@@ -1,0 +1,8 @@
+test(qualidade): Y07 refazer 2 — tira o dado do limite da janela (falha só antes das 10h)
+
+A linha 'a4' ficava cravada em 'hoje - 7 dias' com hora fixa 10:00, e a janela
+atual é pedida como gte(created_at, hoje - 7 dias) sem teto superior
+(useAIStats.ts:73), com o início do período mantendo a hora de quem lê. Rodando
+antes das 10:00 a linha caía DENTRO da janela e a contagem dava 4 (foi a falha
+da integração); rodando depois das 10:00 dava 3. O dado passa a 8 dias atrás,
+que é anterior ao início da janela em qualquer horário.

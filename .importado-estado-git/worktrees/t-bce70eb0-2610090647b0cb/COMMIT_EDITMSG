@@ -1,0 +1,3 @@
+fix(edge): ignora status inválido em receipts
+
+R2-API-016 (item 482): um status não-string em messages.update derrubava o lote inteiro de receipts (TypeError em rawStatus.toLowerCase). O status de cada receipt passa por EvolutionMessagesUpdateStatusSchema.safeParse; entrada inválida é logada e ignorada (continue), sem abortar os demais receipts do lote.

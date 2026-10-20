@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283697 -0300	
+a463ef22afa83c4d00654d03782a15cc3263a0e7 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283698 -0300	reset: moving to HEAD
+a463ef22afa83c4d00654d03782a15cc3263a0e7 2cb8099aff017ad55b4211c0b4c914d6c58eab46 Joaquim Ataides <ti@promobrindes.com.br> 1791283781 -0300	commit (cherry-pick): fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)
+2cb8099aff017ad55b4211c0b4c914d6c58eab46 f64f826d7f9f7db1dbad869e5e71552be755d784 Joaquim Ataides <ti@promobrindes.com.br> 1791283781 -0300	cherry-pick: fix(multiplix): preserva escopo e falhas por item
+f64f826d7f9f7db1dbad869e5e71552be755d784 8afc2902e62e5693bf790772eaf06672e9ec9745 Joaquim Ataides <ti@promobrindes.com.br> 1791283781 -0300	cherry-pick: fix(multiplix): isola a gravacao do snapshot do catch da resolucao do bloco
+8afc2902e62e5693bf790772eaf06672e9ec9745 7b6abda34d3891cd76226c803d842e9b8c9db019 Joaquim Ataides <ti@promobrindes.com.br> 1791285317 -0300	commit: fix(multiplix): envia ativo de voz já renderizado
+7b6abda34d3891cd76226c803d842e9b8c9db019 af59607df43193c46b38996838ba4a5fc24e62ed Joaquim Ataides <ti@promobrindes.com.br> 1791285522 -0300	commit: test(multiplix): remove caso duplicado do mock

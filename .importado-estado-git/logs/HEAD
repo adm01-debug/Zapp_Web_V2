@@ -1,0 +1,202 @@
+0000000000000000000000000000000000000000 cbe75963e5dae093d551733abb6ced721fe74884 Joaquim Ataides <ti@promobrindes.com.br> 1790619904 -0300	clone: from https://github.com/adm01-debug/Zapp_Web_V2.git
+cbe75963e5dae093d551733abb6ced721fe74884 de55839a4a6f902d2e5eae07b96636e34803bd9c Joaquim Ataides <ti@promobrindes.com.br> 1790765745 -0300	checkout: moving from main to docs/plano-ordem-banner-20-etapas-2026-09-30
+de55839a4a6f902d2e5eae07b96636e34803bd9c 1c30e5bf5fef42054271e18454afab661d41852f Joaquim Ataides <ti@promobrindes.com.br> 1790765902 -0300	merge origin/main: Fast-forward
+1c30e5bf5fef42054271e18454afab661d41852f 7e37c3008f047f8370b3bb454d862b332228cba5 Joaquim Ataides <ti@promobrindes.com.br> 1790765944 -0300	reset: moving to 7e37c3008f047f8370b3bb454d862b332228cba5
+7e37c3008f047f8370b3bb454d862b332228cba5 76bd9f8e6323c17eec3baa58ce42e7490b45459f Joaquim Ataides <ti@promobrindes.com.br> 1790767730 -0300	checkout: moving from docs/plano-ordem-banner-20-etapas-2026-09-30 to docs/plano-contatos-cabecalho-botao-50-etapas-2026-09-30
+76bd9f8e6323c17eec3baa58ce42e7490b45459f 1e9d8cc9af0992e752391883b5e65f30f32688ff Joaquim Ataides <ti@promobrindes.com.br> 1790768104 -0300	merge origin/main: Fast-forward
+1e9d8cc9af0992e752391883b5e65f30f32688ff 9da991a72b155681934ab7d2a581736e8dff7366 Joaquim Ataides <ti@promobrindes.com.br> 1790768133 -0300	reset: moving to 9da991a72b155681934ab7d2a581736e8dff7366
+9da991a72b155681934ab7d2a581736e8dff7366 9f817ac213de7f246becbdaf79039d3180bfed52 Joaquim Ataides <ti@promobrindes.com.br> 1790775988 -0300	checkout: moving from docs/plano-contatos-cabecalho-botao-50-etapas-2026-09-30 to fix/remover-assistente-ia-barra-inferior
+9f817ac213de7f246becbdaf79039d3180bfed52 38407f062b53748a6171a258b47bb7daa31429aa Joaquim Ataides <ti@promobrindes.com.br> 1790776260 -0300	reset: moving to 38407f062b53748a6171a258b47bb7daa31429aa
+38407f062b53748a6171a258b47bb7daa31429aa 711e323fd1bfc7937de0b66c6c8b201490593b31 Joaquim Ataides <ti@promobrindes.com.br> 1790780281 -0300	checkout: moving from fix/remover-assistente-ia-barra-inferior to verify/remover-assistente-ia-main
+711e323fd1bfc7937de0b66c6c8b201490593b31 b5fffc974c038f1b82dbb96bc54c4ea319e63700 Joaquim Ataides <ti@promobrindes.com.br> 1790780281 -0300	cherry-pick: fix(inbox): remove atalho redundante do Assistente IA
+b5fffc974c038f1b82dbb96bc54c4ea319e63700 83625096a9cbcf9d397b80b7010e30f636b52ae6 Joaquim Ataides <ti@promobrindes.com.br> 1790780460 -0300	rebase (start): checkout origin/main
+83625096a9cbcf9d397b80b7010e30f636b52ae6 f9f67d0276e4b9a214d2d6dc83b203ad84b62795 Joaquim Ataides <ti@promobrindes.com.br> 1790780460 -0300	rebase (pick): fix(inbox): remove atalho redundante do Assistente IA
+f9f67d0276e4b9a214d2d6dc83b203ad84b62795 f9f67d0276e4b9a214d2d6dc83b203ad84b62795 Joaquim Ataides <ti@promobrindes.com.br> 1790780460 -0300	rebase (finish): returning to refs/heads/verify/remover-assistente-ia-main
+f9f67d0276e4b9a214d2d6dc83b203ad84b62795 cbe75963e5dae093d551733abb6ced721fe74884 Joaquim Ataides <ti@promobrindes.com.br> 1790781288 -0300	checkout: moving from verify/remover-assistente-ia-main to main
+cbe75963e5dae093d551733abb6ced721fe74884 c4d419eb981014348d38319d941a3118793bfd19 Joaquim Ataides <ti@promobrindes.com.br> 1790781288 -0300	merge origin/main: Fast-forward
+c4d419eb981014348d38319d941a3118793bfd19 c4d419eb981014348d38319d941a3118793bfd19 Joaquim Ataides <ti@promobrindes.com.br> 1790781496 -0300	checkout: moving from main to fix/mover-zen-cabecalho-conversas
+c4d419eb981014348d38319d941a3118793bfd19 c4d419eb981014348d38319d941a3118793bfd19 Joaquim Ataides <ti@promobrindes.com.br> 1790781732 -0300	reset: moving to HEAD
+c4d419eb981014348d38319d941a3118793bfd19 af89069dbe91bbd2b9d7f1f67e6e0bcb8f52944b Joaquim Ataides <ti@promobrindes.com.br> 1790781732 -0300	rebase (start): checkout origin/main
+af89069dbe91bbd2b9d7f1f67e6e0bcb8f52944b af89069dbe91bbd2b9d7f1f67e6e0bcb8f52944b Joaquim Ataides <ti@promobrindes.com.br> 1790781732 -0300	rebase (finish): returning to refs/heads/fix/mover-zen-cabecalho-conversas
+af89069dbe91bbd2b9d7f1f67e6e0bcb8f52944b af89069dbe91bbd2b9d7f1f67e6e0bcb8f52944b Joaquim Ataides <ti@promobrindes.com.br> 1790783949 -0300	reset: moving to HEAD
+af89069dbe91bbd2b9d7f1f67e6e0bcb8f52944b c4d419eb981014348d38319d941a3118793bfd19 Joaquim Ataides <ti@promobrindes.com.br> 1790783949 -0300	checkout: moving from fix/mover-zen-cabecalho-conversas to main
+c4d419eb981014348d38319d941a3118793bfd19 3d2b7d572e689527e12e2e44104f327a9a23cb55 Joaquim Ataides <ti@promobrindes.com.br> 1790783949 -0300	merge origin/main: Fast-forward
+3d2b7d572e689527e12e2e44104f327a9a23cb55 a6955b16909f01894bbc1f975140e07841aaf21e Joaquim Ataides <ti@promobrindes.com.br> 1790785493 -0300	merge origin/main: Fast-forward
+a6955b16909f01894bbc1f975140e07841aaf21e 325729ed2d1fcf34186e24717455650ad6a1ffb3 Joaquim Ataides <ti@promobrindes.com.br> 1790785855 -0300	merge origin/main: Fast-forward
+325729ed2d1fcf34186e24717455650ad6a1ffb3 325729ed2d1fcf34186e24717455650ad6a1ffb3 Joaquim Ataides <ti@promobrindes.com.br> 1790785855 -0300	checkout: moving from main to feat/talk-me-queue
+325729ed2d1fcf34186e24717455650ad6a1ffb3 211fe16069a549dc233a5097edfcb10cad3cf870 Joaquim Ataides <ti@promobrindes.com.br> 1790787971 -0300	rebase (start): checkout origin/main
+211fe16069a549dc233a5097edfcb10cad3cf870 211fe16069a549dc233a5097edfcb10cad3cf870 Joaquim Ataides <ti@promobrindes.com.br> 1790787971 -0300	rebase (finish): returning to refs/heads/feat/talk-me-queue
+211fe16069a549dc233a5097edfcb10cad3cf870 8c732a358bada04e8d492b3d75845321715a3a3d Joaquim Ataides <ti@promobrindes.com.br> 1790788742 -0300	commit: feat(inbox): adiciona fila TALK ME com aceite atomico
+8c732a358bada04e8d492b3d75845321715a3a3d 1573ed40f35e7a0a100751474f0b8557f12e580e Joaquim Ataides <ti@promobrindes.com.br> 1790788896 -0300	rebase (start): checkout origin/main
+1573ed40f35e7a0a100751474f0b8557f12e580e 38b828a58fe470e71033107a8da6ba95989962e6 Joaquim Ataides <ti@promobrindes.com.br> 1790788896 -0300	rebase (pick): feat(inbox): adiciona fila TALK ME com aceite atomico
+38b828a58fe470e71033107a8da6ba95989962e6 38b828a58fe470e71033107a8da6ba95989962e6 Joaquim Ataides <ti@promobrindes.com.br> 1790788896 -0300	rebase (finish): returning to refs/heads/feat/talk-me-queue
+38b828a58fe470e71033107a8da6ba95989962e6 0335822a5b7607170eab50db4723eda6a139320e Joaquim Ataides <ti@promobrindes.com.br> 1790789349 -0300	commit (amend): feat(inbox): adiciona fila TALK ME com aceite atomico
+0335822a5b7607170eab50db4723eda6a139320e b458138139745a7131df53cba874d9862bb26670 Joaquim Ataides <ti@promobrindes.com.br> 1790789417 -0300	rebase (start): checkout origin/main
+b458138139745a7131df53cba874d9862bb26670 d44687d98a3e905c32f16ee58a0d9ec4910b1733 Joaquim Ataides <ti@promobrindes.com.br> 1790789417 -0300	rebase (pick): feat(inbox): adiciona fila TALK ME com aceite atomico
+d44687d98a3e905c32f16ee58a0d9ec4910b1733 d44687d98a3e905c32f16ee58a0d9ec4910b1733 Joaquim Ataides <ti@promobrindes.com.br> 1790789417 -0300	rebase (finish): returning to refs/heads/feat/talk-me-queue
+d44687d98a3e905c32f16ee58a0d9ec4910b1733 80dce9c6c7b6d3c085f0d5cf92b5a249b90ec5c8 Joaquim Ataides <ti@promobrindes.com.br> 1790789464 -0300	commit (amend): feat(inbox): adiciona fila TALK ME com aceite atomico
+80dce9c6c7b6d3c085f0d5cf92b5a249b90ec5c8 212c192043cc0f78f9106b79ac9ccec041a98257 Joaquim Ataides <ti@promobrindes.com.br> 1790789524 -0300	rebase (start): checkout origin/main
+212c192043cc0f78f9106b79ac9ccec041a98257 6afed1c310e33320398df50c0bbf9979ea99be8f Joaquim Ataides <ti@promobrindes.com.br> 1790789524 -0300	rebase (pick): feat(inbox): adiciona fila TALK ME com aceite atomico
+6afed1c310e33320398df50c0bbf9979ea99be8f 6afed1c310e33320398df50c0bbf9979ea99be8f Joaquim Ataides <ti@promobrindes.com.br> 1790789524 -0300	rebase (finish): returning to refs/heads/feat/talk-me-queue
+6afed1c310e33320398df50c0bbf9979ea99be8f 0526c94aa1ca7d8554e05e15ff2b19ac7dc0c773 Joaquim Ataides <ti@promobrindes.com.br> 1790789612 -0300	commit (amend): feat(inbox): adiciona fila TALK ME com aceite atomico
+0526c94aa1ca7d8554e05e15ff2b19ac7dc0c773 facb1d00d20ecbc3c13772429fa2a08e8255055b Joaquim Ataides <ti@promobrindes.com.br> 1790790302 -0300	checkout: moving from feat/talk-me-queue to origin/main
+facb1d00d20ecbc3c13772429fa2a08e8255055b 080afc085170ca48f3ee08c3f460153633eba324 Joaquim Ataides <ti@promobrindes.com.br> 1790804404 -0300	checkout: moving from facb1d00d20ecbc3c13772429fa2a08e8255055b to main
+080afc085170ca48f3ee08c3f460153633eba324 826fa1486a51d8bfdab285abb5a6e76ce7921426 Joaquim Ataides <ti@promobrindes.com.br> 1790804404 -0300	merge origin/main: Fast-forward
+826fa1486a51d8bfdab285abb5a6e76ce7921426 a98d3e45fdc40bc578641f4f186f432cba4efbed Joaquim Ataides <ti@promobrindes.com.br> 1790805984 -0300	checkout: moving from main to codex/plano-refinamento-talk-me-50-20260930
+a98d3e45fdc40bc578641f4f186f432cba4efbed f3bdca55495752e9066edbc6f756fa254c949635 Joaquim Ataides <ti@promobrindes.com.br> 1790806020 -0300	merge origin/codex/plano-refinamento-talk-me-50-20260930: Fast-forward
+f3bdca55495752e9066edbc6f756fa254c949635 f3bdca55495752e9066edbc6f756fa254c949635 Joaquim Ataides <ti@promobrindes.com.br> 1790806477 -0300	checkout: moving from codex/plano-refinamento-talk-me-50-20260930 to codex/talk-me-carousel-refinement-20260930
+f3bdca55495752e9066edbc6f756fa254c949635 79d943340404e81827012c0546fb78ad6381839d Joaquim Ataides <ti@promobrindes.com.br> 1790807743 -0300	commit: feat(talk-me): refina carrossel e fila de espera
+79d943340404e81827012c0546fb78ad6381839d 955e0684c9c6cddf19f69c2b56caa9e3ecf63088 Joaquim Ataides <ti@promobrindes.com.br> 1790836414 -0300	commit: docs(talk-me): registra execução do refinamento
+955e0684c9c6cddf19f69c2b56caa9e3ecf63088 a2c1d4164ceafbfb13fbd2b042f310da12778e68 Joaquim Ataides <ti@promobrindes.com.br> 1790836964 -0300	commit: docs(talk-me): contextualiza build de implementação
+a2c1d4164ceafbfb13fbd2b042f310da12778e68 826fa1486a51d8bfdab285abb5a6e76ce7921426 Joaquim Ataides <ti@promobrindes.com.br> 1790837571 -0300	checkout: moving from codex/talk-me-carousel-refinement-20260930 to main
+826fa1486a51d8bfdab285abb5a6e76ce7921426 efdfac92edbadfd69f529ab42e9922c62143be04 Joaquim Ataides <ti@promobrindes.com.br> 1790837571 -0300	merge origin/main: Fast-forward
+efdfac92edbadfd69f529ab42e9922c62143be04 6a9aec578f2a1556cf5a0966176489f01308074d Joaquim Ataides <ti@promobrindes.com.br> 1790850634 -0300	merge origin/main: Fast-forward
+6a9aec578f2a1556cf5a0966176489f01308074d 6a9aec578f2a1556cf5a0966176489f01308074d Joaquim Ataides <ti@promobrindes.com.br> 1790850634 -0300	checkout: moving from main to codex/talk-me-compact-viewport
+6a9aec578f2a1556cf5a0966176489f01308074d a4459a159cd7366ceecf1bb20357cdd2f72d5a87 Joaquim Ataides <ti@promobrindes.com.br> 1790850786 -0300	commit: fix(talk-me): compacta layout para mostrar a fila sem rolagem
+a4459a159cd7366ceecf1bb20357cdd2f72d5a87 1abab1e37b324b2b896352d2ef1332a123f6fa82 Joaquim Ataides <ti@promobrindes.com.br> 1790850836 -0300	commit (amend): fix(talk-me): compacta layout para mostrar a fila sem rolagem
+1abab1e37b324b2b896352d2ef1332a123f6fa82 674a7bf9a7b45440a1a35eb7c9e6cda17bb5afcc Joaquim Ataides <ti@promobrindes.com.br> 1790850847 -0300	commit (amend): fix(talk-me): compacta layout para mostrar a fila sem rolagem
+674a7bf9a7b45440a1a35eb7c9e6cda17bb5afcc 6a9aec578f2a1556cf5a0966176489f01308074d Joaquim Ataides <ti@promobrindes.com.br> 1790851544 -0300	checkout: moving from codex/talk-me-compact-viewport to main
+6a9aec578f2a1556cf5a0966176489f01308074d e4d7e1b56ae4371a482a698748f187b0a7680703 Joaquim Ataides <ti@promobrindes.com.br> 1790851544 -0300	merge origin/main: Fast-forward
+e4d7e1b56ae4371a482a698748f187b0a7680703 5c19b311416c26286255205c3d549e20fea1f709 Joaquim Ataides <ti@promobrindes.com.br> 1790853391 -0300	merge origin/main: Fast-forward
+5c19b311416c26286255205c3d549e20fea1f709 762c7c25044be174f643be3c251973a6ef9ca41d Joaquim Ataides <ti@promobrindes.com.br> 1790853771 -0300	merge origin/main: Fast-forward
+762c7c25044be174f643be3c251973a6ef9ca41d 762c7c25044be174f643be3c251973a6ef9ca41d Joaquim Ataides <ti@promobrindes.com.br> 1790854305 -0300	checkout: moving from main to fix/talk-me-audit-remediation-20261001
+762c7c25044be174f643be3c251973a6ef9ca41d 572920b2df4d33caf28ff06db3006a16125e1d57 Joaquim Ataides <ti@promobrindes.com.br> 1790854506 -0300	commit (cherry-pick): fix(db): usa versão reservada na migration de contatos
+572920b2df4d33caf28ff06db3006a16125e1d57 5a445bd58459e3a6b68407a1e2fa44cc0f4263fb Joaquim Ataides <ti@promobrindes.com.br> 1790854567 -0300	commit: fix(talk-me): corrige foco e contraste do carrossel
+5a445bd58459e3a6b68407a1e2fa44cc0f4263fb c72a4b3bf8d6fc4f430d7743f37a32a72635fe16 Joaquim Ataides <ti@promobrindes.com.br> 1790854704 -0300	commit: fix(talk-me): endurece busca aceite e realtime
+c72a4b3bf8d6fc4f430d7743f37a32a72635fe16 48d07ab70bdc6f6251f90a0b463d6dcd36d81080 Joaquim Ataides <ti@promobrindes.com.br> 1790854766 -0300	commit: fix(db): endurece privilégios do TALK ME
+48d07ab70bdc6f6251f90a0b463d6dcd36d81080 b881077a850a3922fe85bf9a41dae6a68a5ff413 Joaquim Ataides <ti@promobrindes.com.br> 1790854884 -0300	commit: fix(talk-me): reconcilia elegibilidade sem expor tabelas
+b881077a850a3922fe85bf9a41dae6a68a5ff413 7d4ff3991a3f624728ba0c82b73b1636c2d117b1 Joaquim Ataides <ti@promobrindes.com.br> 1790855192 -0300	rebase (start): checkout origin/main
+7d4ff3991a3f624728ba0c82b73b1636c2d117b1 2cf8d57e76f8769de715ac61a63e725a5e22de08 Joaquim Ataides <ti@promobrindes.com.br> 1790855192 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+2cf8d57e76f8769de715ac61a63e725a5e22de08 c856a9754707c38126a5403c8c958633e208965c Joaquim Ataides <ti@promobrindes.com.br> 1790855192 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+c856a9754707c38126a5403c8c958633e208965c 1115b4ea61071044263bb004c9dc162ccd8fc66f Joaquim Ataides <ti@promobrindes.com.br> 1790855192 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+1115b4ea61071044263bb004c9dc162ccd8fc66f 912e46ed69ead1b28949a6149317df43fbc291d4 Joaquim Ataides <ti@promobrindes.com.br> 1790855192 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+912e46ed69ead1b28949a6149317df43fbc291d4 912e46ed69ead1b28949a6149317df43fbc291d4 Joaquim Ataides <ti@promobrindes.com.br> 1790855192 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+912e46ed69ead1b28949a6149317df43fbc291d4 67ebb7544206c8e69751f9ea49f56aa35060f964 Joaquim Ataides <ti@promobrindes.com.br> 1790855604 -0300	commit: refactor(db): remove duplicação dos guards de contatos
+67ebb7544206c8e69751f9ea49f56aa35060f964 b2aaa658f7b6588f2c2e40f8a63c0eabaf5363e6 Joaquim Ataides <ti@promobrindes.com.br> 1790855719 -0300	commit: test(talk-me): reduz duplicação dos cenários do hook
+b2aaa658f7b6588f2c2e40f8a63c0eabaf5363e6 a9218473e4981622d8d058202940049bddeca910 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (start): checkout origin/main
+a9218473e4981622d8d058202940049bddeca910 b2ce29e038b4aa5bf32948e612ad6090db951a59 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+b2ce29e038b4aa5bf32948e612ad6090db951a59 20140d422d7cf6b6b42d5bd2d765e8347c8cc499 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+20140d422d7cf6b6b42d5bd2d765e8347c8cc499 9dd901a0ad2bcd9978c9a289ac17851caeb1ddf2 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+9dd901a0ad2bcd9978c9a289ac17851caeb1ddf2 b643072590e27ad84eff29a0c0b5c561618ae854 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+b643072590e27ad84eff29a0c0b5c561618ae854 700453a082e168eb83b72eeefd740c2d68005b43 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+700453a082e168eb83b72eeefd740c2d68005b43 1d52cbea00ffd3997fcc5a90012442ee81e49f50 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+1d52cbea00ffd3997fcc5a90012442ee81e49f50 1d52cbea00ffd3997fcc5a90012442ee81e49f50 Joaquim Ataides <ti@promobrindes.com.br> 1790855940 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+1d52cbea00ffd3997fcc5a90012442ee81e49f50 f8530c98e2b8aa7bfa3c534d9ad6dee47c12b832 Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (start): checkout origin/main
+f8530c98e2b8aa7bfa3c534d9ad6dee47c12b832 306ee1d96c2fe3df25718786f662d0c2ba9597b7 Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+306ee1d96c2fe3df25718786f662d0c2ba9597b7 359845bb9727a70c67b7363d2c47fac9936bc5ef Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+359845bb9727a70c67b7363d2c47fac9936bc5ef bbf026ce9ea888a8457d513afb66dfd79a0b387a Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+bbf026ce9ea888a8457d513afb66dfd79a0b387a 0f01150dabd3d26e7e3f53d1b01a72b5e2ebb802 Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+0f01150dabd3d26e7e3f53d1b01a72b5e2ebb802 257cc6445081414530389cf172ba1133609b56d6 Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+257cc6445081414530389cf172ba1133609b56d6 5d8a241bc882b2498328d5f998802025815e2b7a Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+5d8a241bc882b2498328d5f998802025815e2b7a 5d8a241bc882b2498328d5f998802025815e2b7a Joaquim Ataides <ti@promobrindes.com.br> 1790856680 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+5d8a241bc882b2498328d5f998802025815e2b7a eb4b0d0e09f6000e6011c714a8845bad47bf08d0 Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (start): checkout origin/main
+eb4b0d0e09f6000e6011c714a8845bad47bf08d0 5d9a1854b20be1d0bb13be33cd4e82caba91f496 Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+5d9a1854b20be1d0bb13be33cd4e82caba91f496 d766e4f3a56d945e1b48a36177184592794c802f Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+d766e4f3a56d945e1b48a36177184592794c802f d3c283821d751f013370de1edc284c7695030705 Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+d3c283821d751f013370de1edc284c7695030705 4274f5cfd89e357532d2a82d60e25e5a8ba56ef7 Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+4274f5cfd89e357532d2a82d60e25e5a8ba56ef7 d99595f198b2658c777eaaa9dfa6e9fd9553ac0c Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+d99595f198b2658c777eaaa9dfa6e9fd9553ac0c 442c3f90f8867359598acc332ee2391481b3f924 Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+442c3f90f8867359598acc332ee2391481b3f924 442c3f90f8867359598acc332ee2391481b3f924 Joaquim Ataides <ti@promobrindes.com.br> 1790856899 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+442c3f90f8867359598acc332ee2391481b3f924 4079cd0b112b509490ef20ca32fe2230a978d7ed Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (start): checkout origin/main
+4079cd0b112b509490ef20ca32fe2230a978d7ed 97919be9cf4d6557e860c00504d61e113e928dda Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+97919be9cf4d6557e860c00504d61e113e928dda 4bc6cfe6e237adbe1f0e64fbf646ca67b5e24886 Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+4bc6cfe6e237adbe1f0e64fbf646ca67b5e24886 89f818cd1ff30c5092cc64b1525126b881d580a2 Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+89f818cd1ff30c5092cc64b1525126b881d580a2 52767d0674b82547f7e8e4eea77d4f30f9e41985 Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+52767d0674b82547f7e8e4eea77d4f30f9e41985 1a86cbe3d8403f20c5528baf544a4b15ce62fba2 Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+1a86cbe3d8403f20c5528baf544a4b15ce62fba2 e2d81550fa9b2e14d2425aa8573a96a82779ac7d Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+e2d81550fa9b2e14d2425aa8573a96a82779ac7d e2d81550fa9b2e14d2425aa8573a96a82779ac7d Joaquim Ataides <ti@promobrindes.com.br> 1790857351 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+e2d81550fa9b2e14d2425aa8573a96a82779ac7d 74a01abe6477063269edbeac157b59ca364eea8e Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (start): checkout origin/main
+74a01abe6477063269edbeac157b59ca364eea8e 5f21e6ed390b8950589319b47ecc20f14e603a6b Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+5f21e6ed390b8950589319b47ecc20f14e603a6b caa38737a06395201a6642cbec876ebdba36fa11 Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+caa38737a06395201a6642cbec876ebdba36fa11 c3438f4576bf5f0ad3bed1201a26c8ed6cc854a0 Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+c3438f4576bf5f0ad3bed1201a26c8ed6cc854a0 cbd28198b2b940e074b6befe793f12eedb9c230e Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+cbd28198b2b940e074b6befe793f12eedb9c230e 04cb541267e5789883e71ae99a0a05a06e12690e Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+04cb541267e5789883e71ae99a0a05a06e12690e da0b69073b06ea6345238dcc82e0b405fac984a4 Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+da0b69073b06ea6345238dcc82e0b405fac984a4 da0b69073b06ea6345238dcc82e0b405fac984a4 Joaquim Ataides <ti@promobrindes.com.br> 1790857883 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+da0b69073b06ea6345238dcc82e0b405fac984a4 bb4cd4189494adb9582b2d3c1a592b1c1b5c9f14 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (start): checkout origin/main
+bb4cd4189494adb9582b2d3c1a592b1c1b5c9f14 9acd20b45a5896530c01b590be100172fd513590 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+9acd20b45a5896530c01b590be100172fd513590 a8239477aab5910ea8654ed8fa14198b80c858aa Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+a8239477aab5910ea8654ed8fa14198b80c858aa 0f150d11b167678e21508709f690969468d7a1f8 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+0f150d11b167678e21508709f690969468d7a1f8 b7c26ca14f7b9937fe44e7d35b77f2bcbcc75187 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+b7c26ca14f7b9937fe44e7d35b77f2bcbcc75187 ce68546d46013988b9df197bc37f5949b93d1346 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+ce68546d46013988b9df197bc37f5949b93d1346 5660afe42212ed2c52a676ca742599506a6d8c96 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+5660afe42212ed2c52a676ca742599506a6d8c96 5660afe42212ed2c52a676ca742599506a6d8c96 Joaquim Ataides <ti@promobrindes.com.br> 1790858382 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+5660afe42212ed2c52a676ca742599506a6d8c96 3d094336f0384073e7d9e4c9b5cfed640fd366a0 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (start): checkout origin/main
+3d094336f0384073e7d9e4c9b5cfed640fd366a0 630df8b6d3ed792d12d9453fea02f14308d64a7f Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+630df8b6d3ed792d12d9453fea02f14308d64a7f 96a2c5c0ada32a8945590be2f3c7c91fb7e29357 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+96a2c5c0ada32a8945590be2f3c7c91fb7e29357 266db4fb60dc1881c38c603e7b220c5923291408 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+266db4fb60dc1881c38c603e7b220c5923291408 371bfd0adfd8c9d248506bf3f3e64be525061120 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+371bfd0adfd8c9d248506bf3f3e64be525061120 8ce120f35bacb2009f0b343b5ffdafbb99193879 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+8ce120f35bacb2009f0b343b5ffdafbb99193879 91cd4492ce69e7e48c16af4ddb707fd758e424b1 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+91cd4492ce69e7e48c16af4ddb707fd758e424b1 91cd4492ce69e7e48c16af4ddb707fd758e424b1 Joaquim Ataides <ti@promobrindes.com.br> 1790858931 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+91cd4492ce69e7e48c16af4ddb707fd758e424b1 7d3117ceb46d5f04c1c199defe9d90b2b9e00c0f Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (start): checkout origin/main
+7d3117ceb46d5f04c1c199defe9d90b2b9e00c0f 40b0632924c013b80594b770e1efe1278d224054 Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+40b0632924c013b80594b770e1efe1278d224054 64614d736b959aa0ce912ff4a31d2098301767eb Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+64614d736b959aa0ce912ff4a31d2098301767eb ca14543bd0d34910e6103d19901802c96b2aea43 Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+ca14543bd0d34910e6103d19901802c96b2aea43 b5a1b09defb10bfcd8c4ab58b601ca44d94bfb64 Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+b5a1b09defb10bfcd8c4ab58b601ca44d94bfb64 d4cf1bcde07ee7b51f8056de5a5731acc7d9236e Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+d4cf1bcde07ee7b51f8056de5a5731acc7d9236e bfe94d2a80f124da3958fcf1c635f36d7ceaed40 Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+bfe94d2a80f124da3958fcf1c635f36d7ceaed40 bfe94d2a80f124da3958fcf1c635f36d7ceaed40 Joaquim Ataides <ti@promobrindes.com.br> 1790859416 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+bfe94d2a80f124da3958fcf1c635f36d7ceaed40 a1ddaafee90442ccb5403e5ee619f77d36069b50 Joaquim Ataides <ti@promobrindes.com.br> 1790860035 -0300	rebase (start): checkout origin/main
+a1ddaafee90442ccb5403e5ee619f77d36069b50 804d9623fd12c412018714182e46c9664e42032c Joaquim Ataides <ti@promobrindes.com.br> 1790860035 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+804d9623fd12c412018714182e46c9664e42032c 6bbe03a8388f2635155824e41e2f06afa3f0dd37 Joaquim Ataides <ti@promobrindes.com.br> 1790860035 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+6bbe03a8388f2635155824e41e2f06afa3f0dd37 91a9db14f8701d1b74eb1216744e1dcd32f39986 Joaquim Ataides <ti@promobrindes.com.br> 1790860036 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+91a9db14f8701d1b74eb1216744e1dcd32f39986 3d6c4a537da0b05c114d4b1b63b2363cdeeb7669 Joaquim Ataides <ti@promobrindes.com.br> 1790860036 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+3d6c4a537da0b05c114d4b1b63b2363cdeeb7669 d83706eca86901b341b7295dce08c965dc155fc2 Joaquim Ataides <ti@promobrindes.com.br> 1790860036 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+d83706eca86901b341b7295dce08c965dc155fc2 32d4efcfc39d977de88e93e0ca90068bedb9ecc8 Joaquim Ataides <ti@promobrindes.com.br> 1790860036 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+32d4efcfc39d977de88e93e0ca90068bedb9ecc8 32d4efcfc39d977de88e93e0ca90068bedb9ecc8 Joaquim Ataides <ti@promobrindes.com.br> 1790860036 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+32d4efcfc39d977de88e93e0ca90068bedb9ecc8 f919b2376f93eb6c4613411514e71d19ffd128c9 Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (start): checkout origin/main
+f919b2376f93eb6c4613411514e71d19ffd128c9 eed8bedf07ee31f338d8f1da5295bf0f2a517416 Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (pick): fix(talk-me): corrige foco e contraste do carrossel
+eed8bedf07ee31f338d8f1da5295bf0f2a517416 4f68ffad34d4ccb18ca46c3f6c79a651b5031d43 Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (pick): fix(talk-me): endurece busca aceite e realtime
+4f68ffad34d4ccb18ca46c3f6c79a651b5031d43 1f62a1323b5901ddfcf5a3b4f716310aac08ad8e Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (pick): fix(db): endurece privilégios do TALK ME
+1f62a1323b5901ddfcf5a3b4f716310aac08ad8e 53041e245f0df54e889599c86a02d8356506dcab Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (pick): fix(talk-me): reconcilia elegibilidade sem expor tabelas
+53041e245f0df54e889599c86a02d8356506dcab 5559267bb0c9480a472920d171de341418d122cd Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (pick): refactor(db): remove duplicação dos guards de contatos
+5559267bb0c9480a472920d171de341418d122cd b8b27907fa15b0eb529d8d38a98eec77cb9b46c5 Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (pick): test(talk-me): reduz duplicação dos cenários do hook
+b8b27907fa15b0eb529d8d38a98eec77cb9b46c5 b8b27907fa15b0eb529d8d38a98eec77cb9b46c5 Joaquim Ataides <ti@promobrindes.com.br> 1790860574 -0300	rebase (finish): returning to refs/heads/fix/talk-me-audit-remediation-20261001
+b8b27907fa15b0eb529d8d38a98eec77cb9b46c5 59a4eccd460990cbfed6a0cd0d5a6086a777486a Joaquim Ataides <ti@promobrindes.com.br> 1790861538 -0300	checkout: moving from fix/talk-me-audit-remediation-20261001 to chore/sync-talk-me-supabase-types-20261001
+59a4eccd460990cbfed6a0cd0d5a6086a777486a 13e579983a47f6664678182c4d0f8d99ae975b5c Joaquim Ataides <ti@promobrindes.com.br> 1790861664 -0300	commit: chore(db): sincroniza tipo do guard de contatos
+13e579983a47f6664678182c4d0f8d99ae975b5c 762c7c25044be174f643be3c251973a6ef9ca41d Joaquim Ataides <ti@promobrindes.com.br> 1790862405 -0300	checkout: moving from chore/sync-talk-me-supabase-types-20261001 to main
+762c7c25044be174f643be3c251973a6ef9ca41d 547eda65e4911a8b10310b4da96e0d9d79b1d4f1 Joaquim Ataides <ti@promobrindes.com.br> 1790862405 -0300	merge origin/main: Fast-forward
+547eda65e4911a8b10310b4da96e0d9d79b1d4f1 547eda65e4911a8b10310b4da96e0d9d79b1d4f1 Joaquim Ataides <ti@promobrindes.com.br> 1790868007 -0300	checkout: moving from main to main
+547eda65e4911a8b10310b4da96e0d9d79b1d4f1 3f123b523b6d78d489716a9b75aff98ec7e8d4a3 Joaquim Ataides <ti@promobrindes.com.br> 1790868007 -0300	merge origin/main: Fast-forward
+3f123b523b6d78d489716a9b75aff98ec7e8d4a3 3f123b523b6d78d489716a9b75aff98ec7e8d4a3 Joaquim Ataides <ti@promobrindes.com.br> 1790868251 -0300	checkout: moving from main to fix/strict-branch-protection-automation-20261001
+3f123b523b6d78d489716a9b75aff98ec7e8d4a3 6e2382a7d4b7411bbd4a0fefcdfece366d52df4d Joaquim Ataides <ti@promobrindes.com.br> 1790868277 -0300	commit: fix(ci): estabiliza checks estritos da main
+6e2382a7d4b7411bbd4a0fefcdfece366d52df4d ffea3e09d269b802f764731a1da97a9c0aebcff8 Joaquim Ataides <ti@promobrindes.com.br> 1790868931 -0300	rebase (start): checkout origin/main
+ffea3e09d269b802f764731a1da97a9c0aebcff8 1ef28027831a8c88f7febf0cb0558379cfabd813 Joaquim Ataides <ti@promobrindes.com.br> 1790868955 -0300	rebase (continue): fix(ci): estabiliza checks estritos da main
+1ef28027831a8c88f7febf0cb0558379cfabd813 1ef28027831a8c88f7febf0cb0558379cfabd813 Joaquim Ataides <ti@promobrindes.com.br> 1790868955 -0300	rebase (finish): returning to refs/heads/fix/strict-branch-protection-automation-20261001
+1ef28027831a8c88f7febf0cb0558379cfabd813 3f123b523b6d78d489716a9b75aff98ec7e8d4a3 Joaquim Ataides <ti@promobrindes.com.br> 1790870800 -0300	checkout: moving from fix/strict-branch-protection-automation-20261001 to main
+3f123b523b6d78d489716a9b75aff98ec7e8d4a3 b22b91f8f5912f280d884b691b696881183e9cfb Joaquim Ataides <ti@promobrindes.com.br> 1790870801 -0300	pull --ff-only origin main: Fast-forward
+b22b91f8f5912f280d884b691b696881183e9cfb 71e3f4dd255e86542408c6553b13eba038b816c0 Joaquim Ataides <ti@promobrindes.com.br> 1790973102 -0300	cherry-pick: docs(email): planeja redesign NAVY em 100 etapas sem executar
+71e3f4dd255e86542408c6553b13eba038b816c0 8957b85e54bde2b2b58f4620a5c353a57151f181 Joaquim Ataides <ti@promobrindes.com.br> 1790973117 -0300	revert: Revert "docs(email): planeja redesign NAVY em 100 etapas sem executar"
+8957b85e54bde2b2b58f4620a5c353a57151f181 18689fa07f72bdc61b7285ae4f6a6adb3f0e016c Joaquim Ataides <ti@promobrindes.com.br> 1791110024 -0300	reset: moving to origin/main
+18689fa07f72bdc61b7285ae4f6a6adb3f0e016c d9dd916a8187aa108064494a8001641c41b03eb9 Joaquim Ataides <ti@promobrindes.com.br> 1791112616 -0300	pull --ff-only -q: Fast-forward
+d9dd916a8187aa108064494a8001641c41b03eb9 2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 Joaquim Ataides <ti@promobrindes.com.br> 1791112903 -0300	pull --ff-only -q: Fast-forward
+2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 Joaquim Ataides <ti@promobrindes.com.br> 1791113136 -0300	checkout: moving from main to chore/versiona-migrations-fora-do-git-20261004
+2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 70f8df13b2b6e1c50b4c55ec356a8a6d1e38375e Joaquim Ataides <ti@promobrindes.com.br> 1791113166 -0300	commit: chore(db): versiona 3 migrations já aplicadas no banco e ausentes do Git
+70f8df13b2b6e1c50b4c55ec356a8a6d1e38375e 2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 Joaquim Ataides <ti@promobrindes.com.br> 1791113291 -0300	checkout: moving from chore/versiona-migrations-fora-do-git-20261004 to main
+2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 2b4dac2d3f4fbab3b54b65acdbb01e036ff2b4bb Joaquim Ataides <ti@promobrindes.com.br> 1791116961 -0300	pull --ff-only -q: Fast-forward
+2b4dac2d3f4fbab3b54b65acdbb01e036ff2b4bb bf266d2f890e7013f03da20d5612addf3a19b39c Joaquim Ataides <ti@promobrindes.com.br> 1791118693 -0300	merge origin/main: Fast-forward
+bf266d2f890e7013f03da20d5612addf3a19b39c 7a15852791828c50a9985a49659a9e13f15eaa86 Joaquim Ataides <ti@promobrindes.com.br> 1791122805 -0300	merge origin/main: Fast-forward
+7a15852791828c50a9985a49659a9e13f15eaa86 d5125552ec815192db38c4e10549896f76453830 Joaquim Ataides <ti@promobrindes.com.br> 1791206781 -0300	merge origin/main: Fast-forward
+d5125552ec815192db38c4e10549896f76453830 b44540e359cfb367ed7a9ecb5caf3507b1d040b1 Joaquim Ataides <ti@promobrindes.com.br> 1791219095 -0300	merge origin/main: Fast-forward
+b44540e359cfb367ed7a9ecb5caf3507b1d040b1 0c90ce276baf6c86e93659c0622ea2d42c44ed0e Joaquim Ataides <ti@promobrindes.com.br> 1791221490 -0300	merge origin/main: Fast-forward
+0c90ce276baf6c86e93659c0622ea2d42c44ed0e 48f6f5be22c18530e12394a5832df1b35d606524 Joaquim Ataides <ti@promobrindes.com.br> 1791222687 -0300	merge origin/main: Fast-forward
+48f6f5be22c18530e12394a5832df1b35d606524 03eb778ecb5c2793cb340158c98e3a78f6a93587 Joaquim Ataides <ti@promobrindes.com.br> 1791223882 -0300	merge origin/main: Fast-forward
+03eb778ecb5c2793cb340158c98e3a78f6a93587 ec2722f0f9c4e9e949cf5d0dee2765264b9f5634 Joaquim Ataides <ti@promobrindes.com.br> 1791224788 -0300	merge origin/main: Fast-forward
+ec2722f0f9c4e9e949cf5d0dee2765264b9f5634 b44540e359cfb367ed7a9ecb5caf3507b1d040b1 Joaquim Ataides <ti@promobrindes.com.br> 1791224970 -0300	checkout: moving from main to b44540e359
+b44540e359cfb367ed7a9ecb5caf3507b1d040b1 0b7c0ba5b4fc0e73adc6b2deb0ed17f8c9d33911 Joaquim Ataides <joaquim@ataides> 1791581081 -0300	commit: N-007: migration bucket avatars privado com policy authenticated
+b44540e359cfb367ed7a9ecb5caf3507b1d040b1 623321b041efa05d390befe25dd0ccbdda1966e5 Joaquim Ataides <joaquim@ataides> 1791588492 -0300	commit: N-064: aria-label em botões ícone e seletores admin
+623321b041efa05d390befe25dd0ccbdda1966e5 623321b041efa05d390befe25dd0ccbdda1966e5 Joaquim Ataides <joaquim@ataides> 1791608388 -0300	reset: moving to HEAD
+623321b041efa05d390befe25dd0ccbdda1966e5 623321b041efa05d390befe25dd0ccbdda1966e5 Joaquim Ataides <joaquim@ataides> 1791614990 -0300	reset: moving to HEAD
+623321b041efa05d390befe25dd0ccbdda1966e5 99aa53ff7f2e8b046a1679a860f6fde55853eb68 Joaquim Ataides <joaquim@ataides> 1791614991 -0300	rebase (start): checkout origin/main
+99aa53ff7f2e8b046a1679a860f6fde55853eb68 8b7ab3f1640b88dff32771269275d4b798ab1a19 Joaquim Ataides <joaquim@ataides> 1791614992 -0300	rebase (pick): N-064: aria-label em botões ícone e seletores admin
+8b7ab3f1640b88dff32771269275d4b798ab1a19 8b7ab3f1640b88dff32771269275d4b798ab1a19 Joaquim Ataides <joaquim@ataides> 1791614992 -0300	rebase (finish): returning to refs/heads/v2/n-007-storage-avatar-private-261009153000
+8b7ab3f1640b88dff32771269275d4b798ab1a19 ed7450ae5eb79112410fcef137e06943d904f449 Joaquim Ataides <joaquim@ataides> 1791617295 -0300	commit: feat(talkx): segments route integration (X111)
+ed7450ae5eb79112410fcef137e06943d904f449 ed7450ae5eb79112410fcef137e06943d904f449 Joaquim Ataides <joaquim@ataides> 1791619900 -0300	reset: moving to HEAD
+ed7450ae5eb79112410fcef137e06943d904f449 c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 Joaquim Ataides <joaquim@ataides> 1791620012 -0300	commit: fix(volume): contrato media-volume-surfaces aponta para o arquivo certo do chat interno
+c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 ad4297990e0a33bd4bfd2755ee153bf39ceb44eb Joaquim Ataides <joaquim@ataides> 1791627998 -0300	commit: fix(performance): cache do Bun nos jobs com bun install (SL-095)
+ad4297990e0a33bd4bfd2755ee153bf39ceb44eb c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 Joaquim Ataides <joaquim@ataides> 1791628006 -0300	reset: moving to HEAD~
+c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 a49dba26104bc09dd05817f08de080594bb5a3a4 Joaquim Ataides <joaquim@ataides> 1791628046 -0300	commit: fix(performance): cache do Bun nos jobs com bun install (SL-095)
+a49dba26104bc09dd05817f08de080594bb5a3a4 26ac8a2ed92fbf017fb18f51b77a4fb4974218f2 Joaquim Ataides <joaquim@ataides> 1791629251 -0300	commit: fix(talk-x): step da row Conexão WhatsApp é 3 na review
+26ac8a2ed92fbf017fb18f51b77a4fb4974218f2 26ac8a2ed92fbf017fb18f51b77a4fb4974218f2 Joaquim Ataides <joaquim@ataides> 1791629272 -0300	reset: moving to HEAD
+26ac8a2ed92fbf017fb18f51b77a4fb4974218f2 24a01f7c806f731bb2929621f0df69bcc40a0cbf Joaquim Ataides <joaquim@ataides> 1791631488 -0300	commit (amend): fix(supabase): revogar permissoes de tabela de anon e authenticated em 8 tabelas

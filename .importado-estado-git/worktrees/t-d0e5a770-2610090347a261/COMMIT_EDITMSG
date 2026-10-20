@@ -1,0 +1,23 @@
+fix(seguranca): href seguro e rascunho de conversa por usuário (SEC-FE-02/03)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 12e407210
+# Last command done (1 command done):
+#    pick 39aeda620 fix(seguranca): href seguro e rascunho de conversa por usuário (SEC-FE-02/03)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-d0e5a770-2610090347a261' on '12e407210'.
+#
+# Changes to be committed:
+#	new file:   src/components/inbox/chat/__tests__/useChatInputLogic.rascunho-por-usuario.test.tsx
+#	modified:   src/components/inbox/chat/useChatInputLogic.ts
+#	modified:   src/components/inbox/contact-details/Contact360Helpers.tsx
+#	new file:   src/components/inbox/contact-details/__tests__/Contact360Helpers.href-seguro.test.tsx
+#	new file:   src/hooks/auth/__tests__/useAuth.rascunho-inbox-logout.test.tsx
+#	modified:   src/hooks/auth/useAuth.tsx
+#	new file:   src/lib/__tests__/inboxDraftSession.test.ts
+#	new file:   src/lib/__tests__/urlSafety.href-seguro.test.ts
+#	new file:   src/lib/inboxDraftSession.ts
+#	modified:   src/lib/urlSafety.ts
+#

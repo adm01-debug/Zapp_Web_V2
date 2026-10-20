@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791514928 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791514929 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 ace1d0561e07cc0e8a6c609b5082e6c3b9571f57 worker <worker@hermes.local> 1791515409 -0300	commit: fix(ci/devops): Prettier com plugin Tailwind e ESLint Tailwind (SL-137)

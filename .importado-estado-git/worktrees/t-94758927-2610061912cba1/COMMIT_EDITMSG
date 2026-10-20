@@ -1,0 +1,30 @@
+fix(mensageria): conquista de marco nao bloqueia o envio do agente (#79)
+
+R2-DB-009 (item #79, P1). O enqueue autenticado insere em public.messages com
+sender='agent' e o trigger AFTER INSERT OR UPDATE OF agent_id chama
+grant_agent_achievement com 'message_milestone' nos totais 10/50/100/500/1000. A
+guarda vigente desse RPC recusa tipo reservado quando auth.role() nao e
+privilegiado e o chamador nao e admin/supervisor -- e o JWT do enqueue e
+'authenticated'. Como o RAISE EXCEPTION nao era tratado em lugar nenhum da
+cadeia, o PostgreSQL desfazia o INSERT inteiro: mensagem nao gravada, incremento
+de agent_stats revertido e envio do agente bloqueado no marco (repetir
+reencontrava o marco).
+
+Correcao sem mexer na fronteira do RPC publico:
+- nova rotina interna public.grant_agent_achievement_internal(uuid,text,text,text,int)
+  com a MESMA escrita (agent_stats FOR UPDATE, unico por tipo, INSERT em
+  agent_achievements e soma de XP/level) e sem a guarda de tipo reservado, com
+  EXECUTE revogado de PUBLIC/anon/authenticated -- so o owner a alcanca;
+- handle_message_gamification passa a chamar a rotina interna e a tratar qualquer
+  erro de gamificacao (EXCEPTION WHEN OTHERS + RAISE WARNING), como
+  handle_conversation_closure_gamification ja faz: gamificacao e mecanismo
+  secundario e nunca derruba o atendimento.
+grant_agent_achievement fica intacto: mesma guarda, mesmos erros, mesma ordem.
+
+Prova: scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
+(PostgreSQL 17 descartavel, corpos reais extraidos dos arquivos versionados).
+Vermelho sem a migration (ERROR: achievement type message_milestone requires
+service_role or admin privileges, 0 mensagens gravadas) e verde com ela: 19/19
+assercoes -- envio em 'sending' nos marcos 10 e 500, conquista concedida, retry
+idempotente, mensagem recebida no marco, RPC publico seguindo recusado ao agente,
+rotina interna inacessivel ao cliente e falha de gamificacao virando WARNING.

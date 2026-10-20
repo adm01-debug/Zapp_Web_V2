@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300808 -0300	branch: Created from dia/2026-10-06
+d6bfd59751f26503e528dfa54b704daf0f497157 289773f8f3de3a8f6a14c746db83a464faae4798 Iris <iris@hermes.local> 1791301416 -0300	commit: fix(inbox): filtro por tag da busca entra na consulta e vale para mensagens (#316)

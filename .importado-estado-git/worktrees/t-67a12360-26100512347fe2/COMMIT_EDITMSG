@@ -1,0 +1,3 @@
+feat(inbox): liga paginacao do historico antigo a Inbox ativa (R2-INB-004)
+
+ChatPanel propaga hasOlderMessages/loadingOlderMessages/onLoadOlderMessages ate a ChatMessagesArea e a RealtimeInboxView entrega os tres valores do useRealtimeInbox, sem fetch/estado/cursor paralelo. Teste novo monta a Inbox ativa real e prova o clique unico no loadOlderMessages, o reflexo do loading e a ausencia do controle quando hasOlderMessages=false.

@@ -1,0 +1,10 @@
+fix(settings): valida HH:MM antes de gravar business_hours e zera o rascunho no sucesso (#273-A)
+
+A aba Horario mandava para o upsert de business_hours o que estivesse no
+rascunho: limpar o horario de um dia aberto gravava open_time vazio, fora do
+contrato. Agora o salvar valida todos os dias abertos contra TIME_PATTERN
+(HH:MM), mostra o erro na tela e nao chama o banco quando algum esta invalido.
+
+No sucesso, saveSettings (mutateAsync) resolve e o rascunho volta a null, para
+a tela refletir o que o banco devolveu; na falha o rascunho permanece.
+SettingsView.tsx volta a ter hunk apenas no bloco <TabsContent value="schedule">.

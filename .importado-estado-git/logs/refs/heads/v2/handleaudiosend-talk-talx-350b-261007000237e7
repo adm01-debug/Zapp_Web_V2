@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342139 -0300	branch: Created from dia/2026-10-07
+e58beff67df277afa73c179058c38190a5dd5d5c 215b8c5b55ba67563f3ace0f48f8496cab5745fc Joaquim Ataides <ti@promobrindes.com.br> 1791342413 -0300	commit: fix(team-chat): handleAudioSend devolve boolean e sinaliza falha do envio de áudio (#350-B)

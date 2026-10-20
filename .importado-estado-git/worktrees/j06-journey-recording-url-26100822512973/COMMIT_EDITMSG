@@ -1,0 +1,1 @@
+fix(journey): nao pede recording_url ao banco; hasRecording vem so do recording_status

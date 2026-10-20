@@ -1,0 +1,10 @@
+docs(outros): MCP read-only e grafo de conhecimento — estado das etapas 099/100 (SL-221)
+
+- docs/architecture/mcp-e-grafo-de-conhecimento.md: registro canônico das etapas 099
+  (camada MCP do banco presente e gateada; servidor MCP HTTP ausente, Edge + Gate [PROD]
+  fora do escopo do cartão) e 100 (graphify-out ausente por desenho; grafo versionado
+  íntegro em docs/reconciliation/evidence, sha256 conferido contra o manifesto assinado).
+- docs/architecture/edge-functions.md: cabeçalho canônico (Status + data ISO) e nota de
+  desatualização — critério de aceite da etapa 100.
+- tests/contracts/sl221-mcp-grafo-canonico.contract.test.ts: contrato que trava o estado
+  conferido (8 casos).

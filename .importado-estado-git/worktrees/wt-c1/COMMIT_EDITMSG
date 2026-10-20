@@ -1,0 +1,3 @@
+fix(inbox/chat): Hooks passam a usar get_team_inbox / get_team_messages_ (SL-016)
+
+Cartão V2: 26100915599132 (lote grande)

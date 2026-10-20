@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 a980fada3dc8fdf9579b4e5391913db37c4365fb Joaquim Ataides <ti@promobrindes.com.br> 1791482713 -0300	
+a980fada3dc8fdf9579b4e5391913db37c4365fb a980fada3dc8fdf9579b4e5391913db37c4365fb Joaquim Ataides <ti@promobrindes.com.br> 1791482714 -0300	reset: moving to HEAD
+a980fada3dc8fdf9579b4e5391913db37c4365fb 0b679fb148acd6b9b33e9f10e18e1e2040bbf812 Joaquim Ataides <ti@promobrindes.com.br> 1791482721 -0300	cherry-pick: test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast
+0b679fb148acd6b9b33e9f10e18e1e2040bbf812 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540280 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 2feb97bc963a339269ef995f66ddaf171a5f6695 Joaquim Ataides <ti@promobrindes.com.br> 1791540297 -0300	rebase (continue): test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast
+2feb97bc963a339269ef995f66ddaf171a5f6695 2feb97bc963a339269ef995f66ddaf171a5f6695 Joaquim Ataides <ti@promobrindes.com.br> 1791540297 -0300	rebase (finish): returning to refs/heads/v2/rodar-verify-full-ctrl2-aa04cc21-261008150525b9

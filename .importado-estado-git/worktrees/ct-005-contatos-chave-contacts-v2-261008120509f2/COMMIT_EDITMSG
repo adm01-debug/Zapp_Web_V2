@@ -1,0 +1,3 @@
+feat(contatos): chave contacts.v2 para liberar por partes (CT-005)
+
+Hook useContactsV2Flags() lê a chave geral contacts.v2 (desligamento geral) e as sub-chaves independentes contacts.v2.toolbar|cards|detalhe|empresa|edicao|protecao sobre a infraestrutura de flags que já existe (sem dependência nova); padrão: ligada em desenvolvimento/teste, desligada em produção (inclusive quando a consulta falha). Ponto único de leitura em ContactsView, que publica no elemento raiz data-contacts-v2 com as áreas ligadas. Nenhuma tela v2 existe ainda (chegam em CT-006+), então ligar/desligar não muda a tela hoje.

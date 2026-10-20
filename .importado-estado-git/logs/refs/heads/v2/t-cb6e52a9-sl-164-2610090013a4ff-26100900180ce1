@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791515893 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 65e00ccc906753e44f6d95bfe8242dcd241d3cad Joaquim Ataides <ti@promobrindes.com.br> 1791516327 -0300	commit: fix(dashboard/analytics): Capacidade máxima e deltas de Conversas Abertas/Não Lid (SL-164)

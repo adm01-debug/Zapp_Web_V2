@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ecedcd357953316187ecb706521ce6c337410a42 Joaquim Ataides <ti@promobrindes.com.br> 1791198279 -0300	
+ecedcd357953316187ecb706521ce6c337410a42 ecedcd357953316187ecb706521ce6c337410a42 Joaquim Ataides <ti@promobrindes.com.br> 1791198280 -0300	reset: moving to HEAD
+ecedcd357953316187ecb706521ce6c337410a42 8f4bc074d0c4ded5158302f6494f6f07549fabc3 Joaquim Ataides <ti@promobrindes.com.br> 1791199808 -0300	commit: feat(talkx): drena a fila de expurgo de midia pela Storage API a partir do tick (QA5-05)

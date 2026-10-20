@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791430427 -0300	
+b6ff185f72fab85c050ee66812f03072ff4f0726 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791430428 -0300	reset: moving to HEAD
+b6ff185f72fab85c050ee66812f03072ff4f0726 54386f1fbde622b57d70c45957f9d60017f6c86a Joaquim Ataides <ti@promobrindes.com.br> 1791430437 -0300	cherry-pick: fix(banco): cursor composto (created_at, id) no log do Talk X (#122)
+54386f1fbde622b57d70c45957f9d60017f6c86a 2f6719eeafc1332ab7ccd98cc0daf86eaccac4b3 Joaquim Ataides <ti@promobrindes.com.br> 1791431539 -0300	commit (amend): fix(banco): cursor composto (created_at, id) no log do Talk X (#122)

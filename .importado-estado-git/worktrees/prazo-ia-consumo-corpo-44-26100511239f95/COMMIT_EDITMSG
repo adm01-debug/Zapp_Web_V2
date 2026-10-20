@@ -1,0 +1,17 @@
+fix(ai-timeout): deadline unico cobre corpo/parse e log essencial vira recuperavel (IA-TIMEOUT-001)
+
+O AbortController era desarmado quando os headers chegavam e o
+response.json() corria sem prazo: resposta com headers imediatos e corpo
+travado pendurava a execucao para alem do orcamento. Agora um deadline
+absoluto unico (deadlineAtMs/providerDeadlineAt) cobre reserva, todas as
+tentativas de fetch, o consumo do corpo das respostas transitorias e o
+parse do JSON — com reader proprio que cancela o stream de fato no
+estouro e TimeoutError classificavel como 504/TIMEOUT.
+
+O log essencial ignorava o { error } do supabase-js e engolia o resto num
+warn: a linha de consumo pago desaparecia em silencio. Agora toda linha
+sai com id gerado no cliente e upsert(on_conflict=id, ignoreDuplicates),
+tornando o reenvio idempotente; falha essencial vira console.error
+observavel + pendencia em buffer com dreno (drainPendingUsageLogs,
+EdgeRuntime.waitUntil em producao). Telemetria (essential:false) falha
+com warn e nao ocupa a fila — falha de telemetria nao e de negocio.

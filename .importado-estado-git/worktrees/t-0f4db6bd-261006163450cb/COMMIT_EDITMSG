@@ -1,0 +1,6 @@
+fix(atalhos): Ctrl+2 seleciona a view dashboard pela navegação canônica
+
+A ação go-to-dashboard só chamava navigate('/') e anunciava no toast: a URL
+seguia em ?view=inbox e nenhum zapp:navigate saía, então a tela continuava em
+Inbox. Agora usa navigateToView (?view=dashboard + evento zapp:navigate) e,
+fora da rota raiz, volta ao shell já com a view no caminho.

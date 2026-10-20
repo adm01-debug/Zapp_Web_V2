@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523811 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 1d31ed22d159a18da14d3163eeefff83a1b821c5 Joaquim Ataides <ti@promobrindes.com.br> 1791525452 -0300	commit: fix(components): tirar o runtime de animacao JS do caminho inicial (SL-103A)

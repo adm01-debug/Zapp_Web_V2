@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319648 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319649 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 164b206f3152f41077bf04d0975fee321d548085 worker-sql <worker-sql@hermes.local> 1791323576 -0300	commit: fix(db): escopa o expurgo LGPD do Talk X aos ai_jobs do proprio Talk X

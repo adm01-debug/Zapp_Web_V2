@@ -1,0 +1,17 @@
+fix(settings): aba Sons le e grava as preferencias no hook canonico dos alertas (#271)
+
+A aba Sons instanciava um useUserSettings() proprio, nunca salvava e oferecia
+ids de som que o banco recusa ('default', 'pop', 'ding', 'bubble', 'none'):
+a tela confirmava uma configuracao que os alertas nunca aplicavam.
+
+Agora le E grava pelo useNotificationSettings (o mesmo hook de
+useRealtimeNotifications, useSLANotifications, useGoalNotifications,
+useTranscriptionNotifications, useSentimentAlerts e do SoundVolumeControl):
+categoria -> messageSoundType/mentionSoundType/slaSoundType/goalSoundType/
+transcriptionSoundType, soundEnabled, quietHoursEnabled/Start/End e
+soundVolume (faixa 10-100, passo 5). Os selects so oferecem os 5 tipos do
+banco/player (beep, chime, bell, alert, soft) e um guard descarta qualquer
+valor fora desse vocabulario. O preview usa previewSound(tipo,
+settings.soundVolume) e nao toca com os sons desligados. O upload guarda o
+caminho do storage e a tela diz que o arquivo foi enviado, mas ainda NAO e
+aplicado aos alertas.

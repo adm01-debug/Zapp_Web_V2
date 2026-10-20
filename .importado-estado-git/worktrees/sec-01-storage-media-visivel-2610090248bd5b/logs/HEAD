@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524899 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524900 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 f69bc2075b0363c2b3752d0c5ddb048b1af7802a workersql <workersql@example.test> 1791525875 -0300	commit: fix(db): leitura de mídia privada ligada ao contato visível, não à media_url do cliente (SEC-STORAGE-01)

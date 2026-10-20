@@ -1,0 +1,8 @@
+test(email): tooltip dos Tiles cobre e-mail vazio e o texto dos outros botões
+
+O tooltip contextual do Tile vale para todos os botões do painel (cada um
+declara o texto em `title`), não só para o de e-mail. O caso novo prova o
+e-mail vazio ("") como sem e-mail e o tooltip de "Ligar" e "Mais".
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

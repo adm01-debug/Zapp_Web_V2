@@ -1,0 +1,26 @@
+fix(db): backfill do status_changed_at nao regrava updated_at em massa (#126)
+
+Refazer 1: a correcao anterior (coluna status_changed_at, gatilho so em troca
+REAL de status, view de saude lendo a coluna nova) foi mantida; o backfill e a
+protecao de EXECUTE foram corrigidos.
+
+1. Backfill: o UPDATE que preenche status_changed_at toca TODAS as linhas da
+   tabela e o gatilho generico public.update_talkx_recipients_updated_at
+   (BEFORE UPDATE FOR EACH ROW) regravava updated_at = now() em todas elas,
+   destruindo o carimbo real e fazendo a view ANTIGA (a que o rollback devolve)
+   enxergar todo o historico como recente. Agora a migration DESLIGA esse gatilho
+   apenas durante o backfill e o religa em seguida, na mesma transacao.
+
+2. REVOKE EXECUTE do gatilho de status passa a cobrir tambem authenticated e
+   service_role (o Supabase concede EXECUTE a anon/authenticated/service_role por
+   default privileges; revogar so PUBLIC/anon deixava os dois com o privilegio).
+
+3. Teste: compara o digest de updated_at (id + carimbo) antes/depois da migration
+   em c_green e c_live, o que FALHA com o backfill destrutivo antigo; reproduz a
+   ACL de partida do Supabase (default privileges) com funcao sonda de controle,
+   para a afirmacao de EXECUTE valer sobre o banco e nao sobre o harness; e prova
+   que o SQL de rollback nao regrava updated_at em massa.
+
+4. Relato: nao afirma mais que nada consome talkx_recipients.updated_at (isso nao
+   foi auditado); updated_at segue escrito pelo gatilho generico e apenas o sinal
+   de saude muda de fonte.

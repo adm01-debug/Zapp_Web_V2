@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489148 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489149 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc d576469c16b8ca9a1cac6a57978c45ed92554f74 Joaquim Ataides <ti@promobrindes.com.br> 1791489749 -0300	commit: test(edge-functions): prova regressiva SL-052 — disconnect zera os tokens cifrados e não chama store_gmail_tokens vazio

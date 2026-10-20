@@ -1,0 +1,10 @@
+test(contrato): reprova default de valor com binding nomeado de tipo (M03)
+
+`import pdfjs, { type PDFPageProxy } from 'pdfjs-dist'` passava como só-tipo
+porque a regra olhava apenas a lista de bindings nomeados; o binding DEFAULT é
+valor e puxa a biblioteca para o bundle. A declaração só é só-tipo pelos
+bindings inline quando não existe `importClause.name`.
+
+- cobre também o misto `import { type PDFPageProxy, getDocument }`;
+- `soBindingsDeTipo` aceita `NamedImportBindings | NamedExports` e trata
+  `NamespaceImport` explicitamente como não-tipo (não por ausência de `.elements`).

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566913 -0300	branch: Created from dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 e792b2e1cd98c052042857018a6ab4d27e7554fe Joaquim Ataides <ti@promobrindes.com.br> 1791567450 -0300	commit: fix(arquivos): rótulo acessível do play cita o nome do arquivo sem quebrar os testes (A06b)

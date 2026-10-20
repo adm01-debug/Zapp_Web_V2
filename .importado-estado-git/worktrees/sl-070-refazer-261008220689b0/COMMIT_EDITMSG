@@ -1,0 +1,11 @@
+fix(inbox/chat): libera dedupe em falha e espaça drenagem offline pelo throttle (SL-070)
+
+- release do crossTabSendDedupe em try/finally: falha do throttle ou do
+  enqueue não deixa mais a aba presa como dona da ação
+- deliverQueuedOfflineMessage aguarda sendThrottle.wait() por entrega:
+  a reconexão não vira rajada contra o servidor
+- drain da fila offline trata falha de driver.remove/readAll via onError
+  e para em ordem, sem rejeição solta; a chave clientMessageId cobre o
+  reenvio na próxima tentativa
+- testes do caminho online: aba não-dona não fala com o servidor, aba
+  dona passa pelo throttle

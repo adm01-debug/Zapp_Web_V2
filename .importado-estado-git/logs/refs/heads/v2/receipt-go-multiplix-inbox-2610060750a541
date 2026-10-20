@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283843 -0300	branch: Created from dia/2026-10-06
+a463ef22afa83c4d00654d03782a15cc3263a0e7 b2bce8ce6184b9a27e52fec5d7afe85945abab76 Joaquim Ataides <ti@promobrindes.com.br> 1791285996 -0300	commit: fix(evolution-webhook): recibo GO com Chat !== Sender resolve a linha outbound por external_id e conexao

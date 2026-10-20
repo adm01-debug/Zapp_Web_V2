@@ -1,0 +1,27 @@
+fix(talkx): listagem de supressao sem removidos, busca no servidor e modal de edicao sem motivo (TL-165)
+
+Refazer 1 do X178: corrige os tres pontos da recusa anterior e cobre com teste.
+
+1) `fetchSuppressionPage` volta a aplicar `.is('removed_at', null)`: remover e
+   UPDATE de `removed_at` (o registro fica como historico), entao a linha
+   removida nao pode voltar para a tabela nem entrar no `count` do rodape.
+2) A busca deixa de misturar recurso pai e embed no mesmo `or`: o contato e
+   resolvido antes numa consulta a `contacts` (nome, e-mail, telefone — colunas
+   do proprio recurso) e entra no `or` do pai como `contact_id.in.(...)`, com
+   `phone.ilike` e `reason.ilike` da propria linha. O termo so de digitos e
+   normalizado para casar o telefone gravado com mascara (eixo do #406).
+3) `SuppressionOrderKey` so aceita coluna real (`created_at`, `origin`,
+   `reason`); a traducao passa por `suppressionOrderColumn`, que cai em
+   `created_at` para chave desconhecida — `status` (derivado de datas) nunca vai
+   cru ao `.order()`. O desempate por `id` continua.
+4) `editReasonOptions` nao inclui mais string vazia quando `row.reason` e nulo: o
+   Radix Select nao aceita item de valor vazio e o registro sem motivo passa a
+   abrir no primeiro motivo conhecido.
+
+Testes: novo `useTalkXSuppression.test.tsx` (o `useTalkXSuppression.test.ts`
+anterior exercitava a API antiga do hook — lista sem filtro de removido,
+`isSuppressed`, remocao por DELETE — extinta pela unificacao; a cobertura de la
+foi portada) com busca, filtros de origem/motivo, ordenacao com desempate,
+filtro de removido e moleculas; teste do modal de edicao sem motivo no
+`authoring`; mock do teste da ponta `TalkXSuppression.phoneOnly` passou a emular
+a leitura paginada no servidor (asserções intactas).

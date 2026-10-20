@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791499580 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe c3cb4fb9f5d9cd796acfdc8ce28f0d4ab46b7f33 Joaquim Ataides <ti@promobrindes.com.br> 1791500382 -0300	commit: fix(performance): registra o raw do maior chunk do build (vendor-maps) e trava por guarda (SL-233)
+c3cb4fb9f5d9cd796acfdc8ce28f0d4ab46b7f33 d223458c29a974c412fb1c15409b87356099ef28 Joaquim Ataides <ti@promobrindes.com.br> 1791500457 -0300	commit: test(performance): bordas da guarda do raw do maior chunk (vazio, sem tabela, duas linhas com teto) (SL-233)

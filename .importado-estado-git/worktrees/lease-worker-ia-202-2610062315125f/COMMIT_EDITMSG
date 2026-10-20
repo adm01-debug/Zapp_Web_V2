@@ -1,0 +1,17 @@
+fix(ai-jobs): limita o prazo da geracao ao menor entre o default do roteador e o orcamento do lease
+
+Resposta aos pontos da recusa do refazer (t_1af42ea3):
+
+- handleAiGenerate: timeoutMs = Math.min(resolveDefaultTimeoutMs(purpose,
+  null), LEASE_WINDOW_MS - GENERATE_LEASE_MARGIN_MS) = 30.000 ms — o mesmo
+  default do roteador para texto, nunca acima dele nem da janela menos a
+  margem (a forma recusada passava 105.000 ms, 3,5x o default)
+- _shared/ai-generate.ts: exporta resolveDefaultTimeoutMs (aditivo), o
+  default real em vez de literal repetido
+- guarda do teste: exige Math.min+resolveDefaultTimeoutMs na expressao e
+  chama a funcao real para toda finalidade (efetivo == padrao == 30_000 e
+  <= orcamento); falha se o prazo voltar a subir
+- comentario do keeper corrigido: erro de infra persistente lanca excecao
+  e nao aborta o handler; a seguranca vem da marca duravel e do reaper
+- suite SQL envolvida em BEGIN/ROLLBACK: claims de limite 100 nao deixam
+  leases de jobs alheios no banco local

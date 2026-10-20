@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536989 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536990 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537010 -0300	reset: moving to ce8f99e418dde54bc50badba5044cfbd48e351f2
+ce8f99e418dde54bc50badba5044cfbd48e351f2 1c891fe5b87257e9938c1666a4a1f0bee59fbda7 Joaquim Ataides <ti@promobrindes.com.br> 1791537026 -0300	cherry-pick: fix(team-chat): liga busca server-side e os itens sem chamador no TeamChatPanel (SL-082)
+1c891fe5b87257e9938c1666a4a1f0bee59fbda7 459a040cd37a95229b132c1e83e50fe55bb3a5ed Joaquim Ataides <ti@promobrindes.com.br> 1791537026 -0300	cherry-pick: fix(team-chat): trata falha da busca como erro real e usa motion-safe no spinner (SL-082)
+459a040cd37a95229b132c1e83e50fe55bb3a5ed 325f8768091117f3630a3d90833faf83bcc12016 Joaquim Ataides <ti@promobrindes.com.br> 1791537026 -0300	cherry-pick: fix(team-chat): limpa o aviso de falha da busca quando a resposta chega (SL-082)
+325f8768091117f3630a3d90833faf83bcc12016 9df0c5070162ea49256b9f89381ee0944c2a19ae Joaquim Ataides <ti@promobrindes.com.br> 1791537026 -0300	cherry-pick: test(team-chat): prova a variante de movimento pela lista de animacoes do icone (SL-082)
+9df0c5070162ea49256b9f89381ee0944c2a19ae 3d90c23ec9facc404df0b65dd1001ced881f2ca6 Joaquim Ataides <ti@promobrindes.com.br> 1791537494 -0300	commit: fix(team-chat): prende erro e resultado da busca a conversa e termo (SL-082)

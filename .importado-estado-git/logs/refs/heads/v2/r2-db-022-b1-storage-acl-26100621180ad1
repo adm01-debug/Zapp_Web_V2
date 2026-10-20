@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332338 -0300	branch: Created from dia/2026-10-06
+f8309fb2679055122550ca345e0a90edf6e34853 67a41f964085e44e8848f4d0d1277a9933602c17 Joaquim Ataides <ti@promobrindes.com.br> 1791334238 -0300	commit: fix(security): mantém leituras legítimas nos buckets privados

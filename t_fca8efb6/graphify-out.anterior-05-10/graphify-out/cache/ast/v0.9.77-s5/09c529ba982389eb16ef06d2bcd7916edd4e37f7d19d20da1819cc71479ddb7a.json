@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260923175500_allow_personal_tasks_without_contact_sql", "label": "20260923175500_allow_personal_tasks_without_contact.sql", "file_type": "code", "source_file": "supabase/migrations/20260923175500_allow_personal_tasks_without_contact.sql", "source_location": null}], "edges": []}

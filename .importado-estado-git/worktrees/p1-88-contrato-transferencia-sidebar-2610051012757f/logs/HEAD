@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791205978 -0300	
+24d62d71031b256f8590067fae660ee76dd69a97 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791205979 -0300	reset: moving to HEAD
+24d62d71031b256f8590067fae660ee76dd69a97 e7dca7cbdf3230577a30ea65e737285188bae2c1 Joaquim Ataides <ti@promobrindes.com.br> 1791206118 -0300	cherry-pick: refactor(inbox): restringe contrato do TransferDialog a agent|queue (#88)
+e7dca7cbdf3230577a30ea65e737285188bae2c1 961697605d98ccb74aa02c5e76c77ef05f4ea1c1 Joaquim Ataides <ti@promobrindes.com.br> 1791206534 -0300	commit: fix(inbox): transferência da sidebar persiste evento+nota e rejeita em falha (#88)

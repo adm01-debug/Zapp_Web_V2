@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791311262 -0300	
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791311262 -0300	reset: moving to HEAD
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 e7c6ad6f33230b4182dd44368f2305fd00475cdc Joaquim Ataides <ti@promobrindes.com.br> 1791311319 -0300	commit (cherry-pick): fix(gmail-oauth): nao anuncia sucesso quando o update nao afeta nenhuma linha
+e7c6ad6f33230b4182dd44368f2305fd00475cdc c8ebc1c276f7d620794938b0167ce01fb24742f1 Joaquim Ataides <ti@promobrindes.com.br> 1791311522 -0300	commit: fix(gmail-oauth): trate falhas restantes no disconnect

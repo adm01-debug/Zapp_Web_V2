@@ -1,0 +1,10 @@
+refactor(talk-x): Agendada usa o hook unico de ciclo de vida (X051)
+
+O disparo ("Iniciar agora") sai do AlertDialog/launchOpen/handleLaunch local e
+passa a lifecycle.request({ kind: 'start', target: campaign }) do controlador
+unico useTalkXLifecycle, com um so <TalkXLifecycleDialog controller={lifecycle} />.
+O botao da tela le lifecycle.isPending no lugar do estado launching.
+
+Parcial por contrato do hook: o "Cancelar agendamento" (scheduled_at = null,
+status = 'draft') continua no fluxo local porque o hook nao expoe essa acao —
+ver NÃO CONCLUÍ no relato.

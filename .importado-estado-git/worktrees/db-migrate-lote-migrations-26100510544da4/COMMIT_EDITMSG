@@ -1,0 +1,24 @@
+feat(ci): db-migrate aplica lote de migrations com escopo exato e fail-closed fora dele (QA5-01)
+
+O preflight do db-migrate.yml so seguia quando faltava exatamente UMA versao no
+ledger (ou dois bundles fixos de setembro). A branch do dia chega com 8
+migrations novas e o caminho oficial falhava com missing_count=8. Este commit
+adiciona o input lote_versions e move a decisao de escopo para
+scripts/ci/db-migrate-preflight-scope.sh (antes embutida no YAML, onde nenhum
+teste alcancava).
+
+Correcoes da rodada 2 de 2 (recusa anterior):
+- o contrato runtime generico passa a ser fallback EXCLUSIVO do lote explicito
+  validado pelo preflight: o preflight publica modo= e esperados=, o passo de
+  runtime so acrescenta --generico-se-ausente no modo=lote e qualquer outro
+  escopo segue fail-closed (exit 2 sem contrato dedicado);
+- o passo do dry-run confere o conjunto anunciado contra esperados= (--exatos),
+  entao uma migration INTERMEDIARIA omitida do plano e recusada com a version
+  nomeada (antes, com --bundle, passar o alvo da ponta bastava);
+- o relato (.tmp/relato.md) descreve todas as mudancas do workflow.
+
+Testes: scripts/ci/db-migrate-preflight-scope.test.sh (7 cenarios),
+scripts/ci/db-migrate-lote-fim-a-fim.test.sh (13 cenarios, inclui a
+intermediaria omitida e o passo real do workflow fail-closed fora do lote) e
+4 unidades novas em scripts/ci/dry-run-plan.unit.mjs. Nada de push, merge,
+deploy ou execucao do workflow.

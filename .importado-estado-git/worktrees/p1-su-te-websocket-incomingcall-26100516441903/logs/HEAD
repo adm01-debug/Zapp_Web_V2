@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791229458 -0300	
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791229459 -0300	reset: moving to HEAD
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 4effdf5a27a806c5702e55f03340e1fa4a6bb6f4 Joaquim Ataides <ti@promobrindes.com.br> 1791229471 -0300	cherry-pick: test(calls): dubla o realtime nas provas do IncomingCallAlert
+4effdf5a27a806c5702e55f03340e1fa4a6bb6f4 65823cd7051414839d8e7276aa459588bc43d4dc Joaquim Ataides <ti@promobrindes.com.br> 1791230215 -0300	commit: test(calls): versiona prova de zero WebSocket no IncomingCallAlert

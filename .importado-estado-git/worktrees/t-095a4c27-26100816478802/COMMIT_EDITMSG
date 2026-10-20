@@ -1,0 +1,32 @@
+fix(ci/devops): inventário das limitações históricas cobre toda fixação do guard (SL-034)
+
+Por quê: o inventário informativo das limitações históricas do ledger
+(scripts/db-audit/ledger-history-limitations.json) tinha 11 entradas, mas o
+manifesto do guard (migration-evidence.json) já tinha 9 exceções
+ledger-only/name-and-file-pinned: as duas fixadas em 24/09 e 27/09
+(20260924125400 e 20260927540000) nunca entraram no inventário. O teste do
+próprio arquivo congelava a contagem (11 entradas / 7 fixadas), então a falta
+não aparecia em lugar nenhum. O documento que referencia o inventário declara
+que "o teste correspondente impede drift silencioso desses arquivos" — isso
+não valia para as duas.
+
+O que muda: o inventário ganha as 2 entradas com o sha256 real do arquivo
+local (mesmo esquema das existentes, ordem por versão, sem hash histórico
+fabricado) e o teste troca as contagens travadas por uma invariante DERIVADA
+do manifesto do guard — toda exceção ledger-only/name-and-file-pinned tem de
+estar inventariada, com filename e sha256 conferidos contra o arquivo real —
+mais 5 casos adversariais (omissão, duplicata, aviso formalizado promovido a
+exceção de confiança, hash histórico fabricado, sha256 divergente). A guarda
+só aperta: cobertura derivada + caso negativo no lugar de contagem fixa.
+
+Verificação: node --test scripts/db-audit/ledger-history-limitations.test.mjs
+— na base do dia cai só o teste do artefato real (pass 5 / fail 1, com
+20260924125400 e 20260927540000 no diff) e com a correção passa 6/6; prova por
+mutação no sha256 da entrada nova derruba o teste (revertida); node --test
+scripts/db-audit/*.test.mjs -> 348 pass, 0 fail; zapp-verify . --rapido ->
+VERDE SEM BANCO. Nada de hash histórico fabricado: as duas limitações seguem
+sem prova de conteúdo histórico.
+
+O que NÃO fecha aqui: baselines versionados de Cron e Storage e a proveniência
+remota por função (coleta canônica + estado esperado com o responsável,
+VALIDACAO_POS_MERGE_LIBPQ_2026-09-22 §6); registrado em comentário no cartão.

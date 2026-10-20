@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514431 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 298b00cd8a4429a7e72228bea0c3e5a1b13f6466 Joaquim Ataides <ti@promobrindes.com.br> 1791514592 -0300	commit: fix(talk-x): Criar tabela de motivos de supressão e ligar reason_code a ela (TL-061)

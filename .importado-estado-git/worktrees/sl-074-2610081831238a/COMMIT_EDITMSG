@@ -1,0 +1,3 @@
+docs(inbox/chat): registra o fixme de volume de audio e o caminho local (SL-074)
+
+A conferencia de 08/10 confirma a lacuna (nenhuma mensagem de audio no fixture de producao) e registra por que ela segue bloqueada: decisao do dono de 01/10 e a regra R1 de E2E (nenhum agente acessa producao). Registra tambem o caminho autorizado que existe hoje (suite local arquivos-local, que ja semeia audio) e que fechar o caso exige decisao sobre a guarda VOL-05.

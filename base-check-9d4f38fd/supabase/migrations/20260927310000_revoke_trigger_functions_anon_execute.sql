@@ -1,0 +1,9 @@
+REVOKE EXECUTE ON FUNCTION public.enforce_conversation_status_transition() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.enqueue_crm_sync_from_closure() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.prevent_contact_assignee_hijack() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.prevent_contact_queue_hijack() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.prevent_conversation_task_field_forgery() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.seed_default_goals_for_profile() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.set_scheduled_report_config_owner() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.trg_talkx_increment_replied_count() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.trg_talkx_increment_template_use_count() FROM anon;

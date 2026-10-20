@@ -1,0 +1,1 @@
+fix(db): bloqueia can_download próprio em profiles (#252)

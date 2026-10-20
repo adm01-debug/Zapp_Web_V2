@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791309972 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791309972 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd 294453e55c05ec3645fd91b70fb881c925c88821 Joaquim Ataides <ti@promobrindes.com.br> 1791310087 -0300	commit: test(telefonia): trava contrato POST com JSON na chamada de audio do hook
+294453e55c05ec3645fd91b70fb881c925c88821 f66764052c0a12864ca5636f902fdeeb5e18e6ff Joaquim Ataides <ti@promobrindes.com.br> 1791310169 -0300	commit: fix(telefonia): preserva POST com JSON na chamada de audio do hook

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 a70afbf942e81746b6f39022eefe82e932a45c6f Joaquim Ataides <ti@promobrindes.com.br> 1791502476 -0300	branch: Created from dia/2026-10-08
+a70afbf942e81746b6f39022eefe82e932a45c6f 05e303b0931811234951372b83b4328b053c3877 Joaquim Ataides <ti@promobrindes.com.br> 1791502490 -0300	cherry-pick: feat(contatos): Busca por nome do contato ou da empresa, já na primeira letra (CT-011)
+05e303b0931811234951372b83b4328b053c3877 fc051c1029d823fddcf9f5ccfa03f7e38f7f9dbb Joaquim Ataides <ti@promobrindes.com.br> 1791502490 -0300	cherry-pick: test(contatos): tipar props do renderHook na busca instantânea (CT-011)
+fc051c1029d823fddcf9f5ccfa03f7e38f7f9dbb 772a7d13727e3212cdb850938d76d46e8c494dd7 Joaquim Ataides <ti@promobrindes.com.br> 1791502490 -0300	cherry-pick: test(contratos): compatibiliza pdfjs sob demanda com deno
+772a7d13727e3212cdb850938d76d46e8c494dd7 fd91193f3b4f0b09995ba40630d32dd4b54d885d Joaquim Ataides <ti@promobrindes.com.br> 1791504278 -0300	commit: test(contratos): evita require do typescript no pdfjs sob demanda

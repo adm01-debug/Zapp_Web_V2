@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4c7d7e97d714464d9651c2830f6467e4d8084bbb Joaquim Ataides <ti@promobrindes.com.br> 1791359652 -0300	branch: Created from dia/2026-10-07
+4c7d7e97d714464d9651c2830f6467e4d8084bbb b752981eb729379d4aa74626c04d3d27d46f8347 Joaquim Ataides <ti@promobrindes.com.br> 1791360808 -0300	commit: fix(edge): bloquear opt-out fromMe no outbox inbound

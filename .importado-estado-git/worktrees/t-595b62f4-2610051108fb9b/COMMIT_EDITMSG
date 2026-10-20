@@ -1,0 +1,8 @@
+fix(automacoes): preserva condições e demais ações ao salvar automação (R2-MOD-002)
+
+Salvar uma automação existente reconstruía trigger_config como {} e a lista
+de actions como uma única ação com config.message, descartando condições e
+parâmetros que a UI não edita. O editor agora mescla a primeira ação com a
+existente, preserva trigger_config e as demais ações, recarrega o formulário
+ao abrir outro registro e valida os parâmetros obrigatórios de cada tipo de
+ação (blocking tipos sem configuração disponível).

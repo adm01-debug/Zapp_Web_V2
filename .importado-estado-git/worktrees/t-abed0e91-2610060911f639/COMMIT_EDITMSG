@@ -1,0 +1,16 @@
+fix(contatos): reporta erro e lote parcial nas mutations de contatos
+
+R2-AUTH-013 (#242): as mutations de Contatos anunciavam sucesso mesmo com
+erro do SDK, lote parcial ou 0 linhas afetadas.
+
+- novo src/services/contact-bulk.service.ts devolve sucesso/recusa/falha
+  por ID (SELECT/UPDATE com `.select('id')` para saber o que o RLS deixou
+  alterar) e não fabrica `tags=[]` quando a leitura falha;
+- ContactBulkTagDialog e BulkActionsBar (tag/atribuir/tipo) passam a
+  reportar sucesso parcial e devolvem os recusados via `onPartialComplete`,
+  que ContactsView usa para manter a seleção recusada;
+- useContactsCRUD.handleEditContact trata 0 linhas afetadas como falha.
+
+Testes (vermelho->verde): BulkActionsBar.test.tsx, ContactBulkTagDialog.test.tsx
+(novo) e useContactsCRUD.test.tsx cobrem erro de SELECT, erro de UPDATE,
+autorização mista e 0 linhas.

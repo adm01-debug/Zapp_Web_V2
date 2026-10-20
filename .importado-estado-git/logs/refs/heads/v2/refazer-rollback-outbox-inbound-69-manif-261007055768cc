@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 d5e87290300d036e5e33c61d55b26c35ea8a8d16 Joaquim Ataides <ti@promobrindes.com.br> 1791363445 -0300	branch: Created from dia/2026-10-07
+d5e87290300d036e5e33c61d55b26c35ea8a8d16 4c54650e61c0158959298e1e59353216c5be6ad8 Joaquim Ataides <ti@promobrindes.com.br> 1791363908 -0300	commit: fix(migrations): corrige rollback do outbox inbound
+4c54650e61c0158959298e1e59353216c5be6ad8 3330a62a2d84f6a04dcc18e3d96316011e30fcfd Joaquim Ataides <ti@promobrindes.com.br> 1791540224 -0300	commit (merge): Merge branch 'dia/2026-10-09' into v2/refazer-rollback-outbox-inbound-69-manif-261007055768cc
+3330a62a2d84f6a04dcc18e3d96316011e30fcfd e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543082 -0300	reset: moving to e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b a8d21274fe5443a60a5d4e14d0c08b8559a32422 Joaquim Ataides <ti@promobrindes.com.br> 1791543082 -0300	commit: fix(migrations): corrige rollback do outbox inbound

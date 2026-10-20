@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6c905ee6c56dc8215a7cf255d25eb48f89e7c321 Joaquim Ataides <ti@promobrindes.com.br> 1791139259 -0300	branch: Created from dia/2026-10-04
+6c905ee6c56dc8215a7cf255d25eb48f89e7c321 7d65b9eebc13f77a12323d2426bdf33fe37f7f77 Joaquim Ataides <ti@promobrindes.com.br> 1791140135 -0300	commit: fix(edge): política de egress no download de mídia do webhook (R2-API-009)

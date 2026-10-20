@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490583 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490584 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 22f9fe78d2223fe7bdd31003fb9f52edd145ac86 Joaquim Ataides <ti@promobrindes.com.br> 1791490643 -0300	cherry-pick: fix(db): recibos e reacoes derivam conversation_id da mensagem
+22f9fe78d2223fe7bdd31003fb9f52edd145ac86 87122f68aa9f5869bc87946d8407b902bc823f75 Joaquim Ataides <ti@promobrindes.com.br> 1791490650 -0300	cherry-pick: fix(team-chat): nao concede EXECUTE a papel de cliente nas funcoes trigger de recibos e reacoes

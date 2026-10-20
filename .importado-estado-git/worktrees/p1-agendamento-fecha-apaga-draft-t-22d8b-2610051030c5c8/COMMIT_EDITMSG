@@ -1,0 +1,1 @@
+fix(inbox): agendamento só fecha e apaga o rascunho depois de persistir (R2-INB-010)

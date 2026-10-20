@@ -1,0 +1,21 @@
+fix(ai): cobrir consumo completo da resposta no prazo
+
+Reaproveita o conteudo do commit 7d8742c6f (branch
+v2/t-ee2a2f1b-261005201274e8) via cherry-pick, com a logica de prazo
+referenciada no commit 3abda0372 e sem nenhuma mudanca de ai-usage/outbox.
+
+- ai-providers.ts: o mesmo orcamento temporal passa a cobrir a requisicao E a
+  leitura do corpo. O helper comPrazoAteOCorpo embrulha a resposta e so desarma
+  o timer no fim da leitura, no erro ou no cancelamento; sem timeoutMs nada
+  muda (nenhum timer, nenhum signal chega ao fetch).
+- ai-providers.test.ts: prova Deno do caminho real nos 3 provedores (corpo que
+  trava depois dos headers e abortado dentro do orcamento; sem timeoutMs os
+  bytes passam intactos e nenhum signal vai ao fetch; corpo que termina no
+  orcamento desarma o timer no fim da leitura).
+- tests/contracts/_adv_edge_legacy_producers.test.ts: a regressao deste cartao
+  era o ratchet de arquivos .ts contados (o arquivo de teste novo eleva o
+  total medido). O pino sobe 243 -> 244 com a entrada de drift, como manda o
+  proprio cabecalho do arquivo e o precedente 2d3dd7b8d.
+
+Prova: teste focal 3 failed -> 5 passed; contrato 10 passed; zapp-verify full e
+--rapido verdes.

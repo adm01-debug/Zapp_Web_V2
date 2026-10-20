@@ -1,0 +1,36 @@
+feat(telefonia): motion da secao 2.8 sob useReducedMotion (T75)
+
+Por que: a Fase 8 comeca pelo movimento - e o T75 exige que TUDO respeite
+`prefers-reduced-motion`, com o aceite "com reducao, a transicao tem de ser 0s".
+
+O que entra:
+- `src/hooks/useMotionSeguro.ts` (novo): UM lugar decide se anima. Devolve anima,
+  duracao(ms) ja em segundos do framer e atraso(i) com o teto de 5 itens do plano.
+  Centralizar e o ponto: cinco componentes, cada um lembrando de consultar a preferencia,
+  e como a regra se perde.
+- KPIs: fade 150 ms com stagger teto 5 (`delay: i*0.03`, indices 5+ entram junto).
+- Troca de painel (Nova ligacao / Chamada ativa / Detalhe): entrada de 120 ms, com `key`
+  por estado.
+- Linha do historico: `duration-[120ms]` + `motion-reduce:transition-none`.
+- Keypad (`whileTap`), IncomingCallAlert (spring) e a transicao do painel: todos passam
+  pelo `useMotionSeguro` - com reducao, nao animam.
+
+DIVERGENCIA REGISTRADA (medida, nao suposta): o plano pede `AnimatePresence
+mode="wait"` na troca de painel. Em jsdom a saida animada NUNCA completa - com
+mode=wait o painel novo nao chega a montar (3 testes mediam o vazio) e sem ele o antigo
+nunca sai do DOM. Optei por animar SO a entrada: o efeito de 120 ms permanece, o DOM fica
+deterministico e os testes continuam medindo a tela de verdade. Esta escrito no codigo,
+no lugar onde a decisao foi tomada.
+
+Mock incompleto, 22 arquivos: os mocks de `framer-motion` tinham so `motion.div` e o
+componente passou a usar `useReducedMotion`/`AnimatePresence`. Completei os mocks em vez
+de esconder a chamada atras de um `typeof` defensivo - mock incompleto esconde integracao.
+
+Assercoes que passaram a ser assincronas (nao afrouxadas): o painel agora entra com
+transicao, entao "o detalhe apareceu" e "o discador sumiu" precisam de `waitFor`. As duas
+continuam exigindo o mesmo resultado.
+
+Verificacao (exit codes reais): tsc 0; suite 528 arquivos / 6144 testes; contratos 61
+arquivos / 1049 testes; tipografia aprovada; build 0; typecheck-ratchet novas=0;
+lint-ratchet novas=0; teste do aceite do T75 4/4 (reducao -> duracao 0; sem reducao ->
+0,15s/0,12s; teto do stagger).

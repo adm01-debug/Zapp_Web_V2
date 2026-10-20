@@ -1,0 +1,3 @@
+test(talkx): declara onStatusChange no render da campanha agendada
+
+O componente exige a prop onStatusChange; o teste passava sem ela e o typecheck ratchet pegou (TS2741) na verificacao do fechamento.

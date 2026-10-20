@@ -1,0 +1,28 @@
+fix(ai-audio): classificador de audio-meme passa a ouvir o som (IA-131)
+
+O handler montava o prompt só com `file_name`/`audio_url` e chamava o
+provedor de TEXTO: a categoria refletia metadados e a resposta não dizia de
+onde veio (finding IA-AUDIO-001 / plano IA-131).
+
+Agora, quando há `audio_url`, o áudio autorizado do Storage é baixado no
+servidor sob a identidade do chamador (`ai-audio-input.ts`: allowlist de
+bucket, endpoint autenticado, teto de 5 MiB, tipo/formato conferidos) e
+embutido na mensagem como `input_audio`, exigindo a modalidade `audio_stt`
+no despacho central. Sem `audio_url`, ou quando o som não pôde ser
+preparado, o resultado sai ROTULADO `basis: 'metadata'`; falha técnica viaja
+em `degraded`/`error_code` e nunca vira categoria.
+
+- `supabase/functions/_shared/ai-audio-input.ts` (novo): helper tipado,
+  fail-closed, sem credencial implícita.
+- `supabase/migrations/20261006100606_ia131_audio_stt_openrouter.sql`:
+  declara `audio_stt` no provedor OpenRouter (jsonb_set preserva headers;
+  aplicada no banco LOCAL da tarefa).
+- `supabase/deployment-manifest.json`: regenerado (144 fontes).
+- `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts` (novo):
+  16 casos; 9 ficam vermelhos com o handler antigo, 16/16 verdes com o novo.
+- `tests/contracts/_adv_edge_legacy_producers.test.ts`: pino do inventário
+  243 → 244 (arquivo .ts novo, sem token legado).
+
+Verificação: zapp-verify . --rapido VERDE (db_guard/tipos/lint/migrations);
+suíte de contratos 1092 passam, 1 falha pré-existente em
+media-volume-surfaces (também vermelha na árvore base, sem relação).

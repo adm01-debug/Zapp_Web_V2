@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791298854 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 5972055badc91b7432c82e0bf386f5077f1b28ce Iris <iris@hermes.local> 1791299005 -0300	commit: fix(email): conclusão do envio preserva o texto digitado durante o envio (#287)

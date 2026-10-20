@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260902000300_drop_redundant_idx_wc_instance_id_sql", "label": "20260902000300_drop_redundant_idx_wc_instance_id.sql", "file_type": "code", "source_file": "supabase/migrations/20260902000300_drop_redundant_idx_wc_instance_id.sql", "source_location": null}], "edges": []}

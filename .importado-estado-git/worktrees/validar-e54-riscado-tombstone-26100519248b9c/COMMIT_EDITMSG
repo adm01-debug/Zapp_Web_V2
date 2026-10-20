@@ -1,0 +1,14 @@
+feat(ci): aceitar tombstone E54 riscado no validador do catalogo
+
+E54/RISCADO segue contando entre as 100 posicoes estaveis, mas passa a ficar
+dispensado de Objetivo, 10 sub-etapas e checklist SOMENTE quando o mesmo bloco
+combina o cabecalho estrito `### E<id> · ~~<titulo>~~ (RISCADO)` com a linha
+`**Status:** descartado em AAAA-MM-DD`. Marcador ou status isolados, cabecalho
+sem titulo riscado, `(RISCADO)` fora do cabecalho e data fora do formato
+continuam rejeitados; uma posicao ausente continua acusando "E<id>: ausente".
+
+Preserva OTH-011 (checklist conta `[ ]`, `[x]` e `[X]`).
+
+Prova: RED antes (2 casos novos vermelhos, plano canonico exit 1 com os tres
+erros de E54) e GREEN depois (10/10 na suite, plano canonico 100/100 e exit 0);
+13/13 mutacoes adversariais com o comportamento esperado; zapp-verify rapido verde.

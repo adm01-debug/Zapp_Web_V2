@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791327442 -0300	
+7e801f8582265bc03aba115f8871f1dd0abcdb35 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791327443 -0300	reset: moving to HEAD
+7e801f8582265bc03aba115f8871f1dd0abcdb35 a6a493b71a9ffac90906fed1804b281a4b1b5093 Joaquim Ataides <ti@promobrindes.com.br> 1791329373 -0300	commit: fix(relatorios): períodos comparados têm a mesma duração e o rótulo anterior bate com a consulta (#396)
+a6a493b71a9ffac90906fed1804b281a4b1b5093 db05d2b4d5414d2a53d2ec2b08dea2ef76a3d75f Joaquim Ataides <ti@promobrindes.com.br> 1791329846 -0300	commit (amend): fix(relatorios): períodos comparados têm a mesma duração e o rótulo anterior bate com a consulta (#396)

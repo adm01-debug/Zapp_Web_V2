@@ -1,0 +1,36 @@
+test(ci): trava a decisão E86 — suíte logada sem banco local (SL-128)
+
+Avalia o item E86 da auditoria de GitHub Actions ("avaliar supabase start +
+seed mínimo em CI para a suíte logada"). Decisão: NÃO adotar.
+
+Por quê, medido no código de hoje:
+- a suíte logada existe para provar PRODUÇÃO (login real E2E_TEST_EMAIL/
+  E2E_TEST_PASSWORD, RLS real e fixtures que vivem no banco de produção —
+  e2e/README.md, presença cobrada pela E85). Um Postgres local com seed não
+  prova nada disso;
+- os specs que NÃO precisam de produção já rodam 100% locais com custo de boot
+  ZERO (installFakeSession + REST/RPC/Mapbox interceptados por rota;
+  chromium-mapa travado em ci-e2e-projects.unit.mjs), contra os ~3 min/run de
+  boot que a própria E86 levantou;
+- o caminho local do CLI já existe e é documentado como SÓ-DEV em
+  scripts/db-audit/gen-types.sh (--local: "nenhum workflow atual usa");
+- um "seed mínimo" exigiria recriar profiles/user_roles/contatos/campanhas/
+  conexão Talk X (DDL + dados), fora do que este plano admite.
+
+A decisão fica travada em scripts/ci/workflow-contracts.unit.mjs (2 casos E86),
+não no texto do plano: adotar um banco local não entra em silêncio num PR.
+
+Arquivo tocado: scripts/ci/workflow-contracts.unit.mjs (só os 2 casos E86).
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick a1b45b7ef test(ci): trava a decisão E86 — suíte logada sem banco local (SL-128)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-81d81728-2610081742973d' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   scripts/ci/workflow-contracts.unit.mjs
+#

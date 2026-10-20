@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503979 -0300	branch: Created from dia/2026-10-08
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 07ee8b5f8cd51f51c15307edc907431c4c51b5d7 hermes <hermes@local> 1791507366 -0300	commit: fix(connections): remover integracoes e actions que a GO nao tem (SL-075 E43)
+07ee8b5f8cd51f51c15307edc907431c4c51b5d7 cb7ad2632955cb8cf5c0bcc187cb920ba5ab44cc hermes <hermes@local> 1791507381 -0300	commit (amend): fix(connections): remover integracoes e actions que a GO nao tem (SL-075 E43)
+cb7ad2632955cb8cf5c0bcc187cb920ba5ab44cc 17170fc339c3c67ae02092238509fc60bdce09a9 hermes <hermes@local> 1791507705 -0300	commit (amend): fix(connections): remover integracoes e actions que a GO nao tem (SL-075 E43)
+17170fc339c3c67ae02092238509fc60bdce09a9 440816e89993c88f7861eedd256713169319310f hermes <hermes@local> 1791507832 -0300	commit (amend): fix(connections): remover integracoes e actions que a GO nao tem (SL-075 E43)
+440816e89993c88f7861eedd256713169319310f 5f2eba29e1cdda11c7ffddf120db61c420b63cbc hermes <hermes@local> 1791507934 -0300	commit (amend): fix(connections): remover integracoes e actions que a GO nao tem (SL-075 E43)
+5f2eba29e1cdda11c7ffddf120db61c420b63cbc de2477adcaf03f57bc5ccb40d0e7d9f4304a5bd1 Joaquim Ataides <ti@promobrindes.com.br> 1791556885 -0300	rebase (finish): refs/heads/v2/t-f241b18b-26100820594bc5 onto 1098da5a935929b171674a99b425d6b515fd6072
+de2477adcaf03f57bc5ccb40d0e7d9f4304a5bd1 130a5734a64130eadb3b2bb0ae71effc9c3372a3 Joaquim Ataides <ti@promobrindes.com.br> 1791558590 -0300	commit (amend): fix(connections): remover integracoes e actions que a GO nao tem (SL-075 E43)
+130a5734a64130eadb3b2bb0ae71effc9c3372a3 84806cba71f9c9529ac3fedd5b6944b8d30452c5 Joaquim Ataides <ti@promobrindes.com.br> 1791558697 -0300	rebase (finish): refs/heads/v2/t-f241b18b-26100820594bc5 onto 1f9252a86502ac1b3ce1e1bce704508d8ee420fb

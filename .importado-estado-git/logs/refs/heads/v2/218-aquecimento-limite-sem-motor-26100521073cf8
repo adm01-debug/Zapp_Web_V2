@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 fb181319d53a90adf6ee076b22854c754a814df4 Joaquim Ataides <ti@promobrindes.com.br> 1791245224 -0300	branch: Created from dia/2026-10-05
+fb181319d53a90adf6ee076b22854c754a814df4 fdb97412f6a714c4a6a38c118440a7b25241f9a3 Joaquim Ataides <ti@promobrindes.com.br> 1791245518 -0300	commit: fix(conexoes): aquecimento e limite diário são configuração sem execução automática (#218)

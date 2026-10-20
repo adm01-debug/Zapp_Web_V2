@@ -1,0 +1,12 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542918 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542919 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b b563b7d4bd5021adb16596c99f71990c91abfef1 Joaquim Ataides <ti@promobrindes.com.br> 1791545362 -0300	commit: fix(talkx): nome dos controles e cartao sem controle aninhado (TL-175D)
+b563b7d4bd5021adb16596c99f71990c91abfef1 b563b7d4bd5021adb16596c99f71990c91abfef1 Joaquim Ataides <ti@promobrindes.com.br> 1791545393 -0300	reset: moving to HEAD
+b563b7d4bd5021adb16596c99f71990c91abfef1 3907816021be2f9d5e67c0c7cb4e933428955ffe Joaquim Ataides <ti@promobrindes.com.br> 1791545404 -0300	commit (amend): fix(talkx): nome dos controles e cartao sem controle aninhado (TL-175D)
+3907816021be2f9d5e67c0c7cb4e933428955ffe 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791565581 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 1ac8c534eedc660dc44f053ac209afd185663b99 Joaquim Ataides <ti@promobrindes.com.br> 1791565654 -0300	rebase (continue): fix(talkx): nome dos controles e cartao sem controle aninhado (TL-175D)
+1ac8c534eedc660dc44f053ac209afd185663b99 1ac8c534eedc660dc44f053ac209afd185663b99 Joaquim Ataides <ti@promobrindes.com.br> 1791565654 -0300	rebase (finish): returning to refs/heads/v2/t-eedf548a-26100907486909
+1ac8c534eedc660dc44f053ac209afd185663b99 d2a9fb39f7a9bfae6317e290e0b3bc13bbb151aa Joaquim Ataides <ti@promobrindes.com.br> 1791565655 -0300	commit (amend): fix(talkx): nome dos controles e cartao sem controle aninhado (TL-175D)
+d2a9fb39f7a9bfae6317e290e0b3bc13bbb151aa cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791565683 -0300	rebase (start): checkout dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 366a82cd8aee16b07c36cbc6c098b1b8f84e771c Joaquim Ataides <ti@promobrindes.com.br> 1791565683 -0300	rebase (pick): fix(talkx): nome dos controles e cartao sem controle aninhado (TL-175D)
+366a82cd8aee16b07c36cbc6c098b1b8f84e771c 366a82cd8aee16b07c36cbc6c098b1b8f84e771c Joaquim Ataides <ti@promobrindes.com.br> 1791565683 -0300	rebase (finish): returning to refs/heads/v2/t-eedf548a-26100907486909

@@ -1,0 +1,1 @@
+fix(queues): descarta a comparação de um período antigo que chega atrasada

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260903240000_revoke_excessive_anon_grants_sql", "label": "20260903240000_revoke_excessive_anon_grants.sql", "file_type": "code", "source_file": "supabase/migrations/20260903240000_revoke_excessive_anon_grants.sql", "source_location": null}], "edges": []}

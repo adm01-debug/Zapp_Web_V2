@@ -1,0 +1,3 @@
+chore(talk-x): TL-180 E95 vínculo/pendentes exige migration+Edge+cron (fechamento sem código)
+
+Lacuna confirmada na ponta dia/2026-10-09 (HEAD df19b16da): só o badge TalkXCRMBadge foi entregue; as tabelas/RPCs de importação e de divergências de vínculo, a Edge Function e o cron não existem. Fechamento pelo caminho que o cartão prevê (item que só se fecha no proibido).

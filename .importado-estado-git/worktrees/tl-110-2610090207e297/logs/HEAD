@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522429 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522430 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 275b0d8079dc1ec8bf9b6e18ee3c6759323d780d Joaquim Ataides <ti@promobrindes.com.br> 1791523110 -0300	commit: fix(talk-x): cabeçalho do módulo com trilha, Ajuda com rótulo e indicador de campanha em andamento (TL-110)
+275b0d8079dc1ec8bf9b6e18ee3c6759323d780d a83ce4bbc4349370e448d9d7b911fb6f856ad1c6 Joaquim Ataides <ti@promobrindes.com.br> 1791523196 -0300	commit: fix(talk-x): ponto "Ao vivo" do indicador com motion-safe (TL-110)
+a83ce4bbc4349370e448d9d7b911fb6f856ad1c6 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556960 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 d57a6768012ae69165e31d5a64f6d99b4e8e3d87 Joaquim Ataides <ti@promobrindes.com.br> 1791557173 -0300	rebase (continue): fix(talk-x): cabeçalho do módulo com trilha, Ajuda com rótulo e indicador de campanha em andamento (TL-110)
+d57a6768012ae69165e31d5a64f6d99b4e8e3d87 eb9a37d8d221834c5f186772bd560658f1ae24df Joaquim Ataides <ti@promobrindes.com.br> 1791557173 -0300	rebase (pick): fix(talk-x): ponto "Ao vivo" do indicador com motion-safe (TL-110)
+eb9a37d8d221834c5f186772bd560658f1ae24df eb9a37d8d221834c5f186772bd560658f1ae24df Joaquim Ataides <ti@promobrindes.com.br> 1791557173 -0300	rebase (finish): returning to refs/heads/v2/tl-110-2610090207e297

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559645 -0300	branch: Created from dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb cdbb22f4d7c1a190e6c32a09a9e1bd21370d7b61 Joaquim Ataides <ti@promobrindes.com.br> 1791559663 -0300	cherry-pick: feat(inbox/chat): readme de canais realtime, querykeys.ts e tipos derivados (SL-081)
+cdbb22f4d7c1a190e6c32a09a9e1bd21370d7b61 d11fbeefcb172759d5cd4ebf622ecbfa954112e2 Joaquim Ataides <ti@promobrindes.com.br> 1791559754 -0300	commit: fix(inbox/chat): README do Team Chat segue o código da dia (SL-081)

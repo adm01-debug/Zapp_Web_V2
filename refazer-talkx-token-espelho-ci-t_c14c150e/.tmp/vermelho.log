@@ -1,0 +1,39 @@
+✔ ESTADO.md lista exatamente as edges que existem no repositório (1.691199ms)
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (13.064065ms)
+✔ edge marcada como órfã (grupo E) realmente não tem chamador no repositório (4251.894969ms)
+✔ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (21971.528067ms)
+✔ ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada (0.931577ms)
+✔ total de edges do cabeçalho do ESTADO.md bate com a tabela (0.474381ms)
+✔ FEATURE_REGISTRY.md lista exatamente as views do ViewRouter (1.346597ms)
+✔ FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada (0.283382ms)
+✔ FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais (6.940578ms)
+✔ TESTING_CONVENTION.md aponta só para caminhos que existem (0.943094ms)
+✔ TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI) (4.107987ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 10
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26363.606551
+
+✖ failing tests:
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:155:1
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (13.064065ms)
+  AssertionError [ERR_ASSERTION]: âncora desatualizada: supabase/functions/talkx-send/index.ts:455 não cita `talkx-link`
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/refazer-talkx-token-espelho-ci-t_c14c150e/scripts/ci/docs-estado-registry-convention.unit.mjs:165:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

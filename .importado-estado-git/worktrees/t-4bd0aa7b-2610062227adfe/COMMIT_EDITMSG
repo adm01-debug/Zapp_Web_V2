@@ -1,0 +1,5 @@
+test(ci): registra o teste novo de encerramento no inventario de CI (#295)
+
+check-test-inventory.mjs exige que todo .test.sh de scripts/db-audit tenha passo em
+workflow ou linha na ALLOWLIST com justificativa. O teste novo depende de docker
+(container descartavel) e o passo no db-guard.yml e do dono do workflow.

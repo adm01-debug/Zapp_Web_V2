@@ -1,0 +1,22 @@
+fix(edge): prazo de IA cobre o consumo do corpo e log essencial para de ser best effort
+
+IA-TIMEOUT-001 (item 44 do BACKLOG_VERIFICADO): o timer do AbortController era
+desarmado no `finally` assim que o fetch resolvia — ou seja, nos HEADERS. O
+`response.json()`/stream consumido depois ficava fora de qualquer prazo, e um
+corpo travado pendurava a chamada para sempre (IA-041 "prazos ponta a ponta"
+incompleto). No log, `logAiUsage` fazia UM insert e engolia a falha com
+`console.warn`: consumo pago virava registro perdido.
+
+- ai-providers.ts: o prazo passa a cobrir a LEITURA DO CORPO. O helper
+  `comPrazoAteOCorpo` embrulha a resposta e só desarma o timer no fim, no erro
+  ou no cancelamento; sem `timeoutMs` nada muda (nenhum timer, nenhum signal).
+- ai-usage.ts: log essencial durável — `metadata.log_key` (SHA-256 dos campos
+  estáveis) torna o reenvio idempotente; o insert retenta transitório (sem
+  resposta, 429, 5xx) conferindo a existência ANTES de cada reenvio (resposta
+  perdida depois da escrita não duplica cobrança) e, esgotado o teto, emite
+  `[ai-usage][LOG-ESSENCIAL-PERDIDO]` com a linha em JSON, recuperável por
+  `reprocessarLogEssencial` (idempotente por construção).
+- Testes: ai-providers.test.ts (corpo travado abortado no orçamento nos 3
+  provedores; sem timeoutMs nada muda; clearTimeout no fim da leitura) e bloco
+  novo em ai-usage.test.ts (retentativa grava; perdido é observável e
+  reprocessável sem duplicar; resposta perdida não reinsere).

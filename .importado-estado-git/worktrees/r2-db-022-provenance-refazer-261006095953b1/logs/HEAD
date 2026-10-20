@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1dcf8dda0d44f9c647a24ef6146f54cf882490f3 Joaquim Ataides <ti@promobrindes.com.br> 1791291540 -0300	
+1dcf8dda0d44f9c647a24ef6146f54cf882490f3 1dcf8dda0d44f9c647a24ef6146f54cf882490f3 Joaquim Ataides <ti@promobrindes.com.br> 1791291541 -0300	reset: moving to HEAD
+1dcf8dda0d44f9c647a24ef6146f54cf882490f3 b1d40b26ca98435080cb576fa1c32c1edb0d7954 Joaquim Ataides <ti@promobrindes.com.br> 1791291554 -0300	cherry-pick: fix(db): protege proveniência de messages e corrige caminho de áudio
+b1d40b26ca98435080cb576fa1c32c1edb0d7954 e491f60bb512ffb9b316fb7bbecd6163a9c3697b Joaquim Ataides <ti@promobrindes.com.br> 1791292595 -0300	commit (amend): fix(db): protege proveniência de messages e corrige caminho de áudio

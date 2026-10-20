@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791520539 -0300	
+bc539491e56a91557290e0b15c0e561646c7e553 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791520540 -0300	reset: moving to HEAD
+bc539491e56a91557290e0b15c0e561646c7e553 bb3c42ed4328ea409f1491809ec5023d14eec5ca Joaquim Ataides <ti@promobrindes.com.br> 1791520547 -0300	cherry-pick: feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)

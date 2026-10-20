@@ -1,0 +1,584 @@
+{
+  "btns": [
+    {
+      "aria": "ZAPP — Ir para Inbox",
+      "title": null,
+      "text": "Z",
+      "visible": true
+    },
+    {
+      "aria": "Expandir menu",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Chat",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Teams",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Email",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Contatos",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Multiplix",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Catálogo",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Telefonia",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Quadro",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Tarefas",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Conquistas",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Dashboard",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Busca global (⌘K)",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Vendas & CRM — expandir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Automação & IA — expandir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Analytics — expandir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Conexões — expandir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Sistema — expandir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Em Desenvolvimento — expandir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Perfil e status",
+      "title": null,
+      "text": "WM",
+      "visible": true
+    },
+    {
+      "aria": "Desativar proteção de tela",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Desativar todas as notificações",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Silenciar sons de alerta",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Volume dos áudios e vídeos",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Modo escuro",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Modo zen",
+      "title": null,
+      "text": "Zen",
+      "visible": true
+    },
+    {
+      "aria": "Nova conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": "Atualizar",
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Filtros",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Todas1",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Não lidas0",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Em atendimento1",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Aguardando0",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Resolvidas0",
+      "visible": true
+    },
+    {
+      "aria": "Favoritar conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Resolver conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Transferir conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Fixar conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Adiar conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Arquivar conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Chat",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "IA",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "CRM 360°",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Pedidos",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Tarefas",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Notas",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Arquivos",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Histórico",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Ver sugestões",
+      "visible": true
+    },
+    {
+      "aria": "Fechar",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Favoritar conversa",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Atribuído a Atendente — clique para transferir",
+      "title": null,
+      "text": "AAtendente",
+      "visible": true
+    },
+    {
+      "aria": "Mais ações",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "👍",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "❤️",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "😂",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "😮",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "😢",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "🙏",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": "Responder",
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": "Encaminhar",
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": "Copiar",
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": "Mais opções",
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Resposta Rápida",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Assistente IA",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Anexar",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Agendar",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Transferir",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Mais",
+      "visible": true
+    },
+    {
+      "aria": "Emojis Personalizados",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Anexar arquivo",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Enviar imagem",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Gravar áudio",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Enviar mensagem",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Recolher painel de detalhes",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Favoritar contato",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Ligar",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Vídeo",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "E-mail",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Transferir",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Adicionar participante",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": "Mais",
+      "title": null,
+      "text": "",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Informações",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Status WhatsApp",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Tentar novamente",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Tags",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Adicionar tag",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Adicionar",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Resumo Comercial",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Última atividade",
+      "visible": true
+    },
+    {
+      "aria": null,
+      "title": null,
+      "text": "Mais detalhes",
+      "visible": true
+    },
+    {
+      "aria": "Assistente de voz",
+      "title": null,
+      "text": "",
+      "visible": true
+    }
+  ],
+  "forms": [
+    {
+      "id": "",
+      "ph": "Buscar conversas…",
+      "aria": "Buscar contato pelo nome"
+    },
+    {
+      "id": "",
+      "ph": null,
+      "aria": null
+    },
+    {
+      "id": "",
+      "ph": "Digite uma mensagem… (/ para comandos, @ para mencionar)",
+      "aria": "Digite sua mensagem"
+    },
+    {
+      "id": "",
+      "ph": null,
+      "aria": null
+    }
+  ]
+}

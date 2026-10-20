@@ -1,0 +1,3 @@
+test(rls): restaura regressivo de DELETE parcial em messages e amplia guarda FOR ALL
+
+Corrige os pontos da recusa do refazer 2. rlsConversationAccess: fixtures sinteticos de FOR DELETE e FOR ALL com o contrato de visibilidade sem o ramo de fila voltam a aparecer em deleteSemContrato, e a ausencia total de cobertura de DELETE volta como caso explicito com fixture via resolvePolicyState. rlsSchemaGuard: assertiva explicita de cobreComando para SELECT, UPDATE, DELETE e INSERT no caso FOR ALL USING (true) com WITH CHECK administrativo. Prova de mutacao: mesmaForma -> return true deixa os dois testes vermelhos. zapp-verify . --rapido: VERDE. Cartao V2: t_2c41fcd8.

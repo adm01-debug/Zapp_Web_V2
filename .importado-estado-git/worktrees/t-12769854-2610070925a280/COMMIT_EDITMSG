@@ -1,0 +1,5 @@
+fix(arquivos): prazo de 15s aborta o download em voo e abort na fila resolve null na hora
+
+O vigia do prazo so abandonava a resposta: com o download ou o carregamento do pdfjs em voo, o trabalho seguia em segundo plano depois de liberarVaga() e a fila de 2 deixava de valer. Agora um AbortController interno une o sinal do chamador e o prazo e e ele que vai ao fetch e as checagens de cancelamento.
+
+Quem esperava vaga ignorava o abort e ficava preso em espera ate alguem liberar; aguardarVaga agora ouve o abort, sai da fila e devolve false sem reservar vaga. Os testes cobrem os dois casos (o de fila aborta a terceira chamada, que esta parada na espera).

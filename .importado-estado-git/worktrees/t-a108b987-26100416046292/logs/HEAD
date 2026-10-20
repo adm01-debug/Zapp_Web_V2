@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 40b49e3f993fa06a1d3c10082a9656e7fed178e5 Joaquim Ataides <ti@promobrindes.com.br> 1791140664 -0300	
+40b49e3f993fa06a1d3c10082a9656e7fed178e5 40b49e3f993fa06a1d3c10082a9656e7fed178e5 Joaquim Ataides <ti@promobrindes.com.br> 1791140664 -0300	reset: moving to HEAD
+40b49e3f993fa06a1d3c10082a9656e7fed178e5 1f54ffef30f3597fbb564942d9bde5b5fb80eb55 Joaquim Ataides <ti@promobrindes.com.br> 1791140743 -0300	cherry-pick: feat(auth): módulo compartilhado de decisão de política de rede (R2-AUTH-022)
+1f54ffef30f3597fbb564942d9bde5b5fb80eb55 293a81b48ac44275e05316e815e36778f01e38b1 Joaquim Ataides <ti@promobrindes.com.br> 1791141415 -0300	commit: feat(auth): aplica política de rede IP/país ao auth-login antes de credenciais (R2-AUTH-022)

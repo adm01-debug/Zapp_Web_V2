@@ -1,0 +1,1 @@
+var e=[{value:`orcamentos`,label:`Orçamentos | Fornecedores`,color:`text-info`,icon:`📋`},{value:`aprovacao`,label:`Aprovação | Fornecedores`,color:`text-success`,icon:`✅`},{value:`os`,label:`O.S. | Fornecedores`,color:`text-warning`,icon:`🔧`},{value:`acerto`,label:`Acerto | Fornecedores`,color:`text-secondary`,icon:`🤝`}];export{e as t};

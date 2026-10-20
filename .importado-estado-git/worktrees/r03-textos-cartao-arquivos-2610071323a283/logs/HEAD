@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3078922b1a3b103bf6bab4a4b2eeb12e1d3ff14b Joaquim Ataides <ti@promobrindes.com.br> 1791390211 -0300	
+3078922b1a3b103bf6bab4a4b2eeb12e1d3ff14b 3078922b1a3b103bf6bab4a4b2eeb12e1d3ff14b Joaquim Ataides <ti@promobrindes.com.br> 1791390212 -0300	reset: moving to HEAD
+3078922b1a3b103bf6bab4a4b2eeb12e1d3ff14b 582e76020834e43e8e49acdba5b14fd91f3ffc4b Joaquim Ataides <ti@promobrindes.com.br> 1791390498 -0300	commit: feat(arquivos): formatadores do cartao (data curta, tipo e tamanho, nome legivel)

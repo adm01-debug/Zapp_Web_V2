@@ -1,0 +1,18 @@
+fix(inbox): lista granular de SLA tolera arvore sem QueryClientProvider (R2-SLA-003)
+
+A recusa da suite integrada era 'No QueryClient set, use QueryClientProvider to
+set one': com o cherry-pick 7accaa0f8 o badge passou a chamar useApplicableSLA
+(react-query) e o useQuery lancava em arvores que montam VirtualizedRealtimeList
+sem o provider da aplicacao (RealtimeContactUpdateE2E.test.tsx e
+VirtualizedRealtimeList.displayName.test.tsx, ambos fora do escopo deste cartao).
+
+ConversationRow le o cliente do contexto (QueryClientContext): com cliente
+renderiza o filho estavel ConversationSLABadge (caminho granular, hook
+incondicional, contrato do cartao preservado); sem cliente cai no SLAIndicator
+com o prazo fixo anterior (5 min), sem chamar o hook, sem lancar e sem instalar
+QueryClient de reserva. O teste do escopo ganha o QueryClientProvider no
+renderList (nivel adequado) e um teste de regressao que monta a lista sem
+provider e prova a linha no DOM com 5 min e zero chamadas do resolver.
+
+Prova: antes 2 arquivos/13 testes vermelhos com 3x 'No QueryClient set'; depois
+os 3 arquivos verdes (24 testes, 0 ocorrencias).

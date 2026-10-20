@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297993 -0300	
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297993 -0300	reset: moving to HEAD
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac da36a85809a1c3d8e7b4b97bbd5688ab4961c523 Joaquim Ataides <ti@promobrindes.com.br> 1791298610 -0300	commit: fix(edge): recupera audio na instancia da propria conexao por mensagem do lote (#208)
+da36a85809a1c3d8e7b4b97bbd5688ab4961c523 c9135a60fe7fec66711101281465cddb97c99284 Joaquim Ataides <ti@promobrindes.com.br> 1791298626 -0300	commit (amend): fix(edge): recupera audio na instancia da propria conexao por mensagem do lote (#208)

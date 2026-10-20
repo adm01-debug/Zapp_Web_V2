@@ -1,0 +1,32 @@
+Squashed commit of the following:
+
+commit ac5a5c38d869ce8ec24c0e21393707995e36aa2e
+Author: Joaquim Ataides <ti@promobrindes.com.br>
+Date:   Fri Oct 9 10:24:13 2026 -0300
+
+    test(talk-x): mock do wizard expõe os limites do nome (X124/TL-140)
+
+commit 599aa708fb25adbd830006ef0007bf319f80a2b3
+Author: Joaquim Ataides <ti@promobrindes.com.br>
+Date:   Fri Oct 9 03:20:21 2026 -0300
+
+    fix(talk-x): avatar do responsável em 24px (tamanho aceito pelo InitialsAvatar)
+
+commit 583cf6c8d05f5f14aa263d7a0b13f265df84e71c
+Author: Joaquim Ataides <ti@promobrindes.com.br>
+Date:   Fri Oct 9 03:15:21 2026 -0300
+
+    fix(talk-x): passo 1 com nome 3-200, descricao do objetivo e responsavel admin/supervisor (X124)
+    
+    O passo 1 do wizard de campanha (tela 08) ainda tinha tres lacunas do item
+    X124 depois da V25:
+    
+    - o nome validava so o minimo (3): acima de 200 caracteres a tela liberava
+      "Continuar" e o erro voltava cru da RPC, que ja recusa `length(name) > 200`
+      (migration 20261001281230, linha 161);
+    - `OBJECTIVES` ganhou icone na V25, mas nao a descricao curta: o select e a
+      linha "Objetivo" do resumo (T09-012) nao diziam o que o objetivo significa;
+    - o select "Responsavel" listava TODOS os perfis ativos e sem avatar, quando
+      quem responde pela campanha e admin ou supervisor.
+    
+    Nada fora da tela: sem DDL, sem Edge Function, sem dependencia nova.

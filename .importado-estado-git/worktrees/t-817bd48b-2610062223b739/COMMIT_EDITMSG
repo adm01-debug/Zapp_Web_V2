@@ -1,0 +1,3 @@
+fix(db): consolida contrato de convites e vocabulário de auditoria de departamento (#163)
+
+Vocabulário único de auditoria (8 verbos canônicos) no lugar dos 12 antigos; código de convite ^[A-Z0-9]{8}$, status canônico e use_count <= max_uses; create/accept_department_invite reescritas in-place (auditoria sem o código em details, autorização por user_roles, erro already_member sem consumir uso). Teste com Postgres descartável aplicando as migrations reais (vermelho antes, verde depois) e prova do rollback.

@@ -1,0 +1,7 @@
+fix(db): protege proveniência de messages e corrige caminho de áudio
+
+Reaplica a parte 1 de 81d78b5db: trg_guard_message_provenance_fields em
+public.messages barra, para quem não é postgres/service_role, INSERT com
+sender<>'agent', external_id ou media_url e UPDATE de media_url, contact_id,
+sender, agent_id e external_id. O áudio do ChatPopup passa a gravar em
+whatsapp-media/<contactId>/audio_<ts>.webm, o caminho canônico do repo.

@@ -1,0 +1,22 @@
+fix(ia): feature_flags lidas no servidor para desligar capacidade (SL-009)
+
+O kill switch de IA só existia no cliente: feature_flags era lida por
+src/hooks/system/useFeatureFlag.ts e, no servidor, apenas por crm-integration.
+Desligar a flag escondia o botão, mas quem chamasse a Edge Function direto (ou um
+bundle velho) continuava consumindo provedor pago (IA-003, achado B8).
+
+- _shared/ai-feature-flags.ts: uma chave por capacidade do desenho IA-009
+  (ai.capability.<capacidade>), mapa função->capacidade fechado e leitura do
+  PostgREST com service role. Semântica SEM seed/migration: chave ausente vale
+  LIGADA (o operador não desligou); só o enabled=false booleano explícito
+  DESLIGA; erro de leitura, exceção ou valor de tipo inesperado FECHAM
+  (fail-closed/503).
+- _shared/ai-guards.ts: enforceAiGuards confere a capacidade ANTES do pré-filtro,
+  do contador compartilhado e da cota — capacidade desligada não reserva
+  orçamento. Resposta 503 com code: AI_CAPABILITY_DISABLED.
+- _shared/ai-auth.ts: o caminho de identidade de SERVIÇO (não passa por
+  enforceAiGuards) também confere a capacidade antes do teto por IP.
+- teste deno (21 casos, todos sobre o caminho real com fetch dublado): vermelho
+  antes (4 falhas de semântica + 2 de fiação), verde depois.
+- SEM migration: a ausência de linha é o padrão ligado, então nada precisa ser
+  semeado para o deploy não desligar a IA.

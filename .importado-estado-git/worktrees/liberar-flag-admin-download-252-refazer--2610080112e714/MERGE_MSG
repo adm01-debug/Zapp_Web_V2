@@ -1,0 +1,17 @@
+fix(db): bloqueia o próprio flag administrativo de download no perfil (#252)
+
+R2-AUTH-027: a policy RESTRICTIVE "Block sensitive field changes by non-admins"
+preservava role, access_level, permissions e is_active e nao citava can_download,
+e o trigger prevent_profile_privilege_escalation tambem nao cobre o campo. O dono
+do proprio perfil ligava o flag por PATCH em public.profiles (GRANT UPDATE para
+authenticated) e o consumidor (useDownloadPermission -> ImagePreview) passava a
+liberar o download que a tela de admin dizia depender do administrador.
+
+A migration reconstroi a MESMA policy restritiva, com o mesmo nome e papel,
+acrescentando can_download a lista de campos que o nao-admin nao pode alterar;
+admin/supervisor seguem passando por is_admin_or_supervisor.
+
+Prova: scripts/db-audit/profiles-can-download-authorization.test.sh (Postgres
+descartavel) aplica as migrations REAIS do periodo — bloco ANTES reproduz a
+escalada, bloco DEPOIS prova a recusa sob o papel authenticated e o bloco de
+MUTACAO derruba a assercao removendo a clausula numa copia temporaria.

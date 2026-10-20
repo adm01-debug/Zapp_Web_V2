@@ -1,0 +1,3 @@
+test(qualidade): Y07 refazer 1 — prende as asserções ao que o título promete
+
+remover relê a lista (leituras aumenta), ordem é created_at descending e o refresh mostra "atualizando" antes de a RPC responder.

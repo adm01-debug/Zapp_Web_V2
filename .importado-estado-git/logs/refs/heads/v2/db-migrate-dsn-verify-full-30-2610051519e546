@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791224357 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 106ae5c64c608d8a612390cd0cbaf2ab748e0366 Joaquim Ataides <ti@promobrindes.com.br> 1791224369 -0300	cherry-pick: fix(db-migrate): consumidores herdam o DSN endurecido do GITHUB_ENV (R2-INF-003)
+106ae5c64c608d8a612390cd0cbaf2ab748e0366 6d6581a34a5138d722fb15588e3832d315fdf0fd Joaquim Ataides <ti@promobrindes.com.br> 1791224455 -0300	commit (amend): fix(db-migrate): consumidores herdam o DSN endurecido do GITHUB_ENV (R2-INF-003)

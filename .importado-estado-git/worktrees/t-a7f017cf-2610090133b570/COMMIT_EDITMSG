@@ -1,0 +1,3 @@
+chore(talk-x): TL-082 X166 fecha sem codigo - abas exigem a tela do relatorio (TL-079/X163) e o detalhe no banco (X162)
+
+Lacuna confirmada na ponta dia/2026-10-09 (HEAD bc539491e): nao existe src/components/talkx/report/ (X163 = TL-079, aberto), nenhuma rota/aba de relatorio no TalkXView e a RPC talkx_campaign_report segue so (p_campaign uuid), sem o detalhe de segmento/link/audiencia/conversao (X162, camada banco). Fechamento pelo caminho que o cartao preve (item que nao cabe em 1 camada).

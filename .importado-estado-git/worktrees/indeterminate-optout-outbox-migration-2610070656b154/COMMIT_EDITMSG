@@ -1,0 +1,14 @@
+feat(db): outbox duravel da resolucao de opt-out indeterminada (#190)
+
+O ingest passa a receber o contrato explicito de decisao de opt-out
+(matched | not_matched | indeterminate) na assinatura nova de 12 args — a de
+11 args fica intacta para o deploy escalonado. 'indeterminate' grava uma
+pendencia (efeito NOVO optout_resolve) na MESMA transacao do ingest, na outbox
+inbound_message_effects (chave unica conexao+external_id+efeito): reentrega do
+mesmo evento nao duplica. Em indeterminate nenhuma atribuicao Talk X/Multiplix
+e criada; a drenagem reavalia pela fonte autoritativa (talkx_match_optout, que
+le talkx_optout_keywords): casou = so supressao, nao casou = libera as
+atribuicoes uma vez, excecao = pendencia conservada para nova entrega.
+
+Depende da base R2-API-006 (migration 20261005224959_inbound_message_effects_outbox.sql,
+entregue por outro cartao): sem ela esta migration nao aplica.

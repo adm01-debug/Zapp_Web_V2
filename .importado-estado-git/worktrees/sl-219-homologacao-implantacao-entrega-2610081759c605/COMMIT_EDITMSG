@@ -1,0 +1,24 @@
+fix(outros): Homologação, implantação controlada e entrega (SL-219)
+
+Revisa a evidência do Bloco 20 (IA-191..IA-200) na ponta de 08/10/2026
+(dia/2026-10-08, 210c3e7c1) e registra o estado REAL de cada etapa, que é o que
+o próprio bloco exige ("Checkpoint do bloco: evidências dos dez critérios de
+aceite revisadas; itens não comprovados permanecem pendentes").
+
+O Bloco 20 é OPERACIONAL: o plano o marca como P1 "somente após autorização
+específica" e a IA-200 exige aceite com "produção exige autorização expressa".
+Executá-lo é homologar, disparar integrações reais e operar produção — fora das
+regras deste cartão (sem DDL/Edge/migration, sem deploy, sem produção).
+
+Estado medido: PARCIAL em IA-191 (deploy de edges com igualdade local/remoto +
+slo.md), IA-192 (migrations com dry-run obrigatório), IA-196 (flags), IA-197
+(runbooks de rollback + source_ref/dry_run), IA-198 (runbooks vivos) e IA-199
+(índice de evidência em docs/ia); NÃO IMPLEMENTADA em IA-193, IA-194, IA-195 e
+IA-200 (dependem de execução autorizada/aceite). Nenhuma etapa entra como
+entregue por intenção nem por infraestrutura vizinha.
+
+Prova: contrato novo tests/contracts/sl219-bloco20-estado.contract.test.ts (6/6),
+vermelho com o documento ausente (ENOENT) e verde com ele; todo caminho citado
+como prova é conferido no disco. zapp-verify . --rapido VERDE.
+
+Cartão V2: t_e6a81198 (SL-219)

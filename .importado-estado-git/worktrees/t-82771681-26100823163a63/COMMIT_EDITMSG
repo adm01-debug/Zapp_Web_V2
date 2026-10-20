@@ -1,0 +1,21 @@
+fix(tarefas): prazo vencido hoje conta como atraso nos mesmos canais (R2-MOD-058)
+
+O badge do menu comparava o prazo com o instante (`due_date < Date.now()`) e o
+modulo (KPI, secoes, chip) so com o inicio do dia: a mesma tarefa com prazo
+"hoje as 9h", as 15h, acendia o menu e nao aparecia em "Atrasadas" na lista.
+
+Regra unica `isOverdue` em `workItemAggregates`: prazo COM hora marcada vence no
+instante; prazo de dia inteiro (23:59/00:00 locais, a convencao dos chips
+"Hoje/Amanha") vence no fim do dia local. Passam a usa-la o badge, o
+`bucketByDue` (KPI e secoes), o `dueLabel` do chip e o `dayGroupLabel`.
+
+Testes: caso do aceite (relogio as 15h, prazo de hoje as 9h) provando badge e
+KPI com o mesmo veredito - vermelho antes (kpis.overdue 0 com badge 1), verde
+depois; dia inteiro, virada do dia e limite de fuso. Fixtures de 3 testes de
+tela que usavam o instante atual como "hoje" passam a usar o fim do dia local.
+
+Retomada em 08/10 (conflito com a ponta dia/2026-10-08): a ponta ja tinha
+reescrito o badge para contar sobre a leitura paginada (R2-MOD-054,
+`fetchAllRows`) e o conflito era nesse trecho. Resolvido preservando a ponta
+(leitura paginada intacta) e aplicando a regra unica sobre ela: `now` passa a
+ser `Date` e a contagem usa `isOverdue(r.due_date, now)`.

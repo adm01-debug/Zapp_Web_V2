@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "area": "infra/ai_delegated",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "mode": "READ_ONLY_STATIC_AND_BOUNDED_OFFLINE",
+  "findings": [
+    {
+      "id": "R2-INF-022",
+      "title": "Classificadores visuais leem mídia privada com service role sem autorizar o objeto do usuário",
+      "severity": "P1",
+      "classification": "novo",
+      "area_extension": "finite_ai_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "classify-emoji autentica o usuário; classify-sticker aceita usuário ou serviço. No ramo de usuário, ambos passam image_url diretamente a toInlineImage. O helper verifica origem, bucket e path, mas baixa o objeto com SUPABASE_SERVICE_ROLE_KEY sem conferir permissão de leitura do usuário, mensagem visível ou vínculo a uma figurinha compartilhada. A allowlist inclui whatsapp-media, que as migrations mantêm privado e sujeito a SELECT por atribuição/visibilidade. Os bytes são embutidos no pedido ao provedor de visão; userId é usado em cota/log, não na autorização do download.",
+      "consumer_chain": [
+        "Usuário autenticado com cota → classify-emoji ou ramo usuário de classify-sticker",
+        "image_url conhecida de whatsapp-media → parser da origem/bucket",
+        "GET do objeto com credencial service role → base64",
+        "generateWithRouting vision → categoria em allowlist devolvida"
+      ],
+      "preconditions": [
+        "Usuário válido, não autorizado pela policy a ler determinado objeto privado de whatsapp-media, conhece seu locator/path.",
+        "O objeto existe, é imagem aceita pelo helper e há provedor de visão configurado para completar a classificação.",
+        "A versão publicada corresponde ao caminho versionado analisado; essa condição não foi medida remotamente."
+      ],
+      "effect": "Permite processamento de mídia privada além da permissão do chamador e envio desses bytes ao provedor configurado. A resposta permite inferir a categoria da imagem; não devolve o arquivo bruto, nem demonstra extração integral do conteúdo para o chamador.",
+      "evidence": [
+        {
+          "path": "supabase/functions/classify-emoji/index.ts",
+          "line_start": 40,
+          "line_end": 70,
+          "sha256": "17398afb5f1a1e4caf8c8e6ecbd3ef00dfb0230f260085a735978f5f60df0e88",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Identidade validada, mas helper da imagem não recebe autorização do objeto"
+        },
+        {
+          "path": "supabase/functions/classify-emoji/index.ts",
+          "line_start": 103,
+          "line_end": 134,
+          "sha256": "17398afb5f1a1e4caf8c8e6ecbd3ef00dfb0230f260085a735978f5f60df0e88",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "URL do corpo vira imagem enviada ao provedor"
+        },
+        {
+          "path": "supabase/functions/classify-sticker/index.ts",
+          "line_start": 39,
+          "line_end": 79,
+          "sha256": "62eedcddfd167537c4dbc7c9185f1dcaf3dcf09f58b356d8ab77a8530a5d162d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Ramo de usuário e serviço converge para helper sem autorização do objeto"
+        },
+        {
+          "path": "supabase/functions/classify-sticker/index.ts",
+          "line_start": 102,
+          "line_end": 127,
+          "sha256": "62eedcddfd167537c4dbc7c9185f1dcaf3dcf09f58b356d8ab77a8530a5d162d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Imagem privilegiada enviada ao provedor"
+        },
+        {
+          "path": "supabase/functions/_shared/ai-image-input.ts",
+          "line_start": 281,
+          "line_end": 348,
+          "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Origin/bucket/path são conferidos; requisição usa credencial de serviço"
+        },
+        {
+          "path": "supabase/functions/_shared/ai-image-input.ts",
+          "line_start": 378,
+          "line_end": 398,
+          "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Bytes viram data URL"
+        },
+        {
+          "path": "supabase/functions/_shared/ai-auth.ts",
+          "line_start": 60,
+          "line_end": 107,
+          "sha256": "80ec690034f445416c1205b5863a4322fe6e260466d49ffaad45f89dc8633820",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Gate de autenticação/cota é real, sem autorização do objeto"
+        },
+        {
+          "path": "supabase/migrations/20260905030000_private_media_buckets.sql",
+          "line_start": 1,
+          "line_end": 11,
+          "sha256": "893ad17f2d01f3fb410194c62e61289147fafb9756697aa2fe7d44deaa710fd1",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Bucket de clientes privado"
+        },
+        {
+          "path": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+          "line_start": 30,
+          "line_end": 50,
+          "sha256": "dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "SELECT de mídia condicionado a mensagem visível"
+        }
+      ],
+      "acceptance": [
+        "No ramo de usuário, autorizar a leitura do objeto com identidade do chamador antes de qualquer download privilegiado ou pedido ao modelo.",
+        "Rejeitar locator de contato/mensagem não visível e impedir acesso a imagem arbitrária no bucket, mesmo quando a URL é conhecida.",
+        "Conservar ramo interno de serviço explícito para o webhook e autorizar bibliotecas compartilhadas por sua política própria.",
+        "Fixtures devem distinguir imagem própria, imagem alheia privada, item compartilhado autorizado, origem externa e identidade inválida; a imagem negada não chega ao provedor."
+      ],
+      "affected_tasks": [
+        {
+          "plan_record_id": "P007",
+          "task_id": "IA-004",
+          "canonical_id": "docs--audits--plano_ia_200_etapas_2026-09-29::IA-004",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Matriz documental separa leitura/sugestão/alteração/envio; perfil somente leitor continua dependência explícita. Existência da tabela não é autorização efetiva em todos os caminhos.",
+          "affected_subcontract": "Autorização de leitura de objeto em classificadores de visão; preservar PARTIAL da matriz.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P007.json",
+          "baseline_task_sha256": "60bc511b88203a32cfe6035fce134ef408feab0e2d7150f47f320ed131b73a3c"
+        },
+        {
+          "plan_record_id": "P007",
+          "task_id": "IA-019",
+          "canonical_id": "docs--audits--plano_ia_200_etapas_2026-09-29::IA-019",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Webhook usa allowlist de metadados e contratos limitam tamanho; prompts e contextos ainda incluem conteúdo operacional. Não há comprovação de minimização por capacidade em toda a superfície.",
+          "affected_subcontract": "Minimização exige dados autorizados no prompt; preservar PARTIAL e acrescentar mídia privada sem autorização por objeto.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P007.json",
+          "baseline_task_sha256": "60bc511b88203a32cfe6035fce134ef408feab0e2d7150f47f320ed131b73a3c"
+        }
+      ],
+      "probe_ids": [
+        "INF-AI-P01"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo específico não contado nos 104 achados anteriores e confirmado sem duplicação direta com providers, database e Inbox; novo não significa regressão posterior à auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem rede de produto, leitura real de Storage, chamada de modelo, SQL/RPC, execução de handler Deno, deploy ou envio nesta revisão.",
+        "Não é chamada anônima: os gates internos exigem usuário válido. Não se presume verify_jwt=false no gateway; nenhuma exceção dessas rotas existe em config.toml.",
+        "Policies mais recentes da fonte foram cruzadas com a área database; não foi certificado o estado atual do Storage remoto.",
+        "R2-API-027 trata URL alternativa na transcrição de áudio com precondição de mensagem visível; este caso é dos classificadores visuais sem esse gate."
+      ]
+    },
+    {
+      "id": "R2-INF-023",
+      "title": "Revalidação de contexto fora da RPC deixa análise antiga substituir uma projeção concorrente",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_ai_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "Os handlers de analysis/summary leem ai_projection_updated_at no início e o revalidam depois do modelo. A leitura final e persist_conversation_analysis são chamadas separadas. A RPC não recebe a versão esperada: aceita a projeção se seu timestamp atual for <= p_analyzed_at, que o handler gera com new Date() no fim. Se outra análise persiste enquanto a resposta da leitura de revalidação antiga está em trânsito, a antiga recebe current:true e seu timestamp posterior permite substituir a projeção concorrente.",
+      "consumer_chain": [
+        "Análise A de contexto anterior captura versão V",
+        "Revalidação A lê V; resposta ainda não chegou ao handler",
+        "Análise B persiste novo contexto e avança projeção",
+        "A recebe snapshot V → current:true → gera timestamp posterior",
+        "RPC de A permite UPDATE por <= p_analyzed_at e substitui B"
+      ],
+      "preconditions": [
+        "Duas execuções para o mesmo contato visível partem da mesma versão de projeção e seus contextos/requisições têm ordem relevante.",
+        "A leitura de revalidação de A captura o estado antes do commit de B, mas A conclui essa leitura e produz p_analyzed_at depois do timestamp usado por B.",
+        "A saída de A possui sentimento/prioridade a projetar e passa o contrato normal. Nenhuma falha de leitura é necessária."
+      ],
+      "effect": "A garantia de cancelar resultado superado antes de qualquer persistência não vale nesse interleaving. A análise antiga pode entrar no histórico e assumir a projeção após a análise nova. A transação INSERT+UPDATE continua atômica; o defeito é a ausência de comparação atômica com a versão esperada.",
+      "evidence": [
+        {
+          "path": "supabase/functions/_shared/ai-conversation-pipeline.ts",
+          "line_start": 178,
+          "line_end": 200,
+          "sha256": "2aa5c9290cc859bed55c6271b3d4ba9f165e6d6ca845eadaab2dc59bf79dce0f",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Versão do contexto é lida em uma consulta separada"
+        },
+        {
+          "path": "supabase/functions/_shared/schemas.ts",
+          "line_start": 440,
+          "line_end": 468,
+          "sha256": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Revalidação usa snapshot e retorna antes da persistência"
+        },
+        {
+          "path": "supabase/functions/ai-conversation-analysis/index.ts",
+          "line_start": 226,
+          "line_end": 272,
+          "sha256": "e4731a289d2c7129b40e2281248529e3ab0b26136173323fdf237d4a5347de92",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Gate externo à RPC e timestamp criado ao concluir"
+        },
+        {
+          "path": "supabase/functions/ai-conversation-summary/index.ts",
+          "line_start": 194,
+          "line_end": 249,
+          "sha256": "cded06fb6964859231886daab87aad3e0f91d85bba1645c3849888c37dcca969",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Mesmo protocolo no resumo"
+        },
+        {
+          "path": "supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql",
+          "line_start": 79,
+          "line_end": 83,
+          "sha256": "348e3d8006109e4e3839c991fd6c5283d82ab4236ecea0c9dafd967f405cea05",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Assinatura não recebe versão esperada"
+        },
+        {
+          "path": "supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql",
+          "line_start": 143,
+          "line_end": 164,
+          "sha256": "348e3d8006109e4e3839c991fd6c5283d82ab4236ecea0c9dafd967f405cea05",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Projeção ordenada apenas por timestamp do payload"
+        },
+        {
+          "path": "tests/contracts/ai-conversation-analysis-contract.test.ts",
+          "line_start": 110,
+          "line_end": 134,
+          "sha256": "0bc3fd3f155c6932e2b0665bfca0fcbc8eb0914a1b78f523f874b81d1a84b9a9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Testes verificam ordem textual/guarda, sem concorrência"
+        },
+        {
+          "path": "tests/contracts/ai-conversation-summary-contract.test.ts",
+          "line_start": 175,
+          "line_end": 200,
+          "sha256": "8a497126906a472927cfdb2f75aa06bde52921cc88151e8e52ef03a03efb739a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Mesmo limite de teste no resumo"
+        }
+      ],
+      "acceptance": [
+        "Definir identidade/ordem do contexto e levá-la à transação que decide aceitar a análise e projetar o contato.",
+        "Verificar versão esperada sob lock ou condição equivalente, devolvendo cancelled/conflito quando a projeção avançou entre leitura e commit.",
+        "Cobrir o interleaving leitura A → commit B → retorno da leitura A → tentativa de persistir A, preservando o resultado de B.",
+        "Preservar o contrato transacional de análise+projeção e distinguir timestamp de término de identidade/recência do contexto."
+      ],
+      "affected_tasks": [
+        {
+          "plan_record_id": "P007",
+          "task_id": "IA-048",
+          "canonical_id": "docs--audits--plano_ia_200_etapas_2026-09-29::IA-048",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Contexto e cancelamento lógico estão presentes nos principais consumidores; troca de contato/período tem testes. Não equivale a cancelamento universal do trabalho/custo já iniciado.",
+          "affected_subcontract": "Além do descarte lógico no cliente, a garantia de não aplicar contexto superado no servidor exige comparação atômica com a versão; status anterior já PARTIAL e assim permanece.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P007.json",
+          "baseline_task_sha256": "60bc511b88203a32cfe6035fce134ef408feab0e2d7150f47f320ed131b73a3c"
+        }
+      ],
+      "probe_ids": [
+        "INF-AI-P02"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo específico não contado nos 104 achados anteriores e confirmado sem duplicação direta com providers, database e Inbox; novo não significa regressão posterior à auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem rede de produto, leitura real de Storage, chamada de modelo, SQL/RPC, execução de handler Deno, deploy ou envio nesta revisão.",
+        "A prova executa o helper real e modela explicitamente o predicado SQL verificado; não é execução de PostgreSQL nem medição de concorrência em produção.",
+        "O controle com leitura final atualizada cancela corretamente. O achado não nega os gates existentes nem a atomicidade da RPC.",
+        "IA-026 permanece implementada aguardando evidência no seu contrato de persistência completa; não reabrir essa tarefa inteira por este subcontrato de recência."
+      ]
+    },
+    {
+      "id": "R2-INF-024",
+      "title": "Sugestões com JSON inválido para o contrato chegam à interface ou viram frases fixas sem sinal de degradação",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_ai_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "ai-suggest-reply extrai um objeto por regex e devolve JSON.parse sem usar SuggestedRepliesOutput. Assim, JSON sintaticamente válido como suggestions:string passa. AISuggestions salva qualquer data.suggestions truthy e renderiza com length e map: uma string não vazia satisfaz a condição e não tem map. Quando o parse falha, a Edge fabrica três frases fixas e responde 200 sem status de degradação, mostrando-as pelo mesmo caminho das sugestões geradas.",
+      "consumer_chain": [
+        "Usuário/contato autorizados → modelo devolve conteúdo",
+        "Regex+JSON.parse sem schema, ou catch com frases fixas",
+        "HTTP 200 → AISuggestions aceita data.suggestions truthy",
+        "Render .length/.map ou escolha de frase fixa no rascunho"
+      ],
+      "preconditions": [
+        "O provedor retorna JSON válido com suggestions fora do formato de array, ou conteúdo que não pode ser parseado.",
+        "A mesma requisição continua vigente no cliente e sua resposta é aceita pelo descarte lógico existente."
+      ],
+      "effect": "Shape inválido pode causar falha de renderização ou ausência silenciosa de sugestões; parse inválido apresenta texto padrão como sucesso de geração sem explicitar sua origem. Não há envio automático de WhatsApp nesse caminho.",
+      "evidence": [
+        {
+          "path": "supabase/functions/ai-suggest-reply/index.ts",
+          "line_start": 163,
+          "line_end": 192,
+          "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Parsing sem contrato e fallback fixo com HTTP 200"
+        },
+        {
+          "path": "supabase/functions/_shared/ai-response-contracts.ts",
+          "line_start": 110,
+          "line_end": 120,
+          "sha256": "b7f4c6f6690e5c02dfbe8b4fea14a03e1ab16357629c823ff70a9542d7b0d38e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Schema de sugestões existe, mas não está aplicado neste handler"
+        },
+        {
+          "path": "src/components/inbox/AISuggestions.tsx",
+          "line_start": 78,
+          "line_end": 99,
+          "sha256": "eee9de6283f635d6877e92efc5184a63701d638240e9860057d362061211135a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Cliente aceita campo truthy sem validar array"
+        },
+        {
+          "path": "src/components/inbox/AISuggestions.tsx",
+          "line_start": 180,
+          "line_end": 217,
+          "sha256": "eee9de6283f635d6877e92efc5184a63701d638240e9860057d362061211135a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Render pressupõe array e texto selecionável"
+        },
+        {
+          "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+          "line_start": 197,
+          "line_end": 208,
+          "sha256": "148dc546dd551b196d4ceb22167e396012e98c52e6552298d3468e605cb86746",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Teste documenta/congela o defeito; não é evidência de contrato correto"
+        }
+      ],
+      "acceptance": [
+        "Validar o envelope e cada sugestão antes de retornar/renderizar, inclusive tipo do array, quantidade e texto não vazio.",
+        "JSON válido com shape errado deve produzir estado de erro/degradação explícito e não entrar no render normal.",
+        "Se frases locais forem política desejada, identificá-las como fallback local e permitir revisão consciente; não apresentá-las como resultado normal do modelo.",
+        "Cobrir array ausente/string/objeto, itens inválidos, JSON malformado e três sugestões válidas, usando respostas sintéticas do provedor."
+      ],
+      "affected_tasks": [
+        {
+          "plan_record_id": "P007",
+          "task_id": "IA-025",
+          "canonical_id": "docs--audits--plano_ia_200_etapas_2026-09-29::IA-025",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Schemas por capacidade e envelope central validam saídas nas funções migradas; cobertura de todos os classificadores/voz e contratos adversariais completos não foi demonstrada.",
+          "affected_subcontract": "JSON válido com estrutura errada permanece sem validação em ai-suggest-reply/AISuggestions; conservar PARTIAL com este produtor/consumidor explícito.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P007.json",
+          "baseline_task_sha256": "60bc511b88203a32cfe6035fce134ef408feab0e2d7150f47f320ed131b73a3c"
+        },
+        {
+          "plan_record_id": "P007",
+          "task_id": "IA-142",
+          "canonical_id": "docs--audits--plano_ia_200_etapas_2026-09-29::IA-142",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Contratos têm origem/provedor/cobertura, mas os componentes não expõem uniformemente origem manual/importada/generativa/calculada.",
+          "affected_subcontract": "Origem das três frases de fallback não é identificada ao consumidor; conservar PARTIAL.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P007.json",
+          "baseline_task_sha256": "60bc511b88203a32cfe6035fce134ef408feab0e2d7150f47f320ed131b73a3c"
+        }
+      ],
+      "probe_ids": [
+        "INF-AI-P03"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo específico não contado nos 104 achados anteriores e confirmado sem duplicação direta com providers, database e Inbox; novo não significa regressão posterior à auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem rede de produto, leitura real de Storage, chamada de modelo, SQL/RPC, execução de handler Deno, deploy ou envio nesta revisão.",
+        "Parse/fallback real foi extraído por AST; a consequência no render é sustentada pelo consumidor e checagem de tipo, sem sessão React/browser.",
+        "Teste de inventário adversarial do próprio repositório já descreve o defeito; ele não consta como mecanismo nos 104 findings reconciliados."
+      ]
+    },
+    {
+      "id": "R2-INF-025",
+      "title": "Reescrita atrasada substitui edição mais nova do mesmo rascunho",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_ai_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "AIRewriteButton e AIEnhanceButton capturam inputValue no clique, aguardam ai-enhance-message e aplicam enhanced sem comparar o rascunho corrente nem uma geração de requisição. O campo de mensagem continua editável. No caminho mobile de ChatInputArea, o botão permanece montado enquanto há texto e seu onRewrite escreve diretamente no textarea via setNativeValue; portanto uma edição feita durante o await é substituída pelo resultado do texto anterior.",
+      "consumer_chain": [
+        "Texto A → clique reescrever/aprimorar",
+        "invoke pendente → usuário mantém mesma conversa e digita texto B",
+        "Resultado para A resolve → callback sem verificação de geração",
+        "onRewrite/onInputChange substitui B pelo resultado de A"
+      ],
+      "preconditions": [
+        "Componente continua montado no mesmo contato/conversa e recebe retorno tardio bem-sucedido.",
+        "Usuário modifica o rascunho enquanto a reescrita está em andamento; no caminho mobile mantém texto não vazio."
+      ],
+      "effect": "Perda da edição recente do rascunho e aplicação de conteúdo relativo a uma versão anterior. O usuário ainda precisa enviar a mensagem; o achado não presume envio, troca de contato ou sobrevivência do componente ao remount.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/AIRewriteButton.tsx",
+          "line_start": 33,
+          "line_end": 63,
+          "sha256": "e350755f36fe88aaf8f3c22c7f3ba7497f7d14c92a7577564a71e38141a7349c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Resposta aplicada após await sem comparar texto/geração"
+        },
+        {
+          "path": "src/components/inbox/chat/AIEnhanceButton.tsx",
+          "line_start": 45,
+          "line_end": 92,
+          "sha256": "5543da64064a3d9e5ad9068cca08c4878124038144074aff8df455a51d0a4d2e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Mesmo caminho no aprimoramento e undo captura texto anterior"
+        },
+        {
+          "path": "src/components/inbox/chat/ChatInputArea.tsx",
+          "line_start": 187,
+          "line_end": 201,
+          "sha256": "2afe2fca8725cc54161998a384a3eb332cc2488e4535d97121f97a80fcbaf70c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Textarea permanece editável"
+        },
+        {
+          "path": "src/components/inbox/chat/ChatInputArea.tsx",
+          "line_start": 267,
+          "line_end": 274,
+          "sha256": "2afe2fca8725cc54161998a384a3eb332cc2488e4535d97121f97a80fcbaf70c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Caminho mobile montado para texto não vazio e aplicação via setter"
+        },
+        {
+          "path": "src/components/inbox/chat/useChatInputLogic.ts",
+          "line_start": 112,
+          "line_end": 124,
+          "sha256": "5f87bfd6aedf159c9724cb33adc752456040bad3315f149de6c3152022de17f3",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Setter aplica diretamente ao campo e emite input"
+        },
+        {
+          "path": "src/components/inbox/chat/ChatMessageInput.tsx",
+          "line_start": 140,
+          "line_end": 149,
+          "sha256": "59fcd6aa95ee33218b3f9ce83a99fcae7afd3caaf96c0eaebf25bcd19099bee9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consumidor do Enhance compartilha o callback do textarea"
+        }
+      ],
+      "acceptance": [
+        "Associar reescrita à versão do rascunho e só aplicar automaticamente se texto/identidade ainda corresponderem ao clique.",
+        "Ao editar durante a requisição, preservar a edição e descartar ou oferecer o resultado antigo como opção revisável.",
+        "Testar edição no mesmo contato durante await e retorno fora de ordem; o texto novo deve permanecer.",
+        "Definir o escopo de desfazer de forma que não restaure silenciosamente um rascunho anterior após nova edição."
+      ],
+      "affected_tasks": [
+        {
+          "plan_record_id": "P007",
+          "task_id": "IA-048",
+          "canonical_id": "docs--audits--plano_ia_200_etapas_2026-09-29::IA-048",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Contexto e cancelamento lógico estão presentes nos principais consumidores; troca de contato/período tem testes. Não equivale a cancelamento universal do trabalho/custo já iniciado.",
+          "affected_subcontract": "Critério inclui rascunho; os consumidores Enhance/Rewrite não têm guarda de geração. Preservar PARTIAL e abrir este ramo sem reclassificar consumidores que já têm proteção.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P007.json",
+          "baseline_task_sha256": "60bc511b88203a32cfe6035fce134ef408feab0e2d7150f47f320ed131b73a3c"
+        }
+      ],
+      "probe_ids": [
+        "INF-AI-P04"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo específico não contado nos 104 achados anteriores e confirmado sem duplicação direta com providers, database e Inbox; novo não significa regressão posterior à auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem rede de produto, leitura real de Storage, chamada de modelo, SQL/RPC, execução de handler Deno, deploy ou envio nesta revisão.",
+        "Callbacks reais executados com invoke/setters falsos; wiring do textarea verificado no fonte, sem teste React/DOM.",
+        "Revisão cruzada com Inbox e grill_me_primary_review excluiu duplicação com UniversityHelp (R2-MOD-012) e AIGenerateDialog (R2-MOD-040)."
+      ]
+    }
+  ],
+  "counts": {
+    "P1": 1,
+    "P2": 3
+  },
+  "previous_findings_compared": {
+    "path": "/workspace/scratch/8b95153002da/reconciliation/docs/reconciliation/FINDINGS.json",
+    "sha256": "731a725f52b6698283cf59b142060ca410055c0b8f1184b67d53205eab396316",
+    "count": 104
+  },
+  "duplicates_not_recounted": [
+    {
+      "previous_id": "IA-AUDIO-001",
+      "classification": "duplicado",
+      "paths": [
+        "supabase/functions/classify-audio-meme/index.ts"
+      ],
+      "assessment": "Áudio-meme usa nome/URL, não conteúdo sonoro; roteamento central não muda esse fato. Não criar outro ID."
+    },
+    {
+      "previous_id": "IA-CHATBOT-001",
+      "classification": "duplicado",
+      "paths": [
+        "supabase/functions/chatbot-l1/index.ts"
+      ],
+      "assessment": "connectionId ignorado em fluxo/histórico; retorno de flags não comprova transferência/envio. Manter achado anterior."
+    },
+    {
+      "previous_id": "IA-METRICS-001",
+      "classification": "extensão_sem_nova_contagem",
+      "paths": [
+        "supabase/functions/ai-churn-analysis/index.ts",
+        "supabase/functions/ai-classify-tickets/index.ts"
+      ],
+      "assessment": "UI ignora resultados da Edge e usa proxies locais. Confidence zero no classificador vira 0.5, mas não atribuir esse valor à UI que ignora esse retorno."
+    },
+    {
+      "previous_id": "IA-TIMEOUT-001",
+      "classification": "extensão_sem_nova_contagem",
+      "paths": [
+        "supabase/functions/_shared/ai-image-input.ts"
+      ],
+      "assessment": "Timer do download é limpo após headers antes de arrayBuffer; limite de bytes é verificado depois da leitura integral. Novo consumidor do mesmo padrão de prazo, sem duplicar o ID."
+    },
+    {
+      "previous_id": "IA-QUOTA-001",
+      "classification": "contexto_sem_nova_contagem",
+      "paths": [
+        "supabase/functions/ai-churn-analysis/index.ts",
+        "supabase/functions/ai-classify-tickets/index.ts"
+      ],
+      "assessment": "Handlers calculados passam guard mas não geram chamada ao modelo/log de consumo pelo dispatcher. Contabilização de ação versus consumo já está na auditoria anterior/DB."
+    }
+  ],
+  "probes": "ai-review-probes.json",
+  "primary_files_fully_read": 12,
+  "primary_lines": 2692
+}

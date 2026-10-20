@@ -1,0 +1,29 @@
+fix(performance): alvos FCP 1,5 s e TTI 3 s medidos pelo coletor (SL-105)
+
+A secao web-vitals do performance-budget.json (fonte unica dos alvos, ligada ao
+coletor no E36) nao tinha FCP nem TTI, e nada os media: os dois alvos da secao
+"Metricas Web" do docs/IMPROVEMENT_PLAN.md seguiam marcados so no papel.
+
+- performance-budget.json: FCP (target 1500 / poor 3000 ms) e TTI (3000 / 5000 ms).
+- src/lib/web-vitals.ts: FCP pelo observador 'paint' (so first-contentful-paint,
+  nunca o first-paint) e TTI pelo fim da ultima long task (>= 50 ms) seguida de
+  5 s sem long tasks, contado do FCP; sem long task depois do FCP o TTI vale o
+  FCP. A janela de rede do Lighthouse nao e reproduzida (o observador de
+  'resource' so entrega a entrada depois de a requisicao terminar).
+- COLLECTED_VITALS + teste de contrato: nenhum alvo orfao (declarado e nao
+  medido) e nenhuma metrica medida sem alvo declarado.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 5ffcf9e05 fix(performance): alvos FCP 1,5 s e TTI 3 s medidos pelo coletor (SL-105)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-657e7e3e-26100822401cfc' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   performance-budget.json
+#	new file:   src/lib/__tests__/web-vitals-fcp-tti.test.ts
+#	modified:   src/lib/web-vitals.ts
+#

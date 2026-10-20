@@ -1,0 +1,17 @@
+fix(midia-volume): AudioContext da mídia só nasce no caminho WebAudio e nunca fica sem dono
+
+O handler de `play` instanciava o singleton incondicionalmente: quem tinha
+`element.volume` gravável seguia pelo caminho nativo, sem `GainNode`, e o
+contexto ficava retido até o fim da sessão (VOL-01). No fallback, uma falha
+entre criar o contexto e registrar o ganho também deixava o órfão.
+
+- `play` aquece o contexto só quando o caminho WebAudio é o que vai consumi-lo;
+  o caminho nativo não cria `AudioContext` nenhum.
+- a falha de preparação antes do nó fecha o contexto sem consumidor e reinicia
+  o singleton, permitindo tentativa posterior.
+- `releaseMediaElement` encerra o contexto quando não sobra consumidor ligado,
+  inclusive quando o elemento solta sem nunca ter registrado ganho.
+
+Testes novos em src/lib/__tests__/mediaVolumeElement.test.ts (3 vermelhos sem a
+correção, verdes com ela) e o compartilhamento entre dois elementos segue
+coberto.

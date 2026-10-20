@@ -1,0 +1,13 @@
+docs(ci): alinhar documentação à baseline atual (TRA-009)
+
+Reconciliação do plano de 100 etapas com base no P006/TRA-009: checkboxes
+alinhados ao estado apurado, coluna 'Limitação' sem corte em '…' (resumo
+coerente do acceptance.note) e sem o cabeçalho '## 0.'/'---' duplicados;
+CLAUDE.md passa a declarar 16 YAML com a fonte gerada docs/ci/README.md e
+`strict=true` como única política vigente; teste documental
+scripts/ci/ci-docs-baseline.test.mjs (vermelho antes, verde depois) cobre
+contagem, rótulo histórico de strict=false, checkboxes e as novas asserções
+contra célula truncada e cabeçalho '## ' duplicado.
+
+Refazer 1 do cartão t_bd92cc1f: aproveita o cherry-pick do trabalho anterior
+(3b464eef3) e corrige exatamente os dois defeitos apontados na recusa.

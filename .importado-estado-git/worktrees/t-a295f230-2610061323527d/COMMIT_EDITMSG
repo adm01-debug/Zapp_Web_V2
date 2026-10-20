@@ -1,0 +1,8 @@
+fix(hooks): desfazer do aviso anterior nao reverte a operacao seguinte (#445)
+
+R2-PLAT-007: useUndoableAction mantinha uma unica pendingActionRef lida pelo
+callback de cada toast no momento do clique; com dois arquivamentos em lote na
+janela de undo, o Desfazer do aviso anterior chamava o undoAction da operacao
+seguinte. Agora cada operacao tem identidade propria (id + toastId): iniciar uma
+operacao encerra explicitamente a anterior (aviso dispensado, onCommit chamado) e
+o callback de um aviso encerrado nao opera sobre outra operacao.

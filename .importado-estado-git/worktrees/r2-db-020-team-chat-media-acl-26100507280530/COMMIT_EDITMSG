@@ -1,0 +1,9 @@
+fix(team-chat): prova contrato canonico de midia e torna o rollback real (R2-DB-020)
+
+Atende aos 4 pontos da recusa: documenta e testa que o upload do frontend e a
+policy de INSERT team_chat_files_insert ja usam <profile_id>/<conversation_id>/
+<opaco> (BLOCO E); registra a contagem zero de linhas/objetos legados que
+valida o ADD CONSTRAINT simples; prova o abandono do formato <auth_uid>/...
+(objeto legado ilegivel pelo dono sob a policy nova, A2 vs B14/B15); e o
+Rollback do cabecalho agora recria a policy de leitura com objects.name
+qualificado — provado no BLOCO C, que executa o proprio SQL do rollback.

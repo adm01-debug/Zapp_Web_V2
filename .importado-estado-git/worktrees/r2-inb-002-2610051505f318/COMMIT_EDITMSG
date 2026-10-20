@@ -1,0 +1,20 @@
+fix(chat): executar encaminhamento pelo transporte canônico
+
+R2-INB-002: "Mensagem no balão → Encaminhar" abria o diálogo e anunciava
+sucesso sem transporte — handleForwardToTargets só registrava log e o hook
+aceitava `void` como entrega concluída.
+
+- handleForwardToTargets passa a ser assíncrono e devolve ForwardResult real:
+  texto/interactive textual vai por sendOutboundMessage (um envio por contato
+  de destino, conteúdo original); image/video/audio/document/file com mediaUrl
+  reusa forwardMediaMessages e sua idempotência (estado por encaminhamento).
+- Grupo e formas sem representação segura falham explicitamente por destino,
+  sem transporte e sem sucesso fictício; sem migration/bypass.
+- ForwardCallback deixa de aceitar `void`: sem resultado do transporte o hook
+  falha em vez de fechar o diálogo como sucesso. Fechamento só com sucesso
+  total; falha parcial preserva os falhos e retryFailed não reenvia concluídos.
+- Teste dedicado cobre transporte por contato, falha parcial, grupo/forma não
+  suportada e retry idempotente.
+
+# Conflicts:
+#	src/components/inbox/chat/ChatDialogs.tsx

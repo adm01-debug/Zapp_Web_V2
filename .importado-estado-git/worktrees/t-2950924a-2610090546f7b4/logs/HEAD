@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 99037feef48ffd49ba7b733aa1fe59fa57baa5a5 Joaquim Ataides <ti@promobrindes.com.br> 1791535613 -0300	
+99037feef48ffd49ba7b733aa1fe59fa57baa5a5 99037feef48ffd49ba7b733aa1fe59fa57baa5a5 Joaquim Ataides <ti@promobrindes.com.br> 1791535613 -0300	reset: moving to HEAD
+99037feef48ffd49ba7b733aa1fe59fa57baa5a5 161262d666173ca43472d023e6d38950043e6960 Joaquim Ataides <ti@promobrindes.com.br> 1791535628 -0300	cherry-pick: test(qualidade): testes de analytics, metas, relatórios agendados e gamificação
+161262d666173ca43472d023e6d38950043e6960 725db84aa9508b4ee307a80e1e3ff63cbce25cd9 Joaquim Ataides <ti@promobrindes.com.br> 1791535628 -0300	cherry-pick: test(qualidade): Y07 refazer 1 — prende as asserções ao que o título promete
+725db84aa9508b4ee307a80e1e3ff63cbce25cd9 573e831563a6f6950de7b25ee10aee18fbe4643f Joaquim Ataides <ti@promobrindes.com.br> 1791535806 -0300	commit: test(qualidade): Y07 refazer 2 — tira o dado do limite da janela (falha só antes das 10h)

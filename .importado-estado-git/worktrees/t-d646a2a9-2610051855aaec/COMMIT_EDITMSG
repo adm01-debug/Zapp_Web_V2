@@ -1,0 +1,13 @@
+fix(talk-me): recupera aceite com resposta perdida e bloqueia aceite offline
+
+O aceite deixa de tratar resposta perdida como falha definitiva: rejeicao de
+transporte ou resposta sem corpo utilizavel vira TalkMeOutcomeUnknownError,
+o dialogo segue aberto e "Conferir aceite" reusa a RPC idempotente para reabrir
+o MESMO atendimento (o servidor devolve o aceite do vencedor sem novo INSERT em
+audit_logs). Erro estruturado do Postgres/PostgREST continua falha definitiva.
+
+Offline o aceite nem sai do navegador (TalkMeOfflineError) e o CTA fica
+desabilitado; ao reconectar o hook apenas reconsulta o estado, sem enfileirar
+aceite automatico (etapa 060 do plano TALK ME).
+
+9 testes novos (vermelho antes, verde depois) + 50 verdes no modulo talk-me.

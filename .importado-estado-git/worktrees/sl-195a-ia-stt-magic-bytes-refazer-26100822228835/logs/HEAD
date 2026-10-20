@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508958 -0300	
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508959 -0300	reset: moving to HEAD
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 7a2d7085f6400344f8ff7e7d1eba224aa9b5f0b2 Joaquim Ataides <ti@promobrindes.com.br> 1791508968 -0300	cherry-pick: fix(ai-transcribe-audio): escolher o tipo de áudio pelos magic bytes
+7a2d7085f6400344f8ff7e7d1eba224aa9b5f0b2 e40332b40588ed3b3dd83becff1b0b53216d1f67 Joaquim Ataides <ti@promobrindes.com.br> 1791509050 -0300	commit: fix(ai-transcribe-audio): filtra magic bytes de áudio

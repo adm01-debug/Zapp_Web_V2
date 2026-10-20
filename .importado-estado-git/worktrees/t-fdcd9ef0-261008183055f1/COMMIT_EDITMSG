@@ -1,0 +1,3 @@
+fix(design-system/ui): registra excecoes conscientes de tipografia em EXCECOES.md (SL-178)
+
+Etapa 66 do PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24: o registro das excecoes conscientes nao existia. Cria docs/tipografia/EXCECOES.md (120px do NotFound e system-ui da tela de erro de boot) e a guarda scripts/ci/tipografia-excecoes-doc.unit.mjs, que recusa o registro se uma excecao obrigatoria sumir do texto ou se o uso documentado deixar de existir no codigo.

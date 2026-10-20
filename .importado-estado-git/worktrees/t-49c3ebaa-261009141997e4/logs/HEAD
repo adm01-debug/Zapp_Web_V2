@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566396 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566397 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 1c20f9bfe211d06a4bb034ad27a9db788bff145c Joaquim Ataides <ti@promobrindes.com.br> 1791568097 -0300	commit: test(telefonia): dubla a fachada lazyToast no teste do useSipClient, nao o sonner

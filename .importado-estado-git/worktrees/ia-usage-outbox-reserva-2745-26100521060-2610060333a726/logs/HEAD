@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791268397 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791268397 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 3d23db2b98797f589d3b48169c19757504aced0b Joaquim Ataides <ti@promobrindes.com.br> 1791268469 -0300	cherry-pick: fix(edge): estabiliza a reserva do event_id no reprocessamento da outbox

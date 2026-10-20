@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524448 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 db55eebac924cc440f031a19c7723c36a8a8c085 Joaquim Ataides <ti@promobrindes.com.br> 1791525579 -0300	commit: fix(talk-x): Criar TalkXMessagePreview fiel ao WhatsApp com midia, interativo e tela cheia (TL-120)
+db55eebac924cc440f031a19c7723c36a8a8c085 a7d864c21dde6fec8bbe50462037c54aa55ded3a Joaquim Ataides <ti@promobrindes.com.br> 1791525652 -0300	commit (amend): fix(talk-x): Criar TalkXMessagePreview fiel ao WhatsApp com midia, interativo e tela cheia (TL-120)
+a7d864c21dde6fec8bbe50462037c54aa55ded3a 3ee8e0f55399fd83600bbeaacd13c2fcf41329e7 Joaquim Ataides <ti@promobrindes.com.br> 1791525842 -0300	commit (amend): fix(talk-x): Criar TalkXMessagePreview fiel ao WhatsApp com midia, interativo e tela cheia (TL-120)
+3ee8e0f55399fd83600bbeaacd13c2fcf41329e7 5288eb94fc26e2f263375d59caf5706df864a5d0 Joaquim Ataides <ti@promobrindes.com.br> 1791557735 -0300	rebase (finish): refs/heads/v2/t-33579d39-2610090240b08c onto 1098da5a935929b171674a99b425d6b515fd6072

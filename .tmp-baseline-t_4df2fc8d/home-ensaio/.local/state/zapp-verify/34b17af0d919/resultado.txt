@@ -1,0 +1,2 @@
+OK      travas         12s
+AVISO   banco_local     1s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline/home-ensaio/.local/state/zapp-verify/34b17af0d919/banco_local.log)

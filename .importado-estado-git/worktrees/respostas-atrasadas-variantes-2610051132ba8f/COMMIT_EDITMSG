@@ -1,0 +1,16 @@
+fix(talkx): descarta resposta atrasada de variantes e historico de outro template
+
+R2-MOD-024 (item 102/P1): os loaders de variantes e de historico aplicavam
+setVariants/setVersions sem comparar o template de origem. Pedir variantes de A,
+trocar para B e receber a resposta de A depois da de B substituia o painel de B
+por dados de A, e um onBlur/clique sobre essa linha enviava payload de A com o
+editor identificado como B.
+
+- fetchVersions/loadVariants so aplicam a resposta se o template de origem
+  ainda for o ativo (ref sempre atual; loadTemplate invalida o anterior);
+- salvar/excluir variante e restaurar versao recusam payload cuja origem nao
+  bate com o template ativo (variante por template_id; versao por template_id,
+  agora trazido no select do historico).
+
+Teste: src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx
+(5 casos, vermelho antes/verde depois).

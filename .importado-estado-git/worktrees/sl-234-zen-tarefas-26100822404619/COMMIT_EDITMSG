@@ -1,0 +1,17 @@
+fix(tarefas/quadro): Modo zen validado no módulo de Tarefas (SL-234)
+
+Lacuna do inventário (CP-H) confirmada na ponta dia/2026-10-08: o ledger marca
+"zen=aberta — nao verificada (garantia apenas por construcao)" e não havia
+nenhuma referência ao modo zen em src/components/tasks (git grep só casa a
+palavra "Fazendo").
+
+Fecha a lacuna pelo lado da verificação, sem tocar em produção: o modo zen é
+decidido pelo shell (AppShell tira a sidebar com !isMobile && !isZen e passa
+hidePageBreadcrumbs=false pelo LayoutContext), então o cabeçalho do PRÓPRIO
+módulo volta a desenhar a trilha (Início / Tarefas) — o caminho de navegação
+que resta com a sidebar fora — e o módulo tem de seguir inteiro.
+
+- src/components/tasks/__tests__/zen.tarefas.test.tsx (novo): 3 casos entrando
+  pelo estado real do shell (localStorage 'zen-mode') com AppShell + TasksModule
+  reais; vermelho provado em 4 regressões desfeitas (sidebar, hidePageBreadcrumbs,
+  breadcrumbs do módulo e o Esc do useZenMode) e verde em 3/3.

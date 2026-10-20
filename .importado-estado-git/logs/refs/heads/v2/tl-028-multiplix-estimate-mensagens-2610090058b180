@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 Joaquim Ataides <ti@promobrindes.com.br> 1791518294 -0300	branch: Created from dia/2026-10-09
+0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 da6fb5fcef9342d32b406789a645fe75c02f12e8 Joaquim Ataides <ti@promobrindes.com.br> 1791518987 -0300	commit: fix(multiplix): estimate → mensagens (aptos × blocos), versões de rotei (TL-028)
+da6fb5fcef9342d32b406789a645fe75c02f12e8 10ad5474658a6787975cad4138c73b79add406b8 Joaquim Ataides <ti@promobrindes.com.br> 1791556448 -0300	rebase (finish): refs/heads/v2/tl-028-multiplix-estimate-mensagens-2610090058b180 onto 1098da5a935929b171674a99b425d6b515fd6072

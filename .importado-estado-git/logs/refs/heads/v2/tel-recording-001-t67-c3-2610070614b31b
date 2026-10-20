@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 19365036be0e33102a2f8ba7ad357bf59d57c2ea Joaquim Ataides <ti@promobrindes.com.br> 1791364444 -0300	branch: Created from dia/2026-10-07
+19365036be0e33102a2f8ba7ad357bf59d57c2ea 7d7be96cc3590197f6a3025349e3e070d9812e0a Joaquim Ataides <ti@promobrindes.com.br> 1791365438 -0300	commit: fix(telefonia): player de gravacao usa so o blob local - URL de origem nunca entra no DOM
+7d7be96cc3590197f6a3025349e3e070d9812e0a 884ee35f30dbf6239ea1ac5a0fd6c0b7fb08cb00 Joaquim Ataides <ti@promobrindes.com.br> 1791365628 -0300	commit (amend): fix(telefonia): player de gravacao usa so o blob local - URL de origem nunca entra no DOM

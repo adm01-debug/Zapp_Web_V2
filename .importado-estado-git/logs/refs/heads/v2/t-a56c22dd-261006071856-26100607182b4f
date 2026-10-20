@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8139cc3eca6311580cbaba02cbfece7a53ede90b Joaquim Ataides <ti@promobrindes.com.br> 1791281937 -0300	branch: Created from dia/2026-10-06
+8139cc3eca6311580cbaba02cbfece7a53ede90b 607f17123342847c6376b8bcf02472aadf7af3b7 Joaquim Ataides <ti@promobrindes.com.br> 1791281963 -0300	cherry-pick: fix(ci): falha explicita quando o tsc sai com erro sem diagnostico parseavel

@@ -1,0 +1,12 @@
+fix(security): salvar regras de rate limit não apaga mais a configuração (R2-AUTH-023)
+
+O salvar fazia DELETE global e depois INSERT, sem transação e sem conferir o
+resultado: um erro no INSERT deixava a tabela sem nenhuma regra. Agora grava o
+conjunto novo antes de remover o antigo, remove só os ids lidos do banco,
+desfaz o conjunto novo se a remoção falhar e valida os campos antes de escrever.
+Leitura com erro deixa de virar "salvar por cima" (erro + tentar novamente).
+
+A "Ação" por regra (Bloquear/Limitar/Alertar) foi retirada: não existe coluna
+`action` em rate_limit_configs, o campo não ia no INSERT, o fetch forçava 'block'
+e nenhum consumidor no repositório usa essa ação — a auditoria manda retirar a
+opção sem semântica implementada, em vez de descartar a escolha do admin.

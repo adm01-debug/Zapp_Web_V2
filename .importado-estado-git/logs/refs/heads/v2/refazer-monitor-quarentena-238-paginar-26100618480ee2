@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323322 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 e684c1835de3d3758551b79b9669a2b3ac70a5d2 Joaquim Ataides <ti@promobrindes.com.br> 1791323341 -0300	cherry-pick: fix(quarentena): reconciliar cache do monitor e retomar em falha transitória
+e684c1835de3d3758551b79b9669a2b3ac70a5d2 fc0beec635cfa0c274fce7c94a426540334d87cd Joaquim Ataides <ti@promobrindes.com.br> 1791323341 -0300	cherry-pick: fix(quarentena): separar janela de ativos das liberações no monitor
+fc0beec635cfa0c274fce7c94a426540334d87cd 02a89f9d49de7d0533ba3ed6ef1cce40fc52f764 Joaquim Ataides <ti@promobrindes.com.br> 1791323341 -0300	cherry-pick: fix(quarentena): consulta separada de liberações e provas da reconciliação
+02a89f9d49de7d0533ba3ed6ef1cce40fc52f764 5a9c628bf5547c581a42655e35b19e82326b82d0 Joaquim Ataides <ti@promobrindes.com.br> 1791323341 -0300	cherry-pick: fix(quarentena): paginar liberações e reconciliar a versão mais recente no monitor (#238)
+5a9c628bf5547c581a42655e35b19e82326b82d0 81aa39add5c928706f125b31ad2cc6f9a6854e97 Joaquim Ataides <ti@promobrindes.com.br> 1791323851 -0300	commit: fix(quarentena): preservar re-quarentena mais recente

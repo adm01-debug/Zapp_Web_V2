@@ -1,0 +1,23 @@
+fix(edge): log essencial de IA com event_id reservado na outbox durável (#44)
+
+Recusa da rodada anterior: no reprocessamento (`reprocessarOutboxDeLog`), o
+pendente que só tem `entrada` (event_id NULL) recebia um `crypto.randomUUID()`
+que NUNCA era gravado na outbox. Se a baixa falhasse (ou o processo caísse
+depois do upsert), a passada seguinte gerava outro uuid e gravava uma segunda
+linha em `ai_usage_logs` — cobrança duplicada, o mesmo defeito que a recusa
+mandou eliminar.
+
+- `persistirEventIdNaOutbox`: PATCH condicionado a `event_id=is.null`
+  (compare-and-swap no banco, não consulta prévia) grava a identidade na linha
+  da outbox ANTES de qualquer envio; `return=representation` confirma a
+  reserva. Sem a linha de volta, o item NÃO é enviado: segue pendente com
+  `tentativas` +1.
+- A linha enviada passa a carregar sempre a identidade já persistida; a
+  passada seguinte reencontra a mesma e o `ON CONFLICT (event_id)` absorve o
+  reenvio em vez de criar segunda cobrança.
+- Migration `20261006165108_ia_timeout_001_event_id_outbox.sql`: `event_id` +
+  UNIQUE em `ai_usage_logs` e a outbox durável com RLS e GRANT só para
+  service_role (anon/authenticated/public revogados). Aplicada no banco LOCAL.
+- Testes novos (vermelho antes, verde depois) cobrem a reserva persistida, o
+  reenvio da 2ª passada com o MESMO event_id e a reserva que não altera a
+  linha (nega o envio, mantém pendente).

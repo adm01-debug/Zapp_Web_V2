@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791558073 -0300	branch: Created from dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 9a05198a0f5789aac712ed5cf7e8a008f3a2a288 Joaquim Ataides <ti@promobrindes.com.br> 1791558109 -0300	cherry-pick: fix(performance): pagina do GET de mensagens deixa de pedir 1000 linhas (SL-099)
+9a05198a0f5789aac712ed5cf7e8a008f3a2a288 3780eee08ebd55be3e95449461a0c769c26f3993 Joaquim Ataides <ti@promobrindes.com.br> 1791558991 -0300	commit: test(mensagens): teste de paginacao deixa de fixar a pagina em 1000 (SL-099)
+3780eee08ebd55be3e95449461a0c769c26f3993 726f9dc3c0bd1ca4a4d8527992bb5f523115eb22 Joaquim Ataides <ti@promobrindes.com.br> 1791560016 -0300	merge dia/2026-10-09: Merge made by the 'ort' strategy.
+726f9dc3c0bd1ca4a4d8527992bb5f523115eb22 3780eee08ebd55be3e95449461a0c769c26f3993 Joaquim Ataides <ti@promobrindes.com.br> 1791560027 -0300	reset: moving to 3780eee08ebd55be3e95449461a0c769c26f3993

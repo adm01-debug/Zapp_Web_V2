@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491133 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc b44f09785fa26787e393057ea092ef7353ff627d worker (testes) <worker-testes@promobrindes.local> 1791491406 -0300	commit: fix(ci): artifacts do ci.yml so em dispatch (dist), main (coverage) e falha (playwright-report) (SL-100)

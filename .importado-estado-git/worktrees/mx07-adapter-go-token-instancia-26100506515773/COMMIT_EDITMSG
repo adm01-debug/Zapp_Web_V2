@@ -1,0 +1,17 @@
+fix(edge): envio GO usa o token da instância e falha fechado sem ele (MX07)
+
+O adaptador evolution-go caía em `deps.instanceToken ?? deps.evolutionKey`,
+então uma rota auth=instance podia sair com a key global admin no header apikey.
+authHeaders agora escolhe a credencial pelo go.auth: admin usa a key global;
+instance exige deps.instanceToken e, sem ele, lança MessagingError
+(missing_instance_token) antes de tocar a rede — presença engole (best-effort),
+envio propaga.
+
+O worker multiplix-send resolve o token DA instância selecionada antes do envio
+(get_instance_token, mesmo padrão do talkx-send: fallback EVOLUTION_INSTANCE_TOKEN
+só na instância padrão) e o passa em deps.instanceToken; instância sem token
+pausa o disparo como connection_lost e devolve o item à fila.
+
+Testes: adapter rejeita rota de instância sem token (vermelho antes, verde
+depois), duas instâncias saem cada uma com seu token e nunca com a key global,
+worker resolve/passa o token da conexão e pausa fail-closed sem ele.

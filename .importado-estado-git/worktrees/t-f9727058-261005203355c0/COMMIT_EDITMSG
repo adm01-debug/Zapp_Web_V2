@@ -1,0 +1,3 @@
+fix(conexoes): editor de privacidade envia so os campos alterados
+
+O rascunho de privacidade nasce vazio (campo desconhecido aparece como "Manter atual"), o salvar envia apenas os campos escolhidos e trocar de instancia descarta o rascunho. Antes, salvar uma alteracao pontual reenviava os seis campos com padroes locais e reabria opcoes da conta que o operador nao tocou (R2-API-040, item 214).

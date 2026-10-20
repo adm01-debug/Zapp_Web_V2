@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542345 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542347 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 44cd5b7233ff8d9d114e85c41f8bae2e726e8e99 Joaquim Ataides <ti@promobrindes.com.br> 1791543166 -0300	commit: fix(telefonia): hook de gravacao entrega os BYTES da Edge como Blob, nunca endereco (TEL-RECORDING-001)
+44cd5b7233ff8d9d114e85c41f8bae2e726e8e99 9d4ef9e4aaf5e0f57b864945f15a46b5bc1286e3 Joaquim Ataides <ti@promobrindes.com.br> 1791543184 -0300	commit (amend): fix(telefonia): hook de gravacao entrega os BYTES da Edge como Blob, nunca endereco (TEL-RECORDING-001)

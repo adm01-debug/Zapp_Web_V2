@@ -1,0 +1,7 @@
+test(tarefas): prova que ?task=<id> abre a folha em qualquer modo
+
+E19 (plano da fusão Quadro→Tarefas): arquivo novo de teste do TasksModule
+cobrindo o contrato de entrada — `?view=tasks&task=<id>` abre o WorkItemSheet
+nos três modos (Lista, Quadro e Agenda), porque o modo vem de `tasks-mode` e a
+folha do id da URL; sem `task`, a tela retoma o modo salvo e não abre folha.
+Nenhuma linha de produção mudou (o comportamento já existe).

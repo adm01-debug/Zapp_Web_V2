@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791246068 -0300	branch: Created from dia/2026-10-05
+55a428d7a89316109e71d975c4193d67f7b3b051 e357ccbc8aeaaab49b518a5e22b9acd5bcf71783 Joaquim Ataides <ti@promobrindes.com.br> 1791247066 -0300	commit: fix(ci): falha explicita quando o tsc sai com erro sem diagnostico parseavel

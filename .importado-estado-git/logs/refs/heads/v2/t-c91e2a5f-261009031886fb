@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526730 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 8696cd3958f6ca187bd747fdfd8e833ab9e3002e Joaquim Ataides <ti@promobrindes.com.br> 1791526921 -0300	commit: perf(ci): chunk proprio para o framer-motion fora do vendor-ui (SL-103B)
+8696cd3958f6ca187bd747fdfd8e833ab9e3002e f6f64f0784d64863eceda53186ad14d36deb95c3 Joaquim Ataides <ti@promobrindes.com.br> 1791527008 -0300	commit: test(ci): guarda de chunking do framer-motion fora do vendor-ui (SL-103B)

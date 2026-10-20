@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510700 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 a6d7d5a019bfc5fb00aee7c7b8c503d016888808 Joaquim Ataides <ti@promobrindes.com.br> 1791510724 -0300	cherry-pick: feat(journey): linhas cruas e fontes de ligação e e-mail do histórico
+a6d7d5a019bfc5fb00aee7c7b8c503d016888808 e7128297aeb1ca0eee739b14348c274c0ded34a8 Joaquim Ataides <ti@promobrindes.com.br> 1791511249 -0300	commit: fix(journey): nao pede recording_url ao banco; hasRecording vem so do recording_status

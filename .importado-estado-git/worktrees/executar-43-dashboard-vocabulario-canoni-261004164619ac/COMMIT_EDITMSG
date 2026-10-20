@@ -1,0 +1,13 @@
+fix(dashboard): alinha consumidores de sentimento ao vocabulário canônico PT-BR
+
+IA-SENTIMENT-001: useAIStats comparava positive/negative/neutral — a classe
+gravada é pt-BR (positivo/neutro/negativo/critico), então toda contagem
+canônica zerava e o `else` final jogava crítico/desconhecido em neutro.
+useRecentSentimentAlerts e useRealSentimentData (SentimentHelpers) liam o
+sentimento cru: o legado EN e o `critico` desapareciam dos alertas e da série.
+
+Agora: normaliza pela classe canônica (`classifySentiment` sobre
+`normalizeSentiment`), soma `critico` à classe negativa e mantém
+desconhecido/ausente fora de todos os baldes. O pill de alerta passa a exibir
+"Crítico". Testes de regressão (vermelho antes, verde depois) cobrem a matriz
+pt-BR/EN/crítico/desconhecido/ausente nos dois widgets.

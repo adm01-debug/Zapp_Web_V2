@@ -1,0 +1,17 @@
+fix(telefonia): Revisão final de CAPACIDADES/CONTRATO e snapshot final. (SL-242)
+
+T92 (fechado): os dois documentos de contrato da Telefonia ganham o carimbo de
+revisão (08/10/2026, commit 1a1bc3179) e as afirmações são refeitas contra o
+código — origem dos defaults SIP na Edge (T15), Inviter no adapter (T09),
+onInvite/handleCallEvent com arquivo e linha certos, gravação (T67/T72/T73),
+D3 = Bitrix24 (Joaquim, 29/09) e D7 = (b) 'Ignorar', e a seção 8 passa a listar
+as 5 RPCs do escopo do baseline (faltava record_incoming_call_event).
+
+Prova: tests/contracts/telefonia-contrato-docs.contract.test.ts — 9 dos 10 casos
+ficam vermelhos com os documentos originais e 10/10 verdes com os revisados.
+
+T93 (bloqueado por regra): o snapshot final.json só sai com DESTINO_URL do
+projeto canônico (scripts/db-audit/database-identity.json), ou seja acesso à
+produção — proibido a agentes. Motivo, comando oficial e a verificação por git
+(2 migrations tocaram calls desde o baseline, uma fora deste plano) ficam na
+linha do T93 do plano.

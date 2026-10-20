@@ -1,0 +1,3 @@
+docs(team-chat): corrige comentario invertido do contrato de handleAudioSend (#350)
+
+O TextToAudioButton PRESERVA a previa do audio gerado quando o envio devolve false ou rejeita, e so a descarta no envio confirmado com true.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536401 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536402 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 0b6dbf5f185ce10f31e94aa05f97ebf70832835f edgar <edgar@hermes.local> 1791536910 -0300	commit: fix(segurança): external-db-proxy exige papel na leitura (Y27 P0-02)
+0b6dbf5f185ce10f31e94aa05f97ebf70832835f 2a8ff9141cc358070a2d3aa700e81606cea54e01 edgar <edgar@hermes.local> 1791536996 -0300	commit (amend): fix(seguranca): external-db-proxy exige papel na leitura (Y27 P0-02)

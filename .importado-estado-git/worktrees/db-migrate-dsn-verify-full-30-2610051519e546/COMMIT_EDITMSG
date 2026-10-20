@@ -1,0 +1,22 @@
+fix(db-migrate): consumidores herdam o DSN endurecido do GITHUB_ENV (R2-INF-003)
+
+O passo de validacao endurecia o DSN (sslmode=verify-full + CA Supabase
+pinada) e exportava via GITHUB_ENV, mas os passos seguintes redeclaravam
+DESTINO_URL a partir do secret bruto no `env:` de cada um, sobrescrevendo
+o DSN endurecido. Como withPsqlEnvironment() descarta os PG* herdados e
+recompoe so o que esta no DSN recebido, o verify-full e a CA se perdiam
+no transporte de todos os psql-safe.mjs seguintes.
+
+Nenhum passo redeclara mais o secret: ele e lido uma unica vez, em
+DESTINO_URL_RAW. O MESMO DSN endurecido (ja mascarado) sai no GITHUB_ENV
+tambem como SUPABASE_DB_URL, que o CLI do Supabase le e que nao entra na
+lista de PG* do withPsqlEnvironment — os dois passos do CLI (dry-run e
+apply) herdam o valor do GITHUB_ENV como os demais. Mesmo padrao do
+types-sync.yml e do targeted-ledger-evidence.yml.
+
+Testes: scripts/ci/db-migrate-workflow.unit.mjs -- 5 casos, incluindo os
+3 de R2-INF-003 (secret bruto com 22 ocorrencias -> 1; cadeia
+secret -> endurecerDestinoTls -> withPsqlEnvironment entrega verify-full +
+CA; nenhum passo redeclara SUPABASE_DB_URL/DESTINO_URL e os 2 passos do
+CLI continuam). Os 3 ficam vermelhos no workflow anterior e verdes com
+esta correcao.

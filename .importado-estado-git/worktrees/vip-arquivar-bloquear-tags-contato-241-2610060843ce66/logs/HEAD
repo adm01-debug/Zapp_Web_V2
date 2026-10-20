@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791286985 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791286986 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 807ea8411adb41b0a9c9f0d5035bb57e35deac93 Joaquim Ataides <ti@promobrindes.com.br> 1791288988 -0300	commit: fix(inbox): persistir VIP, arquivar, bloquear e tags no detalhe do contato (#241)
+807ea8411adb41b0a9c9f0d5035bb57e35deac93 f3ed21d3a267b11211fe866bdaee3aa8215ae5c9 hermes-complexo <hermes@promobrindes.local> 1791289648 -0300	commit: fix(inbox): Desfazer do Arquivar reabre o contato quando o FSM recusa o status anterior (#241)

@@ -1,0 +1,1 @@
+fix(voz): evento final do ditado anterior nao desliga o indicador da nova sessao (#338)

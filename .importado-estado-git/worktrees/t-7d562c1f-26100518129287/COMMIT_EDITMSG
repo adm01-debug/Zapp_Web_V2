@@ -1,0 +1,12 @@
+ci(db-guard): registra diagnóstico do exit 2 no passo revoke-auth-sessions
+
+O passo "Provar revogação de sessões Auth" (R2-AUTH-004) falhou uma vez no runner
+com exit 2 silencioso e passou na repetição. O comando não usa mais `-x` nesta
+base: a flag de diagnóstico veio do commit 5143f0381, que está dangling (nenhum
+ref o contém, sem filho) e nunca foi integrado.
+
+Reprodução local em PostgreSQL descartável: 6/6 execuções verdes e o exit 2 é
+inalcançável por esta trilha — o teste só emite exit 1 e o wrapper só propaga
+0/1 (ou 64 de uso). Conclusão: falha transitória da infraestrutura do runner.
+
+Sem mudança funcional: o diff é apenas o comentário de diagnóstico acima do passo.

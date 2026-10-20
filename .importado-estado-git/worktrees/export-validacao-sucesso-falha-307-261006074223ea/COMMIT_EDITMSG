@@ -1,0 +1,13 @@
+fix(export): não anunciar sucesso do destino após falha do comando de banco
+
+R2-GOV-004 (item #307): supabase-export/validate_destino.sh perdia o status do
+node/psql no pipeline `| tee` (sem pipefail) e não conferia a falha da geração do
+JSON. Com 0 linhas FAIL no buffer, o script saía 0 e imprimia
+"✅ Destino validado com sucesso." logo depois de "psql: simulated connection
+failure" — anúncio de sucesso após falha do comando de banco.
+
+- `set -uo pipefail`: o `if !` do primeiro comando de banco volta a enxergar a falha.
+- a geração do JSON de validação agora tem o status conferido (exit 2 se falhar).
+- scripts/db-audit/validate-destino.test.mjs executa o script real com um `node`
+  falso na PATH (conexão, métrica ❌ FAIL, falha ao gravar o JSON, sucesso
+  sintético): vermelho antes, verde depois. Nenhum banco, psql ou rede.

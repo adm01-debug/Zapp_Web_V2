@@ -1,0 +1,15 @@
+fix(arquivos): invalida contagens só quando o universo de mídia muda; erro vira indisponível (#144)
+
+Recusa da rodada 1: o handler de UPDATE em useMessages invalidava as três chaves em
+qualquer UPDATE de mensagem com mídia (`oldRow.media_url || updatedMessage.media_url`),
+gerando refetch em rajada a cada ack de mídia (status entregue/lido).
+
+- onUpdate passa a comparar os DOIS lados (`old` x `new`) de `is_deleted` e `media_url`
+  e só invalida quando o universo contado muda de fato.
+- Fallback conservador quando `old` chega sem as colunas (Realtime sem REPLICA IDENTITY
+  FULL entrega só a PK): invalida se a linha nova tem mídia, para não perder o agregado.
+- Comentário reescrito para descrever a comparação.
+- Teste RED→GREEN: UPDATE só de status/ack numa mensagem COM mídia NÃO invalida as chaves.
+
+O ajuste de FilesTab (erro na contagem vira "—" em vez de "0") fica citado no título
+por ir além de "invalida contagens após exclusão".

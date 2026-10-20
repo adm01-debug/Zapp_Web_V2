@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315927 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 24d33b1db043048768c7e6047058f86f43b5bc0c Joaquim Ataides <ti@promobrindes.com.br> 1791317732 -0300	commit: fix(db): bloqueia o próprio flag administrativo de download no perfil (#252)

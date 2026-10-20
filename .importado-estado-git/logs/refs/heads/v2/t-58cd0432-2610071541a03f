@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 6e7686335cf993e352f484133b0ea9826f94e806 Joaquim Ataides <ti@promobrindes.com.br> 1791398511 -0300	branch: Created from dia/2026-10-07
+6e7686335cf993e352f484133b0ea9826f94e806 25b79445629bb189c4b1dd4890a1185dd2050693 Joaquim Ataides <ti@promobrindes.com.br> 1791398615 -0300	commit (cherry-pick): test(db): trava da ACL de midia pega join em messages sem schema e --sem-acl so aceita o vermelho esperado (R2-DB-022 B1)
+25b79445629bb189c4b1dd4890a1185dd2050693 b9fa61e2a134d2f8c90957dcd1570cc07cbd79a6 Joaquim Ataides <ti@promobrindes.com.br> 1791399476 -0300	commit (amend): test(db): corrige prova SQL da ACL de midia sem teste orfao

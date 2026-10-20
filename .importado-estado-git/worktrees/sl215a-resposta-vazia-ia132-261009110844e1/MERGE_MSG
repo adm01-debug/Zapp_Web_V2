@@ -1,0 +1,3 @@
+Revert "fix(ia): resposta vazia do provedor nao vira categoria 'outros' concluida (IA-132)"
+
+This reverts commit d6e225bac52ef335ec3bc951c1fdb091087e3004.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791245921 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791245922 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 b413f859e700fb41d7b228d164dde42d8fea75a4 Joaquim Ataides <ti@promobrindes.com.br> 1791245931 -0300	cherry-pick: fix(rotas): redireciona view=tags removido e limpa resíduos da remoção de Etiquetas
+b413f859e700fb41d7b228d164dde42d8fea75a4 430197e471c68d366eff73b6d5c4a0ad051ae5c6 Joaquim Ataides <ti@promobrindes.com.br> 1791246392 -0300	commit: fix(rotas): normaliza legado tags vindo do hash

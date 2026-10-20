@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a Joaquim Ataides <ti@promobrindes.com.br> 1791351959 -0300	branch: Created from dia/2026-10-07
+2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a 3cc4171529941dce712be91421e6944d8dc522d1 Joaquim Ataides <ti@promobrindes.com.br> 1791353955 -0300	commit: fix(calls): player nao reutiliza URL blob revogada do cache do react-query (#62)

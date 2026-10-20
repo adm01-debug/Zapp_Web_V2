@@ -1,0 +1,82 @@
+{
+  "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_kind": "materialized Git tree; verified against parent integrity manifest",
+  "files": [
+    {
+      "path": "src/components/admin/useAdminData.ts",
+      "git_blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+      "bytes": 8352
+    },
+    {
+      "path": "src/components/contacts/ContactBulkTagDialog.tsx",
+      "git_blob_sha": "386521b4886c48e6ea533072c2522255fca0206c",
+      "bytes": 7506
+    },
+    {
+      "path": "src/components/permissions/PermissionMatrix.tsx",
+      "git_blob_sha": "9528e77ae5a584e286e70c2fb38a6a5f218e4d62",
+      "bytes": 7038
+    },
+    {
+      "path": "src/components/team-chat/TeamChatView.tsx",
+      "git_blob_sha": "8454231c59f5d39daef659d66756ecbe66ed4d2b",
+      "bytes": 4129
+    },
+    {
+      "path": "src/components/team-chat/useTeamChatPanel.ts",
+      "git_blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3",
+      "bytes": 12675
+    },
+    {
+      "path": "src/hooks/auth/useAuth.tsx",
+      "git_blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+      "bytes": 7284
+    },
+    {
+      "path": "src/hooks/chat/useTeamChatDraft.ts",
+      "git_blob_sha": "586bbd32e45e818ee4fac64e38a6e82df4d849dd",
+      "bytes": 3269
+    },
+    {
+      "path": "src/hooks/crm/useContactIntelligence.ts",
+      "git_blob_sha": "18ab915b7c991b6358fcd9d58a8c7e3ef95c4d11",
+      "bytes": 3074
+    },
+    {
+      "path": "src/hooks/system/usePermissions.ts",
+      "git_blob_sha": "c8242e4421b19780f72aa36765883db807309f60",
+      "bytes": 4879
+    },
+    {
+      "path": "src/lib/serverLogin.ts",
+      "git_blob_sha": "dd7d79a775127bbb18ee7a64b6e5f730032609aa",
+      "bytes": 4796
+    },
+    {
+      "path": "supabase/functions/_shared/crm-integration-contract.ts",
+      "git_blob_sha": "cfbc3a02deeee3685973ee5e87eea47de4f643ae",
+      "bytes": 8856
+    },
+    {
+      "path": "supabase/functions/_shared/schemas.ts",
+      "git_blob_sha": "57b706d77864be9c2c24f0eb57f0728335b0b2d0",
+      "bytes": 29665
+    },
+    {
+      "path": "supabase/functions/auth-login/index.ts",
+      "git_blob_sha": "a4fe292c8b536d271ff3d65008b5ee8473babc99",
+      "bytes": 4874
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.ts",
+      "git_blob_sha": "d51878b27773388bf87396cb82f9b62c8c818c7b",
+      "bytes": 44811
+    },
+    {
+      "path": "supabase/functions/webauthn/index.ts",
+      "git_blob_sha": "9e42845d17a6dead75e6deb95f12be00d9e7b340",
+      "bytes": 9628
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+LOG  PROVA-SEM: a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+CMD  zapp-verify full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/prova/tmp/copia
+STUB reteste_isolado — fora do escopo desta prova (a prova é a ROTA escolhida)

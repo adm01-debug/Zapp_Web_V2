@@ -1,0 +1,119 @@
+--- ENTREGA/src/hooks/chat/useMessagePins.ts
++++ FIX/src/hooks/chat/useMessagePins.ts
+@@ -1,4 +1,4 @@
+-import { useCallback, useEffect } from 'react';
++import { useCallback } from 'react';
+ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+ import { toast } from 'sonner';
+ import { supabase } from '@/integrations/supabase/client';
+@@ -66,7 +66,14 @@
+   refetch: () => Promise<unknown>;
+ }
+ 
+-/** Lista as mensagens fixadas da conversa, com assinatura de realtime por contato.
++/** Lista as mensagens fixadas da conversa.
++ *
++ *  Sem assinatura de realtime: `public.message_pins` está fora da publicação
++ *  `supabase_realtime` (ver `scripts/db-audit/realtime-publication-baseline.json`),
++ *  então uma subscription seria morta e quebra a guarda de realtime do CI. A lista
++ *  revalida a cada pin/unpin (invalidação no `onSettled`) e a cada 30 s
++ *  (`staleTime`). Reavaliar o realtime quando a trilha de banco incluir a tabela
++ *  na publicação e na baseline.
+  *
+  *  Ordem determinística: `pinned_at` desc com `id` desc como desempate (duas
+  *  fixações no mesmo instante não trocam de posição entre releituras). */
+@@ -90,25 +97,6 @@
+     enabled: !!contactId,
+     staleTime: 30_000,
+   });
+-
+-  // Realtime no padrão do app (useMessageStatus/useMessageReactions): qualquer
+-  // pin/unpin da conversa revalida a lista, inclusive o fixado por outro agente.
+-  useEffect(() => {
+-    if (!contactId) return;
+-    const channel = supabase
+-      .channel(`message-pins:${contactId}`)
+-      .on(
+-        'postgres_changes',
+-        { event: '*', schema: 'public', table: 'message_pins', filter: `contact_id=eq.${contactId}` },
+-        () => {
+-          void queryClient.invalidateQueries({ queryKey: messagePinsKey(contactId) });
+-        },
+-      )
+-      .subscribe();
+-    return () => {
+-      void supabase.removeChannel(channel);
+-    };
+-  }, [contactId, queryClient]);
+ 
+   const pinMutation = useMutation({
+     mutationFn: async (messageId: string): Promise<string> => {
+--- ENTREGA/src/hooks/chat/__tests__/useMessagePins.test.tsx
++++ FIX/src/hooks/chat/__tests__/useMessagePins.test.tsx
+@@ -3,8 +3,9 @@
+ import { renderHook, waitFor, act } from '@testing-library/react';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ 
+-/** A03 — fixar/desafixar (`useMessagePins`): lista ordenada, realtime por contato,
+- *  otimismo com rollback e tradução do limite de 3 e da falta de permissão. */
++/** A03 — fixar/desafixar (`useMessagePins`): lista ordenada, sem assinatura de
++ *  realtime (tabela fora da publicação `supabase_realtime`), otimismo com
++ *  rollback e tradução do limite de 3 e da falta de permissão. */
+ 
+ const h = vi.hoisted(() => ({
+   rows: {} as Record<string, unknown[]>,
+@@ -14,7 +15,6 @@
+   rpcCalls: [] as Array<{ fn: string; args?: Record<string, unknown> }>,
+   queries: [] as Array<{ table: string; eq: Array<[string, unknown]>; order: Array<{ col: string; opts?: unknown }> }>,
+   channels: [] as string[],
+-  realtime: [] as Array<{ cfg: Record<string, unknown>; cb: () => void }>,
+ }));
+ 
+ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
+@@ -44,10 +44,7 @@
+       },
+       channel: (name: string) => {
+         h.channels.push(name);
+-        const c: Record<string, unknown> = {};
+-        c.on = (_evt: string, cfg: Record<string, unknown>, cb: () => void) => { h.realtime.push({ cfg, cb }); return c; };
+-        c.subscribe = () => c;
+-        return c;
++        return {};
+       },
+       removeChannel: vi.fn(),
+     },
+@@ -80,7 +77,6 @@
+   h.rpcCalls = [];
+   h.queries = [];
+   h.channels = [];
+-  h.realtime = [];
+   vi.clearAllMocks();
+ });
+ 
+@@ -101,20 +97,15 @@
+     ]);
+   });
+ 
+-  it('assina o realtime da conversa e revalida a lista ao receber evento', async () => {
++  it('não abre channel de realtime (message_pins está fora da publicação)', async () => {
+     h.rows.message_pins = [PIN_A];
+-    const { result } = montar();
++    const { result, unmount } = montar();
+     await waitFor(() => expect(result.current.isLoading).toBe(false));
+ 
+-    expect(h.channels).toContain('message-pins:contact-1');
+-    expect(h.realtime[0]?.cfg.table).toBe('message_pins');
+-    expect(h.realtime[0]?.cfg.filter).toBe('contact_id=eq.contact-1');
+-
+-    const leiturasAntes = h.queries.filter((q) => q.table === 'message_pins').length;
+-    await act(async () => { h.realtime[0].cb(); });
+-    await waitFor(() =>
+-      expect(h.queries.filter((q) => q.table === 'message_pins').length).toBeGreaterThan(leiturasAntes),
+-    );
++    // A guarda `check-realtime-subscriptions` reprova subscriptions de tabelas
++    // fora da baseline de publicação; o hook não deve abrir channel algum.
++    expect(h.channels).toEqual([]);
++    unmount();
+   });
+ });
+ 

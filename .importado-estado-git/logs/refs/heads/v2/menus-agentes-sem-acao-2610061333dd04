@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304437 -0300	branch: Created from dia/2026-10-06
+421f4a59c7ba7d52bad931d367a68d859d374465 836c865c6e41a8c19aaedb9292752fccbb97f2fc iris <iris@zapp.local> 1791304974 -0300	commit: fix(agents): opções de gerenciamento do agente viram indisponíveis quando não há ação (#243)

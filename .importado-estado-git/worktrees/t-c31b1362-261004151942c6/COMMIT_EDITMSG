@@ -1,0 +1,14 @@
+fix(auth): MFA entra na cadeia de autorização das rotas (R2-AUTH-003)
+
+O desafio 2FA era uma rota independente: sessão aal1 de conta com TOTP
+verificado entrava direto no app porque ProtectedRoute não lia o AAL, e
+/2fa ficava em "Verificando" eterno sem usuário/fator/erro.
+
+- ProtectedRoute decide getAuthenticatorAssuranceLevel antes de liberar
+  conteúdo: aal1 com nextLevel aal2 vai para /2fa, erro vira estado
+  explícito (fail closed), gate indexado ao user.id
+- TwoFactorAuth ganha estados explícitos: sem usuário → /auth, sem fator
+  ou aal2 → /, erro → tela própria, pendente → MFAVerify
+- AuthService.getMfaAssurance isola o acesso ao client fora do componente
+- Teste vermelho→verde cobrindo aal1+pendente, aal2, aal1 limpo, erro e
+  sessão ausente

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527917 -0300	branch: Created from dia/2026-10-09
+2a47986959e01fcd590be2a63199a8b6db27f86d df5f6859123f47d4cbce3340bf8997dfc4ebd11d Joaquim Ataides <ti@promobrindes.com.br> 1791528147 -0300	commit: fix(seguranca): URL do Supabase vem do config, nunca de VITE_SUPABASE_URL (SEC-FE-01)

@@ -1,0 +1,9 @@
+fix(telefonia): Campo channel "habilita a selecao por canal numa etapa (SL-247)
+
+A lacuna do cartao nao existe como comportamento: ela existia como PROMESSA no comentario do campo channel (WhatsAppCallAdapter.ts:124). O item pedia "selecao de canal de chamada (VoIP x WhatsApp) quando houver mais de um canal de saida" e esse caso NAO existe no codigo: o WhatsApp e somente-recebidas por decisao (T23 -> whatsapp_no_outbound; dial lanca NotSupportedError; a "saida por WhatsApp" esta na lista do que o plano NAO promete, T98). O unico canal que disca e o VoIP, e a selecao por canal que existe (entrada) ja e keyed pelo canal: acaoDoAlerta.canalDaNotificacao -> executorDaAcao -> useAcoesDoAlerta -> accept/reject deste adapter.
+
+- WhatsAppCallAdapter: o comentario do campo channel passa a descrever o estado real (de onde vem a selecao hoje e por que nenhuma selecao de saida alcanca este adapter), sem prometer etapa futura; accept/reject passam a gravar this.channel, entao o campo e a fonte unica do canal gravado (era uma constante paralela, decorativa).
+- Teste (bloco "selecao por canal (SL-247)"): o campo e o canal gravado sao o mesmo valor, e o roteamento do alerta manda whatsapp para este contrato e voip para o SIP.
+- Prova: 8 passed no arquivo; 45 files / 584 passed na superficie de telefonia; mutacao na forma anterior do diff deixa exatamente o caso novo vermelho (campo e gravacao podiam divergir em silencio); zapp-verify . --rapido verde.
+
+Achado fora do escopo (kanban_comment): CallSessionProvider.tsx:397-400 ignora pedido.channel e dial (:378) despacha channel voip — a escolha de canal de saida da UI (T56) e descartada no caminho da discagem; fica no provider.

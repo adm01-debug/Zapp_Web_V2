@@ -1,0 +1,7 @@
+feat(auth): aplica política de rede IP/país ao auth-login antes de credenciais (R2-AUTH-022)
+
+O login é público e não passa por requireAuth. Agora, antes de ler body,
+consultar usuário, registrar tentativa ou autenticar, o handler chama
+resolveNetworkPolicy('auth-login') e nega com 403 (IP/país) ou 503 (indecidível),
+sem vazar regras. O limite configurável de auth-login prevalece sobre o hardcoded
+(fallback 10/60s por IP); o limite por e-mail segue 20/60s.

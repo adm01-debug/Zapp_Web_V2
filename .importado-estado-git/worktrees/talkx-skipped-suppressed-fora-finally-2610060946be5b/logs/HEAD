@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290801 -0300	
+33df2adf85cbf443494e294d1c25be40deacfac9 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290801 -0300	reset: moving to HEAD
+33df2adf85cbf443494e294d1c25be40deacfac9 e8f218166b0be3d67f515c8c3f770e2d57344613 Joaquim Ataides <ti@promobrindes.com.br> 1791290876 -0300	cherry-pick: fix(talkx-send): nao perde log do lote quando um destinatario lanca (#127)
+e8f218166b0be3d67f515c8c3f770e2d57344613 0bcb1dab15e4857207cc8754210774053069cac2 Joaquim Ataides <ti@promobrindes.com.br> 1791291130 -0300	commit: fix(talkx-send): nao perde o skipped_suppressed da passada quando um destinatario lanca
+0bcb1dab15e4857207cc8754210774053069cac2 1dcf8dda0d44f9c647a24ef6146f54cf882490f3 Joaquim Ataides <ti@promobrindes.com.br> 1791291219 -0300	reset: moving to dia/2026-10-06
+1dcf8dda0d44f9c647a24ef6146f54cf882490f3 f7d21d2c42f5859c0377bf75106b740ad5aa9876 Joaquim Ataides <ti@promobrindes.com.br> 1791291394 -0300	commit: fix(talkx-send): publica o skipped_suppressed da passada mesmo quando um destinatario lanca

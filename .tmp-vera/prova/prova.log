@@ -1,0 +1,26 @@
+=== ANTES (orig-integrar.sh): os dois pontos de conferência da BASE
+  linha 240: if timeout 1200 zapp-verify full "$INT" >"$DIRLOG/.verificacao-da-base.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-da-base.log"; then
+  linha 422: if timeout 1200 zapp-verify full "$INT" >"$DIRLOG/.verificacao-da-base.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-da-base.log"; then : > "$BOK"; else : > "$BRED"; fi
+=== DEPOIS (novo/integrar.sh): os mesmos dois pontos
+  279:    if conferir_base "base $DIAV @ ${TIPV:0:9} (ponta da fila)" "${PARES_BASE[@]}"; then
+  462:      if conferir_base "$ID (base após cartão vermelho)" "$BASE_SHA|$NOVO"; then : > "$BOK"; else : > "$BRED"; fi
+=== funções extraídas de novo/integrar.sh (linhas 135-171):
+  37 linhas; declarações: CONJUNTO_BASE="v2-integrador" ponta_tem_migration() conferir_base() 
+PAR COM (traz migration): dia/2026-10-04..689345d7f (supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql) — 26100414190f4a.json
+PAR SEM (sem migration):    dia/2026-10-04..05859cedf — 26100414567770.json
+--- predicado (função real do integrador):
+  ponta_tem_migration 'par COM' -> 0  (0 = traz migration)
+  ponta_tem_migration 'par SEM' -> 1  (1 = não traz)
+=== ROTA 1: ponta COM migration
+  conferir_base -> 1 (1 = base vermelha, como manda o stub)
+LOG  PROVA-COM: a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+CMD  zapp-db-local down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/prova/tmp/copia v2-integrador
+CMD  zapp-db-local up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/prova/tmp/copia v2-integrador
+CMD  zapp-verify full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/prova/tmp/copia v2-integrador
+CMD  zapp-db-local down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/prova/tmp/copia v2-integrador
+STUB reteste_isolado — fora do escopo desta prova (a prova é a ROTA escolhida)
+=== ROTA 2: ponta SEM migration
+  conferir_base -> 1 (1 = base vermelha, como manda o stub)
+LOG  PROVA-SEM: a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+CMD  zapp-verify full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/prova/tmp/copia
+STUB reteste_isolado — fora do escopo desta prova (a prova é a ROTA escolhida)

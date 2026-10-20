@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 79b62d45b4c5f9955c5ce05128f4715a0c48ffd3 Joaquim Ataides <ti@promobrindes.com.br> 1791307018 -0300	branch: Created from dia/2026-10-06
+79b62d45b4c5f9955c5ce05128f4715a0c48ffd3 75bbe60ac0cadfbff7c1ce8e19ff2a6250171c82 Joaquim Ataides <ti@promobrindes.com.br> 1791307579 -0300	commit: fix(edge): rota de outra conexao nao usa mais a credencial global da instancia padrao (#18)

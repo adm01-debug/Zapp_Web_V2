@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1758169bfce6eddee3d2173ff798f0143f552522 Joaquim Ataides <ti@promobrindes.com.br> 1791402680 -0300	branch: Created from dia/2026-10-07
+1758169bfce6eddee3d2173ff798f0143f552522 0ac85475c3e992989a4f89b956523cb0001ba1aa Joaquim Ataides <ti@promobrindes.com.br> 1791403690 -0300	commit: test(qualidade): testes de telefonia (adaptador SIP, sink do motor de chamadas, ações do alerta)

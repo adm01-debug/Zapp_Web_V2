@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4e4a7f908f363567d6bcc483da4dd3c511d10a32 Joaquim Ataides <ti@promobrindes.com.br> 1791424949 -0300	
+4e4a7f908f363567d6bcc483da4dd3c511d10a32 4e4a7f908f363567d6bcc483da4dd3c511d10a32 Joaquim Ataides <ti@promobrindes.com.br> 1791424950 -0300	reset: moving to HEAD
+4e4a7f908f363567d6bcc483da4dd3c511d10a32 f8a9b799b859ebf297120a0b9d4503668f876994 Joaquim Ataides <ti@promobrindes.com.br> 1791424957 -0300	cherry-pick: test(e2e): varredura de navegação dos 42 módulos no desktop e no celular (Y09)
+f8a9b799b859ebf297120a0b9d4503668f876994 71d2dbd5e8e8e2f50a6ac6ac327e2b57f7c9e79d Joaquim Ataides <ti@promobrindes.com.br> 1791427831 -0300	commit: test(e2e): separa lacuna do conjunto local de defeito de produto na varredura de módulos

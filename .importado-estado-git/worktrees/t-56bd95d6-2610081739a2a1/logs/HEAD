@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491972 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491973 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc b6114dc2a8a647bc55debc7205f00be8bb7d2700 Joaquim Ataides <ti@promobrindes.com.br> 1791492605 -0300	commit: fix(ci): guard da protecao da main passa a conferir as aprovacoes exigidas (SL-032)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc Joaquim Ataides <ti@promobrindes.com.br> 1791244589 -0300	branch: Created from dia/2026-10-05
+7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc 1abc403629add375ba79b2b365de6006ef307597 Joaquim Ataides <ti@promobrindes.com.br> 1791244700 -0300	commit (cherry-pick): fix(talk-me): recupera aceite com resposta perdida e bloqueia aceite offline

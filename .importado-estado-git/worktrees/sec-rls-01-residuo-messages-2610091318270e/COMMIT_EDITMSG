@@ -1,0 +1,1 @@
+fix(db): messages nao aceita status/carimbos de entrega nem reescrita do texto do cliente (SEC-RLS-01)

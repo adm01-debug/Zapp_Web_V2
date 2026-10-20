@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ecfba91b8c1cef084b0de013726f672c716a3a17 Joaquim Ataides <ti@promobrindes.com.br> 1791372693 -0300	branch: Created from dia/2026-10-07
+ecfba91b8c1cef084b0de013726f672c716a3a17 e143fe8fe55037ffa107a32d5e0e611d45a1481f Joaquim Ataides <ti@promobrindes.com.br> 1791372776 -0300	commit: fix(atalhos): remove o atalho Alt+P e cobre useNavShortcuts com teste (E08)
+e143fe8fe55037ffa107a32d5e0e611d45a1481f f88f784ff2fba3a20521007cc7779f83b07d6c71 Joaquim Ataides <ti@promobrindes.com.br> 1791373586 -0300	commit: fix(tipos): tipa o espiao de navegacao no teste do useNavShortcuts (E08)

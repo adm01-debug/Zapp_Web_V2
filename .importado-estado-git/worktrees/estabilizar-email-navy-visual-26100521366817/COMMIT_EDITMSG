@@ -1,0 +1,14 @@
+test(e2e): isola o axe ocioso e confirma o tema antes de medir
+
+- espera a instância global do axe ficar livre em TODAS as chamadas de axe.run
+  do arquivo (workspace, painel CRM em 320 px e alto contraste), não só na do
+  teste de tokens que o commit 824f8d2c6 tratou.
+- confirma o tema aplicado antes de medir contraste: espera o CSS resolvido do
+  body (fundo e texto, o que o axe lê) ficar coerente com o modo e a classe
+  theme-transitioning sair, e recongela as transições dentro do modo.
+- remove a espera fixa de 400 ms: ela escondia a janela em que a classe do html
+  já é a do tema novo e a superfície ainda está animando. Medido com a espera
+  fixa removida, o WebKit falhava 5/5 lendo rgb(14,14,16) e cores interpoladas
+  (rgb(88,88,90), rgb(138,138,140)) na iteração do tema claro.
+- nenhuma asserção removida, afrouxada ou ignorada: seguem 91 ocorrências de
+  'expect(' no arquivo.

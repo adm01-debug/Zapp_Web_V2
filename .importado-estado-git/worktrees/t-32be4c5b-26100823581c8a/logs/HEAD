@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514689 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514690 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 be9683c5cbcaf0329a5e278fad0e6b14c0539645 Joaquim Ataides <ti@promobrindes.com.br> 1791515281 -0300	commit: fix(multiplix): evolution-webhook: READ/PLAYED → read_at; resposta do c (TL-036)

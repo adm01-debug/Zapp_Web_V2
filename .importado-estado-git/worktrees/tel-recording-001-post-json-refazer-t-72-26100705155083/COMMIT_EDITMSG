@@ -1,0 +1,11 @@
+fix(telefonia): preserva POST JSON no hook de áudio
+
+O invoke da Edge get-call-recording passa a enviar method POST com os
+headers de edgeAuthHeaders() (apikey + bearer da sessão) mais
+Content-Type: application/json. O corpo segue o objeto { callId }, que o
+SDK serializa como JSON — callId nunca vai em query string nem em URL de
+GET. O retorno público do hook não muda ({ disponivel, url, buscando }).
+
+Reaproveita de 85d432c26 somente o contrato de transporte; o retorno
+original é mantido (sem blob, sem url forçada, sem tratar 404, sem
+fallback que pule edgeAuthHeaders).

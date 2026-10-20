@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791524100 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791524101 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 d9f3cd2076ebb3d6329c74b5cc7fd6089ace1ac3 Joaquim Ataides <ti@promobrindes.com.br> 1791524993 -0300	commit: fix(talk-x): construtor de segmentos no endereco da tela (link direto, F5 e historico) com a trilha da tela 03 (TL-133)
+d9f3cd2076ebb3d6329c74b5cc7fd6089ace1ac3 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556951 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 d9f3cd2076ebb3d6329c74b5cc7fd6089ace1ac3 Joaquim Ataides <ti@promobrindes.com.br> 1791556964 -0300	rebase (abort): returning to refs/heads/v2/t-763984bc-2610090234e092
+d9f3cd2076ebb3d6329c74b5cc7fd6089ace1ac3 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556989 -0300	reset: moving to dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 a07b152c4fd428f63f9376120251b3ebeebcacc3 Joaquim Ataides <ti@promobrindes.com.br> 1791557400 -0300	commit: fix(talk-x): construtor de segmentos no endereco da tela (link direto, F5 e historico) com a trilha da tela 03 (TL-133)

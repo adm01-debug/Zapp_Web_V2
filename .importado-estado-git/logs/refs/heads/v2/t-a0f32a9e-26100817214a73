@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490876 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 4da860f913f3b3b270f8257776f76a526e3fd0b9 Joaquim Ataides <ti@promobrindes.com.br> 1791491400 -0300	commit: fix(ci/devops): Filtrar workflow_runs por head_branch automation/types- (SL-024)

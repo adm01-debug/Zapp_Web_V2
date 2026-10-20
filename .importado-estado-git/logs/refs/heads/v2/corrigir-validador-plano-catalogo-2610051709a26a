@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230967 -0300	branch: Created from dia/2026-10-05
+4e6da891e24c6e4920ced3501af74feff40abfa3 ce83c8dd5e9dc53a70b086d6ee312572d99a6666 Joaquim Ataides <ti@promobrindes.com.br> 1791231003 -0300	commit: test(catalog): expor OTH-011 com checklist misto [ ], [x] e [X]
+ce83c8dd5e9dc53a70b086d6ee312572d99a6666 8c454d01a596ae8113f90d6432d176ce357b5b79 Joaquim Ataides <ti@promobrindes.com.br> 1791231090 -0300	commit: fix(ci): aceitar itens concluidos no checklist do catalogo

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 93421353f975da539eae483fcb0449f2f3b8480e Joaquim Ataides <ti@promobrindes.com.br> 1791485664 -0300	branch: Created from dia/2026-10-08
+93421353f975da539eae483fcb0449f2f3b8480e 9a96b6bc44fef6bf7ecc4c0d7a83ba0eea45ef3b Joaquim Ataides <ti@promobrindes.com.br> 1791485714 -0300	cherry-pick: fix(multiplix-dispatch): le o publico inteiro em resumo/estimativa (R2-API-030)
+9a96b6bc44fef6bf7ecc4c0d7a83ba0eea45ef3b 25bf58ce0487ac5213a42db79fb15ae95e5de83b Joaquim Ataides <ti@promobrindes.com.br> 1791485714 -0300	cherry-pick: fix(multiplix-dispatch): paginacao para no total autoritativo, sem pedir a pagina alem do fim
+25bf58ce0487ac5213a42db79fb15ae95e5de83b 1ce249b842c97707a8b13bc8359da2d47efaeedc Joaquim Ataides <ti@promobrindes.com.br> 1791486228 -0300	commit: fix(multiplix-dispatch): remove log direto de inspect.ts que furava o contrato F54
+1ce249b842c97707a8b13bc8359da2d47efaeedc a1f8cecd0db66c3b65bdb5cfa848d0c007213d84 Joaquim Ataides <ti@promobrindes.com.br> 1791487387 -0300	commit: chore(multiplix-dispatch): refecha a entrega com o relato corrigido

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543478 -0300	branch: Created from dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 07c58c9907ad7c6fa7ca2f0bd988fee0e2b60626 Joaquim Ataides <ti@promobrindes.com.br> 1791543513 -0300	commit (cherry-pick): fix(migrações): torna rollback de reactions resiliente a conflito
+07c58c9907ad7c6fa7ca2f0bd988fee0e2b60626 01d6a22d986221a1ce80843dbfd69037550cf78b Joaquim Ataides <ti@promobrindes.com.br> 1791544053 -0300	commit: fix(db): explicita rollback de reações

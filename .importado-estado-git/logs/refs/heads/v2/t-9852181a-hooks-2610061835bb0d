@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791322533 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 6dfb7bb6aa4f43cf6b2aff1481cb19de362d17da Joaquim Ataides <ti@promobrindes.com.br> 1791323262 -0300	commit: fix(figurinhas): contador de uso pessoal consome a operação PostgREST (#485)

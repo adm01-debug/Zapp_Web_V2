@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308433 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd fb71968dd49f8f54cf6df17996fbe2eb2f5b0438 Joaquim Ataides <ti@promobrindes.com.br> 1791308655 -0300	commit: chore(edge): carrega a base da outbox de ai-usage ja entregue (eea74c944)
+fb71968dd49f8f54cf6df17996fbe2eb2f5b0438 44b900a57552cab3cd03a12a3cfb988b75c0ade4 Joaquim Ataides <ti@promobrindes.com.br> 1791308660 -0300	commit: test(edge): cobre conflito com falha no reenfileiramento da outbox (RED)
+44b900a57552cab3cd03a12a3cfb988b75c0ade4 0b43ed040034f924cde1b5556936e49b9a63bda5 Joaquim Ataides <ti@promobrindes.com.br> 1791308678 -0300	commit: fix(edge): devolverPendenciaAOutbox devolve e propaga a falha do reenfileiramento

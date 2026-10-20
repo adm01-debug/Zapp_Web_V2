@@ -1,0 +1,25 @@
+fix(db-audit): replay local com nome unico, digest fixo e bootstrap que falha alto (#361)
+
+Por que: R2-INF-014 (item 361) — o replay fazia `docker rm -f` de um nome FIXO antes
+de subir, sem saber se o container era dele (apagava o de outra execucao e o proprio
+nao ficava garantido), o bootstrap nao usava ON_ERROR_STOP e falhava em silencio, a
+imagem ia so pela tag (sujeita a trocar de conteudo sem aviso) e nenhum caminho de
+setup devolvia status proprio.
+
+- nome UNICO por run (`hermes-e24-replay-<data>-<pid>`) + rotulo de posse
+  `hermes.e24.replay`; `remover_nosso` so remove o container cujo rotulo e o deste run;
+  `trap` em EXIT/INT/TERM.
+- bootstrap com `-v ON_ERROR_STOP=1` e checagem do exit code: falha ABORTA (exit 2) sem
+  aplicar migration em cima de meio-bootstrap.
+- imagem fixada por DIGEST (indice multi-arch de 17.6.1.159).
+- exit codes distintos: 0 verde, 1 drift novo, 2 SETUP indisponivel.
+- cabecalho declara os efeitos por arquivo (cada migration em psql proprio, sem
+  transacao unica) e por que o classificador separa falha raiz de cascata.
+
+Verificacao: novo scripts/db-audit/replay-local-harness.test.sh (docker de mentira no
+PATH; offline) -> 13 ok no script novo e 9 FALHA contra o script de HEAD (nome fixo
+reusado, container alheio removido, sem digest, bootstrap ignorado com exit 0, migration
+aplicada depois do bootstrap falho, rm antes do run). Replay REAL com a imagem de verdade
+e uma migration de fixture: REPLAY=verde, exit 0, container removido sem sobra.
+zapp-verify . --rapido -> VERDE. check-test-inventory -> OK (teste novo registrado na
+ALLOWLIST OFFLINE, como a #1879 fez com replay-classify.test.sh).

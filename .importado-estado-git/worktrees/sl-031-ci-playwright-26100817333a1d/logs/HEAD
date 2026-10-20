@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491592 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491593 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc e2343602357c9875766b12f380bf8f777f171ddc Joaquim Ataides <ti@promobrindes.com.br> 1791492373 -0300	commit: fix(ci/devops): retries 2 só em logados, trace retain-on-failure, video off (SL-031)
+e2343602357c9875766b12f380bf8f777f171ddc 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555174 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 4f7a87a000b82c4c393125e3d49c462d33aa3d92 Joaquim Ataides <ti@promobrindes.com.br> 1791555230 -0300	rebase (continue): fix(ci/devops): retries 2 só em logados, trace retain-on-failure, video off (SL-031)
+4f7a87a000b82c4c393125e3d49c462d33aa3d92 4f7a87a000b82c4c393125e3d49c462d33aa3d92 Joaquim Ataides <ti@promobrindes.com.br> 1791555230 -0300	rebase (finish): returning to refs/heads/v2/sl-031-ci-playwright-26100817333a1d
+4f7a87a000b82c4c393125e3d49c462d33aa3d92 153c392324c480cac14cfc0591bbe0fe7d51f81d Joaquim Ataides <ti@promobrindes.com.br> 1791555322 -0300	commit: fix(ci/devops): guarda E81 não confunde storageState vazio com login real

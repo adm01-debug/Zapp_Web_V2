@@ -1,0 +1,7 @@
+feat(ci): comando unico das provas de banco do chat interno (N-069)
+
+Cria scripts/ci/team-chat-local-gates.sh: roda os scripts/db-audit/team-*.test.sh do
+chat interno com um comando so e sai 1 se qualquer prova falhar (fail-closed,
+inclusive quando nenhuma prova e encontrada). O teste ao lado executa o script
+de verdade numa arvore temporaria com provas falsas: prova o exit 1 da prova
+quebrada, o diretorio homonimo ignorado e o diretorio padrao scripts/db-audit.

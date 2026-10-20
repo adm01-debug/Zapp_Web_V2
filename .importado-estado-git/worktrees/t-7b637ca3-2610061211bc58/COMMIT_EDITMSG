@@ -1,0 +1,14 @@
+fix(edge): alerta e notificacao nao afirmam bloqueio sem gravar blocked_ips (#229)
+
+O send-rate-limit-alert montava o security_alert e a notification a partir do
+campo `blocked` recebido, antes de gravar em blocked_ips. Quando o upsert
+falhava, o erro so era logado e as duas mensagens afirmavam um bloqueio que
+nao existia (o IP seguia liberado).
+
+Agora a gravacao em blocked_ips roda antes de montar as mensagens e o estado
+`blockedPersisted` (upsert sem erro) e o unico que autoriza o texto a dizer
+'bloqueado'. Falha de gravacao: o alerta/notificacao registram o evento sem
+afirmar o bloqueio, com blocked_persisted=false no metadata.
+
+Teste R2-API-057 chama o handler real e confere o payload gravado nos dois
+caminhos (falha e sucesso); vermelho antes, verde depois.

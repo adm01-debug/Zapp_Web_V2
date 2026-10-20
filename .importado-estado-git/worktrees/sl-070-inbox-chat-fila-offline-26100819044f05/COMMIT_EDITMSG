@@ -1,0 +1,1 @@
+fix(inbox/chat): fila offline IndexedDB e throttle de envio com dedupe entre abas (SL-070)

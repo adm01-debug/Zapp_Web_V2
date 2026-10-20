@@ -1,0 +1,6 @@
+docs(performance): alinha auditoria de Web Vitals ao contrato de 12 testes e cita FID (SL-229)
+
+A guarda de contrato passou de 5 para 12 testes (2 sobre o arquivo real + matriz de
+10: 1 verde e 9 defeitos recusados); o doc de auditoria ainda dizia 5 testes/5 de 5.
+O cabecalho de src/lib/web-vitals.ts omitia FID embora o codigo colete first-input e
+o alvo siga no mapa (declarado field: false no JSON).

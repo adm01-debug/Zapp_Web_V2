@@ -1,0 +1,18 @@
+fix(banco): atribuicao de resposta por identidade canonica e evento consumido uma vez (#292)
+
+R2-DB-002: as RPCs attribute_talkx_reply e attribute_multiplix_item_reply
+identificavam o remetente pelo sufixo de 8 digitos do telefone (OR sem
+prioridade, escolhendo o envio mais recente) e nao impediam a mesma
+atribuicao duas vezes no reprocessamento do evento.
+
+- public.phone_identity(text): identidade canonica (DDI 55 fora, DDD + 8
+  digitos, 9o digito normalizado); sem DDD nao ha identidade e a atribuicao
+  recusa em vez de chutar.
+- Contato exato com PRECEDENCIA; eixo por telefone exige identidade igual e
+  a MESMA conexao que recebeu a resposta (public.messages do proprio evento).
+- public.reply_attribution_events com PK (channel, event_id): um evento
+  atribui UMA vez (retry, reprocessamento e corrida); repetido devolve
+  duplicate_event.
+- attributed=true so quando o UPDATE gravou (RETURNING).
+- Teste de banco novo (Postgres descartavel, migrations reais, papel real)
+  com RED/GREEN, ACL, RLS, concorrencia e rollback executado.

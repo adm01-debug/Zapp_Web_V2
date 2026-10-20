@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f4ee23045b20317afff263829d3812255e47b120 Joaquim Ataides <ti@promobrindes.com.br> 1791282534 -0300	branch: Created from dia/2026-10-06
+f4ee23045b20317afff263829d3812255e47b120 01a583da1bba29ca463ab1076852e686e1daa070 Joaquim Ataides <ti@promobrindes.com.br> 1791282687 -0300	commit: fix(sip): desconectar devolve o UA encerrado e permite reconectar

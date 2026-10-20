@@ -1,0 +1,6 @@
+fix(talk-x): rollback preserva updated_at ao rebaixar rascunhos (TL-129)
+
+O rollback rebaixa os rascunhos para 'inactive' antes de reestreitar o CHECK; o
+UPDATE disparava o gatilho update_talkx_segments_updated_at e reescrevia a data
+de todas as linhas. Agora o rollback desliga esse gatilho em volta do UPDATE, e a
+prova no descartavel mostra o rascunho com status=inactive e updated_at intacto.

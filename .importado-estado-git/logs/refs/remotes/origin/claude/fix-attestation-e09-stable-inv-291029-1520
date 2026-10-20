@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 c6cd2db147ed53105cf1a1047e9b6dbaa8fe0b35 Joaquim Ataides <ti@promobrindes.com.br> 1790704560 -0300	fetch origin --prune --quiet: storing head
+c6cd2db147ed53105cf1a1047e9b6dbaa8fe0b35 6d141d270c0544f6633aa8042eaee2262d61976f Joaquim Ataides <ti@promobrindes.com.br> 1790762838 -0300	fetch origin --prune --quiet: fast-forward
+6d141d270c0544f6633aa8042eaee2262d61976f f2e64352d7caa86925b3d7207e279f79891a4370 Joaquim Ataides <ti@promobrindes.com.br> 1790779374 -0300	fetch origin --prune --quiet: fast-forward
+f2e64352d7caa86925b3d7207e279f79891a4370 e9fcc86810fd4061868ab7ee821b89ae61b785ab Joaquim Ataides <ti@promobrindes.com.br> 1790779400 -0300	fetch origin --quiet --prune: fast-forward
+e9fcc86810fd4061868ab7ee821b89ae61b785ab 777d599651fcdfadae64e7584ec785339238bfff Joaquim Ataides <ti@promobrindes.com.br> 1790783672 -0300	fetch origin --quiet --prune: fast-forward
+777d599651fcdfadae64e7584ec785339238bfff 98bae3eb1872e6d38a7613175cb81875a9df9c8d Joaquim Ataides <ti@promobrindes.com.br> 1790793657 -0300	fetch -q origin: fast-forward
+98bae3eb1872e6d38a7613175cb81875a9df9c8d ea107e527cb778149f52d101d2a60144051f60d2 Joaquim Ataides <ti@promobrindes.com.br> 1790854649 -0300	fetch origin --quiet --prune: fast-forward

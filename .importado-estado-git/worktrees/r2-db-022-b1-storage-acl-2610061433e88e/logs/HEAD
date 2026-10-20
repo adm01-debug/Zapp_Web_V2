@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308039 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308040 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd dbf1a5b509c8a73cec8940acbc472f5e4d65cf2c Joaquim Ataides <ti@promobrindes.com.br> 1791310130 -0300	commit: fix(security): SELECT em storage.objects não aceita mais referência forjável em messages.media_url (R2-DB-022 B1)

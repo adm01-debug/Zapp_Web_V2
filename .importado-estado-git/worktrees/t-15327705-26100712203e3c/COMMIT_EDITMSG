@@ -1,0 +1,15 @@
+fix(arquivos): janela de visualização do arquivo menor (-40% largura, -20% altura)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto e423ffa63
+# Last command done (1 command done):
+#    pick a79552623 fix(arquivos): janela de visualização do arquivo menor (-40% largura, -20% altura)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-15327705-26100712203e3c' on 'e423ffa63'.
+#
+# Changes to be committed:
+#	modified:   src/components/inbox/media-gallery/MediaPreviewDialog.tsx
+#	modified:   src/components/inbox/media-gallery/__tests__/MediaPreviewDialog.test.tsx
+#

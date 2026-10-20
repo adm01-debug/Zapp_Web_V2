@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791430345 -0300	
+b6ff185f72fab85c050ee66812f03072ff4f0726 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791430346 -0300	reset: moving to HEAD
+b6ff185f72fab85c050ee66812f03072ff4f0726 b2f975542dff7d1aa43773bf8294c0b038230e30 Joaquim Ataides <ti@promobrindes.com.br> 1791430406 -0300	commit (cherry-pick): fix(ia): auto-tag limpa etiquetas antigas quando a classificação válida não tem tags (#207)

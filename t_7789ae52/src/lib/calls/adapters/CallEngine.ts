@@ -1,0 +1,401 @@
+/**
+ * Motor de sessão de chamada — etapa T09 do plano de finalização.
+ *
+ * Este é o "resto" de `useSipClient.ts` que não era React: bookkeeping da
+ * sessão corrente, cronômetro de resposta, registro no banco e as ações
+ * (discar/atender/recusar/desligar/mute/DTMF). Foi **movido**, não reescrito —
+ * mesmas ordens e mesmos guards do hook original; o que mudou é que o estado
+ * sai por um `CallEngineSink` em vez de `useState`, e o transporte entra pelo
+ * `CallAdapter` em vez de `sip.js` direto.
+ *
+ * Consequência: sem React aqui, o ciclo inteiro é testável com um adapter falso
+ * — o que o T85 vai cobrar. O T10 troca o punhado de campos abaixo pelo
+ * `reduce()` de `src/lib/calls/session.ts`, mantendo esta API.
+ *
+ * Sem import de valor de `sip.js` nem de `@/lib/logger`: o log e o toast
+ * chegam pelo sink, para o módulo continuar sem dependência de UI.
+ */
+
+import type { Invitation, Session, UserAgent } from 'sip.js';
+
+import type { CallEndOutcome } from '../callStatus';
+import type { AdapterDirection, CallAdapter } from './CallAdapter';
+
+/** Estados do ciclo de vida, iguais aos que a UI do T09 já consumia. */
+export type EngineStatus = 'idle' | 'calling' | 'ringing' | 'active' | 'ended';
+
+export interface CreateCallParams {
+  contactId?: string;
+  contactPhone: string;
+  contactName: string;
+  direction: AdapterDirection;
+  /** Id da sessão no front (= `sessionId` da máquina); vira o `p_id` da linha. */
+  sessionId?: string;
+  /** Call-ID do SIP (`Session.id`) — prova da sessão no provedor. */
+  providerCallId?: string;
+}
+
+/** Saídas do motor: tudo o que precisa de React, de toast ou de banco. */
+export interface CallEngineSink {
+  onStatus(status: EngineStatus): void;
+  onSession(direction: AdapterDirection | null, number: string): void;
+  /** Atendida — o consumidor zera e liga o cronômetro. */
+  onEstablished(): void;
+  /** Encerrada — o consumidor para o cronômetro. */
+  onTerminated(): void;
+  onMuted(muted: boolean): void;
+  onError(message: string): void;
+  /**
+   * Chegou uma segunda chamada com a linha já ocupada: ela foi recusada com
+   * 486 e deve ser registrada como perdida (`busy_here`) fora da máquina. O
+   * `number` é o remoto do convite (`adapter.remoteNumberOf`).
+   */
+  onBusyHere(number: string): void;
+  /** Cria o registro da chamada e devolve o id (ou null em falha). */
+  create(params: CreateCallParams): Promise<string | null>;
+  onAnswered(callId: string): void;
+  /** `talkSeconds` null = não atendida. `outcome` = quem encerrou + código SIP (T12). */
+  onFinished(callId: string, talkSeconds: number | null, outcome: CallEndOutcome): void;
+}
+
+/** Quanto tempo o desfecho fica na tela antes de voltar para `idle`. */
+const IDLE_RESET_MS = 2000;
+
+/**
+ * Watchdog do INVITE de saída: o Timer B do SIP (RFC 3261) é 32s; 40s dá
+ * folga para o atraso de rede. Sem ele, um INVITE que nunca recebe resposta
+ * final (WebSocket caiu sem `Terminated`) deixa `isBusy` preso para sempre e a
+ * linha do banco fica em `ringing`.
+ */
+const RESPOSTA_FINAL_TIMEOUT_MS = 40000;
+
+/** Sink inerte: permite construir o motor antes de ter os callbacks do React. */
+const NOOP_SINK: CallEngineSink = {
+  onStatus: () => undefined,
+  onSession: () => undefined,
+  onEstablished: () => undefined,
+  onTerminated: () => undefined,
+  onMuted: () => undefined,
+  onError: () => undefined,
+  onBusyHere: () => undefined,
+  create: async () => null,
+  onAnswered: () => undefined,
+  onFinished: () => undefined,
+};
+
+export class CallEngine {
+  private sink: CallEngineSink;
+  private session: Session | null = null;
+  private invitation: Invitation | null = null;
+  private answeredAt: Date | null = null;
+  // Promise (não valor síncrono) porque o registro no banco começa em paralelo
+  // com o convite SIP — Estabelecida/Terminada podem chegar antes de resolver.
+  private callIdPromise: Promise<string | null> | null = null;
+  private status: EngineStatus = 'idle';
+  private direction: AdapterDirection | null = null;
+  private muted = false;
+  // T12: desfecho fino da chamada corrente. `sipCode` é escrito pelo callback
+  // `onReject` do INVITE (antes do Terminated); as bandeiras dizem se o fim
+  // partiu de uma ação nossa. Todas zeradas no início de cada chamada.
+  private sipCode: number | null = null;
+  private localHangup = false;
+  private localReject = false;
+  private idleResetTimer: ReturnType<typeof setTimeout> | null = null;
+  // Watchdog do INVITE de saída (Timer B): armado no `makeCall`, limpo em
+  // qualquer fim. Ver o caminho único em `encerrar`.
+  private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(
+    private readonly adapter: CallAdapter,
+    sink: CallEngineSink = NOOP_SINK,
+  ) {
+    this.sink = sink;
+  }
+
+  /** Rebinda o sink a cada render (o consumidor recria os callbacks). */
+  bind(sink: CallEngineSink): void {
+    this.sink = sink;
+  }
+
+  /** `true` quando há chamada em curso — o guard de "já existe uma". */
+  get isBusy(): boolean {
+    return this.status !== 'idle';
+  }
+
+  get isMuted(): boolean {
+    return this.muted;
+  }
+
+  /** Convite SIP recebido (delegate do UserAgent). */
+  handleInvitation(invitation: Invitation): void {
+    if (this.status !== 'idle') {
+      // Linha ocupada: recusa com 486, avisa o dono do estado (a segunda
+      // chamada vira `missed`/`busy_here` FORA da máquina) e sai cedo — nada
+      // abaixo pode tocar a sessão da chamada em curso, que não pode cair.
+      this.sink.onBusyHere(this.adapter.remoteNumberOf(invitation));
+      void this.adapter.reject(invitation, 486);
+      return;
+    }
+
+    const remoteUser = this.adapter.remoteNumberOf(invitation);
+    this.invitation = invitation;
+    this.answeredAt = null;
+    this.direction = 'inbound';
+    // Bandeira velha não pode vazar para esta chamada (T12).
+    this.sipCode = null;
+    this.localHangup = false;
+    this.localReject = false;
+    this.setStatus('ringing');
+    this.sink.onSession('inbound', remoteUser);
+
+    invitation.stateChange.addListener((state) => {
+      this.handleStateChange(state, invitation, remoteUser, 'inbound');
+    });
+
+    this.callIdPromise = this.sink.create({
+      contactPhone: remoteUser,
+      contactName: '',
+      direction: 'inbound',
+      // `Invitation` estende `Session`: `id` é o Call-ID do convite.
+      providerCallId: invitation.id,
+    });
+  }
+
+  /** Transição de estado do sip.js (Establishing/Established/Terminated). */
+  handleStateChange(state: string, session: Session, number: string, direction: AdapterDirection): void {
+    // R2-CALL-001: só evento da sessão ATUAL pode mover o motor. Depois que a
+    // chamada acaba os listeners seguem vivos no adapter; sem esta cerca, o
+    // `Terminated` tardio da chamada anterior consumia o `callIdPromise` da
+    // chamada nova e o `Established` tardio a marcava como atendida e anexava o
+    // áudio da sessão velha. Compara o objeto da sessão (que carrega o
+    // Call-ID) com a sessão e o convite correntes.
+    if (session !== this.session && session !== this.invitation) return;
+
+    if (state === 'Establishing') {
+      this.setStatus('ringing');
+      return;
+    }
+
+    if (state === 'Established') {
+      // Resposta final 2xx: o Timer B do INVITE cumpriu o papel — desarma o
+      // watchdog para ele não derrubar uma conversa longa.
+      this.clearWatchdog();
+      this.answeredAt = new Date();
+      this.setStatus('active');
+      this.sink.onEstablished();
+      void this.callIdPromise?.then((id) => { if (id) this.sink.onAnswered(id); });
+      this.adapter.attachRemoteAudio(session);
+      return;
+    }
+
+    if (state === 'Terminated') {
+      // T12: o desfecho fino é montado AQUI, antes de zerar a sessão. O
+      // `sipCode` já está preenchido (o `onReject` do INVITE roda antes do
+      // Terminated) e as bandeiras dizem se o fim partiu de uma ação nossa.
+      const outcome: CallEndOutcome = {
+        endedBy: this.localReject ? 'reject' : this.localHangup ? 'hangup_local' : 'hangup_remote',
+        sipCode: this.sipCode,
+      };
+      if (direction === 'inbound') this.invitation = null;
+      this.encerrar(outcome);
+    }
+  }
+
+  async makeCall(number: string, ua: UserAgent | null, registered: boolean, sessionId?: string): Promise<void> {
+    if (!ua || !registered) { this.sink.onError('VoIP não conectado.'); return; }
+    if (this.status !== 'idle') { this.sink.onError('Já existe uma chamada em andamento.'); return; }
+    try {
+      if (!await this.adapter.isDialable(ua, number)) { this.sink.onError('Número inválido'); return; }
+      // O carregamento de sip.js é assíncrono: recheca para não abrir duas.
+      if (this.status !== 'idle') { this.sink.onError('Já existe uma chamada em andamento.'); return; }
+
+      this.answeredAt = null;
+      this.direction = 'outbound';
+      // T12: esta chamada começa com o desfecho limpo (bandeira velha não vaza).
+      this.sipCode = null;
+      this.localHangup = false;
+      this.localReject = false;
+      this.setStatus('calling');
+      this.sink.onSession('outbound', number);
+      // Timer B: se o INVITE não receber resposta final em 40s, `encerrar`
+      // derruba a chamada como `timeout` e libera a linha.
+      this.armarWatchdog();
+
+      // O Inviter vem ANTES do registro: é dele o Call-ID que vai para
+      // `provider_call_id` (T11). O import do sip.js é dinâmico, por isso a ordem
+      // real só se prova aqui dentro.
+      const inviter = await this.adapter.createInviter(ua, number);
+      // Atribuído antes do invite() para que hangUp() encontre a sessão mesmo
+      // com o INVITE ainda pendente (evita ligação órfã em cancelamento rápido).
+      this.session = inviter;
+      inviter.stateChange.addListener((state) => this.handleStateChange(state, inviter, number, 'outbound'));
+
+      // Não bloqueia a discagem: o registro roda em paralelo com o convite SIP.
+      this.callIdPromise = this.sink.create({
+        contactPhone: number,
+        contactName: '',
+        direction: 'outbound',
+        sessionId,
+        providerCallId: inviter.id,
+      });
+
+      await this.adapter.invite(inviter, (statusCode) => { this.sipCode = statusCode ?? null; });
+    } catch (error: unknown) {
+      // Falha do próprio discar (transporte/URI): o desfecho é `failure`, sem
+      // código SIP — o Terminated pode nunca chegar neste caminho.
+      void this.callIdPromise?.then((id) => { if (id) this.sink.onFinished(id, null, { endedBy: 'failure', sipCode: null }); });
+      this.callIdPromise = null;
+      this.clearWatchdog();
+      this.session = null;
+      this.setStatus('idle');
+      this.direction = null;
+      this.sink.onSession(null, '');
+      this.sink.onError(`Erro ao ligar: ${error instanceof Error ? error.message : 'Falha'}`);
+    }
+  }
+
+  async accept(): Promise<void> {
+    const invitation = this.invitation;
+    if (!invitation) return;
+    try {
+      await this.adapter.accept(invitation);
+      this.session = invitation;
+    } catch {
+      this.sink.onError('Erro ao atender a chamada.');
+    }
+  }
+
+  async reject(): Promise<void> {
+    const invitation = this.invitation;
+    if (!invitation) return;
+    // T12: a recusa é AÇÃO nossa — o Terminated seguinte é `reject`, não um
+    // encerramento remoto.
+    this.localReject = true;
+    await this.adapter.reject(invitation);
+  }
+
+  /**
+   * Não força `idle`: o listener de Terminated é a única fonte de verdade
+   * sobre o resultado final (atendida/perdida) e a duração.
+   */
+  hangUp(): void {
+    const session = this.session;
+    if (session) {
+      // A bandeira vem ANTES do adapter: o Terminated pode chegar durante o
+      // `bye()`/`cancel()` e, sem ela, o fim pareceria remoto (T12).
+      this.localHangup = true;
+      this.adapter.hangup(session, this.direction ?? 'outbound');
+      return;
+    }
+    if (this.invitation && this.status === 'ringing') void this.reject();
+  }
+
+  toggleMute(): void {
+    if (!this.session) return;
+    // O estado de verdade é o das tracks (o adapter devolve o que leu); sem
+    // mídia (`null`) vale a intenção, para o botão não travar na UI.
+    const muted = this.adapter.setMuted(this.session, !this.muted) ?? !this.muted;
+    this.muted = muted;
+    this.sink.onMuted(muted);
+  }
+
+  sendDTMF(digit: string): void {
+    if (!this.session) return;
+    // O guarda de "só estabelecida" (com warn) mora no adapter, que conhece a
+    // sessão; aqui não se duplica para a regra ter um dono só.
+    this.adapter.sendDTMF(this.session, digit);
+  }
+
+  /** Descarta timers, referências e o áudio remoto (unmount). */
+  dispose(): void {
+    this.clearIdleReset();
+    this.clearWatchdog();
+    this.adapter.disposeRemoteAudio();
+    this.session = null;
+    this.invitation = null;
+    this.callIdPromise = null;
+    this.answeredAt = null;
+  }
+
+  /**
+   * Caminho ÚNICO de encerramento: `Terminated`, falha local e watchdog passam
+   * por aqui. Zera a sessão e emite o desfecho numa ordem que a máquina do
+   * provider entende: `onFinished` ANTES de `setStatus('ended')`, senão o
+   * efeito do provider vê `ended` sem o outcome real e o descarta (D4).
+   *
+   * `callIdPromise` é lido e zerado aqui: um 2º encerramento (Terminated tardio
+   * ou watchdog) já não acha o id e **não reemite** `onFinished`.
+   */
+  private encerrar(outcome: CallEndOutcome): void {
+    const answeredAt = this.answeredAt;
+    const callIdPromise = this.callIdPromise;
+    this.callIdPromise = null;
+    this.answeredAt = null;
+    this.session = null;
+    this.clearWatchdog();
+
+    this.sink.onTerminated();
+    if (this.muted) { this.muted = false; this.sink.onMuted(false); }
+
+    const transicionar = () => {
+      this.setStatus('ended');
+      this.clearIdleReset();
+      this.idleResetTimer = setTimeout(() => {
+        this.idleResetTimer = null;
+        this.setStatus('idle');
+        this.direction = null;
+        this.sink.onSession(null, '');
+      }, IDLE_RESET_MS);
+    };
+
+    if (callIdPromise) {
+      void callIdPromise.then((id) => {
+        if (id) {
+          const talkSeconds = answeredAt
+            ? Math.max(0, Math.round((Date.now() - answeredAt.getTime()) / 1000))
+            : null;
+          this.sink.onFinished(id, talkSeconds, outcome);
+        }
+        transicionar();
+      });
+    } else {
+      transicionar();
+    }
+  }
+
+  /** Arma o watchdog do INVITE (Timer B folgado); substitui um anterior. */
+  private armarWatchdog(): void {
+    this.clearWatchdog();
+    this.watchdogTimer = setTimeout(() => {
+      this.watchdogTimer = null;
+      // R2-CALL-001: o watchdog precisa ENCERRAR o transporte, não só limpar o
+      // estado local — a sessão deixada viva era a fonte do evento tardio que
+      // acertava a chamada seguinte. `encerrar` vem antes: um `Terminated`
+      // síncrono do `cancel()` já não acha a sessão corrente e não troca o
+      // desfecho `timeout` por `hangup_remote`.
+      const session = this.session;
+      const direction = this.direction ?? 'outbound';
+      this.encerrar({ endedBy: 'timeout', sipCode: null });
+      if (session) this.adapter.hangup(session, direction);
+    }, RESPOSTA_FINAL_TIMEOUT_MS);
+  }
+
+  private clearWatchdog(): void {
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer);
+      this.watchdogTimer = null;
+    }
+  }
+
+  private setStatus(status: EngineStatus): void {
+    this.status = status;
+    this.sink.onStatus(status);
+  }
+
+  private clearIdleReset(): void {
+    if (this.idleResetTimer) {
+      clearTimeout(this.idleResetTimer);
+      this.idleResetTimer = null;
+    }
+  }
+}

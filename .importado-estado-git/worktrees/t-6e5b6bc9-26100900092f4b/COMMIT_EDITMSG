@@ -1,0 +1,3 @@
+fix(talk-x): Ligar o webhook aos recibos de leitura e à atribuição d (TL-102)
+
+X028 já resolvido na ponta (commit 4e73c7767): handleMessagesUpdate chama record_talkx_recipient_receipt para delivered/read sem depender de fromMe e o webhook aguarda attribute_talkx_reply com o telefone resolvido. Fechado sem mudança de código, com prova no relato (vermelho→verde no teste que guarda a correção).

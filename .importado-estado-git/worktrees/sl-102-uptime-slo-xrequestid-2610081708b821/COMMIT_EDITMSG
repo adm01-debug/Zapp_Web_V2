@@ -1,0 +1,14 @@
+docs(slo): fonte de SLO citada tem de existir — SLO mínimo do webhook e x-request-id real (SL-102)
+
+O runbook abria dizendo que nada era aspiracional, mas a tabela de SLOs apontava
+como fonte o monitor externo de uptime (que não existe), o cron do health check (que
+não existe) e a view slo_inbound_latency_daily (que não existe no retrato), além de
+citar arquivo em caminho que mudou (useDiagnosticsData.ts:151) e afirmar x-request-id
+ponta a ponta quando só a borda trata o header.
+
+- docs/runbooks/slo.md: bloco de atualização 2026-10-08, coluna Fonte hoje
+  (REAL/PARCIAL/PENDENTE) por linha, SLO mínimo da edge evolution-webhook
+  (p95 < 500 ms, erro < 1 %), estado honesto do x-request-id e referências corrigidas.
+- scripts/ci/slo-docs-honesty.unit.mjs: guarda de honestidade (I1-I6) que falha se o
+  runbook voltar a citar fonte que não existe, referência que não resolve ou
+  x-request-id em desacordo com src/.

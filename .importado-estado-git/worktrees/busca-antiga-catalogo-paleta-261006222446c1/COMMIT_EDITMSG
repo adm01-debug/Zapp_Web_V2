@@ -1,0 +1,9 @@
+fix(paleta): resposta antiga do catálogo não substitui os resultados do termo atual (#377)
+
+Cartão V2: 261006222446c1 (branch v2/busca-antiga-catalogo-paleta-261006222446c1 @ 799ff2c79)
+
+O debounce de 300 ms da busca do catálogo no ⌘K não protegia a ordem das respostas:
+a resposta do termo ANTERIOR (ainda em voo quando o termo mudou) sobrescrevia os
+resultados do termo ATUAL — quem respondia por último mandava. Agora cada digitação
+invalida a consulta em voo do termo anterior (sequência por termo, mesmo padrão de
+useAddressAutocomplete.ts), e o indicador de busca fica preso ao termo mais novo.

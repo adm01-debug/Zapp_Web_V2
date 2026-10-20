@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524372 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524373 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 9efd718b5b78d7dec3b68d5b9247ce6a045e3b87 Joaquim Ataides <ti@promobrindes.com.br> 1791525721 -0300	commit: fix(talk-x): Refazer colunas e ações de linha da biblioteca: critérios legíveis, uso e desempenho (TL-136)
+9efd718b5b78d7dec3b68d5b9247ce6a045e3b87 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791558154 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 6ee1797bd2b91028d51ec1bbdd50196b2c43d8d9 Joaquim Ataides <ti@promobrindes.com.br> 1791558420 -0300	rebase (continue): fix(talk-x): Refazer colunas e ações de linha da biblioteca: critérios legíveis, uso e desempenho (TL-136)
+6ee1797bd2b91028d51ec1bbdd50196b2c43d8d9 6ee1797bd2b91028d51ec1bbdd50196b2c43d8d9 Joaquim Ataides <ti@promobrindes.com.br> 1791558420 -0300	rebase (finish): returning to refs/heads/v2/t-7f95d786-2610090239421a

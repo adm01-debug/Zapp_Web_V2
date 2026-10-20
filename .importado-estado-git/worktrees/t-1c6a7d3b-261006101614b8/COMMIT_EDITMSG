@@ -1,0 +1,15 @@
+fix(gmail-webhook): persiste metadados dos anexos para permitir download (#192)
+
+O webhook notificava a mensagem mas só marcava has_attachments; nunca gravava
+as linhas de email_attachments. O download sob demanda (gmail-sync,
+action=get-attachment) exige a linha para responder, então o anexo recém
+notificado respondia sempre 404 "Attachment not found for this message".
+
+Agora o handler extrai os anexos com extractAttachments (o mesmo helper de
+syncMessageIds, que enxerga parts aninhadas), usa o id da mensagem persistida
+para o FK e faz upsert de cada anexo em email_attachments (onConflict
+email_message_id,gmail_attachment_id). has_attachments passa a refletir o
+anexo aninhado, não só os filhos diretos do payload.
+
+Teste vermelho/verde em gmail-webhook/attachments.test.ts: chama o handler
+real com JWT/JWKS local e PostgREST/Gmail API roteados por fetch.

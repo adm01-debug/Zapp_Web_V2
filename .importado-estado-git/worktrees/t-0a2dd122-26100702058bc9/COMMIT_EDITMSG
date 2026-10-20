@@ -1,0 +1,13 @@
+fix(talkx): rollback executavel da migration de reabertura por retry
+
+O fechar exige rollback como SQL executavel no cabecalho da migration
+(regra de 08/10). O cabecalho da 20261006210406 trazia so prosa; agora
+traz o SQL (drop das assinaturas novas, corpos anteriores de
+enforce_talkx_campaign_mutability, retry_talkx_recipients e
+resolve_talkx_outcome_unknown, e REVOKE/GRANT/COMMENT), sem mudar nenhum
+objeto criado pela migration. O teste de banco passa a EXECUTAR esse
+rollback num Postgres descartavel, conferir assinaturas, ACL e
+comportamento antigo, e reaplicar a migration por cima.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

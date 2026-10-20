@@ -1,0 +1,48 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "additional_pins": [
+    {
+      "path": "src/components/admin/GmailWebhookMonitor.tsx",
+      "git_blob_sha": "bcb39f8173293518f05296e967cdd6373b222a02",
+      "sha256": "1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424"
+    }
+  ],
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Exact complete component state/loading prefix (27–58) with controlled React state and Supabase result contracts. JSX and React runtime are not rendered; effect mounting is stubbed and loadData invoked explicitly.",
+  "results": [
+    {
+      "id": "P39",
+      "successfulSnapshot": {
+        "accounts": 1,
+        "total": 12,
+        "unread": 4
+      },
+      "afterFailedQueries": {
+        "accounts": 0,
+        "total": 0,
+        "unread": 0,
+        "loading": false
+      },
+      "warningCount": 0,
+      "failedQueryCount": 3,
+      "outcome": "All three PostgREST/RPC result errors erase prior data into zero/empty with no caught error; UI branches then display no connected account and zero thread counts."
+    }
+  ]
+}

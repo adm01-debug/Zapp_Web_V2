@@ -1,0 +1,23 @@
+fix(ci): usa comentario SQL no heredoc pos-apply do ledger (#95)
+
+O passo "Validar registro no ledger" do db-migrate.yml enviava ao psql tres
+linhas iniciadas por '#'. Dentro de um heredoc isso e' texto literal: o parser
+do PostgreSQL aborta em "# E65 ..." e a contagem nunca executava. Depois do
+apply, um job vermelho ali nao significa "nada foi aplicado".
+
+O contrato E65 (scripts/ci/verify-ledger-statements.unit.mjs) nao pegava o
+defeito porque conferia PRESENCA DE TEXTO no YAML -- e texto presente nao e' SQL
+que roda.
+
+- .github/workflows/db-migrate.yml: comentario Bash -> comentario SQL (--).
+- scripts/db-audit/extrair-consulta-ledger.mjs (novo): extrai o heredoc EXATO do
+  passo, desindentando o bloco `run: |` como o proprio YAML faz.
+- scripts/ci/verify-ledger-statements.unit.mjs: tokeniza o heredoc extraido com o
+  lexer SQL do repositorio e recusa comentario de Bash; com contraprova, para a
+  regressao nao passar por vacuo.
+- scripts/db-audit/ledger-postapply-query.integration.mjs (novo): executa o
+  heredoc exato em PostgreSQL 17 descartavel -- equivalente conta 1 e passa no
+  verificador; NULL, vazio e ausente contam 0 (o passo reprova); divergente conta
+  1 mas o verificador reprova; a contraprova com '#' derruba a consulta.
+- .github/workflows/db-guard.yml: liga o teste de integracao ao job
+  "Contrato DB offline", com a assinatura de bootstrap do wrapper de retry.

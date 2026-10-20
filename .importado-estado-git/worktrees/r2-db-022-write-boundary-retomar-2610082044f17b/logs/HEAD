@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503054 -0300	
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503055 -0300	reset: moving to HEAD
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c b97fd35385bec31a4fcd146f8a2a4670c518c193 Joaquim Ataides <ti@promobrindes.com.br> 1791503171 -0300	cherry-pick: fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)
+b97fd35385bec31a4fcd146f8a2a4670c518c193 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503298 -0300	reset: moving to 1a1bc3179
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c b130202bcee582e9a2c7b4ea3d30252bbe81556a Joaquim Ataides <ti@promobrindes.com.br> 1791505859 -0300	commit: chore(db): retomada do R2-DB-022 fecha sem codigo novo (parte 1 ja integrada; parte 2 adiada)

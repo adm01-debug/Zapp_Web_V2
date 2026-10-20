@@ -1,0 +1,607 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "root",
+  "allocation_roster": "reports/inbox/test-review-roster.json",
+  "allocation_roster_sha256": "4d2d892848101c8840df74f8d670f4416799ba6f70dc4b20abd63c0721200437",
+  "assigned_indices": [
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124
+  ],
+  "files": [
+    {
+      "path": "src/hooks/__tests__/useAudioPlayer.test.tsx",
+      "line_start": 1,
+      "line_end": 126,
+      "git_blob_sha": "7f0ffd37069448bc43a0adb067af3c665949df20",
+      "source_sha256": "269b3c0b78b67d0e0cc46da5874ea4cecb3e20fba679ef2bb128bdde65b2b355",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 94,
+      "adjudication": [
+        "Exercita o useAudioPlayer real com assinatura de Storage simulada: não expõe URL vencida enquanto aguarda, assina locator estável, mantém erro sem voltar à credencial vencida e preserva URL externa sem fetch. Avança Date.now em51 minutos e aciona togglePlay para verificar nova assinatura, load e play.",
+        "O elemento de áudio e seu EventTarget são dublês; a prova não inclui decodificação, reprodução física ou ACL do Storage. O caso de renovação observa o hook real, sem confundir uma URL shaped public com a política real de acesso do bucket."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/__tests__/useContactCustomFields.test.tsx",
+      "line_start": 1,
+      "line_end": 59,
+      "git_blob_sha": "ac7ab2769b4467f43b856900c9f0c6de4da26fe2",
+      "source_sha256": "96afe844d17f35691039c5676480c3e9cf5c1806f79212f864b2b0a4fe51b36b",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 95,
+      "adjudication": [
+        "Monta useContactCustomFields real com builder de banco simulado; confirma consulta à tabela, estado vazio sem id, loading inicial e existência das funções add/remove.",
+        "Não chama as mutações nem verifica os campos retornados no caso nominal; as funções mockSelect/mockUpsert/mockDelete declaradas no topo não constituem assertivas dos writes. Ausência de contactId verifica saída vazia, sem afirmar que o mockFrom não foi chamado."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/__tests__/useContactNotes.test.tsx",
+      "line_start": 1,
+      "line_end": 121,
+      "git_blob_sha": "9e2bab5828f44886a659f252cab9a5449853737e",
+      "source_sha256": "6faa94456d260f548ebb82e2ad22d364ea91f17e4f01d7390aab4e558966f205",
+      "uncontained_bodies_at_allocation": 27,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 96,
+      "adjudication": [
+        "Monta useContactNotes real com usuário/perfil/notas simulados e QueryClient; confere saída definida no fetch nominal e array vazio na fixture sem notas. Inclui rejeição de consulta e usuário ausente.",
+        "Os dois últimos casos exigem apenas o fim de loading, sem mensagem de erro, ausência de consulta ou contrato de autenticação. Os builders de insert/update/delete não são acionados por testes de mutação, e notes definido não certifica conteúdo/autoria/ordenação."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/__tests__/useMessageStatus.test.tsx",
+      "line_start": 1,
+      "line_end": 90,
+      "git_blob_sha": "5b084bddba9525db4681dc5cc4390d1f11b1c07f",
+      "source_sha256": "1bef9837b9dbf2bc412e43a769bf9376ce298f647b8046ff0ff0ee2dee5b6dbb",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 97,
+      "adjudication": [
+        "Monta useMessageStatus real com consulta e canal simulados; cobre estado vazio sem contato, existência de getMessageStatus e limpeza ao remover id.",
+        "No caso nominal statusUpdates.size>=0 aceita também o mapa vazio; não confere os quatro status da fixture ou transições realtime. Erro exige só loading=false e a limpeza não exige previamente mapa não vazio; é limite concreto da prova, não novo defeito de status confirmado."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/__tests__/useMessages.test.tsx",
+      "line_start": 1,
+      "line_end": 274,
+      "git_blob_sha": "6d68ed2b12ef9f1664ba45de647b60fd1a906f42",
+      "source_sha256": "235fc66a7ac3542bd28ab1923bea565bc3deb7e564f827ec98d74b7605e49c5d",
+      "uncontained_bodies_at_allocation": 59,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 98,
+      "adjudication": [
+        "Exercita useMessages e seu serviço real sobre builders de IO: ordem cronológica, erro exposto, limpeza, troca A→B com conclusão invertida, invalidação ao desabilitar e refresh ao habilitar. Verifica que refetch não volta a loading=true e preserva cinco mensagens antigas e a primeira da página anterior ao incorporar a nova, chegando a1006 ids.",
+        "O caso isolado enabled=false só confere retorno definido, mas o caso comportamental posterior observa efetivamente a invalidação da resposta pendente. Realtime e banco são simulados; esses controles não provam RLS nem todos os consumidores, e são evidência positiva que não pode ser descartada por outras suites usarem cópias."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/__tests__/useQuickReplies.test.tsx",
+      "line_start": 1,
+      "line_end": 108,
+      "git_blob_sha": "db27217d8b915466cc2d9d186cdb2d2aa03e532c",
+      "source_sha256": "ccf37192bfedc28ab74aed0ba8f3effc997de344387d24c76bd1e7fd37397d48",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 99,
+      "adjudication": [
+        "Monta useQuickReplies real com usuário e QueryClient; espera fim do carregamento, saída definida e array vazio na fixture vazia.",
+        "O caso sem usuário verifica apenas loading=false; não afirma ausência de consulta nem visibilidade global/privada. Builders de insert/update/delete existem no mock, mas a suíte não os chama nem valida incrementos de uso ou gravação."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useContactMedia.test.tsx",
+      "line_start": 1,
+      "line_end": 250,
+      "git_blob_sha": "ac5f4376990bb2f8284dc33d439b3c0d33d72fff",
+      "source_sha256": "61eed33738c7b18c647514a442ea23b4bce9cf3a25dfdc74bb44fed168d091f9",
+      "uncontained_bodies_at_allocation": 70,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 100,
+      "adjudication": [
+        "Exercita useContactMedia e helpers reais: pedido60+1, cursor created_at/id,201 itens em quatro páginas sem ids repetidos, filtro de apagadas, classificação/fallbacks, assinatura por bucket, erros de Storage e consulta, labels e nomes. O controle sem contato exige nenhuma consulta.",
+        "As páginas chegam de fixtures e o filtro é observado como argumento do builder, sem execução SQL/ordenação no servidor. A simulação de contagem e assinatura não prova ACL, URLs válidas ou mídia decodificável; fornece prova comportamental útil do consumidor dentro dessa fronteira."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useContactMediaCounts.test.tsx",
+      "line_start": 1,
+      "line_end": 93,
+      "git_blob_sha": "f5f76bcc214e3f0c1b12a5e74b35c51de3669b2b",
+      "source_sha256": "e38594e63e215eee8daf7f1fcc83085efe4322c3c54004a4bf6e2b86dd192494",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 101,
+      "adjudication": [
+        "Monta hook real e exige cinco consultas de count exact/head, cinco resultados, filtro de apagadas e áudio+ptt. Confere zero sem contato e chave de invalidação real.",
+        "Os thenables devolvem contagens prontas por argumentos; não contam linhas reais nem executam SQL. O título em paralelo é apoiado por número de chamadas e resultados, sem medição de sobreposição temporal; paridade de MIME/classificação com todos os casos da lista não é demonstrada."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useMessages.media.test.tsx",
+      "line_start": 1,
+      "line_end": 110,
+      "git_blob_sha": "67cd9cb3fbd83ca07b3639b63894ba74bf9913fe",
+      "source_sha256": "7d6d19b13695d3225066dce7c1e3ad14894435fb9583247c690fc8e368fc076e",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 102,
+      "adjudication": [
+        "Monta useMessages real, captura a configuração entregue ao hook realtime e injeta INSERT. Exige exatamente três invalidações com as chaves reais de galeria, badge e chips para mídia do contato atual, com negativos para sem media_url e outro contato.",
+        "ChatService e assinatura realtime são substituídos; cobre callback e política de invalidação, sem tráfego WebSocket, atualização material da lista ou outros tipos de evento. O negativo de contato impede extrapolar uma mera presença de invalidateQueries."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/contactsAggregates.test.ts",
+      "line_start": 1,
+      "line_end": 26,
+      "git_blob_sha": "7a492f66cf39734a5f13c02a79c2fe8d805bb264",
+      "source_sha256": "5064954af0d2382d556b2fd8420d3147147c03368cb85e7eac77a91040faa59c",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 103,
+      "adjudication": [
+        "Preenche um QueryClient real e chama invalidateContactsAggregates real; verifica invalidação de ambos filtros KPI, contadores e duas buscas.",
+        "Mantém como controle negativo a query de última mensagem não invalidada. São estados reais do cache em memória, sem executar fetch, mutação do contato ou consistência eventual do servidor."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/contactsAggregatesRefetchOnMount.test.tsx",
+      "line_start": 1,
+      "line_end": 89,
+      "git_blob_sha": "a6408c10d265ae694488ba533c81d72f32af8f07",
+      "source_sha256": "854cc472c9cc35548a7bbca6f418d7a04f41d8b1bcb32782dcec4158d71d03b5",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 104,
+      "adjudication": [
+        "Monta os hooks reais de KPI e busca com staleTime de cinco minutos e refetchOnMount global false; desmonta/remonta no mesmo QueryClient e exige segunda consulta para KPI, tipos e lista.",
+        "A fronteira de dados é simulada e os resultados são vazios; o teste prova política de revalidação na remontagem, não novos números corretos ou atualização sem desmontar. O builder permissivo é suficiente para observar chamadas, sem substituir um teste de consulta SQL."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAdvancedContactSearch.filters.test.ts",
+      "line_start": 1,
+      "line_end": 15,
+      "git_blob_sha": "9b3ca926f1009c9aa556d64512c5a6dab515b817",
+      "source_sha256": "b074b55b7eb36c50aa44b0f9b0b02595785c3a7d691587e361c1d57f37803cb6",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 105,
+      "adjudication": [
+        "Importa normalizeSearchFilterValue real e confere que false/zero sobrevivem, vazio vira undefined e texto ativo permanece.",
+        "É um contrato puro com cinco entradas, sem montar a tela ou efetuar pesquisa no servidor; não testa o restante do hook pelo simples fato de importar dele."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
+      "line_start": 1,
+      "line_end": 89,
+      "git_blob_sha": "485165fc617afbef1d88e56ea613d41ba0d424de",
+      "source_sha256": "098eade06d9c8557447ec5535768998ca0544ca4f349369f758ac59f49db7bbd",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 106,
+      "adjudication": [
+        "Importa aggregateCrm360 real e fixa NOW; confere vazio honesto, estados de compra elegíveis, delta com duas janelas, deals abertos/propostas/ganhos, etapa recente, união de interações e interesses deduplicados limitados a três.",
+        "O caso de interações anuncia limite quatro mas fornece apenas três elegíveis; não prova truncamento acima do limite. Datas a um/oito meses usam múltiplos de30 dias distantes das bordas, e não certificam a fronteira de seis meses, query ou ACL."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactEnrichedData.test.tsx",
+      "line_start": 1,
+      "line_end": 168,
+      "git_blob_sha": "e7a7aff78e654c3561eb68ccafb0c15e27d8bfa6",
+      "source_sha256": "f93b4b240fc56bd7dfe8d241efe6ba65e2556d26eab5137d3cfbd614a5142ea8",
+      "uncontained_bodies_at_allocation": 42,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 107,
+      "adjudication": [
+        "Monta hook real e injeta UPDATE no callback do canal compartilhado simulado, alterando a fixture consultada; observa nickname atualizado. Confere erro transitório sem success:null e troca de contato com nova company; limpa log.error e restaura o mock de falha em finally.",
+        "O último caso verifica resultado da nova consulta, sem afirmar via callback que somente a assinatura do novo id foi mantida. A máquina realtime e banco têm fronteiras simuladas; a prova positiva de atualização não certifica ACL ou transporte WebSocket."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactSidebar.test.tsx",
+      "line_start": 1,
+      "line_end": 76,
+      "git_blob_sha": "69f852a1cb369d3d3bceef1ca467970fbfebd283",
+      "source_sha256": "b1403ae8c76d2ce67f3a99392b5085d70615377a1c2582c154eb4722565e4363",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 108,
+      "adjudication": [
+        "Monta useContactSidebar real com serviço/gate simulados: disabled sem chamada, loading pendente, found:false→not_found, rejeição→error, found:true→ok e dados, id ausente sem loader infinito.",
+        "O teste not_found não injeta explicitamente null embora o título mencione ambos; o fallback padrão é null, mas os casos relevantes o substituem. Retry é aguardado até error, sem afirmar contagem exata ou funcionamento do CRM externo."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.pagination.test.ts",
+      "line_start": 1,
+      "line_end": 62,
+      "git_blob_sha": "612d6ba061a716710ba64693ae38aae02fb14706",
+      "source_sha256": "536218a74426b60fdb1ce5ac6b44bb46df6056d7c0a515a767f415b8feedd39d",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 109,
+      "adjudication": [
+        "Chama fetchKpiRows real com range que gera2498 linhas e registra intervalos; confere ids lógicos distintos, três páginas e ordens com coluna id. Cobre também múltiplo exato do tamanho da página com consulta extra vazia.",
+        "O servidor é um gerador de fixtures, sem filtros efetivos ou snapshot consistente sob inserts concorrentes. orders.every aceita array vazio e sozinho não exige order chamado; ranges e cardinalidade são assertivas concretas, e o arquivo complementar verifica soft-delete."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.query.test.tsx",
+      "line_start": 1,
+      "line_end": 56,
+      "git_blob_sha": "8a0e6cf6472c0b233d788650fbd9d001c99f0255",
+      "source_sha256": "47af88974bd4a50c0ce4cb9f0b70ee9019fcfac999f06246f126df8d6f0b88c2",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 110,
+      "adjudication": [
+        "Chama fetchKpiRows real e registra .is; com includeLegacy false e true exige chamada e primeiro par deleted_at/null. O próprio comentário identifica a lacuna do mock no teste de paginação anterior.",
+        "As duas fixtures retornam página vazia; o título cada página não observa múltiplas páginas. Protege o filtro na primeira consulta dos dois modos, sem provar o resultado SQL ou todas as iterações."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.test.ts",
+      "line_start": 1,
+      "line_end": 204,
+      "git_blob_sha": "0799ae0fc8f532e3ff039309651add57d4c6828c",
+      "source_sha256": "f3273bf85a53dd1aa8145c25a932732127734ac27c533e992069c680e1fc98af",
+      "uncontained_bodies_at_allocation": 40,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 111,
+      "adjudication": [
+        "Exercita aggregateKpi real com relógio fixado e fixtures independentes: janelas30/60, mínimo49/50, distintos com trim/case, fornecedores, sete buckets, cumulativos12, deltas totais e entradas exatamente no dia30. Verifica valores concretos como120%,50% e10% e ausência de percentual inventado em base toda nova.",
+        "Os dados são arrays completos e a função é pura; não demonstra a consulta, identidade de empresa além da normalização definida ou comportamento de datas futuras/inválidas. Casos de monotonicidade/tipo convivem com valores concretos, sem serem tratados como cópias locais."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useEmailContactContext.test.tsx",
+      "line_start": 1,
+      "line_end": 75,
+      "git_blob_sha": "dcfafb31b9f8e0c58730f6139cbaf76b7943c23b",
+      "source_sha256": "2a41b0f2e11be5a7bbdc1acdba244563aaa8c6e6b6e50c9e0ddbf9645c22c950",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 112,
+      "adjudication": [
+        "Monta hook real com identidade de usuário e CRM simulados; exige consulta com conta/thread/contato e escolha externa, disabled sem chamada, mapeamento de negação e payload exato da mutation linkCompany.",
+        "O título da mutation afirma invalidar contexto, mas o caso só confere chamada de vínculo e não observa invalidação/refetch. A rejeição por texto controlado não executa autorização da Edge ou relacionamento no banco."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/inbox/__tests__/useInboxFilters.dia-local.test.tsx",
+      "line_start": 1,
+      "line_end": 135,
+      "git_blob_sha": "dc414919ebfb2aed5f3b91a4700b3eedbf29cfe9",
+      "source_sha256": "1a5ae73be84b762f1aa89cf0fcc411d4ee28ef265ee323a4d862dfe888fe1d79",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 113,
+      "adjudication": [
+        "Monta useInboxFilters real com MemoryRouter, helpers de dia reais e tempo fixado; observa round-trip dos filtros e exclusão da conversa no dia seguinte, preserva intervalo e limpa datas. Inclui controle sem data com ambos contatos.",
+        "O timezone usado é o do processo que executaria a suíte; o arquivo não configura uma matriz de fusos. window.location.search não representa a localização interna de MemoryRouter, portanto essa assertiva isolada é fraca, mas os valores do hook e a lista filtrada são evidência comportamental real."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/inbox/__tests__/useObjectionDetector.ia048.test.tsx",
+      "line_start": 1,
+      "line_end": 103,
+      "git_blob_sha": "21955c0ed147c5aaeb006931062c683120b4a4e3",
+      "source_sha256": "bb4d89531ad71244eebff42ee3ffb29f3630d2ce8b0e0d253f257c6251da8697",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 114,
+      "adjudication": [
+        "Monta useObjectionDetector real e usa promises controladas para analyze/rewrite; exige resultado no contato atual e descarte após A→B, reset de loading/analyzed e ausência de toast de sucesso da reescrita antiga.",
+        "A Edge é mockada e não há execução de modelo; a prova cobre o consumidor e guardas de resultado superado, sem certificar precisão da objeção, persistência ou abort do trabalho remoto."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/inbox/useInboxUIState.test.ts",
+      "line_start": 1,
+      "line_end": 35,
+      "git_blob_sha": "6e9d94feed953f3fa32f01d765a905c2ceeb6c95",
+      "source_sha256": "f295780b34d84d49df09f5fc964fd4cb1e294ae6f6baf48a413167d0bb47a28f",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 115,
+      "adjudication": [
+        "Monta useInboxUIState real com innerWidth390/1280; exige detalhes inicialmente fechados/abertos e toggle explícito no celular. Restaura largura após cada caso.",
+        "São dois valores de viewport e estado do hook, sem layout, breakpoint exato, evento resize ou painel visual; não transforma todo comportamento responsivo em homologado."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
+      "line_start": 1,
+      "line_end": 164,
+      "git_blob_sha": "dd364b82e23ca11d79ad0684c21ea4884fccd7dc",
+      "source_sha256": "1e42b4e22c924d947276ea8c49955d9fd640f758c9e56b4a8a6f5dabfdbd862c",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 116,
+      "adjudication": [
+        "Importa os helpers reais de busca e registro; confere payload completo snake_case, opcionais null, zeros preservados, três status e erro de insert logado sem rejeição. Cobre mínimo dois caracteres, normalização de dígitos e escape de vírgula/aspas na construção do filtro.",
+        "O caso de telefone usa substring includes local como explicação e também observa filtro real, sem executar PostgREST. O contrato de erro absorvido fica explícito; não prova durabilidade do log ou que uma busca mascarada encontra todo formato possível."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useTeamMessages.test.tsx",
+      "line_start": 1,
+      "line_end": 65,
+      "git_blob_sha": "29239f417bfd7a348aa64233cd7d3d1ea6e394ac",
+      "source_sha256": "9ccc99d2dffc45ce4ad1d518121fa82f67e0630a8ec4b59074f96735e0385a3d",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 117,
+      "adjudication": [
+        "Monta useTeamMessages real com useQuery simulado fornecendo duas mensagens; exige apenas um recibo para remetente alheio, perfil/status/conversation_id exatos e onConflict composto.",
+        "Não executa a consulta, RLS ou NOT NULL no Postgres; protege o payload do hook para a fixture atual. É evidência comportamental de Team Chat e deve coexistir com a crítica TC-011 aos outros testes desconectados."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/lib/__tests__/emailContactIdentity.test.ts",
+      "line_start": 1,
+      "line_end": 37,
+      "git_blob_sha": "9441ca71e71b6346d3d41e2023fb8f3ff0dec940",
+      "source_sha256": "5f5e6a9f8ac47b877bc9051f859c99d9cb221679a10b67c9bc9316ead34b15f2",
+      "uncontained_bodies_at_allocation": 5,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 118,
+      "adjudication": [
+        "Chama resolveEmailConversationPerson real para thread cuja última mensagem é nossa, thread só de saída e resposta posterior de outro endereço; preserva participante externo original e destinatário principal sem usar CC.",
+        "O primeiro título fala latest inbound, mas só fornece uma mensagem inbound; o terceiro fixa a escolha do participante original. Não cobre uma thread com múltiplos participantes originais ambíguos, conta inexistente ou transporte Gmail."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/services/__tests__/contact.service.enriched.test.ts",
+      "line_start": 1,
+      "line_end": 51,
+      "git_blob_sha": "43d0c4ddd3bb2ecd16a964b4cc99e23d14a6f921",
+      "source_sha256": "6afc032c39cf3bee100721b061abf1e686529a2b6fea9413de79bc9fe92a0333",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 119,
+      "adjudication": [
+        "Chama ContactService.fetchEnrichedData real e captura a string select para exigir seis colunas de endereço, cinco campos já existentes e latitude/longitude.",
+        "As verificações usam toContain, de modo que address pode estar contido em address_number; não equivalem a análise de identificadores. Não retornam dados de endereço nem montam/salvam o editor, e a lista de chamadas não é resetada entre os três casos, embora cada um chame o serviço e leia a última."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/services/__tests__/contact.service.legacy.test.ts",
+      "line_start": 1,
+      "line_end": 32,
+      "git_blob_sha": "540f66bbd86dc2b72fd2f1e1bc389abae482f235",
+      "source_sha256": "d69882b18fef4ae2f975756f928d7362fa8adc117ac2585083d23acef052130d",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 120,
+      "adjudication": [
+        "Chama os métodos reais de ContactService e verifica os argumentos de search_contacts e contacts_count_by_type com legado desligado/ligado, incluindo objeto vazio no contador padrão.",
+        "O primeiro matcher impede um valor não nulo reconhecido por expect.anything, mas não é teste estrito de ausência de propriedade undefined/null. A RPC devolve fixture vazia e seus defaults e permissões são avaliados separadamente no banco."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/services/__tests__/outbound-message.service.test.ts",
+      "line_start": 1,
+      "line_end": 98,
+      "git_blob_sha": "fe47c2a45573346de738392d2a91ee1b75212958",
+      "source_sha256": "edb31a6f6efb5c8b7e475b88432957d270a66a04946c8f538eb1a95bdcd4d19d",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 121,
+      "adjudication": [
+        "Chama os serviços reais de envio simples/rico com RPC e Edge simuladas; exige payload de enqueue, resultado do gateway, ausência de dispatch em erro de enqueue e corpo de enquete. Inclui uma falha ambígua seguida de retry com ids observados.",
+        "crypto.randomUUID está fixo no mesmo literal em todas as chamadas; por isso os ids iguais no teste de reuso não distinguem preservação da ação de nova geração a cada tentativa. Não executa SQL, entrega ou durabilidade, e a prova de idempotência precisa de gerador sequencial/controle negativo para detectar perda da identidade."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/types/__tests__/emailContactContext.test.ts",
+      "line_start": 1,
+      "line_end": 51,
+      "git_blob_sha": "81e77f87ebf4ef45529079014703daa0cdc21c68",
+      "source_sha256": "776562ff41e5bc582855fe6937e99a1432d3a499e7aeaaad980a4f620fe3e89d",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 122,
+      "adjudication": [
+        "Chama isEmailContactContext real com estados e objetos positivos/negativos: not_linked, company incompleta, about objeto, rede social fora do contrato, candidatos ambíguos tipados e estado não modelado.",
+        "O título bounded do estado ambíguo fornece apenas dois candidatos; não observa o limite superior nem candidatos malformados. O teste valida shape, sem renderização, resolução de identidade ou autorização do contexto."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "tests/contracts/ai-conversation-messages.contract.test.ts",
+      "line_start": 1,
+      "line_end": 113,
+      "git_blob_sha": "a35e19b145d2077cb4d5bd62ec80d779dd06e7ef",
+      "source_sha256": "95d9961310fbbfe4cdf32577adfd44819b7b34128d102209d0eb54f9a6e1ef74",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 123,
+      "adjudication": [
+        "Exercita schemas e medidor reais; protege id/type/mediaUrl/created_at/periodDays, legado message_type, período opcional, erro agregado150 mil contra aceitação100 mil caracteres, limite individual5001 e métricas3 mensagens/5 caracteres.",
+        "São parse e contagem sobre dados sintéticos, sem consulta de conversa, tokens do provedor ou execução da análise. O título1..365 testa30,0,999 e não cada borda; os tetos textuais são guardas do envelope, sem afirmar orçamento real em tokens."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "tests/contracts/axe-inbox.contract.test.ts",
+      "line_start": 1,
+      "line_end": 51,
+      "git_blob_sha": "01bd7a583b8d997fc1c46a10be4b43b9e520fb96",
+      "source_sha256": "ba43bbf87daeab21c411318dac92d1380b724bd8cdca7a78b7a10c35e03862ac",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 124,
+      "adjudication": [
+        "Lê quatro fontes reais para preservar nav sem role inadequado, classe de avatar e nomes dos botões do modal/aviso; as assertivas são regex de contrato.",
+        "Não executa axe ou navegador. O cabeçalho cita medições históricas e exceções de skin explicitamente decididas; essas razões não foram reapresentadas como medição atual nem as exceções autorizadas como defeito novo."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    }
+  ],
+  "tests_executed": 0,
+  "method": "Full semantic source reading; separate reviewer attribution; no suites, database or provider calls.",
+  "reviewed_files": 31,
+  "total_files": 31,
+  "pending_indices": [],
+  "status": "COMPLETED_REVIEW_PASS",
+  "actual_lines_read": 3026
+}

@@ -1,0 +1,28 @@
+fix(banco): 1 e-mail por mes no alerta de custo do autocomplete (R2-API-058)
+
+O cron `searchbox-budget-alert` rodava todo dia `notify_searchbox_budget()`
+(canal app, deduplicado por mes em `notifications`) seguido de um
+`net.http_post` INCONDICIONAL para a edge — que nao tem ledger de envio.
+Resultado: o canal app avisava 1x por mes e o e-mail se repetia a cada
+execucao diaria.
+
+Correcao (so o canal de e-mail; o canal app fica intacto):
+- tabela `public.searchbox_budget_alert_emails`: identidade mensal do
+  incidente, PK = mes, estados `pending`/`sent`/`failed`/`uncertain`;
+  `pending` e `uncertain` NAO reenviam (evita repetir e-mail), `failed`
+  (falha confirmada) retenta na proxima execucao;
+- funcao `public.searchbox_budget_alert_tick()`: decide em UMA transacao
+  (INSERT ... ON CONFLICT DO NOTHING na PK + so o vencedor chama
+  `net.http_post`), com RLS ligada e REVOKE de PUBLIC/anon/authenticated;
+- o comando do job passa a ser `SELECT public.searchbox_budget_alert_tick()`;
+- a URL do canal NAO e literal no arquivo: a migration a captura do
+  comando vigente do job e guarda como dado (junto do comando anterior,
+  para o rollback restaurar exatamente o que existia).
+
+Prova: scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh
+(53 assercoes, verde) roda o comando REAL do cron.job em PostgreSQL 17
+descartavel — BLOCO A reproduz o defeito (2 POSTs no mesmo mes), BLOCO B
+prova 1 POST por mes + estados, BLOCO C extrai e executa as linhas
+`-- Rollback:` da migration.
+
+Ref: R2-API-058 / #230

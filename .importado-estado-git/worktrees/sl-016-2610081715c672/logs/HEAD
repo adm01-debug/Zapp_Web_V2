@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490529 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490530 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc fdadeaa7f13ec055998d51b9177109b3e6e16812 hugo <hugo@promobrindes.local> 1791491351 -0300	commit: fix(inbox/chat): Hooks passam a usar get_team_inbox / get_team_messages_ (SL-016)

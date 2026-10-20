@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791546725 -0300	
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791546726 -0300	reset: moving to HEAD
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 534241c55f74316b86a7c5e87b9ce6b32d0eb508 Joaquim Ataides <ti@promobrindes.com.br> 1791546737 -0300	cherry-pick: test(talkx): régua de acessibilidade WCAG 2.1 AA por tela e tema (TL-175D)
+534241c55f74316b86a7c5e87b9ce6b32d0eb508 5804a1bcf0be9f7ed76fb387fc25fab73c42d0bb Joaquim Ataides <ti@promobrindes.com.br> 1791547734 -0300	commit: test(talkx): régua de teclado à prova de corrida e assistente avançando sem mouse
+5804a1bcf0be9f7ed76fb387fc25fab73c42d0bb 5804a1bcf0be9f7ed76fb387fc25fab73c42d0bb Joaquim Ataides <ti@promobrindes.com.br> 1791547800 -0300	reset: moving to HEAD
+5804a1bcf0be9f7ed76fb387fc25fab73c42d0bb 5804a1bcf0be9f7ed76fb387fc25fab73c42d0bb Joaquim Ataides <ti@promobrindes.com.br> 1791549523 -0300	reset: moving to HEAD
+5804a1bcf0be9f7ed76fb387fc25fab73c42d0bb 127bfa056ed4d5be0a740542e76b9fe421679f7d Joaquim Ataides <ti@promobrindes.com.br> 1791549523 -0300	commit: test(talkx): régua de acessibilidade estável (boot, ordem do Tab e aviso transiente)
+127bfa056ed4d5be0a740542e76b9fe421679f7d 127bfa056ed4d5be0a740542e76b9fe421679f7d Joaquim Ataides <ti@promobrindes.com.br> 1791550952 -0300	reset: moving to HEAD
+127bfa056ed4d5be0a740542e76b9fe421679f7d 27a8264b3660c0abb5420bbf45b371c97b289991 Joaquim Ataides <ti@promobrindes.com.br> 1791550952 -0300	commit: test(talkx): régua de teclado mede só os controles do módulo e espera o aviso do sonner sair
+27a8264b3660c0abb5420bbf45b371c97b289991 81c07619fb1ba3b25a056bc40bfddc2784ff20e4 Joaquim Ataides <ti@promobrindes.com.br> 1791551800 -0300	commit: test(talkx): varredura de contraste ignora a camada de avisos do sonner (overlay global, transitório)
+81c07619fb1ba3b25a056bc40bfddc2784ff20e4 81c07619fb1ba3b25a056bc40bfddc2784ff20e4 Joaquim Ataides <ti@promobrindes.com.br> 1791553720 -0300	reset: moving to HEAD

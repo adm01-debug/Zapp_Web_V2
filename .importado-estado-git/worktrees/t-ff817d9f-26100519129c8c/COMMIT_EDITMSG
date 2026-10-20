@@ -1,0 +1,15 @@
+fix(ci): não mascarar falha do git cherry na auditoria de branches
+
+O passo "Gerar relatorio" classificava branch como patch-equivalente mesmo
+quando o `git cherry` falhava: com `set -o pipefail`, o `|| true` preso ao
+`grep -c '^+'` engolia tambem o retorno nao zero do git, e a branch
+impossivel de comparar entrava na lista de candidatas a poda.
+
+Agora o status do `git cherry` e' validado antes de contar as linhas `^+`
+(falha vira `::error::` com o ref e derruba o passo) e a contagem usa awk,
+sem depender do status do `grep -c`. Zero commits unicos continua sendo
+equivalencia valida.
+
+Teste de regressao executa o `run:` real do passo com um `git` dublado e
+prova os dois caminhos: sem commits unicos a branch segue equivalente;
+retorno nao zero do git cherry nao a publica e faz a auditoria falhar.

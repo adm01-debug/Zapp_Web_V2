@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1b54b038779d726bc1535d5e292eb1b1f5308c31 Joaquim Ataides <ti@promobrindes.com.br> 1791344151 -0300	
+1b54b038779d726bc1535d5e292eb1b1f5308c31 1b54b038779d726bc1535d5e292eb1b1f5308c31 Joaquim Ataides <ti@promobrindes.com.br> 1791344152 -0300	reset: moving to HEAD
+1b54b038779d726bc1535d5e292eb1b1f5308c31 abb0d3116e1ea26276c4a7bc83fc50dac77c51e0 Joaquim Ataides <ti@promobrindes.com.br> 1791344726 -0300	commit: fix(recuperacao): silencia rate limit anonimo de reset (#72)

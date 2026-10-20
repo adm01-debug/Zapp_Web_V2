@@ -1,0 +1,6 @@
+fix(nps): MetricCard usa pares de texto AA (--primary-text, --warning-text, --destructive-text, --success)
+
+- MetricCard recebe nova prop textColor aplicada ao <p> do valor
+- Valores usam tokens de texto existentes para contraste AA >= 4.5:1
+- Teste NPSDashboard.test.tsx verifica cada MetricCard tem a classe correta
+- Teste falha sem a correção (4 falhas) e passa com ela (4 passadas)

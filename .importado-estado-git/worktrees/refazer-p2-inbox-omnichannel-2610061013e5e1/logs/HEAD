@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 Joaquim Ataides <ti@promobrindes.com.br> 1791292438 -0300	
+aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 Joaquim Ataides <ti@promobrindes.com.br> 1791292439 -0300	reset: moving to HEAD
+aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 f3284f63f60f6f5de7d506c65751ad7257aceece Joaquim Ataides <ti@promobrindes.com.br> 1791292462 -0300	cherry-pick: fix(omnichannel): carrega conversas reais e abre o chat no inbox (#236)
+f3284f63f60f6f5de7d506c65751ad7257aceece 6f77e9adee225d35cc2db58d721e058b759f1a32 Joaquim Ataides <ti@promobrindes.com.br> 1791292462 -0300	cherry-pick: test(omnichannel): restaura casos existentes e cobre a projeção de conversas (#236)
+6f77e9adee225d35cc2db58d721e058b759f1a32 e3c8b8f7e28b48bcaa73c9e0f045d9754e64f73b Joaquim Ataides <ti@promobrindes.com.br> 1791292639 -0300	commit: fix(omnichannel): não inventa histórico ao truncar busca (#236)

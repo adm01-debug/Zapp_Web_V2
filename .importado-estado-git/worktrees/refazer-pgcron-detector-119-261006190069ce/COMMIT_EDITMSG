@@ -1,0 +1,26 @@
+chore(db): retrato da produção do main (#1898) na base deste cartão
+
+A verificação do cartão reprovava no passo `banco_local` por diferença que a
+própria cópia não causava: o retrato versionado (supabase/schema-manifest.json,
+supabase/schema-catalog.json) era o de 04/10 09:05 (b5e2c0741) e não conhecia
+objetos que a PRODUÇÃO já tem desde o push autorizado de 05/10
+(gmail_oauth_states, talkx_storage_purge_queue, grants por coluna de
+team_conversations).
+
+O fluxo confiável regerou o retrato (db-live-guard.yml -> PR #1898, autora
+github-actions[bot], revisão humana), mas o commit foi para `origin/main`;
+a linha do dia (dia/2026-10-06, criada a partir da branch do dia anterior) não
+recebe esse sync — por isso TODO cartão com migration caía no passo banco_local.
+
+Este commit traz, para a base do cartão, só os dois arquivos do retrato que o
+passo `banco_local` lê; `src/integrations/supabase/types.ts` e
+`scripts/db-audit/grants-baseline.json` do mesmo sync ficam como estão (são do
+fluxo confiável e não são lidos pelo portão local).
+
+Medido no conjunto local `refazer119` (banco construído a partir desta cópia):
+  antes:  126 diferenças, 84 sem prova -> FALHOU banco_local
+  depois:   1 diferença (functions|f:talkx_engine_alerts()), a da própria
+            migration 20261005134241 deste cartão -> explicada, AVISO/verde
+
+Não afrouxa portão nenhum: o retrato passa a ser o real da produção; diferença
+sem migration pendente que a cite continua reprovando.

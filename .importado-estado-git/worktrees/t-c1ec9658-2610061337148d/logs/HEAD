@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304639 -0300	
+421f4a59c7ba7d52bad931d367a68d859d374465 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304640 -0300	reset: moving to HEAD
+421f4a59c7ba7d52bad931d367a68d859d374465 8d192820f5bfd9328d7497b4adddf8da7031d6b9 Joaquim Ataides <ti@promobrindes.com.br> 1791304776 -0300	cherry-pick: fix(inbox): conversa fora da janela global de mensagens mantém histórico e não lidas
+8d192820f5bfd9328d7497b4adddf8da7031d6b9 9831e3d8e3c326a09245c1bfab37cbf7667028aa Joaquim Ataides <ti@promobrindes.com.br> 1791304776 -0300	cherry-pick: fix(inbox): só consulta o agregado por contato quando a amostra global é truncada
+9831e3d8e3c326a09245c1bfab37cbf7667028aa b06c4b8e6c3db368ba64d05f874204e21ce1119e Joaquim Ataides <ti@promobrindes.com.br> 1791304777 -0300	cherry-pick: test(inbox): cobre a RPC get_inbox_contact_summaries no banco local (R2-INB-005)

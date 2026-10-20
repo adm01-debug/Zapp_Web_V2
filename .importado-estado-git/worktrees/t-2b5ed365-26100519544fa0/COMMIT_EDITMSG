@@ -1,0 +1,8 @@
+fix(talkx): estados de consulta na tela Agendada via TalkXQueryBoundary
+
+A tela Agendada derivava a campanha de campaigns.find() e devolvia null quando a
+consulta falhava, deixando a tela em branco sem erro, sem retry e sem distinguir
+falha de ausencia. Passa a delegar ao TalkXQueryBoundary na ordem carregando ->
+erro -> vazio -> conteudo, com erro vencendo o vazio, retry chamando
+refetchCampaigns (preservando a campanha aberta) e aria-busy na carga e no
+refetch em andamento.

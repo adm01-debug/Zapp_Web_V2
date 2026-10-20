@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193661 -0300	
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193662 -0300	reset: moving to HEAD
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 ce29fe7aaef9b90cf7da4bd4244b750c0ae0bb8e worker <worker@hermes.local> 1791194186 -0300	commit: fix(telefonia): histórico converte filtro 'all' em sem-filtro e period em janela p_from/p_to (#60)
+ce29fe7aaef9b90cf7da4bd4244b750c0ae0bb8e a732c393c0f25b3f9f6745f1f9cb9700f0f5ab5a worker <worker@hermes.local> 1791194200 -0300	commit (amend): fix(telefonia): histórico converte filtro 'all' em sem-filtro e periodo em janela p_from/p_to (#60)

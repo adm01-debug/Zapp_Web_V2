@@ -1,0 +1,7 @@
+fix(gamification): encerrar a partida do Speed Typing ao zerar o relogio (#268)
+
+O efeito do relogio depende de `onComplete`, e o pai recria essa funcao a cada
+render: com o relogio no zero, todo re-render concluia a partida de novo, com o
+placar velho creditado ao jogo JA SELECIONADO no pai — que fechava sem ser
+jogado e ainda gravava o recorde dele. Uma trava em `useRef` limita o fim de
+partida a uma vez por partida e e liberada enquanto o relogio corre.

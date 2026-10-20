@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456493 -0300	
+0203871564cbc198c32d6c501cd414e24ddb10ab 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456494 -0300	reset: moving to HEAD
+0203871564cbc198c32d6c501cd414e24ddb10ab 963101a4e8bc9d8b528c693f5b91b596b95da230 Joaquim Ataides <ti@promobrindes.com.br> 1791456501 -0300	cherry-pick: test(atalhos): regressão de integração do Ctrl+2 trocando a view do shell
+963101a4e8bc9d8b528c693f5b91b596b95da230 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456590 -0300	reset: moving to HEAD~1
+0203871564cbc198c32d6c501cd414e24ddb10ab 67185ca4da1ac5d73567cd4fa59e55c06621d921 Joaquim Ataides <ti@promobrindes.com.br> 1791456590 -0300	commit: test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast
+67185ca4da1ac5d73567cd4fa59e55c06621d921 67185ca4da1ac5d73567cd4fa59e55c06621d921 Joaquim Ataides <ti@promobrindes.com.br> 1791456647 -0300	reset: moving to HEAD

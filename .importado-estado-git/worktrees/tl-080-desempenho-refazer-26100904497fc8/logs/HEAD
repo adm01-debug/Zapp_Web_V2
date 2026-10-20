@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791532183 -0300	
+09cac15983207293252c5a4602e8b347bd4b8c91 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791532184 -0300	reset: moving to HEAD
+09cac15983207293252c5a4602e8b347bd4b8c91 a3097d0082fe7d420d66e81b97b2b32783008cbe Joaquim Ataides <ti@promobrindes.com.br> 1791532198 -0300	cherry-pick: feat(talk-x): relatório com desempenho (4 séries), funil de 5 degraus e mapa de calor (TL-080)
+a3097d0082fe7d420d66e81b97b2b32783008cbe 1c3e664ad35583775229a444ca23de1acaa8eb87 Joaquim Ataides <ti@promobrindes.com.br> 1791532328 -0300	commit: fix(talk-x): desliga a animacao das series do relatorio e arredonda o % antes da casa decimal (TL-080)

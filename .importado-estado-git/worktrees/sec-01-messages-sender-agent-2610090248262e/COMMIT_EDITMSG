@@ -1,0 +1,1 @@
+fix(db): messages só aceita sender agent pelo usuário autenticado (SEC-RLS-01)

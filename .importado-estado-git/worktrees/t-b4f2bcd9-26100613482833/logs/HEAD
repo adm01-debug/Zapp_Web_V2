@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305335 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305336 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 3a2cd8ed5c5eeffd3daceaa3638a547c847e1d39 Joaquim Ataides <ti@promobrindes.com.br> 1791306361 -0300	commit: test(a11y): mede o contraste do horário do balão e do alto contraste claro
+3a2cd8ed5c5eeffd3daceaa3638a547c847e1d39 72a006d1160df1929af12806a950fc7da1724d89 Joaquim Ataides <ti@promobrindes.com.br> 1791306362 -0300	commit: fix(a11y): contraste do horário do balão fecha a régua AA

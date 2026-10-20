@@ -1,0 +1,5 @@
+fix(talkx): erro da RPC de performance vira estado de erro na tela (TL-171)
+
+A tela real descartava o `error` de supabase.rpc('talkx_overview_stats'): a query resolvia com [] e o grafico mostrava 'Sem envios registrados' em vez do estado de erro da serie. A queryFn agora desestrutura { data, error } e lanca o erro, entao isError chega ao AnalyticsPerformanceChart.
+
+Prova: teste novo na tela real com rpcMock resolvendo { data: null, error: new Error('x') } (vermelho antes, verde depois) e assercao de contrato em scripts/db-audit/talkx-analytics-contract.test.mjs. Imports sem uso de TalkXAnalytics (Database, TalkXErrorState, pct) removidos; BarChart/Bar ficam porque tem uso real no arquivo.

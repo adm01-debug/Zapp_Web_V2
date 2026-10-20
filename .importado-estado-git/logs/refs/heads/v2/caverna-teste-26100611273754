@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791296877 -0300	branch: Created from dia/2026-10-06
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c c4a362de0632cdceb9f556ee11355b8a1b65208f Joaquim Ataides <ti@promobrindes.com.br> 1791297695 -0300	commit: fix(voz): comando de voz substituído não aplica mais a ação antiga

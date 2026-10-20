@@ -1,0 +1,618 @@
+commit c1e898c3fc1f2f1dc623771356a487d56d796f75
+Author: Hermes Senior <hermes-senior@promobrindes.local>
+Date:   Tue Oct 13 18:49:20 2026 -0300
+
+    feat(chat): envio de texto em fila serial por conversa, compositor liberado e rascunho preservado
+
+diff --git a/.tmp/relato.md b/.tmp/relato.md
+index 531b4020c7..b9383d56b1 100644
+--- a/.tmp/relato.md
++++ b/.tmp/relato.md
+@@ -1,27 +1,23 @@
+-Especialista: workertestes
++Especialista: Hugo (area-front-hooks)
+ 
+-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+-
+-## O que já estava coberto (por isso NÃO reescrevi)
+-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
+-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
+-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
+-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
+-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+-
+-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
+-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
+-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
+-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
+-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
+-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
++## O que mudou e por quê
++- `src/hooks/chat/sendQueue.ts` (novo): fila SERIAL por conversa. A tarefa de uma fila ociosa começa no mesmo tick (preserva o envio único acionado dentro do Enter); as seguintes entram na cauda e esperam a vez; uma rejeição não encadeia (libera a próxima) e a fila de um contato não espera a de outro.
++- `src/components/inbox/chat/useChatPanelHandlers.ts`: o envio de texto entra na fila da conversa e o compositor é liberado na hora (o ramo de texto deixa de setar `isSending`, que agora só cobre edição, e deixa de esperar o despacho no Edge). O Enter durante um envio em andamento ENFILEIRA em vez de ser descartado. A animação/som de "enviado" e o toast de erro passam a sair do aceite/rejeição do transporte; falha devolve o rascunho (sem sobrescrever texto novo digitado no meio, e devolvendo também a resposta citada).
++- `src/hooks/inbox/useRealtimeInbox.ts`: `handleSendMessage` não chama mais `refreshActiveConversation()` — o INSERT da mensagem enfileirada já atualiza a lista (`useRealtimeMessages`) e a conversa aberta (`useMessages`) pela inscrição `global-messages-realtime`.
++- `src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts`: saíram os três `it.todo` de PK-21 (as provas agora existem nos arquivos acima), como o próprio registro pede.
+ 
+ ## Prova
+-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
+-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
+-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
+-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
++- vermelho antes (base `dia/2026-10-13`, em `.tmp/base-dia`): `npx vitest run .../fila-serial.test.tsx .../sem-refetch-no-envio.test.tsx .../sendQueue.test.ts` → `Test Files 3 failed (3); Tests 4 failed | 2 passed (6)`, com `AssertionError: expected 'segunda' to be ''` (2º Enter descartado), `expected [ 'lenta' ] to deeply equal [ 'lenta', 'outro-contato' ]` (sem fila por conversa), `expected "vi.fn()" to not be called at all, but actually been called 1 times` (refetch no envio) e `Failed to resolve import "../sendQueue"` (a fila não existia).
++- verde depois: `npx vitest run src/components/inbox src/hooks/inbox src/hooks/chat` → `Test Files 261 passed | 3 skipped (264); Tests 2136 passed | 3 expected fail | 22 todo (2161)`.
++- tipos: nenhum erro novo introduzido pelo diff (o linter acusa só os `TS2307` de alias/`node_modules`, que já existem no arquivo antes da mudança).
++
++## Arquivos fora da lista do cartão (justificativa)
++O cartão lista `src/hooks/chat/` (envio e fila), `src/services/` (messageSender), "componente do compositor (só o necessário)" e testes. Todos os arquivos que toquei caem nessas três classes:
++- `src/hooks/chat/sendQueue.ts` (+ `__tests__/sendQueue.test.ts`): a fila serial, em `src/hooks/chat/`.
++- `src/components/inbox/chat/useChatPanelHandlers.ts` (+ `__tests__/useChatPanelHandlers.fila-serial.test.tsx`): o COMPOSITOR — é onde o Enter/handleSend travava; "só o necessário" = o ramo de texto do `handleSend` e o teste dele. Sem essa mudança não há como o Enter enfileirar nem o rascunho ser preservado.
++- `src/hooks/inbox/useRealtimeInbox.ts` (+ `__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx`): o item 3 do critério ("tirar o refetch da lista do caminho do envio") mora só aqui — `handleSendMessage` é a ponte que o compositor chama; fora da pasta `src/hooks/chat/` por um nível, mas é a mesma camada de envio. Nada além da remoção do `refreshActiveConversation()` foi mudado.
++- Nenhum arquivo de outro assunto entrou.
+ 
+ ## O que NÃO fiz e por quê
+-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
+-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
++- Não toquei no caminho de áudio (`handleSendAudio`) nem no de edição: continuam com `refreshActiveConversation()`/`isSending` como estavam; PK-25 é de outra prova.
++
+diff --git a/src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx b/src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx
+new file mode 100644
+index 0000000000..518b996881
+--- /dev/null
++++ b/src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx
+@@ -0,0 +1,179 @@
++/**
++ * PK-21 — envio de texto em FILA SERIAL por conversa.
++ *
++ * Defeito de origem (doc 06, 2ª passada): o compositor ficava travado até o
++ * enqueue + o despacho no Edge + dois refetches; um Enter durante um envio em
++ * andamento era descartado (mensagem perdida) e a ordem de duas mensagens
++ * seguidas não era garantida. Estas provas fixam o comportamento novo, e as
++ * duas primeiras também fixam o contrato anterior que precisa continuar:
++ * sucesso limpa o editor e anuncia; falha devolve o rascunho sem anunciar.
++ */
++import { describe, it, expect, beforeEach, vi } from 'vitest';
++import { renderHook, act } from '@testing-library/react';
++
++const mocks = vi.hoisted(() => ({
++  undoToast: vi.fn(),
++  toast: vi.fn(),
++  logError: vi.fn(),
++}));
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: { from: () => ({ update: () => ({ eq: async () => ({ error: null }) }) }) },
++}));
++
++vi.mock('@/lib/logger', () => ({
++  log: { error: mocks.logError, debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
++}));
++
++vi.mock('@/lib/undoToast', () => ({
++  undoToast: (...args: unknown[]) => mocks.undoToast(...args),
++}));
++
++vi.mock('@/lib/ai-vocabulary', () => ({
++  normalizeOperationalPriority: () => ({ value: null }),
++}));
++
++vi.mock('@/hooks/ui/use-toast', () => ({
++  toast: (...args: unknown[]) => mocks.toast(...args),
++}));
++
++vi.mock('@/hooks/chat/useConversationActions', () => ({
++  useConversationActions: () => ({
++    isFavorite: () => false,
++    favoriteContact: vi.fn(),
++    unfavoriteContact: vi.fn(),
++    snoozeConversation: vi.fn(),
++  }),
++}));
++
++vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
++  useMyWorkItems: () => ({ createAndGetId: vi.fn() }),
++  tomorrowAtNine: () => new Date('2026-10-06T09:00:00.000Z'),
++}));
++
++vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
++
++vi.mock('@/components/inbox/SlashCommands', () => ({}));
++
++import { useChatPanelHandlers } from '../useChatPanelHandlers';
++
++type OnSend = (content: string, replyToId?: string | null) => Promise<void> | void;
++
++function montarHook(onSendMessage: OnSend, conversationIdInicial = 'conv-1') {
++  return renderHook(
++    (props: { conversationId: string }) =>
++      useChatPanelHandlers({
++        conversationId: props.conversationId,
++        contactId: 'contato-1',
++        contactPhone: '5511999999999',
++        instanceName: 'instancia-1',
++        onSendMessage,
++        editMessageApi: vi.fn(),
++        applySignature: (texto: string) => texto,
++        handleTypingStart: vi.fn(),
++        handleTypingStop: vi.fn(),
++        openDialog: vi.fn(),
++        closeDialog: vi.fn(),
++        handleSetActiveTool: vi.fn(),
++      }),
++    { initialProps: { conversationId: conversationIdInicial } },
++  );
++}
++
++describe('useChatPanelHandlers — envio em fila serial por conversa (PK-21)', () => {
++  beforeEach(() => {
++    mocks.undoToast.mockReset();
++    mocks.toast.mockReset();
++    mocks.logError.mockReset();
++  });
++
++  it('Enter repetido enfileira em série por conversa, preserva a ordem e libera o compositor logo após o enqueue', async () => {
++    const chamadas: string[] = [];
++    let liberarPrimeira!: () => void;
++    const onSendMessage = vi.fn((content: string) => {
++      chamadas.push(`inicio:${content}`);
++      if (content === 'primeira') {
++        return new Promise<void>((resolve) => {
++          liberarPrimeira = () => { chamadas.push('fim:primeira'); resolve(); };
++        });
++      }
++      chamadas.push(`fim:${content}`);
++      return Promise.resolve();
++    });
++    const { result } = montarHook(onSendMessage);
++
++    act(() => { result.current.setInputValue('primeira'); });
++    let primeiraEntrega!: Promise<void>;
++    await act(async () => { primeiraEntrega = result.current.handleSend(); });
++
++    // O compositor NÃO espera o despacho: o editor já está limpo e a 1ª saiu.
++    expect(result.current.inputValue).toBe('');
++    expect(onSendMessage).toHaveBeenCalledTimes(1);
++    expect(chamadas).toEqual(['inicio:primeira']);
++
++    // Segundo Enter com a 1ª ainda em voo: entra na fila em vez de ser descartado.
++    act(() => { result.current.setInputValue('segunda'); });
++    await act(async () => { void result.current.handleSend(); });
++
++    expect(onSendMessage).toHaveBeenCalledTimes(1);
++    expect(result.current.inputValue).toBe('');
++    expect(chamadas).toEqual(['inicio:primeira']);
++
++    await act(async () => { liberarPrimeira(); await primeiraEntrega; });
++
++    // Ordem preservada: a segunda só começou depois que a primeira terminou.
++    expect(chamadas).toEqual(['inicio:primeira', 'fim:primeira', 'inicio:segunda', 'fim:segunda']);
++    expect(mocks.undoToast).toHaveBeenCalledTimes(2);
++  });
++
++  it('falha de enqueue preserva o rascunho e não toca a animação/som de enviado', async () => {
++    const onSendMessage = vi.fn().mockRejectedValueOnce(new Error('sem conexão'));
++    const { result } = montarHook(onSendMessage);
++
++    act(() => { result.current.setInputValue('texto que falhou'); });
++    await act(async () => { await result.current.handleSend(); });
++
++    expect(result.current.inputValue).toBe('texto que falhou');
++    expect(mocks.undoToast).not.toHaveBeenCalled();
++    expect(mocks.toast).toHaveBeenCalledTimes(1);
++  });
++
++  it('a falha não sobrescreve um rascunho novo digitado enquanto a mensagem estava em voo', async () => {
++    let rejeitar!: (erro: Error) => void;
++    const onSendMessage = vi.fn(() => new Promise<void>((_resolve, reject) => { rejeitar = reject; }));
++    const { result } = montarHook(onSendMessage);
++
++    act(() => { result.current.setInputValue('antiga'); });
++    await act(async () => { void result.current.handleSend(); });
++    expect(result.current.inputValue).toBe('');
++
++    act(() => { result.current.setInputValue('nova'); });
++    await act(async () => { rejeitar(new Error('sem rede')); await Promise.resolve(); });
++
++    expect(result.current.inputValue).toBe('nova');
++    expect(mocks.undoToast).not.toHaveBeenCalled();
++  });
++
++  it('a fila é por conversa: outro contato não espera a mensagem em voo do primeiro', async () => {
++    const ordem: string[] = [];
++    let liberarLenta!: () => void;
++    const onSendMessage = vi.fn((content: string) => {
++      ordem.push(content);
++      if (content === 'lenta') return new Promise<void>((resolve) => { liberarLenta = resolve; });
++      return Promise.resolve();
++    });
++    const { result, rerender } = montarHook(onSendMessage);
++
++    act(() => { result.current.setInputValue('lenta'); });
++    await act(async () => { void result.current.handleSend(); });
++    expect(ordem).toEqual(['lenta']);
++
++    rerender({ conversationId: 'conv-2' });
++    act(() => { result.current.setInputValue('outro-contato'); });
++    await act(async () => { await result.current.handleSend(); });
++
++    expect(ordem).toEqual(['lenta', 'outro-contato']);
++    liberarLenta();
++    await act(async () => { await Promise.resolve(); });
++  });
++});
+diff --git a/src/components/inbox/chat/useChatPanelHandlers.ts b/src/components/inbox/chat/useChatPanelHandlers.ts
+index 4a113cab79..23eef2d093 100644
+--- a/src/components/inbox/chat/useChatPanelHandlers.ts
++++ b/src/components/inbox/chat/useChatPanelHandlers.ts
+@@ -22,6 +22,7 @@ import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/c
+ import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
+ import { navigateToView } from '@/hooks/system/useNavigationHistory';
+ import { CHAR_LIMIT } from './useChatInputLogic';
++import { sendQueue } from '@/hooks/chat/sendQueue';
+ 
+ /** Tipos de mensagem do chat com representação textual direta no transporte. */
+ const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
+@@ -334,11 +335,21 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+     const originalText = corpoDoEnvio;
+     const messageContent = payloadDoEnvio;
+     const wasReply = replyToMessageRef.current;
+-    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
++    setInputValue(''); setReplyToMessage(null); handleTypingStop();
+     if (wasReply) log.debug('Sending reply to:', wasReply.id);
+ 
++    // PK-21: fila SERIAL por conversa. O compositor NÃO espera o despacho no Edge
++    // (nem os refetches que vinham depois): a mensagem entra na fila da conversa e
++    // o editor já aceita a próxima digitação. A ordem é preservada — a segunda
++    // mensagem só sai depois que a primeira terminou — e uma falha de enqueue
++    // devolve o rascunho em vez de perdê-lo.
++    const entrega = sendQueue.enqueue(conversationId, () =>
++      onSendMessage(messageContent, wasReply?.id ?? null)
++    );
++
+     try {
+-      await onSendMessage(messageContent, wasReply?.id ?? null);
++      await entrega;
++      // A animação/som de "enviado" é do ACEITE do transporte, nunca da digitação.
+       undoToast({
+         message: 'Mensagem enviada', icon: '📨', delay: 3000,
+         onUndo: () => {
+@@ -349,10 +360,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+       });
+     } catch (err) {
+       log.error('Failed to send message:', err);
+-      setInputValue(originalText);
++      // O rascunho volta ao editor. Se o agente já digitou outra coisa, o texto
++      // novo fica — o que falhou não sobrescreve o que ele está escrevendo.
++      setInputValue((atual) => (atual === '' ? originalText : atual));
++      if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
+       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+-    } finally { setIsSending(false); }
+-  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
++    }
++  }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
+ 
+   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
+   // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem
+diff --git a/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts b/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+index 1aa8cf1f77..2b096f429b 100644
+--- a/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
++++ b/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+@@ -24,12 +24,6 @@
+ import { describe, it } from 'vitest';
+ 
+ describe('paridade-06 · envio (provas pendentes)', () => {
+-  it.todo(
+-    'PK-21: Enter repetido enfileira em série por contato, preserva a ordem e libera o compositor logo após o enqueue local',
+-  );
+-  it.todo('PK-21: falha de enqueue preserva o rascunho e não toca a animação/som de enviado');
+-  it.todo('PK-21: o caminho de envio não refaz o fetch da lista de conversas');
+-
+   it.todo('PK-22: contato existente com conexão A e outra B conectada sai por A');
+   it.todo('PK-22: conexão do contato desconectada → aviso, sem troca silenciosa de número');
+   it.todo('PK-22: contato novo usa a conexão escolhida e o diálogo mostra de qual número sai');
+diff --git a/src/hooks/chat/__tests__/sendQueue.test.ts b/src/hooks/chat/__tests__/sendQueue.test.ts
+new file mode 100644
+index 0000000000..a03862dc01
+--- /dev/null
++++ b/src/hooks/chat/__tests__/sendQueue.test.ts
+@@ -0,0 +1,80 @@
++/**
++ * PK-21 — prova da fila SERIAL por conversa.
++ *
++ * O defeito de origem: o compositor travava até o enqueue + despacho no Edge + os
++ * dois refetches, e não havia fila nenhuma — um segundo Enter durante um envio em
++ * andamento era descartado. A fila abaixo é o alicerce do envio em série: uma fila
++ * por conversa, ordem preservada, e nenhuma rejeição encadeada (um erro de rede
++ * não pode travar os envios seguintes do mesmo contato).
++ */
++import { describe, expect, it, vi } from 'vitest';
++import { createSerialSendQueue } from '../sendQueue';
++
++describe('fila serial de envio por conversa (PK-21)', () => {
++  it('preserva a ordem: a segunda só começa depois que a primeira termina', async () => {
++    const fila = createSerialSendQueue();
++    const ordem: string[] = [];
++    let liberarPrimeira!: () => void;
++
++    const primeira = fila.enqueue('conv-1', async () => {
++      ordem.push('a:inicio');
++      await new Promise<void>((resolve) => { liberarPrimeira = resolve; });
++      ordem.push('a:fim');
++    });
++    const segunda = fila.enqueue('conv-1', async () => {
++      ordem.push('b:inicio');
++      ordem.push('b:fim');
++    });
++
++    await Promise.resolve();
++    expect(ordem).toEqual(['a:inicio']);
++    expect(fila.isBusy('conv-1')).toBe(true);
++
++    liberarPrimeira();
++    await Promise.all([primeira, segunda]);
++
++    expect(ordem).toEqual(['a:inicio', 'a:fim', 'b:inicio', 'b:fim']);
++    expect(fila.isBusy('conv-1')).toBe(false);
++  });
++
++  it('fila ociosa começa no mesmo tick — o Enter aciona o transporte dentro do evento', () => {
++    const fila = createSerialSendQueue();
++    const tarefa = vi.fn().mockReturnValue(undefined);
++
++    fila.enqueue('conv-1', tarefa);
++
++    // Sem esperar microtask: o acionamento (limite/assinatura) conta a chamada ali.
++    expect(tarefa).toHaveBeenCalledTimes(1);
++  });
++
++  it('uma tarefa que falha libera a seguinte e propaga a própria rejeição', async () => {
++    const fila = createSerialSendQueue();
++
++    const primeira = fila.enqueue('conv-1', async () => { throw new Error('enqueue indisponível'); });
++    const segunda = fila.enqueue('conv-1', async () => 'ok');
++
++    await expect(primeira).rejects.toThrow('enqueue indisponível');
++    await expect(segunda).resolves.toBe('ok');
++    expect(fila.isBusy('conv-1')).toBe(false);
++  });
++
++  it('a fila de um contato não espera pela de outro', async () => {
++    const fila = createSerialSendQueue();
++    const ordem: string[] = [];
++    let liberar!: () => void;
++
++    const um = fila.enqueue('conv-1', async () => {
++      ordem.push('um:inicio');
++      await new Promise<void>((resolve) => { liberar = resolve; });
++      ordem.push('um:fim');
++    });
++    const dois = fila.enqueue('conv-2', async () => { ordem.push('dois'); });
++
++    await dois;
++    expect(ordem).toEqual(['um:inicio', 'dois']);
++
++    liberar();
++    await um;
++    expect(ordem).toEqual(['um:inicio', 'dois', 'um:fim']);
++  });
++});
+diff --git a/src/hooks/chat/sendQueue.ts b/src/hooks/chat/sendQueue.ts
+new file mode 100644
+index 0000000000..32bc2b5505
+--- /dev/null
++++ b/src/hooks/chat/sendQueue.ts
+@@ -0,0 +1,65 @@
++/**
++ * PK-21 — fila SERIAL de envio por conversa.
++ *
++ * O compositor não pode ficar travado até o despacho no Edge (e os refetches que
++ * vinham depois dele): a mensagem entra nesta fila — uma fila por conversa — e o
++ * editor é liberado na hora, aceitando a próxima digitação. A fila garante que a
++ * segunda mensagem só começa depois que a primeira terminou: ordem preservada,
++ * sem duas entregas concorrentes para o mesmo contato.
++ *
++ * A primeira tarefa de uma fila OCIOSA começa no mesmo tick (chamada síncrona).
++ * Isso é de propósito: o `Enter` aciona o transporte dentro do próprio evento, e
++ * os testes de acionamento (limite/assinatura) contam a chamada ali. Só a partir
++ * da segunda a tarefa entra na cauda.
++ *
++ * A fila nunca encadeia rejeição: uma tarefa que falha libera a próxima (um erro
++ * de rede não pode travar os envios seguintes do mesmo contato).
++ */
++export interface SerialSendQueue {
++  /** Entra na fila da `key`; resolve/rejeita com o resultado da própria tarefa. */
++  enqueue<T>(key: string, task: () => Promise<T> | T): Promise<T>;
++  /** Há tarefa em voo (ou na cauda) para esta `key`? */
++  isBusy(key: string): boolean;
++  clear(): void;
++}
++
++export function createSerialSendQueue(): SerialSendQueue {
++  const caudas = new Map<string, Promise<void>>();
++  const ocupadas = new Set<string>();
++
++  return {
++    enqueue<T>(key: string, task: () => Promise<T> | T): Promise<T> {
++      let execucao: Promise<T>;
++      if (!ocupadas.has(key)) {
++        ocupadas.add(key);
++        execucao = Promise.resolve(task());
++      } else {
++        const anterior = caudas.get(key) ?? Promise.resolve();
++        execucao = anterior.then(() => task());
++      }
++
++      // A cauda guardada NUNCA rejeita — senão a próxima tarefa herdaria o erro
++      // da anterior em vez de esperar a vez.
++      const cauda = execucao.then(() => undefined, () => undefined);
++      caudas.set(key, cauda);
++      void cauda.then(() => {
++        if (caudas.get(key) === cauda) {
++          caudas.delete(key);
++          ocupadas.delete(key);
++        }
++      });
++
++      return execucao;
++    },
++    isBusy(key: string): boolean {
++      return ocupadas.has(key);
++    },
++    clear(): void {
++      caudas.clear();
++      ocupadas.clear();
++    },
++  };
++}
++
++/** Fila do produto: uma instância por aba, compartilhada pelos painéis de chat. */
++export const sendQueue = createSerialSendQueue();
+diff --git a/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx b/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx
+new file mode 100644
+index 0000000000..c8d03f645c
+--- /dev/null
++++ b/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx
+@@ -0,0 +1,109 @@
++/**
++ * PK-21 — o caminho de envio não refaz o fetch da lista de conversas.
++ *
++ * Defeito de origem: `handleSendMessage` esperava o envio E o par de refetches
++ * (`refetch` da lista + `refetch` da conversa aberta). Isso é o que mantinha o
++ * compositor travado depois do despacho e ainda fazia a lista "piscar" no meio
++ * do envio. A atualização já chega pelo Realtime: o INSERT da mensagem
++ * enfileirada é tratado por `useRealtimeMessages` (lista) e por `useMessages`
++ * (conversa aberta) em `global-messages-realtime`.
++ */
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { renderHook, act } from '@testing-library/react';
++
++const { sendMessageMock, refetchMock, refetchSelectedMock } = vi.hoisted(() => ({
++  sendMessageMock: vi.fn().mockResolvedValue(undefined),
++  refetchMock: vi.fn().mockResolvedValue(undefined),
++  refetchSelectedMock: vi.fn().mockResolvedValue(undefined),
++}));
++
++vi.mock('@/hooks/inbox/useInboxUIState', () => ({
++  useInboxUIState: () => ({
++    selectedContactId: 'c1',
++    setSelectedContactId: vi.fn(),
++    soundOn: true,
++    setSoundOn: vi.fn(),
++    setPendingContactId: vi.fn(),
++  }),
++}));
++vi.mock('@/hooks/chat/useRealtimeMessages', () => ({
++  useRealtimeMessages: () => ({
++    conversations: [],
++    loading: false,
++    error: null,
++    sendMessage: sendMessageMock,
++    markAsRead: vi.fn(),
++    refetch: refetchMock,
++    newMessageNotification: null,
++    dismissNotification: vi.fn(),
++    setSelectedContact: vi.fn(),
++    setSoundEnabled: vi.fn(),
++  }),
++}));
++vi.mock('@/hooks/integrations/useExternalEvolution', () => ({
++  useExternalConversations: () => ({ conversations: [], loading: false, error: null, refetch: vi.fn() }),
++  useExternalMessages: () => ({ messages: [], loading: false, refetch: refetchSelectedMock }),
++}));
++vi.mock('@/hooks/system/useOfflineCache', () => ({
++  useOfflineCache: () => ({ conversations: [], usingCache: false }),
++}));
++vi.mock('@/hooks/chat/useMessages', () => ({
++  useMessages: () => ({
++    messages: [],
++    loading: false,
++    refetch: refetchSelectedMock,
++    hasOlder: false,
++    loadingOlder: false,
++    loadOlderMessages: vi.fn(),
++    addMessage: vi.fn(),
++    updateMessage: vi.fn(),
++    removeMessage: vi.fn(),
++  }),
++}));
++vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: null }) }));
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: vi.fn(() => ({
++      select: vi.fn().mockReturnThis(),
++      eq: vi.fn().mockReturnThis(),
++      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
++    })),
++  },
++}));
++vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
++
++import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  sendMessageMock.mockResolvedValue(undefined);
++  refetchMock.mockResolvedValue(undefined);
++  refetchSelectedMock.mockResolvedValue(undefined);
++});
++
++describe('useRealtimeInbox — envio de texto sem refetch da lista (PK-21)', () => {
++  it('envia sem refazer o fetch da lista nem o da conversa aberta', async () => {
++    const { result } = renderHook(() => useRealtimeInbox());
++
++    await act(async () => {
++      await result.current.handleSendMessage('mensagem em fila', null);
++    });
++
++    expect(sendMessageMock).toHaveBeenCalledWith('c1', 'mensagem em fila', 'text', undefined, undefined, null);
++    // A lista e a conversa aberta são atualizadas pelo Realtime (INSERT da
++    // mensagem), não por um refetch dentro do caminho do envio.
++    expect(refetchMock).not.toHaveBeenCalled();
++    expect(refetchSelectedMock).not.toHaveBeenCalled();
++  });
++
++  it('a rejeição do transporte sobe para o chamador (o compositor devolve o rascunho)', async () => {
++    sendMessageMock.mockRejectedValueOnce(new Error('sem conexão'));
++    const { result } = renderHook(() => useRealtimeInbox());
++
++    await expect(
++      act(async () => { await result.current.handleSendMessage('oi', null); }),
++    ).rejects.toThrow('sem conexão');
++
++    expect(refetchMock).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/hooks/inbox/useRealtimeInbox.ts b/src/hooks/inbox/useRealtimeInbox.ts
+index bbc9984e6c..7ffbe7b92e 100644
+--- a/src/hooks/inbox/useRealtimeInbox.ts
++++ b/src/hooks/inbox/useRealtimeInbox.ts
+@@ -154,6 +154,13 @@ export function useRealtimeInbox() {
+   const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
+     if (!selectedContactId) return;
+     const currentId = selectedContactId;
++    // PK-21: o caminho de envio NÃO refaz o fetch da lista de conversas nem o da
++    // conversa aberta. Os dois já são atualizados pelo Realtime — o INSERT da
++    // mensagem enfileirada é tratado por `useRealtimeMessages` (lista) e por
++    // `useMessages` (conversa aberta) na inscrição `global-messages-realtime` —, e
++    // o par de refetches dentro do envio era o que segurava o compositor depois do
++    // despacho, obrigando o agente a esperar uma ida ao servidor que o Realtime já
++    // cobria.
+     try {
+       await sendMessage(currentId, content, 'text', undefined, undefined, replyToId);
+     } catch (err) {
+@@ -162,15 +169,7 @@ export function useRealtimeInbox() {
+       // chegar até ele para que não limpe o editor nem anuncie sucesso falso.
+       throw err;
+     }
+-
+-    try {
+-      await refreshActiveConversation();
+-    } catch (err) {
+-      // O transporte já confirmou o envio. Falha de refresh não deve sugerir
+-      // ao agente que reenvie a mesma mensagem e gere duplicidade.
+-      log.warn('Message sent, but conversation refresh failed:', err);
+-    }
+-  }, [selectedContactId, sendMessage, refreshActiveConversation]);
++  }, [selectedContactId, sendMessage]);
+ 
+    // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
+    // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando

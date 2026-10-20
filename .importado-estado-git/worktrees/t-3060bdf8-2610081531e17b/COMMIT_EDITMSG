@@ -1,0 +1,5 @@
+fix(arquivos): conta figurinhas nas contagens do periodo
+
+ContactMediaCounts exige `sticker` desde o filtro de figurinhas da ponta de
+dia/2026-10-08; sem a linha o typecheck reprovava em TS2345 em
+FilesTab.tsx(202,59).

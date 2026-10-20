@@ -1,0 +1,27 @@
+fix(outros): noImplicitAny: true via ratchet (SL-090)
+
+Por quê: tsconfig.app.json mantinha `noImplicitAny: false` enquanto o ratchet
+existe (scripts/ci/implicit-any-ratchet.mjs, baseline 0) — mas o ratchet liga a
+flag só na própria linha de comando (`tsc -p tsconfig.app.json --noImplicitAny`).
+O projeto de verdade (`tsc -b --force`, usado pelo typecheck-ratchet, pelo CI e
+pelo editor) aceitava parâmetro sem tipo: com um `function somaSemTipo(a)` em
+src/, `bun run typecheck` saía rc=0. Agora a flag vive no tsconfig e o ratchet
+deixa de ser o único lugar que exige tipo explícito.
+
+Os 4 erros que a flag revelou (todos pré-existentes) foram corrigidos:
+- src/hooks/calls/__tests__/useTerminoRemoto.test.tsx: 2x TS7006 (callback tipado).
+- src/components/settings/theme/__tests__/presets.test.ts: 2x TS2551 - lê
+  'gradient-success' (token do grupo C, fora de ThemeModeColors de propósito)
+  pelo mesmo caminho com que o preset o escreve. Nenhuma asserção afrouxada.
+tsconfig.json levou a mesma linha (era false) por ser o mesmo defeito; é inerte
+(só "references", sem files/include).
+
+Verificação: bun run typecheck rc=0 (antes, o mesmo caso saía rc=0 e agora sai
+rc=2 com TS7006); node scripts/ci/implicit-any-ratchet.mjs -> "implicit-any
+errors: 0 (baseline: 0)"; typecheck-ratchet novas=0; lint-ratchet novas=0;
+vitest dos 2 arquivos tocados: 112 testes; zapp-verify . --rapido VERDE.
+Teste novo em scripts/ci/implicit-any-ratchet.unit.mjs compila 'any' implícito
+no compilador real herdando o tsconfig.app.json e exige TS7006 (falha com a flag
+em false).
+
+Cartão V2: SL-090 (S2-2, plano docs/plans/PLANO_SEGUNDA_LEVA_CARTOES_2026-10-08.md)

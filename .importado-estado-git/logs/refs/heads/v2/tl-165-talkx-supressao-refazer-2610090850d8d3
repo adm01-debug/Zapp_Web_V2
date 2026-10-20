@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791546643 -0300	branch: Created from dia/2026-10-09
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 24d89b0bdbb79a2a513f6707a8180661decf3ab5 Joaquim Ataides <ti@promobrindes.com.br> 1791546791 -0300	commit (cherry-pick): fix(talk-x): unificar o hook de supressão e paginar a tabela no servidor (TL-165)
+24d89b0bdbb79a2a513f6707a8180661decf3ab5 28f2f6e90ba67fcf132b94ea175a0575ded0e059 Joaquim Ataides <ti@promobrindes.com.br> 1791547383 -0300	commit: fix(talkx): listagem de supressao sem removidos, busca no servidor e modal de edicao sem motivo (TL-165)
+28f2f6e90ba67fcf132b94ea175a0575ded0e059 637aa5c7225fd99cf19d875f3a099fd665d77c1a Joaquim Ataides <ti@promobrindes.com.br> 1791548177 -0300	commit (amend): fix(talkx): listagem de supressao sem removidos, busca no servidor e modal de edicao sem motivo (TL-165)

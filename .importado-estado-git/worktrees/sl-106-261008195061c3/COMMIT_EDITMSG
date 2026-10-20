@@ -1,0 +1,5 @@
+fix(telefonia): Painel vira Sheet <1280, CallRowMobile em 390 (SL-106)
+
+T77 do plano da telefonia: abaixo do breakpoint xl (1280) o painel lateral nao cabe na grade ao lado do historico e passa a ser um Sheet lateral, aberto pelo botao do topRight e pela selecao de uma linha (inclusive deep link ?call=). Abaixo de md (768) a tabela de 7 colunas vira a lista CallRowMobile, com avatar, nome, canal, direcao, resultado, data/hora, duracao e as mesmas acoes (selecionar e ligar de volta).
+
+Os dois cortes vem do matchMedia lidos por useSyncExternalStore (sem setState em efeito). Teste novo: src/components/calls/__tests__/TelefoniaView.responsivo.test.tsx (5 falhavam sem a correcao; os 2 controles de 1440 ja passavam).

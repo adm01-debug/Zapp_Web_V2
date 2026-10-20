@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+printf 'zapp-db-guard argc=%d argv=<%s>\n' "$#" "$*" >> "${STUB_LOG:?}"
+exit 0

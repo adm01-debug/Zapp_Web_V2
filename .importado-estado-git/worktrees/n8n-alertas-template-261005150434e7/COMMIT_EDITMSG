@@ -1,0 +1,17 @@
+fix(n8n): corrige condicao por item no template de alertas
+
+O HTTP Request 4.2 expande a resposta array em itens, entao cada $json e um
+objeto de alerta e nao tem "length": o IF "Tem alerta aberto?" ia sempre para
+"Nada a fazer".
+
+- IF passa a operar sobre a colecao de itens recebidos e so reconhece o contrato
+  minimo de alerta (id/kind/opened_at); objeto de erro/resposta invalida nao
+  conta como alerta.
+- Code "Montar resumo" filtra o mesmo contrato e segue agregando os itens validos
+  uma unica vez (preserva total/texto e a finalidade de aviso interno).
+- scripts/ci/talkx-alerts-template.unit.mjs: prova RED/GREEN executando as
+  expressoes REAIS do template (condicao do IF e jsCode do Code), sem
+  reimplementar o predicado no teste.
+
+Preserva active: false, endpoints, headers, variaveis, credenciais, o grafo e o
+tratamento de falha HTTP dos dois HTTP Request (neverError intacto).

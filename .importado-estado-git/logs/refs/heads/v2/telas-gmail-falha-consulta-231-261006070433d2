@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791281059 -0300	branch: Created from dia/2026-10-06
+55a428d7a89316109e71d975c4193d67f7b3b051 15b1dda94a7044701dcb73969ced44da0a1ae416 Joaquim Ataides <ti@promobrindes.com.br> 1791281902 -0300	commit: fix(gmail): falha de consulta não vira conta desconectada nem histórico vazio (#231)

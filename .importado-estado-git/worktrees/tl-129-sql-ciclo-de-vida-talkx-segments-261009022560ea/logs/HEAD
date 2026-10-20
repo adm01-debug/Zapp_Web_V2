@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523529 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523530 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 7eef7a1617bec7fd5a782a2f127f405dd6ad275d workersql <workersql@example.test> 1791524011 -0300	commit: feat(talk-x): estrutura do ciclo de vida do segmento no banco (TL-129)
+7eef7a1617bec7fd5a782a2f127f405dd6ad275d cf4f26b6d70093da02f173b0720e5364072b74bb workersql <workersql@example.test> 1791524043 -0300	commit: test(talk-x): T2/T2b do ciclo de vida provam o CHECK pelo comportamento (sem deparse)
+cf4f26b6d70093da02f173b0720e5364072b74bb 00a40fe688e855fcc3b7e08535f98d3ec2f5d918 workersql <workersql@example.test> 1791524346 -0300	commit: test(talk-x): teste do ciclo de vida roda tambem no schema real (usuarios por auth.users)
+00a40fe688e855fcc3b7e08535f98d3ec2f5d918 671cc3a9ae105e127461559abfc5197aef16acb2 workersql <workersql@example.test> 1791524790 -0300	commit: refactor(talk-x): nomear as constraints da tabela de versoes na migration (TL-129)
+671cc3a9ae105e127461559abfc5197aef16acb2 0d27c05d093febd16ff6e373f5c19c1b9d9e832f workersql <workersql@example.test> 1791525112 -0300	commit: fix(talk-x): rollback preserva updated_at ao rebaixar rascunhos (TL-129)

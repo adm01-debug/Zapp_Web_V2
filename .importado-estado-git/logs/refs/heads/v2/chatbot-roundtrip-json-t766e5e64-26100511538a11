@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211992 -0300	branch: Created from dia/2026-10-05
+c59d333a084df35e69ac5b87318e75495a9c226f fb982f12ea323ee93142c6b259535fe1a81d8c16 Joaquim Ataides <ti@promobrindes.com.br> 1791212163 -0300	commit: fix(chatbot): grava nodes/edges como JSONB e reabre o grafo no roundtrip (#104)

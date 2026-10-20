@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524685 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524686 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 cb300ac038a8af2cf6f054bcbc65101a06980b48 Joaquim Ataides <ti@promobrindes.com.br> 1791526031 -0300	commit: feat(talk-x): liga os KPIs das telas 04 e 05, "Desempenho deste template" e "Em andamento" às RPCs de métricas (TL-123/X091)
+cb300ac038a8af2cf6f054bcbc65101a06980b48 7e0e15fedd5924b372b6918f0434b29ab9af1666 Joaquim Ataides <ti@promobrindes.com.br> 1791526352 -0300	commit: fix(talk-x): tipagem das RPCs pendentes de types-sync e `bars` anulável no KpiCard (TL-123)
+7e0e15fedd5924b372b6918f0434b29ab9af1666 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543955 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e737211b49c6c830197a215999011c051745b6af Joaquim Ataides <ti@promobrindes.com.br> 1791543955 -0300	rebase (pick): feat(talk-x): liga os KPIs das telas 04 e 05, "Desempenho deste template" e "Em andamento" às RPCs de métricas (TL-123/X091)
+e737211b49c6c830197a215999011c051745b6af 737a026a36cc2bd1e906b7f6439429a5c87d6b12 Joaquim Ataides <ti@promobrindes.com.br> 1791543955 -0300	rebase (pick): fix(talk-x): tipagem das RPCs pendentes de types-sync e `bars` anulável no KpiCard (TL-123)
+737a026a36cc2bd1e906b7f6439429a5c87d6b12 737a026a36cc2bd1e906b7f6439429a5c87d6b12 Joaquim Ataides <ti@promobrindes.com.br> 1791543955 -0300	rebase (finish): returning to refs/heads/v2/t-18a3de5e-26100902445f90

@@ -1,0 +1,15 @@
+fix(dashboard): canal realtime unico por instancia e ordem no corte de conversas
+
+O canal do dashboard usava topico fixo ('dashboard-realtime'); desde a
+realtime-js 2.101 o segundo consumidor simultaneo do hook lancava ao
+registrar .on() em canal ja inscrito e derrubava a tela. Passa a usar
+uniqueRealtimeTopic, como useLeaderboard/useQueueGoals.
+
+A consulta de conversas ativas cortava em .limit(5000) sem .order():
+subconjunto arbitrario do PostgREST. Agora ordena por created_at desc com
+id de desempate antes do corte (o corte E26 continua; fix definitivo e a
+RPC do E24/E25).
+
+Testes: reconciliacao nova (conexao, lote, janela, fronteira
+snapshot/evento, nao lidas) e useRealtimeDashboard na lista de hooks que
+nao podem ser montados duas vezes.

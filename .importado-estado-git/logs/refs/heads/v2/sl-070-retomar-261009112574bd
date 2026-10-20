@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555950 -0300	branch: Created from dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 d763b88dc2e0f3197f643eda38c9621232d51db1 Joaquim Ataides <ti@promobrindes.com.br> 1791555970 -0300	cherry-pick: fix(inbox/chat): fila offline IndexedDB e throttle de envio com dedupe entre abas (SL-070)
+d763b88dc2e0f3197f643eda38c9621232d51db1 169335899ec563921a357f3c7db926ea35a38045 Joaquim Ataides <ti@promobrindes.com.br> 1791555970 -0300	cherry-pick: fix(inbox/chat): libera dedupe em falha e espaça drenagem offline pelo throttle (SL-070)
+169335899ec563921a357f3c7db926ea35a38045 55163620fc96a0b5e5d71c1382cc4ed6bf57cc3e Joaquim Ataides <ti@promobrindes.com.br> 1791556682 -0300	commit: test(inbox/chat): zera o throttle entre os casos do envio outbound (SL-070)

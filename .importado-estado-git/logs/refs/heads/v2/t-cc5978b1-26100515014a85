@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791223306 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 384f7121dbc533c4137c5bf88a95fd04a1403229 Joaquim Ataides <ti@promobrindes.com.br> 1791223326 -0300	cherry-pick: feat(edge): circuito por provedor no despacho de IA (IA-050)
+384f7121dbc533c4137c5bf88a95fd04a1403229 82d6017fe16ceb301f455c426482364ab1e86048 Joaquim Ataides <ti@promobrindes.com.br> 1791223542 -0300	commit (amend): feat(edge): circuito por provedor no despacho de IA (IA-050)
+82d6017fe16ceb301f455c426482364ab1e86048 92b41a27661555fb3a049915d41ede6a8315673e Joaquim Ataides <ti@promobrindes.com.br> 1791223752 -0300	commit: fix(edge): 4xx do pedido nao abre o circuito de IA (IA-050)
+92b41a27661555fb3a049915d41ede6a8315673e b9ecdf564680016a0eb7b5f0038bb9cd50e98e88 Joaquim Ataides <ti@promobrindes.com.br> 1791223760 -0300	commit: test(ci): atualiza ratchet de produtores legados para 245 arquivos (IA-050)
+b9ecdf564680016a0eb7b5f0038bb9cd50e98e88 f59726e20c4eb12be15fcffaea42e43713b8bcef Joaquim Ataides <ti@promobrindes.com.br> 1791223778 -0300	commit: chore(edge): regera deployment-manifest no escopo do cartao IA-050

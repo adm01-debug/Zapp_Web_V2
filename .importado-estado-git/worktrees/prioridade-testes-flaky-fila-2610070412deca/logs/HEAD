@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 Joaquim Ataides <ti@promobrindes.com.br> 1791357142 -0300	
+2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 Joaquim Ataides <ti@promobrindes.com.br> 1791357142 -0300	reset: moving to HEAD
+2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 19892ecd4b71ab2d53980cfa03d6bbfb229cf636 Joaquim Ataides <ti@promobrindes.com.br> 1791357188 -0300	cherry-pick: test(estabilidade): espera o estado real nos 2 testes de tela que derrubavam o lote do integrador
+19892ecd4b71ab2d53980cfa03d6bbfb229cf636 f00871f1f45eae7b4bf07b392850a876b044938e Joaquim Ataides <ti@promobrindes.com.br> 1791357188 -0300	cherry-pick: test(vitest): espera assíncrona da suíte deixa de estourar 1 s sob carga

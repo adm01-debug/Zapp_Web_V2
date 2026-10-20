@@ -1,0 +1,7 @@
+fix(ci/devops): Prettier com plugin Tailwind e ESLint Tailwind (SL-137)
+
+Commit vazio: o cartao fecha SEM commit de codigo. Metade "Prettier + plugin
+Tailwind" ja existe na ponta e foi provada por execucao real do Prettier (com e
+sem config). Metade "ESLint Tailwind" so fecharia mexendo em package.json e
+eslint.config.js, que estao na lista PROIBIDO TOCAR do cartao, e exigiria
+dependencia nova (vedada). Prova e limites em .tmp/relato.md.

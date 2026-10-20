@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524725 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524726 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 808dbb4f7164f48c4bfafdf663deccaaab3ab4cb Joaquim Ataides <ti@promobrindes.com.br> 1791525363 -0300	commit: fix(theme): aplicar --gradient-success do preset diversity no <html>
+808dbb4f7164f48c4bfafdf663deccaaab3ab4cb a5c19d5fed1d7ddffefd24b55eea10a3bac1feb9 Joaquim Ataides <ti@promobrindes.com.br> 1791526206 -0300	commit (amend): fix(theme): aplicar --gradient-success do preset diversity no DOM

@@ -1,0 +1,18 @@
+fix(email): sincronização parcial do Gmail para de anunciar sucesso integral
+
+Item 52 do BACKLOG_VERIFICADO (OTH-003 / EN-081). O gmail-sync responde
+HTTP 207 com success:false e failed>0 quando parte das mensagens falha. O
+FunctionsClient trata todo 2xx como sucesso (error:null), então o callback
+em useGmail mostrava "N emails sincronizados" e escondia a falha e o estado
+de erro da conta no cache.
+
+- interpreta o resultado de domínio (success/failed) em vez do error do
+  transporte: distingue completo de parcial (synced>0) e de falha (synced=0);
+- invalida gmail-accounts além de threads/contagens, expondo sync_status e
+  last_error que o backend já grava;
+- aviso parcial com contagem de falhas (diagnóstico sanitizado, sem corpo de
+  e-mail) e recuperação explícita via ação "Tentar de novo"; 207 não dispara
+  retry automático, então a retomada não reenvia nem avança o cursor.
+
+Teste novo cobre a semântica do SDK (invoke -> callGmailFunction) com a
+interpretação do payload: 4 sincronizados + 1 falha vira aviso parcial.

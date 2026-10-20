@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494207 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc f127e3a4b263e2c0c280a34d213054fa771183a8 Joaquim Ataides <ti@promobrindes.com.br> 1791495108 -0300	commit: test(ia): Evolution webhook sem assinatura aceito por padrão (strictMode=false) — regressão do default fail-closed (SL-061)

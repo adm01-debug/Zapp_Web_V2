@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 6d04abb22d070d048ebd494f42f340aa04622d2f Joaquim Ataides <ti@promobrindes.com.br> 1791377188 -0300	branch: Created from dia/2026-10-07
+6d04abb22d070d048ebd494f42f340aa04622d2f bc9a141c03d349927433bfcb7cf5e7bfb440d762 Joaquim Ataides <ti@promobrindes.com.br> 1791377200 -0300	cherry-pick: test(contrato): trava o carregamento estatico do pdfjs-dist (M03)
+bc9a141c03d349927433bfcb7cf5e7bfb440d762 3561d90d58a951c475ca8b4baa118552ad0b595e Joaquim Ataides <ti@promobrindes.com.br> 1791377414 -0300	commit: test(contrato): reprova default de valor com binding nomeado de tipo (M03)

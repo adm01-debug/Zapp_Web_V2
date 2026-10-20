@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791200641 -0300	branch: Created from dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 c551937fe298194bb41bd65d499b6e8cfb29b3dd Joaquim Ataides <ti@promobrindes.com.br> 1791200654 -0300	cherry-pick: fix(ai-image-input): download privado sob a identidade do chamador
+c551937fe298194bb41bd65d499b6e8cfb29b3dd 308069701fda2ae2e263d18320d3b52da916f0da Joaquim Ataides <ti@promobrindes.com.br> 1791200654 -0300	cherry-pick: fix(ai-vision): download privado exige identidade explícita do chamador (R2-INF-022)
+308069701fda2ae2e263d18320d3b52da916f0da d4094feb0e6de4a365051cf4fb4e684aa8d9459c Joaquim Ataides <ti@promobrindes.com.br> 1791201215 -0300	commit: test(ai-vision): prova o download privado do classify-emoji sob a identidade do usuário (R2-INF-022)

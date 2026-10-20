@@ -1,0 +1,9 @@
+fix(auth): bloqueia login de perfil inativo com lookup robusto (R2-AUTH-004)
+
+Reimplementacao sobre a base pos-R2-AUTH-022 (handleLogin tipado). A checagem
+de profiles.is_active fica depois do lockout e antes do signInWithPassword:
+ilike escapado (match exato case-insensitive), array tratado por
+cardinalidade — erro ou e-mail duplicado falham fechado em 500, ausente ou
+inativo respondem o mesmo 401 generico de credencial invalida, sem tokens e
+sem tocar no GoTrue. profiles.email nao tem UNIQUE/lower garantidos, entao
+duplicata vira 500 em vez de maybeSingle estourar.

@@ -1,0 +1,20 @@
+fix(talk-x): Tela 11: criar a aba "Monitor" no módulo, com cabeçalho (TL-154)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    iris <iris@hermes.local>
+#
+# interactive rebase in progress; onto 1f9252a86
+# Last command done (1 command done):
+#    pick 9d0a55452 fix(talk-x): Tela 11: criar a aba "Monitor" no módulo, com cabeçalho (TL-154)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-119a3fec-26100904081b6d' on '1f9252a86'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXLiveMonitor.tsx
+#	modified:   src/components/talkx/TalkXView.tsx
+#	new file:   src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXView.monitor.test.tsx
+#	new file:   src/components/talkx/tracking/TalkXMonitorHeader.tsx
+#

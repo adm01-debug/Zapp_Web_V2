@@ -1,0 +1,5 @@
+test(e2e): prova que dispensarOnboarding fecha o tour pelo nome acessível real (#385)
+
+A fixture procurava o modal com getByRole('dialog', { name: 'Boas-vindas' }), nome que o WelcomeModal não tem mais (o overlay deixou de ser um segundo role=dialog e o nome passou a vir do h2 via aria-labelledby -> 'Bem-vindo...'). Sem casar, dispensarOnboarding saía SEM dispensar e o overlay z-[9999] engolia o clique seguinte, com sintoma enganoso de hit-target.
+
+A prova (e2e/onboarding-dispensar.spec.ts, projeto chromium-onboarding-dispensar, deslogado) exige que o clique REAL chegue na tela depois de dispensar. Mutação: com /bem-vindo/i revertido para /boas-vindas/i, 1 failed (Expected: 0, Received: 1); restaurado, 1 passed.

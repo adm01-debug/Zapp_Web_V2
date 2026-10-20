@@ -1,0 +1,15 @@
+docs(reconciliacao): adjudica as duas fontes com tarefas explicitas no registro de planos
+
+R2-GOV-001 (item 305): os prompts PROMPT_LOVABLE_CRM360_INTEGRATION.md e
+PROMPT_LOVABLE_INTELLIGENCE_PANEL.md declaram 6 e 4 tarefas explicitas
+("### TAREFA n") mas ficavam catalogados como SUPPORTING_DOCUMENT e sem
+correspondencia no registro de planos.
+
+- SOURCE_CATALOG: papel corrigido para
+  DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS.
+- PLAN_REGISTRY: nova secao source_adjudications com a correspondencia de cada
+  requisito (consumidor atual ou componente substituido), apontando para a
+  comparacao ja registrada no reaudit e sem acrescentar tarefas ao ledger.
+- MODULE_LINEAGES: indice de planos passa a listar as fontes adjudicadas.
+- Guarda nova: scripts/ci/reconciliation-source-adjudication.unit.mjs falha se
+  uma fonte catalogada com tarefas explicitas ficar sem adjudicacao.

@@ -1,0 +1,3 @@
+fix(dashboard/analytics): view slo_inbound_latency_daily (p50/p95) (SL-045)
+
+Passo 4 do runbook de SLO: a view nao existia e a ponta do INSERT tambem nao (messages guardava so o created_at do provedor). Adiciona messages.received_at (relogio do INSERT, default do banco, legado NULL) e a view p50/p95 por dia em America/Sao_Paulo para sender='contact', com security_invoker e ACL fechada para anon.

@@ -1,0 +1,9 @@
+fix(talk-x): relatório sem animação do Recharts e % arredondado antes da casa decimal (TL-080)
+
+Recusa de 09/10 (revisor): Area/Line/Tooltip do Desempenho com
+isAnimationActive={false}; contentStyle morto removido do Tooltip;
+talkxReportPctText arredonda para 1 casa antes de decidir a casa decimal
+(99,96 -> 100%). Testes cobrem os dois casos.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193873 -0300	branch: Created from dia/2026-10-05
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 ebd42aa763bdc7812431234247876d1b864b1c8e Joaquim Ataides <ti@promobrindes.com.br> 1791194445 -0300	commit: fix(edge): envio GO usa o token da instância e falha fechado sem ele (MX07)

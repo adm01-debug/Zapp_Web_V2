@@ -1,0 +1,12 @@
+fix(quarentena): reconciliar cache do monitor e retomar em falha transitória
+
+O monitor só consultava pending/deleted e aplicava upsertMany, que nunca
+removia nem atualizava registro ausente: após a liberação o selo conservava a
+decisão antiga. Além disso, qualquer exceção no tick desligava o monitor para
+toda a sessão.
+
+- consulta todas as decisões do selo e reconcilia o cache por ID/versão
+  (reviewed_at); a liberação é observada por valor, não inferida por ausência;
+- só descarta registro ausente quando a janela não foi truncada (count exato);
+- falha transitória faz backoff (30s→5min) e retry; notConfigured segue
+  permanente; estado de atualização observável (quarantineMonitorStatus).

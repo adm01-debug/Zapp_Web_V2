@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791242295 -0300	
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791242295 -0300	reset: moving to HEAD
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b 27f0cccee6b0f70031067d7d170032278c28b8e7 Joaquim Ataides <ti@promobrindes.com.br> 1791244010 -0300	commit: fix(edge): cursor do Gmail só avança após pipeline incremental completo
+27f0cccee6b0f70031067d7d170032278c28b8e7 420ee1f5b8d8b5a3709a3cf5a18a2586c744f39b Joaquim Ataides <ti@promobrindes.com.br> 1791244643 -0300	commit: fix(edge): full sync do cron Gmail nao ancora cursor com falha parcial

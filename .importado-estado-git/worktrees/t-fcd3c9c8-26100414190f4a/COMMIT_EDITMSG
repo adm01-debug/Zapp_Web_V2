@@ -1,0 +1,17 @@
+fix(db): fecha EXECUTE anônimo de record_incoming_call_event (M-DB-02)
+
+Por quê: a T26 (20261002531230) criou por create or replace um overload de
+7 argumentos SECURITY DEFINER que herdou EXECUTE para PUBLIC/authenticated;
+POST anônimo na RPC gravava em calls e servia de oráculo de IDs.
+Migration 20261004172554: REVOKE de PUBLIC/anon/authenticated (só
+service_role), REVOKE no trigger record_talkx_campaign_lifecycle_event (padrão
+de 20261001191230), ALTER DEFAULT PRIVILEGES global para postgres sem PUBLIC e
+DROP do overload morto de 6 argumentos. Guarda genérica nova:
+scripts/db-audit/check-secdef-public-execute.sql (+ teste no db-guard.yml).
+
+Verificação: banco local v2-26100414190f4a — POST anon 200 -> 401 (42501),
+service_role 200; anon f / authenticated f / service_role t; guarda vermelha
+antes (2 funções) e verde depois; teste descartável 15/15; mutation 7/7
+(1 equivalente removido); zapp-verify --rapido, db:guard, node --test
+db-audit (313) e parity-hardening (11) verdes.
+Plano: cartão t_fcd3c9c8 (M-DB-02 = R2-DB-001)

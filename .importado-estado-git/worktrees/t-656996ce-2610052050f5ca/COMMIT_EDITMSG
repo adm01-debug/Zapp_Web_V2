@@ -1,0 +1,12 @@
+fix(grupos): tratar erro lógico da Evolution (data.error) na sincronização e no envio em massa
+
+O proxy da Evolution responde HTTP 200 com a falha lógica no corpo
+({ error: true, message }) — o campo error do supabase.functions.invoke
+fica nulo. As ações de grupos só olhavam o erro de transporte: a
+sincronização anunciava sucesso total e o envio em massa contava enviado
+mesmo com a recusa, gravando grupos de uma resposta que a Evolution
+recusou.
+
+Agora as duas ações também conferem o corpo da resposta (error booleano
+ou textual) e contam a recusa como erro/falha, sem gravar grupos da
+resposta recusada e sem exibir sucesso total (R2-API-042, item 216).

@@ -1,0 +1,6 @@
+fix(permissions): propaga erro da revogação e só anuncia sucesso no retorno true
+
+removePermissionFromRole/addPermissionToRole lançam o erro do PostgREST
+em vez de engoli-lo num false silencioso, e PermissionMatrix só exibe
+toast de sucesso quando a operação confirma — evitando anunciar
+"Permissão removida" quando a revogação falhou (R2-AUTH-009).

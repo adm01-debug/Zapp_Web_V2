@@ -1,0 +1,18 @@
+fix(talkx): sincroniza origem ativa em todas as trocas
+
+Reaproveita a entrega anterior (cherry-pick de a45a9964b..64a0b886d) e corrige o
+ponto apontado pela revisão forte: `activeTemplateIdRef` só era escrito no valor
+inicial e em `loadTemplate`, então qualquer troca do template ativo fora desse
+caminho (criação/duplicação/reativação) deixaria o ref obsoleto e `isActiveOrigin`
+recusaria variantes, histórico e as ações saveVariant/deleteVariant do template
+recém-ativado.
+
+O ref passa a ter fonte ÚNICA: um `useEffect` dependente de `activeTemplateId`
+mantém `activeTemplateIdRef` alinhado em todos os caminhos de troca, incluindo o
+próprio `loadTemplate` (atribuição imediata removida). A proteção contra respostas
+atrasadas A→B e o descarte de origem obsoleta permanecem intactos.
+
+Regressão nova em TalkXTemplateEditor.race.test.tsx cobre o template
+recém-criado/duplicado sem `loadTemplate`: variantes e histórico carregam, o
+saveVariant no onBlur e o deleteVariant no clique funcionam, e variante do template
+anterior continua recusada.

@@ -1,0 +1,15 @@
+fix(gmail): full sync consome todas as páginas e só grava cursor no fim
+
+syncMessages lia só a primeira página de /messages e devolvia o
+nextPageToken sem consumir: caixas com mais de maxResults mensagens
+ficavam incompletas e o cursor (history_id) avançava como se todo o
+histórico tivesse sido aplicado.
+
+- syncMessages itera nextPageToken até esgotar, agregando sucessos e
+  falhas; aborta com erro em token repetido ou além de 100 páginas.
+- runGmailFullSync concentra a regra do cursor: grava
+  sync_status:"synced" + history_id só após todas as páginas e
+  mensagens sem falha; com falha marca "error" e preserva o cursor.
+- gmail-cron-sync e a ação sync-inbox passam por runGmailFullSync; o
+  incremental do cron aplica só os IDs do histórico (syncMessageIds) e
+  só avança o cursor sem falhas.

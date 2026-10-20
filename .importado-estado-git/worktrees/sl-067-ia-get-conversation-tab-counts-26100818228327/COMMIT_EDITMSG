@@ -1,0 +1,14 @@
+docs(ia): confirma L10, L12 e L13 na ponta de 08/10 (SL-067)
+
+Por quê: o inventário da 2ª leva marcava o item como PARCIAL com "L10 e L12
+não confirmados". Conferido no código da ponta do dia: L13 (gravidade alta)
+já está fechado pela autorização por objeto (JWT do chamador + media_url do
+registro antes do download, com teste de runtime e contrato); L10 não é
+lacuna — a RPC é caller-bound e levanta 42501 sem auth.uid(), então o GRANT
+a service_role não teria efeito e nenhuma Edge/cron a consome; L12 segue
+aberto por desenho (credencial de máquina dedicada = segredo novo, decisão
+do dono), declarado como dívida.
+
+Verificação: deno test (ai-audio-authz + runtime) 12 passed; vitest
+ai-endpoints-auth.contract.test.ts 16 passed; zapp-verify . --rapido verde.
+Confirmação registrada em docs/ia/IA-004-matriz-autorizacao.md §7.1.

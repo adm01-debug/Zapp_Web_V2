@@ -1,0 +1,8 @@
+fix(testes): SL038 acompanha o par Promo do SL-041 (destructive-text/background)
+
+Rebase em dia/2026-10-09: o SL-038 (já integrado na dia) pintava a badge Promo
+com o par cru --destructive/--destructive-foreground (3,78:1 claro, 3,00:1
+escuro — abaixo de 4,5:1). O SL-041 (este cartão) troca esse par para
+--destructive-text/--background, que fecha 4,5:1 nos 4 temas. Sem este ajuste
+o teste do SL-038 (SL038_badgesTokensTema.test.tsx) ficava vermelho contra o
+código já correto do SL-041.

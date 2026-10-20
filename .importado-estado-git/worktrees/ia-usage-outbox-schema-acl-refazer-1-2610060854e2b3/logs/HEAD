@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287679 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287680 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 3d428d629297ee348b67e0a9e7ccb11b2ab705db Joaquim Ataides <ti@promobrindes.com.br> 1791287690 -0300	cherry-pick: fix(db): schema, unicidade de event_id e ACL da outbox do log essencial de IA
+3d428d629297ee348b67e0a9e7ccb11b2ab705db 0267a1eaa6450aabc9b54deb0b4962da4204ba0c Joaquim Ataides <ti@promobrindes.com.br> 1791288202 -0300	commit: test(db): prova ACL completa da outbox por papel

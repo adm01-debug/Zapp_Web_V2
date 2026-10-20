@@ -1,0 +1,617 @@
+{
+  "schema_version": 1,
+  "files": {
+    "src/hooks/performance/useDataOptimization.ts": {
+      "assessment": "Paginação acumulada/reset, hover prefetch e preload resources completos. Prefetch não limpa timer no unmount nem reinicia cache ao mudar fetcher; nenhum consumidor produtivo desses exports localizado, só reexports. Preload remove links no cleanup.",
+      "consumers": [
+        "src/hooks/analytics/usePerformance.ts (reexport; não prova montagem)"
+      ]
+    },
+    "src/hooks/performance/useMonitoring.ts": {
+      "assessment": "Contagem de renders, memória dev-only, FPS via RAF e medição entre dois effects. Medição de slow render cobre intervalo pós-commit, não corpo de render; exports sem consumidor produtivo localizado, portanto limite latente sem finding.",
+      "consumers": [
+        "src/hooks/analytics/usePerformance.ts; chamada interna useFPS→useAnimationFrame"
+      ]
+    },
+    "src/hooks/performance/useTimingHooks.ts": {
+      "assessment": "Todos hooks lidos: debounce de valor e throttle limpam timers, RAF cancela request, stable callback usa ref atualizada e idle tem fallback/cleanup. Consumidor real confirmado: useTalkMeQueue93 usa o debounce de valor corretamente; outros exports têm somente reexports/chamada interna de useFPS localizados. Não confundir com useDebounce de callback em hooks/system.",
+      "consumers": [
+        "src/features/talk-me/useTalkMeQueue.ts:3,93",
+        "src/hooks/performance/useMonitoring.ts:useFPS",
+        "src/hooks/analytics/usePerformance.ts e usePerformanceOptimizations.ts (reexports)"
+      ]
+    },
+    "src/hooks/performance/useObservers.ts": {
+      "assessment": "Intersection/lazy/load flags e event listener passivo completos. RemoveEventListener omite capture usado por options, mas não há consumidor ativo identificado: risco latente, sem ID. Observer exige API; cleanup unobserve.",
+      "consumers": [
+        "src/hooks/analytics/usePerformance.ts; chamadas internas"
+      ]
+    },
+    "src/components/ui/command-palette.tsx": {
+      "assessment": "Busca/debounce async, merge/fuzzy/group, teclas, executar ação/href/nav, abrir/fechar, recentes e JSX completos. Rastreadas buscas fora de ordem, actions sem callback e allItems vazio no acesso rápido sem query. Candidatos pendentes de deduplicação/probe.",
+      "consumers": [
+        "src/components/keyboard/CommandPaletteHost.tsx"
+      ]
+    },
+    "src/components/ui/command-palette-data.tsx": {
+      "assessment": "Tipos, default navigation/action commands, fuzzy matching e highlight com JSX escapado. Três action-* são só metadados sem action/href; correlacionado com executor. Nenhum HTML bruto produzido.",
+      "consumers": [
+        "src/components/ui/command-palette.tsx"
+      ]
+    },
+    "src/components/ui/mobile-components.tsx": {
+      "assessment": "MobileDrawer gesto/body overflow, BottomNavigation ativo/vibração/badge, PullToRefresh await e TouchFeedback completos. BottomNavigation é consumidor real; Drawer/PullToRefresh genéricos não aparecem montados e seus riscos latentes não viraram findings.",
+      "consumers": [
+        "src/components/mobile/MobileShell.tsx usa BottomNavigation"
+      ]
+    },
+    "src/components/ui/message-reactions.tsx": {
+      "assessment": "ReactionBadge, picker por grid/ref/teclas, bar/popover e quick strip completos. Teclas Enter/Space chamam onSelect antes de default nativo; requer provar consumidor/unmount antes de alegar dupla mutação. Backend/toggle pertence a Inbox.",
+      "consumers": [
+        "src/components/team-chat/TeamMessageReactionsWrapper.tsx; useTeamMessageReactions tipo"
+      ]
+    },
+    "src/components/ui/accessible-toast.tsx": {
+      "assessment": "Provider add/update/remove, timeout, ToastContainer live region e progresso completos. Loading atualizado não agenda auto-removal e duration0 difere no progress, mas nenhum useAccessibleToast fora da definição localizado. Provider montado não significa toast ativo.",
+      "consumers": [
+        "src/providers/AppProviders.tsx monta provider; sem consumidor de useAccessibleToast encontrado"
+      ]
+    },
+    "src/components/ui/emoji-picker.tsx": {
+      "assessment": "Banco/busca/categorias/recentes/storage, seleção, quick picker e animação completos. JSON local recente só catch parse sem shape e gravação pode lançar; somente referências internas neste arquivo, sem consumidor produtivo de exports identificado.",
+      "consumers": [
+        "QuickReactionPicker→EmojiPicker interno; demais referências de nome em projeto são componentes diferentes"
+      ]
+    },
+    "src/components/keyboard/CommandPaletteHost.tsx": {
+      "assessment": "Host ativo liga open/onNavigate a UI palette, onSearch do catálogo e comandos TalkX. Leitura integral para comprovar alcançabilidade da busca e actions default.",
+      "consumers": [
+        "src/components/keyboard/GlobalKeyboardProvider.tsx (binding/mount encontrado em busca; ainda só dirigido)"
+      ]
+    },
+    "src/hooks/integrations/useCatalogQuickSearch.ts": {
+      "assessment": "Busca promogifts-catalog compact limit8; erro retorna[]; produtos mapeados para CommandItem search e href /?view=catalog&product=...&send=1. Sem guard de geração próprio; retorno async controlado pelo chamador.",
+      "consumers": [
+        "src/components/keyboard/CommandPaletteHost.tsx"
+      ]
+    },
+    "src/components/ui/micro-interactions/buttons.tsx": {
+      "assessment": "Ripple, icon, bounce, magnetic, glow e press feedback completos. Disabled impede callback nos controles pertinentes, props/types variam; não há rede ou escrita de dados. Timers/hover/semântica do div registrados como contrato de componentes genéricos, sem assumir consumidor ativo.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/button.tsx": {
+      "assessment": "Button/MotionButton, variants, Slot, isLoading/disabled e passagem de props completos. Loading desabilita botão nativo; asChild depende de semântica do filho. Tipo default permanece nativo; não alegada submissão acidental sem form consumidor concreto.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/icon-button.tsx": {
+      "assessment": "Props/ref/Slot, aria-label exigido, tooltip opcional e versão motion completos. Nenhuma lógica remota. Trecho truncado foi reaberto integralmente antes desta promoção.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/liquid-metal-button.tsx": {
+      "assessment": "Import lazy de shader, capability/reduced-motion gate, cancel flag, dispose e estados/contagem/handlers completos. Tipo button e disabled/loading aplicados após props; fallback estático. Sem montagem de WebGL ou alegação de ganho medido.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/sidebar/sidebar-context.tsx": {
+      "assessment": "Provider controlado/não controlado, callback toggle, mobile, cookie booleano7dias, Ctrl+B com cleanup e dimensões/context completos. Cookie é preferência não credencial; não promove acesso ou risco de segurança.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/error-boundary-retry.tsx": {
+      "assessment": "Boundary completo: captura, callback, limite2/retry exponential, timer cleanup, manual reset e fallback. Render de mensagem de erro via JSX escapado; nenhum HTML bruto. Retry não prova que causa do erro foi resolvida.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/section-error-boundary.tsx": {
+      "assessment": "Boundary por seção completo: log/reportClientError, captura com stack truncada, retry local e fallback. Egress e sanitização do reporter pertencem ao lote lib/root; não inferidos pela chamada.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/skip-link.tsx": {
+      "assessment": "Links condicionados à existência do target, foco/scroll, detector1500ms e indicador de Tab completos. Cleanup de listener/interval; foco efetivo depende do target focusable, não presumido defeito sem consumidor.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/offline-indicator.tsx": {
+      "assessment": "Eventos navigator.onLine, retry HEAD favicon, toast restaurado e timers completos. Root confirmou SW/PWA desabilitado por configuração. Candidato response.ok rejeitado: HTTP404/500 ainda comprova transporte de rede e rótulo não promete saúde de API.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/route-loading-bar.tsx": {
+      "assessment": "Loading determina visibilidade, percentuais visuais temporizados e término; todos timers cancelados na troca/unmount. Progresso indeterminado simulado não é declarado como bytes medidos ou resultado de negócio.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/VolumeSliderPopoverContent.tsx": {
+      "assessment": "Slider vertical controlado, array de valores, bounds/step, callback, mute label/aria/disabled e footer completos. Usa botão type=button; efeito de mídia é delegado ao consumidor.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/VolumeTriggerButton.tsx": {
+      "assessment": "Botão type=button, foco/long-press/cancel/click/teclas via rocker, aria e indicador completos. ariaDisabled é informativo; política interativa depende do hook useVolumeRocker (root), sem duplicação presumida.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/slider.tsx": {
+      "assessment": "Wrapper Radix completo com número de thumbs derivado do value/defaultValue, labels por índice, orientação vertical/horizontal e props. Corrige número de thumbs; nenhum valor fictício de mídia.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/quick-peek.tsx": {
+      "assessment": "Hover enter/leave/timer, preview/enabled e JSX completos. Timer não tem cleanup no unmount/alteração enabled, mas nenhum efeito de dados; consumidor terá de definir impacto antes de promover achado.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/step-progress.tsx": {
+      "assessment": "Passos derivados por índice, estado atual/concluído, rótulos e conexões completos. Só apresentação; ausência de aria-current anotada como contrato, sem nova certificação a11y ou finding genérico.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/scroll-to-top.tsx": {
+      "assessment": "Ref de container, listener scroll com cleanup, limiar e ação smooth completos. Não inicializa visibilidade pelo scroll atual até primeiro evento; impacto condicionado a consumidor, sem mutação de produto.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    "src/components/ui/chart.tsx": {
+      "assessment": "Context/ResponsiveContainer, CSS por tema, tooltip/legend e helper payload completos. CSS bruto exige config confiável; único importador localizado AIStatsWidget, a ser checado para origem de config. Zero no JSX item.value&& resulta nó0, não prova de sumiço; sem finding falso de contagem. Consumidor AIStatsWidget 57–61/192 usa config CSS literal; dados remotos da série não atravessam dangerouslySetInnerHTML.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/form.tsx": {
+      "assessment": "Contextos Field/Item, Controller/FormProvider, ids/aria, errors e refs completos. Exige árvore de providers; guarda do contexto{} não protege uso incorreto, mas sem consumidor inválido demonstrado. Textos de erro são JSX, não HTML.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/sparkline.tsx": {
+      "assessment": "Normalização min/max, largura/altura, pontos e área SVG completos; <2amostras retorna null e série constante usa range1. Entrada finita é contrato do chamador; nenhuma medição ou acesso remoto.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/sidebar/sidebar-primitives.tsx": {
+      "assessment": "Sidebar desktop/mobile/none, Sheet controlado, trigger/rail/inset/header/footer/group/input completos. Callbacks/props/roles inspecionados; sem importador produtivo do sidebar genérico localizado no scan, não confundir com Sidebar aplicativo.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/sidebar/sidebar-menu.tsx": {
+      "assessment": "Botões/Slot ativos, tooltip colapsado, actions/badge/submenu e skeleton completo. Preferências vêm do contexto e não são ACL. Sem consumidor produtivo importando esse sidebar no scan.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/motion/components.tsx": {
+      "assessment": "PageTransition, neon/card/buttons, stagger/fade/slide/scale, interactive e shimmer completos. PageTransition respeita useReducedMotion; outros wrappers delegam motion ao contexto/props, sem alegar falha a11y sem conferir consumidor/Config global.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/motion/effects.tsx": {
+      "assessment": "AnimatedCounter/progress/presence/stagger/slide/list/typewriter completos, com RAF/interval cleanup. prevRef é objeto recriado e value0 retorna sem reset no contador; falta consumidor real para promover. Não alegada corrupção de métrica apenas pelo export.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/motion/variants.ts": {
+      "assessment": "Todos os variants declarativos e factory talkxStagger lidos; nenhum efeito/IO ou cálculo de dado de produto. Escala/duração são apresentação.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/micro-interactions/feedback.tsx": {
+      "assessment": "MicroFeedback, LoadingDots/Spinner e FeedbackAnimation completos. Tipo/show controlam apresentação; não são prova de sucesso de ação remota por si.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/ui/micro-interactions/skeletons.tsx": {
+      "assessment": "SkeletonPulse e cinco ramos de ContentSkeleton completos. Apenas repetição/estilos/placeholders; count vem do chamador e não foi presumido input não confiável.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    "src/components/effects/EasterEggs.tsx": {
+      "assessment": "Provider/atalhos completos: Konami e sequências ativam party/matrix/disco; listeners e timers removidos, CSS removido. Evento global não filtra campos de texto, mas efeito cosmético deliberado, sem efeito de negócio demonstrado. Texto de XP e estado celebrating não provam integração de gamificação; não promovidos.",
+      "consumers": [
+        "src/App.tsx (lazy provider, ligação identificada e posteriormente verificada por faixa)"
+      ]
+    },
+    "src/components/effects/Confetti.tsx": {
+      "assessment": "Partículas, temporizador, CelebrationOverlay e useCelebration completos. Cleanup ao trocar active interrompe timer; saídas cosméticas de cancelamento não promovidas sem consumidor afetado. Overlay recebe callbacks e a composição é responsabilidade do consumidor; não pressupõe persistência de conquista.",
+      "consumers": [
+        "src/components/dashboard/GoalsDashboard.tsx:47 (montagem confirmada)"
+      ]
+    },
+    "src/components/effects/ScrollEffects.tsx": {
+      "assessment": "Todos exports lidos: magnetic, reveals, counter/spring, gradient, perspective, ripple DOM e blur. Counter/blur obtêm valores de motion via get durante render; risco latente sem consumidor produtivo localizado. Ripple cria/remove elemento cosmético com timeout. Nenhum efeito de dados ou rede.",
+      "consumers": []
+    },
+    "src/components/effects/ParallaxContainer.tsx": {
+      "assessment": "Parallax, imagem/texto, reveal, progress bar e float completos; transforms e variants são apresentação. Nenhum import produtivo fora dos próprios exports localizado; não inventada falha de desempenho ou alcance.",
+      "consumers": []
+    },
+    "src/components/effects/AuroraBorealis.tsx": {
+      "assessment": "Camadas decorativas/partículas e variantes de intensidade lidas integralmente. Pointer-events-none mantém camada fora da interação; loops visuais não comprovam regressão de desempenho sem medição.",
+      "consumers": [
+        "SLAHistory, QueueDetails, QueuesComparison, Admin, Agents, Queues, Groups, Connections, Transcriptions e Wallet (imports localizados)"
+      ]
+    },
+    "src/components/ui/EmptyState.tsx": {
+      "assessment": "Variantes, defaults, ícone, descrição, ações e classes lidos. Botões só aparecem com texto e callback correspondentes; estado puramente apresentado por props, sem leitura de negócio ou rede.",
+      "consumers": []
+    },
+    "src/components/ui/empty-states.tsx": {
+      "assessment": "Contextos e presets inbox/contacts/dashboard/search/notifications/tags/calls/transcriptions lidos; ilustração e mensagens têm fallback. CTA depende de action. Preset legado não prova feature montada.",
+      "consumers": []
+    },
+    "src/components/ui/empty-state.tsx": {
+      "assessment": "Ícone, tamanho, ilustração e botões primário/secundário lidos; ações exigem label e handler. Apenas apresentação controlada pelo consumidor.",
+      "consumers": []
+    },
+    "src/components/ui/GenericEmptyState.tsx": {
+      "assessment": "JSX integral e guardas dos botões lidos. Comentário chama wrapper/reexport, porém implementação é própria; inconsistência documental sem defeito funcional comprovado. Sem efeito externo.",
+      "consumers": []
+    },
+    "src/components/ui/empty-states/ContextualEmptyState.tsx": {
+      "assessment": "Context lookup e fallback messages, query, CTAs condicionais e ajuda lidos integralmente. Valores de config importada são conteúdo; callbacks vêm do consumidor. Não infere resultado de operação.",
+      "consumers": []
+    },
+    "src/components/ui/empty-states/ConvenienceExports.tsx": {
+      "assessment": "Nove wrappers de presets/ações lidos e mapeamento de contexto conferido; nenhum efeito adicional oculto.",
+      "consumers": []
+    },
+    "src/components/ui/empty-state-illustrations.tsx": {
+      "assessment": "Todas ilustrações SVG e Record de presets lidos; faixa inicial foi relida após truncamento para assegurar corpo integral. Sem conteúdo HTML externo, dados ou rede.",
+      "consumers": []
+    },
+    "src/components/ui/avatar.tsx": {
+      "assessment": "Radix root/image/fallback, indicador de status, posições/tamanhos e grupo com overflow lidos; status vem de props, não é inferido de saúde/backend. Imagem mantém contrato do Radix.",
+      "consumers": []
+    },
+    "src/components/ui/input.tsx": {
+      "assessment": "Ref/type/props, variants, ícones, addons e estados de erro/sucesso lidos. Elementos laterais são apresentação; interatividade de addons não é pressuposta sem consumidor específico.",
+      "consumers": []
+    },
+    "src/components/ui/tooltip.tsx": {
+      "assessment": "Wrappers Radix, portais em content/enhanced, offsets/variants e wrapper simplificado lidos. Portal evita clipping conhecido; foco e dismissal delegados ao primitive. Nenhum handler de negócio.",
+      "consumers": []
+    },
+    "src/components/ui/skeleton.tsx": {
+      "assessment": "Variants, delay, role/status/label e composição Card/List/Text/Avatar/Button lidos; placeholders dependem de props e não representam sucesso real de operação.",
+      "consumers": []
+    },
+    "src/components/ui/SkeletonList.tsx": {
+      "assessment": "Ramos list/card/table e composição com StaggerList lidos, contagens e placeholders apenas visuais. Nenhum acesso a dados.",
+      "consumers": []
+    },
+    "src/components/ui/card.tsx": {
+      "assessment": "Variants/ref/props, motion hover e seções/títulos completos; elementos são wrappers de apresentação sem mutações.",
+      "consumers": []
+    },
+    "src/components/ui/pagination.tsx": {
+      "assessment": "Nav/list/link, aria-current, links previous/next e ellipsis lidos; href/onClick são contrato do consumidor, não há paginação de dados implícita.",
+      "consumers": []
+    },
+    "src/components/ui/breadcrumb.tsx": {
+      "assessment": "Nav/ordered list/Slot links, página atual/separadores/ellipsis lidos; sem efeitos. Props/aria encaminhadas, foco dos links controlado pelo elemento renderizado.",
+      "consumers": []
+    },
+    "src/components/dashboard/AIStatsWidget.tsx": {
+      "assessment": "Verificação dirigida do consumidor de ChartContainer: chartConfig em 57–61 usa cores literais confiáveis e passagem em 192 não inclui id externo; valores de série não entram na string CSS. Caminho de CSS não confiável não demonstrado. Restante deste widget pertence à revisão de módulos.",
+      "consumers": [
+        "src/components/ui/chart.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          50,
+          65
+        ],
+        [
+          185,
+          212
+        ]
+      ]
+    },
+    "src/components/ui/accordion.tsx": {
+      "assessment": "Root/Item/Trigger/Content e composição de heading completos; forwarded refs e props preservam estado/eventos do Radix. Chevron/expansão são apresentação, sem efeito de negócio.",
+      "consumers": []
+    },
+    "src/components/ui/alert-dialog.tsx": {
+      "assessment": "Todos primitives e wrappers de portal, overlay, content, title, description, action e cancel lidos. Ações/fechamento e foco são delegados ao Radix e callbacks do consumidor; não há confirmação ou mutação interna.",
+      "consumers": []
+    },
+    "src/components/ui/alert.tsx": {
+      "assessment": "Variants default/destructive, role alert, título/descrição e ref/props completos; apenas apresentação de conteúdo fornecido.",
+      "consumers": []
+    },
+    "src/components/ui/badge.tsx": {
+      "assessment": "Todas variantes semânticas visuais e ref/props lidos; não calcula status nem valida resultado de negócio.",
+      "consumers": []
+    },
+    "src/components/ui/calendar.tsx": {
+      "assessment": "DayPicker com classes default/overrides, ícones e props lido; seleção, modo, disabled/datas encaminhados ao DayPicker. Wrapper não converte timezone nem produz dados.",
+      "consumers": []
+    },
+    "src/components/ui/checkbox.tsx": {
+      "assessment": "Root e Indicator completos; checked/disabled/name/eventos continuam em props e são encaminhados ao primitive. Aparência de check não introduz mutação própria.",
+      "consumers": []
+    },
+    "src/components/ui/command.tsx": {
+      "assessment": "Wrappers cmdk e CommandDialog completos, incluindo title sr-only e aria-describedby undefined deliberado; Item preserva onSelect e disabled. Não confundir com CommandPalette própria que implementa outra busca/teclado.",
+      "consumers": []
+    },
+    "src/components/ui/dialog.tsx": {
+      "assessment": "Portal/overlay/content/close/header/footer/title/description e sizes lidos; max-height e overflow-y-auto presentes na base. Foco/modalidade do Radix mantidos, botão de fechar opcional explícito; altura do consumidor não presumida defeituosa.",
+      "consumers": []
+    },
+    "src/components/ui/drawer.tsx": {
+      "assessment": "Vaul Root/portal/overlay/content, headers/footers/títulos e gesto delegado completos. shouldScaleBackground false deliberado sem wrapper marcado. Alça aria-hidden decorativa, ref/props preservados.",
+      "consumers": []
+    },
+    "src/components/ui/hover-card.tsx": {
+      "assessment": "Root/trigger/content e props de alinhamento lidos. Content não usa Portal próprio, mas clipping só seria defeito com contêiner consumidor demonstrado; nenhum import produtivo encontrado no levantamento transversal.",
+      "consumers": []
+    },
+    "src/components/ui/label.tsx": {
+      "assessment": "Radix label com ref/class/props lido; htmlFor/associação continuam contrato do consumidor.",
+      "consumers": []
+    },
+    "src/components/ui/context-menu.tsx": {
+      "assessment": "Todos exports lidos: submenus, portal principal, checkbox/radio/labels/separadores. checked e handlers encaminhados, disabled/focus delegado; strings de shortcuts não registram atalhos globais.",
+      "consumers": []
+    },
+    "src/components/ui/dropdown-menu.tsx": {
+      "assessment": "Todos exports e submenus lidos; portal principal, checked, ref e callbacks preservados. Nenhuma autorização/mutação de itens está no wrapper; consumidores devem prover handlers e gates.",
+      "consumers": []
+    },
+    "src/components/ui/menubar.tsx": {
+      "assessment": "Root/menu/trigger/submenus/itens checkbox-radio/labels/portal e separadores lidos integralmente; forwarded props preservam contratos do Radix. displayname minúsculo é metadado de depuração, não promovido como falha de produto.",
+      "consumers": []
+    },
+    "src/components/ui/popover.tsx": {
+      "assessment": "Root/trigger/anchor/content e portal completos, align/offset overridable. Foco/dismissal e open vêm do primitive; nenhum efeito externo.",
+      "consumers": []
+    },
+    "src/components/ui/progress.tsx": {
+      "assessment": "Corpo integral lido: value é consumido no transform visual e omitido das props de Root. Candidato de contrato acessível separado, com consumidores/probe a verificar; max segue encaminhado, enquanto cálculo visual assume escala100.",
+      "consumers": []
+    },
+    "src/components/ui/radio-group.tsx": {
+      "assessment": "Root/Item/Indicator lidos integralmente, ref/props preservados. Checked/value/keyboard/input permanecem no primitive.",
+      "consumers": []
+    },
+    "src/components/ui/resizable.tsx": {
+      "assessment": "PanelGroup, Panel e handle completo; direção e callbacks da lib preservados e pega visual opcional. Não persiste layout por conta própria.",
+      "consumers": []
+    },
+    "src/components/ui/scroll-area.tsx": {
+      "assessment": "Root/Viewport/Scrollbar/Corner e dois eixos lidos; props/ref de Root não representam ref do viewport. Nenhum uso incorreto de consumidor é inferido pelo wrapper isolado.",
+      "consumers": []
+    },
+    "src/components/ui/separator.tsx": {
+      "assessment": "Orientação/decorative e ref/props completos; default decorativo deliberado, classes correspondem aos dois eixos.",
+      "consumers": []
+    },
+    "src/components/ui/sheet.tsx": {
+      "assessment": "Lados top/bottom/left/right, overlay/portal, content e close, header/footer/título/descrição lidos. Foco do Radix e close encaminhados. Falta de overflow interno só afetaria consumidor alto comprovado, não promovida genericamente.",
+      "consumers": []
+    },
+    "src/components/ui/sonner.tsx": {
+      "assessment": "Integração com resolvedTheme, opções/duração e classes lida; props finais permitem override. Componente apenas hospeda toast, não cria mensagem de sucesso nem altera operação.",
+      "consumers": []
+    },
+    "src/components/ui/switch.tsx": {
+      "assessment": "Root/thumb lidos; checked/disabled/eventos/ref encaminhados ao Radix, sem estado paralelo ou persistência.",
+      "consumers": []
+    },
+    "src/components/ui/table.tsx": {
+      "assessment": "Table/head/body/footer/row/cell/caption lidos, elementos nativos e props/ref preservados; overflow wrapper permite rolagem. Ordenação/paginação/seleção são do consumidor.",
+      "consumers": []
+    },
+    "src/components/ui/tabs.tsx": {
+      "assessment": "Root/list/trigger/content completos; state/value/disabled/focus seguem primitive, sem reset de dados externo ou efeito de negócio no wrapper.",
+      "consumers": []
+    },
+    "src/components/ui/textarea.tsx": {
+      "assessment": "Forward ref e HTML props lidos; valor/eventos/disabled encaminhados, sem estado interno ou sanitização presuntiva.",
+      "consumers": []
+    },
+    "src/components/ui/toast.tsx": {
+      "assessment": "Provider/viewport/root/action/close/title/description e variants lidos. Root recebe duration/open/handlers, foco/swipe delegados à lib. Mensagem e confirmação de operação são contrato do chamador.",
+      "consumers": []
+    },
+    "src/components/ui/toaster.tsx": {
+      "assessment": "Map de toasts do hook encaminha props/id/title/description/action e close; não consome promessa de operação. Vida útil dos itens é gerida por use-toast, lido pelo root.",
+      "consumers": []
+    },
+    "src/components/ui/toggle-group.tsx": {
+      "assessment": "Contexto de variants/size e Root/Item lidos; grupo precede estilo local, props/eventos/refs preservados. Estado do toggle permanece na lib.",
+      "consumers": []
+    },
+    "src/components/ui/toggle.tsx": {
+      "assessment": "Variants e Root completos, value/pressed/handlers continuam em props; nenhuma mutação externa.",
+      "consumers": []
+    },
+    "src/components/ui/visually-hidden.tsx": {
+      "assessment": "VisuallyHidden, useAnnounce e LiveRegion completos. Hook ignora politeness e usa timer sem cleanup, mas sem consumidor localizado fora da definição; não promovido como ramo ativo. LiveRegion é montado no App e mantém aria-live polite/status.",
+      "consumers": []
+    },
+    "src/App.tsx": {
+      "assessment": "Imports/DeferredProviders e retorno principal lidos por faixas: confirma EasterEggs lazy e montagem, GlobalKeyboardProvider ao redor de AppRoutes, Toaster/Sonner e LiveRegion. Restante não é declarado integral.",
+      "consumers": [
+        "src/components/keyboard/GlobalKeyboardProvider.tsx",
+        "src/components/effects/EasterEggs.tsx",
+        "src/components/ui/visually-hidden.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          75
+        ],
+        [
+          118,
+          147
+        ]
+      ]
+    },
+    "src/components/keyboard/GlobalKeyboardProvider.tsx": {
+      "assessment": "Corpo integral lido como suporte: listener global/custom event, lazy Host e paletteMounted que persiste após primeira abertura; navegação via ref e cleanup listeners. Comprova consumer atual. Gates/atalhos duplicados da plataforma são propriedade do root.",
+      "consumers": [
+        "src/App.tsx",
+        "src/components/keyboard/CommandPaletteHost.tsx"
+      ]
+    },
+    "src/hooks/system/useDebounce.ts": {
+      "assessment": "Callback debounce integral: cancela timer pendente, não cancela promessa já iniciada, não existe fence de geração/consulta. Usado pela CommandPalette; temporizador não tem cleanup no unmount. Sem executar timer real.",
+      "consumers": [
+        "src/components/ui/command-palette.tsx"
+      ]
+    },
+    "src/features/talk-me/useTalkMeQueue.ts": {
+      "assessment": "Correção de alcance: importa useDebounce do módulo performance e o usa para pesquisa normalizada; guarda searchPending e refs de geração aparecem nesta faixa. Debounce de valor tem cleanup, distinto do debounce de callback da paleta. Restante do hook não é declarado lido aqui.",
+      "consumers": [
+        "src/hooks/performance/useTimingHooks.ts"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          8
+        ],
+        [
+          70,
+          120
+        ]
+      ]
+    },
+    "src/components/dashboard/GoalsDashboard.tsx": {
+      "assessment": "Faixa de imports/estado/cálculo/primeiro JSX confirma uso real de CelebrationOverlay com callback inline para limpar showCelebration; não executa nem comprova conclusão de meta.",
+      "consumers": [
+        "src/components/effects/Confetti.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          52
+        ]
+      ]
+    },
+    "src/components/catalog/CatalogBulkSendDialog.tsx": {
+      "assessment": "Imports e ramo sending confirmam Progress com valor conhecido e texto percentual adjacente. Caminho real faz envio por serviço, mas não foi executado; revisão desta fronteira é apenas do controle visual/acessível.",
+      "consumers": [
+        "src/components/ui/progress.tsx",
+        "src/components/catalog/ExternalProductCatalog.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          60
+        ],
+        [
+          205,
+          234
+        ]
+      ]
+    },
+    "src/components/catalog/ExternalProductCatalog.tsx": {
+      "assessment": "Lazy import e montagem condicionada bulkSendOpen confirmam alcance do diálogo em massa. Nenhum envio/chamada de produto realizado.",
+      "consumers": [
+        "src/components/catalog/CatalogBulkSendDialog.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          35,
+          45
+        ],
+        [
+          706,
+          729
+        ]
+      ]
+    },
+    "src/components/inbox/FileUploader.tsx": {
+      "assessment": "Import e ramos de upload simples/múltiplo confirmam Progress com value e textos adjacentes. Não afirmar ausência total de informação a leitor de tela; perda é no contrato numérico do controle. Upload real não executado.",
+      "consumers": [
+        "src/components/ui/progress.tsx",
+        "src/components/inbox/chat/ChatInputArea.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          20
+        ],
+        [
+          156,
+          187
+        ],
+        [
+          198,
+          216
+        ]
+      ]
+    },
+    "src/components/inbox/chat/ChatInputArea.tsx": {
+      "assessment": "Montagem dirigida de FileUploader no composer ativo; passa contato e callbacks. Revisão completa do composer fica com inbox/root.",
+      "consumers": [
+        "src/components/inbox/FileUploader.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          202,
+          221
+        ]
+      ]
+    },
+    "package.json": {
+      "assessment": "Dependência de Progress identificada em contrato; leitura dirigida da linha52 apenas, sem executar install/scripts.",
+      "consumers": [],
+      "reviewed_ranges": [
+        [
+          52,
+          52
+        ]
+      ]
+    },
+    "bun.lock": {
+      "assessment": "Pin versionado de Progress1.1.16 identificado no lock; leitura dirigida da dependência, sem baixar/importar pacote.",
+      "consumers": [],
+      "reviewed_ranges": [
+        [
+          27,
+          27
+        ],
+        [
+          382,
+          382
+        ]
+      ]
+    }
+  },
+  "candidate_notes": [
+    "CommandPalette: três contratos concretos (consulta obsoleta, default actions sem handler, lista inicial fora do teclado); provas delimitadas em preparação.",
+    "ReactionPicker Enter/Space sem preventDefault: depende de unmount antes da ativação nativa, não provar só por leitura.",
+    "OfflineIndicator response.ok: REJECTED como achado; HTTP resposta prova conectividade, SW desativado, não promete backend saudável. Root confirmou limite.",
+    "ReactionPicker possível duplo evento: não promovido; auth confirmou wrapper antigo fora do Panel ativo (AUTH017/TC006), onSelect fecha sincronamente.",
+    "Progress: value perdido antes do Root; documentação primária consultada, pacote1.1.16 não baixado/executado. Probe pode certificar props JSX, não anúncio real de leitor de tela."
+  ]
+}

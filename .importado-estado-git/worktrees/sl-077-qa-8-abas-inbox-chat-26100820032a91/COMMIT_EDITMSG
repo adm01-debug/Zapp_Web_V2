@@ -1,0 +1,12 @@
+test(inbox/chat): QA automático das 8 abas do painel central (CP8/SL-077)
+
+O QA do CP8 era manual em preview (prints + inbox-measure/colors/func, fora do
+repositório) e nunca rodou. No modo V2 (local, sem preview/login QA) o que dá
+para verificar virou teste: 15 casos cobrindo as 8 abas — geometria (barra 53px,
+aba ativa 36px), cores (nenhum literal, só tokens carvão), funcional (barra e
+painéis cobrem o mesmo conjunto de ids; clique id-a-id), mobile (rótulo só em
+2xl, scroll próprio), light (token nos dois modos) e reduced-motion (pílula
+estática). Prova por mutação: 6 defeitos plantados, 6 vermelhos.
+
+O ledger do Inbox 360 passa CP8 de [ ] para [~], com a tabela de prova e o que
+segue NÃO DEMONSTRADO (prints e os 18 checks E2E, que exigem navegador).

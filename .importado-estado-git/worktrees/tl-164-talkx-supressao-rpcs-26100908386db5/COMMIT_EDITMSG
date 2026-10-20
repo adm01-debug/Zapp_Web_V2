@@ -1,0 +1,8 @@
+fix(talk-x): corrige autorizacao, previous e escape das RPCs de supressao (TL-164)
+
+Refazer 1 do X176. As tres RPCs SECURITY INVOKER de leitura da supressao:
+service_role sai do GRANT (a barreira exige admin/supervisor e service_role
+nao tem auth.uid()); active.previous e protected.previous passam a medir o
+estoque no inicio do periodo (v_start); a busca escapa '_' alem de '\' e '%'.
+O teste prova supervisor pelo JWT real e service_role SEM EXECUTE, com
+assercoes de valor para previous e busca com '_'.

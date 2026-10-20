@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529993 -0300	
+5a9731645d266ea721f679d6886b83822ac16f6b 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529993 -0300	reset: moving to HEAD
+5a9731645d266ea721f679d6886b83822ac16f6b 5b1991e7348dae588b13159b99110e7d7841485e Joaquim Ataides <ti@promobrindes.com.br> 1791530470 -0300	commit: chore(talk-x): traz para a base o hook unico do cartao pai (TL-054A/X050)
+5b1991e7348dae588b13159b99110e7d7841485e c3ddb0f2d82c564bca9313ec91123c987c5fc485 Joaquim Ataides <ti@promobrindes.com.br> 1791530479 -0300	commit: refactor(talk-x): Monitor usa o hook unico de ciclo de vida (X051)

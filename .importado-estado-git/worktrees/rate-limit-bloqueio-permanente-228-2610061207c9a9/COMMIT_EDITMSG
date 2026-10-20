@@ -1,0 +1,7 @@
+fix(edge): alerta de rate limit nao sobrescreve bloqueio permanente (R2-API-056)
+
+O upsert incondicional em blocked_ips apagava bloqueio administrativo
+permanente (is_permanent, reason, blocked_at) ao chegar alerta temporario.
+Agora o handler usa ON CONFLICT DO NOTHING para criar so quando nao ha
+linha, e um update compare-and-swap (is_permanent=false + expires_at <
+novo vencimento) que so estende prazo temporario mais curto.

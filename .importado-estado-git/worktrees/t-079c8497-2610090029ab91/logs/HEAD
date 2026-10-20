@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516602 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516603 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 01e3917ffdfa74ce3c627c1cab9998c428343219 Joaquim Ataides <ti@promobrindes.com.br> 1791516785 -0300	commit (cherry-pick): test(team-chat): cobre gravação WhatsApp por RPC atual
+01e3917ffdfa74ce3c627c1cab9998c428343219 825ad727614b8c56706ba0e712ddfc04d1b29095 Joaquim Ataides <ti@promobrindes.com.br> 1791516836 -0300	commit: test(team-chat): alinha contrato atual de WhatsApp
+825ad727614b8c56706ba0e712ddfc04d1b29095 08722b278fe0a9f490881fd48d21260f0764f491 Joaquim Ataides <ti@promobrindes.com.br> 1791516931 -0300	commit: fix(team-chat): preserva contexto da RPC WhatsApp
+08722b278fe0a9f490881fd48d21260f0764f491 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540591 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 08722b278fe0a9f490881fd48d21260f0764f491 Joaquim Ataides <ti@promobrindes.com.br> 1791540596 -0300	rebase (abort): returning to refs/heads/v2/t-079c8497-2610090029ab91
+08722b278fe0a9f490881fd48d21260f0764f491 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791540602 -0300	reset: moving to df19b16dac
+df19b16dac284603bb9296f51c7258b1d49e9fa7 9f1a0cce4133a5d795bf67e07d2d2f41396f6348 Joaquim Ataides <ti@promobrindes.com.br> 1791540602 -0300	commit: fix(team-chat): preserva contrato atual de convites e WhatsApp
+9f1a0cce4133a5d795bf67e07d2d2f41396f6348 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540606 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 41410a03b4155fdd5185a86e2dd63328e307fe65 Joaquim Ataides <ti@promobrindes.com.br> 1791540753 -0300	rebase (continue): fix(team-chat): preserva contrato atual de convites e WhatsApp
+41410a03b4155fdd5185a86e2dd63328e307fe65 41410a03b4155fdd5185a86e2dd63328e307fe65 Joaquim Ataides <ti@promobrindes.com.br> 1791540753 -0300	rebase (finish): returning to refs/heads/v2/t-079c8497-2610090029ab91
+41410a03b4155fdd5185a86e2dd63328e307fe65 f52430435e86ee5ceabcc8865af333b6028f02d8 Joaquim Ataides <ti@promobrindes.com.br> 1791541490 -0300	commit (amend): fix(team-chat): preserva contrato atual de convites e WhatsApp

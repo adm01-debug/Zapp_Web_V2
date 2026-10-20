@@ -1,0 +1,7 @@
+fix(inbox): remove teste de figurinha duplicado e fora de lugar em FileDetailPanel.test.tsx
+
+O rebase sobre dia/2026-10-09 colou o caso de figurinha (commit anterior, sobre o
+arquivo antigo de erro de imagem) no arquivo errado -- FileDetailPanel.test.tsx,
+que e o G4/G5 (SL-083) da dia e nao importa FileDetailPanel nem define makeItem.
+O caso já está, correto, em FileDetailPanel.erroDeImagem.test.tsx (commit anterior
+deste rebase).

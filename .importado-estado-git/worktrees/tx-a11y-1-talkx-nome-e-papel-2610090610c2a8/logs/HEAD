@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537027 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537028 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 c58086e9fe6a64d7c3f2c017f4245eb1c8c60887 Joaquim Ataides <ti@promobrindes.com.br> 1791538186 -0300	commit: fix(talkx): nome acessivel e papel nos controles do Talk X (TX-A11Y-1)
+c58086e9fe6a64d7c3f2c017f4245eb1c8c60887 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791560188 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 4e03c431a65dcf3408ace2df97b1079e54fd4b3c Joaquim Ataides <ti@promobrindes.com.br> 1791560418 -0300	rebase (continue): fix(talkx): nome acessivel e papel nos controles do Talk X (TX-A11Y-1)
+4e03c431a65dcf3408ace2df97b1079e54fd4b3c 4e03c431a65dcf3408ace2df97b1079e54fd4b3c Joaquim Ataides <ti@promobrindes.com.br> 1791560418 -0300	rebase (finish): returning to refs/heads/v2/tx-a11y-1-talkx-nome-e-papel-2610090610c2a8

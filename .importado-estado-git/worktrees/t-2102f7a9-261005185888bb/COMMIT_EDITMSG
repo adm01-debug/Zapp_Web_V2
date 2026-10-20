@@ -1,0 +1,6 @@
+docs(design-system): marcar checkpoints parciais como [~] e resumir gates
+
+CP0-CP11 passam a [~] (prova tecnica existe, gates nao integralmente
+demonstrados); CP12 segue [ ]. Acrescenta legenda de estados ([x]/[~]/[ ])
+e resumo global dos 7 gates com estado real e referencia de evidencia;
+ausencia de prova vira NAO DEMONSTRADO/PENDENTE, nunca sucesso.

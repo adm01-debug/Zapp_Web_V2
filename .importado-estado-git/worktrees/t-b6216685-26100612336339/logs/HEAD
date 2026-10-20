@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300805 -0300	
+d6bfd59751f26503e528dfa54b704daf0f497157 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300805 -0300	reset: moving to HEAD
+d6bfd59751f26503e528dfa54b704daf0f497157 d8724e10a2e81ba7aedfcee8a1c8c6efa60302bc Joaquim Ataides <ti@promobrindes.com.br> 1791301702 -0300	commit: fix(edge): guarda de exposicao de erro passa a enxergar o 500 montado a mao (#363)
+d8724e10a2e81ba7aedfcee8a1c8c6efa60302bc 0415dd978127c1ed399d7bfe56cf888da294775d Joaquim Ataides <ti@promobrindes.com.br> 1791301775 -0300	commit: test(edge): caso da guarda le o conteudo real dos dois arquivos citados (#363)

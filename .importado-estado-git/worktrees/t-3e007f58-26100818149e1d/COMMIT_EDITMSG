@@ -1,0 +1,3 @@
+test(ci): prova por mutação do cabeçalho real na guarda do CT-99 (SL-153)
+
+Responde ao juiz barato: a guarda já roda o validador real sobre a cópia marcada do plano; o caso novo muta o parágrafo da decisão do próprio plano (não um literal) e exige que a regra acuse a volta do motivo caduco.

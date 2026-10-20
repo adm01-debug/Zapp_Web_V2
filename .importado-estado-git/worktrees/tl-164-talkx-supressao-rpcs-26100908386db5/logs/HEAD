@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791545887 -0300	
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791545888 -0300	reset: moving to HEAD
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 2fdc0a2f69d61c8635291b07949a3d497597939e Joaquim Ataides <ti@promobrindes.com.br> 1791545902 -0300	cherry-pick: fix(talk-x): Criar RPCs de leitura da supressão: listagem paginada, KPIs e atividade (X176)
+2fdc0a2f69d61c8635291b07949a3d497597939e 62bcf4cb056e103b5faace33c9f49fc220be6254 Joaquim Ataides <ti@promobrindes.com.br> 1791546965 -0300	commit: fix(talk-x): corrige autorizacao, previous e escape das RPCs de supressao (TL-164)

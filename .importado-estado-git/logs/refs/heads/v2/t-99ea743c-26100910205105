@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791552025 -0300	branch: Created from dia/2026-10-09
+68980bf5e3486ca611a90742053bfdb008fcb5c3 366f4d7bd9f085f69c4af9f30811d3595446e081 Joaquim Ataides <ti@promobrindes.com.br> 1791552090 -0300	cherry-pick: perf(bundle): tira sonner e sessão de telefonia do grafo inicial do entry
+366f4d7bd9f085f69c4af9f30811d3595446e081 592f005618f3ab43d5f0183ed47bcdcf185048b6 Joaquim Ataides <ti@promobrindes.com.br> 1791552090 -0300	cherry-pick: perf(bundle): devolve a sessão de telefonia ao entry e deixa só a poda do sonner
+592f005618f3ab43d5f0183ed47bcdcf185048b6 05ab53783e7e9c80e26f735da34800ed71b1d202 Joaquim Ataides <ti@promobrindes.com.br> 1791552090 -0300	cherry-pick: perf(bundle): fachada lazyToast tira o sonner que a telefonia puxava para o bundle inicial
+05ab53783e7e9c80e26f735da34800ed71b1d202 18873e4cd0570fb838cdedf394dcb34860fc07cd Joaquim Ataides <ti@promobrindes.com.br> 1791552090 -0300	cherry-pick: test(bundle): o caso do sonner cobre também os importadores da telefonia
+18873e4cd0570fb838cdedf394dcb34860fc07cd d50a01bb68d4f72230c59e37aa0d854f4fe6586b Joaquim Ataides <ti@promobrindes.com.br> 1791552588 -0300	commit: fix(bundle): atalhos e CallSessionProvider saem do import estático do sonner

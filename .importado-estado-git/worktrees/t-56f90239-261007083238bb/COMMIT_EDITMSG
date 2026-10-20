@@ -1,0 +1,22 @@
+fix(tarefas): quadro em largura total, colunas flexiveis e foco visivel (E16)
+
+As 5 colunas eram fixas em 232px (260px no `xl`): somavam 1348px e nao cabiam
+nem em 1440 com a sidebar aberta (1440 - 256 - 36 = 1148/1112px), o que forcava
+rolagem horizontal com as colunas ja espremidas. Agora elas dividem a largura do
+trilho (`flex-1`) com um piso legivel de 200px: 5x200 + 4x12 = 1048px, o que cabe
+em 1440 (com a sidebar aberta e com o gutter) e continua rolando como carrossel
+abaixo disso, pelo `overflow-x-auto` + snap que ja existia no trilho.
+
+O `BoardColumn` tambem passa a expor `data-board-column`: era a string da classe
+`min-w-[232px]` que servia de ancora no teste do modulo (justamente a largura que
+sai aqui).
+
+No `WorkItemCard`, o atalho "Abrir conversa" nasce com `opacity-0` e nao tinha
+saida pelo foco: o Tab parava num controle invisivel (o `opacity-0` apaga tambem o
+anel de foco do `button:focus-visible`). Ganha `focus-visible:opacity-100`, como o
+kebab do mesmo card ja tinha.
+
+Teste novo `quadroLarguraFocoContraste.test.tsx`: piso das colunas + vaos medidos
+contra `--sidebar-w`/`--layout-gutter` de `tokens.css`, nenhum controle focavel
+invisivel, e os pares de contraste do card e do cabecalho da coluna medidos nos 4
+temas (medidor WCAG de `movimentoEContraste`).

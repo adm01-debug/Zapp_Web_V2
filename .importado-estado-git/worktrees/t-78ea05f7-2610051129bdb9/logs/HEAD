@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 81619a359dc43c9aee3939a15ec13ba18f23b646 Joaquim Ataides <ti@promobrindes.com.br> 1791210552 -0300	
+81619a359dc43c9aee3939a15ec13ba18f23b646 81619a359dc43c9aee3939a15ec13ba18f23b646 Joaquim Ataides <ti@promobrindes.com.br> 1791210552 -0300	reset: moving to HEAD
+81619a359dc43c9aee3939a15ec13ba18f23b646 b64e352f6b52b686c16a1fd0d18ea2993da09ac9 Joaquim Ataides <ti@promobrindes.com.br> 1791210748 -0300	commit: fix(ci): scanner de pesos acusa intermediário ausente em lista estática (LT-TYPE-03)

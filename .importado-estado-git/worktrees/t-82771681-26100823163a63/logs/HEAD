@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512218 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512219 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 37c4de53e3c7f12e53a790442222d600328d9a3e Joaquim Ataides <ti@promobrindes.com.br> 1791512479 -0300	commit (cherry-pick): fix(tarefas): prazo vencido hoje conta como atraso nos mesmos canais (R2-MOD-058)
+37c4de53e3c7f12e53a790442222d600328d9a3e e5bde4bd4271d478f6cc92d050d9fe85cb525958 Joaquim Ataides <ti@promobrindes.com.br> 1791512490 -0300	commit (amend): fix(tarefas): prazo vencido hoje conta como atraso nos mesmos canais (R2-MOD-058)

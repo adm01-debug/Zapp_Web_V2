@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791202902 -0300	branch: Created from dia/2026-10-05
+b58c615056ec3756606163a249e5d8b26352f355 4ddfe6382f8d4247513a37a6357e41e0a9936fbf Joaquim Ataides <ti@promobrindes.com.br> 1791204095 -0300	commit: fix(ui): cancela timers de transicao do useTheme no unmount

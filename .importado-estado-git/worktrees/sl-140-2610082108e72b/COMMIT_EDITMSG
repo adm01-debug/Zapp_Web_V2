@@ -1,0 +1,15 @@
+test(ci): zera a dívida de implicit-any que mantinha o ratchet vermelho
+
+O `implicit-any-ratchet` (baseline 0, gate do CI em .github/workflows/ci.yml)
+acusava 2 erros TS7006 em `src/hooks/calls/__tests__/useTerminoRemoto.test.tsx`,
+e o `tsconfig.strict.json` acrescentava 2 TS2551 em
+`src/components/settings/theme/__tests__/presets.test.ts`.
+
+Sem mudança de comportamento: anotação das duas linhas do espião de console e
+leitura do token fixo `gradient-success`, que vive fora de `ThemeModeColors`.
+
+Os 4 arquivos citados pela dívida (ThemeCustomizer, PresetCard, presets.ts,
+contact.service.ts) já estão limpos na ponta dia/2026-10-08 — confirmado com
+`tsc -b --force` (rc 0) e `typecheck-ratchet` (baseline=0, atual=0).
+
+SL-140

@@ -1,0 +1,15 @@
+fix(warroom): alerta de SLA não se repete acima da página de 50
+
+R2-MOD-074 (item 437, P2). O monitor de SLA do War Room decidia pela CONTAGEM
+de alertas source=sla-monitor visíveis numa consulta de apresentação limitada a
+50 linhas: acima de 50 violações a condição voltava a ser verdadeira a cada
+republicação da página (realtime/refetch) e o mesmo incidente ganhava outro
+alerta — com som e push — sem parar, inclusive com dois clientes admin abertos.
+
+Agora a identidade do incidente é o CONJUNTO das conversas violadas (hash FNV-1a
+de 64 bits sobre os ids ordenados), a leitura das violações pagina até o fim (o
+teto do PostgREST é 1000) e o INSERT leva dedupe_key, amparado no índice único
+parcial ux_warroom_alerts_dedupe_key (migration aditiva): repetição e corrida
+caem em 23505 e não criam linha. O efeito não depende mais da página de alertas,
+que era o que rearmava a checagem. Falha de leitura não vira alerta; erro real de
+gravação é registrado, não engolido.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791225663 -0300	
+b082bce893ba74365248c56c31e898f05a13dc69 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791225664 -0300	reset: moving to HEAD
+b082bce893ba74365248c56c31e898f05a13dc69 907535ab786a86668630d027c14d0c8021fb174d Joaquim Ataides <ti@promobrindes.com.br> 1791225693 -0300	commit (cherry-pick): docs(catalogo): CT-73 pendente — medição concluída não é meta atingida
+907535ab786a86668630d027c14d0c8021fb174d 13c73191814c43bc8cc34db9b5714980248f4de9 Joaquim Ataides <ti@promobrindes.com.br> 1791225840 -0300	commit: test(catalogo): CT-73 fecha condicionalmente — só com nova medição real < 30 KB

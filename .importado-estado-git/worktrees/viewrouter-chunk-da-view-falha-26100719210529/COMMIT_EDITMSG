@@ -1,0 +1,9 @@
+fix(errors): chunk error da view delega ao boundary global em vez de remontar o lazy morto
+
+O ErrorBoundaryWithRetry auto-retentava remontando a mesma instância
+React.lazy, que re-lança a rejeição guardada sem novo fetch — a tela da
+view nunca voltava e o "Tentar novamente" era morto. Agora chunk errors
+são re-lançados no componentDidCatch para o ErrorBoundary global, que já
+recarrega a página uma vez por sessão via zapp_chunk_reload_v1. Erros
+comuns seguem no fluxo de retry atual; no fallback por chunk error, o
+botão recarrega a página limpando a flag em vez de remontar.

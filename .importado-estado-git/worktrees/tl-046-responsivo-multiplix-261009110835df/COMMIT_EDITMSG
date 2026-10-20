@@ -1,0 +1,8 @@
+test(multiplix): prova de render por linha usa mock parcial do modulo real (TL-046)
+
+O mock enumerado de @/hooks/integrations/useMultiplixDispatches ficou obsoleto
+quando o F51 trouxe useConfirmMultiplixDispatch para o MultiplixMonitor: o mock
+devolvia undefined para o hook novo e a prova quebrava na ponta da dia com
+'No "useConfirmMultiplixDispatch" export is defined on the mock'. O mock passa a
+rodar o modulo real (importOriginal) e sobrescrever so os quatro acessos de
+dados que a prova controla, para nao envelhecer a cada hook novo da trilha.

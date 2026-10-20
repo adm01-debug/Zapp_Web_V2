@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791499634 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe 650add8f905d2252cd7d0589ede92bc5bc80eb0d Joaquim Ataides <ti@promobrindes.com.br> 1791500998 -0300	commit: fix(multiplix): matriz perfil × papel × escopo em PERMISSOES.md bate com o seed e os gates (TL-023)
+650add8f905d2252cd7d0589ede92bc5bc80eb0d 8749032b03b813c9956f0395a27d15d31eccaea3 Joaquim Ataides <ti@promobrindes.com.br> 1791501327 -0300	commit (amend): fix(multiplix): matriz perfil × papel × escopo em PERMISSOES.md bate com o seed e os gates (TL-023)

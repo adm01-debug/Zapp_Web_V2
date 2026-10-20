@@ -1,0 +1,22 @@
+fix(talk-x): Card Ações da lista, modal Adicionar contato e modal Ge (TL-168)
+
+Rail ganha o card "Ações da lista" (SH:242) com as 4 RailAction: Adicionar contato
+(movido da barra de filtros, T06-056), Gerenciar motivos, e Importar/Exportar
+desabilitados (X183). Modal "Adicionar contato" do kit com duas abas: contato
+existente e telefone avulso (máscara brasileira, 10 a 15 dígitos, sem
+contact_id), com o duplicado virando mensagem em vez do erro 23505 cru.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto e423ffa63
+# Last command done (1 command done):
+#    pick 2b00a75c1 fix(talk-x): Card Ações da lista, modal Adicionar contato e modal Ge (TL-168)
+# No commands remaining.
+# You are currently rebasing branch 'v2/tl-168-2610090445716a' on 'e423ffa63'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXSuppression.tsx
+#	new file:   src/components/talkx/__tests__/TalkXSuppression.add.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXSuppressionReasons.test.tsx
+#

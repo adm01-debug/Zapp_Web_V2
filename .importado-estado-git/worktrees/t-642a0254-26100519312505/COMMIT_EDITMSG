@@ -1,0 +1,3 @@
+fix(compras): explicitar escopo do resumo comercial
+
+Reaproveita 7bc6ed9df (cherry-pick equivalente) da branch v2/t-f7158094. O resumo de Compras agrega apenas compras com status 'completed'/'approved' (COMPLETED_STATUSES em src/hooks/crm/useContactCrm360.ts); a UI exibia so 'Compras (N)'. Adiciona aviso visivel e acessivel (role=note) informando o recorte, sem alterar valores nem a regra de agregacao. Teste RED->GREEN em SalesViewTab.test.tsx (4/5 -> 5/5).

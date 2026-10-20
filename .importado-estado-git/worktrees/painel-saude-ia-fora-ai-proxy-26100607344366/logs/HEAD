@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 6f752a05709f2ff19eac17aefc662e3d631e21ce Joaquim Ataides <ti@promobrindes.com.br> 1791282868 -0300	
+6f752a05709f2ff19eac17aefc662e3d631e21ce 6f752a05709f2ff19eac17aefc662e3d631e21ce Joaquim Ataides <ti@promobrindes.com.br> 1791282869 -0300	reset: moving to HEAD
+6f752a05709f2ff19eac17aefc662e3d631e21ce 26225d29ce7076bc254fbe2934a9b6907e0f36bc Joaquim Ataides <ti@promobrindes.com.br> 1791282879 -0300	cherry-pick: fix(ia): painel de saude cobre chamadas de IA fora do ai-proxy (R2-API-043)

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541093 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541095 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 9e4c51183368adab350192bbf05be89f4dbde3cc Joaquim Ataides <ti@promobrindes.com.br> 1791541112 -0300	cherry-pick: fix(message-reactions): escrita da reacao exige a propria autoria (#302)
+9e4c51183368adab350192bbf05be89f4dbde3cc 4ba45e14feedba0f0d5a327e54b716385bea6d26 Joaquim Ataides <ti@promobrindes.com.br> 1791541112 -0300	cherry-pick: test(message-reactions): prova linha afetada no red-first de DELETE/UPDATE (#302)
+4ba45e14feedba0f0d5a327e54b716385bea6d26 3be592c9fe620da312ab6d63fb8d76780e2e9e3a Joaquim Ataides <ti@promobrindes.com.br> 1791541112 -0300	cherry-pick: fix(message-reactions): policies de escrita aceitam contact_id nulo da reação de agente (#302)

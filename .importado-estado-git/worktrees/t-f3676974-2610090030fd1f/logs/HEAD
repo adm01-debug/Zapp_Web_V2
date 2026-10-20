@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516634 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516635 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 0982fa938dba0fcc2f05ee312763d071c81e7bf9 Edgar <edgar@zapp.local> 1791517499 -0300	commit: feat(talkx): assina a midia do bucket no envio e manda documento com nome (X062)
+0982fa938dba0fcc2f05ee312763d071c81e7bf9 2b16d09ec15bdec24a784ff80f5d0725ef694bb2 Edgar <edgar@zapp.local> 1791517749 -0300	commit: fix(talkx): remove o eslint-disable duplicado que a assinatura quebrada deixou (X062)

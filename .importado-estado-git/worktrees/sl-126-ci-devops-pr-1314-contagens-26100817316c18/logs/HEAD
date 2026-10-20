@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491465 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491466 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 853cfae6c1f460a40732849de69ecdd546308279 Joaquim Ataides <ti@promobrindes.com.br> 1791492089 -0300	commit: fix(ci/devops): corrige as contagens do #1267 no arquivo do PR #1314 (17→15 funções) (SL-126)
+853cfae6c1f460a40732849de69ecdd546308279 2c5fc4b106c5980f0134faca6c40251971792faa Joaquim Ataides <ti@promobrindes.com.br> 1791492254 -0300	commit (amend): fix(ci/devops): corrige as contagens do #1267 no arquivo do PR #1314 (17→15 funções) (SL-126)

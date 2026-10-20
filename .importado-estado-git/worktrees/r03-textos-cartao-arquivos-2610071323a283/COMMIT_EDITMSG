@@ -1,0 +1,6 @@
+feat(arquivos): formatadores do cartao (data curta, tipo e tamanho, nome legivel)
+
+Etapas S22-S26 do plano do cartao de arquivo: formatCardDate (Hoje/Ontem/data curta
+em pt-BR no fuso do navegador), typeSizeLine (Tipo . tamanho com virgula, reaproveita
+TYPE_LABEL e formatSize) e cardName (displayName + isTechnical pela regra existente
+isTechnicalFilename). Nenhuma funcao existente foi alterada.

@@ -1,0 +1,17 @@
+test(inbox/chat): prova que o composer só existe na aba Chat por decisão registrada (SL-207)
+
+Só teste: nenhuma linha de produção tocada. A lacuna do cartão (RES-1) não é defeito, é
+decisão registrada em docs/design/PLANO_INBOX_360_CONVERSA.md:66 — "Composer de mensagem só
+existe na aba Chat — decisão registrada (as imagens 3/4/6 mostram composer em outras abas;
+não replicar)".
+
+O composer (ChatInputArea) tem um único ponto de render em produção
+(src/components/inbox/ChatPanel.tsx:401), montado como children do ConversationTabContent,
+que esconde esse painel fora da aba Chat (ConversationTabContent.tsx:67). Estender o composer
+às demais abas exigiria içar o estado do ChatPanel e mexer em 3 arquivos de produção (2
+camadas) — fora do limite do cartão.
+
+O teste novo (src/components/inbox/__tests__/ConversationTabs.test.tsx) trava a decisão: o
+painel do Chat nunca desmonta (senão perderia rascunho/scroll/gravação/realtime) e fica só
+escondido fora da aba Chat. Mutação conferida: removendo o `hidden` de
+ConversationTabContent.tsx:67, o teste fica vermelho. Prova completa em .tmp/relato.md.

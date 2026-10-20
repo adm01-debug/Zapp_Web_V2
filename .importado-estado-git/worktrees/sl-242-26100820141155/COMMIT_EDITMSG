@@ -1,0 +1,21 @@
+docs(telefonia): revisão final de CAPACIDADES/CONTRATO contra o código (T92)
+
+- CAPACIDADES.md e CONTRATO.md revisados em 08/10/2026 contra a cabeça do dia
+  (dia/2026-10-08, c79b2e34c). Citações mortas corrigidas: useSipConnection.ts
+  mudou de pasta (onInvite hoje em src/hooks/sip/useSipConnection.ts:103), o SIP
+  não é mais hardcoded em useSipClient.ts:15-17 (host/porta saem de
+  supabase/functions/get-sip-password/index.ts:13,15) e o handleCallEvent começa
+  hoje em supabase/functions/_shared/evolution-webhook-handlers.ts:270.
+- CONTRATO.md §7 D3: gravações deixam de ser "aberto" — a integração Bitrix24
+  (T71-T74) já está no código (sync-call-records grava recording_status/url,
+  get-call-recording entrega o áudio com o JWT); o que falta é configurar
+  BITRIX_WEBHOOK_URL na Edge, não código.
+- CONTRATO.md §8/§10: record_incoming_call_event (T26 + M-DB-02) e o registro do
+  T92/T93 — o snapshot final.json exige DESTINO_URL do banco canônico (ato de
+  dono); a conferência offline contra o retrato canônico commitado mostra que o
+  contrato de public.calls não mudou e que a única diferença nas 5 funções do
+  escopo é a própria T26.
+- Nova guarda scripts/db-audit/telefonia-docs-revisao.test.mjs (roda no
+  db-guard.yml, node --test scripts/db-audit/*.test.mjs): exige a linha de
+  revisão com data e commit e recusa citação de arquivo inexistente ou de nome
+  solto nos dois documentos.

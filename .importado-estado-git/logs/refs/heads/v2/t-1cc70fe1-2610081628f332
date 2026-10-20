@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ae1fce67665dea872b9b4a4f00a0edc2f8d10125 Joaquim Ataides <ti@promobrindes.com.br> 1791487711 -0300	branch: Created from dia/2026-10-08
+ae1fce67665dea872b9b4a4f00a0edc2f8d10125 437eecd9aac1ec1ae94273f7ef448abf955f2517 Joaquim Ataides <ti@promobrindes.com.br> 1791487778 -0300	cherry-pick: feat(arquivos): filtro por data na aba Arquivos
+437eecd9aac1ec1ae94273f7ef448abf955f2517 22f008542954df6a8dd60c89a81c573723e079a9 Joaquim Ataides <ti@promobrindes.com.br> 1791487782 -0300	cherry-pick: fix(arquivos): periodo personalizado so com "Ate" varre as paginas antigas
+22f008542954df6a8dd60c89a81c573723e079a9 145703d09cef070c2e3c6987025c13983182dc94 Joaquim Ataides <ti@promobrindes.com.br> 1791487928 -0300	commit: fix(arquivos): recorte por periodo conta figurinhas (tipo sticker)

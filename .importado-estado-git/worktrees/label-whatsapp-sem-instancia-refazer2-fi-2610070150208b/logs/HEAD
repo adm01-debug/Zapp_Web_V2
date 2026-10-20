@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348652 -0300	
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348652 -0300	reset: moving to HEAD
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 f0fa0cc2338eccdeabd5e24a0c3b819d7880bf3b Joaquim Ataides <ti@promobrindes.com.br> 1791348661 -0300	cherry-pick: fix(webhook): escopar rename/delete de label do WhatsApp por conexão
+f0fa0cc2338eccdeabd5e24a0c3b819d7880bf3b 719d4f615148604f3017ee04a55d215e2c33d363 Joaquim Ataides <ti@promobrindes.com.br> 1791348661 -0300	cherry-pick: fix(webhook): provar isolamento por conexão das etiquetas de WhatsApp no banco

@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 786a156bb765f8f5edfa6e9b8e236ffe30240e57 Joaquim Ataides <ti@promobrindes.com.br> 1791366237 -0300	
+786a156bb765f8f5edfa6e9b8e236ffe30240e57 786a156bb765f8f5edfa6e9b8e236ffe30240e57 Joaquim Ataides <ti@promobrindes.com.br> 1791366238 -0300	reset: moving to HEAD
+786a156bb765f8f5edfa6e9b8e236ffe30240e57 7bdb7c7a35c8b7f938db958b043d92c45cf6cf0d Joaquim Ataides <ti@promobrindes.com.br> 1791366358 -0300	cherry-pick: fix(telefonia): preserva POST JSON no hook de áudio
+7bdb7c7a35c8b7f938db958b043d92c45cf6cf0d 7e853c52ccef739eca1228c4894202a6316e5456 Joaquim Ataides <ti@promobrindes.com.br> 1791366358 -0300	cherry-pick: test(telefonia): mock de RecordingPlayer devolve auth e anon key (TEL-RECORDING-001)
+7e853c52ccef739eca1228c4894202a6316e5456 a604c56952a7bfd76930d9b0c059d46df2f411a3 Joaquim Ataides <ti@promobrindes.com.br> 1791366358 -0300	cherry-pick: fix(telefonia): player de gravacao usa so o blob local - URL de origem nunca entra no DOM
+a604c56952a7bfd76930d9b0c059d46df2f411a3 a5da473a81fca4f77b022dc18a21481fa1c81908 worker <worker@promobrindes.local> 1791367178 -0300	commit: fix(telefonia): hook de audio entrega os BYTES da Edge como Blob, nao a URL (TEL-RECORDING-001)
+a5da473a81fca4f77b022dc18a21481fa1c81908 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541265 -0300	reset: moving to dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 8be65d9892b6ebe2116c16377f0557a51e378dd1 Joaquim Ataides <ti@promobrindes.com.br> 1791541890 -0300	commit: fix(telefonia): hook de audio entrega os BYTES da Edge como Blob, nao a URL (TEL-RECORDING-001)

@@ -1,0 +1,147 @@
+### 0. fontes sob prova (sha256)
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/.local/bin/zapp-verify
+c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_feadd752/entrega/zapp-verify.novo
+d242c0e63c88b82f652ebcd1314cf85da8a4232fc1e80f7e041af43cd6c7f659  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/arvore/supabase/schema-manifest.json
+14ac6065a506557ad512ae84115708aa57e0b63eb023bd09df4a28d924b56a3f  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/entradas/ledger-fixture-versoes.txt
+3ac569f422892716e212327a92a6132234c744ad12d3f502b68cf36bfd28c2ff  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/stubs/zapp-db-local
+
+### CENARIO P128 — diff real COMPLETO da arvore (128 linhas, sha cb31c19f)
+======================= P128-HOJE | zapp-verify | 70c0b223d5a6
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|gmail_oauth_states; rls|talkx_storage_purge_queue; columns|audit_logs.dedupe_key (+81)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|gmail_oauth_states; rls|talkx_storage_purge_queue; columns|audit_logs.dedupe_key (+81)
+VERIFY: VERMELHO em banco_local (0s)
+-- banco_local.log --
+ESTRUTURA: 128 diferença(s) em relação ao retrato da produção
+======================= P128-NOVO | zapp-verify.novo | c95e371a054e
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     4s  diferença não explicada por migration pendente: indexes|gmail_oauth_states.gmail_oauth_states_pkey; indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pkey; constraints|relation:gmail_oauth_states.gmail_oauth_states_pkey (+5)
+VERIFY: VERMELHO em banco_local (5s)
+exit code = 1
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     4s  diferença não explicada por migration pendente: indexes|gmail_oauth_states.gmail_oauth_states_pkey; indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pkey; constraints|relation:gmail_oauth_states.gmail_oauth_states_pkey (+5)
+VERIFY: VERMELHO em banco_local (5s)
+-- banco_local.log --
+ESTRUTURA: 128 diferença(s) em relação ao retrato da produção
+### CENARIO P2 — retrato canonico fresco na arvore (diff real = 2 linhas, sha 6a6c90ab)
+======================= P2-HOJE | zapp-verify | 70c0b223d5a6
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     1s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-HOJE/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+VERIFY: VERDE (1s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-HOJE/.local/state/zapp-verify/1df9fbeb7e31
+exit code = 0
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     1s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-HOJE/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+VERIFY: VERDE (1s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-HOJE/.local/state/zapp-verify/1df9fbeb7e31
+-- banco_local.log --
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção
+======================= P2-NOVO | zapp-verify.novo | c95e371a054e
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     0s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-NOVO/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-NOVO/.local/state/zapp-verify/1df9fbeb7e31
+exit code = 0
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     0s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-NOVO/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P2-NOVO/.local/state/zapp-verify/1df9fbeb7e31
+-- banco_local.log --
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção
+### CENARIO NEG — controle negativo: diferenca NOVA do cartao (fixture sintetica do ensaio)
+======================= NEG-HOJE | zapp-verify | 70c0b223d5a6
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|sonda_cartao.sonda_cartao_pkey; functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|sonda_cartao.sonda_cartao_pkey; functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+VERIFY: VERMELHO em banco_local (0s)
+-- banco_local.log --
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção
+======================= NEG-NOVO | zapp-verify.novo | c95e371a054e
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|sonda_cartao.sonda_cartao_pkey
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|sonda_cartao.sonda_cartao_pkey
+VERIFY: VERMELHO em banco_local (0s)
+-- banco_local.log --
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção
+### CENARIO LEDGERBLOQ — registro da producao ilegivel (rc=77/R1): destrava a regra estrita?
+======================= LB-NOVO | zapp-verify.novo | c95e371a054e
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/LB-NOVO/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+ESTRUTURA: 9 diferença(s) em relação ao retrato da produção
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+-- resultado.txt do portao --
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/LB-NOVO/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+VERIFY: VERMELHO em banco_local (0s)
+-- banco_local.log --
+ESTRUTURA: 9 diferença(s) em relação ao retrato da produção

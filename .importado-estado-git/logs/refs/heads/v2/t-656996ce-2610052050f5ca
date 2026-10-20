@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc Joaquim Ataides <ti@promobrindes.com.br> 1791244234 -0300	branch: Created from dia/2026-10-05
+7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc d67dcfef644d41bf18759429c1dc44703a5cc50d Joaquim Ataides <ti@promobrindes.com.br> 1791244530 -0300	commit: fix(grupos): tratar erro lógico da Evolution (data.error) na sincronização e no envio em massa
+d67dcfef644d41bf18759429c1dc44703a5cc50d 956f23dd92581c971ba8f43ed52377189b7e4da4 Joaquim Ataides <ti@promobrindes.com.br> 1791244537 -0300	commit (amend): fix(grupos): tratar erro lógico da Evolution (data.error) na sincronização e no envio em massa
+956f23dd92581c971ba8f43ed52377189b7e4da4 7466c17b35fa553703fff81f308c342b02d7d917 Joaquim Ataides <ti@promobrindes.com.br> 1791244738 -0300	commit (amend): fix(grupos): tratar erro lógico da Evolution (data.error) na sincronização e no envio em massa

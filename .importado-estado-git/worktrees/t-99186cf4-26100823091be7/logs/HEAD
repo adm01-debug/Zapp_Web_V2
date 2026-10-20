@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511761 -0300	
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511762 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 f69dcafe75b3aa1ea0d46f048287be9a9a0a5f0c Joaquim Ataides <ti@promobrindes.com.br> 1791512395 -0300	commit: fix(multiplix): multiplix_resolve_recipients em lotes de 1.000 (paginação interna, teto nomeado) (TL-024)

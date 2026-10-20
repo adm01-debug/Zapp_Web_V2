@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 44772c4d988ed808b7743583b9f0ec17309ba2df Joaquim Ataides <ti@promobrindes.com.br> 1791366979 -0300	branch: Created from dia/2026-10-07
+44772c4d988ed808b7743583b9f0ec17309ba2df 8163deed5586542a1f5257f3f9b6a97c5d63f799 Joaquim Ataides <ti@promobrindes.com.br> 1791367966 -0300	commit: feat(db): outbox duravel da resolucao de opt-out indeterminada (#190)

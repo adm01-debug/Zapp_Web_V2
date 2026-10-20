@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527705 -0300	
+2a47986959e01fcd590be2a63199a8b6db27f86d 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527705 -0300	reset: moving to HEAD
+2a47986959e01fcd590be2a63199a8b6db27f86d 460c7d3d9a2caea7b3b6b7339d839bef6657c363 Joaquim Ataides <ti@promobrindes.com.br> 1791527937 -0300	commit: feat(talk-x): hook unico de ciclo de vida (X050) com dialogo, pendente e erro
+460c7d3d9a2caea7b3b6b7339d839bef6657c363 df857a9e6109bd17f74bfaa50126b439374e0263 Joaquim Ataides <ti@promobrindes.com.br> 1791528173 -0300	commit: fix(talk-x): usa motion-safe no giro do botao pendente do lifecycle

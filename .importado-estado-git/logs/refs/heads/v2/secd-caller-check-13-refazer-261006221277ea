@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791335570 -0300	branch: Created from dia/2026-10-06
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 0fb319e96c19218a7573c67c0560fa593a89fc95 Joaquim Ataides <ti@promobrindes.com.br> 1791335582 -0300	cherry-pick: fix(db): exige checagem do chamador nas 13 funções SECURITY DEFINER expostas (M-DB-05)
+0fb319e96c19218a7573c67c0560fa593a89fc95 fdef360fa9f81a3dd20046e31a447236fd1cd24d Joaquim Ataides <ti@promobrindes.com.br> 1791337015 -0300	commit: fix(db): fecha anon/PUBLIC nas 5 DEFINER e corrige as provas do M-DB-05 (#474)

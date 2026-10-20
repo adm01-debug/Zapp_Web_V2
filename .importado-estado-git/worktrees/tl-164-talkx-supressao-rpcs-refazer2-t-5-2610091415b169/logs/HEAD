@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566144 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566145 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 00282ea5321b96298dbcd72a7de3430dbca0ef9a Joaquim Ataides <ti@promobrindes.com.br> 1791566572 -0300	commit: fix(talk-x): revoga service_role nas RPCs de supressao

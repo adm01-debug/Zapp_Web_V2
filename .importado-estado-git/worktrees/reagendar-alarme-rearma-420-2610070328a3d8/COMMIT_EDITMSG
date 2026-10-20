@@ -1,0 +1,3 @@
+test(tarefas): registra no cabecalho do teste o caminho canonico scripts/db-audit (#420)
+
+O cartao autoriza tests/db-audit, pasta que nao existe no repo; o E48 do check-test-inventory e o db-guard.yml varrem so scripts/db-audit, onde moram as 192 provas de banco. So comentario: nenhuma assercao mudou (57/57 verde).

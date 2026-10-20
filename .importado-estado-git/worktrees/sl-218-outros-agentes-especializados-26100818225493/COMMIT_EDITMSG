@@ -1,0 +1,20 @@
+fix(outros): Alinha o checkpoint do Bloco 18 e prova a razão das pendências (SL-218)
+
+Refaz a entrega do SL-218 corrigindo os dois defeitos objetivos da recusa, sobre o
+commit reaproveitado a4d4f0586 (branch v2/sl-218-...-26100817504f8c):
+
+1. docs/ia/IA-171-a-IA-180-agentes-especializados.md, seção "Consequência para o
+   plano": "três etapas" vira "quatro etapas", coerente com IA-172, IA-175,
+   IA-176 e IA-179, com a tabela e com ESTADO_ESPERADO do contrato.
+2. O teste tautológico "as etapas pendentes declaram a pendência" sai; no lugar
+   entra a prova da RAZÃO: cada etapa pendente precisa declarar a ausência
+   ("Não existe", "Não há", "Nenhum ... existe", "Falta").
+3. O último teste ("não lê o bloco como concluído") sai por repetir a asserção de
+   IA-171/173/180 já travada por ESTADO_ESPERADO; no lugar entra a prova do fecho
+   do documento contra a tabela (quatro etapas parciais, sem "três etapas").
+
+Prova: contrato vermelho por mutação (doc "quatro"->"três"; razão removida de
+IA-176) e por ausência do documento (ENOENT), verde com o documento no lugar
+(6/6). zapp-verify . --rapido VERDE.
+
+Cartao V2: t_4464786c (SL-218, refazer do t_38778cb9)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4828775c575e68c498bb957350dfa0171a8f1c8e Joaquim Ataides <ti@promobrindes.com.br> 1791385795 -0300	
+4828775c575e68c498bb957350dfa0171a8f1c8e 4828775c575e68c498bb957350dfa0171a8f1c8e Joaquim Ataides <ti@promobrindes.com.br> 1791385796 -0300	reset: moving to HEAD
+4828775c575e68c498bb957350dfa0171a8f1c8e 2db70876e4aa512e7761f57cffd2a353ee9f497d Joaquim Ataides <ti@promobrindes.com.br> 1791386119 -0300	commit: fix(omnichannel): declara canais e regras sem executor já aplicadas

@@ -1,0 +1,3 @@
+test(talk-x): contador de contatos mede o componente real nos 4 temas (TL-175D-a)
+
+O arquivo de teste passa a ter so casos que montam o componente e medem o elemento que ele renderiza (era 5, fica 4); a checagem que so conferia o par de tokens foi removida.

@@ -1,0 +1,20 @@
+fix(performance): cache do Bun nos jobs com bun install (SL-095)
+
+O inventario marcava E67 como NAO_IMPLEMENTADA e a lacuna continuava viva em
+08/10: nenhum `actions/cache` em `.github/workflows/`, com 10 jobs em 5
+workflows pagando o download inteiro do registry a cada run.
+
+- `ci.yml` (6 jobs), `db-guard.yml`, `e2e-logado.yml`, `e2e-talkx.yml` e
+  `types-sync.yml`: passo `actions/cache` (v6.1.0, SHA pinado) com
+  `path: ~/.bun/install/cache` e chave atrelada a `hashFiles('bun.lock')`
+  imediatamente antes do `bun install`. Jobs condicionais herdam o mesmo `if:`.
+- `scripts/ci/allowed-actions.json`: `actions/cache` entra na lista versionada
+  (sem isto o `check-workflow-pins.mjs`, que roda no job Lint & TypeCheck,
+  recusa o owner do passo novo). A lista passa a ser exatamente as 12 actions
+  em uso.
+- `scripts/ci/workflow-contracts.unit.mjs`: contrato E67 que trava as quatro
+  ancoras (mesmo job, antes do install, caminho do cache global, chave pelo
+  lock) — vermelho antes, verde depois, e sensivel a mutacao.
+
+# Conflicts:
+#	scripts/ci/workflow-contracts.unit.mjs

@@ -1,0 +1,13 @@
+fix(telefonia): selecionar chamada de outra pagina nao volta para a primeira
+
+R2-MOD-014 (#394): setFilter resetava page=1 em qualquer chave diferente de
+'page', inclusive 'call' (o detalhe da linha selecionada). Escolher uma
+chamada da pagina 3 jogava a lista para a 1 e o detalhe - derivado de
+historicos.rows da pagina consultada - nem abria.
+
+Agora so as chaves que mudam o RECORTE (period, channel, dir, result, q,
+scope) resetam a pagina; 'page' e 'call' ficam de fora.
+
+Teste: TelefoniaView.selecao-pagina.test.tsx monta a view real na pagina 3 e
+clica na linha daquela pagina; vermelho antes (aria-current cai para a 1),
+verde depois.

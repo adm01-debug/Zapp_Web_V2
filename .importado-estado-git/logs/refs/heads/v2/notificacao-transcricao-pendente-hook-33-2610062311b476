@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339101 -0300	branch: Created from dia/2026-10-06
+b6a5800086896490ef4415de1f616aa77b69b9b6 231205349080791ddb81daf0f41022fdc561ec98 Joaquim Ataides <ti@promobrindes.com.br> 1791340957 -0300	commit: fix(notificacoes): descarta transcricao pendente ao desativar hook

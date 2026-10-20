@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536480 -0300	branch: Created from dia/2026-10-09
+ce8f99e418dde54bc50badba5044cfbd48e351f2 938f36a3ba823cc0682dc883a062201a059ad704 worker (sql) <workersql@zapp.local> 1791538074 -0300	commit: fix(segurança): INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo (Y25 P0-01)
+938f36a3ba823cc0682dc883a062201a059ad704 b7f32d7ee13387700a218d2b65e585bf8473727d worker (sql) <workersql@zapp.local> 1791538115 -0300	commit (amend): fix(rls): INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo

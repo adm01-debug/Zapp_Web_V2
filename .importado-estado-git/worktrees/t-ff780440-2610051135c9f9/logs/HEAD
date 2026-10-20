@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ece89c515e067bf0b9d3392484087099b0ee574d Joaquim Ataides <ti@promobrindes.com.br> 1791210924 -0300	
+ece89c515e067bf0b9d3392484087099b0ee574d ece89c515e067bf0b9d3392484087099b0ee574d Joaquim Ataides <ti@promobrindes.com.br> 1791210925 -0300	reset: moving to HEAD
+ece89c515e067bf0b9d3392484087099b0ee574d 4ac2af595fd7693c25e45cb9f055accdfe0e0f6d Joaquim Ataides <ti@promobrindes.com.br> 1791211656 -0300	commit: fix(tipografia): detectar família literal em CSS embutido

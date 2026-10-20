@@ -1,0 +1,20 @@
+fix(talkx): nome dos controles e cartao sem controle aninhado (TL-175D)
+
+Tela 17: o rotulo da linha passa a nomear o Switch (que e um button role=switch) e
+os campos de texto, via aria-labelledby do id do proprio key — era button-name
+(critico) e label (critico) nos dois temas.
+
+Tela 08: o SelectTrigger do "Objetivo" ja chega com aria-label="Objetivo" na
+dia/2026-10-09 (TL-140); este commit nao mexe mais no assistente.
+
+Tela 04: o role=button sai do cartao de template e da linha da lista — os botoes
+de acao vivem dentro deles e o axe reprovava nested-interactive (controle
+interativo dentro de controle). O clique por mouse continua; as acoes seguem
+button reais e alcancaveis pelo Tab.
+O TalkXTemplates.duplicarAtalho.test.tsx achava o cartao por
+closest('[role="button"]'); passa a acha-lo pelo data-talkx-template-card.
+
+Prova: teste novo em src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx
+(3 falhas antes das correcoes, 4 passes depois) e a varredura axe da regua do
+cartao pai TL-175D no Chromium real, que deixa de acusar button-name/label/
+nested-interactive nas telas 04, 08 e 17.

@@ -1,0 +1,5 @@
+fix(inbox): prove QueryClient ao badge de SLA da lista granular (R2-SLA-003)
+
+A recusa da suite integrada era 'No QueryClient set, use QueryClientProvider to set one': o badge passou a usar useApplicableSLA (react-query) e quebrava o render em arvores que montam VirtualizedRealtimeList sem o provider da aplicacao (RealtimeContactUpdateE2E.test.tsx e VirtualizedRealtimeList.displayName.test.tsx).
+
+Um limite estavel no mesmo arquivo fornece um QueryClient de fallback apenas quando nao ha cliente no contexto; com o provider da aplicacao presente ele e transparente (mesmo cliente/cache). Hooks de SLA, tipos globais e o comportamento fora da lista seguem intactos.

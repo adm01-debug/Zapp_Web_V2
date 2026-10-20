@@ -1,0 +1,8 @@
+test(ci): furo da I4 antiga provado por execucao da guarda antiga (SL-102)
+
+O juiz barato apontou que o teste novo conferia uma copia feita a mao da regra
+antiga (o array de 4 termos). Tirei a copia: o teste passa a exercitar so o
+analisador real (I4 nova), e o furo antigo fica provado por MEDICAO — o mesmo
+documento de fixture (alvo espalhado em outras linhas) rodado contra o codigo da
+guarda anterior sai sem nenhum problema, e contra o codigo atual acusa as duas
+linhas da edge sem alvo. A medicao esta em .tmp/furo-antigo (fora do commit).

@@ -1,0 +1,32 @@
+fix(multiplix): worker le capabilities da conexao e bloqueia bloco incompativel (TL-035)
+
+F60: `whatsapp_connections.capabilities` existia desde 02/10
+(20261002671230_f60_conexao_capacidades_e_risco.sql) e NENHUM consumidor a lia —
+um bloco que a instancia nao entrega so era recusado pelo provedor, DEPOIS do POST.
+
+O worker passa a ler a coluna na MESMA consulta que seleciona a conexao e, antes de
+baixar a midia/congelar o snapshot, exclui o item cuja capacidade declarada recusa:
+`connection_capability_unsupported:ptt|document|...` (chave = kind do ativo, com
+nota de voz e audio caindo em `ptt`) e `connection_capability_max_chars:<n>`.
+
+Regra do cartao: `{}`/chave ausente = NAO DECLARADO (o worker nao inventa limite; so
+`false` explicito e `max_chars` NUMERICO recusam). Exclusao DETERMINISTICA (skipped,
+nao volta a fila).
+
+Prova: 6 testes novos (3 vermelhos antes da correcao) + arquivo inteiro verde
+(84 passed). Revalidado o F60 do banco: pausa geral da conexao e retomada manual
+(o cron so retoma 'outside_window'/'daily_limit').
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick a38d1d78f fix(multiplix): worker le capabilities da conexao e bloqueia bloco incompativel (TL-035)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-7c9c6f1e-26100823364995' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   supabase/functions/multiplix-send/index.test.ts
+#	modified:   supabase/functions/multiplix-send/index.ts
+#

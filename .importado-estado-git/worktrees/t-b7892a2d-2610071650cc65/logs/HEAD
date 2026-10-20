@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 72f05a068f88e2cadb3c790f1439ff3175c79f94 Joaquim Ataides <ti@promobrindes.com.br> 1791402627 -0300	
+72f05a068f88e2cadb3c790f1439ff3175c79f94 72f05a068f88e2cadb3c790f1439ff3175c79f94 Joaquim Ataides <ti@promobrindes.com.br> 1791402628 -0300	reset: moving to HEAD
+72f05a068f88e2cadb3c790f1439ff3175c79f94 884bf34591fbb289f30cce28e8e70e2cfdaedf57 Joaquim Ataides <ti@promobrindes.com.br> 1791403941 -0300	commit: fix(edge): drenar outbox de IA com service role (#44)

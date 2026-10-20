@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791234999 -0300	branch: Created from dia/2026-10-05
+c28a1a97af8b9fc34ccb54db845a29a48169f257 f8c621afafd81e0cc7765bcad5a0291d2dfb8eda Joaquim Ataides <ti@promobrindes.com.br> 1791235048 -0300	cherry-pick: fix(automacoes): preserva condições e demais ações ao salvar automação (R2-MOD-002)
+f8c621afafd81e0cc7765bcad5a0291d2dfb8eda 064ad3a17823c8c8c701ccb03bda279ee22f639d Joaquim Ataides <ti@promobrindes.com.br> 1791235048 -0300	cherry-pick: fix(automacoes): preserva configuração válida ao salvar ação
+064ad3a17823c8c8c701ccb03bda279ee22f639d b78a2460cd8e1df5cfaa741a7b63c30aa00206b8 Joaquim Ataides <ti@promobrindes.com.br> 1791235393 -0300	commit: fix(automacoes): separa configuração permitida da obrigatória

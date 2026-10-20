@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 c91bd77ef368c42e57a605c168fb7f7d12777504 Joaquim Ataides <ti@promobrindes.com.br> 1791197847 -0300	branch: Created from dia/2026-10-05
+c91bd77ef368c42e57a605c168fb7f7d12777504 409ed452bb85648acffbedba0f9278bbf62f1291 Joaquim Ataides <ti@promobrindes.com.br> 1791197882 -0300	commit: fix(auth): bloquear perfil inativo no AuthProvider (R2-AUTH-004)
+409ed452bb85648acffbedba0f9278bbf62f1291 5b0e46fa0897ed9f6cdbe2614979a571f96d6907 Joaquim Ataides <ti@promobrindes.com.br> 1791198417 -0300	commit: fix(auth): elimina corrida de INITIAL_SESSION no boot do AuthProvider
+5b0e46fa0897ed9f6cdbe2614979a571f96d6907 c91bd77ef368c42e57a605c168fb7f7d12777504 Joaquim Ataides <ti@promobrindes.com.br> 1791198713 -0300	reset: moving to c91bd77ef
+c91bd77ef368c42e57a605c168fb7f7d12777504 1eabad21ce322245303d0d7435c03c84b24f4326 Joaquim Ataides <ti@promobrindes.com.br> 1791198723 -0300	commit: fix(auth): bloqueia perfil inativo no AuthProvider e elimina corrida no boot (R2-AUTH-004)

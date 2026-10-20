@@ -1,0 +1,8 @@
+fix(inbox): adiciona aria-label nos botões remover do montador de mensagem interativa e da enquete (N-036)
+
+- InteractiveMessageBuilder.tsx:154 - aria-label 'Remover opção N' no botão remover de botão
+- InteractiveMessageBuilder.tsx:207 - aria-label 'Remover seção N' no botão remover de seção
+- InteractiveMessageBuilder.tsx:233 - aria-label 'Remover item N' no botão remover de item
+- AdvancedMessageMenu.tsx:260 - aria-label 'Remover opção N' no botão remover de opção de enquete
+
+Testes que provam: InteractiveMessageBuilder.remover-aria-label.test.tsx e AdvancedMessageMenu.remover-aria-label.test.tsx — ambos passam (verde)

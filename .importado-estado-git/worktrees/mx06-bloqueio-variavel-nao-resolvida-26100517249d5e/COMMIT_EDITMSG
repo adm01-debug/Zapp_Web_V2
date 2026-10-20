@@ -1,0 +1,7 @@
+test(multiplix-send): ancorar payload do MX06 em literal alem do oraculo do kernel
+
+Os testes de builtin presente e de campo customizado comparavam o payload
+enviado com o proprio personalize recalculado. Alem do oraculo do kernel
+(exigido pelo criterio 2), passam a exigir o literal 'Ola Acme Ltda' e
+'Ola Diretor' — se o worker passar o insumo errado ao kernel, o teste
+quebra por literal, nao por tautologia.

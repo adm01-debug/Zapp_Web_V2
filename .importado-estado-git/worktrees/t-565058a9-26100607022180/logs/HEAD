@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791280951 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791280951 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 730407ef7d61010b366976b1f592c84dc29be479 Zapp V2 worker <worker@promobrindes.local> 1791281834 -0300	commit: fix(telefonia): retoma TEL-RECORDING-001 com POST na Edge e ciclo de blob no efeito

@@ -1,0 +1,10 @@
+chore(talk-x): regenera ESTADOS.md após o rebase (TL-055)
+
+Rebase em dia/2026-10-09: 3 componentes TalkX novos (TalkXCampaignPaused,
+TalkXAudienceFilters, TalkXInteractiveEditor, TalkXMediaDropzone — 16 -> 19
+telas) chegaram por outros cartões do mesmo lote. O teste
+scripts/talkx/gen-estados.unit.mjs ("ESTADOS.md commitado bate com o
+código") ficou vermelho porque o arquivo gerado por este cartão era de
+antes do rebase. `node scripts/talkx/gen-estados.mjs` regenerou o arquivo;
+`node scripts/talkx/gen-estados.mjs --check` e os 7 casos do teste voltam a
+verde.

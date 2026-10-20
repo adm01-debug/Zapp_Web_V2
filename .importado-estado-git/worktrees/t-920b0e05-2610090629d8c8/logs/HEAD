@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791538144 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791538144 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 922d17c2c48a4730a427d7fdfe24a518d0e1bafc iris <iris@zapp.local> 1791539916 -0300	commit: fix(segurança): todo download passa pelo gate de permissão (Y29 P0-01/02)
+922d17c2c48a4730a427d7fdfe24a518d0e1bafc fe155d0027789b4a91e1ea0b9fb5efd032082a0a iris <iris@zapp.local> 1791539976 -0300	commit (amend): fix(segurança): todo download passa pelo gate de permissão (Y29 P0-01/02)

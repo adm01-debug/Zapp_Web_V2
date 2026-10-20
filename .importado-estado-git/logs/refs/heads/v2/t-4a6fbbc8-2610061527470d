@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791311252 -0300	branch: Created from dia/2026-10-06
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 3ea7020ee3833459b5d98d3e33dfefbe8c7d42f9 Joaquim Ataides <ti@promobrindes.com.br> 1791311280 -0300	cherry-pick: fix(busca): escopa o histórico de buscas recentes por usuário (#444)
+3ea7020ee3833459b5d98d3e33dfefbe8c7d42f9 a0cc49ad13926dd20c59ff018cd2edaabb37cc2e Joaquim Ataides <ti@promobrindes.com.br> 1791311369 -0300	commit: fix(busca): preserva limpeza de histórico carregado
+a0cc49ad13926dd20c59ff018cd2edaabb37cc2e 9cde183284fe8a21043d5c8bd004470f99e33b7f Joaquim Ataides <ti@promobrindes.com.br> 1791511887 -0300	rebase (finish): refs/heads/v2/t-4a6fbbc8-2610061527470d onto e3349b70ce3c5695fd480dcbbed9d213c91cab84
+9cde183284fe8a21043d5c8bd004470f99e33b7f e4aff47849259232a45b182441d8126a13ac8476 Joaquim Ataides <ti@promobrindes.com.br> 1791512325 -0300	commit: fix(busca): monta a busca global sem exigir AuthProvider
+e4aff47849259232a45b182441d8126a13ac8476 a0cc49ad13926dd20c59ff018cd2edaabb37cc2e Joaquim Ataides <ti@promobrindes.com.br> 1791514220 -0300	reset: moving to a0cc49ad1
+a0cc49ad13926dd20c59ff018cd2edaabb37cc2e 341992556429268a4b0ab46fbea0142495e33594 Joaquim Ataides <ti@promobrindes.com.br> 1791514239 -0300	commit: fix(busca): monta a busca global sem exigir AuthProvider
+341992556429268a4b0ab46fbea0142495e33594 d1b9ba231d4ccd1e15de54f72a36a3cbc16c707c Joaquim Ataides <ti@promobrindes.com.br> 1791555696 -0300	rebase (finish): refs/heads/v2/t-4a6fbbc8-2610061527470d onto 1098da5a935929b171674a99b425d6b515fd6072

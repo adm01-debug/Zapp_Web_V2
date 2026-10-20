@@ -1,0 +1,17 @@
+fix(omnichannel): não afirma não lidas vindas de página truncada (#236)
+
+Ponto 2 da recusa do refazer: com searchMessagesTruncated (página de 500
+mensagens cortada), o unreadCount vem de um conjunto incompleto.
+
+- contato sem nenhuma mensagem na página ("faminto"): sem selo numérico e
+  aria-label declara "Histórico não carregado" em vez de afirmar, em
+  silêncio, zero não lidas;
+- contato parcialmente carregado com não lidas na página: selo ">=N" e
+  aria-label "ao menos N mensagens não lidas" (limite inferior, não fato);
+- contato com página truncada e zero não lidas na página: sem selo e sem
+  afirmar zero;
+- sem truncamento: comportamento anterior preservado.
+
+O teste do cenário de 500 mensagens falhava antes (nome acessível do
+contato faminto era "Abrir conversa de Contato com histórico", sem o
+marcador) e passa agora.

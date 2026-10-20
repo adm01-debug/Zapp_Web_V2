@@ -1,0 +1,4 @@
+test(contatos): tipar props do renderHook na busca instantânea (CT-011)
+
+O typecheck do zapp-verify roda `tsc -b` e inclui os arquivos de teste: o props
+inicial do renderHook precisa do tipo completo para o rerender parcial valer.

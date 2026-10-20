@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b8dd449ce2846fbc72d0a735fe2435f741af1525 Joaquim Ataides <ti@promobrindes.com.br> 1791137502 -0300	branch: Created from dia/2026-10-04
+b8dd449ce2846fbc72d0a735fe2435f741af1525 cd4a725e054dcd235135bb9c44034ddc379aa91e Joaquim Ataides <ti@promobrindes.com.br> 1791138088 -0300	commit: fix(edge): fechar autorização da manutenção de rate limit (R2-API-022)

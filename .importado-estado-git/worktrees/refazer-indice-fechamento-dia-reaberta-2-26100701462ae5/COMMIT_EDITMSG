@@ -1,0 +1,3 @@
+fix(db): protege fechamento repetido sem reabertura (#295)
+
+Rebase linear sobre a dia/2026-10-09 (o merge anterior não é aceito pelo integrador). Mesmo conteúdo do commit 0fafd523988a50abe46c3683e729f17ca682f544.

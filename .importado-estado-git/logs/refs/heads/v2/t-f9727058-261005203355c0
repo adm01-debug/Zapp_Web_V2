@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 fe6760cf1188415069f4a00c2fed7b0fee923305 Joaquim Ataides <ti@promobrindes.com.br> 1791243210 -0300	branch: Created from dia/2026-10-05
+fe6760cf1188415069f4a00c2fed7b0fee923305 91f44ce4e4cd943fc811eff45c53732863cfde8b Joaquim Ataides <ti@promobrindes.com.br> 1791243833 -0300	commit: fix(conexoes): editor de privacidade envia so os campos alterados

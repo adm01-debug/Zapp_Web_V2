@@ -1,0 +1,20 @@
+fix(migrações): reação de agente deixa de disputar a chave reservada ao contato (#303)
+
+A tabela public.message_reactions mantinha duas unicidades independentes:
+(message_id, user_id, emoji) e (message_id, contact_id, emoji). O hook de
+reação de agente grava user_id E contact_id mas arbitra o UPSERT só por
+(message_id, user_id, emoji); a segunda reação de agente ao mesmo emoji na
+mesma mensagem colidia na chave de contato (23505) e uma reação de cliente
+disputava a mesma chave.
+
+A migration fixa o modelo de autoria: user_id é o autor agente e contact_id
+fica reservado ao autor cliente. Um gatilho BEFORE INSERT/UPDATE anula
+contact_id quando user_id está preenchido (o vínculo com o contato segue em
+messages.contact_id) e um backfill tira as reações de agente legadas da chave
+de contato, guardando os valores originais em tabela de apoio para o rollback.
+As duas unicidades continuam valendo, então o alvo de UPSERT por
+(message_id, contact_id, emoji) do webhook de cliente não muda.
+
+Prova: scripts/db-audit/message-reactions-author-model.test.sh (Postgres 17
+descartável, migrations reais, papel authenticated) — vermelho antes, verde
+depois, rollback executado e reaplicação idempotente.

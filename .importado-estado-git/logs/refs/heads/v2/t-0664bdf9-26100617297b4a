@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318554 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 63ae79707c8749ba9803d26821b6ef7a57cce714 Joaquim Ataides <ti@promobrindes.com.br> 1791319954 -0300	commit: test(e2e): fixture da aba Arquivos passa ao locator canônico e ganha prova local
+63ae79707c8749ba9803d26821b6ef7a57cce714 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320372 -0300	reset: moving to dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 12f29ad967d970ae3f40863c4d98880f246d401e Joaquim Ataides <ti@promobrindes.com.br> 1791320379 -0300	commit: test(e2e): fixture da aba Arquivos passa ao locator canônico e ganha prova local

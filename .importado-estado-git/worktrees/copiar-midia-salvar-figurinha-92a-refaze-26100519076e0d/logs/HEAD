@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 66727f895120d1457a60c4b77b7bc59b3f4626dc Joaquim Ataides <ti@promobrindes.com.br> 1791238056 -0300	
+66727f895120d1457a60c4b77b7bc59b3f4626dc 66727f895120d1457a60c4b77b7bc59b3f4626dc Joaquim Ataides <ti@promobrindes.com.br> 1791238057 -0300	reset: moving to HEAD
+66727f895120d1457a60c4b77b7bc59b3f4626dc 98bf55507dc64fb939c01db6c790adfb65fba30b Joaquim Ataides <ti@promobrindes.com.br> 1791238062 -0300	cherry-pick: fix(inbox): copiar mídia recebida para o bucket stickers ao salvar figurinha
+98bf55507dc64fb939c01db6c790adfb65fba30b f83bde0c45977148ed0986dae7bdd62cbb87d773 Joaquim Ataides <ti@promobrindes.com.br> 1791238418 -0300	commit: fix(inbox): impedir duplicação ao salvar figurinha recebida

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213700 -0300	
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213701 -0300	reset: moving to HEAD
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 cf8d76ad37d6a67e0ac7c42183dc03cf4e5e388b Joaquim Ataides <ti@promobrindes.com.br> 1791213711 -0300	cherry-pick: fix(multiplix): resolve nao devolve metadados de empresa fora do escopo
+cf8d76ad37d6a67e0ac7c42183dc03cf4e5e388b 4d13f0b8a1e437755cd9315a4e38b998ca4672be Joaquim Ataides <ti@promobrindes.com.br> 1791214949 -0300	commit: test(multiplix): prova R2-DB-003 executando a RPC e o handler de resolve
+4d13f0b8a1e437755cd9315a4e38b998ca4672be 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791215272 -0300	reset: moving to dia/2026-10-05
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 aefe88824658fa1e8cfbbb4dd1b9c210d20d1f56 Joaquim Ataides <ti@promobrindes.com.br> 1791215286 -0300	commit: fix(multiplix): resolve nao devolve metadados de empresa fora do escopo

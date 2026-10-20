@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305022 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305023 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 55451f163a208be6983748798f2f73ba98c78c48 Edgar <edgar@promobrindes.local> 1791305355 -0300	commit: refactor(edge): get-call-recording expoe costura de injecao para provar o contrato
+55451f163a208be6983748798f2f73ba98c78c48 2df95aae53baf2b9303fb92693601eb67b6fea99 Edgar <edgar@promobrindes.local> 1791305739 -0300	commit: fix(edge): get-call-recording entrega JSON com a URL da gravacao (#62)

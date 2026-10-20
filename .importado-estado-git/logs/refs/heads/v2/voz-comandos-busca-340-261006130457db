@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72946d5e8d0a9f3977526ec99bca88f406914b91 Joaquim Ataides <ti@promobrindes.com.br> 1791302695 -0300	branch: Created from dia/2026-10-06
+72946d5e8d0a9f3977526ec99bca88f406914b91 61d556af15bb812d442cc72c3221fa19155d4f04 Iris <iris@hermes.local> 1791303383 -0300	commit: fix(voz): comando de voz aplica busca, filtros e limpeza no estado da lista (#340)

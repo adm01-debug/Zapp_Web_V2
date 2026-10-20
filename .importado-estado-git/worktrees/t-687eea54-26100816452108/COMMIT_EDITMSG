@@ -1,0 +1,15 @@
+fix(ia): elevenlabs-voice-design exige papel e audita criação de voz (SL-007)
+
+A action 'create' criava voz PERSISTENTE na conta ElevenLabs compartilhada da
+empresa com qualquer usuário autenticado: só requireAuth + rate limit, sem
+checagem de papel e sem rastro de autoria em audit_logs (IA-003 B3).
+
+- gate: admin/supervisor pela RPC canônica is_admin_or_supervisor, fail-closed
+  quando a RPC falha (5xx), 403 quando o papel não confere; nada toca o provedor
+  antes do papel verificado.
+- auditoria: criação bem-sucedida grava audit_logs (user_id do autor) com a
+  service role — a policy 'Block direct audit log inserts' bloqueia INSERT de
+  authenticated. Falha da trilha não vira 200.
+- fronteira preservada: preview (efêmera) segue aberta a qualquer autenticado.
+- prova: 5 testes novos em index.test.ts (4 vermelhos antes, o de fronteira
+  verde nos dois lados); deno test 11 passed; deno check ok.

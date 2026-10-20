@@ -1,0 +1,9 @@
+fix(talk-x): filtros de audiência mostram as outras regras, normalizam UF e leem o mesmo grupo que gravam (TL-141)
+
+Correção da recusa de 09/10: regra fora dos 7 controles aparece em
+"Outras regras" com remover; UF/Cidade gravam valor normalizado (trim e
+UF em maiúsculas); os controles leem e gravam só o 1º grupo e preservam a
+regra salva com outro operador.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

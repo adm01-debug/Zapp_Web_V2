@@ -1,0 +1,14 @@
+feat(contatos): contrato único dos campos do Singu com adaptador real e de teste (CT-002)
+
+- src/types/contactSingu.ts: ContactSinguSummary (15 campos opcionais e
+  nuláveis), ContactSinguLastOrder, SinguContactRef e a interface SinguAdapter.
+  Campo ausente = null/omitido, nunca erro.
+- src/services/crm/singu-adapter.ts: realAdapter mapeia o lote já existente
+  (ExternalCRMService.getContact360Batch -> RPC get_companies_by_phones_batch)
+  pelo id do contato do Zapp; o que o lote não devolve fica null. Resposta
+  volta por id, falha do Singu sobe (a tela mostra "Singu indisponível").
+- src/services/crm/singu-adapter.mock.ts: módulo SÓ-DEV/TESTE com as fixtures
+  sintéticas (completa, incompleta e muito longa) que o CT-004 vai substituir.
+- getSinguAdapter(): em DEV devolve o mock via import() dinâmico dentro do
+  ramo import.meta.env.DEV; em produção o ramo é eliminado e o mock não entra
+  no bundle (prova: src/services/crm/__tests__/singu-adapter.bundle.test.ts).

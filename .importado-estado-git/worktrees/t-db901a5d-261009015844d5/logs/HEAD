@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791521894 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791521895 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 55663e7d3389fb7337127ed603ca8ab64acc4c43 Joaquim Ataides <ti@promobrindes.com.br> 1791522440 -0300	commit: fix(telefonia): verifica e prova o aceite do T79 (eslint-baseline em calls/communications/sip) (SL-248)

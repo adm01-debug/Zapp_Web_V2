@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791495907 -0300	branch: Created from dia/2026-10-08
+165168bf7800066e51592380b0ee1a51b75d0548 2f7c30fd3a22e90dd33953f513b88c21f8308be4 Joaquim Ataides <ti@promobrindes.com.br> 1791496578 -0300	commit: fix(db): preserva read_at no backfill de recibos

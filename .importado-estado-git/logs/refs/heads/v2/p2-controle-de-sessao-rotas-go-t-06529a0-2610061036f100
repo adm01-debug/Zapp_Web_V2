@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd Joaquim Ataides <ti@promobrindes.com.br> 1791293764 -0300	branch: Created from dia/2026-10-06
+1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd 08e7bc86b018d18a19e30b116d5de9604473f128 Joaquim Ataides <ti@promobrindes.com.br> 1791294602 -0300	commit: fix(evolution-api): escolher rota do ciclo de sessao por flavor (go/v2) (#195)

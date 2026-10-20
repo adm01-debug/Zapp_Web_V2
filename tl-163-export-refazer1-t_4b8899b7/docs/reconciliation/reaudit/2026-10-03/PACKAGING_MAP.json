@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "compressed_files": [
+    {
+      "original_path": "consolidated/file-review-matrix.json",
+      "original_bytes": 6609491,
+      "original_sha256": "5d2bf5ec95af10fad3d9bfd2969c02fce0140e80e4ad672e818e9d3b29e1dc54",
+      "packed_path": "consolidated/file-review-matrix.json.gz",
+      "packed_bytes": 555002,
+      "packed_sha256": "ef3bf5daacae161c85bc6c251405edb66daee0a45b0151994cb86a1f02e521be"
+    },
+    {
+      "original_path": "consolidated/findings-index.json",
+      "original_bytes": 2156796,
+      "original_sha256": "b766a0738eb3739e89864fa366d3a98090864491f118938ae355b271cfaf489b",
+      "packed_path": "consolidated/findings-index.json.gz",
+      "packed_bytes": 395028,
+      "packed_sha256": "fb8b9011adb8d4e9c33a103505466ef379ac55c52870920a94b20ceaea07381e"
+    },
+    {
+      "original_path": "consolidated/function-review-matrix.json",
+      "original_bytes": 24378567,
+      "original_sha256": "86f77a4130522a5f9e2e57376ded87909c4d43f834b1f6de19d378ce87240b5d",
+      "packed_path": "consolidated/function-review-matrix.json.gz",
+      "packed_bytes": 2284723,
+      "packed_sha256": "01f69726707195e6297c21dd17614d96de80a0be8a37df580bd9a3817b9a9fc7"
+    },
+    {
+      "original_path": "global/import-graph.json",
+      "original_bytes": 2261604,
+      "original_sha256": "6460dec62cd08b9c1fd07c60149bbf064c900ed1954da74fd29e514f38a4a2f7",
+      "packed_path": "global/import-graph.json.gz",
+      "packed_bytes": 111789,
+      "packed_sha256": "e84fd6a08636dc667dffd3969ba3bd00f7680e1e7058c406418af14eedf7e63c"
+    },
+    {
+      "original_path": "global/microfunction-evidence-coverage.json",
+      "original_bytes": 16982593,
+      "original_sha256": "b936e8e29d1871a4dc21dbaa35076cb6649440aa4a975e43c86f8ba31dbc022a",
+      "packed_path": "global/microfunction-evidence-coverage.json.gz",
+      "packed_bytes": 766743,
+      "packed_sha256": "9c45701b2d1392bdbd7b029eb823a95122821fa313295c5e7ea048a128471f40"
+    },
+    {
+      "original_path": "global/microfunctions.json",
+      "original_bytes": 25342005,
+      "original_sha256": "4c4861c94360c5c723ab3bc99055bda61f2d7e22036622a829cbc0c55d51ef40",
+      "packed_path": "global/microfunctions.json.gz",
+      "packed_bytes": 2415545,
+      "packed_sha256": "11f6a35d82fd57d068f5286a476ef2bf8152e99e8f0afb74f650ffc83f8b98a0"
+    },
+    {
+      "original_path": "global/prior-citation-index.json",
+      "original_bytes": 6421395,
+      "original_sha256": "dab966360093cdd5d10e5f8f32b6f98207eb8bdce9ee82c66dd47cd27b446050",
+      "packed_path": "global/prior-citation-index.json.gz",
+      "packed_bytes": 159582,
+      "packed_sha256": "1242113af7f7e62511a36130042ac4bef2664d0fbe6c3883fcc5610724a8dbc0"
+    },
+    {
+      "original_path": "reports/database/coverage.json",
+      "original_bytes": 3941439,
+      "original_sha256": "f6214eee183cfcaaf230ea7164c4b8cd82ddbbeabe05d45e3aab0d1f41043136",
+      "packed_path": "reports/database/coverage.json.gz",
+      "packed_bytes": 385913,
+      "packed_sha256": "57e263f094585718a5e4a202a5c37de399bfeff39716f6d01f11890c085dc6bd"
+    },
+    {
+      "original_path": "reports/database/ddl_completion.json",
+      "original_bytes": 2013756,
+      "original_sha256": "505103360242ab9f7801b536540079d258d35e891105e0cb0a417164638ef988",
+      "packed_path": "reports/database/ddl_completion.json.gz",
+      "packed_bytes": 192962,
+      "packed_sha256": "1a1cf6aa72a8d3466b7f8f0a6506ab1e7598382281ac70e51c5e60d72360fc51"
+    },
+    {
+      "original_path": "reports/database/policy_review.json",
+      "original_bytes": 2365652,
+      "original_sha256": "f56b0f14afdfff4f5e8dee267a112405e8370f86a8820bddedaf04c5067dbfae",
+      "packed_path": "reports/database/policy_review.json.gz",
+      "packed_bytes": 159184,
+      "packed_sha256": "9c00baecf1e5ab055b594cc380c7c85272effa0ae72c262f26add1362f255e9e"
+    },
+    {
+      "original_path": "reports/database/remaining_ddl_inventory.json",
+      "original_bytes": 2722190,
+      "original_sha256": "521cf2ea5b8ec4a8ad5c0a24ca29fd1ff71a79267142740029057bd1337e69b6",
+      "packed_path": "reports/database/remaining_ddl_inventory.json.gz",
+      "packed_bytes": 218948,
+      "packed_sha256": "d904aaf94bcb174aeda90119aea576150789437cedae13b95cb9c0fc9531d64e"
+    },
+    {
+      "original_path": "reports/database/sql_inventory.json",
+      "original_bytes": 4381907,
+      "original_sha256": "9e271fde1f66a2f3bd31fb749572a3bfe4e75da38bb425f224b4eb8cf466f8ba",
+      "packed_path": "reports/database/sql_inventory.json.gz",
+      "packed_bytes": 663673,
+      "packed_sha256": "b8383b8b002b842a1c56f8f651a8b37d36ddd12f559469a061e9ffcecaa8148f"
+    }
+  ],
+  "notes": "Only lossless transport compression. No evidence is omitted; hydrate_artifacts verifies exact original bytes."
+}

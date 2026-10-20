@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791242016 -0300	branch: Created from dia/2026-10-05
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b 164e839f2ddaa9c73f0022c8f5b2d508e0457e5c Joaquim Ataides <ti@promobrindes.com.br> 1791242529 -0300	commit: fix(db): schema, unicidade de event_id e ACL da outbox do log essencial de IA

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2f43009d970b7626c41c18b4f95653a0e1b5937e Joaquim Ataides <ti@promobrindes.com.br> 1791143184 -0300	branch: Created from dia/2026-10-04
+2f43009d970b7626c41c18b4f95653a0e1b5937e cf902f3351b11d512f87733ff9e22f3452b9fea0 Joaquim Ataides <ti@promobrindes.com.br> 1791143498 -0300	commit: fix(arquivos): encaminhar N usa a seleção canônica, não o recorte filtrado (#51)

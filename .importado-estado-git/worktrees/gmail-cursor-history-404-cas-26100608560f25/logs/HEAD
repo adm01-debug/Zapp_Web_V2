@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287765 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287766 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287820 -0300	reset: moving to 614e613981c3e43231ee02999d12e09b8fb055b4
+614e613981c3e43231ee02999d12e09b8fb055b4 de2d71ba58d07ffc57018c366baedfb86de3884f Joaquim Ataides <ti@promobrindes.com.br> 1791287821 -0300	cherry-pick: fix(edge): cursor do Gmail só avança após pipeline incremental completo
+de2d71ba58d07ffc57018c366baedfb86de3884f 787fdaf6edafe678b3ddaac76e7c6f7f714cd3ae Joaquim Ataides <ti@promobrindes.com.br> 1791287822 -0300	cherry-pick: fix(edge): full sync do cron Gmail nao ancora cursor com falha parcial
+787fdaf6edafe678b3ddaac76e7c6f7f714cd3ae 942b6966eda56ec4939b45ad64a9df495e95aab2 Joaquim Ataides <ti@promobrindes.com.br> 1791287988 -0300	commit: fix(edge): protege reset do cursor Gmail com CAS

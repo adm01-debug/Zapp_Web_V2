@@ -1,0 +1,17 @@
+fix(talk-x): Tela 10 — calendário em português e "Resumo da Programação" em linha do tempo (TL-150)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 12e407210
+# Last command done (1 command done):
+#    pick 02adeac73 fix(talk-x): Tela 10 — calendário em português e "Resumo da Programação" em linha do tempo (TL-150)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-72f35473-2610090352a768' on '12e407210'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXCampaignScheduled.tsx
+#	new file:   src/components/talkx/TalkXScheduleTimeline.tsx
+#	new file:   src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx
+#

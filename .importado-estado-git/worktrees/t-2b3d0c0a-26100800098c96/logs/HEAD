@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791428986 -0300	
+b6ff185f72fab85c050ee66812f03072ff4f0726 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791428986 -0300	reset: moving to HEAD
+b6ff185f72fab85c050ee66812f03072ff4f0726 d63d163a68c30f6895d9fb1dc7753a3327cf2c03 Joaquim Ataides <ti@promobrindes.com.br> 1791429004 -0300	cherry-pick: test(edge): ajusta contrato de schemas para status de receipt
+d63d163a68c30f6895d9fb1dc7753a3327cf2c03 f0bf4b4ec44a6d80b40653daf37b9a4c90d867b0 senior <senior@promobrindes.local> 1791430320 -0300	commit: fix(edge): ignora status inválido em receipts
+f0bf4b4ec44a6d80b40653daf37b9a4c90d867b0 dbbfa19564cb3e2841bdd14a3e13c7b152cf8122 Joaquim Ataides <ti@promobrindes.com.br> 1791539052 -0300	commit: test(edge): contrato de schemas volta ao vitest e cobre o status de receipt

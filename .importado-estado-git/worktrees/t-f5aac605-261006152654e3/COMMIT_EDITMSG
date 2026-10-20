@@ -1,0 +1,18 @@
+fix(grupos): preservar broadcast de grupos só na falha total (#234)
+
+R2-API-062: a entrega anterior (5f9ad8e79) preservava texto e seleção também na falha
+parcial (sent > 0), então um novo clique reenviaria a mensagem aos grupos que já a
+receberam. Agora a tentativa só é preservada quando NENHUM envio deu certo:
+
+- handleBroadcast descarta a seleção quando sent > 0 (mantém apenas com sent === 0);
+- GroupsView mantém texto e diálogo somente quando !resultado || resultado.sent === 0;
+- o aviso de falha total diz que mensagem e seleção foram mantidas; o de falha parcial
+  não afirma isso;
+- o teste de GroupsView cobre falha total e falha parcial (2 grupos, um envio de cada) e
+  prova que, após a falha parcial, a seleção não permanece e uma nova tentativa pela
+  interface não reenvia ao grupo que já recebeu.
+
+# Conflicts:
+#	src/components/groups/GroupsView.tsx
+#	src/components/groups/__tests__/GroupsView.broadcast.test.tsx
+#	src/hooks/groups/actions.ts

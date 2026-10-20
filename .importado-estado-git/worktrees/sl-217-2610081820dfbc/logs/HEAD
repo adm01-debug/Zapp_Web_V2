@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494439 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494440 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 1c2be04d7b1ef11c7ee6bb48b42a0ca4fa770654 Joaquim Ataides <ti@promobrindes.com.br> 1791494451 -0300	cherry-pick: fix(outros): nao recomenda produto sem estoque como viavel (SL-217 / IA-152)
+1c2be04d7b1ef11c7ee6bb48b42a0ca4fa770654 810bf455728bbc571639e2729e597ce256bfe8c7 Joaquim Ataides <ti@promobrindes.com.br> 1791494546 -0300	commit: fix(ia): deixa o match esgotado cair para o catalogo recente disponivel (SL-217 / IA-152)

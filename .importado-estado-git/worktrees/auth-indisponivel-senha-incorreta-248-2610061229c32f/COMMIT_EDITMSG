@@ -1,0 +1,1 @@
+fix(auth): indisponibilidade do GoTrue deixa de contar como tentativa de senha incorreta (R2-AUTH-021 #248)

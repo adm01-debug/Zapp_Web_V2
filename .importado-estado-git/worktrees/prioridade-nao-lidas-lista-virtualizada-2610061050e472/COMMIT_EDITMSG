@@ -1,0 +1,8 @@
+fix(inbox): mantém a prioridade de não lidas ao agrupar a lista virtualizada
+
+A lista reordenava toda a entrada por timestamp antes de particionar em
+grupos, descartando o 'não lidas primeiro' calculado em useInboxFilters
+(R2-INB-028). Agora só particiona, preservando a ordem do filtro dentro de
+cada grupo (Fixadas / Hoje / Ontem / Mais antigas).
+
+Refs #323

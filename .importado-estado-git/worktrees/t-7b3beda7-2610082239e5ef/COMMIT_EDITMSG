@@ -1,0 +1,17 @@
+fix(telefonia): Remover useCalls.startCall/answerCall e useCallHistory (SL-251)
+
+Por quê: o T91 do inventario de Telefonia pedia remover os metodos legados do
+`useCalls` e o `useCallHistory` se sem consumidor. Medido na ponta
+dia/2026-10-08: os 4 legados (startCall/answerCall/endCall/missCall) e o
+`useCallHistory` so tinham chamador em teste - o `CallDialog` e o
+`IncomingCallAlert` ja usam a maquina de sessao do `CallSessionProvider`, e o
+caminho de escrita vigente e a RPC `upsert_my_call` (T11).
+
+O que ficou: `addCallNotes` (RPC `set_call_agent_notes`, T13) e
+`getContactCalls`, os unicos que a tela consome. `currentCallId`/`isLoading`
+saíram junto - so os legados os escreviam.
+
+Verificacao: npx vitest run src/hooks/__tests__/useCalls.test.ts
+src/hooks/__tests__/useCalls.test.tsx src/components/calls/__tests__/ ->
+28 arquivos, 197 passed, 3 todo, exit 0; npx tsc -b --force -> exit 0;
+zapp-verify . --rapido -> VERDE SEM BANCO (333s).

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299078 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 38e8ba13c06d3e4c8bf0c584e3ad23e93107f3d2 Joaquim Ataides <ti@promobrindes.com.br> 1791299245 -0300	commit: fix(multiplix): idempotencia da criacao sobrevive a falha de resposta (#400)

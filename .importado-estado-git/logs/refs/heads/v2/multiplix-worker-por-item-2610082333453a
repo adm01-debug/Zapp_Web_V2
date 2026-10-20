@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791513200 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 8df0cba55564ed234a1720e77d5def72d63b44bf Joaquim Ataides <ti@promobrindes.com.br> 1791514017 -0300	commit: fix(multiplix): worker drena pelo item, nao pela fila antiga de recipients (TL-031)

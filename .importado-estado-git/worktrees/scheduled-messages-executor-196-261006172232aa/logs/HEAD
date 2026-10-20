@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318149 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318149 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 2587320d53fd71f250ba948fd468cf97d45f56da worker-mensageria <worker-mensageria@local> 1791318920 -0300	commit: fix(mensageria): declara a fila scheduled_messages sem executor versionado (R2-API-017)

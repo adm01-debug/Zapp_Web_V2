@@ -1,0 +1,10 @@
+fix(crm-integration): vínculo inválido bloqueia telefone mesmo provado no lote (R2-AUTH-018)
+
+Linha de crm_contact_links com normalized_phone divergente ou
+external_contact_id nulo/vazio ia só para linkedPhones, sem entrar em
+expectedByPhone. Se outro contato do mesmo lote provasse o mesmo telefone,
+a prova externa o recolocava em phones e o contato de vínculo inválido
+recebia dados de outra pessoa. Novo conjunto invalidLinkPhones exclui
+esses telefones da projeção tanto na montagem quanto na reinserção via
+prova. Dois testes de regressão cobrem os dois cenários (vermelho antes,
+verde depois).

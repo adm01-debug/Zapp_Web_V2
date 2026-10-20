@@ -1,0 +1,8 @@
+fix(talkx): assina timestamp e external_ref do POST de conversão (R2-API-035)
+
+O HMAC cobria só o corpo, então um par corpo+assinatura capturado era
+aceito com qualquer timestamp novo — replay gravava conversão duplicada.
+A assinatura passa a cobrir a representação canônica v1
+"versão\ntimestamp\nexternal_ref\ncorpo", sem caminho legado, e
+external_ref fica obrigatório (400) para a dedupe atômica valer em toda
+conversão.

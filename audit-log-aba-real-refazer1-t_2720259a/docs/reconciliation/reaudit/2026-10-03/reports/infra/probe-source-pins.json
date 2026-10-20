@@ -1,0 +1,30 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_sha256": {
+    "e2e/fixtures/e2e-contact.ts": "1fd8ce6091aee395a8e43fbb18ebd9b3b81d99eb99a76f5adb43ee78e9315b2a",
+    "package.json": "1f8a4113677be5d92b90ba65c6e98b7e807a3a9b499ada8ec35f6349220debcb",
+    "scripts/ci/audit-prod.mjs": "b0be826aa444e58e48f59db249ba17cede5fd68593ea5e789953373185fabb7b",
+    "scripts/ci/check-edge-error-exposure.mjs": "0f75d9d6636944f836999df17b789b55f7f6837e40a775845e74112db67b8532",
+    "scripts/ci/implicit-any-baseline.json": "49bc21d2cc841f2fbaca5448b53244fffc6e2bf5a4deebe42760747b6405143e",
+    "scripts/ci/implicit-any-ratchet.mjs": "24f5dabb3ba26c3a599badcd39466c531dd7d7f06145a973f0f410db57e8c345",
+    "scripts/ci/typecheck-baseline.json": "3db8149c403fe4f12cc6d8ec1305e3ae3ad5c0fc2400bee564d901048b45a65d",
+    "scripts/ci/typecheck-ratchet.mjs": "e3f24788610a528b685ef4b350407e079f9eb21fcdb7545d2553b65fc790f537",
+    "scripts/db-audit/contracts/20260830170000.sql": "2c9ce0e23b6a88392e1f9159c4ec97c18b54c11fff923bcda060458d7d9301e1",
+    "scripts/db-audit/database-identity.json": "8f07c163ed1559dc1e2c33aa8aacc5bd0df0555743452b31e886cee11488884b",
+    "scripts/db-audit/database-identity.mjs": "08dbca35be2b379bab6df089f4a08241ea556e48a66c02408fb979c48788dded",
+    "scripts/db-audit/psql-environment.mjs": "31b08abff2637b7667da21ea86e1502fd27d9dab090bb8cb43bbc82d99349e68",
+    "scripts/db-audit/run-runtime-contract.mjs": "05cdd5802c16932ce6c4166b90cdebbc5d16b929ac2c3e152125a03c5ada73b1",
+    "scripts/db-tests/01-security-grants.sql": "61ee571140e2fe6bb5a63f2d2715d0d5ab7144b0d66d6e96ecd06918fad28c9e",
+    "scripts/db-tests/02-fsm-transitions.sql": "0d5d0af054b3b2b28e5d3c2b76b3f9b3ddd3926eaa9991782b3f76645bfb6917",
+    "scripts/db-tests/03-gamification-bounds.sql": "054b75916901357856824cb85b968f7a62411a204fc95473bfa452f124345726",
+    "scripts/db-tests/04-schema-contracts.sql": "e191a26b566549592ecaab9bca48b2135be5f26e093580570170c20f34c70ecb",
+    "scripts/db-tests/05-rls-smoke.sql": "91f6d508407a9e1e678484a68328b8ef1f34cce61a33c3b15f544fe52b1921f7",
+    "scripts/db-tests/run-all.mjs": "65b53dc65af4302e0b06af15173f6e130185829c03534a56373035442ddfd885",
+    "scripts/edge-deploy/secrets-scope.mjs": "3950de5c8efee1815be60e17bb8b46c7eaab6dd4121892c72525ed6ddcdef9a2",
+    "scripts/lib/seguranca-processo.mjs": "0976f4699ad3156ee89959b1b2ff346a7bbc9bf05299d9884951a753cf92a9e8",
+    "supabase/functions/searchbox-budget-alert/index.ts": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1",
+    "supabase/functions/webhook-diagnostic/index.ts": "df91c8ad62c862151ce56cb1282d0aef775dddf36055dd4573ffad41b5e4d9b6",
+    "tsconfig.app.json": "6befd9cf62c7b3aadb65de434d9d133c9b688c684895b43253c45dd428306032",
+    "tsconfig.json": "6d9f306c819aabe98cf79f5a6df8074e3d1dd02bb2b13859e7cf0433d42ed32b"
+  }
+}

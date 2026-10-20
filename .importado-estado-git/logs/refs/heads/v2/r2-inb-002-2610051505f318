@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791223519 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 19ed47d2daf493cb6e43d55f6837bab7229d45d0 Joaquim Ataides <ti@promobrindes.com.br> 1791223560 -0300	commit (cherry-pick): fix(chat): executar encaminhamento pelo transporte canônico

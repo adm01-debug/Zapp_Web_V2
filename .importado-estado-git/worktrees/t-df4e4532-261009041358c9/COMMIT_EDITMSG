@@ -1,0 +1,25 @@
+refactor(talk-x): Monitor usa o hook unico de ciclo de vida (X051)
+
+TL-054/3 (X051): a tela Monitor (TalkXLiveMonitor) deixa de ter o proprio
+ciclo de vida de campanha. Saem os tres AlertDialog locais (pausar, retomar,
+cancelar), os estados confirmPause / pauseReason / confirmCancel /
+confirmResume, o import de useTalkX (usado so para as acoes) e os dois catch
+com toast.error; entra `const lifecycle = useTalkXLifecycle()` com
+`lifecycle.request({ kind, target })` nos botoes Pausar / Retomar / Cancelar
+e UM `<TalkXLifecycleDialog controller={lifecycle} />`. O alvo e a campanha da
+consulta do Monitor, como no cartao irmao da Visao geral.
+
+O que muda para o usuario (texto e comportamento passam a ser os do kit):
+- o confirmar fica pendente ("Pausando…"/"Retomando…") e trava os dois botoes;
+- falha da Edge nao fecha mais o dialogo em silencio: o erro aparece dentro do
+  dialogo aberto (`role="alert"`) para o usuario tentar de novo;
+- retomar ganha botao de confirmacao e, quando `startCampaign` devolve false, o
+  aviso aparece no dialogo (antes o `if (!started) return` deixava tudo parado);
+- cancelar passa a usar "Cancelar" / "Voltar" do kit (era "Cancelar campanha");
+- o motivo da pausa sai do campo do dialogo como `reason` para a Edge
+  `talkx-send` (o hook faz isso); nada de evento escrito no navegador.
+
+Teste novo `TalkXLiveMonitor.lifecycle.test.tsx` renderiza o componente REAL
+com o hook REAL (so `useTalkX`, a porta das operacoes, e espiado) e clica nos
+botoes: prova pausa pendente + motivo, erro da Edge no dialogo aberto, textos
+do kit no cancelar, retomada pela Edge e saida "Voltar" sem disparar acao.

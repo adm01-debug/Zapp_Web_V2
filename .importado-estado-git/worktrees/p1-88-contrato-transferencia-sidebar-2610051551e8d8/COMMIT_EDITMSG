@@ -1,0 +1,24 @@
+test(inbox): prova que a rejeicao do transferContact propaga ao TransferDialog (#88)
+
+Refazer 2 do item 88 (R2-INB-009), atendendo os 3 pontos da recusa:
+
+1) Auditoria dos chamadores de transferContact/useConversationActions. O unico
+   chamador em producao e ConversationListSidebar.handleListTransfer
+   (src/components/inbox/ConversationListSidebar.tsx:80). Os demais consumidores
+   do hook (RealtimeInboxView, ContactDetails, ContactHeaderSection,
+   useChatPanelHandlers) usam so favorite/snooze/profileId e nunca transferContact,
+   entao a rejeicao nao os atinge. O consumidor da rejeicao e o TransferDialog
+   real (a2dcf64ee), que ja tem try { await onTransfer(...) } catch {}. O teste
+   novo captura o onTransfer que a sidebar entrega ao dialogo e prova que ele
+   REJEITA (nao engole) quando transferContact falha e quando conversationActions
+   esta ausente.
+
+2) O teste de 'connection' e o ramo 'connection' do hook sao removidos porque o
+   contrato TransferTargetType = 'agent' | 'queue' (a2dcf64ee) torna o ramo
+   inalcancavel. Confirmado por grep: nenhum chamador passa 'connection'; os casts
+   vestigiais em BulkActionsToolbar/ChatDialogs ficam fora do escopo deste cartao.
+
+3) Evidencia no relato: tsc --noEmit limpo, 26 testes verdes nos 2 arquivos e
+   vermelho-antes (7 falhas) reproduzivel.
+
+Arquivo: src/components/inbox/__tests__/ConversationListSidebar.test.tsx

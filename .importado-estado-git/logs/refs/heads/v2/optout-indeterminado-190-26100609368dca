@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791290172 -0300	branch: Created from dia/2026-10-06
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 2ed2f1a0023f2b02f93718e62f26592c7e158a2e Joaquim Ataides <ti@promobrindes.com.br> 1791290249 -0300	cherry-pick: fix(webhook): opt-out e atribuição duráveis em outbox idempotente, retomados no replay (#69)
+2ed2f1a0023f2b02f93718e62f26592c7e158a2e e24ab97b71c4ce778bf38391557dcc4b2991092f Joaquim Ataides <ti@promobrindes.com.br> 1791290249 -0300	cherry-pick: fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)
+e24ab97b71c4ce778bf38391557dcc4b2991092f 028c806c031858237991ced3070e730c10061ab0 Joaquim Ataides <ti@promobrindes.com.br> 1791292528 -0300	commit: fix(webhook): decisão de opt-out indeterminada vira pendência na outbox (#190)

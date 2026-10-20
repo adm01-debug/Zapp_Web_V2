@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194869 -0300	branch: Created from dia/2026-10-05
+80899b98968e007020313a034ed0c94b72bc4083 6fc0083ed71f4fe2220f7f6f84861d00e5417476 Joaquim Ataides <ti@promobrindes.com.br> 1791194883 -0300	cherry-pick: fix(dashboard): separa escopo, conexao, lote mutavel e janelas
+6fc0083ed71f4fe2220f7f6f84861d00e5417476 6522f2d1cac7090a654570c7223641b493934c5f Joaquim Ataides <ti@promobrindes.com.br> 1791195521 -0300	commit: fix(dashboard): filtra eventos realtime pelo recorte de fila/agente

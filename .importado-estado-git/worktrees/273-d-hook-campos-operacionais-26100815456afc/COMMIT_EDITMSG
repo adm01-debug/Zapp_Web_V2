@@ -1,0 +1,3 @@
+fix(settings): useUserSettings para de gravar os campos operacionais das abas Horário/Mensagens/Automação (#273-D)
+
+O upsert de user_settings reescrevia os 11 campos operacionais (Horário/Mensagens por conexão em business_hours/away_messages; Automação global em global_settings/auto_close_config). Remove-os do payload; tipo, defaults, fetch e consumidores ficam como estão. Região do #271 (som) intacta.

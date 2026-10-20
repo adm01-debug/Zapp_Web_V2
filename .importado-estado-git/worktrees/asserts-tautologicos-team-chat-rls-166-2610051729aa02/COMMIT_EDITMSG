@@ -1,0 +1,12 @@
+test(team-chat): eliminar 271 asserts tautologicos do Team Chat com cobertura real e guarda
+
+team-chat-comprehensive tinha 219 asserts sobre o literal true e
+team-chat-security-gaps tinha 52: nenhum validava nada. O comprehensive agora
+executa codigo real (funcoes puras), assegura sobre o codigo-fonte
+(readFileSync) ou declara it.todo honesto; o security-gaps (100% tautologico,
+conteudo redundante) foi removido. O guarda testIntegrityGuard trava a
+reintroducao do padrao.
+
+Entrega dividida: a parte de RLS (rlsGroupAccess/rlsConversationAccess testando
+espelho de schema em vez do real) vai em cartao proprio, para manter o diff
+revisavel.

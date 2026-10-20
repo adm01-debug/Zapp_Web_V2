@@ -1,0 +1,5 @@
+fix(filas): agrupamento diário conta o último dia uma única vez
+
+processDailyData somava o último índice à seleção de múltiplos do salto e dava janela cheia aos dois pontos: em 30 dias o ponto de 28/01 cobria 28-30 e o de 30/01 repetia o dia 30 (mensagens, novos e resolvidos em dobro).
+
+Agora os pontos são intervalos consecutivos e exclusivos, o último limitado ao término do período (R2-QUE-004, item 451).

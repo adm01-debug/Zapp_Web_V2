@@ -1,0 +1,5 @@
+fix(talk-x): tela Agendada com breadcrumb, título, selo no fuso e resumo real (X139)
+
+# Conflicts:
+#	src/components/talkx/TalkXCampaignScheduled.tsx
+#	src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx

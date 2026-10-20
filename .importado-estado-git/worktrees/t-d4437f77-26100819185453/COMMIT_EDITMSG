@@ -1,0 +1,10 @@
+docs(multiplix): F94 TL-016 SCHEMA/ARQUITETURA/COMPONENTES + receita de modulo (lazyViews+nav+permissao+flag)
+
+Os tres documentos especificos do Multiplix nao existiam (a lacuna do F94) e a receita de
+modulo nao estava em lugar nenhum. Cria os tres e acrescenta a receita ao DESIGN_TOKENS_MAP.
+
+O contrato tests/contracts/multiplix-docs.contract.test.ts e a prova: confere os docs contra o
+CODIGO como fonte independente (tabelas multiplix_* de types.ts nos dois sentidos, fontes
+citadas em ARQUITETURA, caminhos citados em COMPONENTES, e o item real de NavigationService +
+a linha real de lazyViews na receita). Sem os docs: 7 falhas; doc divergindo do codigo: 3
+falhas; codigo com permissao mutada: 1 falha; verde: 10/10.

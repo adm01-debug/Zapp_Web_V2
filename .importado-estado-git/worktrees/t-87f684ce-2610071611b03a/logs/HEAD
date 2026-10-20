@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 dc1d8a396946aebbd2fe16c31686c2eb82462853 Joaquim Ataides <ti@promobrindes.com.br> 1791400290 -0300	
+dc1d8a396946aebbd2fe16c31686c2eb82462853 dc1d8a396946aebbd2fe16c31686c2eb82462853 Joaquim Ataides <ti@promobrindes.com.br> 1791400290 -0300	reset: moving to HEAD
+dc1d8a396946aebbd2fe16c31686c2eb82462853 830df36324d8f54816399f2f7fe68220f162069f Joaquim Ataides <ti@promobrindes.com.br> 1791400301 -0300	cherry-pick: feat(journey): resolver de período com calendário e período anterior equivalente
+830df36324d8f54816399f2f7fe68220f162069f 2878ec971f9456de0c0501bc9784acfd59ca869f Joaquim Ataides <ti@promobrindes.com.br> 1791400433 -0300	commit: test(journey): fixa um unico instante no teste de fuso de periodRange

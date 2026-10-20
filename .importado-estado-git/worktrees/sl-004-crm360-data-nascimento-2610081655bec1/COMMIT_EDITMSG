@@ -1,0 +1,3 @@
+fix(crm360): data de nascimento/fundacao mostra o dia gravado (SL-004)
+
+format(new Date('yyyy-MM-dd')) lia a data sem hora como meia-noite UTC: em UTC-3 o rotulo saia um dia antes. Passa a usar calendarDayKey + parseDayKey (src/lib/localDay) nos dois pontos de Contact360Helpers.

@@ -1,0 +1,15 @@
+fix(journey): explicita recorte amostral do tempo medio nas estatisticas
+
+A faixa de estatisticas da Journey dizia "Desde o inicio do relacionamento"
+e o tile de tempo medio omitia que a media usa as 200 primeiras mensagens
+(contact.service.fetchStats, ordenado asc, limit 200) — um recorte amostral
+apresentado como historico completo.
+
+- JourneyTab: subtitulo do SectionCard passa a "Independe do periodo abaixo"
+  (S24/S27), removendo a promessa de historico inteiro.
+- ContactStatsStrip: subtitulo do tile "Tempo medio" passa a
+  "Resposta ao cliente · 200 primeiras msgs" (S26), identificando a amostra.
+
+Testes provam o defeito (vermelho antes, verde depois, 16/16).
+
+Refs #160 SV-002

@@ -1,0 +1,14 @@
+fix(db-audit): reconciliar catalogo, manifesto e grants com o banco (TL-050)
+
+O catalogo e o manifesto commitados na ponta estavam gerados em 04-05/10,
+antes das migrations de 06/10 da propria branch: faltavam gmail_oauth_states e
+talkx_storage_purge_queue (que o retrato canonico cita com RLS) e 17 colunas.
+Os tres artefatos passam ao estado gerado do banco (schema-catalog.json,
+schema-manifest.json, grants-baseline.json), identicos aos da main.
+
+check-catalog-fresh.test.mjs ganha o teste que le os quatro artefatos
+commitados e exige que o catalogo cubra o que retrato, publicacao Realtime e
+grants citam (e o inverso) - falha com o catalogo velho e passa com o novo.
+
+Nota do F93 no plano Multiplix atualizada com os runs atuais do db-guard e do
+db-live-guard, sem prometer alteracao fora do diff.

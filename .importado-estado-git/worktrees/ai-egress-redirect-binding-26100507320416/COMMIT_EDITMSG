@@ -1,0 +1,17 @@
+fix(ai): vincular endpoint e secret de ai_providers a política de egress (IA-EGRESS-001)
+
+- Novo módulo puro ai-provider-egress.ts: valida endpoint (https público, sem
+  credencial, sem IP privado/literal, sem porta não padrão) e nome de secret
+  (formato canônico + fora da lista de secrets de infraestrutura) antes de fetch.
+- validatedAiFetch revalida cada redirect (redirect: manual) — destino privado
+  ou fora da política é bloqueado antes de enviar Authorization; redirect para
+  OUTRA origem é recusado (reenviar o init repassaria a chave a outro host, pior
+  que o fetch padrão, que remove Authorization em redirect cross-origin); 303 e
+  301/302 de POST viram GET sem body, como manda a especificação.
+- callOpenAICompatible/callCustomWebhook passam pelo validatedAiFetch;
+  requireSecret (ai-generate) e requireProviderSecret (ai-proxy) validam o nome.
+- Migration com CHECK em ai_providers (api_endpoint e api_key_secret_name) via
+  funções imutáveis; dados atuais de produção já satisfazem.
+- Testes Deno provam o defeito (vermelho: fetch cru aceitava IP privado e
+  redirect cross-origin levava Authorization a outro host; verde: bloqueio antes
+  de enviar cabeçalho) e a reescrita de método/body em 303/302.

@@ -1,0 +1,12 @@
+test(email): corrige medição real de consultas EN-088 (#154)
+
+A medição de consultas passa a executar o useGmail real (renderHook) com o
+cliente Supabase mockado e deriva o total das chamadas observadas na cadeia
+(from/select/range/in/count: exact), sem fetcher próprio nem constante +2.
+
+- Doc: fixture extrema = 100 anexos; 40 = ciclos de prévia; números de
+  consultas (4 e 6) e saída verde alinhados à execução atual.
+- Restauração segura de addEventListener/removeEventListener e
+  createObjectURL/revokeObjectURL em afterEach (roda mesmo em falha).
+- Guarda de CI deixa de inspecionar o fonte TS por regex: só existência dos
+  artefatos e números estáveis do doc; o comportamento fica no Vitest.

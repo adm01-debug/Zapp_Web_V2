@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791307321 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd ed11ec28c5deb84f8f5a282a9fdbc2eab0c34518 Joaquim Ataides <ti@promobrindes.com.br> 1791307337 -0300	cherry-pick: fix(edge): guarda de exposicao de erro passa a enxergar o 500 montado a mao (#363)
+ed11ec28c5deb84f8f5a282a9fdbc2eab0c34518 5926425d59f9f3b1b10805f7f252e16a9bf443ed Joaquim Ataides <ti@promobrindes.com.br> 1791307337 -0300	cherry-pick: test(edge): caso da guarda le o conteudo real dos dois arquivos citados (#363)
+5926425d59f9f3b1b10805f7f252e16a9bf443ed 6123e3f0471e3f8f774624971d722cc60351f986 Joaquim Ataides <ti@promobrindes.com.br> 1791308496 -0300	commit: test(edge): prova o detalhe sintetico no log dos handlers 500 (#363)

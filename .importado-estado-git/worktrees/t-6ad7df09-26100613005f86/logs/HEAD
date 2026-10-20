@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 fab4394b10028d4b48475c9313bd219493d509b6 Joaquim Ataides <ti@promobrindes.com.br> 1791302416 -0300	
+fab4394b10028d4b48475c9313bd219493d509b6 fab4394b10028d4b48475c9313bd219493d509b6 Joaquim Ataides <ti@promobrindes.com.br> 1791302417 -0300	reset: moving to HEAD
+fab4394b10028d4b48475c9313bd219493d509b6 ddd6b385b6ec4e104e76f2808271a3ddd712d7b0 Joaquim Ataides <ti@promobrindes.com.br> 1791302847 -0300	commit: fix(edge): recusa action fora do contrato no laboratório de voz em vez de listar vozes (#433)
+ddd6b385b6ec4e104e76f2808271a3ddd712d7b0 4f64dc26784e1bc99c78c509ab7b79dabaf16d0e Joaquim Ataides <ti@promobrindes.com.br> 1791302849 -0300	commit (amend): fix(edge): recusa action fora do contrato no laboratório de voz em vez de listar vozes (#433)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791203314 -0300	branch: Created from dia/2026-10-05
+b58c615056ec3756606163a249e5d8b26352f355 d8dfcb3712f6cb0e56a2a0675e0dad20d4eeb3fe Joaquim Ataides <ti@promobrindes.com.br> 1791203336 -0300	cherry-pick: fix(team-chat): trata DELETE filtrado como erro e fecha frestas de owner no banco

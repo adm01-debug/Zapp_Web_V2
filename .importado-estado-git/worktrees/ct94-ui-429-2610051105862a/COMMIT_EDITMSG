@@ -1,0 +1,3 @@
+test(catalogo): CT-94 afirma a reação visível da tela ao 429
+
+O CT-94 provava só o HTTP (expect(status).toContain('429')) e terminava em screenshot, sem asserção da reação da interface. Agora a edge promogifts-catalog é mockada via page.route e responde 429 determinístico; o spec afirma o toast 'Muitas requisições, aguarde 1 min' visível e as ações de retry/atualização ('Atualizar' e 'Tentar de novo') desabilitadas no cooldown, preservando a prova HTTP no mesmo fluxo. Sessão falsa (installFakeSession) e backend mockado: sem storageState, sem secrets e sem tocar produção.

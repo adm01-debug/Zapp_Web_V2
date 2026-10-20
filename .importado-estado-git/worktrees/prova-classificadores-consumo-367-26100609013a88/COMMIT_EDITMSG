@@ -1,0 +1,12 @@
+fix(qa): correlaciona o consumo das duas chamadas na prova dos classificadores (#367)
+
+A prova de visao aprovava 'PROVA OK' sem comprovar os registros: HTTP nao-ok
+na leitura de ai_usage_logs virava apenas aviso (falhas continuava 0) e, quando
+a consulta funcionava, bastavam DUAS linhas de qualquer classificador nos
+ultimos 5 min — inclusive anteriores ou duas da mesma funcao — sem correlacao
+com as duas chamadas feitas agora.
+
+Agora o provador tira uma foto dos registros ANTES das chamadas (linha de base)
+e exige um registro NOVO e valido (sucesso + modelo Gemini) para CADA um dos
+dois classificadores; leitura de consumo recusada deixa a prova INCONCLUSIVA,
+nunca 'PROVA OK'.

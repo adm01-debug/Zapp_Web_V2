@@ -1,0 +1,16 @@
+test(e2e): varredura de navegação dos 42 módulos no desktop e no celular (Y09)
+
+Percorre todas as entradas do menu — barra lateral no desktop (1440x900) e menu
+móvel na navegação inferior (390x844) — mais a busca global, conferindo por
+módulo: título do documento, view ativa (aria-current), ausência de erro de
+console e de requisição falha. Ao fim, prova de cobertura (42/42 entradas) e
+lista de requisições canceladas sem resposta da mesma URL.
+
+A tolerância só vale com prova medida na própria resposta (espião de fetch na
+página): funções de ponta que não têm segredo no conjunto LOCAL (R1/HERMES-GUARD
+proíbe usar segredo de produção) e três defeitos do produto pinados por
+URL+status+texto, registrados em test.fixme (SIP sem token no boot,
+detect-new-device em corrida, HTML inválido no Quadro/Documentação).
+
+Teto de tempo e login com espera explícita ficam no próprio spec, para ele rodar
+no playwright.config.ts do repositório sem configuração própria.

@@ -1,0 +1,10 @@
+fix(filas/sla): atribuição por habilidade só toma contato que ainda aguarda (SL-192)
+
+Recusa de 09/10 (revisor): o UPDATE em contacts repete a guarda de
+"aguardando" (fila, sem agente, não excluído, conversa aberta) e confirma
+a escrita com .select('id'); sem linha alterada, toast próprio em vez de
+sucesso. No sucesso invalida as queries de contatos e de contagem da
+fila. O teste registra os filtros da leitura e do UPDATE.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

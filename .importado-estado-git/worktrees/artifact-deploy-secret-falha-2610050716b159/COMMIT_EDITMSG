@@ -1,0 +1,8 @@
+fix(ci): confere residuo do segredo pelo valor e torna a base do redator explicita
+
+A checagem pos-redacao buscava a chave access_token, mas o redator a
+reescreve como token=*** — o gate sempre falharia e nenhuma evidencia de
+deploy subiria. Agora o passo confere o VALOR do segredo via grep -qF (sem
+imprimir), define REDIGIR_LOG_BASE=runner.temp para cobrir o staging, e um
+teste novo executa o redator real no mesmo caminho e ambiente do workflow.
+O teste do chmod 0444 pula com t.skip quando roda como root.

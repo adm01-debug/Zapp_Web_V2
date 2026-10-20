@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308971 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd 4f450accd233d1dd45db77465d3a7e2be985c118 Joaquim Ataides <ti@promobrindes.com.br> 1791309874 -0300	commit: fix(telefonia): ciclo do endereco blob da gravacao mora no RecordingPlayer (TEL-RECORDING-001)

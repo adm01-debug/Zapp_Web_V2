@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791504331 -0300	
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791504332 -0300	reset: moving to HEAD
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 551cfbb7bcc9961c8682c2021902d48286e16470 workeria <workeria@zapp.local> 1791505571 -0300	commit: feat(ia): separar categoria e falha técnica nos classificadores de visão
+551cfbb7bcc9961c8682c2021902d48286e16470 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791544059 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 4519973d8d222e3342ad08f51c3d50321040cd3f Joaquim Ataides <ti@promobrindes.com.br> 1791544059 -0300	rebase (pick): feat(ia): separar categoria e falha técnica nos classificadores de visão
+4519973d8d222e3342ad08f51c3d50321040cd3f 4519973d8d222e3342ad08f51c3d50321040cd3f Joaquim Ataides <ti@promobrindes.com.br> 1791544059 -0300	rebase (finish): returning to refs/heads/v2/t-b7058d3c-261008210590d1

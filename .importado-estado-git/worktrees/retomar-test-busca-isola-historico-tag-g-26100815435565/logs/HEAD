@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485032 -0300	
+72ad19958df7735cd29bad24dd38f66265c47f3b 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485033 -0300	reset: moving to HEAD
+72ad19958df7735cd29bad24dd38f66265c47f3b ab2b43e91074e15ad6270e295bc2d8a62b89b7bf Joaquim Ataides <ti@promobrindes.com.br> 1791485102 -0300	cherry-pick: fix(busca): preserva limpeza de histórico carregado
+ab2b43e91074e15ad6270e295bc2d8a62b89b7bf 6440daa34f85e70b120781af330c24a9a51fb58c Joaquim Ataides <ti@promobrindes.com.br> 1791485102 -0300	cherry-pick: test(busca): isola histórico no teste de tag global
+6440daa34f85e70b120781af330c24a9a51fb58c 7cf6a0329f86be216c5262dc994a75792df67a34 Joaquim Ataides <ti@promobrindes.com.br> 1791485227 -0300	commit: test(busca): isola histórico no teste de ações rápidas da busca embutida

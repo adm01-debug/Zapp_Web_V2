@@ -1,0 +1,5 @@
+test(e2e): confirma reflow 200 do email navy
+
+Cartão V2: t_e38e29e9
+
+A ponta do dia já contém a correção do trabalho anterior; a reprodução com zapp-verify full e o Playwright do email-navy ficaram verdes sem alteração de arquivos. Commit vazio para registrar o refazer local exigido pelo fluxo.

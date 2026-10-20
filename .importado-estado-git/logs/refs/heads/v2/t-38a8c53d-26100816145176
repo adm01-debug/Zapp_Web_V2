@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f891205568255a7478741f771cb768b902a1c61b Joaquim Ataides <ti@promobrindes.com.br> 1791486884 -0300	branch: Created from dia/2026-10-08
+f891205568255a7478741f771cb768b902a1c61b 5d097a5d5f087b9ac92960ac12d99c33a943c8b1 Joaquim Ataides <ti@promobrindes.com.br> 1791486899 -0300	cherry-pick: fix(catalog): favorito deixa de converter preço e estoque desconhecidos em zero
+5d097a5d5f087b9ac92960ac12d99c33a943c8b1 a3fdf8d9230e1bd66f9a1c712d78166cde3a07c4 Joaquim Ataides <ti@promobrindes.com.br> 1791487259 -0300	rebase (finish): refs/heads/v2/t-38a8c53d-26100816145176 onto 5fbe9ae2e61dfe972148ed679b2a604432c228ab

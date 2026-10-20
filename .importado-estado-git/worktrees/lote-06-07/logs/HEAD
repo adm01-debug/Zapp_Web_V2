@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 99ff88bf2d71a4c11b6427b1eed8874b5060f62d Joaquim Ataides <ti@promobrindes.com.br> 1791367130 -0300	
+99ff88bf2d71a4c11b6427b1eed8874b5060f62d 99ff88bf2d71a4c11b6427b1eed8874b5060f62d Joaquim Ataides <ti@promobrindes.com.br> 1791367131 -0300	reset: moving to HEAD
+99ff88bf2d71a4c11b6427b1eed8874b5060f62d e770bcddcfd4cc472144e0703063b196ddc4b177 Joaquim Ataides <ti@promobrindes.com.br> 1791367141 -0300	commit (merge): Lote 06–07/10: correções da fábrica local (dia/2026-10-07)
+e770bcddcfd4cc472144e0703063b196ddc4b177 444c4e9941b48ea33ff454815ce974845c9ddc2c Joaquim Ataides <ti@promobrindes.com.br> 1791367943 -0300	commit: chore(edge): regenera o manifesto de deploy das Edge Functions após a junção do lote
+444c4e9941b48ea33ff454815ce974845c9ddc2c f49231665e0941c4ebd51463df5d31b48dde2e25 Joaquim Ataides <ti@promobrindes.com.br> 1791369675 -0300	commit: fix(testes): tipa o parametro linha em useTerminoRemoto.test para zerar o implicit-any ratchet
+f49231665e0941c4ebd51463df5d31b48dde2e25 5c05e688400c125dbb1948478be2384db313383f Joaquim Ataides <ti@promobrindes.com.br> 1791370497 -0300	cherry-pick: fix(contratos): IA-055 ancora o p_since do custo na propria RPC e na janela do ciclo
+5c05e688400c125dbb1948478be2384db313383f 2b4f494bc3d071ae0057aa159a511d69ae102b18 Joaquim Ataides <ti@promobrindes.com.br> 1791371498 -0300	commit: chore(perf): sobe o teto do JS inicial de 341 para 343 KB para o lote 06-07/10

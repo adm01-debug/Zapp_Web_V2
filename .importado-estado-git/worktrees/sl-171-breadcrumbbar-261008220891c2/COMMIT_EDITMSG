@@ -1,0 +1,11 @@
+fix(design-system/ui): BreadcrumbBar com botão Teletransporte e LayoutContext. (SL-171)
+
+Conferido na ponta de dia/2026-10-08: a lacuna do inventario nao e defeito no
+codigo. BreadcrumbBar.tsx (botao Teletransporte Zap sky-400 + trilha
+breadcrumbTrail) foi apagado de proposito em da53c9a64 (#599, remover barra
+superior do desktop) e o flag hasBreadcrumbBar foi renomeado para
+hidePageBreadcrumbs em 782c0ca1b (#609, "para refletir a realidade depois da
+remocao da barra de trilha"); as duas decisoes sao ancestrais do HEAD. Hoje
+git grep de hasBreadcrumbBar/teletransporte em src = 0; a trilha do mobile/zen
+e do PageHeader (PageHeader.trilha.test.tsx, 5 testes verdes) e o voltar do
+desktop e o SidebarBackButton. Sem mudanca de codigo.

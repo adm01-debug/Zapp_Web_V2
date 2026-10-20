@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319782 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 392289d1e9d2663547bbdd9d6bf4649fe5d49e42 Joaquim Ataides <ti@promobrindes.com.br> 1791320832 -0300	commit: fix(talkx): ação Novo template abre o editor de template vazio, não o wizard de campanha (#494)

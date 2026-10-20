@@ -1,0 +1,9 @@
+fix(team-chat): prende erro e resultado da busca a conversa e termo (SL-082)
+
+O aviso de falha e o recorte de resultados da busca eram guardados so pelo
+termo. Como o painel nao tem key e o termo digitado sobrevive a troca de
+conversa, a conversa B exibia o aviso ou os resultados da conversa A enquanto
+a busca dela ainda estava em voo. Os dois registros passam a carregar a
+conversa que os produziu e so valem para a tela quando conversa e termo batem
+com o que esta em uso; o teste de troca de conversa prova o estado
+intermediario com a RPC pendente (vermelho antes, verde depois).

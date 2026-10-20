@@ -1,0 +1,21 @@
+fix(calls): ignorar evento tardio da sessão SIP anterior (#75)
+
+Item 75 / R2-CALL-001 (P1, services). O `handleStateChange` aceitava evento de
+qualquer sessão: como os listeners seguem vivos no adapter depois que a chamada
+acaba, um `Established`/`Terminated` tardio da chamada A atendia/encerrava a
+chamada B (o `Terminated` antigo consumia o `callIdPromise` dela) e o
+`Established` antigo anexava o áudio da sessão velha.
+
+- `handleStateChange` ignora evento cuja sessão não é a atual (sessão ou
+  convite correntes): o evento fica associado à chamada dona dele.
+- O watchdog do INVITE passa a encerrar também o TRANSPORTE
+  (`adapter.hangup`) — a sessão deixada viva era a fonte do evento tardio.
+  `encerrar` vem antes do `hangup` para um `Terminated` síncrono do `cancel()`
+  não trocar o desfecho `timeout` por `hangup_remote`.
+
+Prova: teste novo que dispara pelo listener real (`stateChange.addListener`) —
+A timeout → B discada → eventos tardios de A (inclusive repetidos) não alteram
+o estado, o registro nem o áudio de B, e a sessão corrente segue respondendo.
+Vermelho antes (3 failed | 30 passed), verde depois (33 passed). Mutação: sem a
+cerca, 2 testes falham; sem o `hangup`, 1 falha. Suíte 6313 testes, 0 falhas.
+`zapp-verify . --rapido`: VERDE.

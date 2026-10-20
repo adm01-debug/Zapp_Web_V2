@@ -1,0 +1,25 @@
+fix(multiplix): matriz perfil × papel × escopo em PERMISSOES.md bate com o seed e os gates (TL-023)
+
+O seed da F25 (`20260930620000_multiplix_role_permissions_matrix.sql`, 9 pares) esta
+versionado desde o Bloco B, mas o `docs/multiplix/PERMISSOES.md` continuava descrevendo a
+semeadura como ALVO — celulas 🎯, legenda "role_permissions a semear numa migration que
+ainda NAO esta neste repo", "As 5 permissoes ... sem nenhuma atribuicao a papel" — e o §2
+dizia que a nav ainda filtrava por papel `STAFF_ROLES`. Doc contradizendo o codigo no
+exato item que ele documenta (o gate de nav/rota ja e por `multiplix.dispatch.create`:
+`navigation.service.ts:45,54,157-163,193` + `ViewRouter.tsx:132`; o gate de entrada do
+worker idem: `multiplix-send/index.ts:94,171-177`, sempre limitado pelo dono).
+
+Corrige a matriz para o estado real (9 pares, todos ✅, com a migration citada), o §2
+(linhas certas dos dois gates) e o §4 (estado atual em vez de "alvo"; decisao explicita de
+que start/pause/cancel seguem exigindo o dono ou `manage_all`), e o §6.5 do
+`docs/multiplix/PONTE_SINGU.md`, que ainda dizia "EM ANDAMENTO ... migration em rascunho
+com versao reservada".
+
+Prova: contrato novo `tests/contracts/multiplix-permissoes-matrix.contract.test.ts` (7 casos)
+— le os 9 pares do PROPRIO SQL do seed (fonte independente) e exige que a matriz do doc, o
+catalogo das migrations e os dois gates concordem; o caso (f) IMPORTA o `NavigationService`
+real e exercita menu (`filterNavItems`) e rota (`canAccess`), negando `admin`/`supervisor`
+sem a permissao e liberando `agent` com ela. Com o §1 revertido para 🎯 (estado do dia):
+1 falha (caso b); com os docs corrigidos: 7/7 verde.
+
+Sem DDL: nenhuma migration foi escrita ou alterada nesta leva (o seed ja existe no repo).

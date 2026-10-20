@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522232 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 eab5ab4b236087083e58b97aae84b21c18b5bb7c Joaquim Ataides <ti@promobrindes.com.br> 1791522239 -0300	cherry-pick: fix(volume): volume das mídias por usuário no aparelho, com sincronia entre abas
+eab5ab4b236087083e58b97aae84b21c18b5bb7c 31a153a8c9bdc58c0a91e9e738e57b66de9dd00c Joaquim Ataides <ti@promobrindes.com.br> 1791523826 -0300	commit: test(contrato): mantem o pdfjs sob demanda rodando no deno e no vitest
+31a153a8c9bdc58c0a91e9e738e57b66de9dd00c eab5ab4b236087083e58b97aae84b21c18b5bb7c Joaquim Ataides <ti@promobrindes.com.br> 1791524239 -0300	reset: moving to eab5ab4b2

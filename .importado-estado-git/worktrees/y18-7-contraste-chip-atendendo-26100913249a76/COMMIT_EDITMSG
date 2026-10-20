@@ -1,0 +1,11 @@
+fix(a11y): chip de status ativo fecha contraste AA no alto contraste (Y18-7)
+
+Auditoria A11Y-CONFIG_ADMIN_SHELL-09: no alto contraste claro o chip
+`status-chip-attending` ativo pinta `bg-accent` (violeta solido --accent,
+258 100% 45%) com `text-foreground` (preto) = 2,40:1.
+
+O tema de alto contraste passa a usar o par de TEXTO do proprio acento
+(--accent-foreground, branco no claro) so no estado CLARO; no alto contraste
+escuro o text-foreground ja e branco (4,71:1) e o --accent-foreground de la e
+preto (4,45:1), por isso o :not(.dark). Nenhum outro tema muda e nenhuma cor
+nova entra (so tokens existentes).

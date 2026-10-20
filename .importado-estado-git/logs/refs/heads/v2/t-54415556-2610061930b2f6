@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d97071c73fdbab1c5fdfddbd1c0ad379f4067446 Joaquim Ataides <ti@promobrindes.com.br> 1791325854 -0300	branch: Created from dia/2026-10-06
+d97071c73fdbab1c5fdfddbd1c0ad379f4067446 812df5b0b66b9f7c5c0da9a8a5c851194cb56c23 Joaquim Ataides <ti@promobrindes.com.br> 1791327187 -0300	commit: fix(banco): atribuicao de resposta por identidade canonica e evento consumido uma vez (#292)

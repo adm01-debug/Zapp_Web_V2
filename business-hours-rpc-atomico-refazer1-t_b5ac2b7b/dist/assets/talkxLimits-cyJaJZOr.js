@@ -1,0 +1,1 @@
+import"./talkxShared-wpDVVPo-.js";import{k as e}from"./TalkXView-DAgYqDFL.js";function t(e){return Math.round(e/1e3)}function n(e){return Math.round(e*1e3)}function r(t){let r=e.find(e=>e.value===t),[i,a]=r?r.interval:[8,20];return[n(i),n(a)]}function i(e){return Number.isFinite(e)&&e>=3&&e<=600}export{n as i,i as n,t as r,r as t};

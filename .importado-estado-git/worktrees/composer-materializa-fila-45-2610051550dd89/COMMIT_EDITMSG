@@ -1,0 +1,13 @@
+fix(multiplix): mantem o reparo da fila legada e documenta a pendencia do lote (MX01)
+
+Correcao da 2a passada da rodada 2 do cartao #45:
+- remove o gate `previousStatus !== 'sending'`: ele quebrava o disparo AGENDADO do
+  composer (create_draft grava 'scheduled' SEM bloco/item e o cron
+  trigger_pending_multiplix_dispatches transiciona scheduled->sending antes de
+  chamar o worker), que voltaria a morrer em 'sending' com zero itens — o mesmo
+  defeito do item 45. A conversao idempotente volta a rodar sempre, e o caminho de
+  reparo + o efeito no lote (pendencia registrada no cartao) ficam documentados no
+  codigo.
+- `transitionError` do start continua tratado antes da materializacao (409).
+- teste MX01 do caminho de reparo passa a travar a conversao de 'sending' sem fila
+  (vermelho com o gate, verde sem ele); suite 48 passed / 0 failed.

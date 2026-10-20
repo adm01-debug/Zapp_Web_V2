@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8088a69a714303234a61547f46470954377c81a5 Joaquim Ataides <ti@promobrindes.com.br> 1791136276 -0300	branch: Created from dia/2026-10-04
+8088a69a714303234a61547f46470954377c81a5 f598a3c32cd6d0d1cd578eaa0959045d0ca7393c Joaquim Ataides <ti@promobrindes.com.br> 1791136547 -0300	commit: feat(db): leitura do gateway MCP sem poder de escrita (mcp_query_ro)

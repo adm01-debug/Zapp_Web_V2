@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791312092 -0300	branch: Created from dia/2026-10-06
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 570a39e1fc1acec026e4160ba9f1eedee9b2430d Hugo <hugo@zapp.local> 1791312748 -0300	commit: test(midia): prova que midia privada so e lida por URL assinada apos a ACL (R2-DB-022 B2)

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791290227 -0300	
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791290228 -0300	reset: moving to HEAD
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 c9d90b0ade8c8b8639de6c2c6d096ac0f4eb3340 Joaquim Ataides <ti@promobrindes.com.br> 1791290248 -0300	cherry-pick: test(rls): trazer verificacao de RLS contra o schema real (R2-GOV-003)
+c9d90b0ade8c8b8639de6c2c6d096ac0f4eb3340 b625b80b477916700a09423b12212a3369c7ae1d Joaquim Ataides <ti@promobrindes.com.br> 1791290248 -0300	cherry-pick: test(rls): detectar enfraquecimento por policies ALL
+b625b80b477916700a09423b12212a3369c7ae1d 86f53648d02b1bfcb569f237a75feb9ed7343fea Joaquim Ataides <ti@promobrindes.com.br> 1791290846 -0300	commit: test(rls): validar DELETE de messages em policies ALL
+86f53648d02b1bfcb569f237a75feb9ed7343fea b804add6fe7a83d28b28e26d5540ae1d05386389 Joaquim Ataides <ti@promobrindes.com.br> 1791291648 -0300	commit (amend): test(rls): validar DELETE de messages em policies ALL

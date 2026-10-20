@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323592 -0300	
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323593 -0300	reset: moving to HEAD
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 268268012cae93b25ac99ffcf9e540af90691f78 Joaquim Ataides <ti@promobrindes.com.br> 1791323835 -0300	commit: fix(tarefas): trocar de dia com criacao pendente nao restaura o prazo anterior (#424)

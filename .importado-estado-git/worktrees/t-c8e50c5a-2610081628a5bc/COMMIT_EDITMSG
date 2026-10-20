@@ -1,0 +1,3 @@
+feat(arquivos): área de toque de 44 px nos botões de ação do cartão no celular (A07a)
+
+A classe do botão de 28 px vira uma constante única (fileActionButton.ts) com a extensão invisível de área de toque (pseudo-elemento de 44x32 px, centrado) só sob @media (pointer: coarse) — o mesmo critério de pointerMedia.ts. Os 6 botões (cartão, lista, tabela, play do áudio e o Encaminhar desabilitado) passam a usar a constante; o tamanho visível e o desktop seguem iguais.

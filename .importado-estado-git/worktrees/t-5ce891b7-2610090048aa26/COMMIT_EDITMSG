@@ -1,0 +1,8 @@
+fix(volume): contrato media-volume-surfaces aponta para o arquivo certo do chat interno
+
+O '<audio>' e a ligacao ao controle unico saem de teamChatParts.tsx
+(TC-006, ec1bb1453); o TeamChatPanel virou shell. A entrada 'chat interno
+da equipe' apontava para o shell e deixava o contrato vermelho na base.
+Aponta para o arquivo que RENDERIZA o audio (como o RecordingPlayer na
+VOL-02) e adiciona teste que prova a ligacao do <audio> efetivo ao
+controle unico + que o shell nao volta a segurar a ligacao orfa.

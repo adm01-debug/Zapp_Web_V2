@@ -1,0 +1,4 @@
+test(db): prova em Postgres descartavel o fluxo de convite de agente (R2-AUTH-015)
+
+# Conflicts:
+#	scripts/ci/check-test-inventory.mjs

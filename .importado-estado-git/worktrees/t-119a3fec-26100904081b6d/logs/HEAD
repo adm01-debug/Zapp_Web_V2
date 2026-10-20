@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529728 -0300	
+5a9731645d266ea721f679d6886b83822ac16f6b 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529728 -0300	reset: moving to HEAD
+5a9731645d266ea721f679d6886b83822ac16f6b 9d0a5545213f8d3a76cf6a3170f1cdb3a727198c iris <iris@hermes.local> 1791530907 -0300	commit: fix(talk-x): Tela 11: criar a aba "Monitor" no módulo, com cabeçalho (TL-154)
+9d0a5545213f8d3a76cf6a3170f1cdb3a727198c 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559602 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 1a259a37a1bd8c7e9553831bc9366346f1df8a00 Joaquim Ataides <ti@promobrindes.com.br> 1791559663 -0300	rebase (continue): fix(talk-x): Tela 11: criar a aba "Monitor" no módulo, com cabeçalho (TL-154)
+1a259a37a1bd8c7e9553831bc9366346f1df8a00 1a259a37a1bd8c7e9553831bc9366346f1df8a00 Joaquim Ataides <ti@promobrindes.com.br> 1791559663 -0300	rebase (finish): returning to refs/heads/v2/t-119a3fec-26100904081b6d

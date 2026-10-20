@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555004 -0300	
+1098da5a935929b171674a99b425d6b515fd6072 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555005 -0300	reset: moving to HEAD
+1098da5a935929b171674a99b425d6b515fd6072 aadaa205b0d928f37c5a490fce3aed1fc12630d4 Joaquim Ataides <ti@promobrindes.com.br> 1791555226 -0300	commit: test(talk-x): guarda contra a volta do hook morto e mantem a API de atividade (TL-002)
+aadaa205b0d928f37c5a490fce3aed1fc12630d4 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555249 -0300	reset: moving to dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 896def388caf47e888e70974518ae93feccb6ea7 Joaquim Ataides <ti@promobrindes.com.br> 1791555250 -0300	commit: refactor(talk-x): remove o hook morto useTalkXSuppression do modulo (TL-002)
+896def388caf47e888e70974518ae93feccb6ea7 464721bf15233f40beb4c79c70cfd4d064902836 Joaquim Ataides <ti@promobrindes.com.br> 1791555253 -0300	commit: test(talk-x): guarda contra a volta do hook morto e mantem a API de atividade (TL-002)
+464721bf15233f40beb4c79c70cfd4d064902836 bd48864ea213bc3943c2198de56b196053857bf5 Joaquim Ataides <ti@promobrindes.com.br> 1791555862 -0300	commit: test(talk-x): exercita a leitura da atividade no guarda do hook morto (TL-002)

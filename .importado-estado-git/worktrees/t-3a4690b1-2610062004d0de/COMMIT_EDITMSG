@@ -1,0 +1,1 @@
+fix(recuperacao): gatilho de reset de senha nao cita mais a coluna removida reset_token (#304)

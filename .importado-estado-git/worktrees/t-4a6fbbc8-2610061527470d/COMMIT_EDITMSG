@@ -1,0 +1,12 @@
+fix(busca): monta a busca global sem exigir AuthProvider
+
+O histórico por usuário (#444) passou a ler a identidade com useAuth(), que lança
+fora de um AuthProvider. A busca global é montada em telas e testes sem provider
+(GlobalSearch -> useGlobalSearchData -> useSearchHistory): a verificação da
+integração derrubou 5 testes de GlobalSearch.r2-inb-020 e 5 de
+GlobalSearch.r2-inb-018 com "useAuth must be used within an AuthProvider".
+
+O hook passa a ler a identidade por useOwnerId(), que converte APENAS a ausência
+de provider em "sem sessão" (qualquer outra falha do useAuth continua subindo).
+Sem identidade não existe histórico: o mesmo caminho do logout, que também não
+lê nem grava nada.

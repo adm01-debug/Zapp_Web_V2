@@ -1,0 +1,18 @@
+fix(catalog): envio em lote nao classifica falha integral como sucesso (R2-MOD-007)
+
+A classificacao do envio em lote partia de `imageOk = true` mesmo sem
+tentativa de imagem: produto sem imagem cujo unico texto era rejeitado
+virava `partial`, o agregador contava como sucesso e o encerramento limpava
+a selecao (onSent) mesmo com itens falhados.
+
+- sendSingleProduct agora classifica pelas TENTATIVAS efetivas: sem imagem
+  so o texto e tentado, e a rejeicao dele e `fail` (falha integral).
+  `partial` so existe quando ao menos uma parte foi confirmada.
+- handleSendAll discrimina enviados/parciais/falhados no resumo e devolve
+  ao pai so os ids concluidos (onSent(sentIds)).
+- Pais (ExternalProductCatalog, ExternalProductManagement) removem da
+  selecao apenas os ids concluidos; falhados e parciais ficam marcados
+  para reenvio.
+
+Teste: CatalogBulkSendDialog.bulkOutcome.test.tsx (3 casos; vermelho antes,
+verde depois).

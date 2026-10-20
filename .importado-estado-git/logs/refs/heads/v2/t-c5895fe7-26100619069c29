@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791324404 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 76abe9b5801ccae2c8a065ae72ffa48e640ea4ad Joaquim Ataides <ti@promobrindes.com.br> 1791324998 -0300	commit: fix(catalogo): fallback da imagem fica na tela e erro nao persiste ao trocar de foto (#430)

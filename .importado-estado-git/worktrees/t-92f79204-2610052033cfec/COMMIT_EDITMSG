@@ -1,0 +1,7 @@
+fix(talkx): placar conta só o estado verificado de P046.json
+
+O placar contava como concluída qualquer etapa com marcador histórico (XNNN) em título de commit, o que comunicava 42/200 etapas e 242/1135 elementos. A fonte canônica do estado atual é docs/reconciliation/tasks/P046.json, casada por ID; somente DONE_VERIFIED conclui.
+
+- loadAvaliacoes/parearEtapas casam 1:1 as 200 etapas com as 200 avaliações e rejeitam ID ausente, duplicado ou desconhecido; loadEtapas rejeita id duplicado.
+- verifiedDoneSteps só conclui DONE_VERIFIED: PARTIAL, IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE e VALIDATED_FAIL seguem abertas mesmo com marcador de entrega.
+- STATUS.md regenerado (2/200 etapas, 217/1135 elementos) e o texto declara a fonte verificada.

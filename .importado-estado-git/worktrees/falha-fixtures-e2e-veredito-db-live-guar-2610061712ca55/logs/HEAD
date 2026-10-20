@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791317559 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791317561 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318594 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 fdbe39f59228e42177793d39a6d3c27dad808fba worker (testes) <workertestes@hermes.local> 1791318647 -0300	commit: fix(db-live-guard): falha dos fixtures de E2E entra no veredito e no alerta (#368)
+fdbe39f59228e42177793d39a6d3c27dad808fba b1b960abe824101b37f91d4bb549c15d5ce7bff2 worker (testes) <workertestes@hermes.local> 1791318691 -0300	commit (amend): fix(db-live-guard): falha dos fixtures de E2E entra no veredito e no alerta (#368)

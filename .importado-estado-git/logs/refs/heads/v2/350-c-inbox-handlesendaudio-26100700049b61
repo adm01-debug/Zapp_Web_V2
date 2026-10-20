@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342286 -0300	branch: Created from dia/2026-10-07
+e58beff67df277afa73c179058c38190a5dd5d5c 6653b0e728d2147b86a1e5a594fe9667c3aec2ad Joaquim Ataides <ti@promobrindes.com.br> 1791342543 -0300	commit: fix(inbox): ponte do áudio rejeita a falha em vez de resolver sucesso (#350-C)

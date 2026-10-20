@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488703 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 4d67edc904c29628913b1058ba4bde6ec8738171 Joaquim Ataides <ti@promobrindes.com.br> 1791488798 -0300	commit: fix(arquivos): nome do arquivo no rótulo acessível do play (A06b)
+4d67edc904c29628913b1058ba4bde6ec8738171 6d9093a328daa4493d89e3be487629ad6f5c2557 Joaquim Ataides <ti@promobrindes.com.br> 1791554815 -0300	rebase (finish): refs/heads/v2/a06b-nome-acessivel-play-refazer-t-87742-2610081645d325 onto 1098da5a935929b171674a99b425d6b515fd6072

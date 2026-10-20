@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517799 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 7735c7d05b4a128b8eb8c04ce195af4d717b68d1 Joaquim Ataides <ti@promobrindes.com.br> 1791517809 -0300	cherry-pick: feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)

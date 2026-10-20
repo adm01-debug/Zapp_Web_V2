@@ -1,0 +1,1 @@
+function e(e){return`"${e.replace(/\\/g,`\\\\`).replace(/"/g,`\\"`)}"`}export{e as t};

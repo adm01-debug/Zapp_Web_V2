@@ -1,0 +1,7 @@
+fix(ai-vision): download privado exige identidade explícita do chamador (R2-INF-022)
+
+Remove o fallback silencioso para service role em toInlineImage (falha
+fechada com IMAGE_STORAGE_UNAVAILABLE) e faz classify-emoji/classify-sticker
+repassarem a identidade real: usuário baixa com anon key + JWT (policy de
+storage.objects decide), webhook baixa com service role explícita. Contrato
+por chamador prova que o caminho de usuário nunca vaza a service role.

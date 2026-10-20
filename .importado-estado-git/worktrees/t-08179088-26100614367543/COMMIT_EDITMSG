@@ -1,0 +1,9 @@
+fix(ci): guard do TALK ME detecta contagem de lacunas diferente de cinco (#478)
+
+O guard so exigia LACUNAS.length === 5 e a presenca da expressao "cinco
+lacunas" em qualquer ponto da secao: um relatorio declarando "oito lacunas"
+continuava aprovado. Agora o texto nao pode declarar outra quantidade e o
+mapa tem de ter exatamente tantas linhas "Ausente" quantas LACUNAS, sem
+rotulo fora da lista.
+
+Cartao V2: t_08179088 (branch v2/t-08179088-26100614367543)

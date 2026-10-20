@@ -1,0 +1,13 @@
+test(edge): stubs de handler respondem à política de rede do requireAuth
+
+O requireAuth passou a consultar a RPC public.resolve_network_policy
+(R2-AUTH-022 / 27.3) depois de autenticar e antes do handler. Os stubs de
+globalThis.fetch dos contratos de handler que dirigem a edge de ponta a ponta
+(ai-proxy, classify-sticker, elevenlabs-dialogue, elevenlabs-voice-design,
+multiplix-audience e multiplix-voices) só respondiam pela autenticação; sem
+rota para a RPC a decisão virava 503 e o teste morria antes do caminho que ele
+prova.
+
+Cada stub ganha apenas a rota/ramo da política, com a mesma forma de resposta
+que a RPC devolve quando libera ({ allowed: true, reason: null, ... }); nenhuma
+asserção foi afrouxada nem removida.

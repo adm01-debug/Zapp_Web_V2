@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791336217 -0300	
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791336219 -0300	reset: moving to HEAD
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 9270d507e1b32003ba3b72bac47d882d72003c8a Joaquim Ataides <ti@promobrindes.com.br> 1791338987 -0300	commit: fix(db): consolida contrato de convites e vocabulário de auditoria de departamento (#163)
+9270d507e1b32003ba3b72bac47d882d72003c8a 0f1fc28e174096e7b926f6df2eed3dc6017674e5 Joaquim Ataides <ti@promobrindes.com.br> 1791339146 -0300	commit: test(db): prova linha-a-linha do gatilho de updated_at no aceite de convite (#163)
+0f1fc28e174096e7b926f6df2eed3dc6017674e5 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791339153 -0300	reset: moving to HEAD~2
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 f3cb7dfd58b8461b7c91e5ce247e3dd426a43c50 Joaquim Ataides <ti@promobrindes.com.br> 1791339153 -0300	commit: fix(db): consolida contrato de convites e vocabulário de auditoria de departamento (#163)
+f3cb7dfd58b8461b7c91e5ce247e3dd426a43c50 61974aad42946d8def7f1716247b4608ea479027 Joaquim Ataides <ti@promobrindes.com.br> 1791339179 -0300	commit (amend): fix(db): consolida contrato de convites e vocabulário de auditoria de departamento (#163)

@@ -1,0 +1,7 @@
+test(e2e): Y10 le o KPI depois da Lista carregar (prazo de hoje)
+
+O KPI nasce com 0 (itens ainda vazios) e so recebe a contagem real no render em
+que a Lista desenha os cartoes. O cenario lia o antes nesse instante, dava 0 e a
+conta antes+1 virava mentira sob maquina carregada (falha medida em
+.tmp/prova-rodada-1.log: esperado 1, recebido 4). Agora espera a Lista sair do
+carregamento (cartao ou estado vazio) e recusa um KPI sem numero.

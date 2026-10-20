@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292594 -0300	
+9771aacba0ef60787d64631780e660cf381e98e8 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292595 -0300	reset: moving to HEAD
+9771aacba0ef60787d64631780e660cf381e98e8 11956a246f8ba5ccc0d5e986ef553255f64517cf worker <worker@local> 1791293003 -0300	commit: fix(gmail-webhook): persiste metadados dos anexos para permitir download (#192)

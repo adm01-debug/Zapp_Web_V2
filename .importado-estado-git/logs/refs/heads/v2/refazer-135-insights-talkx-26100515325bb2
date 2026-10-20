@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791225140 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 a832aa80357bb8b6fb39bcb31a7bfb457693fdeb Joaquim Ataides <ti@promobrindes.com.br> 1791225196 -0300	cherry-pick: fix(talkx): insights expõem base calculada e ritmo usa minutos consecutivos
+a832aa80357bb8b6fb39bcb31a7bfb457693fdeb 2b0e9df6802d649d0cea7c12dffd57cb205270d4 Joaquim Ataides <ti@promobrindes.com.br> 1791226291 -0300	commit: test(talkx): expõe erro, truncagem e ritmo zero nos insights (RED)
+2b0e9df6802d649d0cea7c12dffd57cb205270d4 98559258dd7e551c99ded052547e29f9766d94b2 Joaquim Ataides <ti@promobrindes.com.br> 1791226299 -0300	commit: fix(talkx): trata falha das consultas, teto de cliques e ETA sem ritmo

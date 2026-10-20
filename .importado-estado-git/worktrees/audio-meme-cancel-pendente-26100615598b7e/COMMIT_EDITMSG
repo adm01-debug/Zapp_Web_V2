@@ -1,0 +1,13 @@
+fix(ai-audio): nao aguarda reader.cancel() ao estourar o teto
+
+O limite de 5 MiB do streaming aguardava a promessa de reader.cancel() antes
+de lancar AUDIO_TOO_LARGE. Com uma origem que devolve cancelamento pendente,
+a funcao ficava presa para sempre — e o timer do download ja podia ter sido
+limpo, sem ninguem para destravar. Agora o cancelamento e DISPARADO
+(void + catch), nunca aguardado: a rejeicao por AUDIO_TOO_LARGE sai na hora e
+a falha do cancelamento nao muda o desfecho.
+
+Teste novo em tests/contracts/ia131-audio-meme-conteudo.contract.test.ts:
+resposta chunked sem content-length, 8 pedacos de 1 MiB, cancel() devolvendo
+promessa pendente; prova que toInlineAudio rejeita dentro da janela (vermelho
+antes: 'pendurou') e que o resto do corpo nao e consumido.

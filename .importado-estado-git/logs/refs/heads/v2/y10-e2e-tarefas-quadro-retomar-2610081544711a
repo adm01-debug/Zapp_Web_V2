@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485059 -0300	branch: Created from dia/2026-10-08
+72ad19958df7735cd29bad24dd38f66265c47f3b 38707290e268802590af6f7251ad29c751e5a173 worker (testes) <worker-testes@local> 1791487491 -0300	commit: test(e2e): Y10 de tarefas e o quadro no banco local (preserva o spec E21 e conserta o flake do login)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791492735 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791492736 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc a22b5b93f120b0af3dc673115cbc77067e554d15 Joaquim Ataides <ti@promobrindes.com.br> 1791492750 -0300	cherry-pick: fix(outros): Voz, transcrição, TTS e comandos (SL-087)
+a22b5b93f120b0af3dc673115cbc77067e554d15 2760c0bde9262a07a8fc8bbf4d6bd13c559eb5fb Joaquim Ataides <ti@promobrindes.com.br> 1791493204 -0300	commit: test(outros): elevenlabs-sts prova o teto pelo content-length explícito (SL-087)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 Joaquim Ataides <ti@promobrindes.com.br> 1791354391 -0300	
+37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 Joaquim Ataides <ti@promobrindes.com.br> 1791354392 -0300	reset: moving to HEAD
+37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 b9e27ed502f92fad961c6b38e7f2f9c406b150c7 Joaquim Ataides <ti@promobrindes.com.br> 1791354401 -0300	cherry-pick: fix(talkx): limitar drenagem diaria de expurgo em volume
+b9e27ed502f92fad961c6b38e7f2f9c406b150c7 1a3b424b4bd7cabd1efa0bcdba390ab9875ccbb4 Joaquim Ataides <ti@promobrindes.com.br> 1791355647 -0300	commit: test(talkx): prova do expurgo em volume sem corrida nem ordem de uuid

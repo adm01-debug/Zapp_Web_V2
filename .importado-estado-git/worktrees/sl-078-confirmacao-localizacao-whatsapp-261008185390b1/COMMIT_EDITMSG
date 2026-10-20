@@ -1,0 +1,5 @@
+fix(inbox/chat): Confirmacao visual do envio real de localizacao no What (SL-078)
+
+Sem mudanca de codigo: conferencia na ponta mostra o caminho de confirmacao
+visual completo (picker -> envio -> toast -> balao -> location_sent) e verde.
+O que falta do item E94 e o teste manual com numero real, do Joaquim.

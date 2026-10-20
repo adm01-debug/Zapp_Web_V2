@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791285468 -0300	branch: Created from dia/2026-10-06
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 854eb3ecd9f44315faf49fe152c6179a7c8b3ddc Joaquim Ataides <ti@promobrindes.com.br> 1791285479 -0300	cherry-pick: fix(inbox): transferência em lote atômica via RPC bulk_transfer_contacts (R2-INB-009 / #88)
+854eb3ecd9f44315faf49fe152c6179a7c8b3ddc e225c07d253691d3efa178fa6e4c910cb81995f9 Joaquim Ataides <ti@promobrindes.com.br> 1791286769 -0300	commit: fix(inbox): corrige contrato seguro da transferência em lote

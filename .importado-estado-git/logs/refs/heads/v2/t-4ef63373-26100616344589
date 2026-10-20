@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315279 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 921f24b4dc68fb9bcfa406d2f22eb8efb6604c03 Joaquim Ataides <ti@promobrindes.com.br> 1791315578 -0300	commit: fix(inbox): contador Em atendimento e badge de responsavel usam profile.id, nao o auth id

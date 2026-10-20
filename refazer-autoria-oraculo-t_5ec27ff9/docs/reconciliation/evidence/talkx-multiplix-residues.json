@@ -1,0 +1,100 @@
+[
+  {
+    "path": "docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "Talk X V4 X001–X200",
+    "reason": "Explicitly superseded; historical criteria/references remain."
+  },
+  {
+    "path": "docs/talkx/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "Talk X V4",
+    "reason": "Superseded execution plan, still cited for DoD/evidence criteria."
+  },
+  {
+    "path": "docs/talkx/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "Talk X V4 and recorded V22–V26 implementation",
+    "reason": "Frozen after overlapping migrations; captures actual predecessor work."
+  },
+  {
+    "path": "docs/talkx/PARIDADE.md",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "docs/talkx/v4/inventario/",
+    "reason": "Historical parity; current acceptance must use V4+evidence."
+  },
+  {
+    "path": "docs/multiplix/PLANO_IMPLEMENTACAO_MULTIPLIX_200_ETAPAS_2026-09-26.md",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "Multiplix F01–F100",
+    "reason": "Finalization audit maps original requirements E001–E200; retain provenance."
+  },
+  {
+    "path": "docs/adr/ADR-007-multiplix-ponte-singu.md",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "docs/adr/ADR-007-multiplix-ponte-singu-canal-e-aptidao.md",
+    "reason": "Explicit Superseded by with decisions preserved."
+  },
+  {
+    "path": "supabase/migrations/_foreign/singu/",
+    "status": "HISTORICAL_REQUIRED",
+    "deletion_confidence": "DELETE-X",
+    "successor": null,
+    "reason": "External DB mirrors and HMAC contracts; not deployed by ZAPP db-guard. No runtime consumer search can justify deleting provenance."
+  },
+  {
+    "path": "supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql",
+    "status": "LEGACY_USED",
+    "deletion_confidence": "DELETE-C",
+    "successor": "item RPCs within same migration",
+    "reason": "Defines new RPCs and marks old recipient RPCs deprecated; worker still calls old drain, quota/monitor read recipients. Migration itself historical required."
+  },
+  {
+    "path": "supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql",
+    "status": "LEGACY_USED",
+    "deletion_confidence": "DELETE-C",
+    "successor": "complete_multiplix_dispatch_if_items_drained",
+    "reason": "Current worker still consumes legacy completion function. Keep migration for replay regardless eventual RPC retirement."
+  },
+  {
+    "path": "src/components/multiplix/MultiplixComposerDialog.tsx",
+    "status": "LEGACY_USED",
+    "deletion_confidence": "DELETE-C",
+    "successor": "F72 three-region composition UI, not yet implemented",
+    "reason": "Reachable from MultiplixView; deleting before replacement removes current create entry point."
+  },
+  {
+    "path": "src/hooks/integrations/useMultiplixAudience.ts",
+    "status": "ACTIVE",
+    "deletion_confidence": "DELETE-X",
+    "successor": "F44/F72 integration",
+    "reason": "Current safe server-resolved create path uses it. Domain API draft.create cannot safely replace it as-is."
+  },
+  {
+    "path": "src/components/talkx/talkxShared.ts",
+    "status": "ACTIVE",
+    "deletion_confidence": "DELETE-X",
+    "successor": "src/components/talkx/kit/",
+    "reason": "Compatibility barrel consumed across screens after X042 split, not dead duplicate implementation."
+  },
+  {
+    "path": "e2e/fixtures/talkx-demo/",
+    "status": "GENERATED",
+    "deletion_confidence": "DELETE-X",
+    "successor": "X003/X004 growth contract and X195 final gate",
+    "reason": "16 empty placeholders intentionally staged; one populated fixture. Missing data not proof of dead artifacts."
+  },
+  {
+    "path": "docs/talkx/recovery/evidence/X023/preflight-2026-10-03.json",
+    "status": "HISTORICAL_UNVERIFIABLE",
+    "deletion_confidence": "DELETE-X",
+    "successor": "new complete remote preflight required",
+    "reason": "Local hashes known, git_sha/remote/secrets null; preserve audit trail but do not accept as deploy proof."
+  }
+]

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791430345 -0300	branch: Created from dia/2026-10-08
+b6ff185f72fab85c050ee66812f03072ff4f0726 b2f975542dff7d1aa43773bf8294c0b038230e30 Joaquim Ataides <ti@promobrindes.com.br> 1791430406 -0300	commit (cherry-pick): fix(ia): auto-tag limpa etiquetas antigas quando a classificação válida não tem tags (#207)

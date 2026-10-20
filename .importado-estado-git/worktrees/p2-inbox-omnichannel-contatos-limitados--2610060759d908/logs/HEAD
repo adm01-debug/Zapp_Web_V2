@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284345 -0300	
+fbb20ec26ffb172a379a820a3fafde28a671aae1 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284346 -0300	reset: moving to HEAD
+fbb20ec26ffb172a379a820a3fafde28a671aae1 e0107b0e0ac24c9d907e54162684f7a2890ba162 Joaquim Ataides <ti@promobrindes.com.br> 1791284775 -0300	commit: fix(omnichannel): carrega conversas reais e abre o chat no inbox (#236)
+e0107b0e0ac24c9d907e54162684f7a2890ba162 a139e2a1ef146509578461903d3c252af0a1a0b1 Joaquim Ataides <ti@promobrindes.com.br> 1791285044 -0300	commit: test(omnichannel): restaura casos existentes e cobre a projeção de conversas (#236)

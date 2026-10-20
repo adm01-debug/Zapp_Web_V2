@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=automacoes-sem-tag
+ID=2610140700fa2c
+BRANCH=v2/automacoes-sem-tag-2610140700fa2c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automacoes-sem-tag-2610140700fa2c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-14T07:00:04-03:00
+KANBAN=t_23deb8a0
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automacoes-sem-tag-2610140700fa2c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-14
+DB_LOCAL=v2-2610140700fa2c
+PRONTO_SHA=37440837021e27662ff3ecb14356284a7562f922

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 6653bbe05ba03734957cc0efa7995e2918f2c7a8 Joaquim Ataides <ti@promobrindes.com.br> 1791434995 -0300	branch: Created from dia/2026-10-08
+6653bbe05ba03734957cc0efa7995e2918f2c7a8 91dd0f1c7dfce43dd812a170563a186eaf53bb3b Joaquim Ataides <ti@promobrindes.com.br> 1791435007 -0300	cherry-pick: fix(ia): reclassificação de IA preserva etiqueta humana homônima (R2-DB-012)
+91dd0f1c7dfce43dd812a170563a186eaf53bb3b f10f705d80296426bdb871125f0540117902c83d Joaquim Ataides <ti@promobrindes.com.br> 1791435603 -0300	commit: fix(ci): registra teste local de reclassificacao IA
+f10f705d80296426bdb871125f0540117902c83d 1ebe66a1a1aaeff4a7a54397f1771a09e7fc1b79 Joaquim Ataides <ti@promobrindes.com.br> 1791435835 -0300	commit: fix(sql): documenta rollback executavel da reclassificacao IA

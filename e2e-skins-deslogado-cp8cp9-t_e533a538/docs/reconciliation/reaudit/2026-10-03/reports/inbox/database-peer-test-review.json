@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "inbox",
+  "allocation_roster": "reaudit/reports/database/test-review-roster.json",
+  "allocation_roster_sha256": "ab29fb2773c7ce8bf521092c22ad33d83a102885a204ba5bf2cc7fe660690b16",
+  "assigned_indices": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "files": [
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.test.mjs",
+      "line_start": 1,
+      "line_end": 65,
+      "git_blob_sha": "c2d80666a706fd9e5d5c06d7b576e335ab0b8f84",
+      "source_sha256": "7c1170fd22fa67acc69363ce45453788aa135aa4933b8eac59cc9c1b4fc02321",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 16,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 65
+        }
+      ],
+      "adjudication": [
+        "O teste lança o medidor Python real sobre três jobs sintéticos e confere slots/concorrência/horário pior; controles negativos exigem saída1 para arquivo vazio e rejeição de /etc/hostname e prefixo /tmpfoo.",
+        "O wrapper captura status/stdout/stderr, e arquivos temporários de fixture não são removidos neste arquivo. Não há consulta de cron vivo nem medição de execução simultânea: o contrato é o cálculo sobre linhas de agendamento."
+      ],
+      "limits": "Somente leitura. Não executado Python/subprocesso; cobertura restrita a horários literais usados e validação lexical das raízes, sem demonstrar todos os formatos cron, timezone ou symlinks."
+    },
+    {
+      "path": "scripts/db-audit/psql-environment.test.mjs",
+      "line_start": 1,
+      "line_end": 150,
+      "git_blob_sha": "718010b9c0d1a89f04d98c4c74d91e65454ad28b",
+      "source_sha256": "5dfc225c5bda69b11969a29d7121c52e1e8ab2204b02bbe6dbac86b92d35aa57",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 17,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 150
+        }
+      ],
+      "adjudication": [
+        "Exercita withPsqlEnvironment real com callback síncrono: separa URI em variáveis libpq, preserva opções TLS/timeout, elimina variáveis conflitantes, confere escape/permissões0600/0700 e remove passfile após sucesso ou erro. Inputs são credenciais sintéticas de fixture.",
+        "Cobre IPv6 e nomes escapados, rejeita overrides/opções duplicadas/desconhecidas e entradas inválidas com diagnóstico sanitizado. Retry opt-in conta tentativas de falhas de transporte simuladas, não repete falhas determinísticas listadas e conserva cleanup após esgotamento."
+      ],
+      "limits": "Somente leitura, sem criar passfiles ou chamar PostgreSQL. TLS é preservação de parâmetros, não handshake; retries são callbacks que lançam erros sintéticos, sem atestar segurança de repetir escrita de resultado ambíguo ou comportamento de todo libpq."
+    },
+    {
+      "path": "scripts/db-audit/psql-safe.test.mjs",
+      "line_start": 1,
+      "line_end": 121,
+      "git_blob_sha": "f0e2fb37e68dfb1561fd41e18aef55a33883624f",
+      "source_sha256": "dddc5847cea864f21f17e039c9bad24a5d41e3cbce9db3405e8bb79a9f74f422",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 18,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 121
+        }
+      ],
+      "adjudication": [
+        "O teste inicia psql-safe real com PSQL_BIN apontando a executável Node falso, que captura argv/subconjunto do env e ecoa stdin/stdout/stderr/exit. Asserts conferem ausência da URI em argv, derivação do destino, cleanup do passfile e propagação das opções TLS.",
+        "Controles negativos exigem saída2 sem spawn quando DESTINO_URL falta e diagnóstico sanitizado para URI inválida. O SQL SELECT1 é apenas texto ecoado pelo stub; não é executado em banco. Diretórios dos stubs não têm cleanup explícito neste arquivo."
+      ],
+      "limits": "Somente leitura: nenhum processo do teste foi lançado. Não cobre execução SQL, rede, todas as variáveis herdadas do ambiente ou validação TLS real; o child é um stub que implementa protocolo mínimo."
+    },
+    {
+      "path": "scripts/db-audit/register-migration.test.mjs",
+      "line_start": 1,
+      "line_end": 272,
+      "git_blob_sha": "9929169b341a3ee44fca1fd1b0ee5382247d5c00",
+      "source_sha256": "0c9f5219ed30db951c83d319765ddfaa8e88a2fd497b685e2be866275fa22b85",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 19,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 272
+        }
+      ],
+      "adjudication": [
+        "Exercita os helpers reais splitStatements/buildInsertSql/parseMigrationFile com aspas SQL, comentários, dollar quotes e colisão de delimitador; os casos sustentam essas entradas concretas, não equivalência com um parser completo de PostgreSQL. O helper de fixtures remove seu diretório temporário em finally.",
+        "Os subprocessos CLI executariam o entrypoint real contra um PSQL_BIN fake que devolve versão máxima, nenhuma colisão de objetos e INSERT/RETURNING configurados. Conferem rejeição de versão/retorno vazio/tag INSERT 0 0, aceitação de retorno esperado, dry-run, identidade do destino, diagnóstico sanitizado e flags -q/ON_ERROR_STOP em todas as chamadas capturadas.",
+        "O spy do caso de parâmetro host proibido é salvo como .mjs mas usa require: se fosse chamado, poderia falhar antes de criar o marcador. Ausência desse marcador isoladamente não prova que psql não foi invocado; a mensagem de rejeição esperada continua sendo evidência separada. Os outros spies usam ESM corretamente."
+      ],
+      "limits": "Leitura integral, sem executar teste/CLI/SQL. Psql é sintético e não interpreta SQL; não há prova de concorrência real no ledger, RLS, transação nem destino vivo. Caso dry-run não espiona ausência de spawn. Limites de evidência relacionados a GOV003, sem novo finding de produto."
+    },
+    {
+      "path": "scripts/db-audit/talkx-analytics-contract.test.mjs",
+      "line_start": 1,
+      "line_end": 78,
+      "git_blob_sha": "b60fee36cbe3772fee3897fbe2091fad944c5664",
+      "source_sha256": "126e5b5416700e5fd70762e451c9cb1cbd615d4891d2e36e302055f8902f93ba",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 20,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 78
+        }
+      ],
+      "adjudication": [
+        "Lê sete arquivos TSX reais como texto e aplica regex para impedir fórmulas percentuais fabricadas, exigir campos de entregas/leitura e conversões não rastreadas, corrigir rótulos de público/uso/envio e exigir o hook de conexão do monitor.",
+        "As duas assertions de disabled verificam expressões textuais no diálogo/primitiva. São controles de regressão da forma do código e de cópias conhecidas, sem montar React, disparar ações, computar estatísticas ou observar propagação efetiva do estado disabled."
+      ],
+      "limits": "Leitura integral sem execução. Correspondência lexical não prova alcance do ramo, comportamento de componentes ou dados reais; strings podem existir em contexto não executado. Nenhum finding novo; limitação de prova GOV003."
+    },
+    {
+      "path": "scripts/db-audit/talkx-delivery-leases-contract.test.mjs",
+      "line_start": 1,
+      "line_end": 110,
+      "git_blob_sha": "8595dd8c6799ef1e1675646d48ea6020aac73dcb",
+      "source_sha256": "8d376b74fb1d7f43e0ed01b654280425f85344c33117249e2c7c352615871ccd",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 21,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 110
+        }
+      ],
+      "adjudication": [
+        "Verifica migrations históricas nomeadas e textos atuais do worker/processador: SKIP LOCKED, tokens, grants/revokes, estados, quarentena, contadores, recibos, supressão, snapshot e códigos de erro. Os checks de ordem com indexOf/lastIndexOf mantêm sequências lexicais claim→provider→completion e snapshot→dispatch→provider.",
+        "Nenhuma asserção executa SQL ou simula trabalhadores concorrentes. Grants e locks presentes no arquivo não demonstram atomicidade, autorização efetiva ou fencing; regex com [\\s\\S]* podem cruzar corpos. A seleção fixa de migrations de setembro não resolve qual definição posterior vence no snapshot."
+      ],
+      "limits": "Leitura integral sem suíte/SQL/serviços. Evidência é estrutural sobre artefatos específicos; não comprova concorrência, replays, efeitos transacionais nem configuração aplicada. Contratos do banco permanecem na revisão Database; limites de prova GOV003, sem novo ID."
+    },
+    {
+      "path": "scripts/db-audit/talkx-e90-links-contract.test.mjs",
+      "line_start": 1,
+      "line_end": 206,
+      "git_blob_sha": "25f6afa00ea1813f8ed364a67c25209a137cddd2",
+      "source_sha256": "9b341cc0a601e52c74031b54b828eae650101ebfc2ead9a391f753cac87a51c8",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 22,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 206
+        }
+      ],
+      "adjudication": [
+        "Todos os casos são regex/indexOf em treze artefatos reais. Mantêm presença e ordem lexical do trackingUrl no call site, passe único de placeholders, proteção de chaves reservadas/protótipo, chunking/ordenação de custom fields, rate-limit, salt configurável, chamadas RPC e guards de IDOR, índice case-insensitive e REVOKEs.",
+        "A proximidade inferior a 600 caracteres entre personalize e trackingUrl não analisa argumentos da AST; a cadeia de resolução e a ordem de consultas são textuais. O teste de IP apenas exige import/definição e proíbe uma sintaxe antiga: não injeta headers nem comprova resistência ao spoofing. O título de RLS para todas as tabelas exige uma ocorrência genérica de ENABLE ROW LEVEL SECURITY mais três revokes, não uma por tabela."
+      ],
+      "limits": "Leitura integral sem execução. Não há redirects HTTP, destinatários cruzados reais, SQL/RLS, rate limit vivo nem disputa de campos paginados. Usa migrations nomeadas, sem adjudicar definições posteriores. Controles estruturais úteis, limites de evidência GOV003."
+    },
+    {
+      "path": "scripts/db-audit/talkx-navigation-contract.test.mjs",
+      "line_start": 1,
+      "line_end": 19,
+      "git_blob_sha": "2d828fbd75381bd94ec4aacce68257becda400f9",
+      "source_sha256": "34f50600f7acae079354a98ce575911c5e82444a7a338e9640f95a91501768f3",
+      "uncontained_bodies_at_allocation": 1,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 23,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 19
+        }
+      ],
+      "adjudication": [
+        "O arquivo inteiro lê três componentes e confere assinatura onLaunched, presença de mudanças scheduled/monitor, backToList e assinatura do callback, proibindo duas formas antigas de código. Nenhum componente é montado; regex [\\s\\S]* pode atravessar ramos e backToList pode existir em outro fluxo."
+      ],
+      "limits": "Leitura integral sem execução. Não demonstra navegação efetiva para campanha cancelada/agendada/enviando nem execução dos callbacks. Evidência textual específica; sem novo finding."
+    },
+    {
+      "path": "scripts/db-audit/talkx-personalize-parity.test.mjs",
+      "line_start": 1,
+      "line_end": 113,
+      "git_blob_sha": "3c104d99135f4cf65f89432be1e2eff6176d8d96",
+      "source_sha256": "3a643788258efe00bd008ccca328799f0bd97cd87ee7f4999915bede8b94eb64",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 24,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 113
+        }
+      ],
+      "adjudication": [
+        "Ao executar, importaria os dois módulos reais em Deno e compararia doze casos compartilhados, exigindo também textos esperados. Li integralmente a fixture de 102 linhas: nomes, apelido, empresa ausente, fallback, custom field presente/ausente, vendedor, telefone e link têm expectativas concretas. Isso é controle comportamental real de funções puras, mais forte que presença de strings.",
+        "O caso de datas compara os dois módulos e valida formato dd/mm/aaaa, mas não fixa relógio nem exige a data correta de um instante em fusos distintos. O relógio é consultado separadamente, podendo atravessar meia-noite. Não cobre bundler React/Deno deployment, missing/unknown do retorno edge ou campos adversariais nesta fixture."
+      ],
+      "limits": "Leitura integral e fixture conferida, sem executar Deno/teste. Doze exemplos provam somente contratos representados se a suíte rodar; nenhuma execução realizada nesta auditoria. Fixture SHA256 61e7d22c0776523bcfd5aec0c39a9738cb560688fc86a583e839b5cc317ee907, 1–102, scripts/db-audit/fixtures/talkx-personalize-parity.json."
+    },
+    {
+      "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+      "line_start": 1,
+      "line_end": 91,
+      "git_blob_sha": "d338fb960ae84a6b7411583c4f653fec25e9c643",
+      "source_sha256": "5edc20b84bc32a751f32d140a85c2009718f27dfbb4831674d70580dd76f97d3",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 25,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 91
+        }
+      ],
+      "adjudication": [
+        "Os cinco testes são guards textuais sobre migration e oito produtores/consumidores: persistência de timezone, uso de pg_timezone_names, janela ordenada, payload/editor, min do input e cadeia scheduler→resume-policy→deliveryWindowStatus. Restringem a reintrodução de cálculos locais antigos e exigem resolver compartilhado para conexão ausente.",
+        "A presença de NOT VALID e nomes de validação na migration não testa inserts/updates existentes ou novos. Não há instante UTC, DST ambíguo, timezone inválido, montagem do wizard ou resposta do scheduler executada; a alegação fails-closed depende do comportamento não chamado neste arquivo."
+      ],
+      "limits": "Leitura integral sem execução SQL/React/Edge. Migrations históricas nomeadas não determinam vencedora atual. Controles estruturais de regressão, não prova de fronteiras temporais reais; sem novo ID."
+    },
+    {
+      "path": "scripts/db-audit/talkx-scheduler-contract.test.mjs",
+      "line_start": 1,
+      "line_end": 53,
+      "git_blob_sha": "9599d678e31b1d1433d108a9270c9a146e4bd22d",
+      "source_sha256": "4ef0c33ceeaaba59ed01115bbadb87ad750c5c180cb206ef4cd23e416c198ab2",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "database",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 26,
+      "reviewer": "inbox",
+      "runtime_executed": false,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 53
+        }
+      ],
+      "adjudication": [
+        "Confere por regex a interpretação de response.ok mais success===true, export de handler/entrypoint, nomes de credencial/comparação constante/401, timeout de 10s, teto de dez campanhas/uma retomada e ausência de update/status sending. São guards sobre o texto atual do scheduler.",
+        "Não chama handler com headers nem avança temporizadores; presença de AbortController/setTimeout não demonstra abortar fetch ou liberar timer. Constantes e slice não provam o número de envios observados e ausência de update direto não elimina escrita via RPC."
+      ],
+      "limits": "Leitura integral sem executar teste/handler/serviços. Mantém formas específicas de código; autenticação, limites e timeout comportamentais exigem outros controles. GOV003, sem novo finding de produto."
+    }
+  ],
+  "tests_executed": 0,
+  "method": "Leitura semântica integral de assertions, fixtures, mocks, script e SQL embutido quando presentes; nenhum arquivo revisado foi importado/executado, e não houve suíte, shell de produto, banco ou serviço.",
+  "reviewed_files": 11,
+  "total_files": 11,
+  "pending_indices": [],
+  "status": "COMPLETED_REVIEW_PASS",
+  "actual_lines_read": 1278,
+  "updated_at": "2026-10-04T06:27:35.052169+00:00",
+  "transferred_indices": [
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "transfer_evidence": "../database/test-tail-review.json",
+  "support_files": [
+    {
+      "path": "scripts/db-audit/fixtures/talkx-personalize-parity.json",
+      "source_sha256": "61e7d22c0776523bcfd5aec0c39a9738cb560688fc86a583e839b5cc317ee907",
+      "git_blob_sha": "cce27bf8f1a7331ff7741d3327944133560f3041",
+      "line_start": 1,
+      "line_end": 102,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 102
+        }
+      ],
+      "reviewer": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "runtime_executed": false,
+      "adjudication": "Fixture de doze exemplos lida integralmente; ver adjudicação do roster_index 24."
+    }
+  ]
+}

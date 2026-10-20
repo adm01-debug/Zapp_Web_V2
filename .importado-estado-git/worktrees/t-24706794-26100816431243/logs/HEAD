@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 f73548534c1a2628ccde6cebcf76bee330d96ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791488584 -0300	
+f73548534c1a2628ccde6cebcf76bee330d96ca4 f73548534c1a2628ccde6cebcf76bee330d96ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791488585 -0300	reset: moving to HEAD
+f73548534c1a2628ccde6cebcf76bee330d96ca4 8fc96081611e0e46a7a9368d40f1f146f8c743bb Joaquim Ataides <ti@promobrindes.com.br> 1791488635 -0300	cherry-pick: fix(mobile): central de notificações do shell mobile usa a lista real e o contador real (#449)
+8fc96081611e0e46a7a9368d40f1f146f8c743bb e645b5b663d4688734233ae86b95c20c1a89d318 Joaquim Ataides <ti@promobrindes.com.br> 1791489905 -0300	commit: test(mobile): shell do teste de busca recebe a fonte de notificações mockada (#449)
+e645b5b663d4688734233ae86b95c20c1a89d318 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489921 -0300	rebase (start): checkout dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 327f3b2f241e343e5b825939c37acd04ddcb2784 Joaquim Ataides <ti@promobrindes.com.br> 1791489921 -0300	rebase (pick): fix(mobile): central de notificações do shell mobile usa a lista real e o contador real (#449)
+327f3b2f241e343e5b825939c37acd04ddcb2784 333ed637a7c066f7aaa997dfc412fdb0fe6379dc Joaquim Ataides <ti@promobrindes.com.br> 1791489921 -0300	rebase (pick): test(mobile): shell do teste de busca recebe a fonte de notificações mockada (#449)
+333ed637a7c066f7aaa997dfc412fdb0fe6379dc 333ed637a7c066f7aaa997dfc412fdb0fe6379dc Joaquim Ataides <ti@promobrindes.com.br> 1791489921 -0300	rebase (finish): returning to refs/heads/v2/t-24706794-26100816431243

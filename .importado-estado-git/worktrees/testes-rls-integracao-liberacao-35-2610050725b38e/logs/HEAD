@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d1cd57ad4b775bb431a3bbd0e639c54f9fa7ac86 Joaquim Ataides <ti@promobrindes.com.br> 1791195944 -0300	
+d1cd57ad4b775bb431a3bbd0e639c54f9fa7ac86 d1cd57ad4b775bb431a3bbd0e639c54f9fa7ac86 Joaquim Ataides <ti@promobrindes.com.br> 1791195944 -0300	reset: moving to HEAD
+d1cd57ad4b775bb431a3bbd0e639c54f9fa7ac86 a6c96dbbfcb44befb560357cad115c609d4c957c Joaquim Ataides <ti@promobrindes.com.br> 1791196342 -0300	cherry-pick: test(dashboard): prova fronteira RLS real das RPCs e gate de liberação
+a6c96dbbfcb44befb560357cad115c609d4c957c 662582e73f75de0a31f27ac921a3d95333abbdce Joaquim Ataides <ti@promobrindes.com.br> 1791197699 -0300	commit: test(dashboard): extrai helpers/policies das migrations e valida contra pg_policies

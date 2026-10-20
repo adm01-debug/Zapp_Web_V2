@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456512 -0300	branch: Created from dia/2026-10-08
+0203871564cbc198c32d6c501cd414e24ddb10ab 3ec906d9af0bb95c6875eec0b8239bffe77e876e Joaquim Ataides <ti@promobrindes.com.br> 1791456521 -0300	cherry-pick: fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)
+3ec906d9af0bb95c6875eec0b8239bffe77e876e f66fb8be4aeaacde6b3407da16dcb708106cf0c8 Joaquim Ataides <ti@promobrindes.com.br> 1791457302 -0300	commit: fix(ci): ajustar inventário de testes do refazer 299
+f66fb8be4aeaacde6b3407da16dcb708106cf0c8 ee5d28fba9165a6376245416f59257a29f5793f0 Joaquim Ataides <ti@promobrindes.com.br> 1791458132 -0300	commit (amend): fix(ci): ajustar inventário de testes do refazer 299

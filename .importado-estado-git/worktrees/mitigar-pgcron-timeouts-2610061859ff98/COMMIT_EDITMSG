@@ -1,0 +1,17 @@
+fix(banco): nenhum minuto do pg_cron chega a 6 jobs, condicao do job startup timeout
+
+A migration 20261002541230 (escalonamento de 02/10) baixou o pico de 10 para 7
+jobs por minuto. Medido no dia inteiro com a frota real (13 jobs, base
+dia/2026-10-06), ainda sobravam 99 slots de hora:minuto com >=6 jobs — a
+condicao exata do 'job startup timeout' de pg_cron (max_worker_processes=6,
+runbook docs/ops/runbook-pg-cron-capacidade.md). Esta migration so mexe em
+AGENDA, via cron.alter_job (sem DML direto em cron.job), em tres jobs:
+
+  connection-health-check   2-57/5  -> 3-58/5
+  cleanup-edge-rate-limits  7-52/15 -> 4-49/15
+  gmail-incremental-sync    0-55/5  -> 1-56/5
+
+Depois: max 5 jobs por minuto, 0 slots com >=6 e 0 com >=7. A funcao e
+idempotente (rerun nao muda nada), tem rollback executavel
+(apply_pg_cron_anti_timeout(true)) e nao aplica meia mitigacao se um dos jobs
+nao existir.

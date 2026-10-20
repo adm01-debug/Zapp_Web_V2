@@ -1,0 +1,3 @@
+fix(inbox): parar de anunciar ações de mensagem e comandos sem implementação (R2-INB-021)
+
+O menu do balão oferecia Favoritar/Fixar/Responder depois/Reportar sem handler e sem nenhuma implementação de mensagem; o menu do header oferecia 'Adicionar tag' sem onClick; /note e /tag só limpavam o input e mostravam um aviso. Cada item passou a existir só onde a operação existe: menu do balão, menu do header e lista de comandos deixam de anunciar o que não concluem.

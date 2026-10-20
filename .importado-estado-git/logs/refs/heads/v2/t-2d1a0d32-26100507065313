@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194773 -0300	branch: Created from dia/2026-10-05
+80899b98968e007020313a034ed0c94b72bc4083 17f103939e175f0b70f5f9124f7cd00b9a20e9e9 Joaquim Ataides <ti@promobrindes.com.br> 1791194904 -0300	cherry-pick: feat(seguranca): vincula inventário de sessões à sessão Auth e revoga dispositivos (R2-AUTH-004)
+17f103939e175f0b70f5f9124f7cd00b9a20e9e9 ee7e08091fd203f1dd0638936a7ae8edb37d6260 Joaquim Ataides <ti@promobrindes.com.br> 1791194908 -0300	cherry-pick: fix(seguranca): usa escape dinâmico para auth_session_id ainda fora do types.ts (R2-AUTH-004)
+ee7e08091fd203f1dd0638936a7ae8edb37d6260 051b2c1e9de4fabf87eb30f0e0d2f6b78899d4b3 Joaquim Ataides <ti@promobrindes.com.br> 1791195352 -0300	commit: fix(testes): restaura estado inicial e prova ordem/fail-closed na revogação de dispositivos (R2-AUTH-004)

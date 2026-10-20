@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=gmail-watch-renovar-automatico
+ID=26101300171101
+BRANCH=v2/gmail-watch-renovar-automatico-26101300171101
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/gmail-watch-renovar-automatico-26101300171101
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T00:17:39-03:00
+KANBAN=t_e5f0a946
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/gmail-watch-renovar-automatico-26101300171101/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101300171101
+PRONTO_SHA=2c2920f185970644b26bc37e2c12b1b167cb23a4

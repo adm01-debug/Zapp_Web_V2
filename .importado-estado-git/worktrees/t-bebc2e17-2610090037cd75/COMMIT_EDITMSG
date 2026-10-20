@@ -1,0 +1,3 @@
+fix(design-system/ui): Absorver 13px/15px em text-sm/text-base e substituir te (SL-176)
+
+Os arbitrários abaixo do mínimo utilizável (7px/8px) passam a usar o token text-3xs (10px/13px) nos 9 componentes que os usavam; teste novo trava o piso em src.

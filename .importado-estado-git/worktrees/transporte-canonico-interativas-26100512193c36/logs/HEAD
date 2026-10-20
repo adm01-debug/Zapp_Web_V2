@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213578 -0300	
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213578 -0300	reset: moving to HEAD
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 5cd0c55e822906bf113d78f41c7b9ae1200329e1 Joaquim Ataides <ti@promobrindes.com.br> 1791213589 -0300	cherry-pick: feat(inbox): transporte canônico de botões e listas interativas (R2-INB-003)
+5cd0c55e822906bf113d78f41c7b9ae1200329e1 a9ea27692a1c0a2790190a866ecfb664db7402f5 Joaquim Ataides <ti@promobrindes.com.br> 1791214080 -0300	commit: fix(inbox): contrato Evolution de botões reply/url/call e fim da prop morta de indisponível (R2-INB-003)
+a9ea27692a1c0a2790190a866ecfb664db7402f5 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791214435 -0300	reset: moving to 4913a095d
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 a9d5d6fdb60c886508901bef958303e39d28d286 Joaquim Ataides <ti@promobrindes.com.br> 1791214436 -0300	commit: feat(inbox): transporte canônico de mensagens interativas botões/lista (R2-INB-003)

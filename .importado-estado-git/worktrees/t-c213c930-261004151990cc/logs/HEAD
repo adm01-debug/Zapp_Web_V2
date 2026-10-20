@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791137947 -0300	
+4b97aa57c9ee4140bffb232536c003bfa92f1809 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791137948 -0300	reset: moving to HEAD
+4b97aa57c9ee4140bffb232536c003bfa92f1809 5d6342f3b7f0f1996f5aa60963a50a5df1a7d872 Joaquim Ataides <ti@promobrindes.com.br> 1791138878 -0300	commit: fix(db): RPC canônica de política IP/país e rate limit configurável (R2-AUTH-022)

@@ -1,0 +1,8 @@
+fix(tema): recupera do storage quando o JSON e null (#157)
+
+readStored() deixava passar JSON valido que nao e objeto (ex.: o literal
+"null"): JSON.parse("null") nao lanca, entao o catch nao cobria e o valor
+null chegava a loadThemeConfig, que estourava em `stored.v`
+(TypeError: Cannot read properties of null). Agora readStored so aceita
+objeto (nao-nulo e nao-array); qualquer outro JSON cai para {} e o tema
+recupera o default. Teste vermelho/verde em theme-storage.test.ts.

@@ -1,0 +1,19 @@
+fix(ci/devops): corrige as contagens do #1267 no arquivo do PR #1314 (17→15 funções) (SL-126)
+
+O comentário da migration 20260930300000 declarava "das 17 funções Multiplix que citam
+auth.role(), as outras 15 usam <> 'service_role' THEN RAISE EXCEPTION 'service_role_required'".
+O catálogo mede 15 funções distintas: 13 RPCs já fail-close + estes 2 triggers — é a medição do
+achado A6 do veredicto da auditoria da Onda 3, que reproduzi sobre as 685 migrations de
+160f34052 (o merge do #1314): 15 funções distintas citando auth.role(), 13 com o RAISE.
+
+Por quê: era a contagem errada que o corpo do PR #1314 publicou e que seguia viva no arquivo.
+Correção mínima: só o cabeçalho de comentário do #1267, agora datado e com o critério (contagem
+por função distinta, não por definição em arquivo).
+
+Só comentário: o sql_sha256 da forma canônica (o que o check-migration-drift.mjs compara com o
+ledger) segue idêntico — 3e202413642f3481a2bbe1d615d45629ff2cd81bc21d3986a4ea79dbc9b6cbff;
+muda apenas o file_sha256, e não há exceção pinned no migration-evidence.json para esta versão.
+
+Verificação: scripts/db-audit/multiplix-guards-count-claims.test.mjs (novo) confere a contagem
+declarada contra a medição do veredicto e contra o próprio arquivo — 4/4 passando; vermelho antes
+(17 != 15) e por mutação (17/15 e "as outras 14" voltam a falhar); eslint rc=0.

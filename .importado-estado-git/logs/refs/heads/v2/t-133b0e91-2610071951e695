@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 42f2377e49e75f9d464725b09512ef310cee2871 Joaquim Ataides <ti@promobrindes.com.br> 1791413495 -0300	branch: Created from dia/2026-10-07
+42f2377e49e75f9d464725b09512ef310cee2871 eae63305445d8bf82f57bc7f458fda1d7ce08b5f Joaquim Ataides <ti@promobrindes.com.br> 1791413500 -0300	cherry-pick: test(e2e): cobre a busca global (Ctrl+K), a paleta de comandos e os atalhos
+eae63305445d8bf82f57bc7f458fda1d7ce08b5f aa0742fd570189ed7469aa25fed3873ef3ec63cb Joaquim Ataides <ti@promobrindes.com.br> 1791415050 -0300	commit: test(e2e): refazer 1 do Ctrl+K/atalhos — Ctrl+K alterna e Esc devolve foco viram test.fixme

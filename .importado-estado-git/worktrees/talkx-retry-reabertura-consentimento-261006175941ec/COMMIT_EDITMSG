@@ -1,0 +1,26 @@
+fix(talkx): corpo do retry preserva a validacao de lote do #123 na reabertura (#124)
+
+Reconciliacao com o cartao irmao #123 (R3-DELTA-004, migration
+20261006193650_talkx_retry_lote_ids_inexistentes, branch
+v2/talkx-retry-lote-ids-123-26100616347b08 @ 4e93d970e, na mesma fila do
+integrador): ele recria a MESMA retry_talkx_recipients validando o lote pelo
+conjunto PEDIDO x ENCONTRADO. Como a versao dele e MENOR, ele e aplicado ANTES
+desta migration — um CREATE OR REPLACE copiado so de X031 desfaria a correcao
+dele no banco (o buraco do lote inexistente voltaria) e a campanha 'completed'
+poderia ser reaberta sem nenhum destinatario pendente.
+
+- O corpo da migration passa a incluir o delta do #123
+  (v_pedidos/v_pedidos_nulos/v_validos) e a validacao do lote fica ANTES do gate
+  de reabertura: lote invalido continua dando talkx_retry_recipient_not_found e
+  nulo no array continua invalid_talkx_retry_request.
+- O gate do #124 (p_confirm_relaunch) e o resto do corpo nao mudam.
+- Harness: secao #124 8 prova que o contrato do #123 segue valendo neste corpo;
+  ids de fixture do #124 renomeados para a faixa ...0124-0126, que nao colide
+  com os do #123 (d0...-0004/-0005, e0...-0007/-0008/-0009). 64 PASS, 0 FALHA.
+- Colisao sinalizada em kanban_comment (hotspot) para o integrador: o merge dos
+  dois ramos conflita no mesmo arquivo de teste e o GREEN-5 do #123 espera
+  reabrir campanha 'completed' sem confirmacao (comportamento que o #124 remove
+  de proposito) — precisa de decisao na integracao.
+
+A revisao aprovada cobriu o commit anterior (c99141ef0); este commit ADICIONA
+apenas o delta do #123 e as assercoes que o provam — o gate do #124 nao mudou.

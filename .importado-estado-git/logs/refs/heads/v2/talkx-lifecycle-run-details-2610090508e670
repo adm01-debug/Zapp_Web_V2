@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791533324 -0300	branch: Created from dia/2026-10-09
+09cac15983207293252c5a4602e8b347bd4b8c91 e4c08d4205fd37f07313e013acba26084a035847 Joaquim Ataides <ti@promobrindes.com.br> 1791533412 -0300	commit: chore(talk-x): traz para a base o hook unico do ciclo de vida e o teste (TL-054A2)
+e4c08d4205fd37f07313e013acba26084a035847 6e0faae5cef27de96d36186df11745f7de71ce61 Joaquim Ataides <ti@promobrindes.com.br> 1791533606 -0300	commit: feat(talk-x): hook lifecycle aceita executor proprio e detalhes do wizard (TL-054A2)
+6e0faae5cef27de96d36186df11745f7de71ce61 d4230304b073a5900449db3e13842a02dd92f332 Joaquim Ataides <ti@promobrindes.com.br> 1791566887 -0300	rebase (finish): refs/heads/v2/talkx-lifecycle-run-details-2610090508e670 onto cdf3e975ea5f37a2ec9d90dffa14043660b5f658

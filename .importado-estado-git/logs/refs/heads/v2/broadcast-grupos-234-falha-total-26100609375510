@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290253 -0300	branch: Created from dia/2026-10-06
+33df2adf85cbf443494e294d1c25be40deacfac9 e0e855bb3524b53f8a025f11a3ef165a08f8a944 Joaquim Ataides <ti@promobrindes.com.br> 1791290263 -0300	cherry-pick: fix(grupos): preservar texto e destinatarios do broadcast quando todos os envios falham (#234)
+e0e855bb3524b53f8a025f11a3ef165a08f8a944 5b390092b526d0cc2e5e07535081ed0605a56f52 Joaquim Ataides <ti@promobrindes.com.br> 1791290700 -0300	commit: fix(grupos): preservar broadcast de grupos só na falha total (#234)

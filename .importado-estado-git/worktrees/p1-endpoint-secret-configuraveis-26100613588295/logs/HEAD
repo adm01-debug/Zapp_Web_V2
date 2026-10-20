@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305892 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305893 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a9dad8b5a125454d8799e8e1e90b41d02a97562e Joaquim Ataides <ti@promobrindes.com.br> 1791306287 -0300	commit: fix(db): vincula endpoint e nome de secret de ai_providers com CHECK convalidado (#20)

@@ -1,0 +1,9 @@
+fix(multiplix): rascunho do monitor inicia pelo confirm (F51/MX01) - TL-029
+
+O botao "Iniciar agora" de um rascunho chamava multiplix-send/start direto:
+o worker processa multiplix_delivery_items e a fila nao existia, entao o
+disparo entrava em 'sending' com destinatarios pendentes e nao enviava nada.
+Agora o rascunho passa pelo confirm da edge multiplix-dispatch (revalida F49,
+congela publico/blocos, dispatch_version++ e materializa a fila na MESMA
+transacao), idempotente por (dispatch_id, dispatch_version): 5 cliques = 1
+execucao. "Retomar" de pausado continua no worker (a fila ja existe).

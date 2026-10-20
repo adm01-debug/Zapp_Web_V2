@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 Joaquim Ataides <ti@promobrindes.com.br> 1791354526 -0300	
+37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 Joaquim Ataides <ti@promobrindes.com.br> 1791354526 -0300	reset: moving to HEAD
+37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 da58ca66b5725ce49015a67916b216089dad1657 Joaquim Ataides <ti@promobrindes.com.br> 1791354539 -0300	cherry-pick: fix(tarefas): reagendar o alarme pelo Salvar rearma a tarefa ja notificada (#420)
+da58ca66b5725ce49015a67916b216089dad1657 60739bd39f40f0509259d0da2b4403d7d8b45139 Joaquim Ataides <ti@promobrindes.com.br> 1791355416 -0300	commit: test(tarefas): prova o gatilho de forja ativo e o zera-alarme de verdade (#420)
+60739bd39f40f0509259d0da2b4403d7d8b45139 cb1cffd65928ed4f02f08dba1444f3fe6f3595fc Joaquim Ataides <ti@promobrindes.com.br> 1791356094 -0300	commit: test(tarefas): registra no cabecalho do teste o caminho canonico scripts/db-audit (#420)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297671 -0300	branch: Created from dia/2026-10-06
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac 6b7b923b8487c82e298cd9fa10ec963381cb1cd8 Joaquim Ataides <ti@promobrindes.com.br> 1791298320 -0300	commit: fix(arquivos): miniatura renova pelo locator a assinatura em lote que falha

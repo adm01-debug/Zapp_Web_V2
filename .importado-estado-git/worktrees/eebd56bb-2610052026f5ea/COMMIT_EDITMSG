@@ -1,0 +1,9 @@
+fix(conexoes): isola identidade de resposta e polling no diálogo de QR Code
+
+R2-API-039: connectInstance e o polling de status aplicavam o resultado ao
+diálogo atual sem conferir a conexão/geração, então a resposta atrasada de A
+podia exibir o QR de A sob B, marcar B como conectada e ainda anular a
+referência do intervalo de B (polling zumbi após fechar). Cada abertura,
+refresh ou fechamento agora grava de forma síncrona uma identidade (conexão +
+geração); respostas e timers só alteram o estado enquanto a identidade em que
+nasceram continuar atual, e cada timer só libera a própria referência.

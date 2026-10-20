@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510157 -0300	
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510158 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 d581eb6ac7a24f1919835c356d70add143e02252 Joaquim Ataides <ti@promobrindes.com.br> 1791510281 -0300	cherry-pick: feat(auth): aplica política de rede no requireAuth das Edges (R2-AUTH-022)
+d581eb6ac7a24f1919835c356d70add143e02252 9a991d576c992b2603c0d34da3b47149f3488b53 Joaquim Ataides <ti@promobrindes.com.br> 1791510281 -0300	cherry-pick: fix(auth): requireAuth devolve 503 quando o client de política não é criado
+9a991d576c992b2603c0d34da3b47149f3488b53 d54a7cc08a22dc2dfa8026240156b8a4ca754678 Edgar <ti@promobrindes.com.br> 1791510643 -0300	commit: test(edge): stubs de handler respondem à política de rede do requireAuth
+d54a7cc08a22dc2dfa8026240156b8a4ca754678 0b814c9ce65677472a5d9297efc925fb2894a46a Edgar <ti@promobrindes.com.br> 1791510659 -0300	commit (amend): test(edge): stubs de handler respondem à política de rede do requireAuth

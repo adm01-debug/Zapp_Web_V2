@@ -1,0 +1,10 @@
+fix(inbox/chat): README do Team Chat segue o código da dia (SL-081)
+
+O README herdado do SL-081 citava nomes que a dia/2026-10-09 mudou e por isso
+deixava o contratosModulo.test.ts VERMELHO:
+- useTeamUnreadCount.ts nao existe mais (F83 substituiu por useTeamUnreadTotal,
+  que so le o cache do inbox, sem canal) -> linha do canal team-unread e a
+  mencao no paragrafo de eventos saem do README;
+- useDepartmentWhatsAppCredentials passou a chamar a RPC
+  get_department_whatsapp_mode -> linha da tabela acompanha.
+Pendencia conhecida de department_whatsapp_configs ajustada para 'upsert'.

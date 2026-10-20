@@ -1,0 +1,1 @@
+fix(ai-proxy): diagnostico exige admin, limita conteudo/modelo/orcamento e registra consumo (R2-API-032)

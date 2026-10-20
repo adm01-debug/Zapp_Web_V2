@@ -1,0 +1,1 @@
+test(inbox/chat): zera o throttle entre os casos do envio outbound (SL-070)

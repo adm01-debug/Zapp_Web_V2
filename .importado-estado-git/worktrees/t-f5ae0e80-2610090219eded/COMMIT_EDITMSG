@@ -1,0 +1,16 @@
+fix(talk-x): Criar os campos de valor por tipo: vários valores, período, data, moeda e sim/não (TL-131)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick b281b00fc fix(talk-x): Criar os campos de valor por tipo: vários valores, período, data, moeda e sim/não (TL-131)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-f5ae0e80-2610090219eded' on '1098da5a9'.
+#
+# Changes to be committed:
+#	new file:   src/components/talkx/__tests__/RuleValueInput.test.tsx
+#	modified:   src/components/talkx/segments/RuleRow.tsx
+#	new file:   src/components/talkx/segments/RuleValueInput.tsx
+#

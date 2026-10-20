@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241028 -0300	
+c773b85ea000696fbcd37c6368f87978de8bebba c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241029 -0300	reset: moving to HEAD
+c773b85ea000696fbcd37c6368f87978de8bebba 00c755316deed502e5328155ab558abee718b1e9 Joaquim Ataides <ti@promobrindes.com.br> 1791241064 -0300	cherry-pick: fix(filas): deriva analytics de fila de dados medidos, nao de estimativas fixas (R2-QUE-001)
+00c755316deed502e5328155ab558abee718b1e9 51bd8db882685bcad4b73f6229338fe8de2c8094 Joaquim Ataides <ti@promobrindes.com.br> 1791241064 -0300	cherry-pick: fix(filas): calcula analytics sobre toda a fila
+51bd8db882685bcad4b73f6229338fe8de2c8094 f73d1305f653e8960060bcdea61ce910072f7d0a Joaquim Ataides <ti@promobrindes.com.br> 1791241064 -0300	cherry-pick: fix(filas): pagina analytics sobre toda a fila
+f73d1305f653e8960060bcdea61ce910072f7d0a 2ddc77c15344525d89ef78dca0269e596da4aa48 Joaquim Ataides <ti@promobrindes.com.br> 1791241278 -0300	commit: test(filas): alinha data local da paginação de analytics

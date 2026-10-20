@@ -1,0 +1,6 @@
+fix(telefonia): verifica e prova o aceite do T79 (eslint-baseline em calls/communications/sip) (SL-248)
+
+Sem mudanca de codigo: o aceite da fonte (nenhuma entrada
+src/components/calls|src/hooks/communication/useSip|src/hooks/sip no
+baseline) esta cumprido e o ESLint real na ponta nao acusa violacao
+nesses 61 arquivos. Prova em .tmp/relato.md.

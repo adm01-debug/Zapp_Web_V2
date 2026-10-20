@@ -1,0 +1,7 @@
+test(multiplix): e2e de responsividade nas 4 viewports do F87 (TL-046)
+
+Mede o documento e, dentro dos dois componentes do aceite (MultiplixMonitor e o
+dialogo do composer), procura barra de rolagem horizontal - necessaria porque o
+app shell tem overflow-x hidden no main/body e a medida do documento sozinha
+seria cega para conteudo largo demais. Hermetico: sessao falsa, storageState
+zerado, app shell mockado e as Edges do modulo por page.route.

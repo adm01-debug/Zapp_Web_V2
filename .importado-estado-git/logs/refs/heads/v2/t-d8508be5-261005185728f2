@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 bd0e6794fe1aebfffe77783f97ab99542e569f20 Joaquim Ataides <ti@promobrindes.com.br> 1791237436 -0300	branch: Created from dia/2026-10-05
+bd0e6794fe1aebfffe77783f97ab99542e569f20 f72a44bf693c65156a56d1baabb3128601151a63 Joaquim Ataides <ti@promobrindes.com.br> 1791237798 -0300	commit: fix(telefonia): reconciliacao Bitrix usa identidade com DDD e end_reason canonico

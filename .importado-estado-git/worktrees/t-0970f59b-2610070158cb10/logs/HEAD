@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 2feceb06c79e013544cd76efdf7363eb311dd7d9 Joaquim Ataides <ti@promobrindes.com.br> 1791349100 -0300	
+2feceb06c79e013544cd76efdf7363eb311dd7d9 2feceb06c79e013544cd76efdf7363eb311dd7d9 Joaquim Ataides <ti@promobrindes.com.br> 1791349101 -0300	reset: moving to HEAD
+2feceb06c79e013544cd76efdf7363eb311dd7d9 2feceb06c79e013544cd76efdf7363eb311dd7d9 Joaquim Ataides <ti@promobrindes.com.br> 1791349160 -0300	reset: moving to 2feceb06c79e013544cd76efdf7363eb311dd7d9
+2feceb06c79e013544cd76efdf7363eb311dd7d9 dfcf47fb6a51f2c8c3e9be19df4ae187e10afccd Joaquim Ataides <ti@promobrindes.com.br> 1791349160 -0300	cherry-pick: fix(multiplix-dispatch): le o publico inteiro em resumo/estimativa (R2-API-030)
+dfcf47fb6a51f2c8c3e9be19df4ae187e10afccd d8a3126c308d5baf20cdd01f6b68bdc2e84bcfbb Joaquim Ataides <ti@promobrindes.com.br> 1791349160 -0300	cherry-pick: fix(multiplix-dispatch): paginacao para no total autoritativo, sem pedir a pagina alem do fim

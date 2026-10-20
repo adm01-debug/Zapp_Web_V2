@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517663 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 37fedef4a17d5616809732eaa384ebd14ebcd1b8 worker <worker@local> 1791518217 -0300	commit: fix(e-mail): Outlook/Microsoft Graph, tracking pixel, Resend + IMAP (SL-185)
+37fedef4a17d5616809732eaa384ebd14ebcd1b8 4da4a09e531dff19953ceb532dafc73aab7c02b3 Joaquim Ataides <ti@promobrindes.com.br> 1791543836 -0300	rebase (finish): refs/heads/v2/sl-185-email-26100900476305 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+4da4a09e531dff19953ceb532dafc73aab7c02b3 e17c3e82934e4e287a1a209a4e05ded6a672f8eb Joaquim Ataides <ti@promobrindes.com.br> 1791543845 -0300	commit: revert(e-mail): remove o cliente de tracking que dependia de Edge inexistente (SL-185)

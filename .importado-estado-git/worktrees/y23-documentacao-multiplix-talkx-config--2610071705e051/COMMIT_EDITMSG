@@ -1,0 +1,3 @@
+docs(modulos): Multiplix, Talk X, Configurações, Notificações e Segurança
+
+Documento de módulo Y23 (docs/design/MODULO_MULTIPLIX_TALKX_CONFIG_SEGURANCA.md) fiel ao código do dia: telas, fluxos, dados (tabelas/colunas/RPC/Edge Functions), permissões, estados de erro, limites, testes e planos. Só o arquivo do cartão entra no diff.

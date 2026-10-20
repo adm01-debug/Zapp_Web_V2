@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490048 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc fa28b26416d21c0c58ec18b5451e78959fdb83a7 Joaquim Ataides <ti@promobrindes.com.br> 1791490750 -0300	commit: fix(performance): Cache dos browsers Playwright (SL-096)

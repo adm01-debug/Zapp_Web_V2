@@ -1,0 +1,32 @@
+docs(ia): confirma L7 fechado pela migration 20260930200000 (SL-065)
+
+Por quê: o inventário da 2ª leva marcava o item como não verificável ("Escolha de
+conexão no envio sem distinção de fila/departamento", L7 da IA-004). Conferido no
+código da ponta do dia: a lacuna JÁ ESTÁ FECHADA — a migration
+20260930200000_enforce_enqueue_connection_scope.sql (:102-131) repõe
+public.enqueue_outbound_message com a guarda de escopo de conexão por fila (42501
+whatsapp_connection_out_of_scope), é a última definição da RPC e o único caminho de
+envio do navegador (src/services/outbound-message.service.ts:110). Nenhuma linha de
+código, teste ou migration mudou: este commit registra a verificação na própria fonte
+citada pelo cartão (docs/ia/IA-004 §7.1), no mesmo formato do cartão irmão SL-067.
+
+Verificação: bash scripts/db-audit/retry-disposable-postgres-test.sh bash
+scripts/db-audit/enqueue-connection-scope.test.sh em PostgreSQL 17 descartável =
+10 PASS / 0 FAIL (BLOCO A = o defeito antes da migration; BLOCO B = a recusa depois,
+com B3/B4 permitidos e B7 provando que a guarda do L9 continua valendo), passo do CI
+em .github/workflows/db-guard.yml:350-353; zapp-verify . --rapido verde (exit 0).
+
+Plano: docs/plans/PLANO_SEGUNDA_LEVA_CARTOES_2026-10-08.md (cartão SL-065)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 2de6462b9 docs(ia): confirma L7 fechado pela migration 20260930200000 (SL-065)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-42d0cac9-2610081841581d' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   docs/ia/IA-004-matriz-autorizacao.md
+#

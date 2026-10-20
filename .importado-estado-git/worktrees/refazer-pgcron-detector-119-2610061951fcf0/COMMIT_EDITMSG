@@ -1,0 +1,20 @@
+chore(db): importa o retrato oficial da producao (PR #1898) para o portao banco_local
+
+Por que: o retrato versionado da producao (supabase/schema-manifest.json) estava
+de 04/10 (b5e2c0741) e a producao recebeu, em 05/10, o lote de 8 migrations
+(ledger 785 -> 793). Sem o retrato atualizado, o passo banco_local do zapp-verify
+acusa ~126 diferencas que nenhuma migration PENDENTE pode explicar, e reprova
+todo cartao que traz migration (logs do integrador de 06/10: 11:20, 11:36, 12:05,
+12:21, 13:29, 15:43, 16:15, 16:33).
+
+Como: os dois arquivos sao copia byte a byte do artefato gerado pelo fluxo confiavel
+(db-live-guard/types-sync) contra o banco oficial e ja verificado: PR #1898
+(merge 99ff88bf2, 06/10 17:31 -03) e run DB Live Guard 37527051505, verde. Nada foi
+gerado offline: nenhum arquivo foi fabricado a partir do banco local.
+
+Prova local (banco local refazer119, mesma copia): zapp-db-local check passa de
+126 linhas de diferenca (84 sem prova -> FALHOU com a mesma mensagem do integrador)
+para 1 linha (functions|f:talkx_engine_alerts()), que a migration pendente deste
+cartao cita -> motivo 'ok' -> AVISO/VERDE.
+
+Cartao: t_68277fb7 (#119).

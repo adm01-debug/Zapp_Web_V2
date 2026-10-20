@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791527128 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791527129 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 27e18cff0a7a474b0312e6b3cd08832e02da7ad9 Joaquim Ataides <ti@promobrindes.com.br> 1791527328 -0300	commit: perf(ci): separa framer-motion do chunk vendor-ui (codeSplitting)
+27e18cff0a7a474b0312e6b3cd08832e02da7ad9 b35cc2ceb9c3cd10f66d66afc2373b1eeed4cfdc Joaquim Ataides <ti@promobrindes.com.br> 1791527330 -0300	cherry-pick: fix(components): tirar o runtime de animacao JS do caminho inicial (SL-103A)
+b35cc2ceb9c3cd10f66d66afc2373b1eeed4cfdc ebb77e1bd6508026e5b584e78b05a8a46bbd3870 Joaquim Ataides <ti@promobrindes.com.br> 1791527330 -0300	cherry-pick: perf(components): tirar o framer-motion do skip-link inicial (SL-103C)
+ebb77e1bd6508026e5b584e78b05a8a46bbd3870 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791527402 -0300	reset: moving to fd6847638

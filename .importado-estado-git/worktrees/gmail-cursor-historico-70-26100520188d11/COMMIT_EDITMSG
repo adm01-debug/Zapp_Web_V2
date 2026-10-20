@@ -1,0 +1,8 @@
+fix(edge): full sync do cron Gmail nao ancora cursor com falha parcial
+
+R2-API-011 (2a passada): o ramo de full sync do gmail-cron-sync gravava
+history_id=profile.historyId mesmo com mensagens falhando na sincronizacao,
+ancorando o cursor com eventos nao aplicados atras dele. Agora falha parcial
+mantem history_id nulo (ponto recuperavel: a conta repete o full sync),
+sync_status=error e last_error, mesma disciplina do gmail-sync sync-inbox.
+Teste novo prova vermelho->verde. deployment-manifest.json regenerado.

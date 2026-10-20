@@ -1,0 +1,10 @@
+test(rls): recusar DELETE de messages por ramo permissivo extra
+
+A validacao de DELETE de messages comparava o predicado por trechos
+(regex), entao `USING (true OR <contrato>)` passava apesar de abrir
+acesso irrestrito. Agora `deleteSemContrato` compara a FORMA canonica:
+quebra o predicado efetivo (predicadoEfetivo) em ramificacoes de OR de
+nivel zero, normaliza (normSql), ordena e exige igualdade com o contrato
+vigente lido do schema real (SELECT de messages) — ramo a mais, `true`,
+`1 = 1` ou ausencia de cobertura explicita reprovam. Regressivo novo com
+`true OR <contrato>` prova a falha (os tres trechos continuam presentes).

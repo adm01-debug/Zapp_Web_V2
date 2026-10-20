@@ -1,0 +1,94 @@
+EVIDENCIA — t_24415f97 — verificacao independente das rotas de conferencia da BASE
+gerada em 2026-10-07T11:28:07-03:00
+
+1) ARQUIVO VERIFICADO
+   19d60d07a0a7f4cad38d3a6500896e09  /home/joaquim_ataides/arquitetura-v2/integrador/integrar.sh
+   510 linhas; bash -n: OK
+   ExecStart do servico que o roda: ExecStart=%h/arquitetura-v2/integrador/integrar.sh
+   git status:  M integrador/integrar.sh
+   referencia (anterior, sem a correcao): d48e0769b5f5eba96546d22ad74f551e 470 linhas
+
+2) PONTOS QUE RODAM zapp-verify (arquivo vivo)
+   167:  timeout 1200 zapp-verify full "$INT" $NOME >"$ARQ" 2>&1 9>&-; RC=$?
+   187:    timeout 1500 zapp-verify full "$INT" >"$DIRLOG/.verificacao-da-sonda.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-da-sonda.log" "$B0" || return 1
+   256:    if timeout 1500 zapp-verify full "$INT" >"$DIRLOG/.verificacao-do-lote.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-do-lote.log" "$B0"; then
+   425:  else timeout 1200 zapp-verify full "$INT" $NOMEBD >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?; fi
+   429:    sleep 20; timeout 1200 zapp-verify full "$INT" $NOMEBD >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?
+   pontos antigos da BASE (arquivo de referencia):
+   149:    timeout 1500 zapp-verify full "$INT" >"$DIRLOG/.verificacao-da-sonda.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-da-sonda.log" "$B0" || return 1
+   218:    if timeout 1500 zapp-verify full "$INT" >"$DIRLOG/.verificacao-do-lote.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-do-lote.log" "$B0"; then
+   257:    if timeout 1200 zapp-verify full "$INT" >"$DIRLOG/.verificacao-da-base.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-da-base.log"; then
+   386:  else timeout 1200 zapp-verify full "$INT" $NOMEBD >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?; fi
+   390:    sleep 20; timeout 1200 zapp-verify full "$INT" $NOMEBD >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?
+   439:      if timeout 1200 zapp-verify full "$INT" >"$DIRLOG/.verificacao-da-base.log" 2>&1 9>&- || reteste_isolado "$DIRLOG/.verificacao-da-base.log"; then : > "$BOK"; else : > "$BRED"; fi
+
+3) PARES REAIS USADOS (copia de referencia, somente leitura)
+   COM migration: 689345d7f -> supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql
+   SEM migration: 05859cedf -> []
+
+4) MATRIZ (argv efetivo de cada cenario + rota escolhida)
+   --- p1-pontoA-COM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   --- p10-pontoB-SEM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   --- p11-pontoB-SEM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+      log: 2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+   --- p12-pontoB-COM-base-de-hoje ---
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<up <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-verify   argc=3 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      log: 2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+   --- p2-pontoA-COM ---
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<up <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-verify   argc=3 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      log: 2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+   --- p3-pontoA-SEM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   --- p4-pontoA-SEM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+      log: 2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+   --- p5-pontoA-MISTO ---
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<up <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-verify   argc=3 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      log: 2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+   --- p6-pontoA-SHA-RUIM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+      log: 2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+   --- p7-pontoA-BASE-RUIM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+      log: 2026-10-07T11:26:50-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+   --- p8-pontoB-COM ---
+      zapp-verify   argc=2 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   --- p9-pontoB-COM ---
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<up <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-verify   argc=3 argv=<full <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      zapp-db-local argc=3 argv=<down <SB>/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+      log: 2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+
+5) EFEITO DA ROTA SEM NOME (zapp-verify real, ~/.local/bin/zapp-verify linha 35-37 e 178)
+     # sem nome não existe conjunto: o banco NÃO foi verificado. Antes isto saía VERDE em silêncio.
+     printf 'AVISO   %-12s NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)\n' banco_local | tee -a "$RES"
+   if [ -z "$NOME" ]; then echo "VERIFY: VERDE SEM BANCO ($(( $(date +%s)-T_INI ))s) — o banco NÃO foi verificado; registros em $LOG" | tee -a "$RES"
+   log REAL da base de 07/10 10:52 (rodada anterior a correcao):
+   5:AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   8:VERIFY: VERDE SEM BANCO (307s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/ef03bcc8d522
+
+6) MANIFESTO DA EXTRACAO
+   arquivo vivo : /home/joaquim_ataides/arquitetura-v2/integrador/integrar.sh
+     md5=19d60d07a0a7f4cad38d3a6500896e09 linhas=510
+     cabecalho.sh   <- linhas 43-46     (log, campo)
+     reteste.sh     <- linhas 103-133   (reteste_isolado)
+     conferencia.sh <- linhas 144-171   (CONJUNTO_BASE/ponta_tem_migration/conferir_base)
+     pontoA.sh      <- linhas 289-306   (ponto A: base do dia a reverificar)
+     pontoB.sh      <- linhas 476-481   (ponto B: base após cartão vermelho)
+   referencia (sem a correção): <SB>/pristine.sh
+     md5=d48e0769b5f5eba96546d22ad74f551e linhas=470
+     pristino-pontoA.cmd <- linha 257 do pristine
+     pristino-pontoB.linha <- linha 439 do pristine

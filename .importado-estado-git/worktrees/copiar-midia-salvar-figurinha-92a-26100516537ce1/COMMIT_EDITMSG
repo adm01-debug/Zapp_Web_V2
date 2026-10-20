@@ -1,0 +1,6 @@
+fix(inbox): copiar mídia recebida para o bucket stickers ao salvar figurinha
+
+Ao salvar uma figurinha recebida na biblioteca, a mídia é baixada e
+publicada em caminho próprio no bucket `stickers`; o INSERT passa a usar
+somente a URL da cópia, nunca a `image_url` da mensagem em whatsapp-media.
+Falha de cópia/insert não anuncia sucesso e compensa o objeto publicado.

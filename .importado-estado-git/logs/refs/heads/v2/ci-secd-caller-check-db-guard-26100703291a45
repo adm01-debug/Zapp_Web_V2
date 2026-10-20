@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 Joaquim Ataides <ti@promobrindes.com.br> 1791354568 -0300	branch: Created from dia/2026-10-07
+37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 3c3af1bc4a6fdb7cf4401c51e2a6ef0e6e86718f Joaquim Ataides <ti@promobrindes.com.br> 1791354573 -0300	cherry-pick: fix(db): exige checagem do chamador nas 13 funções SECURITY DEFINER expostas (M-DB-05)
+3c3af1bc4a6fdb7cf4401c51e2a6ef0e6e86718f fc54cb244c6c85aefcffcda880845ce691746c4e Joaquim Ataides <ti@promobrindes.com.br> 1791354573 -0300	cherry-pick: fix(db): fecha anon/PUBLIC nas 5 DEFINER e corrige as provas do M-DB-05 (#474)
+fc54cb244c6c85aefcffcda880845ce691746c4e c8b1c222b09d07a9f4adec7ba9695befd7a68730 Joaquim Ataides <ti@promobrindes.com.br> 1791354673 -0300	commit: fix(ci): registra o teste secd-caller-check no db-guard.yml (#474)

@@ -1,0 +1,1 @@
+fix(banco): tolera pg_cron local sem alter_job

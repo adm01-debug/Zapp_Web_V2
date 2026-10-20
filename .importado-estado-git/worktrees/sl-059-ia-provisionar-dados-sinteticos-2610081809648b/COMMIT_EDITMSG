@@ -1,0 +1,34 @@
+fix(ia): Provisionar dados sintéticos e 4 perfis de ensaio (SL-059)
+
+O item IA-010 está NAO_IMPLEMENTADA com o "o que falta" exato: "Provisionamento
+depende de autorização no banco canônico". Escrever no banco canônico é escrita em
+PRODUÇÃO e este cartão proíbe produção, migration e DDL. A correção mínima que
+fecha a lacuna SEM violar isso é o artefato de provisionamento: um gerador
+determinístico que produz o DML do §2 da IA-010 sem tocar banco nenhum.
+
+- scripts/ia/ensaio-provisionamento.mjs: gera o plano e o DML do §2 — 6
+  departamentos com 1 fila cada (cores só da paleta de CreateQueueDialog.tsx), 36
+  contatos, 18 conversas de texto e 6 conversas longas de 216 mensagens (>200 da
+  IA-063), 1374 mensagens; tudo marcado com ENSAIO-, domínio de teste
+  ensaio.invalid e telefone em +5500***** (fora de faixa real). O DML é aditivo,
+  idempotente (todo insert com on conflict) e a reversão filtra só por prefixo.
+  O gerador não abre conexão: --sql/--remover imprimem; a única aplicação
+  autorizada a um agente é no banco LOCAL da cópia (zapp-db-local psql), e
+  conferirAlvoLocal recusa host que não seja local.
+- Sem inventar o que não existe: o 4º perfil (somente leitura) fica PENDENTE (o
+  enum public.app_role tem só admin/supervisor/agent — SL-058) e o caso de borda
+  "mesmo telefone" (IA-098) fica BLOQUEADO, provado pelo índice único
+  contacts_phone_key do retrato canônico.
+
+Prova: tests/contracts/sl059-ia010-provisionamento.contract.test.ts — 11/11;
+vermelho com o gerador ausente (Cannot find module) e verde com ele; as
+conferências cruzam o plano com supabase/schema-manifest.json (colunas), com a
+migration que cria o enum de papéis e com a paleta real do sistema. Antes da
+edição do documento o contrato ficava 2 vermelhos (estado não registrado), verde
+depois. zapp-verify . --rapido VERDE; check-test-inventory OK.
+
+docs/ia/IA-010-ambiente-de-ensaio.md: §5 passa a [~] e §6 registra o estado real
+(artefato pronto, execução no canônico pendente de autorização) — mesma edição de
+índice em docs/ia/README.md, para o índice não ficar mentindo.
+
+Cartão V2: t_faaf1cc6

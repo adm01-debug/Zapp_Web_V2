@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791449853 -0300	branch: Created from dia/2026-10-08
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a f6417a8b2b0b01c458637909296539bc80c772e8 Joaquim Ataides <ti@promobrindes.com.br> 1791455789 -0300	merge dia/2026-10-08: Fast-forward
+f6417a8b2b0b01c458637909296539bc80c772e8 5ff1b79d49722fb3b930e6e9b90e31884c0a01bc Joaquim Ataides <ti@promobrindes.com.br> 1791455860 -0300	commit (cherry-pick): fix(tarefas): Salvar espera a escrita e não dispara estado e campos em paralelo (#419)

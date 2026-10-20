@@ -1,0 +1,4 @@
+test(edge): atualiza inventário para prova TRA-003
+
+# Conflicts:
+#	tests/contracts/_adv_edge_legacy_producers.test.ts

@@ -1,0 +1,13 @@
+test(e2e): host e chave de sessao saem da fonte unica, nao de literal
+
+catalog.spec.ts, fixtures/mapa-mocks.ts e fixtures/talkx-demo.ts fixavam o
+endereco do projeto oficial e a chave de sessao derivada dele. Com o app
+apontado para o banco local de desenvolvimento, a sessao falsa e a rota de
+bloqueio de rede nao casavam e os projetos simulados falhavam em bloco.
+
+Agora os tres leem e2e/fixtures/supabase-env.ts. Sem override os valores sao
+identicos aos literais antigos (conferido); com E2E_SUPABASE_URL_OVERRIDE
+seguem o banco local. Medido contra o banco local: projetos simulados em
+chromium de 43 falhas para 1.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>

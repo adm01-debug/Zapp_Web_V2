@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332551 -0300	
+f8309fb2679055122550ca345e0a90edf6e34853 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332552 -0300	reset: moving to HEAD
+f8309fb2679055122550ca345e0a90edf6e34853 bb06be1d9d771cfa9619fc7968691e1b978a7039 Joaquim Ataides <ti@promobrindes.com.br> 1791333580 -0300	commit: fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)

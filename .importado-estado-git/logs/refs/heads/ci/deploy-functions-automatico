@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 99aa354f5e628c215aeced71892ddbb0e119904d Joaquim Ataides <ti@promobrindes.com.br> 1791374886 -0300	branch: Created from origin/main
+99aa354f5e628c215aeced71892ddbb0e119904d d793ef8dda3ae042de85b37c8981b9fee2c8f05a Joaquim Ataides <ti@promobrindes.com.br> 1791374915 -0300	commit: ci(edge): volta o deploy automatico das Edge Functions no push da main
+d793ef8dda3ae042de85b37c8981b9fee2c8f05a 0dfc9331ef0bdc35c1fc074c4e175e1d8f6bcfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791375122 -0300	commit: docs(ci): regenera docs/ci/README.md com o novo gatilho do deploy de Edge Functions

@@ -1,0 +1,14 @@
+fix(inbox): trata insert rejeitado ao salvar figurinha na biblioteca (#332)
+
+Item 332 / R2-INB-038 re-pin. A confirmação de sucesso só depois de um insert
+sem erro já existia (commit e8a21d131, #92A); o que faltava era o caminho em que
+a promessa do insert REJEITA em vez de resolver com { error } — nele a cópia
+recém-publicada no bucket ficava órfã, porque a compensação só rodava dentro do
+`if (insertError)`.
+
+- MessageBubble.tsx: captura as duas formas de falha e leva as duas à mesma
+  compensação (storage.remove) antes de propagar para o toast destrutivo.
+- Teste novo: insert com mockRejectedValue → sem toast de sucesso, com toast de
+  erro e com o objeto publicado removido (vermelho antes, verde depois).
+
+Cartão: t_64261525

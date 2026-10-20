@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "/root/grill_me_primary_review",
+  "status": "COMPLETE_FINITE_SHELL_READING",
+  "counts": {
+    "assigned_files": 13,
+    "assigned_lines": 3608,
+    "adjudicated": 13,
+    "pending": 0,
+    "scripts_executed": 0,
+    "sql_executed": 0
+  },
+  "files": [
+    {
+      "path": "scripts/db-audit/conversation-analyses-authorization.test.sh",
+      "line_start": 1,
+      "line_end": 310,
+      "source_sha256": "be3da53b8efaf5157e920b44f8c9d57ae66b0a391e6c334b29894f2206b4a05b",
+      "git_blob_sha": "976c95d60c7c8d102be4f5dd8353cd6a8290a2e4",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          310
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Harness PG17 com migration real fixa, estado anterior/semente reconstruídos, negações com erro esperado e contagens persistidas, controles de agente próprio/admin/service e revalidação de SELECT.",
+        "limits": "Não executado. Predicados de visibilidade são reconstruídos no fixture; get_visible_agent_ids só retorna perfil próprio. Não aplica cadeia inteira nem testa fila com membership; gravação de serviço não chama Edge. Imagem por tag, cleanup por nome com PID e sem rótulo de ownership.",
+        "runner": "set -Eeuo pipefail, ON_ERROR_STOP; expect_error exige status não zero e mensagem; readiness em duas consultas e trap remove container/temporário."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/enqueue-connection-scope.test.sh",
+      "line_start": 1,
+      "line_end": 391,
+      "source_sha256": "5af89516a3bd1ec22cc407f7d7e8df31493d53d9fee06e7c9ca4fba22fbe4753",
+      "git_blob_sha": "6dc7e1dc6f1a646212145a90b2bfc0a621aa2fef",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          391
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Migration real aplicada após reprodução do estado anterior. Verifica recusa por escopo, ausência de mensagem após recusa, conexão sem fila/atribuída e send_messages; total final quatro mensagens.",
+        "limits": "Não executado. Visibilidade de contato é stub SELECT true. Controle B3 usa contato já atribuído à mesma conexão, logo não isola membership; ADM também pertence à fila e usa contato atribuído, portanto B4 não isola override de admin. Não prova fallback concorrente ou matriz completa atual.",
+        "runner": "set -Eeuo pipefail, ON_ERROR_STOP; helpers exigem erro/valor, container PID e temporário removidos por trap."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-escalonamento.test.sh",
+      "line_start": 1,
+      "line_end": 120,
+      "source_sha256": "453b7eadb75051fdda62b00bd84aba1d1b5604c4720348b1141da1ef56457cc6",
+      "git_blob_sha": "0136d8bbee837cd35670ce179fbe98008fa14ea5",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          120
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Aplica migration fornecida, verifica nove valores de schedule, preserva três jobs por minuto, reaplicação e rollback textual completos, além de mensagem para job ausente.",
+        "limits": "Não executado. cron.job/alter_job são simulados em PG; não instala pg_cron. TMPDIR não é inicializado no script, e linha 91 com set -u depende de ambiente; arquivo jobs-medir.txt é fixo e não removido. A contagem de nove schedules não mapeia job a schedule, ESPERADO fica sem uso. Etapa C só confere retorno do helper, não redução numérica entre antes/depois.",
+        "runner": "set -euo pipefail e FALHAS final; Docker por PID com remoção antecipada; trap só container. Args exigem caminho de migration, tag de imagem alterável."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/public-api-disable.test.sh",
+      "line_start": 1,
+      "line_end": 80,
+      "source_sha256": "fff9e7e8e09620e13449d134499858cbab55684de4c6610a730d9cf5922e56f8",
+      "git_blob_sha": "39046c022f52d96661226e7027b79af63b89ba87",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          80
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Aplica migration real de retirada de token, preserva outra configuração, exige constraint validada, nega reinserção e reaplica para idempotência.",
+        "limits": "Não executado. Tabela mínima isolada e acesso como postgres; verifica migration/constraint, não kill switch HTTP ou cadeia completa. Imagem por tag e cleanup pelo nome PID.",
+        "runner": "set -Eeuo pipefail, ON_ERROR_STOP, espera readiness, falha de reinserção exige status e constraint específicos, trap remove container."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talk-me-client-privileges.test.sh",
+      "line_start": 1,
+      "line_end": 260,
+      "source_sha256": "41f7582800cb1eebbf7ea35f00c2c55aa94c620570167e276296abdb252b81d6",
+      "git_blob_sha": "7b61e7ca9fcb1e58d0c492387dfe05044db2c698",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          260
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Aplica migration duas vezes e verifica ACLs/RLS/trigger attachments, sessão authenticator com JWTs coerentes/incoerentes, recusa a perfil inativo e permissões de fila, autoatribuição, admin, serviço e auditoria append-only.",
+        "limits": "Não executado. Schema parcial e policy contacts_authenticated_all tornam testes específicos dos guards/ACL, não prova completa da RLS real. Helpers de perfil/admin reconstruídos. has_table_privilege com lista SELECT,INSERT em A6 aceita algum dos privilégios, mas B14 exerce INSERT e outros checks cobrem parte do restante.",
+        "runner": "set -Eeuo pipefail, ON_ERROR_STOP, helpers de erro/valor, três readiness consecutivos, tmp_dir sob prefixo verificado e trap do container PID."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-counters-integrity.test.sh",
+      "line_start": 1,
+      "line_end": 470,
+      "source_sha256": "792c151d806d4052298bed7f970c7f296a6398021586e3eb1401b63048163b98",
+      "git_blob_sha": "67417a4a8223211aa78ae8a7c4553479723a7529",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          470
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "X026 é localizada por marcador e aplicada ao fixture; mede skipped_count/status, incremento único, conteúdo do duplicado, exclusão, ator do checklist e restrição de eventos; reaplica policy.",
+        "limits": "Não executado. Admin é stub true, trigger de use_count é copiado no fixture, não importado. Guards de contagem definem JWT mas permanecem como postgres (307–325), portanto não provam ACL de authenticated. Alguns asserts usam substring de número único (298/463) em saída permissiva; contagens exatas posteriores são controles mais fortes. Não compõe migrations posteriores.",
+        "runner": "set -euo pipefail e setup ON_ERROR_STOP=1; psql_raw/script usam ON_ERROR_STOP=0 e ||true, exigindo cuidado com assertions textuais. Container aleatório por tag e trap; fallback de migration local explicitado."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-current-template-version.test.sh",
+      "line_start": 1,
+      "line_end": 618,
+      "source_sha256": "bd24eef47dfbd98dcc832c2343b5fc01903972549018b58fc7e0d9c95cbd6a87",
+      "git_blob_sha": "24b121c82eac10856b648238552aea8ca37150bd",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          618
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Harness modela applier SECURITY DEFINER com owner não superuser, guard/history, backfill, ponteiro vivo, duas edições, FK e bloqueio de SET NULL. Cria cinco mutações em cópias, exige mudança textual e morte pelo motivo esperado.",
+        "limits": "Não executado. Fixture omite set_talkx_template_updated_at/trigger de timestamp vigente; por isso não reproduz T≠S de R2-DB-013. Owner da tabela e helpers são reconstruídos, RLS completa ausente. Guard_n396 só conta presença, não tgenabled, embora o fixture o crie ativo. Não atesta produção pela simulação.",
+        "runner": "set -Eeuo pipefail; aplicação strict via função; psql_test permissivo tem saídas verificadas. Casos em containers separados; array de nomes registrados após docker run; temporários mktemp sob prefixo e cleanup validado."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-delivery-leases.test.sh",
+      "line_start": 1,
+      "line_end": 223,
+      "source_sha256": "fdcf0958e08af1fd12aa0e728708f9f2da04a3a303168f44d890e59527a6604c",
+      "git_blob_sha": "6fa06ae5f531ca26d25ca964cd5bfa150d8c720b",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          223
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Aplica seis migrations reais e exerce claims, recusa authenticated, tokens obsoletos, ACK duplicado, recibo repetido, recuperação antes/depois do dispatch, supressão tardia e conclusão/quarentena com contadores exatos.",
+        "limits": "Não executado. Operações de workers são sequenciais, não corridas concorrentes reais. Schema mínimo e auth.role simplificado; só cadeia de setembro indicada, não todas as redefinições atuais. Provider POST não é chamado.",
+        "runner": "set -euo pipefail, ON_ERROR_STOP; readiness com duas consultas e até três reinícios apenas no setup. Erros esperados via texto específico; cleanup por nome PID com EXIT e remoção antecipada."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-escape-hatch-auth.test.sh",
+      "line_start": 1,
+      "line_end": 187,
+      "source_sha256": "edfae77dda0f72d0936987dea22a14dcda522fb74aad397eae86864b1dc3fbf1",
+      "git_blob_sha": "d8a5b91dd295a3dc844e43baec2d3778960d1f69",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          187
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Aplica/reaplica V09d, conecta trigger e verifica não dono recusado, dono/admin autorizados com GUC e RPC do dono preservada com valores persistidos.",
+        "limits": "Não executado. Perfil usa coluna role do fixture e helper próprio; não aplica X014/políticas/trigger final, logo autorização histórica de dono agente não prova estado atual. GUC é setado de propósito para isolar guard; RLS completa fora do escopo.",
+        "runner": "set -Eeuo pipefail, ON_ERROR_STOP, recusa exige mensagem; setup e sucesso estritos, cleanup container random/PID."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-message-snapshot.test.sh",
+      "line_start": 1,
+      "line_end": 84,
+      "source_sha256": "59763497f8952bc44a660997a0f887bfddc6729986310fa195d25c8562fdb121",
+      "git_blob_sha": "c5138fe7bf2adf8f256af96923a53fce99e46cbc",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          84
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Migration real de snapshot; compara conteúdo/mídia/variante, confirma retry imutável e nega authenticated, mídia sem tipo e token diferente.",
+        "limits": "Não executado. Schema mínimo e chamadas sequenciais; não verifica worker, variante escolhida no cliente, expiração de lease nem cadeia posterior.",
+        "runner": "set -euo pipefail e ON_ERROR_STOP; retry somente bootstrap, duas consultas readiness, erros específicos e cleanup por nome PID."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-role-gates.test.sh",
+      "line_start": 1,
+      "line_end": 357,
+      "source_sha256": "2642770f45b521a3c8f8ad0a1de3f818f7f61ee6e7041b034dd82abe834cd3c0",
+      "git_blob_sha": "0d2538474cb3c4b66535c32dcac40f226e465edc",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          357
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Migration X014 aplicada duas vezes; nega agente nas três RPCs, permite admin/supervisor, verifica revisões, ACL e agendamento via trigger com RLS desligada depois religada, além de status persistido.",
+        "limits": "Não executado. Helpers de visibilidade/timezone e schema são mínimos. Blacklist/clicks e parte das policies são confirmados por expressão textual no catálogo, não por operações adversariais. Não aplica redefinições posteriores nem testa cada privilégio operativo.",
+        "runner": "set -euo pipefail e ON_ERROR_STOP; erros exigem status não zero e mensagem, readiness em duas consultas com retry do container e trap EXIT."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/talkx-update-limits-22009.test.sh",
+      "line_start": 1,
+      "line_end": 175,
+      "source_sha256": "b19510550e59ec28d33108ab1109b4f1b28aee1d06627e5cf2ffccb16192b491",
+      "git_blob_sha": "e6f533c32795f6766443a114921775e7a66b41c8",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          175
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Aplica V09/V09c/V09e e reaplica fix; offsets inválidos devem produzir mensagem normalizada, offset válido persiste 10h e atualização seguinte usa revisão 2.",
+        "limits": "Não executado. rpc permissivo captura mensagem; não ativa VERBOSITY verbose nem captura SQLSTATE 22023 diretamente. Não cria trigger de mutabilidade no fixture e não aplica gates posteriores; escopo é conversão de valores histórica, não autorização atual.",
+        "runner": "set -Eeuo pipefail, setup/controle positivo ON_ERROR_STOP; erros esperados verificam texto e ausência do erro cru. Container random/PID e trap."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    },
+    {
+      "path": "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+      "line_start": 1,
+      "line_end": 333,
+      "source_sha256": "a16b83c3394f67ce0137dac3b14f1c48d14b99dfd70b19f6b891f72352f5b2d9",
+      "git_blob_sha": "721296459a8f713f206cada8ef2d042895b925a9",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          333
+        ]
+      ],
+      "reviewer": "/root/grill_me_primary_review",
+      "status": "ADJUDICATED_BODY_READ",
+      "adjudication": {
+        "positive": "Reproduz ambiguidade de vínculo/cursor e recursão da policy em etapas distintas, aplica migration real e testa valores, ordem/limite/join, não membro, sem JWT, isolamento e contrato de retorno.",
+        "limits": "Não executado. Schema/predicados anteriores reconstruídos; mensagens têm timestamps distintos, não testa empate de keyset, cursor alheio/inexistente ou redefinições posteriores. Não representa três RPCs diferentes: o foco é get_team_messages_page e policy de membros.",
+        "runner": "set -Eeuo pipefail e ON_ERROR_STOP; erros com status e mensagem esperados, contagens exatas como usuário; mktemp e trap removem fixture/container PID."
+      },
+      "execution": "NOT_RUN",
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Saldo shell identificado pelo gate de linguagens, fora do AST e do roster anterior de testes TypeScript."
+    }
+  ],
+  "additional_dependency_read": {
+    "path": "scripts/db-audit/pg-cron-concorrencia.py",
+    "line_start": 1,
+    "line_end": 85,
+    "git_blob_sha": "cec86d4f4a7e7b841ae7d136fef0ae8d6c65966d",
+    "source_sha256": "ea39a45f0c3b2fb502968b555835179456785a355cd5e26d48484c39658c4524",
+    "adjudication": "Calcula/imprime concorrência de uma fase, retorna 0 se existem slots. Não compara fases; modela 2/setembro e não usa dow. Limite do teste shell registrado no arquivo correspondente."
+  },
+  "validation": {
+    "all_sha256_and_git_blob_match_roster": true,
+    "all_ranges_1_to_eof_read": true,
+    "all_files_have_individual_adjudication": true
+  },
+  "limits": [
+    "Não houve execução de shell, Docker, PostgreSQL, SQL ou suíte nesta revisão; somente leitura.",
+    "Harnesses de migrations reais com schemas reduzidos foram distinguidos de simples réplicas de lógica em testes TypeScript.",
+    "O contexto de cada migration histórica não equivale à composição do schema final.",
+    "Nenhum novo ID criado; limites concretos comunicados ao root para família GOV003 e cross-reference de DB013."
+  ]
+}

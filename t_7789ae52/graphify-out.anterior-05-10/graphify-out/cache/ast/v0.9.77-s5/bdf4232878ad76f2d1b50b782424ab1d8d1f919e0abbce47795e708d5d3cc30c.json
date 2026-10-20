@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20261003152707_cleanup_e2e_conversation_closures_sql", "label": "20261003152707_cleanup_e2e_conversation_closures.sql", "file_type": "code", "source_file": "supabase/migrations/20261003152707_cleanup_e2e_conversation_closures.sql", "source_location": null}], "edges": []}

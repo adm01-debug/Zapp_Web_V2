@@ -1,0 +1,8 @@
+fix(db): vincula endpoint e nome de secret de ai_providers com CHECK convalidado (#20)
+
+IA-EGRESS-001: a configuracao persistida de ai_providers nao tinha nenhum CHECK.
+Passa a barrar endpoint nao-HTTPS, com credencial embutida, IP literal (v4/v6),
+hostname interno ou porta fora da 443, e a exigir ALLOWLIST positiva de
+credenciais de provedor em api_key_secret_name (secret de infraestrutura nao
+pode ser selecionado). Constraint em duas etapas (NOT VALID + VALIDATE), com
+prova em Postgres descartavel rodando como authenticated/admin.

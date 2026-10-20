@@ -1,0 +1,3 @@
+chore(tarefas/quadro): reconfere R3-05 na ponta e fecha sem codigo (SL-236)
+
+NotesTab ja le a data sem hora por calendarDayKey (#1336) e isTaskDueSoon saiu em #1437. Em bucketByDue o criterio do util nao entra: 21:00 locais grava a mesma meia-noite UTC da data sem hora, entao reinterpretar deslocaria um prazo real em 1 dia. Prova no relato.

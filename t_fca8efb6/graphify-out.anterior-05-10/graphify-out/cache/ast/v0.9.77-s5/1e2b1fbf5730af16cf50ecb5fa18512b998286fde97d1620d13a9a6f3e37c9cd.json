@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260924123033_fix_catalog_send_events_insert_policy_anon_bypass_sql", "label": "20260924123033_fix_catalog_send_events_insert_policy_anon_bypass.sql", "file_type": "code", "source_file": "supabase/migrations/20260924123033_fix_catalog_send_events_insert_policy_anon_bypass.sql", "source_location": null}], "edges": []}

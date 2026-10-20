@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791341440 -0300	
+b6a5800086896490ef4415de1f616aa77b69b9b6 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791341441 -0300	reset: moving to HEAD
+b6a5800086896490ef4415de1f616aa77b69b9b6 76c6264891271b099aaaaf69a53bdce75804352f hugo <hugo@promobrindes.local> 1791341765 -0300	commit: fix(team-chat): handleAudioSend sinaliza falha para a previa do audio gerado sobreviver (#350)

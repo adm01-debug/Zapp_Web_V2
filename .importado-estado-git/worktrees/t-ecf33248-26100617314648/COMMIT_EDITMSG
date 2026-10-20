@@ -1,0 +1,9 @@
+fix(ia): reclassificação de IA preserva etiqueta humana homônima (R2-DB-012)
+
+O UPSERT de public.replace_ai_conversation_tags forçava source='ai' no conflito
+(contact_id, tag_name): uma etiqueta HUMANA com nome igual à sugestão da IA passava
+a ser de IA e a próxima reclassificação (delete where source='ai') a apagava.
+Agora o conflito só atualiza a linha quando ela é da IA (where source='ai').
+
+Prova: scripts/db-audit/ai-replace-tags-humana.test.sh (PostgreSQL 17 descartável,
+vermelho → verde + mutação).

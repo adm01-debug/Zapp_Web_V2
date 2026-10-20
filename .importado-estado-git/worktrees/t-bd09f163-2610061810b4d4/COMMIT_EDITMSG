@@ -1,0 +1,11 @@
+fix(banco): cota por conexao conta o item enviado do Multiplix e trata medicao invalida
+
+MX04 (#48). multiplix_connection_daily_usage e talkx_connection_send_budget somavam o consumo do Multiplix por multiplix_recipients.sent_at, mas o motor atual (F32/F55) carimba multiplix_delivery_items.sent_at: todo envio por item desaparecia do teto diario/minuto compartilhado com o Talk X.
+
+A migration nova (20261006211601) recria as DUAS funcoes com a mesma assinatura, o mesmo formato de retorno e a mesma ACL (REVOKE PUBLIC/anon/authenticated + GRANT service_role):
+- consumo do Multiplix passa a contar ITEM enviado (1 por mensagem; N blocos do mesmo destinatario consomem N);
+- disparo legado (fila por destinatario) continua contando, mas SO quando o disparo nao tem itens, para nada contar duas vezes;
+- trafego sem conexao carimbada passa a consumir o teto da conexao PADRAO (is_default + connected), que e a que o worker escolhe nesse caso;
+- medicao invalida ganha politica explicita: teto so vale como numero JSON inteiro nao-negativo; valor ilegivel cai no default da propria funcao (0 fail-closed no Multiplix; 6/minuto e 500/dia no Talk X) em vez de levantar 22P02, e 'remaining' nunca vem ausente/nao-numerico.
+
+Prova: scripts/db-audit/multiplix-cota-conexao-itens.test.sh (Postgres 17 descartavel, cadeia real de migrations, escrita pelos RPCs reais do worker). Verde com a correcao; com MX04_SEM_CORRECAO=true a mesma cadeia sem a migration mostra o defeito (cota 500:0:500 apos 2 itens, orcamento do Talk X cego, cron retomando o disparo com a cota esgotada, 22P02 no teto ilegivel).

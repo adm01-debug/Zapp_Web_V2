@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235485 -0300	branch: Created from dia/2026-10-05
+c28a1a97af8b9fc34ccb54db845a29a48169f257 63be61cb013e6cf25cc28571d657169069473cdc Joaquim Ataides <ti@promobrindes.com.br> 1791235558 -0300	cherry-pick: fix(edge): prazo de IA cobre o consumo do corpo e log essencial para de ser best effort
+63be61cb013e6cf25cc28571d657169069473cdc a590544a0c75c039d8232a1a15f987afa11482fa Joaquim Ataides <ti@promobrindes.com.br> 1791235558 -0300	cherry-pick: fix(edge): identidade unica por evento e outbox duravel no log essencial de IA
+a590544a0c75c039d8232a1a15f987afa11482fa 70c8304a8dd63332bfb53496351adc5abc44d4f9 Joaquim Ataides <ti@promobrindes.com.br> 1791235558 -0300	cherry-pick: fix(edge): endurece o log essencial de IA (outbox duravel, ACL e prova no banco)

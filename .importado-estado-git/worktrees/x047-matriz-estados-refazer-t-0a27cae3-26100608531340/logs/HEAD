@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287594 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287595 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 807a93c4a49dea3d11da64716bc1f361fb2ad3e9 Joaquim Ataides <ti@promobrindes.com.br> 1791287602 -0300	cherry-pick: test(talkx): matriz por tela e contrato de adocao dos estados (X047)
+807a93c4a49dea3d11da64716bc1f361fb2ad3e9 617e9d5a2706d012d8124f68239f0baa1d1a28ca Joaquim Ataides <ti@promobrindes.com.br> 1791287735 -0300	commit: test(talkx): restaura matriz isolada de estados X047

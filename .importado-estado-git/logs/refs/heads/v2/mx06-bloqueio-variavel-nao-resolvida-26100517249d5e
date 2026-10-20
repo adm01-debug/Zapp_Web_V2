@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fc43af374a38304a738983aeccac72e29394e6d9 Joaquim Ataides <ti@promobrindes.com.br> 1791231846 -0300	branch: Created from dia/2026-10-05
+fc43af374a38304a738983aeccac72e29394e6d9 7520418217c3aaa88f64f65cd94a7f94f85b9fab Joaquim Ataides <ti@promobrindes.com.br> 1791232309 -0300	commit: fix(multiplix-send): bloquear envio com variavel nao resolvida (MX06)
+7520418217c3aaa88f64f65cd94a7f94f85b9fab c322e641f69bde6fe94eb2be4bcfb30b4f1b8084 Joaquim Ataides <ti@promobrindes.com.br> 1791233059 -0300	commit: test(multiplix-send): ancorar payload do MX06 em literal alem do oraculo do kernel

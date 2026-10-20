@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311971 -0300	
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311971 -0300	reset: moving to HEAD
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 628782f87e91c0ba85ab3b9b303e8d25a534dbb7 Joaquim Ataides <ti@promobrindes.com.br> 1791312268 -0300	commit: fix(inbox): preserva previa do Voice Changer quando envio falha (#350)

@@ -1,0 +1,6 @@
+test(outros): elevenlabs-sts prova o teto pelo content-length explícito (SL-087)
+
+O teste do teto montava um File de MAX+1 dentro do FormData — sem cabeçalho
+content-length no Request, o 413 vinha do size real e não da fronteira do
+cabeçalho. Agora o corpo é pequeno e válido e o content-length vai explícito:
+sem o bloco do cabeçalho no handler o teste falha (veio 200), com ele passa.

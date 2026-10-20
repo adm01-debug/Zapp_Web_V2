@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6c57dfa54443435babc08970f517261076314176 Joaquim Ataides <ti@promobrindes.com.br> 1791345152 -0300	branch: Created from dia/2026-10-07
+6c57dfa54443435babc08970f517261076314176 cfd7de02d7e5221f1b561fcac8f21d4c60f163e1 Joaquim Ataides <ti@promobrindes.com.br> 1791346182 -0300	commit: fix(recuperacao): remove ramo anonimo do gatilho de reset

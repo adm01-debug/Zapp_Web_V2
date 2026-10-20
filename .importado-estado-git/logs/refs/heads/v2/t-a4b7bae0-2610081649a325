@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488986 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 8536bc915a2fc437ae507f1a99c682489a6269d5 Joaquim Ataides <ti@promobrindes.com.br> 1791490383 -0300	commit: feat(edge): valida o corpo de evolution-api com schema Zod (E45/SL-050)

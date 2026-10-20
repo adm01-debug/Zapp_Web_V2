@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 66727f895120d1457a60c4b77b7bc59b3f4626dc Joaquim Ataides <ti@promobrindes.com.br> 1791238252 -0300	branch: Created from dia/2026-10-05
+66727f895120d1457a60c4b77b7bc59b3f4626dc b9816a01291a8d8e4e792c4ac5654adb03c1094d Joaquim Ataides <ti@promobrindes.com.br> 1791239170 -0300	commit: fix(telefonia): player de gravacao consome o stream da Edge (TEL-RECORDING-001)

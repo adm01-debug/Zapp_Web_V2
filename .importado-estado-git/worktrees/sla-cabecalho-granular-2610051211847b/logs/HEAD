@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 Joaquim Ataides <ti@promobrindes.com.br> 1791213086 -0300	
+b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 Joaquim Ataides <ti@promobrindes.com.br> 1791213087 -0300	reset: moving to HEAD
+b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 a620cf33ba1e2ad0caef8b4598763ea90d0ffd0a Joaquim Ataides <ti@promobrindes.com.br> 1791213422 -0300	commit: fix(inbox): aplica prazo de SLA granular no cabeçalho da conversa

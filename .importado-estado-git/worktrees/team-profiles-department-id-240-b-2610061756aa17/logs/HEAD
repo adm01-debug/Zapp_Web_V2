@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320212 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320214 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 99a9fa93cf28faa52a121b9b77e903920488d710 Joaquim Ataides <ti@promobrindes.com.br> 1791320239 -0300	cherry-pick: fix(team-chat): lista colegas por RPC get_team_profiles com department_id

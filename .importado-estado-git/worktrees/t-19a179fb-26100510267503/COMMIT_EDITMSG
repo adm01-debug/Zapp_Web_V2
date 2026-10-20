@@ -1,0 +1,4 @@
+test(inbox): tipa o fake de onSendMessage no teste de retry (R2-INB-007)
+
+Evita TS2322 no typecheck ratchet: o parâmetro do helper usava
+ReturnType<typeof vi.fn>, incompatível com a assinatura de onSendMessage.

@@ -1,0 +1,17 @@
+fix(ci): implicit-any-ratchet falha explicito quando o compilador nao roda (R2-INF-008)
+
+O ratchet capturava qualquer falha do subprocesso e contava so "error TS7":
+compilador ausente, config quebrada (TS5058/TS5023) ou diagnostico global
+(TS5083) produziam zero ocorrencias, o script anunciava "implicit-any errors:
+0 (baseline: 0)" e saia 0 - o falso zero (probe missing_compiler_passes).
+
+Agora o resultado do compilador passa por assertUsableCompilerResult: exit fora
+de {0,1,2}, compilador ausente, diagnostico global (linha comecando com
+"error TS####:"/"warning TS####:") ou exit nao-zero sem nenhum diagnostico
+reconhecivel sao falha explicita (exit 2). O caminho legitimo nao muda: erros
+TS7 seguem contados e comparados ao baseline, e erros sem TS7 seguem aceitos.
+
+Prova: scripts/ci/implicit-any-ratchet.unit.mjs (10 casos + 2 adversarios de
+regex) executa o ARQUIVO REAL do ratchet num repo sintetico com
+node_modules/typescript/bin/tsc de mentira; vermelho antes (6/12 falhavam),
+verde depois (12/12).

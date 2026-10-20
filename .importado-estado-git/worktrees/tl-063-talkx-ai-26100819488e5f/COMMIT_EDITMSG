@@ -1,0 +1,6 @@
+feat(talk-x): cria a edge talkx-ai com ai-proxy, teto de custo e trilha (TL-063)
+
+X076: nova edge supabase/functions/talkx-ai delega a chamada paga ao ai-proxy,
+recusa antes da rede (flag desligada, teto do mes, limite diario), limpa telefone
+e e-mail do prompt, cache de 24h por input_hash, valida a saida e grava a trilha
+conferindo o retorno. Inclui a funcao no config.toml e regenera o manifesto.

@@ -1,0 +1,2106 @@
+{
+  "schema_version": 1,
+  "area": "infra_ui_performance",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "state": "COMPLETED",
+  "primary_files": 87,
+  "primary_lines": 10095,
+  "primary_full_file_read": 87,
+  "primary_remaining": 0,
+  "counts": {
+    "total": 101,
+    "targeted": 10,
+    "semantic": 91
+  },
+  "inventory": [
+    {
+      "path": "bun.lock",
+      "sha256": "81a17a8b7cc56ef4a9aa584cc341de640c0fe8d59fca3fc7b399431db10a695f",
+      "bytes": 199894,
+      "lines": 1626,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          27,
+          27
+        ],
+        [
+          382,
+          382
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Pin versionado de Progress1.1.16 identificado no lock; leitura dirigida da dependência, sem baixar/importar pacote.",
+      "consumers": []
+    },
+    {
+      "path": "package.json",
+      "sha256": "1f8a4113677be5d92b90ba65c6e98b7e807a3a9b499ada8ec35f6349220debcb",
+      "bytes": 4679,
+      "lines": 139,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          52,
+          52
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Dependência de Progress identificada em contrato; leitura dirigida da linha52 apenas, sem executar install/scripts.",
+      "consumers": []
+    },
+    {
+      "path": "src/App.tsx",
+      "sha256": "3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220",
+      "bytes": 5554,
+      "lines": 154,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          75
+        ],
+        [
+          118,
+          147
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Imports/DeferredProviders e retorno principal lidos por faixas: confirma EasterEggs lazy e montagem, GlobalKeyboardProvider ao redor de AppRoutes, Toaster/Sonner e LiveRegion. Restante não é declarado integral.",
+      "consumers": [
+        "src/components/keyboard/GlobalKeyboardProvider.tsx",
+        "src/components/effects/EasterEggs.tsx",
+        "src/components/ui/visually-hidden.tsx"
+      ]
+    },
+    {
+      "path": "src/components/catalog/CatalogBulkSendDialog.tsx",
+      "sha256": "aa84d2e5e54f2667f870c1a91358fc79b0ed064b548e6ec0c8c9ea9e78a7fc14",
+      "bytes": 9209,
+      "lines": 234,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          60
+        ],
+        [
+          205,
+          234
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Imports e ramo sending confirmam Progress com valor conhecido e texto percentual adjacente. Caminho real faz envio por serviço, mas não foi executado; revisão desta fronteira é apenas do controle visual/acessível.",
+      "consumers": [
+        "src/components/ui/progress.tsx",
+        "src/components/catalog/ExternalProductCatalog.tsx"
+      ]
+    },
+    {
+      "path": "src/components/catalog/ExternalProductCatalog.tsx",
+      "sha256": "5658830363331ff54f5ec01121ce2eef2bfc9ed1aea8071ee51c4b5e4ac965e5",
+      "bytes": 34153,
+      "lines": 740,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          35,
+          45
+        ],
+        [
+          706,
+          729
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Lazy import e montagem condicionada bulkSendOpen confirmam alcance do diálogo em massa. Nenhum envio/chamada de produto realizado.",
+      "consumers": [
+        "src/components/catalog/CatalogBulkSendDialog.tsx"
+      ]
+    },
+    {
+      "path": "src/components/dashboard/AIStatsWidget.tsx",
+      "sha256": "cff1545aaa2bcf97b2ac75991d32de134cb164a543951a5b8f9b5ca5ea794556",
+      "bytes": 14833,
+      "lines": 215,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          50,
+          65
+        ],
+        [
+          185,
+          212
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Verificação dirigida do consumidor de ChartContainer: chartConfig em 57–61 usa cores literais confiáveis e passagem em 192 não inclui id externo; valores de série não entram na string CSS. Caminho de CSS não confiável não demonstrado. Restante deste widget pertence à revisão de módulos.",
+      "consumers": [
+        "src/components/ui/chart.tsx"
+      ]
+    },
+    {
+      "path": "src/components/dashboard/GoalsDashboard.tsx",
+      "sha256": "efec6b35b713bcf1532b3ae81b0ac20ff81cec8c9570b82b1b726d1e915407ba",
+      "bytes": 3918,
+      "lines": 94,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Faixa de imports/estado/cálculo/primeiro JSX confirma uso real de CelebrationOverlay com callback inline para limpar showCelebration; não executa nem comprova conclusão de meta.",
+      "consumers": [
+        "src/components/effects/Confetti.tsx"
+      ]
+    },
+    {
+      "path": "src/components/effects/AuroraBorealis.tsx",
+      "sha256": "515cde0ddadb1c627607600bb0fe4b835248d03bc8955e685db1d84a830c3256",
+      "bytes": 4297,
+      "lines": 151,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          151
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Camadas decorativas/partículas e variantes de intensidade lidas integralmente. Pointer-events-none mantém camada fora da interação; loops visuais não comprovam regressão de desempenho sem medição.",
+      "consumers": [
+        "SLAHistory, QueueDetails, QueuesComparison, Admin, Agents, Queues, Groups, Connections, Transcriptions e Wallet (imports localizados)"
+      ]
+    },
+    {
+      "path": "src/components/effects/Confetti.tsx",
+      "sha256": "e7894b765e17b47106e567c55d7135abff01a3bfb4b1413ffc8da290bce8d062",
+      "bytes": 8760,
+      "lines": 296,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          296
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Partículas, temporizador, CelebrationOverlay e useCelebration completos. Cleanup ao trocar active interrompe timer; saídas cosméticas de cancelamento não promovidas sem consumidor afetado. Overlay recebe callbacks e a composição é responsabilidade do consumidor; não pressupõe persistência de conquista.",
+      "consumers": [
+        "src/components/dashboard/GoalsDashboard.tsx:47 (montagem confirmada)"
+      ]
+    },
+    {
+      "path": "src/components/effects/EasterEggs.tsx",
+      "sha256": "92a020d4fb71fc1a0c03d350285898011e5e41ab0b42c74322c0482ec524d35b",
+      "bytes": 8133,
+      "lines": 250,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          250
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Provider/atalhos completos: Konami e sequências ativam party/matrix/disco; listeners e timers removidos, CSS removido. Evento global não filtra campos de texto, mas efeito cosmético deliberado, sem efeito de negócio demonstrado. Texto de XP e estado celebrating não provam integração de gamificação; não promovidos.",
+      "consumers": [
+        "src/App.tsx (lazy provider, ligação identificada e posteriormente verificada por faixa)"
+      ]
+    },
+    {
+      "path": "src/components/effects/ParallaxContainer.tsx",
+      "sha256": "f6dfa28b375389d00613567c22169adc1b735ed42e68d0eb3a40ff14c30dfa56",
+      "bytes": 5975,
+      "lines": 268,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          268
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Parallax, imagem/texto, reveal, progress bar e float completos; transforms e variants são apresentação. Nenhum import produtivo fora dos próprios exports localizado; não inventada falha de desempenho ou alcance.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/effects/ScrollEffects.tsx",
+      "sha256": "a3b2580bf37b32e2639a1da6ad8c593f9a87de44201266bc15557de1ace64c7c",
+      "bytes": 7758,
+      "lines": 309,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          309
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todos exports lidos: magnetic, reveals, counter/spring, gradient, perspective, ripple DOM e blur. Counter/blur obtêm valores de motion via get durante render; risco latente sem consumidor produtivo localizado. Ripple cria/remove elemento cosmético com timeout. Nenhum efeito de dados ou rede.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/inbox/FileUploader.tsx",
+      "sha256": "b3dee842e813c8c8b8c192f945dd096e6daba2de41163208fb26ff7a65acb0f9",
+      "bytes": 12590,
+      "lines": 235,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          20
+        ],
+        [
+          156,
+          187
+        ],
+        [
+          198,
+          216
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Import e ramos de upload simples/múltiplo confirmam Progress com value e textos adjacentes. Não afirmar ausência total de informação a leitor de tela; perda é no contrato numérico do controle. Upload real não executado.",
+      "consumers": [
+        "src/components/ui/progress.tsx",
+        "src/components/inbox/chat/ChatInputArea.tsx"
+      ]
+    },
+    {
+      "path": "src/components/inbox/chat/ChatInputArea.tsx",
+      "sha256": "2afe2fca8725cc54161998a384a3eb332cc2488e4535d97121f97a80fcbaf70c",
+      "bytes": 14823,
+      "lines": 279,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          202,
+          221
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Montagem dirigida de FileUploader no composer ativo; passa contato e callbacks. Revisão completa do composer fica com inbox/root.",
+      "consumers": [
+        "src/components/inbox/FileUploader.tsx"
+      ]
+    },
+    {
+      "path": "src/components/keyboard/CommandPaletteHost.tsx",
+      "sha256": "34609b36fb8616345b10f2b49f26bfeafaf03f70cb5090eb99b3b44cf3f30f97",
+      "bytes": 1078,
+      "lines": 30,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Host ativo liga open/onNavigate a UI palette, onSearch do catálogo e comandos TalkX. Leitura integral para comprovar alcançabilidade da busca e actions default.",
+      "consumers": [
+        "src/components/keyboard/GlobalKeyboardProvider.tsx (binding/mount encontrado em busca; ainda só dirigido)"
+      ]
+    },
+    {
+      "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
+      "sha256": "16dcf2e44b55d936320e7da0d4677482b952e0d952840483632274d735feb020",
+      "bytes": 5554,
+      "lines": 157,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          157
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Corpo integral lido como suporte: listener global/custom event, lazy Host e paletteMounted que persiste após primeira abertura; navegação via ref e cleanup listeners. Comprova consumer atual. Gates/atalhos duplicados da plataforma são propriedade do root.",
+      "consumers": [
+        "src/App.tsx",
+        "src/components/keyboard/CommandPaletteHost.tsx"
+      ]
+    },
+    {
+      "path": "src/components/ui/EmptyState.tsx",
+      "sha256": "5e5d2171d0cf75e62d3732bd536d38e1418174f06380ea5dbefcdc78b2e221ac",
+      "bytes": 5924,
+      "lines": 197,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          197
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Variantes, defaults, ícone, descrição, ações e classes lidos. Botões só aparecem com texto e callback correspondentes; estado puramente apresentado por props, sem leitura de negócio ou rede.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/GenericEmptyState.tsx",
+      "sha256": "48fc0950c127f091aa38258cc0d5567ef6d5d14944877a9bbe62c4e6cfd73ad6",
+      "bytes": 2851,
+      "lines": 84,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          84
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "JSX integral e guardas dos botões lidos. Comentário chama wrapper/reexport, porém implementação é própria; inconsistência documental sem defeito funcional comprovado. Sem efeito externo.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/SkeletonList.tsx",
+      "sha256": "9f8607a96ba22f78811b19bceeb42aadb387d1d55c94718800f9a7443aa6e3b9",
+      "bytes": 4372,
+      "lines": 150,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          150
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Ramos list/card/table e composição com StaggerList lidos, contagens e placeholders apenas visuais. Nenhum acesso a dados.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/VolumeSliderPopoverContent.tsx",
+      "sha256": "a25fe7d6756c1ebd148bd57eac91f8894b6d20d293a8d01dcf1214fdde9b85ea",
+      "bytes": 2260,
+      "lines": 88,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Slider vertical controlado, array de valores, bounds/step, callback, mute label/aria/disabled e footer completos. Usa botão type=button; efeito de mídia é delegado ao consumidor.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/VolumeTriggerButton.tsx",
+      "sha256": "ee4b548a6e000576ad79b999935e67944dccfceda95aa9efec4827e906237a74",
+      "bytes": 1830,
+      "lines": 64,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Botão type=button, foco/long-press/cancel/click/teclas via rocker, aria e indicador completos. ariaDisabled é informativo; política interativa depende do hook useVolumeRocker (root), sem duplicação presumida.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/accessible-toast.tsx",
+      "sha256": "8467cd6963fe26b28a2a778e05302eef3450020b387d587d44341090cd6ea7a0",
+      "bytes": 6016,
+      "lines": 200,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          200
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Provider add/update/remove, timeout, ToastContainer live region e progresso completos. Loading atualizado não agenda auto-removal e duration0 difere no progress, mas nenhum useAccessibleToast fora da definição localizado. Provider montado não significa toast ativo.",
+      "consumers": [
+        "src/providers/AppProviders.tsx monta provider; sem consumidor de useAccessibleToast encontrado"
+      ]
+    },
+    {
+      "path": "src/components/ui/accordion.tsx",
+      "sha256": "9587b5ca80cf0aa68bc2a4e6baacebbe07eab14e1c66c6b6420033aeca9219d1",
+      "bytes": 1976,
+      "lines": 52,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/Item/Trigger/Content e composição de heading completos; forwarded refs e props preservam estado/eventos do Radix. Chevron/expansão são apresentação, sem efeito de negócio.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "54099ac38e08ddbd70e613a488b8491249aaabdf9db65229f80717457aaadd40",
+      "bytes": 4318,
+      "lines": 104,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          104
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todos primitives e wrappers de portal, overlay, content, title, description, action e cancel lidos. Ações/fechamento e foco são delegados ao Radix e callbacks do consumidor; não há confirmação ou mutação interna.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/alert.tsx",
+      "sha256": "6352c232d36b2aeb20cce9692fecd98a472c8bb0b8c3f8a45446c433382e2da7",
+      "bytes": 1546,
+      "lines": 43,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Variants default/destructive, role alert, título/descrição e ref/props completos; apenas apresentação de conteúdo fornecido.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "b4c71ba3498ebcb42ce4145e079d9fd7f2272943da1888e5d76dd2e14bbb3ecb",
+      "bytes": 5526,
+      "lines": 201,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          201
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Radix root/image/fallback, indicador de status, posições/tamanhos e grupo com overflow lidos; status vem de props, não é inferido de saúde/backend. Imagem mantém contrato do Radix.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/badge.tsx",
+      "sha256": "d11c91f058c88ebbe7c63178aa6a1aaa868b405ffcfbcdb2663d8c5584cb1a33",
+      "bytes": 1489,
+      "lines": 35,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todas variantes semânticas visuais e ref/props lidos; não calcula status nem valida resultado de negócio.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/breadcrumb.tsx",
+      "sha256": "e5589a54c1ed42101bb24cd67bbc72469fbfbe6b694c46e006424375ad77183e",
+      "bytes": 2687,
+      "lines": 90,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Nav/ordered list/Slot links, página atual/separadores/ellipsis lidos; sem efeitos. Props/aria encaminhadas, foco dos links controlado pelo elemento renderizado.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "f953f4a9dc2d26f0b7ed0b30bd8b508e81e7ad4977ad8df764b40febe61dd957",
+      "bytes": 5832,
+      "lines": 113,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          113
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Button/MotionButton, variants, Slot, isLoading/disabled e passagem de props completos. Loading desabilita botão nativo; asChild depende de semântica do filho. Tipo default permanece nativo; não alegada submissão acidental sem form consumidor concreto.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/calendar.tsx",
+      "sha256": "1bde372ba013108ff79310bc0e9de2655a3de200cac41ba6dc095dfe194f6581",
+      "bytes": 2557,
+      "lines": 54,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "DayPicker com classes default/overrides, ícones e props lido; seleção, modo, disabled/datas encaminhados ao DayPicker. Wrapper não converte timezone nem produz dados.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/card.tsx",
+      "sha256": "ca8da198da3299e33bd248a3e325de90992bc56979a2bce063b2dbb68bb82587",
+      "bytes": 3924,
+      "lines": 104,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          104
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Variants/ref/props, motion hover e seções/títulos completos; elementos são wrappers de apresentação sem mutações.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/chart.tsx",
+      "sha256": "d650f6a8d6b08861f406d6c873978d5bba76e3115cc519b33a7ea8e2a44479af",
+      "bytes": 10168,
+      "lines": 305,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          305
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Context/ResponsiveContainer, CSS por tema, tooltip/legend e helper payload completos. CSS bruto exige config confiável; único importador localizado AIStatsWidget, a ser checado para origem de config. Zero no JSX item.value&& resulta nó0, não prova de sumiço; sem finding falso de contagem. Consumidor AIStatsWidget 57–61/192 usa config CSS literal; dados remotos da série não atravessam dangerouslySetInnerHTML.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "sha256": "178f8177bedb1704b4dd3e748f4826848981c8af43178c04e1a276a7f017cf1f",
+      "bytes": 1053,
+      "lines": 26,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root e Indicator completos; checked/disabled/name/eventos continuam em props e são encaminhados ao primitive. Aparência de check não introduz mutação própria.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/command-palette-data.tsx",
+      "sha256": "5abe68e6324949e730211977509079358132b9c97bc31982c1e94984dcbc8cf5",
+      "bytes": 4028,
+      "lines": 71,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Tipos, default navigation/action commands, fuzzy matching e highlight com JSX escapado. Três action-* são só metadados sem action/href; correlacionado com executor. Nenhum HTML bruto produzido.",
+      "consumers": [
+        "src/components/ui/command-palette.tsx"
+      ]
+    },
+    {
+      "path": "src/components/ui/command-palette.tsx",
+      "sha256": "cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c",
+      "bytes": 12207,
+      "lines": 211,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          211
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Busca/debounce async, merge/fuzzy/group, teclas, executar ação/href/nav, abrir/fechar, recentes e JSX completos. Rastreadas buscas fora de ordem, actions sem callback e allItems vazio no acesso rápido sem query. Candidatos pendentes de deduplicação/probe.",
+      "consumers": [
+        "src/components/keyboard/CommandPaletteHost.tsx"
+      ]
+    },
+    {
+      "path": "src/components/ui/command.tsx",
+      "sha256": "ab9b9cee2af3df4a03d3a257bb4bc4969e0c0fcba07aa99fba22fbc4fa9ffaba",
+      "bytes": 5058,
+      "lines": 135,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          135
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Wrappers cmdk e CommandDialog completos, incluindo title sr-only e aria-describedby undefined deliberado; Item preserva onSelect e disabled. Não confundir com CommandPalette própria que implementa outra busca/teclado.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/context-menu.tsx",
+      "sha256": "2d294c5e421c41b817f1644f2d54bfdde628cffae2682e69ca504ae754739ad6",
+      "bytes": 7191,
+      "lines": 178,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          178
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todos exports lidos: submenus, portal principal, checkbox/radio/labels/separadores. checked e handlers encaminhados, disabled/focus delegado; strings de shortcuts não registram atalhos globais.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "a867cf82df7a8f755a3145acc8e2a274290b5bfabb419a2d6daa88d103433bbf",
+      "bytes": 4655,
+      "lines": 122,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          122
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Portal/overlay/content/close/header/footer/title/description e sizes lidos; max-height e overflow-y-auto presentes na base. Foco/modalidade do Radix mantidos, botão de fechar opcional explícito; altura do consumidor não presumida defeituosa.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/drawer.tsx",
+      "sha256": "399bd87bf70ad580f1de759c8cc2e9b30d16f3ebceffe81d6275fe9dff4d209a",
+      "bytes": 3668,
+      "lines": 107,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Vaul Root/portal/overlay/content, headers/footers/títulos e gesto delegado completos. shouldScaleBackground false deliberado sem wrapper marcado. Alça aria-hidden decorativa, ref/props preservados.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "sha256": "2d8551edad1ff9b225501f5e10b1c7ae8952d82f73ad29279d273e4382109622",
+      "bytes": 7296,
+      "lines": 179,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          179
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todos exports e submenus lidos; portal principal, checked, ref e callbacks preservados. Nenhuma autorização/mutação de itens está no wrapper; consumidores devem prover handlers e gates.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/emoji-picker.tsx",
+      "sha256": "31752fc217b289f4d88770822cb76db7f8b2cb161a47a5681cbe662c7af3dd14",
+      "bytes": 11710,
+      "lines": 331,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          331
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Banco/busca/categorias/recentes/storage, seleção, quick picker e animação completos. JSON local recente só catch parse sem shape e gravação pode lançar; somente referências internas neste arquivo, sem consumidor produtivo de exports identificado.",
+      "consumers": [
+        "QuickReactionPicker→EmojiPicker interno; demais referências de nome em projeto são componentes diferentes"
+      ]
+    },
+    {
+      "path": "src/components/ui/empty-state-illustrations.tsx",
+      "sha256": "cf7abe4dab092ea9635b370e9f59e821f5c779c7f28f0bacd7ed204c3e439a82",
+      "bytes": 15851,
+      "lines": 176,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          176
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todas ilustrações SVG e Record de presets lidos; faixa inicial foi relida após truncamento para assegurar corpo integral. Sem conteúdo HTML externo, dados ou rede.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/empty-state.tsx",
+      "sha256": "9406883d1f4b8359f628af4767e0421b20c98e5e0861bf85743d57935451d94b",
+      "bytes": 4384,
+      "lines": 143,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          143
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Ícone, tamanho, ilustração e botões primário/secundário lidos; ações exigem label e handler. Apenas apresentação controlada pelo consumidor.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/empty-states.tsx",
+      "sha256": "e7efc754e236d60413d5d6af2bb9a3708e6baf6d24ef72eca1398eeb4bca32de",
+      "bytes": 6789,
+      "lines": 191,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          191
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Contextos e presets inbox/contacts/dashboard/search/notifications/tags/calls/transcriptions lidos; ilustração e mensagens têm fallback. CTA depende de action. Preset legado não prova feature montada.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/empty-states/ContextualEmptyState.tsx",
+      "sha256": "d37b403238bd0bd46625edc13fe4e73f0e4c5b4f622ce9a7ea806690e5a5bf5d",
+      "bytes": 5235,
+      "lines": 86,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          86
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Context lookup e fallback messages, query, CTAs condicionais e ajuda lidos integralmente. Valores de config importada são conteúdo; callbacks vêm do consumidor. Não infere resultado de operação.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/empty-states/ConvenienceExports.tsx",
+      "sha256": "d44469464f2400f54f0f76e2724ac43787ae833af42838d27c0563b1213d02fb",
+      "bytes": 2333,
+      "lines": 37,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Nove wrappers de presets/ações lidos e mapeamento de contexto conferido; nenhum efeito adicional oculto.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/error-boundary-retry.tsx",
+      "sha256": "a0610fdf1d105fd5b7b8bdd2b6a4aa755c1f1c133aa4aa9939d998b4a81ff8c8",
+      "bytes": 4218,
+      "lines": 140,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          140
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Boundary completo: captura, callback, limite2/retry exponential, timer cleanup, manual reset e fallback. Render de mensagem de erro via JSX escapado; nenhum HTML bruto. Retry não prova que causa do erro foi resolvida.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/form.tsx",
+      "sha256": "7f6f3b157f0c08880937ae41d5e61647703c7163c3d8444656de711fb0576faf",
+      "bytes": 4014,
+      "lines": 129,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Contextos Field/Item, Controller/FormProvider, ids/aria, errors e refs completos. Exige árvore de providers; guarda do contexto{} não protege uso incorreto, mas sem consumidor inválido demonstrado. Textos de erro são JSX, não HTML.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/hover-card.tsx",
+      "sha256": "00f9086b1412843e04e01d31d2fab00a25d65d789d1a382e41f01b1f3c167c3b",
+      "bytes": 1237,
+      "lines": 27,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/trigger/content e props de alinhamento lidos. Content não usa Portal próprio, mas clipping só seria defeito com contêiner consumidor demonstrado; nenhum import produtivo encontrado no levantamento transversal.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/icon-button.tsx",
+      "sha256": "0ce7df739af7cfcf757ee078f3e6ffd8e10a7b4df51fab72ce34000bd6d39157",
+      "bytes": 4110,
+      "lines": 151,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          151
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Props/ref/Slot, aria-label exigido, tooltip opcional e versão motion completos. Nenhuma lógica remota. Trecho truncado foi reaberto integralmente antes desta promoção.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/input.tsx",
+      "sha256": "75a097473cf33404041c4c3d6f0ef097e33b05cb9d0dec467cbd9257c48fdc7e",
+      "bytes": 3327,
+      "lines": 83,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Ref/type/props, variants, ícones, addons e estados de erro/sucesso lidos. Elementos laterais são apresentação; interatividade de addons não é pressuposta sem consumidor específico.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/label.tsx",
+      "sha256": "d5dc9497cbb28a5401b864bd44a15f010c302584fbe8e07e015dbe443f103753",
+      "bytes": 696,
+      "lines": 17,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Radix label com ref/class/props lido; htmlFor/associação continuam contrato do consumidor.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/liquid-metal-button.tsx",
+      "sha256": "a241431bfc3fef8226fe6c942da9a37ec2c4cc0ed0aa1e9f4ad07656b9845aba",
+      "bytes": 5506,
+      "lines": 130,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          130
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Import lazy de shader, capability/reduced-motion gate, cancel flag, dispose e estados/contagem/handlers completos. Tipo button e disabled/loading aplicados após props; fallback estático. Sem montagem de WebGL ou alegação de ganho medido.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/menubar.tsx",
+      "sha256": "9a44756ba91e4c486b30574910b72f58c136c7a9281ccf0c13bf366962c7cdaf",
+      "bytes": 7863,
+      "lines": 207,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          207
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/menu/trigger/submenus/itens checkbox-radio/labels/portal e separadores lidos integralmente; forwarded props preservam contratos do Radix. displayname minúsculo é metadado de depuração, não promovido como falha de produto.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/message-reactions.tsx",
+      "sha256": "addd9a86a96ea7059ff95e71151368003560b3d190fbf6b0ef68078bbcc25114",
+      "bytes": 6309,
+      "lines": 184,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          184
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "ReactionBadge, picker por grid/ref/teclas, bar/popover e quick strip completos. Teclas Enter/Space chamam onSelect antes de default nativo; requer provar consumidor/unmount antes de alegar dupla mutação. Backend/toggle pertence a Inbox.",
+      "consumers": [
+        "src/components/team-chat/TeamMessageReactionsWrapper.tsx; useTeamMessageReactions tipo"
+      ]
+    },
+    {
+      "path": "src/components/ui/micro-interactions/buttons.tsx",
+      "sha256": "d7f5fb7ae44142afa3b5a7feb6e2a6b9fd3bb9e8b42fac95c1ca5fe3400657e1",
+      "bytes": 10136,
+      "lines": 284,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          284
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Ripple, icon, bounce, magnetic, glow e press feedback completos. Disabled impede callback nos controles pertinentes, props/types variam; não há rede ou escrita de dados. Timers/hover/semântica do div registrados como contrato de componentes genéricos, sem assumir consumidor ativo.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/micro-interactions/feedback.tsx",
+      "sha256": "b5d73b371d544c586e50417e71b73553bd993cd5f8360f1672b7826bc3a25ec9",
+      "bytes": 3087,
+      "lines": 83,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "MicroFeedback, LoadingDots/Spinner e FeedbackAnimation completos. Tipo/show controlam apresentação; não são prova de sucesso de ação remota por si.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/micro-interactions/skeletons.tsx",
+      "sha256": "6c93689b0e3157397ded412a14502e7e0e80fae10c45c467b6c56aba56fb1da6",
+      "bytes": 4072,
+      "lines": 106,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          106
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "SkeletonPulse e cinco ramos de ContentSkeleton completos. Apenas repetição/estilos/placeholders; count vem do chamador e não foi presumido input não confiável.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/mobile-components.tsx",
+      "sha256": "ed00b3cb8b194e3c1848f2209af38db60ff622517281fe0af2ca4f97d5eb0ff3",
+      "bytes": 8267,
+      "lines": 263,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          263
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "MobileDrawer gesto/body overflow, BottomNavigation ativo/vibração/badge, PullToRefresh await e TouchFeedback completos. BottomNavigation é consumidor real; Drawer/PullToRefresh genéricos não aparecem montados e seus riscos latentes não viraram findings.",
+      "consumers": [
+        "src/components/mobile/MobileShell.tsx usa BottomNavigation"
+      ]
+    },
+    {
+      "path": "src/components/ui/motion/components.tsx",
+      "sha256": "0052875250f53a3ae79cea95701b42fbcfeb01f5b58ab69165db9445b5429057",
+      "bytes": 6386,
+      "lines": 127,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "PageTransition, neon/card/buttons, stagger/fade/slide/scale, interactive e shimmer completos. PageTransition respeita useReducedMotion; outros wrappers delegam motion ao contexto/props, sem alegar falha a11y sem conferir consumidor/Config global.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/motion/effects.tsx",
+      "sha256": "6f9c3105614d0904639a1110b586d68ad7689f7c140d3c20b44e8fb283d4a969",
+      "bytes": 5107,
+      "lines": 94,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "AnimatedCounter/progress/presence/stagger/slide/list/typewriter completos, com RAF/interval cleanup. prevRef é objeto recriado e value0 retorna sem reset no contador; falta consumidor real para promover. Não alegada corrupção de métrica apenas pelo export.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/motion/variants.ts",
+      "sha256": "b9d91fb904192da124830c6ec881d104a22b3c37689bbe480132a9ddd37e2a40",
+      "bytes": 2954,
+      "lines": 83,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todos os variants declarativos e factory talkxStagger lidos; nenhum efeito/IO ou cálculo de dado de produto. Escala/duração são apresentação.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/offline-indicator.tsx",
+      "sha256": "6a36323d9c73d69cde169ea2a7555f827c71311382c690191afc52b485619b31",
+      "bytes": 3855,
+      "lines": 131,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Eventos navigator.onLine, retry HEAD favicon, toast restaurado e timers completos. Root confirmou SW/PWA desabilitado por configuração. Candidato response.ok rejeitado: HTTP404/500 ainda comprova transporte de rede e rótulo não promete saúde de API.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/pagination.tsx",
+      "sha256": "ac9da1e191c3485524c1e8d8cdbe0b9fa4ea2729c9554f796e2516485c839260",
+      "bytes": 2683,
+      "lines": 81,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Nav/list/link, aria-current, links previous/next e ellipsis lidos; href/onClick são contrato do consumidor, não há paginação de dados implícita.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/popover.tsx",
+      "sha256": "29b81e3615887edd40dd5423d5a16dd6b2f7b6953d2ba92e1108b67ea3395338",
+      "bytes": 1319,
+      "lines": 31,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/trigger/anchor/content e portal completos, align/offset overridable. Foco/dismissal e open vêm do primitive; nenhum efeito externo.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/progress.tsx",
+      "sha256": "bdc4847f05de3aea1276966e0df9b4a293297f0ca7d7b430a1cb16cf5626728f",
+      "bytes": 765,
+      "lines": 23,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Corpo integral lido: value é consumido no transform visual e omitido das props de Root. Candidato de contrato acessível separado, com consumidores/probe a verificar; max segue encaminhado, enquanto cálculo visual assume escala100.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/quick-peek.tsx",
+      "sha256": "7266734909f75cbde0969d6059b3e0b884724452208c267ef7db771dfe20d8f6",
+      "bytes": 2017,
+      "lines": 73,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Hover enter/leave/timer, preview/enabled e JSX completos. Timer não tem cleanup no unmount/alteração enabled, mas nenhum efeito de dados; consumidor terá de definir impacto antes de promover achado.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/radio-group.tsx",
+      "sha256": "995ec983735b204597f11ae5dd22ba0175dfc633da2ddecf222847bbca387adb",
+      "bytes": 1447,
+      "lines": 36,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/Item/Indicator lidos integralmente, ref/props preservados. Checked/value/keyboard/input permanecem no primitive.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/resizable.tsx",
+      "sha256": "a31af34c14c7c86612d1c2e51c90da59e0edae37dab5210bc1dd2c91dc2f3edd",
+      "bytes": 1696,
+      "lines": 37,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "PanelGroup, Panel e handle completo; direção e callbacks da lib preservados e pega visual opcional. Não persiste layout por conta própria.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/route-loading-bar.tsx",
+      "sha256": "5de0faf7fef76e6cebf2798b7e153d24babb11ec3294a6ccb80c973624264ecb",
+      "bytes": 2233,
+      "lines": 74,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Loading determina visibilidade, percentuais visuais temporizados e término; todos timers cancelados na troca/unmount. Progresso indeterminado simulado não é declarado como bytes medidos ou resultado de negócio.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/scroll-area.tsx",
+      "sha256": "998181a10164aa6e508210064ba61b2f772a92958d7bb2141867007f0ebd9783",
+      "bytes": 1608,
+      "lines": 38,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/Viewport/Scrollbar/Corner e dois eixos lidos; props/ref de Root não representam ref do viewport. Nenhum uso incorreto de consumidor é inferido pelo wrapper isolado.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/scroll-to-top.tsx",
+      "sha256": "4c3e0dcde3689476b2aef2b4c87eced0d12fdcd25676a0ae3dc437498425586e",
+      "bytes": 1932,
+      "lines": 57,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Ref de container, listener scroll com cleanup, limiar e ação smooth completos. Não inicializa visibilidade pelo scroll atual até primeiro evento; impacto condicionado a consumidor, sem mutação de produto.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/section-error-boundary.tsx",
+      "sha256": "1877f1817bf8a507f97f7348212d82b1a17029c74a7e2dea639d1bf27a2b2a1d",
+      "bytes": 2421,
+      "lines": 71,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Boundary por seção completo: log/reportClientError, captura com stack truncada, retry local e fallback. Egress e sanitização do reporter pertencem ao lote lib/root; não inferidos pela chamada.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/separator.tsx",
+      "sha256": "6c271e740c3d7b54947bb727383e5355788f0176b7b683c3bb970cad9883dded",
+      "bytes": 698,
+      "lines": 20,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Orientação/decorative e ref/props completos; default decorativo deliberado, classes correspondem aos dois eixos.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "61ab422356f167e723d837621de474a30ceeaadf90b27689df853f970fc4e080",
+      "bytes": 4202,
+      "lines": 107,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Lados top/bottom/left/right, overlay/portal, content e close, header/footer/título/descrição lidos. Foco do Radix e close encaminhados. Falta de overflow interno só afetaria consumidor alto comprovado, não promovida genericamente.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/sidebar/sidebar-context.tsx",
+      "sha256": "0c8bcfc67490b0afa0bb8d8459563cce25e99c2cb25dec165c1fdf332365be08",
+      "bytes": 3457,
+      "lines": 111,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Provider controlado/não controlado, callback toggle, mobile, cookie booleano7dias, Ctrl+B com cleanup e dimensões/context completos. Cookie é preferência não credencial; não promove acesso ou risco de segurança.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/sidebar/sidebar-menu.tsx",
+      "sha256": "976a654ca306695404793fdc00eb1d8f8448a0211a8d4f5dc7b9470a996696c7",
+      "bytes": 8432,
+      "lines": 192,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          192
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Botões/Slot ativos, tooltip colapsado, actions/badge/submenu e skeleton completo. Preferências vêm do contexto e não são ACL. Sem consumidor produtivo importando esse sidebar no scan.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/sidebar/sidebar-primitives.tsx",
+      "sha256": "64393052715bdfa2c4a0a4f70bf8ad0ac265d5c6a1b9bc26d39a6ab3b896f06f",
+      "bytes": 9958,
+      "lines": 242,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          242
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Sidebar desktop/mobile/none, Sheet controlado, trigger/rail/inset/header/footer/group/input completos. Callbacks/props/roles inspecionados; sem importador produtivo do sidebar genérico localizado no scan, não confundir com Sidebar aplicativo.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "sha256": "53b61cffdbb841da36647d05ac24d6341b81d283b85d67a7c3b54f9461fca6d7",
+      "bytes": 3489,
+      "lines": 139,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          139
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Variants, delay, role/status/label e composição Card/List/Text/Avatar/Button lidos; placeholders dependem de props e não representam sucesso real de operação.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/skip-link.tsx",
+      "sha256": "c15be302e8660cad3bfc3f70f0fe50ea69e8e82b5f367f7270b540c37ff12108",
+      "bytes": 4797,
+      "lines": 141,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          141
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Links condicionados à existência do target, foco/scroll, detector1500ms e indicador de Tab completos. Cleanup de listener/interval; foco efetivo depende do target focusable, não presumido defeito sem consumidor.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/slider.tsx",
+      "sha256": "d77d15801626d932dac1accbfc590f3a2cedbec5591b8a667f1c3f7614ab416b",
+      "bytes": 2694,
+      "lines": 56,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Wrapper Radix completo com número de thumbs derivado do value/defaultValue, labels por índice, orientação vertical/horizontal e props. Corrige número de thumbs; nenhum valor fictício de mídia.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/sonner.tsx",
+      "sha256": "4fd69acf94a61fe969b3eb9380a7eaf60d3ad5f19d9f4d0b51bd7ad6def3c6bf",
+      "bytes": 1996,
+      "lines": 38,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Integração com resolvedTheme, opções/duração e classes lida; props finais permitem override. Componente apenas hospeda toast, não cria mensagem de sucesso nem altera operação.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/sparkline.tsx",
+      "sha256": "9a8342eb3d4251152e38b60d71bf4533902502d87a4b830a8b357eae8d5c2579",
+      "bytes": 1469,
+      "lines": 53,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Normalização min/max, largura/altura, pontos e área SVG completos; <2amostras retorna null e série constante usa range1. Entrada finita é contrato do chamador; nenhuma medição ou acesso remoto.",
+      "consumers": [
+        "Busca de imports produtivos realizada; contratos do consumidor são limitados ao que está descrito na avaliação."
+      ]
+    },
+    {
+      "path": "src/components/ui/step-progress.tsx",
+      "sha256": "61b5b54d25747f0bf45ab49c090c28c0b2094e2d2800d57a61348732bbeb04a8",
+      "bytes": 2750,
+      "lines": 79,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Passos derivados por índice, estado atual/concluído, rótulos e conexões completos. Só apresentação; ausência de aria-current anotada como contrato, sem nova certificação a11y ou finding genérico.",
+      "consumers": [
+        "Componente genérico; imports/consumidores específicos serão cruzados no inventário final."
+      ]
+    },
+    {
+      "path": "src/components/ui/switch.tsx",
+      "sha256": "99cda942c2d215d8f25dd33ae06ed1278bcf912b262ed0e907b04f35881ac507",
+      "bytes": 1147,
+      "lines": 27,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/thumb lidos; checked/disabled/eventos/ref encaminhados ao Radix, sem estado paralelo ou persistência.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/table.tsx",
+      "sha256": "ea6b552d669711f46a9e69b21d92eeb7221cca4ee358f1a1edd20ae5692e9d03",
+      "bytes": 2742,
+      "lines": 72,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          72
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Table/head/body/footer/row/cell/caption lidos, elementos nativos e props/ref preservados; overflow wrapper permite rolagem. Ordenação/paginação/seleção são do consumidor.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/tabs.tsx",
+      "sha256": "f925108b56089ced9906cc92c94f2db05d66880b0c030f933fcb120f4debd8d6",
+      "bytes": 1926,
+      "lines": 53,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Root/list/trigger/content completos; state/value/disabled/focus seguem primitive, sem reset de dados externo ou efeito de negócio no wrapper.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/textarea.tsx",
+      "sha256": "1b43012d40d2fc4363ddee86c0988f6668cd2dc8d5a022352fd950d5ad340d0d",
+      "bytes": 738,
+      "lines": 21,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Forward ref e HTML props lidos; valor/eventos/disabled encaminhados, sem estado interno ou sanitização presuntiva.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/toast.tsx",
+      "sha256": "a65ac1eaac926086d97e761afec995f3fb90c8a8a8c6c4177f61440dbde94755",
+      "bytes": 4807,
+      "lines": 111,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Provider/viewport/root/action/close/title/description e variants lidos. Root recebe duration/open/handlers, foco/swipe delegados à lib. Mensagem e confirmação de operação são contrato do chamador.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/toaster.tsx",
+      "sha256": "a9a3c1d570d615cbd6024ee89666a083c7de97ca96b64ce03f6f83316b2f01fc",
+      "bytes": 733,
+      "lines": 24,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Map de toasts do hook encaminha props/id/title/description/action e close; não consome promessa de operação. Vida útil dos itens é gerida por use-toast, lido pelo root.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/toggle-group.tsx",
+      "sha256": "a3ea231230c8fff22ff6e0b457e71addf961fe1f80deaba0c80d17e649d34bf3",
+      "bytes": 1714,
+      "lines": 49,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Contexto de variants/size e Root/Item lidos; grupo precede estilo local, props/eventos/refs preservados. Estado do toggle permanece na lib.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/toggle.tsx",
+      "sha256": "fb0f786bce638fd414f220e31ad3c902f5c6e25eee9c95ac955cacd50638d6ff",
+      "bytes": 1416,
+      "lines": 37,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Variants e Root completos, value/pressed/handlers continuam em props; nenhuma mutação externa.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/tooltip.tsx",
+      "sha256": "7f27fffd04c247d2ddfc87bf111661698f8e14d813871bbcb99347e98d81d7b3",
+      "bytes": 4825,
+      "lines": 139,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          139
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Wrappers Radix, portais em content/enhanced, offsets/variants e wrapper simplificado lidos. Portal evita clipping conhecido; foco e dismissal delegados ao primitive. Nenhum handler de negócio.",
+      "consumers": []
+    },
+    {
+      "path": "src/components/ui/visually-hidden.tsx",
+      "sha256": "ccc68ada5d43a50e7f4115b4340e8a27632657661177de63b3bf598ed519b204",
+      "bytes": 1701,
+      "lines": 77,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "VisuallyHidden, useAnnounce e LiveRegion completos. Hook ignora politeness e usa timer sem cleanup, mas sem consumidor localizado fora da definição; não promovido como ramo ativo. LiveRegion é montado no App e mantém aria-live polite/status.",
+      "consumers": []
+    },
+    {
+      "path": "src/features/talk-me/useTalkMeQueue.ts",
+      "sha256": "383cf318e725c8f1c3fc1e7ef3b650e70218fd71691004a27926e5d4c5be097b",
+      "bytes": 15649,
+      "lines": 433,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          8
+        ],
+        [
+          70,
+          120
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Correção de alcance: importa useDebounce do módulo performance e o usa para pesquisa normalizada; guarda searchPending e refs de geração aparecem nesta faixa. Debounce de valor tem cleanup, distinto do debounce de callback da paleta. Restante do hook não é declarado lido aqui.",
+      "consumers": [
+        "src/hooks/performance/useTimingHooks.ts"
+      ]
+    },
+    {
+      "path": "src/hooks/integrations/useCatalogQuickSearch.ts",
+      "sha256": "6e015b754e5e3f4d12867f3f7f864b37a2bd4447c29c8499805ba8a4942b2dc7",
+      "bytes": 1419,
+      "lines": 34,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Busca promogifts-catalog compact limit8; erro retorna[]; produtos mapeados para CommandItem search e href /?view=catalog&product=...&send=1. Sem guard de geração próprio; retorno async controlado pelo chamador.",
+      "consumers": [
+        "src/components/keyboard/CommandPaletteHost.tsx"
+      ]
+    },
+    {
+      "path": "src/hooks/performance/useDataOptimization.ts",
+      "sha256": "ca3ee411ad74e74bbf9a85c868c5a7282493b6bf216f0b3afc9d7abf03ab01e3",
+      "bytes": 2615,
+      "lines": 116,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          116
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Paginação acumulada/reset, hover prefetch e preload resources completos. Prefetch não limpa timer no unmount nem reinicia cache ao mudar fetcher; nenhum consumidor produtivo desses exports localizado, só reexports. Preload remove links no cleanup.",
+      "consumers": [
+        "src/hooks/analytics/usePerformance.ts (reexport; não prova montagem)"
+      ]
+    },
+    {
+      "path": "src/hooks/performance/useMonitoring.ts",
+      "sha256": "dc67f2b6661408db027e6c95792e77edae7427ef74c5677801693d99ced52961",
+      "bytes": 2525,
+      "lines": 105,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          105
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Contagem de renders, memória dev-only, FPS via RAF e medição entre dois effects. Medição de slow render cobre intervalo pós-commit, não corpo de render; exports sem consumidor produtivo localizado, portanto limite latente sem finding.",
+      "consumers": [
+        "src/hooks/analytics/usePerformance.ts; chamada interna useFPS→useAnimationFrame"
+      ]
+    },
+    {
+      "path": "src/hooks/performance/useObservers.ts",
+      "sha256": "0886fdcbc4a71872f654f6c0868112ae19da2e1a5f58fcf432076b57a4432a19",
+      "bytes": 1749,
+      "lines": 72,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          72
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Intersection/lazy/load flags e event listener passivo completos. RemoveEventListener omite capture usado por options, mas não há consumidor ativo identificado: risco latente, sem ID. Observer exige API; cleanup unobserve.",
+      "consumers": [
+        "src/hooks/analytics/usePerformance.ts; chamadas internas"
+      ]
+    },
+    {
+      "path": "src/hooks/performance/useTimingHooks.ts",
+      "sha256": "6a38d0e660b1a9d04289fb332b79b702314eaac852cc587ac45b0170e3fd66f8",
+      "bytes": 2626,
+      "lines": 103,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          103
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "ui_performance_delegated",
+      "review_basis": "Todos hooks lidos: debounce de valor e throttle limpam timers, RAF cancela request, stable callback usa ref atualizada e idle tem fallback/cleanup. Consumidor real confirmado: useTalkMeQueue93 usa o debounce de valor corretamente; outros exports têm somente reexports/chamada interna de useFPS localizados. Não confundir com useDebounce de callback em hooks/system.",
+      "consumers": [
+        "src/features/talk-me/useTalkMeQueue.ts:3,93",
+        "src/hooks/performance/useMonitoring.ts:useFPS",
+        "src/hooks/analytics/usePerformance.ts e usePerformanceOptimizations.ts (reexports)"
+      ]
+    },
+    {
+      "path": "src/hooks/system/useDebounce.ts",
+      "sha256": "e1a8716e995f6732963fd06d57df463dde9325aa55a96bfa29a2e9c7a24daba4",
+      "bytes": 527,
+      "lines": 21,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "ui_performance_support",
+      "review_basis": "Callback debounce integral: cancela timer pendente, não cancela promessa já iniciada, não existe fence de geração/consulta. Usado pela CommandPalette; temporizador não tem cleanup no unmount. Sem executar timer real.",
+      "consumers": [
+        "src/components/ui/command-palette.tsx"
+      ]
+    }
+  ],
+  "candidate_notes": [
+    "OfflineIndicator: HTTP404/500 ainda comprova transporte/conectividade; o rótulo não promete saúde de API e SW/PWA foi deliberadamente desativado. Rejeitado como defeito.",
+    "ReactionPicker: falta de preventDefault sozinha não prova duplo evento. Wrapper TeamMessageItem antigo não está no Panel ativo e fechamento é síncrono; sem novo ID.",
+    "Prefetch/observers/counters/QuickPeek e vários efeitos exportados têm riscos latentes sem consumidor ativo confirmado; não foram convertidos em incidentes de produto.",
+    "useTimingHooks tem consumidor real do debounce de valor em useTalkMeQueue; a nota inicial de ausência genérica foi corrigida após busca transversal de imports. Esse debounce limpa timer e não é o callback debounce da paleta.",
+    "ChartContainer foi rastreado até config CSS literal em AIStatsWidget; dados de série remotos não demonstram injeção no CSS.",
+    "Easter eggs, partículas e skeletons são apresentação deliberada; animação ou placeholders não provam regressão de performance ou conclusão falsa de negócio.",
+    "useAnnounce ignora politeness e tem timer sem cleanup, mas só sua definição foi localizada; LiveRegion ativo é componente distinto."
+  ],
+  "controls": [
+    "Fonte fixa e sem escrita; nenhum script/produto ou endpoint executado.",
+    "Arquivo semantic exige faixa integral já lida; inventário pendente continua structural.",
+    "Exports/demos sem consumidor produtivo não viram achado de alcançabilidade presumida."
+  ],
+  "remaining_gaps": [
+    "Sem browser/assistive technology, medições de FPS/memória ou regressão visual; leitura integral não é teste de renderização.",
+    "Dependências Radix/cmdk/vaul são fronteiras não executadas. Eventos/foco/scroll internos não foram reimplementados em mocks como se fossem comprovação do pacote.",
+    "Probes cobrem quatro riscos concretos; não são suíte completa, typecheck, build nem aceite final de acessibilidade.",
+    "A auditoria global continua IN_PROGRESS; conclusão se refere somente aos87 arquivos primários deste lote."
+  ],
+  "task_adjudication": [
+    "P010/56 DONE_VERIFIED certifica remoção de nav-tags; continua preservado e não é reaberto pelos novos defeitos de busca/execução.",
+    "P015/E38 do catálogo e P043/E26 são SUPERSEDED; a relação histórica com a paleta não reativa planos substituídos.",
+    "P046/X054 PARTIAL trata integração específica de Talk X; este lote não altera esse status nem certifica todos os itens Talk X.",
+    "Nenhuma tarefa genérica DONE_VERIFIED foi reaberta por associação temática. Os defeitos atuais têm seu próprio subcontrato executável e aceite."
+  ],
+  "harness_history": [
+    "Primeira execução do P01 usou await Promise.resolve() insuficiente para Promise entre VM/host e parou por TypeError antes de gravar resultado. Harness corrigido para aguardar a Promise exata do callback capturada na fronteira; quatro casos então passaram. Nenhuma falha desse harness virou achado."
+  ]
+}

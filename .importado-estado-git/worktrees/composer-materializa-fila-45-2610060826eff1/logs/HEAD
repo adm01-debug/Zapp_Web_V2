@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791285971 -0300	
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791285972 -0300	reset: moving to HEAD
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 b8f916a14e56b52b4e96809177c8e0a50d59a7b2 Joaquim Ataides <ti@promobrindes.com.br> 1791286037 -0300	commit (cherry-pick): fix(multiplix): inicia disparo so depois de materializar a fila por itens (MX01)
+b8f916a14e56b52b4e96809177c8e0a50d59a7b2 747032589c92234567cb6d5816419893ae89012e Joaquim Ataides <ti@promobrindes.com.br> 1791286037 -0300	cherry-pick: fix(multiplix): materializacao recusa rascunho sem texto e worker nao auto-cura 'sending' sem fila (MX01)
+747032589c92234567cb6d5816419893ae89012e 50546688bb5cbb1aef5a9250e92e4f31febd0585 Joaquim Ataides <ti@promobrindes.com.br> 1791286037 -0300	cherry-pick: fix(multiplix): mantem o reparo da fila legada e documenta a pendencia do lote (MX01)
+50546688bb5cbb1aef5a9250e92e4f31febd0585 a930c8440ffb45794611a61b922c2c9f61159161 Joaquim Ataides <ti@promobrindes.com.br> 1791286850 -0300	commit: fix(multiplix): pausa fila legada antes da retomada
+a930c8440ffb45794611a61b922c2c9f61159161 62051a988728c0b22a2f0312b7898fe424689e23 Joaquim Ataides <ti@promobrindes.com.br> 1791287213 -0300	commit: test(multiplix): executa rollback declarado da fila legada

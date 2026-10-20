@@ -1,0 +1,7 @@
+fix(team-chat): entrada por codigo no canal de departamento e telas no contrato atual (SL-069 F76/F77/F79)
+
+TeamChatPanel: o canal de departamento bloqueado passa a oferecer Entrar via codigo
+(useAcceptDepartmentInvite -> RPC accept_department_invite), com motivo tipado de recusa
+e sem selo de canal. DepartmentInvitesView: mostra uso/limite do convite (use_count/max_uses)
+e trata erro de leitura em vez de lista vazia. DepartmentWhatsAppView: le instance_id/has_api_key
+pelo contrato atual e salva instance_id/api_key (sem nomes legados).

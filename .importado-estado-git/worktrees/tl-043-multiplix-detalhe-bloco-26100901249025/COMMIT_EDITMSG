@@ -1,0 +1,5 @@
+fix(multiplix): historico de disparos rotula o caso parcial e pagina sem carregar tudo (TL-043)
+
+A lista "Disparos recentes" pedia uma pagina de 50 na edge e descartava o meta.total exato do dispatch.list: os 50 se passavam pelo historico inteiro, sem rotulo do caso parcial e sem caminho para os mais antigos (o unico jeito de abrir o monitor e clicar numa linha dessa lista).
+
+fetchMultiplixDispatchesPage(offset) passa a devolver { rows, total } (o total e o do servidor) e useMultiplixDispatchesList usa a pagina 0. A tela mostra "N de M" e oferece "Carregar mais antigos", que pede a pagina seguinte (mesmo limite, offset = linhas ja carregadas) e anexa por id - nada de carregar o historico inteiro.

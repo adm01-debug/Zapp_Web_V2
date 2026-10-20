@@ -1,0 +1,25 @@
+fix(catalogo): teste do gate monta o caminho real dos arquivos do Catálogo
+
+Recusa do revisor de 09/10: arquivosDoModulo() prefixava o módulo duas vezes
+(src/components/catalog/src/components/catalog/X.tsx) e o teste passava por
+acaso. Agora o caminho sai de relative(raiz, join(parentPath, name)) com "/",
+há asserção do formato (toContain da amostra) e o comentário do piso diz que a
+medição é do próprio módulo do Catálogo.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1f9252a86
+# Last commands done (2 commands done):
+#    pick 9483fb68e fix(catálogo): Incluir src/components/catalog/** no coverage.include e (SL-154)
+#    pick e908f779a fix(catalogo): teste do gate monta o caminho real dos arquivos do Catálogo
+# No commands remaining.
+# You are currently rebasing branch 'v2/sl-154-261008214830a7' on '1f9252a86'.
+#
+# Changes to be committed:
+#	modified:   src/__tests__/coverage-catalogo.test.ts
+#	modified:   vitest.config.ts
+#

@@ -1,0 +1,9 @@
+refactor(inbox): restringe contrato do TransferDialog a agent|queue (#88)
+
+Remove a opcao 'connection' do TransferDialog: nao existe operacao canonica
+de transferencia de contato entre conexoes no backend da Inbox. O contrato
+publico passa a ser somente agent|queue (TransferTargetType exportado), o
+que elimina os casts que escondiam a incompatibilidade nos consumidores.
+
+Testes: TransferDialog.test.tsx cobre a ausencia da opcao Conexao, a
+atribuicao sem cast de onTransfer e o fluxo agent->fechar apos resolver.

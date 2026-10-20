@@ -1,0 +1,3 @@
+fix(telefonia): seletor de saida de audio (setSinkId) no dialogo de chamada (SL-246)
+
+O botao de alto-falante volta ao CallDialog cumprindo a condicao que o T21 deixou escrita no arquivo: so existe onde o navegador tem setSinkId. O clique lista as saidas de audio (enumerateDevices, kind=audiooutput) e a escolha chama setSinkId no elemento de audio remoto do SIP (REMOTE_AUDIO_ID). Estados de carregando, vazio, erro e lista; a saida atual so muda depois de a promessa resolver. Seletor fecha ao encerrar a chamada e ao fechar o dialogo.

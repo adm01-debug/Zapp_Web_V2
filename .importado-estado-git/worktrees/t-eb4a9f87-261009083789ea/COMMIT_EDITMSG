@@ -1,0 +1,1 @@
+fix(migrations): corrige rollback do outbox inbound

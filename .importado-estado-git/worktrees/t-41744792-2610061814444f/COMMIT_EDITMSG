@@ -1,0 +1,6 @@
+fix(contratos): IA-055 ancora o p_since do custo na propria RPC e na janela do ciclo
+
+O contrato lia /p_since:\s*since/ — casava com o p_since do resumo e deixou de
+valer quando o #264 (cb0459af7) trocou o `since` memoizado por janelaAtual().
+A garantia e a mesma: o custo vem do servidor com a janela relativa. A checagem
+passa a ser ancorada na RPC do custo, entao fica mais estrita, nao mais frouxa.

@@ -1,0 +1,19 @@
+fix(edge): endurece o gate pre-auth do evolution-webhook contra abuso de instanceName (TRA-002)
+
+Sem assinatura HMAC, o instanceName do corpo virava chave ilimitada do
+tokenCache (expiradas nunca varridas) e disparava um RPC service_role por
+nome novo — vetor de memoria e amplificacao de carga apontado na recusa.
+
+- tokenCache com teto de 256 entradas: gravações varrem expiradas e
+  removem a menos recentemente usada (LRU via re-insercao no hit)
+- goTokenMatches rejeita nome fora do formato de instance_id
+  (^[A-Za-z0-9_-]{1,64}$: cobre generateInstanceName, 'PRINCIPAL' e ids
+  com hifen) sem chamar o resolver — zero RPC, zero entrada no cache
+- resolveInstanceToken ganha opcao cacheMiss:false, usada so no caminho
+  do webhook: miss de input nao autenticado nao vira entrada negativa
+  (caminhos autenticados mantem o cache negativo de 30s)
+- testes Deno: teto nao ultrapassado por N nomes, nome invalido nao chama
+  RPC, miss pre-auth nao cacheada, hit continua cacheado
+
+# Conflicts:
+#	supabase/functions/evolution-webhook/index.ts

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791492729 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc b6925814a03040936aad13949705ae59736be9e6 Joaquim Ataides <ti@promobrindes.com.br> 1791492746 -0300	cherry-pick: fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)
+b6925814a03040936aad13949705ae59736be9e6 48e044298d28a8c4b4d527a842468db0516f5820 Joaquim Ataides <ti@promobrindes.com.br> 1791493157 -0300	commit: fix(notificacoes): isola lista confirmada por usuario
+48e044298d28a8c4b4d527a842468db0516f5820 db5154e90b12da3a9a6d766d4668a9b59a9d26e0 Joaquim Ataides <ti@promobrindes.com.br> 1791493343 -0300	commit (amend): fix(notificacoes): isola lista confirmada por usuario
+db5154e90b12da3a9a6d766d4668a9b59a9d26e0 9661b76c457c18723329d7e8892a4704b58df2f5 Joaquim Ataides <ti@promobrindes.com.br> 1791544238 -0300	commit: fix(notificacoes): spinner do popover com contraste AA e motion-safe

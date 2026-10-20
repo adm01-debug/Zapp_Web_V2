@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791296711 -0300	branch: Created from dia/2026-10-06
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c 47993290ec25cd009ef2c757d112c5e7601a1f64 iris <iris@hermes.local> 1791297054 -0300	commit: fix(contatos): descarta coordenada de recálculo atrasado que não é do endereço vigente (#263)

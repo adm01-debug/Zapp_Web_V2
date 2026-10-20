@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510769 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 1efaef578cd4da4efb8b8c2d0b970e930be8576d Joaquim Ataides <ti@promobrindes.com.br> 1791511137 -0300	commit: fix(multiplix): "N contatos × M blocos = N×M mensagens" sempre visível; (TL-010)
+1efaef578cd4da4efb8b8c2d0b970e930be8576d 58ab6db131d276317f6fb6ae757278e655aeed7c Joaquim Ataides <ti@promobrindes.com.br> 1791511326 -0300	commit (amend): fix(multiplix): "N contatos × M blocos = N×M mensagens" sempre visível; (TL-010)

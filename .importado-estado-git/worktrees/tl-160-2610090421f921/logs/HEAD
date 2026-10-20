@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791530464 -0300	
+5a9731645d266ea721f679d6886b83822ac16f6b 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791530464 -0300	reset: moving to HEAD
+5a9731645d266ea721f679d6886b83822ac16f6b 3276df583cb74ec3cbf75d197b008ab024fbcfd7 iris <iris@hermes.local> 1791531449 -0300	commit: fix(talk-x): tela 12 com cabeçalho, seletor do kit, abas acessíveis, anel e "Pico de Respostas" (TL-160)
+3276df583cb74ec3cbf75d197b008ab024fbcfd7 387d1a8b6f745c6ded7de9404468b87490cb1412 iris <iris@hermes.local> 1791531655 -0300	commit (amend): fix(talk-x): tela 12 com cabeçalho, seletor do kit, abas acessíveis, anel e "Pico de Respostas" (TL-160)
+387d1a8b6f745c6ded7de9404468b87490cb1412 7e92052cd1973c129b3bf5acbd1106fe2232cc50 iris <iris@hermes.local> 1791531764 -0300	commit (amend): fix(talk-x): tela 12 com cabeçalho, seletor do kit, abas acessíveis, anel e "Pico de Respostas" (TL-160)
+7e92052cd1973c129b3bf5acbd1106fe2232cc50 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791558290 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 42caf7532ff859a67ff0d7762c89af718a0f2bde Joaquim Ataides <ti@promobrindes.com.br> 1791558729 -0300	rebase (continue): fix(talk-x): tela 12 com cabeçalho, seletor do kit, abas acessíveis, anel e "Pico de Respostas" (TL-160)
+42caf7532ff859a67ff0d7762c89af718a0f2bde 42caf7532ff859a67ff0d7762c89af718a0f2bde Joaquim Ataides <ti@promobrindes.com.br> 1791558729 -0300	rebase (finish): returning to refs/heads/v2/tl-160-2610090421f921

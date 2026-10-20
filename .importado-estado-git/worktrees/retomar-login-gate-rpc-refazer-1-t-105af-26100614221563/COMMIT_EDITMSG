@@ -1,0 +1,10 @@
+fix(auth-login): consolida gate de login na RPC consume_login_gate
+
+A edge fazia quatro idas ao banco: a conta travada só era consultada depois
+de consumir os dois rate limits. A RPC nova decide o bloqueio antes de
+consumir contadores, aplica os tetos de IP e de e-mail na mesma transação
+(corpo inválido conta só o IP) e é executável apenas por service_role.
+
+Prova: scripts/db-audit/login_gate_rpc.test.sh (Postgres descartável) —
+27 asserções verdes, p95 da chamada única 3.22ms < 5.34ms da sequência
+antiga; suite offline do handler 15/15.

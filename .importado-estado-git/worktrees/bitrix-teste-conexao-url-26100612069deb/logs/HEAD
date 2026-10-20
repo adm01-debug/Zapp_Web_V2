@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299194 -0300	
+7e3d30cb5be2c801088f200d54191d09416ae334 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299194 -0300	reset: moving to HEAD
+7e3d30cb5be2c801088f200d54191d09416ae334 9a021bb58d602704f36e21df6d2fb3adc79b7859 Joaquim Ataides <ti@promobrindes.com.br> 1791299527 -0300	commit: fix(bitrix-api): teste de conexão nomeia o portal testado e recusa URL do chamador (#222)

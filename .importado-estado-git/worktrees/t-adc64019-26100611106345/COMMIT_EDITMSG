@@ -1,0 +1,8 @@
+fix(admin): Sala de Crise conta pendencia e presenca reais, nao proxies
+
+R2-AUTH-036 (item 260): a Sala de Crise tratava toda mensagem sender=contact da
+ultima hora como 'sem resposta' (inclusive as ja respondidas) e usava
+profiles.is_active (conta habilitada) como agente online e como denominador da
+'carga por agente'. Agora a pendencia exclui mensagem com resposta posterior, o
+cartao de agentes usa a presenca real (agent_presence) e a carga divide por
+agente online; sem ninguem online a razao sai '--' em vez de zero.

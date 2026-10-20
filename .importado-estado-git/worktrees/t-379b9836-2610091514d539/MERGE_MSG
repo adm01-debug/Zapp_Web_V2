@@ -1,0 +1,4 @@
+fix(inbox/chat): Hooks passam a usar get_team_inbox / get_team_messages_ (SL-016)
+
+# Conflicts:
+#	src/hooks/team-chat/__tests__/useTeamChatMutations.mute.test.ts

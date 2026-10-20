@@ -1,0 +1,10 @@
+test(seguranca): lista as permissoes da tela sem trava no banco (N-004)
+
+Script de auditoria offline que cruza as permissoes NOMEADAS usadas pela tela
+(requiredPermission/withPermission do ProtectedRoute, hasPermission/checkPermission
+do usePermissions, _permission_name da RPC e o metadata de menu permission:) com
+toda chamada user_has_permission(...) das migrations, e imprime a tabela
+permissao x trava no banco. Na ponta de hoje a tabela tem 1 linha: a unica
+permissao que a tela usa, multiplix.dispatch.create, segue SEM TRAVA, enquanto
+send_messages (o envio) ja tem trava nas migrations 20260930190000/20260930200000.
+Nada de rede, banco ou producao; teste unitario com fixture prova as regras.

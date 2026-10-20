@@ -1,0 +1,6 @@
+fix(sla): marco de primeira resposta usa o instante do envio, nao o da criacao (#460)
+
+O trigger messages_sla_first_response_trigger passa a registrar a
+primeira resposta no instante em que o status vira 'sent'
+(status_updated_at), em vez do created_at da mensagem: o tempo em
+fila/retentativa ate a entrega ao provedor volta a contar no SLA.

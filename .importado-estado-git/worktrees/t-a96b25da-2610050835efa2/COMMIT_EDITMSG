@@ -1,0 +1,10 @@
+fix(send-email): teste do relay compara host do Resend por hostname exato
+
+O mock de fetch decidia a rota e contava as chamadas ao provedor com
+url.includes('api.resend.com'), que casa também hosts arbitrários com esse
+texto (alerta CodeQL js/incomplete-url-substring-sanitization no PR 1890).
+
+Agora a rota é casada por host+path exatos e o resumo de chamadas Resend
+filtra por new URL(url).hostname === 'api.resend.com'. Novo teste cobre
+lookalikes (api.resend.com.evil.tld, evil.tld/api.resend.com, userinfo) e
+confirma que o host real continua contando.

@@ -1,0 +1,7 @@
+fix(ci): guard da protecao da main passa a conferir as aprovacoes exigidas (SL-032)
+
+O baseline declara required_approving_review_count=0 desde 03/10/2026 e nada
+conferia o campo: subir para 1 na mao (ou por PUT completo de branch protection,
+que ja derrubou 'strict' tres vezes) passava como "Perimetro OK". O guard agora
+compara o campo com o baseline, acusa divergencia com a politica do ADR-004 e
+NAO restaura sozinho — mudar politica de aprovacao e decisao humana.

@@ -1,0 +1,3 @@
+SHA_COM=689345d7fdc097fb284cdf2f1290498b00388327
+SHA_SEM=05859cedfd480031cc0b072e492ca8abadb860e3
+SHA_ZERO=cccccccccccccccccccccccccccccccccccccccc

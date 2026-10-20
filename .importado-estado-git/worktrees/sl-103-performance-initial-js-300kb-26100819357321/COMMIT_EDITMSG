@@ -1,0 +1,3 @@
+perf(bundle): tira o framer-motion do skip-link (SL-103)
+
+O aviso de Tab do SkipLinks nasce com a animacao CSS do proprio projeto (animate-slide-down, motion-safe) em vez do motion.div/AnimatePresence. O framer-motion sai do grafo inicial por este arquivo; o aviso passa a ficar visivel ja no primeiro quadro (antes montava com opacity 0 inline ate a animacao JS rodar). Teste novo: src/components/ui/__tests__/skip-link.test.tsx (vermelho com a versao antiga, verde agora).

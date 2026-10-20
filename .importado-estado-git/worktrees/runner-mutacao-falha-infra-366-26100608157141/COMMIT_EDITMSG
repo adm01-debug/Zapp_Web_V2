@@ -1,0 +1,23 @@
+fix(mutacao): separa falha de infraestrutura de mutante morto no runner do mapa (#366)
+
+R2-INF-019: `killed = processo.status !== 0` fazia binário que não inicia
+(status null), configuração quebrada ou "No test files found" valerem como
+MORTO sem executar um teste. Medido no runner antigo: escondendo o vitest,
+ele imprimia "6/6 mutantes MORTOS" e saía 0.
+
+Agora o runner só afirma o que mediu:
+- baseline obrigatório: a suíte roda SEM mutação e precisa ficar verde;
+- MORTO exige pelo menos um teste NOMEADO vermelho (asserção rastreável),
+  presente no resumo `Tests ...` e no corpo da saída;
+- INFRA (não iniciou, sinal, sem resumo) e INCONCLUSIVO (saiu != 0 sem teste
+  nomeado vermelho) são estados próprios e nunca contam como mortos;
+- política de sobreviventes explícita (EQUIVALENTES_DECLARADOS + mutação de
+  controle com `esperado: sobrevivente`);
+- a conclusão vai para o status: 0 medido e limpo, 1 sobrevivente não
+  declarado, 2 medição inválida (baseline ruim, INFRA/INCONCLUSIVO, erro).
+
+Os controles que já existiam foram preservados: aplicação por sed, backup em
+.tmp/mutation-backup, restauração byte a byte conferida e verificação final
+de que nenhum arquivo ficou mutado.
+
+Teste: scripts/ci/run-mapa-classificacao.unit.mjs (17 casos, `node --test`).

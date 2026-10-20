@@ -1,0 +1,35 @@
+feat(inbox): transporte canônico de mensagens interativas botões/lista (R2-INB-003)
+
+Entrega o TRANSPORTE real dos tipos interativos pedido por t_b10d983f
+(item 82 do BACKLOG / R2-INB-003); o cartão anterior só apresentava o envio
+como indisponível. "CTA URL" não é tipo novo: é um botão type='url' dentro
+de 'buttons'.
+
+- Migration 20261005130925 (idempotente, com -- Rollback): o CHECK de
+  messages.message_type passa a aceitar 'buttons' e a RPC
+  enqueue_rich_outbound_message ganha os ramos 'buttons'/'list' com a mesma
+  validação severa de poll/contact, preservando assinatura, idempotência
+  (advisory lock + comparação de payload) e imutabilidade do payload.
+- message-delivery/index.ts: novos cases que montam /message/sendButtons e
+  /message/sendList a partir de media_meta->outbound_delivery_payload, com
+  validação equivalente à de poll/contact.
+- Construtor/handler: o envio interativo passa a chamar
+  sendRichOutboundMessage de verdade, mantendo o contrato onSend:
+  Promise<void> — fecha/limpa só com o aceite do transporte e preserva a
+  composição em rejeição (alerta é o sendError real).
+
+Refaz os três pontos da recusa da rodada anterior:
+1. remove sendUnavailableReason/interactiveSendUnavailableReason (código
+   morto, nascia fixado em null) do builder, ChatDialogs, ChatPanel e
+   useChatPanelHandlers, junto com os testes do caminho "indisponível";
+2. alinha migration, edge e front ao contrato de botões da Evolution
+   (reply/url/call): url exige ^https?:// <=2048, call exige phoneNumber de
+   8 a 15 dígitos, reply exige id <=256; o alias legado 'phone' fica só na
+   renderização de mensagens já persistidas. Casos novos provam a recusa de
+   call sem número, reply sem id e tipo phone inexistente, no deno e no
+   PostgreSQL descartável;
+3. registra interactive-buttons-list-behavior.test.sh no db-guard.yml (passo
+   ao lado do irmão message-delivery-phase1, com SKIP_DOCKER_SHIM) e tira a
+   entrada da ALLOWLIST do inventário.
+
+Fecha o caminho de sucesso falso: nenhuma confirmação de envio sem aceite.

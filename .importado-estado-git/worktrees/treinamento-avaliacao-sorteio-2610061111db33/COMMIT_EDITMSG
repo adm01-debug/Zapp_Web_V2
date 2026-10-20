@@ -1,0 +1,7 @@
+fix(treinamento): nota do Modo Treinamento passa a sair das respostas do atendente (#261)
+
+A nota era sorteada (Math.random, depois secureRandomFloat) e gravada em
+training_sessions.score com feedback de 'empatia e resolução' — avaliação de
+desempenho que não media nada (R2-AUTH-037). Agora cada resposta do atendente é
+medida em detalhe, próximo passo e empatia; a nota é a fração de critérios
+atendidos (faixa 40..100) e o feedback diz qual critério faltou.

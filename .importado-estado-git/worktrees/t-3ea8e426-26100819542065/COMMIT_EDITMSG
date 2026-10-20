@@ -1,0 +1,14 @@
+test(hooks): estabiliza Ctrl+2 fora do shell esperando o commit do router (#447)
+
+O caso '#447 > Ctrl+2 fora do shell (/sla)' lia a sonda (useLocation) FORA do
+waitFor: o waitFor só esperava window.location, que o react-router atualiza
+antes de commitar a transition. Sob carga o DOM ainda mostrava '/sla'
+(AssertionError: expected '/sla' to be '/?view=dashboard').
+
+A asserção da sonda entra na MESMA condição do waitFor: sem timeout novo, sem
+skip, sem tocar em nenhum outro teste.
+
+Prova: com a URL já trocada e o commit do router atrasado 30 ms, o teste ANTIGO
+falha em 37 ms com a mensagem exata do flake e o consertado passa (3/3);
+suíte de src/hooks/__tests__ 3/3 verdes (1183 testes, 123 arquivos) e o caso
+sozinho 10/10.

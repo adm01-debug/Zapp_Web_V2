@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791450853 -0300	
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791450880 -0300	reset: moving to HEAD
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791451862 -0300	reset: moving to HEAD
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 435428566d936bd4e96c6fdf9aae96399dede2e6 worker-testes <worker-testes@promobrindes.local> 1791452013 -0300	commit: test(e2e): só tolera lacuna medida do conjunto local; defeito do produto vira test.fixme específico

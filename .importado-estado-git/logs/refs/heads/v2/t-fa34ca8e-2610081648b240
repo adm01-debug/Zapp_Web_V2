@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488900 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc a3f8bec91257e59cf26d9cda3f6a840b90df33b5 Joaquim Ataides <ti@promobrindes.com.br> 1791488949 -0300	commit (cherry-pick): fix(tarefas): cartão de tarefa concluída oferece lembrete que o executor exclui por estado (#425)

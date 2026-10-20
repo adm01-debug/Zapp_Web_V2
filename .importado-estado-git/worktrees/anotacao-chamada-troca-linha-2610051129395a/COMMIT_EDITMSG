@@ -1,0 +1,10 @@
+fix(calls): vincula rascunho da anotacao ao id da chamada
+
+O rascunho de anotacao era estado local solto (sem reset por call.id): ao
+trocar a chamada selecionada com o painel ainda montado, o texto digitado na
+chamada A continuava valendo e salvar gravava o texto de A no id de B.
+
+R2-MOD-013: guarda o rascunho junto do call.id a que pertence, de modo que
+cada chamada so enxergue o proprio rascunho - o de A fica preservado e B
+mostra as notas reais de B. Teste prova o defeito (vermelho antes, verde
+depois).

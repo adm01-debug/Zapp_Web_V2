@@ -1,0 +1,7 @@
+fix(hooks): não apaga vínculo local quando a Evolution GO falha na exclusão (#66)
+
+handleDelete engolia a rejeição de deleteInstance com .catch(() => {}) e em seguida apagava a linha em whatsapp_connections, confirmando sucesso na UI com a instância remota ainda viva (TRA-005).
+
+Agora: (1) a exclusão na GO roda sem catch vazio e, se falhar, o vínculo local é preservado (só mostra o erro); (2) a remoção do vínculo local passa a reportar 'Exclusão pendente' quando a GO apaga a instância mas a linha local sobra; (3) sucesso só é anunciado quando as duas etapas saem.
+
+Teste em src/hooks/inbox/__tests__/useConnectionsManager.tra005.test.ts: 2 falhas contra o código original (DELETE local chamado após falha da GO; sem estado 'pendente') e 4 verdes com a correção.

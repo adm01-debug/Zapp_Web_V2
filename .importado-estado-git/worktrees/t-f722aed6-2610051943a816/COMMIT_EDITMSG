@@ -1,0 +1,5 @@
+test(talkx): não citar o placeholder legado no teste
+
+O teste continua guardando a ausência do texto solto (regex com espaço
+variável), mas o arquivo não repete o literal — a busca estática do contrato
+de adoção roda no diretório todo.

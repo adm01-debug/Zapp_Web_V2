@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d279c795feba69022b6603c79169c914886901fb Joaquim Ataides <ti@promobrindes.com.br> 1791222113 -0300	branch: Created from dia/2026-10-05
+d279c795feba69022b6603c79169c914886901fb d3418037e3d03f85db45967f972c249be89bdc0a Joaquim Ataides <ti@promobrindes.com.br> 1791222343 -0300	merge 5431c28e1: Merge made by the 'ort' strategy.
+d3418037e3d03f85db45967f972c249be89bdc0a ae896d904de72ff40f5ed2a6f2209f0b0842ff1b Joaquim Ataides <ti@promobrindes.com.br> 1791223146 -0300	commit: feat(popup): liga a paginacao do historico antigo ao ChatPopup (R2-INB-004)

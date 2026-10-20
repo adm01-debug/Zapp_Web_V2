@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4ff5d77217832e5762e4009e271c4a3179bbc9cd Joaquim Ataides <ti@promobrindes.com.br> 1791386624 -0300	branch: Created from dia/2026-10-07
+4ff5d77217832e5762e4009e271c4a3179bbc9cd e659ef5175b53f1eb16c11ac0d823298c3965424 Joaquim Ataides <ti@promobrindes.com.br> 1791387090 -0300	commit: fix(sip): limpa tentativa cancelada quando espera rejeita

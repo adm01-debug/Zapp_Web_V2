@@ -1,0 +1,7 @@
+fix(telefonia): ciclo do endereco blob da gravacao mora no RecordingPlayer (TEL-RECORDING-001)
+
+O endereco `blob:` da gravacao passa a ser criado E revogado no MESMO useEffect do
+RecordingPlayer, com o endereco vivo num registro lido por useSyncExternalStore (nao em
+useMemo, que criava na renderizacao e deixava a limpeza do StrictMode revogar o endereco sem
+criar outro - o <audio> ficava com um blob: revogado). Cada teste renderiza um player e c3/c4
+viraram cenarios independentes.

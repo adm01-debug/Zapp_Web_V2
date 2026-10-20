@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791138007 -0300	
+4b97aa57c9ee4140bffb232536c003bfa92f1809 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791138008 -0300	reset: moving to HEAD
+4b97aa57c9ee4140bffb232536c003bfa92f1809 362fb17adc83391086b2a69e4d805cf579d0fad0 Joaquim Ataides <ti@promobrindes.com.br> 1791138722 -0300	commit: fix(ci): dry_run não reescreve secrets das edges

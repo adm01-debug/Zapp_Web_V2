@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 720dd7154e04c63517a42151d943589278f389e8 Joaquim Ataides <ti@promobrindes.com.br> 1791432721 -0300	
+720dd7154e04c63517a42151d943589278f389e8 720dd7154e04c63517a42151d943589278f389e8 Joaquim Ataides <ti@promobrindes.com.br> 1791432722 -0300	reset: moving to HEAD
+720dd7154e04c63517a42151d943589278f389e8 e0f9976bb7fda961541d7f546a79e3f20561e0b5 Joaquim Ataides <ti@promobrindes.com.br> 1791432734 -0300	cherry-pick: test(e2e): varredura de navegação dos 42 módulos no desktop e no celular (Y09)
+e0f9976bb7fda961541d7f546a79e3f20561e0b5 da54da657814daf50cfc18c245e3af024bad7ba0 Joaquim Ataides <ti@promobrindes.com.br> 1791432815 -0300	commit: test(e2e): varredura de módulos só tolera lacuna medida do conjunto local
+da54da657814daf50cfc18c245e3af024bad7ba0 fa91fa17d645d784b4e6bad838255f7f46a1a887 worker <worker@promobrindes.local> 1791433268 -0300	commit: test(e2e): aquece o runtime de Edge com um worker por vez
+fa91fa17d645d784b4e6bad838255f7f46a1a887 16313f8ed604c2bb2ff146ae07deb1bebb007f2c worker <worker@promobrindes.local> 1791434622 -0300	commit: test(e2e): aquece o runtime do conjunto em passadas ate uma fechar limpa

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524900 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524901 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 ac4214f90afa3b3deac4474fde838c80a1f0a2a5 Joaquim Ataides <ti@promobrindes.com.br> 1791526329 -0300	commit: fix(db): RPCs de contato nao distinguem inexistente de fora do alcance (SEC-RLS-02/03)

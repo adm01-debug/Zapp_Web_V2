@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542291 -0300	branch: Created from dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 3f9b681511b8837957058668938ba75b4feffa91 Joaquim Ataides <ti@promobrindes.com.br> 1791542317 -0300	cherry-pick: feat(talk-x): liga os KPIs das telas 04 e 05, "Desempenho deste template" e "Em andamento" às RPCs de métricas (TL-123/X091)
+3f9b681511b8837957058668938ba75b4feffa91 b6d629d725f7481536b27de3b957f11d2e6937f8 Joaquim Ataides <ti@promobrindes.com.br> 1791542317 -0300	cherry-pick: fix(talk-x): tipagem das RPCs pendentes de types-sync e `bars` anulável no KpiCard (TL-123)
+b6d629d725f7481536b27de3b957f11d2e6937f8 4cb28efd0e47a3f297d5ecf71fbc79d390308a90 Joaquim Ataides <ti@promobrindes.com.br> 1791542513 -0300	commit: fix(talkx): variação do card Total de Templates compara criados do mês (TL-123)

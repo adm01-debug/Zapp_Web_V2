@@ -1,0 +1,17 @@
+fix(webhook): opt-out e atribuição duráveis em outbox idempotente, retomados no replay (#69)
+
+R2-API-006: depois do ingest, a supressão de opt-out e as atribuições
+TalkX/Multiplix eram chamadas soltas (erro só logado ou fire-and-forget) e a
+reentrega (outcome='duplicate') saía antes de retomar qualquer efeito — a
+mensagem ficava durável e os efeitos se perdiam para sempre.
+
+- inbound_message_effects: outbox por (conexão, external_id, efeito), gravada
+  na mesma transação do ingest_inbound_message (novos p_opt_out_keyword e
+  p_quoted_external_id).
+- drain_inbound_message_effects aplica cada pendência e baixa a linha na mesma
+  transação; falha fica em last_error/attempts e o replay retenta só o
+  incompleto — inclusive no 'duplicate', que agora resolve o id da linha
+  vencedora e registra efeitos de mensagens anteriores à outbox.
+- Edge lança erro quando ingest/drain falham ou deixam pendência: o 500 faz a
+  Evolution reentregar. Autoresposta só com suppression_id novo (nunca duas
+  confirmações); opt-out nunca conta como resposta.

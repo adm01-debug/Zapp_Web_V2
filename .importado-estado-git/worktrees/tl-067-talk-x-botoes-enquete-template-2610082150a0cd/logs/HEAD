@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507018 -0300	
+5bb8664d243f0787d35e99d55ec899187a39121b 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507019 -0300	reset: moving to HEAD
+5bb8664d243f0787d35e99d55ec899187a39121b 273a4d6eba0713b502f602ffce3f42f28725cc10 Joaquim Ataides <ti@promobrindes.com.br> 1791507851 -0300	commit: feat(talkx): botoes e enquete na mensagem do template, com texto reserva e teste real (TL-067)
+273a4d6eba0713b502f602ffce3f42f28725cc10 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543260 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b b10ea0b4f136b25abbdf5772994ff09d8d789fcc Joaquim Ataides <ti@promobrindes.com.br> 1791543260 -0300	rebase (pick): feat(talkx): botoes e enquete na mensagem do template, com texto reserva e teste real (TL-067)
+b10ea0b4f136b25abbdf5772994ff09d8d789fcc b10ea0b4f136b25abbdf5772994ff09d8d789fcc Joaquim Ataides <ti@promobrindes.com.br> 1791543260 -0300	rebase (finish): returning to refs/heads/v2/tl-067-talk-x-botoes-enquete-template-2610082150a0cd
+b10ea0b4f136b25abbdf5772994ff09d8d789fcc a138f9042738b3658a1032b84796340f8cbe1e11 Joaquim Ataides <ti@promobrindes.com.br> 1791543574 -0300	commit: fix(talkx): erros do editor interativo em text-warning e transição só com motion-safe

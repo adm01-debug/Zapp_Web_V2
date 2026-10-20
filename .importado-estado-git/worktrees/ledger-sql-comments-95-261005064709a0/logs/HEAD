@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193677 -0300	
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193677 -0300	reset: moving to HEAD
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 7d907c08eb753a1a34de0d7d95dd81277714fc1b Joaquim Ataides <ti@promobrindes.com.br> 1791194242 -0300	commit: fix(ci): usa comentario SQL no heredoc pos-apply do ledger (#95)

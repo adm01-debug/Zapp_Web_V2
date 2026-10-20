@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791138032 -0300	
+4b97aa57c9ee4140bffb232536c003bfa92f1809 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791138033 -0300	reset: moving to HEAD
+4b97aa57c9ee4140bffb232536c003bfa92f1809 291946e88789359f515f0b0ef8275f6d33bf9537 Joaquim Ataides <ti@promobrindes.com.br> 1791138773 -0300	commit: fix(permissions): propaga erro da revogação e só anuncia sucesso no retorno true

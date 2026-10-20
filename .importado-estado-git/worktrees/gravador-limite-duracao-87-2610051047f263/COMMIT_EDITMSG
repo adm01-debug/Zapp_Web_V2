@@ -1,0 +1,12 @@
+fix(hooks): gravador interrompe captura no limite de duracao e no unmount
+
+stopRecording/cancelRecording guardavam com o isRecording capturado no
+primeiro render (sempre false), entao o timer nao parava o MediaRecorder
+no maxDuration e nada liberava microfone no desmonte. A liberacao passa a
+ser feita por releaseCapture, funcao estavel baseada em refs (timer,
+recorder e tracks), idempotente; um useEffect de unmount descarta a
+captura, getUserMedia resolvido apos o desmonte devolve as tracks e
+falha no construtor do MediaRecorder para a stream. O useEffect do
+AudioRecorder ganha as deps corretas agora que os callbacks sao estaveis.
+Cobre R2-INB-008 (item 87): testes de lifecycle provam stop, tracks.stop
+e clearInterval no timeout e no unmount.

@@ -1,0 +1,19 @@
+fix(ci): scanner de pesos acusa intermediário ausente em lista estática (LT-TYPE-03)
+
+O parser da URL do Google Fonts colapsava uma lista estática de pesos
+(wght@300;400;500;600;700) em [min,max] = [300,700], e scanOrphanWeights
+só rejeitava o que ficava FORA do intervalo. Assim um font-weight: 450
+ausente da lista passava batido. Agora:
+
+- parseLoadedWeights devolve { min, max, exact }: exact = null para eixo
+  variável (min..max), exemplos de pesos para lista estática.
+- isWeightLoaded decide por família: intervalo contínuo no eixo variável,
+  pertinência exata na lista estática.
+- scanOrphanWeights usa isWeightLoaded e reporta pesosCarregados.
+
+O index.html atual usa wght@200..800 (eixo variável) para Plus Jakarta
+Sans, então o guard-rail real segue com pesoOrfao=0; o defeito era
+latente e só aparecia com lista estática.
+
+Teste: scripts/ci/medir-tipografia.unit.mjs cobre o caso (vermelho antes,
+verde depois) e isWeightLoaded.

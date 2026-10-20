@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 Joaquim Ataides <ti@promobrindes.com.br> 1791207564 -0300	branch: Created from dia/2026-10-05
+2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 9b17311d00d48589410d1205e9f2ca5a33344f6f Joaquim Ataides <ti@promobrindes.com.br> 1791209110 -0300	commit: feat(talkx): detector de cron no sensor — timeouts e ≥5 falhas seguidas (#119)

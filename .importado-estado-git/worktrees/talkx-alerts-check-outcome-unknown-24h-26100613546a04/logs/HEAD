@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305666 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305667 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 cf271055d6b589b9b8f363827bdf2f90ef10419b Joaquim Ataides <ti@promobrindes.com.br> 1791306117 -0300	commit: test(db): prova que o lote de alertas do Talk X nao trava no sinal outcome_unknown_24h

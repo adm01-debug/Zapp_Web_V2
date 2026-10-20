@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791290051 -0300	branch: Created from dia/2026-10-06
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 73067f63f3e7c5640573cdcfe4c74782835355f4 Joaquim Ataides <ti@promobrindes.com.br> 1791290445 -0300	commit: fix(inbox): preserva o erro da carga das mensagens da conversa ativa (#319)

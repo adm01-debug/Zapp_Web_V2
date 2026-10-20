@@ -1,0 +1,1 @@
+fix(biblioteca-midia): le o catalogo paginado em vez de travar na janela de mil itens (#344)

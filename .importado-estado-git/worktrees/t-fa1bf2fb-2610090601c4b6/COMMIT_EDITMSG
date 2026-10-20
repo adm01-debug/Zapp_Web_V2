@@ -1,0 +1,7 @@
+fix(seguranca): figurinha recebida deixa de ir para bucket público (Y29 P0-03)
+
+A cópia da figurinha recebida de cliente passa a viver DENTRO do bucket privado da
+mídia de conversa (whatsapp-media), em pasta própria do usuário que salva, e a
+biblioteca (stickers.image_url) guarda só o locator durável dela — lido por URL
+assinada (useResolvedStorageUrl). O bucket público stickers sai do fluxo de mídia
+de conversa. Cópia server-side (storage.copy): o arquivo não passa pelo navegador.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511045 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 84c1784a909a8c0964fd2a949b0b415a60ca35c1 Joaquim Ataides <ti@promobrindes.com.br> 1791511111 -0300	commit (cherry-pick): fix(historico): 'Carregar mais' da Jornada ultrapassa as janelas fixas das consultas (#328)
+84c1784a909a8c0964fd2a949b0b415a60ca35c1 625fe56a0276e37197574010e5fb87ee9f9351aa Joaquim Ataides <ti@promobrindes.com.br> 1791511111 -0300	cherry-pick: fix(historico): ordena as atividades do negocio antes do limite na Jornada (#328)

@@ -1,0 +1,10 @@
+fix(errors): ErrorBoundary respeita fallback nulo e retira o overlay quebrado (#383)
+
+`render()` usava `if (this.props.fallback)`, entao `fallback={null}` — usado em
+App.tsx para remover em silencio um provider de overlay que quebrou — era lido
+como "sem fallback" e a tela GLOBAL de erro (role="alert", "Ops! Algo deu
+errado") tomava o lugar do overlay, derrubando a interface inteira.
+
+Passa a testar a PRESENCA da prop (`this.props.fallback !== undefined`): null e
+false significam "nao renderize nada", ausencia da prop mantem a tela de erro.
+Teste novo cobre os quatro casos (null, false, ausente e customizado).

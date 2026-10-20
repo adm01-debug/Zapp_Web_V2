@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503051 -0300	branch: Created from dia/2026-10-08
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 562998f6e54bfa47084d975e2ef2189b866f0f17 Joaquim Ataides <ti@promobrindes.com.br> 1791504506 -0300	commit: fix(inbox/chat): zera 78 achados de lint do inbox (react-hooks/refs e no-explicit-any) (SL-202)
+562998f6e54bfa47084d975e2ef2189b866f0f17 256c45062596f26dd28164c867ef334ffb7055a9 Joaquim Ataides <ti@promobrindes.com.br> 1791504528 -0300	commit (amend): fix(inbox/chat): zera 78 achados de lint do inbox (react-hooks/refs e no-explicit-any) (SL-202)

@@ -1,0 +1,14 @@
+fix(quarentena): paginar liberações e reconciliar a versão mais recente no monitor (#238)
+
+A consulta de allowed/whitelisted usava limit: 500 sem paginação e ordenada
+por created_at crescente: com mais de 500 liberações para ids já cacheados,
+a 1ª página trazia as MAIS ANTIGAS e a decisão antiga de um id podia
+permanecer no cache para sempre.
+
+- fetchAllReleases pagina por offset (countMode exact) até esgotar o
+  resultado, cobrindo todos os ids cacheados;
+- latestReleasePerMessageId reduz as liberações à linha efetivamente mais
+  recente por message_id (reviewed_at > created_at > id), com versões
+  repetidas do mesmo id;
+- teste novo com 600 versões de um id + liberação além da 500ª (vermelho
+  antes, verde depois); demais testes de backoff/retomada/estado preservados.

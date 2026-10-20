@@ -1,0 +1,1 @@
+fix(catalogo): lote aplica a mesma pre-validacao de envio e falha fechada quando a consulta cai (#389)

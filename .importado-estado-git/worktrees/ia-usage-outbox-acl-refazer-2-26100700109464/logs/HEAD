@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342618 -0300	
+e58beff67df277afa73c179058c38190a5dd5d5c e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342619 -0300	reset: moving to HEAD
+e58beff67df277afa73c179058c38190a5dd5d5c fc7517f732de7a08350437cbd8023c5bef9e1785 Joaquim Ataides <ti@promobrindes.com.br> 1791342753 -0300	reset: moving to fc7517f73
+fc7517f732de7a08350437cbd8023c5bef9e1785 98a74a5dcdf375f3e209005850b38dc63cad15af Joaquim Ataides <ti@promobrindes.com.br> 1791344987 -0300	commit: fix(db): ACL da outbox de IA com rollback real e contrato por papel
+98a74a5dcdf375f3e209005850b38dc63cad15af bdaf0b1ee7409920f6e272aeeb87f798245280d9 Joaquim Ataides <ti@promobrindes.com.br> 1791344999 -0300	commit (amend): fix(db): ACL da outbox de IA com rollback real e contrato por papel

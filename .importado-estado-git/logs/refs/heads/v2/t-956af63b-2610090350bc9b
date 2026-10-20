@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791528603 -0300	branch: Created from dia/2026-10-09
+2a47986959e01fcd590be2a63199a8b6db27f86d bfd76d334c735970fe1d5e01003c2158654ceeba Joaquim Ataides <ti@promobrindes.com.br> 1791529626 -0300	commit: fix(talk-x): Tela 10 com data, horário, fuso, janela, throttle e supressão; salvar pela RPC com revisão (TL-149)

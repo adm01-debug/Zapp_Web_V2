@@ -1,0 +1,6 @@
+fix(edge): presença pré-envio do multiplix sai com o token da instância (MX07)
+
+A presença "digitando" do worker ia só com a key global e o evoFetch caía no
+EVOLUTION_INSTANCE_TOKEN (instância padrão) ou morria calada com 400. Agora
+resolve o token da MESMA instância que vai enviar via resolveInstanceToken
+(memoizado — segue 1 RPC por instância por passada) e passa como instanceToken.

@@ -1,0 +1,19 @@
+test(db-audit): mede e registra a divergência de replay do Talk X E27 (#464)
+
+Por quê: o E27 publicou as três tabelas do Talk X em supabase_realtime por DOIS
+arquivos com o mesmo SQL (20260927500001 e 20260927570000); no replay o segundo
+cai em 42710. A decisão 20261001-114300-7eb1 (opção 2) manda NÃO editar a
+migration aplicada, registrar a divergência e só corrigir com migration nova se
+preciso.
+
+Medido nos arquivos reais em PG 17 descartável: sozinha, a 20260927570000 aplica
+sem erro (a causa não é o estado da imagem/base, como o registro dizia — é a irmã
+duplicada) e a publicação termina com as 3 tabelas do E27. Logo o efeito
+pretendido está intacto e nenhuma migration nova é necessária (uma versão
+posterior não desfaz a falha do arquivo anterior).
+
+Registro: motivo da entrada corrigido em replay-known-failures.json e o E27
+adicionado aos "arquivos que não aplicam" em docs/MIGRATIONS.md §7.
+Teste novo: scripts/db-audit/talkx-e27-replay-divergence.test.sh (vermelho antes
+na checagem do registro, verde depois). Verificação: zapp-verify . --rapido verde;
+check-test-inventory OK; replay-classify.test.sh PASSOU.

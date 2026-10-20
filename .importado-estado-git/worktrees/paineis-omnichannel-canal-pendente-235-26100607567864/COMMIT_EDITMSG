@@ -1,0 +1,17 @@
+fix(omnichannel): canal pendente deixa de contar como conectado e WhatsApp sai da constante 1
+
+R2-API-063 (#235): o painel Canais do OmnichannelInbox tratava toda linha ativa
+de channel_connections_safe como conexão operacional — contava em "canais
+conectados" e pintava o ponto verde mesmo com status pending_setup (cadastro
+sem credenciais). Agora separa cadastro (is_active) de conexão operacional
+(status connected); pending_setup aparece como Pendente em "Canais Não
+Conectados" e não entra na contagem.
+
+No OmnichannelManager a contagem WhatsApp era a constante 1 e a tela vazia
+afirmava "Seus canais WhatsApp já estão ativos" sem consultar nada. A contagem
+passa a vir da fonte autorizada (whatsapp_connections_safe, status connected)
+com estado de carregamento/erro explícito, e o texto vazio reflete o que foi
+verificado.
+
+Testes: OmnichannelInbox.canaisPendentes (vermelho antes) e
+OmnichannelManager.whatsappCount (duas conexões, zero, erro, texto vazio).

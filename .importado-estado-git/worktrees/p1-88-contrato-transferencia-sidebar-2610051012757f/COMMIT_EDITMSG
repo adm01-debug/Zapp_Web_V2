@@ -1,0 +1,11 @@
+fix(inbox): transferência da sidebar persiste evento+nota e rejeita em falha (#88)
+
+transferContact passa a aceitar so agent|queue (sem caminho connection),
+recebe a nota opcional e a persiste em conversation_events.metadata.note
+com event_type='transfer' e destino em to_agent_id/to_queue_id. Erro do
+UPDATE ou do INSERT agora rejeita a Promise (sem toast de sucesso), e a
+sidebar so fecha o diálogo quando a transferência conclui — alvo e diálogo
+se mantem em falha.
+
+Dependencia integrada nesta branch: contrato TransferTargetType do
+TransferDialog (cherry-pick de 3da946159).

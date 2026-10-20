@@ -1,0 +1,10 @@
+fix(catalogo): is_new exige created_at dentro da janela de 30 dias
+
+list_products aplicava só is_new = true, então produto marcado como novo
+há mais de 30 dias continuava no filtro new_30d (listagem e exportação),
+divergindo da métrica. O contrato público segue { is_new: true }; na edge
+o predicado passa a exigir também created_at >= agora-30d, fronteira
+inclusiva, com o corte UTC/ISO calculado uma vez por requisição (a
+consulta paginada e a contagem de fallback do PGRST103 usam o mesmo
+instante). deps.now injetável fixa o relógio no teste, que prova o valor
+exato do corte.

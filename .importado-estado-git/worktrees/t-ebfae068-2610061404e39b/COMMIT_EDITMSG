@@ -1,0 +1,9 @@
+fix(migrations): associa lembretes à tarefa pela identidade da origem, não pelo título (#293)
+
+A migração 20260928140000 ligava reminders.migrated_task_id à tarefa por
+igualdade de título. Dois lembretes de donos/contatos diferentes com o
+mesmo título disputavam as mesmas tarefas: vínculo cruzado ou repetido,
+sem como auditar. A correção acrescenta a origem imutável
+(migrated_from_reminder_id, com índice único de bijeção) e um reparo
+idempotente que associa por identidade (título+dono+contato+horários+
+descrição), negado a anon/authenticated.

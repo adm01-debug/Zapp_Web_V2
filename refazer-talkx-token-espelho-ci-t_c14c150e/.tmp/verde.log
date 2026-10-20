@@ -1,0 +1,19 @@
+✔ ESTADO.md lista exatamente as edges que existem no repositório (2.651535ms)
+✔ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (9.650109ms)
+✔ edge marcada como órfã (grupo E) realmente não tem chamador no repositório (5438.95044ms)
+✔ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (25281.888075ms)
+✔ ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada (0.977587ms)
+✔ total de edges do cabeçalho do ESTADO.md bate com a tabela (0.24502ms)
+✔ FEATURE_REGISTRY.md lista exatamente as views do ViewRouter (1.546219ms)
+✔ FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada (0.396586ms)
+✔ FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais (10.160519ms)
+✔ TESTING_CONVENTION.md aponta só para caminhos que existem (1.674493ms)
+✔ TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI) (4.162521ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30878.22604

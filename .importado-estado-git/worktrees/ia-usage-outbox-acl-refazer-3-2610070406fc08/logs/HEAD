@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 Joaquim Ataides <ti@promobrindes.com.br> 1791356816 -0300	
+2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 Joaquim Ataides <ti@promobrindes.com.br> 1791356817 -0300	reset: moving to HEAD
+2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 9564b3a714c1473d732d654346b21e2264ecab3d Joaquim Ataides <ti@promobrindes.com.br> 1791356829 -0300	cherry-pick: fix(db): ACL da outbox de IA com rollback real e contrato por papel

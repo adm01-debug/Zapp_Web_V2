@@ -1,0 +1,4 @@
+fix(ci): aceitar itens concluidos no checklist do catalogo
+
+# Conflicts:
+#	scripts/catalog/validate-plan.test.mjs

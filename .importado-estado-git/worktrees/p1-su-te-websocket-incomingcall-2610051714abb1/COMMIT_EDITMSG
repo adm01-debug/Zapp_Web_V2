@@ -1,0 +1,9 @@
+test(calls): versiona prova de zero WebSocket no IncomingCallAlert
+
+A sonda que media ausência de socket era temporária e não ficava no
+commit. Agora um helper versionado (websocketSpy.ts) instala um WebSocket
+dublê antes da avaliação do cliente Supabase (via vi.hoisted, pois o
+realtime-js captura o construtor na criação do SupabaseClient) e registra
+um afterEach que falha se qualquer url for construída. Removendo o mock
+de @/integrations/supabase/client o teste falha acusando a url do
+realtime; com o mock, passa com contagem zero.

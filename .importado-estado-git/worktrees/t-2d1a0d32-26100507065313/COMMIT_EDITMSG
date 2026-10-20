@@ -1,0 +1,7 @@
+fix(testes): restaura estado inicial e prova ordem/fail-closed na revogação de dispositivos (R2-AUTH-004)
+
+Corrige os pontos da recusa da rodada anterior:
+- restaura os testes de estado inicial (devices=[], sessions=[], currentDeviceId=null);
+- no caminho feliz de removeDevice, prova a ordem via log de eventos: o delete de
+  user_devices só ocorre DEPOIS de todas as revogações Auth;
+- no fail-closed, prova que user_devices.delete NÃO é chamado quando uma revogação falha.

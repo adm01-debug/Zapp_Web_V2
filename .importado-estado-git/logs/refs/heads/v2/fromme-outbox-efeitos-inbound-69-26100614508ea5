@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791309032 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd 5e9a18f3483655817a315fc8c7cadfb978f69b08 Joaquim Ataides <ti@promobrindes.com.br> 1791309259 -0300	commit (cherry-pick): fix(webhook): opt-out e atribuição duráveis em outbox idempotente, retomados no replay (#69)
+5e9a18f3483655817a315fc8c7cadfb978f69b08 2d3fa8c0022705d1b07e985df11ad7b0d794b183 Joaquim Ataides <ti@promobrindes.com.br> 1791309259 -0300	cherry-pick: fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)
+2d3fa8c0022705d1b07e985df11ad7b0d794b183 d4009c4107a1a734db46b22666d1c95de5c0028c v2-complexo <v2@local> 1791309558 -0300	commit: fix(migrations): restaura o rollback executavel do outbox inbound (#69)
+d4009c4107a1a734db46b22666d1c95de5c0028c faddbd58a437d91b1c51c4937973283549c588c6 v2-complexo <v2@local> 1791310861 -0300	commit: test(db-audit): executa o rollback do outbox no Postgres descartavel (#69)

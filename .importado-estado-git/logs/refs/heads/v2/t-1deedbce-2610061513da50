@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791310419 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd 745476861eb36faae828a26923c8407518a99f33 Joaquim Ataides <ti@promobrindes.com.br> 1791310432 -0300	cherry-pick: fix(multiplix): conclusao do dispatch decide pela fila por item quando ela existe (#47)
+745476861eb36faae828a26923c8407518a99f33 efd5b8aef1e19136a7670fa1f501013dd095c8d7 Joaquim Ataides <ti@promobrindes.com.br> 1791313554 -0300	commit (amend): fix(multiplix): conclusao do dispatch decide pela fila por item quando ela existe (#47)

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791525543 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791525544 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 697fa256d7b37480500c3c00ebe29fa108c01921 Joaquim Ataides <ti@promobrindes.com.br> 1791527030 -0300	commit: fix(seguranca): amarra autoria de reacao, revoga privilegios do anon e valida alcance no INSERT de conversation_tasks
+697fa256d7b37480500c3c00ebe29fa108c01921 9941a3b13abde4a172e202f6cb3472a01b756648 Joaquim Ataides <ti@promobrindes.com.br> 1791527090 -0300	commit: docs(seguranca): rollback executavel nas 3 migrations do achado SEC-RLS_CONTATOS_MENSAGENS-04/05/06
+9941a3b13abde4a172e202f6cb3472a01b756648 c68425913fa4b5fef4bace95ff1b5f3e7c84eb45 Joaquim Ataides <ti@promobrindes.com.br> 1791527094 -0300	commit (amend): fix(seguranca): bloco de rollback executavel nas 3 migrations do achado SEC-RLS_CONTATOS_MENSAGENS-04/05/06

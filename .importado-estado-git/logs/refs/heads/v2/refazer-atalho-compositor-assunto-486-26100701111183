@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6c57dfa54443435babc08970f517261076314176 Joaquim Ataides <ti@promobrindes.com.br> 1791346263 -0300	branch: Created from dia/2026-10-07
+6c57dfa54443435babc08970f517261076314176 c5f0c56ba59e7d3d7a33049dd48c7d9f5e6f1d1b Joaquim Ataides <ti@promobrindes.com.br> 1791346284 -0300	cherry-pick: fix(gmail): atalho do compositor respeita a exigência de assunto do botão (#486)

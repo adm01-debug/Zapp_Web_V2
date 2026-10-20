@@ -1,0 +1,13 @@
+fix(telefonia): liga o player de gravacao ao volume global (VOL-02)
+
+O <audio> efetivo da gravacao nasce em RecordingPlayer, mas a ref/hook do
+controle de volume tinham ficado no shell (TelefoniaView) como ref orfa: o
+elemento tocava no volume cheio, ignorando o slider e o mute, enquanto o
+contrato textual ficava verde so por achar o nome do hook no shell.
+
+- RecordingPlayer passa a criar a ref e ligar o <audio> ao controle unico
+  (useMediaElementVolume), acompanhando ajustes e mute e desligando no unmount.
+- TelefoniaView perde a ref orfa e o import morto.
+- Teste de comportamento mede o elemento real (vermelho antes, verde depois).
+- Contrato passa a apontar para o player que renderiza o audio e proibe a
+  ligacao orfa voltar ao shell.

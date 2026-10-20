@@ -1,0 +1,14 @@
+docs(telefonia): roteiro de homologacao de audio com 9 cenarios e recibos (T87)
+
+TEL-RUNTIME-001 (item 63): a persistencia SIP (upsert_my_call, T11) e o codigo de
+gravacao (get-call-recording/sync-call-records, T71-T74) existem e tem teste, mas o
+aceite exige chamada real com provider_call_id/end_reason no mesmo UUID e audio real.
+O que faltava de parte local era o roteiro de homologacao (T87) com a tabela de
+recibos por cenario; a execucao com a operadora fica humana (registrado no relato).
+
+- docs/telefonia/HOMOLOGACAO.md: Apendice G (9 cenarios), consulta de conferencia,
+  criterios de encerramento (mesmo UUID / audio / zero ringing preso), Bloqueios e
+  Pendencias honestas.
+- scripts/db-audit/telefonia-homologacao-runbook.test.mjs: guarda que roda no
+  'node --test scripts/db-audit/*.test.mjs' do db-guard; vermelho antes do roteiro
+  existir (4/4 falhas), verde depois (4/4).

@@ -1,0 +1,14 @@
+fix(performance): pagina do GET de mensagens deixa de pedir 1000 linhas (SL-099)
+
+O `useMessages` pedia 1000 linhas numa unica requisicao — o teto padrao do
+PostgREST — e o GET de uma conversa grande estourava o statement timeout do
+banco (`57014`): o pedido voltava 500 e o chat abria sem historico.
+
+O teto por requisicao cai para 100 linhas. Nada do historico e cortado: o
+restante continua vindo pela paginacao por cursor (`loadOlderMessages` ->
+`fetchMessagesBefore`), que usa o MESMO teto, e a lista virtualizada carrega
+mais ao chegar no topo.
+
+Prova: `useMessages.paginacao.test.tsx` — vermelho antes
+(`expected 1000 to be less than or equal to 200`) e verde depois, com o
+historico alcancavel e as paginas antigas sobrevivendo ao refetch silencioso.

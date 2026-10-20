@@ -1,0 +1,11 @@
+fix(multiplix): formato do rollback da migration MX01 no padrao do repo
+
+O cabecalho tinha UM  numa linha so; o
+fechar recusou por nao ser o bloco '-- Rollback (SQL executavel, na ordem):' +
+linhas '--   <sql>' que o revisor exige. Separei as duas instrucoes em linhas
+'--   ' (mesmo SQL, sem mudanca de comportamento) e troquei a extracao do
+MX01.R2.4 (lia so a 1a linha '-- Rollback:') por um awk que le o bloco novo
+inteiro, concatenando as duas instrucoes.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

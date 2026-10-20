@@ -1,0 +1,3 @@
+fix(telefonia): tipa os callbacks de mock.calls no teste do useTerminoRemoto (SL-249)
+
+O gate implicit-any (scripts/ci/implicit-any-ratchet.mjs, rodado no CI em ci.yml:171) estava vermelho na ponta: 2 TS7006 em src/hooks/calls/__tests__/useTerminoRemoto.test.tsx:143-144, onde warnSpy (ReturnType<typeof vi.spyOn>) deixa mock.calls sem tipo e os parametros do filter/map caem em any implicito. Anotados como unknown[].

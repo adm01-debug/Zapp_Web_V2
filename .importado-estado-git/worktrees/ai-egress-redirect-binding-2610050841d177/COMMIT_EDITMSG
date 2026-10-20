@@ -1,0 +1,25 @@
+fix(ai): fecha SSRF por DNS resolvido e rebinding e troca blocklist por allowlist (IA-EGRESS-001)
+
+Recusa 1 (SSRF incompleto: hostname que resolve para IP privado continuava
+permitido). O módulo agora resolve o DNS do hostname (A + AAAA) e recusa quando
+QUALQUER endereço é privado/loopback/link-local/metadata, ou quando a resolução
+falha/vem vazia (fail-closed). A resolução roda em CADA requisição e em CADA
+redirect. Contra DNS rebinding, o conjunto de endereços é fixado (pin) por
+requisição, reconferido com uma segunda resolução antes do primeiro envio e
+exigido idêntico a cada novo salto ao mesmo host: host que troca de endereço no
+meio da requisição é bloqueado em vez de seguido.
+
+Recusa 2 (blocklist de secrets permite exfiltrar secret não enumerado). A lista
+negativa saiu; entrou AI_PROVIDER_SECRET_ALLOWLIST, uma lista POSITIVA de
+credenciais de provedor (DEEPSEEK/GLM/GROQ/LOVABLE/OPENAI/OPENROUTER _API_KEY).
+Qualquer outro nome — inclusive secrets de infraestrutura não enumerados, como
+GITHUB_TOKEN ou TYPES_SYNC_PR_TOKEN — é recusado. O mesmo vale para o ramo
+custom_webhook/custom_agent, que antes lia Deno.env.get(secretName) cru.
+
+Migration (banco LOCAL): CHECK de ai_providers agora usa a allowlist explícita e
+o CHECK do endpoint também barra porta explícita e hostname interno/localhost.
+
+Testes Deno: prova vermelho->verde (o módulo anterior aceitava 127.0.0.1.nip.io e
+GITHUB_TOKEN) e cobre resolução privada, mistura público+privado, DNS que falha,
+rebinding antes/durante a requisição, redirect privado/outra origem e a
+reescrita POST->GET em 303/302.

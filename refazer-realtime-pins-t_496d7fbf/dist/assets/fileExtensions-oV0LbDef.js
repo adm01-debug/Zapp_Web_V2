@@ -1,0 +1,1 @@
+function e(e){if(!e||!e.includes(`.`))return null;let t=e.split(`.`);return t.length<=1?null:t.pop()?.toLowerCase()||null}function t(t,n){return e(t)||n}export{t};

@@ -1,0 +1,1 @@
+import{n as e}from"./crmIntegration-CiyAMXsu.js";function t(e){return e===`true`}var n=t(`true`);function r(){let t=e(`crm.integration`,!1);return n&&t}export{r as t};

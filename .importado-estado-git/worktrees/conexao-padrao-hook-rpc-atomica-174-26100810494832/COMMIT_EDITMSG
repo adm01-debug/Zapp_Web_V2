@@ -1,0 +1,25 @@
+fix(ci): baseline do usage-guard aceita a RPC da conexao padrao ainda fora da dia (#174)
+
+A guarda scripts/db-audit/supabase-usage-guard.mjs reprovou a entrega do hook
+(1 violacao nova: rpc:set_default_whatsapp_connection em
+src/hooks/inbox/useConnectionsManager.ts:306) porque a metade de banco do #174
+(t_ae0a55a6, migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql,
+APROVADA pelo revisor em 06/10 nos commits 076d3262b/96fb877ea) ainda NAO esta em
+nenhuma branch dia/ (conferido: dia/2026-10-06, dia/2026-10-07 e dia/2026-10-08).
+A projecao forward-only da guarda le so a arvore do branch, entao o alvo nao
+existe na projecao e a guarda acusa. A guarda esta CORRETA; falta o alvo na arvore.
+
+Registro a chave no baseline ratchet, que e o mecanismo que a propria guarda
+prescreve para divida conhecida e o mesmo caminho ja usado no repo: c7e646c3e
+(Claude, 27/09) e as 5 chaves rpc:* de talkx (02/10, removidas em 2017400d9
+quando o alvo passou a existir). A entrada e temporaria e auto-anunciada: a NOTA
+gravada em _comment manda remove-la quando a migration entrar na dia, e naquele
+momento o alvo passa a existir, a chave fica obsoleta e a guarda volta a falhar
+sozinha ("Entradas obsoletas no baseline") pedindo a remocao.
+
+Prova (tudo rodado nesta copia):
+- node scripts/db-audit/supabase-usage-guard.mjs
+  hook novo sem baseline -> 1 nova (a linha 306) / EXIT 1
+  hook antigo (HEAD~1)   -> 0 novas                / EXIT 0  (causalidade)
+  hook novo com baseline -> 0 novas                / EXIT 0
+- node --test scripts/ci/supabase-usage-guard-forward-projection.unit.mjs -> 25/25

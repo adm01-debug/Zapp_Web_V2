@@ -1,0 +1,12 @@
+fix(ci/devops): guarda E81 não confunde storageState vazio com login real
+
+Rebase em cima de dia/2026-10-09: o projeto chromium-telefonia (novo na dia) usa
+storageState: { cookies: [], origins: [] } para garantir sessão VAZIA de propósito
+(deslogado), mas o teste scripts/ci/playwright-config-e81.unit.mjs classificava
+qualquer bloco com `storageState:` como logado, sem distinguir o objeto vazio da
+referência em string ao arquivo de sessão real (e2e/.auth/user.json). Isso fazia
+a guarda E81 exigir `retries: RETRIES_LOGADOS` também no chromium-telefonia.
+Ajustada a detecção para `storageState:\s*'` (só conta string).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

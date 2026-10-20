@@ -1,0 +1,3 @@
+test(contatos): mede o caminho até abrir a conversa (CT-001, números de antes)
+
+Roteiro hermético que mede cliques, segundos, requisições, JS baixado, chunk do módulo, erros de console e achados de a11y do módulo Contatos, em 390/768/1672 px, com mediana de 3 rodadas por largura. Guarda de rede por allowlist (só a origem local) e o ref do backend vem do bundle servido — nada de host de produção no código. Auto-teste --busca-sempre-vazia prova que o roteiro fica vermelho quando o caminho não fecha.

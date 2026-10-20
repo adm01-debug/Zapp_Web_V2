@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299832 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 b2cf89249989e923742def83f3e01d607ff2d6d2 adm01-debug <adm01@promobrindes.com.br> 1791300482 -0300	commit: fix(inbox): composer consome Ctrl+F/Ctrl+K e para de duplicar a busca (#313)

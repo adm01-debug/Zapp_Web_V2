@@ -1,0 +1,3 @@
+fix(talkx): expurgo diario drena o acervo vencido em lotes (retencao em volume)
+
+R3-DELTA-008: purge_talkx_expired_data fazia um unico lote de p_limit linhas por passo e fechava o dia; com acervo vencido maior que o lote (campanha inteira vencendo de uma vez) o texto/midia seguia guardado alem do prazo. Agora cada passo drena em lotes de p_limit ate acabar o acervo (p_limit = tamanho do lote, nao teto diario) e o dia so fecha depois de drenar.

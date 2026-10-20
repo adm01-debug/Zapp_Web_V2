@@ -1,0 +1,10 @@
+fix(message-reactions): policies de escrita aceitam contact_id nulo da reação de agente (#302)
+
+O modelo de autoria do item 303 (gatilho message_reactions_normalize_author) zera
+contact_id quando user_id está preenchido, antes do WITH CHECK. Com a exigência
+m.contact_id = contact_id, toda reação legítima de agente seria barrada ao
+empilhar as duas migrations. A autorização continua vindo do contato da mensagem;
+contact_id preenchido e diferente do da mensagem segue barrado.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

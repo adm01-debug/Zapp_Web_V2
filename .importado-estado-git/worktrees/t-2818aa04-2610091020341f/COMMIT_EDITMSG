@@ -1,0 +1,7 @@
+test(edge): contrato prova orcamentos atuais alimentando a regra efetiva (R2-AUTH-022)
+
+Ponto do juiz barato (criterio do cartao): os rate limits existentes passam a
+receber a regra efetiva resolvida no banco (27.1). O contrato passa a provar que
+o ponto central encaminha os orcamentos ATUAIS (30/60, sobreponiveis) como
+default da RPC canonica, com UMA consulta por requisicao — a regra ativa no banco
+decide o efetivo. consume_rate_limit/429 das Edges seguem verdes na suite deno.

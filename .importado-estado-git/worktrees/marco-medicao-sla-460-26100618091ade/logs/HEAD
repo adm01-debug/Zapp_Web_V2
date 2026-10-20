@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320973 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320974 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 c72b90f87fc68aae777be30a7b1c99a26b4cbfe3 worker-mensageria <worker@zapp.local> 1791324259 -0300	commit: fix(sla): marco de primeira resposta usa o instante do envio, nao o da criacao (#460)

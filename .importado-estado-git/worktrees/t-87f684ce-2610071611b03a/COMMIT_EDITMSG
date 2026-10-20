@@ -1,0 +1,7 @@
+test(journey): fixa um unico instante no teste de fuso de periodRange
+
+O teste de fuso usava um `new Date(...)` local depois de trocar o `TZ`, entao os dois lados
+comparavam instantes diferentes e esperava 08/10 nos dois fusos. Agora cria
+`new Date('2026-10-08T01:30:00.000Z')` antes da troca e procura 07/10 em America/Sao_Paulo
+(UTC-3) contra 08/10 em UTC, mantendo a guarda de `getTimezoneOffset`. Corrige tambem o titulo
+do teste de 22:30: 22:30 em UTC-3 e 01:30Z do dia seguinte, nao 03:30Z.

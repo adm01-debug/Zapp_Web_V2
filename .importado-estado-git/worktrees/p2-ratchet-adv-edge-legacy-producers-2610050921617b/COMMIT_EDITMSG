@@ -1,0 +1,3 @@
+test(contratos): sobe o pino do ratchet de produtores legados para 242 arquivos .ts (drift acumulado)
+
+tests/contracts/_adv_edge_legacy_producers.test.ts pinava 232 arquivos .ts em supabase/functions; a arvore real media 235 ja no commit do pino e 242 no momento do cartao (nada do cartao, so merge de testes/infra sem token legado). Sobe o pino e o titulo para 242 e documenta o passo; INVENTARIO e ocorrencias (3) inalterados.

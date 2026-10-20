@@ -1,0 +1,8 @@
+fix(crm360): Campos sem fonte (segmento/porte/CNPJ/ultima visualizacao/ligacoes) omitidos e tabelas comerciais vazias (SL-151)
+
+Conferido na ponta de dia/2026-10-08: a lacuna nao existe como defeito de tela.
+A omissao e decisao do plano (PLANO_INBOX_360_CONVERSA.md:102,144,196) por
+ausencia de FONTE de dado; os campos citados tem render quando a fonte existe
+(Contact360Helpers.tsx:112 CNPJ, :117 porte, :76 segmento) e as tabelas
+comerciais ja tem empty states testados (Crm360Tab.test.tsx:112,
+SalesViewTab.test.tsx:82 - 17 testes verdes). Sem mudanca de codigo.

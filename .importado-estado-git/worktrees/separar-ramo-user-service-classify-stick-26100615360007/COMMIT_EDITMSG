@@ -1,0 +1,13 @@
+test(classify-sticker): prova o ramo usuario x service no preparo da imagem (R2-INF-022)
+
+7 testes focais com `globalThis.fetch` dublado por host/path exato (GoTrue, PostgREST/RPC,
+Storage e provedor) e o handler REAL capturado do `Deno.serve`; fixtures sinteticas, sem rede.
+
+- identidade de usuario vira `{kind:'user', bearerToken}` e a de servico `{kind:'service'}`;
+- usuario + midia autorizada: GET com anon key + JWT do chamador e 1 chamada ao provedor;
+- servico (webhook interno): service role explicita e bucket `whatsapp-media` preservado;
+- midia negada (403 da policy): 'outros', 0 chamada ao provedor e trilha sem locator nem token;
+- sem bearer e com bearer invalido: 401 sem download de midia e sem provedor.
+
+Vermelho->verde medido: com `index.ts` revertido ao base, 4 passed | 3 failed (o log vazava
+"Storage respondeu HTTP 403 para whatsapp-media/alheia/segredo.webp."); com a correcao, 7/7.

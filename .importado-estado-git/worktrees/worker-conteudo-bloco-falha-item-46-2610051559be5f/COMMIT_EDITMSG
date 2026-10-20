@@ -1,0 +1,32 @@
+fix(multiplix): preserva escopo e falhas por item
+
+Refazer 1 do item #46 (MX02). A entrega anterior (46a701218) ja fazia o worker
+usar o conteudo/midia do BLOCO do item, mas deixava `resolveBlockContent` e a
+montagem do texto FORA de tratamento de erro: uma excecao ali subia ao catch do
+handler, devolvia 500 e derrubava a invocacao inteira - o item corrente nao
+virava `failed` e os itens seguintes do lote nem eram processados.
+
+- `multiplix-send/index.ts`: a resolucao do bloco e a montagem do texto passam a
+  rodar DEPOIS do claim (o item so pode ser concluido com o lease em maos) e
+  dentro de um try/catch proprio; excecao conclui SOMENTE o item corrente via
+  `complete_multiplix_item(..., 'failed', mensagem)` e o lote continua.
+- `multiplix-send/index.test.ts`: harness fiel ao banco (o claim incrementa
+  `attempt_count` - f32b §2 - e o reschedule devolve `dead_lettered` em
+  `attempt_count >= 3` - f32b §7) + 5 testes novos: falha isolada por item com o
+  lote seguindo, gravacao do snapshot do ITEM, teto de tentativas para
+  `multiplix_block_pending_media` e `multiplix_block_empty_content`, e backoff
+  da tentativa abaixo do teto.
+- `multiplix-dispatch/actions/inspect.ts`: limpeza do que o cherry-pick deixou
+  (dois blocos de reexport que ninguem importa, JSDoc/banners orfaos e linhas em
+  branco extras); `evaluatePlaceholder` passa a usar o `renderForRecipient`
+  compartilhado (o import direto de `personalize` sai).
+
+Sem migration: `multiplix_delivery_items.personalized_message` ja existe (f32a,
+linha 42) e `persist_multiplix_item_message_snapshot` ja grava nela (f32b,
+linhas 206 e 224-225).
+
+Prova: `multiplix-send/index.test.ts` 55/55 verde (50 anteriores + 5 novos);
+suite Deno completa 1003 passed / 0 failed; `multiplix-dispatch` 64/64;
+typecheck-ratchet e lint-ratchet sem divida nova; `zapp-verify . --rapido` VERDE.
+Vermelho medido: o teste de falha isolada FALHA com o `index.ts` anterior, e os
+11 testes MX02 falham contra o worker de antes do cherry-pick (72cacb5d2).

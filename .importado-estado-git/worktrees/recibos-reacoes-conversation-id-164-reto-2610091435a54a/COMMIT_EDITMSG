@@ -1,0 +1,7 @@
+chore(db): versiona a migration de recibos/reações com a data de hoje (#164)
+
+A versão 20261006222024 vinha de 06/10 e ficaria atrás de qualquer migration
+já criada em 07-09/10 na branch do dia (fora de ordem no replay). A migration
+nova é a MESMA entrega aprovada, só com a versão de hoje:
+20261009173657_team_receipts_reactions_conversation_id_forced.sql.
+O caminho no .test.sh acompanha.

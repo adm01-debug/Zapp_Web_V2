@@ -1,0 +1,3 @@
+fix(talk-x): barra agendamento sem data valida no lifecycle
+
+Em runAction caso schedule, scheduledAt ausente/invalido lanca 'Escolha a data e hora do agendamento.' antes de updateCampaign.mutateAsync; o erro mantem a intencao aberta.

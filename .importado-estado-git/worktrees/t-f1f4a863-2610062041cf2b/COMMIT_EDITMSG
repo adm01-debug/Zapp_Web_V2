@@ -1,0 +1,11 @@
+fix(catalog): exportar catalogo leva todos os filtros da listagem (#410)
+
+O "Exportar catalogo" do rail so mandava para a edge o filtro do rail
+(in_stock/featured/new_30d) convertido por filterKeyToEdgeParams; busca,
+categoria, fornecedor, estoque baixo, preco, cor, material e bestseller
+ficavam de fora e o CSV saia quase inteiro.
+
+O CatalogRail passa a somar os filtros ativos da listagem (novo prop
+exportFilters) aos do rail, e a tela de gestao extrai esses filtros numa
+unica fonte (listingFilterParams) que buildFilters tambem usa - assim um
+filtro novo na grade nao volta a sumir do CSV.

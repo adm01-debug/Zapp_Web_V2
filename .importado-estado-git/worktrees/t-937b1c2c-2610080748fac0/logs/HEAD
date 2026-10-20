@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456497 -0300	
+0203871564cbc198c32d6c501cd414e24ddb10ab 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456498 -0300	reset: moving to HEAD
+0203871564cbc198c32d6c501cd414e24ddb10ab 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791457580 -0300	reset: moving to HEAD
+0203871564cbc198c32d6c501cd414e24ddb10ab 183101473db5ad4222816c95a2b1f650cf0c50a1 Joaquim Ataides <ti@promobrindes.com.br> 1791458230 -0300	commit: fix(ci): prova de orcamento nao altera tmpdir (#358)

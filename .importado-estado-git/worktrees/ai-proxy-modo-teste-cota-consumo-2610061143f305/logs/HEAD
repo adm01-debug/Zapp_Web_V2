@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297815 -0300	
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297815 -0300	reset: moving to HEAD
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac d08ec90c3782ed0ee041a07a8e69368c689beae2 Joaquim Ataides <ti@promobrindes.com.br> 1791299047 -0300	commit: fix(ai-proxy): diagnostico exige admin, limita conteudo/modelo/orcamento e registra consumo (R2-API-032)

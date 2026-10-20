@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559400 -0300	
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559402 -0300	reset: moving to HEAD
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 06491de587f44996280b3654793a7a08917bb21c Joaquim Ataides <ti@promobrindes.com.br> 1791559522 -0300	commit (cherry-pick): fix(talk-x): autosave não marca uso do segmento e traduz os erros do rascunho (X123)

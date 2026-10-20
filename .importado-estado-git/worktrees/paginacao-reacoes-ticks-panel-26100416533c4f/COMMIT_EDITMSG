@@ -1,0 +1,20 @@
+fix(team-chat): compor paginação, reações e ticks no Panel ativo (TC-006)
+
+O hook já tinha fetchOlderMessages/oldestCursor, as reações eram carregadas e
+o TeamMessageItem (reações + tick de leitura) já existia, mas nada disso era
+usado pelo Panel ativo, que mantinha o markup inline:
+
+- liga a paginação ao scroll (e a um botão acessível) do Panel;
+- cursor de paginação passa a ser composto (created_at, id): só created_at
+  pulava mensagens com timestamps empatados;
+- o reset por conversa passa a rodar ANTES do init do cursor (o reset apagava
+  o cursor recém-gravado e a paginação nunca começava);
+- o Panel passa a compor o TeamMessageItem, que renderiza as reações
+  (TeamReactionBar) e os ticks de leitura (MessageStatus);
+- ORDER BY created_at, id nas consultas para a fronteira do cursor ser estável.
+
+Testes: TeamChatPanel.wiring.test.tsx (reações/ticks/scroll/botão) e
+useTeamChatPanel.pagination.test.tsx (cursor composto) — vermelhos antes da
+correção, verdes depois. As asserts de markup do team-chat-exhaustive-audit
+foram apontadas para o arquivo que agora contém o código (TeamMessageItem/
+teamChatParts).

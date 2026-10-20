@@ -1,0 +1,11 @@
+fix(integracoes): manter Salvar acessível ao desativar uma integração
+
+O IntegrationForm só renderizava campos, Salvar e Remover dentro de
+`Boolean(values.enabled) && (...)`. Ao desligar o switch Ativado, a ação
+Salvar era desmontada antes de o operador conseguir enviar enabled=false:
+a integração remota continuava ativa e o diálogo passava a exibir um estado
+desativado que nunca chegou ao provedor (R2-API-041, item 215).
+
+A barra de ações (Salvar/Remover) sai do bloco condicional e passa a ficar
+sempre acessível; os campos continuam aparecendo só com a integração ligada
+e um aviso em text-muted-foreground explica como registrar a desativação.

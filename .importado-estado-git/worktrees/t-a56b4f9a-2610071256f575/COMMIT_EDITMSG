@@ -1,0 +1,18 @@
+fix(volume): rótulos com % nos dois controles e gravação de alertas agrupada com desfazer
+
+S28/S29 (B4): o `aria-label` do fone passa a trazer o volume ("Volume dos áudios e
+vídeos: 80%"; mudo = "Áudios e vídeos mudos") e o painel do fone abre com o nome
+completo em vez do "Volume" genérico. Rótulos seguem em src/lib/volumeLabels.ts
+(fonte única também usada pelo E2E); `MEDIA_VOLUME_SLIDER_LABEL` deixou de ser
+"Volume das mídias". E2E e testes que citavam os rótulos antigos atualizados.
+
+S36–S38 (B6): o volume dos alertas anda na tela na hora e grava em `user_settings`
+~400 ms depois do último movimento (um POST por rajada, onde antes era um por
+passo), com cancelamento ao desmontar, indicador discreto "Salvando…" sem travar o
+slider, e volta ao valor anterior na tela quando a gravação não chega às
+preferências. O aviso curto e o desfazer são do `useNotificationSettings` (que já
+faz isso uma vez por rajada) — o hook não foi alterado e o toast não foi duplicado.
+
+S39: mudo e volume não se misturam nos dois controles — o clique grava só
+`soundEnabled` (nunca zera o volume; slider de alertas com mínimo 10) e desmutar
+devolve o último volume.

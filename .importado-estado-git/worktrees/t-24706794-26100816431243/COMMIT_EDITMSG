@@ -1,0 +1,10 @@
+test(mobile): shell do teste de busca recebe a fonte de notificações mockada (#449)
+
+O shell mobile passou a consumir `useNotifications` (que exige `AuthProvider`), e
+o teste do botão Buscar (R2-PLAT-010) montava o `MobileShell` sem provedor: as
+duas provas de busca quebravam com "useAuth must be used within an AuthProvider"
+na verificação cheia, e a entrega anterior foi desfeita por isso.
+
+Aqui só entra a fonte de dados mockada — mesma convenção do `Sidebar.test.tsx` —
+sem tocar em nenhuma asserção de busca: o `MobileShell` e a `CommandPalette`
+seguem reais.

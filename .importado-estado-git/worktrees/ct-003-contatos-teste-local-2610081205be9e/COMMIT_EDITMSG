@@ -1,0 +1,10 @@
+feat(contatos): contatos de teste realistas para o ambiente local (CT-003)
+
+Script de semente DML (nao e migration) com 156 contatos de teste para o banco
+LOCAL: 7 grupos de tipo, com e sem e-mail/endereco/empresa, nomes de 60+ chars,
+[E2E] e emoji no nome, tags, 4 vendedores, 2 filas, legados (LID), excluidos
+(soft-delete) e duplicados propositais por e-mail e por telefone.
+
+Wrapper recusa producao (ref/host nao local) e o proprio .sql exige a marca de
+sessao app.zapp_seed_contatos=on. Idempotente por id determinista + ON CONFLICT
+(id) DO NOTHING: rodar 2x nao duplica (156 -> 156).

@@ -1,0 +1,14 @@
+fix(volume): visualizador do arquivo entra no volume global no mount
+
+O conteudo do dialogo vive num portal do Radix que monta em duas etapas
+(@radix-ui/react-portal 1.1.17): com o container implicito o conteudo nasce
+no 2o commit, que nao re-renderiza o MediaPreviewDialog, entao o
+useMediaElementVolume rodava uma vez com a ref nula e nao voltava. Com URL
+publica nada re-renderizava: o video/audio abria em 100% do sistema, sem
+listener de play/loadedmetadata.
+
+DialogContent passa a aceitar e repassar 'container' ao DialogPortal
+(opcional; sem ele nada muda para os outros dialogos) e o MediaPreviewDialog
+entrega document.body explicito, montando o conteudo no 1o commit.
+
+Refs t_fe46ce81

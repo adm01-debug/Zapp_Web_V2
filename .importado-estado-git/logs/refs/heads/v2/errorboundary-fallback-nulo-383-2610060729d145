@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f4ee23045b20317afff263829d3812255e47b120 Joaquim Ataides <ti@promobrindes.com.br> 1791282593 -0300	branch: Created from dia/2026-10-06
+f4ee23045b20317afff263829d3812255e47b120 a74a41252027d526493f384f391c0141d7787689 Joaquim Ataides <ti@promobrindes.com.br> 1791282928 -0300	commit: fix(errors): ErrorBoundary respeita fallback nulo e retira o overlay quebrado (#383)

@@ -1,0 +1,3 @@
+fix(journey): useCountUp parte do valor na tela, arredonda alvo inteiro e o cartão mantém anel de foco nos dois modos
+
+Anima do valor mostrado (ref) até o novo alvo: 10->12 não cai para ~0. Quadro intermediário arredondado quando o alvo é inteiro, alvo final exato. CARD_INTERACTIVE ganha motion-reduce:focus-visible:ring-2/ring-ring/50 (foco não é movimento) e perde motion-reduce:shadow-none, que apagava a sombra base.

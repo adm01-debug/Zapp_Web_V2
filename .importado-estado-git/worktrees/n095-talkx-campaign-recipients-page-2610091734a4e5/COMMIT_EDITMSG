@@ -1,0 +1,11 @@
+feat(talkx): cria talkx_campaign_recipients_page com paginação, filtros e RLS
+
+- Migration 20261009173548: criação da função talkx_campaign_recipients_page
+  com SECURITY DEFINER, search_path fixo, REVOKE de PUBLIC/anon
+  - Retorna rows/next_cursor/total com filtros por status, segmento e busca
+  - Quem não pode ver a campanha recebe recusa (42501)
+  - Sem campo de origem para selo
+- Migration 20261009174219: corrige cursor pagination e CTE scope
+  - Resolve bug no WHERE do cursor (agrupa com parênteses corretos)
+  - Resolve bug no CTE counted (separado do SELECT principal)
+  - Resolve bug no MAX(uuid) para next_cursor (usa subquery)

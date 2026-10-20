@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791298623 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 6f75561bfb1789e83284639316d1ea827755fa61 Joaquim Ataides <ti@promobrindes.com.br> 1791298750 -0300	commit: fix(telefonia): resumo pos-chamada nao fecha sozinho com anotacao em edicao (#275)

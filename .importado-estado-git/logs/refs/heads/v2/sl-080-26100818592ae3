@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791496742 -0300	branch: Created from dia/2026-10-08
+165168bf7800066e51592380b0ee1a51b75d0548 6c249ee61594a1365a681fbb3ca5c8771ac5cbe5 Joaquim Ataides <ti@promobrindes.com.br> 1791497038 -0300	commit: fix(inbox/chat): retoma a busca sozinha quando a pausa de 429 expira (SL-080)

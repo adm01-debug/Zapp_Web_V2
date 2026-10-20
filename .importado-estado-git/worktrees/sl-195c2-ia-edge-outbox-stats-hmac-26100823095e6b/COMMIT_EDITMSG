@@ -1,0 +1,10 @@
+feat(edge): evento de IA não confirmado vai para outbox_events assinado (SL-195c2)
+
+Quando o insert em ai_usage_logs não se confirma, registrarFalhaDeLog passa a
+gravar o evento em public.outbox_events (contrato do pai t_c33d0cbc):
+event_id = chaveDeLog (idempotência por UNIQUE origem+event_id via
+resolution=ignore-duplicates), payload.corpo com a serialização canônica da
+linha, assinatura HMAC-SHA256 verificada antes do POST. Sem
+AI_OUTBOX_HMAC_SECRET ou com verificação falhando, nada é gravado
+(fail-closed) e a perda sai pelo marcador de log; o caminho do log essencial
+(ai_usage_outbox + console.error) fica intacto.

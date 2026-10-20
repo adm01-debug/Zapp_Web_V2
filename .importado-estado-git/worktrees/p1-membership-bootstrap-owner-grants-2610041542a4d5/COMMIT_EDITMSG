@@ -1,0 +1,12 @@
+fix(db): protege bootstrap e último owner do team chat (TC-003)
+
+Por quê: a policy tcm_insert_member exigia membro prévio ou admin e
+impedia o bootstrap de grupo por agente (conversa órfã); o INSERT não
+exigia member_role='member' (injeção de owner); o DELETE não guardava
+o último owner; e o GRANT UPDATE de team_conversations anulava os
+REVOKEs de coluna (type, created_by, department_id).
+
+Verificação: scripts/db-audit/team-membership-bootstrap-owner.test.sh
+(40 asserções, bloco A defeito / bloco B corrigido) + zapp-verify . --rapido verde.
+
+Plano: TC-003 do BACKLOG_VERIFICADO (cartão t_721ab94b).

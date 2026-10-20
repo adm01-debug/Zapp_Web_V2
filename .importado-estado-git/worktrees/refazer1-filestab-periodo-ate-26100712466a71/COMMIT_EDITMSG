@@ -1,0 +1,9 @@
+fix(arquivos): periodo personalizado so com "Ate" varre as paginas antigas
+
+A varredura do periodo exigia `periodRange.from` para comecar, entao com so o "Ate" ela ja
+nascia concluida: `periodFullyLoaded` era true, a tela mostrava "Nenhum arquivo neste periodo"
+e nenhuma pagina antiga era carregada, escondendo os arquivos que casam com o limite `to`.
+
+Agora o limite da varredura e a ponta que existe (`from` quando ha "De"; `to` quando so ha
+"Ate") e o teto de paginas tambem encerra a varredura, para a tela nao ficar em skeleton para
+sempre quando nenhum item casa.

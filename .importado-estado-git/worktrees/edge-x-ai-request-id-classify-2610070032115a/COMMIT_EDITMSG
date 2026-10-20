@@ -1,0 +1,32 @@
+fix(ia): classificadores propagam x-ai-request-id ao log de consumo
+
+classify-audio-meme, classify-emoji e classify-sticker chamavam
+generateWithRouting sem requestId, entao toda linha de ai_usage_logs saia
+com request_id NULL e a prova de orcamento lia 0 linhas para o run.
+Os tres handlers agora leem o id com extractAiRequestId (uuid ou null,
+nunca inventado) e o repassam ao roteador e aos logAiUsage diretos das
+degradacoes. Handlers exportados (handleClassifyAudioMeme,
+handleClassifyEmoji, handleClassifyStickerRequest) com Deno.serve
+incondicional no modulo, como o contrato vitest de visao exige; os testes
+Deno stubam Deno.serve ao importar. Refeito sobre dia/2026-10-09.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto cdf3e975e
+# Last command done (1 command done):
+#    pick 46179634a fix(ia): classificadores propagam x-ai-request-id ao log de consumo
+# No commands remaining.
+# You are currently rebasing branch 'v2/edge-x-ai-request-id-classify-2610070032115a' on 'cdf3e975e'.
+#
+# Changes to be committed:
+#	new file:   supabase/functions/classify-audio-meme/index.test.ts
+#	modified:   supabase/functions/classify-audio-meme/index.ts
+#	modified:   supabase/functions/classify-emoji/index.ts
+#	new file:   supabase/functions/classify-emoji/request-id.test.ts
+#	modified:   supabase/functions/classify-sticker/index.ts
+#	new file:   supabase/functions/classify-sticker/request-id.test.ts
+#

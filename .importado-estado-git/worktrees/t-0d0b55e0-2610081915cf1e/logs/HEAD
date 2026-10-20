@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791497738 -0300	
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791497739 -0300	reset: moving to HEAD
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe bcb9c6d50b18e784f5218e7ffb162f406a918206 Joaquim Ataides <ti@promobrindes.com.br> 1791498010 -0300	commit: fix(ia): feature_flags lidas no servidor para desligar capacidade (SL-009)
+bcb9c6d50b18e784f5218e7ffb162f406a918206 7ee41159d90c3fef6bd214cb01bc37abfd76a472 Joaquim Ataides <ti@promobrindes.com.br> 1791499101 -0300	commit (amend): fix(ia): feature_flags lidas no servidor para desligar capacidade (SL-009)

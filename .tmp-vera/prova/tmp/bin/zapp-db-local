@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo "CMD  zapp-db-local $*" >> "$PROVA_CMD"
+exit 0

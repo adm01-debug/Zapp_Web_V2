@@ -1,0 +1,24 @@
+fix(multiplix): resolve nao devolve metadados de empresa fora do escopo
+
+Por quê: multiplix_resolve_recipients só ocultava destino_e164/destino_origem quando
+no_escopo=false — company_name, contact_id, empresa_papeis e last_interaction_at seguiam
+na linha e a edge repassava tudo ao cliente (R2-DB-003, item 28 do BACKLOG_VERIFICADO,
+P1 segurança). Agora a RPC redige na fonte (versão versionada em _foreign/singu, aplicação
+no Singu pendente) e a edge redige de novo no ramo resolve (redactResolvedRecipient):
+linha não elegível sai só com company_id (eco do id enviado) + elegibilidade.
+
+Refazer 1: a entrega anterior foi recusada por cobertura tautológica (o .sql era lido como
+texto e só o helper isolado era exercitado). Esta rodada acrescenta as duas provas pedidas:
+
+- scripts/db-audit/multiplix-resolve-escopo.test.sh (novo): EXECUTA a RPC extraída verbatim
+  do arquivo versionado num postgres:17-alpine descartável, com empresas dentro e fora do
+  escopo e inativas, assertando campo a campo (fora do escopo: 6 metadados NULL; elegível:
+  linha inteira). Verde na versão nova (41 asserções); vermelho na antiga
+  (MULTIPLIX_RESOLVE_ESCOPO_TEST_FUNCAO_ARQUIVO=...20261001160000...). Ligado ao job
+  "Contrato DB offline" do db-guard.yml.
+- index.test.ts: dirige handleMultiplixAudienceRequest de ponta a ponta (auth -> escopo ->
+  HMAC -> RPC do Singu -> resposta) com fetch stubado e asserta o CORPO devolvido ao
+  cliente: a linha fora do escopo não carrega nenhum metadado.
+
+Verificação: deno test supabase/functions -> 993 passed/0 failed; zapp-verify . --rapido
+VERDE. Cartão: t_c1431127.

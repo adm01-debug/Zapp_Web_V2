@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514442 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 c51c35af8d2aa919e526c2ee432a9f86de27ca48 Joaquim Ataides <ti@promobrindes.com.br> 1791514473 -0300	cherry-pick: fix(ai-tags): Classificar Recentes nao conta resposta de erro como conversa classificada (#272)

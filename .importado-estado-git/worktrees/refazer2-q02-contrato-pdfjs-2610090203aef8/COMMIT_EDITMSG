@@ -1,0 +1,3 @@
+test(contrato): mantem o pdfjs sob demanda rodando no deno e no vitest
+
+O comando citado na recusa (deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 <arquivo>) nao resolvia 'typescript' nem 'vitest': com nodeModulesDir none o deno nao resolve specifier nu, e o contrato ainda escrevia arquivo temporario que o --allow-read nao permite. A varredura, a AST e a tabela de casos continuam as mesmas; mudaram o loader (typescript por createRequire; vitest por import de specifier nao-literal) e a camada de assercao (node:assert, valida nos dois runners). A amostra de arquivo virou fonte em memoria e o campo inexistente namedExports do export virou exportClause, com caso novo de reexport so de tipo.

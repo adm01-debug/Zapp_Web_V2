@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230146 -0300	
+4e6da891e24c6e4920ced3501af74feff40abfa3 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230147 -0300	reset: moving to HEAD
+4e6da891e24c6e4920ced3501af74feff40abfa3 343341eb717056c688e26d371f02293dd4b493b8 Joaquim Ataides <ti@promobrindes.com.br> 1791230169 -0300	cherry-pick: feat(inbox): liga paginacao do historico antigo a Inbox ativa (R2-INB-004)
+343341eb717056c688e26d371f02293dd4b493b8 361be72d2710074765c31704c8427ea3e9052a36 Joaquim Ataides <ti@promobrindes.com.br> 1791230169 -0300	cherry-pick: test(inbox): torna deterministica a paginacao da Inbox sob a suite completa (R2-INB-004)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b8dd449ce2846fbc72d0a735fe2435f741af1525 Joaquim Ataides <ti@promobrindes.com.br> 1791137323 -0300	branch: Created from dia/2026-10-04
+b8dd449ce2846fbc72d0a735fe2435f741af1525 e4ee5f018e130f11054141812f4a637c6c356437 Joaquim Ataides <ti@promobrindes.com.br> 1791138563 -0300	commit: feat(auth): revoke-auth-sessions revoga sessões Auth reais (R2-AUTH-004)

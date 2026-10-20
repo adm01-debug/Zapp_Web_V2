@@ -1,0 +1,7 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+VERIFY: VERMELHO em banco_local (0s)

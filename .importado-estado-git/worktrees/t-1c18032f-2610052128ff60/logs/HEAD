@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791246537 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791246538 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 2257e6a10e645ac1bed805d205bd9dbbfe1a5678 Joaquim Ataides <ti@promobrindes.com.br> 1791247223 -0300	commit: fix(calls): termino remoto so encerra a sessao observada e usa evento valido em ringing

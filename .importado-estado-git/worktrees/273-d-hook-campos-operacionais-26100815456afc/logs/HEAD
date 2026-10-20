@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485150 -0300	
+72ad19958df7735cd29bad24dd38f66265c47f3b 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485151 -0300	reset: moving to HEAD
+72ad19958df7735cd29bad24dd38f66265c47f3b b719eaddd581fde057f03951df0dad8b051af3ff Joaquim Ataides <ti@promobrindes.com.br> 1791485171 -0300	commit: test(settings): prova que os campos operacionais não vão no upsert de user_settings (#273-D)
+b719eaddd581fde057f03951df0dad8b051af3ff 99a925c6854f415d771cddffd2a3f6c615dccc3d Joaquim Ataides <ti@promobrindes.com.br> 1791485186 -0300	commit: fix(settings): useUserSettings para de gravar os campos operacionais das abas Horário/Mensagens/Automação (#273-D)

@@ -1,0 +1,1 @@
+test(telefonia): renderiza a pilha real de AppProviders/App e prova o contexto de VoIP (ACH-3/SL-108)

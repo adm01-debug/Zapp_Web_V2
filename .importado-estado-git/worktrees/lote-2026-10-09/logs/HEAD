@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791550123 -0300	
+68980bf5e3486ca611a90742053bfdb008fcb5c3 e90956a2004a93e11ecebacb653a971eb5786c1b Joaquim Ataides <ti@promobrindes.com.br> 1791550300 -0300	checkout: moving from 68980bf5e3486ca611a90742053bfdb008fcb5c3 to lote/2026-10-09
+e90956a2004a93e11ecebacb653a971eb5786c1b 6634721e0bf67393c60799e4c88bc7e1d9ad2cae Joaquim Ataides <ti@promobrindes.com.br> 1791550405 -0300	commit (amend): feat: lote 2026-10-09 (217 correções e melhorias da fábrica)
+6634721e0bf67393c60799e4c88bc7e1d9ad2cae 32f53520a6301a348d8e75c625c90d729db7a9ae Joaquim Ataides <ti@promobrindes.com.br> 1791553115 -0300	commit: fix(ci): regex de teste não dispara falso-positivo no guard de tipografia
+32f53520a6301a348d8e75c625c90d729db7a9ae 14ad95693675fda15ac8e5060bd8187a5a4d30c5 Joaquim Ataides <ti@promobrindes.com.br> 1791556087 -0300	commit: fix(db): migrations do lote ganham versão de 09/10 (reservada no ledger)
+14ad95693675fda15ac8e5060bd8187a5a4d30c5 14ad95693675fda15ac8e5060bd8187a5a4d30c5 Joaquim Ataides <ti@promobrindes.com.br> 1791556767 -0300	reset: moving to HEAD
+14ad95693675fda15ac8e5060bd8187a5a4d30c5 19ce570c407399f872c101b1d2648982aafd3ea5 Joaquim Ataides <ti@promobrindes.com.br> 1791556789 -0300	commit: fix(auth): formulários de login e cadastro validam pelo zod (noValidate)
+19ce570c407399f872c101b1d2648982aafd3ea5 a609cd094f34e192864306995b626a94441a463c Joaquim Ataides <ti@promobrindes.com.br> 1791558000 -0300	commit: test(calls): useCallRecording confere o Blob sem depender do construtor do jsdom
+a609cd094f34e192864306995b626a94441a463c c9e08c6f4a66afd5d501d9e9ba4396c4c60da4df Joaquim Ataides <ti@promobrindes.com.br> 1791561079 -0300	cherry-pick: perf(bundle): tira o sonner do grafo inicial do entry, inclusive o que a telefonia puxava

@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 7a15852791828c50a9985a49659a9e13f15eaa86 Joaquim Ataides <ti@promobrindes.com.br> 1791127659 -0300	
+7a15852791828c50a9985a49659a9e13f15eaa86 7a15852791828c50a9985a49659a9e13f15eaa86 Joaquim Ataides <ti@promobrindes.com.br> 1791127660 -0300	reset: moving to HEAD
+7a15852791828c50a9985a49659a9e13f15eaa86 640cb77d2ac95568ac9b9e40da32fa7a567438ab Joaquim Ataides <ti@promobrindes.com.br> 1791127900 -0300	commit: feat(config): app aceita banco local de desenvolvimento por desvio explícito
+640cb77d2ac95568ac9b9e40da32fa7a567438ab 1e0fee458d00ff65152a1d085fd2cf18dd4cf755 Joaquim Ataides <ti@promobrindes.com.br> 1791127971 -0300	commit: fix(db-audit): replay local não chama mais a produção e aceita as fixtures E2E
+1e0fee458d00ff65152a1d085fd2cf18dd4cf755 f4744ac074d371eed0fd117c3eba1793632bbf09 Joaquim Ataides <ti@promobrindes.com.br> 1791128041 -0300	commit: docs(claude): regra do banco na V2 — trabalho local, produção só no lote do dia
+f4744ac074d371eed0fd117c3eba1793632bbf09 45850bdfa21afa980dd605abb4d453ea31b7caec Joaquim Ataides <ti@promobrindes.com.br> 1791128190 -0300	commit: chore(db): reconcilia o replay local com o banco canônico (sem efeito no canônico)
+45850bdfa21afa980dd605abb4d453ea31b7caec b8dd449ce2846fbc72d0a735fe2435f741af1525 Joaquim Ataides <ti@promobrindes.com.br> 1791137323 -0300	merge dia/2026-10-04: Fast-forward
+b8dd449ce2846fbc72d0a735fe2435f741af1525 1bee59c5aef4174a5b2784c3904be7b229e9f7d4 Joaquim Ataides <ti@promobrindes.com.br> 1791139754 -0300	commit: test(e2e): host e chave de sessao saem da fonte unica, nao de literal

@@ -1,0 +1,8 @@
+fix(edge): guardas de topo voltam a exigir connection.id (fail-closed)
+
+O refazer t_2a21c350 trocou `if (!connection?.id)` por `if (!connection)` nos
+três handlers. Uma conexão resolvida sem `id` (linha parcial) passava a seguir
+para `eq('whatsapp_connection_id', undefined)` e para upsert de stub/tombstone
+sem conexão. Restaura a guarda fail-closed de dia/2026-10-07, sem tocar nas
+outras mudanças da entrega (filtros incondicionais por connection.id depois do
+retorno cedo continuam valendo).

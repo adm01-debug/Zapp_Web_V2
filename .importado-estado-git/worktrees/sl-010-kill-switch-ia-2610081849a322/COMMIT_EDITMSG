@@ -1,0 +1,23 @@
+fix(ia): kill switch de IA lido no servidor (SL-010, IA-009)
+
+O desenho do IA-009 define as chaves `ai.capability.*`, `ai.provider.*` e
+`ai.bot.<conexao>` sobre a tabela `feature_flags` que ja existe, mas NENHUMA Edge
+Function lia a tabela (so o `crm-integration`, chave `crm.integration`): desligar a
+flag escondia o botao no cliente e quem chamasse a funcao direto continuava sendo
+atendido e consumindo provedor. O desligamento de emergencia dependia de deploy.
+
+Mecanismo: `_shared/ai-kill-switch.ts` (lido a cada chamada, sem cache) e chamado
+antes de reservar orcamento e antes de tocar o provedor em `generateWithRouting`
+(despacho central: 8 Edge de IA), no `ai-proxy` (origem e destino do fallback) e no
+`ai-transcribe-audio` (ElevenLabs fora de `ai_providers`); a pausa de bot por
+conexao entra no `chatbot-l1`. Fechado por padrao (desenho §2.5): chave ausente,
+falsa ou leitura falhando NEGA — o provedor nao e chamado e o ledger registra
+`denied` (status que `ai-usage.ts` ja trata como "sem chamada paga"). Desfecho
+explicito (503 + AI_DISABLED), nunca resposta vazia apresentada como sucesso.
+
+Migration semeia as chaves LIGADAS (o comportamento de hoje passa a ser explicito,
+e desligar vira escrita de uma linha, sem deploy). Nao aplicada em banco nenhum.
+
+Prova: `_shared/ai-kill-switch.test.ts` (7 testes; sem o hunk do despacho central
+sao 2 falhas: o provedor era chamado com a capacidade desligada). Suite Deno das
+Edges: 1328 passaram, 0 falharam.

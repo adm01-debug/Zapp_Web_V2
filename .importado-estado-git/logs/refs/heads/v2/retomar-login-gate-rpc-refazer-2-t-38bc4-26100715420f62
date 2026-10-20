@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 6e7686335cf993e352f484133b0ea9826f94e806 Joaquim Ataides <ti@promobrindes.com.br> 1791398527 -0300	branch: Created from dia/2026-10-07
+6e7686335cf993e352f484133b0ea9826f94e806 a4946964cba410abdc587d455a4c6d2f55af3f55 Joaquim Ataides <ti@promobrindes.com.br> 1791398938 -0300	commit (cherry-pick): fix(auth-login): consolida gate de login na RPC consume_login_gate
+a4946964cba410abdc587d455a4c6d2f55af3f55 15c9901668eea0e24f06a8046415d5610a672f40 Joaquim Ataides <ti@promobrindes.com.br> 1791400002 -0300	commit (amend): fix(auth-login): consolida gate de login na RPC consume_login_gate
+15c9901668eea0e24f06a8046415d5610a672f40 e08782467bb09e6bb295b896e9baa61c06b1031a Joaquim Ataides <ti@promobrindes.com.br> 1791541363 -0300	rebase (finish): refs/heads/v2/retomar-login-gate-rpc-refazer-2-t-38bc4-26100715420f62 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+e08782467bb09e6bb295b896e9baa61c06b1031a f50510f3042e30f3b26946d327078112e1869fd4 Joaquim Ataides <ti@promobrindes.com.br> 1791542425 -0300	commit: fix(auth-login): rollback executavel da migration consume_login_gate

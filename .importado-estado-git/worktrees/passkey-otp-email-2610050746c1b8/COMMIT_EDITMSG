@@ -1,0 +1,8 @@
+fix(webauthn): localiza challenge anônimo e pagina listUsers na autenticação por passkey
+
+authentication-options gravava challenge com user_id null quando o e-mail
+não era informado, mas verify-authentication só buscava por user_id — login
+discoverable sempre falhava com "Challenge not found". Agora a verificação
+cai no anônimo mais recente quando não há challenge do usuário, e consome o
+challenge por id. listUsers() também só lia a 1ª página (50): conta fora
+dela ficava sem allowCredentials; agora pagina até achar ou esgotar.

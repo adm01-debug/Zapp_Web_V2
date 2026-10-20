@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510260 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 2f21a476cbaa4a2b0f4bf2f495bee825d61e5925 worker (ci) <ci@zapp.local> 1791511071 -0300	commit: fix(multiplix): lista de publico virtualizada e selecionar todos os N do servidor (TL-007)
+2f21a476cbaa4a2b0f4bf2f495bee825d61e5925 9edf99765415c9251e231e022394aeff87d02ea1 worker (ci) <ci@zapp.local> 1791511172 -0300	commit: fix(multiplix): spinner do botao de selecionar todos respeita prefers-reduced-motion (TL-007)

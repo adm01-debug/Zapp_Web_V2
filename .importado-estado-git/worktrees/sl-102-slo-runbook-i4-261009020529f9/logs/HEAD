@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522312 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522313 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 c09098cd365c6138a53123ad3adce8dfd4192d0b Joaquim Ataides <ti@promobrindes.com.br> 1791522322 -0300	cherry-pick: docs(slo): fonte de SLO citada tem de existir — SLO mínimo do webhook e x-request-id real (SL-102)
+c09098cd365c6138a53123ad3adce8dfd4192d0b 02616e1b5416fc989de61cb740452e3c6aa238d5 Joaquim Ataides <ti@promobrindes.com.br> 1791522653 -0300	commit: docs(slo): fonte e alvo do SLO da edge webhook; I4 exige o alvo na propria linha (SL-102)
+02616e1b5416fc989de61cb740452e3c6aa238d5 48feebc37ad36037c7d8269fa32aa4a3ab81d888 Joaquim Ataides <ti@promobrindes.com.br> 1791522762 -0300	commit: test(ci): furo da I4 antiga provado por execucao da guarda antiga (SL-102)

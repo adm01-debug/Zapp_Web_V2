@@ -1,0 +1,3 @@
+fix(compras): explicitar escopo do resumo comercial
+
+O resumo de Compras agrega apenas compras concluídas/aprovadas, mas a UI exibia só 'Compras (N)'. Adiciona aviso visível e acessível (role=note) informando o recorte, sem alterar valores nem a regra de agregação. Teste RED->GREEN em SalesViewTab.test.tsx.

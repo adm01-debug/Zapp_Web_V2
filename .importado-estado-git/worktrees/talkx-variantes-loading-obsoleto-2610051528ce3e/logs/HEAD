@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791224912 -0300	
+b082bce893ba74365248c56c31e898f05a13dc69 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791224914 -0300	reset: moving to HEAD
+b082bce893ba74365248c56c31e898f05a13dc69 a45a9964b5b791b1ef346fc8f2387247c5428d32 Joaquim Ataides <ti@promobrindes.com.br> 1791224935 -0300	cherry-pick: fix(talkx): descarta resposta atrasada de variantes e historico de outro template
+a45a9964b5b791b1ef346fc8f2387247c5428d32 64a0b886d25097a201c5892efb5df2865ab2af11 Joaquim Ataides <ti@promobrindes.com.br> 1791225605 -0300	commit: fix(talkx): zera loading do historico na troca de template e no descarte obsoleto

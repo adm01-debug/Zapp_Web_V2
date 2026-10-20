@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 54ce9e1e030fc4f689132815cd2baecf27dd8658 Joaquim Ataides <ti@promobrindes.com.br> 1791333200 -0300	
+54ce9e1e030fc4f689132815cd2baecf27dd8658 54ce9e1e030fc4f689132815cd2baecf27dd8658 Joaquim Ataides <ti@promobrindes.com.br> 1791333201 -0300	reset: moving to HEAD
+54ce9e1e030fc4f689132815cd2baecf27dd8658 eb714baeeebe1b5bac9a76fb00b90bca902df7ad workersql <ti@promobrindes.com.br> 1791334236 -0300	commit: fix(db): exige checagem do chamador nas 13 funções SECURITY DEFINER expostas (M-DB-05)

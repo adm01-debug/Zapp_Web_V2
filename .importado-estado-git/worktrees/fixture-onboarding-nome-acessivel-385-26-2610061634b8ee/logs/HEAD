@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315291 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315292 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 a5dd4d005889967ce563620da2d2a97e15901f8a worker (testes) <workertestes@hermes.local> 1791317573 -0300	commit: test(e2e): prova que dispensarOnboarding fecha o tour pelo nome acessível real (#385)

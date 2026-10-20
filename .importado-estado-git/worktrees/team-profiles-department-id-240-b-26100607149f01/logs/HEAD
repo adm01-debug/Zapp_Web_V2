@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8139cc3eca6311580cbaba02cbfece7a53ede90b Joaquim Ataides <ti@promobrindes.com.br> 1791281651 -0300	
+8139cc3eca6311580cbaba02cbfece7a53ede90b 8139cc3eca6311580cbaba02cbfece7a53ede90b Joaquim Ataides <ti@promobrindes.com.br> 1791281652 -0300	reset: moving to HEAD
+8139cc3eca6311580cbaba02cbfece7a53ede90b 1349a934cf4905b99e14c5850643c5dc4d22638a Joaquim Ataides <ti@promobrindes.com.br> 1791282668 -0300	commit: fix(team-chat): lista colegas por RPC get_team_profiles com department_id

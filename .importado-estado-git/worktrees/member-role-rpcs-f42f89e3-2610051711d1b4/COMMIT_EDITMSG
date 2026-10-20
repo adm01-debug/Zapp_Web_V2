@@ -1,0 +1,21 @@
+fix(db): corrigir member_role nas RPCs leave_team_group e remove_team_member
+
+As duas RPCs vigentes (ultima definicao em 20261003272707) consultavam a coluna
+INEXISTENTE tcm.role em public.team_conversation_members — a coluna real e
+member_role — e estouravam 42703 no caminho feliz, quebrando "sair do grupo" e
+"remover membro".
+
+- migration 20261005201340_fix_member_role_leave_remove_rpcs.sql recria as duas
+  funcoes com o corpo copiado verbatim do arquivo vigente, trocando SO a coluna
+  (inclui SET member_role='owner' na promocao do proximo dono); assinatura,
+  RETURNS jsonb, SECURITY DEFINER, search_path=public e as guardas de
+  autorizacao seguem iguais.
+- scripts/db-audit/team-member-role-rpcs.test.sh: bloco A extrai os corpos
+  vigentes verbatim do repo e prova o 42703 nas duas RPCs; bloco B prova as duas
+  respondendo com a autorizacao lida de member_role e a fronteira de EXECUTE
+  intacta (anon sem EXECUTE).
+- db-guard.yml: registra o teste no passo de PostgreSQL descartavel.
+
+Teste verde (42 PASS, 0 FAIL) e sensivel a mutacao: correcao desfeita -> RED na
+guarda de vigencia; promocao gravando 'member' em vez de 'owner' -> RED em B2b.
+Aplicada apenas no banco local (hermes-db-migrar); producao nao foi tocada.

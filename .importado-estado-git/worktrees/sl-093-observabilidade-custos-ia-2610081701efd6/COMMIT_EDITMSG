@@ -1,0 +1,10 @@
+fix(outros): Observabilidade, custos e resultados de negócio (SL-093)
+
+Registra no indice da IA o estado REAL de cada etapa do Bloco 06
+(IA-051..IA-060) com a evidencia que existe no repositorio, e fixa o estado
+por contrato: IA-051..IA-057 implementadas (com migration/painel/teste
+citados), IA-058 DESIGN_ONLY (projeto), IA-059 e IA-060 NAO IMPLEMENTADAS.
+O inventario de 07/10 dizia "IA-057/059/060 sem evidencia"; esta e a
+evidencia, e o contrato impede o bloco ser lido como concluido.
+
+Cartao V2: t_2a6f6a79 (SL-093)

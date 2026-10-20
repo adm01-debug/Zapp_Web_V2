@@ -1,0 +1,9 @@
+fix(gmail-oauth): nao anuncia sucesso quando o update nao afeta nenhuma linha
+
+O PostgREST nao devolve erro quando o filtro de um update nao casa nenhuma
+linha: a desativacao do disconnect, a gravacao de token_expires_at e a
+recuperacao da conta no exchange-code passam a conferir tambem as linhas
+afetadas (select id) antes de responder. Zero linhas = erro, nunca success.
+
+Testes: 3 novos casos (disconnect, refresh-token e exchange-code) que falham
+sem a correcao.

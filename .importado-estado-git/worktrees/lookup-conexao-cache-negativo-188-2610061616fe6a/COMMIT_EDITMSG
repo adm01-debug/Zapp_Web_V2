@@ -1,0 +1,1 @@
+fix(evolution): erro de lookup de conexao nao vira cache negativo nem amplia mutacoes (#188)

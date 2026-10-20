@@ -1,0 +1,9 @@
+fix(chat): validar exclusão no menu contextual
+
+O handleDelete do MessageContextActions ignorava o { error } da
+atualização local do Supabase (PostgREST não lança), então a UI
+confirmava a exclusão e chamava onMessageDeleted mesmo quando a
+marcação era rejeitada. Agora erro local gera toast de erro, sem
+toast de sucesso e sem callback; o fallback local quando só a
+Evolution API falha continua valendo quando o update local vier
+com error: null.

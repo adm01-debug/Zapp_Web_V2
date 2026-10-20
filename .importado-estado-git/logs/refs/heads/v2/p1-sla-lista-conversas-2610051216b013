@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 Joaquim Ataides <ti@promobrindes.com.br> 1791213381 -0300	branch: Created from dia/2026-10-05
+b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 7accaa0f8b0be3337340cfdc996e4e89bf234b06 Joaquim Ataides <ti@promobrindes.com.br> 1791213747 -0300	commit: fix(inbox): lista de conversas usa prazo granular de SLA por conversa (R2-SLA-003)

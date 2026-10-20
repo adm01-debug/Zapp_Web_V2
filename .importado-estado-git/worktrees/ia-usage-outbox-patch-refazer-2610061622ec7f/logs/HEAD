@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791314555 -0300	
+7c26f709642e9058b3f6a016072d9516a70e55f3 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791314556 -0300	reset: moving to HEAD
+7c26f709642e9058b3f6a016072d9516a70e55f3 cd1fb6dbc7463ba81362602a57f3f8cbf606cd18 Joaquim Ataides <ti@promobrindes.com.br> 1791314970 -0300	commit: chore(edge): carrega a base revisada da outbox de ai-usage na dia (circuito IA-050 preservado)
+cd1fb6dbc7463ba81362602a57f3f8cbf606cd18 bf2c87ca4af7a6faa5c96e408c44f066b21ba031 Joaquim Ataides <ti@promobrindes.com.br> 1791314980 -0300	commit: test(edge): cobre conflito com falha no reenfileiramento da outbox (RED)
+bf2c87ca4af7a6faa5c96e408c44f066b21ba031 b76631b58ed7bbed6b4d928d5c4f5e3607bb90f7 Joaquim Ataides <ti@promobrindes.com.br> 1791314997 -0300	commit: fix(edge): devolverPendenciaAOutbox devolve e propaga a falha do reenfileiramento

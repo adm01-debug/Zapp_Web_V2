@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508931 -0300	
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508932 -0300	reset: moving to HEAD
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf f5df8a1767979e136e91575eff8092c6634cfb08 Joaquim Ataides <ti@promobrindes.com.br> 1791508942 -0300	cherry-pick: fix(catálogo): Incluir src/components/catalog/** no coverage.include e (SL-154)
+f5df8a1767979e136e91575eff8092c6634cfb08 f5df8a1767979e136e91575eff8092c6634cfb08 Joaquim Ataides <ti@promobrindes.com.br> 1791509098 -0300	reset: moving to HEAD
+f5df8a1767979e136e91575eff8092c6634cfb08 1b185f7155163fb36ea9752b1fe175dc8b65b7df worker <worker@hermes.local> 1791509115 -0300	commit: fix(catálogo): corrigir caminho dos arquivos do módulo no teste de coverage (SL-154)
+1b185f7155163fb36ea9752b1fe175dc8b65b7df 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555836 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 5911a82f7d5657603f8ae6a18647d716cbd1dc2c Joaquim Ataides <ti@promobrindes.com.br> 1791555867 -0300	rebase (continue): fix(catálogo): Incluir src/components/catalog/** no coverage.include e (SL-154)
+5911a82f7d5657603f8ae6a18647d716cbd1dc2c b959a6bd73b33c81b561856cac8a7b0017982cfd Joaquim Ataides <ti@promobrindes.com.br> 1791555906 -0300	rebase (continue): fix(catálogo): corrigir caminho dos arquivos do módulo no teste de coverage (SL-154)
+b959a6bd73b33c81b561856cac8a7b0017982cfd b959a6bd73b33c81b561856cac8a7b0017982cfd Joaquim Ataides <ti@promobrindes.com.br> 1791555906 -0300	rebase (finish): returning to refs/heads/v2/sl-154-coverage-refazer-1-26100822224155

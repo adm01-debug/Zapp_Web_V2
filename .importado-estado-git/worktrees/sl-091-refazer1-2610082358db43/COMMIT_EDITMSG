@@ -1,0 +1,13 @@
+fix(outros): baixa o baseline ate o codigo e corrige o aviso do lint ratchet (SL-091)
+
+Refazer 1 do SL-091. O commit anterior deixou 16 ocorrencias JA PAGAS no baseline e
+justificou a sobra com uma medicao que o diff nao sustenta.
+
+- scripts/ci/eslint-baseline.json: saem as 16 ocorrencias pagas restantes e os 10
+  registros de arquivo que ficaram sem divida. O baseline passa a ser exatamente o que
+  a varredura encontra (gate: removidas=0).
+- scripts/ci/lint-ratchet.mjs: o comentario e o AVISO perdem as afirmacoes de processo
+  e as medicoes falsas; o AVISO agora so informa quantas ocorrencias do baseline nao
+  existem mais no codigo e pede para baixar o baseline.
+- scripts/ci/lint-ratchet.unit.mjs: o teste do AVISO confere pela contagem (nao mais
+  pela substring --update-baseline) e entra o caso negativo (removidas=0 = sem AVISO).

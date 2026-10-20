@@ -1,0 +1,23 @@
+fix(inbox): conversa fora da janela global de mensagens mantém histórico e não lidas
+
+R2-INB-005 (P1, item 84). A carga inicial da inbox pedia as 1000 mensagens mais
+recentes de TODOS os contatos (RECENT_MESSAGES_LIMIT) e montava cada conversa só
+com o que caísse nessa amostra global. Contato cujo histórico ficava fora da
+janela — porque outros contatos ocuparam as 1000 linhas — voltava com
+lastMessage null e unreadCount 0 e desaparecia da aba "abertas"
+(useInboxFilters exige messages.length > 0).
+
+- Nova RPC get_inbox_contact_summaries(p_contact_ids uuid[]) (SECURITY DEFINER,
+  search_path fixo, EXECUTE só para authenticated/service_role e mesmo predicado
+  de visibilidade de get_last_message_dates): última mensagem + não lidas POR
+  CONTATO, direto do banco.
+- fetchInitialConversations pergunta o agregado apenas dos contatos que a amostra
+  não alcançou, em blocos de 200; quem está na amostra segue como antes. Quando a
+  amostra não é truncada a consulta nem sai.
+- Falha (campo error ou exceção, ex.: RPC ausente no ambiente) não derruba a
+  inbox: registra e segue sem o agregado.
+- buildConversation/buildConversations aceitam o agregado por contato; um
+  contato sem nenhuma mensagem continua fora da lista.
+
+Prova: fixture de 1001 mensagens de dois contatos (vermelho antes, verde depois)
+e o filtro de abertas; verificação zapp-verify . --rapido VERDE.

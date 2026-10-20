@@ -1,0 +1,8 @@
+fix(inbox): transferência da sidebar persiste evento com nota e rejeita em erro
+
+transferContact passa a gravar conversation_events (event_type='transfer',
+to_agent_id/to_queue_id, metadata.note opcional) e a lançar exceção quando o
+UPDATE em contacts ou o INSERT do evento falha — antes só mostrava toast e a
+sidebar fechava o diálogo como se tivesse dado certo. A assinatura fica
+restrita a 'agent' | 'queue' (sem caminho 'connection') e handleListTransfer
+repassa a nota do TransferDialog, que agora só fecha em sucesso.

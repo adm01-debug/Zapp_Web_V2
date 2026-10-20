@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1b54b038779d726bc1535d5e292eb1b1f5308c31 Joaquim Ataides <ti@promobrindes.com.br> 1791344323 -0300	
+1b54b038779d726bc1535d5e292eb1b1f5308c31 1b54b038779d726bc1535d5e292eb1b1f5308c31 Joaquim Ataides <ti@promobrindes.com.br> 1791344323 -0300	reset: moving to HEAD
+1b54b038779d726bc1535d5e292eb1b1f5308c31 fc89c8744c8f1a0d69cd57f90e0fa05aebea138b Joaquim Ataides <ti@promobrindes.com.br> 1791344332 -0300	cherry-pick: fix(gamificacao): creditar no servidor o XP anunciado pelos mini-games (#267)
+fc89c8744c8f1a0d69cd57f90e0fa05aebea138b 5702ddb077b01da071c765f8fe2830d4a9650dfb Hermes complexo <ti@promobrindes.com.br> 1791346034 -0300	commit: fix(gamificacao): mini-game credita o XP da partida com limite diario no servidor (#267)

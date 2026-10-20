@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791347594 -0300	
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791347595 -0300	reset: moving to HEAD
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348302 -0300	reset: moving to HEAD
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 12eb817b0944e1400c3e7f8047c3e5de7f20c567 Joaquim Ataides <ti@promobrindes.com.br> 1791351081 -0300	commit: fix(gmail-webhook): reset do history 404 com CAS sobre o cursor lido

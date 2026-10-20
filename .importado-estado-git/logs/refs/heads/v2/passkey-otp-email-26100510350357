@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791207331 -0300	branch: Created from dia/2026-10-05
+24d62d71031b256f8590067fae660ee76dd69a97 b3643830d37e64c9cedb17cf8eda7178e0785c9b Joaquim Ataides <ti@promobrindes.com.br> 1791207369 -0300	cherry-pick: fix(auth): passkey localiza o challenge pelo clientDataJSON e só anuncia login com sessão
+b3643830d37e64c9cedb17cf8eda7178e0785c9b 0dad97fee9c08e52bc08676ae996dcac05331001 Joaquim Ataides <ti@promobrindes.com.br> 1791207940 -0300	commit (amend): fix(auth): passkey só anuncia login com a sessão do usuário validado (R2-AUTH-002)

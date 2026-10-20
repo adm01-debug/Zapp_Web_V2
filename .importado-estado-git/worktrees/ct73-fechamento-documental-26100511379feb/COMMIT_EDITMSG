@@ -1,0 +1,16 @@
+docs(catalogo): CT-73 pendente — medição concluída não é meta atingida
+
+O plano marcava CT-73 como `[x]`/FEITO porque a MEDIÇÃO foi feita, mesmo com a
+própria evidência registrando 81,5 KB por página de 24 contra o teto vigente de
+< 30 KB. Medição concluída e meta atingida são estados distintos.
+
+- Teste novo `scripts/ci/catalog-ct73-docs.unit.mjs` (vermelho antes, verde
+  depois) prende: checkbox desmarcado, `< 30 KB` e `81,5 KB` preservados,
+  medição concluída separada de meta não atingida e exigência de nova medição
+  real após reduzir o payload.
+- PLANO: CT-73 vira `[ ]` com estado ◐ PARCIAL; a menção em §10 não declara mais
+  "fechado pelo aceite".
+- PERF.md: a seção diferencia medição histórica concluída de meta de desempenho
+  não cumprida; teto e baseline intactos.
+
+Nenhuma alteração de teto, payload ou produção.

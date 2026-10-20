@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536408 -0300	branch: Created from dia/2026-10-09
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ea09c5e5e1145d48ed323de271a9266ae7f86a61 Joaquim Ataides <ti@promobrindes.com.br> 1791537513 -0300	commit: fix(segurança): fetch-link-preview exige login e limita taxa (Y27 P1-03)
+ea09c5e5e1145d48ed323de271a9266ae7f86a61 4e0d395aa43ec3d7034c08afd7c93461c3245c1e Joaquim Ataides <ti@promobrindes.com.br> 1791537758 -0300	commit (amend): fix(seguranca): fetch-link-preview exige login e limita taxa (Y27 P1-03)

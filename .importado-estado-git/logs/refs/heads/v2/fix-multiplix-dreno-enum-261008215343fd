@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507182 -0300	branch: Created from dia/2026-10-08
+5bb8664d243f0787d35e99d55ec899187a39121b 40890b71e7a11db5636df16b1bc868d9a52e168b Joaquim Ataides <ti@promobrindes.com.br> 1791507373 -0300	cherry-pick: test(multiplix): cobre confirm, drenagem e reconciliacao da fila no banco de teste (TL-048/F89)
+40890b71e7a11db5636df16b1bc868d9a52e168b bbbc466d8e4309f350ee90ca539280b917f085aa Joaquim Ataides <ti@promobrindes.com.br> 1791507794 -0300	commit: fix(multiplix): cast do status ENUM na drenagem do disparo (42804)
+bbbc466d8e4309f350ee90ca539280b917f085aa 731d75bda03858ecd9dc9d1e489f3eec04007e39 Joaquim Ataides <ti@promobrindes.com.br> 1791507795 -0300	commit: test(multiplix): liga a drenagem ate a conclusao na fila por item (F89)
+731d75bda03858ecd9dc9d1e489f3eec04007e39 a91645ee268ddababb806568897d09a228abc393 Joaquim Ataides <ti@promobrindes.com.br> 1791508664 -0300	commit: fix(multiplix): rollback executavel comentado na migration do cast (juiz)
+a91645ee268ddababb806568897d09a228abc393 4bff1b8632b923dc47c23be5acf2d33099ac3ea4 Joaquim Ataides <ti@promobrindes.com.br> 1791557691 -0300	rebase (finish): refs/heads/v2/fix-multiplix-dreno-enum-261008215343fd onto 1098da5a935929b171674a99b425d6b515fd6072

@@ -1,0 +1,6 @@
+fix(team-chat): detalhes de colegas usam a RPC segura get_team_profiles
+
+useTeamMemberDetails lia profiles direto (conversa direta e membros do grupo),
+leitura bloqueada por RLS para agentes. Passa a usar get_team_profiles
+(SECURITY DEFINER, so ativos) e reduz o retorno aos IDs da conversa.
+birthday fica null: fora do contrato seguro.

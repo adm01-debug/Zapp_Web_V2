@@ -1,0 +1,1 @@
+fix(inbox/chat): zera 78 achados de lint do inbox (react-hooks/refs e no-explicit-any) (SL-202)

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791283931 -0300	branch: Created from dia/2026-10-06
+fbb20ec26ffb172a379a820a3fafde28a671aae1 67d63dd0053981fdd0cc551d9ce2afe47bcb1fc6 Joaquim Ataides <ti@promobrindes.com.br> 1791285354 -0300	commit (cherry-pick): fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)
+67d63dd0053981fdd0cc551d9ce2afe47bcb1fc6 457742edc9dd3c8f788f19461a86efdccc8112d5 Joaquim Ataides <ti@promobrindes.com.br> 1791285602 -0300	commit (cherry-pick): fix(multiplix): preserva escopo e falhas por item
+457742edc9dd3c8f788f19461a86efdccc8112d5 355cb8f3ff6fdb302c1a6b2b162e5d8f40dbc702 Joaquim Ataides <ti@promobrindes.com.br> 1791285771 -0300	commit (cherry-pick): fix(multiplix): isola a gravacao do snapshot do catch da resolucao do bloco
+355cb8f3ff6fdb302c1a6b2b162e5d8f40dbc702 33051f6c462dafaa1bebe8a2070033380f4e9ac8 Joaquim Ataides <ti@promobrindes.com.br> 1791286631 -0300	commit: fix(multiplix): envia voice_ai com ativo renderizado em vez de reenfileirar

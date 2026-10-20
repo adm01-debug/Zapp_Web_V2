@@ -1,0 +1,14 @@
+fix(performance): desacopla o DELETE de mensagem de coluna que nao e PK (SL-104)
+
+O evento de DELETE do Realtime so garante a PK: com REPLICA IDENTITY DEFAULT o
+`payload.old` traz apenas `id`. O handler EXIGIA `old.contact_id` (coluna que
+nao e PK) e `old.media_url`, e era essa dependencia do front que mantinha
+`messages` em REPLICA IDENTITY FULL (docs/audits/slow-queries-2026-09.md).
+
+- a remocao passa a ser por `id` (unico): a lista local so contem a conversa
+  aberta e esta assinatura de canal so recebe eventos dela;
+- quando o `old` traz `contact_id` (hoje, FULL) a checagem de conversa continua
+  valendo; quando nao traz, o handler funciona sem ela;
+- o agregado de midia decide pelo `media_url` quando as colunas vem no `old` e
+  invalida por seguranca quando nao vem (mesmo criterio do fallback do UPDATE);
+- testes vermelho -> verde em useMessages.media.test.tsx.

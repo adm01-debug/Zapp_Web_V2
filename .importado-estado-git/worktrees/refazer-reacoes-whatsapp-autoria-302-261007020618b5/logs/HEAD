@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 2feceb06c79e013544cd76efdf7363eb311dd7d9 Joaquim Ataides <ti@promobrindes.com.br> 1791349610 -0300	
+2feceb06c79e013544cd76efdf7363eb311dd7d9 2feceb06c79e013544cd76efdf7363eb311dd7d9 Joaquim Ataides <ti@promobrindes.com.br> 1791349611 -0300	reset: moving to HEAD
+2feceb06c79e013544cd76efdf7363eb311dd7d9 71f4eb45a9666c33bef6c04c0c617a980d7cfec1 Joaquim Ataides <ti@promobrindes.com.br> 1791349618 -0300	cherry-pick: fix(message-reactions): escrita da reacao exige a propria autoria (#302)
+71f4eb45a9666c33bef6c04c0c617a980d7cfec1 3241451795a8096c716ef3ea4ee0dd791f987810 Joaquim Ataides <ti@promobrindes.com.br> 1791350190 -0300	commit: test(message-reactions): prova linha afetada no red-first de DELETE/UPDATE (#302)
+3241451795a8096c716ef3ea4ee0dd791f987810 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540514 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b d900fa5b1a8c099e2f2f276c59d1627076dd078d Joaquim Ataides <ti@promobrindes.com.br> 1791540524 -0300	rebase (continue): fix(message-reactions): escrita da reacao exige a propria autoria (#302)
+d900fa5b1a8c099e2f2f276c59d1627076dd078d 364b346be15a38a8653c62b8bcda970e330e769e Joaquim Ataides <ti@promobrindes.com.br> 1791540524 -0300	rebase (pick): test(message-reactions): prova linha afetada no red-first de DELETE/UPDATE (#302)
+364b346be15a38a8653c62b8bcda970e330e769e 364b346be15a38a8653c62b8bcda970e330e769e Joaquim Ataides <ti@promobrindes.com.br> 1791540524 -0300	rebase (finish): returning to refs/heads/v2/refazer-reacoes-whatsapp-autoria-302-261007020618b5
+364b346be15a38a8653c62b8bcda970e330e769e e9e65389f8a777e12a22f0917c9a8e37943f0e58 Joaquim Ataides <ti@promobrindes.com.br> 1791540669 -0300	commit: fix(message-reactions): policies de escrita aceitam contact_id nulo da reação de agente (#302)

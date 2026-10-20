@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791520119 -0300	
+bc539491e56a91557290e0b15c0e561646c7e553 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791520120 -0300	reset: moving to HEAD
+bc539491e56a91557290e0b15c0e561646c7e553 a8e41aefcfc3c1240e5cfcc42437c1a4a0a489a5 Joaquim Ataides <ti@promobrindes.com.br> 1791521431 -0300	commit: feat(multiplix-edge): públicos salvos (audience.save/apply) e seleção por regra/lista
+a8e41aefcfc3c1240e5cfcc42437c1a4a0a489a5 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543080 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 1704ddc95712ab7bfa8cd49c2300f5298413384b Joaquim Ataides <ti@promobrindes.com.br> 1791543080 -0300	rebase (pick): feat(multiplix-edge): públicos salvos (audience.save/apply) e seleção por regra/lista
+1704ddc95712ab7bfa8cd49c2300f5298413384b 1704ddc95712ab7bfa8cd49c2300f5298413384b Joaquim Ataides <ti@promobrindes.com.br> 1791543080 -0300	rebase (finish): returning to refs/heads/v2/t-89efd21a-2610090128a2b1
+1704ddc95712ab7bfa8cd49c2300f5298413384b 721af6cac31a1fde404459a736292e31c40811c1 Joaquim Ataides <ti@promobrindes.com.br> 1791543286 -0300	commit: fix(multiplix-edge): compensa público órfão e não ecoa erro interno no audience.save
+721af6cac31a1fde404459a736292e31c40811c1 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559142 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 42b376a5c308102bb118eb378e562b1f49145fe8 Joaquim Ataides <ti@promobrindes.com.br> 1791559222 -0300	rebase (continue): feat(multiplix-edge): públicos salvos (audience.save/apply) e seleção por regra/lista
+42b376a5c308102bb118eb378e562b1f49145fe8 2ef765717f637c47e2fbc3b00ee023c2408da64a Joaquim Ataides <ti@promobrindes.com.br> 1791559258 -0300	rebase (continue): fix(multiplix-edge): compensa público órfão e não ecoa erro interno no audience.save
+2ef765717f637c47e2fbc3b00ee023c2408da64a 2ef765717f637c47e2fbc3b00ee023c2408da64a Joaquim Ataides <ti@promobrindes.com.br> 1791559258 -0300	rebase (finish): returning to refs/heads/v2/t-89efd21a-2610090128a2b1

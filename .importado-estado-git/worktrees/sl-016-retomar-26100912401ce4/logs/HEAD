@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791560452 -0300	
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791560454 -0300	reset: moving to HEAD
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb d119d26a8c7c4972cff0724ef9641cf18048e7c3 Joaquim Ataides <ti@promobrindes.com.br> 1791560464 -0300	cherry-pick: fix(inbox/chat): Hooks passam a usar get_team_inbox / get_team_messages_ (SL-016)
+d119d26a8c7c4972cff0724ef9641cf18048e7c3 47c329fff002d3d21489b9ff104d98fe385cd42d Joaquim Ataides <ti@promobrindes.com.br> 1791560628 -0300	commit: test(inbox/chat): testes de conversas e reações no contrato por RPC (SL-016)

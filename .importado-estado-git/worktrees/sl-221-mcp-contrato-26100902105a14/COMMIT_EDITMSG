@@ -1,0 +1,26 @@
+test(outros): contrato SL-221 sem cimentar lacunas futuras (refazer 1)
+
+Corrige a entrega recusada (commit 90a9d5777) nos 4 pontos apontados,
+sem afrouxar nenhuma protecao:
+
+1. caso de graphify-out/: removida a assercao de AUSENCIA do diretorio
+   (expect(existe('graphify-out')).toBe(false)) — ele e cache por clone,
+   gerado por `bun run graph:setup`. Fica so a prova de que o .gitignore
+   ignora o diretorio inteiro;
+2. removido o caso "o servidor MCP HTTP nao existe (nem mcp nem mcp-server)":
+   contrato nao cimenta a lacuna que o plano manda fechar (o cartao futuro
+   que criar supabase/functions/mcp-server quebraria o teste). O doc canonico
+   segue registrando a ausencia atual;
+3. removido expect(manifesto.raw_nodes).toBe(19319): a integridade do grafo
+   fica provada pela igualdade entre o sha256 do .gz descomprimido e o
+   graph_sha256 do manifesto assinado;
+4. caso do tombstone renomeado para "`public-api` e tombstone 410 sem
+   `service_role`" (o caso nao confere unicidade nenhuma).
+
+Contagem: 6 casos (8 originais - 1 caso removido no item 2 = 7; as duas
+provas gateadas do CI — migrations MCP do banco e contrato de ACL/db-guard —
+seguem com TODAS as assercoes, agora em um caso unico, para fechar em 6).
+Docblock atualizado para nao descrever contrato que o teste nao faz mais.
+
+Prova: 6/6 verdes; vermelho/verde do caso do cabecalho de docs/architecture/
+(mutando edge-functions.md) registrado no relato do cartao.

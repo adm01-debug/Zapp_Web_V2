@@ -1,0 +1,7 @@
+fix(arquivos): encaminhar N usa a seleção canônica, não o recorte filtrado (#51)
+
+OTH-001: a lista de itens encaminhados vinha de `filtered`; trocar o filtro
+depois de selecionar removia do payload os arquivos que continuavam
+selecionados. Agora resolve `selection.selectedIds` sobre a coleção completa
+(`items`) e ordena por `view.sort`. Teste de regressão prova o payload com os
+N selecionados atravessando filtros distintos.

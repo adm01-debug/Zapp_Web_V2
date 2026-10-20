@@ -1,0 +1,14 @@
+PROJETO=Zapp_Web_V2
+SLUG=t_915d02bd
+ID=t_915d02bd
+BRANCH=v2/t_915d02bd
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t_915d02bd
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-09T17:50:00-03:00
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t_915d02bd/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-09
+DB_LOCAL=v2-t_915d02bd
+PRONTO_SHA=

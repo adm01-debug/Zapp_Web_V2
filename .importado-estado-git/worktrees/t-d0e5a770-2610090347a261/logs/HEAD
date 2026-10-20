@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791528473 -0300	
+2a47986959e01fcd590be2a63199a8b6db27f86d 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791528474 -0300	reset: moving to HEAD
+2a47986959e01fcd590be2a63199a8b6db27f86d 39aeda6204524f4a0f3fb1057dd98286ce4fbaa3 Joaquim Ataides <ti@promobrindes.com.br> 1791529252 -0300	commit: fix(seguranca): href seguro e rascunho de conversa por usuário (SEC-FE-02/03)
+39aeda6204524f4a0f3fb1057dd98286ce4fbaa3 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562630 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 50288263ac412399f8b85b93f27baeb5c9f8e42e Joaquim Ataides <ti@promobrindes.com.br> 1791562678 -0300	rebase (continue): fix(seguranca): href seguro e rascunho de conversa por usuário (SEC-FE-02/03)
+50288263ac412399f8b85b93f27baeb5c9f8e42e 50288263ac412399f8b85b93f27baeb5c9f8e42e Joaquim Ataides <ti@promobrindes.com.br> 1791562678 -0300	rebase (finish): returning to refs/heads/v2/t-d0e5a770-2610090347a261

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f84635d09ff00485f7a25b04f80edbcae85ee5b0 Joaquim Ataides <ti@promobrindes.com.br> 1791303372 -0300	
+f84635d09ff00485f7a25b04f80edbcae85ee5b0 f84635d09ff00485f7a25b04f80edbcae85ee5b0 Joaquim Ataides <ti@promobrindes.com.br> 1791303372 -0300	reset: moving to HEAD
+f84635d09ff00485f7a25b04f80edbcae85ee5b0 c596631d0c2ffa33a171abff5dd3a2de45e64935 Joaquim Ataides <ti@promobrindes.com.br> 1791303792 -0300	commit: fix(media-library): conta erros da funcao na reclassificacao e preserva selecao (#346)
+c596631d0c2ffa33a171abff5dd3a2de45e64935 db478a95867c96845bb84da941404b59144d2daf Joaquim Ataides <ti@promobrindes.com.br> 1791303875 -0300	commit (amend): fix(media-library): conta erros da funcao na reclassificacao e preserva selecao (#346)

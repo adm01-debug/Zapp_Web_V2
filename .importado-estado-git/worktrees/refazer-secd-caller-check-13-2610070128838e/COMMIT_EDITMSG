@@ -1,0 +1,13 @@
+fix(db): fecha anon/PUBLIC nas 5 DEFINER e corrige as provas do M-DB-05 (#474)
+
+Por quê: a entrega anterior do M-DB-05 foi recusada em cinco pontos objetivos. (1) o C2 da KB usava uma policy fictícia (kb_own); (2) faltava prova de is_within_business_hours sem perfil; (3) o relato não batia com os REVOKEs/rollback; (4) o caminho anon dependia só da guarda externa; (5) effective_role estava rotulado no grupo A apesar de pertencer ao B.
+
+Agora: o esqueleto do teste modela as DUAS policies reais de knowledge_base_articles (20260317222442), com is_admin_or_supervisor; a troca DEFINER->INVOKER fica declarada como endurecimento sem vazamento observável hoje (C2/C2b provam 2 publicadas e 0 não publicadas antes e depois, e C2c prova no catálogo que a função deixou de ser DEFINER). Entram C4 (vermelho) e C5b (verde) para chamador sem perfil no horário, D0 (vermelho) e D1-D6 (verde) para anon/PUBLIC nas 5 DEFINER restantes, com helpers as_anon/expect_anon_*. effective_role sai de A e vira B6r/B6b, coerente com a migration.
+
+A migration ganha a seção D com REVOKE EXECUTE FROM PUBLIC, anon nas 5 (user_has_permission, is_team_conversation_member, count_searchbox_sessions_this_month, is_within_business_hours, talkx_engine_window_open) e nota de rollback dizendo que anon/PUBLIC não voltam de propósito (não tinham EXECUTE antes); onde a migration revogou authenticated (as 7 de B), o rollback devolve só authenticated.
+
+Verificação: bash scripts/db-audit/secd-caller-check.test.sh -> 45 cenários aprovados (era 33) em PostgreSQL 17 descartável, aplicando o arquivo inteiro da migration; prova de não vacuidade por mutação: sem os 5 REVOKEs o teste para em D1 e sem a checagem de chamador de is_within_business_hours para em C5b; rollback da própria linha -- Rollback: aplicado e conferido (agente volta ao estado anterior, anon segue barrado); zapp-verify . --rapido -> VERDE SEM BANCO (dependencias, db_guard, tipos, lint, migrations).
+
+# Conflicts:
+#	scripts/db-audit/secd-caller-check.test.sh
+#	supabase/migrations/20261007004545_secd_caller_check_13.sql

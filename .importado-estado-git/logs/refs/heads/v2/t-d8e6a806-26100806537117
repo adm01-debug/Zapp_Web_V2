@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791453238 -0300	branch: Created from dia/2026-10-08
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 64a3044143c104a9b579d595e7c5798097c36730 Joaquim Ataides <ti@promobrindes.com.br> 1791453375 -0300	commit: fix(ci): prova de orcamento nao expoe credencial (#358)

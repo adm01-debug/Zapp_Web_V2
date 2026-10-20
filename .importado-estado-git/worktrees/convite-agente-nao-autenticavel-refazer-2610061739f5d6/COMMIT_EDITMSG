@@ -1,0 +1,11 @@
+fix(db): convite vencido vira estado terminal e libera o e-mail para reenvio (R2-AUTH-015)
+
+O status 'expired' so existia na leitura e o indice unico parcial
+(status='pending') seguia bloqueando convites vencidos: depois de expirar
+sem aceite, o e-mail nunca mais podia ser convidado (already_pending).
+
+create_agent_invite agora marca 'revoked' nos convites pendentes ja
+vencidos do mesmo e-mail antes do INSERT, na mesma transacao; o indice
+so bloqueia pendente ainda valido. Teste em Postgres descartavel prova
+o reenvio, o estado terminal, a recusa do codigo antigo e do segundo
+pendente valido.

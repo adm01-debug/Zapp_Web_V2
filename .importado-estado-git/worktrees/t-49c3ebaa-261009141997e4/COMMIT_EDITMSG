@@ -1,0 +1,15 @@
+test(telefonia): dubla a fachada lazyToast no teste do useSipClient, nao o sonner
+
+O toast da telefonia sai de `@/lib/lazyToast`, que pede o sonner por `import()`
+para a lib nao entrar no grafo estatico inicial (guardado pelo
+bundle-inicial.bundle.test.ts). Dublar o `'sonner'` prendia este arquivo ao
+instante em que a fachada resolve esse import: com a fachada mais lazy a chamada
+cai fora do duble e os casos de toast ficam vermelhos no lote em cima da dia
+(09/10).
+
+O contrato que aqui se guarda e o do hook (qual toast, com que mensagem), que e
+justamente o que a fachada expoe; o encaminhamento dela ao sonner tem teste
+proprio em src/lib/__tests__/lazyToast.test.ts. Nenhuma linha de producao
+tocada; budget e teste de bundle intocados.
+
+Cartao V2: t_49c3ebaa

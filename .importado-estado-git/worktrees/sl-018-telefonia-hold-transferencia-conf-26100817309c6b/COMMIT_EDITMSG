@@ -1,0 +1,9 @@
+fix(telefonia): it.todo: espera (hold), transferencia e conferencia de chamada (SL-018)
+
+O it.todo de calls-access.test.ts nomeava a lacuna sem afirmar nada. Agora:
+- controleDaChamada.ts (novo): camada de operacao da espera, transferencia
+  cega/assistida e conferencia (recusada com motivo: a linha nao tem ponte);
+- CallAdapter/SipCallAdapter: setHold (re-INVITE com hold) e refer (REFER
+  cego e com Replaces), so com sessao Established;
+- testes das regras e do transporte SIP (28 casos) + assert de fonte no lugar
+  do it.todo.

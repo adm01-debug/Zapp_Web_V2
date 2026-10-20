@@ -1,0 +1,15 @@
+fix(arquivos): prazo de 15 s da miniatura aborta o trabalho em voo e a fila solta quem foi abortado
+
+O vigia do prazo chamava `descarte.atual`, que e null durante `baixarPdf`: o fetch
+seguia pendurado, o parse/render continuavam depois de `liberarVaga()` e a fila de 2
+furava. Agora cada execucao de `processar` abre um `AbortController` interno, uniao do
+sinal do chamador com o relogio de 15 s; e esse sinal que o fetch, as checagens de
+`aborted` e o descarte do render obedecem.
+
+`aguardarVaga` recebe o sinal do chamador: quem aborta esperando vaga sai da fila na
+hora, resolve `null` sem reservar vaga e sem esperar vaga futura (antes ficava presa ate
+alguem liberar). `liberarVaga` passa a vaga direto para o proximo da fila.
+
+Prova: teste novo de fetch pendurado (null, sinal do fetch abortado, sem `getDocument`,
+vaga de volta) e o teste de espera corrigido para abortar a TERCEIRA chamada, em espera.
+Os dois falham no codigo anterior (timeout de 15 s / sinal undefined no fetch).

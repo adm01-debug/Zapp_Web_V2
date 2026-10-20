@@ -1,0 +1,5 @@
+fix(ia): lista fechada de vozes/modelos TTS aceitos (voice_id livre) (SL-008)
+
+O cliente escolhia voice_id/voiceId/modelId livre (ate 100 caracteres) em elevenlabs-tts, -tts-stream, -dialogue e -sts: dava para acionar voz clonada da conta compartilhada e o modelo mais caro. Agora ha lista fechada das 12 vozes do catalogo da interface e dos modelos do produto, recusando fora da lista ANTES do POST ao provedor (422 no schema, 400 no sts, que le FormData).
+
+Prova: vitest contracts 9 failed -> 159 passed; deno test sts 2 failed (guard antigo) -> 4 passed; deno test dialogue+voice-design 12 passed; deno check nos 4 handlers RC=0; zapp-verify --rapido VERDE.

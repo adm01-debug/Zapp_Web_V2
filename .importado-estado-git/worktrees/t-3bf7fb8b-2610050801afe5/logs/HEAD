@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c91bd77ef368c42e57a605c168fb7f7d12777504 Joaquim Ataides <ti@promobrindes.com.br> 1791198066 -0300	
+c91bd77ef368c42e57a605c168fb7f7d12777504 c91bd77ef368c42e57a605c168fb7f7d12777504 Joaquim Ataides <ti@promobrindes.com.br> 1791198067 -0300	reset: moving to HEAD
+c91bd77ef368c42e57a605c168fb7f7d12777504 ead462521746eea1fdbf55cd9c2136b3411c323b Joaquim Ataides <ti@promobrindes.com.br> 1791198918 -0300	commit: fix(calls): encaminha Atender/Ignorar do alerta pelo canal da notificação (#76)

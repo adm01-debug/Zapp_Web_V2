@@ -1,0 +1,18 @@
+fix(ci): guarda de exposicao fecha a cegueira do jsonResponse 5xx (#363)
+
+A guarda lia a chamada inteira de `new Response` mas deixava `jsonResponse(corpo, 5xx, req)`
+de fora — um `jsonResponse({ error: err.message }, 503, req)` passava com "nenhuma exposicao"
+impressa, e o unit test PINAVA essa cegueira.
+
+- check-edge-error-exposure.mjs: `jsonResponse(` entra na mesma leitura por chamada (o status
+  e o SEGUNDO argumento). Corpo com `.message`/`.stack` num 5xx e achado, igual ao `new
+  Response`. Unica excecao, enumerada por nome de funcao: corpo que e CHAMADA a um construtor
+  de envelope documentado (IA-026/IA-027) — `buildAiEnvelope` e `persistenceFailureEnvelope`,
+  cujo campo `error` e mensagem de capacidade escrita no call site, nao o `message` de um catch.
+- check-edge-error-exposure.unit.mjs: o teste que pinava a cegueira virou 5 casos (objeto
+  literal em 503 e achado; builder documentado nao e; builder fora da lista e achado; 2xx/4xx
+  seguem liberados) mais a prova com o CONTEUDO REAL de `_shared/ai-conversation-pipeline.ts`
+  lido do disco, com a regressao injetada acusada.
+- diagnostic-authz.test.ts: o teste R2-INF-016 do 500 sanitizado passa a afirmar os headers
+  (access-control-allow-origin padrao sem Origin, allow-methods de `getCorsHeaders(req)`,
+  content-type json, vary Origin), provando que sanitizar o corpo nao derruba o CORS.

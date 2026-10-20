@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791499038 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe b05a0b297fb033a98b6baddee61fcea3df91a865 Joaquim Ataides <ti@promobrindes.com.br> 1791500456 -0300	commit: fix(performance): compara os alvos de Web Vitals com o campo e ajusta o conjunto (SL-229)
+b05a0b297fb033a98b6baddee61fcea3df91a865 f05c26fa78f9346c91b5e78334bf532880cab36a Joaquim Ataides <ti@promobrindes.com.br> 1791501046 -0300	commit: test(performance): prova que o codigo usa o alvo do FCP e mantem o do FID (SL-229)

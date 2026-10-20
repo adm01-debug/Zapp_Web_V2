@@ -1,0 +1,28 @@
+feat(email): ícone de e-mail do contato abre a conversa dele ou o compositor
+
+navigateToView ganha params saneados (emailContact=UUID, emailTo≤254) gravados
+na mesma entrada; EmailChatInbox consome a intenção só com conta Gmail ativa —
+abre a thread mais recente do contato ou o compositor com o destinatário — e
+limpa a URL. ?emailThread explícito mantém prioridade.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto e423ffa63
+# Last command done (1 command done):
+#    pick 0d41f5a8e feat(email): ícone de e-mail do contato abre a conversa dele ou o compositor
+# No commands remaining.
+# You are currently rebasing branch 'v2/c03-painel-contato-email-26100711176198' on 'e423ffa63'.
+#
+# Changes to be committed:
+#	modified:   src/components/email/EmailChatInbox.tsx
+#	new file:   src/components/email/__tests__/EmailChatInbox.contato.test.tsx
+#	modified:   src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx
+#	modified:   src/components/email/__tests__/EmailChatInbox.test.tsx
+#	modified:   src/components/inbox/contact-details/ContactActionButtons.tsx
+#	modified:   src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx
+#	new file:   src/hooks/integrations/__tests__/useEmailThreadForContact.test.tsx
+#	new file:   src/hooks/integrations/useEmailThreadForContact.ts
+#	new file:   src/hooks/system/useNavigationHistory.navigateToViewParams.test.ts
+#	modified:   src/hooks/system/useNavigationHistory.ts
+#

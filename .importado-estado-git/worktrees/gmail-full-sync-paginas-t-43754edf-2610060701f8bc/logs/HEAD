@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791280906 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791280907 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 67c3f7460b3032163a087799d51caa71382fdc80 Joaquim Ataides <ti@promobrindes.com.br> 1791281989 -0300	commit: fix(gmail): full sync consome todas as páginas e só grava cursor no fim

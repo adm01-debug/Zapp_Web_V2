@@ -1,0 +1,32 @@
+fix(telefonia): fechamento das fases 8 e 9 — axe sem violacao seria no modulo (T76/T80/T84)
+
+O fechamento das fases 8 (motion/a11y/responsivo) e 9 (QA automatizado) ficou sem
+nenhuma prova de axe DENTRO da suite: as provas de T81/T84 moravam em script fora
+do repo (`qa/tel/axe.mjs`), que nao deixa rede de seguranca. Trazendo a varredura
+para dentro, o aceite da Fase 8 (T76: axe `serious/critical` = 0) REPROVOU na tela
+real:
+
+  aria-valid-attr-value (serious)
+  Invalid ARIA attribute value: aria-controls="radix-_r_4_-content-all"
+  no botao `[data-testid="tel-channel-tab"]` ativo
+
+Causa: `CallHistoryTabs` usava o primitivo `Tabs` sem nenhum `TabsContent` (o
+filtro de canal nao tem painel proprio — a lista filtrada e o corpo do
+`CallHistoryCard`, renderizada pelo pai). O Radix emite `aria-controls` no trigger
+ativo apontando para o painel que nunca existe.
+
+Correcao minima: o filtro passa a ser grupo de alternancia
+(`ToggleGroup type="single"` = `role="radiogroup"` + itens `role="radio"` +
+`aria-checked`), o mesmo padrao que esta casa ja usa para recorte de periodo
+(`SLAHistoryDashboard`) e que o T56 usou no seletor de canal da "Nova ligacao".
+Mantem navegacao por setas/foque itinerante do Radix, as MESMAS classes visuais
+(sublinhado no item ativo) e o `data-testid` que os testes vizinhos usam.
+
+Teste novo `TelefoniaView.a11y.test.tsx` (vitest-axe, mesmo padrao do CT67_a11y):
+monta a tela REAL em 3 estados (ociosa, chamada ativa, detalhe selecionado),
+afirma 0 violacoes serias E o inventario nao-serio por igualdade (nada escondido),
+com controle que prova que o matcher acusa violacao real (`button-name`).
+
+Mutacao: so `CallHistoryTabs.tsx` revertido -> 3 de 4 vermelhos com o
+`aria-valid-attr-value` acima; restaurado -> 4 de 4 verdes. Suite
+`src/components/calls`: 27 arquivos / 195 passed | 3 todo, 0 falhas.

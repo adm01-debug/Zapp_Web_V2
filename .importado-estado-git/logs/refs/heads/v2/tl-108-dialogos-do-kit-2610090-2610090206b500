@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522406 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 5c3650e60eeb1ae940115eb6ce6c1bfafb318740 Joaquim Ataides <ti@promobrindes.com.br> 1791522526 -0300	cherry-pick: fix(talk-x): modal único do kit com barra de título, tom aplicado, espera da ação e presets do mock (TL-107)
+5c3650e60eeb1ae940115eb6ce6c1bfafb318740 5fccaf901ae14c6684c1a4e89a7d40f2ce44174c Joaquim Ataides <ti@promobrindes.com.br> 1791523139 -0300	commit: fix(talk-x): trocar diálogos soltos e confirmações de Supressão, Templates e limites pelo kit (TL-108)

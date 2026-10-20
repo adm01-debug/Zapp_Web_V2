@@ -1,0 +1,6 @@
+fix(inbox): mostra os candidatos da busca manual de localização (#333)
+
+A busca manual (Enter sem sugestão destacada) preenchia searchResults no useLocationPicker e o
+LocationPicker não consumia o estado: com 2+ candidatos do /forward nada aparecia para escolher.
+Agora eles entram no mesmo modelo de sugestões da lista (E32), com o termo guardado junto, e a
+escolha aplica só o candidato clicado (coordenada que o /forward já traz, sem /retrieve, E15).

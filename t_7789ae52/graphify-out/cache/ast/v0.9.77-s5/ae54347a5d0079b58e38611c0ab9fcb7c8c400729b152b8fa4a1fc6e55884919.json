@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260905040000_drop_lid_snapshot_and_table_comments_sql", "label": "20260905040000_drop_lid_snapshot_and_table_comments.sql", "file_type": "code", "source_file": "supabase/migrations/20260905040000_drop_lid_snapshot_and_table_comments.sql", "source_location": null}], "edges": []}

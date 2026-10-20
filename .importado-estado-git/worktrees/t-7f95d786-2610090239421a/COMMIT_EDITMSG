@@ -1,0 +1,17 @@
+fix(talk-x): Refazer colunas e ações de linha da biblioteca: critérios legíveis, uso e desempenho (TL-136)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 9efd718b5 fix(talk-x): Refazer colunas e ações de linha da biblioteca: critérios legíveis, uso e desempenho (TL-136)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-7f95d786-2610090239421a' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   scripts/db-audit/talkx-analytics-contract.test.mjs
+#	modified:   src/components/talkx/TalkXSegments.tsx
+#	new file:   src/components/talkx/__tests__/TalkXSegments.library.test.tsx
+#	modified:   src/hooks/integrations/useTalkXSegments.ts
+#

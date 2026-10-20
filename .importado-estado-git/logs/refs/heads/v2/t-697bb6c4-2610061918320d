@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 26dd0ef2dbcafd97c0a94141e67686f04000b815 Joaquim Ataides <ti@promobrindes.com.br> 1791325114 -0300	branch: Created from dia/2026-10-06
+26dd0ef2dbcafd97c0a94141e67686f04000b815 d211ef95e79c63dd15afa7a4b3ac5be64abf82a7 worker-sql <worker-sql@local> 1791328600 -0300	commit: fix(talkx): aceita origem webhook e aplica os defaults da conversão (#210)

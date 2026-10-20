@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ZAPP WEB</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Preconnect to Google Fonts for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload critical fonts for faster LCP.
+         Faixas variaveis (wght@min..max), nao pesos estaticos: o CSS pede
+         450/550/650/800/900 no dark (src/styles/base.css) que nenhum peso
+         estatico cobre — o navegador tinha que sintetizar. Faixa continua
+         cobre qualquer peso pedido dentro do eixo da fonte (Jakarta vai ate
+         800 — nao existe corte 900 publicado; Outfit cobre 100-900 inteiro).
+         JetBrains Mono entra pela mesma URL: font-mono/.text-code citavam
+         essa familia sem nenhum @font-face carregando ela. -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('theme');
+          var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', isDark);
+          
+          var skin = localStorage.getItem('theme-custom-colors');
+          if (skin) {
+            var c = JSON.parse(skin), root = document.documentElement;
+            if (c.v === 6) {
+              var mode = isDark ? 'dark' : 'light';
+              // Alto contraste: as cores vêm da classe `.high-contrast` (accessibility.css).
+              // Escrever o cache inline aqui venceria a classe e anularia o modo (mesmo
+              // cuidado do applyThemePreset); a classe entra já no boot para não piscar.
+              var altoContraste = localStorage.getItem('highContrast') === 'true';
+              if (altoContraste) root.classList.add('high-contrast');
+              if (!altoContraste && c.cssVarsCache && c.cacheMode === mode) {
+                for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
+              }
+              if (typeof c.borderRadius === 'number' && isFinite(c.borderRadius)) {
+                var r = Math.max(0, Math.min(20, c.borderRadius));
+                root.style.setProperty('--radius', (r / 16) + 'rem');
+              }
+              if (c.preset) root.setAttribute('data-preset-id', c.preset);
+            } else if (c.v !== 5) {
+              localStorage.removeItem('theme-custom-colors'); /* v5 fica: ThemeInitializer migra */
+            }
+          }
+        } catch(e) {
+          console.error('[BOOT] Theme init failed:', e);
+        }
+      })();
+    </script>
+    <script>
+      try { sessionStorage.removeItem('zapp-preview-boot-retry-done'); } catch(e) {}
+    </script>
+    <script>
+      // Boot diagnostic – captures any error before React mounts and surfaces
+      // a visible reason if mount doesn't happen within the timeout.
+      (function() {
+        // O default de produção é 8s. O override (window.__BOOT_DEADLINE_MS) existe
+        // para o CI/spec visual: com o dev server vite frio e vários workers em
+        // paralelo, o React 19 pode levar >8s para montar e o watchdog destruiria
+        // o app (#root zerado) — falha flaky "Falha ao inicializar o app".
+        var deadline = Date.now() + (window.__BOOT_DEADLINE_MS || 8000);
+        var interval = setInterval(function() {
+          if (document.getElementById('root') && document.getElementById('root').firstChild) {
+            clearInterval(interval);
+            return;
+          }
+          if (Date.now() > deadline) {
+            clearInterval(interval);
+            var errs = (window.__bootErrors || []).map(function(e) { return e; }).join('\n');
+            var root = document.getElementById('root');
+            if (!root) return;
+            root.innerHTML = ''
+            + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:system-ui,sans-serif;padding:24px;overflow:auto;">'
+            + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">&#9888;&#65039; Falha ao inicializar o app</h1>'
+            + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React n\u00e3o montou em 8s. Detalhes abaixo:</p>'
+            + '<div style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;">'
+            + (errs || '(sem erros capturados — verifique o console)')
+            + '</div>'
+            + '<button onclick="location.reload()" style="margin-top:16px;background:#2563eb;color:#fff;border:0;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Recarregar</button>'
+            + '</div>';
+          }
+        }, 500);
+
+        window.__bootErrors = window.__bootErrors || [];
+        window.onerror = function(msg, src, line, col, err) {
+          window.__bootErrors.push(
+            '[JS] ' + msg + (src ? ' @ ' + src + ':' + line : '')
+          );
+        };
+        window.addEventListener('unhandledrejection', function(ev) {
+          var reason = ev.reason;
+          window.__bootErrors.push(
+            '[Promise] ' + (reason && reason.stack ? reason.stack : String(reason))
+          );
+        });
+      })();
+    </script>
+    <style>
+      /* Tela de abertura (`#root-loading`): pinta já no primeiro quadro, antes de o
+         bundle do React baixar e montar, para o usuário não ver fundo vazio.
+         As cores são literais IGUAIS aos tokens de `src/styles/tokens.css` — neste
+         ponto do boot esse CSS ainda não chegou, mas o script de tema acima já marcou
+         `<html class="dark">`, então claro e escuro saem certos sem flash de tema errado.
+           claro:  --background 221 20% 97% | --foreground 221 20% 12% | --muted-foreground 221 10% 40%
+           escuro: --background 240 6% 6%  | --foreground 210 40% 98% | --muted-foreground 215 20% 75%
+         Só transform/opacity animam (nada de cor ou layout) e a animação não roda com
+         reduzir-movimento ligado. */
+      #root-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: hsl(221 20% 97%);
+        color: hsl(221 20% 12%);
+        font-family: Outfit, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        text-align: center;
+        transition: opacity 0.3s ease;
+      }
+      #root-loading .root-loading__marca {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      #root-loading .root-loading__status {
+        margin-top: 6px;
+        font-size: 13px;
+        color: hsl(221 10% 40%);
+      }
+      #root-loading .root-loading__pontos {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 14px;
+      }
+      #root-loading .root-loading__ponto {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: hsl(221 83% 53%);
+        animation: root-loading-pulso 1.5s infinite ease-in-out;
+      }
+      #root-loading .root-loading__ponto:nth-child(2) { animation-delay: 0.2s; }
+      #root-loading .root-loading__ponto:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes root-loading-pulso {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+      }
+      html.dark #root-loading {
+        background: hsl(240 6% 6%);
+        color: hsl(210 40% 98%);
+      }
+      html.dark #root-loading .root-loading__status {
+        color: hsl(215 20% 75%);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #root-loading { transition: none; }
+        #root-loading .root-loading__ponto {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="root-loading">
+      <div>
+        <div class="root-loading__marca">ZAPP Web</div>
+        <div class="root-loading__status" role="status">Carregando…</div>
+        <div class="root-loading__pontos" aria-hidden="true">
+          <span class="root-loading__ponto"></span>
+          <span class="root-loading__ponto"></span>
+          <span class="root-loading__ponto"></span>
+        </div>
+      </div>
+    </div>
+    <script>
+      // A abertura sai assim que o app desenha algo em #root (o React insere os filhos
+      // ali). Se o watchdog de 8s escrever a mensagem de erro em #root, o observador
+      // dispara também e o aviso de erro aparece no lugar da abertura.
+      (function () {
+        var root = document.getElementById('root');
+        var abertura = document.getElementById('root-loading');
+        if (!root || !abertura) return;
+        var soltar = function () {
+          if (abertura.parentNode) abertura.parentNode.removeChild(abertura);
+        };
+        var remover = function () {
+          abertura.style.opacity = '0';
+          var reduzido =
+            window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduzido) {
+            soltar();
+          } else {
+            setTimeout(soltar, 300);
+          }
+        };
+        var observador = new MutationObserver(function () {
+          if (root.childElementCount > 0) {
+            observador.disconnect();
+            remover();
+          }
+        });
+        observador.observe(root, { childList: true });
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

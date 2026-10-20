@@ -1,0 +1,21 @@
+fix(talkx): trata falha das consultas, teto de cliques e ETA sem ritmo
+
+Recusa do item #135.
+
+- fetchInsightData: as consultas obrigatórias passam por must() — erro de
+  leitura sobe (o hook expõe o estado de erro) em vez de virar insight
+  ausente/zero silencioso. Erro no join de cliques marca clickError e
+  suprime a conclusão de baixo clique.
+- Cliques: limite defensivo CLICK_SAMPLE_LIMIT (5000) com ordem por clicked_at
+  desc; bater exatamente no teto marca clicksTruncated e buildInsights abstém-se
+  de concluir 'baixo clique' — conjunto truncado não é o total.
+- Schema comprovado (sem dependência silenciosa): reply_rate_pct pela migration
+  20260922130000 e pelo type gerado Views.talkx_campaign_metrics; talkx_links.
+  campaign_id pelo type gerado Tables.talkx_links e pela migration
+  20260916200000_talkx_e90_links.sql.
+- ETA: estimateMinutesToFinish trata ritmo 0/ausente como indisponível (nunca
+  Infinity); TabResults mostra 'Indisponível' e o ritmo em decimal quando fração.
+
+Verde: 26 testes focados; zapp-verify --rapido VERDE (tipos/lint/db_guard/
+migrations); suíte completa 6459 passed (1 flake pré-existente de inbox, verde
+isolado); suíte Deno 992 passed.

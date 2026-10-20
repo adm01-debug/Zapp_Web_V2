@@ -1,0 +1,10 @@
+fix(bitrix-api): teste de conexão nomeia o portal testado e recusa URL do chamador (#222)
+
+O handler resolvia o alvo só por BITRIX_WEBHOOK_URL e devolvia a resposta sem dizer qual portal respondeu; webhookUrl/domain digitados na tela eram descartados em silêncio, então a resposta do portal A podia ser apresentada como se fosse a do B informado (R2-API-048).
+
+- o corpo passa a ser .strict(): webhookUrl/domain (e qualquer chave desconhecida) é recusado com 400, sem nenhum fetch — o chamador não escolhe o alvo do teste;
+- toda resposta nomeia o portal efetivamente testado (host do webhook configurado), no sucesso e no erro do provedor;
+- BITRIX_WEBHOOK_URL ausente ou inválida NEGA (400) sem tocar no provedor, em vez de 'testar' um alvo inexistente;
+- handler exportado e dependências por injeção para o teste chamar o handler real (Deno.serve sob import.meta.main).
+
+Teste: supabase/functions/bitrix-api/index.test.ts — 4 dos 6 casos ficam vermelhos sem a correção (deno test, 6 passed).

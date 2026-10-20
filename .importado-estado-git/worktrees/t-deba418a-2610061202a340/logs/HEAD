@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791298967 -0300	
+7e3d30cb5be2c801088f200d54191d09416ae334 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791298968 -0300	reset: moving to HEAD
+7e3d30cb5be2c801088f200d54191d09416ae334 abac507398b97cd52347e5d0dab4b57b5fa83af6 Joaquim Ataides <ti@promobrindes.com.br> 1791299235 -0300	commit: fix(telefonia): historico refaz a consulta quando a pagina esta fora do intervalo (#395)

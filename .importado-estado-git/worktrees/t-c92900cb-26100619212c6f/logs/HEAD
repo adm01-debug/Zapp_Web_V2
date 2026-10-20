@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 26dd0ef2dbcafd97c0a94141e67686f04000b815 Joaquim Ataides <ti@promobrindes.com.br> 1791325317 -0300	
+26dd0ef2dbcafd97c0a94141e67686f04000b815 26dd0ef2dbcafd97c0a94141e67686f04000b815 Joaquim Ataides <ti@promobrindes.com.br> 1791325318 -0300	reset: moving to HEAD
+26dd0ef2dbcafd97c0a94141e67686f04000b815 8cbe1c435499eefff9532e4d1b696a4164e97586 Joaquim Ataides <ti@promobrindes.com.br> 1791326508 -0300	commit: fix(filas): Editar do card e Configurar da fila passam a gravar a fila (R2-QUE-006)

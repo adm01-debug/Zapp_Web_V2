@@ -1,0 +1,25 @@
+test(estabilidade): espera o estado real nos 2 testes de tela que derrubavam o lote do integrador
+
+Os dois testes usavam o teto padrão do Testing Library (waitFor/findBy = 1000 ms)
+para esperar a PRIMEIRA renderização do caminho real. Com a máquina carregada
+essa renderização passa de 1 s (medido: ChatPopup 1101–1423 ms; no cartão,
+SkillBasedRouting 1438 ms), a consulta estourava o teto e o teste falhava por
+TEMPO, não por comportamento — derrubando todo lote do integrador.
+
+- ChatPopup.pagination (R2-INB-004): ESPERA_ESTADO_REAL = 5000 ms nas 7 esperas
+  (findByRole/findByTestId/waitFor). A área virtualizada monta 1000 linhas; era
+  a montagem que passava do teto.
+- SkillBasedRoutingSettings (item 270): ESPERA_ESTADO_REAL = 5000 ms nas 4
+  esperas (waitFor do seletor de agente, findByPlaceholderText, waitFor do insert).
+
+Nenhuma asserção foi removida, pulada ou afrouxada: a consulta e o `expect` são
+os mesmos; só o teto de espera ficou explícito e dimensionado. Não há sleep fixo
+— a espera continua sendo por estado real (polling do findBy/waitFor).
+
+Prova: 6 falhas em 8 rodadas sob carga antes; 10/10 verde nas MESMAS condições
+depois (8 processos de CPU + load average 41–44 em 24 núcleos), e 10/10 verde com
+`npx tsc --noEmit` em paralelo. Mutação: `hasOlderMessages={false}` no ChatPopup
+→ 3 testes vermelhos ("Unable to find role=button ... Carregar mensagens
+anteriores", após os 5000 ms); `skill_level: 3` fixo no insert → o teste do nível
+escolhido vermelho (Expected 5, Received 3). Produção restaurada (git status
+limpo): o diff só toca os 2 arquivos de teste.

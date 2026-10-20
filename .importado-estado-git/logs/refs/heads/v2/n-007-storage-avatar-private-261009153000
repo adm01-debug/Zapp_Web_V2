@@ -1,0 +1,9 @@
+b44540e359cfb367ed7a9ecb5caf3507b1d040b1 623321b041efa05d390befe25dd0ccbdda1966e5 Joaquim Ataides <joaquim@ataides> 1791588492 -0300	commit: N-064: aria-label em botões ícone e seletores admin
+623321b041efa05d390befe25dd0ccbdda1966e5 8b7ab3f1640b88dff32771269275d4b798ab1a19 Joaquim Ataides <joaquim@ataides> 1791614992 -0300	rebase (finish): refs/heads/v2/n-007-storage-avatar-private-261009153000 onto 99aa53ff7f2e8b046a1679a860f6fde55853eb68
+8b7ab3f1640b88dff32771269275d4b798ab1a19 ed7450ae5eb79112410fcef137e06943d904f449 Joaquim Ataides <joaquim@ataides> 1791617295 -0300	commit: feat(talkx): segments route integration (X111)
+ed7450ae5eb79112410fcef137e06943d904f449 c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 Joaquim Ataides <joaquim@ataides> 1791620012 -0300	commit: fix(volume): contrato media-volume-surfaces aponta para o arquivo certo do chat interno
+c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 ad4297990e0a33bd4bfd2755ee153bf39ceb44eb Joaquim Ataides <joaquim@ataides> 1791627998 -0300	commit: fix(performance): cache do Bun nos jobs com bun install (SL-095)
+ad4297990e0a33bd4bfd2755ee153bf39ceb44eb c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 Joaquim Ataides <joaquim@ataides> 1791628006 -0300	reset: moving to HEAD~
+c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 a49dba26104bc09dd05817f08de080594bb5a3a4 Joaquim Ataides <joaquim@ataides> 1791628046 -0300	commit: fix(performance): cache do Bun nos jobs com bun install (SL-095)
+a49dba26104bc09dd05817f08de080594bb5a3a4 26ac8a2ed92fbf017fb18f51b77a4fb4974218f2 Joaquim Ataides <joaquim@ataides> 1791629251 -0300	commit: fix(talk-x): step da row Conexão WhatsApp é 3 na review
+26ac8a2ed92fbf017fb18f51b77a4fb4974218f2 24a01f7c806f731bb2929621f0df69bcc40a0cbf Joaquim Ataides <joaquim@ataides> 1791631488 -0300	commit (amend): fix(supabase): revogar permissoes de tabela de anon e authenticated em 8 tabelas

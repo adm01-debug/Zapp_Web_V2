@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211546 -0300	branch: Created from dia/2026-10-05
+c59d333a084df35e69ac5b87318e75495a9c226f efdf0e389cd32922327ef83ce8870b04b9a8c454 Joaquim Ataides <ti@promobrindes.com.br> 1791211563 -0300	cherry-pick: fix(inbox): conversa fora da janela global de mensagens mantém histórico e não lidas
+efdf0e389cd32922327ef83ce8870b04b9a8c454 8b0583b330c6633ddb6d07e88fff5d8fa96b5c82 Joaquim Ataides <ti@promobrindes.com.br> 1791211620 -0300	commit: fix(inbox): só consulta o agregado por contato quando a amostra global é truncada
+8b0583b330c6633ddb6d07e88fff5d8fa96b5c82 f7dd253915a3a0368fbf9a94942b6b766854cbdc Hermes (complexo) <ti@promobrindes.com.br> 1791226535 -0300	commit: test(inbox): cobre a RPC get_inbox_contact_summaries no banco local (R2-INB-005)

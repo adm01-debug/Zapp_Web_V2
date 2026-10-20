@@ -1,0 +1,44 @@
+Re-extracting code files in . (no LLM needed)...
+[graphify watch] 55 file(s) not classified (no supported extension or shebang), skipped: .editorconfig, .env.example, .gitattributes, .gitignore, .gitleaks.toml, .graphify_labels.json.sig (+49 more)
+  AST extraction: 100/3173 uncached files (3%) [24 workers]
+  AST extraction: 200/3173 uncached files (6%) [24 workers]
+  AST extraction: 300/3173 uncached files (9%) [24 workers]
+  AST extraction: 400/3173 uncached files (12%) [24 workers]
+  AST extraction: 500/3173 uncached files (15%) [24 workers]
+  AST extraction: 600/3173 uncached files (18%) [24 workers]
+  AST extraction: 700/3173 uncached files (22%) [24 workers]
+  AST extraction: 800/3173 uncached files (25%) [24 workers]
+  AST extraction: 900/3173 uncached files (28%) [24 workers]
+  AST extraction: 1000/3173 uncached files (31%) [24 workers]
+  AST extraction: 1100/3173 uncached files (34%) [24 workers]
+  AST extraction: 1200/3173 uncached files (37%) [24 workers]
+  AST extraction: 1300/3173 uncached files (40%) [24 workers]
+  AST extraction: 1400/3173 uncached files (44%) [24 workers]
+  AST extraction: 1500/3173 uncached files (47%) [24 workers]
+  AST extraction: 1600/3173 uncached files (50%) [24 workers]
+  AST extraction: 1700/3173 uncached files (53%) [24 workers]
+  AST extraction: 1800/3173 uncached files (56%) [24 workers]
+  AST extraction: 1900/3173 uncached files (59%) [24 workers]
+  AST extraction: 2000/3173 uncached files (63%) [24 workers]
+  AST extraction: 2100/3173 uncached files (66%) [24 workers]
+  AST extraction: 2200/3173 uncached files (69%) [24 workers]
+  AST extraction: 2300/3173 uncached files (72%) [24 workers]
+  AST extraction: 2400/3173 uncached files (75%) [24 workers]
+  AST extraction: 2500/3173 uncached files (78%) [24 workers]
+  AST extraction: 2600/3173 uncached files (81%) [24 workers]
+  AST extraction: 2700/3173 uncached files (85%) [24 workers]
+  AST extraction: 2800/3173 uncached files (88%) [24 workers]
+  AST extraction: 2900/3173 uncached files (91%) [24 workers]
+  AST extraction: 3000/3173 uncached files (94%) [24 workers]
+  AST extraction: 3100/3173 uncached files (97%) [24 workers]
+  AST extraction: 3173/3173 uncached files (100%) [24 workers]
+  warning: 537 code file(s) yielded no symbols (1.44 MB) — a data file, or source this extractor models no symbols for: docs/dashboard/rls-snapshot-2026-09.sql, docs/migration/source-ddl/table_email_attachments.sql, e2e/auth.spec.ts, e2e/contacts-crud.spec.ts, e2e/contacts-detail.spec.ts (+532 more)
+[graphify watch] community set changed since labeling (2882 saved labels, 2960 communities now; renamed 486 community(ies) by their hub). Run `graphify label` to refresh names with the LLM.
+[graphify] backed up curated graph (4 files) -> 2026-10-14/
+Graph has 37776 nodes (above 5000 limit). Building aggregated community view...
+graph.html written (aggregated: 2960 community nodes, 5279 cross-community edges)
+Tip: run with --obsidian for full node-level detail.
+[graphify watch] Rebuilt: 37776 nodes, 85275 edges, 2960 communities
+[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in graphify-out
+Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.
+Tip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.

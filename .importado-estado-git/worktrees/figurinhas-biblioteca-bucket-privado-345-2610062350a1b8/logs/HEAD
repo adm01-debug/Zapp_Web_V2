@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791341447 -0300	
+b6a5800086896490ef4415de1f616aa77b69b9b6 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791341448 -0300	reset: moving to HEAD
+b6a5800086896490ef4415de1f616aa77b69b9b6 0bce78189e8417acd79425baf33d36f18c595245 Joaquim Ataides <ti@promobrindes.com.br> 1791341912 -0300	commit: fix(settings): miniatura da biblioteca de midia resolve URL de bucket privado (#345-B)

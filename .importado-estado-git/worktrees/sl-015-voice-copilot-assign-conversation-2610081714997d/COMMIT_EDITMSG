@@ -1,0 +1,3 @@
+docs(ia): fecha L4 da matriz — assign_conversation checa papel (SL-015)
+
+A lacuna L4 (voice-copilot-action:assign_conversation) ja estava fechada no codigo pelo commit f033ea226 (#1252), integrado antes deste cartao; nada de codigo mudou aqui. A matriz seguia com o texto e as linhas de antes da correcao. Prova: index.ts:128-154 + _shared/voice-copilot-authz.ts:39-52 e deno test do authz (11 casos, inclui N19).

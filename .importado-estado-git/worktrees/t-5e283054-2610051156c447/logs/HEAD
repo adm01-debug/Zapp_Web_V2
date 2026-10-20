@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791212217 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791212218 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f 00ba710bf665f0566a281fa652ec0adfa3945f00 Joaquim Ataides <ti@promobrindes.com.br> 1791212808 -0300	commit: fix(filas): conta contatos aguardando de verdade para os alertas de fila (R2-QUE-002)

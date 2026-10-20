@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791228135 -0300	branch: Created from dia/2026-10-05
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 887bf12e4d6c5dae324ebba10a4fa31872caebfe Joaquim Ataides <ti@promobrindes.com.br> 1791228150 -0300	cherry-pick: feat(inbox): liga paginacao do historico antigo a Inbox ativa (R2-INB-004)
+887bf12e4d6c5dae324ebba10a4fa31872caebfe 6d206b3004d12a4413df5748fc863c83eeeb7996 Joaquim Ataides <ti@promobrindes.com.br> 1791229396 -0300	commit: test(inbox): torna deterministica a paginacao da Inbox sob a suite completa (R2-INB-004)

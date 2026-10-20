@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791307504 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd 4d7b467981ae4f22dc03b8a11c849a7277774c04 Joaquim Ataides <ti@promobrindes.com.br> 1791307620 -0300	commit (cherry-pick): fix(gmail): arquivar thread legada remove INBOX e só então volta
+4d7b467981ae4f22dc03b8a11c849a7277774c04 341db094a2018e2156950a5e9352570cf0d8427a Joaquim Ataides <ti@promobrindes.com.br> 1791309033 -0300	commit (amend): fix(gmail): arquivar thread legada remove INBOX e só então volta

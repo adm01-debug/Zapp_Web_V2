@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 99037feef48ffd49ba7b733aa1fe59fa57baa5a5 Joaquim Ataides <ti@promobrindes.com.br> 1791534923 -0300	branch: Created from dia/2026-10-09
+99037feef48ffd49ba7b733aa1fe59fa57baa5a5 772d59a8eb3ad4053b4e13aab2ea2b478afe4b68 Joaquim Ataides <ti@promobrindes.com.br> 1791535230 -0300	cherry-pick: feat(multiplix): expõe público do disparo (select/save/apply) na camada de hooks
+772d59a8eb3ad4053b4e13aab2ea2b478afe4b68 f22c0ec88c1001da5b3edd6458e0f021d1631a24 Joaquim Ataides <ti@promobrindes.com.br> 1791535638 -0300	commit: feat(multiplix): painel com exclusões, seleção preservada, público salvo e detalhe do contato (TL-041C)
+f22c0ec88c1001da5b3edd6458e0f021d1631a24 5fab45df7c7cf8948aa01de245beb6f01554cf71 Joaquim Ataides <ti@promobrindes.com.br> 1791535720 -0300	commit: test(multiplix): prova a seleção preservada e a exclusão também no texto do rodapé (TL-041C)
+5fab45df7c7cf8948aa01de245beb6f01554cf71 af35f928c1d4bb7c2a48342ff65209b5fc36f20b Joaquim Ataides <ti@promobrindes.com.br> 1791535872 -0300	commit: test(multiplix): helper de última chamada no lugar de Array.at no teste novo (TL-041C)
+af35f928c1d4bb7c2a48342ff65209b5fc36f20b fa90bec62d86641fe2272b2f7589eeab469a9c66 Joaquim Ataides <ti@promobrindes.com.br> 1791535949 -0300	commit: test(multiplix): helper de última chamada genérico no teste novo (TL-041C)

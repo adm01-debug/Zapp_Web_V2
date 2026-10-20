@@ -1,0 +1,14 @@
+fix(relatorios): relatório agendado não é marcado como enviado quando o envio falha
+
+O handler avançava last_sent_at/next_send_at e respondia success=true mesmo com
+a chave do provedor ausente, com recusa HTTP de um ou de todos os destinatários
+e mesmo quando o UPDATE do agendamento falhava (erro ou zero linhas — que o
+PostgREST devolve sem erro). O relatório era dado como enviado sem entrega e a
+próxima execução era postergada.
+
+Agora o ciclo só é confirmado depois da entrega de todos os destinatários e do
+UPDATE conferido: falha de configuração responde 503, recusa do provedor
+responde 502 (status partial/failed, delivered/total, last_sent_advanced=false)
+e falha ao registrar responde 500 — nenhum deles avança o agendamento.
+
+Refs: R2-API-023 (#199)

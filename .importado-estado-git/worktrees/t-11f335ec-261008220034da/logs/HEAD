@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507631 -0300	
+5bb8664d243f0787d35e99d55ec899187a39121b 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507632 -0300	reset: moving to HEAD
+5bb8664d243f0787d35e99d55ec899187a39121b 905467bae336d06330c997bc0aa60bdf07f963b4 Joaquim Ataides <ti@promobrindes.com.br> 1791507642 -0300	cherry-pick: test(multiplix): cobre os 4 built-ins da personalizacao (apelido/nome_completo) no F88 (TL-047)
+905467bae336d06330c997bc0aa60bdf07f963b4 3cecac57233c936260ffeccbf00227e458cffc7a Joaquim Ataides <ti@promobrindes.com.br> 1791507685 -0300	commit: test(multiplix): alinha titulo dos built-ins de contato

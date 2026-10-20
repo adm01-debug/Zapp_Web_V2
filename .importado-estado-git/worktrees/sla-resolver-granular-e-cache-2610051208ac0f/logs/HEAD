@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 Joaquim Ataides <ti@promobrindes.com.br> 1791212908 -0300	
+b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 Joaquim Ataides <ti@promobrindes.com.br> 1791212908 -0300	reset: moving to HEAD
+b5ce79b2c732486b6e93cc279d2d1c1a4f9e4709 f8e26e39e75ab991f737d3b65875792a882c7ae0 Joaquim Ataides <ti@promobrindes.com.br> 1791213139 -0300	commit: fix(sla): resolver granular com contrato testado e invalidacao de applicable-sla (R2-SLA-003)

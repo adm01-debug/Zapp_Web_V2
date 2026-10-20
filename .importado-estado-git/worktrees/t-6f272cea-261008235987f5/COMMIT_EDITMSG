@@ -1,0 +1,3 @@
+fix(ci/devops): Build local sem SHA de commit (local-...) (SL-133)
+
+Sem mudanca de codigo: item A-07 provado como NAO defeito de codigo (vite.config.ts:8 usa VERCEL_GIT_COMMIT_SHA||GITHUB_SHA; local-<ts> so quando a env nao existe). Prova medida: build sem env -> local-<ts>; build com VERCEL_GIT_COMMIT_SHA=HEAD -> SHA identico ao commit.

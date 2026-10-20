@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791563522 -0300	
+12e407210db0ea4d9f817618d30848304ca932d5 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791563523 -0300	reset: moving to HEAD
+12e407210db0ea4d9f817618d30848304ca932d5 80f86209e05c5cb3feec9472c83dee0fdc3520e8 Joaquim Ataides <ti@promobrindes.com.br> 1791564159 -0300	commit: fix(connections): remover o painel de integracoes e a superficie do hook que a GO nao tem (SL-075 E43 front)

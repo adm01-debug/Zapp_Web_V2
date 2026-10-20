@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a980fada3dc8fdf9579b4e5391913db37c4365fb Joaquim Ataides <ti@promobrindes.com.br> 1791483232 -0300	
+a980fada3dc8fdf9579b4e5391913db37c4365fb a980fada3dc8fdf9579b4e5391913db37c4365fb Joaquim Ataides <ti@promobrindes.com.br> 1791483233 -0300	reset: moving to HEAD
+a980fada3dc8fdf9579b4e5391913db37c4365fb 3a3f9c7130cae44ce42d64ea321e9e351b9a9be3 Joaquim Ataides <ti@promobrindes.com.br> 1791483245 -0300	cherry-pick: feat(telefonia): Ligar do inbox disca na hora no cartão do contato
+3a3f9c7130cae44ce42d64ea321e9e351b9a9be3 2ee51cf3660af5f7b3dd3d1d38c3a5a3b3dca649 Joaquim Ataides <ti@promobrindes.com.br> 1791484207 -0300	commit: fix(telefonia): isola diálogo de saída sem provider

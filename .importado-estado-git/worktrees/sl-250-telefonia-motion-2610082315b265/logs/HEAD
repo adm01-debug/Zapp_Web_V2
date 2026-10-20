@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512117 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512118 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 4b5c03f6c5f1f3865553194e9413ec367b082796 Joaquim Ataides <ti@promobrindes.com.br> 1791512593 -0300	commit: fix(telefonia): Motion: KPI fade 150ms, troca de painel 120ms, whileTap (SL-250)
+4b5c03f6c5f1f3865553194e9413ec367b082796 f0df7869d473d39b82f884ff08eb7145c6a340a6 Joaquim Ataides <ti@promobrindes.com.br> 1791513225 -0300	commit: test(telefonia): tipar o embrulho do motion no teste de movimento (SL-250)
+f0df7869d473d39b82f884ff08eb7145c6a340a6 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555329 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 4e876d210fc1a2471b3e022d14ec776ec6ba7975 Joaquim Ataides <ti@promobrindes.com.br> 1791555471 -0300	rebase (continue): fix(telefonia): Motion: KPI fade 150ms, troca de painel 120ms, whileTap (SL-250)
+4e876d210fc1a2471b3e022d14ec776ec6ba7975 1d6c89fc5435d1f8d3d11ac71a43789ef0259e72 Joaquim Ataides <ti@promobrindes.com.br> 1791555471 -0300	rebase (pick): test(telefonia): tipar o embrulho do motion no teste de movimento (SL-250)
+1d6c89fc5435d1f8d3d11ac71a43789ef0259e72 1d6c89fc5435d1f8d3d11ac71a43789ef0259e72 Joaquim Ataides <ti@promobrindes.com.br> 1791555471 -0300	rebase (finish): returning to refs/heads/v2/sl-250-telefonia-motion-2610082315b265

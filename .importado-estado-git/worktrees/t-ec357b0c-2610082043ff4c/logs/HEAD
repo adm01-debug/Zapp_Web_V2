@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791502986 -0300	
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791502987 -0300	reset: moving to HEAD
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 9457e5e9b9e42e1cf33b6321d03a3cd3cb279ac8 Joaquim Ataides <ti@promobrindes.com.br> 1791503149 -0300	commit: fix(performance): notes do budget apontam a coleta para speed-insights (SL-230)
+9457e5e9b9e42e1cf33b6321d03a3cd3cb279ac8 a9f50c42716e842424550d9a1aef92c21f58333f Joaquim Ataides <ti@promobrindes.com.br> 1791503243 -0300	commit (amend): fix(performance): notes do budget apontam a coleta para o modulo certo (SL-230)
+a9f50c42716e842424550d9a1aef92c21f58333f e4cd00bd038720056834c0a92d62cda2f14abc12 Joaquim Ataides <ti@promobrindes.com.br> 1791503615 -0300	commit (amend): fix(performance): notes do budget apontam a coleta para o modulo certo (SL-230)

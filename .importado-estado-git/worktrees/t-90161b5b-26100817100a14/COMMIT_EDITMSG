@@ -1,0 +1,30 @@
+fix(performance): paraleliza jobs do ci.yml (test/security/e2e/mutation-mapa sem needs do lint) (SL-097)
+
+Por quê: os quatro jobs tinham `needs: lint-and-typecheck` sem consumir nada do
+lint — cada um faz o próprio checkout e `bun install`. Com o `needs`, o tempo de
+parede do PR era a SOMA dos jobs; sem ele, rodam em PARALELO com o lint. O
+`build` mantém `needs: [lint-and-typecheck, test]`, que é o gate de fato.
+
+Prova: scripts/ci/workflow-contracts.unit.mjs ganhou dois casos E69 que leem o
+`jobs:` do ci.yml, montam o grafo de `needs` e exigem ancestrais vazios para
+test/security/e2e/mutation-mapa, e ancestrais {lint-and-typecheck, test} para o
+build. Teste escrito antes do fix: vermelho com o `needs` no lugar, verde depois.
+
+Verificação: node --test scripts/ci/workflow-contracts.unit.mjs -> 11 pass / 0 fail;
+mutação (revertendo SÓ o ci.yml) -> 10 pass / 1 fail, "test volta a esperar
+lint-and-typecheck"; actionlint .github/workflows/ci.yml -> exit 0; PyYAML lê o
+arquivo e só `build` tem needs.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 7b2e6fda1 fix(performance): paraleliza jobs do ci.yml (test/security/e2e/mutation-mapa sem needs do lint) (SL-097)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-90161b5b-26100817100a14' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   .github/workflows/ci.yml
+#	modified:   scripts/ci/workflow-contracts.unit.mjs
+#

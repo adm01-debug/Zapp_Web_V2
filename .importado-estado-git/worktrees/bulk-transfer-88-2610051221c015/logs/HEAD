@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213694 -0300	
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213695 -0300	reset: moving to HEAD
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 88149fe7ce64f3ae47ca471c124f4cac5150133e Joaquim Ataides <ti@promobrindes.com.br> 1791213701 -0300	cherry-pick: fix(inbox): transferência em lote aguarda a Promise, grava evento e rejeita em erro
+88149fe7ce64f3ae47ca471c124f4cac5150133e 4f247fb6245355fe711f4ffd85c44968875c7e5a Joaquim Ataides <ti@promobrindes.com.br> 1791214800 -0300	commit (amend): fix(inbox): transferência em lote atômica via RPC bulk_transfer_contacts (R2-INB-009 / #88)

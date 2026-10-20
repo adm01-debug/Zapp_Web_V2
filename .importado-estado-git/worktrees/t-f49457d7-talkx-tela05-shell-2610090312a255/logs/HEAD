@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526344 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526345 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 ba6f367bb9a8634922b1660f91cf117054530b9d Joaquim Ataides <ti@promobrindes.com.br> 1791527215 -0300	commit: fix(talk-x): Encaixar a tela 05 no shell: rota, cabeçalho, sub-abas, (TL-125)
+ba6f367bb9a8634922b1660f91cf117054530b9d 8225b959acd072b831bbd75aec0a27348bc895b9 Joaquim Ataides <ti@promobrindes.com.br> 1791527588 -0300	commit: fix(talk-x): tipagem do parse da rota de template e caso de ttab sem template (TL-125)
+8225b959acd072b831bbd75aec0a27348bc895b9 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791558616 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 603335fa83b4e4090f6a8ab46ac21ed99d03c461 Joaquim Ataides <ti@promobrindes.com.br> 1791558924 -0300	rebase (continue): fix(talk-x): Encaixar a tela 05 no shell: rota, cabeçalho, sub-abas, (TL-125)
+603335fa83b4e4090f6a8ab46ac21ed99d03c461 2cf72f4b307eda7f5d5ca6f1df8df5b730ada09a Joaquim Ataides <ti@promobrindes.com.br> 1791558925 -0300	rebase (pick): fix(talk-x): tipagem do parse da rota de template e caso de ttab sem template (TL-125)
+2cf72f4b307eda7f5d5ca6f1df8df5b730ada09a 2cf72f4b307eda7f5d5ca6f1df8df5b730ada09a Joaquim Ataides <ti@promobrindes.com.br> 1791558925 -0300	rebase (finish): returning to refs/heads/v2/t-f49457d7-talkx-tela05-shell-2610090312a255

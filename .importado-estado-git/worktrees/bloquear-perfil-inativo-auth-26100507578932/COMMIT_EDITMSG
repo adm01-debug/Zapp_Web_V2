@@ -1,0 +1,31 @@
+fix(auth): bloqueia perfil inativo no AuthProvider e elimina corrida no boot (R2-AUTH-004)
+
+Por quê: o AuthProvider publicava usuário/sessão direto do evento de Auth, sem
+consultar o perfil — durante a janela do JWT stateless (até `exp`) um perfil
+recém-inativado seguia navegando e lendo cache. Agora o estado autenticado só é
+publicado depois de carregar o perfil atual e confirmar `is_active === true`;
+perfil inativo/ausente ou consulta que falha é fail-closed (limpa estado,
+invalida consultas em voo, limpa QueryClient/offline/drafts e faz signOut
+best-effort), com `error` explícito na tela.
+
+Recusa da rodada 1 (deadlock + erro apagado): o callback de
+`onAuthStateChange` ficou síncrono — o trabalho async é adiado com
+`setTimeout(..., 0)`, fora do lock de auth do supabase-js — e
+`clearAuthState({ preserveError: true })` no caminho de `SIGNED_OUT` do próprio
+fail-closed mantém 'Sua conta está inativa.' visível.
+
+Recusa da rodada 2 (corrida no boot): o supabase-js emite INITIAL_SESSION com a
+sessão recuperada para cada subscriber novo, em pleno boot. O applySession
+adiado por esse evento ganhava um token novo, descartava o do initSession, e o
+`finally` do initSession soltava `loading=false` com `user=null` até o segundo
+fetch terminar — mandando usuário ativo ao login a cada recarga. O evento passa
+a ser ignorado (o `getSession` do boot cobre o mesmo caminho) e o `loading` só é
+liberado por quem vence a disputa, via `finishLoading()`: o applySession mais
+recente ao terminar, ou um encerramento de sessão. Resposta descartada nunca
+libera o loading, inclusive quando qualquer evento preempta o boot.
+
+Verificação: vitest do hook 12/12; RED→GREEN dos testes novos — com o hook da
+entrega recusada (409ed452b) os 2 falham (fetchProfile 2x; loading solto com
+user=null) e com a correção passam; `zapp-verify . --rapido` verde (db_guard,
+tipos, lint, migrations). Escopo: só src/hooks/auth/useAuth.tsx e
+src/hooks/__tests__/useAuth.test.tsx.

@@ -1,0 +1,10 @@
+test(e2e): cobre discador, ligar do painel do contato e estados sem provedor (Y11)
+
+Spec E2E hermetico da Telefonia (sessao falsa + page.route + rede real barrada): abre o
+discador, prova os estados sem provedor (CTA bloqueado com motivo), a normalizacao E.164 do
+numero digitado (nono digito, DDI 55, teclado e backspace), o historico vazio/semeado e o
+clique-para-discar a partir do painel do contato ate a tela de Telefonia.
+
+Adiciona o projeto 'chromium-telefonia' no playwright.config.ts: sem ele a spec so seria
+coletada pelo catch-all de sessao salva (proibido para agentes pela guarda R1) e o arquivo
+entra no testIgnore desse catch-all.

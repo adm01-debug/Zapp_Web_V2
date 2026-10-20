@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 31d20bffaf93442786ebccb7b20b1224bb3eb054 Joaquim Ataides <ti@promobrindes.com.br> 1791374278 -0300	branch: Created from dia/2026-10-07
+31d20bffaf93442786ebccb7b20b1224bb3eb054 6e135b13cc8f017d510f1d19a7571f39effd4137 Joaquim Ataides <ti@promobrindes.com.br> 1791374543 -0300	commit: test(tarefas): tabela dos limites do arrasto em resolveDragEnd (E23)
+6e135b13cc8f017d510f1d19a7571f39effd4137 ca3b2070c33ecca8c7d6820bdf14b63fea45f2dd Joaquim Ataides <ti@promobrindes.com.br> 1791374897 -0300	commit: test(tarefas): tira da tabela a assercao sobre a constante de WIP (E23)

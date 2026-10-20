@@ -1,0 +1,5 @@
+fix(inbox): rejeita transferência quando evento falha (#88)
+
+Falha no insert de conversation_events passa a ser falha da transferência: mostra toast de erro e lança eventError (não resolve, não emite toast.success). O update é idempotente e pode repetir; o retry tenta gravar o evento de novo.
+
+Teste do hook: o caso 'erro no insert do evento não rejeita' vira rejects.toBe(eventError). Teste integrado da sidebar prova que a promise rejeita com o eventError e o diálogo/alvo permanecem abertos.

@@ -1,0 +1,14 @@
+fix(catalogo): favoritar em lote só confirma após a escrita e expõe falhas (#412)
+
+O "Favoritar N" da barra de seleção disparava os toggles com `void` e
+anunciava a quantidade inteira na hora, antes de qualquer resposta; o hook
+engolia o erro do insert/delete (só log + rollback), então uma falha de
+persistência continuava exibindo sucesso.
+
+- useExternalCatalog: `toggle` devolve `Promise<boolean>` (true = persistido,
+  false = sem usuário ou erro do insert/delete, com o cache revertido).
+- ExternalProductManagement / ExternalProductCatalog: aguardam cada escrita
+  (avaliada isoladamente), confirmam só a quantidade persistida e avisam o
+  que não foi salvo — os reprovados seguem selecionados para nova tentativa.
+
+Cartão: t_30e7cdcd (R2-MOD-043 / #412)

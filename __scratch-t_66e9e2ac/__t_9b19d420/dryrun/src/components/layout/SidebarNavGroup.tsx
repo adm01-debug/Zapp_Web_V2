@@ -1,0 +1,137 @@
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SidebarNavItem, type NavItemConfig } from './SidebarNavItem';
+
+interface SidebarNavGroupProps {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: readonly NavItemConfig[];
+  currentView: string;
+  onViewChange: (v: string) => void;
+  defaultOpen?: boolean;
+  collapsed?: boolean;
+  onToggleFavorite?: (id: string) => void;
+  isFavorite?: (id: string) => boolean;
+}
+
+const GROUPS_STORAGE_KEY = 'zapp-sidebar-groups';
+
+function readStoredGroupsState(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(GROUPS_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredGroupState(label: string, isOpen: boolean) {
+  try {
+    const state = readStoredGroupsState();
+    state[label] = isOpen;
+    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // localStorage indisponível (modo privado/quota) — estado só não persiste entre sessões
+  }
+}
+
+export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, onViewChange, defaultOpen = false, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavGroupProps) {
+  const hasActiveItem = items.some(item => item.id === currentView);
+  // Derived: always show group open when it contains the active item
+  // isOpen tracks user's explicit toggle; hasActiveItem is auto-override
+  const [isOpen, setIsOpen] = useState(() => {
+    const stored = readStoredGroupsState()[label];
+    return stored !== undefined ? stored : (defaultOpen || hasActiveItem);
+  });
+
+
+
+
+  const effectiveOpen = isOpen || hasActiveItem;
+  const handleToggle = () => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      writeStoredGroupState(label, next);
+      return next;
+    });
+  };
+
+  const triggerButton = (
+    <button
+      onClick={handleToggle}
+      className={cn(
+        'rounded-lg flex items-center transition-all duration-200 group/trigger',
+        collapsed ? 'w-full h-[30px] justify-center gap-0.5' : 'w-full h-10 px-2.5 gap-2',
+        hasActiveItem
+          ? 'text-primary'
+          : 'text-muted-foreground hover:text-foreground'
+      )}
+      aria-expanded={effectiveOpen}
+      aria-label={`${label} — ${isOpen ? 'recolher' : 'expandir'}`}
+    >
+      <GroupIcon className={cn(
+        collapsed ? 'w-[11px] h-[11px]' : cn('w-6 h-6', !hasActiveItem && 'text-sidebar-foreground/30'),
+        'shrink-0 transition-colors duration-200'
+      )} />
+      {!collapsed && (
+        <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground truncate select-none">
+          {label}
+        </span>
+      )}
+      <ChevronDown className={cn(
+        'transition-transform duration-300 shrink-0',
+        collapsed ? 'w-[8px] h-[8px]' : 'w-3.5 h-3.5 ml-auto text-sidebar-foreground/30',
+        effectiveOpen && 'rotate-180'
+      )} />
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col w-full border-t border-border/40 first:border-t-0 pt-1.5 mt-0.5 first:mt-0 first:pt-0">
+      {collapsed ? (
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8} className="text-xs font-semibold">
+            {label}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        triggerButton
+      )}
+
+      <AnimatePresence initial={false}>
+        {effectiveOpen && (
+          <motion.nav
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className={cn('flex flex-col w-full overflow-hidden', collapsed && 'items-center')}
+            aria-label={label}
+          >
+            <ul role="list" className={cn(
+              'flex flex-col gap-0.5 w-full list-none p-0 m-0 pt-0.5',
+              collapsed && 'items-center',
+              !collapsed && 'pl-1'
+            )}>
+              {items.map((item) => (
+                <li key={item.id}>
+                  <SidebarNavItem
+                    item={item}
+                    currentView={currentView}
+                    onViewChange={onViewChange}
+                    collapsed={collapsed}
+                    onToggleFavorite={onToggleFavorite}
+                    isFavorite={isFavorite?.(item.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485218 -0300	
+72ad19958df7735cd29bad24dd38f66265c47f3b 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485220 -0300	reset: moving to HEAD
+72ad19958df7735cd29bad24dd38f66265c47f3b 25427315049009a43641253e843547780c96bbae Joaquim Ataides <ti@promobrindes.com.br> 1791485304 -0300	commit (cherry-pick): fix(catalog): favorito deixa de converter preço e estoque desconhecidos em zero

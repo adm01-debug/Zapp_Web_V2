@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 5afded0c612a5df8d38a1eb6de7cccaf12aa7a77 Joaquim Ataides <ti@promobrindes.com.br> 1791295571 -0300	branch: Created from dia/2026-10-06
+5afded0c612a5df8d38a1eb6de7cccaf12aa7a77 7807f2249cc42cbd4f72820368cc0bd67d9fb37e Joaquim Ataides <ti@promobrindes.com.br> 1791296058 -0300	commit: fix(historico): 'Carregar mais' da Jornada ultrapassa as janelas fixas das consultas (#328)

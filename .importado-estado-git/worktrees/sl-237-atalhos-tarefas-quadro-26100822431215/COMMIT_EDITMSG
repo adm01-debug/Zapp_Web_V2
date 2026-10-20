@@ -1,0 +1,3 @@
+fix(tarefas/quadro): atalhos E, X, Delete, /, ? no modulo (SL-237)
+
+Verificacao: lacuna do item E125 ja resolvida na ponta dia/2026-10-08 (atalhos no registry com escopo 'tasks' + ramos no TasksModule). Sem mudanca de codigo; prova em .tmp/relato.md.

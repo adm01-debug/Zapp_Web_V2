@@ -1,0 +1,6 @@
+test(progress): cobre encaminhamento de value ao Root semântico (#491)
+
+Travamento de regressão do achado R2-INF-035: cobre o valor semântico
+(aria-valuenow/aria-valuemax) sob props espalhadas e prende a barra visual
+ao mesmo denominador anunciado pelo Root. Fica vermelho sem a linha
+`value={value}` do Root.

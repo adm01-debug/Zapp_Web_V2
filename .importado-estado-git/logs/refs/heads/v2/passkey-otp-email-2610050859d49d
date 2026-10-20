@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201598 -0300	branch: Created from dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 2b81efc4525513928da00d75a4ab275e601ccb20 Joaquim Ataides <ti@promobrindes.com.br> 1791201629 -0300	cherry-pick: fix(auth): passkey só anuncia login quando há sessão; sem sessão, continua por link de e-mail
+2b81efc4525513928da00d75a4ab275e601ccb20 5db7f4fe3e3d5548e386d21caf894dd0dece9153 Joaquim Ataides <ti@promobrindes.com.br> 1791201629 -0300	cherry-pick: fix(webauthn): localiza challenge anônimo e pagina listUsers na autenticação por passkey
+5db7f4fe3e3d5548e386d21caf894dd0dece9153 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791202723 -0300	reset: moving to df5cd607f
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 3f7838341fe0b4a6b2f484ba71c9e0273a00d863 Joaquim Ataides <ti@promobrindes.com.br> 1791202735 -0300	commit: fix(auth): passkey localiza o challenge pelo clientDataJSON e só anuncia login com sessão

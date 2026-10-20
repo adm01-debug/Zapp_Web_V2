@@ -1,0 +1,3 @@
+fix(edge): recusa action fora do contrato no laboratório de voz em vez de listar vozes (#433)
+
+Cartão V2: 26100613005f86 (branch v2/t-6ad7df09-26100613005f86 @ ddd6b385b)

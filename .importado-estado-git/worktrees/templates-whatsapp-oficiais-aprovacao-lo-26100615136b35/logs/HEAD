@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791310407 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791310408 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd 5e6387b3fe50e47e046bc5ab0f6dabebf0b6dcb6 Joaquim Ataides <ti@promobrindes.com.br> 1791310420 -0300	cherry-pick: fix(whatsapp-templates): aprovação de template não é escolhida localmente (R2-MOD-067)
+5e6387b3fe50e47e046bc5ab0f6dabebf0b6dcb6 d01744cff7906496cf54fc677a3c268b80d2aceb Joaquim Ataides <ti@promobrindes.com.br> 1791310420 -0300	cherry-pick: test(whatsapp-templates): prova pelo fluxo do hook que a aprovação não vem do formulário
+d01744cff7906496cf54fc677a3c268b80d2aceb 2333667a486505799f4d6c745d192b98e72726b2 Joaquim Ataides <ti@promobrindes.com.br> 1791310494 -0300	commit: fix(whatsapp-templates): remove promessa de sincronização local

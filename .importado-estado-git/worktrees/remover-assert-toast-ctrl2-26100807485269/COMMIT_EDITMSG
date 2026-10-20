@@ -1,0 +1,15 @@
+test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast
+
+O defeito #447 passou a ser provado observando o PONTO QUE RECEBE A VIEW — o
+`currentView` entregue ao `AppShell` — e a URL canônica `?view=dashboard`, e não
+o aviso de toast (proibido como prova pelo revisor). Traz o teste de 6b3fd8da5
+sem a linha `expect(toast.info).toHaveBeenCalledWith('📊 Dashboard', …)` e sem o
+`import { toast } from 'sonner'` que ficaria sem uso; o `vi.mock('sonner')`
+segue como dublê. O cabeçalho não cita mais asserção de toast.
+
+Fluxo coberto: GlobalKeyboardProvider → useGlobalKeyboardShortcuts (registry
+global) → navigateToView('dashboard') → useNavigationHistory do Index →
+prop `currentView` do AppShell. Vermelho na implementação antiga (o shell
+seguia em inbox), verde com a ação go-to-dashboard já corrigida no cartão pai.
+
+Escopo: apenas src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx.

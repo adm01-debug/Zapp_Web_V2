@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7538413a5bc8a7f679961fbcb3c80557d47ccb63 Joaquim Ataides <ti@promobrindes.com.br> 1791465528 -0300	branch: Created from dia/2026-10-08
+7538413a5bc8a7f679961fbcb3c80557d47ccb63 d09649eb45e83e9969826ae117356b3f874f1a9f Joaquim Ataides <ti@promobrindes.com.br> 1791465657 -0300	commit: test(tarefas): reproduz save prematuro com escrita pendente no WorkItemSheet (#419)

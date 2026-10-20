@@ -1,0 +1,1 @@
+import{dn as e,pn as t}from"./vendor-ui-DxdqrxSq.js";function n(...n){return e(t(n))}export{n as t};

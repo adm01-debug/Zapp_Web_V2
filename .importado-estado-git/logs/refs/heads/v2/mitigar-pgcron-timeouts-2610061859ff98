@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323967 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 909f68e2efb47aeb513e8d1062adc7de12a0bf23 Joaquim Ataides <ti@promobrindes.com.br> 1791324004 -0300	cherry-pick: fix(banco): nenhum minuto do pg_cron chega a 6 jobs, condicao do job startup timeout
+909f68e2efb47aeb513e8d1062adc7de12a0bf23 fd4a3523bb270748b36aa168d8c073139ffc9809 Joaquim Ataides <ti@promobrindes.com.br> 1791324214 -0300	commit (amend): fix(banco): nenhum minuto do pg_cron chega a 6 jobs, condicao do job startup timeout

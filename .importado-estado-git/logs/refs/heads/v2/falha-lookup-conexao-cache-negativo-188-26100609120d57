@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791288736 -0300	branch: Created from dia/2026-10-06
+614e613981c3e43231ee02999d12e09b8fb055b4 e84d0432426f9ce55c58b1906cee10d8728380c5 Joaquim Ataides <ti@promobrindes.com.br> 1791289658 -0300	commit: fix(edge): erro de lookup de conexão lança em vez de virar cache negativo

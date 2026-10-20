@@ -1,0 +1,22 @@
+fix(multiplix): inicia disparo so depois de materializar a fila por itens (MX01)
+
+Achado MX01 (#45): o composer cria o disparo por multiplix_create_draft (SO
+dispatches + recipients) e chama multiplix-send/start em seguida, mas o worker
+consome exclusivamente multiplix_delivery_items. O disparo entrava em 'sending'
+com destinatarios pendentes e ZERO itens processaveis — nada saia e nenhum erro
+aparecia ("sucesso" silencioso).
+
+- Nova RPC multiplix_materialize_legacy_queue (migration 20261005150259): cria o
+  bloco texto do message_template quando o rascunho legado nao tem bloco e
+  materializa 1 item por (destinatario elegivel x bloco) com a idempotencia do
+  idempotency_key (mesma forma do F51/confirm). No-op com itens ja existentes ou
+  fora de 'sending'; service_role apenas.
+- multiplix-send chama a conversao depois do start e ANTES do loop de envio
+  (nunca dispara sem a fila materializada; fail-closed se a RPC falhar) — cobre
+  tambem um disparo ja em 'sending' sem fila (auto-cura).
+- Teste prova o defeito (vermelho antes, verde depois) em index.test.ts.
+
+Achado fora do escopo: trg_multiplix_bump_version_on_dispatch_edit le NEW.template,
+coluna inexistente em multiplix_dispatches (42703 em qualquer UPDATE de draft).
+
+Cartao V2: 2610051151125f (branch v2/composer-materializa-fila-2610051151125f)

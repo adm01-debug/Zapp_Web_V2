@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537230 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537232 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 7932fd8fb58b7cb543c7afa96c6b0c94e7e7c49b Joaquim Ataides <ti@promobrindes.com.br> 1791537836 -0300	commit: fix(a11y): favorito fora do botão do item da barra lateral (Y18-4)
+7932fd8fb58b7cb543c7afa96c6b0c94e7e7c49b 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791564698 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 5d5b155294b84314a0c12daa62c9efb766fd3321 Joaquim Ataides <ti@promobrindes.com.br> 1791564718 -0300	rebase (continue): fix(a11y): favorito fora do botão do item da barra lateral (Y18-4)
+5d5b155294b84314a0c12daa62c9efb766fd3321 5d5b155294b84314a0c12daa62c9efb766fd3321 Joaquim Ataides <ti@promobrindes.com.br> 1791564718 -0300	rebase (finish): returning to refs/heads/v2/t-d8d88c7b-26100906132067

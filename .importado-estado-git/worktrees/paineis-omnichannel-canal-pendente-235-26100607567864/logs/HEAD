@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284195 -0300	
+fbb20ec26ffb172a379a820a3fafde28a671aae1 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284195 -0300	reset: moving to HEAD
+fbb20ec26ffb172a379a820a3fafde28a671aae1 6a4d2e722ef32b202c587068c225be39fd8ee079 Joaquim Ataides <ti@promobrindes.com.br> 1791284746 -0300	commit: fix(omnichannel): canal pendente deixa de contar como conectado e WhatsApp sai da constante 1

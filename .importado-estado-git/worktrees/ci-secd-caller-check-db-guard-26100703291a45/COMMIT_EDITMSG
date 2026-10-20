@@ -1,0 +1,3 @@
+fix(ci): registra o teste secd-caller-check no db-guard.yml (#474)
+
+check-test-inventory reprovava scripts/db-audit/secd-caller-check.test.sh como orfao em db-guard.yml: cada .test.sh de scripts/db-audit/ e conferido individualmente, entao um teste novo precisa do passo proprio no workflow. O passo segue o padrao dos vizinhos (retry-disposable-postgres-test.sh + *_TEST_POSTGRES_IMAGE de env.POSTGRES_TEST_IMAGE) e roda o teste real, que aplica o arquivo inteiro da migration 20261007004545 no PostgreSQL 17 descartavel.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791234815 -0300	
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791234816 -0300	reset: moving to HEAD
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c39dbcc8a72329d6be2953eab667c62f14904b46 Joaquim Ataides <ti@promobrindes.com.br> 1791234880 -0300	commit (cherry-pick): fix(chatbot-l1): exigir conexão para flow e histórico
+c39dbcc8a72329d6be2953eab667c62f14904b46 533045d47a16cbf0ed1bd76da4c88ea966002df1 Joaquim Ataides <ti@promobrindes.com.br> 1791235047 -0300	commit: test(chatbot-l1): provar contrato do erro de conexão

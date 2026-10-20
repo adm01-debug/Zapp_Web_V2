@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd Joaquim Ataides <ti@promobrindes.com.br> 1791293492 -0300	branch: Created from dia/2026-10-06
+1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd 46e1e5f27e047fa8c2d75ba7ac80b12888e31fef Joaquim Ataides <ti@promobrindes.com.br> 1791294125 -0300	commit: fix(agentes): capacidade conta conversa aberta, nao contato atribuido (#247)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e9a541f13f2ddb3759049440c93a2bbb35943596 Joaquim Ataides <ti@promobrindes.com.br> 1791204171 -0300	branch: Created from dia/2026-10-05
+e9a541f13f2ddb3759049440c93a2bbb35943596 ddac99983b870c0461ae98b45d72a0df21f089c6 Joaquim Ataides <ti@promobrindes.com.br> 1791206454 -0300	commit: fix(inbox): conversa fora da janela global de mensagens mantém histórico e não lidas

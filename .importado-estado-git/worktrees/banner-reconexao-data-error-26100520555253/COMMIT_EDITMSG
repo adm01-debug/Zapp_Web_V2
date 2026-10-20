@@ -1,0 +1,7 @@
+fix(alerts): banner de reconexão rejeita erro lógico da Evolution
+
+A Edge Function evolution-api responde HTTP 200 também nas falhas lógicas,
+com o erro no corpo ({ error: true, message }). O handleReconnect do banner
+conferia apenas o error de transporte e anunciava "Reconectando..." como se
+a solicitação tivesse sido aceita; agora confere data?.error antes do aviso
+de sucesso (R2-API-042).

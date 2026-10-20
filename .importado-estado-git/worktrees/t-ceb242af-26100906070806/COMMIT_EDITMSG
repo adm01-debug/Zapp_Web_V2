@@ -1,0 +1,22 @@
+feat(talk-x): filtros por tag, proprietario e rascunho e paginacao da biblioteca (TL-135c)
+
+O recorte da biblioteca de segmentos (origem, tag, status, proprietario e pagina) passa a viver na URL e o tamanho de pagina vira preferencia por usuario, com 10 por pagina por padrao (X114). As opcoes de tag e de proprietario saem dos proprios segmentos (talkx_segments.tags de X101 e created_by/creator). Inclui o ajuste do caso Segmentos do teste R2-MOD-060, que fixava o padrao antigo de 8 por pagina.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    iris <iris@fabrica.local>
+#
+# interactive rebase in progress; onto cdf3e975e
+# Last commands done (2 commands done):
+#    pick c049b104a feat(talkx): KPIs da biblioteca de segmentos pela RPC (TL-135b)
+#    pick a5dc5793a feat(talk-x): filtros por tag, proprietario e rascunho e paginacao da biblioteca (TL-135c)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-ceb242af-26100906070806' on 'cdf3e975e'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXSegments.tsx
+#	modified:   src/components/talkx/__tests__/TalkXPaginacao.tamanhoPagina.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXSegments.filtrosPaginacao.test.tsx
+#	modified:   src/hooks/integrations/useTalkXSegments.ts
+#

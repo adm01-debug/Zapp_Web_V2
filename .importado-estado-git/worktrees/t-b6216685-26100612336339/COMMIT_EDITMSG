@@ -1,0 +1,5 @@
+test(edge): caso da guarda le o conteudo real dos dois arquivos citados (#363)
+
+O caso novo pega os arquivos do disco (searchbox-budget-alert e webhook-diagnostic), confere que
+estao limpos e, em memoria, devolve a forma antiga (500 montado a mao) para provar que a varredura
+reprovaria a regressao deles — em vez de so conferir uma copia literal feita no proprio teste.

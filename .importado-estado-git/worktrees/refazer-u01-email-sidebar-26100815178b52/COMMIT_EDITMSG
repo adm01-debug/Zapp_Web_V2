@@ -1,0 +1,1 @@
+fix(sidebar): evitar websocket real do contador em testes

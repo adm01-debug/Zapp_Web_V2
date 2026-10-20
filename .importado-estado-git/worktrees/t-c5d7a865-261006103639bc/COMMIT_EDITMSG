@@ -1,0 +1,10 @@
+fix(seguranca): overview mede 2FA, senha e alertas antes de exibir estado (#250)
+
+- fonte compartilhada dos fatores TOTP (useMfaFactors) distinguindo
+  carregando, erro e nenhum fator; useHasVerifiedTotp deriva dela
+- SecurityOverview e SecuritySettingsPanel deixam de exibir 2FA
+  desativado/zero por nao lerem os fatores
+- pontuacao so com item realmente medido; senha nao e mais pontuada
+  nem afirmada; teto passa a 75 e some enquanto a medicao nao conclui
+- falha ao consultar alertas mostra indisponibilidade em vez de
+  'conta segura e sem atividades suspeitas'

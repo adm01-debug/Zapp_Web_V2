@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791341946 -0300	branch: Created from dia/2026-10-06
+e58beff67df277afa73c179058c38190a5dd5d5c 9f86469da0e28deb8da673193e4a71a7523cf751 Joaquim Ataides <ti@promobrindes.com.br> 1791342489 -0300	commit: fix(inbox): handlers de envio de audio sinalizam a falha ao chamador (#350-A)

@@ -1,0 +1,8 @@
+feat(team-chat): cria set_profile_department e remove a tabela legada department_invites
+
+Migration versionada do SL-069: RPC public.set_profile_department(p_profile_id, p_department_id)
+SECURITY DEFINER admin-only (mesma guarda de create_department_invite/policies de departamento),
+com UPDATE + auditoria em department_audit_logs na mesma transacao, e a remocao da tabela legada
+department_invites (aposentada pelo contrato department_invitations). types.ts sem a tabela legada
+e com a RPC. Prova em scripts/db-audit/sl069-set-profile-department.test.sh (Postgres descartavel,
+papel real, rollback do proprio arquivo executado).

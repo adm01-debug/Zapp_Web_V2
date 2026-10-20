@@ -1,0 +1,3 @@
+fix(inbox): mantém o volume de vídeo viável no fallback do iOS (#185)
+
+VOL-04: o <video> do fullscreen e da galeria nasciam sem crossOrigin e sem playsInline. No iOS element.volume é read-only e o app cai no caminho GainNode/WebAudio; sem crossOrigin a URL assinada cross-origin lança SecurityError em createMediaElementSource, o catch engole e o ganho vira um no-op silencioso. Com playsInline o iOS não sequestra o vídeo para o player nativo e os controles do app permanecem. Teste de DOM (vermelho antes, verde depois) trava as duas superfícies.

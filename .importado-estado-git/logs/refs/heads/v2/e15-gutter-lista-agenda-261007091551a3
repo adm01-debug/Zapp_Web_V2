@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 43dc29c51da515c0e4ea13af301e59f766093649 Joaquim Ataides <ti@promobrindes.com.br> 1791375340 -0300	branch: Created from dia/2026-10-07
+43dc29c51da515c0e4ea13af301e59f766093649 9712bbcc551871f62f587aceaf411a46ef0aea3b Joaquim Ataides <ti@promobrindes.com.br> 1791375531 -0300	commit: fix(tarefas): preservar rodapé da lista no gutter E15
+9712bbcc551871f62f587aceaf411a46ef0aea3b d7a395877b54546a9ab95cdd929bf846b60aae40 Joaquim Ataides <ti@promobrindes.com.br> 1791380499 -0300	commit: fix(tarefas): gutter e rolagem nas raízes de carregamento e dos vazios da Lista

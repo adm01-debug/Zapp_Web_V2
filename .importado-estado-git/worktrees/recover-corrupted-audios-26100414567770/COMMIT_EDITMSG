@@ -1,0 +1,8 @@
+fix(recover-corrupted-audios): autoriza execução com JWT admin antes do scan
+
+P1 R2-API-022: a rotina varria áudio global e aceitava batch_size/offset/dry_run
+do chamador sem auth/role. Agora o preflight CORS continua livre, mas a
+autorização (Bearer -> getUser -> is_admin_or_supervisor) roda ANTES de
+parsear o payload, antes do scan e antes de qualquer download/upload/update.
+Sem identidade -> 401; agente comum -> 403. Teste RED/GREEN novo prova a
+rejeição e a ausência de efeitos.

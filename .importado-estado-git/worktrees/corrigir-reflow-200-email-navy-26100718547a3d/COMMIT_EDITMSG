@@ -1,0 +1,19 @@
+test(e2e): portão de boot explícito no reflow 200% do email-navy
+
+Cartão V2: 26100718547a3d (t_96e6411d, branch v2/corrigir-reflow-200-email-navy-26100718547a3d)
+
+A falha da rodada 2 em chromium-email-navy (getByRole heading 'Email' não
+encontrado) acontece porque a PRIMEIRA asserção depois do page.goto também
+serve de portão de boot, com o default de 5 s do expect, enquanto o próprio
+spec declara 60 s de deadline de boot (__BOOT_DEADLINE_MS) e o dev server
+frio, com 3 projetos em paralelo, estoura esse orçamento.
+
+O portão agora espera a view existir (com o zoom de 200% já aplicado) usando
+ESPERA_BOOT_MS = 20 s. Nenhuma asserção foi alterada nem afrouxada: o heading,
+as ações essenciais e o overflow (scrollWidth - clientWidth <= 2) continuam
+iguais e obrigatórios.
+
+ATENÇÃO (motivo do bloqueio): este portão NÃO cobre a falha de fetch do módulo
+da view ("Failed to fetch dynamically imported module"), que deixa a view morta
+até um reload da página — ver comentário do cartão t_96e6411d e o cartão filho
+da correção em src/pages/ViewRouter.tsx.

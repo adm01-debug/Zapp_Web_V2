@@ -1,0 +1,16 @@
+test(ia): ajusta fixtures de SL-010b apos o rebase na dia de 09/10
+
+O elevenlabs-sts da dia/2026-10-09 (IA-122/IA-128, independente deste cartao)
+prova a assinatura real do audio antes do kill switch; o fixture de
+ai-kill-switch-elevenlabs.test.ts usava bytes arbitraries que a checagem de
+assinatura recusa com 415 antes do kill switch rodar. Troquei para um
+cabecalho ID3 reconhecido, sem tocar em sniffStsAudioFormat nem no handler.
+
+O teste pre-existente "SL-013: falha do provedor tambem deixa linha" em
+elevenlabs-dialogue/index.test.ts nao stubava feature_flags; com o kill
+switch novo isso nega por flag_read_error (503) antes do fetch simulado de
+erro do provedor. Acrescentei ROTA_FLAGS a essa lista; a asserção (status
+500 do provedor, linha error no ledger) nao mudou.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

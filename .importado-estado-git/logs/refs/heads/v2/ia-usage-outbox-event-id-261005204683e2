@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc Joaquim Ataides <ti@promobrindes.com.br> 1791243972 -0300	branch: Created from dia/2026-10-05
+7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc eea74c944d2ee8345f369c765555d7199cb239c0 Joaquim Ataides <ti@promobrindes.com.br> 1791244570 -0300	commit: fix(edge): UPSERT por event_id e outbox duravel no log essencial de IA

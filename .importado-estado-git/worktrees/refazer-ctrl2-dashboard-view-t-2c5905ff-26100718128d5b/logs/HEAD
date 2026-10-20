@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 0330a462c8f3be5f568cef624d549fe21c02f408 Joaquim Ataides <ti@promobrindes.com.br> 1791407569 -0300	
+0330a462c8f3be5f568cef624d549fe21c02f408 0330a462c8f3be5f568cef624d549fe21c02f408 Joaquim Ataides <ti@promobrindes.com.br> 1791407569 -0300	reset: moving to HEAD
+0330a462c8f3be5f568cef624d549fe21c02f408 ebcc22cd61f6b891965c4e67f769302fa8d9346a Joaquim Ataides <ti@promobrindes.com.br> 1791409121 -0300	commit: fix(atalhos): refaz regressao Ctrl+2 no shell

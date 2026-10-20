@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791225978 -0300	
+b082bce893ba74365248c56c31e898f05a13dc69 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791225979 -0300	reset: moving to HEAD
+b082bce893ba74365248c56c31e898f05a13dc69 9a99f2daea7d447ab99b908dfc4b2e4cfc311265 Joaquim Ataides <ti@promobrindes.com.br> 1791226111 -0300	cherry-pick: fix(inbox): transferência da sidebar passa a ser atômica via RPC transfer_contact
+9a99f2daea7d447ab99b908dfc4b2e4cfc311265 c7d5079e20360da939e87e36ed79ac727f06c056 Joaquim Ataides <ti@promobrindes.com.br> 1791227959 -0300	commit (amend): fix(inbox): nota da transferência da sidebar é persistida no evento
+c7d5079e20360da939e87e36ed79ac727f06c056 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791228251 -0300	reset: moving to HEAD^
+b082bce893ba74365248c56c31e898f05a13dc69 77edc22451e3e430302fe94d6e23403ba02d15e2 Joaquim Ataides <ti@promobrindes.com.br> 1791228256 -0300	commit: fix(inbox): persiste a nota da transferência e rejeita falha na sidebar

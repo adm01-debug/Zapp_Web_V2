@@ -1,0 +1,6 @@
+fix(edge): teste de negacao prova nao-vazamento e JSDoc alinha com regex
+
+- teste networkPolicyDenialResponse passa a chamar a funcao de verdade e
+  prova corpos 403 identicos, sem razao, IP ou codigo de pais
+- JSDoc de isValidEndpoint descreve a regex real ^[!-~]{1,128}$
+- rpcThrowing perde o array calls sem uso

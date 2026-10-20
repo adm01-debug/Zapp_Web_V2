@@ -1,0 +1,2 @@
+pick ca93e4dd9 fix(team-chat): migra gestão de departamento para o contrato atual de convites e WhatsApp
+pick a54d75c7c fix(team-chat): entrada por codigo no canal de departamento e telas no contrato atual (SL-069 F76/F77/F79)

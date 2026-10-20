@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 bee70440c4e23db21430212a22af80d0d5d8572e Joaquim Ataides <ti@promobrindes.com.br> 1791295017 -0300	
+bee70440c4e23db21430212a22af80d0d5d8572e bee70440c4e23db21430212a22af80d0d5d8572e Joaquim Ataides <ti@promobrindes.com.br> 1791295018 -0300	reset: moving to HEAD
+bee70440c4e23db21430212a22af80d0d5d8572e c8b29a88cc663ca734230f83341cc9e67cf47897 Joaquim Ataides <ti@promobrindes.com.br> 1791295425 -0300	commit: fix(relatorios): relatório agendado não é marcado como enviado quando o envio falha

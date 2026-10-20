@@ -1,0 +1,13 @@
+feat(cors): aceita o dominio oficial zappweb.app.br nas Edge Functions
+
+O produto passa a responder em https://zappweb.app.br. Sem a origem na lista exata de
+validation.ts, o navegador bloquearia toda chamada do app as Edge Functions.
+
+- EXACT_ALLOWED_ORIGINS ganha https://zappweb.app.br (o www redireciona para o apex na Vercel).
+- Testes em public-api/index.test.ts: a origem nova e a antiga sao refletidas; dominios
+  parecidos, subdominios, http e porta diferente nao sao.
+- docs/runbooks/deploy.md registra o dominio oficial.
+- Os testes ficam em arquivo existente para nao alterar o total pinado de arquivos .ts das Edges.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NuZ7WYqf38Zz5TogJEdDgf

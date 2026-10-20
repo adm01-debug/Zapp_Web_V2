@@ -1,0 +1,3 @@
+fix(ci/devops): Registrar testes/tsc pre-existentes, graphify update, P (SL-252)
+
+Itens 74-76 do plano de migracao registrados como superados, com a prova no proprio arquivo: divida de tsc zerada e travada por ratchet no CI; grafo graphify fora do git por desenho (regenerado por clone); checklist de PR travado pela guarda E92. Nenhuma linha de producao ou de teste mudou.

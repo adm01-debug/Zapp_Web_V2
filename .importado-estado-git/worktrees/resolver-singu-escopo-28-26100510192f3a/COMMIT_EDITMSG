@@ -1,0 +1,11 @@
+fix(multiplix): resolve nao devolve metadados de empresa fora do escopo
+
+Por quê: multiplix_resolve_recipients so ocultava destino_e164/destino_origem
+quando no_escopo=false — company_name, contact_id, empresa_papeis e
+last_interaction_at seguiam na linha e a edge repassava tudo ao cliente
+(R2-DB-003). Agora a RPC redige na fonte (arquivo versionado em _foreign/singu,
+CREATE OR REPLACE puro) e a edge redige de novo no ramo resolve (helper
+redactResolvedRecipient): nao elegivel sai so com company_id + elegibilidade.
+Verificação: deno test supabase/functions 992 passed/0 failed (6 testes novos
+R2-DB-003, vermelho->verde + mutacao conferida); zapp-verify . --rapido VERDE.
+Plano: cartao t_891763fa (item 28 do BACKLOG_VERIFICADO, P1 seguranca).

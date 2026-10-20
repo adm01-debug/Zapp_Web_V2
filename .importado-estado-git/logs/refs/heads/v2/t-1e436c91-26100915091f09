@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791569394 -0300	branch: Created from dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 0f257906f3766da53667632164b263b75aafb65e Joaquim Ataides <ti@promobrindes.com.br> 1791569413 -0300	cherry-pick: test(a11y): prende o contraste do player e do slider nos temas (SL-020)
+0f257906f3766da53667632164b263b75aafb65e 488313d9ff9202118a8eff63591b29dbea62c7bf Joaquim Ataides <ti@promobrindes.com.br> 1791570148 -0300	commit (amend): test(a11y): prende contraste do player e slider (SL-020)

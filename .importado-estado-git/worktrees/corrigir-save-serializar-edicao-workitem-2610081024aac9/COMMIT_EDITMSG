@@ -1,0 +1,5 @@
+test(tarefas): cobre falha do Salvar, clique duplo e o fechamento assincrono (#419)
+
+O it('25') pre-existente passa a aguardar o fechamento (agora assincrono) e dois
+casos novos provam o ramo de falha (Sheet aberto com o rascunho e aviso) e o
+clique duplo (uma gravacao so enquanto a escrita esta em voo).

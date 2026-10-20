@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566578 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566580 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567082 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 52c34861e7145daf52765ba96cc5eb9a4e10cae1 edgar <edgar@hermes.local> 1791569223 -0300	commit: fix(edge): rota de outra conexao nao usa mais a credencial global da instancia padrao (#18)

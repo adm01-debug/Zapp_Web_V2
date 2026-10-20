@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c11be973776aac83d37785aad471b891d94b0f31 Joaquim Ataides <ti@promobrindes.com.br> 1791196379 -0300	
+c11be973776aac83d37785aad471b891d94b0f31 c11be973776aac83d37785aad471b891d94b0f31 Joaquim Ataides <ti@promobrindes.com.br> 1791196380 -0300	reset: moving to HEAD
+c11be973776aac83d37785aad471b891d94b0f31 07ed35b8a1730d6a064d4fde67b746eb13447b79 Joaquim Ataides <ti@promobrindes.com.br> 1791196387 -0300	cherry-pick: fix(ai): vincular endpoint e secret de ai_providers a política de egress (IA-EGRESS-001)
+07ed35b8a1730d6a064d4fde67b746eb13447b79 9cd4342797bab67f53064d9bdaa6e1bf71e09ff7 Joaquim Ataides <ti@promobrindes.com.br> 1791197415 -0300	commit (amend): fix(ai): vincular endpoint e secret de ai_providers a política de egress (IA-EGRESS-001)

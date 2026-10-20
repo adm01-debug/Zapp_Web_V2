@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342963 -0300	
+e58beff67df277afa73c179058c38190a5dd5d5c e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342964 -0300	reset: moving to HEAD
+e58beff67df277afa73c179058c38190a5dd5d5c 84b9e236e702d6fa5c8e7bc162f0287b0897efe4 Joaquim Ataides <ti@promobrindes.com.br> 1791342990 -0300	cherry-pick: fix(webhook): opt-out e atribuição duráveis em outbox idempotente, retomados no replay (#69)
+84b9e236e702d6fa5c8e7bc162f0287b0897efe4 0079d363691d9953f4d4e5470c78b82a6dafe1fd Joaquim Ataides <ti@promobrindes.com.br> 1791342990 -0300	cherry-pick: fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)
+0079d363691d9953f4d4e5470c78b82a6dafe1fd 6fabb9a604690c5dc301b7ac0803d2ee57765f46 Joaquim Ataides <ti@promobrindes.com.br> 1791342990 -0300	cherry-pick: fix(migrations): restaura o rollback executavel do outbox inbound (#69)
+6fabb9a604690c5dc301b7ac0803d2ee57765f46 46691bf0d125c00d620f54e2acc08741f52b4f66 Joaquim Ataides <ti@promobrindes.com.br> 1791342990 -0300	cherry-pick: test(db-audit): executa o rollback do outbox no Postgres descartavel (#69)

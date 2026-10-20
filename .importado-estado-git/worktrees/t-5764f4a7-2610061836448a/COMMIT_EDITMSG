@@ -1,0 +1,6 @@
+fix(segmentos): detalhe do segmento passa a usar a cópia salva
+
+O rail de detalhe lê `selected` e o save() descartava a linha devolvida pelo
+update: depois de Salvar a tela mostrava a cópia antiga e "Editar segmento"
+reabria nome, descrição e condições obsoletos. Agora o resultado do update
+atualiza `selected` (TalkXSegments.tsx:76-78).

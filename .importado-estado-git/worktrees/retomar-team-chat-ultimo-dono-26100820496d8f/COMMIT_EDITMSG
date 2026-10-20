@@ -1,0 +1,11 @@
+test(team-chat): prova que a transferencia renova o updated_at de UMA conversa (QA5-10)
+
+Por quê: o juiz barato vinha apontando 'backfill dispara gatilho' na migration das guardas.
+A transferencia faz UM UPDATE em team_conversations com WHERE id = p_conversation_id; o gatilho
+BEFORE UPDATE de 20260402130912 regrava updated_at SO nessa linha. O bloco B agora mede isso:
+marco o instante antes, transfiro e conto as conversas renovadas (1) e qual delas (a transferida).
+
+Verificação: scripts/db-audit/team-chat-department-transfer-guards.test.sh — 45 PASS em Postgres 17
+descartável (o pre.sql passa a espelhar o gatilho real, sem o qual o efeito não seria medido).
+
+Plano: cartão t_3cc16339 (QA5-10).

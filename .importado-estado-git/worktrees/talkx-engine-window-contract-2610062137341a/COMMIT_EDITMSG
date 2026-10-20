@@ -1,0 +1,3 @@
+fix(talkx): alinha a janela de saude do motor ao contrato business_hours
+
+A funcao public.talkx_engine_window_open(uuid) media o business_hours no fuso da campanha e nao validava o JSONB salvo; a saude podia declarar a janela aberta enquanto o sender e o scheduler a fechavam. Agora o business_hours e avaliado no tz proprio do JSONB, a ausencia usa 08:00-18:00 seg-sex America/Sao_Paulo e valor presente invalido FECHA a janela, sem excecao. Prova: scripts/db-audit/talkx-engine-window-contract.test.mjs.

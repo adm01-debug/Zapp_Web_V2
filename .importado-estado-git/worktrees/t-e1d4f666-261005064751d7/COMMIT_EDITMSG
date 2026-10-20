@@ -1,0 +1,10 @@
+fix(telefonia): histórico converte filtro 'all' em sem-filtro e periodo em janela p_from/p_to (#60)
+
+A RPC search_my_calls só interpreta NULL como "sem filtro". O histórico enviava
+o literal 'all' de canal/direção/resultado cru, virando c.channel='all' e
+devolvendo zero linhas no estado padrão. Além disso o periodo só mudava o
+queryKey, sem p_from/p_to, então a janela consultada divergia do KPI.
+
+Reusa periodoParaIntervalo (mesma conversão do my_calls_kpi) e omite os filtros
+em 'all', igual ao useCallsKpi. Teste prova o defeito: vermelho antes (envia
+'all' e sem p_from), verde depois.

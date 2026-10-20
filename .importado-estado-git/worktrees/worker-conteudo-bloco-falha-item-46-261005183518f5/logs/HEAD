@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791236105 -0300	
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791236106 -0300	reset: moving to HEAD
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791236149 -0300	reset: moving to c28a1a97af8b9fc34ccb54db845a29a48169f257
+c28a1a97af8b9fc34ccb54db845a29a48169f257 72b5b7b73cfb9e5526ed2411de47ea968ea334ec Joaquim Ataides <ti@promobrindes.com.br> 1791236149 -0300	cherry-pick: fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)
+72b5b7b73cfb9e5526ed2411de47ea968ea334ec c6127a780d121b2c6baa7f279992c91fe75876af Joaquim Ataides <ti@promobrindes.com.br> 1791236149 -0300	cherry-pick: fix(multiplix): preserva escopo e falhas por item
+c6127a780d121b2c6baa7f279992c91fe75876af 007d5c9a4a6df1b7b859650e490830e36447e4c4 Joaquim Ataides <ti@promobrindes.com.br> 1791236365 -0300	commit: fix(multiplix): isola a gravacao do snapshot do catch da resolucao do bloco

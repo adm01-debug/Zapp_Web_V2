@@ -1,0 +1,6 @@
+test(dashboard): remove literais T2-T4 dos edge cases do KPI
+
+percentile_cont sobre VALUES e AT TIME ZONE sobre timestamps fixos
+testavam o Postgres, nao a dashboard_kpi. Fica so o T1 (janela futura,
+RAISE EXCEPTION sem admin) apontando D4-D7 do teste descartavel, que
+cobre outlier p50/p90 e virada de dia SP contra a RPC real.

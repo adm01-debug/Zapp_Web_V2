@@ -1,0 +1,3 @@
+test(email): mede memória, consultas, iframes, listeners e blobs do Email (#154)
+
+Fechar o achado OTH-014 (EN-088): a medição de volume do Email não existia. Novo medidor mede o corpus de 1.000 threads e trava os orçamentos (consultas sem N+1, DOM plano em 20 linhas, ≤1 iframe, ≤2 object URLs no pico e 0 ao fechar, 0 listener pendente); a página registra a saída crua e a prova de mutação (vermelho com o corpus inteiro no DOM, verde revertida). Guarda de CI impede apagar a medição em silêncio.

@@ -1,0 +1,9 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     0s  ESTRUTURA: 9 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; 2
+drift: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+drift: routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean);routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres) (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P9-NOVO/.local/state/zapp-verify/1df9fbeb7e31/banco_local.log)
+VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_b54cfdf6/home/P9-NOVO/.local/state/zapp-verify/1df9fbeb7e31

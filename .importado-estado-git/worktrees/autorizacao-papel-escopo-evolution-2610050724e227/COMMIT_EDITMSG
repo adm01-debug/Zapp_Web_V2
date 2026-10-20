@@ -1,0 +1,26 @@
+fix(evolution-api): matriz de autorização passa a negar por padrão (R2-API-001)
+
+Por quê: a matriz classificava ação desconhecida como 'read' — qualquer JWT
+executava ações fora das listas (connect/QR, logout, edição/exclusão de
+mensagem). Recusa do cartão t_3ee4be59 apontou o R2-API-001 fechado pela
+metade.
+
+- Novo READ_ACTIONS explícito (38 leituras extraídas dos cases do handler);
+  classifyEvolutionAction devolve 'control' para ação fora dos três
+  conjuntos — deny by default.
+- CONTROL_ACTIONS ganha connect, delete-message, update-message,
+  edit-message, delete-for-everyone, typebot-change-status, start-typebot.
+- SEND_ACTIONS ganha send-reaction, send-status, mark-read, mark-unread,
+  archive-chat (mutações de conversa); resolveSendAccess resolve o alvo por
+  JID (key.remoteJid/remoteJid/chat) além de number — sem alvo, nega.
+- Gate de autorização movido para antes da consulta de manutenção: nenhum
+  fetch/RPC privilegiado roda antes da decisão.
+- Teste novo extrai todos os `action ===` do handler e exige bijecção com os
+  três conjuntos; testes provam 403 sem I/O para 'connect' e ação
+  desconhecida, e mark-read via JID para agente com contato visível.
+
+Verificação: deno test (20 testes verdes, mutation do default prova RED),
+zapp-verify . --rapido VERDE (216s). deno.lock: entradas novas são deps
+transitivas do qrcode@1.5.3, já importado dinamicamente no connect — o lock
+passou a registrá-las quando index.test.ts começou a importar index.ts.
+Plano: cartão t_3ee4be59 (refazer 1) — R2-API-001.

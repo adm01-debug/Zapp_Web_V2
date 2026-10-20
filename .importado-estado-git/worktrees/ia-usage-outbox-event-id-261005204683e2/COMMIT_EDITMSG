@@ -1,0 +1,6 @@
+fix(edge): UPSERT por event_id e outbox duravel no log essencial de IA
+
+Traz, byte a byte, a parte de ai-usage dos commits 8f96a4ddd e 3bda4d59c sobre a base do cartao pai
+(c48ded051): event_id estavel, UPSERT idempotente no envio inicial e no reprocessamento, retentativa so para
+429/5xx e outbox duravel com marcador final observavel. Nao inclui 2745bcb53 (corrida do reprocessamento),
+migrations, ACL, script SQL nem ai-providers.ts.

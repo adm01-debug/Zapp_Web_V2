@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791504755 -0300	branch: Created from dia/2026-10-08
+0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 580268ae6130563bfaf899a17481096bd55689c2 Joaquim Ataides <ti@promobrindes.com.br> 1791504797 -0300	cherry-pick: fix(telefonia): Scripts measure/colors/func/axe (E.2-E.5) (SL-240)
+580268ae6130563bfaf899a17481096bd55689c2 dd6bd5623eb93ea44ac2af43b306f363221b9b6c Joaquim Ataides <ti@promobrindes.com.br> 1791504798 -0300	cherry-pick: fix(telefonia): valida passos funcionais locais do QA
+dd6bd5623eb93ea44ac2af43b306f363221b9b6c 93829fa1b35485e8b72cf68df31432adf3fb97f9 Joaquim Ataides <ti@promobrindes.com.br> 1791505227 -0300	commit: fix(telefonia): prova efeitos reais no QA funcional
+93829fa1b35485e8b72cf68df31432adf3fb97f9 7696460d5beecf54ee51cd9c5a0dfbb5070e6cc7 Joaquim Ataides <ti@promobrindes.com.br> 1791543805 -0300	rebase (finish): refs/heads/v2/t-2b15e7b7-26100821128bb1 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

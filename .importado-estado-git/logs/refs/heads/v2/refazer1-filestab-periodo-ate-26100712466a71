@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8e356134fda9647151a80e3fee8969eb952afe5a Joaquim Ataides <ti@promobrindes.com.br> 1791388007 -0300	branch: Created from dia/2026-10-07
+8e356134fda9647151a80e3fee8969eb952afe5a 28f394f8e9c74f3e088d044313bef26197a5a0c7 Joaquim Ataides <ti@promobrindes.com.br> 1791388017 -0300	cherry-pick: feat(arquivos): filtro por data na aba Arquivos
+28f394f8e9c74f3e088d044313bef26197a5a0c7 d40069c4dc47cd86ba7cbee4a018eeaa545d407d Joaquim Ataides <ti@promobrindes.com.br> 1791388940 -0300	commit: fix(arquivos): periodo personalizado so com "Ate" varre as paginas antigas

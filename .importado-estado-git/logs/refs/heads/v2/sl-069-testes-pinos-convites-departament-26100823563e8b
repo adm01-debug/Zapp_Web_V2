@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514572 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 b5741cf14dc82775119cb099b4873a47adb1eae7 Joaquim Ataides <ti@promobrindes.com.br> 1791514644 -0300	cherry-pick: fix(team-chat): migra gestão de departamento para o contrato atual de convites e WhatsApp
+b5741cf14dc82775119cb099b4873a47adb1eae7 74773f7a4cbeede392d874e14b3462f52fd9a2fd Joaquim Ataides <ti@promobrindes.com.br> 1791514964 -0300	commit: test(team-chat): pinos dos convites de departamento no contrato atual (department_invitations + RPC)

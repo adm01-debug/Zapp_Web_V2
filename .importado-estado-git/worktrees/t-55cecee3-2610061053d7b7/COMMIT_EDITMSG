@@ -1,0 +1,19 @@
+test(ci): prova que o fechamento do volume não declara audição e mantém a exceção de áudio (#480)
+
+Achado VOL-05 (P3, área testes) — o run de UI do `e2e-logado` foi registrado como se
+qualificasse a audição dos alertas, e o critério de aceite (§4.3) afirmava prova "à mão
+(E49)". Nenhum dos dois é prova de playback real: o caso de `<audio>.volume` segue
+`test.fixme` e não há mensagem de áudio no fixture.
+
+- `scripts/ci/volume-e2e-evidence-honesty.unit.mjs`: guarda nova com predicado real
+  (`auditarEvidenciaVolume`) + 5 fixtures (caso que NÃO pode passar e caso honesto) e 4
+  asserções sobre o plano e o spec reais. Trava: (a) o critério de audição não afirma prova
+  manual "à mão (E49)"; (b) o fechamento não declara playback real nem fixture de áudio
+  criada; (c) o fechamento mantém a ressalva de audição, o estado da fixture e a distinção
+  do run (falha alheia ao volume); (d) a asserção de `<audio>.volume` só vive dentro do
+  `test.fixme`, nunca num caso que alega passar.
+- `docs/plans/PLANO_VOLUME_MIDIA_50_ETAPAS_2026-09-27.md`: qualifica a evidência
+  documental — §4.3 deixa de declarar audição provada "à mão (E49)" e §7.4 ganha a
+  qualificação do que o run NÃO prova, mantendo o fechamento registrado.
+
+Vermelho antes (9: 1 falha), verde depois (9/9). Nenhum teste existente alterado.

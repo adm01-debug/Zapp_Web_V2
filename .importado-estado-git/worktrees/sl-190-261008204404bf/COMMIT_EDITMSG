@@ -1,0 +1,16 @@
+fix(edge-functions): trata eventos TYPEBOT_* no evolution-webhook (SL-190)
+
+A Evolution esta configurada a enviar TYPEBOT_START/TYPEBOT_CHANGE_STATUS
+(evolution-api set-webhook), mas o roteador nao tinha ramo para os dois: o
+evento chegava, ganhava 200 e era descartado sem efeito.
+
+- handleTypebotEvent grava a transicao da sessao do Typebot do contato em
+  conversation_events (event_type 'bot_session', metadata.session_status =
+  opened/paused/closed); typebot.start sem status vale como opened; status fora
+  do vocabulario nao e gravado cru.
+- JID sem telefone real (@lid), instancia sem conexao e contato inexistente sao
+  descartados com o motivo em log (descarte mudo era o defeito); falha de
+  persistencia sobe como erro (o webhook devolve 500 e o provedor reprocessa).
+- docs/WEBHOOK_EVENTS.md deixa de marcar TYPEBOT_* como NAO IMPLEMENTADO.
+- Teste novo: comportamento do handler + passagem pelo roteador real com
+  Supabase falso em 127.0.0.1 (sem banco e sem instancia de producao).

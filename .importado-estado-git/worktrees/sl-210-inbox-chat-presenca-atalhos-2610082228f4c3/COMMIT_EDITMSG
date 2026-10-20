@@ -1,0 +1,16 @@
+fix(figurinhas): grava a figurinha em WebP antes de subir ao bucket (SL-210)
+
+O WhatsApp só aceita figurinha em WebP (docs/COMPLETE_SYSTEM_FEATURES.md:157) e
+a Evolution GO recusa o envio quando o objeto guardado não é WebP. Os dois
+canais de upload para o bucket `stickers` subiam os bytes ORIGINAIS do arquivo
+escolhido: o picker do chat (`useStickerPicker.processFile`, aceita
+png/jpeg/gif) e a pasta pessoal (`usePersonalStickers.handleUpload`). Uma
+figurinha escolhida como PNG ficava gravada e enviada como PNG.
+
+- src/lib/stickerImage.ts: conversão client-side para WebP com o que o
+  navegador já tem (createImageBitmap + OffscreenCanvas, canvas do DOM como
+  reserva). Figurinha que já é WebP e GIF não são reencodados; qualquer falha
+  devolve o arquivo original (não bloqueia o upload).
+- src/hooks/sticker-picker/useStickerPicker.ts e
+  src/hooks/integrations/usePersonalStickers.ts: o objeto subido passa a ser o
+  convertido, com extensão e contentType dele.

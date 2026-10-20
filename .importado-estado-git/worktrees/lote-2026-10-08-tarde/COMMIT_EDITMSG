@@ -1,0 +1,4 @@
+test(calls): conferir o Blob do audio sem depender da classe Blob do jsdom (realm diferente no CI)
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

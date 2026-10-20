@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791298732 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 742689b10b459c8bf688a2ef7f3bf5604e5aedfc Joaquim Ataides <ti@promobrindes.com.br> 1791299194 -0300	commit: fix(calls): alerta segue a chamada, nao a tela (#282)

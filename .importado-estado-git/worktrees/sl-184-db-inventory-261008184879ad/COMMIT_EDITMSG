@@ -1,0 +1,9 @@
+docs(banco): cria docs/DB-INVENTORY.md com o inventario das tabelas de public (SL-184)
+
+Etapa 11 da AUDITORIA_MIGRACAO_DB_2026-08-28 (pendencia do plano de 27/08): o inventario pedido
+nao existia. Cria o documento com as 166 tabelas do catalogo (supabase/schema-catalog.json) e,
+para cada uma, proposito, status (ativo/parcial/roadmap) e consumidores conhecidos, medidos por
+varredura textual no repositorio. Cruzamento com a secao 8 da auditoria de 28/08: crisis_room_alerts
+e webhook_rate_limits (8.1) e link_preview_cache_metrics e mfa_sessions (8.2) saem como roadmap;
+oito tabelas citadas so pelo ferramental saem como parcial. A guarda
+scripts/ci/db-inventory-doc.unit.mjs passa de vermelho para verde.

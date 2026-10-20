@@ -1,0 +1,7 @@
+fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)
+
+Refazer 2 (t_813f36b7): rejeita os segmentos de nome de arquivo '.'/'..' no
+locator canônico; T1-T3 passam a exigir o SQLERRM da trigger (não só 42501);
+novos testes cobrem o INSERT de authenticated com media_url, o UPDATE de
+media_url em mensagem de agente e a edição legítima de conteúdo; o enqueue
+recusa path terminando em '..'.

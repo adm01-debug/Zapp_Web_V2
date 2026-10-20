@@ -1,0 +1,340 @@
+--- a/src/components/ui/phone-input.tsx
++++ b/src/components/ui/phone-input.tsx
+@@ -63,19 +63,10 @@
+   const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);
+ 
+   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+-    let digits = extractDigits(e.target.value);
+-
+-    // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
+-    if (digits.length >= 2 && !digits.startsWith('55')) {
+-      const possibleDDD = parseInt(digits.slice(0, 2), 10);
+-      if (possibleDDD >= 11 && possibleDDD <= 99) {
+-        digits = '55' + digits;
+-      }
+-    }
+-
+-    // Teto de 13 dígitos (55 + 2 DDD + 9 número).
+-    if (digits.length > 13) digits = digits.slice(0, 13);
+-
++    // Sem auto-prefixo 55 e sem teto: o formatPhone já formata BR só quando
++    // os dígitos começam com 55 e passa o resto cru (`+CC resto`), sem
++    // prefixar nem truncar ([refazer 1] P1 — internacional não vira +55).
++    const digits = extractDigits(e.target.value);
+     onChange(formatPhone(digits), digits);
+   }, [onChange]);
+ 
+--- a/src/components/connections/ConnectionsView.tsx
++++ b/src/components/connections/ConnectionsView.tsx
+@@ -99,7 +99,7 @@
+               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
+               <div className="grid gap-4 py-4">
+                 <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
+-                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(formatted) => setNewConnection({ ...newConnection, phone_number: formatted })} /></div>
++                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(_formatted, raw) => setNewConnection({ ...newConnection, phone_number: raw })} /></div>
+                 {addConnectionError && (
+                   <p
+                     role="alert"
+--- a/src/hooks/inbox/useConnectionsManager.ts
++++ b/src/hooks/inbox/useConnectionsManager.ts
+@@ -160,8 +160,11 @@
+ 
+   const handleAddConnection = async () => {
+     setAddConnectionError(null);
+-    if (!newConnection.name || !newConnection.phone_number) {
+-      const message = 'Preencha o nome e o número do telefone.';
++    // [refazer 1] P3: valida a contagem de dígitos (o phone_number guarda
++    // dígitos crus). Só o '+55' do pré-preenchimento não passa.
++    const phoneDigits = newConnection.phone_number.replace(/\D/g, '');
++    if (!newConnection.name || phoneDigits.length < 10) {
++      const message = 'Preencha o nome e um número válido com DDI+DDD (mínimo 10 dígitos).';
+       setAddConnectionError(message);
+       toast({ title: 'Erro', description: message, variant: 'destructive' });
+       return;
+--- a/src/components/ui/__tests__/phone-input.test.tsx
++++ b/src/components/ui/__tests__/phone-input.test.tsx
+@@ -4,15 +4,14 @@
+ import { PhoneInput } from '../phone-input';
+ 
+ /**
+- * UI-07 (paridade V3 → V2) — máscara do campo de telefone.
++ * UI-07 (paridade V3 → V2) — máscara do campo de telefone + [refazer 1].
+  *
+- * O formulário de nova conexão usava `Input` livre. Aqui se prova o
+- * comportamento portado do `PhoneInput` da V3:
+- *   - celular BR (11 dígitos) → `+55 XX XXXXX-XXXX`
+- *   - fixo BR (10 dígitos)    → `+55 XX XXXX-XXXX`
+- *   - internacional            → passthrough `+CC restante` (sem grupo BR)
+- *   - apagar                    → re-formata o que sobrou
+- *   - colar com símbolos        → extrai só os dígitos e formata
++ * Contrato vigente (recusa da rodada 1):
++ *   - BR (dígitos começam com 55): máscara +55 XX XXXXX-XXXX / XXXX-XXXX,
++ *     com teto de 13 dígitos;
++ *   - resto: dígitos crus, sem prefixar 55 e sem truncar (passthrough);
++ *   - pré-preenche +55 só a partir do vazio (focus no campo vazio);
++ *   - limpar o campo resulta em '' (não em '+').
+  * O componente é controlado (o pai guarda `value`), como no diálogo real.
+  */
+ function Harness({ initial = '', onChange }: { initial?: string; onChange?: (f: string, r: string) => void }) {
+@@ -37,43 +36,94 @@
+ }
+ 
+ describe('PhoneInput — máscara brasileira', () => {
+-  it('celular com 11 dígitos digitado sem máscara vira +55 XX XXXXX-XXXX', () => {
++  it('BR com 55 digitado vira +55 XX XXXXX-XXXX', () => {
+     const onChange = vi.fn();
+     render(<Harness onChange={onChange} />);
+ 
+-    change(field(), '11987654321');
++    change(field(), '5511987654321');
+ 
+     expect(field().value).toBe('+55 11 98765-4321');
+     expect(onChange).toHaveBeenLastCalledWith('+55 11 98765-4321', '5511987654321');
+   });
+ 
+-  it('fixo com 10 dígitos vira +55 XX XXXX-XXXX', () => {
++  it('fixo BR com 55 vira +55 XX XXXX-XXXX', () => {
+     const onChange = vi.fn();
+     render(<Harness onChange={onChange} />);
+ 
+-    change(field(), '1132345678');
++    change(field(), '551132345678');
+ 
+     expect(field().value).toBe('+55 11 3234-5678');
+     expect(onChange).toHaveBeenLastCalledWith('+55 11 3234-5678', '551132345678');
+   });
+ 
+-  it('número internacional é aceito sem formato brasileiro', () => {
++  it('internacional digitado com + não ganha prefixo 55', () => {
++    const onChange = vi.fn();
++    render(<Harness onChange={onChange} />);
++
++    change(field(), '+351211234567');
++
++    expect(field().value).toBe('+35 1211234567');
++    expect(onChange).toHaveBeenLastCalledWith('+35 1211234567', '351211234567');
++  });
++
++  it('internacional longo não é truncado (dígitos crus, sem teto BR)', () => {
++    const onChange = vi.fn();
++    render(<Harness onChange={onChange} />);
++
++    change(field(), '+4915123456789');
++
++    expect(onChange).toHaveBeenLastCalledWith('+49 15123456789', '4915123456789');
++    expect(field().value).toBe('+49 15123456789');
++  });
++
++  it('DDD direto sem 55 passa cru, sem prefixar', () => {
++    const onChange = vi.fn();
++    render(<Harness onChange={onChange} />);
++
++    change(field(), '11987654321');
++
++    expect(field().value).toBe('+11 987654321');
++    expect(onChange).toHaveBeenLastCalledWith('+11 987654321', '11987654321');
++  });
++
++  it('focus no campo vazio pré-preenche +55', () => {
++    const onChange = vi.fn();
++    render(<Harness onChange={onChange} />);
++
++    fireEvent.focus(field());
++
++    expect(onChange).toHaveBeenLastCalledWith('+55', '55');
++    expect(field().value).toBe('+55');
++  });
++
++  it('apagar tudo resulta em vazio, não em +', () => {
++    const onChange = vi.fn();
++    render(<Harness onChange={onChange} />);
++
++    change(field(), '5511987654321');
++    change(field(), '');
++
++    expect(field().value).toBe('');
++    expect(onChange).toHaveBeenLastCalledWith('', '');
++  });
++
++  it('número internacional inicial exibe passthrough sem formato brasileiro', () => {
+     render(<Harness initial="+351211234567" />);
+ 
+     expect(field().value).toBe('+35 1211234567');
+   });
+ 
+-  it('apagar um dígito re-formata o restante', () => {
++  it('apagar um dígito re-formata o restante (BR)', () => {
+     render(<Harness />);
+ 
+-    change(field(), '11987654321');
++    change(field(), '5511987654321');
+     expect(field().value).toBe('+55 11 98765-4321');
+ 
+     change(field(), '55119876');
+     expect(field().value).toBe('+55 11 9876');
+   });
+ 
+-  it('colar com símbolos extrai só os dígitos e formata', () => {
++  it('colar com símbolos extrai só os dígitos e formata (BR)', () => {
+     const onChange = vi.fn();
+     render(<Harness onChange={onChange} />);
+ 
+--- a/src/components/connections/__tests__/ConnectionsView.erro-dialogo.test.tsx
++++ b/src/components/connections/__tests__/ConnectionsView.erro-dialogo.test.tsx
+@@ -83,15 +83,18 @@
+     h.setNewConnection.mockClear();
+   });
+ 
+-  it('o telefone do diálogo passa pela máscara (formata o valor que sobe)', async () => {
++  it('o telefone do diálogo guarda os dígitos crus (raw), não o formatado', async () => {
+     await renderDialog();
+     const phone = screen.getByPlaceholderText('+55 11 99999-0000') as HTMLInputElement;
+ 
+-    fireEvent.change(phone, { target: { value: '11987654321' } });
++    fireEvent.change(phone, { target: { value: '5511987654321' } });
+ 
++    // P2 ([refazer 1]): o chamador recebe o 2º argumento do onChange (raw) e
++    // guarda os dígitos — o backend recebe dígitos, e a máscara segue visível
++    // porque o PhoneInput deriva o display do value (coberto no teste dele).
+     expect(h.setNewConnection).toHaveBeenLastCalledWith({
+       name: 'Vendas',
+-      phone_number: '+55 11 98765-4321',
++      phone_number: '5511987654321',
+     });
+   });
+ 
+--- a/src/hooks/inbox/__tests__/useConnectionsManager.validacao-telefone.test.ts
++++ b/src/hooks/inbox/__tests__/useConnectionsManager.validacao-telefone.test.ts
+@@ -0,0 +1,132 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { renderHook, act, waitFor } from '@testing-library/react';
++
++// [refazer 1] P3 — handleAddConnection valida a contagem de dígitos:
++// só o '+55' do pré-preenchimento (ou qualquer número com menos de 10
++// dígitos) não passa; exige nome + número válido com DDI+DDD.
++const mocks = vi.hoisted(() => ({
++  from: vi.fn(),
++  select: vi.fn(),
++  order: vi.fn(),
++  channel: vi.fn(),
++  toast: vi.fn(),
++  logError: vi.fn(),
++  createConnection: vi.fn(),
++}));
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: (...args: unknown[]) => mocks.from(...args),
++    channel: (...args: unknown[]) => mocks.channel(...args),
++    removeChannel: vi.fn(),
++  },
++}));
++
++vi.mock('@/hooks/ui/use-toast', () => ({
++  toast: (...args: unknown[]) => mocks.toast(...args),
++}));
++
++vi.mock('@/lib/logger', () => ({
++  log: {
++    error: (...args: unknown[]) => mocks.logError(...args),
++    debug: vi.fn(),
++    info: vi.fn(),
++    warn: vi.fn(),
++  },
++}));
++
++vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
++  useEvolutionApi: () => ({
++    isLoading: false,
++    createConnection: (...args: unknown[]) => mocks.createConnection(...args),
++    connectInstance: vi.fn(),
++    getInstanceStatus: vi.fn(),
++    disconnectInstance: vi.fn(),
++    deleteInstance: vi.fn(),
++  }),
++}));
++
++import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
++
++const MENSAGEM = 'Preencha o nome e um número válido com DDI+DDD (mínimo 10 dígitos).';
++
++function toasts() {
++  return mocks.toast.mock.calls.map((call) => call[0] as { title?: string; description?: string; variant?: string });
++}
++
++async function mount() {
++  const { result } = renderHook(() => useConnectionsManager());
++  await waitFor(() => expect(result.current.loading).toBe(false));
++  return result;
++}
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  mocks.select.mockReturnValue({ order: mocks.order });
++  mocks.order.mockResolvedValue({ data: [], error: null });
++  mocks.from.mockImplementation(() => ({ select: mocks.select }));
++  mocks.channel.mockImplementation(() => ({ on: () => ({ subscribe: () => ({}) }) }));
++  mocks.createConnection.mockResolvedValue({ connection: null });
++});
++
++describe('useConnectionsManager.handleAddConnection — validação do telefone', () => {
++  it('só o +55 do pré-preenchimento não passa (menos de 10 dígitos)', async () => {
++    const result = await mount();
++
++    act(() => {
++      result.current.setNewConnection({ name: 'Vendas', phone_number: '55' });
++    });
++    await act(async () => {
++      await result.current.handleAddConnection();
++    });
++
++    expect(mocks.createConnection).not.toHaveBeenCalled();
++    expect(result.current.addConnectionError).toBe(MENSAGEM);
++    expect(toasts().find((t) => t.variant === 'destructive')?.description).toBe(MENSAGEM);
++  });
++
++  it('número curto (<10 dígitos) não passa', async () => {
++    const result = await mount();
++
++    act(() => {
++      result.current.setNewConnection({ name: 'Vendas', phone_number: '5511' });
++    });
++    await act(async () => {
++      await result.current.handleAddConnection();
++    });
++
++    expect(mocks.createConnection).not.toHaveBeenCalled();
++    expect(result.current.addConnectionError).toBe(MENSAGEM);
++  });
++
++  it('nome vazio não passa mesmo com número válido', async () => {
++    const result = await mount();
++
++    act(() => {
++      result.current.setNewConnection({ name: '', phone_number: '5511987654321' });
++    });
++    await act(async () => {
++      await result.current.handleAddConnection();
++    });
++
++    expect(mocks.createConnection).not.toHaveBeenCalled();
++    expect(result.current.addConnectionError).toBe(MENSAGEM);
++  });
++
++  it('BR válido (12 dígitos) cria a conexão levando os dígitos crus', async () => {
++    const result = await mount();
++
++    act(() => {
++      result.current.setNewConnection({ name: 'Vendas', phone_number: '5511987654321' });
++    });
++    await act(async () => {
++      await result.current.handleAddConnection();
++    });
++
++    expect(mocks.createConnection).toHaveBeenCalledWith(
++      expect.objectContaining({ name: 'Vendas', phone_number: '5511987654321' }),
++    );
++    expect(result.current.addConnectionError).toBeNull();
++    expect(result.current.isAddDialogOpen).toBe(false);
++  });
++});

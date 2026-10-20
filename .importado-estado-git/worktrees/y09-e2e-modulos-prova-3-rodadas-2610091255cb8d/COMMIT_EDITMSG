@@ -1,0 +1,11 @@
+test(e2e): registra o terceiro que o app chama no conjunto local e mede so a URL dele
+
+- O menu movel nao desenha o selo do item: clicarMobile volta ao rotulo puro.
+- TERCEIROS_DE_PRODUTO: o app pede o script do Speed Insights da Vercel em toda
+  carga e o DNS preso do conjunto cancela a requisicao (ERR_BLOCKED_BY_ORB); a URL
+  nunca responde e canceladasSemProva reprovava. Agora a URL medida sai em lista
+  propria com dono e test.fixme, e qualquer outro cancelamento sem resposta segue
+  reprovando.
+- Guarda nova prova os dois lados: terceiro da lista tolerado, cancelamento do app
+  reprovado, e URL que respondeu na sequencia nao vira terceiro.
+- Fixme do <li>/<li> para de clicar o Quadro (saiu da navegacao em 6b0be2a4c).

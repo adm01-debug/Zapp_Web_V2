@@ -1,0 +1,10 @@
+feat(talk-me): histórico pendente do cliente antes do aceite
+
+A fila TALK ME só expõe a última mensagem; o aceite exige decidir sem
+contexto. A RPC talk_me_list_pending_messages devolve sob demanda o
+bloco de mensagens do cliente ainda sem resposta, com autorização
+revalidada (perfil ativo, flag, contato ainda elegível, admin ou membro
+ativo da fila) e sem efeito colateral (STABLE: não assume nem marca
+lida). O botão "Ver as N mensagens do cliente" abre diálogo somente
+leitura com rótulo de origem por mensagem (etapa 046). Série F do
+contrato do banco prova a regra de autorização.

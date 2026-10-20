@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e9a541f13f2ddb3759049440c93a2bbb35943596 Joaquim Ataides <ti@promobrindes.com.br> 1791203817 -0300	branch: Created from dia/2026-10-05
+e9a541f13f2ddb3759049440c93a2bbb35943596 e7eddf713c438c390875a42db6725df46d7ff155 Joaquim Ataides <ti@promobrindes.com.br> 1791204515 -0300	commit: fix(inbox): construtor interativo não confirma envio sem transporte (R2-INB-003)

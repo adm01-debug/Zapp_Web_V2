@@ -1,0 +1,9 @@
+fix(logger): contexto de quarentena não sobrescreve mais o attempt do logger filho (#475)
+
+O Logger.child (X033) amarra campaign_id/recipient_id/attempt a toda entrada
+do destinatário, mas log() montava a entrada com `...this.bound` ANTES de
+`...ctx`: o contexto da chamada ganhava. No aviso de quarentena o motor TalkX
+repete attempt com o valor do banco (a tentativa anterior), então a linha de
+outcome_unknown saía com uma tentativa diferente das demais do mesmo
+destinatário. Agora o contexto FIXO do filho entra DEPOIS do contexto da
+chamada e não pode ser sobrescrito.

@@ -1,0 +1,10 @@
+fix(monitoring): SLA de 24h e disponibilidade de 7 dias usam a janela prometida e nao aprovam ausencia de checks
+
+R2-INF-027 (#373). A consulta de health logs seguia o período
+selecionado (padrão 12h) e o SLA/heatmap liam esse recorte, então uma
+seleção de 1h com um check falho 8h atrás dava "100%" e zero checks
+dava "SLA atingido". Agora a consulta cobre os 7 dias prometidos pelo
+heatmap; o SLA filtra 24h e a disponibilidade agrega 7 dias, ambos
+independentes do seletor. Ausência de checks vira `percentage = null`
+e as telas mostram "Sem dados"/"—" em vez de aprovar. A aba Logs
+continua restrita ao período.

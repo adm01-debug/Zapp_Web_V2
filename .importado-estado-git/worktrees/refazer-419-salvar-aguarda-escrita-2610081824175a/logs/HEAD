@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494657 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494658 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 54d19f8d12c11b4e92fb1aa2ea45840ff44629e3 Joaquim Ataides <ti@promobrindes.com.br> 1791494691 -0300	commit (cherry-pick): fix(tarefas): Salvar espera a escrita e não dispara estado e campos em paralelo (#419)

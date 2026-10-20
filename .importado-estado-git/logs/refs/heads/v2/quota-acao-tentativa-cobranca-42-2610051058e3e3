@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 Joaquim Ataides <ti@promobrindes.com.br> 1791208714 -0300	branch: Created from dia/2026-10-05
+2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 5b5cdacfa901c7537bb6d7f40fe7676ee1115518 Joaquim Ataides <ti@promobrindes.com.br> 1791209898 -0300	commit: fix(edge): ações calculadas de IA passam a consumir a quota real

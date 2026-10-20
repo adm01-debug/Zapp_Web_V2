@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791293025 -0300	branch: Created from dia/2026-10-06
+9771aacba0ef60787d64631780e660cf381e98e8 3982e23eb2dcd1698805f36484f7f48759f6ac99 worker <worker@promobrindes.local> 1791293701 -0300	commit: fix(multiplix-send): heartbeat do lease consome a RPC e limpa o timer em toda saida (R2-API-013)

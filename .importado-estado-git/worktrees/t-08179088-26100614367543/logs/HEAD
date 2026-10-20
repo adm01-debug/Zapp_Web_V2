@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308213 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308214 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308233 -0300	reset: moving to 1a367b13dd8456a44e967ef882041d70e876ebdd
+1a367b13dd8456a44e967ef882041d70e876ebdd d750c70c74e9f4a0fc03d428c604fd336007b288 Joaquim Ataides <ti@promobrindes.com.br> 1791308503 -0300	commit: fix(ci): guard do TALK ME detecta contagem de lacunas diferente de cinco (#478)

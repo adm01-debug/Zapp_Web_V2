@@ -1,0 +1,13 @@
+fix(inbox): editar resposta rápida não reutiliza mais o formulário anterior (#347)
+
+O estado do formulário vivia no QuickReplyDialog, que fica montado no
+QuickRepliesManager mesmo fechado (open=false). Ao abrir a edição de outra
+resposta, o formulário do alvo anterior (ou de uma criação) permanecia e
+"Salvar Alterações" gravava esses dados no template recém-aberto.
+
+O formulário passou a ser um componente próprio dentro do DialogContent
+(que o Radix desmonta ao fechar), com key pelo template alvo: o estado nasce
+sempre do template que está sendo aberto.
+
+Teste: src/components/inbox/quick-replies/__tests__/QuickReplyDialog.item347.test.tsx
+(3 testes de defeito vermelhos antes, verdes depois; + 1 de regressão do criar)

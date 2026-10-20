@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+printf 'zapp-db-local argc=%d argv=<%s>\n' "$#" "$*" >> "${STUB_LOG:?}"
+if [ "${1:-}" = list ]; then echo '[{"name":"v2-integrador","reachable":true}]'; fi
+exit 0

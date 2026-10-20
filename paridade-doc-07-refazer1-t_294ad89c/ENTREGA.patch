@@ -1,0 +1,404 @@
+--- a/docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE1_MENSAGENS_PRESENCA.md
++++ b/docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE1_MENSAGENS_PRESENCA.md
+@@ -0,0 +1,115 @@
++# Auditoria de paridade V3 -> V2, doc 07 (2a passada): leitura de mensagens, status WhatsApp, presença/last seen, identidade de contato
++
++Data: 13/10/2026. Somente leitura. V3 = `origin/main` de Zapp_Web_V3; V2 = `~/hermes-workspaces/Zapp_Web_V2/.integrador`. Recorte: §2.1, §2.2, §2.3, §2.4 e achados A1, A9, A10, A11, A13, A18 do `docs/estado/07-features-inbox-services.md`.
++
++## 0. O que o doc 07 diz e o código real da V3 desmente (importante para quem lê o doc)
++
++O doc é de 09/08 e está defasado. Comportamento REAL na V3 (origin/main):
++
++| Doc 07 diz | Código real V3 |
++|---|---|
++| `fetchMessagesByContact(contactJid, limit, before)` sobre `evolution_messages` (schema evo) | `messageRepository.ts:37-46`: `dbFrom('messages')` por `contact_id` UUID, `order created_at ASC`, `.range(from, from+limit-1)` (offset, sem cursor, sem desempate por id), com `abortSignal`. Se não for UUID devolve `[]` (`:38`). `listByContactJid` (RPC `listMessagesLite`) existe mas não é usado pelo serviço. |
++| `getAllMessagesForContact(contactJid, contactId)` com sort e dedup por id | `messageService.ts:38-135`: UM parâmetro (`contactId`) + `signal`. Laço que baixa TODO o histórico em páginas de 1000 (`:52-68`), junta `whisper_messages` (só se UUID, `:75-103`), ordena por `created_at` (`:113-121`). NÃO há dedup por id (o doc errou). Erro em qualquer página derruba tudo (`:60`). Abort entre páginas (`:53`) e erro de abort não vai para o Sentry (`:128-131`). |
++| realtime em `evolution_messages` | `messageRepository.ts:107-138`: canal `messages:${contactId}` em `zapp.realtime_message_fanout` (INSERT/UPDATE/DELETE com `contact_id=eq.`), payload normalizado por `normalizeMessage`. |
++| `touchLastSeen(supabase, userId)`, timer deslizante | `touchLastSeen.ts:12-41`: SEM argumentos; se já há timer ou voo, ignora (não é janela deslizante); `lastWriteAt` calcula o atraso; lê `auth.getUser()`, `profiles.update({last_seen}).eq('user_id', user.id)`; erro do PATCH é logado (`:33`). |
++| `useInboxHeartbeat` só em teste | `useInboxHeartbeat.ts` é o hook real (THROTTLE 240s, HEARTBEAT 180s, offline após 30s oculto, `pagehide`, `online/offline`) e escreve `profiles.online_status` + `last_seen` com `.eq('id', profileId)` (`:36-43`), ao contrário do `touchLastSeen` (`user_id`). |
++| `findStatusMessages(instanceId, jid)`, `getContact(contactId)` | `whatsappStatusRepository.ts:60-90`: `getContact(phone)` por telefone, `getConnectedWhatsAppConnection` = QUALQUER conexão `connected` `limit(1)` sem ordem, `findStatusMessages(instanceName)` traz 200 registros do feed de status da INSTÂNCIA inteira e o filtro por contato é feito no navegador (`whatsappStatusService.ts:110-155`). Presença é sempre `{isOnline:false, lastSeen:null}` (`:157-161`): a "presença" da V3 é fixa. O `sendChatPresence('paused')` é enviado ao contato a cada abertura e o resultado é descartado (`:110-113`). |
++| `ContactRef` com `evolution_contacts` / `rpc_get_contact` | `useFallbackContact.ts`: ramifica UUID -> `contacts.id`; JID -> `contacts.phone` -> `evolution_contacts.remote_jid`; proxy externo só com `useExternalDb`; estratégia C (contato sintético) SEMPRE (`:143-157`), com comentário de incidente (#732): sem ela a tela ficava vazia para sempre. |
++
++Conclusão: o que vale comparar é o comportamento real acima, não o texto do doc.
++
++## 1. Tabela de itens
++
++Legenda: EQUIVALENTE, MELHOR_NA_V2, DECISAO, LACUNA (nova ou já coberta).
++
++| # | Item (comportamento) | Classificação | Evidência V3 (arquivo:linha) | Evidência V2 | Cartão existente |
++|---|---|---|---|---|---|
++| 1 | Leitura de mensagens: paginação | MELHOR_NA_V2 | `messageService.ts:52-68` baixa tudo (while sem teto); `messageRepository.ts:41-43` offset por `.range` | `src/hooks/chat/useMessages.ts:28,114,153-197`: página 100 mais recentes + cursor `loadOlderMessages`; `src/services/chat.service.ts:32-80` ordena `created_at,id` DESC e cursor `(created_at,id)` estável (SL-099) | n/a |
++| 2 | Ordenação / desempate | MELHOR_NA_V2 | `messageService.ts:113-121` só por `created_at` ASC, sem id | `chat.service.ts:42-43,70-71` `created_at,id`; merge com `Map` + sort (`useMessages.ts:123-137`) | n/a |
++| 3 | Deduplicação | MELHOR_NA_V2 | V3 NÃO dedup (doc errado) | `useMessages.ts:124-129,181,209-211`: Map por id; INSERT repetido ignorado | n/a |
++| 4 | Corrida realtime x refetch (overlay) | MELHOR_NA_V2 | sem equivalente | `useMessages.ts:36,77-82,129-136` overlay com geração (#310 R2-INB-013); testes `useMessages.overlay.test.tsx` | n/a |
++| 5 | Estados carregando/erro/vazio/silencioso | MELHOR_NA_V2 | `useMessages` da V3 usa `getAllMessagesForContact` sem cursor | `useMessages.ts:99-102,141-150` refetch silencioso; `error`, `loading`, `loadingOlder`, `hasOlder` | n/a |
++| 6 | Cancelamento por troca de contato | EQUIVALENTE (V2 por geração, não por AbortSignal) | `messageService.ts:48-54,125-131` `signal` + RCA 2026-08-21/22 | `useMessages.ts:51,86,117-119,143-148` `requestGenerationRef` descarta resposta velha; a requisição em si NÃO é abortada (`ChatService.fetchMessages` sem `abortSignal`) | PF1 (rajada de consultas ao trocar) cobre o custo |
++| 7 | Reconexão do realtime | MELHOR_NA_V2 | só canal simples | `useMessages.ts:353-364` `onReconnect` refetch silencioso; `useMessages.reconexao.test.tsx` | RT1 (feito) |
++| 8 | Realtime: tabela/escopo do canal | DECISAO | `messageRepository.ts:105-138` `realtime_message_fanout` (espelho não particionado da era evo) | `useMessages.ts:366-373` canal em `messages` com filtro `contact_id`; DELETE por `id` sem exigir colunas (SL-104) | n/a |
++| 9 | Guarda de UUID antes de consultar | LACUNA (P2, nova) | `messageRepository.ts:38,54,82`; `useConversationActions.ts` `markAsRead` valida `isValidUUID` | `ChatService.fetchMessages` (`chat.service.ts:32`), `RealtimeService.markMessagesAsRead` (`realtime.service.ts:208`) e o fallback `.eq('id', selectedContactId)` (`useRealtimeInbox.ts:97-101`) não validam: id não-UUID (deep link, evento `open-contact-chat`) vira 400 `invalid input syntax for type uuid` e `error` na tela | nenhum |
++| 10 | Sussurros (notas internas) na leitura | DECISAO / já coberto | `messageService.ts:75-103` mistura `whisper_messages` na linha do tempo | V2 mantém painel à parte `WhisperMode.tsx:291-320` (últimos 20, `refetchInterval 10s`) e contador `useWhisperCount.ts` (sem conteúdo) | WH1, WH2, WM1 |
++| 11 | Sussurro: marcar como lido | LACUNA (P1, nova; confirmar no banco) | V3 não marca | `WhisperMode.tsx:342-350` faz `UPDATE whisper_messages SET is_read=true WHERE contact_id=? AND is_read=false` sem filtrar `target_agent_id` e SEM tratar erro; nas migrations só há políticas de SELECT/INSERT/DELETE para `whisper_messages` (`20260317222442:150-158`, `20260317222757:51`, `20260317223223:41`); `grep -i update` em todas as migrations que citam whisper = 0. Sem política de UPDATE o PATCH afeta 0 linhas: o selo de não lidos nunca zera, e se a política vier sem filtro o remetente marca como lido o que ele mesmo enviou | WM1 não cobre (só destino e erro do INSERT) |
++| 12 | Status WhatsApp: fluxo repositório/serviço | EQUIVALENTE | `whatsappStatusService.ts:69-164` | `src/hooks/integrations/useWhatsAppStatus.ts:138-271` (mesma lógica copiada para dentro do hook; `instance_id` é o nome da instância na V2, como em `ConnectionsView.tsx:70`) | WS1 |
++| 13 | Status WhatsApp: tela que consome | LACUNA já coberta | `WhatsAppStatusSection.tsx:15-61` + `StoryViewer` | hook só usado em teste (`grep` em `src`) | WS1 (t_20151931) |
++| 14 | Status WhatsApp: `buildPhoneNeedles` (com/sem 55, com/sem 9) | EQUIVALENTE | `whatsappStatusService.ts:20-43` | `useWhatsAppStatus.ts:74-97` idêntico | n/a |
++| 15 | Status WhatsApp: privacidade do feed (servidor devolve o feed de status da instância inteira) | LACUNA (P1, nova) | `whatsappStatusService.ts:110-155` filtra no navegador | `supabase/functions/evolution-api/index.ts:913-921` busca `status@broadcast` (200 registros) e devolve tudo; `evolution-control-authz.ts:146` classifica `find-status-messages` como READ, liberado a QUALQUER autenticado, sem checar que o usuário enxerga o contato (a regra SEND de contato não vale para READ) | WS1 só faz a tela; nenhum cartão trata o escopo no servidor |
++| 16 | Status WhatsApp: efeito colateral `send-chat-presence 'paused'` | LACUNA (P2, nova; pior que a V3 só no peso) | `whatsappStatusService.ts:110-113` (resultado descartado) | `useWhatsAppStatus.ts:210-213`: cada abertura/refresh envia presença ao contato, resultado ignorado; é ação SEND (`evolution-control-authz.ts:120`) | nenhum (WS1 não manda remover) |
++| 17 | Status WhatsApp: cancelamento por troca de telefone / unmount | LACUNA (P2, nova) | `useWhatsAppStatus` V3 tem `AbortController` mas ele não chega ao serviço (decorativo); `useMountedRef` | V2 só usa `mountedRef` (`useWhatsAppStatus.ts:129-136,216,263`): trocar de contato rápido deixa a resposta velha sobrescrever a nova (sem token de geração) | WS1 (incluir) |
++| 18 | Status WhatsApp: escolha da conexão | EQUIVALENTE (mesma fraqueza) | `whatsappStatusRepository.ts:67-74` qualquer `connected` `limit(1)` sem ordem | `useWhatsAppStatus.ts:161-170` idem; `.eq('phone')` + `maybeSingle` falha com telefone duplicado e cai na "qualquer conexão" | WS1 (incluir: usar a conexão do contato, e dizer quando não há) |
++| 19 | Presença online/offline do CONTATO | DECISAO + cartão | V3 devolve sempre `isOnline:false` (`whatsappStatusService.ts:157-161`) | cabeçalho mostra ponto neutro (R2-INB-030) | PS1 (t_ea70c782, edgar) e PS2 (t_5cca1a48, iris): presença real |
++| 20 | A1: `.eq('user_id')` vs `.eq('id')` em `profiles` | DECISAO (V2 não tem esse modelo) | `touchLastSeen.ts:26-32` | `profiles` da V2 não tem `last_seen` nem `online_status` (`types.ts`: `last_seen` só em `contact_identity_map`); presença do agente é a tabela `agent_presence` com `user_id = auth.uid()` (`20260924195600_agent_presence_server_side.sql:15-37`) | n/a |
++| 21 | A9: estado global de módulo (um timer por aba) | EQUIVALENTE | `touchLastSeen.ts:7-9` | `useAgentPresence.ts:30-45` store de módulo + `useSyncExternalStore`, `joinSeq` evita corrida; montado uma vez em `AppShell.tsx:57` | n/a |
++| 22 | Heartbeat: periodicidade/expiração | MELHOR_NA_V2 | `useInboxHeartbeat.ts:7-9` 180s, throttle 240s; sem expirar no servidor | `useAgentPresence.ts:19-23` 25s, stale 75s no cliente; `20260925100542_agent_presence_server_ttl.sql` cron a cada 2 min marca offline após 90s | n/a |
++| 23 | A11: `pagehide` / aba oculta / `online`-`offline` / cleanup condicional | LACUNA já coberta | `useInboxHeartbeat.ts:69-96,109-134` | `useAgentPresence.ts` não escuta `pagehide`, `visibilitychange`, `online/offline`; `leave()` só no logout/desmontagem (`:128-146`) | PD-91 (cobre e manda portar os testes) |
++| 24 | Heartbeat: testes | LACUNA já coberta | `useInboxHeartbeat.simulacao.test.ts`, `.keepAlive.test.ts`, `touchLastSeen.simulacao.test.ts` | V2 só tem `src/hooks/crm/__tests__/useAgentPresence.test.ts` | PD-91, PD-95 |
++| 25 | Privacidade de presença (quem lê `agent_presence`) | LACUNA já coberta | `profiles` RLS | `agent_presence` SELECT `USING (true)` para `authenticated` (`20260925...server_side.sql:22-26`) | PD-01 (27 tabelas de leitura aberta) |
++| 26 | Sinal de "agente ausente" para reatribuição | LACUNA (P1, nova; complementa PF-09; confirmar no banco) | V3 usava `profiles.last_seen` (`touchLastSeen`) como sinal; a RPC da V3 citava coluna inexistente (`...fix_reassign_absent_agents_last_seen_at.sql:4`) | V2 definiu ausente = nenhuma `user_sessions` ativa com `last_activity_at` recente (`reassign_absent_agents`, mesma migration `:34-56`). Mas `last_activity_at` só é gravado em `detect-new-device/index.ts:253-262`, chamado por `useDeviceDetection.checkDevice` (`:102-123`), e esse hook só roda quando as telas de Segurança montam (`SecurityOverview.tsx:77`, `DevicesPanel.tsx:14`). Nada atualiza a sessão durante o uso, então quase todo agente online há mais de 30 min conta como "ausente" e o botão "Reatribuir Ausentes" (`AgentReassignmentPanel.tsx`, `WarRoomDashboard.tsx:124`) move a carteira de gente trabalhando. A presença real já existe (`agent_presence`, heartbeat 25s) e não é usada | PF-09 (t_9ba1d0c7) trata o escopo (só conversas abertas, simulação), mas aceita "sessão recente" como definição de ausente; não corrige o sinal |
++| 27 | A10: aba Arquivadas ignora os outros filtros | DECISAO (V2 mais restritiva) | `inboxFilterPipeline.ts:120-121,146-153,223,314`: com `archivedTab` só busca vale; `computeInboxTabCounts` (`:349-358`) conta sempre não arquivadas | `useInboxFilters.ts:105-114`: chip Arquivadas = `conversation_status==='archived'` + fila + busca/painel; `passesExtraFilters` (`chipCounts.ts:94-154`) aplica também status/atendente/datas do painel, então um filtro de painel ativo esvazia a aba sem aviso | n/a (teste `useInboxFilters.arquivadas.test.tsx`; contagem e lista compartilham `passesExtraFilters`, MELHOR no ponto "número = tamanho da lista") |
++| 28 | A10: contagem dos chips = tamanho da lista | MELHOR_NA_V2 | invariante documentada em `inboxFilterPipeline.ts:349` | `chipCounts.ts:207` mesma função para lista e contador; `chipCounts.test.ts` | n/a |
++| 29 | A13: cadeia de resolução do contato selecionado | LACUNA parcial (P2, nova) | `useFallbackContact.ts:31-168`: UUID, JID->phone->`evolution_contacts`, proxy, sintético sempre; erros viram `log.warn` e a cadeia segue; `isArchived: Boolean(deleted_at)` (`:183`) | `useRealtimeInbox.ts:94-109`: só `contacts.eq('id')`; erro = `log.error` e para; contato inexistente/sem permissão = `fallbackContact` nulo, a tela mostra `InboxEmptyChat` (`RealtimeInboxView.tsx:411`) sem carregando, sem erro, sem "contato não encontrado", sem tentar de novo. Como a lista tem teto de 500 contatos (PD-74), abrir por notificação/busca global/`open-contact-chat` um contato fora da amostra cai nesse ramo | PD-73/PD-74 (lista) não cobrem; nenhum cartão cobre o estado vazio mudo |
++| 30 | A13: JID/telefone como identidade (`ContactRef`, `@lid`, `@g.us`) | DECISAO | `contactRef.ts:58-86` | V2 identifica sempre por UUID de `contacts`; `@lid` resolvido por `contact_identity_map` (`20260901100003_create_contact_identity_map_e32.sql`); sem modo externo | JG1 (endereço de GRUPO para editar/reagir/apagar) |
++| 31 | A13: testes do fallback | LACUNA (P2, nova) | `useFallbackContact.test.ts` (160 linhas), `contactRef.test.ts` (303) | nenhum teste do fallback de contato selecionado em `src/hooks/inbox/__tests__/` (7 arquivos, nenhum cobre o `useEffect` de `useRealtimeInbox.ts:94-109`) | PD-95 não lista |
++| 32 | Marcar como lido (consumidor do `touchLastSeen` na V3) | LACUNA já coberta | `markMessagesRead.ts:16-62` (classificação de erro transitório) + `useConversationActions.ts:40-170` (debounce, otimista, retry, flush no unmount) | `realtime.service.ts:208-220` 1 UPDATE por seleção, sem retry; `useRealtimeMessages.ts:253-267` só atualiza o estado depois do sucesso | PD-91 |
++| 33 | A18: mistura `dbFrom` / `supabase` | DECISAO | `whatsappStatusRepository.ts:61,68` | V2 usa `supabase` direto (sem camada `dbFrom`/datasource) | n/a (sem impacto funcional) |
++| 34 | Acessibilidade da seção de status | LACUNA já coberta | `WhatsAppStatusSection.tsx` `aria-label` no botão atualizar | sem tela | WS1 (pede aria-label, teclado) |
++
++Contagem: 34 itens. EQUIVALENTE 5 (6, 12, 14, 18, 21); MELHOR_NA_V2 8 (1, 2, 3, 4, 5, 7, 22, 28); DECISAO 7 (8, 10, 19, 20, 27, 30, 33); LACUNA já coberta por cartão 6 (13, 23, 24, 25, 32, 34); LACUNA nova 8 (9, 11, 15, 16, 17, 26, 29, 31).
++
++## 2. Lacunas reais sem cartão (priorizadas)
++
++### P1
++
++**L1. Sinal de "agente ausente" nunca é atualizado (item 26)**
++- O que fazer: `reassign_absent_agents` (e a escolha do substituto) deve usar `agent_presence` (status diferente de `offline` e `updated_at` recente) em vez de `user_sessions.last_activity_at`, que só muda quando alguém abre a tela de Segurança. Alternativa: um heartbeat leve que atualize `user_sessions.last_activity_at` (não recomendo: a presença já existe). Teste de banco: agente com heartbeat recente não é reatribuído; agente sem heartbeat há mais de N min é; `p_dry_run` não grava. Fazer junto do PF-09 (mesma função) para não gerar duas migrations conflitantes.
++- Perfil: workersql (função SQL + teste); hugo só se mexer no painel (confirmação já pedida em outro cartão).
++- Arquivos: nova migration `supabase/migrations/<ts>_reassign_absent_usa_agent_presence.sql` (CREATE OR REPLACE sobre `20260829040000_fix_reassign_absent_agents_last_seen_at.sql`), `src/hooks/crm/useAgentReassignment.ts`, `src/components/inbox/AgentReassignmentPanel.tsx`.
++- Conferir no banco real: definição vigente de `reassign_absent_agents` (pode ter sido refeita na migration `20261003272707_reconcile_local_replay_with_canonical.sql`, citada no PF-09) e quantas linhas de `user_sessions` têm `last_activity_at` nos últimos 30 min.
++
++**L2. `find-status-messages` devolve o feed de status da instância inteira a qualquer autenticado (item 15)**
++- O que fazer: no servidor, aceitar `contactId` (ou `number`), validar `is_contact_visible_to_user` e filtrar `records` pelos candidatos de telefone (mesma lógica de `buildPhoneNeedles`) ANTES de responder; negar sem alvo (fail-safe, como as ações SEND). Mover o filtro do navegador para o servidor. Coordenar com WS1 (tela) para o hook passar o `contactId`.
++- Perfil: edgar.
++- Arquivos: `supabase/functions/evolution-api/index.ts:913-921`, `supabase/functions/_shared/evolution-control-authz.ts` (nova classe de ação "read de contato" ou mover para o resolvedor de alvo das SEND), testes Deno em `supabase/functions/_shared/__tests__/evolution-control-authz.test.ts`; `src/hooks/integrations/useWhatsAppStatus.ts`.
++
++**L3. Sussurro "marcar como lido" sem política de UPDATE e sem filtro de destinatário (item 11; confirmar no banco)**
++- O que fazer: política `FOR UPDATE` em `whisper_messages` só para quem é `target_agent_id` (coluna `is_read` apenas, via função ou `WITH CHECK`); no front filtrar `target_agent_id = meu perfil`, tratar o erro e só zerar o selo após sucesso; teste de RLS: remetente não marca o próprio sussurro como lido, destinatário marca, terceiro não.
++- Perfil: workersql (política + prova) e iris/hugo (ajuste de `WhisperMode.tsx`; combinar com WM1, mesmo arquivo).
++- Arquivos: nova migration `supabase/migrations/<ts>_whisper_messages_update_destinatario.sql`; `src/components/inbox/WhisperMode.tsx:342-350`; `src/hooks/chat/useWhisperCount.ts`.
++
++### P2
++
++**L4. Abrir contato fora da lista: estado vazio mudo (itens 29 e 9)**
++- O que fazer: no efeito de `useRealtimeInbox.ts:94-109` expor estados `carregando` / `não encontrado` / `erro (tentar de novo)`; a tela mostra mensagem útil em vez de `InboxEmptyChat`; validar UUID antes de consultar (e em `ChatService.fetchMessages`, `markMessagesAsRead`), sem 400 no console; usar `deleted_at` / `conversation_status` do contato carregado para marcar arquivada no cabeçalho.
++- Perfil: hugo (hook) + iris (estado de tela, se pedir componente novo).
++- Arquivos: `src/hooks/inbox/useRealtimeInbox.ts`, `src/components/inbox/RealtimeInboxView.tsx`, `src/services/chat.service.ts`, `src/services/realtime.service.ts`, `src/utils/uuid.ts` (se existir).
++
++**L5. Não enviar `send-chat-presence` ao abrir o status do contato e cancelar resposta velha (itens 16, 17)**
++- O que fazer: remover o `send-chat-presence 'paused'` do hook (resultado descartado e ação SEND ao contato); guardar token de geração por telefone para ignorar resposta atrasada; escolher a conexão do contato e mostrar "sem conexão" em vez de usar uma qualquer. Pode ser absorvido pelo WS1 se o dono do cartão ler este relatório.
++- Perfil: hugo.
++- Arquivos: `src/hooks/integrations/useWhatsAppStatus.ts`, `src/hooks/__tests__/useWhatsAppStatus.test.ts`.
++
++**L6. Testes do contato selecionado fora da lista (item 31)**
++- O que fazer: portar os casos do `useFallbackContact.test.ts` da V3 que fazem sentido na V2 (UUID existente, inexistente, erro de rede, troca rápida de id sem corrida, lista que passa a conter o contato).
++- Perfil: workertestes.
++- Arquivos: `src/hooks/inbox/__tests__/useRealtimeInbox.contatoForaDaLista.test.tsx` (novo).
++
++## 3. Já coberto (não criar cartão)
++
++PD-91 (pagehide, aba oculta, marcar como lido em lote com retry, mensagem que chega com a conversa aberta), PD-95 (testes de presença), PD-01 (leitura aberta de `agent_presence`), PD-73/PD-74 (lista, paginação), WS1 (tela de stories), PS1/PS2 (presença real do contato), WH1/WH2/WM1 (sussurro), RT1/RT2 (realtime), JG1 (endereço de grupo), PF-09 (reatribuição por ausência/sobrecarga), PF1 (rajada de consultas ao trocar de conversa).
++
++## 4. O que NÃO consegui verificar
++
++- Banco real: se `whisper_messages` tem política de UPDATE criada fora das migrations versionadas (item 11); definição vigente de `reassign_absent_agents` e dados de `user_sessions.last_activity_at` (item 26); se `whisper_messages` está hoje na publicação do realtime (a migration `20260828190000` o inclui, mas a nota de `useWhisperCount.ts` diz que foi removido; o painel tem polling de 10 s, então o efeito é só latência).
++- Runtime: nada foi executado. Não medi o custo real de `find-status-messages` (200 registros por chamada) nem se a Evolution GO responde (`goHistoryNotSupported` em `evolution-api/index.ts:914` indica que na GO a rota devolve erro; então em instâncias GO a seção de stories ficaria sempre vazia, mesmo com WS1 pronto).
++- Se, na V2, a mensagem que chega com a conversa aberta fica sem marcar como lida (afirmado pelo PD-91; não reexecutei).
++- Se existem outros chamadores de `useDeviceDetection` fora de `src/components/security` (busca por texto não achou).
++- Não conferi a definição de `isArchived()` em `chipCounts.ts` contra o banco (quantos contatos têm `conversation_status='archived'`).
++
++## 5. Atestado pós-entrega (conferência 14/10/2026 contra a `dia/2026-10-14`)
++
++- **Stories vazio em instâncias GO: confirmado no código.** `supabase/functions/evolution-api/index.ts:914`: em instância GO (`isGoFlavor`), `find-status-messages` retorna `goHistoryNotSupported('find-status-messages')` sem consultar a Evolution. Logo, em provedor GO a seção de stories fica sempre vazia mesmo com o WS1 pronto — o vazio é "provedor não entrega", não defeito do hook (`src/hooks/integrations/useWhatsAppStatus.ts`).
+--- a/docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE2_VOZ_SIP_MIDIA.md
++++ b/docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE2_VOZ_SIP_MIDIA.md
+@@ -0,0 +1,101 @@
++# Paridade V3 -> V2, doc 07 (segunda passada): voz, SIP e mídia
++
++Data: 13/10/2026. Recorte: §2.5 Agente de voz, §2.6 Conexão SIP, achados A7, A8, A12, A14, A15, A16.
++Método: código real da V3 (`origin/main`) comparado por comportamento com a V2 viva (`~/hermes-workspaces/Zapp_Web_V2/.integrador`). Somente leitura. Nada foi executado (sem testes).
++
++## 0. Resumo executivo
++
++- O doc 07 está defasado em pontos que importam: o `retry.ts` real da V3 usa 2 tentativas / 500 ms (o doc diz 3 / 1000 ms e cita "err" como gatilho, que não existe); o `useSipConnection` real da V3 tem estados `disconnected|connecting|registered|error` (sem `reconnecting`) e zera o contador ao esgotar (o doc diz "error permanente"); o `useVoiceAgent` da V3 (`src/hooks/useVoiceAgent.ts`, 9 linhas) é só um re-export de `useVoiceAgentManagement`, que é uma casca (ativa/desativa e um array vazio).
++- A V2 já é **melhor** que a V3 em quase todo o recorte: TTS que encerra a Promise ao interromper, agente de voz com "geração" e abort, SIP com token de tentativa, estados explícitos, 403 = linha em uso, eleição de aba líder, edges de voz com `requireAuth` + rate limit persistente + ledger de custo.
++- **Lacunas reais** (todas sem cartão aberto): 3 de prioridade P1 e 9 de P2 (seção 3). As P1 são: (1) retenção/LGPD de `voice_command_logs`, (2) SIP não é desregistrado ao desmontar/sair, (3) nenhum código do front chama a edge `recover-message-media` (o cartão MR1 entregou só a edge).
++- Regra do dono (nada que exporte/baixe/copie/imprima): nenhuma lacuna abaixo exige isso. A retenção do item 1 é expurgo interno, não exportação.
++
++## 1. Tabela de itens
++
++Legenda: EQ = EQUIVALENTE, MELHOR = MELHOR_NA_V2, LAC = LACUNA, DEC = DECISAO. Caminhos da V3 relativos a `src/features/inbox/hooks/`; caminhos da V2 relativos a `src/`.
++
++| # | Item | Classif. | Evidência V3 | Evidência V2 | Cartão existente |
++|---|------|----------|--------------|--------------|------------------|
++| 1 | `splitTextIntoTtsChunks` (220 chars: frases, depois vírgulas, depois palavras) | EQ | `voice/playTtsAudio.ts` (função interna, `TTS_CHUNK_MAX_LENGTH`) | `hooks/voice/playTtsAudio.ts` (diff com a V3 não toca a função) | nenhum (sem teste em nenhuma das duas, ver #35) |
++| 2 | `fetchChunkAudio`: timeout 60 s via AbortController, 401/403 -> `TTS_UNAUTHORIZED` | MELHOR | `playTtsAudio.ts:145-154` usa `apikey` + `Bearer supabaseKey` (anon) | `playTtsAudio.ts:~164-170` usa `edgeAuthHeaders()` (token da sessão); a edge exige `requireAuth` | nenhum (já resolvido) |
++| 3 | Pré-busca do chunk N+1 durante a reprodução de N | EQ | `playTtsAudio.ts` loop principal (`ensureChunkAudio(i+1)`) | `playTtsAudio.ts:~232-250` idêntico | nenhum |
++| 4 | Fallback `window.speechSynthesis` (pt-BR) em erro de rede/cota | EQ | `playTtsAudio.ts:~250-260` | `playTtsAudio.ts:~270-278` (agora dentro de `aguardarOuParar`) | nenhum |
++| 5 | `NotAllowedError` -> `onAutoplayBlocked` sem fallback de síntese | LAC (P2) | `playTtsAudio.ts` `playObjectUrl` e catch | existe em `playTtsAudio.ts`, e `components/inbox/summary/useSummaryTts.ts:39` / `ai-tools/useAnalysisTts.ts:47` passam o callback; mas o agente de voz (`hooks/communication/useVoiceAgent.ts`, chamada `playTtsAudio(result.response, supabaseUrl, authToken)`) NÃO passa `options`: em autoplay bloqueado a resposta só aparece escrita, sem aviso | nenhum |
++| 6 | `stop()` tem de encerrar a Promise da fala | MELHOR | `playTtsAudio.ts`: `cleanup()` desliga `onended`/`onerror`, a Promise ficava pendente | `playTtsAudio.ts:99-123, 286-288` (`notificarParada`, `aguardarOuParar`, cartão #341/R2-INB-047) + `hooks/voice/__tests__/playTtsAudio.interrupcao.test.ts` (3 casos) | #341 (feito) |
++| 7 | Volume global do atendente na fala | MELHOR | ausente | `playTtsAudio.ts` `attachMediaVolume(audioElement)` (E36) | feito |
++| 8 | `processVoiceTranscript`: POST `voice-agent`, timeout 15 s, resposta sem action/response vira "answer" | EQ | `voice/processTranscript.ts` (44 linhas) | `hooks/voice/processTranscript.ts` (diff só de comentário); `useVoiceAgent` envia o token da SESSÃO (`resolveAuthToken`) e a edge exige `requireAiIdentity` (IA-011) | nenhum |
++| 9 | `retry.ts`: `isRetryableError`, `withRetry`, `friendlyErrorMessage` | EQ | `voice/retry.ts` (58 linhas, `maxRetries=2`, `baseDelay=500`); testes `voice/__tests__/retry.test.ts` (229 linhas, ~33 casos) | `hooks/voice/retry.ts` (idêntico). Sem teste (`lib/__tests__/retry.random.test.ts` é de OUTRO módulo, `lib/retry.ts`) | PD-95 (teste de `hooks/voice/retry.ts`) |
++| 10 | `isRetryableError` retenta `aborted` e `429` (defeito herdado) | LAC (P2) | `retry.ts` | `hooks/voice/retry.ts:6-13`. No `useVoiceAgent`, o próprio `withRetry` lança `Error('Aborted')` quando o comando foi substituído, e "aborted" é retentável: gasta 500 ms + 1 s de timers à toa (o `isCurrent()` impede efeito visível). Retentar `429` agrava o limite de taxa. `friendlyErrorMessage` também classifica qualquer erro com "permission" como microfone (um 403 "permission denied" do servidor vira "Permissão de microfone negada") | nenhum |
++| 11 | `logVoiceCommand`: cabeçalhos `Content-Profile`/`Accept-Profile: zapp` (A14) | DEC | `voice/logVoiceCommand.ts:34-38` (V3 usava schema `zapp`) | a V2 tem a tabela em `public` (`supabase/migrations/20260407153654_eb8255fa-...sql`), logo o cabeçalho não se aplica; usa `SUPABASE_URL`/`SUPABASE_ANON_KEY` | nenhum (decisão de schema da V2) |
++| 12 | `logVoiceCommand`: timeout 15 s e checagem de resposta | LAC (P2) | V3 tem `AbortController` 15 s (`logVoiceCommand.ts:19-20`); NÃO checa `res.ok` | V2 não tem timeout nem `AbortController` (`hooks/voice/logVoiceCommand.ts:18-41`) e também não checa `res.ok`: um 401/403/RLS ou 5xx some em silêncio e um fetch pendurado fica vivo | nenhum |
++| 13 | LGPD do log de voz: o que vai para o banco e por quanto tempo | LAC (P1) | V3 grava `transcript`, `response`, `data` sem prazo (tabela com 0 linhas em ago/2026 segundo docs da V3) | V2 grava o mesmo (`logVoiceCommand.ts:34-43`) em `public.voice_command_logs` (migration 20260407153654): sem CHECK de tamanho, sem política de DELETE para o próprio usuário (só INSERT e SELECT), sem expurgo por prazo (nenhum cron/migration cita a tabela; `docs/LGPD-RETENTION-POLICY.md` não menciona voz). A edge registra os 100 primeiros caracteres da fala em log (`supabase/functions/voice-agent/index.ts:104`), enquanto a `elevenlabs-tts-stream` já foi corrigida para não logar texto (F16) | nenhum |
++| 14 | Agente de voz de ponta a ponta (Scribe realtime, fases, cancelamento) | MELHOR | `src/hooks/useVoiceAgent.ts` = re-export de `useVoiceAgentManagement` (casca: `isActive`, `responses=[]`) | `hooks/communication/useVoiceAgent.ts` (336 linhas): geração por comando (R2-INB-048), abort, `waitForPlaybackOrAbort`, timeout de boot 8 s, reset de erro 5 s; testes `hooks/__tests__/useVoiceAgent.interrupcao.test.ts`, `useVoiceAgent.comandoSubstituido.test.ts` | feito |
++| 15 | Comando de voz vira estado real da tela | MELHOR | `src/hooks/useVoiceActionHandler.ts`: só `toast` + `onViewChange`; invoca `voice-copilot-action` apenas para `search` e ignora o resultado (só `log.info`) | `hooks/voice/voiceActionPlan.ts` + `hooks/voice/useVoiceAgent.ts` gravam na query string (`q`, `status`, ...) e dizem "indisponível" quando a tela não consome o filtro; `components/layout/__tests__/VoiceActionBridge.test.tsx` | R2-INB-046 (feito) |
++| 16 | `voice-copilot-action` (edge) chamada pelo front | DEC | V3: chamada só em `search` (`useVoiceActionHandler.ts:11-24`) | V2: a edge existe (`supabase/functions/voice-copilot-action`) mas nenhum arquivo de `src/` a invoca (grep) | plano do copiloto (cartões t_b8b573c3, t_b6eb108a, t_6dec2fc6, t_9ae66b75). Não consegui ver se esses cartões incluem ligar o front |
++| 17 | Permissão do microfone e mensagens de erro | EQ | `friendlyErrorMessage` ("Permissão de microfone negada...") | idêntico; `scribe.connect({ microphone: {echoCancellation, noiseSuppression, autoGainControl} })`; timeout de boot "Conexão com microfone demorou demais" | nenhum |
++| 18 | Sessão do microfone sem limite (custo e privacidade) | LAC (P2, ambos) | n/a (a V3 nem tinha o hook real) | `useVoiceAgent.ts`: depois de um comando volta a `listening` com o Scribe conectado, sem teto de duração, sem inatividade, sem `visibilitychange`/`pagehide`. Só fecha pelo X do overlay (que chama `reset`) ou unmount | nenhum |
++| 19 | Acessibilidade do overlay de voz | EQ | `src/components/voice/VoiceSearchOverlay.tsx:57-97,160-162,250,282` (`role=dialog`, `aria-modal`, foco preso, Esc, `useReducedMotion`) | `components/voice/VoiceSearchOverlay.tsx`: diff só de formatação e de import de `framer-motion` | nenhum |
++| 20 | Edges de voz: autenticação, cota e rastro de custo | MELHOR | V3 `elevenlabs-scribe-token` usa `requireUser` + `checkRateLimit` (em memória) | V2 `elevenlabs-scribe-token`, `elevenlabs-tts-stream` (30/min), `elevenlabs-tts` (20/min), `elevenlabs-agent-token` (30/min): `requireAuth` + `enforceRateLimit` persistente + `logAiUsageDetached`; `voice-agent`: `requireAiIdentity`, `transcript` com `max(2000)`, `response` cortada em 500 | feito |
++| 21 | Chamada ao provedor ElevenLabs sem timeout | LAC (P2) | V3 `elevenlabs-scribe-token` usa `fetchWithRetry(..., {timeoutMs: 10_000})` | V2 `supabase/functions/elevenlabs-scribe-token/index.ts` faz `fetch` direto sem sinal de timeout (a `elevenlabs-tts-stream` também) | nenhum |
++| 22 | A7: backoff exponencial com teto de 30 s e 5 tentativas | MELHOR | `sip/useSipConnection.ts:109-127` (`Math.min(1000*2^n, 30000)`; ao esgotar, zera o contador e só mostra toast) | `hooks/sip/useSipConnection.ts:18-19,141-150` (`MAX_BACKOFF_MS`, esgotou -> `unavailable` + toast) e teste "T16: 6ª falha seguida vira unavailable e para de tentar" | feito (T16) |
++| 23 | Estados da conexão SIP | MELHOR | real: `disconnected|connecting|registered|error` (o doc cita `connected` e `reconnecting`, que não existem no código) | `SipStatus = idle|connecting|registered|reconnecting|unavailable` + `sipReason` | feito (T15/T16) |
++| 24 | Concorrência de `connect`, 403 = linha em uso, mídia criptografada, aba líder | MELHOR | V3 só para o UA anterior no início de `connect` | `useSipConnection.ts`: `attemptRef` (tentativa em voo), `onReject` 403 -> `line_in_use_other_user`, `rtcpMuxPolicy`/`bundlePolicy` (SL-002), `isLeader()` (T20); ~20 testes em `hooks/sip/__tests__/useSipConnection.test.ts` | feito |
++| 25 | Cleanup do SIP no unmount (desregistrar e fechar o WebSocket) | LAC (P1) | `sip/useSipConnection.ts:36-66`: no cleanup do efeito faz `registerer.unregister()` e `ua.stop()` ("senão o UserAgent mantém a sessão registrada e o socket aberto em segundo plano") | V2 `hooks/sip/useSipConnection.ts:45-55`: o cleanup só marca `unmountedRef`, cancela a tentativa e limpa o timer; NÃO desregistra nem para o UA vivo. `useSipClient` (`hooks/communication/useSipClient.ts:93`) só faz `engine.dispose()` (áudio remoto). Grep em `src/`: ninguém chama `disconnect()` em logout, `pagehide` ou desmontagem do `CallSessionProvider`, só a aba que vira seguidora (`useSipClient.ts:90`). O servidor limita um ramal por vez (T15/T16): o ramal pode ficar preso e o próximo login recebe 403 "linha em uso" | nenhum |
++| 26 | UA morto do retry nunca recebe `stop()` | LAC (P2) | V3 `connect` para o UA antigo antes de criar outro (`useSipConnection.ts:63-79`) | V2: no timer do backoff só faz `uaRef.current = null; registererRef.current = null` (`useSipConnection.ts:~140-146`), sem `ua.stop()`/`unregister()` do antigo; timers internos do sip.js (refresh de REGISTER) podem seguir vivos. A confirmar com teste que verifique `stop` do UA antigo | nenhum |
++| 27 | Esgotamento das 5 tentativas só sai com `connect()` manual | EQ | doc A7 / código zera contador | `unavailable` só sai por novo `connect()`; contador volta a 0 ao registrar | nenhum |
++| 28 | A12: `mountedRef`, `AbortSignal` no invoke, falha rápida em erro irrecuperável | DEC | `useMediaUrl.ts` (705 linhas) + `useMediaUrl.test.ts` (535) | A V2 não tem `useMediaUrl`: a mídia expirada do WhatsApp é recuperada NO SERVIDOR (edge `recover-message-media`, cartão MR1, que devolve `ok|ja_permanente|indisponivel|negado`, com limite de 1 tentativa/10 min por mensagem e tipos sticker/efêmera/apagada recusados) e o front só assina URL de Storage (`hooks/storage/useResolvedStorageUrl.ts`: flag `active`, dedupe por `refreshPromiseRef`, cooldown de 5 s) | MR1 (t_4ebeb0c4, done) |
++| 29 | Front que chama a recuperação de mídia vencida | LAC (P1) | V3 `useMediaUrl` dispara `get-media-base64` no `onError` | V2: `grep -rn recover-message-media src` = vazio. Para URL que não é de Storage (CDN do WhatsApp vencida), `useResolvedStorageUrl.refresh` devolve `source` (`if (!reference) return source`) e nada recupera: o arquivo quebra para sempre, exatamente o defeito que o MR1 queria resolver. O MR1 pediu só a edge | nenhum para o lado do front (MR1 só cobre a edge) |
++| 30 | Estado de erro em vídeo/arquivo com mídia quebrada | LAC (P2) | V3 `useMediaUrl` devolve `error` classificado (`expired|not_found|network|unsupported|forbidden`) e `failed` | V2 `components/inbox/ImagePreview.tsx:153` mostra "Mídia indisponível", mas `VideoPreview` (`components/inbox/MediaPreview.tsx:~125-155`) mantém o spinner (`!isLoaded || isLoading`) para sempre se a URL falhar, sem mensagem nem botão de nova tentativa | nenhum |
++| 31 | Teto de tentativas por mídia entre montagens (anti-tempestade, E39) | LAC (P2) | `useMediaUrl.ts`: `MAX_SESSION_REFRESH_ATTEMPTS=40` em janela de 5 min, `REFRESH_RATE_LIMIT_WINDOW_MS=30_000` por mensagem, contador que persiste entre montagens (incidente de 06/08/2026) | V2 `useResolvedStorageUrl.ts`: só cooldown de 5 s por instância e `lastRefreshAtRef` zera a cada montagem; sem contador de falhas por objeto. Num incidente de bucket (todas as mídias falhando) cada miniatura remontada assina de novo | nenhum |
++| 32 | A15: LRU com teto de 200 entradas e 50 MB para data URLs | DEC | `mediaRefreshCache.ts` (104 linhas) | Não se aplica: a V2 não guarda base64 no navegador; a recuperação persiste o arquivo no bucket privado e o front assina URL curta. Ao criar o cartão do #29, NÃO reintroduzir cache de base64 em memória | MR1 |
++| 33 | A16: `deriveFinalStatus` (5 regras) sobre `retry_metrics` | DEC | `messageSendHistory.schemas.ts:181-215`; `useMessageSendHistory.ts:137` | A V2 não tem `retry_metrics`/`final_status` (grep em `src` e `supabase/migrations`). O histórico de envio é derivado dos campos da própria mensagem: `components/inbox/chat/messageSendTimeline.ts` (`buildMessageSendTimeline`, `estadoDeEnvio`: queued/inFlight/failed/confirmed) + `MessageSendHistorySheet.tsx` + teste `MessageSendHistorySheet.test.tsx` | decisão de arquitetura da V2 (entrega por claim/lease) |
++| 34 | Testes do SIP e do TTS que a V2 tem e a V3 não | MELHOR | V3: sem teste de `useSipConnection`, `playTtsAudio`, `logVoiceCommand`, `processTranscript` (só `retry.test.ts`) | V2: `useSipConnection.test.ts` (~20 casos) e `playTtsAudio.interrupcao.test.ts` | feito |
++| 35 | Testes de TTS (chunks, pré-busca, fallback, autoplay), `logVoiceCommand` e `processTranscript` | LAC (P2) | nenhum teste na V3 | V2 só testa a interrupção. `splitTextIntoTtsChunks` não é exportada, então não dá para testar sem mudar a assinatura | PD-95 cobre só `retry.ts` |
++
++Contagem: EQUIVALENTE 8 (#1, 3, 4, 8, 9, 17, 19, 27) / MELHOR_NA_V2 10 (#2, 6, 7, 14, 15, 20, 22, 23, 24, 34) / DECISAO 5 (#11, 16, 28, 32, 33) / LACUNA 12 (#5, 10, 12, 13, 18, 21, 25, 26, 29, 30, 31, 35). Total 35.
++
++## 2. Observações de verificação (para conferir antes de abrir cartão)
++
++- #25: confirmar que `providers/CallSessionProvider.tsx:362` fica montado durante todo o app e se o logout desmonta ou não. Quando desmontar (logout/troca de usuário) ou ao fechar a aba, nada chama `ua.stop()`/`unregister()`. Fechar a aba derruba o WebSocket sozinho, mas o REGISTER segue válido no servidor até expirar (a duração depende da configuração do Asterisk, que não consegui ver).
++- #13: confirmar no banco real se há linhas em `voice_command_logs` e se existe alguma política/cron fora das migrations.
++- #29: confirmar no banco/edge que a migração de mídia (`migrate-media-storage`, `persistIncomingMedia` no webhook) não torna o caso raro; o cartão MR1 afirma que, quando `persistIncomingMedia` falha, a URL do CDN fica e nada a recupera.
++
++## 3. Lacunas reais priorizadas (todas sem cartão)
++
++### P1
++
++1. **LGPD do log de comandos de voz** (workersql + edgar).
++   O que implementar: (a) migration com CHECK de tamanho em `transcript` (ex. 2000, igual ao limite da edge), `response` (500) e `data`; (b) política `DELETE` do próprio usuário (direito do titular) e expurgo por prazo (pg_cron diário, ex. 90 dias, prazo a confirmar com o Joaquim); (c) incluir a tabela em `docs/LGPD-RETENTION-POLICY.md`; (d) na edge `voice-agent`, trocar o `log.info` com `transcript.substring(0,100)` por tamanho/hash, como já feito na `elevenlabs-tts-stream` (F16).
++   Arquivos: `supabase/migrations/<novo>.sql`, `supabase/functions/voice-agent/index.ts:104`, `docs/LGPD-RETENTION-POLICY.md`, `scripts/db-audit/grants-baseline.json` se mudar grants.
++2. **Desregistrar o SIP ao desmontar, sair ou fechar** (hugo).
++   O que implementar: no cleanup de `useSipConnection` (e no logout) fazer `registerer.unregister()` + `ua.stop()` com `onDisconnect` neutralizado (como a V3 fazia); `pagehide` best-effort; teste "unmount com UA registrado chama unregister e stop". Respeitar a regra de aba líder (T20): só a líder segura o UA.
++   Arquivos: `src/hooks/sip/useSipConnection.ts`, `src/hooks/communication/useSipClient.ts`, `src/providers/CallSessionProvider.tsx`, `src/hooks/sip/__tests__/useSipConnection.test.ts`.
++3. **Ligar o front à recuperação de mídia vencida (`recover-message-media`)** (hugo + iris).
++   O que implementar: hook `useRecoveredMediaUrl` (ou ramo em `useResolvedStorageUrl` quando a URL não é de Storage): no `onError` chama a edge UMA vez por mensagem (contador persistente por `message_id` entre montagens, teto de sessão e janela anti-tempestade como o E39 da V3), respeita `AbortSignal` e desmontagem, falha rápida em `indisponivel|negado`, troca a URL pela assinada do caminho permanente devolvido e invalida a query da mensagem. Mostra estado de erro em pt-BR (ver P2 #4). Sem cache base64.
++   Arquivos: `src/hooks/storage/useResolvedStorageUrl.ts`, `src/components/inbox/MediaPreview.tsx`, `src/components/inbox/ImagePreview.tsx`, `src/components/inbox/tabs/FileDetailPanel.tsx`, `supabase/functions/recover-message-media/index.ts` (contrato de resposta).
++
++### P2
++
++4. **Estado de erro e nova tentativa em `VideoPreview`/arquivo** (iris): trocar o spinner eterno por "Mídia indisponível" + botão "Tentar de novo", como o `ImagePreview` já faz (`components/inbox/MediaPreview.tsx`).
++5. **Teto de tentativas por objeto entre montagens em `useResolvedStorageUrl`** (hugo): contador de falhas por `bucket/path` em módulo, janela deslizante e teto de sessão, reset só em sucesso ou retry manual (ideia do E39, sem base64).
++6. **Aviso de autoplay bloqueado e de falha de TTS no agente de voz** (iris): passar `onAutoplayBlocked`/`onError` de `playTtsAudio` no `useVoiceAgent` e mostrar "Toque para ouvir a resposta" no overlay (`hooks/communication/useVoiceAgent.ts`, `components/voice/VoiceSearchOverlay.tsx`).
++7. **Limite da sessão de microfone do agente de voz** (hugo): encerrar o Scribe após inatividade (ex. 60 s sem fala) e ao ocultar a aba; teto de duração; aviso visível (`hooks/communication/useVoiceAgent.ts`). Melhoria acima da paridade.
++8. **`logVoiceCommand` com timeout e verificação de resposta** (hugo): `AbortSignal.timeout(15000)` e `log.warn` quando `!res.ok` (`hooks/voice/logVoiceCommand.ts`).
++9. **Ajustes de `retry.ts`** (hugo): não retentar `aborted` quando o chamador abortou, não retentar `429`, restringir a mensagem de "permissão de microfone" a erros de microfone (`hooks/voice/retry.ts`).
++10. **Timeout na chamada ao ElevenLabs nas edges** (edgar): `AbortSignal.timeout(10_000)` no scribe-token e um teto na `elevenlabs-tts-stream` (`supabase/functions/elevenlabs-scribe-token/index.ts`, `supabase/functions/elevenlabs-tts-stream/index.ts`).
++11. **`ua.stop()` do UA morto no backoff do SIP** (hugo): antes de zerar `uaRef`/`registererRef` no timer do retry, chamar `stop()` best-effort do UA antigo e testar (`hooks/sip/useSipConnection.ts` ~l.140-146).
++12. **Testes de voz sem cobertura** (workertestes): `playTtsAudio` (divisão em chunks, pré-busca, fallback para `speechSynthesis`, 401/403, autoplay), `logVoiceCommand`, `processVoiceTranscript` (timeout, resposta incompleta). Exige exportar `splitTextIntoTtsChunks`, o que toca produção; combinar com o PD-95, que hoje cobre só `retry.ts` (`hooks/voice/__tests__/`).
++
++## 4. O que NÃO consegui verificar
++
++- Banco real: volume e retenção de `voice_command_logs`; se existe cron/política fora das migrations; existência de `retry_metrics` no banco da V2 (só vi que não há migration nem uso no código).
++- Runtime: validade do REGISTER no servidor SIP após fechar a aba (depende do `expires` do Asterisk); comportamento real do autoplay em Safari/iOS depois dos `await` do agente de voz (o elemento `Audio` é criado dentro de `playTtsAudio`, que roda depois de chamadas assíncronas, fora do gesto do usuário); se o logout do app desmonta o `CallSessionProvider`.
++- Se os cartões do copiloto de voz (t_b8b573c3, t_b6eb108a, t_6dec2fc6, t_9ae66b75) incluem ligar o front à edge `voice-copilot-action`: o plano `docs/voice/PLANO_EVOLUCAO_COPILOTO_VOZ_2026-10-10.md` não está na árvore `.integrador` que li.
++- Cartões antigos: a busca no kanban (`buscar_corpo.py`) devolveu NENHUM para `useMediaUrl`, `MEDIA_EXPIRED`, `deriveFinalStatus`, `voice_command_logs`, `speechSynthesis`, `SIP`, `voice-agent`, `autoplay`; só `mediaRefresh` (MR1). Li o corpo do MR1; não abri os demais.
++- Testes: nada foi executado (restrição de carga); as afirmações sobre testes vêm da leitura dos arquivos.
++
++## 5. Atestados pós-entrega (conferência 14/10/2026 contra a `dia/2026-10-14`)
++
++- **Voz: as 2 edges não logam texto.** `supabase/functions/elevenlabs-tts-stream/index.ts` só loga tamanho da fala e voz (`:50`, `Streaming TTS: ${text.length} caracteres`) e status/erro (`:99`, `:105`, `:115`); `grep -i transcript` no arquivo = vazio. `supabase/functions/elevenlabs-agent-token/index.ts` só loga `agentId`/status/erro (`:29`, `:40`, `:73`, `:80`, `:84`), sem texto do usuário. Contraste: `supabase/functions/voice-agent/index.ts:104` AINDA loga `transcript.substring(0, 100)` — por isso a troca desse log virou ação do P1 nº 1, item (d), §3.
++- **Mídia: a edge persiste no bucket privado e o front só assina URL curta.** `supabase/functions/recover-message-media/index.ts` recupera o base64 da Evolution (`:265-271`, `extractBase64Media`) e persiste via `persistBase64Media` (`:279-280`), devolvendo a URL permanente (`:384`); "URL já no Storage permanente (bucket whatsapp-media/audio-messages)" (`:117`). No front, `src/hooks/storage/useResolvedStorageUrl.ts` só usa `supabase.storage` para assinar URL curta (`:85`) — `grep -i base64` no hook = vazio: nenhum base64 no navegador.
++- **Copiloto de voz: 3 ações integradas + 1 recusada fora da dia.** Na `dia/2026-10-14`, `supabase/functions/voice-copilot-action/index.ts` tem `search_tasks` (`:155`, t_b6eb108a, APROVADO), `search_catalog_products` (`:204`, t_6dec2fc6 — recusado 1x porque mandava a service_role como `apikey`; corrigido com anon key, `:11`, `:215`, `:218`) e `search_files_in_conversation` (`:401`, t_b8b573c3, APROVADO, devolve `messageId`). `search_emails` (t_9ae66b75) foi recusado pelo revisor e NÃO está na dia (case ausente). O front ainda NÃO invoca a edge (única menção em `src/` é um comentário em `src/lib/postgrestFilters.ts:16`); o mecanismo "ver na conversa" existe: `scrollToMessage` em `src/components/inbox/chat/ChatMessagesArea.tsx:304-309` (rola o virtualizador até o `messageId`).
+--- a/docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE3_REACOES_TEAMCHAT.md
++++ b/docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE3_REACOES_TEAMCHAT.md
+@@ -0,0 +1,106 @@
++# Paridade V3 -> V2, doc 07, segunda passada: Reacoes (2.7), Team Chat (2.8), A2, A3, A4, A5, A6, A17, A19
++
++Data: 13/10/2026. Somente leitura. V3 = `origin/main` (src/features/inbox/hooks/...). V2 = `~/hermes-workspaces/Zapp_Web_V2/.integrador/src` e `supabase/migrations`.
++Abreviacoes de caminho V3: `R/` = `src/features/inbox/hooks/reactions/`, `T/` = `src/features/inbox/hooks/team-chat/`. V2: `h/` = `src/hooks/`.
++
++Correcoes ao documento 07 (o codigo real manda):
++- O doc diz "topic `reactions-{convId}`"; o codigo real e `conv-reactions:<convId>:<random8>` (R/useConversationReactionsRealtime.ts:34). O doc diz que `delete` de mensagem da equipe e soft-delete (`deleted_at`); o codigo real faz `.delete()` fisico (T/useTeamChatMutations.ts, mutation useDeleteTeamMessage, comentario enganoso "soft-delete"). O doc diz "7 mutations ... updateStatus" e que o realtime de mensagens da equipe e INSERT-only com setQueryData: confere, mas so INSERT (edicao e exclusao feitas por outro membro nunca chegam ao vivo na V3).
++- O doc diz que `rpc_get_reactions_batch` e usado; o cartao RB1 ja decidiu nao portar a RPC.
++
++## 1. Tabela item | classificacao | evidencia V3 | evidencia V2 | cartao
++
++| # | Item | Classif. | Evidencia V3 | Evidencia V2 | Cartao |
++|---|------|----------|--------------|--------------|--------|
++| 1 | Reacoes em lote (N+1 evitado) | MELHOR_NA_V2 | R/useBatchReactions.ts:19-90 (RPC + fallback `.in()` chunk 100 + 1 GET profiles); R/usePreloadConversationReactions.ts:62-117 (provider, 1 query por lista de ids; refaz tudo quando um id novo entra, chave = todos os ids) | h/reactions/useBatchReactions.ts:93-200: provider com trava POR MENSAGEM (`coveredIds`/`settledIds`), lote incremental so dos ids novos, 1 `.in('id')` de nomes para todos os blocos, bloco falho libera fallback solo. Testes: h/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx | RB1 (feito) |
++| 2 | RPC `rpc_get_reactions_batch` | DECISAO | R/useBatchReactions.ts:28 | nao existe na V2; RB1 mandou usar so `.in()` em blocos | RB1 |
++| 3 | Guard `dataUpdatedAt < batchStartedAt` (A6) | MELHOR_NA_V2 | R/usePreloadConversationReactions.ts:93-100 (`!state?.data \|\| dataUpdatedAt < batchStartedAt`) | h/reactions/useBatchReactions.ts:81-92 `seedMessageReactions`: tambem preserva chave invalidada pelo realtime (`state.isInvalidated`) | RB1 |
++| 4 | Lote falha -> fallback por mensagem; sem provider -> comportamento antigo | EQUIVALENTE | usePreload...:106 `retry:false`; `useReactionsBatchContext` devolve "sem batch" | h/chat/useMessageReactions.ts:27-31 (`batch == null` ou id em `settledIds`) | RB1 |
++| 5 | Realtime de reacoes por conversa (canal unico, ids em ref, invalida so o id visivel) | EQUIVALENTE com defeito | R/useConversationReactionsRealtime.ts:29-72 (topic com sufixo aleatorio; `logChannelError`; `unsubscribe`+`removeChannel`) | components/inbox/chat/ChatMessagesArea.tsx:330-345 + services/realtime.service.ts:194-203: topic FIXO `chat-reactions:${conversationId}`, sem sufixo | PD-76 (lista `chat-reactions:${id}`) |
++| 6 | Canal por bolha `reactions:${id}` (A4) | LACUNA coberta | R/... hooks/useMessageReactions.ts:35 usa sufixo aleatorio | h/chat/useMessageReactions.ts:35 `reactions:${messageId}` fixo, schema public; hoje as bolhas passam `disableRealtime` (MessageBubble.tsx:206,401), entao so quebra em consumidor novo | RT2, PD-76 |
++| 7 | A4: mesmo topic = mesma instancia; `.on()` apos `.subscribe()` lanca | MELHOR_NA_V2 (parcial) | doc: realtimeChannelLifecycle.test.ts, sufixo aleatorio | lib/realtimeTopic.ts `uniqueRealtimeTopic` + teste real h/__tests__/realtimeSharedTopic.test.tsx (cobre 4 hooks); mas ainda ha topicos fixos: `team-messages-${id}` (h/team-chat/useTeamMessages.ts:73), `team-reactions-${id}` (useTeamMessageReactions.ts:64), `team-chat-updates` (useTeamConversations.ts:110), `team-chat-notifications` (h/chat/useTeamChatNotifications.ts:149) | PD-76 cobre os dois ultimos; `team-messages-`/`team-reactions-` NAO estao em nenhum cartao (ver lacuna L4) |
++| 8 | Mutacao de reacao: otimista + rollback | LACUNA coberta | R/useReactionMutations.ts:100-149 (`onMutate` cancela, snapshot, `setQueryData`; `onError` restaura) | h/reactions/useReactionMutations.ts: sem onMutate; so `invalidateQueries` no sucesso; badge so aparece depois da Evolution responder | PD-90 (troca otimista com rollback) |
++| 9 | Ordem transporte x gravacao | MELHOR_NA_V2 | R/...:81-98 grava no banco e ENGOLE o erro da Evolution (reacao fica no banco e nao no WhatsApp, sem aviso) | h/reactions/useReactionMutations.ts:44-70 transporte primeiro (R2-INB-032), rejeicao propaga; teste transport-rejection | feito |
++| 10 | Idempotencia da reacao | EQUIVALENTE | upsert `onConflict message_id,user_id,emoji` | idem (useReactionMutations.ts:66); UNIQUE existe na migration 20251220181300:37 | - |
++| 11 | Uma reacao por autor por mensagem (troca em vez de somar) | LACUNA coberta | V3 tem o mesmo defeito (soma) | MessageReactions.tsx `handleReact` soma | PD-90, PD-89 (webhook) |
++| 12 | Autoria da reacao no banco (RLS) | LACUNA coberta | n/a | politicas duplicadas em `message_reactions` | PD-65 |
++| 13 | Telemetria `audit_logs` por reacao | DECISAO (nao portar) | R/useReactionMutations.ts:27-49 insert do CLIENTE em `audit_logs` (forjavel, 1 INSERT por clique) | V2 nao faz | - |
++| 14 | `.maybeSingle()` apos upsert (evita PGRST116) | LACUNA (P2) | R/...:85 `.maybeSingle()` | h/reactions/useReactionMutations.ts:73 `.single()`: se a politica de SELECT nao devolver a linha recem gravada, o toast de erro aparece com a reacao gravada | nenhum (L8) |
++| 15 | Clique na reacao: tratamento de erro/pending e acessibilidade | LACUNA (P2) | V3 `toast` com id estavel, mensagens por status 401/403/504 (R/...:121-143) | components/inbox/MessageReactions.tsx:76-83 `handleReact` faz `await` sem try/catch (mutateAsync rejeita -> unhandled rejection, popover nao fecha) e sem trava de pending; botao-badge (l.92-112) sem `aria-label`/`aria-pressed`; ui/message-reactions.tsx:39 monta `reacao${'oes'}` = "reacaoões" (bug de plural no rotulo) | nenhum (L8) |
++| 16 | Compensacao de falha parcial (transporte ok e banco falha, ou o inverso) | LACUNA (P2) | V3 engole a falha do transporte | V2: transporte ok + upsert falha deixa reacao no WhatsApp e nao no banco; sem desfazer | nenhum (incluir em L8) |
++| 17 | Testes de reacoes | EQUIVALENTE (V2 tem outros) | useMessageReactions.test.tsx (175 l.), useReactionMutations.telemetry.test, MessageReactions.telemetry.test, message-reactions.test | h/__tests__/useMessageReactions.test.tsx, h/chat/__tests__/useMessageReactions.transport-rejection, uma-consulta, ui/__tests__/message-reactions.test.tsx. Falta: teste de ciclo de vida do canal de reacoes do ChatMessagesArea (StrictMode, 2 montagens, cleanup) | RT2 inclui teste de montar 2x |
++| 18 | A2/A3: hooks de realtime/reacao nao exportados no barrel | DECISAO | doc | V2 h/reactions/index.ts (4 l.) e h/team-chat/index.ts nao exportam useTeamMessageReactions; sem impacto | - |
++| 19 | Team chat: paginacao por cursor composto (A19) | EQUIVALENTE no cursor / LACUNA no estado | T/useTeamMessages.ts:25-46 `useInfiniteQuery`, `created_at\|id`, 50/pagina, `setQueryData` poda pagina | V2: janela nova pela RPC `get_team_messages_page` (200, useTeamMessages.ts:60) + "mais antigas" manual em components/team-chat/useTeamChatPanel.ts:181-220 (keyset `(created_at,id)` com aspas, 60/vez). Cursor MELHOR; mas `olderMessages` e estado local que nunca e podado nem atualizado (ver #20) | TC-006 (feito) |
++| 20 | Excluir/editar mensagem que esta na parte "mais antigas" | LACUNA (P1, bug) | V3 filtra/atualiza TODAS as paginas do cache (T/useTeamChatMutations.ts:onSuccess de delete e edit com `setQueriesData`) | useTeamChatPanel.ts:142-146 mescla `[...olderMessages, ...newestMessages]` e o primeiro vence; `handleDelete` (l.269) so invalida `queryKeys.messages`, que e a janela nova: mensagem apagada que veio de `olderMessages` continua na tela; editada continua com texto antigo; nenhum teste (pagination.test.tsx so cobre `fetchOlderMessages`) | NENHUM (L1) |
++| 21 | Realtime de mensagens da equipe | MELHOR_NA_V2 no tipo de evento, LACUNA no topic | T/useTeamMessages.ts:77-114 so INSERT, `setQueryData` otimista, topic com sufixo | V2 useTeamMessages.ts:71-80 `event:'*'` com filtro `conversation_id`, invalida (edicao/exclusao tambem chegam); topic fixo | L4; DELETE: ver #22 |
++| 22 | Evento DELETE com filtro e `REPLICA IDENTITY DEFAULT` | NAO_VERIFICADO (provavel lacuna P2) | n/a (V3 nao escuta DELETE) | migration 20260929410000 (e47) voltou `team_messages` para REPLICA IDENTITY DEFAULT; no Supabase Realtime o filtro nao e avaliavel em DELETE, entao a exclusao feita por OUTRO membro pode nao chegar ao painel aberto (so o canal sem filtro `team-chat-updates` recebe e ele invalida apenas a lista) | NENHUM (L4, conferir em runtime) |
++| 23 | Realtime de reacoes da equipe: tabela publicada? | LACUNA provavel (P1) | T/useTeamMessageReactions.ts:55-73 escuta `team_message_reactions` | nenhuma migration faz `ALTER PUBLICATION supabase_realtime ADD TABLE public.team_message_reactions` (grep em todas; so team_messages, team_conversation_members, team_message_receipts, team_conversations, message_reactions). Se o banco real tambem nao tem, a reacao de outro membro so aparece apos refetch (staleTime 30 s / foco). Vale tambem para a V3 | NENHUM (L2; Claude confirma no banco) |
++| 24 | Toggle de reacao da equipe | MELHOR_NA_V2 | T/useTeamMessageReactions.ts:96-110: le `reactions` do cache e escolhe insert/delete (corrida com cache velho; duplo clique pode inserir 2x; so o UNIQUE salva) | useTeamMessageReactions.ts:88-120: RPC `toggle_team_reaction` (F43), confere vinculo da mensagem com a conversa, otimista com rollback + `onSettled` invalida; trigger `team_reactions_dedup_guard`, trigger que forca `conversation_id` (20261006222024), UNIQUE `team_message_reactions_unique` | feito |
++| 25 | Busca de reacoes da equipe | MELHOR_NA_V2 | T/...:36-48 duas etapas (todos os ids de mensagem e depois `.in(message_id, ids)`: URL gigante e limite de 1000 linhas) | V2 `.eq('conversation_id')` (coluna adicionada em 20260927630000). Obs.: sem paginacao; acima de 1000 reacoes na conversa o PostgREST trunca em silencio (P2 teorico) | - |
++| 26 | A17: `safeClient` misturado com `supabase` cru | MELHOR_NA_V2 | doc A17; T/useTeamChatMutations.ts usa os dois | V2 nao tem `safeClient` (grep vazio); tudo `supabase` + RPCs `SECURITY DEFINER` (find_or_create_direct_conversation, create_team_group_conversation, set_team_member_pref, transfer_team_conversation_ownership, mark_team_conversation_read) | - |
++| 27 | Enviar mensagem | EQUIVALENTE | insert + `update team_conversations.updated_at` + append otimista no cache | V2 useSendTeamMessage (useTeamChatMutations.ts:7-38): sem otimismo (invalida), restaura rascunho em falha (useTeamChatPanel.ts:262-266, teste send-draft); o `update updated_at` do cliente e redundante: trigger `after_team_message_insert_bump_conversation` (20260927270001) ja faz e a politica de UPDATE de `team_conversations` e so do criador, entao para os demais membros e no-op silencioso | L9 (limpeza) |
++| 28 | Idempotencia do envio | EQUIVALENTE (nenhuma das duas) | sem client id | sem client id; duplo clique depende da trava do painel | - |
++| 29 | Excluir mensagem | EQUIVALENTE | `.delete()` fisico (o doc errou: nao e soft) | `.delete()` fisico; politica "Senders can delete own messages" (20260404172933) | - |
++| 30 | Politicas de escrita sem checar vinculo atual | NAO_VERIFICADO | n/a | DELETE/UPDATE de `team_messages` filtram so `sender_id = current_profile_id()` (migrations 20260404172933 / 20260928480000): quem saiu do grupo ainda apaga/edita as proprias mensagens antigas. Gatilho e28 so protege `content` de terceiros | L7 (Claude confere no banco) |
++| 31 | Editar mensagem | MELHOR_NA_V2 | update direto de `content` | trigger `team_messages_edit_guard` (e28) | - |
++| 32 | Criar conversa (direta/grupo/departamento) | MELHOR_NA_V2 | T/useTeamChatMutations.ts:200-290: N consultas para achar DM existente + 2 inserts nao atomicos (conversa e membros) | RPCs atomicas `find_or_create_direct_conversation` e `create_team_group_conversation` (TC-003) | - |
++| 33 | Silenciar | MELHOR_NA_V2 | update direto (0 linhas = falso sucesso) | RPC `set_team_member_pref` levanta `not_member` | - |
++| 34 | Status entregue/lido da mensagem (`useUpdateTeamMessageStatus`) | DECISAO | UPDATE de `team_messages.status` pelo cliente | cliente sem UPDATE em `status` (grant por coluna); recibos em `team_message_receipts` via RPC `mark_team_conversation_read` (F55, TC-010) | - |
++| 35 | Nao lidas da lista | MELHOR_NA_V2 | T/useTeamConversations.ts: 1 query em janela de 30 dias | RPC `get_team_unread_counts` (e17) + inbox RPC; `refetchInterval` 30 s e realtime | - |
++| 36 | Transferir conversa | DECISAO a tomar (semantica diferente) | `useTransferTeamConversation` troca `department_id` (+metadata) de uma conversa de departamento | V2 `TransferConversationDialog` + `useTransferConversation` (useTeamChatMutations.ts:233) transfere a PROPRIEDADE do grupo para um membro; nao existe mover conversa de departamento para outro departamento | L10 (P2, decisao) |
++| 37 | Busca dentro da conversa da equipe | LACUNA (P2) | T/useTeamMessages.ts:51-54 `ilike` no servidor com `sanitizePostgrestFilter`, pagina o resultado | useTeamChatPanel.ts:224-230 filtra em memoria so o que ja foi carregado (200 + mais antigas abertas). O banco JA tem `search_team_messages(p_conversation_id,p_query,p_limit)` (20260929290000) e nenhuma tela chama (so aparece em `types.ts`) | NENHUM (L5) |
++| 38 | Estado de erro das mensagens da equipe | LACUNA (P2) | T/useTeamMessages.ts devolve `isError`, `error`, `hasNextPage`, `isFetchingNextPage` | V2 useTeamMessages.ts:125 devolve so `{messages, isLoading}`: se a RPC falhar, a tela mostra conversa vazia como se nao houvesse mensagens; `fetchOlderMessages` em erro so loga (useTeamChatPanel.ts:217) | NENHUM (L6) |
++| 39 | Ressincronizacao apos reconexao | LACUNA coberta/parcial | n/a (V3 tambem nao tem para team chat) | useTeamMessages e useTeamMessageReactions nao reconsultam ao reconectar (sem `refetchInterval`); PD-76 lista `useTeamChatNotifications` e `team-chat-updates`, nao esses dois | PD-76 (acrescentar) |
++| 40 | RLS: quem le/escreve | NAO_VERIFICADO no banco real | V3: igual (members) | migrations: SELECT de `team_messages` = membro (`is_team_conversation_member`); INSERT = membro e `sender_id` proprio; reacoes: SELECT por membro, INSERT por RPC com guarda (20260930260000), DELETE so do autor (`reactions_delete`). Existem politicas antigas e novas somadas em `team_message_reactions` (0902 `team_message_reactions_*` e 0929 `reactions_*`) | L7 (Claude lista `pg_policies`) |
++| 41 | Canais de digitacao/presenca da equipe privados | LACUNA coberta | n/a | `team-typing-`/`team-presence-` sem `private:true`, sem politica em `realtime.messages` | PD-68, PD-69 |
++| 42 | A5: `bulkArchive` deve arquivar (soft) e nao desatribuir | LACUNA (P1, bug real) | teste h/__tests__/useInboxBulkActions.test.ts (regressao do bug "Arquivar em lote fazia update assigned_to:null") + `updateStatusBulk(ids,'archived')`, undo `'active'` | h/inbox/useInboxBulkActions.ts:97-137: `update({ assigned_to: null })` (o MESMO bug da V3); o teste da V2 (hooks/inbox/__tests__/useInboxBulkActions.test.ts:374-420) CODIFICA o comportamento errado (`payload: { assigned_to: null }`). Resultado: "Arquivar" da selecao em massa so desatribui o contato e a conversa continua na lista. O arquivamento real da V2 e `conversation_status='archived'` (hooks/inbox/useBulkActions.ts:128-139, FSM `enforce_conversation_status_transition`; RS1 cita `useArchiveConversationActions`) | RS1 so separa Resolver/Encerrar/Arquivar no menu do cabecalho; NAO cobre o lote. NENHUM (L3) |
++| 43 | A19: busca com `sanitizePostgrestFilter` | NAO_APLICA hoje | `.ilike` com sanitizacao | V2 nao envia a busca ao servidor (#37); ao usar `search_team_messages` (RPC com parametro tipado) nao ha interpolacao em filtro | - |
++| 44 | Testes do team chat | MELHOR_NA_V2 | team-chat-comprehensive, team-chat-security-gaps, useTeamChatPanel.extra, TeamMessageItem.status, useTeamPerformance.contract | V2 tem 13 arquivos em components/team-chat/__tests__ + 22 em hooks/team-chat/__tests__ (inclui rls-contract.test.ts, toggle-rpc, read-state, membership). Faltam so: poda/edicao em `olderMessages`, DELETE por outro membro, erro da RPC de pagina | L1, L6 |
++
++Contagem exata na secao 4.
++
++## 2. Lacunas reais sem cartao, priorizadas
++
++### P1
++
++**L1. Mensagem apagada/editada nas "mais antigas" nao some / nao atualiza (bug V2, V3 correto)** - perfil: hugo.
++- O que implementar: `olderMessages` (estado local) precisa acompanhar delete/edit. Opcoes: (a) em `handleDelete`/`handleSaveEdit` podar/atualizar `olderMessages` alem de invalidar; (b) migrar as paginas antigas para `useInfiniteQuery`/cache do react-query como na V3, para `setQueriesData` valer para todas as paginas; (c) no merge preferir a copia de `newestMessages` quando o id existir nas duas. Tambem reconciliar ao receber realtime de UPDATE/DELETE. Teste: abrir mais antigas, apagar uma mensagem dela, ela sai; editar, texto novo aparece.
++- Arquivos: `src/components/team-chat/useTeamChatPanel.ts` (l.64-66, 142-146, 181-220, 269-276), `src/hooks/team-chat/useTeamChatMutations.ts`, `src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx`.
++
++**L2. Reacoes da equipe sem realtime se `team_message_reactions` nao estiver publicada** - perfil: workersql (+ conferencia do Claude no banco).
++- Evidencia: nenhuma migration adiciona a tabela a `supabase_realtime` (so message_reactions, team_messages, team_conversation_members, team_message_receipts, team_conversations). O hook `useTeamMessageReactions.ts:64-76` depende disso. Implementar: `ALTER PUBLICATION supabase_realtime ADD TABLE public.team_message_reactions;` idempotente (DO block como em e34) e, para o evento DELETE chegar, `REPLICA IDENTITY FULL` (com a RLS de SELECT por membro) ou aceitar invalidacao por UPDATE/INSERT; prova no banco local com 2 sessoes. `-- Rollback:`.
++- Arquivos: `supabase/migrations/<ts>_team_message_reactions_realtime.sql` (novo), teste em `supabase/tests/`.
++
++**L3. "Arquivar" em lote na caixa de entrada so desatribui (A5)** - perfil: hugo (com iris se mudar o texto do toast).
++- Evidencia acima (#42). Implementar: `bulkArchive` deve gravar `conversation_status='archived'` pelo mesmo caminho do arquivamento individual (respeitando o FSM, so contatos com UUID), guardar o `conversation_status` e o `assigned_to` anteriores para o desfazer (5 s) e NAO tocar em `assigned_to`; atualizar o teste que hoje exige `{assigned_to:null}`; selecao vazia e ids nao-UUID = no-op (contrato da V3). Conferir se `archivedTab` (A10) exclui os arquivados da lista principal.
++- Arquivos: `src/hooks/inbox/useInboxBulkActions.ts`, `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`, `src/hooks/inbox/useBulkActions.ts` (referencia do payload), `src/hooks/inbox/useUndoableAction*`.
++
++### P2
++
++**L4. Canais da equipe com nome fixo e sem ressincronizacao** (`team-messages-${id}`, `team-reactions-${id}`) - perfil: hugo. Usar `uniqueRealtimeTopic` (lib/realtimeTopic.ts) e `useSupabaseRealtime`/refetch ao reconectar, junto ao PD-76 (que ja lista `team-chat-updates` e `team-chat-notifications`; avisar o dono do PD-76 para incluir esses dois). Conferir em runtime se a exclusao feita por outro membro chega ao painel aberto (filtro em DELETE + REPLICA IDENTITY DEFAULT); se nao chegar, escutar DELETE sem filtro e podar pelo id (ou invalidar tambem `messages(conversationId)` no canal `team-chat-updates`). Arquivos: `src/hooks/team-chat/useTeamMessages.ts`, `useTeamMessageReactions.ts`, `useTeamConversations.ts`, testes sob StrictMode (modelo: `src/hooks/__tests__/realtimeSharedTopic.test.tsx`).
++
++**L5. Busca da conversa da equipe so olha o que esta carregado** - perfil: hugo (+ iris para o estado "buscando"/"sem resultado"). Chamar a RPC `search_team_messages` (ja no banco, `SECURITY DEFINER`, `authenticated`) com debounce e mostrar resultados com link para a mensagem; manter o filtro em memoria como atalho. Arquivos: `src/components/team-chat/useTeamChatPanel.ts` (l.224-230), novo hook em `src/hooks/team-chat/`, `TeamChatHeader.tsx`. Conferir antes no banco que a RPC checa vinculo do chamador.
++
++**L6. Erro ao carregar mensagens da equipe aparece como "conversa vazia"** - perfil: hugo + iris. Expor `isError`/`refetch` em `useTeamMessages` (hoje so `{messages,isLoading}`), mostrar estado de erro com "tentar de novo" e tratar falha de `fetchOlderMessages` (toast + manter `hasOlderMessages`). Testes: RPC falha -> mensagem de erro, nao lista vazia. Arquivos: `src/hooks/team-chat/useTeamMessages.ts:125`, `src/components/team-chat/useTeamChatPanel.ts:181-220`, `TeamChatPanel.tsx`.
++
++**L7. Politicas de escrita da equipe sem vinculo atual (conferir no banco)** - perfil: workersql. Se confirmado: DELETE/UPDATE de `team_messages` exigirem tambem `is_team_conversation_member(auth.uid(), conversation_id)`; consolidar as politicas antigas e novas somadas de `team_message_reactions` (0902 `team_message_reactions_*` + 0929 `reactions_*`). Prova com 3 papeis (membro, ex-membro, admin).
++
++**L8. Acabamento das reacoes do atendimento** - perfil: iris (componentes) + hugo (hook). (a) `handleReact` com try/catch e trava de pending (sem duplo envio a Evolution); (b) `aria-label="<emoji> <n> reacao(oes)"` e `aria-pressed` nos badges de `components/inbox/MessageReactions.tsx`; corrigir o plural em `components/ui/message-reactions.tsx:39` (`reação${n!==1?'ões':''}` produz "reaçãoões"; usar `n===1 ? 'reação' : 'reações'`); (c) `.maybeSingle()` no upsert; (d) mensagens de erro por status (401/403/504) e toast com id estavel; (e) compensar falha parcial entre Evolution e banco (ou avisar que a reacao so foi enviada ao WhatsApp). Arquivos: `src/components/inbox/MessageReactions.tsx`, `src/components/ui/message-reactions.tsx`, `src/hooks/reactions/useReactionMutations.ts`, testes. Coordenar com PD-90 (mesmo arquivo).
++
++**L9. Remover o `update team_conversations.updated_at` do cliente no envio** - perfil: hugo. O trigger `after_team_message_insert_bump_conversation` ja faz; para nao-criadores e no-op silencioso. Arquivo: `src/hooks/team-chat/useTeamChatMutations.ts:30`.
++
++**L10. Mover conversa de departamento para outro departamento (decisao do dono)** - perfil: iris + workersql se aprovado. A V3 tem `useTransferTeamConversation` (troca `department_id`); a V2 so transfere a propriedade do grupo. Perguntar ao Joaquim se a funcao e desejada; se sim, RPC com checagem de admin/owner.
++
++## 3. O que NAO consegui verificar (Claude confere no banco/runtime)
++
++1. `select * from pg_publication_tables where pubname='supabase_realtime' and tablename in ('team_message_reactions','team_messages','message_reactions')` e `relreplident` dessas tabelas (L2, #22).
++2. `select policyname, cmd, qual, with_check from pg_policies where tablename in ('team_messages','team_message_reactions','team_conversations','message_reactions')`: politicas somadas por OR, ex-membro apagando/editando (L7), e se existe politica de SELECT de `message_reactions` que impeca o `.single()` pos-upsert.
++3. Existencia e corpo da RPC `search_team_messages` (a migration foi "recuperada do ledger"): checa membro? limita resultado? (L5). Idem `get_team_messages_page`, `toggle_team_reaction`, `mark_team_conversation_read`.
++4. Runtime: a exclusao por outro membro chega ao painel aberto? O topic fixo `chat-reactions:${contato}` quebra com dois paineis do mesmo contato (ex.: ChatPopup e inbox)? Nao rodei testes nem a aplicacao (maquina no limite).
++5. UNIQUE `(message_id, user_id, emoji)` em `message_reactions` no banco real (a migration inicial 20251220181300 declara; pode ter sido alterada fora do Git).
++6. Se `useTeamMessages` ainda e usado fora do painel (ex.: popup) onde o topic fixo colidiria: grep so achou `useTeamChatPanel.ts:85`.
++7. Detalhes de UI do dialogo de transferencia da V3 (se lista departamentos); so li o hook.
++
++## 4. Resumo numerico
++
++44 itens: EQUIVALENTE 9, MELHOR_NA_V2 14, DECISAO 5, LACUNA ja coberta por cartao 7 (RB1/PD-65/PD-76/PD-89/PD-90/PD-68-69/RT2), LACUNA sem cartao 6 (L1, L3, L5, L6, L8, L9; mais L2 e L10 como lacunas dependentes de conferencia/decisao), NAO_VERIFICADO 3 (#22, #30, #40; viram L4/L7).
++Lacunas novas: P1 = L1, L2, L3; P2 = L4, L5, L6, L7, L8, L9, L10.
+--- a/docs/plans/PLANO_PARIDADE_V3_DOC_07_SEGUNDA_PASSADA_2026-10-13.md
++++ b/docs/plans/PLANO_PARIDADE_V3_DOC_07_SEGUNDA_PASSADA_2026-10-13.md
+@@ -0,0 +1,70 @@
++# Plano de paridade V3 → V2 — doc 07 (inbox: serviços, hooks especializados e utils), segunda passada
++
++Data: 13/10/2026. Pedido do Joaquim: auditar `docs/estado/07-features-inbox-services.md` da V3 e achar o que existe lá e não existe (ou é pior) na V2.
++
++## 1. Como foi feito
++- O doc 07 (junto com o 06) já tinha sido auditado em 12/10 (cartões `PD-61..PD-95`). Esta é a **segunda passada**: 4 leitores em paralelo, somente leitura, comparando o **código real da V3** (o documento é de agosto e está defasado) com a V2, **por comportamento**, e reportando só o que não tem cartão.
++- Recortes: (1) leitura de mensagens, status do WhatsApp, presença e identidade de contato; (2) voz, SIP, cache de mídia e métricas; (3) reações e Team Chat; (4) inventário de tabelas, RPCs, exports, utils e arquivos fora do documento.
++- Eu conferi cada achado P1 no código da V2 antes de criar cartão. Três achados foram **cortados ou reduzidos** (ver §4). O banco real não foi consultado: os cartões de banco mandam conferir no banco local antes de alterar.
++- Relatórios completos (fonte), em `docs/audits/` (3 arquivos neste cartão; a PARTE4 vai em cartão próprio, t_6587228b, filho deste — limite de 90k do fechar; os números do §2 cobrem a 2ª passada inteira, 4 partes):
++  - `AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE1_MENSAGENS_PRESENCA.md`
++  - `AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE2_VOZ_SIP_MIDIA.md`
++  - `AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE3_REACOES_TEAMCHAT.md`
++
++## 2. Resultado em números (167 comportamentos)
++| Classificação | Itens |
++|---|---|
++| Equivalente | 44 |
++| **V2 melhor que a V3** | 40 |
++| Decisão (não portar) | 33 |
++| Lacuna já coberta por cartão | 15 |
++| Código morto na V3 | 4 |
++| **Lacuna real sem cartão** | 31 (virou 15 cartões) |
++
++A V2 está claramente melhor que a V3 em: reações em lote (transporte antes da gravação), toggle de reação da equipe por RPC atômica, paginação por cursor com desempate, presença com TTL no servidor, SIP (token de tentativa, aba líder, 403 = linha em uso, ~20 testes), agente de voz (um comando substitui o outro), Edges de voz (autenticação, limite persistente, ledger de custo).
++
++O doc 07 está errado em vários pontos (a V3 real lê `messages` por UUID e não `evolution_messages`; o retry real tem 2 tentativas/500 ms; o SIP real não tem estado `reconnecting`; o `useVoiceAgent` da V3 é uma casca). Não use o doc como especificação.
++
++## 3. Cartões (PH-01..PH-15 + PH-00 de documentação)
++**P1 (prioridade 6):**
++- PH-01 hugo — "Arquivar" em lote do inbox só tira o responsável; passa a arquivar de verdade (e corrige o teste que exige o erro).
++- PH-02 workersql — sinal de "agente ausente" usa a presença real (`agent_presence`) em vez de `user_sessions.last_activity_at`.
++- PH-03 edgar — `find-status-messages` só devolve status de contato que o usuário pode ver.
++- PH-04 hugo — Team Chat: busca no servidor, estado de erro e reconciliação das mensagens "mais antigas".
++- PH-05 workersql — LGPD de `voice_command_logs`: limite de tamanho, apagar os próprios, expurgo por prazo, política.
++- PH-06 edgar — voz: não logar a fala do usuário; timeout nas chamadas ao ElevenLabs.
++- PH-07 hugo — mídia do WhatsApp vencida passa a ser recuperada pelo front (liga a Edge `recover-message-media`).
++- PH-08 hugo — SIP desregistra e para o ramal ao desmontar, sair e fechar a aba.
++- PH-09 workersql — Team Chat no banco: publicação realtime, REPLICA IDENTITY, UPDATE/DELETE de ex-membro, políticas somadas (conferir antes).
++
++**P2 (prioridade 5):** PH-10 hugo (realtime do Team Chat), PH-11 iris (reações: plural, pending/erro), PH-12 hugo (contato aberto fora da lista), PH-13 hugo (robustez da voz), PH-14 iris (voz e vídeo: autoplay, falha de TTS, vídeo sem spinner eterno), PH-15 workertestes (testes ausentes).
++
++**Documentação:** PH-00 worker — grava esta auditoria e este plano em `docs/audits/` e `docs/plans/`.
++
++**Adicionados em 13/10 (ordem do Joaquim):**
++- PH-16 hugo `t_38e58f50` — status do WhatsApp: sem `send-chat-presence`, token de geração por telefone, conexão do contato.
++- PH-17 hugo `t_5b8b86cf` — hook que liga a RPC `transfer_team_conversation_department` (já existe no banco, sem chamador).
++- PH-18 iris `t_47e2d408` — diálogo "Mover para outro departamento" (filho do PH-17).
++
++## 4. O que foi cortado depois da conferência
++- "Marcar sussurro como lido" sem política de UPDATE: não se confirma na V2 (o sussurro foi refeito em WH1/WM1/RL1, ainda sem integrar). Sem cartão.
++- Acessibilidade dos badges de reação: `aria-label` e `aria-pressed` já existem; o defeito real é só o plural "reaçãoões" (PH-11).
++- Contato fora da lista: a V2 já tem carregamento de contingência; falta só guarda de UUID e estado de erro (PH-12).
++- Presença `paused` do status do WhatsApp (efeito colateral ao abrir): vai como comentário no cartão WS1, sem cartão novo.
++
++## 5. Decisões que dependem do Joaquim (sem cartão)
++1. ~~Transferir conversa entre departamentos~~ — DECIDIDO: portar (PH-17, PH-18).
++2. Dois `useVoiceAgent` na V2 (`hooks/voice/` e `hooks/communication/`): o PH-13 verifica qual vale e só remove o morto se nada importar.
++
++## 6. Como será validado (no fim)
++Para cada cartão: relato com a linha de resultado dos testes, `zapp-verify . --rapido` verde, e, nos de banco, prova no banco **local** com os papéis reais (sem papel, agent, supervisor, admin). Eu confiro a integração na `dia` e reviso o que o revisor recusar. Nada vai para produção sem autorização.
++
++## 7. Não consegui verificar
++Banco real (políticas finais, publicação realtime, dados de `user_sessions`, cron e linhas de `voice_command_logs`); runtime; autoplay no Safari/iOS; se o logout desmonta o provedor de chamadas e por quanto tempo o REGISTER do SIP vale no servidor.
++
++## 8. Atualização de 13/10 08:15 — 3 cartões a mais e decisão tomada
++- **PH-16** hugo `t_38e58f50` — status do WhatsApp: abrir o status não envia presença ao contato, resposta atrasada é ignorada, usa a conexão do contato (antes só um comentário no WS1).
++- **PH-17** hugo `t_5b8b86cf` — Team Chat: hook para mover conversa de departamento (liga a RPC `transfer_team_conversation_department`, hoje sem chamador).
++- **PH-18** iris `t_47e2d408` — Team Chat: diálogo "Mover para outro departamento" (admin e supervisor), depende do PH-17.
++- A decisão 1 do §5 (transferir conversa entre departamentos) foi **tomada**: portar (PH-17/18). Resta só a decisão 2 (`useVoiceAgent` duplicado), que o PH-13 verifica.
++- Total: **19 cartões** (PH-00..PH-18). Acompanhamento: `python3 ~/arquitetura-v2/paridade-07/acompanhar.py`. Validação final = todos `NA_DIA` e, nos de banco, prova no banco local conferida.

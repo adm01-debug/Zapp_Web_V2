@@ -1,0 +1,10 @@
+fix(auth-login): rollback executavel da migration consume_login_gate
+
+O fechar exige o rollback como SQL executavel e comentado nas primeiras
+linhas da migration (regra de 08/10); o cabecalho trazia o DROP na propria
+linha "Rollback:". Passa a ter a linha "Rollback (SQL executavel)" seguida de
+"--   drop function if exists ...". O teste de banco extrai a linha por esse
+formato e continua executando o rollback e reaplicando a migration.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

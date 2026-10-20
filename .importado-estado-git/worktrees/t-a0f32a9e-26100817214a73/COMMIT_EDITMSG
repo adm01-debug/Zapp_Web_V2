@@ -1,0 +1,12 @@
+fix(ci/devops): Filtrar workflow_runs por head_branch automation/types- (SL-024)
+
+O passo "Destravar os checks do PR de sincronizacao" filtrava o
+listWorkflowRunsForRepo apenas por head_sha + status: run de outra branch no
+MESMO commit entrava no laco e era aprovado pelo GITHUB_TOKEN (G-25).
+
+A consulta passa a filtrar tambem head_branch: 'automation/types-sync', a
+mesma branch que o create-pull-request abre.
+
+Teste novo: scripts/ci/types-sync-workflow.unit.mjs roda o proprio script do
+workflow contra a API de mentira e prova que run de outra branch no mesmo SHA
+nao e aprovado (vermelho com o codigo antigo: 3 falhas; verde com o fix).

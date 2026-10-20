@@ -1,0 +1,4 @@
+fix(talk-x): autosave não marca uso do segmento e traduz os erros do rascunho (X123)
+
+# Conflicts:
+#	src/components/talkx/TalkXCampaignWizard.tsx

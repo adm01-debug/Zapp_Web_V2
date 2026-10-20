@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 Joaquim Ataides <ti@promobrindes.com.br> 1791208480 -0300	
+2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 Joaquim Ataides <ti@promobrindes.com.br> 1791208481 -0300	reset: moving to HEAD
+2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 307c404de3ef101e311a7188f19230d308375ad1 Joaquim Ataides <ti@promobrindes.com.br> 1791208555 -0300	cherry-pick: feat(ci): db-migrate aceita lote de migrations via lote_versions
+307c404de3ef101e311a7188f19230d308375ad1 fddd56d426b313300efa99b7c3afac8a3455bf23 Joaquim Ataides <ti@promobrindes.com.br> 1791208555 -0300	cherry-pick: fix(ci): passo de runtime do db-migrate volta a aceitar contrato generico
+fddd56d426b313300efa99b7c3afac8a3455bf23 31323a62db23688fd2249c1f02ad27154753a6d6 Joaquim Ataides <ti@promobrindes.com.br> 1791208555 -0300	cherry-pick: test(ci): executa o passo real de runtime no teste do lote do db-migrate
+31323a62db23688fd2249c1f02ad27154753a6d6 2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 Joaquim Ataides <ti@promobrindes.com.br> 1791209419 -0300	reset: moving to 2d3dd7b8d
+2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 2dfa34bb8aef8ec82979290ec65ba1d26d9e1cbc Joaquim Ataides <ti@promobrindes.com.br> 1791209425 -0300	commit: feat(ci): db-migrate aplica lote de migrations com escopo exato e fail-closed fora dele (QA5-01)

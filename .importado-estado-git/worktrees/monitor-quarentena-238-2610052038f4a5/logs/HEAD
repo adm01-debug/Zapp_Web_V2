@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fe6760cf1188415069f4a00c2fed7b0fee923305 Joaquim Ataides <ti@promobrindes.com.br> 1791243512 -0300	
+fe6760cf1188415069f4a00c2fed7b0fee923305 fe6760cf1188415069f4a00c2fed7b0fee923305 Joaquim Ataides <ti@promobrindes.com.br> 1791243513 -0300	reset: moving to HEAD
+fe6760cf1188415069f4a00c2fed7b0fee923305 166888094d17939570871b4af6155e61ddb157e0 Joaquim Ataides <ti@promobrindes.com.br> 1791244239 -0300	commit: fix(quarentena): reconciliar cache do monitor e retomar em falha transitória

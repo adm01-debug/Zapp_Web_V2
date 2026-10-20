@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791223847 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 df32c30509d2989e125dd1923893c4f5f65fd418 Joaquim Ataides <ti@promobrindes.com.br> 1791223890 -0300	commit (cherry-pick): fix(inbox): nao descarta a gravacao de audio quando o envio falha (R2-INB-022)

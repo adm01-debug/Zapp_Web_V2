@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 81619a359dc43c9aee3939a15ec13ba18f23b646 Joaquim Ataides <ti@promobrindes.com.br> 1791210213 -0300	branch: Created from dia/2026-10-05
+81619a359dc43c9aee3939a15ec13ba18f23b646 1669bb56f18b8f05e73d15786858a55f3a598a39 Joaquim Ataides <ti@promobrindes.com.br> 1791211229 -0300	commit: fix(ai-timeout): deadline unico cobre corpo/parse e log essencial vira recuperavel (IA-TIMEOUT-001)

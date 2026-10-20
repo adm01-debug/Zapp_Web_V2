@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 6c57dfa54443435babc08970f517261076314176 Joaquim Ataides <ti@promobrindes.com.br> 1791345290 -0300	branch: Created from dia/2026-10-07
+6c57dfa54443435babc08970f517261076314176 43c1cfe7c6c52d9c2822454f451211dd655a44f1 Joaquim Ataides <ti@promobrindes.com.br> 1791345296 -0300	cherry-pick: fix(email): preserva rascunho rapido ao trocar conversa (#288)
+43c1cfe7c6c52d9c2822454f451211dd655a44f1 9cfd1f23ef96e8c66312bc5694642598762fb34d Joaquim Ataides <ti@promobrindes.com.br> 1791346986 -0300	commit: fix(email): reidrata rascunho rapido quando a chave da conversa muda (#288)

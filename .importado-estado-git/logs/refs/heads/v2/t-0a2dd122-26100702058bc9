@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 2feceb06c79e013544cd76efdf7363eb311dd7d9 Joaquim Ataides <ti@promobrindes.com.br> 1791349535 -0300	branch: Created from dia/2026-10-07
+2feceb06c79e013544cd76efdf7363eb311dd7d9 50973d5e9bede64f07be39ae99143b93863c6c4c Joaquim Ataides <ti@promobrindes.com.br> 1791350523 -0300	commit: fix(talkx): exige base legal na reabertura por retry
+50973d5e9bede64f07be39ae99143b93863c6c4c e5bdaa6257e266bde809b0e8e72df8b4f8b59033 Joaquim Ataides <ti@promobrindes.com.br> 1791540923 -0300	rebase (finish): refs/heads/v2/t-0a2dd122-26100702058bc9 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+e5bdaa6257e266bde809b0e8e72df8b4f8b59033 94852222cbc8e7c749a1dce63977add7141e6f0b Joaquim Ataides <ti@promobrindes.com.br> 1791541236 -0300	commit: fix(talkx): rollback executavel da migration de reabertura por retry

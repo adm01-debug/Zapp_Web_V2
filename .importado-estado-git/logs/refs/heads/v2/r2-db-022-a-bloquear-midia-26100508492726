@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791200995 -0300	branch: Created from dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 526d5a7b9e79722dceb3bc8117452e1471846398 Joaquim Ataides <ti@promobrindes.com.br> 1791201000 -0300	cherry-pick: fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)
+526d5a7b9e79722dceb3bc8117452e1471846398 81d78b5db84709197dffea9ddcdc2328b9cac603 Joaquim Ataides <ti@promobrindes.com.br> 1791202576 -0300	commit (amend): fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1dcf8dda0d44f9c647a24ef6146f54cf882490f3 Joaquim Ataides <ti@promobrindes.com.br> 1791291005 -0300	branch: Created from dia/2026-10-06
+1dcf8dda0d44f9c647a24ef6146f54cf882490f3 bc229482a6b7b5f1953343ddd68e19804ac2f4a6 Joaquim Ataides <ti@promobrindes.com.br> 1791291027 -0300	cherry-pick: fix(db): fecha ACL de leitura dos buckets privados de mídia do WhatsApp (R2-DB-022 B)
+bc229482a6b7b5f1953343ddd68e19804ac2f4a6 0c046c1310f92610b34bb0cbe832fe3200a4e2f7 Joaquim Ataides <ti@promobrindes.com.br> 1791291027 -0300	cherry-pick: fix(db): prova forja bloqueada e ordena ACL de leitura após fronteira de escrita (R2-DB-022 B)
+0c046c1310f92610b34bb0cbe832fe3200a4e2f7 8ab2000801b280c915e123f758e64436cd6d3580 Joaquim Ataides <ti@promobrindes.com.br> 1791293243 -0300	commit: fix(db): reduz e endurece prova da ACL de mídia (R2-DB-022 B)

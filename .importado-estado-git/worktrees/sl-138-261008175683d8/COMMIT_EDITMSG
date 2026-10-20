@@ -1,0 +1,13 @@
+chore(ci): reinspeciona typecheck-ratchet.mjs — exit 2 do tsc ja corrigido (SL-138)
+
+Cartao SL-138 (DIV-1, NAO_VERIFICAVEL): re-inspecionar scripts/ci/typecheck-ratchet.mjs
+quebrado com exit 2 do tsc. A lacuna descrita em docs/design/INBOX_360_STATUS.md
+ja estava corrigida na base do dia (67a7d0445 e 40e483135): assertUsableCompilerResult
+aceita 0/1/2 e exige diagnostico parseavel fora do exit 0.
+
+Prova: sonda de erro de tipo real -> tsc -b --force exit 2 com diagnostico;
+script pre-fix (67a7d0445^) -> 'ERRO no typecheck ratchet: tsc -b falhou com exit 2';
+script atual -> processa a saida e falha pelo motivo certo (erro novo, exit 1).
+node --test scripts/ci/typecheck-ratchet.unit.mjs: 16/16. zapp-verify . --rapido: verde.
+
+Sem mudanca de codigo (diff vazio), conforme o cartao.

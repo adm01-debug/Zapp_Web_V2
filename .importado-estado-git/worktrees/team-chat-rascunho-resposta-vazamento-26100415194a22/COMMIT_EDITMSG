@@ -1,0 +1,8 @@
+fix(team-chat): isola rascunho e resposta por conta e por conversa (R2-AUTH-010)
+
+O rascunho era gravado em localStorage sem o dono (team_draft_<conv>), então
+atravessava contas no mesmo navegador; e o painel não remonta ao trocar de
+conversa, então texto e reply_to vazavam para a conversa seguinte. A chave
+passa a ser escopada por usuário (zapp.teamchat.draft:<user>:<conv>), o
+legado sem escopo é removido na montagem, e text/replyTo são zerados no
+render ao trocar de conversa — mesmo padrão de useFilesViewState.

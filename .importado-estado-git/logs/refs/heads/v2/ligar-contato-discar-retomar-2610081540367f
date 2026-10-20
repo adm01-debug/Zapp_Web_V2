@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d572c447dfea8aa4d924f19c51d8d349a445054a Joaquim Ataides <ti@promobrindes.com.br> 1791484816 -0300	branch: Created from dia/2026-10-08
+d572c447dfea8aa4d924f19c51d8d349a445054a da9c7ef9901a1cd9ca9007fe3b0b995f6f7a0062 Joaquim Ataides <ti@promobrindes.com.br> 1791484862 -0300	cherry-pick: feat(telefonia): Ligar do inbox disca na hora no cartão do contato
+da9c7ef9901a1cd9ca9007fe3b0b995f6f7a0062 3c8eb233786160ba57294a1b147dec6e9529a194 Joaquim Ataides <ti@promobrindes.com.br> 1791485305 -0300	commit: fix(telefonia): OutboundCallDialog tolerante fora do CallSessionProvider

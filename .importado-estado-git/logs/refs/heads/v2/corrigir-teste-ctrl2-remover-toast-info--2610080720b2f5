@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791454814 -0300	branch: Created from dia/2026-10-08
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 87397ab4f63bc8c870d1bd7d2b26dde3787e9a68 Joaquim Ataides <ti@promobrindes.com.br> 1791454824 -0300	cherry-pick: test(atalhos): regressão de integração do Ctrl+2 trocando a view do shell
+87397ab4f63bc8c870d1bd7d2b26dde3787e9a68 1c538cd84b15982314e0a66a0c8a347d804a7930 Joaquim Ataides <ti@promobrindes.com.br> 1791455067 -0300	commit (amend): test(atalhos): regressão de integração do Ctrl+2 trocando a view do shell

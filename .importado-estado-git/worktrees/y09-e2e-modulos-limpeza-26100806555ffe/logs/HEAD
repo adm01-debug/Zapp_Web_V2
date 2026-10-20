@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791453343 -0300	
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791453344 -0300	reset: moving to HEAD
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a ed03958396f7c2442b996ac353b8a62bda4cf81d Joaquim Ataides <ti@promobrindes.com.br> 1791453893 -0300	commit: test(e2e): varredura Y09 só tolera lacuna medida e sombra de console do mesmo endpoint
+ed03958396f7c2442b996ac353b8a62bda4cf81d 055d2fa01d8f65bd9a1ebdbae0ee3fdc864ccea2 Joaquim Ataides <ti@promobrindes.com.br> 1791454669 -0300	commit: test(e2e): sombra de console casada com a resposta medida que a precedeu (URL não vem no texto)
+055d2fa01d8f65bd9a1ebdbae0ee3fdc864ccea2 b719e7c677d0e5fde6627b44a1bd7320cdd11e64 Joaquim Ataides <ti@promobrindes.com.br> 1791455375 -0300	commit: test(e2e): guarda usa o mesmo formatador de ruido da varredura (nada de copia a mao)

@@ -1,0 +1,5 @@
+docs(db): bloco de rollback executavel comentado na migration do item 090
+
+O portao pede o SQL do rollback comentado logo depois da linha -- Rollback:.
+So o cabecalho mudou: nenhuma linha de DDL foi tocada (diff do DDL sem
+comentarios identico ao da versao aplicada no banco local).

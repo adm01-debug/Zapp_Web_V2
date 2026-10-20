@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524899 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524900 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 31f9926a6d903a7fe432d3dbb4437afd5901a9df workersql <workersql@hermes.local> 1791527169 -0300	commit: fix(db): messages so aceita sender agent pelo usuario autenticado (SEC-RLS-01)
+31f9926a6d903a7fe432d3dbb4437afd5901a9df 1edb7399395cc849867d5aa8eeb891b8cb6d493a workersql <workersql@hermes.local> 1791527174 -0300	commit (amend): fix(db): messages só aceita sender agent pelo usuário autenticado (SEC-RLS-01)

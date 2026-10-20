@@ -1,0 +1,1647 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "checks": [
+    {
+      "path": ".agents/skills/zapp-web-v2/agents/openai.yaml",
+      "git_blob_sha": "070b8b283e2b09b531278268e32eff77003e1b15",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".claude/ecc-tools.json",
+      "git_blob_sha": "b6339ea2fbb7f179c0b3c6f5b70d7ba7b5eafa71",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": ".claude/homunculus/instincts/inherited/zapp-web-v2-instincts.yaml",
+      "git_blob_sha": "e5acba1d66f8701b425333e8b5935fac4d980d3c",
+      "semantic_review_implied": false,
+      "status": "MIXED_FRONTMATTER_MARKDOWN_FORMAT",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution",
+      "limitation": "Contains Markdown plus YAML front matter; generic YAML parsing is inapplicable. Plugin loader compatibility was not certified."
+    },
+    {
+      "path": ".claude/identity.json",
+      "git_blob_sha": "cc095fb4ab12783f2fbaec0534417ff1cc488770",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": ".claude/settings.json",
+      "git_blob_sha": "df8954581c1e4cc15c9cf7b30e00774a403f5cc2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": ".codex/agents/docs-researcher.toml",
+      "git_blob_sha": "0daae570b16c18326a81568204dd828213c23dbb",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python tomllib; syntax only"
+    },
+    {
+      "path": ".codex/agents/explorer.toml",
+      "git_blob_sha": "732df7aff20d5c1d5aed8926cb9a640d866f9b5f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python tomllib; syntax only"
+    },
+    {
+      "path": ".codex/agents/reviewer.toml",
+      "git_blob_sha": "b13ed9cf1ffedccc2d36531d7f073f9a337d0ee7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python tomllib; syntax only"
+    },
+    {
+      "path": ".codex/config.toml",
+      "git_blob_sha": "bc1ee67f60844cb9744e0be8dc78bf97af259bf3",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python tomllib; syntax only"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "git_blob_sha": "c93a7e948749c654e200020c2529e1041304b8de",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "git_blob_sha": "a11a9aa91a17993dff60c6caa61274e9092fb6bc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "git_blob_sha": "813a0f4ac2f7d6fcc36fbe65eeacf4ebfcf12391",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "git_blob_sha": "5d779328043f23c1096738770f7ae91037fe3838",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/auto-update-pr-branch.yml",
+      "git_blob_sha": "00e5758916c54d147ec28e09db055ade4b45d41c",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/branch-hygiene-audit.yml",
+      "git_blob_sha": "dcd0b16debeb7b0e80c50f54c67dff0e5c261b7f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_blob_sha": "e6308213bcb911f4ad1a575b3b372635f87ef4a3",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "git_blob_sha": "d4a6b29605eb9f6901145c3fe81085fbddda8534",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/crm-sync-worker.yml",
+      "git_blob_sha": "3d69406223df5cd14ddafa14befdd39d736a7beb",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/db-guard.yml",
+      "git_blob_sha": "ab9a32e01d33aa3defdf6211d08d4ca5d111ad83",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/db-live-guard.yml",
+      "git_blob_sha": "83d6b1cd8ff1ffbb6dd41ac2defd371dd98d2df2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/db-migrate.yml",
+      "git_blob_sha": "bc443e4ae55738f18f87e7cbe8cfb31597c615a5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/deploy-functions.yml",
+      "git_blob_sha": "0d1919df39d8e9421df3b4f6e18ebc858110cdbb",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/e2e-logado.yml",
+      "git_blob_sha": "e59263a0cd33205b77d47f0e2bb8ee0ea02fbce8",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/e2e-talkx.yml",
+      "git_blob_sha": "7fd23456a3ecbf49e070c9c32b30f6b71885b761",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/settings-guard.yml",
+      "git_blob_sha": "bd72fadd3eda84c70d8492fd14492817bfa60e13",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/supabase-sync.yml",
+      "git_blob_sha": "bf01861d84122599986893b3d1b472d9e80642f4",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/talkx-status-regen.yml",
+      "git_blob_sha": "034fa740ac05e2ba8d1551ef3196e458e3ce616d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/targeted-ledger-evidence.yml",
+      "git_blob_sha": "c43a639eb1a7b96d5855acf639884bca01e935f8",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".github/workflows/types-sync.yml",
+      "git_blob_sha": "9e9a9d6c4162c8b21c8d31927031b43dd2dc64b5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "git_blob_sha": "e84a4747cd630ecda2364fc26c2e4fdd8f8446dc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python tomllib; syntax only"
+    },
+    {
+      "path": ".vscode/extensions.json",
+      "git_blob_sha": "3187acabda6b5049d4fd85d73b076dfb191be47d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": ".vscode/settings.json",
+      "git_blob_sha": "22087c806bce24be90411f2610ae3c11bfa9e29c",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "components.json",
+      "git_blob_sha": "62e101166a31ade477811bd31f6be1ae44d45423",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A3-01-result.json",
+      "git_blob_sha": "17ab2db431bc187cdbc9a2b537b2ebdaed166056",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A3-01-traffic.json",
+      "git_blob_sha": "3c54e0ce319493c29b2493b90a579558f28c10e2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A3-04-result.json",
+      "git_blob_sha": "7682b7c6bc9f4d31aedb2ea3fff6a00595193c4e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A3-04-traffic.json",
+      "git_blob_sha": "a3c29f3339c6a314db2588d636aed6619e28d585",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A4-BC-result.json",
+      "git_blob_sha": "f863776317554611f6daaab35284655cb42bd359",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A4-BC-traffic.json",
+      "git_blob_sha": "6b4c6411d9ed1f93c7c0f9d0a3d2504af6eb4156",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A4-D-result.json",
+      "git_blob_sha": "03c8fff32158a088fb88e246f4320b68bac3f519",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/A4-D-traffic.json",
+      "git_blob_sha": "916259f1563b43ba99a8c2c93dbdc2ab182fc487",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/explore-dom.json",
+      "git_blob_sha": "13f9fca98a937f630a33b67a19a9f914e27f6b06",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/explore5-buttons.json",
+      "git_blob_sha": "8728f329b1b8324d23ae2aff533d983c8ad49197",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/explore6.json",
+      "git_blob_sha": "c511a33e0758454e72ea8b3327f58f15474f2f77",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/explore7.json",
+      "git_blob_sha": "2f750a4217b7dd1a60449c9230ce7e3418e4e462",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w5/sanity-origins.json",
+      "git_blob_sha": "0f5624c6eee0c6df413660cc93e414b755b7f820",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/evidence/2026-09-22-hardening-validation.json",
+      "git_blob_sha": "a1efeb3e46cc9424d9dd4c577689d876e6f748bc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/evidence/2026-09-22-local-triage.json",
+      "git_blob_sha": "7d0dbc786de479d15c0920d95efc38b62a8ed789",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/evidence/2026-09-22-post-libpq-validation.json",
+      "git_blob_sha": "ef9ce8d273886727fe4a4b959ebec739e692f753",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/evidence/2026-09-22-sync-local-inventory.json",
+      "git_blob_sha": "229dddf2631609b299cf75dc61465e4512e24e0a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/evidence/branch-protection-2026-10-01.json",
+      "git_blob_sha": "3c44e62b9b94e58a772b15a707b3365296f49d74",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/evidence/branch-protection-2026-10-02.json",
+      "git_blob_sha": "6e6b45d75db943928c0dca026df92eba1bf4bb6f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/audits/onda3-260930/poc/team-chat-two-findings.test.sh",
+      "git_blob_sha": "68fc99a8be853984f65e0997f11a61835ace9ca0",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "docs/audits/talkx-revalidation-2026-09-11/evidence-snapshot.json",
+      "git_blob_sha": "d7a440b9b1d4f7f7e5ade6f88a525a3f937fae61",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/design/telefonia-baseline-2026-09-29/pos-fase-0.json",
+      "git_blob_sha": "d357268f46576a28c1698ca9cf693b53b7992616",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "git_blob_sha": "a0f19c04287a9f6bfd29dd2d723c044402242167",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python ast.parse; no execution"
+    },
+    {
+      "path": "docs/talkx/recovery/evidence/X023/preflight-2026-10-03.json",
+      "git_blob_sha": "703f1edfdba1a8ba68c0d3090469ec8ee467e00b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/talkx/references/MANIFESTO.json",
+      "git_blob_sha": "409998b88e34260747766627a7bcb46faf6b134a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/talkx/v4/etapas.json",
+      "git_blob_sha": "adf5ebfedae2e5dfc1fb6e1e7647e6c46bc59b94",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/tipografia/baseline-2026-09-22-pos.json",
+      "git_blob_sha": "b0b898fc4ceab161e87df1380aeb330033d9a6f2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "docs/tipografia/baseline-2026-09-22.json",
+      "git_blob_sha": "308796c9cfd696abb95f968732316ef7ee1d7e99",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/01-campanhas-visao-geral.json",
+      "git_blob_sha": "1ada011576885eaa8cb7fdc5c3fd2c5edd872ea2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/02-segmentos-biblioteca-detalhes.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/03-segmentos-criar-editar.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/04-templates-biblioteca.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/05-templates-criar-editar.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/06-lista-de-supressao.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/07-analytics.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/08-nova-campanha.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/09-revisao-final-confirmacao.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/10-campanha-agendada.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/11-monitor-ao-vivo.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/12-campanha-em-andamento.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/13-campanha-pausada-retomada.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/14-relatorio-campanha-concluida.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/15-importacao-vinculacao-crm360.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/16-ajuda-talkx.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/fixtures/talkx-demo/17-estados-sistema-modais.json",
+      "git_blob_sha": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "e2e/quarantine.json",
+      "git_blob_sha": "914a5406db17c690ff3ebadb99d95aec2d602d2a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/docker-compose.yml",
+      "git_blob_sha": "ff5d4b6850eb990893d7180b6cd30780308290cb",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "PyYAML safe_load; syntax only, YAML1.1 resolution"
+    },
+    {
+      "path": "package.json",
+      "git_blob_sha": "9ef9728c868dc404ad7c67af475be67a98c37be4",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "performance-budget.json",
+      "git_blob_sha": "900e1af901210529b0ead36b0315610d2323f044",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "public/manifest.json",
+      "git_blob_sha": "bf0a7ab85f202f993211f6c812e80fb8f8410bfe",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "public/version.json",
+      "git_blob_sha": "2714f4ef09322c30d28efe273829fbaa9c56416b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/ci/allowed-actions.json",
+      "git_blob_sha": "ec1ba788eb5ad9d1ed782ecbbc6df0ba171148cc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/ci/deno.json",
+      "git_blob_sha": "7d6f690df25ccb786917623c7ec89429509ee630",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/ci/eslint-baseline.json",
+      "git_blob_sha": "7961ccdc729ad826aed70b4bb091d9d2a9f16051",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/ci/github-settings-baseline.json",
+      "git_blob_sha": "02f9b4f11ebe04fc5f53bf15268bf4943536cbe5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/ci/implicit-any-baseline.json",
+      "git_blob_sha": "332894a205d85359c949044864433bc16e43ad79",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/ci/install-pgbouncer.sh",
+      "git_blob_sha": "35d4f658babc0b8ccff8387f1c6f3370e5c05987",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/ci/install-postgresql-client.sh",
+      "git_blob_sha": "4f1a4dc1e1916c4f7ab0b99b330b215cfe031e04",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/ci/typecheck-baseline.json",
+      "git_blob_sha": "3ea3c0d166426963163b117df6d8c34d606a4a74",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
+      "git_blob_sha": "f2b6914a8c0553106b395b761016075756be919b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/ai-read-policies-queue-scope.test.sh",
+      "git_blob_sha": "746d9e72e62770485024339465604119aa60d4c3",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/calls-telefonia-contract.test.sh",
+      "git_blob_sha": "a1982fa70f7d983fed7c5a04edb6baa0629100a2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/catalog-manifest.test.sh",
+      "git_blob_sha": "90ee8c16dcb323b1046fd42c099bd3844fb75130",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/check-mcp-exec-acl.test.sh",
+      "git_blob_sha": "d7678ba2125f35ceae92cf809b044b792779eb16",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
+      "git_blob_sha": "ca84a96c7a3d6add5df78d551b33e5c01c4456d6",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/check-webhook-failures-acl.test.sh",
+      "git_blob_sha": "26092b40ca35ef7047bbcfe539092d0d8458b881",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/contacts-legacy-visibility.test.sh",
+      "git_blob_sha": "452a2d76731a7348c7b957aac6f8a590c77faae8",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/contacts-soft-delete-and-status.test.sh",
+      "git_blob_sha": "66be0a61f0debef3267b6630222d4fc83062b1d5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/conversation-analyses-authorization.test.sh",
+      "git_blob_sha": "976c95d60c7c8d102be4f5dd8353cd6a8290a2e4",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/crm-sync-outbox-behavior.test.sh",
+      "git_blob_sha": "c78be19b5d0966a830b6caed11cdf778bf859c74",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/cron-secret-l5-contract.test.sh",
+      "git_blob_sha": "9efbb61d1332ece54d6a024c430e606c50bd875a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/database-identity.json",
+      "git_blob_sha": "5eeaedf12d1e8c82577d19be650c1119043e8913",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/drop-redundant-messages-external-id-index.test.sh",
+      "git_blob_sha": "a763e0da1405fd97b92001a090535ddb26c5ffa7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/enqueue-connection-scope.test.sh",
+      "git_blob_sha": "6dc7e1dc6f1a646212145a90b2bfc0a621aa2fef",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/f64-voz-assets-e-grants.test.sh",
+      "git_blob_sha": "e77c964de9c6feba7cb37274220f7f1f97bffb44",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/fixtures/talkx-personalize-parity.json",
+      "git_blob_sha": "cce27bf8f1a7331ff7741d3327944133560f3041",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/gen-types.sh",
+      "git_blob_sha": "eafd90df266633803db92e1269627fded570991f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/gen-types.test.sh",
+      "git_blob_sha": "d18aa236314e4b372720879947499e3a2add0c24",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/generic-migration-runtime.test.sh",
+      "git_blob_sha": "53af2ab1dda15942931ab34bdd485182589d7c22",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/grants-baseline.json",
+      "git_blob_sha": "3b8f96f811f79a3bc54b0bdd082472ee1fcafd89",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/inbox-contact-authorization.test.sh",
+      "git_blob_sha": "a7272fe7302f3857da8bc61761e1cc01f1c75d2d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/known-violations.json",
+      "git_blob_sha": "80de7cfee0a8abaa9114ad3f6872de9400b64c11",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/l11-departments-acl-escrita.test.sh",
+      "git_blob_sha": "b519e30d1a5d1fc66550c0d4a1c52b200abe2ed3",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/ledger-history-limitations.json",
+      "git_blob_sha": "f56531435930a251c4915633377bdbc4e614b7fc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/mapa-f1-address-contract.test.sh",
+      "git_blob_sha": "980a69a0bbc8bcbd66aed4e680ed8514a20913f8",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+      "git_blob_sha": "405e493087f8cc89db012a68f5c5a15e955b3576",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/migration-evidence.json",
+      "git_blob_sha": "46bec250e426af4521aa790774c2fbb58268531e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-delivery-leases.test.sh",
+      "git_blob_sha": "461817346b9bfe24dc79d113e6c213e357406dc7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-rls.test.sh",
+      "git_blob_sha": "ddeebeded076d066874cd0345ea58681df2a2d0b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-scope.test.sh",
+      "git_blob_sha": "f585bd05aa49853759d79c6402a742fe7caea80f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-send-mutation.py",
+      "git_blob_sha": "fbe817af1420abe4d94c98ad74cf209cc246f2e8",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python ast.parse; no execution"
+    },
+    {
+      "path": "scripts/db-audit/notification-delivery-atomicity.test.sh",
+      "git_blob_sha": "d223b26325c806c46f7665f2ab38acc8a4696e17",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/notify-due-tasks-authorization.test.sh",
+      "git_blob_sha": "4200d876bd6051582b7abac9a8399f3c67116fec",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "git_blob_sha": "cec86d4f4a7e7b841ae7d136fef0ae8d6c65966d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python ast.parse; no execution"
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-escalonamento.test.sh",
+      "git_blob_sha": "0136d8bbee837cd35670ce179fbe98008fa14ea5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/public-api-disable.test.sh",
+      "git_blob_sha": "39046c022f52d96661226e7027b79af63b89ba87",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/realtime-publication-baseline.json",
+      "git_blob_sha": "97dc2490267e988ce9abb86b76d7ac08f9f2444a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/db-audit/replay-local.sh",
+      "git_blob_sha": "06320298311a83d392086fcecc149e8453cc990c",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/retry-disposable-postgres-test.sh",
+      "git_blob_sha": "60702aa693ea83ec128c4a6fabc159ca21f64b5a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/runtime-config.test.sh",
+      "git_blob_sha": "0a9cdd662eb3c54e2910433ede98a9df97c045d4",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/scope-public-policies-authenticated.test.sh",
+      "git_blob_sha": "f0294a2358480232f00ae7949d4a915da2d4d8c7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/send-messages-permission-authorization.test.sh",
+      "git_blob_sha": "3c830651803bbea13fde469179b666c6ee37e1a6",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talk-me-client-privileges.test.sh",
+      "git_blob_sha": "7b61e7ca9fcb1e58d0c492387dfe05044db2c698",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talk-me-queue-contract.test.sh",
+      "git_blob_sha": "86941160cc05d1f1ceba8850e527259eccaf1898",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-audience-rpc.test.sh",
+      "git_blob_sha": "94d7473872c4f8e570f4690b907de7aaa881faaf",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-audience-snapshot.test.sh",
+      "git_blob_sha": "97fcb8cb9c5c660f3daad47f639def0c49f7a5bf",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh",
+      "git_blob_sha": "94caa8ff95e19104deb27fbacf1d0a5ad01d8a2d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-segments.test.sh",
+      "git_blob_sha": "519f57d4306a4761456bc9cccf3ee95fb2af0f5a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+      "git_blob_sha": "03c5e4931dcd93ffbc7fc3dbcf8013fd570d947e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-transitions.test.sh",
+      "git_blob_sha": "115cf06885ab415f7ccb5a8c36660e9e027f591d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-worker-lease.test.sh",
+      "git_blob_sha": "28d2c91d85445b0a12e7221a2f1f4e7506f47b65",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-counters-integrity.test.sh",
+      "git_blob_sha": "67417a4a8223211aa78ae8a7c4553479723a7529",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-current-template-version.test.sh",
+      "git_blob_sha": "24b121c82eac10856b648238552aea8ca37150bd",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-delivery-leases.test.sh",
+      "git_blob_sha": "6fa06ae5f531ca26d25ca964cd5bfa150d8c720b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-draft-recipients.test.sh",
+      "git_blob_sha": "02815987e189d04e8bcd8e69fd449441f5a3f8a7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-draft-save.test.sh",
+      "git_blob_sha": "3aa4bf86a5d6109ea614f3fb7d0d32f344ac1a64",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-engine-tick.test.sh",
+      "git_blob_sha": "cc22278f4a737ba2a621499d561fc0a41667f1b6",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-escape-hatch-auth.test.sh",
+      "git_blob_sha": "d8a5b91dd295a3dc844e43baec2d3778960d1f69",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-events-contract.test.sh",
+      "git_blob_sha": "cd9867192d16e735161056dc3e665a4328262fe7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-guards-fail-closed.test.sh",
+      "git_blob_sha": "d546111ae0c466d474822bbb25844f9361c027ab",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-history-saved-by-fk.test.sh",
+      "git_blob_sha": "ea543bbc03d95f10ca9ff755d129a67cffdfdb6b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-lifecycle-events.test.sh",
+      "git_blob_sha": "88c1a10e71ddd3e274b0ecf460e04aafe936c30d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-links-conversions.test.sh",
+      "git_blob_sha": "dd7babd5b3ba4fc635e4cab611d38572fcc933f5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-message-snapshot.test.sh",
+      "git_blob_sha": "c5138fe7bf2adf8f256af96923a53fce99e46cbc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-metrics-view-invoker.test.sh",
+      "git_blob_sha": "a7e46fd33e866363b0aefee7d64f90f863c916dc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-optout.test.sh",
+      "git_blob_sha": "062c52d4fc0481675b446a9ac296fe6bf5ee2bb0",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-overview-stats.test.sh",
+      "git_blob_sha": "c8887e8e6db4f97d24a6bb993b9d22485c8dcc36",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-receipts-replies.test.sh",
+      "git_blob_sha": "44e487c108f075d370223c2ace078ee770165e2e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-regressoes-chain.test.sh",
+      "git_blob_sha": "90c184953b6dec3489787fd82bbc73704c1f9aba",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-role-gates.test.sh",
+      "git_blob_sha": "0d2538474cb3c4b66535c32dcac40f226e465edc",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-send-budget.test.sh",
+      "git_blob_sha": "c96249c591a955feb158e823b42f2eabd5b3cce9",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-send-interval-teto-24h.test.sh",
+      "git_blob_sha": "df4a279b05a9029de6309b45eb0974b5b95f503f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-settings-replay-idempotent.test.sh",
+      "git_blob_sha": "d630f837d90ced607ebbf3f6e7f50359c6a0ca55",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-settings-rls.test.sh",
+      "git_blob_sha": "b7aaba71b98db126251e38a0426131f78f07fa8b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-suppress-phone-axis.test.sh",
+      "git_blob_sha": "a7223aa7d0fce61dc434c74fac2ccff6dc132236",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-template-history-behavior.test.sh",
+      "git_blob_sha": "40e569e66b1011c1972b57bdc3921a58882a3b4e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
+      "git_blob_sha": "d0e345dc07d1bce4a9bd6e10922698e682f5eb1b",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-update-limits-22009.test.sh",
+      "git_blob_sha": "e6f533c32795f6766443a114921775e7a66b41c8",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-update-limits-casts.test.sh",
+      "git_blob_sha": "acb083600168273dfe92cee092f7557d00461b9c",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-update-limits-rpc.test.sh",
+      "git_blob_sha": "c8e7dcfc2683d112c3068950221f9fd38e25250e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-update-limits-send-window.test.sh",
+      "git_blob_sha": "1300f64d0e4c4327012a2e64473d54c07b56a08d",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v12-lifecycle-events.test.sh",
+      "git_blob_sha": "28cfea1062d87f62a68124149ccb1300be2e1783",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v15-replied-count-guard.test.sh",
+      "git_blob_sha": "e9b19d54da20223a1cb7fc355a6825e68b81b0fd",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v16-time-series.test.sh",
+      "git_blob_sha": "3305ac8f65e62653051e5fc698a3ad96dc493527",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v17-read-at.test.sh",
+      "git_blob_sha": "14d66a1aa014f580d2304933b06aec4b8d2c5f13",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v19-retry-recipient.test.sh",
+      "git_blob_sha": "d073a74efadb5eb75fcd26fce7ee433c5b57c307",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v21-launch-flags.test.sh",
+      "git_blob_sha": "305f5713485f5a1233dbb5709ddcb19399cb2e2a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v23-draft-step.test.sh",
+      "git_blob_sha": "67509747cafab179ef1480b41e5fe87fd18b21c5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v25-owner.test.sh",
+      "git_blob_sha": "701bfdc1aaa5cd7ee0c9defe8e068a88d83c1be5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v26-template-version.test.sh",
+      "git_blob_sha": "718d405a7d9f44f3f40a6764e1b050391c8d16c5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+      "git_blob_sha": "721296459a8f713f206cada8ef2d042895b925a9",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/team-reaction-membership.test.sh",
+      "git_blob_sha": "b631998b263c5fcf87508427add1e3596436ade4",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/team-receipts-membership.test.sh",
+      "git_blob_sha": "a2ea5899cba525188a33608691b095bb8bbcbc35",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/user-settings-sound-integrity-contract.test.sh",
+      "git_blob_sha": "380c5e14d53de8d30376022bb977153e32b70aad",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/db-audit/wa-tag-and-status-authorization.test.sh",
+      "git_blob_sha": "fb58006b18814835643845da79a46a7d6c513da7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/edge-deploy/legacy-functions.json",
+      "git_blob_sha": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "scripts/graphify/setup.sh",
+      "git_blob_sha": "4fe70f3d25ea6ab363ef2961c2c25bb92dad62a0",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/qa/prova-orcamento-rate-limit.sh",
+      "git_blob_sha": "00901507fb2cc22b64c132f2cea8fdecc46072d5",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "scripts/qa/tipografia-budget.json",
+      "git_blob_sha": "3395542c390d57f4f709d9c9abf6af5b9d2047c0",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json",
+      "git_blob_sha": "24d91a145d031ef1101c59964ab4cea706b50776",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/rate-limit-429.json",
+      "git_blob_sha": "16b742c8c300fc6c5aa611297b414a1ce26af983",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/retrieve-xbz-brindes.json",
+      "git_blob_sha": "b1b23e35d6b9c374f55217816bb71ddce706246a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/suggest-asdkjh.json",
+      "git_blob_sha": "ba8b0ffc01ba18694b47b4cc0b3275813f2516d7",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/suggest-avenida-paulista-1000.json",
+      "git_blob_sha": "64cbdecdef8b0b2a08812c2ed26ccd9cdda3850c",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/suggest-xbz.json",
+      "git_blob_sha": "1b6e9af54a3a21a430344de742f16f00ac2ec8f4",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase-export/POST_EXPORT_CHECKLIST.sh",
+      "git_blob_sha": "339cd06a594a73c3eab1aee03ac1115af53f7f5f",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "supabase-export/import.sh",
+      "git_blob_sha": "53f53e740054c816faf60543b67f574668bbb1d3",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "supabase-export/manifest.json",
+      "git_blob_sha": "a721837227574fba1ee95387b4543a7bf36384f3",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase-export/validate_destino.sh",
+      "git_blob_sha": "6ff9558ba387a7dce03e9e8c9ea8e632a8d7780e",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "bash -n; no script execution"
+    },
+    {
+      "path": "supabase/config.toml",
+      "git_blob_sha": "1b9366ddd8abbaf06c8c90853e2ec60fb2c70140",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python tomllib; syntax only"
+    },
+    {
+      "path": "supabase/deployment-manifest.json",
+      "git_blob_sha": "45bbc4caba00b1cc284d66c9062fd9cc89e4d074",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-accept.json",
+      "git_blob_sha": "2b0625163e92e7d31e55dc1e52d6a47d8eb3d5df",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-offer.json",
+      "git_blob_sha": "80cf4b8762ebfc93dc8d307322bf53da1d4b7fd6",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-reject.json",
+      "git_blob_sha": "50e1e845631c44d7556e41ebd475e337a39b0bb2",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-terminate.json",
+      "git_blob_sha": "4034e42b951d1a5b1d3dad91143d524c12b3ef22",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase/schema-catalog.json",
+      "git_blob_sha": "fe23a7ab9456124d5e61a99284af92b399ecf299",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "supabase/schema-manifest.json",
+      "git_blob_sha": "0a608dc2072999f1a3aded5bf6693e7e8c761537",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    },
+    {
+      "path": "tsconfig.app.json",
+      "git_blob_sha": "91c1e1e41a29b4e9afe4f7d41aba1f2169317edb",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK_JSONC",
+      "parser": "TypeScript parseConfigFileTextToJson",
+      "parser_version": "5.9.3",
+      "diagnostic_codes": [],
+      "limitation": "TypeScript configuration accepts comments; rejection by a strict JSON parser is not itself a product defect."
+    },
+    {
+      "path": "tsconfig.e2e.json",
+      "git_blob_sha": "5e2d8994266ac8524fc605451a18a30e37ad6318",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK_JSONC",
+      "parser": "TypeScript parseConfigFileTextToJson",
+      "parser_version": "5.9.3",
+      "diagnostic_codes": [],
+      "limitation": "TypeScript configuration accepts comments; rejection by a strict JSON parser is not itself a product defect."
+    },
+    {
+      "path": "tsconfig.json",
+      "git_blob_sha": "4b420d0d82ff149c4670b8f889cce0fcc1945d93",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK_JSONC",
+      "parser": "TypeScript parseConfigFileTextToJson",
+      "parser_version": "5.9.3",
+      "diagnostic_codes": [],
+      "limitation": "TypeScript configuration accepts comments; rejection by a strict JSON parser is not itself a product defect."
+    },
+    {
+      "path": "tsconfig.node.json",
+      "git_blob_sha": "3133162c20350e1741b94b8d2ff77b811bec8363",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK_JSONC",
+      "parser": "TypeScript parseConfigFileTextToJson",
+      "parser_version": "5.9.3",
+      "diagnostic_codes": [],
+      "limitation": "TypeScript configuration accepts comments; rejection by a strict JSON parser is not itself a product defect."
+    },
+    {
+      "path": "tsconfig.strict.json",
+      "git_blob_sha": "20c12c89928d7318a8c85fa81ad0d82703a32218",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK_JSONC",
+      "parser": "TypeScript parseConfigFileTextToJson",
+      "parser_version": "5.9.3",
+      "diagnostic_codes": [],
+      "limitation": "TypeScript configuration accepts comments; rejection by a strict JSON parser is not itself a product defect."
+    },
+    {
+      "path": "vercel.json",
+      "git_blob_sha": "771140b5994634ed8eb0a9eb112c328a4091a29a",
+      "semantic_review_implied": false,
+      "status": "SYNTAX_OK",
+      "parser": "Python json.loads; syntax only"
+    }
+  ],
+  "python_functions": [
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "git_blob_sha": "a0f19c04287a9f6bfd29dd2d723c044402242167",
+      "semantic_review_implied": false,
+      "name": "sha",
+      "line_start": 95,
+      "line_end": 96,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "git_blob_sha": "a0f19c04287a9f6bfd29dd2d723c044402242167",
+      "semantic_review_implied": false,
+      "name": "rodar",
+      "line_start": 99,
+      "line_end": 109,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "git_blob_sha": "a0f19c04287a9f6bfd29dd2d723c044402242167",
+      "semantic_review_implied": false,
+      "name": "main",
+      "line_start": 112,
+      "line_end": 154,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-send-mutation.py",
+      "git_blob_sha": "fbe817af1420abe4d94c98ad74cf209cc246f2e8",
+      "semantic_review_implied": false,
+      "name": "run_tests",
+      "line_start": 90,
+      "line_end": 92,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-send-mutation.py",
+      "git_blob_sha": "fbe817af1420abe4d94c98ad74cf209cc246f2e8",
+      "semantic_review_implied": false,
+      "name": "classificar",
+      "line_start": 95,
+      "line_end": 106,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "git_blob_sha": "cec86d4f4a7e7b841ae7d136fef0ae8d6c65966d",
+      "semantic_review_implied": false,
+      "name": "resolver_caminho_permitido",
+      "line_start": 23,
+      "line_end": 38,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "git_blob_sha": "cec86d4f4a7e7b841ae7d136fef0ae8d6c65966d",
+      "semantic_review_implied": false,
+      "name": "expande",
+      "line_start": 41,
+      "line_end": 55,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "git_blob_sha": "cec86d4f4a7e7b841ae7d136fef0ae8d6c65966d",
+      "semantic_review_implied": false,
+      "name": "main",
+      "line_start": 57,
+      "line_end": 82,
+      "kind": "FunctionDef",
+      "review_state": "STRUCTURAL_ONLY"
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "git_blob_sha": "cec86d4f4a7e7b841ae7d136fef0ae8d6c65966d",
+      "semantic_review_implied": false,
+      "name": "lambda@78",
+      "line_start": 78,
+      "line_end": 78,
+      "kind": "Lambda",
+      "review_state": "STRUCTURAL_ONLY"
+    }
+  ],
+  "go_files": [
+    {
+      "path": "infrastructure/preview-egress-proxy/main.go",
+      "git_blob_sha": "77a087a719637ce4e1fb538e213ab9011e78bb59",
+      "semantic_review_implied": false,
+      "status": "RUNTIME_NOT_EXECUTED",
+      "limitation": "Go runtime was unavailable; semantic source review, if any, is recorded in infrastructure coverage."
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/main_test.go",
+      "git_blob_sha": "c99bc0a85e625bd0e8864d34c4fd66cb6b5475e9",
+      "semantic_review_implied": false,
+      "status": "RUNTIME_NOT_EXECUTED",
+      "limitation": "Go runtime was unavailable; semantic source review, if any, is recorded in infrastructure coverage."
+    }
+  ],
+  "limitations": [
+    "No Python module, shell script, SQL statement or Go program was executed.",
+    "Syntax validity does not verify provider schemas, authorization, operational effects or deployment configuration.",
+    "YAML1.1 scalar resolution is not a claim about the workflow runner’s schema.",
+    "No source values or credential contents are included."
+  ]
+}

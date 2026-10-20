@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20261003142707_whatsapp_media_recebida_select_via_messages_sql", "label": "20261003142707_whatsapp_media_recebida_select_via_messages.sql", "file_type": "code", "source_file": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql", "source_location": null}], "edges": []}

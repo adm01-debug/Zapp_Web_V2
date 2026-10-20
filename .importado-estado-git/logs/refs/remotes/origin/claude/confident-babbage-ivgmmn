@@ -1,0 +1,23 @@
+8652a409879a9c7b8d1014978d785b412a4845da be48c1d9a75cd99daa2058bfb4eb71ff788bce3e Joaquim Ataides <ti@promobrindes.com.br> 1790678604 -0300	fetch -q origin: forced-update
+be48c1d9a75cd99daa2058bfb4eb71ff788bce3e 184abb2347e774f5c23794b9a2934b72356017b7 Joaquim Ataides <ti@promobrindes.com.br> 1790679714 -0300	fetch origin --quiet: fast-forward
+184abb2347e774f5c23794b9a2934b72356017b7 756013816af94cd3882b5322bf23a8752915c013 Joaquim Ataides <ti@promobrindes.com.br> 1790686810 -0300	fetch origin --quiet: fast-forward
+756013816af94cd3882b5322bf23a8752915c013 a2401d128ee4f2aaabbd05a426f361efc8fec293 Joaquim Ataides <ti@promobrindes.com.br> 1790687015 -0300	fetch origin --prune --quiet: fast-forward
+a2401d128ee4f2aaabbd05a426f361efc8fec293 52b52f8f71bc8a7b25d10db4dfa1165db9010d6e Joaquim Ataides <ti@promobrindes.com.br> 1790689003 -0300	fetch origin --quiet: fast-forward
+52b52f8f71bc8a7b25d10db4dfa1165db9010d6e 25b308f2093675373358f86e882454ea73349d92 Joaquim Ataides <ti@promobrindes.com.br> 1790690417 -0300	fetch origin --quiet --prune: fast-forward
+25b308f2093675373358f86e882454ea73349d92 7ea10dbbfdd4868a65b6c4324e1e06804ab4f593 Joaquim Ataides <ti@promobrindes.com.br> 1790691645 -0300	fetch -q origin: fast-forward
+7ea10dbbfdd4868a65b6c4324e1e06804ab4f593 175fe6783236531de77ad21f53a892938da61070 Joaquim Ataides <ti@promobrindes.com.br> 1790692696 -0300	fetch origin --prune: fast-forward
+175fe6783236531de77ad21f53a892938da61070 d3221a082239e10a5e1d2d27177a94078fc80902 Joaquim Ataides <ti@promobrindes.com.br> 1790693952 -0300	fetch origin --quiet: fast-forward
+d3221a082239e10a5e1d2d27177a94078fc80902 acf0d209ff0e77d44d413ff484696468d5e39015 Joaquim Ataides <ti@promobrindes.com.br> 1790694684 -0300	fetch origin -q: fast-forward
+acf0d209ff0e77d44d413ff484696468d5e39015 60cc7398a5beb8b841e7a116c9ed855b8a68c326 Joaquim Ataides <ti@promobrindes.com.br> 1790695076 -0300	fetch origin --quiet --prune: fast-forward
+60cc7398a5beb8b841e7a116c9ed855b8a68c326 b25a9136cfd3fea8d0e8b9c74c1f8e3613464bea Joaquim Ataides <ti@promobrindes.com.br> 1790695859 -0300	fetch origin --quiet --prune: fast-forward
+b25a9136cfd3fea8d0e8b9c74c1f8e3613464bea 893c5204954bee7e28274460ac282e64c55b6d34 Joaquim Ataides <ti@promobrindes.com.br> 1790696513 -0300	fetch origin --prune --quiet: fast-forward
+893c5204954bee7e28274460ac282e64c55b6d34 6e19205e8e273c390e898ccf9ccc8cccc366d462 Joaquim Ataides <ti@promobrindes.com.br> 1790697147 -0300	fetch origin --quiet --prune: fast-forward
+6e19205e8e273c390e898ccf9ccc8cccc366d462 c2358574e28dc3e02a14185113f2646d9989e8c6 Joaquim Ataides <ti@promobrindes.com.br> 1790697214 -0300	fetch origin --prune --quiet: fast-forward
+c2358574e28dc3e02a14185113f2646d9989e8c6 291d11f3d717ee2a1a9cea4e2dd2e0ac96dd4ff6 Joaquim Ataides <ti@promobrindes.com.br> 1790697452 -0300	fetch origin --quiet --prune: fast-forward
+291d11f3d717ee2a1a9cea4e2dd2e0ac96dd4ff6 f34a953553fb77abcaec9110ccf65f04de996b28 Joaquim Ataides <ti@promobrindes.com.br> 1790697706 -0300	fetch origin --quiet --prune: fast-forward
+f34a953553fb77abcaec9110ccf65f04de996b28 3c6f690cff93cf4341c420e6d1f8f8c55121dc0a Joaquim Ataides <ti@promobrindes.com.br> 1790698060 -0300	fetch origin --prune --quiet: fast-forward
+3c6f690cff93cf4341c420e6d1f8f8c55121dc0a e60b31e3fa1f1915d4d8607c6e7e77eeaee8b029 Joaquim Ataides <ti@promobrindes.com.br> 1790699251 -0300	fetch origin --prune --quiet: fast-forward
+e60b31e3fa1f1915d4d8607c6e7e77eeaee8b029 e42c6f703130fcfcc1a2418a63f892f067df0317 Joaquim Ataides <ti@promobrindes.com.br> 1790699685 -0300	fetch origin --quiet --prune: fast-forward
+e42c6f703130fcfcc1a2418a63f892f067df0317 c07756715e6c2b3f8ccd48363bee11e9aa8d0b84 Joaquim Ataides <ti@promobrindes.com.br> 1790700524 -0300	fetch origin --quiet --prune: fast-forward
+c07756715e6c2b3f8ccd48363bee11e9aa8d0b84 6fb1465a7332f9621ef646a8936fdb4a09e1e549 Joaquim Ataides <ti@promobrindes.com.br> 1790700856 -0300	fetch origin --prune --quiet: fast-forward
+6fb1465a7332f9621ef646a8936fdb4a09e1e549 0e283d06850a67739beee9cc623530619d9b2cad Joaquim Ataides <ti@promobrindes.com.br> 1790701915 -0300	fetch origin -q: fast-forward

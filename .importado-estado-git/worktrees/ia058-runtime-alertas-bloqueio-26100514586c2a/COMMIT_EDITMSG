@@ -1,0 +1,27 @@
+feat(ai): runtime IA-058 com alertas de consumo anomalo deduplicados e bloqueio por capacidade
+
+IA-058 existia apenas como projeto documental. Este commit entrega a fatia
+vertical local ao Postgres:
+
+- ai_anomaly_configs: configuracao persistida por (scope, signal) —
+  user|department|capability x cost|errors|concurrency — com janela, limiar
+  e amostra minima; nenhum limiar fica hardcoded no avaliador.
+- ai_anomaly_incidents: identidade (scope, target_id, signal, window_start)
+  com indice unico (dedup seguro sob concorrencia); ciclo
+  open|acknowledged|resolved; reabre e notifica de novo apenas com piora
+  mensuravel (measured_value > max_value).
+- ai_capability_blocks: bloqueio somente por function_name, sempre com
+  incident_id e motivo; ativo enquanto resumed_at IS NULL; retomada manual
+  via ai_capability_resume.
+- ai_anomaly_evaluate + job pg_cron idempotente (ia058-avaliador-anomalias),
+  sem HTTP externo, escrevendo alertas em public.notifications para
+  admin/supervisor via user_roles.
+- enforceAiGuards consulta ai_capability_active_block antes de consumir
+  contador/cota e recusa explicitamente (403 com incident_id e motivo);
+  falha de infraestrutura falha aberta.
+- RLS/grants fail-closed: mutacao so service_role; leitura operacional
+  restrita a admin/supervisor.
+
+Teste de contrato cobre os 3 sinais, os 3 escopos, min_sample, dedup,
+reabertura com piora, bloqueio seletivo (function_a recusada, function_b
+permitida) e retomada manual.

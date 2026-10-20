@@ -1,0 +1,8 @@
+chore(ci): marcador da retomada -- R2-INF-002 ja corrigido na ponta
+
+A entrega anterior (95b397b8d) foi reimplementada em dia/2026-10-08 pelo
+commit 39cc5c744: o passo do workflow passa a chamar
+scripts/edge-deploy/preparar-artifact-deploy.sh (fail-closed), a conferencia
+de residuo e' pelo VALOR do segredo e REDIGIR_LOG_BASE segue explicita no
+passo. Nenhum arquivo alterado: o cartao manda fechar sem commit de codigo
+quando o defeito ja' esta corrigido.

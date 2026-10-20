@@ -1,0 +1,26 @@
+fix(design-system/ui): Absorver text-[7px] e text-[8px] em text-3xs (SL-176, E39-E40)
+
+E39-E40 do PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24: 7px e 8px ficam abaixo do
+menor degrau da escala (`text-3xs`, 10px/13px) e nao tem degrau proprio. Eram 14
+usos em 9 arquivos (git grep em src): 3 text-[7px] + 11 text-[8px].
+
+- Codemod mecanico (script, sem edicao manual): text-[7px] -> text-3xs e
+  text-[8px] -> text-3xs. O valor pedido e 10px, e text-3xs E o token de 10px
+  (0.625rem/0.8125rem, tailwind.config.ts:36) — escrever text-[10px] reabriria
+  exatamente a divida que o codemod de 932 usos fechou na F3 (da8058b27).
+- Nenhum `title` novo foi preciso: onde o texto e abreviacao ilegivel a 7/8px, o
+  texto completo ja esta exposto ao lado ou ja existe tooltip/`title` no mesmo
+  componente (`title={name}` em CompanyLogo.tsx:84; TooltipContent
+  "Atendido por ..." + aria-label em VirtualizedRealtimeList.tsx:475-489; nome do
+  contato/membro/atendente renderizado no mesmo botao em ContactMapView.tsx:167,
+  ContactNotes.tsx:229, ChatPanelHeader.tsx:124). Os dois usos decorativos
+  (StickerGrid.tsx:202 `aria-hidden`, mock de telefone em talkx/kit/preview.tsx)
+  nao ganham tooltip: em elemento aria-hidden o `title` e contraditorio.
+
+Guarda: `src/test/tipografiaForaDaEscala.test.ts` (novo) varre o codigo de produto
+de src e falha enquanto houver text-[7px]/text-[8px]; rodou VERMELHO antes do
+codemod (14 ocorrencias, 9 arquivos) e VERDE depois (5/5).
+
+Verificado: node scripts/qa/medir-tipografia.cjs --check -> "guard-rail de
+tipografia aprovado" (tsxFontSizeInline 2->1: o primeiro rascunho do teste usava
+`fontSize: <numero>` e o medidor o acusou; trocado por nomes neutros).

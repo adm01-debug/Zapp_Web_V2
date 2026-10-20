@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791202890 -0300	branch: Created from dia/2026-10-05
+b58c615056ec3756606163a249e5d8b26352f355 b7158aa3870635245ce56c09ceafeb1d3222881f Joaquim Ataides <ti@promobrindes.com.br> 1791202937 -0300	cherry-pick: fix(ai-image-input): download privado sob a identidade do chamador
+b7158aa3870635245ce56c09ceafeb1d3222881f 2a3f3e80f31178a334105ed4aa473186201ab954 Joaquim Ataides <ti@promobrindes.com.br> 1791202937 -0300	cherry-pick: fix(ai-vision): download privado exige identidade explícita do chamador (R2-INF-022)

@@ -1,0 +1,169 @@
+import { cn } from '@/lib/utils';
+import { AlertTriangle, Timer } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useSLACalculation, formatTimeRemaining, SLAStatus } from '@/hooks/sla/useSLACalculation';
+
+interface SLAIndicatorProps {
+  firstMessageAt: Date;
+  firstResponseAt?: Date | null;
+  firstResponseMinutes: number;
+  className?: string;
+  compact?: boolean;
+}
+
+/**
+ * O TEXTO de cada selo é o par de TEXTO do estado — `--warning-text` (tokens.css:168) e
+ * `--destructive-text` (tokens.css:169). As cores de PREENCHIMENTO (`--warning` L50 e
+ * `--destructive` L60) como texto sobre a própria tinta /10 davam 1,98:1 e 3,32:1 no tema
+ * claro (e o axe da auditoria de 07/10 mediu o selo `SLA violado` em 2,53:1). O verde já é o
+ * próprio par de texto (`text-success`, 4,92:1 no claro e 6,59:1 no escuro); não existe
+ * `--success-text`. A tinta, a borda e o arco não mudam.
+ */
+const statusStyles: Record<SLAStatus, { bg: string; text: string; border: string; ring: string }> = {
+  ok: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30', ring: 'stroke-success' },
+  warning: { bg: 'bg-warning/10', text: 'text-[hsl(var(--warning-text))]', border: 'border-warning/30', ring: 'stroke-warning' },
+  breached: { bg: 'bg-destructive/10', text: 'text-[hsl(var(--destructive-text))]', border: 'border-destructive/30', ring: 'stroke-destructive' },
+};
+
+function SLAProgressRing({ status, percent, size = 28 }: { status: SLAStatus; percent: number; size?: number }) {
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.max(0, Math.min(100, percent)) / 100) * circumference;
+
+  return (
+    <svg width={size} height={size} className="shrink-0 -rotate-90">
+      <circle
+        cx={size / 2} cy={size / 2} r={radius}
+        fill="none" strokeWidth={strokeWidth}
+        className="stroke-muted/30"
+      />
+      <motion.circle
+        cx={size / 2} cy={size / 2} r={radius}
+        fill="none" strokeWidth={strokeWidth} strokeLinecap="round"
+        className={statusStyles[status].ring}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        strokeDasharray={circumference}
+      />
+    </svg>
+  );
+}
+
+function getPercent(remainingMs: number, totalMs: number, breached: boolean): number {
+  if (breached) return 0;
+  return Math.max(0, Math.min(100, (remainingMs / totalMs) * 100));
+}
+
+export function SLAIndicator({
+  firstMessageAt,
+  firstResponseAt,
+  firstResponseMinutes,
+  className,
+  compact = false,
+}: SLAIndicatorProps) {
+  const sla = useSLACalculation({ firstMessageAt, firstResponseAt, firstResponseMinutes });
+
+  if (firstResponseAt && sla.firstResponse.status === 'ok') return null;
+
+  const style = statusStyles[sla.firstResponse.status];
+
+  const frTotalMs = firstResponseMinutes * 60_000;
+
+  if (compact) {
+    const frPercent = getPercent(sla.firstResponse.remainingMs, frTotalMs, sla.firstResponse.breached);
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <motion.div
+              role="status"
+              aria-label={`SLA ${sla.firstResponse.status === 'breached' ? 'violado' : sla.firstResponse.status === 'warning' ? 'em alerta' : 'dentro do prazo'}`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className={cn(
+                'flex items-center gap-1 px-1.5 py-0.5 rounded-md text-3xs font-medium border',
+                style.bg, style.text, style.border,
+                sla.firstResponse.status === 'breached' && 'animate-pulse',
+                className
+              )}
+            >
+              <SLAProgressRing status={sla.firstResponse.status} percent={frPercent} size={16} />
+              {!firstResponseAt && sla.firstResponse.remainingMs > 0 && (
+                <span>{formatTimeRemaining(sla.firstResponse.remainingMs)}</span>
+              )}
+              {sla.firstResponse.breached && <span>SLA</span>}
+            </motion.div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <Timer className="w-3 h-3" />
+                <span className="font-medium">Primeira Resposta:</span>
+                {firstResponseAt ? (
+                  <span className={sla.firstResponse.breached ? 'text-[hsl(var(--destructive-text))]' : 'text-success'}>
+                    {sla.firstResponse.breached ? 'Violado' : 'OK'}
+                  </span>
+                ) : (
+                  <span className={statusStyles[sla.firstResponse.status].text}>
+                    {sla.firstResponse.status === 'breached' ? 'Violado' : formatTimeRemaining(sla.firstResponse.remainingMs)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return (
+    <div role="status" aria-label="Indicador de SLA de primeira resposta" className={cn('flex items-center gap-2', className)}>
+      {!firstResponseAt ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border',
+            statusStyles[sla.firstResponse.status].bg,
+            statusStyles[sla.firstResponse.status].text,
+            statusStyles[sla.firstResponse.status].border,
+            sla.firstResponse.status === 'breached' && 'animate-pulse'
+          )}
+        >
+          <SLAProgressRing
+            status={sla.firstResponse.status}
+            percent={getPercent(sla.firstResponse.remainingMs, frTotalMs, sla.firstResponse.breached)}
+            size={22}
+          />
+          <span>1ª Resp:</span>
+          <span className="font-bold">
+            {sla.firstResponse.status === 'breached' ? 'Violado' : formatTimeRemaining(sla.firstResponse.remainingMs)}
+          </span>
+        </motion.div>
+      ) : sla.firstResponse.breached ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border animate-pulse',
+            statusStyles.breached.bg,
+            statusStyles.breached.text,
+            statusStyles.breached.border
+          )}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>1ª Resp: Violado</span>
+        </motion.div>
+      ) : null}
+    </div>
+  );
+}

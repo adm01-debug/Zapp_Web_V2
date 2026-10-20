@@ -1,0 +1,23 @@
+test(ci): trava o passo de mutação do Multiplix no db-guard (N-017)
+
+Por quê: o valor deste cartão é a prova rodar sozinha no CI. Um passo que some, que
+aponta para um runner renomeado ou que ganha `continue-on-error: true` (como o
+`mutation-mapa` do ci.yml, onde isso é de propósito) devolveria a prova ao estado
+anterior — só rodando à mão — sem nenhum gate perceber.
+
+O caso lê o db-guard.yml de verdade e classifica PASSO executável (dentro de bloco
+`run:`, ignorando linha comentada) em vez de procurar o caminho por substring: um
+passo comentado que cite o runner não pode ser aprovado. As bordas vão junto —
+workflow sem o passo, passo informativo e caminho só em comentário são casos
+NEGATIVOS executados pelo teste (não há asserção tautológica: a asserção vem do
+arquivo real e a lógica é exercitada contra entradas adversárias).
+
+Prova (log .tmp/prova-red.log / rodada no workspace):
+- workflow da base dia/2026-10-09 + este teste -> 4 testes, 3 passam, 1 FALHA
+  ("nenhum bloco 'run:' executa scripts/db-audit/multiplix-send-mutation.py — o
+  runner de mutação voltou a rodar só à mão").
+- workflow do commit + este teste -> 4/4 passam (node --test
+  scripts/ci/multiplix-send-mutation-ci.unit.mjs).
+
+O arquivo é coberto pelo glob `scripts/ci/*.unit.mjs` do ci.yml (job
+lint-and-typecheck), o mesmo que roda esta família de guardas.

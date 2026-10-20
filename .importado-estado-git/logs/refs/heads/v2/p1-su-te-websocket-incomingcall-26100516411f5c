@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791229296 -0300	branch: Created from dia/2026-10-05
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 df41e19cd5cc817805ab1f9792ad40a50bea7d2d Joaquim Ataides <ti@promobrindes.com.br> 1791229482 -0300	cherry-pick: test(calls): dubla o realtime nas provas do IncomingCallAlert
+df41e19cd5cc817805ab1f9792ad40a50bea7d2d 3c5eb00fcf9c457093fdf1f9cc0e0b6b7cb85aae Joaquim Ataides <ti@promobrindes.com.br> 1791230120 -0300	commit: test(calls): prova no commit que o alerta nao abre WebSocket real

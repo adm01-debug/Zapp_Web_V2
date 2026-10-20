@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791429780 -0300	
+b6ff185f72fab85c050ee66812f03072ff4f0726 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791429781 -0300	reset: moving to HEAD
+b6ff185f72fab85c050ee66812f03072ff4f0726 6b708ef691df6e0432668affad15f746da77ce68 Joaquim Ataides <ti@promobrindes.com.br> 1791432661 -0300	commit: fix(db): bloqueia can_download próprio em profiles (#252)

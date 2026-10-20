@@ -1,0 +1,24 @@
+fix(talk-x): tela 12 com cabeçalho, seletor do kit, abas acessíveis, anel e "Pico de Respostas" (TL-160)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    iris <iris@hermes.local>
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 7e92052cd fix(talk-x): tela 12 com cabeçalho, seletor do kit, abas acessíveis, anel e "Pico de Respostas" (TL-160)
+# No commands remaining.
+# You are currently rebasing branch 'v2/tl-160-2610090421f921' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXCampaignRunning.tsx
+#	new file:   src/components/talkx/__tests__/TalkXCampaignRunning.header-abas.test.tsx
+#	modified:   src/components/talkx/__tests__/TalkXCampaignRunning.janela-historico.test.tsx
+#	modified:   src/components/talkx/__tests__/TalkXCampaignRunning.remote-completion.test.tsx
+#	modified:   src/components/talkx/__tests__/TalkXCampaignRunning.states.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXProgressRing.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXReplyPeakCard.test.tsx
+#	new file:   src/components/talkx/tracking/TalkXProgressRing.tsx
+#	new file:   src/components/talkx/tracking/TalkXReplyPeakCard.tsx
+#

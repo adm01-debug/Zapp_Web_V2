@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791280925 -0300	branch: Created from dia/2026-10-06
+55a428d7a89316109e71d975c4193d67f7b3b051 e78d50e676da540a6f0c01a666a7a465ee9ed758 Joaquim Ataides <ti@promobrindes.com.br> 1791281409 -0300	commit: fix(ci): inventario de testes passa a cobrir as suites Node de scripts/ (#360)

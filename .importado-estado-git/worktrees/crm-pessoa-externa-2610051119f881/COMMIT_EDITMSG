@@ -1,0 +1,8 @@
+fix(crm-integration): lote fecha brechas de vínculo inválido e telefone compartilhado (R2-AUTH-018)
+
+Qualquer presença em crm_contact_links agora exige vínculo válido e prova
+externa: linha com external_contact_id nulo/vazio ou normalized_phone
+divergente deixa de cair no caminho de contato sem vínculo, e telefone
+presente em qualquer linha de vínculo sai do conjunto unlinkedPhones,
+impedindo que um contato sem vínculo libere telefone compartilhado com
+contato vinculado cuja prova falha ou diverge.

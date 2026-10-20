@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d1cd57ad4b775bb431a3bbd0e639c54f9fa7ac86 Joaquim Ataides <ti@promobrindes.com.br> 1791195884 -0300	branch: Created from dia/2026-10-05
+d1cd57ad4b775bb431a3bbd0e639c54f9fa7ac86 413969569d7e06809c684d8f6be6ff30b0b41128 Joaquim Ataides <ti@promobrindes.com.br> 1791195899 -0300	cherry-pick: fix(evolution-api): matriz de autorização por ação nas ações de controle (R2-API-001)
+413969569d7e06809c684d8f6be6ff30b0b41128 3345d7fa7078f8e71367b300676b1414cae3943a Joaquim Ataides <ti@promobrindes.com.br> 1791197295 -0300	commit: fix(evolution-api): matriz de autorização passa a negar por padrão (R2-API-001)

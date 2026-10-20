@@ -1,0 +1,10 @@
+fix(talk-me): permitir leitura integral da mensagem antes do aceite
+
+A previa do TALK ME so exibia a ultima mensagem em line-clamp-2 e nao
+oferecia controle de leitura. Adiciona o botao acessivel 'Ler mensagem
+completa' (aria-expanded/aria-controls) que revela o texto integral sem
+claim nem mark-read; recolhe ao trocar de contato e informa a contagem
+de mensagens anteriores pendentes.
+
+Ref: TM-01 (#170). Historico de mensagens anteriores fica no cartao
+t_549fad23 (recorte de escopo autorizado pelo relatorio do modulo).

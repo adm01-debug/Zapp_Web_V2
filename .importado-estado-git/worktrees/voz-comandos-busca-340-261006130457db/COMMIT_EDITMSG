@@ -1,0 +1,7 @@
+fix(voz): comando de voz aplica busca, filtros e limpeza no estado da lista (#340)
+
+A ponte do assistente de voz (search/filter/sort/clear) so navegava e mostrava
+toast: a lista conservava os parametros anteriores. Agora cada acao vira um
+plano tipado (voiceActionPlan) aplicado a query string - o estado real que as
+listas leem - e a confirmacao reflete so o resultado efetivo, avisando quando
+o parametro nao tem consumidor (ordenacao) em vez de anunciar execucao.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791453388 -0300	
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791453388 -0300	reset: moving to HEAD
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 28ecd3106f0272fb084d1c68d87c7df541c097db Joaquim Ataides <ti@promobrindes.com.br> 1791453814 -0300	commit: test(e2e): telefonia — diff restrito à spec e guarda de rede no afterEach

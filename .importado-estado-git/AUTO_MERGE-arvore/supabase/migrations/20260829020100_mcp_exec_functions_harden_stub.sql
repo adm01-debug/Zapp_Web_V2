@@ -1,0 +1,16 @@
+-- 20260829020100_mcp_exec_functions_harden_stub
+-- Stub de reconciliacao: o hardening de mcp_exec e mcp_exec_many
+-- (search_path fixado, regexp_replace de semicolons, re-raise de
+--  lock_not_available/query_canceled) foi aplicado diretamente via MCP
+-- em 2026-08-29 02:00 UTC e documentado em:
+--   supabase/migrations/20260829020000_mcp_exec_functions_harden.sql
+--
+-- Este arquivo existe para fechar o delta banco/repo no ledger:
+--   schema_migrations.version = '20260829020100'
+--   schema_migrations.name    = 'mcp_exec_functions_harden_stub'
+-- Sem ele o CI check-migration-drift.mjs falha com:
+--   'Registro no banco sem arquivo no repo: 20260829020100'
+--
+-- Ver docs/MIGRATIONS.md — workaround supabase_apply_migration bugado.
+
+-- stub: mcp_exec hardening aplicado diretamente via MCP

@@ -1,0 +1,7 @@
+fix(inbox): transferência em lote aguarda a Promise, grava evento e rejeita em erro
+
+BulkActionsToolbar fechava o TransferDialog sem aguardar e ampliava o tipo
+com cast para connection; bulkTransfer engolia a falha e ignorava a nota.
+Agora cada contato recebe evento conversation_events (transfer, destino em
+to_agent_id/to_queue_id, nota em metadata.note) e qualquer falha rejeita
+preservando seleção e diálogo.

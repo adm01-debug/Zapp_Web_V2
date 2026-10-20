@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 Joaquim Ataides <ti@promobrindes.com.br> 1791292273 -0300	
+aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 Joaquim Ataides <ti@promobrindes.com.br> 1791292273 -0300	reset: moving to HEAD
+aadae44b53ca2f0af8c8540bfe8565f6e5b31f44 235741ec7e84cd96648e84fc32d521dbfdeac6d0 Joaquim Ataides <ti@promobrindes.com.br> 1791292284 -0300	cherry-pick: fix(sip): desconectar devolve o UA encerrado e permite reconectar
+235741ec7e84cd96648e84fc32d521dbfdeac6d0 436b739560ecb68c56c67c29bd0c32433ec2afdb Joaquim Ataides <ti@promobrindes.com.br> 1791292515 -0300	commit: fix(sip): sempre encerra UA após falha no unregister
+436b739560ecb68c56c67c29bd0c32433ec2afdb 6a471092a2621e62970c730d2e6d76c8e6eb42d6 Joaquim Ataides <ti@promobrindes.com.br> 1791292570 -0300	commit: test(sip): restaura fim de linha do contrato

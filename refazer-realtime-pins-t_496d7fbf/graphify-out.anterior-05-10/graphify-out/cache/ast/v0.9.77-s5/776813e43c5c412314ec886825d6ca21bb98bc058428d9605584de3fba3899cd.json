@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260924230500_fix_contact_id_idor_snoozes_pins_favorites_sql", "label": "20260924230500_fix_contact_id_idor_snoozes_pins_favorites.sql", "file_type": "code", "source_file": "supabase/migrations/20260924230500_fix_contact_id_idor_snoozes_pins_favorites.sql", "source_location": null}], "edges": []}

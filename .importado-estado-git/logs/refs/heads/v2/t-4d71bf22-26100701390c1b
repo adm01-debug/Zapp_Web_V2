@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791347968 -0300	branch: Created from dia/2026-10-07
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 9e7b63b4143e7f0254d520b5f4c125d43ed4ca35 Joaquim Ataides <ti@promobrindes.com.br> 1791347994 -0300	cherry-pick: fix(banco): unifica o contrato de mídia do Team Chat no storage e na mensagem (#54)
+9e7b63b4143e7f0254d520b5f4c125d43ed4ca35 a72242a87b592d8f8298d0a09fd3e41cfb08d67b Joaquim Ataides <ti@promobrindes.com.br> 1791348505 -0300	commit: fix(banco): exige media_type no locator do Team Chat (#54)

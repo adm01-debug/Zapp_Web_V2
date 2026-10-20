@@ -1,0 +1,5 @@
+fix(ci): reconhece erro do gate so com 'error:' e aceita cabecalho error- (R2-INF-009)
+
+O commit anterior (adbbb01f4) usava /^error\b/iu; como \b casa antes do hifen, um relatorio completo cujo pacote fosse error-ex@1.2.3 era classificado como erro operacional e o gate saia com 2. Agora a forma reconhecida e' exatamente uma linha iniciada por 'error:', preservando os dois erros reais do coletor (db indisponivel e ConnectionRefused) fechados com 2.
+
+Prova: scripts/ci/audit-prod.unit.mjs — teste do cabecalho error-ex@1.2.3 vermelho (2 !== 0) com a regex anterior e verde com a corrigida; os testes dos dois erros reais continuam verdes.

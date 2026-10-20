@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791551951 -0300	branch: Created from dia/2026-10-09
+68980bf5e3486ca611a90742053bfdb008fcb5c3 56b8d282ae5d9a10dff5fb01a3455f9474f083b1 Joaquim Ataides <ti@promobrindes.com.br> 1791551981 -0300	cherry-pick: test(ci): guarda do inventario do banco exige docs/DB-INVENTORY.md coerente com o catalogo (SL-184)
+56b8d282ae5d9a10dff5fb01a3455f9474f083b1 4442bdfa6e79cf69ab53c419da6f490b00c00b6d Joaquim Ataides <ti@promobrindes.com.br> 1791551988 -0300	cherry-pick: docs(banco): cria docs/DB-INVENTORY.md com o inventario das tabelas de public (SL-184)
+4442bdfa6e79cf69ab53c419da6f490b00c00b6d 350c09650c6fe8e4e43514a8a7cd63a10b2c0a7e Joaquim Ataides <ti@promobrindes.com.br> 1791552603 -0300	commit: fix(docs): inventario do banco acerta webhook_rate_limits pela Edge metrics (SL-184)

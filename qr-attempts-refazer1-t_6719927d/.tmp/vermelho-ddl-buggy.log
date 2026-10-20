@@ -1,0 +1,136 @@
+BEGIN
+CREATE ROLE
+CREATE ROLE
+CREATE ROLE
+CREATE SCHEMA
+CREATE FUNCTION
+CREATE FUNCTION
+GRANT
+GRANT
+CREATE TABLE
+CREATE SCHEMA
+CREATE TABLE
+CREATE TABLE
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:60: WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+CREATE PUBLICATION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+── aplicando as migrations REAIS (user_roles/helpers + qr_attempts) ──
+CREATE TYPE
+CREATE TABLE
+ALTER TABLE
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+INSERT 0 1
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+ALTER PUBLICATION
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/.tmp/buggy/20261012110945_qr_attempts.sql:73: NOTICE:  policy "qr_attempts_staff_all" for relation "public.qr_attempts" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+REVOKE
+GRANT
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+GRANT
+SET
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+
+── T0: a barreira e a RLS, nao a ACL ──────────────────────────────────
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:162: NOTICE:  PASS [T0 authenticated TEM o GRANT de tabela (sem RLS a escrita passaria)] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:164: NOTICE:  PASS [T0d anon NAO tem GRANT de tabela] -> false
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:168: NOTICE:  PASS [T0b RLS ligada em qr_attempts] -> true
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO 1: contrato estrutural ───────────────────────────────────────
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:176: NOTICE:  PASS [T1 contrato do cartao: conexao/criado_em/expira_em/status/motivo] -> 5
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:179: NOTICE:  PASS [T2 a FK e ON DELETE CASCADE] -> c
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:182: NOTICE:  PASS [T3 status default e pendente] -> 'pendente'::text
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:185: NOTICE:  PASS [T4 status fora do dominio e recusado] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_status_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:188: NOTICE:  PASS [T4b TTL abaixo do clamp (5 s) e recusado] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_ttl_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:191: NOTICE:  PASS [T4c TTL acima do clamp (400 s) e recusado] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_ttl_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:194: ERROR:  t_7af815d8 FALHOU [T4d sem expires_at explicito o TTL default e de 60 s]: esperado OK 1, obtido ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_ttl_check"
+CONTEXT:  PL/pgSQL function pg_temp_3.espera(text,text,text) line 4 at RAISE

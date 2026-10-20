@@ -1,0 +1,15 @@
+fix(ia-uso): renovar a janela relativa do painel de uso de IA a cada atualização (#264)
+
+R2-AUTH-040: o limite inferior do filtro relativo era memoizado por `timeFilter`,
+então o polling de 30s e o botão Atualizar reenviavam o instante em que o painel
+abriu. Com "Última 1h" escolhido às 12h, a busca das 13h ainda pedia
+`created_at >= 11h` — duas horas de dados sob o mesmo rótulo, com totais, taxas e
+gráficos mudando de significado ao longo do uso.
+
+Agora a janela pertence ao ciclo de atualização: resumo, custos e lista
+recalculam o limite pelo relógio do momento da consulta e as três do mesmo ciclo
+recebem o mesmo instante (trocar de filtro continua recalculando).
+
+Prova: src/hooks/analytics/__tests__/useAIUsageDashboard.janela.test.tsx, com
+relógio controlado (T0 e T0+1h) — vermelho antes (o `desde` ficava preso em
+11:00Z) e verde depois; o mesmo teste cobre custos e o corte da lista.

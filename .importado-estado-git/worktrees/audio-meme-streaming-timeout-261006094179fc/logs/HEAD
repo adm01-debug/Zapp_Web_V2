@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290513 -0300	
+33df2adf85cbf443494e294d1c25be40deacfac9 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290514 -0300	reset: moving to HEAD
+33df2adf85cbf443494e294d1c25be40deacfac9 40e4633dd67f1709a572dec97e8a2bc08e99440c Joaquim Ataides <ti@promobrindes.com.br> 1791290536 -0300	cherry-pick: fix(ai-audio): classificador de audio-meme passa a ouvir o som (IA-131)
+40e4633dd67f1709a572dec97e8a2bc08e99440c 036c8927d4b002f7c629bd9077013332ee1ea867 Joaquim Ataides <ti@promobrindes.com.br> 1791291875 -0300	commit: fix(ai-audio): limita streaming e cobre leitura no timeout

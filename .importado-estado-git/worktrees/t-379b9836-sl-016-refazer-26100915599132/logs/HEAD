@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791572368 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791572370 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 2c0507db98e1bd3f7b337427c81330c03d7710a3 Joaquim Ataides <ti@promobrindes.com.br> 1791573468 -0300	commit: fix(inbox/chat): hooks usam RPCs do team chat (SL-016)

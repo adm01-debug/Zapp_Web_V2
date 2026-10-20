@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791497053 -0300	
+165168bf7800066e51592380b0ee1a51b75d0548 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791497054 -0300	reset: moving to HEAD
+165168bf7800066e51592380b0ee1a51b75d0548 d74ba0c5b0790a55293929f900121dedeecfe51d Joaquim Ataides <ti@promobrindes.com.br> 1791500608 -0300	commit: fix(inbox/chat): fila offline IndexedDB e throttle de envio com dedupe entre abas (SL-070)

@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200282 -0300	
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200283 -0300	reset: moving to HEAD
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f 6d074b87669ea6a71b01892eed5cfb1490fe12cf Joaquim Ataides <ti@promobrindes.com.br> 1791200290 -0300	cherry-pick: feat(auth): aplica política de rede no requireAuth das Edges (R2-AUTH-022)
+6d074b87669ea6a71b01892eed5cfb1490fe12cf 20405008a657feb8028e7d9a3e284b037fd7fc2f Joaquim Ataides <ti@promobrindes.com.br> 1791200809 -0300	commit: fix(auth): requireAuth devolve 503 quando o client de política não é criado
+20405008a657feb8028e7d9a3e284b037fd7fc2f 20405008a657feb8028e7d9a3e284b037fd7fc2f Joaquim Ataides <ti@promobrindes.com.br> 1791200858 -0300	checkout: moving from v2/politica-rede-requireauth-26100508387b49 to v2/politica-rede-requireauth-26100508387b49
+20405008a657feb8028e7d9a3e284b037fd7fc2f 6d074b87669ea6a71b01892eed5cfb1490fe12cf Joaquim Ataides <ti@promobrindes.com.br> 1791201095 -0300	reset: moving to HEAD~1
+6d074b87669ea6a71b01892eed5cfb1490fe12cf df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201100 -0300	reset: moving to dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 20405008a657feb8028e7d9a3e284b037fd7fc2f Joaquim Ataides <ti@promobrindes.com.br> 1791201106 -0300	reset: moving to 20405008a

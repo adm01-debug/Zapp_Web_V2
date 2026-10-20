@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791301288 -0300	branch: Created from dia/2026-10-06
+d6bfd59751f26503e528dfa54b704daf0f497157 34821c268c4697515aa182b44217108a8069b84f Joaquim Ataides <ti@promobrindes.com.br> 1791301492 -0300	commit: fix(inbox): botão Baixar documento respeita can_download do perfil (#325)

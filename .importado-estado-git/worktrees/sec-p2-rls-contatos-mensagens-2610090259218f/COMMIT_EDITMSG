@@ -1,0 +1,1 @@
+fix(seguranca): bloco de rollback executavel nas 3 migrations do achado SEC-RLS_CONTATOS_MENSAGENS-04/05/06

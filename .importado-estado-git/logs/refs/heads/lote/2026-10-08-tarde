@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 24bb722fa4148088c7188ec0289e29698136f932 Joaquim Ataides <ti@promobrindes.com.br> 1791486917 -0300	branch: Created from origin/main
+24bb722fa4148088c7188ec0289e29698136f932 01e2f3042324ed904288ce402b7d8f6d7924cb22 Claude <noreply@anthropic.com> 1791486933 -0300	commit: Lote 08/10 (tarde): correções e melhorias da fábrica, planos e auditorias
+01e2f3042324ed904288ce402b7d8f6d7924cb22 25148624c509a21271c3d5e0062c9d74faed8ece Claude <noreply@anthropic.com> 1791490471 -0300	commit: ci(db-audit): baseline temporário da RPC mark_ai_job_effect_started (criada pela migration deste lote)
+25148624c509a21271c3d5e0062c9d74faed8ece e1d00fce3ccb21a94cc422e4e74e32b331a541a2 Claude <noreply@anthropic.com> 1791492347 -0300	commit: test(calls): folga de tempo no RecordingPlayer.test para o CI com cobertura
+e1d00fce3ccb21a94cc422e4e74e32b331a541a2 90d27d330676c3e6fb60ec8efe18e99926ac7bbb Claude <noreply@anthropic.com> 1791497847 -0300	commit: test(calls): corpo do Response em texto no RecordingPlayer.test (Blob do jsdom pode chegar com 0 bytes no CI)
+90d27d330676c3e6fb60ec8efe18e99926ac7bbb 212ca677bc97805d88c8d903d4a08e2dc2ac0d47 Claude <noreply@anthropic.com> 1791499118 -0300	commit: test(calls): conferir o Blob do audio sem depender da classe Blob do jsdom (realm diferente no CI)

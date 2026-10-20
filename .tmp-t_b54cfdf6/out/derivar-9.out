@@ -1,0 +1,12 @@
+linhas do check real: 128
+residuais (chave ausente do retrato fresco): 9
+todas tambem ausentes do banco local (ou seja, "so producao"): True
+  resid=True local=False  functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+  resid=True local=False  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+  resid=True local=False  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+  resid=True local=False  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+  resid=True local=False  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+  resid=True local=False  routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+  resid=True local=False  routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+  resid=True local=False  routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+  resid=True local=False  relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres

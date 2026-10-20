@@ -1,0 +1,4 @@
+fix(departamentos): usa RPC de modo do WhatsApp acessível ao usuário logado (QA5-09)
+
+# Conflicts:
+#	.github/workflows/db-guard.yml

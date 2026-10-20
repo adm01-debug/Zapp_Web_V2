@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 237fdb469e5d9e84980e06fe6530221fb1c3bbcf Joaquim Ataides <ti@promobrindes.com.br> 1791385011 -0300	branch: Created from dia/2026-10-07
+237fdb469e5d9e84980e06fe6530221fb1c3bbcf 80c1aba97774ba9fd4e79934cdeafaa3fdee1e29 Joaquim Ataides <ti@promobrindes.com.br> 1791385275 -0300	commit: fix(edge): classifica GO logada sem socket como reconectando

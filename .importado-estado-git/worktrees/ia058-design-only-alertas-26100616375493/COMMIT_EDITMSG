@@ -1,0 +1,10 @@
+docs(ia): registra IA-058 como DESIGN_ONLY, sem alertas em operação (#134)
+
+O indice docs/ia nao dizia nada sobre a IA-058: o projeto publicado em #1839
+(escopos, sinais, limiares, dedupe do incidente e bloqueio por capacidade)
+podia ser lido como alerta disponivel. A secao do Bloco 06 passa a declarar
+IA-058 como DESIGN_ONLY (projeto), distinta de runtime, e afirma que nenhum
+alerta nem bloqueio de capacidade existem em operacao.
+
+Contrato novo em tests/contracts/ia058-design-only.contract.test.ts trava o
+estado documental e proibe a alegacao de alerta/bloqueio em operacao.

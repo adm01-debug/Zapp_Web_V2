@@ -1,0 +1,14 @@
+fix(mensageria): webhook entrega a mensagem de ausencia configurada por conexao (#219)
+
+R2-API-045: `away_messages`/`business_hours` eram apenas persistidas pelo
+BusinessHoursDialog/useBusinessHours — nenhuma Edge Function lia as duas
+tabelas, entao o ciclo configuracao -> contato fora do horario -> entrega
+nunca fechava.
+
+Novo `_shared/away-message.ts` e o consumidor ligado a mensagem RECEBIDA em
+`handleIncomingMessage`: so envia fora do expediente, so com `is_enabled`,
+uma vez por contato a cada 24h, pelo token da instancia (get_instance_token),
+com as variaveis do dialogo ({nome}, {horario_abertura}, {horario_fechamento}).
+Sem horario configurado, sem token ou com variavel desconhecida nao envia;
+opt-out tem precedencia e o desfecho segue o R2-API-008 (accepted/rejected/
+unknown, nunca anunciar envio sem 2xx).

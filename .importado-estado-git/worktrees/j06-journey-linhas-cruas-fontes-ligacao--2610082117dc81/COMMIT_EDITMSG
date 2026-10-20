@@ -1,0 +1,17 @@
+feat(journey): linhas cruas e fontes de ligação e e-mail do histórico
+
+Tipos crus de todas as fontes do Histórico em src/lib/journey/rawRows.ts
+(RawMessage, RawCall, RawEmail, RawNote, RawTask, RawEvent, RawDeal,
+RawActivity) e o recorte de período que todas compartilham.
+
+useJourneyCalls: `calls` do contato em `started_at` dentro do intervalo,
+ordem `started_at`/`id` decrescente, páginas de 200 por rolagem; a URL da
+gravação nunca sai (só `hasRecording`).
+
+useJourneyEmails: mensagens das conversas do contato, com
+`email_threads.last_message_at` no intervalo, ordem `internal_date`/`id`
+decrescente, páginas de 300; sem conta Gmail ou RLS negado a lista vem
+vazia sem exceção; o corpo (`body_html`/`body_text`) nunca é pedido.
+
+16 testes com o cliente Supabase mockado (escopo do contato e do período,
+paginação, erro, vazio, sem URL de gravação e sem corpo).

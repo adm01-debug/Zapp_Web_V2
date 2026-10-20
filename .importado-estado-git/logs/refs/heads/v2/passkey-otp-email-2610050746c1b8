@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a86c870bf96aef6a27f8bd8576c89109c5779dd5 Joaquim Ataides <ti@promobrindes.com.br> 1791197203 -0300	branch: Created from dia/2026-10-05
+a86c870bf96aef6a27f8bd8576c89109c5779dd5 a431b2665c2e26e9d3e0b7df4eed648031026751 Joaquim Ataides <ti@promobrindes.com.br> 1791197953 -0300	commit: fix(auth): passkey só anuncia login quando há sessão; sem sessão, continua por link de e-mail
+a431b2665c2e26e9d3e0b7df4eed648031026751 1bf38f7c6a2e9dd76a949d60293d448720f16f1a Joaquim Ataides <ti@promobrindes.com.br> 1791197964 -0300	commit: fix(webauthn): localiza challenge anônimo e pagina listUsers na autenticação por passkey

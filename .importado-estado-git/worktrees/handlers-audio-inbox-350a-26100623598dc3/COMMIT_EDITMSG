@@ -1,0 +1,11 @@
+fix(inbox): handlers de envio de audio sinalizam a falha ao chamador (#350-A)
+
+handleSendAudioMeme passa a REJEITAR em falha (conexao WhatsApp nao
+resolvida e erro do transporte), depois do toast; resolve so quando o
+envio confirma. Sem isso o VoiceChangerPicker/AudioMemePicker fechavam o
+popover e descartavam a previa mesmo sem a mensagem ter ido.
+
+handleAudioSend ja devolvia Promise<boolean> (R2-INB-022, integrado na
+branch do dia) e agora fica pinado por teste nos 3 caminhos.
+
+Cartao V2: R2-INB-058 (#350-A)

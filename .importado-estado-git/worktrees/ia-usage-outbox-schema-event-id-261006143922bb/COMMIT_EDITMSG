@@ -1,0 +1,1 @@
+fix(db): isola schema e unicidade de event_id da outbox de IA

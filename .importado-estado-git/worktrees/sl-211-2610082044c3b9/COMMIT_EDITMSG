@@ -1,0 +1,3 @@
+fix(inbox/chat): Editor de mensagem rico (chat) (SL-211)
+
+Lacuna nao existe na ponta: o chat ja tem editor rico (RichTextToolbar + RichTextToggle + MarkdownPreview) ligado no ChatInputArea, o mesmo campo do ChatPanel. Provado com teste renderizado (verde com a barra, vermelho sem ela). Sem alteracao de codigo, conforme o cartao.

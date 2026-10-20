@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 44772c4d988ed808b7743583b9f0ec17309ba2df Joaquim Ataides <ti@promobrindes.com.br> 1791367891 -0300	
+44772c4d988ed808b7743583b9f0ec17309ba2df 44772c4d988ed808b7743583b9f0ec17309ba2df Joaquim Ataides <ti@promobrindes.com.br> 1791367891 -0300	reset: moving to HEAD
+44772c4d988ed808b7743583b9f0ec17309ba2df 62cb947fce4c44e7359ea8cda0bfefa127fbafb0 Joaquim Ataides <ti@promobrindes.com.br> 1791368538 -0300	commit: fix(edge): restaura diagnostico e ajusta outbox do log essencial

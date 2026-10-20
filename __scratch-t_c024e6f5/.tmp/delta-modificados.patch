@@ -1,0 +1,105 @@
+diff --git a/src/components/inbox/chat/useChatPanelHandlers.ts b/src/components/inbox/chat/useChatPanelHandlers.ts
+index 4a113cab79..23eef2d093 100644
+--- a/src/components/inbox/chat/useChatPanelHandlers.ts
++++ b/src/components/inbox/chat/useChatPanelHandlers.ts
+@@ -22,6 +22,7 @@ import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/c
+ import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
+ import { navigateToView } from '@/hooks/system/useNavigationHistory';
+ import { CHAR_LIMIT } from './useChatInputLogic';
++import { sendQueue } from '@/hooks/chat/sendQueue';
+ 
+ /** Tipos de mensagem do chat com representação textual direta no transporte. */
+ const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
+@@ -334,11 +335,21 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+     const originalText = corpoDoEnvio;
+     const messageContent = payloadDoEnvio;
+     const wasReply = replyToMessageRef.current;
+-    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
++    setInputValue(''); setReplyToMessage(null); handleTypingStop();
+     if (wasReply) log.debug('Sending reply to:', wasReply.id);
+ 
++    // PK-21: fila SERIAL por conversa. O compositor NÃO espera o despacho no Edge
++    // (nem os refetches que vinham depois): a mensagem entra na fila da conversa e
++    // o editor já aceita a próxima digitação. A ordem é preservada — a segunda
++    // mensagem só sai depois que a primeira terminou — e uma falha de enqueue
++    // devolve o rascunho em vez de perdê-lo.
++    const entrega = sendQueue.enqueue(conversationId, () =>
++      onSendMessage(messageContent, wasReply?.id ?? null)
++    );
++
+     try {
+-      await onSendMessage(messageContent, wasReply?.id ?? null);
++      await entrega;
++      // A animação/som de "enviado" é do ACEITE do transporte, nunca da digitação.
+       undoToast({
+         message: 'Mensagem enviada', icon: '📨', delay: 3000,
+         onUndo: () => {
+@@ -349,10 +360,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+       });
+     } catch (err) {
+       log.error('Failed to send message:', err);
+-      setInputValue(originalText);
++      // O rascunho volta ao editor. Se o agente já digitou outra coisa, o texto
++      // novo fica — o que falhou não sobrescreve o que ele está escrevendo.
++      setInputValue((atual) => (atual === '' ? originalText : atual));
++      if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
+       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+-    } finally { setIsSending(false); }
+-  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
++    }
++  }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
+ 
+   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
+   // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem
+diff --git a/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts b/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+index 1aa8cf1f77..2b096f429b 100644
+--- a/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
++++ b/src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+@@ -24,12 +24,6 @@
+ import { describe, it } from 'vitest';
+ 
+ describe('paridade-06 · envio (provas pendentes)', () => {
+-  it.todo(
+-    'PK-21: Enter repetido enfileira em série por contato, preserva a ordem e libera o compositor logo após o enqueue local',
+-  );
+-  it.todo('PK-21: falha de enqueue preserva o rascunho e não toca a animação/som de enviado');
+-  it.todo('PK-21: o caminho de envio não refaz o fetch da lista de conversas');
+-
+   it.todo('PK-22: contato existente com conexão A e outra B conectada sai por A');
+   it.todo('PK-22: conexão do contato desconectada → aviso, sem troca silenciosa de número');
+   it.todo('PK-22: contato novo usa a conexão escolhida e o diálogo mostra de qual número sai');
+diff --git a/src/hooks/inbox/useRealtimeInbox.ts b/src/hooks/inbox/useRealtimeInbox.ts
+index bbc9984e6c..7ffbe7b92e 100644
+--- a/src/hooks/inbox/useRealtimeInbox.ts
++++ b/src/hooks/inbox/useRealtimeInbox.ts
+@@ -154,6 +154,13 @@ export function useRealtimeInbox() {
+   const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
+     if (!selectedContactId) return;
+     const currentId = selectedContactId;
++    // PK-21: o caminho de envio NÃO refaz o fetch da lista de conversas nem o da
++    // conversa aberta. Os dois já são atualizados pelo Realtime — o INSERT da
++    // mensagem enfileirada é tratado por `useRealtimeMessages` (lista) e por
++    // `useMessages` (conversa aberta) na inscrição `global-messages-realtime` —, e
++    // o par de refetches dentro do envio era o que segurava o compositor depois do
++    // despacho, obrigando o agente a esperar uma ida ao servidor que o Realtime já
++    // cobria.
+     try {
+       await sendMessage(currentId, content, 'text', undefined, undefined, replyToId);
+     } catch (err) {
+@@ -162,15 +169,7 @@ export function useRealtimeInbox() {
+       // chegar até ele para que não limpe o editor nem anuncie sucesso falso.
+       throw err;
+     }
+-
+-    try {
+-      await refreshActiveConversation();
+-    } catch (err) {
+-      // O transporte já confirmou o envio. Falha de refresh não deve sugerir
+-      // ao agente que reenvie a mesma mensagem e gere duplicidade.
+-      log.warn('Message sent, but conversation refresh failed:', err);
+-    }
+-  }, [selectedContactId, sendMessage, refreshActiveConversation]);
++  }, [selectedContactId, sendMessage]);
+ 
+    // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
+    // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando

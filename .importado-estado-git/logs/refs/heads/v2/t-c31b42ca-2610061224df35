@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300256 -0300	branch: Created from dia/2026-10-06
+d6bfd59751f26503e528dfa54b704daf0f497157 deef635a40f12fb67490d6b8074e909c589adc14 Joaquim Ataides <ti@promobrindes.com.br> 1791300538 -0300	commit: fix(tarefas): desfazer cancelamento/conclusão restaura status e alarme e só confirma após gravar (#421)

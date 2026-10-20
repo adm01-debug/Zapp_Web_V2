@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791226267 -0300	
+b082bce893ba74365248c56c31e898f05a13dc69 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791226268 -0300	reset: moving to HEAD
+b082bce893ba74365248c56c31e898f05a13dc69 bae13aa28cf6e1d6e3999947cee110c78e0cb37e Joaquim Ataides <ti@promobrindes.com.br> 1791226276 -0300	cherry-pick: fix(inbox): transferência da sidebar grava evento com nota e trata falha parcial (#88)
+bae13aa28cf6e1d6e3999947cee110c78e0cb37e 4f49eb0f81fc5dd32683128fac4e57abc0a1fd8e Joaquim Ataides <ti@promobrindes.com.br> 1791226748 -0300	commit: test(inbox): prova que a rejeicao do transferContact propaga ao TransferDialog (#88)

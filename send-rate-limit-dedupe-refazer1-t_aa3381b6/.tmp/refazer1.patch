@@ -1,0 +1,85 @@
+--- a/supabase/functions/send-rate-limit-alert/index.ts
++++ b/supabase/functions/send-rate-limit-alert/index.ts
+@@ -228,6 +228,12 @@
+       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       const patch: Record<string, any> = {
+         description,
++        // Estado atual SEMPRE persistido: sem isso o update congelaria
++        // alert_type/severity/title do estado antigo (ex.: um alerta blocked
++        // seguido de chamada warning continuaria high para sempre).
++        alert_type: alertType,
++        severity,
++        title,
+         metadata: {
+           ...(existing.metadata ?? {}),
+           endpoint,
+@@ -237,11 +243,9 @@
+           last_seen_at: now.toISOString(),
+         },
+       };
+-      if (escalating) {
+-        patch.alert_type = alertType;
+-        patch.severity = severity;
+-        patch.title = title;
+-      }
++      // shouldNotify (= escalating, marcado acima) continua sendo o único
++      // comportamento condicional: a notificação só sai na criação ou na
++      // escalada; o estado atual vai no patch em todo update.
+ 
+       const { error: updateError } = await supabaseClient
+         .from("security_alerts")
+--- a/supabase/functions/send-rate-limit-alert/__tests__/dedupe.test.ts
++++ b/supabase/functions/send-rate-limit-alert/__tests__/dedupe.test.ts
+@@ -260,6 +260,52 @@
+   assert(after60 === 2, `fora da janela cria novo alerta: ${after60}`);
+ });
+ 
++Deno.test("dedupe: update sem escalada persiste alert_type/severity/title do estado atual", async () => {
++  const clock = () => new Date("2026-10-13T12:00:00.000Z");
++  const mock = statefulMock({ admins: [ADMIN], now: clock });
++  const deps = { supabase: mock.supabase, internalSecret: "segredo", now: clock };
++
++  // 1ª chamada bloqueia de verdade → cria o alerta como blocked/high.
++  const first = await handleRateLimitAlert(req("203.0.113.60", "/api/login", 200, true), deps);
++  assert(first.status === 200, `chamada 1: ${first.status}`);
++  assert(
++    mock.alerts[0].alert_type === "rate_limit_blocked",
++    `pré-condição: 1ª chamada cria blocked: ${mock.alerts[0].alert_type}`,
++  );
++
++  // 2ª chamada no estado warning (sem escalada) → atualiza o MESMO alerta,
++  // sem nova notificação, gravando o estado atual (warning/medium).
++  const second = await handleRateLimitAlert(req("203.0.113.60", "/api/login", 25, false), deps);
++  assert(second.status === 200, `chamada 2: ${second.status}`);
++
++  assert(mock.alerts.length === 1, `deveria continuar 1 alerta: ${mock.alerts.length}`);
++  assert(
++    mock.notificationBatches.length === 1,
++    `sem escalada não há nova notificação: ${mock.notificationBatches.length}`,
++  );
++  const alert = mock.alerts[0];
++  assert(
++    alert.alert_type === "rate_limit_warning",
++    `update deveria gravar o estado atual (warning): ${alert.alert_type}`,
++  );
++  assert(
++    alert.severity === "medium",
++    `update deveria gravar severity atual (medium): ${alert.severity}`,
++  );
++  assert(
++    alert.title === "Alerta de Rate Limit para IP 203.0.113.60",
++    `update deveria gravar o title atual: ${alert.title}`,
++  );
++  assert(
++    alert.metadata.request_count === 25,
++    `request_count deveria ser atualizado: ${JSON.stringify(alert.metadata)}`,
++  );
++  assert(
++    alert.metadata.blocked_persisted === false,
++    `blocked_persisted deveria ser false: ${JSON.stringify(alert.metadata)}`,
++  );
++});
++
+ Deno.test("dedupe: blocked=true com falha de gravação NÃO escala (segue warning, sem nova notificação)", async () => {
+   const clock = () => new Date("2026-10-13T12:00:00.000Z");
+   const mock = statefulMock({

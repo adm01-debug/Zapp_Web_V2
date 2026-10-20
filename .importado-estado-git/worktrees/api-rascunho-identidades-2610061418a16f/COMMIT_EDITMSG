@@ -1,0 +1,23 @@
+fix(multiplix-dispatch): rascunho usa a identidade canonica e re-resolve o publico
+
+MX08 (t_bc869ae9): o `draft.*` misturava identidades e colunas e aceitava
+destinatario vindo do cliente.
+
+- identidade: `multiplix_dispatches.created_by` (e o `p_created_by` da RPC) guarda
+  `profiles.id`, mas a edge comparava/gravava o `auth.uid` cru (`ctx.userId`): o
+  proprio dono levava 404/409 e a criacao caia em `multiplix_draft_owner_not_found`.
+  Agora um unico `resolveProfileId`/`resolveOwnerScope` (profiles.user_id ->
+  profiles.id, OU `multiplix.dispatch.manage_all`) decide dono e escrita; quem tem
+  manage_all edita/descarta SEM tomar a posse (`created_by` intacto).
+- colunas: `draft.get` pedia `template`/`recipient_count`, nomes que nao existem na
+  tabela (sao `message_template`/`total_recipients`) -> 42703 do PostgREST saindo
+  como 502.
+- destinatario do cliente: `draft.create` aceitava `recipients` prontos do navegador
+  (com destino/elegibilidade forjaveis). O corpo passa a trazer so ids de
+  empresa/contato (schema estrito), o escopo de publico sai SEMPRE do JWT (sem
+  permissao = 403, sem resolucao e sem escrita) e a re-resolucao roda na ponte Singu
+  sob escopo assinado, no servidor.
+- blocks: a guarda de edicao passa a usar o mesmo resolver canonico (o dono do
+  proprio rascunho de bloco tambem era negado).
+- contrato F54 (b) reescrito: proibia `created_by = ctx.userId` e agora exige o
+  `profiles.id` resolvido do JWT.

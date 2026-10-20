@@ -1,0 +1,10 @@
+test(stickers): mock do catálogo suporta a cadeia order().order().range()
+
+O mock do Supabase no teste de fechamento devolvia `{ limit }` no primeiro
+`order`, mas o hook pagina o catálogo com `fetchAllRows` ->
+`.order('use_count').order('id').range(from, to)`. O segundo `order` da cadeia
+real não era função e a rejeição não tratada derrubava o arquivo inteiro
+(8 erros, exit 1) mesmo com os 6 casos passando.
+
+O builder agora devolve a si mesmo em cada `order`, registra as colunas pedidas
+e a faixa da página, e um teste novo prende a forma da consulta do catálogo.

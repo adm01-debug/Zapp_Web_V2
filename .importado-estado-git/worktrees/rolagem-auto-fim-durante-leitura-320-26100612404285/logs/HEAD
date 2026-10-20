@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791301204 -0300	
+d6bfd59751f26503e528dfa54b704daf0f497157 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791301205 -0300	reset: moving to HEAD
+d6bfd59751f26503e528dfa54b704daf0f497157 2350e43ba256514b2ecf074748925563e6e34a57 Joaquim Ataides <ti@promobrindes.com.br> 1791301793 -0300	commit: fix(inbox): mensagem nova e digitando nao arrastam mais a lista durante a leitura (#320)

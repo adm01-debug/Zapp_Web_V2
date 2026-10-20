@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3ff2cc72197643067d1943deda2cbe17d55b1e51 Joaquim Ataides <ti@promobrindes.com.br> 1791141741 -0300	
+3ff2cc72197643067d1943deda2cbe17d55b1e51 3ff2cc72197643067d1943deda2cbe17d55b1e51 Joaquim Ataides <ti@promobrindes.com.br> 1791141741 -0300	reset: moving to HEAD
+3ff2cc72197643067d1943deda2cbe17d55b1e51 fd29b22929fc769d29b63120ef6497510afc079e Joaquim Ataides <ti@promobrindes.com.br> 1791142384 -0300	commit: fix(ai-transcribe-audio): recusa mensagem visível sem mídia em vez de baixar objeto do cliente (R2-API-027)

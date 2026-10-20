@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 91d2a15da9d41e550acdaa897069855a00bb34d6 Joaquim Ataides <ti@promobrindes.com.br> 1791195419 -0300	
+91d2a15da9d41e550acdaa897069855a00bb34d6 91d2a15da9d41e550acdaa897069855a00bb34d6 Joaquim Ataides <ti@promobrindes.com.br> 1791195420 -0300	reset: moving to HEAD
+91d2a15da9d41e550acdaa897069855a00bb34d6 36b3dfbfbb2e93be354c5aa30b1011fdf7a749d6 Joaquim Ataides <ti@promobrindes.com.br> 1791195434 -0300	cherry-pick: fix(ci): artifact de deploy nao sobe mais se a remocao de secrets falhar
+36b3dfbfbb2e93be354c5aa30b1011fdf7a749d6 95b397b8d3a6d525d077a0f3079a95cf7ce39f16 Joaquim Ataides <ti@promobrindes.com.br> 1791195929 -0300	commit: fix(ci): confere residuo do segredo pelo valor e torna a base do redator explicita

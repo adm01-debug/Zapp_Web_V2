@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791460778 -0300	
+56917f551f1e9d834297f0df48c33726666b992d 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791460779 -0300	reset: moving to HEAD
+56917f551f1e9d834297f0df48c33726666b992d 904d7b8549c8817ea673f03b7a523c77912d9cc8 Joaquim Ataides <ti@promobrindes.com.br> 1791460798 -0300	cherry-pick: fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)
+904d7b8549c8817ea673f03b7a523c77912d9cc8 c3ee6399334740d355df0bbb9b887212deba7307 Joaquim Ataides <ti@promobrindes.com.br> 1791460798 -0300	cherry-pick: fix(ci): ajustar inventário de testes do refazer 299
+c3ee6399334740d355df0bbb9b887212deba7307 64eb50f2ca7545376ce34c33216e6f01e97cc68d Joaquim Ataides <ti@promobrindes.com.br> 1791461102 -0300	commit: fix(ci): corrigir refazer do inventario e seguranca do processo

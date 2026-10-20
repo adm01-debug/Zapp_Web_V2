@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2f43009d970b7626c41c18b4f95653a0e1b5937e Joaquim Ataides <ti@promobrindes.com.br> 1791143217 -0300	branch: Created from dia/2026-10-04
+2f43009d970b7626c41c18b4f95653a0e1b5937e c3f5994b7afb6e3f4e8453549149b95876693a61 Joaquim Ataides <ti@promobrindes.com.br> 1791144871 -0300	commit: fix(ai): vincular endpoint e secret de ai_providers a política de egress (IA-EGRESS-001)

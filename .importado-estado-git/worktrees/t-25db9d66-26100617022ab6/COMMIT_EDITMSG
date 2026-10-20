@@ -1,0 +1,12 @@
+fix(ia): consulta de custo nao elimina mais a janela quando o fim e nulo
+
+A RPC ai_usage_cost_summary comparava l.created_at < p_until sem tratar o
+nulo que o proprio painel envia (janela inteira): comparacao com NULL e
+desconhecida e o WHERE nao passava nenhuma linha, zerando o relatorio de
+custo da janela. A janela agora usa coalesce(p_until, now()), a mesma regra
+da IA-056, e declara until_efetivo em filtros.
+
+Prova: scripts/db-audit/ai-usage-cost-window-open.test.sh (PostgreSQL
+descartavel) reproduz o defeito com a definicao da base (0 chamadas com fim
+nulo, 3 com fim informado) e prova a correcao depois (3 chamadas, custo
+0.003, fim exclusivo e inicio preservados).

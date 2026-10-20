@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a86c870bf96aef6a27f8bd8576c89109c5779dd5 Joaquim Ataides <ti@promobrindes.com.br> 1791197219 -0300	
+a86c870bf96aef6a27f8bd8576c89109c5779dd5 a86c870bf96aef6a27f8bd8576c89109c5779dd5 Joaquim Ataides <ti@promobrindes.com.br> 1791197220 -0300	reset: moving to HEAD
+a86c870bf96aef6a27f8bd8576c89109c5779dd5 f3692db5ced4cdc1f27dd420472548bbb8da7bdf Joaquim Ataides <ti@promobrindes.com.br> 1791198213 -0300	commit: fix(multiplix-dispatch): prévia e validação rejeitam destinatário de outro disparo (R2-API-029)

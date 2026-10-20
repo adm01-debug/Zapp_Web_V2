@@ -1,0 +1,14 @@
+fix(inbox): transferência da sidebar grava evento com nota e trata falha parcial (#88)
+
+transferContact passa a aceitar só agent|queue (sem caminho connection), recebe
+a nota opcional e a persiste em conversation_events.metadata.note com
+event_type='transfer' e destino em to_agent_id/to_queue_id. Erro do UPDATE
+rejeita sem gravar evento (a sidebar mantém alvo e diálogo abertos); erro do
+INSERT do evento — quando o contato JÁ foi transferido — resolve com aviso
+distinto, em vez de rejeitar com erro genérico e convidar a repetir a
+transferência.
+
+O contrato agent|queue do TransferDialog (#88) já está na base do dia
+(a2dcf64ee, byte-idêntico a 3da946159): este commit não traz cherry-pick nenhum.
+
+Arquivos: ConversationListSidebar.tsx, useConversationActions.ts e seus testes.

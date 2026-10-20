@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791341724 -0300	branch: Created from dia/2026-10-06
+e58beff67df277afa73c179058c38190a5dd5d5c 853eabb06bf6a3e95f8451dce9e772164c6ef4b1 Joaquim Ataides <ti@promobrindes.com.br> 1791341738 -0300	cherry-pick: fix(settings): aba Horário passa a editar business_hours por conexão (#273-A)
+853eabb06bf6a3e95f8451dce9e772164c6ef4b1 e9c740ccc41f782e9d531b0b63dd06f0be79040c Joaquim Ataides <ti@promobrindes.com.br> 1791341968 -0300	commit: fix(settings): valida HH:MM antes de gravar business_hours e zera o rascunho no sucesso (#273-A)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791484984 -0300	branch: Created from dia/2026-10-08
+72ad19958df7735cd29bad24dd38f66265c47f3b a35ee12830564ebeb515d74da0fdd9c08a3f9a43 Joaquim Ataides <ti@promobrindes.com.br> 1791485117 -0300	commit: test(e2e): telefonia hermética com projeto dedicado e sem o ref do banco real
+a35ee12830564ebeb515d74da0fdd9c08a3f9a43 b4a5116ef0d0ddd99a296c030abd41fd8c529680 Joaquim Ataides <ti@promobrindes.com.br> 1791485198 -0300	commit (amend): test(e2e): telefonia hermética com projeto dedicado e sem o ref do banco real

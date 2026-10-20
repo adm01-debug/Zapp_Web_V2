@@ -1,0 +1,31 @@
+0000000000000000000000000000000000000000 cbe75963e5dae093d551733abb6ced721fe74884 Joaquim Ataides <ti@promobrindes.com.br> 1790619904 -0300	clone: from https://github.com/adm01-debug/Zapp_Web_V2.git
+cbe75963e5dae093d551733abb6ced721fe74884 c4d419eb981014348d38319d941a3118793bfd19 Joaquim Ataides <ti@promobrindes.com.br> 1790781288 -0300	merge origin/main: Fast-forward
+c4d419eb981014348d38319d941a3118793bfd19 3d2b7d572e689527e12e2e44104f327a9a23cb55 Joaquim Ataides <ti@promobrindes.com.br> 1790783949 -0300	merge origin/main: Fast-forward
+3d2b7d572e689527e12e2e44104f327a9a23cb55 a6955b16909f01894bbc1f975140e07841aaf21e Joaquim Ataides <ti@promobrindes.com.br> 1790785493 -0300	merge origin/main: Fast-forward
+a6955b16909f01894bbc1f975140e07841aaf21e 325729ed2d1fcf34186e24717455650ad6a1ffb3 Joaquim Ataides <ti@promobrindes.com.br> 1790785855 -0300	merge origin/main: Fast-forward
+325729ed2d1fcf34186e24717455650ad6a1ffb3 08de12f4f2e392265bed3fd4bcfef4654416db51 Joaquim Ataides <ti@promobrindes.com.br> 1790790007 -0300	pull --ff-only origin main: Fast-forward
+08de12f4f2e392265bed3fd4bcfef4654416db51 3393b540c8eff4f12fe73ed0eff42e789584cff1 Joaquim Ataides <ti@promobrindes.com.br> 1790794780 -0300	pull --ff-only origin main: Fast-forward
+3393b540c8eff4f12fe73ed0eff42e789584cff1 080afc085170ca48f3ee08c3f460153633eba324 Joaquim Ataides <ti@promobrindes.com.br> 1790795902 -0300	pull --ff-only origin main: Fast-forward
+080afc085170ca48f3ee08c3f460153633eba324 826fa1486a51d8bfdab285abb5a6e76ce7921426 Joaquim Ataides <ti@promobrindes.com.br> 1790804404 -0300	merge origin/main: Fast-forward
+826fa1486a51d8bfdab285abb5a6e76ce7921426 efdfac92edbadfd69f529ab42e9922c62143be04 Joaquim Ataides <ti@promobrindes.com.br> 1790837571 -0300	merge origin/main: Fast-forward
+efdfac92edbadfd69f529ab42e9922c62143be04 6a9aec578f2a1556cf5a0966176489f01308074d Joaquim Ataides <ti@promobrindes.com.br> 1790850634 -0300	merge origin/main: Fast-forward
+6a9aec578f2a1556cf5a0966176489f01308074d e4d7e1b56ae4371a482a698748f187b0a7680703 Joaquim Ataides <ti@promobrindes.com.br> 1790851544 -0300	merge origin/main: Fast-forward
+e4d7e1b56ae4371a482a698748f187b0a7680703 5c19b311416c26286255205c3d549e20fea1f709 Joaquim Ataides <ti@promobrindes.com.br> 1790853391 -0300	merge origin/main: Fast-forward
+5c19b311416c26286255205c3d549e20fea1f709 762c7c25044be174f643be3c251973a6ef9ca41d Joaquim Ataides <ti@promobrindes.com.br> 1790853771 -0300	merge origin/main: Fast-forward
+762c7c25044be174f643be3c251973a6ef9ca41d 547eda65e4911a8b10310b4da96e0d9d79b1d4f1 Joaquim Ataides <ti@promobrindes.com.br> 1790862405 -0300	merge origin/main: Fast-forward
+547eda65e4911a8b10310b4da96e0d9d79b1d4f1 3f123b523b6d78d489716a9b75aff98ec7e8d4a3 Joaquim Ataides <ti@promobrindes.com.br> 1790868007 -0300	merge origin/main: Fast-forward
+3f123b523b6d78d489716a9b75aff98ec7e8d4a3 b22b91f8f5912f280d884b691b696881183e9cfb Joaquim Ataides <ti@promobrindes.com.br> 1790870801 -0300	pull --ff-only origin main: Fast-forward
+b22b91f8f5912f280d884b691b696881183e9cfb 71e3f4dd255e86542408c6553b13eba038b816c0 Joaquim Ataides <ti@promobrindes.com.br> 1790973102 -0300	cherry-pick: docs(email): planeja redesign NAVY em 100 etapas sem executar
+71e3f4dd255e86542408c6553b13eba038b816c0 8957b85e54bde2b2b58f4620a5c353a57151f181 Joaquim Ataides <ti@promobrindes.com.br> 1790973117 -0300	revert: Revert "docs(email): planeja redesign NAVY em 100 etapas sem executar"
+8957b85e54bde2b2b58f4620a5c353a57151f181 18689fa07f72bdc61b7285ae4f6a6adb3f0e016c Joaquim Ataides <ti@promobrindes.com.br> 1791110024 -0300	reset: moving to origin/main
+18689fa07f72bdc61b7285ae4f6a6adb3f0e016c d9dd916a8187aa108064494a8001641c41b03eb9 Joaquim Ataides <ti@promobrindes.com.br> 1791112616 -0300	pull --ff-only -q: Fast-forward
+d9dd916a8187aa108064494a8001641c41b03eb9 2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 Joaquim Ataides <ti@promobrindes.com.br> 1791112903 -0300	pull --ff-only -q: Fast-forward
+2fd1d7595e0e419b3f9a3d221be5b387c596d2b6 2b4dac2d3f4fbab3b54b65acdbb01e036ff2b4bb Joaquim Ataides <ti@promobrindes.com.br> 1791116961 -0300	pull --ff-only -q: Fast-forward
+2b4dac2d3f4fbab3b54b65acdbb01e036ff2b4bb bf266d2f890e7013f03da20d5612addf3a19b39c Joaquim Ataides <ti@promobrindes.com.br> 1791118693 -0300	merge origin/main: Fast-forward
+bf266d2f890e7013f03da20d5612addf3a19b39c 7a15852791828c50a9985a49659a9e13f15eaa86 Joaquim Ataides <ti@promobrindes.com.br> 1791122805 -0300	merge origin/main: Fast-forward
+7a15852791828c50a9985a49659a9e13f15eaa86 d5125552ec815192db38c4e10549896f76453830 Joaquim Ataides <ti@promobrindes.com.br> 1791206781 -0300	merge origin/main: Fast-forward
+d5125552ec815192db38c4e10549896f76453830 b44540e359cfb367ed7a9ecb5caf3507b1d040b1 Joaquim Ataides <ti@promobrindes.com.br> 1791219095 -0300	merge origin/main: Fast-forward
+b44540e359cfb367ed7a9ecb5caf3507b1d040b1 0c90ce276baf6c86e93659c0622ea2d42c44ed0e Joaquim Ataides <ti@promobrindes.com.br> 1791221490 -0300	merge origin/main: Fast-forward
+0c90ce276baf6c86e93659c0622ea2d42c44ed0e 48f6f5be22c18530e12394a5832df1b35d606524 Joaquim Ataides <ti@promobrindes.com.br> 1791222687 -0300	merge origin/main: Fast-forward
+48f6f5be22c18530e12394a5832df1b35d606524 03eb778ecb5c2793cb340158c98e3a78f6a93587 Joaquim Ataides <ti@promobrindes.com.br> 1791223882 -0300	merge origin/main: Fast-forward
+03eb778ecb5c2793cb340158c98e3a78f6a93587 ec2722f0f9c4e9e949cf5d0dee2765264b9f5634 Joaquim Ataides <ti@promobrindes.com.br> 1791224788 -0300	merge origin/main: Fast-forward

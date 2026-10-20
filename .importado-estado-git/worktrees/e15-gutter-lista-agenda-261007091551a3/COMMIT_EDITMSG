@@ -1,0 +1,8 @@
+fix(tarefas): gutter e rolagem nas raízes de carregamento e dos vazios da Lista
+
+Com tasks em layout:'full' o ViewContainer não aplica mais o gutter; sem ele, o
+carregamento e os dois vazios da Lista colavam na borda. As três raízes passam a
+repassar o mesmo scroller + gutter do container (overflow-y-auto
+p-[var(--layout-gutter)]), sem o rodapé extra pb-[calc(var(--layout-gutter)+2rem)]
+que é só da Lista cheia. Os testes E15 invertem as asserções para EXIGIR o gutter
+no carregamento e nos vazios, mantendo a prova da ausência do pb somado.

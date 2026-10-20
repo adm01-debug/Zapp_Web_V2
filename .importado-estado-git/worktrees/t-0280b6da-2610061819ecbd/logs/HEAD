@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321567 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321568 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 1581af8cd5799f4974e4b44751330e2e619bfb28 Joaquim Ataides <ti@promobrindes.com.br> 1791321759 -0300	cherry-pick: fix(sla): periodos do SLA correspondem aos rotulos Todos e 7d (#459)
+1581af8cd5799f4974e4b44751330e2e619bfb28 868e4ffad52c510b7b74e09692870f103cc638af Joaquim Ataides <ti@promobrindes.com.br> 1791322514 -0300	commit: fix(sla): metricas e historico usam o mesmo denominador de 1a resposta (#458)
+868e4ffad52c510b7b74e09692870f103cc638af d5189ac9e323f5830c3e1554a10fb4eb553360ab Joaquim Ataides <ti@promobrindes.com.br> 1791322887 -0300	commit (amend): fix(sla): metricas e historico usam o mesmo denominador de 1a resposta (#458)

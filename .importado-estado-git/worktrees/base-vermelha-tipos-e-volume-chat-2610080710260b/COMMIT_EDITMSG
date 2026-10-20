@@ -1,0 +1,3 @@
+fix(ci): aponta o contrato de volume do chat interno ao teamChatParts
+
+O refactor TC-006 moveu o <audio>/<video> do chat interno para src/components/team-chat/teamChatParts.tsx, que já chama useMediaElementVolume (linhas 47-48). O contrato continuava apontando para o shell TeamChatPanel.tsx e por isso ficava vermelho. Segue a própria regra VOL-02 do arquivo: a superfície é o player que RENDERIZA o <audio>, não o shell.

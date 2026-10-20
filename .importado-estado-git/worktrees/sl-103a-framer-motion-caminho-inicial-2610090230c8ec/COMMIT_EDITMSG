@@ -1,0 +1,3 @@
+fix(components): tirar o runtime de animacao JS do caminho inicial (SL-103A)
+
+button.tsx, card.tsx, accessible-toast.tsx e RouteTransition.tsx deixam de importar framer-motion: hover/tap, entrada de toast e entrada de rota passam a usar as animacoes e tokens do tema, sempre com motion-safe:. Testes por componente + guarda de fonte que falha se o import voltar.

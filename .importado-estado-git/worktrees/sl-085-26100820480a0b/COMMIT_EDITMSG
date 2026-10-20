@@ -1,0 +1,16 @@
+fix(outros): Zod schemas + zodResolver + maxLength nos formulários (SL-085)
+
+Primeiro formulário do app validado por schema: `src/lib/schemas/slaRule.ts`
+com o schema da regra de SLA e o `zodResolver` no `SLARuleFormDialog`, no lugar
+do `validate()` escrito à mão (o inventário apontava 0 ocorrências de
+`zodResolver` em `src`).
+
+- schema define os tetos: nome 120 e notas de escalação 500; o `maxLength` do
+  input usa a MESMA constante do schema (o teto vale para o que é colado e para
+  o que já estava salvo no banco, não só para digitação)
+- escopo passa a ser validado pelo schema, com a mesma mensagem por escopo
+  ("Selecione um(a) empresa")
+- `zod/v3` + cast documentado: o `@hookform/resolvers@3` instalado lê
+  `error.errors` (zod v3) e estoura com schema do zod v4 (runtime e tipos)
+- teste novo com vermelho antes (2 falhas com o componente antigo) e verde
+  depois (5 passando)

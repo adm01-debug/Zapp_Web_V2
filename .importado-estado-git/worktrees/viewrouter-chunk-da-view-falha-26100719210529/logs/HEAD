@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b63a1e982e5865a88b53a0509b5c9abdf52088fe Joaquim Ataides <ti@promobrindes.com.br> 1791411672 -0300	
+b63a1e982e5865a88b53a0509b5c9abdf52088fe b63a1e982e5865a88b53a0509b5c9abdf52088fe Joaquim Ataides <ti@promobrindes.com.br> 1791411673 -0300	reset: moving to HEAD
+b63a1e982e5865a88b53a0509b5c9abdf52088fe 776eca33e3fe98b36a23fee189fe48d5c9282f95 Joaquim Ataides <ti@promobrindes.com.br> 1791413198 -0300	commit: fix(errors): chunk error da view delega ao boundary global em vez de remontar o lazy morto
+776eca33e3fe98b36a23fee189fe48d5c9282f95 3bd095a3fb3f91e61dabf76737f38ccc52c39f30 Joaquim Ataides <ti@promobrindes.com.br> 1791414445 -0300	commit (amend): fix(errors): chunk error da view delega ao boundary global em vez de remontar o lazy morto

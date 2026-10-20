@@ -1,0 +1,10 @@
+fix(seguranca): external-db-proxy exige papel na leitura (Y27 P0-02)
+
+SEC-EDGE_FUNCTIONS-02 (P0): o ramo de leitura consultava o Postgres externo
+(evolution_contacts/evolution_messages/media_quarantine) com a credencial do
+servidor sem exigir papel — qualquer usuário autenticado lia mensagens que não
+enxerga no app. A checagem is_admin_or_supervisor saiu de dentro do
+if (action === 'update') e passou a valer nas duas pontas (403).
+O handler virou exportado (Deno.serve atrás de import.meta.main) para o teste
+chamar o handler real; teste novo em index.test.ts cobre o caminho negado das
+três tabelas, a falha do RPC, o admin lendo como antes e o ramo de update.

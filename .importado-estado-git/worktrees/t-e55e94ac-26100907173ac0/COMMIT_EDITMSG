@@ -1,0 +1,25 @@
+fix(ci/devops): entrada from:department_whatsapp_configs sai do baseline (SL-144)
+
+Fecha a ultima violacao conhecida do supabase-usage-guard. useSaveDepartmentWhatsApp gravava
+direto na tabela department_whatsapp_configs, que nao existe no schema (nem catalogo, nem
+migration) e fazia o upsert falhar em runtime; a gravacao passa para a RPC canonica
+public.set_department_whatsapp_config (migration 20261006213734), que autoriza por
+is_admin_or_supervisor e audita whatsapp_updated sem o segredo. A entrada obsoleta sai do
+baseline (o guard falha com entrada obsoleta) e 4 testes novos provam a troca.
+
+(cherry picked from commit 4659ceaad482e1a434a2b08c56bc661dcfb7fb97)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1f9252a86
+# Last command done (1 command done):
+#    pick 0b1ca1af0 fix(ci/devops): entrada from:department_whatsapp_configs sai do baseline (SL-144)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-e55e94ac-26100907173ac0' on '1f9252a86'.
+#
+# Changes to be committed:
+#	modified:   scripts/db-audit/known-violations.json
+#	modified:   src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx
+#	modified:   src/hooks/team-chat/useDepartmentManagement.ts
+#

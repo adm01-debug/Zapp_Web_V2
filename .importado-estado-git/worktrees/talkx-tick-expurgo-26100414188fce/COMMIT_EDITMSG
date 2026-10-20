@@ -1,0 +1,16 @@
+fix(talkx): tick do motor não aborta mais no expurgo do storage
+
+Por quê: M-DB-01 (P0). trigger_talkx_engine_tick() chamava o expurgo fora de
+bloco de exceção e o expurgo fazia DELETE em storage.objects; o gatilho
+storage.protect_delete (FOR EACH STATEMENT) recusa com 42501 mesmo com 0 linhas,
+a transação do tick revertia e last_purge_at nunca era gravado.
+Migration 20261004172416: órfãos de talkx-media vão para o manifesto
+talkx_storage_purge_queue (só service_role); o tick envolve o expurgo em
+EXCEPTION com alerta purge_failed (CHECK estendido), last_purge_attempt_at e
+nova tentativa só depois de 1 h; talkx_engine_alerts() não fecha purge_failed
+sozinho e traduz outcome_unknown_24h para outcome_unknown; search_path
+public, pg_temp nas três funções.
+Verificação: talkx-tick-purge-storage.test.sh vermelho antes / verde depois
+(PG17 descartável, 6 mutantes pegos); dois ticks e falha simulada provados no
+banco local da tarefa; zapp-verify --rapido verde.
+Plano: cartão t_5083facb — P0 Talk X: tick não pode abortar no expurgo do storage (M-DB-01) v2

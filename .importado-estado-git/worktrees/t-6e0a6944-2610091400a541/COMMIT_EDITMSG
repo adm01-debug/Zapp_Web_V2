@@ -1,0 +1,38 @@
+refactor(talk-x): Em andamento usa o hook unico de ciclo de vida (X051)
+
+A tela "Campanha em Andamento" (TalkXCampaignRunning) deixa de ter ciclo de
+vida proprio: saem os AlertDialog de Pausar e Cancelar, os estados pauseOpen,
+pauseReason e cancelOpen, o estado resuming e os handlers handlePause e
+handleCancel. Os tres botoes passam a chamar
+lifecycle.request({ kind: 'pause'|'resume'|'cancel', target: campaign }) do
+controlador unico useTalkXLifecycle e a tela monta um so
+<TalkXLifecycleDialog controller={lifecycle} />. O modal de Editar Limites
+continua local (nao e ciclo de vida).
+
+Contrato mudado (visivel ao operador):
+- titulos passam a ser os do kit: "Pausar campanha?" e "Cancelar campanha?";
+- cancelar confirma com "Cancelar" (saida "Voltar"), antes "Confirmar
+  cancelamento";
+- retomar agora pede confirmacao ("Retomar campanha?") e o pendente
+  ("Retomando...") saiu do botao para o dialogo — mesma porta das outras acoes;
+- erro da Edge deixa de virar toast: aparece como alerta DENTRO do dialogo
+  aberto, que segue aberto para nova tentativa.
+
+O efeito de conclusao remota (R2-MOD-032) passa a chamar lifecycle.close() no
+lugar de setPauseOpen(false)/setCancelOpen(false); o guard de isPending do hook
+mantem o dialogo aberto quando ha acao em espera. O cancelar confirmado segue
+voltando para a lista (onBack), como o handleCancel antigo — o controlador nao
+tem onDone por acao, entao a tela observa a acao de cancelar que chegou a rodar
+(intencao de cancelar + isPending) e so entao navega: "Voltar" fecha sem agir.
+
+Prova:
+- src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx (novo)
+  renderiza a tela REAL com o hook REAL (so useTalkX espiado): dialogo do kit,
+  pendente travando os botoes, motivo em pauseCampaign, erro no dialogo aberto,
+  retomar com confirmacao, cancelar levando ao onBack e "Voltar" sem acao.
+  Vermelho contra o componente do HEAD: 4 failed | 1 passed (o caso do "Voltar"
+  passa porque nao depende da troca); verde depois: 5 passed.
+- e2e/talkx-launch.spec.ts ajustado no mesmo commit (Pausar agora, confirmacao
+  do Retomar, Cancelar no lugar de "Confirmar cancelamento") e rodado:
+  chromium-talkx-launch 1 passed (8.7s).
+- modulo Talk X: 43 arquivos / 321 testes verdes.

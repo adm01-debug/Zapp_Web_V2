@@ -1,0 +1,6 @@
+fix(dashboard): cobre classes de sentimento nos insights
+
+# Conflicts:
+#	src/components/dashboard/AIQuickAccess.tsx
+#	src/components/dashboard/__tests__/AIQuickAccess.test.tsx
+#	src/hooks/analytics/useRecentAnalyses.ts

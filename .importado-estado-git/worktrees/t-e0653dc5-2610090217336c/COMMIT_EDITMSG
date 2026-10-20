@@ -1,0 +1,8 @@
+fix(talk-x): ações de linha da campanha em useCampaignRowActions (TL-116)
+
+A Visão geral montava o menu de ações à mão, pausava e retomava sem
+confirmação e duplicava sem modal. As ações por status agora saem de
+src/components/talkx/useCampaignRowActions.tsx: matriz pelos 6 status
+(excluir só em rascunho e agendada, como a regra do banco), confirmação
+das ações que mudam o estado, pausa com motivo obrigatório, indicador por
+linha e mensagem do servidor no próprio modal quando a ação é recusada.

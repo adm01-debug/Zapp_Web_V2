@@ -1,0 +1,24 @@
+fix(edge): rota de outra conexao nao usa mais a credencial global da instancia padrao (#18)
+
+A Evolution GO seleciona a instancia pela CREDENCIAL (apikey), nao pelo path. O
+proxy _shared/evolution-api-proxy.ts usava EVOLUTION_INSTANCE_TOKEN (token da
+instancia PADRAO) para TODA rota de instancia e, sem o env, a key global admin —
+a rota de uma conexao saia executada na instancia errada (#18 / TRA-002).
+
+- NOVO _shared/evolution-instance-token.ts: resolvedor unico do token da conexao
+  (Vault via get_instance_token, cache por isolate). O fallback de transicao
+  EVOLUTION_INSTANCE_TOKEN so vale para a instancia padrao
+  (instanceName === EVOLUTION_INSTANCE_NAME) — a mesma regra que o evoFetch de
+  _shared/evolution-send.ts (1197fa6e4) ja aplica.
+- _shared/evolution-api-proxy.ts: proxyToEvolution aceita instanceToken; sem ele,
+  rota de instancia que nao e da padrao FALHA FECHADO (200 + {error:true}) antes
+  de qualquer rede, nunca com a key global.
+- evolution-api/index.ts: resolve o token DA conexao e o entrega no helper proxy()
+  (grupos/perfil/settings/webhook/restart/info), no connect (GO), no status, no
+  disconnect e no update-privacy; o ramo v2 (instancia pelo nome no path, auth da
+  key global) fica intacto. Comentario desatualizado do create-connection corrigido.
+- evolution-api/index.test.ts: cada ponto de bloqueio tem o caso NEGADO (loop de 5
+  acoes) + positivos (token da conexao usado) + fallback da padrao preservado.
+
+Prova: vermelho na base (7 failed / 20 passed), verde com o fix (33 passed / 0
+failed); zapp-verify . --rapido VERDE.

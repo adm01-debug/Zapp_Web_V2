@@ -1,0 +1,6 @@
+test(conexoes): prova que a troca de padrao toca so as linhas alteradas (#174)
+
+Resposta ao aviso do juiz barato sobre o gatilho de updated_at: cada comando
+so atinge linhas que de fato mudam de valor (no maximo a padrao antiga e o
+alvo). A.2b mostra que o caminho antigo tocava 3 linhas; B.5b prova que a RPC
+toca exatamente 2 e B.5 que as linhas intocadas preservam updated_at.

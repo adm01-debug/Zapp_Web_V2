@@ -1,0 +1,11 @@
+-- Fecha os buckets com dados de clientes. Estavam public=true: qualquer URL
+-- (6.074 objetos em 2026-09-05: whatsapp-media 4.254, audio-messages 1.820)
+-- era servida sem JWT — o maior vazamento potencial de dados pessoais do
+-- sistema, com o banco ja blindado por RLS. O app ja resolve locators via
+-- createSignedUrl (src/hooks/storage/useResolvedStorageUrl.ts,
+-- PRIVATE_MEDIA_BUCKETS em src/lib/storage_object_reference.ts, migration
+-- 20260831150000) e as edges assinam antes de entregar a Evolution GO
+-- (resolvePrivateBucketUrl em _shared/evolution-api-proxy.ts). As policies de
+-- SELECT em storage.objects (por contato atribuido / admin / membro da
+-- conversa) passam a ser a autorizacao efetiva de leitura.
+UPDATE storage.buckets SET public = false WHERE id IN ('whatsapp-media', 'audio-messages', 'team-chat-files');

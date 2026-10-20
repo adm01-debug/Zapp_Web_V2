@@ -1,0 +1,13 @@
+fix(arquivos): miniatura renova pelo locator a assinatura em lote que falha
+
+R2-INB-059: quando o item ja vinha com signedUrl da assinatura em lote, o
+ThumbImage (e o FileDetailContent) entregavam source vazio ao
+useResolvedStorageUrl e preferiam sempre a URL em lote no src. O refresh
+ligado ao onError nao recebia o locator e devolvia vazio: a miniatura caia
+em "Previa indisponivel" mesmo com o objeto e a permissao de leitura validos.
+
+O resolver passa a receber sempre o locator duravel (item.url) e aceita a
+assinatura em lote como semente (signedUrl/signedUrlExpiresAt): ela entra
+como URL de leitura sem pedido individual enquanto vale, e o refresh assina
+de novo a partir do locator. A semente faz parte da identidade do estado,
+entao uma assinatura reemitida pela consulta assume no lugar da antiga.

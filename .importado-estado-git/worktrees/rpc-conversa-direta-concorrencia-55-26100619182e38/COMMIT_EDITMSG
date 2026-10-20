@@ -1,0 +1,14 @@
+fix(banco): restabelece o par ordenado e o UPSERT da RPC de conversa direta (#55)
+
+A 20260929190000 (repetida pela reconciliação 20261003272707) recriou
+public.find_or_create_direct_conversation com SELECT por membros + INSERT
+(type, created_by): o par direct_member_a/b ficava NULL e o índice único
+parcial idx_team_conversations_direct_pair deixava de arbitrar duas
+requisições simultâneas — duas conversas diretas para o mesmo par.
+
+Migration nova (forward-only) volta a gravar o par ordenado e troca o INSERT
+por UPSERT arbitrado pelo índice único, mantendo a busca por membros para as
+linhas legadas sem par. Prova em scripts/db-audit/tc002-direct-conversation-race.test.sh
+(PostgreSQL descartável, migrations reais, papel authenticated): A vermelho
+(duas conversas) -> B verde (mesmo id, uma conversa, dois membros) -> rollback
+vermelho -> reaplicação verde.

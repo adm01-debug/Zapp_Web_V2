@@ -1,0 +1,7 @@
+fix(edge): nao anunciar autoresposta de opt-out quando o provedor responde erro
+
+R2-API-008: o Response do evoFetch era ignorado e o webhook logava
+'Confirmacao enviada' mesmo com HTTP 4xx/5xx. Agora o status classifica o
+desfecho (accepted/rejected/unknown): 2xx anuncia envio, 4xx/5xx registra a
+recusa com a evidencia do provedor, e queda de transporte fica como unknown.
+A espera pela resposta ganha AbortSignal.timeout(15s).

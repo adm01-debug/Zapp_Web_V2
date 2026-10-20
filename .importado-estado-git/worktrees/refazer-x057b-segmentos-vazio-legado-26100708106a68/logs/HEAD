@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 2dd7632be9d539b5a1dad42e5522a04ae786f802 Joaquim Ataides <ti@promobrindes.com.br> 1791371403 -0300	
+2dd7632be9d539b5a1dad42e5522a04ae786f802 2dd7632be9d539b5a1dad42e5522a04ae786f802 Joaquim Ataides <ti@promobrindes.com.br> 1791371404 -0300	reset: moving to HEAD
+2dd7632be9d539b5a1dad42e5522a04ae786f802 d26f7f5fdd5b1ec853c6df6db9b6dd1142adc268 Joaquim Ataides <ti@promobrindes.com.br> 1791371414 -0300	cherry-pick: fix(talkx): preserva segmentos no replay X057b
+d26f7f5fdd5b1ec853c6df6db9b6dd1142adc268 09d014b0f685de9beba7bd6b486e45671ae6bdfa Joaquim Ataides <ti@promobrindes.com.br> 1791371545 -0300	commit: fix(talkx): recusa segment_ids vazio legado

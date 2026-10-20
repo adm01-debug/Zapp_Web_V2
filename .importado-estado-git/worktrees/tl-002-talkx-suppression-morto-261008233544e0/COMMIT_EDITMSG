@@ -1,0 +1,11 @@
+fix(talk-x): remove o hook morto useTalkXSuppression.ts (TL-002)
+
+O modulo em src/hooks/integrations/ nunca foi importado por nenhum arquivo do
+repositorio (a varredura em src, e2e, tests, supabase/functions e scripts so
+encontrava a propria declaracao) e divergia da tela TalkXSuppression.tsx, que faz
+as proprias queries; alem disso removia com DELETE fisico, contra a trilha
+append-only do modulo.
+
+Teste-guarda novo em src/hooks/integrations/__tests__/useTalkXSuppression.removido.test.ts
+varre a arvore de codigo e falha se o arquivo voltar ou se algum arquivo citar o
+identificador (vermelho antes: 2 casos falhando; verde depois: 4 passando).

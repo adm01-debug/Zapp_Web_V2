@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791322696 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791322697 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 9475040b996f296009a11264538fd8ab9f539a8f Joaquim Ataides <ti@promobrindes.com.br> 1791322856 -0300	commit: fix(observabilidade): coletor local agrega CLS por janela de sessão e INP pelo p98

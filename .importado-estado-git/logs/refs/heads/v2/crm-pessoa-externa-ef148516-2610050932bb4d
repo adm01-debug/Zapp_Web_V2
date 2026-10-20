@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791203571 -0300	branch: Created from dia/2026-10-05
+b58c615056ec3756606163a249e5d8b26352f355 38fc44f2cd6a58ac8db1f1aec19735f943be7d2c Joaquim Ataides <ti@promobrindes.com.br> 1791204644 -0300	commit: fix(crm-integration): inteligência e lote recusam identidade externa divergente (R2-AUTH-018)

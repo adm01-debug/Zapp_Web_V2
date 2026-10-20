@@ -1,0 +1,14 @@
+fix(filas/skills): UPDATE de contato repete guarda de aguardando e confirma escrita (SL-192)
+
+Refazer da recusa do SL-192: a atribuição por habilidade lia o contato
+aguardando e fazia UPDATE só por id — outro agente/fluxo podia atribuir o
+mesmo contato entre a leitura e a escrita e ser sobrescrito. O UPDATE agora
+repete a guarda (queue_id, assigned_to nulo, deleted_at nulo) e confirma a
+escrita com .select('id'): resposta vazia vira "já atribuído por outro
+fluxo", sem toast de sucesso falso. Sucesso real invalida os agregados de
+Contatos (helper canônico) e a contagem por fila do dashboard.
+
+Teste: mock da fronteira registra is/not/order por tipo de corrente e
+devolve data nulo em UPDATE sem select (PostgREST real); prova os filtros
+da busca, as guardas da escrita, o caso de 0 linhas e a invalidação.
+Vermelho: 3 failed sem a correção; verde: 7 passed com ela.

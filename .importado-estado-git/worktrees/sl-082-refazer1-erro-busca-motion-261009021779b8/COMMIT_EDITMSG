@@ -1,0 +1,7 @@
+test(team-chat): prova a variante de movimento pela lista de animacoes do icone (SL-082)
+
+O guarda de movimento do fechar varre o TEXTO dos arquivos e apontava o proprio
+arquivo de teste: o titulo, o comentario e a assercao negativa citavam a classe
+crua sem `motion-safe:`. A prova agora compara a lista de classes de animacao do
+icone com o esperado — mesma medicao (a classe crua continua reprovando), sem
+escrever a classe crua no arquivo.

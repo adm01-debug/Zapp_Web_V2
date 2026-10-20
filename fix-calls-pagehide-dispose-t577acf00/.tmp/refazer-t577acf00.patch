@@ -1,0 +1,465 @@
+--- a/src/hooks/communication/useSipClient.ts (879519e80)
++++ b/src/hooks/communication/useSipClient.ts (refazer-t577acf00)
+@@ -2,7 +2,7 @@
+ import { getLogger } from '@/lib/logger';
+ import { supabase } from '@/integrations/supabase/client';
+ import { useSipConnection } from '../sip/useSipConnection';
+-import { criarFilaDePersistencia, registrarFimNaSaidaDaPagina, type CallEndOutcome } from '@/lib/calls/persistence';
++import { criarFilaDePersistencia, registrarFimNaSaidaDaPagina, reservarIdDeSaida, type CallEndOutcome } from '@/lib/calls/persistence';
+ import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
+ import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
+ import { provisionarSip } from '@/lib/calls/sipProvisioning';
+@@ -72,6 +72,13 @@
+   // O `sessionId` vem do provider: é o id da linha e o mesmo do evento `DIAL`.
+   const makeCall = useCallback(async (number: string, sessionId?: string) => {
+     if (!(await garantirMicrofone())) return;
++    // Refazer (t_577acf00, ponto 1): o ID é guardado no INÍCIO (síncrono).
++    // Se a aba fechar antes de o registro assíncrono resolver, o flush do
++    // `pagehide` usa o ID guardado em vez de sair sem saber o que gravar.
++    // Só quando determinístico: sem sessionId o registro gera um uuid que não
++    // há como prever aqui — reservar outro criaria uma segunda linha.
++    const reservado = reservarIdDeSaida(sessionId);
++    if (reservado) currentCallIdRef.current = reservado;
+     engine.makeCall(number, uaRef.current, sipStatus === 'registered', sessionId);
+   }, [engine, sipStatus, uaRef, garantirMicrofone]);
+   const hangUp = useCallback(() => engine.hangUp(), [engine]);
+@@ -103,13 +110,16 @@
+   useEffect(() => registrarFimNaSaidaDaPagina(() => {
+     const desfecho = engine.desfechoParaSaida();
+     if (!desfecho) return null;
++    // Refazer (t_577acf00, ponto 1): o flush usa o ID guardado — primeiro o
++    // resolvido pelo motor (síncrono ao assentar), depois a reserva do início
++    // da chamada; nunca sai sem ID quando há chamada em curso.
+     return {
+-      callId: currentCallIdRef.current,
++      callId: desfecho.callId ?? currentCallIdRef.current,
+       direction: desfecho.direction,
+       talkSeconds: desfecho.talkSeconds,
+       outcome: desfecho.outcome,
+     };
+-  }), [engine]);
++  }, filaDePersistencia), [engine, filaDePersistencia]);
+ 
+   return {
+     sipStatus, sipReason, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
+--- a/src/lib/calls/adapters/CallEngine.ts (879519e80)
++++ b/src/lib/calls/adapters/CallEngine.ts (refazer-t577acf00)
+@@ -91,6 +91,20 @@
+   // Promise (não valor síncrono) porque o registro no banco começa em paralelo
+   // com o convite SIP — Estabelecida/Terminada podem chegar antes de resolver.
+   private callIdPromise: Promise<string | null> | null = null;
++  /**
++   * Refazer (t_577acf00): geração de descarte. Continuações assíncronas
++   * pendentes (`callIdPromise.then`) capturam a geração e só disparam se ela
++   * ainda for a atual — `dispose()` (saída da página/desmontar) invalida a
++   * geração, então nada pendente dispara contra o estado `terminated`. Nova
++   * chamada também invalida a anterior (não há duas chamadas por motor).
++   */
++  private geracao = 0;
++  /**
++   * Refazer (t_577acf00): ID resolvido pelo registro, guardado de forma
++   * síncrona assim que a promise assenta — o flush do `pagehide` usa este ID
++   * mesmo quando o `ref` do React ainda não propagou (efeito pós-render).
++   */
++  private callIdResolvido: string | null = null;
+   private status: EngineStatus = 'idle';
+   private direction: AdapterDirection | null = null;
+   private muted = false;
+@@ -159,6 +173,7 @@
+       // `Invitation` estende `Session`: `id` é o Call-ID do convite.
+       providerCallId: invitation.id,
+     });
++    this.guardarCallIdResolvido();
+   }
+ 
+   /** Transição de estado do sip.js (Establishing/Established/Terminated). */
+@@ -196,7 +211,15 @@
+       this.answeredAt = new Date();
+       this.setStatus('active');
+       this.sink.onEstablished();
+-      void this.callIdPromise?.then((id) => { if (id) this.sink.onAnswered(id); });
++      // O id chega depois (registro assíncrono): sem o `void`, a promise
++      // solta vira rejeição não tratada quando o banco falha.
++      // Refazer (t_577acf00): a continuação captura a geração — descartada no
++      // `dispose`, nada pendente dispara contra o estado `terminated`.
++      const geracaoAoAtender = this.geracao;
++      void this.callIdPromise?.then((id) => {
++        if (geracaoAoAtender !== this.geracao || id === null) return;
++        this.sink.onAnswered(id);
++      });
+       this.adapter.attachRemoteAudio(session);
+       return;
+     }
+@@ -251,12 +274,18 @@
+         sessionId,
+         providerCallId: inviter.id,
+       });
++      this.guardarCallIdResolvido();
+ 
+       await this.adapter.invite(inviter, (statusCode) => { this.sipCode = statusCode ?? null; });
+     } catch (error: unknown) {
+       // Falha do próprio discar (transporte/URI): o desfecho é `failure`, sem
+       // código SIP — o Terminated pode nunca chegar neste caminho.
+-      void this.callIdPromise?.then((id) => { if (id) this.sink.onFinished(id, null, { endedBy: 'failure', sipCode: null }); });
++      // Refazer (t_577acf00): mesma guarda de geração do Established.
++      const geracaoAoFalhar = this.geracao;
++      void this.callIdPromise?.then((id) => {
++        if (geracaoAoFalhar !== this.geracao || id === null) return;
++        this.sink.onFinished(id, null, { endedBy: 'failure', sipCode: null });
++      });
+       this.callIdPromise = null;
+       this.clearWatchdog();
+       this.session = null;
+@@ -328,8 +357,12 @@
+    * convite ainda tocando é recusa, e sem sessão nem convite é `failure` (não
+    * havia o que encerrar no provedor). `ended` também devolve `null`: a linha já
+    * recebeu o desfecho no `Terminated` e regravá-la aqui perderia o motivo real.
++   *
++   * Refazer (t_577acf00): carrega também o `callId` resolvido pelo registro
++   * (guardado de forma síncrona ao assentar, sem esperar o React) — o flush
++   * usa `callId` e só cai para o `ref` do hook quando ainda não resolveu.
+    */
+-  desfechoParaSaida(): { direction: AdapterDirection | null; talkSeconds: number | null; outcome: CallEndOutcome } | null {
++  desfechoParaSaida(): { direction: AdapterDirection | null; talkSeconds: number | null; outcome: CallEndOutcome; callId: string | null } | null {
+     if (this.status === 'idle' || this.status === 'ended') return null;
+     const answeredAt = this.answeredAt;
+     return {
+@@ -339,6 +372,7 @@
+         endedBy: this.session ? 'hangup_local' : this.invitation ? 'reject' : 'failure',
+         sipCode: this.sipCode,
+       },
++      callId: this.callIdResolvido,
+     };
+   }
+ 
+@@ -365,6 +399,11 @@
+     this.invitation = null;
+     this.callIdPromise = null;
+     this.answeredAt = null;
++    // Refazer (t_577acf00): invalida a geração — continuações pendentes
++    // (`callIdPromise.then`) capturadas antes daqui não disparam mais, e o ID
++    // resolvido é descartado junto (o flush pós-saída parte do `null`).
++    this.geracao += 1;
++    this.callIdResolvido = null;
+   }
+ 
+   /**
+@@ -404,7 +443,12 @@
+     };
+ 
+     if (callIdPromise) {
++      // Refazer (t_577acf00): a continuação captura a geração — se o
++      // `dispose` (ou uma chamada mais nova) invalidou, o fim NÃO é reemitido
++      // nem o status muda (nada dispara contra o estado `terminated`).
++      const geracaoAoEncerrar = this.geracao;
+       void callIdPromise.then((id) => {
++        if (geracaoAoEncerrar !== this.geracao) return;
+         if (id) {
+           const talkSeconds = answeredAt
+             ? Math.max(0, Math.round((endedAt - answeredAt.getTime()) / 1000))
+@@ -418,6 +462,22 @@
+     }
+   }
+ 
++  /**
++   * Refazer (t_577acf00): invalida continuações antigas (nova geração), zera
++   * o ID resolvido e arma a captura do ID da chamada corrente — de forma
++   * síncrona, assim que a promise do registro assenta, sem esperar o React.
++   * Chamar SEMPRE logo após atribuir `callIdPromise`.
++   */
++  private guardarCallIdResolvido(): void {
++    this.geracao += 1;
++    this.callIdResolvido = null;
++    const geracaoDaChamada = this.geracao;
++    void this.callIdPromise?.then((id) => {
++      if (geracaoDaChamada !== this.geracao || id === null) return;
++      this.callIdResolvido = id;
++    });
++  }
++
+   /** Arma o watchdog do INVITE (Timer B folgado); substitui um anterior. */
+   private armarWatchdog(): void {
+     this.clearWatchdog();
+--- a/src/lib/calls/adapters/__tests__/CallEngine.test.ts (879519e80)
++++ b/src/lib/calls/adapters/__tests__/CallEngine.test.ts (refazer-t577acf00)
+@@ -1210,3 +1210,85 @@
+     }
+   });
+ });
++
++// ─── Refazer (t_577acf00): id guardado no início, descarte pós-dispose ───────
++// Pontos 1, 2 e 4b da recusa: o flush do pagehide não podia sair sem ID, e
++// continuações assíncronas pendentes não podem disparar contra o estado
++// `terminated` (descartadas no dispose).
++
++describe('CallEngine — refazer pagehide/dispose (id guardado, descarte)', () => {
++  async function escoar(voltas = 8): Promise<void> {
++    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
++  }
++
++  function sessaoEstabelecivel() {
++    return {
++      ...sessionWithTrack(fakeAudioTrack(true), 'Established'),
++      sessionDescriptionHandler: {
++        peerConnection: {
++          getSenders: () => [],
++          getReceivers: () => [],
++        },
++      },
++      bye: vi.fn().mockResolvedValue(undefined),
++      cancel: vi.fn().mockResolvedValue(undefined),
++    };
++  }
++
++  it('P1: desfechoParaSaida carrega o callId resolvido (o flush do pagehide não fica sem ID)', async () => {
++    const adapter = new TestAdapter();
++    adapter.inviter = sessaoEstabelecivel();
++    const engine = new CallEngine(adapter, fakeSink());
++
++    await engine.makeCall('11999992048', fakeUa(), true);
++    await escoar();
++
++    const desfecho = engine.desfechoParaSaida();
++    expect(desfecho).not.toBeNull();
++    expect(desfecho?.callId).toBe('call-1');
++  });
++
++  it('P2a: resposta atendida que chega DEPOIS do dispose não dispara onAnswered', async () => {
++    vi.stubGlobal('MediaStream', class { addTrack() { /* dublê */ } });
++    let resolverRegistro!: (id: string) => void;
++    const sink = fakeSink({ create: vi.fn(() => new Promise<string>((resolve) => { resolverRegistro = resolve; })) });
++    const adapter = new TestAdapter();
++    const sessao = sessaoEstabelecivel();
++    adapter.inviter = sessao;
++    const engine = new CallEngine(adapter, sink);
++
++    try {
++      const chamada = engine.makeCall('11999992048', fakeUa(), true);
++      await escoar(); // create() chamado, mas o registro ainda não resolveu
++      engine.handleStateChange('Established', sessao as unknown as Session, '11999992048', 'outbound');
++      engine.dispose(); // aba fechada: a continuação pendente é descartada
++      resolverRegistro('call-1');
++      await chamada;
++      await escoar();
++
++      expect(sink.onAnswered).not.toHaveBeenCalled();
++    } finally {
++      vi.unstubAllGlobals();
++    }
++  });
++
++  it('P2b: fim que resolve DEPOIS do dispose não regrava onFinished nem muda o status', async () => {
++    let resolverRegistro!: (id: string) => void;
++    const sink = fakeSink({ create: vi.fn(() => new Promise<string>((resolve) => { resolverRegistro = resolve; })) });
++    const adapter = new TestAdapter();
++    const sessao = { ...sessaoEstabelecivel(), state: 'Terminated' };
++    adapter.inviter = sessao;
++    const engine = new CallEngine(adapter, sink);
++
++    const chamada = engine.makeCall('11999992048', fakeUa(), true);
++    await escoar(); // create() chamado, mas o registro ainda não resolveu
++    engine.handleStateChange('Terminated', sessao as unknown as Session, '11999992048', 'outbound');
++    engine.dispose(); // aba fechada: a continuação pendente é descartada
++    resolverRegistro('call-1');
++    await chamada;
++    await escoar();
++
++    expect(sink.onFinished).not.toHaveBeenCalled();
++    expect(sink.onStatus).not.toHaveBeenCalledWith('ended', expect.anything());
++  });
++});
+--- a/src/lib/calls/persistence.ts (879519e80)
++++ b/src/lib/calls/persistence.ts (refazer-t577acf00)
+@@ -312,15 +312,24 @@
+  * roda no mesmo turno, antes de a página ser descartada) — guardá-lo antes
+  * valeria por uma sessão inteira e um JWT vencido seria recusado pela RPC.
+  */
+-export function registrarFimNaSaidaDaPagina(colher: () => SaidaDaPagina | null): () => void {
++export function registrarFimNaSaidaDaPagina(
++  colher: () => SaidaDaPagina | null,
++  fila?: FilaDePersistencia,
++): () => void {
+   const aoSairDaPagina = () => {
+     const saida = colher();
+     if (!saida) return;
+     const entrada = entradaDaSaidaDaPagina(saida);
+     if (!entrada) return;
+-    void bearerDaSessao().then((bearer) => {
+-      if (bearer) gravarFimComKeepalive(entrada, bearer);
+-    });
++    const enviar = () => {
++      void bearerDaSessao().then((bearer) => {
++        if (bearer) gravarFimComKeepalive(entrada, bearer);
++      });
++    };
++    // Com fila, o fim espera a cauda: não fura uma escrita ainda em voo
++    // (chegaria antes e a linha terminaria presa no status anterior).
++    if (fila) fila.aposCauda(enviar);
++    else enviar();
+   };
+   window.addEventListener('pagehide', aoSairDaPagina);
+   return () => window.removeEventListener('pagehide', aoSairDaPagina);
+@@ -329,6 +338,28 @@
+ /** Contrato da fila: quem chama na ordem, chega na ordem. */
+ export interface FilaDePersistencia {
+   executar(input: UpsertMyCallInput): Promise<UpsertMyCallResult>;
++  /**
++   * Agenda um trabalho de despedida ATRÁS da cauda atual: ele roda depois de
++   * tudo que já estava enfileirado, sem furar a fila e sem segurar as
++   * próximas gravações (fogo-e-esquece: nunca propaga erro). Serve ao flush
++   * do `pagehide`, que não pode `await` nada mas também não pode chegar
++   * antes de uma escrita ainda em voo.
++   */
++  aposCauda(trabalho: () => void): void;
++}
++
++/**
++ * Reserva o ID da chamada NO INÍCIO (síncrono), antes de o registro
++ * assíncrono (`sink.create`: busca de contato + 1ª escrita) resolver — para o
++ * flush do `pagehide` nunca sair sem saber o que gravar.
++ *
++ * Só devolve ID quando ele é determinístico (sessionId do provider: o
++ * registro gera exatamente o mesmo via `novoCallId`). Sem sessionId o
++ * registro gera um uuid imprevisível — reservar outro aqui criaria uma
++ * SEGUNDA linha para a mesma chamada, então devolve null.
++ */
++export function reservarIdDeSaida(sessionId?: string | null): string | null {
++  return sessionId ? novoCallId(sessionId) : null;
+ }
+ 
+ /**
+@@ -350,5 +381,18 @@
+       corrente = proxima.catch(() => undefined);
+       return proxima;
+     },
++    aposCauda(trabalho) {
++      // Atrás da cauda, sem segurar a fila: a corrente NÃO anda com o
++      // trabalho (as próximas gravações não esperam a despedida), e o erro
++      // do trabalho nunca vaza (a aba pode estar morrendo).
++      const seguro = () => {
++        try {
++          trabalho();
++        } catch {
++          /* despedida é fogo-e-esquece */
++        }
++      };
++      void corrente.then(seguro, seguro);
++    },
+   };
+ }
+--- a/src/lib/calls/__tests__/persistence.test.ts (879519e80)
++++ b/src/lib/calls/__tests__/persistence.test.ts (refazer-t577acf00)
+@@ -12,11 +12,15 @@
+ 
+ import { beforeEach, describe, expect, it, vi } from 'vitest';
+ 
+-const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }));
++const { mockRpc, mockGetSession } = vi.hoisted(() => ({ mockRpc: vi.fn(), mockGetSession: vi.fn() }));
+ 
+-vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: mockRpc } }));
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: { rpc: mockRpc, auth: { getSession: mockGetSession } },
++  SUPABASE_URL: 'https://projeto.supabase.co',
++  SUPABASE_ANON_KEY: 'anon-key-de-teste',
++}));
+ 
+-import { UPSERT_MY_CALL_RPC, criarFilaDePersistencia, desfechoDaChamada, novoCallId, upsertMyCall, uuidV4 } from '../persistence';
++import { UPSERT_MY_CALL_RPC, criarFilaDePersistencia, desfechoDaChamada, novoCallId, registrarFimNaSaidaDaPagina, reservarIdDeSaida, upsertMyCall, uuidV4 } from '../persistence';
+ import type { CallDirection, CallEndOutcome, EndReason, PersistedStatus } from '../callStatus';
+ 
+ /** Argumentos da n-ésima chamada a `upsert_my_call` (0 = primeira). */
+@@ -377,3 +381,94 @@
+     expect(mockRpc).toHaveBeenCalledTimes(4); // 3 tentativas da 1ª + 1 da 2ª
+   });
+ });
++
++// ─── Refazer (t_577acf00): id reservado no início + fim atrás da cauda ──────
++// Ponto 1: o pagehide precisa do ID antes de o registro assíncrono resolver.
++// Ponto 4b: o keepalive do fim espera a cauda da fila (ordem preservada, uma
++// escrita por estado) em vez de furar a escrita em voo.
++
++describe('reservarIdDeSaida (P1)', () => {
++  it('com sessionId do provider devolve o MESMO id que o registro vai gerar', () => {
++    expect(reservarIdDeSaida('sessao-1')).toBe('sessao-1');
++    expect(reservarIdDeSaida('sessao-1')).toBe(novoCallId('sessao-1'));
++  });
++
++  it('sem sessionId devolve null (o uuid do registro é imprevisível: reservar outro duplicaria a linha)', () => {
++    expect(reservarIdDeSaida(undefined)).toBeNull();
++    expect(reservarIdDeSaida(null)).toBeNull();
++  });
++});
++
++describe('registrarFimNaSaidaDaPagina com fila (P4b)', () => {
++  it('com escrita em voo, o fim espera a cauda: ordem preservada, UMA escrita por estado', async () => {
++    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'jwt-de-teste' } }, error: null });
++    let liberarRpc!: (valor: unknown) => void;
++    mockRpc.mockImplementationOnce(() => new Promise((resolve) => { liberarRpc = resolve; }));
++    const fetchDuble = vi.fn().mockResolvedValue({ ok: true });
++    vi.stubGlobal('fetch', fetchDuble);
++    const fila = criarFilaDePersistencia();
++
++    const emVoo = fila.executar({ id: 'id-1', direction: 'outbound', status: 'answered' });
++    const descartar = registrarFimNaSaidaDaPagina(() => ({
++      callId: 'id-1',
++      direction: 'outbound',
++      talkSeconds: 12,
++      outcome: { endedBy: 'hangup_local', sipCode: null },
++    }), fila);
++    try {
++      window.dispatchEvent(new Event('pagehide'));
++      await Promise.resolve();
++      await Promise.resolve();
++
++      // A escrita em voo ainda não assentou: o keepalive NÃO pode furá-la
++      // (chegaria antes e a linha terminaria presa em `answered`).
++      expect(fetchDuble).not.toHaveBeenCalled();
++
++      liberarRpc({ data: 'ok', error: null });
++      await emVoo;
++      await Promise.resolve();
++      await Promise.resolve();
++      await Promise.resolve();
++
++      expect(fetchDuble).toHaveBeenCalledTimes(1);
++      const [url, init] = fetchDuble.mock.calls[0] as [string, RequestInit];
++      expect(url).toBe('https://projeto.supabase.co/rest/v1/rpc/upsert_my_call');
++      expect(init.keepalive).toBe(true);
++      const corpo = JSON.parse(String(init.body)) as Record<string, unknown>;
++      expect(corpo).toMatchObject({
++        p_id: 'id-1',
++        p_status: 'ended',
++        p_end_reason: 'hangup_local',
++        p_talk_seconds: 12,
++      });
++      // UMA escrita por estado: `answered`×1 na RPC, `ended`×1 no keepalive.
++      expect(mockRpc).toHaveBeenCalledTimes(1);
++    } finally {
++      descartar();
++      vi.unstubAllGlobals();
++    }
++  });
++
++  it('sem fila, o comportamento imediato continua (compatibilidade)', async () => {
++    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'jwt-de-teste' } }, error: null });
++    const fetchDuble = vi.fn().mockResolvedValue({ ok: true });
++    vi.stubGlobal('fetch', fetchDuble);
++    const descartar = registrarFimNaSaidaDaPagina(() => ({
++      callId: 'id-1',
++      direction: 'outbound',
++      talkSeconds: null,
++      outcome: { endedBy: 'hangup_local', sipCode: null },
++    }));
++    try {
++      window.dispatchEvent(new Event('pagehide'));
++      await Promise.resolve();
++      await Promise.resolve();
++      await Promise.resolve();
++
++      expect(fetchDuble).toHaveBeenCalledTimes(1);
++    } finally {
++      descartar();
++      vi.unstubAllGlobals();
++    }
++  });
++});

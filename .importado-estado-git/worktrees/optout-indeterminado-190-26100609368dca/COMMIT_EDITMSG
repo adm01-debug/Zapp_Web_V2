@@ -1,0 +1,10 @@
+fix(webhook): decisão de opt-out indeterminada vira pendência na outbox (#190)
+
+resolveOptOutKeyword devolvia null para "não casou" e para "não conseguiu
+decidir" (leitura de talkx_optout_keywords e talkx_match_optout falhando
+juntas), e a falha virava atribuição. Contrato explícito
+matched|not_matched|indeterminate via p_opt_out_decision na assinatura nova
+de 12 args do ingest (a de 11 args fica intacta para o deploy escalonado);
+'indeterminate' enfileira optout_resolve, que a drenagem reavalia pela fonte
+autoritativa: casou = só supressão, não casou = libera atribuições uma vez,
+exceção = pendência conservada para reentrega.

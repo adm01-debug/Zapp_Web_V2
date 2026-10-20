@@ -1,0 +1,37 @@
+fix(talk-x): ler a linha do tempo operacional do servidor com tipos e "Ver todos" (TL-159)
+
+X152: a aba "Linha do Tempo" do Monitor escrevia o tipo cru do banco quando o
+evento não tinha mensagem ("resumed"), despejava o JSON de limits_updated e lia
+50 eventos fixos por polling, sem filtro nem segunda página.
+
+- src/hooks/integrations/useTalkXCampaignTimeline.ts (novo): leitura da linha do
+  tempo com cursor (created_at desc + id desc, `.lt` = o p_before do X141),
+  filtro por tipo no servidor e página seguinte sob demanda.
+- src/components/talkx/tracking/talkxTimelineCopy.ts (novo): mapa tipo → ícone,
+  cor, título e frase em português para todos os tipos que o CHECK do banco
+  aceita; JSON de configuração nunca vai cru para a tela.
+- src/components/talkx/tracking/TalkXOperationalTimeline.tsx (novo): card com os
+  5 últimos itens, horário HH:mm à esquerda, ícone por tipo e "Ver todos" com
+  painel lateral paginado por cursor e filtro por tipo.
+- src/components/talkx/TalkXLiveMonitor.tsx: a aba passa a usar o componente.
+- testes novos (TalkXOperationalTimeline, talkxTimelineCopy) e o mock da linha do
+  tempo no TalkXLiveMonitor.states.test.tsx apontado para a fonte que a tela usa.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick f225fe3a5 fix(talk-x): ler a linha do tempo operacional do servidor com tipos e "Ver todos" (TL-159)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-3271425b-26100904070efd' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXLiveMonitor.tsx
+#	modified:   src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXOperationalTimeline.test.tsx
+#	new file:   src/components/talkx/__tests__/talkxTimelineCopy.test.ts
+#	new file:   src/components/talkx/tracking/TalkXOperationalTimeline.tsx
+#	new file:   src/components/talkx/tracking/talkxTimelineCopy.ts
+#	new file:   src/hooks/integrations/useTalkXCampaignTimeline.ts
+#

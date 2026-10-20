@@ -1,0 +1,7 @@
+fix(ci/devops): separa job '🦕 Edge contracts' do lint obrigatorio (SL-026)
+
+O job required `🔍 Lint & TypeCheck` carregava o setup e a execucao de Deno (deno check + deno test) e de Go (go test ./... do egress-proxy): toda PR pagava esse setup antes do check obrigatorio responder. Os 5 steps saem para o job novo `edge-contracts` (`🦕 Edge contracts`), com os mesmos comandos, pins e flags, sem alterar o nome do job required.
+
+O job novo nao e required e nenhum outro job declara needs: edge-contracts -- a promocao e a etapa E100/SL-120, depois de 1 semana verde.
+
+E70 do plano docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md.

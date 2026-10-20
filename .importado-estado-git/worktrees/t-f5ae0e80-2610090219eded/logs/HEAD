@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523144 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523145 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 b281b00fcb355c7ad8a62d4e8b2e187757eeaf1a Joaquim Ataides <ti@promobrindes.com.br> 1791523787 -0300	commit: fix(talk-x): Criar os campos de valor por tipo: vários valores, período, data, moeda e sim/não (TL-131)
+b281b00fcb355c7ad8a62d4e8b2e187757eeaf1a 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556475 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 641dc9ecea166cc93ed1d746e62963cb5285ceee Joaquim Ataides <ti@promobrindes.com.br> 1791556566 -0300	rebase (continue): fix(talk-x): Criar os campos de valor por tipo: vários valores, período, data, moeda e sim/não (TL-131)
+641dc9ecea166cc93ed1d746e62963cb5285ceee 641dc9ecea166cc93ed1d746e62963cb5285ceee Joaquim Ataides <ti@promobrindes.com.br> 1791556566 -0300	rebase (finish): returning to refs/heads/v2/t-f5ae0e80-2610090219eded

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 48001a459f82ace6e4c72114e3d3205f1efba9a6 Joaquim Ataides <ti@promobrindes.com.br> 1791239084 -0300	branch: Created from dia/2026-10-05
+48001a459f82ace6e4c72114e3d3205f1efba9a6 7007ef6619d997d2e27edc6ad7469fffadf23270 Joaquim Ataides <ti@promobrindes.com.br> 1791239093 -0300	cherry-pick: test(team-chat): eliminar 271 asserts tautologicos do Team Chat com cobertura real e guarda
+7007ef6619d997d2e27edc6ad7469fffadf23270 dadea0abf4c50ec815d1e54eb988bd518ec77ff8 Joaquim Ataides <ti@promobrindes.com.br> 1791239940 -0300	commit: test(team-chat): substituir asserts de fonte por comportamento
+dadea0abf4c50ec815d1e54eb988bd518ec77ff8 2efda9f6ff11e69df2157afd96bacf15aeeb512f Joaquim Ataides <ti@promobrindes.com.br> 1791240073 -0300	commit (amend): test(team-chat): substituir asserts de fonte por comportamento
+2efda9f6ff11e69df2157afd96bacf15aeeb512f 27108b6c97c7068f21a8b0eade79b750d4ee359b Joaquim Ataides <ti@promobrindes.com.br> 1791240118 -0300	commit (amend): test(team-chat): substituir asserts de fonte por comportamento
+27108b6c97c7068f21a8b0eade79b750d4ee359b 6f60e19b34a4649b3fce26af7fd6324a51d1a396 Joaquim Ataides <ti@promobrindes.com.br> 1791240529 -0300	commit (amend): test(team-chat): substituir asserts de fonte por comportamento

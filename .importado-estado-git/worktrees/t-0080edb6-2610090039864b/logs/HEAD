@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517149 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517150 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 c676d3934fd736691555a38741d2e15edfc88da4 Joaquim Ataides <ti@promobrindes.com.br> 1791517161 -0300	cherry-pick: fix(talk-x): Trocar o campo de URL por envio de arquivo com validação de 16 MB e metadados (TL-066)
+c676d3934fd736691555a38741d2e15edfc88da4 b8b1948fb06f2bb289a9f6ee0fe2ef92d66afdd1 Joaquim Ataides <ti@promobrindes.com.br> 1791518189 -0300	commit: fix(talk-x): descartar envio cancelado e preservar mídia persistida no upload do template (TL-066)

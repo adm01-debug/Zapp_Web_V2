@@ -1,0 +1,7 @@
+feat(multiplix): status devolve horario e atribuicao do retorno por destinatario (TL-044A)
+
+A action status de multiplix-dispatch passa a expor, em cada item de
+by_recipient, replied_at (horario do PRIMEIRO retorno) e reply_attribution
+(linked|inferred) — o dado ja existia em multiplix_delivery_items e nao saia
+na resposta. Campos aditivos; os contadores atuais (sent/delivered/read/
+replied) seguem identicos. Sem migration e sem mudanca de escopo.

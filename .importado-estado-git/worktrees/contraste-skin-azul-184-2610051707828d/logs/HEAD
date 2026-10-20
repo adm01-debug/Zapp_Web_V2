@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230872 -0300	
+4e6da891e24c6e4920ced3501af74feff40abfa3 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230873 -0300	reset: moving to HEAD
+4e6da891e24c6e4920ced3501af74feff40abfa3 b9d34c36d2babd0e9022cee185efa24adeb2a244 Joaquim Ataides <ti@promobrindes.com.br> 1791230892 -0300	cherry-pick: fix(a11y): corrige contraste do volume no overlay
+b9d34c36d2babd0e9022cee185efa24adeb2a244 96f15ae4c01a3a827dc331c891543672d16b8cbc Joaquim Ataides <ti@promobrindes.com.br> 1791231271 -0300	commit: test(a11y): mede contraste pelas classes reais do overlay

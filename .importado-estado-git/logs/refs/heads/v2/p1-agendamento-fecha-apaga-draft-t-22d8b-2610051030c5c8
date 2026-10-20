@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791207045 -0300	branch: Created from dia/2026-10-05
+24d62d71031b256f8590067fae660ee76dd69a97 e7346a598fb39e02494bd267e334b7db72aba45d Joaquim Ataides <ti@promobrindes.com.br> 1791207264 -0300	commit: fix(inbox): agendamento só fecha e apaga o rascunho depois de persistir (R2-INB-010)

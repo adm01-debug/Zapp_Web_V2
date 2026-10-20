@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567265 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567267 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 ca75dff46965323a254c8bc412e6cfdb10412413 Joaquim Ataides <ti@promobrindes.com.br> 1791567317 -0300	cherry-pick: fix(multiplix): troca tokens do prototipo por tokens reais e remove px arbitrario (TL-038)
+ca75dff46965323a254c8bc412e6cfdb10412413 422e53284abd8f9e4e7bf725a3e7ca746f7b1e09 Joaquim Ataides <ti@promobrindes.com.br> 1791567317 -0300	cherry-pick: test(multiplix): confere px arbitrario na subarvore de cada bloco, nao so no elemento (TL-038)
+422e53284abd8f9e4e7bf725a3e7ca746f7b1e09 0dfd65f45c680f69931b99fe2ad5aba6e451600a Joaquim Ataides <ti@promobrindes.com.br> 1791567317 -0300	cherry-pick: test(multiplix): prova por DOM (inclusive amostra/falha/vazio), sem scan de fonte (TL-038)
+0dfd65f45c680f69931b99fe2ad5aba6e451600a 23c108b70ce4a3bed1fd98ad85029de8a47f40ea Joaquim Ataides <ti@promobrindes.com.br> 1791567317 -0300	cherry-pick: test(multiplix): regra derivada da folha de tokens e da escala do tailwind, sem comparar texto de classe (TL-038)

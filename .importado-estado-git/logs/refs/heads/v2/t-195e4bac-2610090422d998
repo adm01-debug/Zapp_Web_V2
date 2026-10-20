@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791530581 -0300	branch: Created from dia/2026-10-09
+5a9731645d266ea721f679d6886b83822ac16f6b 5e0ab3b1f10076ca71309223514004db8187b87a Joaquim Ataides <ti@promobrindes.com.br> 1791531668 -0300	commit: fix(talk-x): unificar o hook de supressão e paginar a tabela no servidor (TL-165)

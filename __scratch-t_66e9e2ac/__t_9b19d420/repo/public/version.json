@@ -1,0 +1,8 @@
+{
+  "name": "zapp-web",
+  "version": "2.0.1",
+  "environment": "production",
+  "supabase": "https://tnnnlkbymytvtqngbbqh.supabase.co",
+  "evolution": "https://evolution.atomicabr.com.br",
+  "buildDate": "2026-06-13"
+}

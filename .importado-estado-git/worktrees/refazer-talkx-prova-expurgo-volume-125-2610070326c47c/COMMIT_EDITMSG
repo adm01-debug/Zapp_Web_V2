@@ -1,0 +1,9 @@
+test(talkx): prova do expurgo em volume sem corrida nem ordem de uuid
+
+A fixture de SKIP LOCKED sinalizava pronto cedo demais (try==true antes do
+UPDATE do segundo plano); agora a linha e travada de verdade antes do
+advisory lock e o encerramento e por pg_cancel_backend, sem sleep fixo.
+O item de volume conta o total global de vencidos (1206) em vez de so a
+campanha c_vol, que oscilava 205/206 com a ordem dos ids aleatorios.
+Chamada do expurgo bloqueada sem progresso nao grava mais evento
+talkx_lgpd_purge, para o tick nao inchar a tabela ate a linha destravar.

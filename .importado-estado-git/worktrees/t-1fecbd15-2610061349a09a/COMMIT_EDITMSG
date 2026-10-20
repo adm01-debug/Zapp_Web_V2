@@ -1,0 +1,13 @@
+docs(ui-audit): registra a prova das duas limitações do layoutguard
+
+Cartão V2: t_1fecbd15 (branch v2/t-1fecbd15-2610061349a09a)
+
+Commit vazio de propósito: nenhuma alteração de código neste cartão. As duas
+limitações de análise do layout-guard (alias VoIPPanel virando NAO AUDITAVEL; e
+o regex h-full casando a substring de min-h-full) já foram eliminadas no commit
+cccf81707, ancestral da base do dia (dia/2026-10-06).
+
+Prova no .tmp/relato.md: 1) o teste de regressão scripts/ui-audit/layout-guard.unit.mjs
+falha 3/4 contra o guard do baseline (sha c8e3e6e3) e passa 4/4 contra o guard de hoje;
+2) sobre a mesma arvore src do baseline o guard antigo aponta 5 e o de hoje aponta 3,
+saindo exatamente as duas limitacoes.

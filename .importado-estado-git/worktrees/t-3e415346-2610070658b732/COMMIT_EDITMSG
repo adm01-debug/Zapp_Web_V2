@@ -1,0 +1,13 @@
+test(e2e): espera o tema assentar antes do axe no teste de alto contraste
+
+O teste 'alto contraste e movimento reduzido mantem o workspace acessivel' media o
+contraste com o tema ainda em transicao.
+
+Medido na prova 10x de 07/10 neste workspace (2 workers, 3 navegadores):
+- sem esta espera: RUN 2 reprovou ESTE teste em chromium E firefox (RUN 1 = 93 passed,
+  RUN 2 = 2 failed, 91 passed);
+- com esta espera: RUN 2 deixou de reprova-lo (1 failed, 92 passed, falha de outro teste).
+
+waitForAppliedTheme ja existia e ja era usado no teste de tokens; aqui ele apenas antecipa
+a MESMA espera por CONDICAO (CSS resolvido do tema) antes da afericao do axe. Nenhuma
+asserção foi alterada, nenhum timeout foi aumentado e nenhum PNG de baseline foi regerado.

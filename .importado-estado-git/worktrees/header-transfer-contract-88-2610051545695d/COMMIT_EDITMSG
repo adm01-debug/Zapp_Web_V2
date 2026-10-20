@@ -1,0 +1,7 @@
+fix(inbox): transferência atômica via RPC transfer_conversation (#88)
+
+Update do contato e insert do evento de transferência agora ocorrem na
+mesma transação do Postgres: falha no evento desfaz o update, então
+nenhuma transferência persiste sem registro. Função SECURITY DEFINER
+com o mesmo predicado da policy de UPDATE de contacts (can_edit_contact),
+EXECUTE restrito a authenticated/service_role.

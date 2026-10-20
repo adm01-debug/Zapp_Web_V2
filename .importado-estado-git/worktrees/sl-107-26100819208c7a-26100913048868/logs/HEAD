@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561869 -0300	
+12e407210db0ea4d9f817618d30848304ca932d5 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561870 -0300	reset: moving to HEAD
+12e407210db0ea4d9f817618d30848304ca932d5 152ed155b2f2340fe389864e5dd337dddb586545 Joaquim Ataides <ti@promobrindes.com.br> 1791562091 -0300	commit (cherry-pick): fix(telefonia): e2e/telefonia.spec.ts no e2e-logado.yml (SL-107)
+152ed155b2f2340fe389864e5dd337dddb586545 a82502432f2b351f9952dff4f5c5b34cdb9fd3ee Joaquim Ataides <ti@promobrindes.com.br> 1791562678 -0300	commit (amend): fix(telefonia): e2e/telefonia.spec.ts no e2e-logado.yml (SL-107)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a Joaquim Ataides <ti@promobrindes.com.br> 1791352957 -0300	branch: Created from dia/2026-10-07
+2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a ef3896c3abe2fa7b8fb543a8f95fe8ec9efc1714 Joaquim Ataides <ti@promobrindes.com.br> 1791353287 -0300	commit: test(theme): prende decisão do SK04 — skin aprovada não leva ajuste AA global (#499)
+ef3896c3abe2fa7b8fb543a8f95fe8ec9efc1714 272e76a1981773ad39a7a7563939c8e7c4343cbf Joaquim Ataides <ti@promobrindes.com.br> 1791353371 -0300	commit: test(theme): expectativa do SK04 sai do preset e do tokens.css, não de literal (#499)

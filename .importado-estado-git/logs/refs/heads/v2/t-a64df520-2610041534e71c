@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 aa33409d405b65992ed13bd019b7e8decf0e29ec Joaquim Ataides <ti@promobrindes.com.br> 1791138867 -0300	branch: Created from dia/2026-10-04
+aa33409d405b65992ed13bd019b7e8decf0e29ec 5eea9e4842a529a8cd76804b6639671061766804 Joaquim Ataides <ti@promobrindes.com.br> 1791139938 -0300	commit: fix(admin): liga logout forçado e desativação à revogação real de sessões (R2-AUTH-004)

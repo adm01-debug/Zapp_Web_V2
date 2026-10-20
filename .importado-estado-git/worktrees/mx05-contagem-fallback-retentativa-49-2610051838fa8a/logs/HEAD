@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f0536ff170b4c4739a436efa42e6afa5e6a48536 Joaquim Ataides <ti@promobrindes.com.br> 1791236310 -0300	
+f0536ff170b4c4739a436efa42e6afa5e6a48536 f0536ff170b4c4739a436efa42e6afa5e6a48536 Joaquim Ataides <ti@promobrindes.com.br> 1791236310 -0300	reset: moving to HEAD
+f0536ff170b4c4739a436efa42e6afa5e6a48536 08c71aa06069569867583bc6a6bed4e6661adbde Joaquim Ataides <ti@promobrindes.com.br> 1791236319 -0300	cherry-pick: fix(multiplix): retentativa limitada para rejeicao transitoria do provedor (MX05)
+08c71aa06069569867583bc6a6bed4e6661adbde fdfc0b339caf3b2863963770a7aabe7de9d645ec Joaquim Ataides <ti@promobrindes.com.br> 1791237166 -0300	commit: fix(multiplix): corrigir contagem e fallback da retentativa MX05

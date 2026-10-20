@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283350 -0300	branch: Created from dia/2026-10-06
+a463ef22afa83c4d00654d03782a15cc3263a0e7 08ecfa1da972d92d512b6d1a7e08bfe40643cc93 Joaquim Ataides <ti@promobrindes.com.br> 1791283357 -0300	cherry-pick: fix(integracoes): tela do Sentry não confirma ativação nem exibe métricas sem integração (#221)

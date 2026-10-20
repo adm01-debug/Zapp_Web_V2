@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319650 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 927b6c2dc661e2f78b3d3f7c3d8d4269b56b091b hermes <hermes@local> 1791321599 -0300	commit: fix(talkx): retry terminal volta a pending elegivel ao motor de envio (#300)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567599 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567600 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 c8d2baf39184ba6473c9b792ed19d83cbd254fd1 Joaquim Ataides <ti@promobrindes.com.br> 1791568919 -0300	commit: fix(ci): liga a mutação do worker do Multiplix ao db-guard (N-017)
+c8d2baf39184ba6473c9b792ed19d83cbd254fd1 af94cb32373780fbd8a1a202d982f305b8e2ead3 Joaquim Ataides <ti@promobrindes.com.br> 1791569031 -0300	commit: test(ci): trava o passo de mutação do Multiplix no db-guard (N-017)

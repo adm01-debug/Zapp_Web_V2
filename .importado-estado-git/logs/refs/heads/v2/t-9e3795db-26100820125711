@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791501176 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe 2edd644113e77e364af770d59b5d2f293920b517 Joaquim Ataides <ti@promobrindes.com.br> 1791501191 -0300	cherry-pick: fix(talkx): reabertura por retry exige a nova confirmacao de lancamento (#124)
+2edd644113e77e364af770d59b5d2f293920b517 17d3a2b4ab0132e9e6c4ea6c065edac0ebc561df Joaquim Ataides <ti@promobrindes.com.br> 1791501191 -0300	cherry-pick: fix(talkx): corpo do retry preserva a validacao de lote do #123 na reabertura (#124)
+17d3a2b4ab0132e9e6c4ea6c065edac0ebc561df 06fa0a0cb247dc265f38bd6e9792d4c2dc219d9a Joaquim Ataides <ti@promobrindes.com.br> 1791501191 -0300	cherry-pick: test(talkx): secao #123 roda antes da migration do #124 no harness do retry
+06fa0a0cb247dc265f38bd6e9792d4c2dc219d9a 2bfa2a6ece5ebe2d9f1427cfc6d97e53be55201e Joaquim Ataides <ti@promobrindes.com.br> 1791501191 -0300	cherry-pick: docs(talkx): rollback do #124 restaura o corpo do #123 (nao o de X031)

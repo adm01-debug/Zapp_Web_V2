@@ -1,0 +1,16 @@
+fix(auth): passkey só anuncia login com a sessão do usuário validado (#71)
+
+O login com passkey anunciava "Autenticado com Passkey!" e navegava para '/'
+apenas porque signInWithOtp respondeu sem erro — e signInWithOtp só ENVIA o
+link de acesso por e-mail, não cria sessão. O usuário via o login concluído
+sem sessão nenhuma e a rota protegida o devolvia ao /auth.
+
+Agora o fluxo só anuncia e navega quando existe sessão de fato E ela pertence
+ao usuário que a passkey validou (session.user.id === result.userId): sessão
+de outra conta (aparelho compartilhado, login anterior) não prova este login.
+Sem sessão, o estado honesto é "Passkey verificada — link enviado por e-mail".
+A passkey recusada e a falha de envio passam a dar alerta destrutivo, sem
+anunciar autenticação nem navegar.
+
+Teste: src/hooks/auth/__tests__/useAuthForm.passkey.test.tsx (6 casos; 3
+falhavam antes da correção).

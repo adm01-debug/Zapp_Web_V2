@@ -1,0 +1,7 @@
+fix(inbox): fechar pickers de áudio meme e stickers desfaz upload não confirmado
+
+Ao fechar/desmontar o popover, o objeto já enviado ao Storage (a linha só
+nasce no Salvar) ficava órfão: os hooks apenas zeravam o pendingUpload.
+Agora o fechamento faz rollback do objeto não confirmado e invalida um
+upload em voo, para que a conclusão tardia não recrie o preview fora do
+ciclo aberto e seja encaminhada para limpeza (R2-INB-043, item 337).

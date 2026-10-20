@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194843 -0300	
+80899b98968e007020313a034ed0c94b72bc4083 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194844 -0300	reset: moving to HEAD
+80899b98968e007020313a034ed0c94b72bc4083 5d136edad2c5b61d0b800ddaec6596a847443ba1 Joaquim Ataides <ti@promobrindes.com.br> 1791194864 -0300	cherry-pick: fix(webhooks): autenticidade fail-closed nos webhooks públicos (R2-API-021)
+5d136edad2c5b61d0b800ddaec6596a847443ba1 662972fa3e4b4f128f9e4e99b79a16d01571538d Joaquim Ataides <ti@promobrindes.com.br> 1791195314 -0300	commit: fix(webhooks): exige e-mail exato do service account no gate OIDC do gmail-webhook

@@ -1,0 +1,16 @@
+test(e2e): separa lacuna do conjunto local de defeito de produto na varredura de módulos
+
+A varredura tolerava por família (status/endpoint) e deixava passar o que não tinha
+prova. Agora cada resposta >= 400 só escapa com corpo e status medidos na própria
+sessão, casando uma entrada explícita de LACUNAS_DO_CONJUNTO_LOCAL (4 lacunas do
+conjunto + a falha de arranque do runtime de Edge do conjunto) ou de
+DEFEITOS_DE_PRODUTO (2 respostas). console.error só escapa como sombra de resposta
+já justificada ou como par de tags aninhadas de NINHOS_DE_PRODUTO (3 pares medidos).
+
+Os 5 defeitos de produto ganham test.fixme próprio com reprodução real (barra lateral
+<button> em <button>, <li> em <li> no PageHeader/Quadro, selo do catálogo <div> em
+<p> na Documentação, get-sip-password 401, detect-new-device 500) e o relatório passa
+a listar [LACUNAS DO CONJUNTO LOCAL] e [DEFEITOS DE PRODUTO] separadamente.
+
+Junto: o julgamento espera (teto de 5 s) a prova medida chegar, porque o espião lê o
+corpo de forma assíncrona — sem isso a tolerância dependia de sorte de tempo.

@@ -1,0 +1,7 @@
+fix(onboarding): nao marca o passo de tema como concluido sem configuracao (#492)
+
+O passo "Personalize seu tema" do checklist comparava apenas
+`data?.theme !== null && data?.theme !== 'system'`. Com `maybeSingle()`
+sem linha, `data` e null e `data?.theme` fica `undefined`, que passa nas
+duas comparacoes: o passo aparecia concluido (6/6 -> progresso cheio)
+sem o usuario ter escolhido tema. Agora exige tema de fato definido.

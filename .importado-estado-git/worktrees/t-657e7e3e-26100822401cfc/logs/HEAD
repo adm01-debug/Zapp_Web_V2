@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510014 -0300	
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510015 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510696 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 5ffcf9e05dc47683a668958e2d20ec9c32d49316 Joaquim Ataides <ti@promobrindes.com.br> 1791511097 -0300	commit: fix(performance): alvos FCP 1,5 s e TTI 3 s medidos pelo coletor (SL-105)
+5ffcf9e05dc47683a668958e2d20ec9c32d49316 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555307 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 60aa57c33d9201c4c68900dbf19f3ff4f5122a60 Joaquim Ataides <ti@promobrindes.com.br> 1791555406 -0300	rebase (continue): fix(performance): alvos FCP 1,5 s e TTI 3 s medidos pelo coletor (SL-105)
+60aa57c33d9201c4c68900dbf19f3ff4f5122a60 60aa57c33d9201c4c68900dbf19f3ff4f5122a60 Joaquim Ataides <ti@promobrindes.com.br> 1791555406 -0300	rebase (finish): returning to refs/heads/v2/t-657e7e3e-26100822401cfc

@@ -1,0 +1,10 @@
+fix(outros): nao recomenda produto sem estoque como viavel (SL-217 / IA-152)
+
+A recomendacao da aba de IA casava so por categoria e nao lia o estoque do
+catalogo: produto esgotado (stock_quantity 0) era apresentado ao atendente como
+se fosse viavel. Passa a ler o atributo autorizado stock_quantity, deixa fora o
+que ja se sabe incompativel e marca o estoque ausente como 'confirmar' (dado que
+falta exige confirmacao, nunca presuncao de disponibilidade).
+
+Prova: src/hooks/chat/__tests__/useRecommendedProducts.test.tsx (vermelho 0/4
+antes, verde 4/4 depois) pelo hook real com stub de PostgREST.

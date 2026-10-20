@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 012f8f8b754403f5eef8fa48af9acadb592b3dd0 Joaquim Ataides <ti@promobrindes.com.br> 1791405435 -0300	branch: Created from dia/2026-10-07
+012f8f8b754403f5eef8fa48af9acadb592b3dd0 a5ab5f2325150b4c7a2db160224f145fa926c287 Joaquim Ataides <ti@promobrindes.com.br> 1791405594 -0300	commit: fix(atalhos): Ctrl+2 seleciona a view dashboard pela navegacao canonica (#447)
+a5ab5f2325150b4c7a2db160224f145fa926c287 b7585ed7999bbf1d05ee68e3ba3bc85c3b31071c Joaquim Ataides <ti@promobrindes.com.br> 1791405594 -0300	commit: test(atalhos): regressao de integracao do Ctrl+2 trocando a view do shell (#447)

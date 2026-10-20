@@ -1,0 +1,3 @@
+x EXATAMENTE  Especialista: worker (ci)
+x EXATAMENTE: Especialista: worker (ci)
+x EXATAMENTE !!Especialista: worker (ci)

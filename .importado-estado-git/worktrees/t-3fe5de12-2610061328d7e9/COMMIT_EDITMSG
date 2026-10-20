@@ -1,0 +1,1 @@
+fix(talkx-send): decisao A/B nao depende da ordem das variantes (#483)

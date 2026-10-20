@@ -1,0 +1,287 @@
+BEGIN
+CREATE ROLE
+CREATE ROLE
+CREATE ROLE
+CREATE SCHEMA
+CREATE FUNCTION
+CREATE FUNCTION
+GRANT
+GRANT
+CREATE TABLE
+CREATE SCHEMA
+CREATE TABLE
+CREATE TABLE
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:60: WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+CREATE PUBLICATION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+── aplicando as migrations REAIS (user_roles/helpers + qr_attempts) ──
+CREATE TYPE
+CREATE TABLE
+ALTER TABLE
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+INSERT 0 1
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+ALTER PUBLICATION
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/migrations/20261012110945_qr_attempts.sql:73: NOTICE:  policy "qr_attempts_staff_all" for relation "public.qr_attempts" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+REVOKE
+GRANT
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+GRANT
+SET
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+
+── T0: a barreira e a RLS, nao a ACL ──────────────────────────────────
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:162: NOTICE:  PASS [T0 authenticated TEM o GRANT de tabela (sem RLS a escrita passaria)] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:164: NOTICE:  PASS [T0d anon NAO tem GRANT de tabela] -> false
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:168: NOTICE:  PASS [T0b RLS ligada em qr_attempts] -> true
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO 1: contrato estrutural ───────────────────────────────────────
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:176: NOTICE:  PASS [T1 contrato do cartao: conexao/criado_em/expira_em/status/motivo] -> 5
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:179: NOTICE:  PASS [T2 a FK e ON DELETE CASCADE] -> c
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:182: NOTICE:  PASS [T3 status default e pendente] -> 'pendente'::text
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:185: NOTICE:  PASS [T4 status fora do dominio e recusado] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_status_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:188: NOTICE:  PASS [T4b TTL abaixo do clamp (5 s) e recusado] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_ttl_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:191: NOTICE:  PASS [T4c TTL acima do clamp (400 s) e recusado] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_ttl_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:194: NOTICE:  PASS [T4d sem expires_at explicito o TTL default e de 60 s] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:196: NOTICE:  PASS [T4e o TTL gravado bate com o default] -> 60
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:200: NOTICE:  PASS [T4f TTL relativo: criado ha 1 h com expiracao 60 s depois e ACEITO] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:204: NOTICE:  PASS [T4g TTL relativo: criado ha 1 h com expiracao 61 min depois e RECUSADO] -> ERRO 23514 new row for relation "qr_attempts" violates check constraint "qr_attempts_ttl_check"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+
+── BLOCO 2: quem pode, quem nao pode, e o anonimo ─────────────────────
+DELETE 2
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:214: NOTICE:  PASS [T5 admin INSERE a tentativa] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:218: NOTICE:  PASS [T5b admin INSERE com motivo] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:221: NOTICE:  PASS [T5c admin LE as duas tentativas] -> 2
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:227: NOTICE:  PASS [T6 usuario comum NAO insere (RLS)] -> ERRO 42501 new row violates row-level security policy for table "qr_attempts"
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:230: NOTICE:  PASS [T6b usuario comum NAO le (0 linhas)] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:235: NOTICE:  PASS [T7 anon NAO insere] -> ERRO 42501 permission denied for table qr_attempts
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:237: NOTICE:  PASS [T7b anon NAO le] -> ERRO 42501
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO 3: CASCADE e retencao de 30 dias ─────────────────────────────
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:245: NOTICE:  PASS [T8 admin abre tentativa na Conexao B] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:248: NOTICE:  PASS [T8b a tentativa da Conexao B existe] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+DELETE 1
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:252: NOTICE:  PASS [T8c CASCADE: apagar a conexao levou as tentativas dela] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+DELETE 2
+INSERT 0 2
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:262: NOTICE:  PASS [T9 ha a antiga (31 dias) e a recente] -> 2
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:264: NOTICE:  PASS [T9b service_role executa a purga e remove so a de 31 dias] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:266: NOTICE:  PASS [T9c a recente sobreviveu (retencao de 30 dias, nao tudo)] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:269: NOTICE:  PASS [T9d authenticated NAO executa a purga] -> ERRO 42501 permission denied for function qr_attempts_purge
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:271: NOTICE:  PASS [T9e anon NAO executa a purga] -> ERRO 42501 permission denied for function qr_attempts_purge
+ espera_erro 
+-------------
+ 
+(1 row)
+
+
+── BLOCO 4: a linha -- Rollback: executa ──────────────────────────────
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:278: NOTICE:  PASS [T10 rollback: drop function] -> OK 0
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:280: NOTICE:  PASS [T10b rollback: drop table] -> OK 0
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:282: NOTICE:  PASS [T10c apos o rollback a tabela sumiu] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/supabase/tests/qr_attempts.sql:284: NOTICE:  PASS [T10d apos o rollback a funcao sumiu] -> true
+ espera 
+--------
+ 
+(1 row)
+
+
+PASS: TC qr_attempts — contrato do cartao, FK CASCADE, dominio de status, clamp de TTL,
+      RLS staff-only (usuario comum e anon barrados), retencao de 30 dias so por service_role
+      e rollback executavel.
+ROLLBACK

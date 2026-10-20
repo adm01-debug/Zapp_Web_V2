@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529672 -0300	branch: Created from dia/2026-10-09
+5a9731645d266ea721f679d6886b83822ac16f6b a59c07926516c904ecd5e30a38595c59a6728328 workersql <workersql@hermes.local> 1791530605 -0300	commit: fix(talk-x): Criar RPCs de leitura da supressão: listagem paginada, KPIs e atividade (X176)

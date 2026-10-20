@@ -1,0 +1,11 @@
+fix(a11y): dica e rótulo no botão de acessibilidade da sidebar
+
+S27/D03 (achado B3): o botão de acessibilidade (AccessibilitySettings) era um dos 3 controles
+rápidos sem dica. A dica passa a seguir o padrão do botão de tema vizinho (side=right,
+sideOffset=8, delayDuration 200) e o aria-label 'Configurações de acessibilidade' não muda.
+
+Corrige a falha que barrou a entrega anterior no integrador: o Tooltip do Radix exige um
+TooltipProvider acima dele e o painel também é montado fora da árvore da sidebar
+(routeTransitionReducedMotion.test.tsx), que quebrava com 'Tooltip must be used within
+TooltipProvider'. O provider agora vem dentro do próprio componente, como em
+BusinessHoursIndicator e ContactForm.

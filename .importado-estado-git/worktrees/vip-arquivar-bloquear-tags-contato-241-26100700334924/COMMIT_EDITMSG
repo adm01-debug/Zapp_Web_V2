@@ -1,0 +1,9 @@
+fix(inbox): semântica do dono nas ações do detalhe do contato (#241)
+
+- Arquivar delega ao archiveContact (zera assigned_to; Desfazer restaura
+  o valor anterior real, sem forçar 'open' nem escrever conversation_status)
+- Bloquear chama update-block-status real na Evolution (mesma action do
+  menu de mensagem) + tag 'Bloqueado' como marcador; sem instância não há
+  escrita; falha na tag reverte o bloqueio; Desfazer = unblock + remove tag
+- Selo VIP do cabeçalho lê a tag VIP de contacts.tags (mesma fonte do
+  botão), não mais o relationship_score do CRM

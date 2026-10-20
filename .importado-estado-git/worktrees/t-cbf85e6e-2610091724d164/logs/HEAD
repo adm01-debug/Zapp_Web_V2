@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 09925971542656b91650495b74781b3cdf7c3cfb Joaquim Ataides <ti@promobrindes.com.br> 1791577467 -0300	
+09925971542656b91650495b74781b3cdf7c3cfb 09925971542656b91650495b74781b3cdf7c3cfb Joaquim Ataides <ti@promobrindes.com.br> 1791577469 -0300	reset: moving to HEAD
+09925971542656b91650495b74781b3cdf7c3cfb 09925971542656b91650495b74781b3cdf7c3cfb Joaquim Ataides <ti@promobrindes.com.br> 1791577608 -0300	reset: moving to HEAD
+09925971542656b91650495b74781b3cdf7c3cfb ced6c156f28e796a4ff063e56f01cbfff0705a73 Joaquim Ataides <ti@promobrindes.com.br> 1791578321 -0300	commit: fix(ci/devops): normaliza chave vazia antes da RPC set_department_whatsapp_config (SL-144 refazer 2)

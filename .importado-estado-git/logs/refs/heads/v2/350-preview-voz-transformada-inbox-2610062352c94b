@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791341571 -0300	branch: Created from dia/2026-10-06
+e58beff67df277afa73c179058c38190a5dd5d5c 0e11a02a45f470bd7699d299a3a7b2edef4d7506 Joaquim Ataides <ti@promobrindes.com.br> 1791341676 -0300	cherry-pick: fix(inbox): preserva previa do Voice Changer quando envio falha (#350)
+0e11a02a45f470bd7699d299a3a7b2edef4d7506 eda1a048aa1a8cab5e4495fa39e18fbc70aa2332 Joaquim Ataides <ti@promobrindes.com.br> 1791342569 -0300	commit: fix(inbox): handleSendAudioMeme sinaliza a falha do envio para a prévia da voz transformada sobreviver (#350)
+eda1a048aa1a8cab5e4495fa39e18fbc70aa2332 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791538941 -0300	reset: moving to e58beff67
+e58beff67df277afa73c179058c38190a5dd5d5c c656eb590721dff3c79d86753b0cc8f74fa1544b Joaquim Ataides <ti@promobrindes.com.br> 1791538950 -0300	commit: fix(inbox): encerra a entrega duplicada do #350 — a ponta já sinaliza a falha do envio

@@ -1,0 +1,14 @@
+fix(ci/devops): Gate AST de Realtime aceita 10 regressões como aprovada (SL-033)
+
+As fixtures adversariais do laudo de 2026-09-22 ja viraram testes oficiais na
+ponta (10 testes, executados pelo db-guard). Faltavam tres casos da recomendacao
+do proprio laudo ("respeitar ordem e spreads", "resolver simbolos/aliases"), que
+passam a ser testes oficiais do guard:
+
+- spread ANTES das propriedades (a primeira propriedade textual nao pode aprovar);
+- propriedade table duplicada (nao aprovar a primeira);
+- alias do evento com assercao de tipo ('as const').
+
+So teste: nenhuma linha de producao. Contra o gate anterior ao endurecimento
+(fe74df292) os dois testes novos falham (o gate aprovava public.notifications com
+spread antes e nao resolvia o alias); com o gate atual, 12/12 verdes.

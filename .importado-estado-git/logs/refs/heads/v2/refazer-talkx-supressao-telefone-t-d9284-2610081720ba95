@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490826 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 789b32f6470f55ee06574441dcac1e1b2eca573b Joaquim Ataides <ti@promobrindes.com.br> 1791490839 -0300	cherry-pick: fix(talkx): lista de supressão mostra e busca bloqueios cadastrados só por telefone (#406)

@@ -1,0 +1,1 @@
+test(ia): deno test do ai-auto-tag roda sem url base e entra no ci (SL-068)

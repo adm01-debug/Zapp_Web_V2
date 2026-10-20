@@ -1,0 +1,6 @@
+fix(crm): resumo comercial descarta resposta superada e propaga erro da gravação (#259)
+
+Cada save recebe um número de ordem; a resposta de uma gravação superada é descartada (não
+publica valor antigo no cache) e só a mais recente publica com setQueryData — sem refetch, que
+podia responder com o valor de antes. update sem linhas afetadas (RLS/contato inexistente) deixa
+de ser sucesso e isSaving conta as gravações em voo, com finally garantindo que não fica preso.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791461330 -0300	
+56917f551f1e9d834297f0df48c33726666b992d 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791461331 -0300	reset: moving to HEAD
+56917f551f1e9d834297f0df48c33726666b992d 2038142525dd423fa5be2eceeee83f4549941661 Joaquim Ataides <ti@promobrindes.com.br> 1791461342 -0300	cherry-pick: fix(inbox): troca de conexão padrão usa RPC atômica e confere erro (#174)

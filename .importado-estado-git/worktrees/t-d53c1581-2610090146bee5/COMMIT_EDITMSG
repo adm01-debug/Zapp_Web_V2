@@ -1,0 +1,1 @@
+fix(performance): Preconnect do index.html para Google Fonts gera request (SL-227)

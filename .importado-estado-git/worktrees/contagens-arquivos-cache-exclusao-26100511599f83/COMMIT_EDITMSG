@@ -1,0 +1,15 @@
+fix(arquivos): invalida contagens da aba após exclusão de mídia (#144)
+
+OTH-002/P2: a exclusão de uma mídia (useFilesActions) invalidava a galeria
+(`contactMediaKey`) e o badge da aba (`conversationTabCountsKey`), mas omitia a
+chave dos chips por tipo (`contactMediaCountsKey`, etapa 42). Como o hook usa
+`staleTime: 30s` e os defaults desligam refetch ao montar/focar, o número antigo
+permanecia após apagar.
+
+- useFilesActions: invalida também `contactMediaCountsKey` no sucesso.
+- useMessages: eventos realtime de UPDATE (`is_deleted`/`media_url`) e DELETE de
+  mídia passam a invalidar as três chaves (antes só o INSERT o fazia).
+- FilesTab: erro na query de contagens vira "—" (indisponível) em vez de "0"
+  confirmado.
+- Testes: RED antes / GREEN depois em useFilesActions, useMessages.media e
+  FilesTab; mocks de useContactMediaCounts passam a expor o módulo real.

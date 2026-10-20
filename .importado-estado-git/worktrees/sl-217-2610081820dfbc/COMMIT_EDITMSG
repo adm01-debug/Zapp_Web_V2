@@ -1,0 +1,9 @@
+fix(ia): deixa o match esgotado cair para o catalogo recente disponivel (SL-217 / IA-152)
+
+selectRecommendableProducts escolhia entre 'casa com o interesse' e 'catalogo
+recente' ANTES de filtrar estoque: com toda a categoria do contato esgotada o
+match ocupava as vagas, o filtro esvaziava o resultado e o hook devolvia lista
+vazia em vez do fallback recente disponivel (regressao).
+
+Prova: src/hooks/chat/__tests__/useRecommendedProducts.test.tsx (6/6 verde; com o
+hook original o teste novo fica vermelho: esperado ['d1'], recebido []).

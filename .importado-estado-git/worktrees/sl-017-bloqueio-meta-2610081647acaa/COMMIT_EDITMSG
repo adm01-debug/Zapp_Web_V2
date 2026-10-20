@@ -1,0 +1,3 @@
+fix(inbox/chat): faixa de conexões anuncia o motivo da edge no bloqueio da Meta (SL-017)
+
+O banner global engolia a mensagem da edge ({error:true,message} com o fim da janela de manutenção): em bloqueio da Meta o operador via "Erro ao reconectar PRINCIPAL" e insistia no login em loop. Agora o motivo chega como veio e o aviso de sucesso só sai quando a edge aceitou. Runbook do bloqueio passa a descrever o que o sistema faz (a UI não desabilita botão: global_settings é admin/supervisor) e traz a rampa do E05 como regra do time; INCIDENT-RUNBOOK ganha o link e o aviso. Trava de envio do E02 provada (RPC + testes existentes).

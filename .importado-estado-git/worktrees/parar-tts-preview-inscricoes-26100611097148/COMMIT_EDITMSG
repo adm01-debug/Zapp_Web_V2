@@ -1,0 +1,3 @@
+fix(inbox): parar TTS e prévia de meme solta o bind do player descartado (#335)
+
+O detach devolvido por attachMediaVolume vivia só dentro de onended; pausar, trocar de prévia, enviar, cancelar ou desmontar descartava o Audio mantendo a inscrição no store global de volume e o ganho WebAudio. O cleanup agora fica numa ref e passa pelo mesmo caminho idempotente em stop, troca, erro, ended e unmount.

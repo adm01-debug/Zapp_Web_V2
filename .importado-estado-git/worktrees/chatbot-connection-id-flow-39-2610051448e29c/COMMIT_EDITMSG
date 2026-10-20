@@ -1,0 +1,11 @@
+fix(chatbot-l1): exigir conexão para flow e histórico
+
+`connectionId` deixou de ser opcional: sem ele o handler escolhia um flow
+ativo QUALQUER e lia o histórico do mesmo contato, misturando canais. Agora a
+ausência/nulidade é rejeitada na entrada (VALIDATION_ERROR) antes de qualquer
+consulta a flow, histórico ou IA, e as duas consultas passam a filtrar SEMPRE
+por `whatsapp_connection_id` — sem fallback global.
+
+Prova: supabase/functions/chatbot-l1/index.test.ts (6 testes). Antes do fix,
+os casos "sem connectionId" e "null" falham; depois, os 6 passam. Suíte Deno
+completa: 998 passam / 0 falham.

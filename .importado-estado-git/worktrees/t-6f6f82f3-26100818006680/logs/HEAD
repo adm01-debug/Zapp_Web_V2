@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791493220 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791493221 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 63d9f0f6b8a27d861dedcba9f5119cb8b3fbfc5f Joaquim Ataides <ti@promobrindes.com.br> 1791493558 -0300	commit: fix(ci/devops): Pinar contratos visíveis não cobertos com teste por módulo (SL-131)

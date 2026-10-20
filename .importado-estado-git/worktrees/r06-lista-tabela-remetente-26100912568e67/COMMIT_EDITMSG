@@ -1,0 +1,13 @@
+feat(arquivos): remetente na Lista e na Tabela
+
+R06 (S47-S48): quem enviou sai com foto + nome nos dois modos densos, do
+lote de perfis (D04) que o FilesTab ja resolve uma vez e repassa por props
+(como no R04). A regra de identidade e a mesma do cartao
+(resolveSenderIdentity: Voce/contato/atendente/Equipe). Na Tabela a coluna
+vira "Enviado por" com SenderAvatar e passa a ordenar pela pessoa.
+
+FilesContent.tsx entra no diff apenas como o repasse das duas props: e o
+unico renderizador das duas vistas (sem ele os props nasciam mortos).
+
+Sem DDL, sem Edge Function, sem migration, sem dependencia nova, sem selo
+de canal/origem, sem cor nova.

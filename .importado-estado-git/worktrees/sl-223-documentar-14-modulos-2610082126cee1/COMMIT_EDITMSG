@@ -1,0 +1,8 @@
+fix(outros): Documentar 14 modulos e 5 edge functions em COMPLETE_SY (SL-223)
+
+O FORGOTTEN_FEATURES_REPORT aponou 14 modulos e 5 Edge Functions que existem no codigo
+mas nao constavam do COMPLETE_SYSTEM_FEATURES.md (parado nas 34 secoes de 2026-03-15).
+Acrescenta as secoes 35-48 e as funcoes 34.20-34.24, conferidas contra o codigo da ponta
+(routes do ViewRouter, hooks, tabelas e pastas de supabase/functions) — inclusive o estado
+real de public-api (410 desativada) e da exportacao LGPD (bloqueada).
+Guarda novos scripts/ci/complete-system-features-doc.unit.mjs: documento sem as secoes falha.

@@ -1,0 +1,209 @@
+--- a/e2e/a11y-config-admin.spec.ts
++++ b/e2e/a11y-config-admin.spec.ts
+@@ -13,7 +13,7 @@
+  */
+ import { test, expect, type Page } from '@playwright/test';
+ import { createRequire } from 'node:module';
+-import { mockAppShell, json, bloquearRedeReal, type Registro } from './fixtures/mapa-mocks';
++import { mockAppShell, json, bloquearRedeReal, responderUserSettingsFake, type Registro } from './fixtures/mapa-mocks';
+ import { installFakeSession } from './fixtures/talkx-demo';
+ 
+ const require = createRequire(import.meta.url);
+@@ -82,7 +82,11 @@
+ }
+ 
+ async function mockConfigVazio(page: Page): Promise<void> {
+-  await page.route(/\/rest\/v1\/user_settings/, (route) => json(route, []));
++  // `user_settings` fica com a linha da sessão falsa (onboarding concluído): o
++  // `mockAppShell` já a responde, e uma resposta VAZIA aqui reabria o tour por
++  // cima da tela (o Radix marcava o `<main>` como aria-hidden e o heading nao
++  // aparecia). A tela le essa linha com todos os campos default — mesmo estado
++  // visual de antes, sem o overlay.
+   await page.route(/\/rest\/v1\/rpc\/(save_user_settings|get_user_settings)/, (route) => json(route, []));
+ }
+ 
+--- a/e2e/ct94-ui-429.spec.ts
++++ b/e2e/ct94-ui-429.spec.ts
+@@ -30,6 +30,7 @@
+  */
+ import { test, expect, type Page, type Route } from '@playwright/test';
+ import { installFakeSession, FAKE_USER_ID } from './fixtures/talkx-demo';
++import { responderUserSettingsFake } from './fixtures/mapa-mocks';
+ import { E2E_CATALOG_PATH } from './fixtures/catalog';
+ 
+ /** Edge que devolve 429 quando a cota de 60 req/min estoura. */
+@@ -98,6 +99,9 @@
+       ]);
+     }
+     if (tabela === 'user_roles') return json(route, [{ role: 'admin' }]);
++    // `user_settings` do app shell: onboarding JÁ concluído, senão o WelcomeModal
++    // cobre a tela antes de o catálogo montar (o tour segue esta coluna).
++    if (tabela === 'user_settings') return responderUserSettingsFake(route);
+     return json(route, []);
+   });
+ 
+--- a/e2e/fixtures/email-navy.ts
++++ b/e2e/fixtures/email-navy.ts
+@@ -156,7 +156,7 @@
+   await installFakeSession(page);
+   await mockTalkXAuth(page);
+ 
+-  await page.route(/\/rest\/v1\/(?!rpc|profiles|user_roles|email_threads|email_messages|email_labels|email_attachments)[a-z_]+/, route =>
++  await page.route(/\/rest\/v1\/(?!rpc|profiles|user_roles|user_settings|email_threads|email_messages|email_labels|email_attachments)[a-z_]+/, route =>
+     isRead(route.request().method()) ? json(route, []) : json(route, { message: 'escrita externa bloqueada no E2E' }, 403),
+   );
+   await page.route(/\/functions\/v1\/(?!gmail-oauth|gmail-sync|gmail-send)[a-z-]+/, route => json(route, { message: 'função externa bloqueada no E2E' }, 403));
+--- a/e2e/fixtures/mapa-mocks.ts
++++ b/e2e/fixtures/mapa-mocks.ts
+@@ -58,6 +58,29 @@
+ }
+ 
+ /**
++ * Linha de `user_settings` da sessão FALSA com o tour de onboarding JÁ concluído.
++ *
++ * `user_settings.onboarding_completed` é a fonte da verdade do `useOnboarding`
++ * (migration 20261013044344). Antes o estado deslogado marcava a conclusão com uma
++ * flag em `localStorage` — chave que o hook deixou de ler, ficando MORTA: com isso
++ * o `WelcomeModal` abria por cima de TODA tela deslogada e o Radix marcava o
++ * `<main>` como `aria-hidden`, derrubando as specs de a11y e de tela (o overlay
++ * engole o clique seguinte). Toda spec deslogada passa por aqui.
++ */
++export const USER_SETTINGS_SESSAO_FAKE = { onboarding_completed: true } as const;
++
++/**
++ * Responde `user_settings` com a linha da sessão falsa (tour concluído).
++ *
++ * Use como handler de `page.route(/\/rest\/v1\/user_settings/, ...)`. Quem precisa
++ * PROVAR o tour ABERTO (onboarding-dispensar.spec.ts) re-registra esta rota com a
++ * coluna em false — no Playwright a última rota registrada vence.
++ */
++export function responderUserSettingsFake(route: Route) {
++  return json(route, querObjetoUnico(route) ? USER_SETTINGS_SESSAO_FAKE : [USER_SETTINGS_SESSAO_FAKE]);
++}
++
++/**
+  * Identidade + RPCs + edge do app shell. Registre este ANTES das rotas específicas da
+  * sua spec (a última registrada vence, então as suas têm prioridade).
+  */
+@@ -66,8 +89,7 @@
+     json(route, querObjetoUnico(route) ? PERFIL_FAKE : [PERFIL_FAKE]));
+   await page.route(/\/rest\/v1\/user_roles/, (route) =>
+     json(route, querObjetoUnico(route) ? { role: 'admin' } : [{ role: 'admin' }]));
+-  await page.route(/\/rest\/v1\/user_settings/, (route) =>
+-    json(route, querObjetoUnico(route) ? null : []));
++  await page.route(/\/rest\/v1\/user_settings/, responderUserSettingsFake);
+ 
+   // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
+   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
+--- a/e2e/fixtures/talkx-demo.ts
++++ b/e2e/fixtures/talkx-demo.ts
+@@ -1,6 +1,8 @@
+ import { readdirSync, readFileSync } from 'node:fs';
+ import { join } from 'node:path';
+ import type { Page, Route } from '@playwright/test';
++
++import { responderUserSettingsFake } from './mapa-mocks';
+ 
+ /**
+  * Backend fake do Talk X para E2E determinístico (plano V4, etapa X003).
+@@ -196,21 +198,25 @@
+ 
+ export async function installFakeSession(page: Page) {
+   await page.addInitScript(
+-    ({ storageKey, session, themeKey, onboardingKey }) => {
++    ({ storageKey, session, themeKey }) => {
+       localStorage.setItem(storageKey, JSON.stringify(session));
+       localStorage.setItem(themeKey, 'dark');
+-      // Marca o onboarding como concluído para o WelcomeModal não abrir e
+-      // bloquear os cliques do spec visual (useOnboarding lê este flag antes
+-      // de consultar user_settings).
+-      localStorage.setItem(`${onboardingKey}_${session.user.id}`, 'true');
+     },
+     {
+       storageKey: AUTH_STORAGE_KEY,
+       session: FAKE_SESSION,
+       themeKey: 'theme',
+-      onboardingKey: 'onboarding_completed',
+     },
+   );
++
++  // O tour de onboarding segue a COLUNA `user_settings.onboarding_completed`
++  // (useOnboarding, migration 20261013044344). A antiga flag
++  // `onboarding_completed_<id>` no localStorage ficou MORTA — o hook deixou de
++  // lê-la — e o WelcomeModal passou a cobrir TODA tela deslogada (o overlay
++  // engole o clique seguinte). A sessão falsa responde a coluna como concluída;
++  // quem PROVA o tour aberto (onboarding-dispensar.spec.ts) re-registra esta
++  // rota depois, porque no Playwright a última registrada vence.
++  await page.route(/\/rest\/v1\/user_settings/, responderUserSettingsFake);
+ }
+ 
+ export async function mockTalkXAuth(page: Page) {
+@@ -266,7 +272,7 @@
+   await mockTalkXBackend(page, tela);
+ 
+   // Catch-all para as leituras do app shell não interceptadas acima.
+-  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts)[a-z_]+/, (route) =>
++  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|user_settings|contacts)[a-z_]+/, (route) =>
+     isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
+   );
+ }
+--- a/e2e/onboarding-dispensar.spec.ts
++++ b/e2e/onboarding-dispensar.spec.ts
+@@ -25,7 +25,7 @@
+ import { test, expect, type Page } from '@playwright/test';
+ 
+ import { bloquearRedeReal, json, mockAppShell, type Registro } from './fixtures/mapa-mocks';
+-import { installFakeSession, FAKE_USER_ID } from './fixtures/talkx-demo';
++import { installFakeSession } from './fixtures/talkx-demo';
+ import { dispensarOnboarding, OVERLAY_ONBOARDING } from './fixtures/onboarding';
+ 
+ test.use({ storageState: { cookies: [], origins: [] } });
+@@ -34,9 +34,6 @@
+ // navegação e leva bem mais que os 30s padrão do Playwright. Sem isto a prova
+ // reprova por tempo de build, não pelo defeito.
+ test.setTimeout(120_000);
+-
+-/** Chave que `useOnboarding` lê primeiro; com ela fora, a decisão vem de `user_settings` (null). */
+-const CHAVE_TOUR = `onboarding_completed_${FAKE_USER_ID}`;
+ 
+ test.describe('dispensarOnboarding fecha o modal de boas-vindas de verdade', () => {
+   let registro: Registro;
+@@ -51,13 +48,15 @@
+     registro = { writesApp: [], mapbox: [], redeBarrada: [] };
+     // Registre o guarda ANTES dos mocks: o Playwright casa na ordem inversa.
+     await bloquearRedeReal(page, registro);
+-    // `user_settings` responde null → o tour ainda não foi concluído → o modal abre.
++    // `mockAppShell` responde `user_settings` como tour concluído; esta spec quer o oposto.
+     await mockAppShell(page, registro);
+     await installFakeSession(page);
+     // `installFakeSession` marca o tour como concluído (o spec visual do Talk X
+     // depende disso). Aqui o alvo é o contrário — o OVERLAY, que engole o clique —
+-    // então a chave local sai logo depois, simulando um navegador novo.
+-    await page.addInitScript((chave) => localStorage.removeItem(chave), CHAVE_TOUR);
++    // então a leitura de `user_settings` é RE-REGISTRADA vazia logo depois: a
++    // última rota registrada vence (Playwright casa na ordem inversa) e o
++    // `useOnboarding` vê `onboarding_completed` ausente, como um navegador novo.
++    await page.route(/\/rest\/v1\/user_settings/, (route) => json(route, []));
+     // Leitura de contatos da tela: sem isto a tela dispara `contacts` e o guarda
+     // de rede a barra (o catch-all do app shell exclui `contacts` de propósito).
+     await page.route(/\/rest\/v1\/contacts/, (route) => json(route, []));
+--- a/e2e/talkx-launch.spec.ts
++++ b/e2e/talkx-launch.spec.ts
+@@ -25,6 +25,7 @@
+ import { readFileSync, readdirSync } from 'node:fs';
+ import { join } from 'node:path';
+ import { installFakeSession } from './fixtures/talkx-demo';
++import { responderUserSettingsFake } from './fixtures/mapa-mocks';
+ 
+ const FIXTURES_DIR = join(import.meta.dirname, 'fixtures', 'talkx-launch');
+ const STUB_HEADER = 'x-talkx-launch-stub';
+@@ -117,6 +118,9 @@
+       return json(route, [{ id: FAKE_USER_ID, user_id: FAKE_USER_ID, name: 'Visual Talk X', email: FAKE_EMAIL, role: 'admin', is_active: true }]);
+     }
+     if (tabela === 'user_roles') return json(route, [{ role: 'admin' }]);
++    // `user_settings` do app shell: onboarding JÁ concluído, senão o WelcomeModal
++    // cobre a tela antes da campanha (o tour segue esta coluna).
++    if (tabela === 'user_settings') return responderUserSettingsFake(route);
+     if (tabela === 'talkx_campaigns') return json(route, campanhas);
+     return json(route, fixtures[tabela] ?? []);
+   });

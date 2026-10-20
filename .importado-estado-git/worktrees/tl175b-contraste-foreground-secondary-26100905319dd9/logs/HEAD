@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 3692aab78f0f28d74750ba9484a1304a8a7f93db Joaquim Ataides <ti@promobrindes.com.br> 1791534680 -0300	
+3692aab78f0f28d74750ba9484a1304a8a7f93db 3692aab78f0f28d74750ba9484a1304a8a7f93db Joaquim Ataides <ti@promobrindes.com.br> 1791534681 -0300	reset: moving to HEAD
+3692aab78f0f28d74750ba9484a1304a8a7f93db e5f8d434d34f5a771d4891121cc87f3adfa4a839 Joaquim Ataides <ti@promobrindes.com.br> 1791535402 -0300	commit: fix(tema): corrige contraste do token foreground-secondary no tema claro (TL-175B)
+e5f8d434d34f5a771d4891121cc87f3adfa4a839 9157ab5a0aec55a7cb8b67bf9593a0dd69cc851f Joaquim Ataides <ti@promobrindes.com.br> 1791535455 -0300	commit (amend): fix(tema): corrige contraste do token foreground-secondary no tema claro (TL-175B)

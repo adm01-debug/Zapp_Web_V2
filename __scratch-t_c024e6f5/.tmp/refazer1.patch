@@ -1,0 +1,418 @@
+--- a/src/hooks/chat/sendQueue.ts
++++ b/src/hooks/chat/sendQueue.ts
+@@ -32,7 +32,13 @@
+       let execucao: Promise<T>;
+       if (!ocupadas.has(key)) {
+         ocupadas.add(key);
+-        execucao = Promise.resolve(task());
++        try {
++          execucao = Promise.resolve(task());
++        } catch (erro) {
++          // Tarefa que lança em vez de rejeitar: vira rejeição da própria
++          // entrega, nunca exceção síncrona (o chamador só tem o `await`).
++          execucao = Promise.reject(erro);
++        }
+       } else {
+         const anterior = caudas.get(key) ?? Promise.resolve();
+         execucao = anterior.then(() => task());
+--- a/src/hooks/chat/__tests__/sendQueue.test.ts
++++ b/src/hooks/chat/__tests__/sendQueue.test.ts
+@@ -77,4 +77,19 @@
+     await um;
+     expect(ordem).toEqual(['um:inicio', 'dois', 'um:fim']);
+   });
++
++  it('tarefa que lança em vez de rejeitar vira rejeição — nunca exceção síncrona', async () => {
++    const fila = createSerialSendQueue();
++    const erro = new Error('falha síncrona');
++    let entrega: Promise<unknown> | undefined;
++    expect(() => {
++      entrega = fila.enqueue('conv-1', () => {
++        throw erro;
++      });
++    }).not.toThrow();
++    await expect(entrega).rejects.toBe(erro);
++    // A fila não trava: o próximo envio da mesma conversa anda normalmente.
++    await expect(fila.enqueue('conv-1', async () => 'depois')).resolves.toBe('depois');
++    expect(fila.isBusy('conv-1')).toBe(false);
++  });
+ });
+--- a/src/components/inbox/chat/useChatPanelHandlers.ts
++++ b/src/components/inbox/chat/useChatPanelHandlers.ts
+@@ -360,10 +360,10 @@
+       });
+     } catch (err) {
+       log.error('Failed to send message:', err);
+-      // O rascunho volta ao editor. Se o agente já digitou outra coisa, o texto
+-      // novo fica — o que falhou não sobrescreve o que ele está escrevendo.
+-      setInputValue((atual) => (atual === '' ? originalText : atual));
+-      if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
++      // O rascunho volta ao editor SEM perder o que o agente digitou no meio:
++      // texto novo continua depois do original (prefixo já redigitado não duplica).
++      setInputValue((atual) => (atual.startsWith(originalText) ? atual : originalText + atual));
++      if (wasReply) setReplyToMessage(wasReply);
+       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+     }
+   }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
+--- a/src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx
++++ b/src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx
+@@ -56,6 +56,7 @@
+ vi.mock('@/components/inbox/SlashCommands', () => ({}));
+ 
+ import { useChatPanelHandlers } from '../useChatPanelHandlers';
++import type { Message } from '@/types/chat';
+ 
+ type OnSend = (content: string, replyToId?: string | null) => Promise<void> | void;
+ 
+@@ -138,19 +139,60 @@
+     expect(mocks.toast).toHaveBeenCalledTimes(1);
+   });
+ 
+-  it('a falha não sobrescreve um rascunho novo digitado enquanto a mensagem estava em voo', async () => {
++  it('a falha devolve o rascunho sem perder o que foi digitado enquanto a mensagem estava em voo', async () => {
+     let rejeitar!: (erro: Error) => void;
+     const onSendMessage = vi.fn(() => new Promise<void>((_resolve, reject) => { rejeitar = reject; }));
+     const { result } = montarHook(onSendMessage);
+ 
+-    act(() => { result.current.setInputValue('antiga'); });
++    act(() => { result.current.setInputValue('primeira'); });
++    await act(async () => { void result.current.handleSend(); });
++    expect(result.current.inputValue).toBe('');
++
++    act(() => { result.current.setInputValue(' segunda'); });
++    await act(async () => { rejeitar(new Error('sem rede')); await Promise.resolve(); });
++
++    expect(result.current.inputValue).toBe('primeira segunda');
++    expect(mocks.undoToast).not.toHaveBeenCalled();
++  });
++
++  it('rascunho já redigitado não duplica na falha', async () => {
++    let rejeitar!: (erro: Error) => void;
++    const onSendMessage = vi.fn(() => new Promise<void>((_resolve, reject) => { rejeitar = reject; }));
++    const { result } = montarHook(onSendMessage);
++
++    act(() => { result.current.setInputValue('primeira'); });
++    await act(async () => { void result.current.handleSend(); });
++
++    act(() => { result.current.setInputValue('primeira de novo'); });
++    await act(async () => { rejeitar(new Error('sem rede')); await Promise.resolve(); });
++
++    expect(result.current.inputValue).toBe('primeira de novo');
++    expect(mocks.undoToast).not.toHaveBeenCalled();
++  });
++
++  it('a falha restaura a resposta citada', async () => {
++    const citada = {
++      id: 'm-citada',
++      contact_id: 'contato-1',
++      sender: 'contact',
++      content: 'oi',
++      created_at: new Date().toISOString(),
++    } as unknown as Message;
++    let rejeitar!: (erro: Error) => void;
++    const onSendMessage = vi.fn(() => new Promise<void>((_resolve, reject) => { rejeitar = reject; }));
++    const { result } = montarHook(onSendMessage);
++
++    act(() => { result.current.handleReplyToMessage(citada); });
++    act(() => { result.current.setInputValue('com resposta'); });
+     await act(async () => { void result.current.handleSend(); });
+     expect(result.current.inputValue).toBe('');
++    expect(result.current.replyToMessage).toBeNull();
++    expect(onSendMessage).toHaveBeenCalledWith('com resposta', 'm-citada');
+ 
+-    act(() => { result.current.setInputValue('nova'); });
+     await act(async () => { rejeitar(new Error('sem rede')); await Promise.resolve(); });
+ 
+-    expect(result.current.inputValue).toBe('nova');
++    expect(result.current.inputValue).toBe('com resposta');
++    expect(result.current.replyToMessage).toEqual(citada);
+     expect(mocks.undoToast).not.toHaveBeenCalled();
+   });
+ 
+--- a/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refresh-no-envio.test.tsx
++++ b/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refresh-no-envio.test.tsx
+@@ -0,0 +1,172 @@
++/**
++ * PK-21 — envio de texto sem refresh no caminho (módulos reais, rede fingida).
++ *
++ * O defeito de origem: `handleSendMessage` chamava `refreshActiveConversation`
++ * depois de enviar — dois fetches bloqueando o compositor. A regressão proibida
++ * é QUALQUER fetch (lista, conversa, mensagens) dentro da janela do envio: o
++ * transporte é RPC `enqueue_outbound_message` + Edge `message-delivery`, e a UI
++ * anda pelo Realtime.
++ *
++ * Este teste usa os módulos REAIS do caminho de envio (`useRealtimeMessages`,
++ * `useMessages`, `messageSender`, `outbound-message.service`, `ChatService`,
++ * `RealtimeService`) e só finge a fronteira de rede (`supabase`: rpc, functions,
++ * from) mais efeitos colaterais (som/notificação, transporte realtime, auth e
++ * UI). Se alguém reintroduzir um fetch no envio, o `supabase.from` é chamado na
++ * janela e o teste quebra.
++ */
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { act, renderHook, waitFor } from '@testing-library/react';
++import React from 'react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++
++const rede = vi.hoisted(() => {
++  // Construtor encadeável do PostgREST: qualquer método devolve o construtor;
++  // `await` resolve lista vazia (inbox sem conversas no teste).
++  const cadeia = (): unknown => {
++    const proxy: unknown = new Proxy(
++      {},
++      {
++        get(_alvo, prop) {
++          if (prop === 'then') {
++            return (resolve: (v: unknown) => void) =>
++              resolve({ data: [], error: null, count: 0 });
++          }
++          if (prop === 'maybeSingle' || prop === 'single') {
++            return () => Promise.resolve({ data: null, error: null });
++          }
++          return (..._args: unknown[]) => proxy;
++        },
++      },
++    );
++    return proxy;
++  };
++  return {
++    from: vi.fn(() => cadeia()),
++    rpc: vi.fn(async (nome: string) => {
++      if (nome === 'enqueue_outbound_message') {
++        return {
++          data: { id: 'srv-1', status: 'queued', external_id: null },
++          error: null,
++        };
++      }
++      return { data: null, error: null };
++    }),
++    invoke: vi.fn(async (nome: string) => {
++      if (nome === 'message-delivery') {
++        return { data: { messageId: 'srv-1', status: 'sent' }, error: null };
++      }
++      return { data: null, error: null };
++    }),
++  };
++});
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: rede.from,
++    rpc: rede.rpc,
++    functions: { invoke: rede.invoke },
++    channel: () => ({
++      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
++      subscribe: () => ({ unsubscribe: () => {} }),
++    }),
++    removeChannel: () => {},
++  },
++}));
++
++// Transporte realtime (assinaturas): fora do caminho de envio.
++vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({
++  useSupabaseRealtime: () => {},
++}));
++
++// Som/notificação: efeito colateral, fora do caminho de envio.
++vi.mock('@/hooks/realtime/useRealtimeNotifications', () => ({
++  useRealtimeNotifications: () => ({
++    newMessageNotification: null,
++    notifyAboutIncomingMessage: vi.fn(),
++    dismissNotification: vi.fn(),
++    setSelectedContact: vi.fn(),
++    setSoundEnabled: vi.fn(),
++  }),
++}));
++
++vi.mock('@/hooks/inbox/useInboxUIState', () => ({
++  useInboxUIState: () => ({
++    selectedContactId: 'c1',
++    setSelectedContactId: vi.fn(),
++    showNewConversation: false,
++    setShowNewConversation: vi.fn(),
++    showArchived: false,
++    setShowArchived: vi.fn(),
++    globalSearch: '',
++    setGlobalSearch: vi.fn(),
++    selectedQueueId: null,
++    setSelectedQueueId: vi.fn(),
++    selectedContactIds: [],
++    setSelectedContactIds: vi.fn(),
++    toggleSelectContact: vi.fn(),
++    startNewConversation: vi.fn(),
++  }),
++}));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'u1' }, loading: false }),
++}));
++
++vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
++
++import { useRealtimeInbox } from '../useRealtimeInbox';
++
++function montar() {
++  const cliente = new QueryClient({
++    defaultOptions: { queries: { retry: false } },
++  });
++  const wrapper = ({ children }: { children: React.ReactNode }) => (
++    <QueryClientProvider client={cliente}>{children}</QueryClientProvider>
++  );
++  return renderHook(() => useRealtimeInbox(), { wrapper });
++}
++
++describe('useRealtimeInbox — envio de texto sem refresh no caminho (PK-21)', () => {
++  beforeEach(() => {
++    rede.from.mockClear();
++    rede.rpc.mockClear();
++    rede.invoke.mockClear();
++  });
++
++  it('o envio usa RPC + Edge e NENHUM fetch roda na janela', async () => {
++    const { result } = montar();
++    await waitFor(() => expect(result.current.loading).toBe(false));
++
++    // Só o que a montagem buscou; a janela do envio começa zerada.
++    rede.from.mockClear();
++    rede.rpc.mockClear();
++    rede.invoke.mockClear();
++
++    await act(async () => {
++      await result.current.handleSendMessage('olá');
++    });
++
++    // O envio aconteceu de verdade (módulos reais até a rede).
++    expect(rede.rpc).toHaveBeenCalledTimes(1);
++    expect(rede.rpc.mock.calls[0]?.[0]).toBe('enqueue_outbound_message');
++    expect(rede.invoke).toHaveBeenCalledTimes(1);
++    expect(rede.invoke.mock.calls[0]?.[0]).toBe('message-delivery');
++    // E nenhum fetch (lista, conversa, mensagens) rodou junto.
++    expect(rede.from).not.toHaveBeenCalled();
++  });
++
++  it('a falha do envio propaga sem disparar fetch', async () => {
++    const { result } = montar();
++    await waitFor(() => expect(result.current.loading).toBe(false));
++
++    rede.from.mockClear();
++    rede.rpc.mockRejectedValueOnce(new Error('banco fora do ar'));
++
++    await expect(
++      act(async () => {
++        await result.current.handleSendMessage('olá');
++      }),
++    ).rejects.toThrow('banco fora do ar');
++    expect(rede.from).not.toHaveBeenCalled();
++  });
++});
+--- a/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx
++++ b/src/hooks/inbox/__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx
+@@ -1,109 +0,0 @@
+-/**
+- * PK-21 — o caminho de envio não refaz o fetch da lista de conversas.
+- *
+- * Defeito de origem: `handleSendMessage` esperava o envio E o par de refetches
+- * (`refetch` da lista + `refetch` da conversa aberta). Isso é o que mantinha o
+- * compositor travado depois do despacho e ainda fazia a lista "piscar" no meio
+- * do envio. A atualização já chega pelo Realtime: o INSERT da mensagem
+- * enfileirada é tratado por `useRealtimeMessages` (lista) e por `useMessages`
+- * (conversa aberta) em `global-messages-realtime`.
+- */
+-import { describe, it, expect, vi, beforeEach } from 'vitest';
+-import { renderHook, act } from '@testing-library/react';
+-
+-const { sendMessageMock, refetchMock, refetchSelectedMock } = vi.hoisted(() => ({
+-  sendMessageMock: vi.fn().mockResolvedValue(undefined),
+-  refetchMock: vi.fn().mockResolvedValue(undefined),
+-  refetchSelectedMock: vi.fn().mockResolvedValue(undefined),
+-}));
+-
+-vi.mock('@/hooks/inbox/useInboxUIState', () => ({
+-  useInboxUIState: () => ({
+-    selectedContactId: 'c1',
+-    setSelectedContactId: vi.fn(),
+-    soundOn: true,
+-    setSoundOn: vi.fn(),
+-    setPendingContactId: vi.fn(),
+-  }),
+-}));
+-vi.mock('@/hooks/chat/useRealtimeMessages', () => ({
+-  useRealtimeMessages: () => ({
+-    conversations: [],
+-    loading: false,
+-    error: null,
+-    sendMessage: sendMessageMock,
+-    markAsRead: vi.fn(),
+-    refetch: refetchMock,
+-    newMessageNotification: null,
+-    dismissNotification: vi.fn(),
+-    setSelectedContact: vi.fn(),
+-    setSoundEnabled: vi.fn(),
+-  }),
+-}));
+-vi.mock('@/hooks/integrations/useExternalEvolution', () => ({
+-  useExternalConversations: () => ({ conversations: [], loading: false, error: null, refetch: vi.fn() }),
+-  useExternalMessages: () => ({ messages: [], loading: false, refetch: refetchSelectedMock }),
+-}));
+-vi.mock('@/hooks/system/useOfflineCache', () => ({
+-  useOfflineCache: () => ({ conversations: [], usingCache: false }),
+-}));
+-vi.mock('@/hooks/chat/useMessages', () => ({
+-  useMessages: () => ({
+-    messages: [],
+-    loading: false,
+-    refetch: refetchSelectedMock,
+-    hasOlder: false,
+-    loadingOlder: false,
+-    loadOlderMessages: vi.fn(),
+-    addMessage: vi.fn(),
+-    updateMessage: vi.fn(),
+-    removeMessage: vi.fn(),
+-  }),
+-}));
+-vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: null }) }));
+-vi.mock('@/integrations/supabase/client', () => ({
+-  supabase: {
+-    from: vi.fn(() => ({
+-      select: vi.fn().mockReturnThis(),
+-      eq: vi.fn().mockReturnThis(),
+-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+-    })),
+-  },
+-}));
+-vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+-
+-import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
+-
+-beforeEach(() => {
+-  vi.clearAllMocks();
+-  sendMessageMock.mockResolvedValue(undefined);
+-  refetchMock.mockResolvedValue(undefined);
+-  refetchSelectedMock.mockResolvedValue(undefined);
+-});
+-
+-describe('useRealtimeInbox — envio de texto sem refetch da lista (PK-21)', () => {
+-  it('envia sem refazer o fetch da lista nem o da conversa aberta', async () => {
+-    const { result } = renderHook(() => useRealtimeInbox());
+-
+-    await act(async () => {
+-      await result.current.handleSendMessage('mensagem em fila', null);
+-    });
+-
+-    expect(sendMessageMock).toHaveBeenCalledWith('c1', 'mensagem em fila', 'text', undefined, undefined, null);
+-    // A lista e a conversa aberta são atualizadas pelo Realtime (INSERT da
+-    // mensagem), não por um refetch dentro do caminho do envio.
+-    expect(refetchMock).not.toHaveBeenCalled();
+-    expect(refetchSelectedMock).not.toHaveBeenCalled();
+-  });
+-
+-  it('a rejeição do transporte sobe para o chamador (o compositor devolve o rascunho)', async () => {
+-    sendMessageMock.mockRejectedValueOnce(new Error('sem conexão'));
+-    const { result } = renderHook(() => useRealtimeInbox());
+-
+-    await expect(
+-      act(async () => { await result.current.handleSendMessage('oi', null); }),
+-    ).rejects.toThrow('sem conexão');
+-
+-    expect(refetchMock).not.toHaveBeenCalled();
+-  });
+-});

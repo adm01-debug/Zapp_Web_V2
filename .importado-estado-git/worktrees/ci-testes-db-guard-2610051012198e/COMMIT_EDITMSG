@@ -1,0 +1,9 @@
+fix(ci): liga testes de política de rede e revogação de sessões ao db-guard
+
+Os testes network-policy-rpc.test.sh (R2-AUTH-022) e
+revoke-auth-sessions.test.sh (R2-AUTH-004) existiam no disco sem passo
+correspondente e eram reprovados como órfãos pelo check-test-inventory no
+PR 1890. Ambos seguem o padrão E50: mesmo job, harness
+retry-disposable-postgres-test.sh e SKIP_DOCKER_SHIM=1 — um cria dois
+containers com roles globais iguais (colidiriam no cluster do shim) e o
+outro usa `docker exec pg_isready`, que o shim não intercepta.

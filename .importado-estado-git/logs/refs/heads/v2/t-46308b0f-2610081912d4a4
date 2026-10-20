@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8b6c77917938252e54b01b3ace2edfd337240642 Joaquim Ataides <ti@promobrindes.com.br> 1791497567 -0300	branch: Created from dia/2026-10-08
+8b6c77917938252e54b01b3ace2edfd337240642 c93f23461a58395bab589d745e10fdd33f478a33 Joaquim Ataides <ti@promobrindes.com.br> 1791497890 -0300	commit: fix(performance): pagina do GET de mensagens deixa de pedir 1000 linhas (SL-099)
+c93f23461a58395bab589d745e10fdd33f478a33 493b92d27fb3c1ac9c7d6a52d2dc059d50df7df4 Joaquim Ataides <ti@promobrindes.com.br> 1791498010 -0300	commit (amend): fix(performance): pagina do GET de mensagens deixa de pedir 1000 linhas (SL-099)

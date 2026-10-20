@@ -1,0 +1,3 @@
+fix(automacoes): coleta a mensagem da notificacao ao salvar (#99)
+
+O editor oferecia 'Enviar Notificacao' no seletor de acao mas so exibia o campo de mensagem para 'send_message', entao a acao era salva com config vazia. A chave 'message' e declarada valida para os dois tipos em ACTION_CONFIG_OWNERS; o campo agora segue essa mesma fonte (MESSAGE_ACTION_TYPES) e o save grava o texto digitado nos dois tipos.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527942 -0300	
+2a47986959e01fcd590be2a63199a8b6db27f86d 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527943 -0300	reset: moving to HEAD
+2a47986959e01fcd590be2a63199a8b6db27f86d 663ed0b634f1a401dccf04654ac0d08b39ac3b8e Joaquim Ataides <ti@promobrindes.com.br> 1791528405 -0300	commit: fix(talk-x): prevê taxa de resposta e risco de opt-out só com base do servidor (TL-147)

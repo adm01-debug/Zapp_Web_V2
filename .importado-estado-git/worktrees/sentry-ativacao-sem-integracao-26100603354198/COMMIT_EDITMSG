@@ -1,0 +1,11 @@
+fix(integracoes): tela do Sentry não confirma ativação nem exibe métricas sem integração (#221)
+
+A tela do Sentry anunciava "Sentry conectado com sucesso!" a partir de qualquer
+DSN não vazio e, com isso, passava a apresentar estatísticas fixas (crash-free
+99.2%) e uma lista de issues de exemplo como se fossem dados do ambiente —
+sem SDK inicializado, DSN validado, persistência ou API de métricas consultada.
+
+- rotula a tela e o cartão do hub como demonstração;
+- bloqueia a ativação: não existe caminho para o estado "Ativo";
+- remove as métricas e a lista de issues sintéticas da apresentação;
+- teste novo prova o defeito (vermelho antes, verde depois).

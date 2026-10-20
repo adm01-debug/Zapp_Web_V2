@@ -1,0 +1,8 @@
+test(dashboard): endurece guarda de RLS e cenarios de KPI
+
+Guarda de vigencia no lugar do bloco tautologico: para os 5 helpers, 4 policies
+e as 3 RPCs do dashboard, varre supabase/migrations em ordem e falha se algum
+arquivo posterior ao de origem redefinir o objeto (CREATE/ALTER/DROP).
+pg_policies/pg_proc reescritos como checagem de aplicacao, nao de fidelidade.
+T1 de dashboard_kpi_edge_cases.sql falha com RAISE EXCEPTION sem admin (fim do
+skip silencioso) e o documento GATE_LIBERACAO_100_ETAPAS.md sai da entrega.

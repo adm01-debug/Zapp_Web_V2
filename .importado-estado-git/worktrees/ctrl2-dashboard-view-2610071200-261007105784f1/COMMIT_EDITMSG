@@ -1,0 +1,12 @@
+fix(atalhos): prova do evento de Ctrl+2 pelo campo view do detail
+
+A recusa veio de `toContainEqual({ view: 'dashboard' })`: o `detail` de
+`zapp:navigate` é `{ view, entryId }` (navigateToView em
+src/hooks/system/useNavigationHistory.ts), então a igualdade profunda do objeto
+inteiro reprovava o evento por causa do `entryId` legítimo.
+
+A prova agora lê o CAMPO `detail.view` (helper `viewsPedidas`) e segue exigindo
+a URL canônica (?view=dashboard) e o toast de Dashboard. Sem a correção de
+produção os três testes de navegação ficam vermelhos: a URL segue ?view=inbox e
+nenhum evento de dashboard chega (visto em .tmp/vermelho.log: "expected 'inbox'
+to be 'dashboard'", "expected [] to include 'dashboard'").

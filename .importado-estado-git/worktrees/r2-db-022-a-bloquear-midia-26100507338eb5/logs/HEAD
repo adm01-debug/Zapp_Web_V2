@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c11be973776aac83d37785aad471b891d94b0f31 Joaquim Ataides <ti@promobrindes.com.br> 1791196396 -0300	
+c11be973776aac83d37785aad471b891d94b0f31 c11be973776aac83d37785aad471b891d94b0f31 Joaquim Ataides <ti@promobrindes.com.br> 1791196397 -0300	reset: moving to HEAD
+c11be973776aac83d37785aad471b891d94b0f31 bc836775482a5e21940ca4f2ffdf3fa5f5a195d3 Joaquim Ataides <ti@promobrindes.com.br> 1791196485 -0300	cherry-pick: fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)
+bc836775482a5e21940ca4f2ffdf3fa5f5a195d3 c8eaf243e459d89b9a339c7042344b490f2d7d67 Joaquim Ataides <ti@promobrindes.com.br> 1791196865 -0300	commit (amend): fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)

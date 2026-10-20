@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791200519 -0300	
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791200520 -0300	reset: moving to HEAD
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 c3cadc420a7a9c93f99386652d5e472d6e8665e7 Joaquim Ataides <ti@promobrindes.com.br> 1791200534 -0300	cherry-pick: fix(ai): vincular endpoint e secret de ai_providers a política de egress (IA-EGRESS-001)
+c3cadc420a7a9c93f99386652d5e472d6e8665e7 c3cadc420a7a9c93f99386652d5e472d6e8665e7 Joaquim Ataides <ti@promobrindes.com.br> 1791200926 -0300	reset: moving to HEAD
+c3cadc420a7a9c93f99386652d5e472d6e8665e7 c3cadc420a7a9c93f99386652d5e472d6e8665e7 Joaquim Ataides <ti@promobrindes.com.br> 1791200940 -0300	reset: moving to HEAD
+c3cadc420a7a9c93f99386652d5e472d6e8665e7 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201358 -0300	reset: moving to dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 e04402b664cb4082c8c25f96b91f7df63a897ca8 Joaquim Ataides <ti@promobrindes.com.br> 1791201358 -0300	commit: fix(ai): fecha SSRF por DNS resolvido e rebinding e troca blocklist por allowlist (IA-EGRESS-001)
+e04402b664cb4082c8c25f96b91f7df63a897ca8 fa7b42d44f2a8e44cdc2966f78604f389aa508a4 Joaquim Ataides <ti@promobrindes.com.br> 1791202877 -0300	commit (amend): fix(ai): fecha SSRF por DNS resolvido e rebinding e troca blocklist por allowlist (IA-EGRESS-001)

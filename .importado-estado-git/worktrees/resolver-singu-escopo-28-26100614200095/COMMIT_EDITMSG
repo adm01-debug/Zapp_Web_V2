@@ -1,0 +1,18 @@
+fix(multiplix): resolve do Singu nao devolve metadados de empresa fora do escopo (R2-DB-003)
+
+O ramo 'resolve' de multiplix-audience espalhava a linha inteira do Singu
+para o cliente autenticado. A RPC calcula no_escopo por empresa, mas so
+ocultava destino_e164/destino_origem: company_name, contact_id,
+empresa_papeis e last_interaction_at seguiam na resposta mesmo com
+elegibilidade 'fora_do_escopo'/'destino_invalido'.
+
+Correcao em duas camadas, como o aceite do R2-DB-003 pede:
+- a RPC passa a redigir na fonte (NULL nos 4 metadados quando fora do
+  escopo ou inativa; company_id fica, e eco do id do chamador);
+- a edge redige de novo na fronteira PT->EN (redactResolvedRecipient),
+  para o periodo em que o Singu ainda roda a versao antiga.
+
+Provas: deno test do handler (vermelho 4/33 sem a redacao, verde 33/33 com
+ela) e execucao REAL da RPC em postgres:17-alpine descartavel
+(scripts/db-audit/multiplix-resolve-escopo.test.sh), vermelho na versao
+anterior.

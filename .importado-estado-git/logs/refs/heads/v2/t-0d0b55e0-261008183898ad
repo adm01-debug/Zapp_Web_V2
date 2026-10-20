@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791495519 -0300	branch: Created from dia/2026-10-08
+165168bf7800066e51592380b0ee1a51b75d0548 d2d629011cd42986b0e04a371538aefa497cc288 Joaquim Ataides <ti@promobrindes.com.br> 1791496942 -0300	commit: fix(ia): feature_flags lidas no servidor para desligar capacidade (SL-009)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791317775 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 650a4b2d7db6cf4341d81f43725786c8ac966c7f Joaquim Ataides <ti@promobrindes.com.br> 1791318644 -0300	commit: test(crm): prova corrida entre gravações do resumo comercial (#259)
+650a4b2d7db6cf4341d81f43725786c8ac966c7f 88d00f40699b7bd83365ed656018038225e8aace Joaquim Ataides <ti@promobrindes.com.br> 1791318647 -0300	commit: fix(crm): resumo comercial descarta resposta superada e propaga erro da gravação (#259)

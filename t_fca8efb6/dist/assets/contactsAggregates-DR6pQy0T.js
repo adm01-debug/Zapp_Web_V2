@@ -1,0 +1,1 @@
+var e=[[`contacts-kpi`],[`contacts-type-counts`]];function t(t){for(let n of e)t.invalidateQueries({queryKey:[...n]})}var n={refetchOnMount:`always`},r=`^[0-9]{10,15}$`,i=`contact-show-legacy`;function a(){try{return localStorage.getItem(i)===`true`}catch{return!1}}function o(e){try{localStorage.setItem(i,String(e))}catch{}}export{o as a,a as i,r as n,t as r,n as t};

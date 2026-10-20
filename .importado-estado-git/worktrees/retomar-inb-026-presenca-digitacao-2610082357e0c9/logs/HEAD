@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514626 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514627 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 3b12a4a6ba91edce7755690a8822f2c32eb2052e Joaquim Ataides <ti@promobrindes.com.br> 1791514888 -0300	commit: fix(inbox): presença de digitação entre agentes usa identidade real da sessão (R2-INB-026) — já corrigido na ponta, sem mudança de código
+3b12a4a6ba91edce7755690a8822f2c32eb2052e a3bfcf574a2a5610aeec5c01320f16b76d48acb1 Joaquim Ataides <ti@promobrindes.com.br> 1791514899 -0300	merge dia/2026-10-08: Merge made by the 'ort' strategy.

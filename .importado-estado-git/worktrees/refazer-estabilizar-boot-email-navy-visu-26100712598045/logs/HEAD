@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 78083577fdec68faf4aa08eebf043f551d7e5ba0 Joaquim Ataides <ti@promobrindes.com.br> 1791388753 -0300	
+78083577fdec68faf4aa08eebf043f551d7e5ba0 78083577fdec68faf4aa08eebf043f551d7e5ba0 Joaquim Ataides <ti@promobrindes.com.br> 1791388754 -0300	reset: moving to HEAD
+78083577fdec68faf4aa08eebf043f551d7e5ba0 78083577fdec68faf4aa08eebf043f551d7e5ba0 Joaquim Ataides <ti@promobrindes.com.br> 1791388786 -0300	reset: moving to 78083577fdec68faf4aa08eebf043f551d7e5ba0
+78083577fdec68faf4aa08eebf043f551d7e5ba0 eeb3da2f079c9908d300e0766fb80c0ce116f924 Joaquim Ataides <ti@promobrindes.com.br> 1791388791 -0300	cherry-pick: test(e2e): espera o boot da tela de email antes das medições visuais
+eeb3da2f079c9908d300e0766fb80c0ce116f924 d74d5acb362b646d6a7ecef046829df242b1c8be Joaquim Ataides <ti@promobrindes.com.br> 1791388791 -0300	cherry-pick: test(e2e): alinha o orçamento do teste ao teto de boot declarado

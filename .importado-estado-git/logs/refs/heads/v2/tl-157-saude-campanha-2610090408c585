@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529730 -0300	branch: Created from dia/2026-10-09
+5a9731645d266ea721f679d6886b83822ac16f6b d11c6d57f6a475ea8919542f122362ccc1448dfb iris <iris@hermes.local> 1791530882 -0300	commit: fix(talk-x): monta a "Saúde da Campanha" com estado do worker, conexão e taxa medida (TL-157)
+d11c6d57f6a475ea8919542f122362ccc1448dfb 7de61781969fff41be6ebd8ef0b2aa0fcc07ae0b Joaquim Ataides <ti@promobrindes.com.br> 1791565319 -0300	rebase (finish): refs/heads/v2/tl-157-saude-campanha-2610090408c585 onto 12e407210db0ea4d9f817618d30848304ca932d5
+7de61781969fff41be6ebd8ef0b2aa0fcc07ae0b ecc8b466e57ee94037b99b0470070b8769621663 Joaquim Ataides <ti@promobrindes.com.br> 1791566068 -0300	commit: fix(talk-x): completa o rebase do TL-157 após o X189 mover a Ajuda para tela com rota
+ecc8b466e57ee94037b99b0470070b8769621663 6776827558f0ff755a98eca22e2b64ac08cee966 Joaquim Ataides <ti@promobrindes.com.br> 1791566381 -0300	commit: fix(talk-x): corrige citação do cartão que moveu a Ajuda para tela (TL-174, não X189)

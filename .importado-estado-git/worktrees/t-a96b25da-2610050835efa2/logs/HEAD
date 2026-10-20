@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200139 -0300	
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200140 -0300	reset: moving to HEAD
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f 41381134a2d0b4e0f5e1dfeb77aa68f6b7cbfe0e Joaquim Ataides <ti@promobrindes.com.br> 1791200243 -0300	commit: fix(send-email): teste do relay compara host do Resend por hostname exato

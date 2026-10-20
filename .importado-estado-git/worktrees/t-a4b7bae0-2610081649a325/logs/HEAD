@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488986 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488987 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 8536bc915a2fc437ae507f1a99c682489a6269d5 Joaquim Ataides <ti@promobrindes.com.br> 1791490383 -0300	commit: feat(edge): valida o corpo de evolution-api com schema Zod (E45/SL-050)

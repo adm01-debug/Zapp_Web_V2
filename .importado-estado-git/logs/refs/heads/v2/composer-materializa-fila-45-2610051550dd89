@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791226212 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 00c9b04111ed4352ef53548942432718dc658b89 Joaquim Ataides <ti@promobrindes.com.br> 1791226231 -0300	cherry-pick: fix(multiplix): inicia disparo so depois de materializar a fila por itens (MX01)
+00c9b04111ed4352ef53548942432718dc658b89 61169acd2a1c7f10a2ba88fbf5d9d5d909f39783 Joaquim Ataides <ti@promobrindes.com.br> 1791227382 -0300	commit: fix(multiplix): materializacao recusa rascunho sem texto e worker nao auto-cura 'sending' sem fila (MX01)
+61169acd2a1c7f10a2ba88fbf5d9d5d909f39783 021da879ac25bf24470ed08b46a1ced7a2c88ed4 Joaquim Ataides <ti@promobrindes.com.br> 1791228245 -0300	commit: fix(multiplix): mantem o reparo da fila legada e documenta a pendencia do lote (MX01)

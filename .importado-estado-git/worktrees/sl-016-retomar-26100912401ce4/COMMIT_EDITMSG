@@ -1,0 +1,7 @@
+test(inbox/chat): testes de conversas e reações no contrato por RPC (SL-016)
+
+Os dois testes que a verificação acusou ainda liam o caminho antigo (três consultas
+em useTeamConversations e INSERT/DELETE na tabela em useTeamMessageReactions).
+Reescreve-os para o contrato novo: get_team_inbox para a caixa de entrada e
+toggle_team_reaction para alternar a reação, mantendo toda a cobertura antiga
+(nome/avatar de chat direto, prévia, erro de RLS, otimista, desfazer, realtime).

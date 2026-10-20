@@ -1,0 +1,13 @@
+fix(email): corrige regressões da lista de threads paginada (#145)
+
+REFAZER rodada 1 sobre o cherry-pick 22966ebf9 (OTH-005), sem recomeçar:
+- has_attachments volta a ser preenchido nas linhas da página (lote restrito
+  aos thread_id da página), com o filtro de anexo desligado;
+- EmailChatInbox volta à página 1 quando a busca global muda e nunca pede
+  página acima de threadsPageCount (sem consulta range inválida);
+- busca por contato restaurada por contact_id.in.(...) — coluna da thread,
+  sem join, então thread sem contato não é excluída;
+- sai o escopo extra (3ª contagem de favoritos, accountThreadsTotalCount);
+- % e _ do termo são escapados antes dos curingas externos do ilike;
+- EmailVolumeMedicao (#154/EN-088, que veio na base depois do cherry-pick)
+  passa a medir a página do servidor sem afrouxar orçamento.

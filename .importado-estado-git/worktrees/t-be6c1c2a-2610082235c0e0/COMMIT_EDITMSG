@@ -1,0 +1,22 @@
+test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+
+Correção da recusa de 09/10: o cabeçalho da spec não cita mais o host nem o
+id do projeto de produção do Realtime (fundido neste commit para que o id não
+fique em nenhum commit da tarefa).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1f9252a86
+# Last command done (1 command done):
+#    pick d8ca9b48c test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-be6c1c2a-2610082235c0e0' on '1f9252a86'.
+#
+# Changes to be committed:
+#	new file:   e2e/skins-e2e.spec.ts
+#	modified:   playwright.config.ts
+#

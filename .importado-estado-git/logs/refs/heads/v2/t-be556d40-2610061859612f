@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323970 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 d3df0d6f41ca20be0ba19d248989f724d0e143ba Joaquim Ataides <ti@promobrindes.com.br> 1791324097 -0300	commit: fix(dashboard): restaurar padrões das metas preserva o id e salva por update (#429)

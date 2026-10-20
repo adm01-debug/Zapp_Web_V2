@@ -1,0 +1,6 @@
+test(edge): contrato de schemas volta ao vitest e cobre o status de receipt
+
+O commit anterior trocou o arquivo para a API do Deno e quebrava o vitest.contracts.config.ts do CI (ESM loader recusa https:). Aqui o arquivo fica como na dia, só com o caso novo de EvolutionMessagesUpdateStatusSchema.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

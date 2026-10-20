@@ -1,0 +1,3 @@
+fix(acessibilidade): Zoom 200% nas 5 telas, alvo de toque dos rotulos 9-10px (SL-114)
+
+Os rotulos de 9-10px clicaveis do inbox tinham como alvo de toque so a linha de texto (~13px). Aplica min-h-11 (44px), o mesmo padrao do bloco E61 do location-picker, nos 5 botoes de rotulo que caem na regra (IA sugere x3, Todos/Limpar e Limpar datas). Teste novo prova o alvo e o comportamento.

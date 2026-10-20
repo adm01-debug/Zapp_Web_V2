@@ -1,0 +1,1 @@
+test(theme): expectativa do SK04 sai do preset e do tokens.css, não de literal (#499)

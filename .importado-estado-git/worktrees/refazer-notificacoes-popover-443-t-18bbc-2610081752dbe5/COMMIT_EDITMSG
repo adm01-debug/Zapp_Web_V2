@@ -1,0 +1,6 @@
+fix(notificacoes): spinner do popover com contraste AA e motion-safe
+
+text-muted-foreground/60 (2,36:1) reprovava o contrato contraste-aa-componentes do CI e animate-spin sem motion-safe fere a regra permanente.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

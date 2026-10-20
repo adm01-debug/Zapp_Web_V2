@@ -1,0 +1,1 @@
+fix(ai-tags): Classificar Recentes nao conta resposta de erro como conversa classificada (#272)

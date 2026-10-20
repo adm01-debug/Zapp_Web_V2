@@ -1,0 +1,1 @@
+chore(talk-x): TL-077 (X158) fecha sem codigo - a Visao Geral da tela 13 vive em TalkXCampaignPaused.tsx (X156/TL-075, em execucao) e os componentes X146/X149/X153 nao existem na ponta; o card de segmentos exige as RPCs X140/X142 (banco)

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "project_ref": "tnnnlkbymytvtqngbbqh",
+  "git_sha": null,
+  "created_at": "2026-10-03T15:45:09.650Z",
+  "funcoes_preflight": [
+    "talkx-send",
+    "talkx-scheduler",
+    "talkx-link",
+    "talkx-report",
+    "evolution-webhook"
+  ],
+  "local": [
+    {
+      "funcao": "talkx-send",
+      "source_sha256": "cdb35bd35a56506d97f03ff85744e5c29c20ce8d246dfda1033069fa29b37f3d",
+      "verify_jwt": true,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "talkx-scheduler",
+      "source_sha256": "94e7a74caf08745ed0e3e912fcc9d922cd3c00b4ebfe8f7e0b9772991e88031d",
+      "verify_jwt": true,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "talkx-link",
+      "source_sha256": "bfda47cc709b983a9497f0f029248170501f4e5829c168796ab2840d425ddfb7",
+      "verify_jwt": false,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "talkx-report",
+      "source_sha256": "e6a6e0b92170b867abebd452ce8a08c2ad8ea53e0aa5ed33526897f2b8f4300e",
+      "verify_jwt": true,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    },
+    {
+      "funcao": "evolution-webhook",
+      "source_sha256": "cf7b89a5cb9d9a430f54ee69d1cea573c2606042aaed157471dc7aef1c7ae9fd",
+      "verify_jwt": false,
+      "digest_diverge": false,
+      "verify_jwt_diverge": false,
+      "ok": true
+    }
+  ],
+  "divergidas": {
+    "local": [],
+    "remoto": null,
+    "total": 0
+  },
+  "secrets": {
+    "exigidos": [
+      "EVOLUTION_API_URL",
+      "EVOLUTION_API_KEY",
+      "EVOLUTION_INSTANCE_TOKEN",
+      "RESEND_API_KEY",
+      "TALKX_LINK_IP_SALT",
+      "TALKX_LINK_BASE_URL"
+    ],
+    "ausentes": null,
+    "missing": null
+  },
+  "vault_e_job": "-- Existência dos segredos do motor no Vault (nomes apenas, nunca os valores):\nSELECT name, created_at\n  FROM vault.secrets\n WHERE name IN ('talkx_cron_secret', 'talkx_send_url', 'talkx_scheduler_url')\n ORDER BY name;\n\n-- Comando do job do tick (deve conter trigger_talkx_engine_tick):\nSELECT jobname, schedule, active, command\n  FROM cron.job\n WHERE jobname = 'talkx-scheduler-1min';",
+  "conclusao": "preflight verde"
+}

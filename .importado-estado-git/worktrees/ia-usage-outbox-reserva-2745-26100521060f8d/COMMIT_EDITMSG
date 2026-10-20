@@ -1,0 +1,13 @@
+fix(edge): estabiliza a reserva do event_id no reprocessamento da outbox
+
+Reaproveita byte a byte o estado do commit 2745bcb53 (parte de identidade do
+reprocessamento, sobre o trabalho do cartão pai) e cobre os dois casos que a
+recusa apontou no item 3 (PATCH devolve [] = perdeu a corrida) e no item 4
+(event_id proposto já pertence a outra linha da outbox → 23505/409): em ambos
+nenhum POST vai a ai_usage_logs, a linha original segue pendente com tentativas
+0→1 e a outra linha fica intacta.
+
+- supabase/functions/_shared/ai-usage.ts (b3b330d6b, == 2745bcb53)
+- supabase/functions/_shared/ai-usage.test.ts: dublê passa a emular o PostgREST
+  (filtro event_id=is.null, representação só com Prefer, conflito 409/23505) e
+  ganha os dois testes separados + o teste da baixa que falha já existente.

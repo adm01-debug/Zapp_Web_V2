@@ -1,0 +1,18 @@
+fix(talkx): retry em lote recusa IDs inexistentes e nao reabre campanha sem destinatario (#123)
+
+A RPC retry_talkx_recipients (X031, 20261003222707) validava o lote comparando
+LINHAS encontradas com linhas encontradas NA campanha. Um id que nao existe nao
+entra em nenhuma das duas contagens, entao um lote inteiramente inexistente
+passava pelo "0 = 0": nada era retentado, a campanha completed era reaberta para
+sending (completed_at zerado + evento resumed) e ficava sem nenhum destinatario
+pendente. Lote misto (id valido + inexistente) tambem passava, reenviando so a
+parte valida.
+
+Agora compara o conjunto PEDIDO (ids distintos e nao nulos do array) com o
+conjunto ENCONTRADO na campanha: tudo-ou-nada, fail-closed, mesmo erro
+(talkx_retry_recipient_not_found, P0002); nulo no array vira
+invalid_talkx_retry_request (22023).
+
+Teste: scripts/db-audit/talkx-retry-resolve.test.sh ganha a secao #123
+(RED prova o defeito no corpo vivo; GREEN aplica a migration e prova a recusa,
+a campanha intacta e o caminho valido) — 40 PASS, 0 FALHA.

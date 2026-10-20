@@ -1,0 +1,16 @@
+refactor(talk-x): passo de revisao do wizard usa o hook unico (X051)
+
+O passo 4 do wizard (TalkXWizardReview) perde o <Dialog> azul proprio de
+confirmacao do disparo: o botao passa a pedir `lifecycle.request({ kind:
+'start', target, details, run })` ao controlador unico `useTalkXLifecycle` e a
+tela monta um so <TalkXLifecycleDialog controller={lifecycle} />.
+
+O `run` e o executor proprio do wizard (`ed.handleSave('launch'|'schedule')`),
+que salva o rascunho e gera o snapshot de destinatarios antes de iniciar; o
+caminho padrao do hook (`startCampaign` direto) pularia o salvamento. Os
+detalhes do pedido sao as linhas Segmento / Destinatarios / Envio.
+
+Teste novo TalkXWizardReview.lifecycle.test.tsx renderiza tela e hook reais e
+falha sem a troca (7 de 7 casos caem contra a tela anterior). A revisao agora
+passa pelo `useTalkX` (react-query): TalkXVariablesGrammar.test.tsx ganhou o
+mock da porta, senao o render caia em "No QueryClient set".

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791454209 -0300	branch: Created from dia/2026-10-08
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 64e8432b3706f4e17ef5a8a97e12e8ecb046b6fa Joaquim Ataides <ti@promobrindes.com.br> 1791454850 -0300	commit: fix(ci): tipa o parâmetro 'linha' no teste do término remoto
+64e8432b3706f4e17ef5a8a97e12e8ecb046b6fa 697135cae1dbb6e57350ac98d7a6d2719bd1c61b Joaquim Ataides <ti@promobrindes.com.br> 1791454852 -0300	commit: fix(ci): aponta o contrato de volume do chat interno ao teamChatParts

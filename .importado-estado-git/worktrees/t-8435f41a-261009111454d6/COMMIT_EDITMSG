@@ -1,0 +1,6 @@
+test(ai-transcribe-audio): prova o caminho NEGADO da autorização por objeto (IA-014)
+
+O diff mexe no ramo de bloqueio do caminho de usuário (assertMessageVisible).
+Falta o teste do caso NEGADO: mensagem não visível tem de recusar com o status da
+autorização e NÃO pode baixar o objeto nem chamar o provedor. Roda o handler REAL
+com deps injetadas; vermelho quando a autorização é pulada, verde agora.

@@ -1,0 +1,6 @@
+fix(biblioteca-midia): remove do Storage o objeto orfao quando o insert falha
+
+Importacao em massa (useMediaUpload) e salvamento do audio gerado por IA
+(AIGenerateDialog) subiam o arquivo para o bucket e, se o insert do registro
+falhasse, deixavam o objeto no Storage sem nenhuma linha que o referenciasse.
+Agora o objeto enviado e removido (best-effort) quando o insert falha. (#343)

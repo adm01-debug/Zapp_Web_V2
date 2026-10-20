@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791498429 -0300	
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791498430 -0300	reset: moving to HEAD
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe cce5de6fdfd0c8c8b9b08ca119a08f98da93c00c Joaquim Ataides <ti@promobrindes.com.br> 1791498571 -0300	commit (cherry-pick): fix(team-chat): trata DELETE filtrado como erro e fecha frestas de owner no banco
+cce5de6fdfd0c8c8b9b08ca119a08f98da93c00c 9b264671182a2b345842d2a03f5ad9c5553bfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791501112 -0300	commit: test(team-chat): prova o rollback das guardas de departamento e transferencia (QA5-10)

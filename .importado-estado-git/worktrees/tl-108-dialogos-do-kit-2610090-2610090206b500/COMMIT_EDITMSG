@@ -1,0 +1,10 @@
+fix(talk-x): trocar diálogos soltos e confirmações de Supressão, Templates e limites pelo kit (TL-108)
+
+Supressão: o AlertDialog cru virou o preset `removerSupressao` do kit (tile e
+botão violeta, pergunta e consequência do mock, nome do contato em `details`) e
+o modal só fecha quando o UPDATE volta; o invólucro vazio em volta do botão
+"Remover" saiu. Templates: preset `excluirTemplate` esperando o DELETE. Editor:
+as 4 confirmações do navegador viraram `useTalkXConfirm` (arquivo novo no kit)
+com `descartarAlteracoes`, `restaurarVersao` e `excluirVariante` com a contagem
+de envios; o formulário de teste passou para `TalkXDialogShell`. Limites: o
+formulário de "Editar Limites de Envio" também passou para a casca do kit.

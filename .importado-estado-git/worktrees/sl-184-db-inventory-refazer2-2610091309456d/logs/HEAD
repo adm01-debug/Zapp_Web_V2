@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562153 -0300	
+12e407210db0ea4d9f817618d30848304ca932d5 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562154 -0300	reset: moving to HEAD
+12e407210db0ea4d9f817618d30848304ca932d5 7db9d3ce6120dc1a5134377d6b506215074e57c8 Joaquim Ataides <ti@promobrindes.com.br> 1791562190 -0300	cherry-pick: test(ci): guarda do inventario do banco exige docs/DB-INVENTORY.md coerente com o catalogo (SL-184)
+7db9d3ce6120dc1a5134377d6b506215074e57c8 290634f63ae43650eb05e77a77676a627a97ba23 Joaquim Ataides <ti@promobrindes.com.br> 1791562190 -0300	cherry-pick: docs(banco): cria docs/DB-INVENTORY.md com o inventario das tabelas de public (SL-184)
+290634f63ae43650eb05e77a77676a627a97ba23 5ebbe323084e1b8d82210c0e288334ce3e3f22da Joaquim Ataides <ti@promobrindes.com.br> 1791562190 -0300	cherry-pick: fix(docs): inventario do banco acerta webhook_rate_limits pela Edge metrics (SL-184)
+5ebbe323084e1b8d82210c0e288334ce3e3f22da 3caf363873790853930e09bf8e9278fec0966619 Joaquim Ataides <ti@promobrindes.com.br> 1791562777 -0300	commit: fix(docs): inventario do banco acerta talkx_campaign_segments pela TL-162 (SL-184)

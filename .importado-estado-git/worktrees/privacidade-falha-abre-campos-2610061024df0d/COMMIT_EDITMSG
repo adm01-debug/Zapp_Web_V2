@@ -1,0 +1,10 @@
+fix(edge): update-privacy GO nega e avisa na convenção do proxy quando a leitura da privacidade falha
+
+A negação de R2-API-014 passa a sair como HTTP 200 com { error: true, status: 502,
+message }, que é o corpo que useEvolutionApiCore lê para mostrar o toast —
+mesma convenção de _shared/evolution-api-proxy.ts. Um status cru não-2xx
+perderia a mensagem e o operador veria apenas 'non-2xx status code'.
+
+Teste R2-API-014 de leitura inválida (corpo não-JSON) substitui o de provedor
+inalcançável, que passava também sem a correção; os quatro cenários de negação
+agora falham no código anterior.

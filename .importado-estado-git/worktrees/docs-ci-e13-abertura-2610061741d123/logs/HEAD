@@ -1,0 +1,17 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319273 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319274 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 a0822a6d3c026b7b37deff61fbab04eeb340bde9 Joaquim Ataides <ti@promobrindes.com.br> 1791319337 -0300	cherry-pick: docs(ci): alinhar documentação à baseline atual
+a0822a6d3c026b7b37deff61fbab04eeb340bde9 ba28bf7968350cd25f944605db5500c83e94eddf Joaquim Ataides <ti@promobrindes.com.br> 1791319449 -0300	commit: fix(ci): restaura a evidencia da E13 na abertura e contextualiza a E11
+ba28bf7968350cd25f944605db5500c83e94eddf 8954f74319e144e8ece2e1d65660327bc993b085 Joaquim Ataides <ti@promobrindes.com.br> 1791319863 -0300	commit: refactor(ci): tira do recorte o hunk de CLAUDE.md e o que nao e deste cartao
+8954f74319e144e8ece2e1d65660327bc993b085 8226c264792cc8c20970ac5868a3a83012fb9550 Joaquim Ataides <ti@promobrindes.com.br> 1791319944 -0300	commit: chore(ci): escreve o project ref da E39 como placeholder no plano
+8226c264792cc8c20970ac5868a3a83012fb9550 975757de8059ffdb601c321ba6de505b2f284012 Joaquim Ataides <ti@promobrindes.com.br> 1791319986 -0300	commit: test(ci): confere a evidencia da E13 na abertura com a secao 1 do plano
+975757de8059ffdb601c321ba6de505b2f284012 f178e8b4bbbce96b0c25b2493226c65e9ef88f46 Joaquim Ataides <ti@promobrindes.com.br> 1791320044 -0300	commit: test: diagnostico temporario do portao de segredo
+f178e8b4bbbce96b0c25b2493226c65e9ef88f46 975757de8059ffdb601c321ba6de505b2f284012 Joaquim Ataides <ti@promobrindes.com.br> 1791320045 -0300	reset: moving to 975757de8
+975757de8059ffdb601c321ba6de505b2f284012 5fe76a7cc5ac4096fc0385876ada24bca0d0f29b Joaquim Ataides <ti@promobrindes.com.br> 1791320068 -0300	commit: docs(ci): cita o baseline da reconciliacao pelo sha curto (diagnostico)
+5fe76a7cc5ac4096fc0385876ada24bca0d0f29b daf8b6aa9dc760351105a86084bbf3413a5e212b Joaquim Ataides <ti@promobrindes.com.br> 1791320142 -0300	commit: test: diagnostico temporario (sem o ref no diff)
+daf8b6aa9dc760351105a86084bbf3413a5e212b 5fe76a7cc5ac4096fc0385876ada24bca0d0f29b Joaquim Ataides <ti@promobrindes.com.br> 1791320144 -0300	reset: moving to 5fe76a7cc
+5fe76a7cc5ac4096fc0385876ada24bca0d0f29b 428c1f26833928fb0beea024ea04357eed04598b Joaquim Ataides <ti@promobrindes.com.br> 1791320278 -0300	commit: chore(ci): escreve o project ref como placeholder tambem na secao G-30 (diagnostico)
+428c1f26833928fb0beea024ea04357eed04598b a0822a6d3c026b7b37deff61fbab04eeb340bde9 Joaquim Ataides <ti@promobrindes.com.br> 1791320625 -0300	reset: moving to a0822a6d3
+a0822a6d3c026b7b37deff61fbab04eeb340bde9 74d20b709076e926ef7ccb2e07aeba4d32418002 Joaquim Ataides <ti@promobrindes.com.br> 1791320625 -0300	commit: fix(ci): restaura a evidencia da E13 na abertura e contextualiza a E11
+74d20b709076e926ef7ccb2e07aeba4d32418002 062b7f0fc51ba1c2d7956e98d72d54f0f47af70e Joaquim Ataides <ti@promobrindes.com.br> 1791320625 -0300	commit: test(ci): guarda a tabela de abertura e o bloco concluido do plano
+062b7f0fc51ba1c2d7956e98d72d54f0f47af70e 2ff69e26650d66b55bc322f5f07b43fcdc5570cb Joaquim Ataides <ti@promobrindes.com.br> 1791320635 -0300	commit: chore(ci): tira do recorte o hunk de CLAUDE.md trazido pelo cherry-pick

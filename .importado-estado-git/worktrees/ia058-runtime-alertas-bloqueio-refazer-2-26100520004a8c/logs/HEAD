@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241217 -0300	
+c773b85ea000696fbcd37c6368f87978de8bebba c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241218 -0300	reset: moving to HEAD
+c773b85ea000696fbcd37c6368f87978de8bebba e09a8692d2ff117bdd9406730f5b73bf509f5d14 Joaquim Ataides <ti@promobrindes.com.br> 1791241234 -0300	cherry-pick: feat(ai): runtime IA-058 com alertas de consumo anomalo deduplicados e bloqueio por capacidade
+e09a8692d2ff117bdd9406730f5b73bf509f5d14 25c14868b4baa58b9b771aca48ccd93026fafd08 Joaquim Ataides <ti@promobrindes.com.br> 1791241234 -0300	cherry-pick: fix(ai): deduplicar alertas por usuário admin
+25c14868b4baa58b9b771aca48ccd93026fafd08 ede2a01b3eccdcf4b614030daec7c138733c7fed Joaquim Ataides <ti@promobrindes.com.br> 1791242292 -0300	commit: test(ai): provar runtime IA-058 sem contratos estáticos

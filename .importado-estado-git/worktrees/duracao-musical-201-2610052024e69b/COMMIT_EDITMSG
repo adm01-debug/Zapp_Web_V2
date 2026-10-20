@@ -1,0 +1,7 @@
+fix(sfx): usa music_length_ms em ms no contrato de geracao musical (#201)
+
+O modo "music" do elevenlabs-sfx enviava duration_seconds ao endpoint
+POST /v1/music, que exige music_length_ms em milissegundos. A montagem da
+requisicao foi isolada em request.ts: music recebe { prompt,
+music_length_ms: duration * 1000 } (padrao 15 s -> 15000 ms) e sfx
+permanece com { text, duration_seconds, prompt_influence: 0.3 }.

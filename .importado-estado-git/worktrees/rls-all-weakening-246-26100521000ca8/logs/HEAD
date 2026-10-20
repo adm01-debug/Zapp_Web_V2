@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e248e23bec1f63f229e6c0232becddbd25e198d9 Joaquim Ataides <ti@promobrindes.com.br> 1791244834 -0300	
+e248e23bec1f63f229e6c0232becddbd25e198d9 e248e23bec1f63f229e6c0232becddbd25e198d9 Joaquim Ataides <ti@promobrindes.com.br> 1791244835 -0300	reset: moving to HEAD
+e248e23bec1f63f229e6c0232becddbd25e198d9 17885f847b6e1ef7affb655ef10452ad62a3081c Joaquim Ataides <ti@promobrindes.com.br> 1791244954 -0300	commit: test(rls): trazer verificacao de RLS contra o schema real (R2-GOV-003)
+17885f847b6e1ef7affb655ef10452ad62a3081c ae344071018c18331520bf8023f62ad7ed5ea5c2 Joaquim Ataides <ti@promobrindes.com.br> 1791247178 -0300	commit: test(rls): detectar enfraquecimento por policies ALL

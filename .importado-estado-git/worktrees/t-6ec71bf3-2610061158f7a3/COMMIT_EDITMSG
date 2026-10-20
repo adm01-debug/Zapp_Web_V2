@@ -1,0 +1,3 @@
+fix(calls): alerta segue a chamada, nao a tela (#282)
+
+R2-CALL-006: o IncomingCallAlert conservava a notificacao de uma ligacao ja encerrada e o dialogo da chamada anterior. O estado "atendido" agora e da CHAMADA (identidade), nao um booleano solto, e o alerta sai de cena quando o provedor encerra a MESMA chamada sem atendimento.

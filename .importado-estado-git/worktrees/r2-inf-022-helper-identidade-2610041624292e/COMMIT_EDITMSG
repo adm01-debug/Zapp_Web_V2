@@ -1,0 +1,8 @@
+fix(ai-image-input): download privado sob a identidade do chamador
+
+R2-INF-022 (P1): toInlineImage passou a aceitar storageIdentity discriminado
+({ kind:'user'; bearerToken; anonKey? } | { kind:'service' }). No caminho de
+usuário o GET usa anon key + JWT do chamador e deixa a policy de storage.objects
+decidir; o caminho de serviço preserva a service role (padrão histórico).
+Credencial ausente/inconsistente falha fechada com erro tipado e sem rede.
+Preservados allowlist, anti-traversal, MIME, 4 MiB, timeout e data:.

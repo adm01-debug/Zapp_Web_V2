@@ -1,0 +1,21 @@
+fix(db-audit): corpo do -c e string bash (escapes/expansao) e o fail-closed e provado pelo proprio executor (#94)
+
+O extrator de contratos de runtime tratava o corpo entre aspas duplas do `-c` como
+SQL literal: `\"`, `\`, `\$` e `\`+newline chegavam ao psql sem serem desfeitos, e
+`$A`/`$1`/`$_`/`$$` passavam pelo validador embora o bash os expandiria.
+
+- `desfazerAspasDuplasBash`: uma passada que desfaz os 4 escapes de aspas duplas do
+  bash (e a continuacao de linha) e ABORTA fail-closed em crase solta, barra invertida
+  fora desses escapes e `$` expansivel (`[A-Za-z0-9_$@*#?!({[-]`); `validarSql` passa
+  o corpo por ela. Nada que o filtro antigo recusava ficou aceito.
+- `principal(argv, { dir })` permite ao teste exercitar o fail-closed real sem psql.
+- O `spawnSync` do E62 saia com 2 e stdout vazio para QUALQUER versao (o psql-safe morre
+  sem DESTINO_URL): passava por acaso. A discriminacao passou a ser o `::error::`, que so
+  o executor emite. Novos testes: versao invalida, contrato malformado (6 casos, dir
+  sintetico), fallback generico com aviso so no stderr, escapes/expansao e o oraculo do
+  bash para os 7 contratos inline dedicados (o SQL extraido comparado ao SQL que o bash
+  entrega ao psql).
+- BLOCO C ganhou os mesmos casos; nenhuma mensagem existente nem o `[OK]` mudaram.
+
+Prova: suite 2/9 vermelha contra o parser anterior e 9/9 verde com a correcao;
+`runtime-contract-runner.test.sh` inteiro (PG17 descartavel) exit 0; `zapp-verify . --rapido` verde.

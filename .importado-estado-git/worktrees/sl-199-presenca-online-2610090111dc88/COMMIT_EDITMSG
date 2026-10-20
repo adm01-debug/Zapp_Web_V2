@@ -1,0 +1,3 @@
+chore(inbox/chat): prova que presenca Online por contato exige Edge/DDL (SL-199)
+
+Cartao 'fechar sem commit': o item RES-presenca nao fecha em 1 camada sem Edge Function ou DDL, ambos proibidos. Nenhum arquivo de producao alterado; prova e justificativa em .tmp/relato.md.

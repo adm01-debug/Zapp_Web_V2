@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791551971 -0300	
+68980bf5e3486ca611a90742053bfdb008fcb5c3 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791551972 -0300	reset: moving to HEAD
+68980bf5e3486ca611a90742053bfdb008fcb5c3 824e792f93d8342913546c9446460fb8e4c8bee7 Joaquim Ataides <ti@promobrindes.com.br> 1791552088 -0300	cherry-pick: test(volume): o volume das mídias é aplicado em cada player
+824e792f93d8342913546c9446460fb8e4c8bee7 fcf555a614d79172ba22056e0addd3e838302d7c Joaquim Ataides <ti@promobrindes.com.br> 1791552129 -0300	commit: test(volume): visualizador exige o volume global no mount (t_fe46ce81)
+fcf555a614d79172ba22056e0addd3e838302d7c a4ecffe924c8ef1e6222d033c65f8f93cc1394e8 Joaquim Ataides <ti@promobrindes.com.br> 1791552249 -0300	commit: fix(volume): visualizador do arquivo entra no volume global no mount

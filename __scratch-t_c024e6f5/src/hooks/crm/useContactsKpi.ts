@@ -1,0 +1,106 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { CONTACTS_AGGREGATE_QUERY_OPTIONS, CONTACT_VISIBLE_PHONE_PATTERN } from './contactsAggregates';
+
+type Row = { created_at: string; contact_type: string | null; company: string | null };
+const DAY = 86_400_000;
+
+/** Mínimo de registros no período anterior para exibir delta. Abaixo disso retorna null. */
+const MIN_PREV = 50;
+
+export function aggregateKpi(rows: Row[], now = new Date()) {
+  const t = now.getTime();
+  const inLast = (r: Row, days: number) => t - Date.parse(r.created_at) < days * DAY;
+  const between = (r: Row, from: number, to: number) => {
+    const d = t - Date.parse(r.created_at);
+    return d >= from * DAY && d < to * DAY;
+  };
+
+  const novos30 = rows.filter(r => inLast(r, 30)).length;
+  const novosPrev30 = rows.filter(r => between(r, 30, 60)).length;
+
+  const pct = (cur: number, prev: number) =>
+    prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100);
+
+  /** Retorna null quando o período anterior tem dados insuficientes (< MIN_PREV) */
+  const pctOrNull = (cur: number, prev: number): number | null =>
+    prev < MIN_PREV ? null : pct(cur, prev);
+
+  const daily30 = Array.from({ length: 30 }, (_, i) =>
+    rows.filter(r => between(r, 29 - i, 30 - i)).length
+  );
+  const bucket7 = Array.from({ length: 7 }, (_, i) =>
+    daily30.slice(i * 4, i * 4 + 4 + (i === 6 ? 2 : 0)).reduce((a, b) => a + b, 0)
+  );
+  const weekly = (f: (r: Row) => boolean, weeks = 12) =>
+    Array.from({ length: weeks }, (_, i) =>
+      rows.filter(r => f(r) && between(r, (weeks - 1 - i) * 7, (weeks - i) * 7)).length
+    );
+  const cumulative = (arr: number[], base: number) =>
+    arr.reduce<number[]>((acc, v) => [...acc, (acc.length ? acc[acc.length - 1] : base) + v], []);
+
+  const olderThan12w = rows.filter(r => !inLast(r, 84)).length;
+  const fornecedores = rows.filter(r => r.contact_type === 'fornecedor');
+  const fornecedores30 = fornecedores.filter(r => inLast(r, 30)).length;
+  const fornecedoresPrev30 = fornecedores.filter(r => between(r, 30, 60)).length;
+  const companyKey = (r: Row) => r.company?.toLowerCase().trim() || null;
+  const empresasDistinct = new Set(rows.map(companyKey).filter(Boolean)).size;
+
+  /** Empresas distintas acumuladas até o fim de cada semana — mesma grandeza do valor do card. */
+  const empresasCumulative12w = Array.from({ length: 12 }, (_, i) => {
+    const endDaysAgo = (11 - i) * 7;
+    return new Set(
+      rows
+        .filter(r => t - Date.parse(r.created_at) >= endDaysAgo * DAY)
+        .map(companyKey)
+        .filter(Boolean),
+    ).size;
+  });
+
+  /** Base real de 30 dias atrás: contatos que já existiam naquela data. */
+  const prevTotal = rows.filter(r => !inLast(r, 30)).length;
+
+  return {
+    novos30,
+    novosPrev30,
+    deltaNovosPct: pctOrNull(novos30, novosPrev30),
+    deltaTotalPct: pctOrNull(rows.length, prevTotal),
+    empresasDistinct,
+    fornecedoresTotal: fornecedores.length,
+    fornecedores30,
+    deltaFornecedoresPct: pctOrNull(fornecedores30, fornecedoresPrev30),
+    seriesTotalCumulative12w: cumulative(weekly(() => true), olderThan12w),
+    seriesNovosDaily30: bucket7,
+    seriesEmpresasCumulative12w: empresasCumulative12w,
+    seriesFornecedoresWeekly12: weekly(r => r.contact_type === 'fornecedor'),
+  };
+}
+
+export type ContactsKpi = ReturnType<typeof aggregateKpi>;
+
+/** Limite de linhas por resposta do PostgREST (`max_rows`). */
+export const KPI_PAGE_SIZE = 1000;
+
+export async function fetchKpiRows(includeLegacy: boolean): Promise<Row[]> {
+  const rows: Row[] = [];
+  for (let from = 0; ; from += KPI_PAGE_SIZE) {
+    let q = supabase.from('contacts').select('created_at, contact_type, company').is('deleted_at', null);
+    if (!includeLegacy) {
+      q = q.eq('is_lid_legacy', false).filter('phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN);
+    }
+    const { data, error } = await q.order('id', { ascending: true }).range(from, from + KPI_PAGE_SIZE - 1);
+    if (error) throw error;
+    const page = (data ?? []) as Row[];
+    rows.push(...page);
+    if (page.length < KPI_PAGE_SIZE) return rows;
+  }
+}
+
+export function useContactsKpi(includeLegacy: boolean) {
+  return useQuery({
+    queryKey: ['contacts-kpi', includeLegacy],
+    queryFn: async () => aggregateKpi(await fetchKpiRows(includeLegacy)),
+    staleTime: 60_000,
+    ...CONTACTS_AGGREGATE_QUERY_OPTIONS,
+  });
+}

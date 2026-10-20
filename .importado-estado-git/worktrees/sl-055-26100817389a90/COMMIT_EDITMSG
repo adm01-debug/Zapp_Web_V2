@@ -1,0 +1,13 @@
+test(edge-functions): prova o circuit breaker POR INSTANCIA Evolution ja existente (SL-055)
+
+O inventario 027-028 registrava "Circuit breaker por instancia Evolution nao
+confirmado"; a evidencia apontava only _shared/ai-circuit.ts (circuito de IA).
+Conferido no codigo de ponta de dia: o circuito por instancia JA existe em
+_shared/evolution-api-proxy.ts (E22, commits 48b0a11a0 + f5c21610a) — chave
+cbKey || instanceInPath || '__admin', limiar 5 falhas de infra, cooldown 60s —
+mas NENHUM teste provava o contrato por instancia. Este arquivo fecha a lacuna
+de prova: 5 falhas 5xx numa instancia nao podem abrir o circuito de outra, o
+bloqueio acontece ANTES da rede, 4xx (GO de pe) nao alimenta o contador,
+sucesso zera a sequencia e o cooldown devolve uma tentativa (half-open).
+
+Sem alteracao de producao: o diff e um unico arquivo de teste novo.

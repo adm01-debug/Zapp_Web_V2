@@ -1,0 +1,8 @@
+fix(team-chat): barra saída silenciosa do último dono e frestas de departamento (QA5-10)
+
+A policy tcm_delete_own_or_admin filtra a linha do último owner sem erro:
+o app via DELETE direto voltava 0 linhas e a tela mostrava sucesso. Os hooks
+de sair/remover agora pedem .select('id') e tratam 0 linhas como erro.
+create_team_group_conversation passa a exigir admin ou perfil do departamento
+antes do get-or-create, e transfer_team_conversation_ownership exige ator
+membro (created_by sem membership não transfere mais).

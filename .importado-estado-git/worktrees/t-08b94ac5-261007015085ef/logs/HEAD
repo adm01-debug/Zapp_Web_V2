@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348618 -0300	
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348619 -0300	reset: moving to HEAD
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 603176a62a917de4220ddad914b214f6eaec652d Joaquim Ataides <ti@promobrindes.com.br> 1791348636 -0300	cherry-pick: fix(edge): status não string não derruba mais o lote de receipts do webhook (#482)
+603176a62a917de4220ddad914b214f6eaec652d 5b1fc17a8dc60fcd50b15ad0fbb7e9e1e7747320 Joaquim Ataides <ti@promobrindes.com.br> 1791349842 -0300	commit: test(edge): ajusta contrato de schemas para status de receipt

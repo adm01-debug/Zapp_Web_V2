@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791207327 -0300	branch: Created from dia/2026-10-05
+24d62d71031b256f8590067fae660ee76dd69a97 1cfa29ea39aa15724059dc44697bb37bde0fe4be Joaquim Ataides <ti@promobrindes.com.br> 1791207339 -0300	cherry-pick: test(dashboard): endurece guarda de RLS e cenarios de KPI
+1cfa29ea39aa15724059dc44697bb37bde0fe4be b0952daea48b5e3ce22ab8ebb294bac9a3991ccf Joaquim Ataides <ti@promobrindes.com.br> 1791207693 -0300	commit: test(dashboard): remove literais T2-T4 dos edge cases do KPI

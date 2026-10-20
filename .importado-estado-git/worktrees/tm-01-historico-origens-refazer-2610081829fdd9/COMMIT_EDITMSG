@@ -1,0 +1,7 @@
+fix(talk-me): historico pendente com origens e contato nulo negado por padrao
+
+Consolida a RPC talk_me_list_pending_messages numa migration unica com
+timestamp novo (a anterior nasceu mais antiga que o registro da producao)
+e nega por padrao p_contact_id nulo, que antes devolvia o bloco de todos os
+contatos que o chamador ja podia ler com o contexto misturado. A serie F do
+contrato cobre limite nulo/negativo/acima do teto e contato nulo.

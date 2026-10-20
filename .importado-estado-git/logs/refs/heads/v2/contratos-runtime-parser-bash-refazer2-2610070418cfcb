@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 Joaquim Ataides <ti@promobrindes.com.br> 1791357523 -0300	branch: Created from dia/2026-10-07
+2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 65844b1f8ffa88d506f0c96763711373525f0d86 Joaquim Ataides <ti@promobrindes.com.br> 1791357956 -0300	commit: fix(db-audit): isola DESTINO_URL nos testes de contrato runtime

@@ -1,0 +1,1 @@
+async function e(e,{pageSize:t=1e3,maxPages:n=100}={}){let r=[];for(let i=0;i<n;i+=1){let n=i*t,{data:a,error:o}=await e(n,n+t-1);if(o)return{rows:r,incomplete:!0,error:o};let s=a??[];if(r.push(...s),s.length<t)return{rows:r,incomplete:!1}}return{rows:r,incomplete:!0}}export{e as t};

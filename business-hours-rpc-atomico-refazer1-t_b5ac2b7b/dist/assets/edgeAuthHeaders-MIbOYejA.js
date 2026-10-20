@@ -1,0 +1,1 @@
+import{r as e,t}from"./client-BV8iPb2f.js";async function n(){let{data:{session:n}}=await e.auth.getSession();return{apikey:t,Authorization:`Bearer ${n?.access_token??t}`}}export{n as t};

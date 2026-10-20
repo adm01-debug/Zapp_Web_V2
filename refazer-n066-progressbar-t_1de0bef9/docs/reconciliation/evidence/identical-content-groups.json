@@ -1,0 +1,37 @@
+[
+  {
+    "sha256": "faf8048f4b6671af47e8c145a59ca23a1dba06a13773f7b625a82fd6125fd5eb",
+    "paths": [
+      ".agents/skills/zapp-web-v2/SKILL.md",
+      ".claude/skills/zapp-web-v2/SKILL.md"
+    ]
+  },
+  {
+    "sha256": "9f30845c79604ae2e3c43fc636a44ad1c1e5f2bacd6f4c7e40399abc8fa78484",
+    "paths": [
+      "docs/design/salesview-journey/02-salesview-vazio.png",
+      "docs/design/salesview-journey/03-salesview-cheio.png"
+    ]
+  },
+  {
+    "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    "paths": [
+      "e2e/fixtures/talkx-demo/02-segmentos-biblioteca-detalhes.json",
+      "e2e/fixtures/talkx-demo/03-segmentos-criar-editar.json",
+      "e2e/fixtures/talkx-demo/04-templates-biblioteca.json",
+      "e2e/fixtures/talkx-demo/05-templates-criar-editar.json",
+      "e2e/fixtures/talkx-demo/06-lista-de-supressao.json",
+      "e2e/fixtures/talkx-demo/07-analytics.json",
+      "e2e/fixtures/talkx-demo/08-nova-campanha.json",
+      "e2e/fixtures/talkx-demo/09-revisao-final-confirmacao.json",
+      "e2e/fixtures/talkx-demo/10-campanha-agendada.json",
+      "e2e/fixtures/talkx-demo/11-monitor-ao-vivo.json",
+      "e2e/fixtures/talkx-demo/12-campanha-em-andamento.json",
+      "e2e/fixtures/talkx-demo/13-campanha-pausada-retomada.json",
+      "e2e/fixtures/talkx-demo/14-relatorio-campanha-concluida.json",
+      "e2e/fixtures/talkx-demo/15-importacao-vinculacao-crm360.json",
+      "e2e/fixtures/talkx-demo/16-ajuda-talkx.json",
+      "e2e/fixtures/talkx-demo/17-estados-sistema-modais.json"
+    ]
+  }
+]

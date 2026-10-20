@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a980fada3dc8fdf9579b4e5391913db37c4365fb Joaquim Ataides <ti@promobrindes.com.br> 1791483440 -0300	branch: Created from dia/2026-10-08
+a980fada3dc8fdf9579b4e5391913db37c4365fb 77acc21b2b58e271026c9abcaae9bb22818853fc Joaquim Ataides <ti@promobrindes.com.br> 1791483459 -0300	cherry-pick: feat(sidebar): selo de e-mails nao lidos no item Email
+77acc21b2b58e271026c9abcaae9bb22818853fc a521ce2baa41dd87945bf43c1f6f687873413c1f Joaquim Ataides <ti@promobrindes.com.br> 1791484919 -0300	commit: fix(sidebar): evitar websocket real do contador em testes

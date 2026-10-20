@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72946d5e8d0a9f3977526ec99bca88f406914b91 Joaquim Ataides <ti@promobrindes.com.br> 1791302915 -0300	branch: Created from dia/2026-10-06
+72946d5e8d0a9f3977526ec99bca88f406914b91 db14d04823f1f707ea188a2dcef675b8d9c5f041 Joaquim Ataides <ti@promobrindes.com.br> 1791303381 -0300	commit: fix(edge): status não string não derruba mais o lote de receipts do webhook (#482)

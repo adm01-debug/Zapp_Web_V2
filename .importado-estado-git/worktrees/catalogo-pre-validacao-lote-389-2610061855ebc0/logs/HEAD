@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323718 -0300	
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323719 -0300	reset: moving to HEAD
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 bbe20129d115890cc10dc45a8e7e30da1b52ca86 Hermes <hermes@local> 1791324620 -0300	commit: fix(catalogo): lote aplica a mesma pre-validacao de envio e falha fechada quando a consulta cai (#389)

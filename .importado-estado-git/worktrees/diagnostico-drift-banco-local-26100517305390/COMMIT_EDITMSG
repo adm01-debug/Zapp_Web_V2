@@ -1,0 +1,9 @@
+fix(db): persiste first_response_breached com o prazo granular aplicavel
+
+register_first_response_internal comparava sempre com intervalo fixo de 5
+min; uma regra ativa de 2 min com resposta aos 3 min ficava persistida como
+dentro do prazo. Novo resolvedor resolve_applicable_first_response_minutes
+replica no banco a mesma precedencia da UI (contact > company > job_title >
+contact_type > queue > agent, fallback sla_configurations default e padrao
+de 5 min). Teste de contrato em PostgreSQL descartavel prova o caso
+2min/3min e a cadeia de fallback com SQL de verdade.

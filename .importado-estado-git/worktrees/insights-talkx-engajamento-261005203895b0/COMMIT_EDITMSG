@@ -1,0 +1,11 @@
+fix(talkx): insights elegem campanha por taxa de resposta e usam status completed
+
+O insight "Mensagem com maior engajamento" escolhia a campanha por contagem
+absoluta de respostas (order by replied_count) e o ramo de cliques filtrava
+status='finished', que o CHECK de talkx_campaigns.status nao admite ('completed').
+Agora a metrica de engajamento e a taxa de resposta (replied_count/sent_count),
+com amostra minima de 10 envios e desempate deterministico; o ramo de cliques
+usa 'completed' e correlaciona cliques/enviados/campanhas ao mesmo conjunto de
+campanhas concluidas da janela. Erro de leitura sobe em vez de virar "sem dado".
+
+Cartao: t_c0abeb92 (#223 / R2-API-049)

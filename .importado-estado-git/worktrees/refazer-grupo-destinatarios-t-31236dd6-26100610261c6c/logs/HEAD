@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791293197 -0300	
+9771aacba0ef60787d64631780e660cf381e98e8 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791293198 -0300	reset: moving to HEAD
+9771aacba0ef60787d64631780e660cf381e98e8 beebd8f90ed5cb148be9b8576010eb2b01dd3611 Joaquim Ataides <ti@promobrindes.com.br> 1791293266 -0300	commit (cherry-pick): fix(grupos): manter grupo já selecionado no menu "Enviar mensagem"

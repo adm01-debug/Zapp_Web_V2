@@ -1,0 +1,12 @@
+fix(inbox): upload agendado usa path canônico do contato
+
+O anexo agendado em ChatPanel gravava o objeto como
+scheduled_<timestamp>_<nome> sem o primeiro segmento igual ao contact_id,
+fora do contrato de mídia (o SELECT do Storage autoriza pela pasta do
+contato). Agora o path é <contact_id>/<id-opaco>-<nome-seguro>, reusando
+createStorageObjectId/sanitizeStorageFileName/removeStoredObjectBestEffort;
+falha de locator/persistência remove o objeto órfão best-effort e não
+anuncia sucesso.
+
+Prova: ChatPanel.scheduled-media.test.tsx (10 testes) — vermelho antes
+(path sem prefixo do contact_id), verde depois; zapp-verify --rapido verde.

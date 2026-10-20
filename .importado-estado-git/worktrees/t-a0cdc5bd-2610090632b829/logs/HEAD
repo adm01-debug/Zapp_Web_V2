@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791538366 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791538366 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 d3a5d97e99459ce012f36bc7c9121d78b2a7dde8 Joaquim Ataides <ti@promobrindes.com.br> 1791538380 -0300	cherry-pick: fix(recuperacao): silencia rate limit anonimo de reset (#72)
+d3a5d97e99459ce012f36bc7c9121d78b2a7dde8 e10cbec809887c8f499145493620068c1c724101 Joaquim Ataides <ti@promobrindes.com.br> 1791539980 -0300	commit: fix(recuperacao): nomeia policy anonima sem aspas

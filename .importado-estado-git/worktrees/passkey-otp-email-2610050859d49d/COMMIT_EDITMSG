@@ -1,0 +1,21 @@
+fix(auth): passkey localiza o challenge pelo clientDataJSON e só anuncia login com sessão
+
+R2-AUTH-002 (#71). Duas correções num só commit:
+
+- Front (`useAuthForm.ts`): `signInWithOtp` só ENVIA o link por e-mail, não cria
+  sessão. Anunciar "Autenticado com Passkey!" e navegar para '/' derrubava o
+  usuário de volta no /auth. Agora só anuncia e navega quando `getSession()`
+  confirma sessão; sem sessão, mostra o estado "link de acesso enviado".
+
+- Edge `webauthn`: em `verify-authentication`, o challenge passa a ser extraído
+  do `clientDataJSON` da assertion e a linha é localizada em `webauthn_challenges`
+  pelo seu VALOR + `type='authentication'`, aceitando `user_id` do dono da
+  credencial ou nulo (login discoverable). Consome só essa linha por `id`, sem
+  depender de recência — um challenge antigo do próprio usuário não encobre mais
+  o anônimo e logins simultâneos não disputam a mesma linha. `listUsers()` passa
+  a paginar até achar o e-mail (conta fora da 1ª página ficava sem allowCredentials).
+
+O handler foi extraído para `handleWebAuthn(req, deps)` com `Deno.serve` sob
+`if (import.meta.main)` (padrão de `auth-login`), permitindo testes Deno offline
+da edge: paginação do listUsers, discoverable com challenge anônimo, challenge
+antigo do usuário coexistindo com o anônimo, challenge ausente e expirado.

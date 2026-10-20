@@ -1,0 +1,3 @@
+fix(edge): não deixa mensagem de grupo GO entrar no inbox direto (#189)
+
+resolveEventJid classificava o participante do grupo como interlocutor: o guard de @g.us de handleIncomingMessage via o telefone do autor e persistia a mensagem de grupo na conversa direta dele. Agora o CHAT do evento (remoteJid/chatId) é classificado antes de resolver o autor (R2-API-005).

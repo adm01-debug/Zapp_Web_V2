@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512220 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 f547b5f59a3e25688f719ff2a69ea113d044e858 Joaquim Ataides <ti@promobrindes.com.br> 1791513681 -0300	commit: fix(telefonia): seletor de saida de audio (setSinkId) no dialogo de chamada (SL-246)

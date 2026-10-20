@@ -1,0 +1,15 @@
+fix(telefonia): hook de audio entrega os BYTES da Edge como Blob, nao a URL (TEL-RECORDING-001)
+
+useCallRecording passa a devolver { disponivel, blob, buscando } e deixa de
+criar/devolver endereco blob: (a URL de origem nunca passa pelo hook). Quem
+monta e revoga o blob: local e o RecordingPlayer, que perde o fallback para
+gravacao.url: sem bytes o player nao renderiza (falha fechada) e nenhuma URL
+de origem entra no DOM. Transporte (fetch POST + JWT da sessao) e cache do
+Blob da dia ficam como estao; 200 em JSON passa a ser indisponivel.
+
+Testes: novo useCallRecording.test.tsx (contrato de bytes, POST sem callId na
+URL, 403/404, blob vazio, JSON, erros que propagam, cache) e caso c6 no
+RecordingPlayer.test.tsx. Refeito sobre dia/2026-10-09.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

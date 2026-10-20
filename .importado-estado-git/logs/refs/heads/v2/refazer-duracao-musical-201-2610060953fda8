@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1dcf8dda0d44f9c647a24ef6146f54cf882490f3 Joaquim Ataides <ti@promobrindes.com.br> 1791291183 -0300	branch: Created from dia/2026-10-06
+1dcf8dda0d44f9c647a24ef6146f54cf882490f3 601db27ab913e7d7513ec858d191541dbbe9c7f2 Joaquim Ataides <ti@promobrindes.com.br> 1791291203 -0300	cherry-pick: fix(sfx): usa music_length_ms em ms no contrato de geracao musical (#201)

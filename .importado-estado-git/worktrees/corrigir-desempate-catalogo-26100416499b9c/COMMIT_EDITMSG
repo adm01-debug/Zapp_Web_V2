@@ -1,0 +1,3 @@
+fix(catalogo): estabiliza paginacao da exportacao (#53)
+
+Preserva order_by/ascending como ordenacao primaria e adiciona id ASC como desempate unico (buildProductOrderClauses), sem duplicar quando order_by=id. Corrige omissao/duplicacao de produtos em nomes empatados na fronteira de pagina.

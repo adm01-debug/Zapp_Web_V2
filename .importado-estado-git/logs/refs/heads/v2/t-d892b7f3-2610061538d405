@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311932 -0300	branch: Created from dia/2026-10-06
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 d25ff7827cb6a6960ef35c62a89b3c401e30215a iris <iris@promobrindes.local> 1791312212 -0300	commit: fix(inbox): mantem a previa do TTS quando o envio do audio falha (#350)

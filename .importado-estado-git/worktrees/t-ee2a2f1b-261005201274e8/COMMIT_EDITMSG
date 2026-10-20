@@ -1,0 +1,24 @@
+fix(edge): prazo de IA cobre o consumo completo do corpo da resposta
+
+IA-TIMEOUT-001: o timer do AbortController era desarmado no `finally` assim que o
+`fetch` resolvia — ou seja, nos HEADERS. A leitura/parse do corpo que vem depois
+ficava fora de qualquer prazo, e um corpo travado depois dos headers pendurava a
+chamada para sempre (IA-041 "prazos ponta a ponta" incompleto).
+
+Reaproveitamento exclusivo da parte de prazo do commit
+3abda03728f1c9796559f83f00771dcb9bf943fc, sem nenhuma mudança de ai-usage/outbox:
+
+- ai-providers.ts: o mesmo orçamento temporal passa a cobrir a requisição E a
+  leitura do corpo. O helper `comPrazoAteOCorpo` embrulha a resposta e só desarma
+  o timer no fim da leitura, no erro ou no cancelamento; sem `timeoutMs` nada
+  muda (nenhum timer, nenhum signal chega ao fetch).
+- ai-providers.test.ts: corpo que trava depois dos headers é abortado dentro do
+  orçamento nos 3 provedores; sem `timeoutMs` nenhum signal vai ao fetch e os
+  bytes passam intactos; corpo que termina no orçamento desarma o timer no fim da
+  leitura.
+
+Prova: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read
+--allow-net=127.0.0.1 supabase/functions/_shared/ai-providers.test.ts
+  antes: 2 passed | 3 failed  (NAO_TERMINOU nos 3 provedores)
+  depois: 5 passed | 0 failed
+zapp-verify . --rapido => VERDE (db_guard, tipos, lint, migrations).

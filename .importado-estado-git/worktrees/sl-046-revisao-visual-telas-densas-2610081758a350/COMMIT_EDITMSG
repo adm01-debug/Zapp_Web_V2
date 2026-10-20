@@ -1,0 +1,24 @@
+fix(design-system/ui): Revisao visual das telas densas apos 193 trocas de meia (SL-046)
+
+Por que: o F3 item 12 (docs/tipografia/RELATORIO_PARIDADE_F0_F7_2026-09-22.md:161-185)
+ficou 2 semanas aberto com o medo de que as trocas de meia-medida mudassem a quebra de
+linha nas tabelas densas, e nunca foi inspecionado em tela (4 tentativas de automacao
+bloqueadas por infra de browser). Sem sessao e sem banco, a revisao pode ser feita por
+medicao: bancada local em 127.0.0.1 com o CSS REAL deste projeto.
+
+Verificacao (workspace do cartao, 08/10/2026):
+- git grep -nE 'text-\[[0-9]+\.[0-9]+(px|rem|em)\]' -- src -> 0 ocorrencias;
+  cada valor do F3 (12.5/13.5/11.5/10.5/9.5/7.5px) -> 0 residuo.
+- node scripts/qa/medir-tipografia.cjs --check -> exit 0 (meiaMedida 0, teto 0).
+- Prova por mutacao: text-[12.5px] dentro de um <td> derruba o guard (exit 1,
+  meia-medida 1); removido, volta a exit 0.
+- Chromium + CSS compilado de tailwind.config.ts + src/index.css, fonte carregada:
+  188 pares (antes->depois) extraidos do diff do F3 em 24 arquivos; 252 cruzamentos
+  (6 tipos x 6 textos x 7 larguras): 5 mudancas de quebra (2,0%), todas em coluna
+  estreita e 4 para MENOS linhas; a unica que ganhou linha e a troca de 1 ocorrencia
+  (7.5->8px, selo "online") que com o texto real fica em 1 linha em 120/220/320px.
+  Cracha h-6: corte de rotulo 4 -> 3 (a troca desfez um corte; os 3 restantes ja
+  cortavam antes).
+
+Documento do F3: item 12 sai de "Pendente" e passa a registrar a revisao com os numeros;
+as 4 tentativas bloqueadas viram historico. Nenhum arquivo de produto alterado.

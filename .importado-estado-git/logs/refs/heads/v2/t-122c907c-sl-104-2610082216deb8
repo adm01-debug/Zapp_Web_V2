@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508569 -0300	branch: Created from dia/2026-10-08
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf c61e1055792c44bbdd98d70fa82c0728398c9fee Joaquim Ataides <ti@promobrindes.com.br> 1791508883 -0300	commit: fix(performance): desacopla o DELETE de mensagem de coluna que nao e PK (SL-104)
+c61e1055792c44bbdd98d70fa82c0728398c9fee 5d9e89e48186a763e055c61a9effb6f49a71f3bc Joaquim Ataides <ti@promobrindes.com.br> 1791508968 -0300	commit (amend): fix(performance): desacopla o DELETE de mensagem de coluna que nao e PK (SL-104)
+5d9e89e48186a763e055c61a9effb6f49a71f3bc 71174cf3bfcb4244bc05e919be8b4f71f4025136 Joaquim Ataides <ti@promobrindes.com.br> 1791509140 -0300	commit (amend): fix(performance): desacopla o DELETE de mensagem de coluna que nao e PK (SL-104)
+71174cf3bfcb4244bc05e919be8b4f71f4025136 df3bdc7b7abe9c08eb57c679f5313a8377b7ce41 Joaquim Ataides <ti@promobrindes.com.br> 1791509216 -0300	commit (amend): fix(performance): desacopla o DELETE de mensagem de coluna que nao e PK (SL-104)

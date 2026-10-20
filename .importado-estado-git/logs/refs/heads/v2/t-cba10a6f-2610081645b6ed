@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488717 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 09b415e3d07792879ab004c073bd51e763e815f8 Joaquim Ataides <ti@promobrindes.com.br> 1791489032 -0300	commit: test(catálogo): foto inválida rejeitada no enqueue vira falha do envio (partial) (SL-005)

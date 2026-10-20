@@ -1,0 +1,5 @@
+fix(tarefas/quadro): QuickAdd com Data, Lembrar com hora, @ Contato e ! Prio (SL-235)
+
+Item de inventário já resolvido na ponta: os 4 recursos e os 7 chips do QuickAdd
+existem no código de produção. Fecho sem mudança de código, como o cartão manda.
+Prova em .tmp/relato.md.

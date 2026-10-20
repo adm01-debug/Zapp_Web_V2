@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6cd17e247e6089142395dce367264084286ca84a Joaquim Ataides <ti@promobrindes.com.br> 1791199243 -0300	branch: Created from dia/2026-10-05
+6cd17e247e6089142395dce367264084286ca84a cc69a8bd4605349ffb2e6cc2724676a3ae564240 Joaquim Ataides <ti@promobrindes.com.br> 1791199615 -0300	commit: fix(ci): ledger pos-apply usa o gate de prontidão do harness e o docker-shim

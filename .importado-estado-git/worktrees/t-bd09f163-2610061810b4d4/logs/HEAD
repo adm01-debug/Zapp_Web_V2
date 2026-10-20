@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321017 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321019 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 5505e606e9053a5c955f8bbe006143a7d9bbfd77 worker (sql) <workersql@hermes.local> 1791322878 -0300	commit: fix(banco): cota por conexao conta o item enviado do Multiplix e trata medicao invalida

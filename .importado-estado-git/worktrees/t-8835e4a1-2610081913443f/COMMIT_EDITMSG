@@ -1,0 +1,17 @@
+fix(performance): limpa o timer de retry de openContactChat (SL-101)
+
+O handle do timer de retry vivia só dentro de openContactChat: sem clearTimeout a cadeia disparava o evento open-contact-chat até 15 vezes mesmo depois de a inbox consumir o contato, e o timer agendado atravessava o teardown do jsdom. Agora a cadeia para quando o contato pendente é consumido (confirmação que useRealtimeInbox já dá) e uma chamada nova cancela a cadeia anterior.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick c05927d97 fix(performance): limpa o timer de retry de openContactChat (SL-101)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-8835e4a1-2610081913443f' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/catalog/__tests__/useSendProduct.test.tsx
+#	modified:   src/components/catalog/useSendProduct.ts
+#

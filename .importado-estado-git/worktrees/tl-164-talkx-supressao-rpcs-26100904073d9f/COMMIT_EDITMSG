@@ -1,0 +1,3 @@
+fix(talk-x): Criar RPCs de leitura da supressão: listagem paginada, KPIs e atividade (X176)
+
+TL-164. Migration nova com tres funcoes SECURITY INVOKER (talkx_suppression_list, talkx_suppression_stats e talkx_suppression_activity) que devolvem 42501 para quem nao e admin/supervisor, indice em talkx_blacklist(created_at desc) e prova em PostgreSQL 17 descartavel aplicando a migration real e executando como authenticated/anon/service_role.

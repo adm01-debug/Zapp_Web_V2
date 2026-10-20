@@ -1,0 +1,15 @@
+fix(inbox): filtro por tag da busca entra na consulta e vale para mensagens (#316)
+
+R2-INB-020: o chip de tag nao representava um escopo comum. A consulta de
+contatos aplicava .limit(10) e so depois filtrava a tag em JS — o LIMIT
+cortava pela ordem alfabetica e o contato marcado (11o) ficava de fora. As
+consultas de mensagem e transcricao nem aplicavam as tags selecionadas.
+
+- useGlobalSearchData: os IDs dos contatos que carregam as tags entram na
+  consulta (contacts.overlaps) e viram .in('id'|'contact_id') ANTES do LIMIT,
+  no mesmo escopo para contato, mensagem e transcricao; o filtro em JS pos-LIMIT
+  saiu. Sem contato com a tag, o escopo e vazio.
+- Teste: GlobalSearch.r2-inb-020.test.tsx (3 vermelhos sem a correcao, 3 verdes
+  com ela).
+
+Prova: npx vitest run src/components/inbox/__tests__/GlobalSearch.r2-inb-020.test.tsx

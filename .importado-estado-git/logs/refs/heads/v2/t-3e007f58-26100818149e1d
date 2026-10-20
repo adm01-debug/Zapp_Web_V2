@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494053 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 607096bb01c28b306c1f44a6ecffa04f44b1e9f5 Joaquim Ataides <ti@promobrindes.com.br> 1791494539 -0300	commit: fix(catálogo): CT-99 — tira do plano de 11/09 o motivo caduco dos checkboxes e trava por guarda (SL-153)
+607096bb01c28b306c1f44a6ecffa04f44b1e9f5 968c94f0cc3093b3b41f832a0e8746fce5ec647e Joaquim Ataides <ti@promobrindes.com.br> 1791494586 -0300	commit: test(ci): prova por mutação do cabeçalho real na guarda do CT-99 (SL-153)

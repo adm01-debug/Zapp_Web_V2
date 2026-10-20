@@ -1,0 +1,1 @@
+fix(tts): cancela a fala do chat ao desmontar e impede geração duplicada da mesma mensagem (#334)

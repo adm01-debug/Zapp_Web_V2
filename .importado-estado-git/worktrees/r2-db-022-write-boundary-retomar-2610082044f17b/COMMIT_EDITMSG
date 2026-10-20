@@ -1,0 +1,3 @@
+chore(db): retomada do R2-DB-022 fecha sem codigo novo (parte 1 ja integrada; parte 2 adiada)
+
+A fronteira de escrita de public.messages ja esta fechada no codigo atual pela migration 20261006114108_r2_db_022_provenance_trigger.sql (identica a parte 1 da entrega retomada). A parte 2 (validacao canonica no enqueue) foi recusada pelo dono em 06/10 e pertence a cartao proprio com ajuste de frontend. Motivo da falha anterior (ref de producao no diff) nao se aplica: nao ha diff.

@@ -1,0 +1,1 @@
+fix(inbox/chat): upload de audio do chat interno declara o formato real do blob (webm/mp4/m4a) (SL-072)

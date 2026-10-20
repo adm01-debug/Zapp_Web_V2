@@ -1,0 +1,8 @@
+fix(edge): status não string não derruba mais o lote de receipts do webhook (#482)
+
+O cast cego de status para string no handler de messages.update fazia
+status.toLowerCase() num valor não string (número/objeto) lançar TypeError,
+derrubar o lote inteiro com HTTP 500 e perder/retentar os recibos válidos do
+mesmo payload. O status passa a ser validado POR EVENTO
+(EvolutionMessagesUpdateStatusSchema); entrada sem string não vazia é
+descartada com log explícito, sem tocar o banco, e as demais seguem.

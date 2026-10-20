@@ -1,0 +1,11 @@
+feat(inbox): avatares e anexos usam as variantes do CF Images
+
+Por quê: o srcSet das variantes do Cloudflare Images existia só dentro do catálogo
+(`catalogShared.tsx`). Fora dele, uma imagem de imagedelivery.net era baixada numa única
+variante — a `large` de 1200 px — mesmo num avatar de 40 px ou numa miniatura de 32 px.
+O helper foi extraído para `src/lib/cfImages.ts` e passou a ser usado pelo catálogo (sem
+mudança de comportamento), pela primitiva de avatar e pelos anexos do Inbox.
+Verificação: typecheck-ratchet 0/0 · lint-ratchet 612→612 (0 novas) · tipografia ✓ ·
+build ✓ · vitest 121/121 (E37 + catálogo) e 66/66 (consumidores do avatar) · mutação:
+4 garantias mutadas → 4 arquivos vermelhos, revertidas → verde.
+Plano: E37 do PLANO_MELHORIAS_50_ETAPAS_2026-09-20 ("srcSet CF Images fora do catálogo").

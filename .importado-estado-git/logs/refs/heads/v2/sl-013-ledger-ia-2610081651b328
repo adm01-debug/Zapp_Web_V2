@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489120 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc dc1f1949d87253fd8bf6ec54b8a73c27bb2f5d2a Joaquim Ataides <ti@promobrindes.com.br> 1791490374 -0300	commit: fix(ia): toda chamada paga das funcoes elevenlabs-* gera linha no ledger (SL-013)

@@ -1,0 +1,12 @@
+test(ia): alinha o contrato R2-INF-022 do classify-emoji ao novo state/error_code (IA-132)
+
+O contrato de resposta do classify-emoji passou a devolver, alem de category,
+o state da classificacao e o error_code (IA-132). O teste co-locado
+R2-INF-022 (supabase/functions/classify-emoji/index.test.ts), que chegou na
+dia depois desta entrega, afirmava o corpo EXATO { category: 'riso' } e
+{ category: 'outros' } e ficou vermelho.
+
+As duas assercoes seguem por igualdade EXATA, agora com os campos do novo
+contrato ({ category, state, error_code }): nao ha afrouxamento — o corpo
+esperado ficou mais preciso. Nada nas verificacoes de identidade/Storage
+(anon key + JWT, 0 provedor, log sem locator/token) foi alterado.

@@ -1,0 +1,6 @@
+chore(multiplix-dispatch): refecha a entrega com o relato corrigido
+
+Sem mudanca de codigo: o revisor aprovou o codigo e recusou so o relato
+(assinatura da area, contagem dos testes R2-API-030, prova vermelha do
+defeito e a mudanca de comportamento de handleValidate). Este commit novo
+carrega o sha que a reentrega precisa.

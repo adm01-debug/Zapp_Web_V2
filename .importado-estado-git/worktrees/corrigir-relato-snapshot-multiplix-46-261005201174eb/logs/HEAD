@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791241864 -0300	
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791241864 -0300	reset: moving to HEAD
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791241951 -0300	reset: moving to 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b 6831a0e076e3f478169793fc8d2761f296cb028d Joaquim Ataides <ti@promobrindes.com.br> 1791241951 -0300	cherry-pick: fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)
+6831a0e076e3f478169793fc8d2761f296cb028d dc12106ec2f7c88adbd1a6f5816ecba1d3a61766 Joaquim Ataides <ti@promobrindes.com.br> 1791241951 -0300	cherry-pick: fix(multiplix): preserva escopo e falhas por item
+dc12106ec2f7c88adbd1a6f5816ecba1d3a61766 e6f6578a648b360988ab282d510e2841e391b4aa Joaquim Ataides <ti@promobrindes.com.br> 1791241951 -0300	cherry-pick: fix(multiplix): isola a gravacao do snapshot do catch da resolucao do bloco

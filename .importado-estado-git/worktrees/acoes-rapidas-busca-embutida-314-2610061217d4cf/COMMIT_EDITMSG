@@ -1,0 +1,15 @@
+fix(inbox): acoes rapidas e selecao da busca embutida executam a intencao (#314)
+
+R2-INB-018: 'Nova conversa' e 'Respostas rapidas' so fechavam a busca, e a
+selecao no chat (Ctrl+K) so mostrava 'Resultado selecionado'.
+
+- GlobalSearch: acao rapida sem operacao real do host sai do seletor; as duas
+  acoes passam a executar a operacao recebida (onNewConversation /
+  onManageQuickReplies).
+- RealtimeInboxView: 'Nova conversa' abre o NewConversationModal da tela.
+- ChatDialogs/ChatPanel: selecionar resultado usa o mesmo contrato da Inbox
+  (onSelectConversation = onSelectPinned); 'Respostas rapidas' abre a gestao do
+  chat. O toast de sucesso falso saiu.
+
+Prova: src/components/inbox/__tests__/GlobalSearch.r2-inb-018.test.tsx
+(5 vermelhos sem a correcao, 5 verdes com ela).

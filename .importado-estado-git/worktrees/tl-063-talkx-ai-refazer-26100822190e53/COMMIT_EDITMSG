@@ -1,0 +1,8 @@
+fix(talk-x): grava trilha conferida em todo caminho pago do talkx-ai
+
+Os caminhos pagos que escapavam de talkx_ai_requests agora gravam a tentativa:
+422 por saída inválida e 502 empty_output registram status error com modelo,
+tokens e custo da tarifa vigente (o gasto volta a contar no teto do mês e no
+limite diário); a falha de leitura de ai_model_prices depois da chamada paga
+vira custo nulo com warn em vez de 500 sem trilha; e a gravação da tentativa no
+erro do proxy não é mais engolida — falhou, a resposta é 500.

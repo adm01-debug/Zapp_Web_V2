@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 1f3e7037baed730afd78a0fb9bee086f3191e6a6 Joaquim Ataides <ti@promobrindes.com.br> 1791355992 -0300	
+1f3e7037baed730afd78a0fb9bee086f3191e6a6 1f3e7037baed730afd78a0fb9bee086f3191e6a6 Joaquim Ataides <ti@promobrindes.com.br> 1791355993 -0300	reset: moving to HEAD
+1f3e7037baed730afd78a0fb9bee086f3191e6a6 629cccb2fd925bf3940df36f92620c24304d4e93 Joaquim Ataides <ti@promobrindes.com.br> 1791356008 -0300	cherry-pick: test(e2e): prova local-only da aba Arquivos com usuario sintetico e banco local
+629cccb2fd925bf3940df36f92620c24304d4e93 6da92626c7aa493551372b42a8d5f2cb9e0544e3 Joaquim Ataides <ti@promobrindes.com.br> 1791356008 -0300	cherry-pick: test(e2e): tipa o seed local para o typecheck do repo
+6da92626c7aa493551372b42a8d5f2cb9e0544e3 70e168065b2b4137cb8db48632ff642ee0260d5d Joaquim Ataides <ti@promobrindes.com.br> 1791357360 -0300	commit: test(e2e): corrige prova local da aba arquivos
+70e168065b2b4137cb8db48632ff642ee0260d5d 2aaaed8ce7ca07136422000910ed9fbb5d6154c5 Joaquim Ataides <ti@promobrindes.com.br> 1791357667 -0300	commit (amend): test(e2e): corrige prova local da aba arquivos

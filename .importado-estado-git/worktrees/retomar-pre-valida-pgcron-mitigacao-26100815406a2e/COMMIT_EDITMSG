@@ -1,0 +1,1 @@
+fix(banco): pre-valida EXECUTE em cron.alter_job antes da mitigacao

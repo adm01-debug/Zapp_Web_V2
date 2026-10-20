@@ -1,0 +1,7 @@
+test(ci): exercita o shell real do passo que limpa o log do deploy
+
+O teste do ELO le o bloco run: do passo "Limpar segredos do log de deploy"
+direto do YAML e o executa com bash, no layout do runner
+($RUNNER_TEMP/edge-tooling/scripts/edge-deploy) e com o redator real. Assim a
+indirecao do workflow nao escapa: se o passo voltar a redigir inline, o teste
+cai (prova por mutacao). Amostra de segredo montada em tempo de execucao.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 6e7686335cf993e352f484133b0ea9826f94e806 Joaquim Ataides <ti@promobrindes.com.br> 1791398517 -0300	branch: Created from dia/2026-10-07
+6e7686335cf993e352f484133b0ea9826f94e806 a1aa1b11d0ec98b8f92ddec0d4cdcfadb6b579f7 Joaquim Ataides <ti@promobrindes.com.br> 1791398544 -0300	cherry-pick: fix(db): corrigir a coluna member_role nas RPCs de saida e remocao (#31)
+a1aa1b11d0ec98b8f92ddec0d4cdcfadb6b579f7 609d84a175e5578376d7e952e5a2f14b39f5911a Joaquim Ataides <ti@promobrindes.com.br> 1791399448 -0300	commit: ci(db): registrar teste das RPCs de membros
+609d84a175e5578376d7e952e5a2f14b39f5911a 8d55c8cf25c4bd547758eee718c8bea4cd2c43ba Joaquim Ataides <ti@promobrindes.com.br> 1791540310 -0300	rebase (finish): refs/heads/v2/rpcs-saida-remocao-coluna-role-t-881da63-261007154187de onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 db2ae6b5e1b579c58f6e376f6b5428da8f09d7b8 Joaquim Ataides <ti@promobrindes.com.br> 1791198738 -0300	branch: Created from dia/2026-10-05
+db2ae6b5e1b579c58f6e376f6b5428da8f09d7b8 1bd8c20918e438b205a5cb872cd10c0ab7a2dd1c Joaquim Ataides <ti@promobrindes.com.br> 1791200195 -0300	commit: feat(ci): db-migrate aceita lote de migrations via lote_versions

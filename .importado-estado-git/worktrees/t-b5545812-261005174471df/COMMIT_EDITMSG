@@ -1,0 +1,13 @@
+fix(contatos): Total de Contatos coincide com a aba Todos no mesmo snapshot (#155)
+
+A etapa 98 registrou Total (3.095) != Todos (3.124) com legados ligados. As duas
+contagens leem a mesma fonte (contacts_count_by_type); o valor menor era o quadro
+intermediario da animacao CountUp do card "Total de Contatos", que so comeca a
+animar depois que o agregado pesado useContactsKpi resolve.
+
+- ContactStatsCards: o card Total le totalAll (mesma fonte do badge) e nao e mais
+  bloqueado por useContactsKpi; os 3 cards do agregado seguem em esqueleto.
+- ContactKpiCard: novo prop animateValue (default true); o Total usa false e
+  aparece com o valor real ja no primeiro frame, como o badge.
+- Teste de paridade no mesmo snapshot para legados DESLIGADOS e LIGADOS.
+- Nota de reconciliacao com filtros, papel (can_edit_contact) e exclusao logica.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332610 -0300	
+f8309fb2679055122550ca345e0a90edf6e34853 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332611 -0300	reset: moving to HEAD
+f8309fb2679055122550ca345e0a90edf6e34853 5521ad205b54c354c85dfddda1dc23e0e0f113d6 iris <iris@promobrindes.local> 1791332951 -0300	commit: fix(mobile): central de notificações do shell mobile usa a lista real e o contador real (#449)

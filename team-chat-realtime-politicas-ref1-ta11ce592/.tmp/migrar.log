@@ -1,0 +1,9 @@
+BEGIN
+DO
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+ERROR:  function public.current_profile_id() does not exist
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+ERRO: a migration falhou no banco local (transação desfeita)
+EXIT=1

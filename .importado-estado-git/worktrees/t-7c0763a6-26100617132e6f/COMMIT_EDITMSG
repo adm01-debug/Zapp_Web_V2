@@ -1,0 +1,14 @@
+fix(hooks): useContactNotes rejeita erro do serviço e pagina a leitura de notas (#259)
+
+ContactService.addNote/deleteNote/updateNote devolviam { data, error } sem
+transformar error em rejeição: a mutation caía em onSuccess, invalidava o
+cache e anunciava "Nota adicionada" com a nota não salva. Agora as três
+lançam quando o PostgREST devolve error.
+
+A leitura (fetchNotes) não tinha .range(): o PostgREST devolvia só a
+primeira página (teto de 1000 linhas) e as notas seguintes sumiam em
+silêncio. Passa a paginar por fetchAllRows com ordem estável
+(created_at desc + id desc).
+
+Teste: src/hooks/crm/useContactNotes.error-pagination.test.tsx (7 casos;
+4 falham sem a correção).

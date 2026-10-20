@@ -1,0 +1,20 @@
+test(edge): realimenta o ledger no teste de 4xx do pedido (IA-050)
+
+Recusa anterior: o teste de seis respostas 400 nao realimentava o ledger com os
+registros realmente inseridos — a leitura do circuito devolvia `estado.ledger`
+estatico (vazio), entao as seis linhas gravadas nunca chegavam a derivacao e o
+verde era trivial.
+
+Correcao:
+- o stub de `fetch` passa a REALIMENTAR o ledger: cada INSERT em `ai_usage_logs`
+  entra no ledger lido (com `created_at`, como o default do banco), e o GET
+  devolve as linhas ordenadas como o `select`. Nada de fixture estatica.
+- o teste passa a provar ponta a ponta: seis 400 sao auditados como
+  'request_error', permanecem reconciliados como falha do pedido
+  (`reconciliarConsumo`) e o circuito segue FECHADO (o provedor e chamado nas
+  seis); e, na MESMA ledger, a falha TRANSITORIA (503) volta a contar e ABRE no
+  limiar — o 4xx nao cegou o circuito.
+
+Vermelho antes: revertendo `ai-generate.ts` ao estado sem a classificacao 4xx, o
+sexto 400 abre o circuito e o chamador recebe 503/CIRCUIT_OPEN (FAILED | 6
+passed | 1 failed). Verde depois: 7/7.

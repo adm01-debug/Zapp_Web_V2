@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332470 -0300	
+f8309fb2679055122550ca345e0a90edf6e34853 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332471 -0300	reset: moving to HEAD
+f8309fb2679055122550ca345e0a90edf6e34853 56faf521d47cdb34f49c53a42230b9ddcec103f5 Joaquim Ataides <ti@promobrindes.com.br> 1791332480 -0300	cherry-pick: fix(dashboard): restaura trava E33, fuso SP e dedupe do SLA em dashboard_contact_counts (#38)

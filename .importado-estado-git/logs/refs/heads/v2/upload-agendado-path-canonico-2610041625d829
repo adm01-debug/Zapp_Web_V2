@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 72471e4ab1fbcf23842d5726c5bdcc8553e61687 Joaquim Ataides <ti@promobrindes.com.br> 1791141903 -0300	branch: Created from dia/2026-10-04
+72471e4ab1fbcf23842d5726c5bdcc8553e61687 26b962041c363a0a7223e29449b4f36b3c60dd62 Joaquim Ataides <ti@promobrindes.com.br> 1791142826 -0300	commit: fix(inbox): upload agendado usa path canônico do contato
+26b962041c363a0a7223e29449b4f36b3c60dd62 5d710c3cbaad3a38eb3086401ce5eeee8a29dade Joaquim Ataides <ti@promobrindes.com.br> 1791142862 -0300	commit: test(inbox): usa origin fictício no teste de mídia agendada (sem URL de produção)
+5d710c3cbaad3a38eb3086401ce5eeee8a29dade 72471e4ab1fbcf23842d5726c5bdcc8553e61687 Joaquim Ataides <ti@promobrindes.com.br> 1791142882 -0300	reset: moving to HEAD~2
+72471e4ab1fbcf23842d5726c5bdcc8553e61687 552d4715461786b45c30a5881529c729040be070 Joaquim Ataides <ti@promobrindes.com.br> 1791142882 -0300	commit: fix(inbox): upload agendado usa path canônico do contato

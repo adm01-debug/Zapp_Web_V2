@@ -1,0 +1,7 @@
+fix(auth): requireAuth devolve 503 quando o client de política não é criado
+
+getServiceClient() podia rejeitar a Promise fora de qualquer tratamento
+(import dinâmico ou env ausente), fazendo requireAuth propagar exceção em
+vez de falhar fechado. Criação do client e execução da política agora
+ficam sob o mesmo try/catch → 503, com policyRpcFactory injetável para
+provar a falha de criação em teste.

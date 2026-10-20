@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791306276 -0300	branch: Created from dia/2026-10-06
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 5da732496cd2853bc8385a0c44a65f24b498cb1a worker (auth) <workerauth@hermes.local> 1791307246 -0300	commit: fix(migrations): associa lembretes à tarefa pela identidade da origem, não pelo título (#293)

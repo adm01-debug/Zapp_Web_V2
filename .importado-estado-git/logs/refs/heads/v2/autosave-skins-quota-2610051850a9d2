@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 bd0e6794fe1aebfffe77783f97ab99542e569f20 Joaquim Ataides <ti@promobrindes.com.br> 1791237035 -0300	branch: Created from dia/2026-10-05
+bd0e6794fe1aebfffe77783f97ab99542e569f20 42a1309a52cf32e4564cddbbc9300f39526b17ad Joaquim Ataides <ti@promobrindes.com.br> 1791237750 -0300	commit: fix(skins): autosave só confirma o tema quando a gravação tem sucesso

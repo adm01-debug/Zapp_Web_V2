@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566899 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566900 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 b756a99acda250419a06158c673cc70ed2afc4af Joaquim Ataides <ti@promobrindes.com.br> 1791566905 -0300	cherry-pick: fix(multiplix): painel 01 com papel multi-selecao, ramo com busca sem acento, busca com debounce e selecao preservada (TL-040/F73)
+b756a99acda250419a06158c673cc70ed2afc4af c8cd36cce8e3a3799baf9f95be43a1a09de90f45 Joaquim Ataides <ti@promobrindes.com.br> 1791566905 -0300	cherry-pick: fix(multiplix): dublê de useVirtualizer no teste do Painel 01 (rebase contra dia/2026-10-09)
+c8cd36cce8e3a3799baf9f95be43a1a09de90f45 6e0ef36a95527e22ca6736b6b641bbc741dbc614 Joaquim Ataides <ti@promobrindes.com.br> 1791566905 -0300	cherry-pick: fix(multiplix): restaura rigor do contrato de acessibilidade das campanhas

@@ -1,0 +1,12 @@
+0000000000000000000000000000000000000000 4cc5018ae42050172e823d0368aa9c41f47751c0 Joaquim Ataides <ti@promobrindes.com.br> 1791399708 -0300	
+4cc5018ae42050172e823d0368aa9c41f47751c0 4cc5018ae42050172e823d0368aa9c41f47751c0 Joaquim Ataides <ti@promobrindes.com.br> 1791399709 -0300	reset: moving to HEAD
+4cc5018ae42050172e823d0368aa9c41f47751c0 9a22bc8ff817815231c87165a340136667f16e5c Joaquim Ataides <ti@promobrindes.com.br> 1791399807 -0300	commit (cherry-pick): fix(inbox): erro de imagem dos detalhes de arquivo nao passa para o proximo item (#352)
+9a22bc8ff817815231c87165a340136667f16e5c e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541278 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 6a0d28915bc884d21e29ab457170dfc9ae55133a Joaquim Ataides <ti@promobrindes.com.br> 1791541290 -0300	rebase (continue): fix(inbox): erro de imagem dos detalhes de arquivo nao passa para o proximo item (#352)
+6a0d28915bc884d21e29ab457170dfc9ae55133a 6a0d28915bc884d21e29ab457170dfc9ae55133a Joaquim Ataides <ti@promobrindes.com.br> 1791541290 -0300	rebase (finish): returning to refs/heads/v2/t-69af436e-2610071601ff9e
+6a0d28915bc884d21e29ab457170dfc9ae55133a dc3eb5908c5968bf3dde3233ad271ac1feea9b39 Joaquim Ataides <ti@promobrindes.com.br> 1791541686 -0300	commit: test(inbox): figurinha também descarta o erro de imagem ao trocar de arquivo (#352)
+dc3eb5908c5968bf3dde3233ad271ac1feea9b39 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791558813 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 057ca26427b0b6b3f95145bcdadb17988f8bc269 Joaquim Ataides <ti@promobrindes.com.br> 1791558900 -0300	rebase (continue): fix(inbox): erro de imagem dos detalhes de arquivo nao passa para o proximo item (#352)
+057ca26427b0b6b3f95145bcdadb17988f8bc269 09086c79f6bddfacbdcba172bc189e6a70d51074 Joaquim Ataides <ti@promobrindes.com.br> 1791558900 -0300	rebase (pick): test(inbox): figurinha também descarta o erro de imagem ao trocar de arquivo (#352)
+09086c79f6bddfacbdcba172bc189e6a70d51074 09086c79f6bddfacbdcba172bc189e6a70d51074 Joaquim Ataides <ti@promobrindes.com.br> 1791558900 -0300	rebase (finish): returning to refs/heads/v2/t-69af436e-2610071601ff9e
+09086c79f6bddfacbdcba172bc189e6a70d51074 69671911bb4068bf82fcc90847768086bfb91559 Joaquim Ataides <ti@promobrindes.com.br> 1791559011 -0300	commit: fix(inbox): remove teste de figurinha duplicado e fora de lugar em FileDetailPanel.test.tsx

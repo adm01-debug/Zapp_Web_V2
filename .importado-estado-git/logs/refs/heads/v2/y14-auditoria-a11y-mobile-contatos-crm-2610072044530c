@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d5df15aacd40db59cb415fa03917e7b3a4d7975c Joaquim Ataides <ti@promobrindes.com.br> 1791416660 -0300	branch: Created from dia/2026-10-07
+d5df15aacd40db59cb415fa03917e7b3a4d7975c 3c27ae4adad5ed04f84cc89ce95c82f04015ace3 Joaquim Ataides <ti@promobrindes.com.br> 1791416666 -0300	cherry-pick: docs(auditoria): acessibilidade e celular — Contatos, CRM 360° e SalesView
+3c27ae4adad5ed04f84cc89ce95c82f04015ace3 69f230453cf6ef020f062fe68c0c422ae58a0407 Joaquim Ataides <ti@promobrindes.com.br> 1791416666 -0300	cherry-pick: docs(auditoria): corrige contradicoes e numeros do relatorio A11Y mobile Contatos/CRM/SalesView (refazer 1)
+69f230453cf6ef020f062fe68c0c422ae58a0407 653b13bdcc0e3aa070a7842437eded06a2157e73 worker (testes) <worker-testes@local> 1791416935 -0300	commit: docs(auditoria): zera contradicoes remanescentes do relatorio A11Y mobile Contatos/CRM/SalesView (refazer 2)

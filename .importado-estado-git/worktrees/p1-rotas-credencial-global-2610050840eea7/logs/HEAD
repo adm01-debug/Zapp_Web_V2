@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791200403 -0300	
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791200404 -0300	reset: moving to HEAD
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 44e8c04e46fcc18202cf98d040e597f065b68491 Joaquim Ataides <ti@promobrindes.com.br> 1791200622 -0300	commit (cherry-pick): fix(edge): isola credencial de instância por conexão na Evolution GO (TRA-002)
+44e8c04e46fcc18202cf98d040e597f065b68491 f8cde550a800dff0d043ec623d8b246256a87e0f Joaquim Ataides <ti@promobrindes.com.br> 1791200640 -0300	commit (cherry-pick): fix(edge): endurece o gate pre-auth do evolution-webhook contra abuso de instanceName (TRA-002)
+f8cde550a800dff0d043ec623d8b246256a87e0f f8cde550a800dff0d043ec623d8b246256a87e0f Joaquim Ataides <ti@promobrindes.com.br> 1791201846 -0300	reset: moving to HEAD
+f8cde550a800dff0d043ec623d8b246256a87e0f 44e8c04e46fcc18202cf98d040e597f065b68491 Joaquim Ataides <ti@promobrindes.com.br> 1791201846 -0300	reset: moving to 44e8c04e4
+44e8c04e46fcc18202cf98d040e597f065b68491 e0e737583b678d58c5b4f0c5e8a7d7e158efe8a2 Joaquim Ataides <ti@promobrindes.com.br> 1791201864 -0300	commit (amend): fix(edge): isola credencial de instância por conexão nas rotas da Evolution GO (TRA-002)
+e0e737583b678d58c5b4f0c5e8a7d7e158efe8a2 6f86ecd04d88c6a148cc179c176d5ab50afe4d6e Joaquim Ataides <ti@promobrindes.com.br> 1791201864 -0300	cherry-pick: fix(edge): endurece o gate pre-auth do evolution-webhook contra abuso de instanceName (TRA-002)
+6f86ecd04d88c6a148cc179c176d5ab50afe4d6e e0e737583b678d58c5b4f0c5e8a7d7e158efe8a2 Joaquim Ataides <ti@promobrindes.com.br> 1791201963 -0300	reset: moving to e0e737583
+e0e737583b678d58c5b4f0c5e8a7d7e158efe8a2 93e25d2a72c7a036d4a1a95033757980f848defe Joaquim Ataides <ti@promobrindes.com.br> 1791201966 -0300	commit (amend): fix(edge): isola credencial de instância por conexão nas rotas da Evolution GO (TRA-002)
+93e25d2a72c7a036d4a1a95033757980f848defe 0e1b9cdca6758f0a68968b06a18daf18067ab3e0 Joaquim Ataides <ti@promobrindes.com.br> 1791201978 -0300	commit (cherry-pick): fix(edge): endurece o gate pre-auth do evolution-webhook contra abuso de instanceName (TRA-002)

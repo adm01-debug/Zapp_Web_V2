@@ -1,0 +1,17 @@
+fix(edge): auto-tag limpa etiquetas de IA antigas quando a classificação nova não traz tags (R2-API-033)
+
+O handler só chamava replace_ai_conversation_tags quando tagPayload.length > 0.
+Com classificação VÁLIDA de tags vazias (tags: [] ou todas recusadas pelo
+contrato/vazias após sanitização), a RPC era pulada e as etiquetas de IA
+ANTIGAS ficavam no contato — o registro passava a mentir sobre a classificação
+atual.
+
+A RPC já tem a semântica explícita de que array vazio LIMPA as etiquetas de IA
+('Resultado vazio tem semântica explícita: LIMPA as etiquetas de IA'), então a
+chamada passa a ser feita sempre que há classificação válida para o contato. O
+caminho sem conversa (nenhuma classificação a gravar) segue intocado — não apaga
+etiqueta por engano.
+
+Teste chama o handler REAL (handleAiAutoTag) com Request real e confere status,
+corpo e efeito no banco (a RPC chamada): vermelho antes (RPC não chamada com
+tags vazias), verde depois; +1 caso de não regressão com tags, +1 de falha 502.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305172 -0300	branch: Created from dia/2026-10-06
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 549577614bba972d359585a7e2d775afaed650f6 Joaquim Ataides <ti@promobrindes.com.br> 1791305300 -0300	commit (cherry-pick): fix(ai-audio): classificador de audio-meme passa a ouvir o som (IA-131)
+549577614bba972d359585a7e2d775afaed650f6 c648f6c43a70d69f8ca1bb94aeea8a77c130b7dc Joaquim Ataides <ti@promobrindes.com.br> 1791305304 -0300	cherry-pick: fix(ai-audio): limita streaming e cobre leitura no timeout
+c648f6c43a70d69f8ca1bb94aeea8a77c130b7dc ff94f552503470d5f4faa347fb37171514379d6f Joaquim Ataides <ti@promobrindes.com.br> 1791305434 -0300	commit: fix(ai-audio): nao aguarda o cancel() do corpo grande (IA-131)

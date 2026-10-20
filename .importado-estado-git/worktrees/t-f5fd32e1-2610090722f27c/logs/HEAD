@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541375 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541376 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b b15dc450e3a2fc619db3cf99f45452c8c7bc2181 Joaquim Ataides <ti@promobrindes.com.br> 1791541403 -0300	cherry-pick: fix(components): tirar o runtime de animacao JS do caminho inicial (SL-103A)
+b15dc450e3a2fc619db3cf99f45452c8c7bc2181 07156807476e271028dff009b831139c1c581494 Joaquim Ataides <ti@promobrindes.com.br> 1791541564 -0300	commit: fix(components): restaura comparacao exata da rota e transicao de box-shadow (SL-103A refazer 1)
+07156807476e271028dff009b831139c1c581494 db9f3971793611d220391c97e38529e835770310 Joaquim Ataides <ti@promobrindes.com.br> 1791541583 -0300	commit: docs(components): comentario do card sem citar o nome do runtime antigo (SL-103A refazer 1)

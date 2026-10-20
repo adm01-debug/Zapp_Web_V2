@@ -1,0 +1,1 @@
+fix(seguranca): URL do Supabase vem do config, nunca de VITE_SUPABASE_URL (SEC-FE-01)

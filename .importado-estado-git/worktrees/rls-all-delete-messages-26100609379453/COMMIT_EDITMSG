@@ -1,0 +1,10 @@
+test(rls): validar DELETE de messages em policies ALL
+
+Fecha a brecha da recusa de t_dfdc1a7c: a validacao de messages nao
+cobria DELETE, entao uma policy FOR ALL podia abrir DELETE sem o
+predicado contratado. deleteSemContrato exige, para toda policy que
+cobre DELETE (FOR ALL conta, pela semantica do Postgres), o predicado
+de visibilidade — e aceita a ausencia total de cobertura, que e o
+contrato vigente. Describe regressivo prova que FOR ALL USING (true)
+cobre DELETE, nao escapa da exigencia e so passa com o predicado
+contratado.

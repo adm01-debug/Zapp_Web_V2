@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791227274 -0300	branch: Created from dia/2026-10-05
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 04dea9adb5fccc2e0c6af36c39538515b3deb618 Joaquim Ataides <ti@promobrindes.com.br> 1791227289 -0300	cherry-pick: fix(arquivos): invalida contagens da aba após exclusão de mídia (#144)
+04dea9adb5fccc2e0c6af36c39538515b3deb618 a31196b604d5229c81a0d35f20df4523c89a6250 Joaquim Ataides <ti@promobrindes.com.br> 1791227389 -0300	commit: fix(arquivos): invalida contagens só quando o universo de mídia muda; erro vira indisponível (#144)

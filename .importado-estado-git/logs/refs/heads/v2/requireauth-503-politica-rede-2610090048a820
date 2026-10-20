@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517713 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 ddd46f2ac0d83d13191f40273fd1442a0efce89a Joaquim Ataides <ti@promobrindes.com.br> 1791517732 -0300	cherry-pick: feat(auth): aplica política de rede no requireAuth das Edges (R2-AUTH-022)
+ddd46f2ac0d83d13191f40273fd1442a0efce89a f524f574465af4b4b257c84157afa90c1b2d8c35 Joaquim Ataides <ti@promobrindes.com.br> 1791517732 -0300	cherry-pick: fix(auth): requireAuth devolve 503 quando o client de política não é criado
+f524f574465af4b4b257c84157afa90c1b2d8c35 7e40b909658212ca6c94ddd0a3499ae3b2ee0ea5 Joaquim Ataides <ti@promobrindes.com.br> 1791517732 -0300	cherry-pick: test(edge): stubs de handler respondem à política de rede do requireAuth
+7e40b909658212ca6c94ddd0a3499ae3b2ee0ea5 0b4d2624933e18993892226573b38d325f4c443c Joaquim Ataides <ti@promobrindes.com.br> 1791555808 -0300	rebase (finish): refs/heads/v2/requireauth-503-politica-rede-2610090048a820 onto 1098da5a935929b171674a99b425d6b515fd6072
+0b4d2624933e18993892226573b38d325f4c443c f23a5eeea7e74f489807908029b5d2b6a45e8274 Joaquim Ataides <ti@promobrindes.com.br> 1791555919 -0300	commit (amend): test(edge): stubs de handler respondem à política de rede do requireAuth

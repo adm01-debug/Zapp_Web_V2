@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8139cc3eca6311580cbaba02cbfece7a53ede90b Joaquim Ataides <ti@promobrindes.com.br> 1791282024 -0300	
+8139cc3eca6311580cbaba02cbfece7a53ede90b 8139cc3eca6311580cbaba02cbfece7a53ede90b Joaquim Ataides <ti@promobrindes.com.br> 1791282025 -0300	reset: moving to HEAD
+8139cc3eca6311580cbaba02cbfece7a53ede90b 486777d5b1cd9c41b278e562ab2e5db299efc951 Joaquim Ataides <ti@promobrindes.com.br> 1791282694 -0300	commit: fix(reconciliation): atestar HEAD e hashes das fontes nos probes transversal, other e volume

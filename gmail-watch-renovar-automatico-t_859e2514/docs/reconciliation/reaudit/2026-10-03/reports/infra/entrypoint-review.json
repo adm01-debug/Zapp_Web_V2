@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "COMPLETED",
+  "files": [
+    {
+      "path": ".husky/pre-commit",
+      "sha256": "754454e98e295163fa10ce8ddfb2068b748ad8efa6ebcf4dacff23e230911299",
+      "git_blob_sha": "df7360632138862db5b5fd8f07f5b8f4f09704cc",
+      "bytes": 337,
+      "lines": 5,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "entrypoint_support",
+      "review_basis": "Invoca lint-ratchet --staged; status da única chamada Node é status do hook. Gate incremental por dívida nova, não lint integral. Nenhuma execução; consumidor do runner já revisado.",
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "path": ".husky/pre-push",
+      "sha256": "ba69f16f206c705ccd7416920530df415a12833d5a8319d99c2f7a3b8d06ffbc",
+      "git_blob_sha": "81a939d7f439e6b1a7a521a3de0d2773e77652c0",
+      "bytes": 509,
+      "lines": 10,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "entrypoint_support",
+      "review_basis": "set-e propaga erro dos runners typecheck, lint e migration-drift em sequência. Não corrige falsa aceitação dentro de typecheck (INF008); comentário offline supõe ambiente sem DESTINO_URL, o hook não limpa a variável. Não foi invocado nem se inferiu consulta de banco nesta revisão.",
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "path": "index.html",
+      "sha256": "8a62d9ad8c361901b0d2e23520ce9843a8024293d1b0395b5f6037ba56585438",
+      "git_blob_sha": "c6ca9c3b5a9dd344030e7f0d7dc8d1d8bac47ada",
+      "bytes": 5949,
+      "lines": 108,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          108
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "entrypoint_support",
+      "review_basis": "Entry HTML integral: idioma/viewport/fonts; bootstrap theme cachev6/v5 e clamp raio; tratamento de exceção; remoção de flag session; watchdog até primeiro filho root, erros window/unhandledrejection e fallback HTML; mount src/main.tsx. Sem DOM/render/rede. O fallback concatena mensagens em innerHTML, mas não foi estabelecido dado adversário alcançável durante bootstrap: observação, não novo XSS. Tema HC antecipado está dentro do cachev6; componentes de tema posteriores não foram confundidos com bootstrap. Prazo8s e override já explicitam limite cold-start, sem novo ID genérico.",
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "path": "public/manifest.json",
+      "sha256": "7a17c95ff76aaa2c57e6d53fa0884130dca86f9e4137dd3ac748a237139ab2dc",
+      "git_blob_sha": "bf0a7ab85f202f993211f6c812e80fb8f8410bfe",
+      "bytes": 1139,
+      "lines": 46,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "entrypoint_support",
+      "review_basis": "Manifest declarativo integral: start/scope/display standalone, idioma, ícones any/maskable, sem shortcuts/handlers. Não há link manifest neste index.html; PWA/SW desabilitado é decisão preservada. Não equivale a instalação ativa nem nova falha.",
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "path": "public/version.json",
+      "sha256": "7959d4270003a19c3231192b36b4c5317a549265748f38e4b1fe5e31f72de708",
+      "git_blob_sha": "2714f4ef09322c30d28efe273829fbaa9c56416b",
+      "bytes": 217,
+      "lines": 8,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "entrypoint_support",
+      "review_basis": "Metadados estáticos integrais de versão, ambiente, endpoints públicos e data histórica. Não é atestado de deploy recente; sem segredo ou consulta de endpoint. Nenhum ID por metadado estático sem consumidor que prometa frescor.",
+      "execution": "NOT_EXECUTED"
+    }
+  ],
+  "completed_files": 5,
+  "completed_lines": 177,
+  "new_findings": 0,
+  "product_executions": 0
+}

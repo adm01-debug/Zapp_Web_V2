@@ -1,0 +1,11 @@
+fix(team-chat): trata falha da busca como erro real e usa motion-safe no spinner (SL-082)
+
+Refazer 1. O hook gravava `results: []` quando a RPC `search_team_messages`
+falhava: o mesmo estado de "a busca não achou nada", então a tela anunciava
+"Nenhuma mensagem encontrada" para um servidor fora do ar. A falha passa a ser
+estado próprio (`searchError`), preso ao termo que a produziu, e o painel mostra
+o aviso em vez do resultado vazio. O spinner da busca vira
+`motion-safe:animate-spin`, como manda a regra permanente de movimento.
+
+Os testes provam os dois pontos: a RPC devolvendo `error` não vira lista vazia
+(hook) e a tela mostra o aviso de falha (componente).

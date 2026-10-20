@@ -1,0 +1,3 @@
+test(team-chat): provar o escritor do mute pelo import consumido pelo painel (#162)
+
+O teste importava o hook direto de ../useTeamChatMutations, mas o painel consome o re-export de @/hooks/chat/useTeamChat. Passa a usar o mesmo specifier do painel e ganha um tripwire que deixa o teste vermelho se o import voltar ao modulo de implementacao.

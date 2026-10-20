@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320284 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 29b0a389a322eed0b5d0097c376f367d4755ef4d Joaquim Ataides <ti@promobrindes.com.br> 1791321688 -0300	commit: fix(sla): periodos do SLA correspondem aos rotulos Todos e 7d (#459)

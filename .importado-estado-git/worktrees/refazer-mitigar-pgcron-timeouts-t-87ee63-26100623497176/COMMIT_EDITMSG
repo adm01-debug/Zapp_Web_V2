@@ -1,0 +1,1 @@
+fix(banco): pre-valida jobs do pg_cron antes da mitigacao

@@ -1,0 +1,17 @@
+fix(multiplix): draft.* resolve profiles.id, colunas reais e destinatarios no servidor (MX08)
+
+O draft.* da edge multiplix-dispatch misturava identidades (auth.uid onde
+created_by guarda profiles.id), lia colunas inexistentes (template/
+recipient_count -> 42703/502) e confiava em `recipients` prontos do
+navegador com destino/elegibilidade forjaveis.
+
+- draft.create recebe company_ids/contact_ids e resolve destino +
+  elegibilidade no servidor via ponte Singu com escopo assinado (mesma via
+  do create_draft da edge irma multiplix-audience); p_created_by recebe o
+  profiles.id resolvido do JWT.
+- draft.get/update/discard e a guarda de blocks.* usam o resolveOwnerScope
+  canonico do index.ts (dono por profiles.id OU multiplix.dispatch.manage_all),
+  agora unico para toda a edge — listing/lifecycle/inspect delegam a ele.
+- Teste draft.test.ts prova o achado (vermelho antes, verde depois) e a
+  idempotencia por client_request_id; contrato write-path pinava o bug e foi
+  atualizado; manifesto de deploy regerado.

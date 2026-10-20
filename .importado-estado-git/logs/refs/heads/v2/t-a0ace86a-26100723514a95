@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 b6ff185f72fab85c050ee66812f03072ff4f0726 Joaquim Ataides <ti@promobrindes.com.br> 1791427901 -0300	branch: Created from dia/2026-10-07
+b6ff185f72fab85c050ee66812f03072ff4f0726 7d7acf9e8381ca4eb0adda3b5704303e55438836 Joaquim Ataides <ti@promobrindes.com.br> 1791427940 -0300	cherry-pick: test(e2e): varredura de navegação dos 42 módulos no desktop e no celular (Y09)
+7d7acf9e8381ca4eb0adda3b5704303e55438836 57fe91fcee27289d3d3a942ae3455ee5fbdf08d5 Joaquim Ataides <ti@promobrindes.com.br> 1791427940 -0300	cherry-pick: test(e2e): separa lacuna do conjunto local de defeito de produto na varredura de módulos
+57fe91fcee27289d3d3a942ae3455ee5fbdf08d5 9f41251ff964c2e47e33e5b7cf59731a1ca20fe1 worker <worker@promobrindes.local> 1791428558 -0300	commit: test(e2e): remove a tolerancia de curinga e aquece o runtime de Edge do conjunto local
+9f41251ff964c2e47e33e5b7cf59731a1ca20fe1 b3856f0e84f61a61be012247bf55c7c3acd2269d worker <worker@promobrindes.local> 1791428942 -0300	commit: test(e2e): decide a entrada pelo desfecho (shell ou tela de login)
+b3856f0e84f61a61be012247bf55c7c3acd2269d e75f3b81c9d10e7e841cd28035f6c6723ece5aca worker <worker@promobrindes.local> 1791429594 -0300	commit: test(e2e): so aceita a tela de login quando ela se sustenta
+e75f3b81c9d10e7e841cd28035f6c6723ece5aca 47698be3672ebb53e95806f9ca119d99b086e797 worker <worker@promobrindes.local> 1791430355 -0300	commit: test(e2e): 'CRM 360°' e admin-only e sai da varredura com ausencia conferida
+47698be3672ebb53e95806f9ca119d99b086e797 6e5244d1d5313a868a7a0103852d0f3f4d5d6678 worker <worker@promobrindes.local> 1791430973 -0300	commit: test(e2e): 'Admin' tambem e admin-only e sai da varredura com ausencia conferida
+6e5244d1d5313a868a7a0103852d0f3f4d5d6678 bfaa7409b682635668fd72367b3371f1c07dda65 worker <worker@promobrindes.local> 1791432713 -0300	commit: test(e2e): abre a secao pelo primeiro item DO MAPA

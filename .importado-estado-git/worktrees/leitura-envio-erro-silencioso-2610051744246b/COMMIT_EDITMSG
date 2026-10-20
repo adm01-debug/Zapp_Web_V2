@@ -1,0 +1,20 @@
+fix(team-chat): não perder leitura nem rascunho após erro silencioso (#165)
+
+TC-010: dois caminhos engoliam falha de escrita e perdiam estado do usuário.
+
+- useTeamMessages: a chave ia para `markedRef` ANTES do await e o resultado dos
+  dois writes era descartado (`.then()` sem callback). Um erro de rede/RLS no
+  upsert do recibo deixava a conversa "lida" só na tela — sem recibo no banco,
+  sem log e sem nova tentativa. Agora a marcação só avança depois que o upsert
+  dos recibos E o `last_read_at` confirmam; com erro, a chave continua livre e o
+  próximo ciclo tenta gravar de novo (com log), e o cancelamento na troca de
+  conversa não promove a marcação de uma chave que já não vale.
+
+- useTeamChatPanel.handleSend: `text` e `replyTo` eram limpos antes do await e
+  nada voltava no catch — falha de envio apagava o rascunho. Agora o texto e a
+  resposta são devolvidos no erro, sem sobrescrever o que o usuário digitou
+  enquanto o envio estava em voo.
+
+Testes (vermelho antes, verde depois):
+- src/hooks/team-chat/__tests__/useTeamMessages.read-state.test.tsx
+- src/components/team-chat/__tests__/useTeamChatPanel.send-draft.test.tsx

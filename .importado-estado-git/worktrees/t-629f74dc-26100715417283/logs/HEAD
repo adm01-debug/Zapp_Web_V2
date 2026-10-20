@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 6e7686335cf993e352f484133b0ea9826f94e806 Joaquim Ataides <ti@promobrindes.com.br> 1791398499 -0300	
+6e7686335cf993e352f484133b0ea9826f94e806 6e7686335cf993e352f484133b0ea9826f94e806 Joaquim Ataides <ti@promobrindes.com.br> 1791398500 -0300	reset: moving to HEAD
+6e7686335cf993e352f484133b0ea9826f94e806 c1eff752eee5e8c66d611c3d4417978745a2d695 Joaquim Ataides <ti@promobrindes.com.br> 1791398996 -0300	commit: feat(journey): modelo de eventos, categorias e cores do histórico
+c1eff752eee5e8c66d611c3d4417978745a2d695 9d3022f73cefea309f58f7debee66b98842d1afc Joaquim Ataides <ti@promobrindes.com.br> 1791399251 -0300	commit: test(journey): travar o mapa de cores por categoria (trilho e selo do mesmo token)

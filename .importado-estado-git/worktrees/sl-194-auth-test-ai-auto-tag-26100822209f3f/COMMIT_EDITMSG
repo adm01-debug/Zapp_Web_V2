@@ -1,0 +1,16 @@
+fix(ia): auth_test.ts de ai-auto-tag fora do CI (SL-194)
+
+O arquivo se chamava `auth_test.ts`: o passo do CI
+(`deno test ... $(git ls-files 'supabase/functions/**/*.test.ts')`) e a guarda
+E48 (`scripts/ci/check-test-inventory.mjs`, que filtra `.test.ts`) nao o
+coletavam. Pior: o corpo so provava 401 contra `SUPABASE_FUNCTIONS_URL`
+(`ignore: !BASE`), entao nenhuma asserção era executada em lugar nenhum.
+
+Passa a `auth.test.ts` com contrato OFFLINE do portao de autenticacao, chamando
+o handler real (`handleAiAutoTag`) sem rede, banco ou env: 401 sem cabecalho
+Authorization (mensagem do `requireAuth`), 401 sem `Bearer`, 401 com `Bearer`
+malformado (falha fechada, nunca 5xx) e um controle que prova que esse 401 vem
+do portao. As duas provas contra URL externa saem do arquivo: o passo do CI so
+libera rede para 127.0.0.1 e a regra R1 proibe bater em producao.
+
+Nenhum arquivo de producao tocado.

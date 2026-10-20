@@ -1,0 +1,1 @@
+-- pg_dump vazio para email_attachments

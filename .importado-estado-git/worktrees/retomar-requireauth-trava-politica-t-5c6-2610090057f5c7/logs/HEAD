@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 Joaquim Ataides <ti@promobrindes.com.br> 1791518239 -0300	
+0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 Joaquim Ataides <ti@promobrindes.com.br> 1791518241 -0300	reset: moving to HEAD
+0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 12effd499010efa3b82d7a9afc16b0784799497e Joaquim Ataides <ti@promobrindes.com.br> 1791518272 -0300	cherry-pick: feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)
+12effd499010efa3b82d7a9afc16b0784799497e bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791519572 -0300	rebase (start): checkout dia/2026-10-09
+bc539491e56a91557290e0b15c0e561646c7e553 276f06df52a28a32f7058ecfcd6b7c6e4b4c765d Joaquim Ataides <ti@promobrindes.com.br> 1791519572 -0300	rebase (pick): feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)
+276f06df52a28a32f7058ecfcd6b7c6e4b4c765d 276f06df52a28a32f7058ecfcd6b7c6e4b4c765d Joaquim Ataides <ti@promobrindes.com.br> 1791519572 -0300	rebase (finish): returning to refs/heads/v2/retomar-requireauth-trava-politica-t-5c6-2610090057f5c7

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311826 -0300	
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311827 -0300	reset: moving to HEAD
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 aeb03ef9c9f5ee1d75ac2ba53442ecf3474dc641 Joaquim Ataides <ti@promobrindes.com.br> 1791311861 -0300	commit (cherry-pick): fix(email): lista de threads filtra e pagina no servidor (OTH-005)
+aeb03ef9c9f5ee1d75ac2ba53442ecf3474dc641 9b013b63cb09a1d60b46049c9f694adab6470aa8 Joaquim Ataides <ti@promobrindes.com.br> 1791314562 -0300	commit: fix(email): corrige regressões da lista de threads paginada (#145)

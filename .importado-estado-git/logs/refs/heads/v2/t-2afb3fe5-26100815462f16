@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485218 -0300	branch: Created from dia/2026-10-08
+72ad19958df7735cd29bad24dd38f66265c47f3b 25427315049009a43641253e843547780c96bbae Joaquim Ataides <ti@promobrindes.com.br> 1791485304 -0300	commit (cherry-pick): fix(catalog): favorito deixa de converter preço e estoque desconhecidos em zero

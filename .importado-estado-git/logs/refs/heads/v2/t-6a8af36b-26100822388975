@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791509920 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 2b44916557922c9cbdb2fdf98fd483d4fd0d6c47 Joaquim Ataides <ti@promobrindes.com.br> 1791510496 -0300	commit: refactor(inbox): filtro de etiquetas da inbox le pela camada de servicos (SL-225)

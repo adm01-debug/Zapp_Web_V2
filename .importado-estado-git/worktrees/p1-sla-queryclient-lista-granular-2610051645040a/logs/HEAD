@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791229539 -0300	
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791229539 -0300	reset: moving to HEAD
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 978e02733c61ea6d4f2d4d7fda0cdda744c93818 Joaquim Ataides <ti@promobrindes.com.br> 1791229550 -0300	cherry-pick: fix(inbox): lista de conversas usa prazo granular de SLA por conversa (R2-SLA-003)
+978e02733c61ea6d4f2d4d7fda0cdda744c93818 fa2d1ba9192e071c04fe32aaa1537db36fdfce44 Joaquim Ataides <ti@promobrindes.com.br> 1791230260 -0300	commit: fix(inbox): prove QueryClient ao badge de SLA da lista granular (R2-SLA-003)

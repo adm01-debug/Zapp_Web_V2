@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200078 -0300	
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200079 -0300	reset: moving to HEAD
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f d83ec6beb7851eff50e0b3688e9f8e23c15603b9 Joaquim Ataides <ti@promobrindes.com.br> 1791200094 -0300	cherry-pick: fix(auth): bloqueia login de perfil inativo com lookup robusto (R2-AUTH-004)
+d83ec6beb7851eff50e0b3688e9f8e23c15603b9 e4041c04c2e2aca0928179a31bdaba1a5497d17c Joaquim Ataides <ti@promobrindes.com.br> 1791200617 -0300	commit: fix(auth): ramo de perfil inativo indistinguível de senha errada e `*` barrado (R2-AUTH-004)
+e4041c04c2e2aca0928179a31bdaba1a5497d17c df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201103 -0300	reset: moving to dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 6a352f566df54c1ba5932f1ad8b98d6c1ae8f928 Joaquim Ataides <ti@promobrindes.com.br> 1791201103 -0300	commit: fix(auth): bloquear login de perfil inativo com resposta indistinguível (R2-AUTH-004)
+6a352f566df54c1ba5932f1ad8b98d6c1ae8f928 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201135 -0300	reset: moving to df5cd607f
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 d2c250d3dd43b7f1ec3717bd2d86921e704712d4 Joaquim Ataides <ti@promobrindes.com.br> 1791201140 -0300	commit: fix(auth): bloquear login de perfil inativo com resposta indistinguível (R2-AUTH-004)

@@ -1,0 +1,5 @@
+fix(webhooks): autenticidade fail-closed nos webhooks públicos (R2-API-021)
+
+Gmail verifica OIDC de verdade (RS256/JWKS, iss, aud, exp, email); WhatsApp
+rejeita sem x-hub-signature-256 válido; Evolution sai do default shadow para
+enforcement por instanceToken resolvido por instância.

@@ -1,0 +1,111 @@
++ '[' 1 = 1 ']'
++ '[' -e /home/joaquim_ataides/.local/libexec/hermes-guard/CONGELADO ']'
++ '[' '!' -e /home/joaquim_ataides/.local/libexec/hermes-guard/MODO_V2 ']'
++ set -euo pipefail
++ GIT=/usr/bin/git
++ GH=/home/joaquim_ataides/.local/bin/gh
++ TITLE='test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9) — E81 no empilhamento'
++ BODYFILE=.tmp/relato.md
++ case "$TITLE" in
++ '[' -f .hermes-tarefa ']'
+++ sed -n 's/^BRANCH=//p' .hermes-tarefa
+++ head -1
++ BRANCH=v2/retomar-e2e-skins-espelho-ci-26101320012e41
+++ sed -n 's/^BASE=//p' .hermes-tarefa
+++ head -1
++ BASE=main
++ '[' -n v2/retomar-e2e-skins-espelho-ci-26101320012e41 ']'
++ '[' -n main ']'
++ grep -qx MODO=V2 .hermes-tarefa
+++ sed -n 's/^BASE_DIA=//p' .hermes-tarefa
+++ head -1
++ DIA=dia/2026-10-13
+++ sed -n 's/^ID=//p' .hermes-tarefa
+++ head -1
++ ID=26101320012e41
++ '[' -n dia/2026-10-13 ']'
++ grep -Eq '^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9._/-]+\))?!?: .{8,}$'
++ echo 'test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9) — E81 no empilhamento'
+++ /usr/bin/git branch --show-current
++ CUR=v2/retomar-e2e-skins-espelho-ci-26101320012e41
++ '[' v2/retomar-e2e-skins-espelho-ci-26101320012e41 = v2/retomar-e2e-skins-espelho-ci-26101320012e41 ']'
+++ /usr/bin/git status --porcelain
++ '[' -n '' ']'
+++ /usr/bin/git log --oneline dia/2026-10-13..HEAD
++ '[' -n '66bb92b3ba chore: artefatos da fabrica (.tmp) fora do commit
+7fddc087cd docs(e2e): relato do empilhamento das skins e do E81
+8194eeaa8f fix(e2e): chromium-skins deslogado nao declara retries (E81)
+9165c37704 test(e2e): adapta skins-e2e aos recursos novos do dia (contagem de e-mail e ponto âmbar)
+0611bf5ea4 test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)' ']'
++ IFS=
++ read -r m
+++ /usr/bin/git diff --name-only --diff-filter=AR dia/2026-10-13...HEAD
++ case "$m" in
++ continue
++ IFS=
++ read -r m
++ IFS=
++ read -r m
+++ /usr/bin/git log -m --name-only --format= dia/2026-10-13..HEAD
+++ sort -u
++ case "$(basename "$m")" in
+++ basename .tmp/relato.md
++ IFS=
++ read -r m
++ case "$(basename "$m")" in
+++ basename e2e/skins-e2e.spec.ts
++ IFS=
++ read -r m
++ case "$(basename "$m")" in
+++ basename playwright.config.ts
++ IFS=
++ read -r m
++ grep -E '^\+'
++ /usr/bin/git log -p --text --no-textconv --no-ext-diff -m --format= dia/2026-10-13..HEAD
++ grep -qE 'rk_live_[A-Za-z0-9]{16,}|xox[baprs]-[A-Za-z0-9-]{20,}|eyJhbGciOi[A-Za-z0-9_-]{30,}|tnnnlkbymytvtqngbbqh|eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sk_live_[A-Za-z0-9]{16,}|AIza[0-9A-Za-z_-]{35}|postgres(ql)?://[^:@/ ]+:[^@/ ]{6,}@|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|sb_(secret|publishable)_[A-Za-z0-9_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|tnnnlkbymytvtqngbbqh\.supabase\.co'
+++ /usr/bin/git diff --text --no-textconv --no-ext-diff --stat --patch --unified=3 dia/2026-10-13...HEAD -- . ':(exclude,icase,glob)**/*.png' ':(exclude,icase,glob)**/*.jpg' ':(exclude,icase,glob)**/*.jpeg' ':(exclude,icase,glob)**/*.webp' ':(exclude,icase,glob)**/*.gif' ':(exclude,icase,glob)**/*.ico' ':(exclude,icase,glob)**/*.avif' ':(exclude,icase,glob)**/*.woff' ':(exclude,icase,glob)**/*.woff2' ':(exclude,icase,glob)**/*.pdf'
+++ python3 -c 'import sys; t=sys.stdin.buffer.read().decode("utf-8", "replace"); print(sum(len(l)+1 for l in t.splitlines() if l.startswith("+") and not l.startswith("+++ ")))'
++ TAMD=37391
++ case "$TAMD" in
++ '[' 37391 -gt 90000 ']'
++ grep -q tnnnlkbymytvtqngbbqh .tmp/relato.md
+++ /usr/bin/git diff --name-only --diff-filter=AM dia/2026-10-13...HEAD -- 'supabase/migrations/*.sql'
++ /usr/bin/git ls-files -- .tmp .devin
++ grep -q .
++ mkdir -p .tmp
++ FATOS=.tmp/fatos-fechar.md
++ RELF=.tmp/relato-fechar.md
++ RELAG=.tmp/relato.md
+++ date '+%d/%m %H:%M'
++ echo '## FATOS MEDIDOS PELO FECHAR (13/10 20:41, gerados por máquina: valem mais que números escritos à mão)'
++ echo '```'
++ tail -n 30
++ /usr/bin/git diff --stat dia/2026-10-13...HEAD
++ echo '```'
+++ /usr/bin/git diff --name-only --diff-filter=AM dia/2026-10-13...HEAD
+++ grep -E '^(src|tests)/.*(\.(test|spec)\.(ts|tsx|mjs|js)|__tests__/.*\.(ts|tsx))$'
+++ true
++ TESTES_MUDADOS=
+++ /usr/bin/git diff --name-only --diff-filter=AMD dia/2026-10-13...HEAD
+++ grep -vE '(\.(test|spec)\.|__tests__/)'
+++ grep -E '^(src|supabase/functions)/'
+++ true
++ CODIGO_MUDADO=
++ '[' -n '' ']'
+++ '[' -n '' ']'
++ echo '- Nenhum arquivo de teste alterado neste cartão'
++ '[' -n '' ']'
++ HX='/mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/bin/hermes.exe'
+++ sed -n 's/^PROJETO=//p' .hermes-tarefa
+++ head -1
+++ tr A-Z_ a-z-
++ TB=zapp-web-v2
++ '[' -n t_8677da24 ']'
++ '[' -x '/mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/bin/hermes.exe' ']'
++ '[' '!' -s .tmp/cartao.md ']'
++ '[' -s .tmp/cartao.md ']'
++ '[' -f .tmp/relato.md ']'
+++ grep -oE 'EXATAMENTE .Especialista: [a-z]+' .tmp/cartao.md
+++ sed 's/.*Especialista: //'
+++ head -1
++ ESP=

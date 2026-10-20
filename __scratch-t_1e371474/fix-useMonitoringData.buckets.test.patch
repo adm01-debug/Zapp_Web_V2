@@ -1,0 +1,95 @@
+--- /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/monitoring-buckets-hook-2610130555f688/src/components/monitoring/__tests__/useMonitoringData.buckets.test.ts	2026-10-13 06:12:31.167047519 -0300
++++ /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/__scratch-t_1e371474/repo/src/components/monitoring/__tests__/useMonitoringData.buckets.test.ts	2026-10-14 22:39:40.796222296 -0300
+@@ -72,6 +72,20 @@
+   return Array.from({ length: n }, (_, i) => row(new Date(start + i * stepMs).toISOString(), incoming, outgoing));
+ };
+ 
++/** 9 linhas como o servidor devolve com p_from alinhado à grade: 8 baldes da
++ * janela + o farelo anterior a `since`. Valores distintos por posição provam
++ * que cada linha cai na barra certa (sem dobrar a barra 0). */
++const sparkRowsDistintos = (startIso: string, stepMs: number): BucketRow[] => {
++  const start = Date.parse(startIso);
++  return Array.from({ length: 9 }, (_, i) =>
++    row(new Date(start + i * stepMs).toISOString(), i, 0));
++};
++
++// Relógios FORA da hora cheia: é quando `since` não casa com a grade do
++// servidor e o mapa antigo dobrava a barra 0.
++const NOW_24H_OFF = new Date('2026-10-06T17:37:00.000Z'); // 14:37 SP
++const NOW_7D_OFF = new Date('2026-10-06T09:23:00.000Z'); // 06:23 SP
++
+ /** 1ª chamada da RPC = gráfico do período; 2ª = barras das sparklines. */
+ function setBuckets(graph: BucketRow[] | null, spark: BucketRow[] | null = []) {
+   let call = 0;
+@@ -133,27 +147,65 @@
+     expect(plotado(messageStats.hourlyData)).toBe(messageStats.total);
+   });
+ 
+-  it('24h: 24 baldes de hora cheia e soma real acima do teto de 1.000', async () => {
++  it('7d fora da hora cheia: p_from alinhado à grade de 21h e cada linha na sua barra', async () => {
++    vi.setSystemTime(NOW_7D_OFF);
++    // 06:23 SP não casa com a grade de 21h do servidor: o p_from do spark vai
++    // alinhado para 06:00 SP (09:00Z de 29/09) e o servidor devolve 9 linhas
++    // (8 baldes + o farelo anterior ao since).
++    const spark = sparkRowsDistintos('2026-09-29T09:00:00.000Z', 21 * 3600000);
++    setBuckets(rowsStep('2026-09-30T03:00:00.000Z', 7, 24 * 3600000, 2, 3), spark);
++
++    const { sparklines } = await fetchData('7d');
++
++    expect(h.rpcCalls[1].args).toEqual({
++      p_from: '2026-09-29T09:00:00.000Z', p_to: '2026-10-06T09:23:00.000Z', p_bucket: '75600 seconds',
++    });
++    // Linha i na barra i; o farelo (linha 8) soma na última barra.
++    expect(sparklines.messages).toEqual([0, 1, 2, 3, 4, 5, 6, 15]);
++    expect(h.tables).not.toContain('messages');
++  });
++
++  it('7d acima de 1.000 mensagens: total e curva somem a janela inteira (2.100)', async () => {
++    vi.setSystemTime(NOW_7D_OFF);
++    // 7 baldes x 300 mensagens = 2.100: acima do teto de 1.000 linhas do
++    // PostgREST — a soma precisa ser o valor real, não o cortado.
++    setBuckets(rowsStep('2026-09-30T03:00:00.000Z', 7, 24 * 3600000, 150, 150));
++
++    const { messageStats } = await fetchData('7d');
++
++    expect(messageStats).toMatchObject({ incoming: 1050, outgoing: 1050, total: 2100 });
++    expect(plotado(messageStats.hourlyData)).toBe(2100);
++    expect(h.tables).not.toContain('messages');
++  });
++
++  it('24h fora da hora cheia: p_from alinhado à grade e cada linha na sua barra', async () => {
++    vi.setSystemTime(NOW_24H_OFF);
+     // 24 baldes x 200 mensagens = 4.800: o hook nunca vê 4.800 linhas, só 24.
++    // 14:37 SP não casa com a grade de 3h do servidor (12h/15h/...): o p_from
++    // do spark vai alinhado para 12:00 SP (15:00Z) e o servidor devolve 9
++    // linhas (8 baldes + o farelo anterior ao since).
+     const graph = rowsStep('2026-10-05T18:00:00.000Z', 24, 3600000, 100, 100);
+-    const spark = rowsStep('2026-10-05T17:00:00.000Z', 8, 3 * 3600000, 50, 50);
++    const spark = sparkRowsDistintos('2026-10-05T15:00:00.000Z', 3 * 3600000);
+     setBuckets(graph, spark);
+ 
+     const { messageStats, sparklines } = await fetchData('24h');
+ 
+     expect(h.rpcCalls[0].args).toEqual({
+-      p_from: '2026-10-05T18:00:00.000Z', p_to: '2026-10-06T17:00:00.000Z', p_bucket: '3600 seconds',
++      p_from: '2026-10-05T18:00:00.000Z', p_to: '2026-10-06T17:37:00.000Z', p_bucket: '3600 seconds',
+     });
+-    // sparklines usam a janela deslizante do período (now-24h), em 8 barras de 3h.
++    // O p_from do spark desce à grade do servidor em vez de since.
+     expect(h.rpcCalls[1].args).toEqual({
+-      p_from: '2026-10-05T17:00:00.000Z', p_to: '2026-10-06T17:00:00.000Z', p_bucket: '10800 seconds',
++      p_from: '2026-10-05T15:00:00.000Z', p_to: '2026-10-06T17:37:00.000Z', p_bucket: '10800 seconds',
+     });
+     expect(messageStats.hourlyData).toHaveLength(24);
+     expect(messageStats.hourlyData[0].hour).toBe('05/10 15h');
+     expect(messageStats.hourlyData[23].hour).toBe('06/10 14h');
+     expect(messageStats).toMatchObject({ incoming: 2400, outgoing: 2400, total: 4800 });
+     expect(plotado(messageStats.hourlyData)).toBe(4800);
+-    expect(sparklines.messages).toEqual([100, 100, 100, 100, 100, 100, 100, 100]);
++    // Mapeamento posicional: linha i na barra i; o farelo (linha 8) soma na
++    // última barra em vez de dobrar a primeira. Sem a correção, a barra 0
++    // somava as linhas 0+1 e tudo deslocava ([1,2,...,8]).
++    expect(sparklines.messages).toEqual([0, 1, 2, 3, 4, 5, 6, 15]);
+     // Nenhuma consulta de mensagem crua: o teto de 1.000 linhas do PostgREST não
+     // tem por onde cortar a curva nem o total.
+     expect(h.tables).not.toContain('messages');

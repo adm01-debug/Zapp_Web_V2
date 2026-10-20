@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { TeamConversation } from '@/hooks/chat/useTeamChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,78 @@ import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { TeamMessageItem } from './TeamMessageItem';
 import { useTeamChatPanel } from './useTeamChatPanel';
+import { useAcceptDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
 
 /* eslint-disable react-hooks/refs, react-hooks/immutability */
+
+/**
+ * F79 — motivos tipados da RPC `accept_department_invite` (a RPC responde
+ * `ok: false` com o motivo, que o hook converte em mensagem de erro).
+ */
+const JOIN_ERROR_MESSAGES: Record<string, string> = {
+  invalid_or_expired_code: 'Código inválido ou expirado.',
+  invite_exhausted: 'Este convite já atingiu o limite de usos.',
+  not_authenticated: 'Sessão expirada. Entre novamente para usar o código.',
+};
+
+function joinErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+  return JOIN_ERROR_MESSAGES[message] ?? 'Não foi possível validar o código. Tente novamente.';
+}
+
+/**
+ * F79 — entrada por código para quem está fora do departamento. A submissão passa
+ * pela função do hook `useAcceptDepartmentInvite` (RPC `accept_department_invite`),
+ * que move o perfil e invalida o cache; a tela não escreve em `profiles`.
+ *
+ * Este bloco é um componente próprio de propósito: o hook lê o cache do
+ * react-query, e o painel também é montado onde não há provider (o teste de wiring
+ * do Panel renderiza um canal comum, sem provider e sem convite).
+ */
+function DepartmentJoinByCode() {
+  const acceptInvite = useAcceptDepartmentInvite();
+  const [code, setCode] = useState('');
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    acceptInvite.mutate(trimmed);
+  };
+
+  if (acceptInvite.isSuccess) {
+    return (
+      <p role="status" className="text-sm font-medium text-foreground">
+        Código aceito. Você entrou no departamento.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+      <form className="flex w-full items-center gap-2" onSubmit={handleSubmit}>
+        <Input
+          value={code}
+          onChange={e => setCode(e.target.value)}
+          placeholder="Ex.: AB12CD34"
+          aria-label="Código do convite"
+          name="invite-code"
+          autoComplete="off"
+          spellCheck={false}
+          className="h-9 font-mono uppercase tracking-widest"
+          disabled={acceptInvite.isPending}
+        />
+        <Button type="submit" size="sm" className="shrink-0" disabled={acceptInvite.isPending || code.trim().length === 0}>
+          {acceptInvite.isPending && <Loader2 className="w-3.5 h-3.5 mr-1.5 motion-safe:animate-spin" aria-hidden />}
+          Entrar
+        </Button>
+      </form>
+      {acceptInvite.isError && (
+        <p role="alert" className="text-xs text-destructive">{joinErrorMessage(acceptInvite.error)}</p>
+      )}
+    </div>
+  );
+}
 
 interface Props { conversation: TeamConversation; onBack: () => void; onToggleDetails?: () => void; showDetails?: boolean; }
 
@@ -24,6 +94,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   const convAny = conversation as unknown as Record<string, unknown>;
   const isDeptChannel = !!(convAny.department_id);
   const profileDeptId = (s.profile as Record<string, unknown>)?.department_id as string | null | undefined;
+  // E68/F79: o canal de departamento é fechado para quem está fora, mas o
+  // caminho de entrada é o código do convite — quem não é membro vê o fluxo
+  // "Entrar via código" abaixo, não só o aviso.
   const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
 
   // E73: render performance monitoring (dev only)
@@ -88,9 +161,10 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           <div className="text-center">
             <h3 className="text-base font-semibold text-foreground">Conteúdo Protegido</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-              Este canal é exclusivo para membros do departamento. Solicite um convite ao administrador.
+              Este canal é exclusivo para membros do departamento. Informe o código do convite para entrar.
             </p>
           </div>
+          <DepartmentJoinByCode />
         </div>
       </div>
     );

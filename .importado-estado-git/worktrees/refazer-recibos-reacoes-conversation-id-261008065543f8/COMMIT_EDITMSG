@@ -1,0 +1,14 @@
+fix(team-chat): nao concede EXECUTE a papel de cliente nas funcoes trigger de recibos e reacoes
+
+A versao anterior desta migration dava GRANT EXECUTE para authenticated em
+team_receipts_fill_conversation_id() e team_reactions_force_conversation_id(),
+que so rodam por trigger. Trigger nao depende de EXECUTE para disparar (regra
+ja aplicada em 20260930113613:49-53), entao o GRANT so afrouxava a ACL.
+
+Agora as duas funcoes terminam com REVOKE EXECUTE ... FROM PUBLIC, anon,
+authenticated e nenhum grant. O bloco -- Rollback: cobre a mudanca de privilegio
+(revoke explicito na de recibos; a de reacoes sai no DROP).
+
+Teste: scripts/db-audit/team-receipts-reactions-conversation-id.test.sh ganhou
+B.15/B.16/B.17 provando, por consulta real a pg_proc x aclexplode, que nenhum
+papel de cliente tem EXECUTE. Com a migration recusada (com os GRANT), B.15 falha.

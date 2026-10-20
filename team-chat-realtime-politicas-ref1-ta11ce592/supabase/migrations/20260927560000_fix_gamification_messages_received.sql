@@ -1,0 +1,67 @@
+-- 20260927560000_fix_gamification_messages_received
+-- Corrige handle_message_gamification para contabilizar mensagens recebidas
+-- de contatos e faz backfill das mensagens recebidas já existentes.
+
+CREATE OR REPLACE FUNCTION public.handle_message_gamification()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+DECLARE
+  v_new_sent  int;
+  v_received  int;
+  v_total     int;
+  v_agent_id  uuid;
+BEGIN
+  IF TG_OP = 'UPDATE' AND (OLD.agent_id IS NOT NULL OR NEW.agent_id IS NULL) THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.sender = 'agent' AND NEW.agent_id IS NOT NULL THEN
+    INSERT INTO public.agent_stats (profile_id, messages_sent, messages_received, current_streak, best_streak, updated_at)
+    VALUES (NEW.agent_id, 1, 0, 1, 1, now())
+    ON CONFLICT (profile_id) DO UPDATE
+    SET messages_sent  = public.agent_stats.messages_sent + 1,
+        current_streak = public.agent_stats.current_streak + 1,
+        best_streak    = GREATEST(public.agent_stats.best_streak, public.agent_stats.current_streak + 1),
+        updated_at     = now()
+    RETURNING messages_sent, messages_received INTO v_new_sent, v_received;
+    v_total := v_new_sent + v_received;
+    IF v_total = ANY (ARRAY[10, 50, 100, 500, 1000]) THEN
+      PERFORM public.grant_agent_achievement(
+        NEW.agent_id, 'message_milestone', v_total || ' Mensagens',
+        'Você enviou/recebeu ' || v_total || ' mensagens!',
+        LEAST(100, v_total / 10)
+      );
+    END IF;
+  ELSIF NEW.sender = 'contact' THEN
+    SELECT assigned_to INTO v_agent_id FROM public.contacts WHERE id = NEW.contact_id;
+    IF v_agent_id IS NOT NULL THEN
+      INSERT INTO public.agent_stats (profile_id, messages_sent, messages_received, current_streak, best_streak, updated_at)
+      VALUES (v_agent_id, 0, 1, 0, 0, now())
+      ON CONFLICT (profile_id) DO UPDATE
+      SET messages_received = public.agent_stats.messages_received + 1,
+          updated_at        = now()
+      RETURNING messages_sent, messages_received INTO v_new_sent, v_received;
+      v_total := v_new_sent + v_received;
+      IF v_total = ANY (ARRAY[10, 50, 100, 500, 1000]) THEN
+        PERFORM public.grant_agent_achievement(
+          v_agent_id, 'message_milestone', v_total || ' Mensagens',
+          'Você enviou/recebeu ' || v_total || ' mensagens!',
+          LEAST(100, v_total / 10)
+        );
+      END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+INSERT INTO public.agent_stats (profile_id, messages_sent, messages_received, conversations_resolved, current_streak, best_streak, updated_at)
+SELECT c.assigned_to, 0, COUNT(*), 0, 0, 0, now()
+FROM public.messages m
+JOIN public.contacts c ON c.id = m.contact_id
+WHERE m.sender = 'contact' AND c.assigned_to IS NOT NULL
+GROUP BY c.assigned_to
+ON CONFLICT (profile_id) DO UPDATE
+SET messages_received = EXCLUDED.messages_received,
+    updated_at = now();

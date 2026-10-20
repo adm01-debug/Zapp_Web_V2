@@ -1,0 +1,16 @@
+fix(talkx): zera loading do historico na troca de template e no descarte obsoleto
+
+R2-MOD-024 (item 102/P1, refazer 1): a entrega anterior (c9a4febd6) descartava
+corretamente a resposta atrasada, mas o `return` acontecia antes de
+setLoadingVersions(false), deixando o flag preso quando o historico de A era
+descartado apos a troca A->B.
+
+- fetchVersions: try/finally que so zera o loading quando a origem ainda e o
+  template ativo (a resposta obsoleta nao altera dados nem mexe no loading do
+  template atual);
+- loadTemplate: setLoadingVersions(false) na troca de template, fechando o
+  caminho descartado;
+- teste: novo caso A->B com historico de A pendente (B nao fica carregando),
+  caso complementar (resposta obsoleta de A nao zera o loading de B em
+  andamento), caso positivo (variante do template ativo salva no onBlur e
+  exclui no clique) e remocao do codigo morto nameField/void nameField.

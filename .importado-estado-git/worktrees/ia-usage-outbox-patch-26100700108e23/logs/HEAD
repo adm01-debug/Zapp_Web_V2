@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342656 -0300	
+e58beff67df277afa73c179058c38190a5dd5d5c e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342657 -0300	reset: moving to HEAD
+e58beff67df277afa73c179058c38190a5dd5d5c 9a056ca429094176490deb9e2913f9ac1b1d2b67 Joaquim Ataides <ti@promobrindes.com.br> 1791342811 -0300	cherry-pick: chore(edge): carrega a base revisada da outbox de ai-usage na dia (circuito IA-050 preservado)
+9a056ca429094176490deb9e2913f9ac1b1d2b67 fee20874382d0b864b912fa6a54df3134c40321c Joaquim Ataides <ti@promobrindes.com.br> 1791342811 -0300	cherry-pick: test(edge): cobre conflito com falha no reenfileiramento da outbox (RED)
+fee20874382d0b864b912fa6a54df3134c40321c fd58126a1faa5d1132497b2f487a2cc30287181f Joaquim Ataides <ti@promobrindes.com.br> 1791342811 -0300	cherry-pick: fix(edge): devolverPendenciaAOutbox devolve e propaga a falha do reenfileiramento

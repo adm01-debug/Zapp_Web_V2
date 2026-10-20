@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526242 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 07bdb480fdc659fc018b0b3a23f90e4879bfa531 Joaquim Ataides <ti@promobrindes.com.br> 1791527237 -0300	commit: feat(multiplix): hooks de publico (select/save/apply) via edge multiplix-dispatch

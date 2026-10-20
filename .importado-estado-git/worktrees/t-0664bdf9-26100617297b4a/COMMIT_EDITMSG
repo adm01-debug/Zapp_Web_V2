@@ -1,0 +1,27 @@
+test(e2e): fixture da aba Arquivos passa ao locator canônico e ganha prova local
+
+A ACL fail-closed dos buckets privados (R2-DB-022 B1) só autoriza leitura pelo
+locator canônico: o 1º segmento do objeto tem de ser um contact_id visível ao
+usuário. As duas migrations da fixture da aba Arquivos ainda apontavam para um
+objeto em `whatsapp-media/5b6f6f71-.../...` (1º segmento não é contato) e
+prometiam que a leitura vinha da policy removida "whatsapp media readable via
+visible message", que autorizava por messages.media_url. O caminho antigo deixou
+de ser legível — e não existia e2e/files-tab.spec.ts para medir isso.
+
+- as duas migrations ganham um UPDATE idempotente que move o locator da linha
+  para `whatsapp-media/04dff4dc-c6b1-4283-ac22-bd8639804759/...` (contato
+  seedado, o mesmo de e2e/fixtures/e2e-contact.ts). O UPDATE cobre também a base
+  em que a linha já existe no path antigo — ali o INSERT guardado por
+  `where not exists` não roda. media_size passa a 70 (o PNG 1x1 real);
+- os comentários deixam de citar a policy removida e passam a apontar o locator
+  canônico e o modo de reproduzir localmente;
+- novo e2e/fixtures/seed-files-tab.mjs: seed LOCAL (usuário sintético, contato e
+  objeto canônico; recusa qualquer host que não seja 127.0.0.1/localhost);
+- novo e2e/files-tab.spec.ts: mede a cadeia fixture -> locator -> assinatura ->
+  download pela API de Storage como o usuário do teste, e nega o path antigo.
+
+Prova (banco local, usuário sintético): sign+GET canônico HTTP 200 (image/png,
+70 bytes); path antigo HTTP 400. Religando a policy removida o path antigo volta
+a 200 — era só ela que o liberava. Migrations: INSERT 0 0 / UPDATE 1 (path
+antigo -> canônico) e UPDATE 0 na segunda passada. Spec: 3 passed; com as linhas
+da fixture movidas ao path antigo, 2 failed.

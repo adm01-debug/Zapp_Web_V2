@@ -1,0 +1,15 @@
+fix(security): SELECT em storage.objects não aceita mais referência forjável em messages.media_url (R2-DB-022 B1)
+
+As policies de SELECT dos buckets privados whatsapp-media e audio-messages
+autorizavam leitura por media_url reassociável (sufixo LIKE, right/position com
+variantes '?'/'%20' e segmento de path igual a auth.uid()). Como policies se
+combinam por OR, um agente que conhece o path privado de outro contato forjava
+uma mensagem visível com media_url apontando para o objeto e passava a lê-lo.
+
+Sem o trigger irmão de fronteira de escrita nesta base, sender/external_id/
+media_url são forjáveis por authenticated — nenhum ramo por media_url pode ser
+confiável, então a policy "whatsapp media readable via visible message" é
+removida e as duas "assigned" ficam só com o locator canônico (1º segmento =
+contact_id visível via is_contact_visible_to_user) + is_admin_or_supervisor.
+Mídia legada sem prefixo de contato fica restrita a admin/supervisor até
+existir fronteira de escrita que torne a proveniência confiável (fail-closed).

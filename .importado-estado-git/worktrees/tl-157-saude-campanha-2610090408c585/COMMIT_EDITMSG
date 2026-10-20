@@ -1,0 +1,9 @@
+fix(talk-x): corrige citação do cartão que moveu a Ajuda para tela (TL-174, não X189)
+
+Os comentários do commit anterior citavam "X189" para a mudança da Ajuda de
+diálogo local para tela com rota própria; o commit real é c3059a31b/61fdcd6a4,
+cartão TL-174 ("Ajuda vira central com artigos em markdown, índice, busca e
+leitor"). Só texto de comentário, nenhuma mudança de comportamento.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

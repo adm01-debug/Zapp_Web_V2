@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 42f2377e49e75f9d464725b09512ef310cee2871 Joaquim Ataides <ti@promobrindes.com.br> 1791414816 -0300	
+42f2377e49e75f9d464725b09512ef310cee2871 42f2377e49e75f9d464725b09512ef310cee2871 Joaquim Ataides <ti@promobrindes.com.br> 1791414817 -0300	reset: moving to HEAD
+42f2377e49e75f9d464725b09512ef310cee2871 36515eac4eb0336782e914c8e0c01a8ac3e328f8 Joaquim Ataides <ti@promobrindes.com.br> 1791415167 -0300	commit: test(e2e): portão de boot explícito e zoom garantido no reflow 200% do email-navy
+36515eac4eb0336782e914c8e0c01a8ac3e328f8 3858d87895852ed894bf39995457110ffb98cb3f Joaquim Ataides <ti@promobrindes.com.br> 1791415176 -0300	commit (amend): test(e2e): portão de boot explícito e zoom garantido no reflow 200% do email-navy
+3858d87895852ed894bf39995457110ffb98cb3f e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540351 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 73acb3be84580150abbc42f5dae2eac05537e674 Joaquim Ataides <ti@promobrindes.com.br> 1791540375 -0300	commit: test(e2e): zoom garantido no reflow 200% do email-navy
+73acb3be84580150abbc42f5dae2eac05537e674 73acb3be84580150abbc42f5dae2eac05537e674 Joaquim Ataides <ti@promobrindes.com.br> 1791540377 -0300	rebase (finish): returning to refs/heads/v2/corrigir-reflow-200-email-navy-2610072013d87b

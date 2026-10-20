@@ -1,0 +1,26 @@
+fix(ci/devops): peter-evans/create-pull-request com labels automerge-ok (SL-025)
+
+E22 do inventario (auditoria de GitHub Actions 2026-10-01), lacuna medida em
+.github/workflows/types-sync.yml: o PR de sincronizacao saia so com a label
+`types-sync` e nenhum passo armava o auto-merge — o PR ficava aberto esperando
+alguem lembrar dele, e o `auto-update-pr-branch.yml`, que filtra
+`autoMergeRequest != null`, nunca encontrava PR nenhum (G-06).
+
+A decisao da casa e' E15(b) (strict=true + allow_auto_merge=true, 02/10, ja
+registrada no CLAUDE.md e em scripts/ci/github-settings-baseline.json), que e' a
+condicao que o proprio E22 pede para implementar o item.
+
+- "Garantir labels da PR de sync": cria `types-sync` E `automerge-ok` antes do
+  passo do PR (a API recusa label inexistente; createLabel devolve 422 quando a
+  label ja existe).
+- create-pull-request passa a declarar `labels: types-sync,automerge-ok`.
+- novo passo "Armar auto-merge do PR de sincronizacao": o `gh` arma o auto-merge
+  do PR com `--auto --squash`, amarrado ao numero do PR criado; nao engole falha
+  (auto-merge que nao arma e' falha real, e nao um detalhe).
+- o corpo do PR deixa de prometer revisao humana obrigatoria, que deixou de ser
+  verdade com a label de auto-merge.
+
+Teste: scripts/ci/types-sync-automerge.unit.mjs (4 casos). Provado vermelho
+contra o YAML de base (3 falham) e verde depois; 5 mutacoes (sem --auto, label
+fora do PR, label nao criada antes, --squash virou --merge, passo de auto-merge
+comentado) sao todas apanhadas pelo caso correspondente.

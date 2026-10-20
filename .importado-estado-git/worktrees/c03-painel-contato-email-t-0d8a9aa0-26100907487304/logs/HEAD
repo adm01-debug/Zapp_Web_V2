@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542899 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791542900 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 11a11eaac30e62ef6660bb82066d8d40cfe6891d Joaquim Ataides <ti@promobrindes.com.br> 1791542933 -0300	commit (cherry-pick): feat(email): ícone de e-mail do contato abre a conversa dele ou o compositor
+11a11eaac30e62ef6660bb82066d8d40cfe6891d 71984ab0f18dd1e1294dfb3f9b3484dab5a13298 Joaquim Ataides <ti@promobrindes.com.br> 1791544614 -0300	commit (amend): feat(email): ícone de e-mail do contato abre a conversa dele ou o compositor
+71984ab0f18dd1e1294dfb3f9b3484dab5a13298 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791569965 -0300	rebase (start): checkout dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 f43582e5a1f9159d42470c05e3d632f87ac21f3b Joaquim Ataides <ti@promobrindes.com.br> 1791570003 -0300	rebase (continue): feat(email): ícone de e-mail do contato abre a conversa dele ou o compositor
+f43582e5a1f9159d42470c05e3d632f87ac21f3b f43582e5a1f9159d42470c05e3d632f87ac21f3b Joaquim Ataides <ti@promobrindes.com.br> 1791570003 -0300	rebase (finish): returning to refs/heads/v2/c03-painel-contato-email-t-0d8a9aa0-26100907487304
+f43582e5a1f9159d42470c05e3d632f87ac21f3b 624e81170913f4a383ac9f8904f3ce3cf119c307 Joaquim Ataides <ti@promobrindes.com.br> 1791570386 -0300	commit: test(email): tooltip dos Tiles cobre e-mail vazio e o texto dos outros botões

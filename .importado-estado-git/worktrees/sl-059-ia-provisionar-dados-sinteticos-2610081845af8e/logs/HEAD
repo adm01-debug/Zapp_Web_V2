@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791495918 -0300	
+165168bf7800066e51592380b0ee1a51b75d0548 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791495919 -0300	reset: moving to HEAD
+165168bf7800066e51592380b0ee1a51b75d0548 2f3622ca9deae0bede474f5dd571159d6ce0fc64 Joaquim Ataides <ti@promobrindes.com.br> 1791495928 -0300	cherry-pick: fix(ia): Provisionar dados sintéticos e 4 perfis de ensaio (SL-059)
+2f3622ca9deae0bede474f5dd571159d6ce0fc64 bafe3d7e45f9f4cb28e28b1578cf2448eca309ee Joaquim Ataides <ti@promobrindes.com.br> 1791496519 -0300	commit: fix(ia): reversão do ensaio só apaga o que o DML escreve (SL-059)

@@ -1,0 +1,6 @@
+test(contatos): WIP do roteiro de baseline medido do modulo (MC-001)
+
+Pausado pelo ESTOP do plano de Contatos (revisao item a item).
+Roteiro ja mede tempo de carga, requisicoes, peso do JS do modulo,
+console/rede e achados de a11y (axe-core); falta re-rodar com o
+mock de agent_presence e escrever o relatorio em docs/audits.

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "dddddddd-0000-4000-8000-0000000000d1",
+    "name": "Ana Ensaio",
+    "nickname": null,
+    "phone": "5511999990001",
+    "company": null,
+    "avatar_url": null,
+    "visible": true,
+    "deleted_at": null
+  },
+  {
+    "id": "dddddddd-0000-4000-8000-0000000000d2",
+    "name": "Bruno Ensaio",
+    "nickname": null,
+    "phone": "5511999990002",
+    "company": null,
+    "avatar_url": null,
+    "visible": true,
+    "deleted_at": null
+  }
+]

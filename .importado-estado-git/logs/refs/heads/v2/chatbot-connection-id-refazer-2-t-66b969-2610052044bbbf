@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc Joaquim Ataides <ti@promobrindes.com.br> 1791243884 -0300	branch: Created from dia/2026-10-05
+7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc db5064860b7bd9edd609004ae6f08edeffa043b2 Joaquim Ataides <ti@promobrindes.com.br> 1791243914 -0300	cherry-pick: fix(chatbot-l1): exigir conexão para flow e histórico
+db5064860b7bd9edd609004ae6f08edeffa043b2 82550349b014bdf8c01d1291f5fdc8444a316eb8 Joaquim Ataides <ti@promobrindes.com.br> 1791243914 -0300	cherry-pick: test(chatbot-l1): provar contrato do erro de conexão

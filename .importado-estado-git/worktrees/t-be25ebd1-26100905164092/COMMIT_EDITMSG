@@ -1,0 +1,17 @@
+fix(talk-x): Ajuda vira central com artigos em markdown, índice, busca e leitor
+
+X189 (TL-174). O "?" do cabeçalho abria um Dialog com 5 seções de texto fixo
+(TalkXHelp.tsx), sem busca, sem endereço e sem artigos.
+
+- docs/talkx/help/<topico>/<artigo>.md e docs/talkx/help/guias/<guia>.md com
+  frontmatter (titulo, topico, tipo, nivel, ordem, palavras-chave, resumo); as 5
+  seções do modal viram 5 arquivos e o primeiro guia é escrito aqui.
+- src/components/talkx/help/: talkxHelpIndex.ts (import.meta.glob sob demanda,
+  valida frontmatter, minutos pela contagem de palavras), TalkXHelpCenter.tsx
+  (tela, não modal), TalkXHelpArticle.tsx (leitor com voltar/anterior/próximo),
+  useTalkXHelpSearch.ts (busca sem acento por título, palavras-chave e corpo, com
+  destaque, setas e Enter) e talkxHelpMarkdown.tsx (renderizador mínimo, sem HTML
+  cru e sem dependência nova).
+- Rota ?view=talkx&screen=help&topic=&article= (talkxHelpRoute.ts) e ⌘K/Ctrl+K
+  focado na busca da Ajuda só com ela aberta.
+- e2e/talkx.spec.ts: o caso do modal vira tela + busca + leitor + ⌘K.

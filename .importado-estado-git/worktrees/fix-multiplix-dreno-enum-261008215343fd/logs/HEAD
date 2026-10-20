@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507182 -0300	
+5bb8664d243f0787d35e99d55ec899187a39121b 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791507183 -0300	reset: moving to HEAD
+5bb8664d243f0787d35e99d55ec899187a39121b 40890b71e7a11db5636df16b1bc868d9a52e168b Joaquim Ataides <ti@promobrindes.com.br> 1791507373 -0300	cherry-pick: test(multiplix): cobre confirm, drenagem e reconciliacao da fila no banco de teste (TL-048/F89)
+40890b71e7a11db5636df16b1bc868d9a52e168b bbbc466d8e4309f350ee90ca539280b917f085aa Joaquim Ataides <ti@promobrindes.com.br> 1791507794 -0300	commit: fix(multiplix): cast do status ENUM na drenagem do disparo (42804)
+bbbc466d8e4309f350ee90ca539280b917f085aa 731d75bda03858ecd9dc9d1e489f3eec04007e39 Joaquim Ataides <ti@promobrindes.com.br> 1791507795 -0300	commit: test(multiplix): liga a drenagem ate a conclusao na fila por item (F89)
+731d75bda03858ecd9dc9d1e489f3eec04007e39 a91645ee268ddababb806568897d09a228abc393 Joaquim Ataides <ti@promobrindes.com.br> 1791508664 -0300	commit: fix(multiplix): rollback executavel comentado na migration do cast (juiz)
+a91645ee268ddababb806568897d09a228abc393 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791557492 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 b6eadc4ecbb2a0c38da7c074cfb32515ba5210ce Joaquim Ataides <ti@promobrindes.com.br> 1791557548 -0300	rebase (pick): fix(multiplix): cast do status ENUM na drenagem do disparo (42804)
+b6eadc4ecbb2a0c38da7c074cfb32515ba5210ce 6c9d1dbc06d27f45f424814c39466816d5b31885 Joaquim Ataides <ti@promobrindes.com.br> 1791557690 -0300	rebase (continue): test(multiplix): liga a drenagem ate a conclusao na fila por item (F89)
+6c9d1dbc06d27f45f424814c39466816d5b31885 4bff1b8632b923dc47c23be5acf2d33099ac3ea4 Joaquim Ataides <ti@promobrindes.com.br> 1791557691 -0300	rebase (pick): fix(multiplix): rollback executavel comentado na migration do cast (juiz)
+4bff1b8632b923dc47c23be5acf2d33099ac3ea4 4bff1b8632b923dc47c23be5acf2d33099ac3ea4 Joaquim Ataides <ti@promobrindes.com.br> 1791557691 -0300	rebase (finish): returning to refs/heads/v2/fix-multiplix-dreno-enum-261008215343fd

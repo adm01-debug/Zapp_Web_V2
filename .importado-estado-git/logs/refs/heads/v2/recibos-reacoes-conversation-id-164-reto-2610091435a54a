@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567335 -0300	branch: Created from dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 37c826ac6a62ce7f183c52364e837b2bb9c43a42 Joaquim Ataides <ti@promobrindes.com.br> 1791567349 -0300	cherry-pick: fix(db): recibos e reacoes derivam conversation_id da mensagem
+37c826ac6a62ce7f183c52364e837b2bb9c43a42 d84711b7ba90707192d1e2d496d7dfe6cddb3548 Joaquim Ataides <ti@promobrindes.com.br> 1791567355 -0300	cherry-pick: fix(team-chat): nao concede EXECUTE a papel de cliente nas funcoes trigger de recibos e reacoes
+d84711b7ba90707192d1e2d496d7dfe6cddb3548 db288d32df178f0f347c5ed9f1fbe19120dc4472 Joaquim Ataides <ti@promobrindes.com.br> 1791567466 -0300	commit: chore(db): versiona a migration de recibos/reações com a data de hoje (#164)
+db288d32df178f0f347c5ed9f1fbe19120dc4472 65573731b70f5e902826434b1cf144c47e9b6d24 Joaquim Ataides <ti@promobrindes.com.br> 1791567511 -0300	commit (amend): chore(db): versiona a migration de recibos/reações com a data de hoje (#164)

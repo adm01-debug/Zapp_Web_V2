@@ -1,0 +1,6 @@
+fix(historico): 'Carregar mais' da Jornada ultrapassa as janelas fixas das consultas (#328)
+
+(cherry picked from commit 6806bca72b7959465640ee1c2c27542226896fd3)
+
+# Conflicts:
+#	src/hooks/chat/useConversationHistoryTimeline.ts

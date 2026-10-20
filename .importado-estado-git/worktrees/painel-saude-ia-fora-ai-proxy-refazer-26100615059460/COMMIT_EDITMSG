@@ -1,0 +1,3 @@
+fix(ia): separador do painel de saude sem alfa /60 (contrato de contraste AA)
+
+O cartao anterior recusado por `tests/contracts/contraste-aa-componentes.contract.test.ts`: o separador novo usava `text-muted-foreground/60`, que e exatamente o alfa banido (2,36:1 sobre branco, limiar 4,5). Trocado pelo token cheio `text-muted-foreground` (AA nos dois temas) e marcado `aria-hidden` por ser decorativo. Nada do contrato foi alterado.

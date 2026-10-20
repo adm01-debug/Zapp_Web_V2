@@ -1,0 +1,10 @@
+0000000000000000000000000000000000000000 dc1d8a396946aebbd2fe16c31686c2eb82462853 Joaquim Ataides <ti@promobrindes.com.br> 1791400876 -0300	
+dc1d8a396946aebbd2fe16c31686c2eb82462853 dc1d8a396946aebbd2fe16c31686c2eb82462853 Joaquim Ataides <ti@promobrindes.com.br> 1791400877 -0300	reset: moving to HEAD
+dc1d8a396946aebbd2fe16c31686c2eb82462853 d31e7d0774a1f5c2f82be92afdf987b0346e6ae9 Joaquim Ataides <ti@promobrindes.com.br> 1791402360 -0300	commit: fix(ai-audio): preserva modalidades no audio_stt
+d31e7d0774a1f5c2f82be92afdf987b0346e6ae9 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540218 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b cf46eeee6a6a81cc08637cf378ee33997c5c4217 Joaquim Ataides <ti@promobrindes.com.br> 1791540225 -0300	rebase (continue): fix(ai-audio): preserva modalidades no audio_stt
+cf46eeee6a6a81cc08637cf378ee33997c5c4217 cf46eeee6a6a81cc08637cf378ee33997c5c4217 Joaquim Ataides <ti@promobrindes.com.br> 1791540226 -0300	rebase (finish): returning to refs/heads/v2/refazer-classificador-audio-meme-133-t-9-2610071621ddbe
+cf46eeee6a6a81cc08637cf378ee33997c5c4217 bbda3d3aa5c38950511e04b524b6a40e79177ba7 Joaquim Ataides <ti@promobrindes.com.br> 1791541318 -0300	commit (amend): fix(ai-audio): preserva modalidades no audio_stt
+bbda3d3aa5c38950511e04b524b6a40e79177ba7 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791558499 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 d85f0ef0b6597cc26282379d4a9f8685f97c51a6 Joaquim Ataides <ti@promobrindes.com.br> 1791558522 -0300	rebase (continue): fix(ai-audio): preserva modalidades no audio_stt
+d85f0ef0b6597cc26282379d4a9f8685f97c51a6 d85f0ef0b6597cc26282379d4a9f8685f97c51a6 Joaquim Ataides <ti@promobrindes.com.br> 1791558522 -0300	rebase (finish): returning to refs/heads/v2/refazer-classificador-audio-meme-133-t-9-2610071621ddbe

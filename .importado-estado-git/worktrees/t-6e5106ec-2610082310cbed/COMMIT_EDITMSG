@@ -1,0 +1,16 @@
+test(multiplix): F56 prova a ordem por bloco com DOIS destinatarios x TRES blocos (TL-032)
+
+A reconciliacao de 04/10 do F56 pedia o cenario de 2 contatos x 3 blocos
+(com mídia distinta/presenca/nome e nenhuma duplicacao). A regra de ordem
+por bloco ja existe e ja era provada com UM destinatario; faltava a prova
+de que as cadeias de destinatarios DIFERENTES nao se cruzam e que nenhum
+item entra na fila duas vezes.
+
+Acrescenta ao harness do modulo (o teste do arquivo que carrega a regra)
+um caso com 2 destinatarios x 3 blocos que percorre as duas cadeias passo
+a passo: fronteira so do bloco 0, avanco independente de cada destinatario,
+fila vazia no fim e exatamente 6 itens 'sent'.
+
+Prova: harness acima PASS (0 FAIL). Prova por mutacao numa copia
+descartavel, com a clausula NOT EXISTS removida: o caso novo FALHA
+(oferece os 6 itens de uma vez) — a assercao depende da regra real.

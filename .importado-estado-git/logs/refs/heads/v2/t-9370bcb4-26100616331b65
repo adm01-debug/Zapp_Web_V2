@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315212 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 a7f55da829dc8416a6fd247f33f93db80704d85a Joaquim Ataides <ti@promobrindes.com.br> 1791315435 -0300	commit: test(auth): prova que o veredito de vazamento pertence sempre a consulta vigente (#256)

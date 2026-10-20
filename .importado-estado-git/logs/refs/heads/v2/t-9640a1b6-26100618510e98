@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323508 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 87ddb6205b76e1e40f7e860fd9630d27843a21b8 Joaquim Ataides <ti@promobrindes.com.br> 1791324053 -0300	commit: test(db-audit): guarda de regressão das guardas globais contra a branch em quarentena (#58)
+87ddb6205b76e1e40f7e860fd9630d27843a21b8 010d697ed61277171c9deb3905dd16ac47d533e7 Joaquim Ataides <ti@promobrindes.com.br> 1791324136 -0300	commit (amend): test(db-audit): guarda de regressão das guardas globais contra a branch em quarentena (#58)

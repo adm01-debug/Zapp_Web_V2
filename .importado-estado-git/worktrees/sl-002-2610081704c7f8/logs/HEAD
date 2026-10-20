@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489858 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489859 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc ddf7bd9c04c7ed6d0e642d0b2593104f4e1a0247 Joaquim Ataides <ti@promobrindes.com.br> 1791491114 -0300	commit: fix(telefonia): it.todo: enforcement de SRTP explicito nas opcoes do Se (SL-002)

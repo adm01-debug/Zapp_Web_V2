@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791495018 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791495019 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc e3ed19e66a61d3be1e3969b17f0f30815eb8ddc6 Joaquim Ataides <ti@promobrindes.com.br> 1791495815 -0300	commit: fix(inbox/chat): Remover derivacao por messages.length, corrigir useBulk (SL-071)

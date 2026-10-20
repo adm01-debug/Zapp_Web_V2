@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 5d5535ecb52365a8bb679538ff6c0948482cb130 Joaquim Ataides <ti@promobrindes.com.br> 1791377675 -0300	branch: Created from dia/2026-10-07
+5d5535ecb52365a8bb679538ff6c0948482cb130 08d0892ae706ddbf2d625e039f0678cbf2e422df Joaquim Ataides <ti@promobrindes.com.br> 1791377695 -0300	cherry-pick: feat(arquivos): miniatura da primeira pagina de PDF (biblioteca e hook)
+08d0892ae706ddbf2d625e039f0678cbf2e422df 8ae3846a84036154b9413258651892e4fca69bf4 Joaquim Ataides <ti@promobrindes.com.br> 1791378056 -0300	commit: fix(arquivos): prazo de 15 s da miniatura aborta o trabalho em voo e a fila solta quem foi abortado

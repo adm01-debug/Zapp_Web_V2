@@ -1,0 +1,6 @@
+chore(catalogo): acrescenta get_inbox_contact_summaries e warroom_alerts.dedupe_key depois de aplicar as migrations 20261005124628 e 20261006155408 no banco canônico
+
+Aplicadas em 07/10/2026 com autorização do dono e validadas em produção: função com 200/200 resultados iguais ao cálculo direto, coluna opcional com índice único parcial, ledger com as versões dos arquivos. A 20261006160117 (apaga persist_conversation_analysis de 3 argumentos) fica para o instante do merge.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NuZ7WYqf38Zz5TogJEdDgf

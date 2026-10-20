@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791308873 -0300	branch: Created from dia/2026-10-06
+1a367b13dd8456a44e967ef882041d70e876ebdd 37eb69369b6218d921e26cd6814f5985640ed4b7 Joaquim Ataides <ti@promobrindes.com.br> 1791309073 -0300	commit: test(telefonia): prova que corpo de audio vazio nao pode virar gravacao valida
+37eb69369b6218d921e26cd6814f5985640ed4b7 45cc30245c28ef1ce360f3c17059c406c0c1d5be Joaquim Ataides <ti@promobrindes.com.br> 1791309124 -0300	commit: fix(telefonia): rejeita gravacao com corpo de audio vazio no hook
+45cc30245c28ef1ce360f3c17059c406c0c1d5be 72aeee0b3385f414c8222cc55c7345754577d86e Joaquim Ataides <ti@promobrindes.com.br> 1791309411 -0300	commit (amend): fix(telefonia): rejeita gravacao com corpo de audio vazio no hook

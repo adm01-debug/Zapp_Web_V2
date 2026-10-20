@@ -1,0 +1,7 @@
+chore(db): sincronizar artefatos derivados após a migration ai_jobs_efeito_externo_lease (#1908)
+
+Candidatos gerados pelo workflow types-sync (run 37866279757): types.ts, catálogo, manifesto e baseline de grants.
+Remove do baseline do usage-guard a entrada temporária da RPC mark_ai_job_effect_started, que agora existe no banco (o gate 2 do types-sync a acusava como obsoleta).
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 09925971542656b91650495b74781b3cdf7c3cfb Joaquim Ataides <ti@promobrindes.com.br> 1791578087 -0300	branch: Created from dia/2026-10-09
+09925971542656b91650495b74781b3cdf7c3cfb 940fcda7778c97d2b9969aebf5700c1aa9de96ac Joaquim Ataides <joaquim@ataides> 1791578711 -0300	commit: feat(talkx): cria talkx_campaign_recipients_page com paginação, filtros e RLS

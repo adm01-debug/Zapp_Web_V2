@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791313978 -0300	
+7c26f709642e9058b3f6a016072d9516a70e55f3 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791313978 -0300	reset: moving to HEAD
+7c26f709642e9058b3f6a016072d9516a70e55f3 75672e5de9bcc80b2d611a6182ade72b971c9846 Joaquim Ataides <ti@promobrindes.com.br> 1791314336 -0300	commit: fix(relatorios): relatorio agendado deixa de avancar last_sent_at e de anunciar sucesso quando o envio falha (#199)

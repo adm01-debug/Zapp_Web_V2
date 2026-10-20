@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=retomar-e2e-skins-espelho-ci
+ID=26101320012e41
+BRANCH=v2/retomar-e2e-skins-espelho-ci-26101320012e41
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/retomar-e2e-skins-espelho-ci-26101320012e41
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T20:01:52-03:00
+KANBAN=t_8677da24
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/retomar-e2e-skins-espelho-ci-26101320012e41/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101320012e41
+PRONTO_SHA=bc06c205d2ec99d9e647fa4454fbfa6e4f2697f5

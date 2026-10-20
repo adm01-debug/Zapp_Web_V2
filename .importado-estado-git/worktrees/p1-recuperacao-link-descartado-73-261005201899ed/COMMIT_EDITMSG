@@ -1,0 +1,33 @@
+fix(auth): aprovação de reset envia e-mail real e registra o estado de entrega
+
+R2-AUTH-007 (item 73): o ramo approve de approve-password-reset usava
+auth.admin.generateLink — que monta o link mas não envia e-mail nenhum —
+devolvia resetLink no corpo e marcava o pedido como 'approved' sem que
+nenhum envio tivesse sido aceito. O painel descartava o `data` da resposta
+e anunciava "Email de reset enviado". A checagem de estado e o update eram
+duas idas ao banco, sem compare-and-swap.
+
+- approve-password-reset: handler exportado (deps injetáveis) e servidor
+  atrás de import.meta.main; claim atômico (UPDATE guardado por
+  status='pending') -> e-mail de recuperação de verdade por
+  auth.resetPasswordForEmail -> delivery_status 'sent'/'failed' com guarda
+  'queued'; a resposta nunca carrega link/token; ação nova 'resend' só em
+  approved+failed; reject também com compare-and-swap; erro de terceiro vai
+  pelo internalErrorResponse.
+- migration 20261005232640: delivery_status/delivered_at/delivery_error +
+  CHECK ('queued','sent','failed') e a view password_reset_requests_safe
+  passa a expor o estado de entrega.
+- migration 20261005234417: a primeira migration recriou a view sem
+  ip_address/user_agent, que a forma em vigor (20260411111454) expõe e o
+  painel mostra ("IP:"). Esta devolve o contrato de hoje ACRESCENTANDO as
+  colunas de entrega (aditivo puro) e corrige o COMMENT, que descrevia uma
+  ocultação que a view não praticava.
+- PasswordResetRequestsPanel: sucesso só quando data.delivery === 'sent',
+  erro quando 'failed'; badge Enviando.../E-mail enviado/Falha no envio;
+  botão "Reenviar e-mail" em approved+failed.
+- Testes: index.test.ts (handler real com Request e client falso; ordem
+  claim->envio->sent, 409 concorrente, nenhum link no corpo, resend) e
+  PasswordResetRequestsPanel.entrega.test.tsx (vermelho antes: anunciava
+  envio com delivery falho). scripts/db-audit/password-reset-delivery.test.sh
+  prova em Postgres descartável o defeito (Bloco A), as duas migrations
+  (B/B2) e os dois rollbacks (C/D).

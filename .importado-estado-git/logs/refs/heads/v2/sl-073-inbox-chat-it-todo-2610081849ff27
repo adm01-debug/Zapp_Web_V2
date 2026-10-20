@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791496190 -0300	branch: Created from dia/2026-10-08
+165168bf7800066e51592380b0ee1a51b75d0548 c539b8ebea8f6828644907f180a3a2178d925869 iris <iris@hermes.local> 1791496712 -0300	commit: fix(inbox/chat): it.todo: persistencia/invalidacao das mutations e rende (SL-073)

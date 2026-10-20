@@ -1,0 +1,24 @@
+fix(multiplix-edge): compensa audience.save static_list e sanitiza o 502
+
+handleAudienceSave gravava o publico em multiplix_audiences e so depois os
+membros; se insertSavedMembers falhasse ficava publico orfao (e nova tentativa
+duplicaria). Adiciona AudienceStore.deleteSavedAudience(id, ownerId) escopado
+por owner_id e compensa antes de devolver erro. O 502 de audience.save passa a
+devolver message FIXA ao navegador; o code detalhado fica so no
+logServerFailure, como no audience.select.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    edgar <edgar@hermes.local>
+#
+# interactive rebase in progress; onto 12e407210
+# Last commands done (2 commands done):
+#    pick 3bd23a5f4 feat(multiplix-edge): públicos salvos (audience.save/apply) e seleção por regra/lista
+#    pick 9b1f681dc fix(multiplix-edge): compensa audience.save static_list e sanitiza o 502
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-275a5d3b-26100905071c8f' on '12e407210'.
+#
+# Changes to be committed:
+#	modified:   supabase/functions/multiplix-dispatch/actions/audience.ts
+#

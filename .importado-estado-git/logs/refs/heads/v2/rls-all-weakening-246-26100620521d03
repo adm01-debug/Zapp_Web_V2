@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791330773 -0300	branch: Created from dia/2026-10-06
+7e801f8582265bc03aba115f8871f1dd0abcdb35 52bef5064e56a47a5d8349a95d5868c806061aff Joaquim Ataides <ti@promobrindes.com.br> 1791330784 -0300	cherry-pick: test(rls): trazer verificacao de RLS contra o schema real (R2-GOV-003)
+52bef5064e56a47a5d8349a95d5868c806061aff cfd1e964b7347c88d22a71debedf1f001b126b85 Joaquim Ataides <ti@promobrindes.com.br> 1791330784 -0300	cherry-pick: test(rls): detectar enfraquecimento por policies ALL
+cfd1e964b7347c88d22a71debedf1f001b126b85 6a5865c294f10fd689f2a1ef2bf16cec252d7c6c Joaquim Ataides <ti@promobrindes.com.br> 1791330784 -0300	cherry-pick: test(rls): validar DELETE de messages em policies ALL
+6a5865c294f10fd689f2a1ef2bf16cec252d7c6c 631938cb0734fb12de46aa2fac1290316491f4f5 Joaquim Ataides <ti@promobrindes.com.br> 1791330784 -0300	cherry-pick: test(rls): recusar DELETE de messages por ramo permissivo extra
+631938cb0734fb12de46aa2fac1290316491f4f5 313fc5aee0d17a9059bf63aa1a990639782f518a Joaquim Ataides <ti@promobrindes.com.br> 1791331688 -0300	rebase (finish): refs/heads/v2/rls-all-weakening-246-26100620521d03 onto dba4ece1f104a2757a954051b06b2c1bd7589050

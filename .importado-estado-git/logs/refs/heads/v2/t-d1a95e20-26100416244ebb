@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72471e4ab1fbcf23842d5726c5bdcc8553e61687 Joaquim Ataides <ti@promobrindes.com.br> 1791141881 -0300	branch: Created from dia/2026-10-04
+72471e4ab1fbcf23842d5726c5bdcc8553e61687 81ee62880254c3c397979e5fc523168284691e03 Joaquim Ataides <ti@promobrindes.com.br> 1791143248 -0300	commit: fix(db): fecha fronteira de escrita de messages e valida mídia canônica no enqueue (R2-DB-022)

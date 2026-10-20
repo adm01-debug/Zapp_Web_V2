@@ -1,0 +1,15 @@
+test(dashboard): prova enforcement de RLS com permissão real (DASH-092)
+
+Fechamento do DASH-ACCEPTANCE-001: os testes SQL atuais do Dashboard
+(rls_dashboard.sql e dashboard_rpc_filters.sql) rodam como service_role
+(BYPASSRLS) e nunca exercitam o enforcement real das policies. Este teste
+de aceitação roda em PostgreSQL descartável e prova, com o papel
+authenticated (sem BYPASSRLS), que a RLS isola de fato:
+
+- agente comum vê só o próprio contato/evento; admin vê tudo;
+- service_role (BYPASSRLS) vê tudo — o defeito que os testes atuais não
+  conseguem detectar;
+- canário não-vácuo: desligar a RLS expõe o dado de outro agente.
+
+Registrado na ALLOWLIST do check-test-inventory (padrão: agente não edita
+workflow; promoção para db-guard.yml fica com o dono do workflow).

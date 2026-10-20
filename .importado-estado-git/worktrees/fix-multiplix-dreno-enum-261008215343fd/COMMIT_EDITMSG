@@ -1,0 +1,11 @@
+fix(multiplix): rollback executavel comentado na migration do cast (juiz)
+
+O portao recusa migration sem o SQL executavel do rollback comentado logo depois da
+linha -- Rollback: (o revisor recusou 17 migrations por isso). A versao 20261009005511
+so tinha a prosa. Nova versao 20261009011641 com o bloco
+"-- Rollback (SQL executavel, na ordem):" + os dois CREATE OR REPLACE com o CORPO
+ANTERIOR inteiro, no mesmo molde de 20261006141643_ai_jobs_efeito_externo_lease.sql
+(linhas 1-11). Corpo aplicado identico: so o cabecalho mudou.
+
+O BLOCO ROLLBACK do harness passa a extrair esse bloco pelo marcador (e nao mais a
+linha 2), e as referencias ao nome antigo foram atualizadas.

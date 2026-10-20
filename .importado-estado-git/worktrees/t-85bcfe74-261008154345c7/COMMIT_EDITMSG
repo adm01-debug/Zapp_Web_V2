@@ -1,0 +1,10 @@
+fix(teste): tour padrao mocka o contador de e-mail nao lido
+
+O selo do item Email (U01) monta `useUnreadEmailCount` na Sidebar, que assina
+realtime no cliente real. A guarda de rede de `src/test/setup.ts` troca so o
+`fetch`; o WebSocket do realtime passa por fora. O render da Sidebar neste teste
+fica 2,5 s vivo (espera do overlay do tour), tempo suficiente para a conexao
+fechar e o `dispatchEvent` do undici estourar ERR_INVALID_ARG_TYPE como erro nao
+tratado — derrubava a suite inteira no `zapp-verify full`.
+
+A fonte de dado entra mockada como as demais do arquivo (o alvo e o tour).

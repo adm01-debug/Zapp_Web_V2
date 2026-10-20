@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791500936 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe ad6536b056dcc0b606b4ecc113413817fac5df5d Joaquim Ataides <ti@promobrindes.com.br> 1791500945 -0300	cherry-pick: fix(team-chat): liga busca server-side e os itens sem chamador no TeamChatPanel (SL-082)
+ad6536b056dcc0b606b4ecc113413817fac5df5d a3f5c38b827a0ddfa98d38ab8bd0df54d8755374 Joaquim Ataides <ti@promobrindes.com.br> 1791501193 -0300	commit: fix(team-chat): trata falha da busca como erro real e usa motion-safe no spinner (SL-082)
+a3f5c38b827a0ddfa98d38ab8bd0df54d8755374 30c57b79d6bca4eb3f6ecedb9475c7cf072a5652 Joaquim Ataides <ti@promobrindes.com.br> 1791501590 -0300	commit (amend): fix(team-chat): trata falha da busca como erro real e usa motion-safe no spinner (SL-082)

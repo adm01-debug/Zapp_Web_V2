@@ -1,0 +1,400 @@
+--- a/supabase/functions/revoke-auth-sessions/index.ts
++++ b/supabase/functions/revoke-auth-sessions/index.ts
+@@ -18,8 +18,12 @@
+ //   resolvido por `effective_role` (matriz em decideThirdPartyRevocation).
+ // - local/others só atuam nas sessões do próprio usuário autenticado (a primitiva SQL
+ //   reforça o self-only via p_actor_user_id, então mesmo um bug aqui não escapa).
+-// Toda revogação bem-sucedida é auditada em audit_logs (ator, alvo, escopo, resultado),
+-// sem token nem IP completo.
++// Toda revogação bem-sucedida é auditada em audit_logs (ator, alvo, escopo,
++// resultado "revogado"), com IP MASCARADO (nunca o endereço completo) e sem token.
++// Tentativa negada pela matriz de papéis (403) também é auditada, com resultado
++// "negado", revoked 0 e entity_id null. Se o insert de auditoria falhar, a
++// revogação NÃO é desfeita: sucesso devolve 200 com `audited: false`, negado
++// mantém o 403; a falha vai para o log da função (nada é engolido).
+ // A revogação real é feita pela função SQL SECURITY DEFINER revoke_auth_sessions,
+ // chamada pela service role; refresh/sessão Auth são removidos imediatamente e o JWT
+ // de acesso já emitido permanece válido somente até o exp.
+@@ -95,8 +99,26 @@
+   action: "auth_sessions_revoke";
+   entity_type: "auth_session";
+   entity_id: string | null;
+-  details: { scope: Scope; target_user_id: string; revoked: number };
+   ip_address: string;
++  details: { scope: Scope; target_user_id: string; revoked: number; resultado: "revogado" | "negado" };
++}
++
++/**
++ * Mascara um IP para auditoria: nunca gravamos o endereço completo.
++ * - IPv4 (com ou sem porta, puro ou mapeado em IPv6): zera o último octeto.
++ * - IPv6: trunca para os 3 primeiros grupos + "::".
++ * - vazio, "unknown" ou formato irreconhecível: "unknown" (fail-closed).
++ */
++export function maskIpForAudit(ip: string): string {
++  const v = (ip ?? "").trim();
++  const v4 = v.match(/(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}/);
++  if (v4) return `${v4[1]}.0`;
++  if (v.includes(":")) {
++    const groups = v.split(":").filter((g) => g.length > 0).slice(0, 3);
++    if (groups.length === 0) return "unknown";
++    return `${groups.join(":")}::`;
++  }
++  return "unknown";
+ }
+ 
+ /**
+@@ -118,8 +140,28 @@
+     action: "auth_sessions_revoke",
+     entity_type: "auth_session",
+     entity_id: entityId,
+-    details: { scope: plan.scope, target_user_id: targetUserId, revoked },
+-    ip_address: ip,
++    details: { scope: plan.scope, target_user_id: targetUserId, revoked, resultado: "revogado" },
++    ip_address: maskIpForAudit(ip),
++  };
++}
++
++/** Linha de auditoria de uma tentativa NEGADA pela matriz de papéis (403).
++ *  Nada foi revogado: `revoked` é 0, `entity_id` é null e o resultado é "negado".
++ *  O alvo é o terceiro que o chamador tentou atingir (sempre definido na
++ *  negação de terceiro); o IP é mascarado como no sucesso. */
++export function buildDeniedRevocationAudit(input: {
++  scope: Scope;
++  callerId: string;
++  targetUserId: string;
++  ip: string;
++}): RevocationAuditRow {
++  return {
++    user_id: input.callerId,
++    action: "auth_sessions_revoke",
++    entity_type: "auth_session",
++    entity_id: null,
++    details: { scope: input.scope, target_user_id: input.targetUserId, revoked: 0, resultado: "negado" },
++    ip_address: maskIpForAudit(input.ip),
+   };
+ }
+ 
+@@ -210,7 +252,50 @@
+   return normalizeRole(data);
+ }
+ 
++/** Cliente admin mínimo do núcleo (a service role real da supabase-js satisfaz).
++ *  É um `RoleResolver` + `AuditSink` cujo erro de RPC também expõe `code`
++ *  (usado no log da falha da primitiva). */
++export interface AdminRevokeClient {
++  rpc(fn: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message: string; code?: string } | null }>;
++  from(table: string): {
++    insert(row: unknown): PromiseLike<{ error: { message: string } | null }>;
++  };
++}
++
++/** Clientes mínimos do núcleo do handler (os clients reais da supabase-js satisfazem).
++ *  Permite testar o handler de verdade com duplos falsos: a decisão da matriz, o
++ *  plano e as chamadas de auditoria passam pelo núcleo; só a criação dos clients
++ *  reais fica no wrapper fino `handleRevokeAuthSessions`. */
++export interface RevokeAuthSessionsClients {
++  userClient: {
++    auth: {
++      getUser(): PromiseLike<{ data: { user: { id: string } | null }; error: { message: string } | null }>;
++    };
++  };
++  adminClient: AdminRevokeClient;
++}
++
+ export async function handleRevokeAuthSessions(req: Request): Promise<Response> {
++  const authHeader = req.headers.get("Authorization");
++  if (!authHeader) return errorResponse("Unauthorized", 401, req);
++
++  const supabaseUrl = requireEnv("SUPABASE_URL");
++  const anonKey = requireEnv("SUPABASE_ANON_KEY");
++  const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
++
++  const supabaseUser = createClient(supabaseUrl, anonKey, {
++    global: { headers: { Authorization: authHeader } },
++  });
++  const supabaseAdmin = createClient(supabaseUrl, serviceKey);
++
++  return handleRevokeAuthSessionsCore(req, { userClient: supabaseUser, adminClient: supabaseAdmin });
++}
++
++/** Núcleo do handler com clients injetados (testável com duplos falsos). */
++export async function handleRevokeAuthSessionsCore(
++  req: Request,
++  clients: RevokeAuthSessionsClients,
++): Promise<Response> {
+   const cors = handleCors(req);
+   if (cors) return cors;
+ 
+@@ -226,16 +311,9 @@
+     const authHeader = req.headers.get("Authorization");
+     if (!authHeader) return errorResponse("Unauthorized", 401, req);
+ 
+-    const supabaseUrl = requireEnv("SUPABASE_URL");
+-    const anonKey = requireEnv("SUPABASE_ANON_KEY");
+-    const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+-
+-    const supabaseUser = createClient(supabaseUrl, anonKey, {
+-      global: { headers: { Authorization: authHeader } },
+-    });
+-    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
++    const { userClient, adminClient } = clients;
+ 
+-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
++    const { data: { user }, error: userError } = await userClient.auth.getUser();
+     if (userError || !user) return errorResponse("Unauthorized", 401, req);
+ 
+     let body: unknown;
+@@ -261,8 +339,8 @@
+     let canRevokeThirdParty = false;
+     if (scope === "global" && target_user_id && target_user_id !== callerId) {
+       const [callerRole, targetRole] = await Promise.all([
+-        resolveEffectiveRole(supabaseAdmin, callerId),
+-        resolveEffectiveRole(supabaseAdmin, target_user_id),
++        resolveEffectiveRole(adminClient, callerId),
++        resolveEffectiveRole(adminClient, target_user_id),
+       ]);
+       canRevokeThirdParty = decideThirdPartyRevocation({ isSelf: false, callerRole, targetRole }).allowed;
+       if (!canRevokeThirdParty) {
+@@ -274,9 +352,20 @@
+     }
+ 
+     const plan = planRevocation(scope, target_user_id, target_session_id, callerId, currentSessionId, canRevokeThirdParty);
+-    if (!plan.ok) return errorResponse(plan.message, plan.status, req);
++    if (!plan.ok) {
++      // Tentativa negada pela matriz (403): audita com resultado "negado" ANTES
++      // de responder. Falha na auditoria aqui não muda o 403 (vai só ao log).
++      // Erros 400 de validação (corpo inválido, sessão ausente) não são
++      // "tentativas" e não geram linha de auditoria.
++      if (plan.status === 403 && target_user_id) {
++        const deniedRow = buildDeniedRevocationAudit({ scope, callerId, targetUserId: target_user_id, ip });
++        const deniedAudit = await recordRevocationAudit(adminClient, deniedRow);
++        if (!deniedAudit.ok) log.error("audit insert failed (negado)", { error: deniedAudit.error });
++      }
++      return errorResponse(plan.message, plan.status, req);
++    }
+ 
+-    const { data: revoked, error: rpcError } = await supabaseAdmin.rpc("revoke_auth_sessions", {
++    const { data: revoked, error: rpcError } = await adminClient.rpc("revoke_auth_sessions", {
+       p_scope: plan.scope,
+       p_actor_user_id: plan.actor,
+       p_target_user_id: plan.target,
+@@ -295,7 +384,7 @@
+     // Auditoria SÓ depois de a revogação ter efeito. Falha ao auditar não desfaz o
+     // que já foi revogado: registra no log e devolve `audited: false` (nada é engolido).
+     const auditRow = buildRevocationAudit(plan, callerId, revokedCount, ip);
+-    const audit = await recordRevocationAudit(supabaseAdmin, auditRow);
++    const audit = await recordRevocationAudit(adminClient, auditRow);
+     if (!audit.ok) log.error("audit insert failed", { error: audit.error });
+ 
+     log.done(200, { scope, revoked: revokedCount, audited: audit.ok });
+--- a/supabase/functions/revoke-auth-sessions/index.test.ts
++++ b/supabase/functions/revoke-auth-sessions/index.test.ts
+@@ -2,10 +2,13 @@
+   planRevocation,
+   decodeJwtClaims,
+   buildRevocationAudit,
++  buildDeniedRevocationAudit,
++  maskIpForAudit,
+   recordRevocationAudit,
+   decideThirdPartyRevocation,
+   normalizeRole,
+   resolveEffectiveRole,
++  handleRevokeAuthSessionsCore,
+ } from "./index.ts";
+ 
+ const A = "00000000-0000-4000-8000-000000000001";
+@@ -94,7 +97,9 @@
+   if (row.details.target_user_id !== A) fail(`alvo deveria ser ${A}, veio ${row.details.target_user_id}`);
+   if (row.details.scope !== "global") fail(`escopo deveria ser global, veio ${row.details.scope}`);
+   if (row.details.revoked !== 3) fail(`revoked deveria preservar 3, veio ${row.details.revoked}`);
+-  if (row.ip_address !== "203.0.113.9") fail(`ip deveria ser preservado, veio ${row.ip_address}`);
++  if (row.ip_address !== "203.0.113.0") fail(`ip deveria sair mascarado (sem o último octeto), veio ${row.ip_address}`);
++  if (row.ip_address.includes("113.9")) fail("ip mascarado não pode conter o endereço completo");
++  if (row.details.resultado !== "revogado") fail(`resultado do sucesso deveria ser revogado, veio ${row.details.resultado}`);
+   if (row.entity_id !== null) fail("global não tem sessão alvo (entity_id deveria ser null)");
+   if (row.action !== "auth_sessions_revoke" || row.entity_type !== "auth_session") fail("action/entity_type errados");
+ });
+@@ -166,6 +171,183 @@
+   if (result.error !== "rls denied") fail(`erro deveria ser propagado, veio ${result.error}`);
+ });
+ 
++// ---- Ponto 1: máscara de IP (nunca grava o endereço completo) ----
++
++Deno.test("maskIpForAudit zera o último octeto do IPv4", () => {
++  if (maskIpForAudit("203.0.113.9") !== "203.0.113.0") fail("IPv4 deveria sair com o último octeto zerado");
++  if (maskIpForAudit(" 198.51.100.44 ") !== "198.51.100.0") fail("deveria aparar espaços antes de mascarar");
++});
++
++Deno.test("maskIpForAudit trunca IPv6 e nunca devolve o endereço completo", () => {
++  const full = "2001:0db8:aaaa:bbbb:cccc:dddd:eeee:ffff";
++  const masked = maskIpForAudit(full);
++  if (masked === full) fail("IPv6 completo não pode ser gravado");
++  if (masked.includes("eeee")) fail(`IPv6 deveria ser truncado, veio ${masked}`);
++  // IPv4 mapeado em IPv6: máscara o IPv4 embutido.
++  if (maskIpForAudit("::ffff:203.0.113.9") !== "203.0.113.0") fail("IPv4 mapeado deveria sair mascarado");
++});
++
++Deno.test("maskIpForAudit falha fechado: vazio, unknown e lixo viram unknown", () => {
++  for (const raw of ["", "   ", "unknown", "abc", "999.999"]) {
++    if (maskIpForAudit(raw) !== "unknown") fail(`${JSON.stringify(raw)} deveria virar unknown`);
++  }
++});
++
++// ---- Ponto 2: tentativa negada pela matriz também é auditada ----
++
++Deno.test("buildDeniedRevocationAudit monta a linha do negado", () => {
++  const row = buildDeniedRevocationAudit({ scope: "global", callerId: A, targetUserId: B, ip: "203.0.113.9" });
++  if (row.user_id !== A) fail("ator deveria ser quem tentou");
++  if (row.details.target_user_id !== B) fail("alvo deveria ser o terceiro negado");
++  if (row.details.scope !== "global") fail("escopo deveria ser global");
++  if (row.details.resultado !== "negado") fail(`resultado deveria ser negado, veio ${row.details.resultado}`);
++  if (row.details.revoked !== 0) fail("negado não revoga nada (revoked deveria ser 0)");
++  if (row.entity_id !== null) fail("negado não tem sessão alvo (entity_id deveria ser null)");
++  if (row.ip_address !== "203.0.113.0") fail(`ip do negado também é mascarado, veio ${row.ip_address}`);
++  if (row.action !== "auth_sessions_revoke" || row.entity_type !== "auth_session") fail("action/entity_type errados");
++});
++
++// ---- Ponto 3: handler de verdade com clientes falsos (matriz + auditoria) ----
++
++type CapturedRow = Record<string, unknown>;
++
++function makeFakeClients(opts: {
++  callerId: string;
++  roles: Record<string, string | null>;
++  revokeCount?: number;
++  auditError?: { message: string } | null;
++}): { clients: Parameters<typeof handleRevokeAuthSessionsCore>[1]; captured: CapturedRow[] } {
++  const captured: CapturedRow[] = [];
++  const clients = {
++    userClient: {
++      auth: {
++        getUser: () =>
++          Promise.resolve({ data: { user: { id: opts.callerId } }, error: null }),
++      },
++    },
++    adminClient: {
++      rpc: (fn: string, args: Record<string, unknown>) => {
++        if (fn === "effective_role") {
++          const role = (args._user_id != null ? opts.roles[String(args._user_id)] : null) ?? null;
++          return Promise.resolve({ data: role, error: null });
++        }
++        if (fn === "revoke_auth_sessions") {
++          return Promise.resolve({ data: opts.revokeCount ?? 1, error: null });
++        }
++        return Promise.resolve({ data: null, error: { message: `rpc desconhecido: ${fn}` } });
++      },
++      from: (table: string) => ({
++        insert: (row: unknown) => {
++          if (table !== "audit_logs") return Promise.resolve({ error: { message: `tabela inesperada: ${table}` } });
++          captured.push(row as CapturedRow);
++          return Promise.resolve({ error: opts.auditError ?? null });
++        },
++      }),
++    },
++  };
++  return { clients, captured };
++}
++
++function makePostRequest(body: unknown, ip: string): Request {
++  return new Request("http://localhost/revoke-auth-sessions", {
++    method: "POST",
++    headers: {
++      "content-type": "application/json",
++      authorization: "Bearer xx.yy.zz",
++      "x-forwarded-for": ip,
++    },
++    body: JSON.stringify(body),
++  });
++}
++
++// Supervisor -> admin (global, terceiro): a matriz nega (403) E a tentativa é auditada como "negado".
++Deno.test("handler: supervisor revogando admin recebe 403 e audita o negado", async () => {
++  const SUP = "00000000-0000-4000-8000-000000000011";
++  const ADM = "00000000-0000-4000-8000-000000000022";
++  const { clients, captured } = makeFakeClients({ callerId: SUP, roles: { [SUP]: "supervisor", [ADM]: "admin" } });
++  const res = await handleRevokeAuthSessionsCore(
++    makePostRequest({ scope: "global", target_user_id: ADM }, "10.20.30.41"),
++    clients,
++  );
++  if (res.status !== 403) fail(`deveria ser 403, veio ${res.status}`);
++  if (captured.length !== 1) fail(`negado deveria gerar 1 linha de auditoria, gerou ${captured.length}`);
++  const row = captured[0];
++  const details = row.details as Record<string, unknown>;
++  if (row.user_id !== SUP) fail("auditoria do negado deveria registrar o ator");
++  if (details.target_user_id !== ADM) fail("auditoria do negado deveria registrar o alvo");
++  if (details.resultado !== "negado") fail(`resultado deveria ser negado, veio ${String(details.resultado)}`);
++  if (row.ip_address !== "10.20.30.0") fail(`ip do negado deveria sair mascarado, veio ${String(row.ip_address)}`);
++});
++
++// Supervisor -> agente (global, terceiro): a matriz autoriza (200) e audita como "revogado".
++Deno.test("handler: supervisor revogando agente recebe 200 e audita o revogado", async () => {
++  const SUP = "00000000-0000-4000-8000-000000000033";
++  const AGE = "00000000-0000-4000-8000-000000000044";
++  const { clients, captured } = makeFakeClients({ callerId: SUP, roles: { [SUP]: "supervisor", [AGE]: "agent" }, revokeCount: 2 });
++  const res = await handleRevokeAuthSessionsCore(
++    makePostRequest({ scope: "global", target_user_id: AGE }, "10.20.30.42"),
++    clients,
++  );
++  if (res.status !== 200) fail(`deveria ser 200, veio ${res.status}`);
++  const body = await res.json() as Record<string, unknown>;
++  if (body.revoked !== 2 || body.scope !== "global" || body.audited !== true) {
++    fail(`corpo inesperado: ${JSON.stringify(body)}`);
++  }
++  if (captured.length !== 1) fail(`sucesso deveria gerar 1 linha de auditoria, gerou ${captured.length}`);
++  const details = captured[0].details as Record<string, unknown>;
++  if (details.resultado !== "revogado") fail(`resultado deveria ser revogado, veio ${String(details.resultado)}`);
++  if (captured[0].ip_address !== "10.20.30.0") fail("ip do sucesso deveria sair mascarado");
++});
++
++// Admin -> qualquer papel (global, terceiro): autoriza (200) e audita.
++Deno.test("handler: admin revogando supervisor recebe 200 e audita", async () => {
++  const ADM = "00000000-0000-4000-8000-000000000055";
++  const SUP = "00000000-0000-4000-8000-000000000066";
++  const { clients, captured } = makeFakeClients({ callerId: ADM, roles: { [ADM]: "admin", [SUP]: "supervisor" } });
++  const res = await handleRevokeAuthSessionsCore(
++    makePostRequest({ scope: "global", target_user_id: SUP }, "10.20.30.43"),
++    clients,
++  );
++  if (res.status !== 200) fail(`deveria ser 200, veio ${res.status}`);
++  if (captured.length !== 1) fail(`sucesso deveria gerar 1 linha de auditoria, gerou ${captured.length}`);
++  if (captured[0].user_id !== ADM) fail("auditoria deveria registrar o admin como ator");
++});
++
++// ---- Ponto 4: falha na auditoria não desfaz a revogação ----
++
++Deno.test("handler: auditoria falhou no sucesso mantém 200 com audited:false", async () => {
++  const ADM = "00000000-0000-4000-8000-000000000077";
++  const AGE = "00000000-0000-4000-8000-000000000088";
++  const { clients } = makeFakeClients({
++    callerId: ADM,
++    roles: { [ADM]: "admin", [AGE]: "agent" },
++    auditError: { message: "audit_logs fora do ar" },
++  });
++  const res = await handleRevokeAuthSessionsCore(
++    makePostRequest({ scope: "global", target_user_id: AGE }, "10.20.30.44"),
++    clients,
++  );
++  if (res.status !== 200) fail(`revogação feita deve continuar 200 mesmo sem auditoria, veio ${res.status}`);
++  const body = await res.json() as Record<string, unknown>;
++  if (body.audited !== false) fail(`audited deveria ser false, veio ${JSON.stringify(body)}`);
++  if (body.revoked !== 1) fail("revoked deveria continuar refletindo a primitiva");
++});
++
++Deno.test("handler: auditoria falhou no negado mantém o 403", async () => {
++  const SUP = "00000000-0000-4000-8000-000000000099";
++  const ADM = "00000000-0000-4000-8000-0000000000aa";
++  const { clients } = makeFakeClients({
++    callerId: SUP,
++    roles: { [SUP]: "supervisor", [ADM]: "admin" },
++    auditError: { message: "audit_logs fora do ar" },
++  });
++  const res = await handleRevokeAuthSessionsCore(
++    makePostRequest({ scope: "global", target_user_id: ADM }, "10.20.30.45"),
++    clients,
++  );
++  if (res.status !== 403) fail(`negado continua 403 mesmo sem auditoria, veio ${res.status}`);
++});
++
+ // ─── Matriz de papéis da revogação de terceiro (critério 1) ───────────────────
+ // A regra pura é o que o handler usa para decidir; provo cada célula da matriz.
+ 

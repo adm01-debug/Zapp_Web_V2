@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299519 -0300	
+7e3d30cb5be2c801088f200d54191d09416ae334 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299520 -0300	reset: moving to HEAD
+7e3d30cb5be2c801088f200d54191d09416ae334 e8a30f53fbd02dc29deb9c2a89c9bee08f8db02d Iris <iris@hermes.local> 1791299922 -0300	commit: fix(inbox): Enter respeita o limite de caracteres do botao Enviar (#312)

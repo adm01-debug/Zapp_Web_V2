@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791550295 -0300	
+68980bf5e3486ca611a90742053bfdb008fcb5c3 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791550295 -0300	reset: moving to HEAD
+68980bf5e3486ca611a90742053bfdb008fcb5c3 ad31971611c058fff2453793afe7a5e5b9c000f4 Joaquim Ataides <ti@promobrindes.com.br> 1791550963 -0300	commit: feat(arquivos): cartão com nome, tipo, tamanho, data e foto de quem enviou
+ad31971611c058fff2453793afe7a5e5b9c000f4 abafc1875e298ced4b6a6e9e984419475da8febd Joaquim Ataides <ti@promobrindes.com.br> 1791551275 -0300	commit: test(arquivos): repoe o caso do Space no marcador do cartao (R04)

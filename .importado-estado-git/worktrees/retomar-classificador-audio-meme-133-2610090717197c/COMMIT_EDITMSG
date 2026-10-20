@@ -1,0 +1,10 @@
+test(ai-audio): prova que a cadeia do audio_stt preserva as modalidades
+
+O defeito do item 133 (IA-AUDIO-001) foi entregue e integrado; o unico delta que
+sobrava no refazer anterior era editar a migration ja aplicada
+20261006100606_ia131_audio_stt_openrouter.sql, o que o passo 'Rejeitar edicao de
+migration ja existente' do db-guard.yml reprova em qualquer PR. No lugar da
+edicao, o teste trava o comportamento real da cadeia ia033+ia131 (vision
+preservada + audio_stt acrescentado + idempotencia + chaves top-level) em
+PostgreSQL 17 descartavel, e o MIGRATIONS.md registra por que a reescrita nao
+entra.

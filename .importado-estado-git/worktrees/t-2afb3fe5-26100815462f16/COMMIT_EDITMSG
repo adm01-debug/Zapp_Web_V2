@@ -1,0 +1,4 @@
+fix(catalog): favorito deixa de converter preço e estoque desconhecidos em zero
+
+# Conflicts:
+#	src/components/catalog/SendProductDialog.tsx

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791457788 -0300	branch: Created from dia/2026-10-08
+0203871564cbc198c32d6c501cd414e24ddb10ab ed75e62f5debbfe8f93c38f1bef479b61f222a98 Joaquim Ataides <ti@promobrindes.com.br> 1791458999 -0300	commit: fix(catalog): favorito nao inventa preco e estoque zero

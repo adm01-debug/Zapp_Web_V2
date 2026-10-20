@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f73548534c1a2628ccde6cebcf76bee330d96ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791488591 -0300	
+f73548534c1a2628ccde6cebcf76bee330d96ca4 f73548534c1a2628ccde6cebcf76bee330d96ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791488592 -0300	reset: moving to HEAD
+f73548534c1a2628ccde6cebcf76bee330d96ca4 62072ca58fdeb7f0a8748042dceaee8216fcfcb5 Joaquim Ataides <ti@promobrindes.com.br> 1791488911 -0300	commit (cherry-pick): fix(ci): prova de orcamento nao expoe credencial em argv nem sessao Auth na saida (#358)
+62072ca58fdeb7f0a8748042dceaee8216fcfcb5 9bd02601304f97eb54bc7b3ad026fbe7af0bdde1 Joaquim Ataides <ti@promobrindes.com.br> 1791488921 -0300	commit (amend): fix(ci): prova de orcamento nao expoe credencial em argv nem sessao Auth na saida (#358)

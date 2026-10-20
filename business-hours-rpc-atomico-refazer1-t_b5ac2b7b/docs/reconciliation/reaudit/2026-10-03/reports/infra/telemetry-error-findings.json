@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "area": "infra_telemetry_error",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "findings": [
+    {
+      "id": "R2-INF-040",
+      "title": "Falha de leitura da telemetria aparece como sistema com bom desempenho",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "area_extension": "finite_telemetry_error_batch",
+      "description": "A queryFn lança o error do SDK, mas AdminTelemetriaPage não consome error/isError/status. Sem dados prévios, o default rows=[] chega à tabela quando a primeira consulta terminou em falha. TelemetryTable usa somente isLoading e rows.length e exibe uma mensagem explícita de bom desempenho, enquanto os cards mostram zero erros e média 0ms.",
+      "consumer_chain": [
+        "NavigationService autoriza view telemetry para admin",
+        "ViewRouter verifica acesso e monta AdminTelemetriaPage",
+        "useQuery recebe rejeição da leitura query_telemetry",
+        "Página descarta estado de erro e passa rows=[]/isLoading=false",
+        "Tabela anuncia bom desempenho"
+      ],
+      "preconditions": [
+        "Usuário com acesso à view de telemetria.",
+        "Consulta inicial falha depois das tentativas configuradas e não há dados de sucesso no cache dessa chave; não há configuração externa que faça throwOnError."
+      ],
+      "effect": "Uma indisponibilidade ou erro de autorização/consulta é apresentada como ausência de consultas lentas e bom desempenho, justamente quando a tela deveria comunicar que não conseguiu medir. O achado não depende de números reais do banco nem afirma exposição a usuários sem acesso.",
+      "evidence": [
+        {
+          "path": "src/pages/AdminTelemetriaPage.tsx",
+          "line_start": 37,
+          "line_end": 59,
+          "sha256": "a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Estado de erro omitido; queryFn lança SDK error"
+        },
+        {
+          "path": "src/pages/AdminTelemetriaPage.tsx",
+          "line_start": 70,
+          "line_end": 98,
+          "sha256": "a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Cards calculados do array vazio"
+        },
+        {
+          "path": "src/pages/AdminTelemetriaPage.tsx",
+          "line_start": 145,
+          "line_end": 148,
+          "sha256": "a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Contador e tabela sem estado de erro"
+        },
+        {
+          "path": "src/pages/admin-telemetria/TelemetryTable.tsx",
+          "line_start": 13,
+          "line_end": 28,
+          "sha256": "351510648414af0ce45528db1ed08ec743d02894d50e0899083481b885eab0b4",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Sem dados vira mensagem explícita de bom desempenho"
+        },
+        {
+          "path": "src/lib/queryClient.ts",
+          "line_start": 9,
+          "line_end": 25,
+          "sha256": "5036c273782cf6aca3d756b2ac74710edbd0b5d8fe177a0991e5fdc2a390fac5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Configura retries, mas não eleva todo erro de query à ErrorBoundary"
+        },
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "line_start": 81,
+          "line_end": 87,
+          "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "View telemetry é consumidor ativo"
+        },
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "line_start": 129,
+          "line_end": 151,
+          "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Gate de acesso presente antes da montagem"
+        },
+        {
+          "path": "src/services/navigation.service.ts",
+          "line_start": 142,
+          "line_end": 155,
+          "sha256": "8e128c5cc1aa208f96570c68295d6e4836ca1febed4d7d1e603f648d4c294d48",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Telemetria restrita por papel no mapa de navegação"
+        }
+      ],
+      "acceptance": [
+        "Consumir e apresentar falha da query, separada de carregamento, sucesso vazio e sucesso com registros.",
+        "Não derivar saúde do sistema de ausência de dados por falha; se houver dados de cache, sinalizar atualização falha/defasagem.",
+        "Verificar falha inicial, sucesso vazio, sucesso com alertas e falha de refetch; manter os gates de acesso e o erro já validado pelo cleanup."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-TE-P01"
+      ],
+      "related_previous_findings": [
+        "R2-INF-026"
+      ],
+      "novelty_basis": "Outro consumidor e mecanismo: este SDK error é lançado corretamente e o erro é perdido na apresentação de useQuery, não nas checagens de saúde de Diagnostics.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Nenhuma query de produto, biblioteca React/TanStack, browser ou retry real executado.",
+        "Probe usa o queryFn real com SDK sintético e fornece o estado de erro documentado à fronteira do hook; testa as decisões de página/tabela reais.",
+        "A classe de severidade e o limite de 500 registros não foram convertidos em defeitos adicionais."
+      ],
+      "external_references": [
+        {
+          "url": "https://tanstack.com/query/latest/docs/framework/react/guides/queries",
+          "retrieved_on": "2026-10-04",
+          "source_kind": "primary_documentation",
+          "supports": "Query com falha é distinguida por isError/status e error; a ausência de dados não equivale a sucesso vazio."
+        }
+      ]
+    },
+    {
+      "id": "R2-INF-041",
+      "title": "ErrorBoundary ignora fallback nulo usado para retirar overlays com falha",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "area_extension": "finite_telemetry_error_batch",
+      "description": "O contrato de Props aceita fallback ReactNode, mas render verifica seu valor por truthiness. Quando App fornece fallback={null} para os providers diferidos, a condição é falsa e o boundary renderiza a tela padrão de erro, com min-h-screen e role=alert. App documenta expressamente que esse fallback deve retirar silenciosamente a camada opcional.",
+      "consumer_chain": [
+        "App mantém AppRoutes fora do boundary de overlays",
+        "DeferredProviders/DeferredHooks são filhos de ErrorBoundary fallback=null",
+        "Uma falha chega ao estado hasError",
+        "render ignora o fallback explícito null e retorna a UI padrão"
+      ],
+      "preconditions": [
+        "O boundary de overlays da aplicação captura uma falha e permanece em hasError.",
+        "O fallback fornecido é null, como no consumidor atual; para chunk load, após a recuperação automática não ser possível ou já ter sido usada."
+      ],
+      "effect": "Uma falha de componente opcional produz um painel de erro com altura mínima de uma viewport e anúncio assertivo em vez de desaparecer. AppRoutes continua fora e montado; não se afirma que o roteamento ou toda a aplicação foi derrubado. A ocupação visual foi confirmada como classe/JSX, não medida em navegador.",
+      "evidence": [
+        {
+          "path": "src/components/errors/ErrorBoundary.tsx",
+          "line_start": 8,
+          "line_end": 13,
+          "sha256": "fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Fallback é ReactNode opcional"
+        },
+        {
+          "path": "src/components/errors/ErrorBoundary.tsx",
+          "line_start": 129,
+          "line_end": 142,
+          "sha256": "fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "if truthy ignora null e cai na UI padrão"
+        },
+        {
+          "path": "src/App.tsx",
+          "line_start": 15,
+          "line_end": 24,
+          "sha256": "3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Contrato de recuperação silenciosa dos overlays"
+        },
+        {
+          "path": "src/App.tsx",
+          "line_start": 128,
+          "line_end": 143,
+          "sha256": "3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consumidor real fornece null e mantém AppRoutes fora do boundary"
+        }
+      ],
+      "acceptance": [
+        "Distinguir fallback não fornecido de fallback fornecido como null/false/zero/string vazia; retornar o ReactNode explícito.",
+        "Verificar erro com fallback=null, fallback customizado e ausência de fallback, além do caminho sem erro.",
+        "Manter os wrappers de sessionStorage, limitação de autoreload e isolamento de AppRoutes; validar em browser que a camada opcional desaparece sem deslocar a aplicação."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-TE-P02"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Contrato produtivo específico de fallback nulo; diferente da simples presença de ErrorBoundary em imports ou dos retries de UI genérica.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Probe chama o método render real isolado, com DEV=false e JSX inerte; não executa componentDidCatch, reportClientError ou reload.",
+        "O comentário de main.tsx sobre um wrapper não montado foi tratado pelo root como observação; não compõe este achado.",
+        "Os controles de chunk recovery e ocultação de detalhes em produção foram lidos e preservados."
+      ]
+    }
+  ],
+  "previous_findings_compared": 104,
+  "remaining_gaps": [
+    "Nenhum browser, SDK real, banco, TLS, Go runtime ou serviço iniciado.",
+    "Probes usam fonte real e fronteiras inertes; não substituem React/TanStack nem a execução de seus ciclos.",
+    "O limite de 500 registros representa uma amostra recente, não certifica métricas de todo o banco; não foi promovido a um novo mecanismo sem promessa mais específica.",
+    "A leitura integral dos sete arquivos fecha apenas o lote delegado; o roster final de testes permanece em andamento."
+  ],
+  "changed_existing_finding": "INF-019 recebeu extensão de locus histórico, sem novo ID; builder da segunda passagem também foi atualizado."
+}

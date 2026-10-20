@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791310745 -0300	
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791310746 -0300	reset: moving to HEAD
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 38f15ec551b5c1f1fb81703d16c1973b7c36ab65 Joaquim Ataides <ti@promobrindes.com.br> 1791310757 -0300	cherry-pick: fix(db): RPC de conversa direta recupera a protecao contra criacao concorrente (#55)
+38f15ec551b5c1f1fb81703d16c1973b7c36ab65 308c1e5e94b6ec7aaa9f4aad9cb222bc2689e96a Joaquim Ataides <ti@promobrindes.com.br> 1791311797 -0300	commit (amend): fix(db): RPC de conversa direta recupera protecao contra criacao concorrente (#55)

@@ -1,0 +1,18 @@
+fix(multiplix): estimate → mensagens (aptos × blocos), versões de rotei (TL-028)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick da6fb5fce fix(multiplix): estimate → mensagens (aptos × blocos), versões de rotei (TL-028)
+# No commands remaining.
+# You are currently rebasing branch 'v2/tl-028-multiplix-estimate-mensagens-2610090058b180' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/multiplix/MultiplixMonitor.tsx
+#	new file:   src/components/multiplix/__tests__/MultiplixMonitor.estimativa.test.tsx
+#	modified:   src/components/multiplix/__tests__/MultiplixMonitor.recipients.test.tsx
+#	modified:   src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx
+#	modified:   src/hooks/integrations/useMultiplixDispatches.ts
+#

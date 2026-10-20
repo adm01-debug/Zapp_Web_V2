@@ -1,0 +1,19 @@
+fix(talkx): insights expõem base calculada e ritmo usa minutos consecutivos
+
+IA-TALKX-001 / R2-MOD-033 / R2-MOD-037 — o nome das recomendações não
+correspondia ao que estava sendo medido.
+
+- useTalkXInsights: hora sugerida lida em America/Sao_Paulo (era o fuso do
+  dispositivo), amostra = 2000 envios MAIS RECENTES e amostra mínima por hora
+  (abstém-se sem base); template escolhido por TAXA de resposta com denominador
+  (era número absoluto de replies); lowClickCampaigns passa a filtrar campanha
+  com taxa de clique baixa (era toda campanha concluída, e status 'finished'
+  nem existe no CHECK — a contagem era sempre zero).
+- TalkXAnalytics: comparativo rotula "Taxa de envio" (a fórmula é
+  sent/total_recipients, não entrega); card de horário fala de volume de envios
+  e para de prometer abertura.
+- TalkXCampaignRunning: ritmo/ETA sobre os últimos 10 minutos CONSECUTIVOS
+  (zeros incluídos) e leitura em ordem decrescente, para o envio 2001+ entrar na
+  série recente.
+
+Testes: 3 arquivos (15 asserções), vermelho antes e verde depois.

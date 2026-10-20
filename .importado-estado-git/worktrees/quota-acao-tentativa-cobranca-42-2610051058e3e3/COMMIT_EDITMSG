@@ -1,0 +1,8 @@
+fix(edge): ações calculadas de IA passam a consumir a quota real
+
+ai-churn-analysis e ai-classify-tickets passavam pelo enforceAiGuards,
+cuja quota diária conta linhas de ai_usage_logs por (usuário, função),
+sem nunca gravar a linha — ação admitida, consumo invisível (IA-QUOTA-001).
+O novo registrarAcaoCalculada grava uma linha por resposta pós-guarda com
+tokens NULL (sem modelo = sem medição, nunca zero), ligando ação/tentativa
+à quota sem virar cobrança de tokens.

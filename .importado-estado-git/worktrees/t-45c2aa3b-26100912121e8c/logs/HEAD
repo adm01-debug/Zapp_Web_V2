@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791558757 -0300	
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791558758 -0300	reset: moving to HEAD
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb c302ebf1ea406577891e573ddeeeea9447f2922d Joaquim Ataides <ti@promobrindes.com.br> 1791558777 -0300	cherry-pick: feat(talk-x): gerenciador de links rastreaveis no editor de mensagem (X118)
+c302ebf1ea406577891e573ddeeeea9447f2922d 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561092 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 3a3926c93eac00727bee2e23511fb1e7605f8538 Joaquim Ataides <ti@promobrindes.com.br> 1791561092 -0300	rebase (pick): feat(talk-x): gerenciador de links rastreaveis no editor de mensagem (X118)
+3a3926c93eac00727bee2e23511fb1e7605f8538 3a3926c93eac00727bee2e23511fb1e7605f8538 Joaquim Ataides <ti@promobrindes.com.br> 1791561092 -0300	rebase (finish): returning to refs/heads/v2/t-45c2aa3b-26100912121e8c
+3a3926c93eac00727bee2e23511fb1e7605f8538 ba42aba772f8f592b042d4e717bc436861f53f9e Joaquim Ataides <ti@promobrindes.com.br> 1791561160 -0300	commit: fix(talk-x): wizard do Talk X volta a montar sem AuthProvider no teste (TL-072)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193701 -0300	
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193701 -0300	reset: moving to HEAD
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 1c44ccdb887d93343f3b278056ecd23e86bea0e6 Joaquim Ataides <ti@promobrindes.com.br> 1791194195 -0300	commit: fix(hooks): não apaga vínculo local quando a Evolution GO falha na exclusão (#66)

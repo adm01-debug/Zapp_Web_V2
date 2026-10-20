@@ -1,0 +1,7 @@
+fix(catalogo): galeria volta ao 1o quadro ao navegar para produto com menos imagens
+
+R2-MOD-047 (#495): o idx da ImageGallery vivia em useState sem relacao com o
+produto mostrado, entao navegar de A (indice alto) para B com menos imagens
+deixava o contador em 3 / 2 e mantinha a seta 'Imagem anterior' apontando para
+um indice inexistente. O indice agora reinicia ao trocar de produto e e
+limitado ao conjunto atual quando ele encolhe.

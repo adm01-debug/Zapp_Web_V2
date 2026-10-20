@@ -1,0 +1,3 @@
+fix(ia): Alertas de consumo anômalo (apenas projeto DESIGN_ONLY) (SL-011)
+
+Item do inventario IA-058: a lacuna e DOCUMENTAL e ja esta fechada na base do dia pelo commit 76cc26864 (#134, integrado) - docs/ia/README.md secao "Bloco 06 - estado de IA-058: DESIGN_ONLY" + tests/contracts/ia058-design-only.contract.test.ts. Nenhum arquivo de codigo foi alterado: git diff --stat contra dia/2026-10-08 sai VAZIO. Commit vazio apenas para o fechamento/fila rodarem. Prova no .tmp/relato.md: contrato 6/6 verde pelo codigo real, os dois commits da evidencia ancestrais de HEAD e zapp-verify . --rapido VERDE.

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 6c57dfa54443435babc08970f517261076314176 Joaquim Ataides <ti@promobrindes.com.br> 1791346215 -0300	branch: Created from dia/2026-10-07
+6c57dfa54443435babc08970f517261076314176 145a91bfd9d1472fb2e8fed898334eff3067642d Joaquim Ataides <ti@promobrindes.com.br> 1791347056 -0300	commit: fix(migrações): torna rollback de reactions resiliente a conflito
+145a91bfd9d1472fb2e8fed898334eff3067642d b180880d74524a76f534933dada2bc8749a2271f Joaquim Ataides <ti@promobrindes.com.br> 1791540063 -0300	rebase (finish): refs/heads/v2/t-9400afa9-26100701102514 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+b180880d74524a76f534933dada2bc8749a2271f 954c35cb1ad7854f0e1fca06c6ebe74638727b59 Joaquim Ataides <ti@promobrindes.com.br> 1791540217 -0300	commit: fix(migrações): rollback no formato '-- Rollback (SQL executavel)' do repo
+954c35cb1ad7854f0e1fca06c6ebe74638727b59 58b0d7626c9a23e521414a8f83fe933aefc9374f Joaquim Ataides <ti@promobrindes.com.br> 1791558201 -0300	rebase (finish): refs/heads/v2/t-9400afa9-26100701102514 onto 1098da5a935929b171674a99b425d6b515fd6072

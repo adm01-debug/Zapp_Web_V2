@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 8e356134fda9647151a80e3fee8969eb952afe5a Joaquim Ataides <ti@promobrindes.com.br> 1791387840 -0300	
+8e356134fda9647151a80e3fee8969eb952afe5a 8e356134fda9647151a80e3fee8969eb952afe5a Joaquim Ataides <ti@promobrindes.com.br> 1791387841 -0300	reset: moving to HEAD
+8e356134fda9647151a80e3fee8969eb952afe5a 966ed428c977c7e0aa8e7800a79f91df46a514a6 Joaquim Ataides <ti@promobrindes.com.br> 1791388953 -0300	commit: feat(arquivos): store de reprodução exclusiva de áudio da aba Arquivos
+966ed428c977c7e0aa8e7800a79f91df46a514a6 a95c2344d39b40e9f2e7df8609a9bd2149aae4a3 Joaquim Ataides <ti@promobrindes.com.br> 1791388954 -0300	commit: feat(arquivos): play/pause direto no cartão de áudio (Grid, Lista e Tabela)
+a95c2344d39b40e9f2e7df8609a9bd2149aae4a3 2a7b84f345aab293550f7d1ad21f361d2540c222 Joaquim Ataides <ti@promobrindes.com.br> 1791388956 -0300	commit: test(arquivos): prova o play/pause exclusivo do áudio e o som fantasma

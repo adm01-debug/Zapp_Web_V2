@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211137 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211138 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f 2ae8544ce77e9cbc190fcfe8526665853a493e64 Joaquim Ataides <ti@promobrindes.com.br> 1791211142 -0300	cherry-pick: fix(webhook): escopar rename/delete de label do WhatsApp por conexão
+2ae8544ce77e9cbc190fcfe8526665853a493e64 d6b0a8a3d020f4e96881bd2b9995d8c88dc78813 Joaquim Ataides <ti@promobrindes.com.br> 1791211142 -0300	cherry-pick: fix(webhook): provar isolamento por conexão das etiquetas de WhatsApp no banco

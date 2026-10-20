@@ -1,0 +1,18 @@
+fix(multiplix): corrigir contagem e fallback da retentativa MX05
+
+Resolve os tres pontos da recusa do item MX05 (#49) sobre o cherry-pick de 964ca5264:
+
+- D1: o ramo permanente/unknown conclui o item como 'failed' e agora incrementa
+  failedCount exatamente uma vez (antes a resposta do worker saia failed=0).
+- D2: quando a RPC devolve dead_lettered o evento vira item_failed (com
+  payload.action = veredicto da RPC); item_rescheduled fica so para o
+  reagendamento de verdade.
+- D3: sem retryAfter do kernel (planRetry ja decide dead_letter) o fallback passa
+  a ser o primeiro degrau deterministico do backoff (30 s) na constante de modulo
+  RETRY_BACKOFF_MS, usada tambem no catch pre-POST. Retry imediato via new Date()
+  nao existe mais; o teto continua sendo da RPC reschedule_multiplix_item.
+
+Testes: MX05/guarda permanente exige corpo.failed === 1; dois testes novos provam
+dead_lettered != reagendamento e que retryAfter ausente nao agenda retry imediato.
+Prova vermelho->verde: 3 passed | 3 failed com o index.ts original; 50 passed com
+a correcao. zapp-verify . --rapido verde; suite Deno de functions 1015 passed.

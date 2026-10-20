@@ -1,0 +1,10 @@
+fix(ai-transcribe-audio): magic bytes só valem para áudio conhecido; MP4 vai como m4a
+
+Recusa do revisor de 09/10: o resolvedor aceitava qualquer mime do detector
+(image/png, application/pdf...) e mandava ao STT com audio.bin. Agora só um
+mime de áudio de EXTENSION_BY_MIME vence o metadado; o container ftyp que o
+detector chama de video/mp4 vira audio/mp4 + audio.m4a (como video/webm ->
+audio/webm). Testes novos: M4A (ftyp isom) e PNG com metadado de áudio.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

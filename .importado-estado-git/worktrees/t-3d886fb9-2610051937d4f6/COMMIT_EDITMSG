@@ -1,0 +1,28 @@
+fix(edge): GO logada sem socket deixa de ser classificada como conexão aberta (#65)
+
+Por quê: `extractConnectionState` (usado pelo connection-health-check e pelo
+webhook-diagnostic) ignorava `Connected` e devolvia 'open' sempre que `LoggedIn`
+era verdadeiro. O estado "Reconnecting" da Evolution GO — credenciais salvas com
+o socket fora do ar — é exatamente {Connected:false, LoggedIn:true}, e era lido
+como 'open': o health-check traduzia para health "healthy" e reafirmava
+status "connected" com o WhatsApp indisponível (disponibilidade falsa). As chaves
+minúsculas (connected/loggedIn), que a GO também emite, nem eram reconhecidas e
+caíam em 'unknown'. Contrato E25 (PLANO_MULTI_CONEXAO_EVOLUTION_GO): LoggedIn &&
+Connected → open; LoggedIn && !Connected → connecting; !LoggedIn → close.
+
+O que muda: `_shared/evolution-send.ts` passa a exigir socket E sessão para
+'open' e devolve 'connecting' quando a socket cai com a sessão viva (transitório
+— o health-check não promove a 'connected' e não alerta queda). Sem a flag de
+socket no payload não há evidência de queda: `LoggedIn` decide, preservando o
+comportamento anterior para respostas parciais da GO.
+
+Verificação: teste novo `_shared/__tests__/evolution-connection-state.test.ts`,
+9 testes. Antes da correção (log .tmp/red.log): 3 falhas — a matriz unitária
+{Connected:false, LoggedIn:true} devolvia 'open' (esperado 'connecting'), as
+flags minúsculas devolviam 'unknown', e o health-check real (fetch da GO
+substituído por stub, sem rede) gravava health "healthy" (esperado "degraded").
+Depois: `deno test` do arquivo → 9 passed / 0 failed; suíte Deno completa do CI
+(`git ls-files 'supabase/functions/**/*.test.ts'`, 96 arquivos) → 1009 passed /
+0 failed / 1 ignored (17s).
+
+Item 65 do BACKLOG_VERIFICADO · TRA-003.

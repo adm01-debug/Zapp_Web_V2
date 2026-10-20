@@ -1,0 +1,6 @@
+fix(inbox/contato): WhatsApp sem copiar/abrir, rótulo "E-mail" e Dados Profissionais sem subtítulo
+
+A linha do WhatsApp vira texto simples com o número inteiro (valueNode com
+whitespace-nowrap) e sem os botões de copiar/abrir; o rótulo do e-mail passa a
+"E-mail" e a seção Dados Profissionais deixa de ter subtítulo (prop subtitle do
+SidebarSection agora é opcional).

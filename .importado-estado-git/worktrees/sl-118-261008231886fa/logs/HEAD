@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512335 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512336 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 c9fe25470f2477aa8ad2cfe4c26d0e1cd8a77dfe worker <worker@fábrica.local> 1791512429 -0300	commit: docs(ci): registra a medição do E80 (cancelamento na main) e a pendência do dono (SL-118)
+c9fe25470f2477aa8ad2cfe4c26d0e1cd8a77dfe de64571fe0f422ade58654eb68f86d4b1746e82b worker <worker@fabrica.local> 1791512470 -0300	commit (amend): docs(ci): registra a medição do E80 (cancelamento na main) e a pendência do dono (SL-118)

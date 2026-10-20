@@ -1,0 +1,12 @@
+fix(db): snapshot do estado novo grava o carimbo que o guard da RPC casa (#298)
+
+O 2o UPDATE de update_talkx_template_with_snapshot (SET current_version_id)
+era recusado com 42501 talkx_template_update_requires_authorized_rpc: o
+snapshot do estado NOVO gravava created_at = updated_at persistido
+(transaction_timestamp) enquanto guard_talkx_template_update casa
+statement_timestamp(). A RPC passa a gravar os dois snapshots com
+statement_timestamp() e devolve o updated_at realmente persistido.
+
+Teste scripts/db-audit/talkx-template-second-update-snapshot.test.sh (Postgres
+descartavel, migrations reais, RPC chamada como authenticated): RED antes
+(42501), GREEN depois, e um dente que prova a linha load-bearing.

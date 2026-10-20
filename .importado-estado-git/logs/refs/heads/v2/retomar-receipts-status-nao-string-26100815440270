@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485047 -0300	branch: Created from dia/2026-10-08
+72ad19958df7735cd29bad24dd38f66265c47f3b 2d8ab30c87e4728888b926919bb2cf5d2d121b9a Joaquim Ataides <ti@promobrindes.com.br> 1791485058 -0300	cherry-pick: fix(edge): status não string não derruba mais o lote de receipts do webhook (#482)
+2d8ab30c87e4728888b926919bb2cf5d2d121b9a bc6615004c0b70f73df9b38196baadcb6eb554bd Joaquim Ataides <ti@promobrindes.com.br> 1791485058 -0300	cherry-pick: test(edge): ajusta contrato de schemas para status de receipt
+bc6615004c0b70f73df9b38196baadcb6eb554bd 01eca9a5c93d6bdee8220125e426a561f3445bee Joaquim Ataides <ti@promobrindes.com.br> 1791486974 -0300	commit: test(edge): harness dual deno/vitest no contrato de schemas

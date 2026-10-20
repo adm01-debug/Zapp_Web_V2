@@ -1,0 +1,13 @@
+fix(talkx): tick do motor não aborta mais no expurgo LGPD
+
+Por quê: M-DB-01 (P0). O passo 5 do expurgo fazia DELETE em storage.objects; o gatilho
+storage.protect_delete (FOR EACH STATEMENT) levanta 42501 mesmo com 0 linhas e revertia o
+tick inteiro (cron talkx-scheduler-1min parado, last_purge_at nunca gravado).
+Agora o expurgo registra os órfãos em talkx_storage_purge_queue (RLS, só service_role); o
+tick isola o expurgo em bloco de exceção (alerta purge_failed, nova tentativa só após 1 h);
+o CHECK de talkx_alerts aceita purge_failed; talkx_engine_alerts traduz outcome_unknown_24h
+e não fecha purge_failed; funções com search_path = public, pg_temp.
+Verificação: talkx-tick-expurgo.test.sh RED→GREEN (42 PASS) em PG17 descartável, 6/6
+mutantes mortos, migration aplicada no banco local v2-26100414295a00 com 2 ticks + falha
+simulada, zapp-verify --rapido verde, db:guard sem violação nova.
+Plano: cartão t_5083facb (M-DB-01 = R3-DELTA-006/007)

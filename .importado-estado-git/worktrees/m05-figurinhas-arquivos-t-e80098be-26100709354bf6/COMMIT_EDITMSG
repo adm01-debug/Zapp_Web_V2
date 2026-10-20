@@ -1,0 +1,7 @@
+feat(arquivos): figurinhas em chip próprio na aba Arquivos
+
+O message_type = 'sticker' decide o tipo antes de qualquer heurística de MIME,
+então a figurinha sai de "Imagens" e ganha o chip "Figurinhas", com contagem
+própria no banco e miniatura de imagem. Os consumidores do tipo novo (contagem
+por chip, rótulo, miniatura, prévia e painel de detalhes) foram ajustados e o
+encaminhamento preserva o transporte de imagem.

@@ -1,0 +1,10 @@
+fix(docs): inventario do banco acerta webhook_rate_limits pela Edge metrics (SL-184)
+
+A guarda scripts/ci/db-inventory-doc.unit.mjs recusava o documento: webhook_rate_limits
+ficou marcada roadmap sem consumidor, mas supabase/functions/metrics/index.ts (SL-051,
+commit 2913af7c6, entrou na dia depois da base da tentativa anterior) a consulta. A
+
+linha passa a ativo com os dois arquivos que a citam, e a nota historica do §8.1
+para de dizer que ela nao tem referencia de codigo.
+
+Prova: node --test scripts/ci/db-inventory-doc.unit.mjs -> 15 pass / 0 fail

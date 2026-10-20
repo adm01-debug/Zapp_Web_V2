@@ -1,0 +1,10 @@
+fix(conquistas): view Conquistas passa a exibir as conquistas reais do usuário
+
+A view roteada (ViewRouter → AchievementsSystem) montava uma lista fixa
+(MOCK_ACHIEVEMENTS) com 400 XP, nível 1 e "756/1000" conversas resolvidas —
+os mesmos números para qualquer conta, sem rótulo de demonstração. Agora lê
+agent_stats/agent_achievements do usuário autenticado via useAgentGamification
+(a mesma fonte do painel real), distinguindo carregando, ausência real e erro.
+A promessa falsa de "Reivindicar Recompensa" sai junto com os mocks.
+
+refs R2-AUTH-042 (#266)

@@ -1,0 +1,13 @@
+fix(conexoes): aquecimento e limite diário são configuração sem execução automática (#218)
+
+O monitor de reputação gravava warmup_status/warmup_day/daily_limit sem
+conferir o erro da atualização e anunciava "Aquecimento iniciado" mesmo
+quando a escrita falhava. Também apresentava o limite diário como
+progresso operacional e afirmava população automática, embora não exista
+motor versionado que renove contadores, avance o dia de aquecimento ou
+aplique o limite.
+
+- confere o error do update antes de anunciar o início;
+- rotula a tela como configuração sem execução automática;
+- ajusta o vazio e o rótulo do limite diário;
+- teste novo prova o defeito (vermelho antes, verde depois).

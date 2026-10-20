@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791310840 -0300	branch: Created from dia/2026-10-06
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 ac0daee88bb181d3b38a06cf60292cef10af3e64 Joaquim Ataides <ti@promobrindes.com.br> 1791310965 -0300	commit (cherry-pick): fix(create-user): compensacao apaga a conta Gmail antes do deleteUser (#245)
+ac0daee88bb181d3b38a06cf60292cef10af3e64 80cb4656b75dbcf4acfde341789633e1810e24a4 Joaquim Ataides <ti@promobrindes.com.br> 1791311013 -0300	commit (amend): fix(create-user): compensacao apaga a conta Gmail antes do deleteUser (#245)

@@ -1,0 +1,1 @@
+import{n as e,r as t}from"./useTeamChatNotifications-8z8spkQb.js";function n(){let n=e();return t(n),null}export{n as TeamChatNotificationsListener};

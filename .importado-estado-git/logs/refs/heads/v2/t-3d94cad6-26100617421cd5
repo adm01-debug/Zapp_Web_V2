@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319331 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 88c7c7fb444012c3df350724842d2e61a67711ae Hugo <hugo@promobrindes.local> 1791319871 -0300	commit: fix(catalogo): seleção em massa passa a enviar/exportar os produtos escolhidos, não só os do filtro visível (#391)

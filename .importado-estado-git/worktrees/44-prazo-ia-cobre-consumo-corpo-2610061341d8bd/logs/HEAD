@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304902 -0300	
+421f4a59c7ba7d52bad931d367a68d859d374465 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304903 -0300	reset: moving to HEAD
+421f4a59c7ba7d52bad931d367a68d859d374465 f23a9730f2d58b5f4ffcc3c640a807d9858999e8 Joaquim Ataides <ti@promobrindes.com.br> 1791305272 -0300	cherry-pick: fix(edge): UPSERT por event_id e outbox duravel no log essencial de IA
+f23a9730f2d58b5f4ffcc3c640a807d9858999e8 501518a049f323ceabb0758cebeacfb7c116d138 Joaquim Ataides <ti@promobrindes.com.br> 1791305947 -0300	commit: fix(edge): log essencial de IA com event_id reservado na outbox durável (#44)
+501518a049f323ceabb0758cebeacfb7c116d138 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305952 -0300	rebase (start): checkout dia/2026-10-06
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 fd079f88c783e0ef0a4514acb7f020cc41fb5788 Joaquim Ataides <ti@promobrindes.com.br> 1791305952 -0300	rebase (pick): fix(edge): UPSERT por event_id e outbox duravel no log essencial de IA
+fd079f88c783e0ef0a4514acb7f020cc41fb5788 0689838f0e9e9e3c7a7bf832e8cff3f3cabc3370 Joaquim Ataides <ti@promobrindes.com.br> 1791305952 -0300	rebase (pick): fix(edge): log essencial de IA com event_id reservado na outbox durável (#44)
+0689838f0e9e9e3c7a7bf832e8cff3f3cabc3370 0689838f0e9e9e3c7a7bf832e8cff3f3cabc3370 Joaquim Ataides <ti@promobrindes.com.br> 1791305952 -0300	rebase (finish): returning to refs/heads/v2/44-prazo-ia-cobre-consumo-corpo-2610061341d8bd

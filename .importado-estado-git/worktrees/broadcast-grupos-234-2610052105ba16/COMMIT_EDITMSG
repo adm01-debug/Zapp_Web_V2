@@ -1,0 +1,5 @@
+fix(grupos): preservar texto e destinatarios do broadcast quando todos os envios falham (#234)
+
+R2-API-062: handleBroadcast limpava a selecao incondicionalmente e GroupsView.onBroadcast fechava o dialogo e zerava a mensagem mesmo quando nenhum envio deu certo, fazendo o usuario perder o texto e os grupos escolhidos.
+
+handleBroadcast agora devolve { sent, failed } e so descarta a selecao quando failed === 0; o componente so fecha o dialogo e limpa o texto quando houve envio sem falha. O aviso passa a dizer que mensagem e selecao foram mantidas.

@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 6afc5e8cf491dc81a99c85cf28eaf0678795db82 Joaquim Ataides <ti@promobrindes.com.br> 1791401653 -0300	
+6afc5e8cf491dc81a99c85cf28eaf0678795db82 6afc5e8cf491dc81a99c85cf28eaf0678795db82 Joaquim Ataides <ti@promobrindes.com.br> 1791401654 -0300	reset: moving to HEAD
+6afc5e8cf491dc81a99c85cf28eaf0678795db82 ae70443793deedea46765b1c05269c52eea9c055 Joaquim Ataides <ti@promobrindes.com.br> 1791401664 -0300	cherry-pick: feat(journey): peças de efeito sutil (entrada, realce, expandir, contagem) com reduzir movimento
+ae70443793deedea46765b1c05269c52eea9c055 8d14d2f0317767fc8f89ccb68c510cb5b325bec8 worker <worker@zapp.local> 1791402355 -0300	commit: fix(journey): useCountUp parte do valor na tela, arredonda alvo inteiro e o cartão mantém anel de foco nos dois modos
+8d14d2f0317767fc8f89ccb68c510cb5b325bec8 72f05a068f88e2cadb3c790f1439ff3175c79f94 Joaquim Ataides <ti@promobrindes.com.br> 1791402374 -0300	rebase (start): checkout dia/2026-10-07
+72f05a068f88e2cadb3c790f1439ff3175c79f94 5736805f4a2abe4a5065a27cb0f5d45cb12edb3b Joaquim Ataides <ti@promobrindes.com.br> 1791402374 -0300	rebase (pick): feat(journey): peças de efeito sutil (entrada, realce, expandir, contagem) com reduzir movimento
+5736805f4a2abe4a5065a27cb0f5d45cb12edb3b 9cc24bb15fd609f8d11e9f77ed0b3164f001c026 Joaquim Ataides <ti@promobrindes.com.br> 1791402374 -0300	rebase (pick): fix(journey): useCountUp parte do valor na tela, arredonda alvo inteiro e o cartão mantém anel de foco nos dois modos
+9cc24bb15fd609f8d11e9f77ed0b3164f001c026 9cc24bb15fd609f8d11e9f77ed0b3164f001c026 Joaquim Ataides <ti@promobrindes.com.br> 1791402374 -0300	rebase (finish): returning to refs/heads/v2/j05-motion-corrigir-countup-presets-2610071634c71e

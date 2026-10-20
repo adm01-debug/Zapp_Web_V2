@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283361 -0300	branch: Created from dia/2026-10-06
+a463ef22afa83c4d00654d03782a15cc3263a0e7 497b2d655fcbd7a6e2be3539904e245326c1fabb Joaquim Ataides <ti@promobrindes.com.br> 1791283679 -0300	commit: fix(export): não anunciar sucesso do destino após falha do comando de banco

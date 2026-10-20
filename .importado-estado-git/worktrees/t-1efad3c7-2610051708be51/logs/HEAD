@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230886 -0300	
+4e6da891e24c6e4920ced3501af74feff40abfa3 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791230887 -0300	reset: moving to HEAD
+4e6da891e24c6e4920ced3501af74feff40abfa3 7753e3b8925432d9a2b1f2d31379cb1c49e78d33 Joaquim Ataides <ti@promobrindes.com.br> 1791230967 -0300	cherry-pick: feat(popup): liga a paginacao do historico antigo ao ChatPopup (R2-INB-004)
+7753e3b8925432d9a2b1f2d31379cb1c49e78d33 4e6da891e24c6e4920ced3501af74feff40abfa3 Joaquim Ataides <ti@promobrindes.com.br> 1791231077 -0300	reset: moving to dia/2026-10-05
+4e6da891e24c6e4920ced3501af74feff40abfa3 1f644734c2ff6f1c61e6e061e5e095bfe7ce892d Joaquim Ataides <ti@promobrindes.com.br> 1791231123 -0300	commit: feat(inbox): traz o contrato de paginacao do ChatPanel do cartao pai (R2-INB-004)
+1f644734c2ff6f1c61e6e061e5e095bfe7ce892d 61c794db69f5881d805caba9362715c232e05d45 Joaquim Ataides <ti@promobrindes.com.br> 1791231137 -0300	commit: feat(popup): liga a paginacao do historico antigo ao ChatPopup (R2-INB-004)

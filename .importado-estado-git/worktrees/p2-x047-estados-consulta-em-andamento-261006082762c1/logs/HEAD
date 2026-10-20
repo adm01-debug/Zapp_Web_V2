@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791286055 -0300	
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791286056 -0300	reset: moving to HEAD
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 38b8093a51f838e8735c3ad259dde3f3f9c5097b Joaquim Ataides <ti@promobrindes.com.br> 1791286141 -0300	commit (cherry-pick): fix(talkx): estados de consulta na tela Em andamento (X047)
+38b8093a51f838e8735c3ad259dde3f3f9c5097b 99fa80fd3889104c5c1a64522a609f924673f586 Joaquim Ataides <ti@promobrindes.com.br> 1791286270 -0300	commit: test(talkx): cobre retry da consulta de mensagens
+99fa80fd3889104c5c1a64522a609f924673f586 ec09b8c46a81e08e6fd1a02b394884ace5a3e5a6 Joaquim Ataides <ti@promobrindes.com.br> 1791286949 -0300	commit: test(talkx): prova refetch por consulta

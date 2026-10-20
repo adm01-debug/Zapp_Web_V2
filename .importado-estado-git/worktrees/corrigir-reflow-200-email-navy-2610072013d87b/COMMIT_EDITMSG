@@ -1,0 +1,17 @@
+test(e2e): zoom garantido no reflow 200% do email-navy
+
+Cartão V2: t_96e6411d (branch v2/corrigir-reflow-200-email-navy-2610072013d87b)
+
+Refeito em cima de dia/2026-10-09. O portão de boot explícito que este cartão
+introduzia já existe na dia (f73548534: helper `abrirEmail` espera a primeira conversa
+com BOOT_DEADLINE_MS e `test.setTimeout(BOOT_DEADLINE_MS + 30_000)`), então foi
+descartado por redundância. Resta a segunda correção do cartão: o teste de reflow
+a 200% passa a VERIFICAR que o zoom (`documentElement.style.fontSize === '200%'`)
+ainda está aplicado imediatamente antes de medir o overflow. Sem isso, um reload
+disparado por chunk error repõe o app do zero (o tema do app regrava o `style` do
+`<html>`) e a medição passaria em falso numa tela sem 200%.
+
+Nenhuma asserção existente foi alterada ou afrouxada.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

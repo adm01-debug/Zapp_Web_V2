@@ -1,0 +1,6 @@
+fix(migrações): rollback no formato '-- Rollback (SQL executavel)' do repo
+
+O teste extrai o rollback do bloco novo; a migration não muda de comportamento.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

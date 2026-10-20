@@ -1,0 +1,10 @@
+fix(contatos): explicitar que os agregados da Analytics são da página atual
+
+O cabeçalho da Analytics de Contatos rotulava `contacts.length` como
+"{n} total". Como o componente recebe apenas a página carregada em
+`ContactsView`, a contagem parcial aparecia como total geral. O rótulo
+passa a ser "{n} nesta página" e uma nota (role=note) declara que
+contagem e agregados (tipos, empresas, tags e novos) consideram somente
+a página atual. Sem segunda consulta e sem mudar a paginação.
+
+Cartão V2: t_1ab7fce3

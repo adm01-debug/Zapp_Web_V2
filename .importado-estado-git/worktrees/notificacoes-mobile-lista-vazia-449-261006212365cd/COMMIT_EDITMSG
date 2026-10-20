@@ -1,0 +1,5 @@
+fix(mobile): central de notificações do shell mobile usa a lista real e o contador real (#449)
+
+O MobileShell alimentava o NotificationsPanel com um useState local sempre vazio e o sino do MobileHeader com o prop unreadNotifications (que src/pages/Index.tsx passa fixo em 0), então a lista nunca aparecia e o contador ficava em zero.
+
+Agora o shell consome useNotifications (o mesmo hook do popover da sidebar), o painel renderiza o NotificationItem compartilhado — mesmo visual e mesmas ações do alarme de tarefa do desktop — e o contador do sino e o do painel vêm das não lidas reais. "Marcar todas como lidas" e o clique no item passam a persistir pelo hook. O botão de fechar do painel ganhou aria-label.

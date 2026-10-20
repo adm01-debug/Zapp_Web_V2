@@ -1,0 +1,6 @@
+fix(automacoes): editor aguarda confirmacao da persistencia antes de fechar
+
+R2-MOD-003 (#386): handleSave usava mutation.mutate (fire-and-forget), entao o
+await do dialogo resolvia na hora e o editor fechava antes do banco responder.
+Passa a mutateAsync nos dois caminhos (criar/editar) e o dialogo trata a
+rejeicao mantendo os campos e o botao pendente para retry.

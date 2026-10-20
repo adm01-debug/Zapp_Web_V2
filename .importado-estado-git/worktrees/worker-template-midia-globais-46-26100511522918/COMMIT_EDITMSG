@@ -1,0 +1,21 @@
+fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)
+
+MX02 (item 46/P1): o motor de envio montava o texto com `dispatch.message_template`
+e decidia a midia por `dispatch.media_url/media_type` (globais do disparo), enquanto
+a previa (F48) resolvia por BLOCO e por `variables_snapshot`. Para o mesmo item os
+dois lados respondiam coisas diferentes: o operador revisava "BLOCO CORRETO
+{{empresa}}" e saia "GLOBAL Empresa 1" (probe local da auditoria).
+
+- `_shared/multiplix-content.ts`: fonte unica da resolucao (texto + ativo + nome do
+  arquivo + `same_audio`), usada pelo worker E pela previa/validate/estimate.
+- worker: le o bloco do item (`block_type`/`content`/`personalization_mode`), o
+  `variables_snapshot` do destinatario e o `personalized_message` DO ITEM;
+  envia a midia do bloco (URL/caption/fileName), mantendo o `prepareMedia` como
+  autoridade do tipo real por magic bytes.
+- nome do arquivo: aceita `media.file_name` e `media.fileName` (as duas grafias
+  divergiam entre previa e worker).
+- F69: bloco de voz sem ativo renderizado e bloco sem texto/midia nao geram POST —
+  o item volta a fila com codigo nomeado, em vez de herdar o template global.
+
+Prova: `supabase/functions/multiplix-send/index.test.ts` 50/50 verde (eram 44);
+9 testes novos falham no worker antigo (vermelho medido com o arquivo revertido).

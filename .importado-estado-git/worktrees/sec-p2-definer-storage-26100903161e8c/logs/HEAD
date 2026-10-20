@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526606 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526607 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 7f076104c8afe5558831af09509ef41c8e0be80e worker (sql) <workersql@example.test> 1791527652 -0300	commit: fix(db): fecha 3 achados P2 de funcoes definer e storage (SEC-STORAGE-02/03/04)
+7f076104c8afe5558831af09509ef41c8e0be80e a636573e1f71ac65371a3526d00b2699ced4a32c worker (sql) <workersql@example.test> 1791527959 -0300	commit: fix(db): rollback executavel comentado no cabecalho da migration SEC-STORAGE-02/03/04
+a636573e1f71ac65371a3526d00b2699ced4a32c 92fabfe157117dabd76968632bc068ba3ea46af5 worker (sql) <workersql@example.test> 1791528043 -0300	commit: fix(db): tira a expressao 'SECURITY DEFINER' do texto comentado da migration (falso positivo do Juiz)

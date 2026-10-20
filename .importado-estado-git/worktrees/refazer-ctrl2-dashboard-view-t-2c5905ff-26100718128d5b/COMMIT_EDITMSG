@@ -1,0 +1,3 @@
+fix(atalhos): refaz regressao Ctrl+2 no shell
+
+Inclui a correcao de producao do go-to-dashboard ja aprovada no cartao pai e a regressao de integracao do Index que observa currentView no AppShell. Ajusta o cabecalho do teste para nao afirmar que nenhum arquivo de producao foi tocado.

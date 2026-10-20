@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339302 -0300	
+b6a5800086896490ef4415de1f616aa77b69b9b6 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339303 -0300	reset: moving to HEAD
+b6a5800086896490ef4415de1f616aa77b69b9b6 1f756224c866f412e11f745901cbbde4d8386b26 Joaquim Ataides <ti@promobrindes.com.br> 1791339319 -0300	cherry-pick: fix(ai-jobs): renova o lease durante o handler e impede retry cego de efeito incerto
+1f756224c866f412e11f745901cbbde4d8386b26 a6d20c6cfb8f9f8e02facc6c3dca82594d078396 Joaquim Ataides <ti@promobrindes.com.br> 1791341244 -0300	commit: fix(ai-jobs): limita o prazo da geracao ao menor entre o default do roteador e o orcamento do lease

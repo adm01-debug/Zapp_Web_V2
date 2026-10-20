@@ -1,0 +1,3 @@
+chore(sl044): prova de escopo sem alteracao de codigo (SL-044)
+
+A lacuna (COUNT(*) OVER() exato em search_contacts, 20260930450000:35) so fecha com migration NOVA, proibida neste cartao, e com decisao de semantica do dono. Prova e fatiamento em .tmp/relato.md. Nenhum arquivo de codigo tocado.

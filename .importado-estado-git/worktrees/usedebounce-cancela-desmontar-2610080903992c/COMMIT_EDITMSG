@@ -1,0 +1,8 @@
+fix(hooks): useDebounce cancela o disparo pendente ao desmontar
+
+O temporizador do useDebounce seguia vivo depois do unmount: o callback agendado
+rodava sem componente (e, nos testes, sem o jsdom) e, sob carga no CI, virava um
+erro nao tratado ('window is not defined') que reprovava o job Unit Tests mesmo
+com todos os testes verdes (a paleta de comandos usa debounce de 300 ms).
+Agora um useEffect com limpeza cancela o timeout pendente no unmount, com teste
+que prova (callback nao chamado apos unmount + advanceTimersByTime).

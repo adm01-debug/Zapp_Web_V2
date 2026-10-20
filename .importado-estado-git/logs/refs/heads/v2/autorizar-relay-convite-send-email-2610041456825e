@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8088a69a714303234a61547f46470954377c81a5 Joaquim Ataides <ti@promobrindes.com.br> 1791136593 -0300	branch: Created from dia/2026-10-04
+8088a69a714303234a61547f46470954377c81a5 c731509c0d329949731cfd23e4b2e24abe009c28 Joaquim Ataides <ti@promobrindes.com.br> 1791137207 -0300	commit: fix(send-email): autoriza relay de convite com JWT + papel admin/supervisor

@@ -1,0 +1,8 @@
+docs(modulos): corrige referências do documento Inbox, Chat e Teams
+
+- uploadTeamMedia: caminho real é src/hooks/team-chat/uploadTeamMedia.ts (§3.4 e §8); a §7 passa a
+  citar o teste com caminho completo
+- §5: o vazio da aba Notas é 'Nenhum registro ainda' (NotesTab.tsx:112); a frase de tarefa aberta vem
+  do cartão 'Pendências' (NotesTab.tsx:242-245)
+- §2.1: 'idem linha 116' e snooze descrito como leitura/gravação em conversation_snoozes
+- §6 item 1: FATOR X definido com fonte no código

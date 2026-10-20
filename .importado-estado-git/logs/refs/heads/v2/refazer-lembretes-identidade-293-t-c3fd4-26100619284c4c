@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d97071c73fdbab1c5fdfddbd1c0ad379f4067446 Joaquim Ataides <ti@promobrindes.com.br> 1791325718 -0300	branch: Created from dia/2026-10-06
+d97071c73fdbab1c5fdfddbd1c0ad379f4067446 61348649c12f901b92a4f7bda703345ddbb69d11 Joaquim Ataides <ti@promobrindes.com.br> 1791326943 -0300	commit: fix(migrations): preserva origem de lembretes migrados

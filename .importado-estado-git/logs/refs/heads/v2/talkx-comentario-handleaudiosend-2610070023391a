@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791343381 -0300	branch: Created from dia/2026-10-07
+e58beff67df277afa73c179058c38190a5dd5d5c cfc4b4c397e100e37978d27a7ffe0949e7ebcf06 Joaquim Ataides <ti@promobrindes.com.br> 1791343391 -0300	cherry-pick: fix(team-chat): handleAudioSend sinaliza falha para a previa do audio gerado sobreviver (#350)
+cfc4b4c397e100e37978d27a7ffe0949e7ebcf06 abb2c30ae39eb21e630ac9b802fd8665dadccf09 Joaquim Ataides <ti@promobrindes.com.br> 1791343484 -0300	commit: docs(team-chat): corrige comentario invertido do contrato de handleAudioSend (#350)

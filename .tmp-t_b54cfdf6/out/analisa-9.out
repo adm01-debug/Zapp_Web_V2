@@ -1,0 +1,33 @@
+linha                                                                    HOJE   NOVO  no retrato  papel/objeto citado na pendente
+--------------------------------------------------------------------------------------------------------------------------------------------
+functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_  DEBITA livre         True  "record_incoming_call_event"=nao
+routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_what  DEBITA livre         True  "postgres"=nao, "record_incoming_call_event"=nao
+routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_what  livre  livre         True  "service_role"=SIM, "record_incoming_call_event"=nao
+routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_what  livre  livre         True  "public"=SIM, "record_incoming_call_event"=nao
+routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_what  livre  livre         True  "authenticated"=SIM, "record_incoming_call_event"=nao
+routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECU  livre  livre         True  "public"=SIM, "record_talkx_campaign_lifecycle_event"=nao
+routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticate  livre  livre         True  "authenticated"=SIM, "record_talkx_campaign_lifecycle_event"=nao
+routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role  livre  livre         True  "service_role"=SIM, "record_talkx_campaign_lifecycle_event"=nao
+relation_grants|r:public.team_conversations|authenticated|UPDATE|gran  livre  livre         True  "authenticated"=SIM
+--------------------------------------------------------------------------------------------------------------------------------------------
+total=9  debitadas HOJE=2  debitadas NOVO=0
+deixaram de ser debitadas (2):
+  - functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_v
+      prova do ajuste: chave no retrato da copia = True; papel/objeto citado pela pendente = nenhum
+  - routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+      prova do ajuste: chave no retrato da copia = True; papel/objeto citado pela pendente = nenhum
+as demais 7 NAO eram debitadas nem hoje (explicada() acha o PAPEL no texto da pendente):
+  - routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+      papel procurado: [('service_role', True), ('record_incoming_call_event', False)]
+  - routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+      papel procurado: [('public', True), ('record_incoming_call_event', False)]
+  - routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p
+      papel procurado: [('authenticated', True), ('record_incoming_call_event', False)]
+  - routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+      papel procurado: [('public', True), ('record_talkx_campaign_lifecycle_event', False)]
+  - routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+      papel procurado: [('authenticated', True), ('record_talkx_campaign_lifecycle_event', False)]
+  - routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+      papel procurado: [('service_role', True), ('record_talkx_campaign_lifecycle_event', False)]
+  - relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+      papel procurado: [('authenticated', True)]

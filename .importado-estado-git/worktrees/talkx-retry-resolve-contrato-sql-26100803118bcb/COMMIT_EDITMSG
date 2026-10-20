@@ -1,0 +1,17 @@
+fix(talkx): assinatura do retry sem DEFAULT rejeita a chamada antiga (#124)
+
+Remove o valor padrao de p_confirm_relaunch nas duas RPCs do #124. Em
+resolve_talkx_outcome_unknown, p_note e p_confirm_duplicate_risk tambem perdem o
+default: o PostgreSQL exige que todo parametro depois de um com DEFAULT tambem
+tenha DEFAULT, entao manter os antigos obrigaria o parametro novo a ter um — a
+compatibilidade silenciosa que a recusa apontou. Agora a chamada antiga de 2/4
+argumentos nao resolve para funcao nenhuma (42883, undefined_function) em vez de
+cair na assinatura nova com false.
+
+O guard fail-closed da migration aborta tambem quando a assinatura nova ganha
+default (talkx_r3delta005_parametro_novo_com_default).
+
+O teste deixa de escolher a assinatura por to_regprocedure: os helpers _x031_*
+executam a aridade antiga REAL (2 argumentos em retry, 2/3/4 em resolve) e os
+_x124_* a nova com o parametro explicito. A secao 5 executa as chamadas antigas
+contra o banco local e exige 42883, provando que nada foi escrito.

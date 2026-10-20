@@ -1,0 +1,28 @@
+docs(ci): alinhar documentação à baseline atual
+
+CLAUDE.md passa a declarar os 16 arquivos YAML de .github/workflows/ (+3
+dinâmicos = 19) e a apontar docs/ci/README.md como fonte canônica gerada;
+as menções de `strict=false` ficam rotuladas como históricas/revogadas, com
+a política vigente `strict=true` coerente com
+scripts/ci/github-settings-baseline.json; entra a seção canônica
+"Perímetro do GitHub — estado canônico" (E95), com a ressalva de que 403
+administrativo é limite de evidência.
+
+O plano de 100 etapas ganha a seção "Reconciliação TRA-009" (legenda,
+tabela das etapas citadas e das demais discrepâncias) e os 62 checkboxes
+divergentes passam a refletir o estado reconciliado: nada que aguarda
+runtime fica marcado como concluído e as etapas superadas (E01/E04/E07)
+ficam marcadas como revogadas.
+
+Correções da recusa anterior do revisor neste mesmo trabalho: o cabeçalho
+'## 0. Sumário executivo' duplicado e o '---' repetido foram removidos, e as
+células truncadas da tabela 'Demais discrepâncias' passaram a trazer um
+resumo coerente do acceptance.note do P006.json — sem cortar palavra nem
+terminar em '…'. O texto integral estourava o limite de 90 mil caracteres
+do diff (o próprio hermes-tarefa-fechar recusa acima disso); a recusa
+admitia 'o texto completo do acceptance.note ou um resumo coerente'.
+
+Teste documental determinístico scripts/ci/ci-docs-baseline.test.mjs:
+14 casos (12 originais + 'tabela sem célula cortada' e 'plano sem
+cabeçalho ## duplicado'), vermelho no estado anterior e verde após a
+correção.

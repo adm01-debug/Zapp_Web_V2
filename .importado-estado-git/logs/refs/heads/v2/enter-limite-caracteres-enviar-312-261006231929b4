@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339567 -0300	branch: Created from dia/2026-10-06
+b6a5800086896490ef4415de1f616aa77b69b9b6 bdbfc16f0bc27a183b12c978fcc55f5f4255f6a6 Joaquim Ataides <ti@promobrindes.com.br> 1791339590 -0300	cherry-pick: fix(inbox): Enter respeita o limite de caracteres do botao Enviar (#312)
+bdbfc16f0bc27a183b12c978fcc55f5f4255f6a6 47211696c66294c21ef38dea2485f59c3fc63fd5 Joaquim Ataides <ti@promobrindes.com.br> 1791339806 -0300	commit (amend): fix(inbox): Enter respeita o limite de caracteres do botao Enviar (#312)

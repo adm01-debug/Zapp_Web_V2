@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791314950 -0300	branch: Created from dia/2026-10-06
+7c26f709642e9058b3f6a016072d9516a70e55f3 9611dff8406a2823e7923e4420a31d887d6c82f1 Joaquim Ataides <ti@promobrindes.com.br> 1791314963 -0300	cherry-pick: fix(seguranca): overview mede 2FA, senha e alertas antes de exibir estado (#250)
+9611dff8406a2823e7923e4420a31d887d6c82f1 1acdb69b1ed0b11c166bc5085097af369c7585e8 Joaquim Ataides <ti@promobrindes.com.br> 1791315270 -0300	commit: fix(seguranca): pontuação do overview normalizada pelo teto medido

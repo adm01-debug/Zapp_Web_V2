@@ -1,0 +1,10 @@
+fix(inbox): preserva anexo enfileirado e não duplica ação no retry (R2-INB-006)
+
+useFileUploadLogic removia o objeto do Storage em QUALQUER rejeicao de
+sendOutboundMessage, mesmo quando o enqueue ja tinha gravado a linha; e o retry
+refazia o upload (novo locator -> nova actionKey), criando outra acao.
+
+- reconcilia por (contact_id, client_message_id) antes de remover: so apaga o
+  objeto quando a consulta prova ZERO linhas (linha encontrada ou consulta
+  falhando mantem o objeto), espelhando o contrato de useForwardMedia;
+- reaproveita objeto e clientMessageId por arquivo no retry, sem novo upload.

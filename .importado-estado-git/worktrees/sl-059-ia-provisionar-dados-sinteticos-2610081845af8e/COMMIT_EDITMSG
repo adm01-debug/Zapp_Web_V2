@@ -1,0 +1,10 @@
+fix(ia): reversão do ensaio só apaga o que o DML escreve (SL-059)
+
+A reversão apagava auth.users, auth.identities, profiles e user_roles —
+tabelas que o provisionamento nunca escreve. Identidade de ensaio exige
+escrita no schema auth (FK NOT NULL + trigger on_auth_user_created),
+fora do escopo: nenhum perfil/usuário/papel é provisionado, e isso fica
+declarado no docstring, no --plano, na IA-010 §5/§6 e no README. O
+contrato ganha paridade reversão×provisionamento (exceções deliberadas
+vazias), prova de omissão de conversation_analyses/conversation_memory
+e conferência de colunas extraída de cada insert.

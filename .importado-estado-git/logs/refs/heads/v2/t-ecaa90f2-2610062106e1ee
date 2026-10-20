@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791331605 -0300	branch: Created from dia/2026-10-06
+dba4ece1f104a2757a954051b06b2c1bd7589050 f2d6fceab57e5f90d00265b2923447ec9d9d3333 iris <iris@hermes.local> 1791332301 -0300	commit: fix(tarefas): cartão de tarefa concluída oferece lembrete que o executor exclui por estado (#425)

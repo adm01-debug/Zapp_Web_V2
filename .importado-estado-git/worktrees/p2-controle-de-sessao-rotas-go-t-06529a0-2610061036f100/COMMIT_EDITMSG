@@ -1,0 +1,3 @@
+fix(evolution-api): escolher rota do ciclo de sessao por flavor (go/v2) (#195)
+
+connect/status/disconnect batiam sempre nas rotas nativas do GO (/instance/connect, /instance/status, /instance/logout, sem instancia no path), ignorando EVOLUTION_API_FLAVOR=v2. Agora metodo, path, credencial e normalizacao da resposta saem da matriz em _shared/evolution-session-routes.ts: GO usa token da instancia em rota sem sufixo; v2 usa chave global em /instance/connect/{inst}, /instance/connectionState/{inst} e /instance/logout/{inst}. R2-API-015.

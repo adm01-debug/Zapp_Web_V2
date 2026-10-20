@@ -1,0 +1,19 @@
+test(contrato): teto explícito no pdfjs sob demanda contra vermelho falso sob carga
+
+A verificação "nenhum arquivo de produção em src/** carrega pdfjs-dist de forma
+estática" é a única do repositório que parseia TODO o src/** com o compilador, e o
+teto padrão do `vitest.contracts.config.ts` é o default de 5 s do vitest (o config
+principal usa 15 s). Com a caixa carregada — a condição normal da rodada do
+integrador — o vitest matava o teste por TEMPO e o espelho do CI publicava
+`contrato: tests/contracts/pdfjs-sob-demanda.contract.test.ts` como falha nova, com
+o arquivo byte a byte igual ao da base.
+
+Medido no mesmo comando e na mesma carga: sem o teto, `Error: Test timed out in
+5000ms.`; com o teto de 60 s, `Test Files 1 passed (1); Tests 23 passed (23)` — o
+teste da varredura levou de ~2 s (máquina livre) a ~26 s (caixa inteira carregada),
+por isso a folga de 60 s.
+
+Só o teto do teste muda; nenhuma asserção, caso da tabela ou exclusão da varredura é
+tocada — a reprovação continua sendo por conteúdo (provado: com um
+`import pdfjs from 'pdfjs-dist'` plantado em src/, o contrato reprova apontando
+`src/lib/mordida-temp.ts:1 — import estático de 'pdfjs-dist'`).

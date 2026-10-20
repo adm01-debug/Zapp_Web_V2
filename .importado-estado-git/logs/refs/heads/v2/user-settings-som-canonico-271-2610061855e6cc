@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323732 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 ef3deaf9388e1bb4a0ca4259eb727fc0064e4622 hugo <hugo@zapp.local> 1791323879 -0300	commit: fix(settings): useUserSettings para de sobrescrever as preferências de som do hook canônico (#271)

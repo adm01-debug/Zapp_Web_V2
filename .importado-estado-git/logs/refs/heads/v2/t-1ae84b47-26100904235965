@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791530591 -0300	branch: Created from dia/2026-10-09
+5a9731645d266ea721f679d6886b83822ac16f6b 21d680bd596c41fea80e493ece33c09f420f251b Joaquim Ataides <ti@promobrindes.com.br> 1791531596 -0300	commit: fix(talk-x): Atividade recente da supressão lida dos eventos de enti (TL-169)
+21d680bd596c41fea80e493ece33c09f420f251b 75a99b762fce9eb1c17471efd0cb9f0405f0019d Joaquim Ataides <ti@promobrindes.com.br> 1791540642 -0300	rebase (finish): refs/heads/v2/t-1ae84b47-26100904235965 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

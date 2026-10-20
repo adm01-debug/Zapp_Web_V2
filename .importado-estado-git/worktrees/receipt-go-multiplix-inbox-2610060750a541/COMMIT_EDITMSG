@@ -1,0 +1,9 @@
+fix(evolution-webhook): recibo GO com Chat !== Sender resolve a linha outbound por external_id e conexao
+
+O adaptador GO infere key.fromMe por Chat === Sender; num recibo de mensagem
+nossa com Chat !== Sender o flag chega falso, a busca primaria erra a linha
+(sender='contact') e o recibo nunca atualiza o inbox nem dispara as RPCs do
+Multiplix. Para delivered/read, a linha outbound existente com o external_id
+na conexao e a evidencia canonica: fallback por sender='agent' quando a
+primaria falha, e o portao Multiplix passa a usar a evidencia (fromMe
+declarado ou linha outbound) em vez do flag inferido.

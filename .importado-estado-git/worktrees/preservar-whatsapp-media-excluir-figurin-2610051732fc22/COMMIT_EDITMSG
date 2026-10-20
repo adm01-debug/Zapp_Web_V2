@@ -1,0 +1,13 @@
+fix(figurinhas): preservar mídia do WhatsApp ao excluir figurinha
+
+handleDelete tratava qualquer URL contendo /whatsapp-media/ como objeto
+próprio da biblioteca e chamava storage.remove, apagando o arquivo
+original ainda referenciado pela mensagem.
+
+A exclusão continua sempre removendo a linha do catálogo, mas o objeto
+físico só é removido quando o locator é reconhecidamente do bucket
+próprio `stickers` e da origem do projeto. URL do whatsapp-media, de
+outro bucket, externa ou malformada é fail-safe: preserva o objeto.
+
+Prova RED->GREEN em src/hooks/sticker-picker/__tests__/useStickerPicker.exclusao.test.tsx
+(antes: 2 falhas — remoção indevida em whatsapp-media e em origem externa).

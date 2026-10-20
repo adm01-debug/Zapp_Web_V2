@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791313256 -0300	branch: Created from dia/2026-10-06
+7c26f709642e9058b3f6a016072d9516a70e55f3 94b3f89f6c1a4111c7b8842c30380fe1e4a881a1 Joaquim Ataides <ti@promobrindes.com.br> 1791313752 -0300	commit: test(security): confirma no base que salvar regras de rate limit não apaga a configuração (R2-AUTH-023 #249)

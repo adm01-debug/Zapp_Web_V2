@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72471e4ab1fbcf23842d5726c5bdcc8553e61687 Joaquim Ataides <ti@promobrindes.com.br> 1791141891 -0300	branch: Created from dia/2026-10-04
+72471e4ab1fbcf23842d5726c5bdcc8553e61687 beba0c196cf1e91539667e8150a2da7b7346290c Joaquim Ataides <ti@promobrindes.com.br> 1791142462 -0300	commit: fix(ai-image-input): download privado sob a identidade do chamador

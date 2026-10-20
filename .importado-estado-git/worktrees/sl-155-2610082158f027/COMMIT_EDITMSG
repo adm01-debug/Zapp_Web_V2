@@ -1,0 +1,3 @@
+test(catálogo): trava a seção Catálogo do CLAUDE.md (SL-155)
+
+Guarda a exigência do REL-1 (docs/catalogo/HANDOFF_v1.md §4) e confere as 6 ações declaradas contra o enum da edge promogifts-catalog. Fica VERMELHO até a seção entrar no CLAUDE.md (arquivo protegido, pendente de aprovação do dono).

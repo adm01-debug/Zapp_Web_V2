@@ -1,0 +1,17 @@
+fix(ci): gate de dependencias falha fechado para erro de registry (R2-INF-009)
+
+O gate aceitava como relatorio qualquer texto que citasse a palavra
+"vulnerability": a falha operacional do registry virava "sem advisory" e o
+passo do CI fechava verde. Agora o gate exige o relatorio completo do bun
+(linha de resumo no formato do bun 1.4.0, com as contagens fechando com os
+advisories lidos) e falha fechado para erro operacional do coletor, mesmo
+que a mensagem contenha a palavra.
+
+O passo informativo do ci.yml para de neutralizar o status com `|| true`:
+grava o codigo do coletor em audit-status.txt e o gate o consome (--status),
+para crash/abort nao passar como verde. `bun audit` sai 1 tanto para
+advisory quanto para falha de registry, por isso o relatorio continua sendo
+o que decide.
+
+Prova: scripts/ci/audit-prod.unit.mjs (4 testes novos, vermelhos antes) e
+scripts/ci/security-workflow.unit.mjs (contrato do passo do workflow).

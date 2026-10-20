@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791322837 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 f5efa90d35e399cf74aa2c9ab1d0ec3e838c5d67 Joaquim Ataides <ti@promobrindes.com.br> 1791323511 -0300	commit: fix(tarefas): persiste o contato escolhido ao editar a tarefa (#417)

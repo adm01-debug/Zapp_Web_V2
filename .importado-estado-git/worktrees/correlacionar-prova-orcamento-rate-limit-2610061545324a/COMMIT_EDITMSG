@@ -1,0 +1,19 @@
+fix(qa): prova de orcamento/rate limit correlaciona o consumo ao RUN_ID (#359)
+
+R2-INF-012 (recusa #359): a leitura de ai_usage_logs filtrava so
+function_name + created_at >= RUN_INICIO, entao registros de uma execucao
+concorrente na mesma janela contavam e a prova aprovava sem medir o consumo
+DESTE run.
+
+- o script manda o identificador do run em CADA chamada verificada, no header
+  x-ai-request-id (o mesmo id opaco que a IA-051 grava em
+  ai_usage_logs.request_id);
+- a leitura passa a filtrar por request_id = RUN_ID, alem de funcao e janela;
+- RUN_ID passa a ser exigido em formato uuid (o unico que o caminho de consumo
+  aceita), com fallback de uuid v4; formato invalido vira
+  FIM_PROVA=inconclusivo em vez de medir o nada.
+
+Teste: scripts/ci/prova-orcamento-rate-limit.unit.mjs roda o script de verdade
+contra um Supabase local que honra os filtros da query. O cenario com linhas de
+OUTRO run prova a negativa: 5/13 vermelho sem o filtro por identificador, 13/13
+verde com ele.

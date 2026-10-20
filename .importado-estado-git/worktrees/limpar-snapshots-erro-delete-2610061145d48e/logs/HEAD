@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297921 -0300	
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac 1bee0282f0f2efcfdc809e42f3f410303a4f56ac Joaquim Ataides <ti@promobrindes.com.br> 1791297922 -0300	reset: moving to HEAD
+1bee0282f0f2efcfdc809e42f3f410303a4f56ac c5a5678e47da4ae2dc7e867d75978b6d5f70c715 Joaquim Ataides <ti@promobrindes.com.br> 1791298523 -0300	commit: fix(analytics): confirma remoção de snapshots antes de anunciar sucesso (#376)

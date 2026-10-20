@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f90fe0e946644bde67765e85b8efd27d707bca87 Joaquim Ataides <ti@promobrindes.com.br> 1791239725 -0300	
+f90fe0e946644bde67765e85b8efd27d707bca87 f90fe0e946644bde67765e85b8efd27d707bca87 Joaquim Ataides <ti@promobrindes.com.br> 1791239726 -0300	reset: moving to HEAD
+f90fe0e946644bde67765e85b8efd27d707bca87 f323483a99bf0c7755f811111be8efb3c40bd0ef Joaquim Ataides <ti@promobrindes.com.br> 1791239746 -0300	cherry-pick: fix(db): persiste first_response_breached com o prazo granular aplicavel
+f323483a99bf0c7755f811111be8efb3c40bd0ef 65baddcc5396cdefe63158cb7ff1254d681320ba Joaquim Ataides <ti@promobrindes.com.br> 1791242038 -0300	commit: test(db): cobre níveis restantes do SLA granular

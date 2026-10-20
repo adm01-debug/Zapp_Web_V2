@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494425 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494426 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc e2f87c50b1954444c1e31ead6606721c18f17de8 Joaquim Ataides <ti@promobrindes.com.br> 1791494861 -0300	commit: fix(telefonia): fechamento das fases 8 e 9 — axe sem violacao seria no modulo (T76/T80/T84)

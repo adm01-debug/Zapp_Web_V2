@@ -1,0 +1,9 @@
+fix(webhook): provar isolamento por conexão das etiquetas de WhatsApp no banco
+
+- rollback da migration 20261005095819 recria as RPCs antigas restaurando
+  REVOKE/GRANT (sem PUBLIC) — sem isso o CREATE deixaria proacl NULL e
+  EXECUTE para PUBLIC (reprovado por check-secdef-public-execute.sql)
+- teste de banco wa-label-connection-scope.test.sh: contatos em duas
+  conexões, vermelho prova o defeito global (rename/delete), verde prova
+  o isolamento por p_connection_id, ACL das assinaturas novas e o rollback
+- passo registrado no db-guard.yml (check-test-inventory)

@@ -1,0 +1,16 @@
+fix(ci/devops): limpeza do E2E logado sem a chave mestra do banco (N-015/E25)
+
+O passo de teardown de conversation_closures do e2e-logado.yml apagava a fixture
+com um `curl DELETE` autenticado por SUPABASE_SERVICE_ROLE_KEY -- a chave que
+ignora RLS e vale para o banco inteiro, num job que tambem roda `bun install`.
+
+E25: o DELETE passa a viver na RPC public.e2e_cleanup_conversation_closures()
+(SECURITY DEFINER; so o contato fixo do fixture e so o usuario de teste via
+auth.uid()), chamada por scripts/ci/e2e-teardown.mjs com o login de
+E2E_TEST_EMAIL/E2E_TEST_PASSWORD -- as mesmas credenciais que o Playwright usa.
+A service role sai do passo.
+
+Prova: scripts/ci/e2e-teardown.unit.mjs (6 casos, `fetch` injetado, offline).
+Vermelho na base dia/2026-10-09 (o passo ainda era curl + service role) e verde
+com a correcao. A logica fica no script, e nao em shell dentro do YAML, para ter
+teste (`node --test scripts/ci/*.unit.mjs` no ci.yml).

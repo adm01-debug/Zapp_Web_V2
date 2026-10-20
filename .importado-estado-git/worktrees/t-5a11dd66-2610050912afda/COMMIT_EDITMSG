@@ -1,0 +1,3 @@
+fix(inbox): preserva o id da resposta até o transporte
+
+R2-INB-001: o Composer lia e limpava replyToMessage mas enviava só o texto, então a citação escolhida nunca chegava ao destinatário. O id da mensagem respondida agora atravessa handleSend -> onSendMessage -> ponte do Inbox -> sendMessage -> sendMessageToContact -> p_reply_to_id do enqueue_outbound_message. ChatPopup (mesmo ChatPanel) também repassa. Testes red-first em 3 costuras da cadeia.

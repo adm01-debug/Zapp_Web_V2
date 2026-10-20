@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 31d20bffaf93442786ebccb7b20b1224bb3eb054 Joaquim Ataides <ti@promobrindes.com.br> 1791374584 -0300	branch: Created from dia/2026-10-07
+31d20bffaf93442786ebccb7b20b1224bb3eb054 da120094eab49a3d62180d3e520d00fb117c10ac Joaquim Ataides <ti@promobrindes.com.br> 1791375060 -0300	commit: fix(db): completa rollback do outbox opt-out indeterminado

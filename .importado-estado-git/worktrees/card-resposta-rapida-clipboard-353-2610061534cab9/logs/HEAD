@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311668 -0300	
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 Joaquim Ataides <ti@promobrindes.com.br> 1791311669 -0300	reset: moving to HEAD
+ba2b2dedfbb3d99f254fc9168c4530912e59f4c2 413ec5ed27305b063b9c2a300e519a4fbaad9bdd Joaquim Ataides <ti@promobrindes.com.br> 1791311896 -0300	commit: fix(inbox): corpo do card de resposta rapida copia de verdade antes de anunciar (#353)

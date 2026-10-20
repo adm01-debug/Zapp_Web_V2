@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791281037 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791281037 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 44e0764dadf20fb284736952f163f60a84efb59d Joaquim Ataides <ti@promobrindes.com.br> 1791281528 -0300	commit: fix(emoji): confirmar sucesso só após a persistência aceita (#226)

@@ -1,0 +1,63 @@
+--- /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/monitoring-buckets-hook-2610130555f688/src/components/monitoring/hooks/useMonitoringData.ts	2026-10-13 06:12:57.688748476 -0300
++++ /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/__scratch-t_1e371474/repo/src/components/monitoring/hooks/useMonitoringData.ts	2026-10-14 22:40:28.176696474 -0300
+@@ -138,15 +138,28 @@
+   }
+ }
+ 
+-/** Soma a agregação em 8 barras (janela de `periodMs[period]`), sem perder balde. */
+-function sparklineFromBuckets(rows: BucketRow[], windowStartMs: number, period: TimePeriod): number[] {
++/**
++ * Alinha um instante à grade de baldes do servidor: piso do relógio de parede
++ * de America/Sao_Paulo no passo dado — a mesma conta da RPC
++ * (`floor(wallclock_epoch(p_from) / passo) * passo`). SP tem offset fixo -03
++ * (sem horário de verão), então a conta em ms absolutos é exata e independe
++ * do fuso do navegador. Com p_from alinhado, cada linha da RPC cai em
++ * exatamente uma barra do sparkline (mapeamento posicional).
++ */
++const SP_OFFSET_MS = 3 * 60 * 60 * 1000;
++function alignSparkStartToServerGrid(sinceMs: number, bucketMs: number): number {
++  return Math.floor((sinceMs - SP_OFFSET_MS) / bucketMs) * bucketMs + SP_OFFSET_MS;
++}
++
++/** Soma a agregação em 8 barras posicionais: com p_from alinhado à grade do
++ * servidor, a linha i da resposta É a barra i. O servidor devolve no máximo
++ * uma linha extra — o farelo após aligned+8*passo, dentro da janela — que
++ * pertence à última barra. Sem o alinhamento, a primeira linha (balde que
++ * começa antes de `since`) caía na barra 0 junto com a segunda. */
++function sparklineFromBuckets(rows: BucketRow[]): number[] {
+   const bars = new Array(8).fill(0) as number[];
+-  const step = periodMs[period] / 8;
+-  rows.forEach(r => {
+-    const t = Date.parse(r.bucket_start);
+-    if (Number.isNaN(t)) return;
+-    const idx = Math.min(7, Math.max(0, Math.floor((t - windowStartMs) / step)));
+-    bars[idx] += Number(r.incoming || 0) + Number(r.outgoing || 0);
++  rows.forEach((r, i) => {
++    bars[Math.min(i, 7)] += Number(r.incoming || 0) + Number(r.outgoing || 0);
+   });
+   return bars;
+ }
+@@ -195,7 +208,13 @@
+         // deslizante do período) vêm da agregação no banco — nenhuma das duas
+         // busca mensagem crua, então não há teto de 1.000 linhas para cortar.
+         fetchMessageBuckets(messageSince, now, messageWindow.bucketSize),
+-        fetchMessageBuckets(since, now, periodMs[period] / 8),
++        // O servidor ancora o primeiro balde ANTES de p_from: alinhar p_from
++        // à grade do servidor faz cada linha cair em exatamente uma barra.
++        fetchMessageBuckets(
++          new Date(alignSparkStartToServerGrid(since.getTime(), periodMs[period] / 8)),
++          now,
++          periodMs[period] / 8,
++        ),
+       ]);
+ 
+       if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
+@@ -231,7 +250,7 @@
+             next.latency = sl.latency;
+             next.uptime = sl.uptime;
+           }
+-          if (sparkAgg.rows) next.messages = sparklineFromBuckets(sparkAgg.rows, since.getTime(), period);
++          if (sparkAgg.rows) next.messages = sparklineFromBuckets(sparkAgg.rows);
+           return next;
+         });
+       }

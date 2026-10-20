@@ -1,0 +1,5 @@
+fix(rotas): link legado do Quadro abre Tarefas no modo Quadro (E07)
+
+?view=pipeline e #pipeline passam por LEGACY_VIEW_REDIRECTS para `tasks` e
+gravam `tasks-mode=board` (a mesma preferencia que TasksModule le). Entrar por
+?view=tasks continua retomando o modo salvo, sem sobrescrever.

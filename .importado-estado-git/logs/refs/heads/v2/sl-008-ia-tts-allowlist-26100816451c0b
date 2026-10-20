@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488717 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc a8d56d717a0f793800589aea6c8b1a4d960d6a2a Joaquim Ataides <ti@promobrindes.com.br> 1791489830 -0300	commit: fix(ia): lista fechada de vozes/modelos TTS aceitos (voice_id livre) (SL-008)
+a8d56d717a0f793800589aea6c8b1a4d960d6a2a 1e11d40e25fd74bef9ba85e95b4ef4b13bb468b3 Joaquim Ataides <ti@promobrindes.com.br> 1791555029 -0300	rebase (finish): refs/heads/v2/sl-008-ia-tts-allowlist-26100816451c0b onto 1098da5a935929b171674a99b425d6b515fd6072
+1e11d40e25fd74bef9ba85e95b4ef4b13bb468b3 c39edd57e163a6649266cdacf98aa160a7d9b66a Joaquim Ataides <ti@promobrindes.com.br> 1791555329 -0300	commit (amend): fix(ia): lista fechada de vozes/modelos TTS aceitos (voice_id livre) (SL-008)

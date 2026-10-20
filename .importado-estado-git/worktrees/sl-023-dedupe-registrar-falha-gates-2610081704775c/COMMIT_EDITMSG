@@ -1,0 +1,20 @@
+fix(ci/devops): dedupe do alerta de falha dos gates do types-sync por causa
+
+O passo "Registrar falha dos gates" comentava na issue
+`[types-sync] Falha ao propor sincronizacao` a CADA run em que um gate falhava
+(o job roda no agendamento semanal e a cada push na main que toca migrations).
+Com o mesmo gate vermelho por dias, a issue enchia de comentarios repetidos e
+deixava de ser lida.
+
+Agora o corpo leva o marcador invisivel `<!-- causa:<gate> -->` (causa = o gate
+que falhou, em identificador sem espaco) e o passo so comenta de novo quando a
+causa MUDA ou o ultimo comentario passou de 6h -- mesmo mecanismo do
+db-live-guard.yml (E05/E06/E44). O ultimo comentario vem pelo header Link com
+per_page: 1, como no db-live-guard: a issue tem historico e ler so a 1a pagina
+daria a causa errada.
+
+Item E20 (CI/DevOps / types-sync) do plano de 2026-10-08.
+
+Teste: scripts/ci/types-sync-dedupe.unit.mjs extrai o bloco real `script: |` do
+passo e o executa contra github/context/core falsos. Vermelho antes (7 de 8
+casos falhando), verde depois (9 de 9).

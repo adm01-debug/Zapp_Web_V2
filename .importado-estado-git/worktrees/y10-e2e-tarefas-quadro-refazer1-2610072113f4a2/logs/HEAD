@@ -1,0 +1,10 @@
+0000000000000000000000000000000000000000 cca4de8e046731a286cfb43fb7b8459053eda56e Joaquim Ataides <ti@promobrindes.com.br> 1791418401 -0300	
+cca4de8e046731a286cfb43fb7b8459053eda56e cca4de8e046731a286cfb43fb7b8459053eda56e Joaquim Ataides <ti@promobrindes.com.br> 1791418402 -0300	reset: moving to HEAD
+cca4de8e046731a286cfb43fb7b8459053eda56e 87e0d0b51cba75cefae62c68ae6658fe07659500 Joaquim Ataides <ti@promobrindes.com.br> 1791418437 -0300	cherry-pick: test(e2e): tarefas e quadro (criar, mover, concluir, filtros)
+87e0d0b51cba75cefae62c68ae6658fe07659500 a31183f49a24e6417d3ef0dd8668f8f24b1677ab Joaquim Ataides <ti@promobrindes.com.br> 1791418437 -0300	cherry-pick: docs(e2e): cabecalho do spec do Y10 registra a pendencia do projeto dedicado
+a31183f49a24e6417d3ef0dd8668f8f24b1677ab 5b6441c1c59e2a92798fe73e478cf39589fa6bcd Joaquim Ataides <ti@promobrindes.com.br> 1791418437 -0300	cherry-pick: test(e2e): Y10 eleva o teto do watchdog de boot no navegador de teste
+5b6441c1c59e2a92798fe73e478cf39589fa6bcd 558991944499ea4a47d4f3b760e45c5cce8c8c0d Joaquim Ataides <ti@promobrindes.com.br> 1791418437 -0300	cherry-pick: test(e2e): Y10 le o KPI depois da Lista carregar (prazo de hoje)
+558991944499ea4a47d4f3b760e45c5cce8c8c0d 7399faf13d4bedf3cc0bb4ca012ca8c3a4893135 Joaquim Ataides <ti@promobrindes.com.br> 1791418437 -0300	cherry-pick: docs(e2e): cabecalho do Y10 aponta o projeto dedicado chromium-tarefas
+7399faf13d4bedf3cc0bb4ca012ca8c3a4893135 9739aeabc1bda9a63c854f5a21a15f5a1f0ed3d3 Joaquim Ataides <ti@promobrindes.com.br> 1791418437 -0300	cherry-pick: test(e2e): Y10 tolera o teto de 12s da edge no login local
+9739aeabc1bda9a63c854f5a21a15f5a1f0ed3d3 f521b5c527af4048e3454d0a3150af4c50097add Joaquim Ataides <ti@promobrindes.com.br> 1791418465 -0300	commit: revert(config): tira o projeto do spec Y10 do playwright.config.ts (escopo: só o spec)
+f521b5c527af4048e3454d0a3150af4c50097add 9b3985e83ec6362e9e421614cce2cf06623c1f37 Joaquim Ataides <ti@promobrindes.com.br> 1791418491 -0300	commit: docs(e2e): cabecalho do Y10 nao cita projeto proprio nem testIgnore (pendencia registrada)

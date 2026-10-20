@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321667 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321668 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 f560a16b8e91db8f91e384f4b436f6bee0359c41 Joaquim Ataides <ti@promobrindes.com.br> 1791322153 -0300	commit: test(create-user): cobre ausencia de role sem update vazio

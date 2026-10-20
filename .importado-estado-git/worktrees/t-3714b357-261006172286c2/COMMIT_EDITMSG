@@ -1,0 +1,24 @@
+test(db-tests): decodifica o envelope do mcp_exec e recusa suite com zero assertivas
+
+Por quê: run-all.mjs tratava a resposta do RPC mcp_exec como array, mas o RPC
+devolve UM jsonb {rows,row_count,truncated,ms} (migrations 20260829020000 e
+20261003272707). Com o envelope real a suíte morria em
+"rows.filter is not a function" e, com resposta [], imprimia
+"RESULTADO: 0 PASS / 0 FAIL" e saía 0 — passava com zero assertivas (R2-INF-010,
+item 357).
+
+- novo scripts/db-tests/rpc-envelope.mjs: decodifica o envelope e recusa resposta
+  que não seja envelope, truncada, com row_count != rows.length, sem rows (ramo
+  ok/rows_affected) e linha sem id ou sem result PASS/FAIL/SKIP; zero assertiva
+  (PASS+FAIL) não é sucesso.
+- run-all.mjs passa a usar o módulo, exige >=1 assertiva por arquivo .sql e só sai
+  0 com envelope válido, nenhum FAIL e nenhum erro; DB_TESTS_DIR é o seam de teste.
+- novo run-all.unit.mjs: 22 testes que executam o runner de verdade em child
+  process com fetch stubbed (reprodução do probe db_tests_response_contract).
+- check-test-inventory.mjs: registro na ALLOWLIST_NODE (exigido pelo inventário).
+
+Verificação: node --test scripts/db-tests/run-all.unit.mjs -> 22 pass / 0 fail;
+prova por mutação (git stash push -- scripts/db-tests/run-all.mjs): original +
+envelope -> "rows.filter is not a function" (10 testes falham), original + [] ->
+0 PASS / 0 FAIL e exit 0; corrigido + [] -> exit 1; corrigido + envelope ->
+5 PASS, exit 0. zapp-verify . --rapido -> VERDE SEM BANCO (269s).

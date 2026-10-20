@@ -1,0 +1,19 @@
+test(team-chat): contrato do schema real no lugar da fixture fictícia de RLS (#166)
+
+`rls-contract.test.ts` afirmava um schema inventado no próprio arquivo
+(`team_messages.type`, `department_invites.invitee_id/invited_by/token/status`);
+5 das 16 colunas declaradas não existem no banco (as reais são `message_type`,
+`code`, `created_by`). A fixture se conferia contra ela mesma.
+
+Agora o esperado vem de `supabase/schema-manifest.json` (snapshot do banco real)
+e o atual vem de CHAMAR os hooks de produção com a fronteira Supabase dublada:
+prova que todo payload gravado e toda coluna/FK lida existem no banco. O que o
+vitest não pode provar (papel e policy de RLS) virou `it.todo` apontando para
+`scripts/db-audit/*.test.sh`.
+
+No mesmo item, a autenticação de `useSendTeamMessage` deixava de ser lida como
+texto (`readFileSync` + `indexOf`) e passa a ser exercitada no hook real.
+
+Prova por mutação: `media_type`→`type` no insert = 1 failed (`expected [ 'type' ] to deeply equal []`);
+guard de auth removido = 1 failed; FK da leitura renomeada = 1 failed; `code`→`token`
+no convite = 1 failed. Restaurado: 18 arquivos, 169 passed, 35 todo, 0 failed.

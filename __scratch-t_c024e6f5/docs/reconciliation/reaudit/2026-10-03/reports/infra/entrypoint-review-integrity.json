@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "finding_total": 43,
+  "finding_counts": {
+    "P1": 8,
+    "P2": 31,
+    "P3": 4
+  },
+  "coverage_counts": {
+    "total": 785,
+    "targeted": 55,
+    "semantic": 505,
+    "structural": 225
+  },
+  "evidence_refs": 219,
+  "source_evidence_refs": 215,
+  "source_hashes_checked": 785,
+  "added_ids": [],
+  "primary_files": 5,
+  "primary_lines": 177,
+  "primary_remaining": 0,
+  "preserved_prior_findings_sha256": "69748a5c10b0f0f5e53fdf5f293931dbb3ed32b9f5013be3a7a9ee7117dbaa40",
+  "artifact_hashes": {
+    "findings.json": "87d4bf35dd37341d26bc99599acdc20c1caaac2d094d72c9f34563efd4664e1c",
+    "coverage.json": "9c57cd52cb9768f0bc3be8104748c794e76c14288eb3e44bd413d71638050f87",
+    "report.md": "33e20e1c4fd8a08a8dfc68d0c2695115cc9f5bc806fcff103c596857928dca67",
+    "entrypoint-review-findings.json": "779d7fb238658da0e24af200854166251b1d1fc179e19e8c01ac7bbb391c4010",
+    "entrypoint-review-coverage.json": "a53d0a7e34525d890f7fa225b008f1abeb45d0ac4dc291a55a32721be48f3db9",
+    "entrypoint-review-report.md": "68eff2d5a0eacdcaedb0813028e062fdd8ee7817ab7476cc00c2525e25a62ae0",
+    "merge_finite_batch.py": "7434bfaf4187797e06d18f5221707aee4e661a6f3fa522c6aed9fbd2d4f02d0c",
+    "entrypoint-review.json": "fc44e83a27aa4195950025f42e77caf4c05cc26c15ecd9eb4507300f6706676b",
+    "finalize_entrypoint_review.py": "ed0dfd9334947639d63c8af73af04a9ccde198771499bd02601d17d816bc3180"
+  }
+}

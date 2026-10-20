@@ -1,0 +1,21 @@
+fix(mensageria): declara a fila scheduled_messages sem executor versionado (R2-API-017)
+
+A fila `scheduled_messages` tem produtor (useScheduledMessages insere pendencia,
+lista e cancela) e estados declarados (pending/sent/failed/cancelled, migration
+20251220182411), mas nenhum consumidor versionado a entrega: a varredura de
+supabase/functions nao encontra uma consulta sequer a tabela e nenhuma migracao
+cria cron ou funcao de envio desta fila. Sem executor, 'sent' e 'failed' nunca
+sao escritos por codigo versionado.
+
+O que entra: o registro versionado e testado desse contrato
+(_shared/messaging/agendamento.ts), com o executor declarado como ausente
+(EXECUTOR_DE_AGENDAMENTO = null), os quatro requisitos que um executor desta fila
+tem de cumprir (claim sem corrida, autorizacao por contato/conexao, estados
+recuperaveis, reconciliacao somente-leitura) e os prerequisitos que ainda faltam.
+O teste de contrato varre supabase/functions e cai se um consumidor aparecer sem
+o registro ser atualizado, e cai se o registro declarar um executor inexistente.
+
+Provas: deno test do arquivo novo — 6/6 verde; vermelho com o registro declarando
+um executor que nao existe (2 passed | 4 failed) e vermelho no estado anterior a
+correcao (modulo ausente, type-check falha). zapp-verify . --rapido: VERDE.
+Nenhum envio real, nenhuma instancia real, sem migration, sem cron.

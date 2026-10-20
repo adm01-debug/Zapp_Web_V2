@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522773 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 39e1987c070b1459e1f1818d63e409760b8c32ee Joaquim Ataides <ti@promobrindes.com.br> 1791523402 -0300	commit: fix(talkx): extrai TalkXSegmentBuilder com reducer, desfazer/refazer e validação (TL-128)
+39e1987c070b1459e1f1818d63e409760b8c32ee 3369264374cd2b94a7286c6b7c09e6d2439336a1 Joaquim Ataides <ti@promobrindes.com.br> 1791523428 -0300	commit (amend): fix(talkx): extrai TalkXSegmentBuilder com reducer, desfazer/refazer e validação (TL-128)
+3369264374cd2b94a7286c6b7c09e6d2439336a1 07699132bd55050866429fbd7827c45c41e45507 Joaquim Ataides <ti@promobrindes.com.br> 1791523500 -0300	commit (amend): fix(talkx): extrai TalkXSegmentBuilder com reducer, desfazer/refazer e validação (TL-128)

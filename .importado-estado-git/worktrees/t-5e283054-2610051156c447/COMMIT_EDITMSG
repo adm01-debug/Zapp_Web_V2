@@ -1,0 +1,14 @@
+fix(filas): conta contatos aguardando de verdade para os alertas de fila (R2-QUE-002)
+
+useQueues sobrescrevia waiting_count com 0, entao a tela mostrava zero
+aguardando e os alertas configurados de fila (espera e taxa de atribuicao)
+nunca disparavam. QueueService.fetchWaitingCounts passa a contar por fila com
+count exato no servidor (head: true), sem o corte de 1000 linhas do PostgREST,
+usando a mesma definicao de aguardando do dashboard: sem responsavel, nao
+soft-deletado e ainda nao encerrado (resolved/archived).
+
+Provado por teste vermelho->verde:
+- src/hooks/__tests__/useQueues.test.tsx: expoe a contagem real por fila.
+- src/components/queues/__tests__/QueuesView.test.tsx: monta o QueuesView real
+  e o alerta '15 contatos aguardando atendimento' aparece (limite 10); fila
+  zerada nao alerta.

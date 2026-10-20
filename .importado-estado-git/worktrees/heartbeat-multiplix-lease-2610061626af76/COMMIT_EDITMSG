@@ -1,0 +1,3 @@
+fix(multiplix-send): heartbeat para na entrada do catch do item, nao so no finally (R2-API-013)
+
+O catch do passLoop termina em `await sleep(interval); continue;`, e o finally so roda depois do sleep: durante essa janela o timer do heartbeat seguia vivo e um tick renovava um item ja reagendado/concluido (RPC inutil + 'multiplix_heartbeat_not_renewed' falso). stopHeartbeat() volta a ser a primeira linha do catch, junto do clearTimeout(sendTimeout); o finally fica como rede de seguranca. Teste (c) ganha o caso (d): tick disparado com o sleep do catch ainda pendente e depois dele, exigindo zero renovacao consumida.

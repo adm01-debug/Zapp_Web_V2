@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 5f4c799a871a942419186f1dfc27c31f09928d39 Joaquim Ataides <ti@promobrindes.com.br> 1791289172 -0300	
+5f4c799a871a942419186f1dfc27c31f09928d39 5f4c799a871a942419186f1dfc27c31f09928d39 Joaquim Ataides <ti@promobrindes.com.br> 1791289173 -0300	reset: moving to HEAD
+5f4c799a871a942419186f1dfc27c31f09928d39 ea1f05c2112af4298aa598949933d6a1dd8ff6a5 Joaquim Ataides <ti@promobrindes.com.br> 1791289874 -0300	commit: fix(edge): não deixa mensagem de grupo GO entrar no inbox direto (#189)

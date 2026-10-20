@@ -1,0 +1,3 @@
+test(busca): isola histórico no teste de ações rápidas da busca embutida
+
+O hook de histórico passou a escopar por usuário e lê useAuth (R2-PLAT-006), que exige AuthProvider. O teste R2-INB-018 prova ações rápidas e seleção, não histórico: isola a dependência alheia com mock local, mesmo padrão de GlobalSearch.navigation e GlobalSearch.r2-inb-020.

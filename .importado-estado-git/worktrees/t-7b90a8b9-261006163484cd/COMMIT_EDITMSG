@@ -1,0 +1,3 @@
+test(talkx): prova a janela e o ritmo do historico no item #135
+
+R2-MOD-033 (item #135) ja esta corrigido no base pelo commit fb181319d; faltava a prova de aceite que a auditoria pedia. O novo teste de tela cobre (1) a consulta pedindo os envios MAIS RECENTES (sent_at decrescente, teto 2000 - o envio 2001+ entra na serie), (2) dez minutos sem envio resultando em ritmo zero e prazo INDISPONIVEL, sem previsao otimista e (3) o ritmo medido sobre 10 minutos consecutivos com prazo calculado. Vermelho controlado antes (3/3 falhas ao repor a ordem crescente e a logica esparsa da revisao anterior), verde depois (4 arquivos / 30 testes).

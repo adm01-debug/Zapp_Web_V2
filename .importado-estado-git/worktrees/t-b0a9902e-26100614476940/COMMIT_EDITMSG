@@ -1,0 +1,1 @@
+fix(telefonia): rejeita gravacao com corpo de audio vazio no hook

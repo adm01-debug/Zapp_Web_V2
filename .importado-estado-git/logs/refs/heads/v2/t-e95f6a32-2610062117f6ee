@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791332224 -0300	branch: Created from dia/2026-10-06
+dba4ece1f104a2757a954051b06b2c1bd7589050 7247623fc2064a6dcac0423d7e5296afe929df96 iris <ti@promobrindes.com.br> 1791332502 -0300	commit: fix(talkx): filtro de período só aparece onde há consumidor do recorte (#426)

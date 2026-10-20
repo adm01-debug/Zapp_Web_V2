@@ -1,0 +1,3 @@
+docs(contatos): Decisões do dono D1–D7 registradas em ADR curto (MC-003)
+
+ADR-008 registra as sete decisões do dono (KPIs, legados, contagem, fotos, lixeira, CRM externo/Singu, mesclar e comparar) e o índice de docs/adr aponta para ele. Trabalho pausado com o cartão (plano do módulo Contatos em revisão item a item, 08/10 11:15): commit local, sem hermes-tarefa-fechar.

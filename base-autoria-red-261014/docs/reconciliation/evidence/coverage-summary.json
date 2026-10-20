@@ -1,0 +1,17 @@
+{
+  "tracked_files": 4065,
+  "bytes_hashed": 76818044,
+  "text_lines_structurally_scanned": 677490,
+  "blob_hash_mismatches": 0,
+  "ast_files": 2394,
+  "ast_parse_errors": 0,
+  "commits_catalogued": 9643,
+  "branches_compared": 58,
+  "exclusive_commits": 197,
+  "pull_requests": 1828,
+  "true_issues": 41,
+  "source_plans_resolved": 62,
+  "task_records": 5166,
+  "individual_assessment_records": 3062,
+  "lineage_only_records": 2104
+}

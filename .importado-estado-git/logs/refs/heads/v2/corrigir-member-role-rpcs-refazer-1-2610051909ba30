@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 66727f895120d1457a60c4b77b7bc59b3f4626dc Joaquim Ataides <ti@promobrindes.com.br> 1791238170 -0300	branch: Created from dia/2026-10-05
+66727f895120d1457a60c4b77b7bc59b3f4626dc dc1a4ba666f63f99c66fedf97ee58728d25a5d12 Joaquim Ataides <ti@promobrindes.com.br> 1791238184 -0300	cherry-pick: fix(db): corrigir member_role nas RPCs leave_team_group e remove_team_member
+dc1a4ba666f63f99c66fedf97ee58728d25a5d12 4f35dc7e6d69e80cdf9574b165e6b291d15b23ad Joaquim Ataides <ti@promobrindes.com.br> 1791238472 -0300	commit: fix(db): ajustar escopo do refazer das RPCs

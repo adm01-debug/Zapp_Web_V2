@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791226787 -0300	
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791226788 -0300	reset: moving to HEAD
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 3c6d7f5737cddd077ed1ee7348186a425e3a36a2 Joaquim Ataides <ti@promobrindes.com.br> 1791226794 -0300	cherry-pick: fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)
+3c6d7f5737cddd077ed1ee7348186a425e3a36a2 b98f796d980f5b6ddc156b4cb1476983ddd346dc Joaquim Ataides <ti@promobrindes.com.br> 1791228612 -0300	commit: fix(multiplix): preserva escopo e falhas por item

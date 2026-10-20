@@ -1,0 +1,4 @@
+import{r as e}from"./client-BV8iPb2f.js";var t=class{static async fetchQueues(){return e.from(`queues`).select(`*`).order(`priority`,{ascending:!1})}static async fetchWaitingCounts(t){let n=await Promise.all(t.map(async t=>{let{count:n,error:r}=await e.from(`contacts`).select(`id`,{count:`exact`,head:!0}).eq(`queue_id`,t).is(`assigned_to`,null).is(`deleted_at`,null).not(`conversation_status`,`in`,`(resolved,archived)`);if(r)throw r;return[t,n??0]}));return new Map(n)}static async fetchMembers(){return e.from(`queue_members`).select(`
+        *,
+        profile:profiles(id, name, avatar_url, is_active)
+      `)}static async createQueue(t){return e.from(`queues`).insert(t).select().single()}static async updateQueue(t,n){return e.from(`queues`).update(n).eq(`id`,t)}static async deleteQueue(t){return e.from(`queues`).delete().eq(`id`,t)}};export{t};

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791236086 -0300	branch: Created from dia/2026-10-05
+c28a1a97af8b9fc34ccb54db845a29a48169f257 adaed942e7427a3692ebb070cd85bb02020ec29e Joaquim Ataides <ti@promobrindes.com.br> 1791237017 -0300	commit: test(rls): validar policies contra o schema real das migrations (R2-GOV-003)
+adaed942e7427a3692ebb070cd85bb02020ec29e 3ed44b21d0573c42f13edcdba5f2f168c331ce48 Joaquim Ataides <ti@promobrindes.com.br> 1791238382 -0300	commit (amend): test(rls): validar policies contra o schema real das migrations (R2-GOV-003)

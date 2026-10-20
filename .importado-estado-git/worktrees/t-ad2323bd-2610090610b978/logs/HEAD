@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537039 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791537040 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 535ca91970f1ef6a85719c45ddf4aed92fa60163 designer <designer@hermes.local> 1791538425 -0300	commit: fix(talkx): contraste AA do texto na familia primaria, botao desabilitado, link e calendario
+535ca91970f1ef6a85719c45ddf4aed92fa60163 535ca91970f1ef6a85719c45ddf4aed92fa60163 Joaquim Ataides <ti@promobrindes.com.br> 1791538758 -0300	reset: moving to HEAD
+535ca91970f1ef6a85719c45ddf4aed92fa60163 6e3bb3fe4008bd8e0e74efd674a9c60a0322f228 designer <designer@hermes.local> 1791538864 -0300	commit: fix(talkx): pulso do aviso ao vivo respeita reduzir movimento
+6e3bb3fe4008bd8e0e74efd674a9c60a0322f228 17443465bf598070b0b6d3dd9cada0630b567fbc designer <designer@hermes.local> 1791539010 -0300	commit: test(talkx): mede o contraste a partir da classe que o componente aplicou no DOM
+17443465bf598070b0b6d3dd9cada0630b567fbc 8ea55e7c962b5e7d1fc1fb24e2046c14a59dfb10 designer <designer@hermes.local> 1791539188 -0300	commit: test(talkx): declara onStatusChange no render da campanha agendada
+8ea55e7c962b5e7d1fc1fb24e2046c14a59dfb10 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559190 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 2e060d11a3d192e09466d83d13de6535b8e504b2 Joaquim Ataides <ti@promobrindes.com.br> 1791559855 -0300	rebase (continue): fix(talkx): contraste AA do texto na familia primaria, botao desabilitado, link e calendario
+2e060d11a3d192e09466d83d13de6535b8e504b2 26ab1e5d98f178228228afa47d2fe06c978f3bc5 Joaquim Ataides <ti@promobrindes.com.br> 1791559855 -0300	rebase (pick): fix(talkx): pulso do aviso ao vivo respeita reduzir movimento
+26ab1e5d98f178228228afa47d2fe06c978f3bc5 f2982bc6c472a2a5fb4d2b251559a2e458906bb6 Joaquim Ataides <ti@promobrindes.com.br> 1791559855 -0300	rebase (pick): test(talkx): mede o contraste a partir da classe que o componente aplicou no DOM
+f2982bc6c472a2a5fb4d2b251559a2e458906bb6 8af33a49370bbe629c027ac50d43827c2f063835 Joaquim Ataides <ti@promobrindes.com.br> 1791559855 -0300	rebase (pick): test(talkx): declara onStatusChange no render da campanha agendada
+8af33a49370bbe629c027ac50d43827c2f063835 8af33a49370bbe629c027ac50d43827c2f063835 Joaquim Ataides <ti@promobrindes.com.br> 1791559855 -0300	rebase (finish): returning to refs/heads/v2/t-ad2323bd-2610090610b978

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 48001a459f82ace6e4c72114e3d3205f1efba9a6 Joaquim Ataides <ti@promobrindes.com.br> 1791238821 -0300	
+48001a459f82ace6e4c72114e3d3205f1efba9a6 48001a459f82ace6e4c72114e3d3205f1efba9a6 Joaquim Ataides <ti@promobrindes.com.br> 1791238822 -0300	reset: moving to HEAD
+48001a459f82ace6e4c72114e3d3205f1efba9a6 950659de2d7dff423999a66ca3510675b915569f Joaquim Ataides <ti@promobrindes.com.br> 1791238828 -0300	cherry-pick: fix(team-chat): fonte única do mute e listener global de notificações (#162)
+950659de2d7dff423999a66ca3510675b915569f 27c25eae0e169c62a271d9a6820756f3b34b76ca Joaquim Ataides <ti@promobrindes.com.br> 1791239267 -0300	commit: test(team-chat): comprovar listener global e fonte do mute

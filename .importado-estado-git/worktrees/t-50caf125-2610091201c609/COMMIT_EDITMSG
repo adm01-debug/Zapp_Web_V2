@@ -1,0 +1,12 @@
+test(mensagens): teste de paginacao deixa de fixar a pagina em 1000 (SL-099)
+
+O teste 'mantem as paginas antigas ja carregadas' montava a pagina com 1000 linhas
+fixas e esperava 1005/1006 — o numero era o teto antigo do hook, que o SL-099
+baixou para 100: com a pagina menor o range nao batia mais e o teste quebrou
+(hasOlder=false). Agora o tamanho da pagina sai do PROPRIO range(from,to) que o
+ChatService monta a partir do teto do hook, e o invariante verificado passa a ser
+'pagina cheia => hasOlder', nao 'a pagina tem 1000 linhas'.
+
+Prova: src/hooks/__tests__/useMessages.test.tsx — vermelho antes
+('expected false to be true', hasOlder), verde depois junto de
+useMessages.{media,overlay,paginacao}.test.tsx: 4 arquivos, 29 testes.

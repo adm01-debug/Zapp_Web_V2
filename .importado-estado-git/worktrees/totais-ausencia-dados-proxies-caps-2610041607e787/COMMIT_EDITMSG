@@ -1,0 +1,26 @@
+fix(hooks): tira proxies, caps e fallbacks dos totais e da ausência de dados (#36)
+
+R2-MOD-018/R2-MOD-019 (useReportsData + Relatórios Avançados)
+- totais/repartições liam só a primeira página (teto do PostgREST) e a chamavam
+  de total do período; agora percorrem todas as páginas via fetchAllRows (novo
+  src/lib/fetchAllRows.ts), com ordenação estável por id.
+- leitura incompleta (erro no meio ou teto) não vira zero: o hook expõe
+  error/isError/isIncomplete e a tela mostra aviso; o valor sai como '—' (erro)
+  ou '≥' (parcial) em vez de número confirmado.
+
+R2-MOD-030 (useWarRoomData + War Room)
+- online/busy vinha de profiles.is_active (cadastro) e não de presença; agora o
+  status sai de useAgentPresenceMap (agent_presence), o mesmo do Dashboard.
+- activeChats/waiting/inProgress contavam todo contato associado, inclusive
+  resolvido; agora contam episódio aberto (conversation_status) e são paginados.
+- avgWaitTime/slaWarnings fixos em 0 viravam "zero medido"; agora são null
+  (não calculado) e a UI mostra '—'.
+
+R2-MOD-075 (useTodayHourlyVolume + VolumeChart)
+- agregador usava startOfDay/format/getHours locais contra buckets que a RPC
+  dashboard_hourly_volume já derivou em America/Sao_Paulo: o bucket corrente
+  migrava para o dia anterior e a hora atual zerava fora de UTC-3. Agora usa
+  appDayKey/appHour/appShiftDayKey (fuso do app, novo helper appHour).
+
+Prova: testes novos/ajustados (22 casos verdes) — 5 vermelhos contra o código
+anterior; suíte completa 550 arquivos/6244 testes verdes; zapp-verify . --rapido VERDE.

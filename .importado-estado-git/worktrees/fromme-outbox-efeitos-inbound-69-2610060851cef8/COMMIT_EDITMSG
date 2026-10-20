@@ -1,0 +1,21 @@
+fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)
+
+R2-API-006 (refazer): a outbox criada em 04ee30646 enfileirava talkx_reply e
+multiplix_reply para qualquer mensagem ingerida, inclusive key.fromMe=true —
+a proteção `if (!key.fromMe)` que vivia na edge saiu junto com as chamadas
+soltas, e uma mensagem nossa podia ser atribuída como resposta do contato.
+
+- ingest_inbound_message ganha p_from_me boolean (9o arg, sem DEFAULT): a
+  direção viaja na MESMA transação do ingest e a edge passa
+  `p_from_me: key.fromMe === true`. Nenhum chamador pode omitir a direção.
+- o enfileiramento passa a exigir mensagem recebida
+  (`IF v_message_id IS NOT NULL AND NOT p_from_me`): com fromMe=true nenhum
+  efeito é criado (nem opt-out, nem atribuição) — a guarda antiga preservada
+  no ponto de enfileiramento.
+- migration idempotente: DROP das assinaturas de 8 e 10 args antes do CREATE
+  de 11; REVOKE/GRANT/COMMENT e o Rollback atualizados.
+- regressão: Deno afirma que a direção chega ao ingest (fromMe=true → efeitos
+  de resposta nunca; fromMe=false → efeitos seguem); teste SQL executado em
+  Postgres descartável com service_role prova 0 efeitos na outbox para
+  mensagem própria (inclusive com palavra de opt-out), os dois efeitos para a
+  recebida e a idempotência do drain.

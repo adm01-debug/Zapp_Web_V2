@@ -1,0 +1,20 @@
+fix(inbox): assinatura de texto conta no limite de 4096 do envio (#312)
+
+O limite de 4096 precisa representar o payload real do canal, e o payload
+real inclui a assinatura aplicada por `applySignature`. Contador e botão
+mediam `inputValue.length`: com a assinatura "*Ana:*\n" (7 caracteres),
+um corpo de 4090 passava de 4096 com o botão Enviar habilitado.
+
+- useChatInputLogic: fonte única da conta (`prefixoAssinaturaDeTexto` +
+  `medirPayloadDeEnvio`); `charCount`/`isOverLimit` passam a medir o
+  payload assinado, e o hook recebe `signatureEnabled`/`signatureName`
+  (o mesmo par que o ChatPanel já entrega à barra).
+- useChatPanelHandlers.handleSend: a recusa mede o payload que vai para o
+  transporte (`applySignature` do corpo; a edição, que não assina, mede o
+  corpo) — o que é medido é o que é enviado.
+- Edição não conta assinatura (o ramo de edição não passa por
+  `applySignature`): contador, botão e Enter medem o corpo do editor.
+
+Prova: teste do cartão (ChatInputArea + useChatPanelHandlers +
+useMessageSignature reais) — 2 testes vermelhos com a medição antiga
+(contador "4089/4096" e "4090/4096"), 8/8 verdes com a correção.

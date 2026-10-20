@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 31d20bffaf93442786ebccb7b20b1224bb3eb054 Joaquim Ataides <ti@promobrindes.com.br> 1791373614 -0300	
+31d20bffaf93442786ebccb7b20b1224bb3eb054 31d20bffaf93442786ebccb7b20b1224bb3eb054 Joaquim Ataides <ti@promobrindes.com.br> 1791373615 -0300	reset: moving to HEAD
+31d20bffaf93442786ebccb7b20b1224bb3eb054 251234add39ad0ddd50c1da21935c11875f0e21f Joaquim Ataides <ti@promobrindes.com.br> 1791373814 -0300	commit: test(navegacao): prova que favoritos e recentes ignoram ids mortos (E17)

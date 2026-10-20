@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791290084 -0300	branch: Created from dia/2026-10-06
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 2031fd21e56b50f59c431225491aede4b98468c0 Joaquim Ataides <ti@promobrindes.com.br> 1791290106 -0300	cherry-pick: fix(talkx-send): nao perde log do lote quando um destinatario lanca (#127)
+2031fd21e56b50f59c431225491aede4b98468c0 b18288e2bedbf936fd394cd134884276ee89be75 Joaquim Ataides <ti@promobrindes.com.br> 1791290253 -0300	commit (amend): fix(talkx-send): nao perde log do lote quando um destinatario lanca (#127)

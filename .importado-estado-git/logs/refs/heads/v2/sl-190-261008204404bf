@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503053 -0300	branch: Created from dia/2026-10-08
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c afecf07220e7f51a0791f65d4c6d1b966dfdad95 Joaquim Ataides <ti@promobrindes.com.br> 1791503426 -0300	commit: fix(edge-functions): trata eventos TYPEBOT_* no evolution-webhook (SL-190)

@@ -1,0 +1,14 @@
+fix(ia): resposta vazia do provedor nao vira categoria 'outros' concluida (IA-132)
+
+classify-sticker e classify-emoji ainda usavam `(content || 'outros')`: quando o
+provedor respondia 200 sem conteudo (choices ausente/vazio, item sem
+`message.content`, ou content vazio/so espacos), o classificador devolvia
+`{ category: 'outros', state: 'ok' }` — uma conclusao FALSA, e o hook gravava
+'outros' como se fosse o modelo respondendo.
+
+Agora, antes de normalizar a categoria, o conteudo bruto e conferido: sem
+conteudo utilizavel o caminho sai com `state:'low_confidence'` e
+`error_code:'EMPTY_RESPONSE'` (estado nao-ok). O texto explicito `outros` vindo
+do modelo continua sendo conclusao valida (`state:'ok'`). O contrato de visao
+cobre, para sticker e emoji, conteudo vazio, choices vazio/ausente e item sem
+message.content; fica vermelho se o codigo voltar a `(content || 'outros')`.

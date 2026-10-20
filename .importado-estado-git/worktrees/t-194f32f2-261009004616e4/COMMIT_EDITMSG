@@ -1,0 +1,5 @@
+fix(multiplix): Painel 03: seletor de destinatario sem alterar composicao (TL-011)
+
+F79 nao cabe em 1 defeito/1 camada (9 comportamentos em front+hooks+edge+migration)
+e um requisito (export dos excluidos) e proibido por regra permanente. Fechado SEM
+commit de codigo, como o cartao manda. Prova e motivo em .tmp/relato.md.

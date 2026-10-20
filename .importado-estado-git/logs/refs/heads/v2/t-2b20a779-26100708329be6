@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 ecfba91b8c1cef084b0de013726f672c716a3a17 Joaquim Ataides <ti@promobrindes.com.br> 1791372732 -0300	branch: Created from dia/2026-10-07
+ecfba91b8c1cef084b0de013726f672c716a3a17 8cba6fea1e648efc3042b1b788f9bfe0febd8b7b Joaquim Ataides <ti@promobrindes.com.br> 1791372992 -0300	commit: test(tarefas): prova que ?task=<id> abre a folha em qualquer modo

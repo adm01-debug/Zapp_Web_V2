@@ -1,0 +1,11 @@
+fix(sticker-picker): preserva objeto do bucket whatsapp-media ao excluir figurinha (#92)
+
+handleDelete tratava qualquer URL contendo /whatsapp-media/ como objeto da
+biblioteca e chamava storage.remove, podendo apagar a midia ainda referenciada
+pela mensagem original. Agora so remove objeto fisico quando a URL e
+reconhecidamente do bucket proprio stickers (origem do storage + bucket +
+caminho seguro, via parseSupabaseStorageObjectUrl); whatsapp-media, outro
+bucket, origem externa ou URL malformada preservam o objeto. A linha do
+catalogo continua sendo removida em todos os casos.
+
+Teste dedicado com RED->GREEN cobre os tres contratos (item #92).

@@ -1,0 +1,7 @@
+test(multiplix): executa o rollback do cabecalho, reaplica e cobre entrada invalida
+
+Bloco C extrai o SQL de rollback do proprio arquivo (linhas apos 'SQL do rollback:'),
+executa no Postgres descartavel, confirma que o comportamento volta ao defeito vivo
+(camada_correta falha de novo) e que o ACL continua so com service_role; depois reaplica
+a migration e confirma a idempotencia. Acrescenta tambem as guardas de entrada invalida
+(NULL e id inexistente) que o corpo reescrito tem de preservar.

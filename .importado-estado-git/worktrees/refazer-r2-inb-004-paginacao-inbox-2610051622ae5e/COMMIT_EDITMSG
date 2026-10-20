@@ -1,0 +1,10 @@
+test(inbox): torna deterministica a paginacao da Inbox sob a suite completa (R2-INB-004)
+
+Pre-carrega o mesmo modulo que o React.lazy de RealtimeInboxView importa
+(ChatPanel) para tirar a transformacao do import dinamico da janela do
+findByRole. Sob a suite completa essa transformacao passava do timeout
+padrao de 1s, a arvore ficava presa no <ChatFallback/> e o teste falhava
+por timing (timeout ao localizar role=log / o botao de carga), nao por
+contrato. Nenhum timeout global foi aumentado e nenhum assert foi
+removido; o caminho de componentes segue o de producao
+(RealtimeInboxView -> ChatPanel -> ChatMessagesArea).

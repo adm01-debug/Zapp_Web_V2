@@ -1,0 +1,6 @@
+fix(ci/devops): E2E de fluxo de mensagens, teste por webhook event, run (SL-149)
+
+Enumera a cobertura do webhook da Evolution por evento: o teste novo amarra os
+ramos event === '...' do roteador real, a lista registrada no provedor
+(WEBHOOK_EVENTS) e a tabela do runbook, e passa cada evento pelo handler real
+com um Supabase falso em 127.0.0.1 (sem banco nem instancia de producao).

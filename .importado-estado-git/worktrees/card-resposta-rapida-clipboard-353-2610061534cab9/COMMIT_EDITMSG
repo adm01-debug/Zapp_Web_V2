@@ -1,0 +1,6 @@
+fix(inbox): corpo do card de resposta rapida copia de verdade antes de anunciar (#353)
+
+Em Configuracoes (sem onSelect) o clique no corpo chamava handleSelect e mostrava
+'Resposta copiada!' sem escrever no clipboard. Agora o corpo copia e so anuncia
+depois de a escrita voltar; com onSelect (Composer) insere a resposta e o feedback
+passa a ser de insercao. O icone Copiar tambem anuncia apenas apos o writeText.

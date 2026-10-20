@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 91d2a15da9d41e550acdaa897069855a00bb34d6 Joaquim Ataides <ti@promobrindes.com.br> 1791195383 -0300	branch: Created from dia/2026-10-05
+91d2a15da9d41e550acdaa897069855a00bb34d6 78688470896ef113e00969b5eb112e853bd1814f Joaquim Ataides <ti@promobrindes.com.br> 1791195780 -0300	commit: fix(edge): teste de negacao prova nao-vazamento e JSDoc alinha com regex

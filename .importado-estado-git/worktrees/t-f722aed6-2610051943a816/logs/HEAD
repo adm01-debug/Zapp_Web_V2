@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 927f042dc443c02c72ad703a546987aaded91003 Joaquim Ataides <ti@promobrindes.com.br> 1791240217 -0300	
+927f042dc443c02c72ad703a546987aaded91003 927f042dc443c02c72ad703a546987aaded91003 Joaquim Ataides <ti@promobrindes.com.br> 1791240218 -0300	reset: moving to HEAD
+927f042dc443c02c72ad703a546987aaded91003 ade38b461148f38caee6bf7853d783ee3cd85edb Joaquim Ataides <ti@promobrindes.com.br> 1791240676 -0300	commit: fix(talkx): adotar estados de consulta na Visão geral e no carregamento do wizard
+ade38b461148f38caee6bf7853d783ee3cd85edb bab0128ca07dfd610c4887fcb20c647c9183fee9 Joaquim Ataides <ti@promobrindes.com.br> 1791240715 -0300	commit: fix(talkx): manter o anúncio de carregamento no esqueleto do wizard
+bab0128ca07dfd610c4887fcb20c647c9183fee9 10a721bd72d84af7f0b080f74ccea2062086d0d9 Joaquim Ataides <ti@promobrindes.com.br> 1791240953 -0300	commit: test(talkx): não citar o placeholder legado no teste

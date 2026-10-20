@@ -1,0 +1,30 @@
+fix(edge-functions): Sentry no front e nas edges (SL-056)
+
+Por quê: o inventário de 07/10/2026 (itens 031-032) mede "Sem Sentry.init no
+front/edges" — o V2 citava Sentry em 3 arquivos e não inicializava nada. Sem
+dependência nova (o cartão proíbe, e o V2 não tem @sentry/*), o protocolo de
+envelope do Sentry (cabeçalho + item + evento, um POST por evento) passa a ser
+falado em casa: `src/lib/sentry.ts` no front, ligado em `src/main.tsx`, e
+`supabase/functions/_shared/sentry.ts` nas edges, usado no catch do
+`evolution-webhook` (`captureSentryError` + `withSentry` para as que deixam o
+erro subir até o Deno.serve).
+
+Desligado por padrão: sem `VITE_SENTRY_DSN` (front) ou `SENTRY_DSN_EDGE`/
+`SENTRY_DSN` (edge) nada é montado e nenhum fetch acontece — nenhuma informação
+sai do sistema até o dono publicar o DSN. Do evento só saem tipo/mensagem/stack
+truncados, a origem, a release e o id de correlação; telefone e e-mail que
+apareçam na mensagem são mascarados, e requisição, cookies e usuário não entram.
+O ramo de erro do webhook continua idêntico (mesma resposta 500): a captura é
+silent-fail.
+
+No arquivo da evidência (`SentryIntegrationView.tsx`) entrou só um comentário
+que separa as duas coisas: o cliente por DSN de ambiente (novo) e o que a TELA
+ainda não faz (validar/persistir DSN e ler métricas) — a ativação pela UI segue
+recusada e o teste R2-API-047 da tela continua verde.
+
+Verificação: `npx vitest run src/lib/__tests__/sentry.test.ts` -> 7 passed
+(vermelho antes: cannot resolve "@/lib/sentry"); `deno test --config
+scripts/ci/deno.json --frozen ... supabase/functions/_shared/__tests__/sentry.test.ts`
+-> 7 passed (vermelho antes: TS2307, módulo ausente); `deno check
+supabase/functions/evolution-webhook/index.ts` -> exit 0; ratchet de tipos sem
+erro novo (baseline=0, novas=0).

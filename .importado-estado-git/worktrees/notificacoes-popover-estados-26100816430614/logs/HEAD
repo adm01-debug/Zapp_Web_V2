@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f73548534c1a2628ccde6cebcf76bee330d96ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791488592 -0300	
+f73548534c1a2628ccde6cebcf76bee330d96ca4 f73548534c1a2628ccde6cebcf76bee330d96ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791488593 -0300	reset: moving to HEAD
+f73548534c1a2628ccde6cebcf76bee330d96ca4 89fa77d0ae2a012b67783b4ff89ecf2c7c49a040 Joaquim Ataides <ti@promobrindes.com.br> 1791488664 -0300	commit (cherry-pick): fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)

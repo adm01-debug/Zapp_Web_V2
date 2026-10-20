@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791303580 -0300	
+421f4a59c7ba7d52bad931d367a68d859d374465 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791303581 -0300	reset: moving to HEAD
+421f4a59c7ba7d52bad931d367a68d859d374465 f8ed2ae684f2feae6924b5fea99f2ecb86d9fc4e Joaquim Ataides <ti@promobrindes.com.br> 1791303906 -0300	commit: fix(inbox): editar resposta rápida não reutiliza mais o formulário anterior (#347)

@@ -1,0 +1,1 @@
+test(ia): Evolution webhook sem assinatura aceito por padrão (strictMode=false) — regressão do default fail-closed (SL-061)

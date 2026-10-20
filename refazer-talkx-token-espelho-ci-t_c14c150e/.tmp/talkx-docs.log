@@ -1,0 +1,19 @@
+✔ fixture: árvore íntegra passa (6.954005ms)
+✔ fixture: predecessor na raiz do módulo é recusado (0.76735ms)
+✔ fixture: predecessor sem arquivo é recusado (0.363291ms)
+✔ fixture: documento arquivado fora do índice é recusado (0.353433ms)
+✔ fixture: documento novo na raiz do módulo é recusado (0.319729ms)
+✔ fixture: README sem o arquivo é recusado (0.335544ms)
+✔ fixture: citação de código inexistente é recusada (0.527568ms)
+✔ fixture: citação de código existente passa (0.321109ms)
+✔ fixture: artefato gerado (ignorado pelo git) não é código ausente (0.741134ms)
+✔ docs/talkx: predecessores arquivados e documentos correntes sem citação falsa (14.36576ms)
+✔ docs/talkx: o arquivo existe no disco e o .gitignore cobre o caminho gerado citado (0.728884ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.125609

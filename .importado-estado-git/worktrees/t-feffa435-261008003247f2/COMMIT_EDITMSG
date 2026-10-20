@@ -1,0 +1,7 @@
+fix(ia): auto-tag limpa etiquetas antigas quando a classificação válida não tem tags (#207)
+
+A chamada a replace_ai_conversation_tags estava sob 'tagPayload.length > 0'; a RPC tem semântica explícita de que lista vazia LIMPA as etiquetas de IA. Classificação válida sem tags pulava a RPC e as etiquetas antigas ficavam no contato.
+
+# Conflicts:
+#	supabase/functions/ai-auto-tag/index.test.ts
+#	supabase/functions/ai-auto-tag/index.ts

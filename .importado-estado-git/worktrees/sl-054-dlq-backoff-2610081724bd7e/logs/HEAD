@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491086 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491087 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 35a762581761baf01acb8ab0780b08305ddba4c0 edgar <edgar@hermes.local> 1791491957 -0300	commit: fix(edge-functions): backoff do DLQ compartilhado (fonte unica) entre talkx-send e multiplix-send (SL-054)
+35a762581761baf01acb8ab0780b08305ddba4c0 88dc025859b3f29f4f7758374ccdad6cfcd4c083 edgar <edgar@hermes.local> 1791492078 -0300	commit: test(edge-functions): exercita planRetry real na prova do backoff compartilhado (SL-054)
+88dc025859b3f29f4f7758374ccdad6cfcd4c083 59f7c1c54ce599740ecd46657ba462c0edd15ff6 edgar <edgar@hermes.local> 1791492504 -0300	commit: refactor(edge-functions): conta do backoff do DLQ compartilhada no kernel (SL-054)

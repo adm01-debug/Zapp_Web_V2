@@ -1,0 +1,3 @@
+fix(inbox): resposta atrasada de reescrita nao substitui rascunho mais novo
+
+R2-INF-025 (item 371): AIRewriteButton e AIEnhanceButton aplicavam data.enhanced depois do await sem comparar o rascunho corrente, e o desfazer do aprimoramento capturava o texto anterior no clique. Agora o texto do clique e comparado com o rascunho vivo antes de aplicar, e o desfazer so restaura se o campo ainda contiver o texto aplicado.

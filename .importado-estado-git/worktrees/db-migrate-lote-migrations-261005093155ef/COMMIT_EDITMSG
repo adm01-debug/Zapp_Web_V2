@@ -1,0 +1,12 @@
+test(ci): executa o passo real de runtime no teste do lote do db-migrate
+
+O cenario (b) provava so a decisao de contrato; nao provava que o PASSO
+"Provar estado runtime antes do push" chega ao fim para uma version do lote
+sem contrato dedicado -- que e' exatamente o que a recusa apontou. O teste
+agora extrai do proprio YAML o run: desse passo e o executa com psql dublado
+(sem banco, sem executar o workflow): com --generico-se-ausente o passo
+completa e registra o contrato generico; sem o flag ele aborta com
+"contrato de runtime ausente" -- o defeito do E62 reproduzido em teste.
+
+O SQL do contrato generico continua coberto por Postgres descartavel no
+db-guard.yml (scripts/db-audit/generic-migration-runtime.test.sh).

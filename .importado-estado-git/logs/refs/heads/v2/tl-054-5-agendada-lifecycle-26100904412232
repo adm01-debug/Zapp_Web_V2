@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791531675 -0300	branch: Created from dia/2026-10-09
+09cac15983207293252c5a4602e8b347bd4b8c91 454b0a1fac52502f2d92f377b285a9610c407ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791531925 -0300	commit: chore(talk-x): traz para a base o hook unico do ciclo de vida (TL-054/X050)
+454b0a1fac52502f2d92f377b285a9610c407ca4 1f7a2f8042fed6d929bd5e0c945140dcac4aa270 Joaquim Ataides <ti@promobrindes.com.br> 1791532455 -0300	commit: refactor(talk-x): Agendada usa o hook unico de ciclo de vida (X051)

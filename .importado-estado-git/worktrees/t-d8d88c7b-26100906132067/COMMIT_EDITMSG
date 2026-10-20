@@ -1,0 +1,17 @@
+fix(a11y): favorito fora do botão do item da barra lateral (Y18-4)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 12e407210
+# Last command done (1 command done):
+#    pick 7932fd8fb fix(a11y): favorito fora do botão do item da barra lateral (Y18-4)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-d8d88c7b-26100906132067' on '12e407210'.
+#
+# Changes to be committed:
+#	modified:   src/components/layout/SidebarNavItem.tsx
+#	new file:   src/components/layout/__tests__/SidebarNavItem.a11y.test.tsx
+#	new file:   src/components/ui/__tests__/skip-link.a11y.test.tsx
+#	modified:   src/components/ui/skip-link.tsx
+#

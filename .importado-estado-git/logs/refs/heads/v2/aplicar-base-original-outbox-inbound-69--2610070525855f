@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 1149f80fcedd49c9b8aeb5c0e5d0da34627dbe6b Joaquim Ataides <ti@promobrindes.com.br> 1791361506 -0300	branch: Created from dia/2026-10-07
+1149f80fcedd49c9b8aeb5c0e5d0da34627dbe6b 7c641c52105a6800cb4d426458222d18dbba1cdd Joaquim Ataides <ti@promobrindes.com.br> 1791361520 -0300	cherry-pick: fix(edge): bloquear opt-out fromMe no outbox inbound
+7c641c52105a6800cb4d426458222d18dbba1cdd 10752133253c7dc7dd1fdcfe8a1799ef740d1484 Joaquim Ataides <ti@promobrindes.com.br> 1791361817 -0300	commit: test(edge): restaurar caso talkx_optout fromMe
+10752133253c7dc7dd1fdcfe8a1799ef740d1484 7684d7865439c381d3dc7a787b6917919a823ab9 Joaquim Ataides <ti@promobrindes.com.br> 1791361878 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+7684d7865439c381d3dc7a787b6917919a823ab9 75e03e48180b842d0757a2679c9e26e4a3ed6467 Joaquim Ataides <ti@promobrindes.com.br> 1791361893 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+75e03e48180b842d0757a2679c9e26e4a3ed6467 f68db82d7c86a70a1a8532deee76a07dfffcf107 Joaquim Ataides <ti@promobrindes.com.br> 1791361919 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+f68db82d7c86a70a1a8532deee76a07dfffcf107 7fadfda1cc6865b5928bc06b909ee20a2cd457bb Joaquim Ataides <ti@promobrindes.com.br> 1791361935 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+7fadfda1cc6865b5928bc06b909ee20a2cd457bb 55b9c60dd9cc2482ca8a3cada8f1e905a2eb9ef6 Joaquim Ataides <ti@promobrindes.com.br> 1791361961 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+55b9c60dd9cc2482ca8a3cada8f1e905a2eb9ef6 bf009da218e41a577dfd840f773af0a090fc391b Joaquim Ataides <ti@promobrindes.com.br> 1791362142 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+bf009da218e41a577dfd840f773af0a090fc391b 7ae23a6410537d4820791004b0b5c0ba97a9dcf6 Joaquim Ataides <ti@promobrindes.com.br> 1791362376 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+7ae23a6410537d4820791004b0b5c0ba97a9dcf6 98796311282da05dac96382a80a5e0ad3669c8d0 Joaquim Ataides <ti@promobrindes.com.br> 1791362388 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+98796311282da05dac96382a80a5e0ad3669c8d0 c266e9073bfeb6059575e5345455c91687010d27 Joaquim Ataides <ti@promobrindes.com.br> 1791362411 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe
+c266e9073bfeb6059575e5345455c91687010d27 69fafa51c0bf00e662271be9585833c5df879a0c Joaquim Ataides <ti@promobrindes.com.br> 1791362439 -0300	commit (amend): test(edge): restaurar caso talkx_optout fromMe

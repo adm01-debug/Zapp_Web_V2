@@ -1,0 +1,4 @@
+ci(db): registrar teste das RPCs de membros
+
+# Conflicts:
+#	.github/workflows/db-guard.yml

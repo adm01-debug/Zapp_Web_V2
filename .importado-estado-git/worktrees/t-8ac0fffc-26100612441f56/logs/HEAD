@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791301469 -0300	
+d6bfd59751f26503e528dfa54b704daf0f497157 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791301469 -0300	reset: moving to HEAD
+d6bfd59751f26503e528dfa54b704daf0f497157 eda6edceb849fe84c1f0b8094bab0d115d74b738 Joaquim Ataides <ti@promobrindes.com.br> 1791302120 -0300	commit: fix(inbox): resposta atrasada do GPS nao substitui o ponto escolhido a mao (#330)

@@ -1,0 +1,12 @@
+fix(ia-metrics): parar de derivar conclusao de dado incompativel no Next Best Action (IA-115/IA-116)
+
+A "Proxima melhor acao" lia `conversation_tasks` filtrando por `status = 'pending'`,
+valor extinto desde a migracao 20260928140000 (backfill pending->todo, completed->done
++ CHECK com 6 valores). A leitura nunca casava nada, entao a tela concluia "sem acoes
+urgentes" com a tarefa aberta ainda no quadro. Agora filtra pelos estados abertos reais
+(backlog/todo/doing/waiting), o mesmo dominio do quadro.
+
+As quatro leituras tambem descartavam `error`: se qualquer uma falhasse, a lista ficava
+vazia e o cartao de oportunidade ("Sem acoes urgentes") era exibido sem nenhum dado -
+ausencia de leitura apresentada como ausencia confirmada de pendencia. Agora a falha
+entra como acao explicita de prioridade alta e o cartao de "sem urgencias" nao aparece.

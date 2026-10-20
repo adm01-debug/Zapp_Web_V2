@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485095 -0300	branch: Created from dia/2026-10-08
+72ad19958df7735cd29bad24dd38f66265c47f3b 302a1b687128a4ad26b4a7cd8710ded14e5ece2b Joaquim Ataides <ti@promobrindes.com.br> 1791485650 -0300	commit: feat(contatos): Busca por nome do contato ou da empresa, já na primeira letra (CT-011)
+302a1b687128a4ad26b4a7cd8710ded14e5ece2b 171e9681c68a00272e6e7a991c425e583b99e899 Joaquim Ataides <ti@promobrindes.com.br> 1791486239 -0300	commit: test(contatos): tipar props do renderHook na busca instantânea (CT-011)

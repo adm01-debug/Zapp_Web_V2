@@ -1,0 +1,17 @@
+docs(catalogo): CT-74 mantém a meta de desempenho sem medição aprovada (#148)
+
+OTH-008 (#148): a meta do Catálogo (Lighthouse `perf ≥ 90` na view autenticada em
+4G; `CLS < 0,05`) continua SEM medição aprovada. A documentação parava na correção
+do strip (#1682); a última alteração de rendimento foi a PR #1735 (o header deixa de
+trocar de altura), que declara a Lighthouse PENDENTE. Nenhuma medição foi feita
+depois dela — a última evidência (perf 44 / CLS 0,2452) é anterior.
+
+- `PERF.md`: nova seção "CT-74 — meta de desempenho: estado do aceite" com o
+  critério literal, o baseline medido (44/0,2452) e o que vale como medição
+  aprovada (SHA, deploy, perfil de rede, cache, resultado, artefato Lighthouse,
+  datado depois do #1735). Deixa explícito que não se fecha por JSX/geometria.
+- `PLANO_FINALIZACAO_CATALOGO_100.md`: CT-74 segue `[ ]` e o bloco declara o
+  aceite sem medição aprovada e a correção final (#1735).
+- Nova guarda `scripts/ci/catalog-perf-meta-docs.unit.mjs` (entra no CI pelo glob
+  `node --test scripts/ci/*.unit.mjs`): 6 testes, vermelho antes (4/6) e verde
+  depois (6/6), travando critério, baseline e o estado "não cumprido".

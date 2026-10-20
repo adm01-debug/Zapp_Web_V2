@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541063 -0300	branch: Created from dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 69a48f3fb817bffbc666a4f695333f9ecdebc3fc Joaquim Ataides <ti@promobrindes.com.br> 1791541220 -0300	commit: test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast

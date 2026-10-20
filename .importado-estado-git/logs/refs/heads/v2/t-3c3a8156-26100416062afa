@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 40b49e3f993fa06a1d3c10082a9656e7fed178e5 Joaquim Ataides <ti@promobrindes.com.br> 1791140778 -0300	branch: Created from dia/2026-10-04
+40b49e3f993fa06a1d3c10082a9656e7fed178e5 72fe14983e83e5f51e65a9809e0dad5cbd33c919 Joaquim Ataides <ti@promobrindes.com.br> 1791142251 -0300	commit: feat(auth): trava de politica de rede no requireAuth das Edges (R2-AUTH-022)
+72fe14983e83e5f51e65a9809e0dad5cbd33c919 18745558d345b8fb67e153b7630f4f9d0b6c9c15 Joaquim Ataides <ti@promobrindes.com.br> 1791142439 -0300	commit: feat(auth): traz modulo compartilhado de politica de rede do cartao 27.2 (R2-AUTH-022)
+18745558d345b8fb67e153b7630f4f9d0b6c9c15 72fe14983e83e5f51e65a9809e0dad5cbd33c919 Joaquim Ataides <ti@promobrindes.com.br> 1791142627 -0300	reset: moving to 72fe14983
+72fe14983e83e5f51e65a9809e0dad5cbd33c919 260f22c2bb88034e3decb33457b9877d22577b81 Joaquim Ataides <ti@promobrindes.com.br> 1791142627 -0300	rebase (finish): refs/heads/v2/t-3c3a8156-26100416062afa onto 2d9ede1ea7f65b1f063089710a9f6929b0fba08f
+260f22c2bb88034e3decb33457b9877d22577b81 261bae51ef7e7cdb65603920bef6a284b0f59ca4 Joaquim Ataides <ti@promobrindes.com.br> 1791142956 -0300	commit: fix(test): usa placeholder em vez da URL de producao no contrato

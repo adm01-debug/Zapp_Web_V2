@@ -1,0 +1,7 @@
+docs(talkx): rollback do #124 restaura o corpo do #123 (nao o de X031)
+
+Com a reconciliacao, o corpo aplicado imediatamente ANTES desta migration em
+retry_talkx_recipients(uuid,uuid[]) e o do #123 (20261006193650), nao o de X031.
+Rollback que recriasse o de X031 desfaria a validacao de lote que ja entrou. O
+cabecalho passa a apontar o arquivo certo, registra que o gatilho nao muda e que o
+DROP zera a ACL (precisa reaplicar REVOKE/GRANT/COMMENT).

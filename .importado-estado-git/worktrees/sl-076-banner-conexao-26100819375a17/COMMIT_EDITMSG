@@ -1,0 +1,9 @@
+fix(inbox/chat): banner de conexão não cobre mais a barra de abas (SL-076)
+
+A faixa era fixed top-0 left-0 right-0 z-[90] e cobria 44 dos 53px da barra de abas do inbox
+(83%), engolindo os cliques de SalesView/Journey. Passa a ancorar no rodapé, como os outros
+avisos globais do shell (MfaAdminNudge z-[80], ConnectionToast z-50), com pointer-events-none no
+wrapper e pointer-events-auto só no cartão — não intercepta ponteiro fora do próprio aviso.
+
+Teste de regressão em EvolutionDisconnectBanner.behavior.test.tsx (vermelho com o overlay antigo,
+verde com a correção).

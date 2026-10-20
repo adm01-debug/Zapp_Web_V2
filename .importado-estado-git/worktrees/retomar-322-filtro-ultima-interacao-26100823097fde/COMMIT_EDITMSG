@@ -1,0 +1,3 @@
+fix(chat): filtro Ultima interacao nao reintroduz sessoes antigas do mesmo dia (#322)
+
+O defeito do cartao JA ESTA CORRIGIDO na ponta dia/2026-10-08 pelo commit 96c6ac617 (cartao 2610061048c43a), que trocou startOfDay(cutoff) por cutoff no preset last_interaction e trouxe testes de regressao do mesmo caso. Nada a corrigir: sem commit de codigo, como o proprio cartao manda para este caso. Provas em .tmp/relato.md.

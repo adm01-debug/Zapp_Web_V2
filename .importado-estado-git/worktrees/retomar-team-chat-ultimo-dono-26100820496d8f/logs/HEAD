@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503364 -0300	
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503366 -0300	reset: moving to HEAD
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c c223706a90058bab6e60050744c983b3594d1bb5 Joaquim Ataides <ti@promobrindes.com.br> 1791503382 -0300	cherry-pick: fix(team-chat): trata DELETE filtrado como erro e fecha frestas de owner no banco
+c223706a90058bab6e60050744c983b3594d1bb5 5bf0dea2296714d8a58b7d1abea23c9b4d030a32 Joaquim Ataides <ti@promobrindes.com.br> 1791503385 -0300	cherry-pick: test(team-chat): prova o rollback das guardas de departamento e transferencia (QA5-10)
+5bf0dea2296714d8a58b7d1abea23c9b4d030a32 074ef1190038a1ac0d1c33266bcc7b7554ca8f41 Joaquim Ataides <ti@promobrindes.com.br> 1791503729 -0300	commit: test(team-chat): prova o DELETE filtrado e o RETURNING nos dois atores (QA5-10)
+074ef1190038a1ac0d1c33266bcc7b7554ca8f41 c9fc3398fe0e868e8eacf94d249f5bbccce2670a Joaquim Ataides <ti@promobrindes.com.br> 1791504580 -0300	commit: test(team-chat): prova que a transferencia renova o updated_at de UMA conversa (QA5-10)

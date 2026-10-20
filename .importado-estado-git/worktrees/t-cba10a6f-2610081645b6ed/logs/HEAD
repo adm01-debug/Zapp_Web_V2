@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488718 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488719 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 09b415e3d07792879ab004c073bd51e763e815f8 Joaquim Ataides <ti@promobrindes.com.br> 1791489032 -0300	commit: test(catálogo): foto inválida rejeitada no enqueue vira falha do envio (partial) (SL-005)

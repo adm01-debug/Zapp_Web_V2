@@ -1,0 +1,187 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5181" --strictPort
+
+
+Running 20 tests using 1 worker
+
+[1/20] [chromium-skins] › e2e/skins-e2e.spec.ts:290:3 › CP8 — fidelidade das 19 skins › as 19 skins aplicam as vars exatas do catálogo e a cor pintada (sidebar/fundo, ΔE76 ≤ 6)
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+
+[WebServer] 6:21:11 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:21:13 PM [vite] (client) [console.warn] [2026-10-14T21:21:13.098Z] [WARN] [App] [sid:60a8475a] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:21:13 PM [vite] (client) [console.warn] [2026-10-14T21:21:13.099Z] [WARN] [App] [sid:60a8475a] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[2/20] [chromium-skins] › e2e/skins-e2e.spec.ts:341:3 › CP8 — fidelidade das 19 skins › modo claro mantém a skin: corporate, gx-classic e diversity
+[WebServer] 6:21:34 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:21:37 PM [vite] (client) [console.warn] [2026-10-14T21:21:37.398Z] [WARN] [App] [sid:739b7bab] [A11Y] 2 accessibility violation(s) detected
+[WebServer] 6:21:37 PM [vite] (client) [console.warn] [2026-10-14T21:21:37.399Z] [WARN] [App] [sid:739b7bab] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (2 element(s))
+
+[WebServer] 6:21:37 PM [vite] (client) [console.warn] [2026-10-14T21:21:37.399Z] [WARN] [App] [sid:739b7bab] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[3/20] [chromium-skins] › e2e/skins-e2e.spec.ts:369:3 › CP8 — fidelidade das 19 skins › raio: GX trava em 10px, clássica em 14px, presets rápidos seguem livres
+[WebServer] 6:21:50 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] [2026-10-14T21:21:52.356Z] [WARN] [App] [sid:9d4d3dc7] [A11Y] 2 accessibility violation(s) detected
+
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] [2026-10-14T21:21:52.357Z] [WARN] [App] [sid:9d4d3dc7] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (1 element(s))
+[WebServer] 6:21:52 PM [vite] (client) [console.warn] [2026-10-14T21:21:52.357Z] [WARN] [App] [sid:9d4d3dc7] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[4/20] [chromium-skins] › e2e/skins-e2e.spec.ts:397:3 › CP8 — fidelidade das 19 skins › sync entre abas: a skin escolhida numa aba vale na outra sem reload
+[WebServer] 6:22:01 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:22:03 PM [vite] (client) [console.warn] [2026-10-14T21:22:03.174Z] [WARN] [App] [sid:4e34278a] [A11Y] 2 accessibility violation(s) detected
+
+[WebServer] 6:22:03 PM [vite] (client) [console.warn] [2026-10-14T21:22:03.174Z] [WARN] [App] [sid:4e34278a] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (1 element(s))
+
+[WebServer] 6:22:03 PM [vite] (client) [console.warn] [2026-10-14T21:22:03.175Z] [WARN] [App] [sid:4e34278a] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[WebServer] 6:22:06 PM [vite] (client) [console.warn] [2026-10-14T21:22:06.339Z] [WARN] [App] [sid:577930e6] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 6:22:06 PM [vite] (client) [console.warn] [2026-10-14T21:22:06.340Z] [WARN] [App] [sid:577930e6] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[5/20] [chromium-skins] › e2e/skins-e2e.spec.ts:453:5 › CP8 — reduzir movimento › com preferência por menos movimento › o card não se move e as transições somem no hover
+[WebServer] 6:22:15 PM [vite] (client) [console.warn] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled
+
+[WebServer] 6:22:17 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:22:19 PM [vite] (client) [console.warn] [2026-10-14T21:22:19.446Z] [WARN] [App] [sid:bfadbc57] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 6:22:19 PM [vite] (client) [console.warn] [2026-10-14T21:22:19.447Z] [WARN] [App] [sid:bfadbc57] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[6/20] [chromium-skins] › e2e/skins-e2e.spec.ts:483:5 › CP8 — reduzir movimento › com movimento permitido (contraprova da medição) › o mesmo hover MUDA o card — a medida acima não é vazia
+[WebServer] 6:22:25 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[7/20] [chromium-skins] › e2e/skins-e2e.spec.ts:505:3 › CP9 — checks funcionais › check 1: ?view=themes não gera console.error
+[WebServer] 6:22:34 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[8/20] [chromium-skins] › e2e/skins-e2e.spec.ts:514:3 › CP9 — checks funcionais › check 2: a tela mostra os 19 cards [role=radio]
+[WebServer] 6:22:42 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[9/20] [chromium-skins] › e2e/skins-e2e.spec.ts:520:3 › CP9 — checks funcionais › check 3: clicar num card muda --primary na hora
+[WebServer] 6:22:50 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[10/20] [chromium-skins] › e2e/skins-e2e.spec.ts:529:3 › CP9 — checks funcionais › check 4: recarregar mantém a skin e o raio
+[WebServer] 6:22:58 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:22:59 PM [vite] (client) [console.warn] [2026-10-14T21:22:59.679Z] [WARN] [App] [sid:57c5a225] [A11Y] 2 accessibility violation(s) detected
+
+[WebServer] 6:22:59 PM [vite] (client) [console.warn] [2026-10-14T21:22:59.680Z] [WARN] [App] [sid:57c5a225] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (5 element(s))
+[WebServer] 6:22:59 PM [vite] (client) [console.warn] [2026-10-14T21:22:59.680Z] [WARN] [App] [sid:57c5a225] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[11/20] [chromium-skins] › e2e/skins-e2e.spec.ts:543:3 › CP9 — checks funcionais › check 5: anti-FOUC — o boot pinta a skin antes de o React montar
+[WebServer] 6:23:12 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[12/20] [chromium-skins] › e2e/skins-e2e.spec.ts:585:3 › CP9 — checks funcionais › check 6: Salvar mostra o toast de sucesso
+[WebServer] 6:23:24 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[13/20] [chromium-skins] › e2e/skins-e2e.spec.ts:593:3 › CP9 — checks funcionais › check 7: Original → dialog → restaurar padrão volta corporate, raio 14 e toast
+[WebServer] 6:23:35 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:23:36 PM [vite] (client) [console.warn] [2026-10-14T21:23:36.173Z] [WARN] [App] [sid:80eeedc4] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:23:36 PM [vite] (client) [console.warn] [2026-10-14T21:23:36.176Z] [WARN] [App] [sid:80eeedc4] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[14/20] [chromium-skins] › e2e/skins-e2e.spec.ts:609:3 › CP9 — checks funcionais › check 8: storage v5 {preset: forest, borderRadius: 8} migra para emerald com raio 8
+[WebServer] 6:23:47 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[15/20] [chromium-skins] › e2e/skins-e2e.spec.ts:627:3 › CP9 — checks funcionais › check 9: GX trava o raio em 10, clássica em 14, e o controle segue livre
+[WebServer] 6:23:55 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:23:57 PM [vite] (client) [console.warn] [2026-10-14T21:23:57.416Z] [WARN] [App] [sid:8731a474] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 6:23:57 PM [vite] (client) [console.warn] [2026-10-14T21:23:57.427Z] [WARN] [App] [sid:8731a474] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[16/20] [chromium-skins] › e2e/skins-e2e.spec.ts:642:3 › CP9 — checks funcionais › check 10: Modo Claro mantém a skin e grava cacheMode light
+[WebServer] 6:24:10 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:24:10 PM [vite] (client) [console.warn] [2026-10-14T21:24:10.987Z] [WARN] [App] [sid:19362dac] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 6:24:10 PM [vite] (client) [console.warn] [2026-10-14T21:24:10.988Z] [WARN] [App] [sid:19362dac] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[17/20] [chromium-skins] › e2e/skins-e2e.spec.ts:656:3 › CP9 — checks funcionais › check 11: falha de quota mostra toast de erro e o ponto de pendência
+[WebServer] 6:24:22 PM [vite] (client) [console.error] [presets] falha ao gravar o tema no localStorage QuotaExceededError: QuotaExceededError
+
+[WebServer] 6:24:22 PM [vite] (client) [console.error] [presets] falha ao gravar o tema no localStorage QuotaExceededError: QuotaExceededError
+
+[WebServer] 6:24:26 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:24:27 PM [vite] (client) [console.error] [presets] falha ao gravar o tema no localStorage QuotaExceededError: QuotaExceededError
+
+[WebServer] 6:24:27 PM [vite] (client) [console.error] [presets] falha ao gravar o tema no localStorage QuotaExceededError: QuotaExceededError
+
+[WebServer] 6:24:28 PM [vite] (client) [console.warn] [2026-10-14T21:24:28.167Z] [WARN] [App] [sid:45d0b262] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:24:28 PM [vite] (client) [console.warn] [2026-10-14T21:24:28.170Z] [WARN] [App] [sid:45d0b262] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[WebServer] 6:24:29 PM [vite] (client) [console.error] [presets] falha ao gravar o tema no localStorage QuotaExceededError: QuotaExceededError
+
+[WebServer] 6:24:29 PM [vite] (client) [console.error] [presets] falha ao gravar o tema no localStorage QuotaExceededError: QuotaExceededError
+
+[18/20] [chromium-skins] › e2e/skins-e2e.spec.ts:676:3 › CP9 — checks funcionais › check 12: teclado — Tab, ArrowRight ×2 e Enter selecionam o terceiro card
+[WebServer] 6:24:38 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:24:40 PM [vite] (client) [console.warn] [2026-10-14T21:24:40.827Z] [WARN] [App] [sid:17538954] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:24:40 PM [vite] (client) [console.warn] [2026-10-14T21:24:40.828Z] [WARN] [App] [sid:17538954] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[19/20] [chromium-skins] › e2e/skins-e2e.spec.ts:696:3 › CP9 — checks funcionais › check 14: com gx-classic, inbox/contacts/dashboard/settings não logam erro novo
+[WebServer] 6:25:05 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:25:06 PM [vite] (client) [console.warn] [2026-10-14T21:25:06.000Z] [WARN] [App] [sid:b4d5386b] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:25:06 PM [vite] (client) [console.warn] [2026-10-14T21:25:06.001Z] [WARN] [App] [sid:b4d5386b] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[WebServer] 6:25:20 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 6:25:21 PM [vite] (client) [console.warn] [2026-10-14T21:25:21.675Z] [WARN] [App] [sid:00461757] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:25:21 PM [vite] (client) [console.warn] [2026-10-14T21:25:21.680Z] [WARN] [App] [sid:00461757] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[WebServer] 6:25:29 PM [vite] (client) [console.warn] [2026-10-14T21:25:29.175Z] [WARN] [App] [sid:9936b9a4] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 6:25:29 PM [vite] (client) [console.warn] [2026-10-14T21:25:29.176Z] [WARN] [App] [sid:9936b9a4] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+  1) [chromium-skins] › e2e/skins-e2e.spec.ts:696:3 › CP9 — checks funcionais › check 14: com gx-classic, inbox/contacts/dashboard/settings não logam erro novo 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('#main-navigation')
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('#main-navigation') with timeout 60000ms
+      - waiting for locator('#main-navigation')
+
+
+      701 |     for (const view of idas) {
+      702 |       await page.goto(`/?view=${view}`);
+    > 703 |       await expect(page.locator('#main-navigation')).toBeVisible({ timeout: 60_000 });
+          |                                                      ^
+      704 |     }
+      705 |     const base = ambiente.erros.slice(inicioBase);
+      706 |
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/e2e-skins-deslogado-cp8cp9-t_e533a538/e2e/skins-e2e.spec.ts:703:54
+
+    Error Context: test-results/skins-e2e-CP9-—-checks-fun-c1b9f-ettings-não-logam-erro-novo-chromium-skins/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/skins-e2e-CP9-—-checks-fun-c1b9f-ettings-não-logam-erro-novo-chromium-skins/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/skins-e2e-CP9-—-checks-fun-c1b9f-ettings-não-logam-erro-novo-chromium-skins/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[20/20] [chromium-skins] › e2e/skins-e2e.spec.ts:733:3 › CP9 — check 13: mobile › check 13: ?view=themes em 390×844 não rola na horizontal
+[WebServer] 6:26:44 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+  1 failed
+    [chromium-skins] › e2e/skins-e2e.spec.ts:696:3 › CP9 — checks funcionais › check 14: com gx-classic, inbox/contacts/dashboard/settings não logam erro novo 
+  19 passed (5.9m)

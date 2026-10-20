@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194935 -0300	
+80899b98968e007020313a034ed0c94b72bc4083 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194935 -0300	reset: moving to HEAD
+80899b98968e007020313a034ed0c94b72bc4083 1c055c7174eff549ea9228fa6d5fbd0b23b7324f Joaquim Ataides <ti@promobrindes.com.br> 1791194942 -0300	cherry-pick: fix(db): fecha ACL de leitura dos buckets privados de mídia do WhatsApp (R2-DB-022 B)
+1c055c7174eff549ea9228fa6d5fbd0b23b7324f c6f9ee3b160b0cf72a91a99d9567b286aea00bd3 Joaquim Ataides <ti@promobrindes.com.br> 1791195893 -0300	commit: fix(db): prova forja bloqueada e ordena ACL de leitura após fronteira de escrita (R2-DB-022 B)

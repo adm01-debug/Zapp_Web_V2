@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 4828775c575e68c498bb957350dfa0171a8f1c8e Joaquim Ataides <ti@promobrindes.com.br> 1791386458 -0300	
+4828775c575e68c498bb957350dfa0171a8f1c8e 4828775c575e68c498bb957350dfa0171a8f1c8e Joaquim Ataides <ti@promobrindes.com.br> 1791386458 -0300	reset: moving to HEAD
+4828775c575e68c498bb957350dfa0171a8f1c8e a7955262356e8a7b5f64fdff564556a5860b920c Joaquim Ataides <ti@promobrindes.com.br> 1791386757 -0300	commit: fix(arquivos): janela de visualização do arquivo menor (-40% largura, -20% altura)
+a7955262356e8a7b5f64fdff564556a5860b920c e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541134 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b a1620595c1ad136ffef1e98d53ca6ce63bb67be3 Joaquim Ataides <ti@promobrindes.com.br> 1791541162 -0300	rebase (continue): fix(arquivos): janela de visualização do arquivo menor (-40% largura, -20% altura)
+a1620595c1ad136ffef1e98d53ca6ce63bb67be3 a1620595c1ad136ffef1e98d53ca6ce63bb67be3 Joaquim Ataides <ti@promobrindes.com.br> 1791541162 -0300	rebase (finish): returning to refs/heads/v2/t-15327705-26100712203e3c

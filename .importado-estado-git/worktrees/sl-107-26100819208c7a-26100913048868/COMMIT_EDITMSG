@@ -1,0 +1,27 @@
+fix(telefonia): e2e/telefonia.spec.ts no e2e-logado.yml (SL-107)
+
+Por quê: a spec de Telefonia existe em `e2e/` (integrada em 523255b95), mas
+NENHUM projeto dela estava no `e2e-logado.yml` — a invocação pós-merge do
+Playwright nunca executava `e2e/telefonia.spec.ts` (lacuna do item T86).
+
+O que mudou:
+- .github/workflows/e2e-logado.yml: `--project=chromium-telefonia`,
+  `--project=firefox-telefonia` e `--project=webkit-telefonia` entram na
+  invocação do Playwright (o aceite do item pede verde nos 3 browsers) +
+  comentário explicando por que entram sem arrastar login real.
+- playwright.config.ts: projetos `firefox-telefonia` e `webkit-telefonia`
+  (testMatch `telefonia.spec.ts`, sem `setup`/`storageState` de arquivo —
+  DESLOGADOS, como o `chromium-telefonia` que o 523255b95 já declarava).
+- e2e/telefonia.spec.ts: a expectativa do teste "ligar do painel do contato"
+  estava MORTA — o C02 (`fix(telefonia): isola diálogo de saída do app`,
+  cb2bebc18, 09/10 09:24) trocou o caminho T29 ("navega para `?view=voip` com o
+  número preenchido") pelo cartão de saída dentro do chat. O teste passa a
+  provar o contrato VIGENTE: o clique emite `zapp:start-call` com o telefone DO
+  CONTATO (lido por listener real no `document`, não por dublê), a URL não muda,
+  a view de Telefonia não sobe e nenhuma chamada é gravada.
+
+Verificação: `npx playwright test --project=chromium-telefonia
+--project=firefox-telefonia --project=webkit-telefonia` → 24 passed, 3 skipped
+(1 `fixme` por browser, pré-existente no spec), 0 failed. Prova por mutação:
+removendo o `dispatchStartCall` de `ContactActionButtons.tsx`, o teste falha
+com `Array []` no lugar do payload esperado (depois restaurado).

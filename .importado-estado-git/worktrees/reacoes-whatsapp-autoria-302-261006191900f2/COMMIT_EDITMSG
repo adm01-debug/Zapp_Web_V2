@@ -1,0 +1,18 @@
+fix(message-reactions): escrita da reacao exige a propria autoria (#302)
+
+R2-DB-019 / item 302: as policies de escrita de public.message_reactions
+autorizavam pela conversa/contato e nao exigiam o user_id do chamador. Com o
+proprio JWT, um atendente gravava reacao com o profile de um colega, forjava
+reacao de Cliente (user_id nulo) e apagava/editava reacao de outro autor em
+qualquer mensagem visivel (as policies permissivas somavam por OR).
+
+A migration passa a exigir user_id = get_profile_id_for_user(auth.uid()) no
+INSERT/UPDATE, amarra contact_id ao contato DA MENSAGEM (fim do caminho que
+autorizava por um contato e gravava em outro) e restringe UPDATE/DELETE a
+propria autoria. A ingestao do provedor (webhook com service role, BYPASSRLS)
+segue intacta para a reacao do contato.
+
+Prova: scripts/db-audit/message-reactions-autoria.test.sh em PG17 descartavel,
+com o pre-estado replayado das proprias migrations (authenticated sem
+BYPASSRLS): vermelho antes (personificacao/edicao alheia passam) e verde
+depois; caminho legitimo do app e service_role preservados.

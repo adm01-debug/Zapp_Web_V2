@@ -1,0 +1,62 @@
+--- a/src/components/settings/CSATAutoConfig.tsx
++++ b/src/components/settings/CSATAutoConfig.tsx
+@@ -36,8 +36,11 @@
+ 
+   // "Último envio": o convite de CSAT é a linha de `messages` cujo
+   // `client_message_id` é o id do encerramento (contrato da Edge
+-  // `csat-auto-send`). Os encerramentos recentes dão os ids candidatos; entre
+-  // eles, a mensagem mais nova é a última pesquisa enfileirada.
++  // `csat-auto-send`: `p_client_message_id` = id do encerramento, com
++  // unicidade (contact_id, client_message_id) no banco). Os encerramentos
++  // recentes dão os ids candidatos; entre eles, a mensagem mais nova é a
++  // última pesquisa enfileirada pelo remetente automático (qualquer conversa;
++  // esta tela não tem contexto de conversa para filtrar por contato).
+   const { data: ultimoEnvio, isLoading: carregandoUltimoEnvio, isError: erroUltimoEnvio } = useQuery({
+     queryKey: ['csat-ultimo-envio'],
+     queryFn: async () => {
+@@ -131,9 +134,9 @@
+             Configuração
+           </CardTitle>
+           <CardDescription>
+-            A pesquisa sai por WhatsApp no encerramento da conversa: uma vez por conversa, e só
+-            se o contato não tiver consentimento revogado nem tiver recebido pesquisa nos últimos
+-            30 dias.
++            A pesquisa sai por WhatsApp no encerramento da conversa: uma vez por conversa (o id
++            do encerramento vai no convite e o banco impede duplicar), e só se o contato não
++            tiver consentimento revogado nem tiver recebido pesquisa nos últimos 30 dias.
+           </CardDescription>
+           <p className="text-xs text-muted-foreground mt-2" data-testid="csat-ultimo-envio">
+             {carregandoUltimoEnvio
+--- a/src/components/settings/__tests__/CSATAutoConfig.test.tsx
++++ b/src/components/settings/__tests__/CSATAutoConfig.test.tsx
+@@ -189,7 +189,7 @@
+     expect(screen.queryByText(/Enviar pesquisa ao resolver ticket/i)).not.toBeInTheDocument();
+   });
+ 
+-  it('mostra a data do último envio, achando o convite pelo id do encerramento', async () => {
++  it('mostra a data do último envio, com o convite achado pelo id do encerramento', async () => {
+     banco.config = { ...CONFIG_SALVA };
+     banco.encerramentos = [{ id: 'closure-9' }, { id: 'closure-8' }];
+     banco.ultimoConvite = '2026-10-12T15:30:00.000Z';
+@@ -198,10 +198,20 @@
+     await waitFor(() =>
+       expect(screen.getByTestId('csat-ultimo-envio')).toHaveTextContent(/^Último envio: /),
+     );
+-    // O convite é procurado por `client_message_id` ∈ ids dos encerramentos.
++    // O convite é procurado por `client_message_id` ∈ ids dos encerramentos
++    // (contrato da Edge: `p_client_message_id` = id do encerramento).
+     expect(banco.filtroIds).toEqual(['closure-9', 'closure-8']);
+   });
+ 
++  it('diz que o id do encerramento vai no convite e o banco impede duplicar', async () => {
++    banco.config = { ...CONFIG_SALVA };
++    renderConfig();
++
++    await waitFor(() =>
++      expect(screen.getByText(/o id do encerramento vai no convite e o banco impede duplicar/i)).toBeInTheDocument(),
++    );
++  });
++
+   it('avisa quando nenhuma pesquisa foi enviada ainda', async () => {
+     banco.config = { ...CONFIG_SALVA };
+     banco.encerramentos = [];

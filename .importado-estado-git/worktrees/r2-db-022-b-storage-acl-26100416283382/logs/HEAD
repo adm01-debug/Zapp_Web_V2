@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4ca29195faf69abc7a6d63fbc2ccc951153129c0 Joaquim Ataides <ti@promobrindes.com.br> 1791142110 -0300	
+4ca29195faf69abc7a6d63fbc2ccc951153129c0 4ca29195faf69abc7a6d63fbc2ccc951153129c0 Joaquim Ataides <ti@promobrindes.com.br> 1791142111 -0300	reset: moving to HEAD
+4ca29195faf69abc7a6d63fbc2ccc951153129c0 951de1bfb15760eac8a52d5ba48e1a5e8dd1c279 Joaquim Ataides <ti@promobrindes.com.br> 1791143268 -0300	commit: fix(db): fecha ACL de leitura dos buckets privados de mídia do WhatsApp (R2-DB-022 B)

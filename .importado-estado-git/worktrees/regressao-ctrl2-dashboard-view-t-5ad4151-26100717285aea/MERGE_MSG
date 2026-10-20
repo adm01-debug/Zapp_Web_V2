@@ -1,0 +1,9 @@
+test(atalhos): regressão de integração do Ctrl+2 trocando a view do shell
+
+O defeito #447 só era provado pelo toast: faltava um teste que observasse a
+view do shell. Este monta o Index dentro do GlobalKeyboardProvider (registry
+global), parte de ?view=inbox e dispara Ctrl+2, assertando a view no ponto que
+recebe o currentView (dublê do AppShell) e a URL canônica ?view=dashboard.
+
+Vermelho na implementação antiga (o shell seguia em inbox), verde com a ação
+go-to-dashboard já corrigida no cartão pai t_0f4db6bd.

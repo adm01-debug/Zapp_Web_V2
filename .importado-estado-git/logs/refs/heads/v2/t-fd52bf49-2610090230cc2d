@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523809 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 8de0fba3331c44ee853c2c28b7af33a04e4dd268 Joaquim Ataides <ti@promobrindes.com.br> 1791526254 -0300	commit: perf(bundle): tira sonner e sessão de telefonia do grafo inicial do entry
+8de0fba3331c44ee853c2c28b7af33a04e4dd268 362d00c2b5473f00b7e59bce868343c86946d42b Joaquim Ataides <ti@promobrindes.com.br> 1791543606 -0300	rebase (finish): refs/heads/v2/t-fd52bf49-2610090230cc2d onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+362d00c2b5473f00b7e59bce868343c86946d42b 5d462f9204079df0c6095d022522e9252e6116a1 Joaquim Ataides <ti@promobrindes.com.br> 1791543973 -0300	commit: perf(bundle): devolve a sessão de telefonia ao entry e deixa só a poda do sonner
+5d462f9204079df0c6095d022522e9252e6116a1 2133043c2e2b83b922ac5854e3d9703b0d6e42d7 Joaquim Ataides <ti@promobrindes.com.br> 1791544695 -0300	commit: perf(bundle): fachada lazyToast tira o sonner que a telefonia puxava para o bundle inicial
+2133043c2e2b83b922ac5854e3d9703b0d6e42d7 f09afd9036737bd96683116545a8d73b39d234ab Joaquim Ataides <ti@promobrindes.com.br> 1791544810 -0300	commit: test(bundle): o caso do sonner cobre também os importadores da telefonia

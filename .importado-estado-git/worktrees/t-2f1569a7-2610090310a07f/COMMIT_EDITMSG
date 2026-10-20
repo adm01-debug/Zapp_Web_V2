@@ -1,0 +1,11 @@
+perf(components): tirar o framer-motion do skip-link inicial (SL-103C)
+
+O aviso de Tab do SkipLinks era um motion.div/AnimatePresence e mantinha o
+runtime de animacao no grafo inicial (src/App.tsx -> skip-link.tsx ->
+framer-motion). Agora e um div com a animacao CSS do tema
+(motion-safe:animate-slide-down): visivel ja no primeiro quadro, sem JS de
+animacao e sem efeito com movimento reduzido.
+
+Teste novo src/components/ui/__tests__/skip-link.test.tsx: comportamento do
+aviso + guarda de fonte que fica vermelha se o arquivo voltar a importar ou
+renderizar o runtime de animacao por JS.

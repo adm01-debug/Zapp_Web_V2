@@ -1,0 +1,21 @@
+feat(db): leitura do gateway MCP sem poder de escrita (mcp_query_ro)
+
+O gateway usa hoje public.mcp_exec tambem para ler. Essa funcao roda como
+postgres e, quando a leitura falha, engole o erro e executa o texto bruto
+(DDL, DML, varias instrucoes). Backlog QA5-01.
+
+Migration aditiva, nao altera mcp_exec:
+- papel mcp_ro_reader, sem login, so SELECT em public, cron e
+  supabase_migrations (nada em vault, pgsodium ou auth), com BYPASSRLS;
+- public.mcp_query_ro(sql, max_rows): SECURITY DEFINER cujo dono e o
+  mcp_ro_reader, transacao marcada somente leitura, sem bloco de excecao
+  e sem segunda tentativa; EXECUTE so para service_role.
+
+Teste: scripts/db-audit/check-mcp-query-ro.local.test.sh roda 37 tentativas
+contra o banco local (escrita, troca de papel, cofre, auth, multiplas
+instrucoes, anon/authenticated) e todas sao recusadas.
+
+So local. No lote: reservar a versao no ledger, aplicar por db-migrate.yml,
+regenerar os artefatos derivados e so entao apontar o gateway para a funcao.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>

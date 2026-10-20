@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791505238 -0300	branch: Created from dia/2026-10-08
+0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 0a87bbf176ec2411b8c71735d71798f2c3e3d785 Joaquim Ataides <ti@promobrindes.com.br> 1791505771 -0300	commit: fix(crm360): Campos sem fonte (segmento/porte/CNPJ/ultima visualizacao/ligacoes) omitidos e tabelas comerciais vazias (SL-151)

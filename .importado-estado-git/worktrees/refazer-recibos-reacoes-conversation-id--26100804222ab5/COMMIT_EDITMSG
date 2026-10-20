@@ -1,0 +1,1 @@
+fix(db): recibos e reacoes derivam conversation_id da mensagem

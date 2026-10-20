@@ -1,0 +1,13 @@
+test(contratos): total de arquivos varridos das Edges vira piso em vez de pino exato
+
+O teste tests/contracts/_adv_edge_legacy_producers.test.ts cravava o total de
+arquivos .ts de supabase/functions com toBe(243). Toda entrega que cria um
+arquivo ali (quase sempre um teste) quebrava o contrato ao ser integrada, e
+duas entregas juntas nunca traziam o número certo. Três cartões já tinham
+caído por isso e outros sete da fila cairiam.
+
+O total passa a ser um piso (PISO_ARQUIVOS_VARRIDOS = 243, toBeGreaterThanOrEqual).
+O que protege contra produtor legado novo continua exato: mapa INVENTARIO,
+contagem de ocorrências (3) e lista MIGRADAS.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>

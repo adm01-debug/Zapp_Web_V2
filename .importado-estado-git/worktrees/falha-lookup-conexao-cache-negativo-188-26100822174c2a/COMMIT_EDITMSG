@@ -1,0 +1,14 @@
+chore(edge): confirma lookup de conexão fail-closed já corrigido na ponta do dia
+
+O pedido do cartão [retomar] já está na ponta dia/2026-10-08: o commit
+3ed4e7b46 ("fix(evolution): falha de lookup de conexão não vira cache
+negativo nem amplia o escopo de mutações"), do mesmo defeito (#188 /
+R2-API-004), é ancestral do HEAD.
+
+Na ponta atual: getConnectionByInstance (evolution-helpers.ts:268-269)
+propaga o erro do PostgREST e não cacheia; send/update/delete
+(evolution-webhook-msg-handlers.ts:19,100,274) retornam cedo sem conexão
+resolvida, então nenhuma mutação sai por external_id global.
+
+Commit vazio de propósito, como manda o cartão: "se já foi corrigido,
+escreva isso em .tmp/relato.md com a prova e feche sem commit de código".

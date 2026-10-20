@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511793 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 4c2347295b00d05ab113022792d7c9453619cbda Joaquim Ataides <ti@promobrindes.com.br> 1791511933 -0300	commit: fix(chat): filtro Ultima interacao nao reintroduz sessoes antigas do mesmo dia (#322)

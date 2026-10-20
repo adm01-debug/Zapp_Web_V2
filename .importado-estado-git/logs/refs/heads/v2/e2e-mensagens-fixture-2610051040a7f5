@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 Joaquim Ataides <ti@promobrindes.com.br> 1791207646 -0300	branch: Created from dia/2026-10-05
+2d3dd7b8d2d3ffee6c340c0c4e0227d1fc9c68d8 666554497e6f3722953e8d2dd16b6f076c541f07 Joaquim Ataides <ti@promobrindes.com.br> 1791208270 -0300	commit: fix(e2e): mensagens abre a conversa pela fixture, nao pelo primeiro item (#97)
+666554497e6f3722953e8d2dd16b6f076c541f07 33784e7eb3419ca087cbb95ad2c7b75ed8d8a6f6 Joaquim Ataides <ti@promobrindes.com.br> 1791208663 -0300	commit: test(e2e): prova o R2-INF-007 rodando o spec real com duplo do Playwright (#97)

@@ -1,0 +1,16 @@
+fix(talkx): nome acessivel no seletor de tamanho de pagina e contraste AA da pilula de rascunho
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 649f53ace fix(talkx): nome acessivel no seletor de tamanho de pagina e contraste AA da pilula de rascunho
+# No commands remaining.
+# You are currently rebasing branch 'v2/tl-175a-talkx-acessibilidade-261009053206b8' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXOverview.tsx
+#	modified:   src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+#	modified:   src/components/talkx/kit/table.tsx
+#

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f90fe0e946644bde67765e85b8efd27d707bca87 Joaquim Ataides <ti@promobrindes.com.br> 1791239440 -0300	branch: Created from dia/2026-10-05
+f90fe0e946644bde67765e85b8efd27d707bca87 5ae17cc7af4228618744d086ae409edbe6aa0c0e Joaquim Ataides <ti@promobrindes.com.br> 1791239521 -0300	commit (cherry-pick): test(inbox): robustecer teste de paginacao contra timing do lazy do ChatPanel (R2-INB-004)

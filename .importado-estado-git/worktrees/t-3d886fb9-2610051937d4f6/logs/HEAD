@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f90fe0e946644bde67765e85b8efd27d707bca87 Joaquim Ataides <ti@promobrindes.com.br> 1791239870 -0300	
+f90fe0e946644bde67765e85b8efd27d707bca87 f90fe0e946644bde67765e85b8efd27d707bca87 Joaquim Ataides <ti@promobrindes.com.br> 1791239871 -0300	reset: moving to HEAD
+f90fe0e946644bde67765e85b8efd27d707bca87 35463d14070929b65c6ebb3c3a97887b8b7fac6f worker <worker@zapp.local> 1791240125 -0300	commit: fix(edge): GO logada sem socket deixa de ser classificada como conexão aberta (#65)
+35463d14070929b65c6ebb3c3a97887b8b7fac6f f4dfce71119a984466e4989c55b6cadc3292b212 worker <worker@zapp.local> 1791240391 -0300	commit (amend): fix(edge): GO logada sem socket deixa de ser classificada como conexão aberta (#65)

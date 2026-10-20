@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791296556 -0300	branch: Created from dia/2026-10-06
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c 16347ab5b42fb4b12b48b2b5cd7bdc8ea90396e9 iris <iris@local> 1791296792 -0300	commit: fix(contatos): mapa nao conta contato com coordenada como localizacao aproximada (#262)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791300004 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 267358dacb9a1812662790beac05a96ee05e1bb1 worker (sql) <workersql@hermes.local> 1791300961 -0300	commit: fix(db): RPC de conversa direta recupera a protecao contra criacao concorrente (#55)

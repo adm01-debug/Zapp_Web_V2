@@ -1,0 +1,612 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-03T23:53:35.339627+00:00",
+  "publication_reviewed_sha": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "result": "PASS",
+  "scope": "Documentation harness hardening only; source audit records and findings unchanged.",
+  "sdk_reference": {
+    "reference_source_sha256_unchanged": "383646bfc6327ff6274e7c15b3b3d73f50cbea5a2636ee95914197a759949246",
+    "new_path": "reproduce/cross-module/supabase-functions-client-2.117.2.ts.txt",
+    "probe_exit_code": 0,
+    "policy": "Exact upstream source preserved as reference data; no baseline/rule/configuration changes."
+  },
+  "validator": {
+    "result": "PASS",
+    "checks": 37,
+    "passed": 37,
+    "tests": [
+      {
+        "name": "reject_relative_path_'../outside/sentinel.txt'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'/etc/passwd'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe/../../outside'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe\\\\outside'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'C:/outside'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe//file'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'./safe'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe/./file'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe/'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'-output'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe:file'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe\\nfile'",
+        "passed": true
+      },
+      {
+        "name": "reject_relative_path_'safe\\x00file'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'--output=outside'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'HEAD'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'aaaaaa'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'a123456:other'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'abcdefg'",
+        "passed": true
+      },
+      {
+        "name": "reject_git_ref_'1234567\\n'",
+        "passed": true
+      },
+      {
+        "name": "accept_pinned_git_ref_7",
+        "passed": true
+      },
+      {
+        "name": "accept_pinned_git_ref_40",
+        "passed": true
+      },
+      {
+        "name": "reject_input_symlink_escape",
+        "passed": true
+      },
+      {
+        "name": "preflight_git_option_ref",
+        "passed": true
+      },
+      {
+        "name": "preflight_plan_parent_path",
+        "passed": true
+      },
+      {
+        "name": "preflight_task_parent_path",
+        "passed": true
+      },
+      {
+        "name": "preflight_manifest_../outside/sentinel.txt",
+        "passed": true
+      },
+      {
+        "name": "preflight_manifest_/etc/passwd",
+        "passed": true
+      },
+      {
+        "name": "preflight_full_ledger_parent_path",
+        "passed": true
+      },
+      {
+        "name": "git_executable_is_absolute_system_path",
+        "passed": true
+      },
+      {
+        "name": "reject_cli_arbitrary_output_argument",
+        "passed": true
+      },
+      {
+        "name": "reject_cli_removed_package_argument",
+        "passed": true
+      },
+      {
+        "name": "fixed_output_written_inside_package",
+        "passed": true
+      },
+      {
+        "name": "reject_output_symlink",
+        "passed": true
+      },
+      {
+        "name": "reject_evidence_directory_symlink",
+        "passed": true
+      },
+      {
+        "name": "existing_hard_link_not_truncated",
+        "passed": true
+      },
+      {
+        "name": "fixed_atomic_writer_has_no_temporary_residue",
+        "passed": true
+      }
+    ],
+    "scope": "Validator input and output boundaries only; synthetic package. No product probes, network or SQL."
+  },
+  "cross_module_and_multiplix": {
+    "status": "PASS",
+    "created_at_utc": "2026-10-03T23:52:51.546955+00:00",
+    "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "documentation_head_at_validation": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+    "scope": {
+      "changed_repository_files": [
+        "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+        "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs"
+      ],
+      "product_config_ledger_changes": false,
+      "sdk_existing_txt_rename_preserved": true,
+      "sonar_suppressions_added": false,
+      "remote_sonar_rescan_claimed": false
+    },
+    "runtime": {
+      "node_version": "v24.19.0",
+      "git_executable": "/usr/bin/git",
+      "requirements": [
+        "Trusted Node 24 runtime and /usr/bin/git on the local host",
+        "Copy probes to scratch before execution",
+        "Repository input must be a Git checkout at the exact audited baseline"
+      ]
+    },
+    "protections": [
+      "Fixed source path allowlists and SHA256 constants derived from baseline Git blobs",
+      "All source and SDK bytes attested before extracted code executes",
+      "Git root and HEAD verified with absolute Git executable and fixed child environment",
+      "Symlinked source paths rejected; no input argument is interpolated into JavaScript or a shell command",
+      "Only verified in-memory source snapshots are transformed and executed; no later file import or source re-read",
+      "Broad multiline regexes replaced by bounded line/block or unique-literal extraction",
+      "Function calls remain explicit and documented for attested source with in-memory dependencies"
+    ],
+    "cross_module": {
+      "probe": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "probe_sha256": "33422cb65eb090c109e7103b98b4e9bce1b2e423ab063d5147c0737afd881c79",
+      "source_count": 14,
+      "source_hashes": [
+        {
+          "path": "src/components/inbox/tabs/filesSort.ts",
+          "sha256": "cbd36a9af9a3c25a8f69b8c15e388d79c992d9823d849138570c3e3d597cf29a",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/components/inbox/tabs/FilesTab.tsx",
+          "sha256": "45986a530fa77ac6fe62b75415e46853893354bee6dbdae6c275f052e8c4e4d5",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/hooks/chat/useFilesActions.ts",
+          "sha256": "437179f65e969801f35cd3f5fed0430d5a0c8304a0d66894571763900ea90366",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/hooks/chat/useContactMediaCounts.ts",
+          "sha256": "d00df6e01028db88a2c46aa7846a5456d4696a87ce256433c308d83389aafe4a",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/hooks/calls/useMyCalls.ts",
+          "sha256": "b0562059d4b6da9b639545b4c55ca8afb7f94769e746647ddf85d7be9b7860cd",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "supabase/migrations/20260926800000_calls_telefonia_v2.sql",
+          "sha256": "f7d1204cabcc9ed87b2a56048a68ca89be1ea1cef9dc719246175b0fb79e8dc0",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/hooks/calls/useCallRecording.ts",
+          "sha256": "6ee90a5527bad6344f7d29832210b022e776fcd92cf2e1d9b0cc132bc3dcc162",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "supabase/functions/get-call-recording/index.ts",
+          "sha256": "5ba90705954488851434e3e4787431d85a64ad907c8f8b63956fa18831aa156d",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/lib/emailErrorState.ts",
+          "sha256": "4a5649dda9b1d7def401258ec346630049ad8a4f2f2b1eb83c8f9a947bd4829e",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/hooks/gmail/gmailApi.ts",
+          "sha256": "d91b95afeeb59b84df2a63e6e2324fac5475387c6e7537a5a2034533ce8e7bad",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "sha256": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql",
+          "sha256": "0cb8963e105f6e76971f3e406209b10519922456c42bfb08c06463848b896bea",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql",
+          "sha256": "02d6435b586ba4098052a105540e40f8152c5ec85be56d0f0f4859cce252a7fa",
+          "baseline_git_blob_verified": true
+        },
+        {
+          "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+          "sha256": "f433b18474ea7b4a2ff7a3743f7f06c9942ac8dd5502cfed799936a87b62cf18",
+          "baseline_git_blob_verified": true
+        }
+      ],
+      "sdk": {
+        "path": "docs/reconciliation/reproduce/cross-module/supabase-functions-client-2.117.2.ts.txt",
+        "sha256": "383646bfc6327ff6274e7c15b3b3d73f50cbea5a2636ee95914197a759949246",
+        "bytes_unchanged": true
+      },
+      "positive_reproduction": {
+        "exit_code": 0,
+        "comparison": "EXACT_JSON_VALUE_EQUAL",
+        "expected": "docs/reconciliation/evidence/cross-module-probes.json",
+        "actual": "audit/publication-gates/cross-module-hardening-result.json",
+        "sha256": "e252db7e35d57518a5252921bacfc90a848948cff4dbd47d2d7d33631f3fe5ac",
+        "relocated_copy_with_spaces": true
+      },
+      "focused_validation": [
+        {
+          "case": "wrong-head",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Checkout HEAD must equal the audited baseline",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/wrong-head/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/wrong-head/stderr.txt"
+        },
+        {
+          "case": "nested-root",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Input must be the Git checkout root",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/nested-root/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/nested-root/stderr.txt"
+        },
+        {
+          "case": "extra-cli",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Only one repository-root argument is accepted",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/extra-cli/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/extra-cli/stderr.txt"
+        },
+        {
+          "case": "tampered-executable-source",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Unattested source bytes: src/components/inbox/tabs/filesSort.ts",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/tampered-executable-source/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/tampered-executable-source/stderr.txt"
+        },
+        {
+          "case": "tampered-sql-evidence",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Unattested source bytes: supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/tampered-sql-evidence/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/tampered-sql-evidence/stderr.txt"
+        },
+        {
+          "case": "symlinked-source",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Symlinked source paths are not accepted",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/symlinked-source/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/symlinked-source/stderr.txt"
+        },
+        {
+          "case": "tampered-sdk",
+          "exit_code": 1,
+          "expected": "REJECT_BEFORE_OUTPUT",
+          "expected_error": "Unattested source bytes: supabase-functions-client-2.117.2.ts.txt",
+          "passed": true,
+          "output_created": false,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/tampered-sdk/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/tampered-sdk/stderr.txt"
+        },
+        {
+          "case": "hostile-path-and-git-env",
+          "exit_code": 0,
+          "expected": "MATCH_ORIGINAL_JSON",
+          "expected_error": null,
+          "passed": true,
+          "output_created": true,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/hostile-path-and-git-env/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/hostile-path-and-git-env/stderr.txt"
+        },
+        {
+          "case": "correct-fixture-checkout",
+          "exit_code": 0,
+          "expected": "MATCH_ORIGINAL_JSON",
+          "expected_error": null,
+          "passed": true,
+          "output_created": true,
+          "unattested_code_marker_observed": false,
+          "stdout_path": "audit/publication-gates/cross-module-hardening/cases/correct-fixture-checkout/stdout.txt",
+          "stderr_path": "audit/publication-gates/cross-module-hardening/cases/correct-fixture-checkout/stderr.txt"
+        }
+      ],
+      "negative_rejections": 7,
+      "partial_index_model": "Original fixture remains permitted. The model now checks the actual null predicate and uniqueness, accepting one open row and rejecting duplicate open rows for the same non-null contact id; original output is unchanged.",
+      "details": [
+        "audit/publication-gates/cross-module-hardening-success.json",
+        "audit/publication-gates/cross-module-hardening-validation.json"
+      ]
+    },
+    "multiplix": {
+      "status": "PASS",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "probe": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "probe_sha256": "0bc0fcf50c5cab888ebb0bf0819a8bab7d807e867c1a13992e5b813ce56756ee",
+      "node_version": "v24.19.0",
+      "git_executable": "/usr/bin/git",
+      "sources": [
+        {
+          "path": "supabase/functions/_shared/talkx-window.ts",
+          "sha256": "18833512cfb4500ff281be4c8d2ce61a82801c9bd66cecd514e929c52c3b6304",
+          "bytes": 5007,
+          "baseline_git_blob_matches_checkout": true
+        },
+        {
+          "path": "supabase/functions/_shared/messaging/personalize.ts",
+          "sha256": "04f9405526d62f1d9b42278697073b6d4451dfe4e51a6644d6cd51dd257fb33a",
+          "bytes": 9884,
+          "baseline_git_blob_matches_checkout": true
+        },
+        {
+          "path": "supabase/functions/multiplix-send/index.ts",
+          "sha256": "c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc",
+          "bytes": 40505,
+          "baseline_git_blob_matches_checkout": true
+        },
+        {
+          "path": "supabase/functions/multiplix-send/index.test.ts",
+          "sha256": "73052b058b26cb52950a131245095eea56dcdeda9f8d5180c770a4bfd9ba9005",
+          "bytes": 62114,
+          "baseline_git_blob_matches_checkout": true
+        }
+      ],
+      "preserved_result": "audit/modules/talkx_multiplix/offline_probe_results.json",
+      "checks": [
+        {
+          "name": "node_syntax",
+          "exit": 0,
+          "passed": true
+        },
+        {
+          "name": "baseline_positive_preserves_entire_json",
+          "exit": 0,
+          "case_count": 3,
+          "json_equal": true,
+          "byte_equal": true,
+          "passed": true
+        },
+        {
+          "name": "wrong_head",
+          "exit": 1,
+          "expected_error": "Repository HEAD must equal audited baseline",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "multiple_roots",
+          "exit": 1,
+          "expected_error": "Expected at most one repository root argument",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "git_subdirectory",
+          "exit": 1,
+          "expected_error": "Repository root must equal the canonical Git toplevel",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "root_symlink",
+          "exit": 1,
+          "expected_error": "Symlink paths are forbidden",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "root_symlink_before_parent_traversal",
+          "exit": 1,
+          "expected_error": "Symlink paths are forbidden",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "source_sha256_mismatch_1",
+          "exit": 1,
+          "expected_error": "Source SHA-256 mismatch: supabase/functions/_shared/talkx-window.ts",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "source_sha256_mismatch_2",
+          "exit": 1,
+          "expected_error": "Source SHA-256 mismatch: supabase/functions/_shared/messaging/personalize.ts",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "source_sha256_mismatch_3",
+          "exit": 1,
+          "expected_error": "Source SHA-256 mismatch: supabase/functions/multiplix-send/index.ts",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "source_sha256_mismatch_4",
+          "exit": 1,
+          "expected_error": "Source SHA-256 mismatch: supabase/functions/multiplix-send/index.test.ts",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        },
+        {
+          "name": "source_symlink_to_identical_baseline_bytes",
+          "exit": 1,
+          "expected_error": "Symlink paths are forbidden",
+          "stdout_empty": true,
+          "result_file_absent": true,
+          "passed": true
+        }
+      ],
+      "limitations": [
+        "Trusted pinned baseline code with injected in-memory mocks; not an arbitrary-code sandbox.",
+        "No live database, provider, SQL, auth integration or deployed-runtime validation."
+      ],
+      "independent_review": "No blocker found in read-only review of hashes, complete attestation barrier, deterministic cuts, fixed Git executable/environment, and output path handling.",
+      "created_at_utc": "2026-10-03T23:50:50.623606+00:00"
+    },
+    "static_review": {
+      "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs": {
+        "no_dynamic_filesystem_import": true,
+        "no_broad_multiline_regex": true,
+        "fixed_git_executable": true,
+        "no_sonar_suppression": true
+      },
+      "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs": {
+        "no_dynamic_filesystem_import": true,
+        "no_broad_multiline_regex": true,
+        "fixed_git_executable": true,
+        "no_sonar_suppression": true
+      }
+    },
+    "diff_check": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "limitations": [
+      "Trusted baseline code is deliberately executed via Function; these probes are not an arbitrary-code sandbox.",
+      "The source pins prove identity of the reviewed local inputs, not correctness of product behavior.",
+      "No database, SQL engine, provider action, production test, deployment, or external network was used.",
+      "Existing product findings, ledgers and conclusions remain unchanged.",
+      "Sonar security hotspots still require explicit review; no remote analyzer rerun or zero-hotspot outcome is asserted."
+    ]
+  },
+  "skins": {
+    "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "source_hashes": {
+      "src/components/settings/theme/presets.ts": "d2facb41ef44ac006051013085df365bb429a99f517b8349f443967ce767c0df",
+      "src/components/settings/theme/useThemePreset.ts": "fa8b1c981e9b8ac4e93442b5535905cd0b036ddbf689d48967cf0a41b230529f",
+      "src/styles/tokens.css": "ca19bfc1a5fd31d443e2763da0304e73bc25027cd894add5d0a32d015f805a28",
+      "index.html": "8a62d9ad8c361901b0d2e23520ce9843a8024293d1b0395b5f6037ba56585438"
+    },
+    "positive": {
+      "exit_code": 0,
+      "total": 299,
+      "passed": 297,
+      "failed": 2,
+      "same_criterion_results": true,
+      "same_full_outcomes": true,
+      "changed_outcomes": []
+    },
+    "negative": [
+      {
+        "case": "changed-source",
+        "refused": true,
+        "before_output_created": true,
+        "expected_error": "Baseline SHA256 mismatch"
+      },
+      {
+        "case": "escaping-symlink",
+        "refused": true,
+        "before_output_created": true,
+        "expected_error": "Source escapes checkout"
+      }
+    ],
+    "no_product_changes": true
+  },
+  "css_fingerprint_proof": {
+    "file": "docs/reconciliation/evidence/skins-probe-results.json",
+    "line": 9,
+    "value_kind": "SHA256_OF_PINNED_CSS_SOURCE",
+    "expected": "ca19bfc1a5fd31d443e2763da0304e73bc25027cd894add5d0a32d015f805a28",
+    "computed": "ca19bfc1a5fd31d443e2763da0304e73bc25027cd894add5d0a32d015f805a28",
+    "match": true,
+    "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6"
+  },
+  "reviewed_scripts_sha256": {
+    "reproduce/validate_package.py": "4c40b6ec8b22684a81ecc507b72867fc79216a85645a550e42daf079e1e0bdbe",
+    "reproduce/cross-module/reproduce_cross_module.mjs": "33422cb65eb090c109e7103b98b4e9bce1b2e423ab063d5147c0737afd881c79",
+    "reproduce/multiplix/reproduce_multiplix.mjs": "0bc0fcf50c5cab888ebb0bf0819a8bab7d807e867c1a13992e5b813ce56756ee",
+    "reproduce/skins/skins_probe.mjs": "a939852b5a37a868f3ceaebf3d92b717a24a2e294cad0a88feabaf4a4325cea7"
+  },
+  "remote_gate_status": "Not inferred from local tests; inspect check for the later published commit."
+}

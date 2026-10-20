@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791548599 -0300	branch: Created from dia/2026-10-09
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 2dd91e7b5f2776575389e77673f3055a16fa53d6 Joaquim Ataides <ti@promobrindes.com.br> 1791548612 -0300	cherry-pick: fix(talk-x): gráfico de performance com 4 séries diárias e funil proporcional (TL-171)
+2dd91e7b5f2776575389e77673f3055a16fa53d6 d64f2f9ec1c66646fc44f43e80e03bcb210d97a9 Joaquim Ataides <ti@promobrindes.com.br> 1791549121 -0300	commit: fix(talkx): erro da RPC de performance vira estado de erro na tela (TL-171)

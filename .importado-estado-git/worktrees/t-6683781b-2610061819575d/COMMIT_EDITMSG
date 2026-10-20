@@ -1,0 +1,15 @@
+fix(paleta): ações padrão sem executor saem da lista ou passam a executar (#378)
+
+R2-INF-033: "Nova conversa", "Respostas rápidas" e "Atalhos de teclado" apareciam no
+grupo Ações da paleta (⌘K) sem `action` nem `href`; o executeCommand só trata callback,
+href ou id nav-, então escolher qualquer uma apenas fechava o diálogo.
+
+"Atalhos de teclado" passa a disparar o evento `show-shortcuts-help` — o mesmo que o
+GlobalKeyboardProvider escuta para abrir o painel de ajuda real. "Nova conversa" e
+"Respostas rápidas" não têm gatilho global no app (o modal de nova conversa vive no
+Inbox e as respostas rápidas no painel de chat, abertos pela própria tela) e deixam de
+ser anunciadas, em vez de prometer um efeito que não existe.
+
+Prova: src/components/ui/__tests__/command-palette-acoes.test.tsx (7 testes) — paleta
+real com os comandos padrão reais; 4 falham sem a correção e passam com ela, inclusive
+a ponta a ponta em que o painel de ajuda real abre.

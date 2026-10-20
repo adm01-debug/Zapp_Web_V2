@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 e78d753d18758c7f0f7b3938d31581e93f01ade6 Joaquim Ataides <ti@promobrindes.com.br> 1791387330 -0300	
+e78d753d18758c7f0f7b3938d31581e93f01ade6 e78d753d18758c7f0f7b3938d31581e93f01ade6 Joaquim Ataides <ti@promobrindes.com.br> 1791387331 -0300	reset: moving to HEAD
+e78d753d18758c7f0f7b3938d31581e93f01ade6 361d86fec61fcb9b0733ca35c73a96f8bf2fa7ed Joaquim Ataides <ti@promobrindes.com.br> 1791387675 -0300	commit: fix(bitrix-api): nomeia portal testado e recusa URL do chamador
+361d86fec61fcb9b0733ca35c73a96f8bf2fa7ed 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791554604 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 361d86fec61fcb9b0733ca35c73a96f8bf2fa7ed Joaquim Ataides <ti@promobrindes.com.br> 1791554605 -0300	rebase (abort): returning to refs/heads/v2/t-1cb148e7-26100712356956

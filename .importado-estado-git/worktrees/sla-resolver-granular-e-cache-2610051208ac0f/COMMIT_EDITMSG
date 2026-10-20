@@ -1,0 +1,8 @@
+fix(sla): resolver granular com contrato testado e invalidacao de applicable-sla (R2-SLA-003)
+
+- useApplicableSLA: habilita a consulta para todos os niveis da hierarquia
+  (job_title e contact_type tambem), sem alterar a precedencia declarada.
+- useSLARules: create/update/delete/toggle bem-sucedidos invalidam tambem
+  a chave applicable-sla, evitando 30 s com prazo antigo.
+- testes de contrato em src/hooks/sla/__tests__ (2 min prevalece, fallback
+  default, e invalidacao em cada mutation).

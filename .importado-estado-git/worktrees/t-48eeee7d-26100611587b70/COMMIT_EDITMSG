@@ -1,0 +1,14 @@
+fix(email): prévia de anexo não usa mais bytes de uma seleção anterior (#284)
+
+A seleção e os bytes eram dois estados separados: a resposta de
+getAttachmentContent gravava previewContent sem conferir se o anexo ainda era
+o selecionado. Abrir A, abrir B e receber A depois de B deixava o título de B
+com os bytes de A; o erro tardio de A fechava a prévia de B.
+
+Seleção, bytes e falha passam a viver no MESMO estado (a prévia tem uma chave
+só) e a continuação assíncrona só aplica o resultado se o anexo ainda for o
+selecionado — resposta ou erro de uma seleção anterior, ou de uma prévia já
+fechada, é descartado. O aviso de falha sobe por efeito, depois do commit.
+
+Teste: src/components/email/__tests__/EmailChatThread.previaAnexo.test.tsx
+(3 dos 4 casos vermelhos sem a correção).

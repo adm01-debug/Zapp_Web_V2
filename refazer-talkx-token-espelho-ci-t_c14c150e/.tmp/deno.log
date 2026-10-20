@@ -1,0 +1,268 @@
+[0m[38;5;245mrunning 30 tests from ./supabase/functions/talkx-link/index.test.ts[0m
+mergeUtm adiciona os UTM ao destino sem query ... [0m[32mok[0m [0m[38;5;245m(965µs)[0m
+mergeUtm não sobrescreve parâmetro existente do destino ... [0m[32mok[0m [0m[38;5;245m(139µs)[0m
+mergeUtm preserva URL sem link e URL inválida ... [0m[32mok[0m [0m[38;5;245m(464µs)[0m
+GET sem destinatário registra clique anônimo e redireciona com UTM do link ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET sem destinatário registra clique anônimo e redireciona com UTM do link ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+GET slug inexistente devolve 404 neutro (sem redirecionar) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[talkx-link] click error: link_not_found
+[0m[38;5;245m----- output end -----[0m
+GET slug inexistente devolve 404 neutro (sem redirecionar) ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+GET legado r=UUID&t=HMAC válido atribui o clique ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET legado r=UUID&t=HMAC válido atribui o clique ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+GET legado com t inválido ou ausente segue anônimo e não bloqueia redirect ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET legado com t inválido ou ausente segue anônimo e não bloqueia redirect ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+GET sem secret configurado não quebra redirect e registra clique anônimo ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET sem secret configurado não quebra redirect e registra clique anônimo ... [0m[32mok[0m [0m[38;5;245m(658µs)[0m
+POST sem secret configurado devolve 503 ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+POST sem assinatura devolve 401 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST sem assinatura devolve 401 ... [0m[32mok[0m [0m[38;5;245m(979µs)[0m
+POST com assinatura errada devolve 401 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST com assinatura errada devolve 401 ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+POST com timestamp vencido devolve 401 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST com timestamp vencido devolve 401 ... [0m[32mok[0m [0m[38;5;245m(938µs)[0m
+POST v1: corpo e assinatura capturados não são aceitos com timestamp novo ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST v1: corpo e assinatura capturados não são aceitos com timestamp novo ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+POST assinatura no formato antigo é aceita até a data-limite e registra aviso ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+POST assinatura no formato antigo depois da data-limite devolve 401 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST assinatura no formato antigo depois da data-limite devolve 401 ... [0m[32mok[0m [0m[38;5;245m(642µs)[0m
+POST legado sem external_ref é aceito antes da data-limite ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[talkx-link] assinatura Talk X legada aceita temporariamente; atualizar emissor para v1 antes de 2999-01-01T00:00:00.000Z
+[0m[38;5;245m----- output end -----[0m
+POST legado sem external_ref é aceito antes da data-limite ... [0m[32mok[0m [0m[38;5;245m(981µs)[0m
+POST v1 sem external_ref (ausente, vazio ou não-string) devolve 400 e não chama a RPC ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST v1 sem external_ref (ausente, vazio ou não-string) devolve 400 e não chama a RPC ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+POST assinatura v1 com corpo adulterado (external_ref trocado) devolve 401 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST assinatura v1 com corpo adulterado (external_ref trocado) devolve 401 ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+POST válido devolve 200 e grava uma conversão com os campos opcionais ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST válido devolve 200 e grava uma conversão com os campos opcionais ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+POST reenvio com mesmo external_ref devolve duplicate (1 chamada RPC por requisição) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST reenvio com mesmo external_ref devolve duplicate (1 chamada RPC por requisição) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+POST com value negativo devolve 422 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST com value negativo devolve 422 ... [0m[32mok[0m [0m[38;5;245m(875µs)[0m
+POST com value texto devolve 422 ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+POST com value texto devolve 422 ... [0m[32mok[0m [0m[38;5;245m(850µs)[0m
+POST com value acima do teto (erro da RPC) devolve 422 sem vazar texto ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[talkx-link] conversion rejected: talkx_conversion_value_exceeds_max
+[0m[38;5;245m----- output end -----[0m
+POST com value acima do teto (erro da RPC) devolve 422 sem vazar texto ... [0m[32mok[0m [0m[38;5;245m(870µs)[0m
+GET com token válido resolve o destinatário e registra o clique atribuído ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET com token válido resolve o destinatário e registra o clique atribuído ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+GET com token adulterado NÃO atribui a ninguém (segue anônimo, sem quebrar) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET com token adulterado NÃO atribui a ninguém (segue anônimo, sem quebrar) ... [0m[32mok[0m [0m[38;5;245m(883µs)[0m
+GET com r=UUID legado e t=HMAC continua atribuindo direto (links já enviados) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET com r=UUID legado e t=HMAC continua atribuindo direto (links já enviados) ... [0m[32mok[0m [0m[38;5;245m(846µs)[0m
+GET com token mas sem segredo configurado NÃO atribui (anônimo) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET com token mas sem segredo configurado NÃO atribui (anônimo) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+GET resolve com 1500 destinatários sem varredura (só point lookups) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET resolve com 1500 destinatários sem varredura (só point lookups) ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+token do teste == token real do talkx-send (contrato único) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+GET com token de outra campanha NÃO atribui (p_recipient null) ...
+[0m[38;5;245m------- output -------[0m
+[rate-limit] limiter persistente indisponivel; usando contador local: Error: SUPABASE_URL is not configured
+[0m[38;5;245m----- output end -----[0m
+GET com token de outra campanha NÃO atribui (p_recipient null) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 65 tests from ./supabase/functions/talkx-send/index.test.ts[0m
+personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao) ... [0m[32mok[0m [0m[38;5;245m(20ms)[0m
+personalize falls back to a bracket placeholder for an unresolved variable instead of throwing ... [0m[32mok[0m [0m[38;5;245m(353µs)[0m
+personalize substitutes the real value when the contact has that custom field ... [0m[32mok[0m [0m[38;5;245m(184µs)[0m
+personalize resolves multiple custom values in the same message ... [0m[32mok[0m [0m[38;5;245m(196µs)[0m
+personalize replaces {{link}} with the per-recipient tracking URL when provided ... [0m[32mok[0m [0m[38;5;245m(385µs)[0m
+personalize falls back to a bracket placeholder for {{link}} when no tracking URL is available ... [0m[32mok[0m [0m[38;5;245m(369µs)[0m
+personalize matches a custom field key case-insensitively ... [0m[32mok[0m [0m[38;5;245m(321µs)[0m
+personalize ignores a custom value using a reserved built-in name ... [0m[32mok[0m [0m[38;5;245m(326µs)[0m
+personalize does not reinterpret placeholder-shaped text inside a custom value ... [0m[32mok[0m [0m[38;5;245m(277µs)[0m
+personalize does not leak an inherited Object.prototype property for an unresolved placeholder ... [0m[32mok[0m [0m[38;5;245m(246µs)[0m
+randomBetween respeita os limites inclusive min..max (V09) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+randomBetween devolve exatamente o valor quando min === max (teto 24h) ... [0m[32mok[0m [0m[38;5;245m(123µs)[0m
+auth: sem Authorization header → 401 ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+auth: Bearer com service-role key correta → passa auth, chega no 400 de campaignId ausente ... [0m[32mok[0m [0m[38;5;245m(986µs)[0m
+auth: Bearer com JWT inválido (getUser retorna error) → 401 ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+auth: Bearer com JWT válido mas sem role admin/supervisor → 403 ... [0m[32mok[0m [0m[38;5;245m(516µs)[0m
+auth: Bearer com JWT válido e role admin → passa auth, chega no 400 de campaignId ausente ... [0m[32mok[0m [0m[38;5;245m(719µs)[0m
+auth: Bearer com JWT válido e role supervisor → passa auth, chega no 400 de campaignId ausente ... [0m[32mok[0m [0m[38;5;245m(479µs)[0m
+dispatch/start: campanha não encontrada → 404 ... [0m[32mok[0m [0m[38;5;245m(511µs)[0m
+dispatch/start: conexão WhatsApp ausente → 409 ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+dispatch/start: janela de envio fechada → 200 ok:false ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+dispatch/test: envia template de teste com sucesso → provider_message_id devolvido ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+dispatch/test: sem conexão WhatsApp ativa → 400 ... [0m[32mok[0m [0m[38;5;245m(587µs)[0m
+dispatch/pause: transição bem-sucedida → success:true com current_status ... [0m[32mok[0m [0m[38;5;245m(461µs)[0m
+dispatch/cancel: transição bem-sucedida → success:true com current_status ... [0m[32mok[0m [0m[38;5;245m(459µs)[0m
+dispatch/resume: ação não implementada → 400 Invalid campaign action ... [0m[32mok[0m [0m[38;5;245m(428µs)[0m
+retry: destinatário outcome_unknown → retry manual → success:true ... [0m[32mok[0m [0m[38;5;245m(659µs)[0m
+retry: destinatário suprimido → success:false reason:suppressed ... [0m[32mok[0m [0m[38;5;245m(486µs)[0m
+X011 continue: 45 destinatários em lote de 20 → três invocações enviam 45, sem id repetido ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"45f72ce2","ms":20000,"msg":"completed 200","status":200,"durationMs":20000,"correlationId":"873c69ec-ef74-4015-a299-958e22520b91","campaign_id":"campaign-dispatch-001","sent":20,"failed":0,"outcomeUnknown":0}
+{"level":"info","fn":"talkx-send","rid":"a4b2d29a","ms":20000,"msg":"completed 200","status":200,"durationMs":20000,"correlationId":"05d79459-18b7-4845-a50e-87dca9d90367","campaign_id":"campaign-dispatch-001","sent":20,"failed":0,"outcomeUnknown":0}
+{"level":"info","fn":"talkx-send","rid":"f652dbb6","ms":5000,"msg":"completed 200","status":200,"durationMs":5000,"correlationId":"cb333327-19b5-4897-a5e1-de87b49e60d5","campaign_id":"campaign-dispatch-001","sent":5,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X011 continue: 45 destinatários em lote de 20 → três invocações enviam 45, sem id repetido ... [0m[32mok[0m [0m[38;5;245m(255ms)[0m
+X011 continue: orçamento estourado → has_more:true e complete_talkx_campaign_if_drained não é chamada ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"90bef833","ms":0,"msg":"completed 200","status":200,"durationMs":0,"correlationId":"9a192df1-2623-4689-8a3d-cacfe3745f37","campaign_id":"campaign-dispatch-001","sent":0,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X011 continue: orçamento estourado → has_more:true e complete_talkx_campaign_if_drained não é chamada ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+X011 continue: destinatário com retry_after vencido só é enviado na invocação seguinte ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"d6d1f5ff","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"b6aee0b9-2a8e-42ad-afdd-1811ce43278c","campaign_id":"campaign-dispatch-001","sent":1,"failed":0,"outcomeUnknown":0}
+{"level":"info","fn":"talkx-send","rid":"0bc63f08","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"9eaa405f-8c6c-489d-9baa-24ff5f0cb65e","campaign_id":"campaign-dispatch-001","sent":1,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X011 continue: destinatário com retry_after vencido só é enviado na invocação seguinte ... [0m[32mok[0m [0m[38;5;245m(13ms)[0m
+X011 continue: segunda invocação com lease vivo faz 0 POST ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"c27f7501","ms":3000,"msg":"completed 200","status":200,"durationMs":3000,"correlationId":"662649be-e80b-46cd-8e0e-884f27a3a1c6","campaign_id":"campaign-dispatch-001","sent":3,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X011 continue: segunda invocação com lease vivo faz 0 POST ... [0m[32mok[0m [0m[38;5;245m(18ms)[0m
+X011 continue: JWT de admin → 403 (só service key ou x-cron-secret dirigem a fila) ... [0m[32mok[0m [0m[38;5;245m(623µs)[0m
+X013 start: campanha com 500 destinatários → 200 accepted, 0 POST ao provedor, 1 kick ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"4566fef4","ms":1,"msg":"completed 200","status":200,"durationMs":1,"correlationId":"1c86045a-80dc-4909-83a5-9568a3620793","campaignId":"campaign-dispatch-001","accepted":true}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 start: campanha com 500 destinatários → 200 accepted, 0 POST ao provedor, 1 kick ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+X013 start: usuário com as roles admin E supervisor → 200 accepted ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"77c8932b","ms":1,"msg":"completed 200","status":200,"durationMs":1,"correlationId":"d2651870-edcf-47ef-8c77-ac70ce4954b0","campaignId":"campaign-dispatch-001","accepted":true}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 start: usuário com as roles admin E supervisor → 200 accepted ... [0m[32mok[0m [0m[38;5;245m(748µs)[0m
+X013 start: agente sem role admin/supervisor → 403 ... [0m[32mok[0m [0m[38;5;245m(298µs)[0m
+X013 continue (migrado de start): happy path — 1 destinatário de texto → sent=1 ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"976ddd3f","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"61462572-8264-47ba-8b18-001e60eaeee1","campaign_id":"campaign-dispatch-001","sent":1,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 continue (migrado de start): happy path — 1 destinatário de texto → sent=1 ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+X013 continue (migrado de start): destinatário suprimido → blacklisted=1, sent=0 ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"4b7fcd06","ms":0,"msg":"completed 200","status":200,"durationMs":0,"correlationId":"0d79c9a9-6453-4daa-892d-aad78dd048ee","campaign_id":"campaign-dispatch-001","sent":0,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 continue (migrado de start): destinatário suprimido → blacklisted=1, sent=0 ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+X013 continue (migrado de start): Evolution v2 retorna 5xx em /message/sendText → outcome_unknown=1, sent=0 ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"warn","fn":"talkx-send","rid":"a5109dbb","ms":0,"msg":"Destinatário em quarentena (outcome_unknown)","correlationId":"09241894-3199-4d44-90d3-35d5ee16422e","campaignId":"campaign-dispatch-001","recipient_id":"recipient-000","attempt":1,"campaign_id":"campaign-dispatch-001"}
+{"level":"warn","fn":"talkx-send","rid":"a5109dbb","ms":0,"msg":"TalkX: falha ao enfileirar reconciliacao (linha segue em outcome_unknown)","correlationId":"09241894-3199-4d44-90d3-35d5ee16422e","campaignId":"campaign-dispatch-001","recipient_id":"recipient-000","error":"enqueueEffectReconcile: resposta invalida da RPC (esperado o id do job).","campaign_id":"campaign-dispatch-001","attempt":1}
+{"level":"info","fn":"talkx-send","rid":"a5109dbb","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"09241894-3199-4d44-90d3-35d5ee16422e","campaign_id":"campaign-dispatch-001","sent":0,"failed":0,"outcomeUnknown":1}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 continue (migrado de start): Evolution v2 retorna 5xx em /message/sendText → outcome_unknown=1, sent=0 ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+X013 continue (migrado de start, GO flavor): happy path — URL /send/text → sent=1 ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"b0e7850f","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"ddafde13-9110-4a84-a9c9-c7f28f7545db","campaign_id":"campaign-dispatch-001","sent":1,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 continue (migrado de start, GO flavor): happy path — URL /send/text → sent=1 ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+X013 continue (migrado de start, GO flavor): 5xx em /send/text → outcome_unknown=1, sent=0 ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"warn","fn":"talkx-send","rid":"8701aa0e","ms":0,"msg":"Destinatário em quarentena (outcome_unknown)","correlationId":"ca100a08-0201-453a-81c0-5084ef1d27ee","campaignId":"campaign-dispatch-001","recipient_id":"recipient-000","attempt":1,"campaign_id":"campaign-dispatch-001"}
+{"level":"warn","fn":"talkx-send","rid":"8701aa0e","ms":0,"msg":"TalkX: falha ao enfileirar reconciliacao (linha segue em outcome_unknown)","correlationId":"ca100a08-0201-453a-81c0-5084ef1d27ee","campaignId":"campaign-dispatch-001","recipient_id":"recipient-000","error":"enqueueEffectReconcile: resposta invalida da RPC (esperado o id do job).","campaign_id":"campaign-dispatch-001","attempt":1}
+{"level":"info","fn":"talkx-send","rid":"8701aa0e","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"ca100a08-0201-453a-81c0-5084ef1d27ee","campaign_id":"campaign-dispatch-001","sent":0,"failed":0,"outcomeUnknown":1}
+[0m[38;5;245m----- post-test output end -----[0m
+X013 continue (migrado de start, GO flavor): 5xx em /send/text → outcome_unknown=1, sent=0 ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+IA-047 test action: repetir o mesmo idempotencyKey faz UM único POST e devolve o MESMO id ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+IA-047 test action: sem idempotencyKey, o mesmo pedido deriva a MESMA chave (1 POST) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+X025 pause: repassa o motivo (p_pause_reason) e o profiles.id do JWT (p_actor_id) ... [0m[32mok[0m [0m[38;5;245m(541µs)[0m
+X025 pause: motivo acima de 500 caracteres → 400 e nenhuma transição ... [0m[32mok[0m [0m[38;5;245m(702µs)[0m
+X025 start: queda de conexão pausa e grava 1 connection_failed com o status lido ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+X025 continue: lote com 2 suprimidos → 1 evento agregado skipped_suppressed ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"9dc52c18","ms":0,"msg":"completed 200","status":200,"durationMs":0,"correlationId":"13426c54-4221-4ec6-831f-07a8d9baa929","campaign_id":"campaign-dispatch-001","sent":0,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X025 continue: lote com 2 suprimidos → 1 evento agregado skipped_suppressed ... [0m[32mok[0m [0m[38;5;245m(905µs)[0m
+R2-INF-016 start: falha do kick → 500 sanitizado (sem detalhe do banco) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+X062 parseTalkxMediaReference: aceita o caminho nu do bucket do Talk X ... [0m[32mok[0m [0m[38;5;245m(327µs)[0m
+X062 parseTalkxMediaReference: recusa travessia, barra invertida, segmento vazio e URL completa ... [0m[32mok[0m [0m[38;5;245m(104µs)[0m
+X062 mediaFileNameFromReference: o nome sai do último segmento, sem query ... [0m[32mok[0m [0m[38;5;245m(110µs)[0m
+X062 resolveTalkxMediaUrl: caminho nu é assinado no bucket talkx-media ... [0m[32mok[0m [0m[38;5;245m(174µs)[0m
+X062 resolveTalkxMediaUrl: URL privada do kernel (whatsapp-media) continua sendo assinada ... [0m[32mok[0m [0m[38;5;245m(374µs)[0m
+X062 resolveTalkxMediaUrl: caminho inseguro não vira objeto assinado (devolve a origem) ... [0m[32mok[0m [0m[38;5;245m(213µs)[0m
+X062 resolveTalkxMediaUrl: falha do Storage SOBE em vez de devolver a URL crua ... [0m[32mok[0m [0m[38;5;245m(213µs)[0m
+X062 action=test: documento vai com a URL ASSINADA e o nome do arquivo ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+X062 action=test: falha ao assinar a mídia → 502 e NENHUM POST ao provedor ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"error","fn":"talkx-send","rid":"70721e0e","ms":1,"msg":"test_media_sign_failed","correlationId":"7825d1a0-040f-4749-a823-1d4ccd5ca6ab","error":"[object Object]"}
+[0m[38;5;245m----- post-test output end -----[0m
+X062 action=test: falha ao assinar a mídia → 502 e NENHUM POST ao provedor ... [0m[32mok[0m [0m[38;5;245m(753µs)[0m
+X062 continue: destinatário com documento recebe a URL ASSINADA e o nome do arquivo ...
+[0m[38;5;245m------- post-test output -------[0m
+{"level":"info","fn":"talkx-send","rid":"3c0f735a","ms":1000,"msg":"completed 200","status":200,"durationMs":1000,"correlationId":"436fe230-f5ae-468f-b1e0-e7f0a033dd07","campaign_id":"campaign-dispatch-001","sent":1,"failed":0,"outcomeUnknown":0}
+[0m[38;5;245m----- post-test output end -----[0m
+X062 continue: destinatário com documento recebe a URL ASSINADA e o nome do arquivo ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+hmacTokenForRecipient produces a deterministic base64url token for a recipient ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+hmacTokenForRecipient produces different tokens for different recipients ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+hmacTokenForRecipient é curto (32 chars) e ausente sem segredo ... [0m[32mok[0m [0m[38;5;245m(695µs)[0m
+buildTalkxTrackingUrl embute o token e NUNCA o recipient_id cru ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+buildTalkxTrackingUrl sem segredo devolve undefined (nao gera link, nao expoe id) ... [0m[32mok[0m [0m[38;5;245m(165µs)[0m
+trackingUrlFor/linksByLabelFor embutem o token e NUNCA o recipient_id cru ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+trackingUrlFor devolve undefined e linksByLabelFor omite o rotulo sem segredo ... [0m[32mok[0m [0m[38;5;245m(322µs)[0m
+
+[0m[32mok[0m | 95 passed | 0 failed [0m[38;5;245m(608ms)[0m
+

@@ -1,0 +1,3 @@
+fix(db): tira a expressao 'SECURITY DEFINER' do texto comentado da migration (falso positivo do Juiz)
+
+O Juiz le qualquer ocorrencia textual da expressao no arquivo e acusa 'funcao sem SET search_path'; as duas ocorrencias eram prosa (o corpo real da unica funcao recriada tem SET search_path = public, pg_temp, e as outras 8 sao ALTER FUNCTION ... SET search_path). Sem mudanca de SQL.

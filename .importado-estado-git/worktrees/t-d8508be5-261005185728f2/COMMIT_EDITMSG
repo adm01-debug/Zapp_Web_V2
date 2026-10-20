@@ -1,0 +1,3 @@
+fix(telefonia): reconciliacao Bitrix usa identidade com DDD e end_reason canonico
+
+escolherCandidata deixa de casar apenas pelos ultimos 9 digitos (numero de outro DDD recebia vinculo arbitrario) e passa a exigir DDD+assinante, ignorando ambiguidade. CALL_FAILED_CODE deixa de ser gravado cru em end_reason (violava o CHECK e perdia a semantica) e e traduzido para o vocabulario canonico. Campo sem valor novo na origem nao sobrescreve mais o existente com null. Refs TEL-RECONCILIATION-001 (#61).

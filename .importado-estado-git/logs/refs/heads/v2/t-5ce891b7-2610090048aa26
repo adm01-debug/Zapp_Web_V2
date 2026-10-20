@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517718 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 4f7d1e4c70e1bc57a067ef4119e5c0667d0a34e7 Joaquim Ataides <ti@promobrindes.com.br> 1791517754 -0300	cherry-pick: fix(volume): contrato media-volume-surfaces aponta para o arquivo certo do chat interno
+4f7d1e4c70e1bc57a067ef4119e5c0667d0a34e7 57691b2be1e4e59e14072544b3ec82299376a30a Joaquim Ataides <ti@promobrindes.com.br> 1791558030 -0300	rebase (finish): refs/heads/v2/t-5ce891b7-2610090048aa26 onto 1098da5a935929b171674a99b425d6b515fd6072
+57691b2be1e4e59e14072544b3ec82299376a30a 39728d20b7a8ea1334ad9e26e7b5f1226a9ea5f6 Joaquim Ataides <ti@promobrindes.com.br> 1791559360 -0300	rebase (finish): refs/heads/v2/t-5ce891b7-2610090048aa26 onto 1f9252a86502ac1b3ce1e1bce704508d8ee420fb

@@ -1,0 +1,1 @@
+fix(queues): bloqueia inicio posterior ao fim no periodo personalizado (#454)

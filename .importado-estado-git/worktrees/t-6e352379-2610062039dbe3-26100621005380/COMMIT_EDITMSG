@@ -1,0 +1,14 @@
+fix(tarefas): Salvar preserva o instante local do prazo e do alarme (#418)
+
+O WorkItemSheet compunha prazo/alarme como "yyyy-MM-ddTHH:mm" sem Z/offset e
+enviava essa string para colunas timestamptz: a sessao Postgres (UTC) lia o
+horario local como UTC e o prazo/alarme andava o tamanho do fuso (-3h em
+America/Sao_Paulo), inclusive ao editar so o titulo. A comparacao de mudanca
+tambem era textual, entao o ISO do banco contava como alteracao.
+
+- localDateTime.ts: conversor unico do modulo (diaLocal, horaLocal, comporLocal
+  com offset explicito e a convencao de dia inteiro em 23:59, mesmoInstante).
+- WorkItemSheet: usa comporLocal e compara por instante no gate 'mudou' e no patch.
+- QuickAdd: passa a importar o mesmo conversor (funcoes movidas verbatim).
+- WorkItemSheet.fuso.test.tsx: prova a ida e volta local->ISO com o fuso do
+  aparelho em Sao Paulo e a leitura do banco simulada em UTC.

@@ -1,0 +1,47 @@
+fix(talk-x): porta grupos E/OU (TL-130) para o TalkXSegmentBuilder extraído (TL-128)
+
+Rebase em dia/2026-10-09: TL-128 (mesmo lote grande) extraiu o construtor de
+segmentos de dentro de TalkXSegments.tsx para
+src/components/talkx/segments/{TalkXSegmentBuilder.tsx,RuleRow.tsx,
+segmentBuilderReducer.ts} com reducer (desfazer/refazer). Este cartão
+(TL-130) desenhava o selo/divisor/árvore/menu E/OU DENTRO do componente
+antigo, que não existe mais nesse formato — portei a mesma UI para dentro
+da arquitetura nova:
+
+- segmentBuilderReducer.ts: nova ação `moveGroup` (troca de posição);
+  `removeGroup` agora RECUSA quando só há 1 grupo (preserva as condições do
+  grupo que sobrou — a versão da dia zerava o grupo substituindo por um
+  vazio); todo `rules: { groups }` passou a `rules: { ...state.rules,
+  groups }` para o campo `join` (conector entre grupos, do TL-130) não se
+  perder a cada despacho.
+- RuleRow.tsx: ícone por tipo de campo (FIELD_ICONS).
+- TalkXSegmentBuilder.tsx: selo do grupo pelo `match` (não pela posição),
+  divisor "Conector entre grupos" entre grupos, menu "⋯" (Alternar E/OU,
+  Duplicar, Mover cima/baixo, Remover — desabilitado com 1 grupo só) no
+  lugar do Select cru + botões soltos, árvore (linha + nó) nas condições.
+- TalkXSegments.tsx: resolvido o conflito tomando o lado da dia (import e
+  corpo do SegmentBuilder/RuleRow antigos, já extraídos por TL-128) —
+  nenhuma lógica nova aqui, ela mora nos arquivos de `segments/`.
+- TalkXSegmentBuilder.test.tsx (herdado da dia): "Duplicar grupo" agora
+  passa pelo menu "⋯" (mock 03), não por um botão solto.
+
+PROVA (comandos rodados agora, nesta máquina, um processo por vez):
+- `./node_modules/.bin/vitest run
+  src/components/talkx/__tests__/TalkXSegments.groups.test.tsx
+  src/components/talkx/__tests__/segmentBuilderReducer.test.ts
+  src/components/talkx/__tests__/TalkXSegmentBuilder.test.tsx
+  src/components/talkx/__tests__/segmentValidation.test.ts` → "Test Files 4
+  passed (4); Tests 41 passed (41)" (antes dos 2 ajustes acima: 2 falhas —
+  "Duplicar grupo" não encontrado e `regras.join` undefined).
+- `./node_modules/.bin/vitest run
+  src/components/talkx/__tests__/TalkXSegments.builder.test.tsx
+  src/components/talkx/__tests__/TalkXSegments.detailFresh.test.tsx
+  src/components/talkx/__tests__/TalkXSegments.states.test.tsx
+  src/components/talkx/kit/__tests__/barrel.test.ts` → "Test Files 4 passed
+  (4); Tests 10 passed (10)" (sem regressão no resto do módulo).
+- `npx tsc -b --noEmit` → sem saída, rc=0 (projeto inteiro).
+- `./node_modules/.bin/eslint src/components/talkx/TalkXSegments.tsx
+  src/components/talkx/segments/*.ts*
+  src/components/talkx/__tests__/TalkXSegmentBuilder.test.tsx
+  src/components/talkx/__tests__/TalkXSegments.groups.test.tsx
+  src/hooks/integrations/useTalkXSegments.ts` → sem saída, rc=0.

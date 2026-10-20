@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260930210000_remove_orphan_searchbox_flag_sql", "label": "20260930210000_remove_orphan_searchbox_flag.sql", "file_type": "code", "source_file": "supabase/migrations/20260930210000_remove_orphan_searchbox_flag.sql", "source_location": null}], "edges": []}

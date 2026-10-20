@@ -1,0 +1,1 @@
+fix(ia): toda chamada paga das funcoes elevenlabs-* gera linha no ledger (SL-013)

@@ -1,0 +1,14 @@
+fix(ia): ai-proxy nao aceita provider_id/model do cliente (SL-014)
+
+O schema aceitava provider_id e model do cliente em qualquer requisicao. Fora
+do diagnostico (test:true, restrito a admin/supervisor) o corpo escolhia o
+provedor de destino — inclusive custom_webhook/custom_agent, cujo endpoint vem
+do cadastro e cuja chave sai do cofre do servidor — e, quando o modelo pedido
+estava em config.allowed_models, escolhia tambem o modelo pago.
+
+- provider_id fora do diagnostico responde 400 PROVIDER_ID_NOT_ALLOWED (nenhuma
+  chamada paga, nenhum consumo) e o filtro por id passa a ser so do diagnostico;
+- o campo model sai do schema: o modelo e sempre o do cadastro do provedor
+  (resolveModel(provider, null)), inclusive nos dois caminhos de fallback.
+
+Teste vermelho->verde em supabase/functions/ai-proxy/index.test.ts (casos 6 e 7).

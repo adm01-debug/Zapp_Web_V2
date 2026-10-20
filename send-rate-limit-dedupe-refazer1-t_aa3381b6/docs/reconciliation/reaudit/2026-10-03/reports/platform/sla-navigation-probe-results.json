@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/pages/SLADashboard.tsx",
+      "git_blob_sha": "1634cc30959d18e0716ddb3904b5e3e6923d63e1",
+      "sha256": "a389da6c61a6d933dfa830e6ac616d5851e5ea83a71250ba1ab3535757fe8ec2"
+    },
+    {
+      "path": "src/pages/SLAHistory.tsx",
+      "git_blob_sha": "6b7727fe3355c205f320ce3236b5fc37599815e2",
+      "sha256": "925ce484f3cc69d6e1af1e75cbdaafa2d0f8882aa332e50f7826cbe3c9bf971b"
+    },
+    {
+      "path": "src/components/layout/SidebarNavItem.tsx",
+      "git_blob_sha": "47eb0a3df6df762e78413ff2e3ee8d59a2165e49",
+      "sha256": "be8efae696b82ddc7896f6601b536909e0d7a1f4570cf259afa576b12cd68776"
+    },
+    {
+      "path": "src/components/layout/Sidebar.tsx",
+      "git_blob_sha": "8781121425b6ee0267d079decb32959035ad6146",
+      "sha256": "445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e"
+    },
+    {
+      "path": "src/routes/AppRoutes.tsx",
+      "git_blob_sha": "005f7a1a35bfb4cb98161784c7047a4edbc9dc22",
+      "sha256": "30c6f9981e0f9b86c37154eba2f87e24e2e2f7720259e95da1899c49fbf11da3"
+    }
+  ],
+  "script_sha256": "d1ee7782792ba78ce5e9dbaacd90385333257c372e17a8cbb86c021d10eb6bef",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "PLAT-P11",
+      "status": "PASS",
+      "title": "SLA route sidebars change a local selection while keeping the SLA body",
+      "observations": [
+        {
+          "path": "src/pages/SLADashboard.tsx",
+          "selected_view": "inbox",
+          "rendered_component_types": [
+            "div",
+            "Sidebar",
+            "main",
+            "SLADashboard"
+          ]
+        },
+        {
+          "path": "src/pages/SLAHistory.tsx",
+          "selected_view": "inbox",
+          "rendered_component_types": [
+            "div",
+            "Sidebar",
+            "main",
+            "AuroraBorealis",
+            "FloatingParticles",
+            "div",
+            "SLAHistoryDashboard"
+          ]
+        }
+      ],
+      "limits": "Both exact page components with captured JSX and synthetic useState. Real SidebarNavItem wiring and AppRoutes are source-reviewed. No browser routing, click, accessibility tree or authenticated account was exercised."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0
+}

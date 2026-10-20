@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791492134 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 5c8e4efb065f61aa08538c463923829ed25e3beb Joaquim Ataides <ti@promobrindes.com.br> 1791492335 -0300	commit: fix(ci/devops): move firefox-auth/webkit-auth do PR para o e2e-logado (SL-119)
+5c8e4efb065f61aa08538c463923829ed25e3beb 8b75695f33d109bb2df4c7c97e1421e10c3bf2f2 Joaquim Ataides <ti@promobrindes.com.br> 1791555742 -0300	rebase (finish): refs/heads/v2/sl-119-firefox-webkit-e2e-logado-26100817422c72 onto 1098da5a935929b171674a99b425d6b515fd6072

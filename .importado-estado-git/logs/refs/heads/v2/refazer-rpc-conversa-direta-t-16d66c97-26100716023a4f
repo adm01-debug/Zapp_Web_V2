@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4cc5018ae42050172e823d0368aa9c41f47751c0 Joaquim Ataides <ti@promobrindes.com.br> 1791399735 -0300	branch: Created from dia/2026-10-07
+4cc5018ae42050172e823d0368aa9c41f47751c0 25f9b18cbeafe732f5d5421fa1724bd52a9da27f Joaquim Ataides <ti@promobrindes.com.br> 1791403655 -0300	commit: fix(db): protege conversa direta contra corrida

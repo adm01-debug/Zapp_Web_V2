@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791331746 -0300	
+dba4ece1f104a2757a954051b06b2c1bd7589050 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791331747 -0300	reset: moving to HEAD
+dba4ece1f104a2757a954051b06b2c1bd7589050 1080fdfaa1a5e676d8a12415e99a5918e43aee40 Joaquim Ataides <ti@promobrindes.com.br> 1791332242 -0300	commit: fix(ci): prova de orcamento nao expoe credencial em argv nem sessao Auth na saida (#358)

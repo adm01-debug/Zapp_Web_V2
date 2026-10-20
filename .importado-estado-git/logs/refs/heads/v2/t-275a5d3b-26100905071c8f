@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791533254 -0300	branch: Created from dia/2026-10-09
+09cac15983207293252c5a4602e8b347bd4b8c91 3bd23a5f44e436fb356c6b087f4f1922f0a2b5c9 Joaquim Ataides <ti@promobrindes.com.br> 1791533261 -0300	cherry-pick: feat(multiplix-edge): públicos salvos (audience.save/apply) e seleção por regra/lista
+3bd23a5f44e436fb356c6b087f4f1922f0a2b5c9 9b1f681dc4cc380db6dd7d903de22fbf492a094d edgar <edgar@hermes.local> 1791533464 -0300	commit: fix(multiplix-edge): compensa audience.save static_list e sanitiza o 502
+9b1f681dc4cc380db6dd7d903de22fbf492a094d 0bd891680278bce8268cbde0a754f3759a1610ea Joaquim Ataides <ti@promobrindes.com.br> 1791564207 -0300	rebase (finish): refs/heads/v2/t-275a5d3b-26100905071c8f onto 12e407210db0ea4d9f817618d30848304ca932d5

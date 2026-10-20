@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 72ad19958df7735cd29bad24dd38f66265c47f3b Joaquim Ataides <ti@promobrindes.com.br> 1791485008 -0300	branch: Created from dia/2026-10-08
+72ad19958df7735cd29bad24dd38f66265c47f3b 32a8284d689cfd6cf4db0aa8273b545297b764aa Joaquim Ataides <ti@promobrindes.com.br> 1791485019 -0300	cherry-pick: feat(sidebar): selo de e-mails nao lidos no item Email
+32a8284d689cfd6cf4db0aa8273b545297b764aa 2c493b83bdf3731ce993359e363e9fe572af81f5 Joaquim Ataides <ti@promobrindes.com.br> 1791485230 -0300	commit: fix(teste): tour padrao mocka o contador de e-mail nao lido

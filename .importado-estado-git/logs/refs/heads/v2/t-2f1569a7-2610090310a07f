@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526255 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 f893696578f3947d29ffefb563b81f25747b8689 Joaquim Ataides <ti@promobrindes.com.br> 1791526702 -0300	commit: perf(components): tirar o framer-motion do skip-link inicial (SL-103C)

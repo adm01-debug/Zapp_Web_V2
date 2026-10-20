@@ -1,0 +1,10 @@
+fix(auth): corrige recusa — callback síncrono e erro preservado no signOut
+
+Por quê: o listener onAuthStateChange aguardava applySession dentro do
+callback do supabase-js (risco de deadlock no lock de auth), e o SIGNED_OUT
+emitido pelo próprio signOut fail-closed zerava o error antes de chegar à
+tela. Callback fica síncrono com applySession adiado via setTimeout, e
+clearAuthState ganha preserveError no caminho do SIGNED_OUT.
+Verificação: 2 testes novos RED→GREEN com mutation check nos dois pontos;
+zapp-verify --rapido verde (db_guard, tipos, lint, migrations).
+Plano: R2-AUTH-004 — bloquear perfil inativo no AuthProvider (t_6f17f5cb).

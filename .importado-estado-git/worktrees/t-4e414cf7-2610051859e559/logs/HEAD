@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 bd0e6794fe1aebfffe77783f97ab99542e569f20 Joaquim Ataides <ti@promobrindes.com.br> 1791237578 -0300	
+bd0e6794fe1aebfffe77783f97ab99542e569f20 bd0e6794fe1aebfffe77783f97ab99542e569f20 Joaquim Ataides <ti@promobrindes.com.br> 1791237579 -0300	reset: moving to HEAD
+bd0e6794fe1aebfffe77783f97ab99542e569f20 bbaa77f2dd7a0dce1d31c3ee0fa2b12a1f940869 Joaquim Ataides <ti@promobrindes.com.br> 1791237845 -0300	commit: test(telefonia): contrato do cabeçalho do plano falha no baseline (RED)
+bbaa77f2dd7a0dce1d31c3ee0fa2b12a1f940869 22d453b895fa594e1d9b312ddd786c052100defa Joaquim Ataides <ti@promobrindes.com.br> 1791237871 -0300	commit: docs(telefonia): alinhar cabeçalho do plano ao estado real

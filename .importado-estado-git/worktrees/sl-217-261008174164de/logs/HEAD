@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791492081 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791492082 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 2b4e1b0fb67f9b695d3d57e546777a2dcb0a1c14 Joaquim Ataides <ti@promobrindes.com.br> 1791492373 -0300	commit: fix(outros): nao recomenda produto sem estoque como viavel (SL-217 / IA-152)
+2b4e1b0fb67f9b695d3d57e546777a2dcb0a1c14 ba47584f666544e803fdb5e10e90ea3e59112229 Joaquim Ataides <ti@promobrindes.com.br> 1791492394 -0300	commit (amend): fix(outros): nao recomenda produto sem estoque como viavel (SL-217 / IA-152)

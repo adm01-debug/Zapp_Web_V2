@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791234657 -0300	branch: Created from dia/2026-10-05
+c28a1a97af8b9fc34ccb54db845a29a48169f257 4021d1bc655e4f8356091330ae30bcb5d2d5654c Joaquim Ataides <ti@promobrindes.com.br> 1791234680 -0300	cherry-pick: fix(talkx): descarta resposta atrasada de variantes e historico de outro template
+4021d1bc655e4f8356091330ae30bcb5d2d5654c fe2450b43295f9106f1be04490201b7b1253a808 Joaquim Ataides <ti@promobrindes.com.br> 1791234680 -0300	cherry-pick: fix(talkx): zera loading do historico na troca de template e no descarte obsoleto
+fe2450b43295f9106f1be04490201b7b1253a808 c4b389212b52d8a1221503d63a482866489b0948 worker <worker@local> 1791234951 -0300	commit: fix(talkx): sincroniza origem ativa em todas as trocas

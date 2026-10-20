@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 e78d753d18758c7f0f7b3938d31581e93f01ade6 Joaquim Ataides <ti@promobrindes.com.br> 1791387382 -0300	
+e78d753d18758c7f0f7b3938d31581e93f01ade6 e78d753d18758c7f0f7b3938d31581e93f01ade6 Joaquim Ataides <ti@promobrindes.com.br> 1791387383 -0300	reset: moving to HEAD
+e78d753d18758c7f0f7b3938d31581e93f01ade6 277cb3defb49e91ff153edac5294029fdc80c8f5 Joaquim Ataides <ti@promobrindes.com.br> 1791388337 -0300	cherry-pick: test(e2e): espera o boot da tela de email antes das medições visuais
+277cb3defb49e91ff153edac5294029fdc80c8f5 5f894da02443061e77b6361cb36dfbf20a0d6933 Joaquim Ataides <ti@promobrindes.com.br> 1791388337 -0300	cherry-pick: test(e2e): alinha o orçamento do teste ao teto de boot declarado
+5f894da02443061e77b6361cb36dfbf20a0d6933 283984893beb6316e4304755a7173d17c639b6af Joaquim Ataides <ti@promobrindes.com.br> 1791389011 -0300	commit: test(e2e): injeta prazo de boot antes do watchdog
+283984893beb6316e4304755a7173d17c639b6af e78d753d18758c7f0f7b3938d31581e93f01ade6 Joaquim Ataides <ti@promobrindes.com.br> 1791389605 -0300	reset: moving to e78d753d1

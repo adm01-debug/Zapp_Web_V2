@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791552100 -0300	
+68980bf5e3486ca611a90742053bfdb008fcb5c3 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791552101 -0300	reset: moving to HEAD
+68980bf5e3486ca611a90742053bfdb008fcb5c3 583cf6c8d05f5f14aa263d7a0b13f265df84e71c Joaquim Ataides <ti@promobrindes.com.br> 1791552167 -0300	commit (cherry-pick): fix(talk-x): passo 1 com nome 3-200, descricao do objetivo e responsavel admin/supervisor (X124)
+583cf6c8d05f5f14aa263d7a0b13f265df84e71c 599aa708fb25adbd830006ef0007bf319f80a2b3 Joaquim Ataides <ti@promobrindes.com.br> 1791552167 -0300	cherry-pick: fix(talk-x): avatar do responsável em 24px (tamanho aceito pelo InitialsAvatar)
+599aa708fb25adbd830006ef0007bf319f80a2b3 599aa708fb25adbd830006ef0007bf319f80a2b3 Joaquim Ataides <ti@promobrindes.com.br> 1791552174 -0300	reset: moving to 599aa708fb25adbd830006ef0007bf319f80a2b3
+599aa708fb25adbd830006ef0007bf319f80a2b3 ac5a5c38d869ce8ec24c0e21393707995e36aa2e Joaquim Ataides <ti@promobrindes.com.br> 1791552253 -0300	commit: test(talk-x): mock do wizard expõe os limites do nome (X124/TL-140)

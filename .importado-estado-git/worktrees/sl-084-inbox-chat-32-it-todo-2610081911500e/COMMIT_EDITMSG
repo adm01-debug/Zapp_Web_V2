@@ -1,0 +1,16 @@
+fix(inbox/chat): 32 it.todo com corpo e titulos corrompidos ("imagesmag (SL-084)
+
+Os 32 it.todo deste arquivo nunca executavam (corpo morto) e os titulos vinham corrompidos ("imagesmages", "uploadpload"). Agora 26 viraram it() reais, apontando para o arquivo que tem o codigo hoje (useTeamChatPanel.ts, TeamMessageItem.tsx, TeamChatHeader.tsx, useTeamChatDraft.ts, uploadTeamMedia.ts), e 6 obsoletos (que afirmavam comportamento inexistente ou duplicado) foram apagados. Nenhuma mudanca de producao.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 86f02e9e4 fix(inbox/chat): 32 it.todo com corpo e titulos corrompidos ("imagesmag (SL-084)
+# No commands remaining.
+# You are currently rebasing branch 'v2/sl-084-inbox-chat-32-it-todo-2610081911500e' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts
+#

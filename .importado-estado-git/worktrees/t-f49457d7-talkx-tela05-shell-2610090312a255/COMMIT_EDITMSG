@@ -1,0 +1,5 @@
+fix(talk-x): tipagem do parse da rota de template e caso de ttab sem template (TL-125)
+
+O typecheck (tsc -b) acusou 4 erros novos: o guard do parse não estreitava
+`rawTemplate` de `string | undefined` (o endereço com `ttab` sem `template` caía no
+regex). Guard alinhado ao de `talkxWizardRoute.ts` e caso coberto no contrato.

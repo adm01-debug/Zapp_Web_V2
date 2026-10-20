@@ -1,0 +1,20 @@
+test(qualidade): testes de CRM (busca de contatos, carteira do cliente, configurações de SLA)
+
+Cobre com testes NOVOS (nenhuma linha de produção alterada) três hooks que não
+tinham teste nenhum:
+
+- useContactsSearch: parâmetros da RPC search_contacts (inclusive a ausência de
+  include_legacy), abas, paginação/limites, date_from por período com relógio
+  congelado, debounce de 400 ms, filtros ativos, clearFilters/clearSearch,
+  contadores por tipo e as RPCs por página (último contato e permissão de
+  exclusão) com resposta vazia, resposta negada por RLS e dado malformado.
+- useClientWallet: carga com join de agente/conexão, erro de RLS na leitura e na
+  recarga, validação do formulário, insert normalizado, alternar ativa, exclusão.
+- useSLAConfigurations: ordenação, erro/vazio na leitura, insert x update,
+  fechamento e limpeza do formulário só no sucesso, invalidação do cache e o
+  vai-e-volta otimista de alternar/excluir.
+
+Três defeitos ficam pinados com it.fails (não corrigidos aqui): 'Mês' a partir do
+dia 31 transborda para o dia 3 do mês seguinte; duas alternâncias simultâneas de
+regra da carteira perdem a primeira; exclusão de regra negada pelo RLS falha em
+silêncio.

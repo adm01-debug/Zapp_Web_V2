@@ -1,0 +1,11 @@
+fix(contatos): painel de detalhe consulta a atividade real do contato (#253)
+
+O painel mostrava "0 Mensagens" e "Inativo"/"—" porque recebia
+messageCount/lastMessageAt por props que o unico consumidor de producao
+(ContactsView) nunca fornecia -- a ausencia da prop era exibida como
+ausencia de atividade (R2-AUTH-028).
+
+Agora o proprio painel busca a atividade canonica do contato
+(ContactService.fetchStats + RPC get_last_message_dates) e distingue
+carregando, indisponivel e zero confirmado: o score de engajamento so e
+calculado quando os insumos sao conhecidos.

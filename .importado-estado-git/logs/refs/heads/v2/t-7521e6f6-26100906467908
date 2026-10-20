@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791539193 -0300	branch: Created from dia/2026-10-09
+ce8f99e418dde54bc50badba5044cfbd48e351f2 04de5a6581aec45d7cd96a2bb18e84d50bebc2b0 Joaquim Ataides <ti@promobrindes.com.br> 1791539229 -0300	cherry-pick: fix(inbox): assinatura de texto conta no limite de 4096 do envio (#312)

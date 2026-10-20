@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791335955 -0300	branch: Created from dia/2026-10-06
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 15eb62d8fad75db2576948c9b85a873fa052ebb4 Joaquim Ataides <ti@promobrindes.com.br> 1791335982 -0300	cherry-pick: fix(grupos): manter grupo já selecionado no menu "Enviar mensagem"

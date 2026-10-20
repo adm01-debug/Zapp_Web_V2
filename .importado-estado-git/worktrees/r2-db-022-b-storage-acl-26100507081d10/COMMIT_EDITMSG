@@ -1,0 +1,1 @@
+fix(db): prova forja bloqueada e ordena ACL de leitura após fronteira de escrita (R2-DB-022 B)

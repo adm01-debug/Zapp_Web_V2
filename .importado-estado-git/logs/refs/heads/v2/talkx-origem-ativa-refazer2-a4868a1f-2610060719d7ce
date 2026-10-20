@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 8139cc3eca6311580cbaba02cbfece7a53ede90b Joaquim Ataides <ti@promobrindes.com.br> 1791281961 -0300	branch: Created from dia/2026-10-06
+8139cc3eca6311580cbaba02cbfece7a53ede90b a02aec544619e685efd75285020169c2534915e7 Joaquim Ataides <ti@promobrindes.com.br> 1791282005 -0300	cherry-pick: fix(talkx): descarta resposta atrasada de variantes e historico de outro template
+a02aec544619e685efd75285020169c2534915e7 6c7ac3975525fcbf97ffea1b0c73b9160a631e5d Joaquim Ataides <ti@promobrindes.com.br> 1791282005 -0300	cherry-pick: fix(talkx): zera loading do historico na troca de template e no descarte obsoleto
+6c7ac3975525fcbf97ffea1b0c73b9160a631e5d 51cbbbf8d012800e1249c47d31057519cc2031d5 Joaquim Ataides <ti@promobrindes.com.br> 1791282005 -0300	cherry-pick: fix(talkx): sincroniza origem ativa em todas as trocas
+51cbbbf8d012800e1249c47d31057519cc2031d5 21858bee8c1f8abc1fd7e597b97295e42745aaa3 Joaquim Ataides <ti@promobrindes.com.br> 1791282005 -0300	cherry-pick: test(talkx): prova troca real da origem ativa
+21858bee8c1f8abc1fd7e597b97295e42745aaa3 fb5b81f157f20f2bd39cf1211be594661edcceea Joaquim Ataides <ti@promobrindes.com.br> 1791282366 -0300	commit: fix(talkx): revalida origem durante mutacoes assincronas

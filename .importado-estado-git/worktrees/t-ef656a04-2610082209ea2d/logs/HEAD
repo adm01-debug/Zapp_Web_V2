@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508153 -0300	
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508154 -0300	reset: moving to HEAD
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf a0bc8d81cb96129a7ca4c802b965d4f3ae5da153 Joaquim Ataides <ti@promobrindes.com.br> 1791508685 -0300	commit: chore(performance): SL-098 fecha sem codigo porque a lacuna so fecha em .github/ e scripts/ci (proibidos pelo cartao)

@@ -1,0 +1,83 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Complete unchanged inspect function bodies evaluated after type/import/export wiring; actual pure messaging helpers imported. Zod replaced only as a valid-input boundary, custom DispatchError boundary, faithful PostgREST select projection and 1000-row cap. No claim to execute the router or live RLS.",
+  "source_hashes": {
+    "supabase/functions/multiplix-dispatch/actions/inspect.ts": "6827c454b7fa4ccdee1d94ae609216f71bddea79f05fbca30ce441879479f5d4"
+  },
+  "results": [
+    {
+      "id": "P19",
+      "status": 200,
+      "response": {
+        "data": {
+          "dispatch_id": "11111111-1111-4111-8111-111111111111",
+          "recipient_id": "44444444-4444-4444-8444-444444444444",
+          "recipient": {
+            "id": "44444444-4444-4444-8444-444444444444",
+            "company_name": "Foreign fixture company",
+            "destino_e164": "+5511000000000"
+          },
+          "timezone": "America/Sao_Paulo",
+          "blocks": [
+            {
+              "block_id": "fixture-block",
+              "block_order": 0,
+              "block_type": "text",
+              "personalization_mode": "personalized",
+              "content_version": 1,
+              "text": "Olá Foreign fixture company",
+              "asset": null
+            }
+          ],
+          "text": "Olá Foreign fixture company"
+        }
+      },
+      "recipientQuery": [
+        {
+          "table": "multiplix_recipients",
+          "columns": "id, company_id, company_name_snapshot, destino_e164, singu_contact_id, eligibility, eligibility_reason, inclusion_reason, status, variables_snapshot",
+          "filters": [
+            {
+              "key": "id",
+              "value": "44444444-4444-4444-8444-444444444444"
+            }
+          ]
+        }
+      ],
+      "outcome": "owned dispatch plus foreign recipient returns foreign company and destination; selected projection omits membership key"
+    },
+    {
+      "id": "P20",
+      "status": 200,
+      "sampleRecipientId": "44444444-4444-4444-8444-444444444444",
+      "disclosedValue": "Foreign fixture company",
+      "outcome": "validate also accepts a foreign sample recipient without membership check"
+    },
+    {
+      "id": "P21",
+      "realRecipientRowsInFixture": 2500,
+      "simulatedPostgrestCap": 1000,
+      "returnedSummaryTotal": 1000,
+      "returnedEstimateMessages": 1000,
+      "outcome": "summary and estimate accept only the first capped page as the total population"
+    }
+  ]
+}

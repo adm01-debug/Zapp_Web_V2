@@ -1,0 +1,20 @@
+test(inbox): cobre a RPC get_inbox_contact_summaries no banco local (R2-INB-005)
+
+Recusa da entrega anterior (item 84): a verificacao 'VERDE SEM BANCO' nao
+exercitou a migration nem a RPC no banco. Este teste SQL fecha essa lacuna:
+roda contra o banco LOCAL (zapp-db-local psql) e prova o contrato que o
+cliente consome.
+
+- T1: contato nao visivel ao chamador nao volta (nem por enumeracao de UUID);
+       visivel para A mas nao para B, e vice-versa.
+- T2: anon/PUBLIC sem EXECUTE (flag de ACL + chamada barrada de fato) e
+       authenticated/service_role chamando com sucesso (controle positivo).
+- T3: 'nao lida' inclui is_read NULO, igual a buildConversation.
+- T4: desempate deterministico por id quando duas mensagens dividem created_at.
+- T5: contato visivel sem nenhuma mensagem nao aparece (nao infla a inbox).
+- T6: unread_count e o agregado do banco (3 de 5 mensagens no fixture).
+
+Dados sinteticos criados dentro da transacao e desfeitos no ROLLBACK final:
+nada sobra no banco e nenhum dado de producao e tocado.
+
+Prova: verde no conjunto local (RC=0) e vermelho com a RPC ausente (RC=3).

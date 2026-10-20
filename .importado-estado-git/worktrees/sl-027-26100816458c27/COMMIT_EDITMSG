@@ -1,0 +1,8 @@
+fix(ci/devops): política explícita de Deno/runtime/lock nas Edge Functions (SL-027)
+
+Adiciona supabase/functions/deno.json, a config que o Deno descobre sozinho ao
+typecheckar/rodar uma edge sem --config, apontando para o lock isolado
+scripts/ci/deno.lock (frozen) com nodeModulesDir=none, o mesmo par que a CI ja
+usa; sem segunda copia de lock (sem drift). Teste novo em
+scripts/ci/deno-reproducibility.unit.mjs trava config, caminho do lock e a
+versao unica de runtime (2.9.5) no ci.yml e no db-guard.yml.

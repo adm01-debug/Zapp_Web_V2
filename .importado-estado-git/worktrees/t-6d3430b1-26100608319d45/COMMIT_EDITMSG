@@ -1,0 +1,15 @@
+fix(recarga): adiar a atualização automática com edição ou sessão ativa
+
+O monitor recarregava assim que uma aba com versão nova ficava oculta, mesmo com
+edição de mensagem ou sessão crítica em andamento, e `updateAlreadyAnnounced`
+impedia reavaliar a recarga quando o bloqueio terminava — a aba ficava presa no
+bundle antigo.
+
+Agora a recarga automática exige aba oculta E `haBloqueioRecarga()` falso. Com
+bloqueio, a versão nova fica pendente com o aviso na tela e o registro de
+bloqueios passa a ser observado: quando o último bloqueio termina e a aba segue
+oculta, a recarga acontece uma única vez. "Atualizar agora" continua imediato.
+
+Prova: src/lib/__tests__/deployment-update.test.ts — os 3 testes novos falham sem
+a correção (recarrega com bloqueio ativo / não recarrega quando o bloqueio
+termina) e passam com ela (9 testes verdes).

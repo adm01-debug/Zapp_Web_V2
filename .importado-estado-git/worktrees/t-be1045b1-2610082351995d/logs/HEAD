@@ -1,0 +1,10 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514266 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514268 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 fd010ea97d405d682188789de8b095250be10e95 Joaquim Ataides <ti@promobrindes.com.br> 1791514275 -0300	cherry-pick: test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+fd010ea97d405d682188789de8b095250be10e95 d7f1eb1a9fdb8421574551ba63a61d990a5cf264 Joaquim Ataides <ti@promobrindes.com.br> 1791514319 -0300	commit (amend): test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+d7f1eb1a9fdb8421574551ba63a61d990a5cf264 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791557437 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 b50ebb2dd603195e2b22a0224e33ea96fe742e79 Joaquim Ataides <ti@promobrindes.com.br> 1791558234 -0300	rebase (continue): test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+b50ebb2dd603195e2b22a0224e33ea96fe742e79 b50ebb2dd603195e2b22a0224e33ea96fe742e79 Joaquim Ataides <ti@promobrindes.com.br> 1791558234 -0300	rebase (finish): returning to refs/heads/v2/t-be1045b1-2610082351995d
+b50ebb2dd603195e2b22a0224e33ea96fe742e79 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559127 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 1ed4660a30d7e9f114a35e48e57f68c2c1911037 Joaquim Ataides <ti@promobrindes.com.br> 1791559127 -0300	rebase (pick): test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+1ed4660a30d7e9f114a35e48e57f68c2c1911037 1ed4660a30d7e9f114a35e48e57f68c2c1911037 Joaquim Ataides <ti@promobrindes.com.br> 1791559127 -0300	rebase (finish): returning to refs/heads/v2/t-be1045b1-2610082351995d

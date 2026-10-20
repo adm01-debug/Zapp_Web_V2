@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235893 -0300	branch: Created from dia/2026-10-05
+c28a1a97af8b9fc34ccb54db845a29a48169f257 e2a79fc8fbc1074a677906caffe0daafb839af2b Joaquim Ataides <ti@promobrindes.com.br> 1791235917 -0300	cherry-pick: fix(inbox): transferência da sidebar grava evento com nota e trata falha parcial (#88)
+e2a79fc8fbc1074a677906caffe0daafb839af2b beef3790787d655db8cb4e60c8f578b9e83407ef Joaquim Ataides <ti@promobrindes.com.br> 1791235917 -0300	cherry-pick: test(inbox): prova que a rejeicao do transferContact propaga ao TransferDialog (#88)
+beef3790787d655db8cb4e60c8f578b9e83407ef 4f115d98ad0965e634f8af90c2dea5faf377d0ea Joaquim Ataides <ti@promobrindes.com.br> 1791236293 -0300	commit: fix(inbox): rejeita transferência quando evento falha (#88)

@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 a0c24340a16f5fb33cb57c491e1c0777870f20f5 Joaquim Ataides <ti@promobrindes.com.br> 1791410860 -0300	
+a0c24340a16f5fb33cb57c491e1c0777870f20f5 a0c24340a16f5fb33cb57c491e1c0777870f20f5 Joaquim Ataides <ti@promobrindes.com.br> 1791410860 -0300	reset: moving to HEAD
+a0c24340a16f5fb33cb57c491e1c0777870f20f5 43f700eb0490cd0165e71a1ec8953ceff981180e Joaquim Ataides <ti@promobrindes.com.br> 1791413219 -0300	commit: test(e2e): tarefas e quadro (criar, mover, concluir, filtros)
+43f700eb0490cd0165e71a1ec8953ceff981180e 06ca75737fdab0b9b3211799b2c92576c33af0df Joaquim Ataides <ti@promobrindes.com.br> 1791414568 -0300	commit: revert(config): tira o projeto chromium-tarefas do diff do Y10
+06ca75737fdab0b9b3211799b2c92576c33af0df 285b3a2798d9d791d0f284b5d332ac5c2fa93710 Joaquim Ataides <ti@promobrindes.com.br> 1791414610 -0300	commit: docs(e2e): cabecalho do spec do Y10 registra a pendencia do projeto dedicado
+285b3a2798d9d791d0f284b5d332ac5c2fa93710 6e45f37d52c8bc2989084dc3e39dfd403c5e6844 Joaquim Ataides <ti@promobrindes.com.br> 1791414990 -0300	commit: test(e2e): Y10 eleva o teto do watchdog de boot no navegador de teste
+6e45f37d52c8bc2989084dc3e39dfd403c5e6844 c2482388528be56059fcce4c344d4ee047103b80 Joaquim Ataides <ti@promobrindes.com.br> 1791415282 -0300	commit: test(e2e): Y10 le o KPI depois da Lista carregar (prazo de hoje)

@@ -1,0 +1,9 @@
+feat(journey): componente JourneyStatsHero com tendência, ranking e efeitos
+
+Etapa S084 (D09/D12): faixa única de estatísticas do contato, só arquivos novos e
+sem consulta a banco. Blocos 'Do contato' e 'No período' com tendência (menor é
+melhor no tempo de resposta), gráfico de linha em SVG próprio, barra empilhada de
+distribuição, ranking top 3 com foto/iniciais e horário-dia mais ativo. Efeitos
+discretos (contagem por requestAnimationFrame, traço desenhando, entrada
+escalonada de 60 ms com teto de 8) desligados em prefers-reduced-motion. Sem
+dependência nova, sem cor literal e sem tocar em arquivo existente.

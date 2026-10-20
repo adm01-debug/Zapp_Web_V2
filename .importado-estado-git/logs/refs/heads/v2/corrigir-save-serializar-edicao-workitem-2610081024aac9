@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7538413a5bc8a7f679961fbcb3c80557d47ccb63 Joaquim Ataides <ti@promobrindes.com.br> 1791465860 -0300	branch: Created from dia/2026-10-08
+7538413a5bc8a7f679961fbcb3c80557d47ccb63 ae215d5dbb9c31b9d9ff18cf5e847283b12f1ba6 Joaquim Ataides <ti@promobrindes.com.br> 1791465877 -0300	cherry-pick: test(tarefas): reproduz save prematuro com escrita pendente no WorkItemSheet (#419)
+ae215d5dbb9c31b9d9ff18cf5e847283b12f1ba6 0e14f562329f50fa2fa06f49a99a3ecf42375d83 Joaquim Ataides <ti@promobrindes.com.br> 1791466171 -0300	commit: fix(tarefas): Salvar do WorkItemSheet aguarda a escrita e serializa estado e campos (#419)
+0e14f562329f50fa2fa06f49a99a3ecf42375d83 f61bcb11292d995f1090ad705e85e65847b8080e Joaquim Ataides <ti@promobrindes.com.br> 1791466174 -0300	commit: test(tarefas): cobre falha do Salvar, clique duplo e o fechamento assincrono (#419)

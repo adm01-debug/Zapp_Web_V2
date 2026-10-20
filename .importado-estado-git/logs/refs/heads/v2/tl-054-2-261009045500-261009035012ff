@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791528607 -0300	branch: Created from dia/2026-10-09
+2a47986959e01fcd590be2a63199a8b6db27f86d 65bfda50fc375a3e886c989d0a668edeaaad73be Joaquim Ataides <ti@promobrindes.com.br> 1791529043 -0300	commit: refactor(talk-x): Visao geral usa o hook unico de ciclo de vida (X051)
+65bfda50fc375a3e886c989d0a668edeaaad73be 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791529675 -0300	reset: moving to HEAD~1
+2a47986959e01fcd590be2a63199a8b6db27f86d 7009dc93ce8e7d6a90715fde86fcc507c4c8393a Joaquim Ataides <ti@promobrindes.com.br> 1791529683 -0300	commit: chore(talk-x): traz para a base o hook unico do cartao pai (TL-054A/X050)
+7009dc93ce8e7d6a90715fde86fcc507c4c8393a bc9a4a5e88cb2de115373a252dfeb8d315a375cc Joaquim Ataides <ti@promobrindes.com.br> 1791529685 -0300	commit: refactor(talk-x): Visao geral usa o hook unico de ciclo de vida (X051)
+bc9a4a5e88cb2de115373a252dfeb8d315a375cc 81772034e1a02abbe6d4050a7dd58ebc44eb5b17 Joaquim Ataides <ti@promobrindes.com.br> 1791529692 -0300	rebase (finish): refs/heads/v2/tl-054-2-261009045500-261009035012ff onto 5a9731645d266ea721f679d6886b83822ac16f6b

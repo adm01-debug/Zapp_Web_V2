@@ -1,0 +1,31 @@
+fix(talkx): nome acessivel e papel nos controles do Talk X (TX-A11Y-1)
+
+A varredura axe WCAG 2.1 AA das telas do Talk X ainda reprovava nome/papel
+depois de TL-175A/B/C: Progress da tela 11 sem nome (aria-progressbar-name),
+input datetime-local e dois Switch da tela 10 sem nome (label/button-name),
+SelectTrigger de fuso horario, do editor de regra de segmento (03) e do
+editor de template (05) sem nome, e a regiao rolavel da Ajuda (16) fora da
+ordem de foco (scrollable-region-focusable).
+
+Os controles com <Label> visivel passam a ser ligados por id+htmlFor; os que
+nao tem rotulo associavel ganham aria-label com o proprio texto visivel; a
+Ajuda passa a ter a regiao rolavel focavel (tabIndex) e nomeada, sem esconder
+nada por CSS. Teste novo no jsdom fixa cada nome (vermelho sem a correcao).
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1f9252a86
+# Last command done (1 command done):
+#    pick c58086e9f fix(talkx): nome acessivel e papel nos controles do Talk X (TX-A11Y-1)
+# No commands remaining.
+# You are currently rebasing branch 'v2/tx-a11y-1-talkx-nome-e-papel-2610090610c2a8' on '1f9252a86'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXCampaignScheduled.tsx
+#	modified:   src/components/talkx/TalkXLiveMonitor.tsx
+#	modified:   src/components/talkx/TalkXTemplateEditor.tsx
+#	new file:   src/components/talkx/__tests__/TalkXA11yNomeEPapel.test.tsx
+#	modified:   src/components/talkx/segments/RuleRow.tsx
+#	modified:   src/components/talkx/segments/TalkXSegmentBuilder.tsx
+#

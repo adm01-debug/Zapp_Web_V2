@@ -1,0 +1,10 @@
+fix(catálogo): badges de destaque do card pintam por token do tema (SL-038)
+
+As badges Novo/Top/Promo usavam a paleta crua do Tailwind
+(bg-emerald-500/bg-orange-500/bg-rose-500): cor fixa, igual nos 4 temas,
+enquanto o texto (text-primary-foreground) mudava. Passam a usar os tokens
+do seu estado (bg-success/bg-warning/bg-destructive) com o par de texto de
+cada token, entao o fundo acompanha claro/escuro/alto contraste.
+
+Prova: src/components/catalog/__tests__/SL038_badgesTokensTema.test.tsx
+(vermelho antes, verde depois).

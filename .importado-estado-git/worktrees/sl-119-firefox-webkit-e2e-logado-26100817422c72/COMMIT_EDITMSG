@@ -1,0 +1,28 @@
+fix(ci/devops): move firefox-auth/webkit-auth do PR para o e2e-logado (SL-119)
+
+E88/G-35 (PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01): auth.spec.ts deslogado nos 3
+engines. O job E2E de PR do ci.yml ja exercita a tela de login pelo projeto
+chromium; firefox-auth/webkit-auth rodavam ali por heranca, nao por precisarem de
+PR. Foram para o e2e-logado.yml (que ja instala os 3 engines), entao a cobertura
+cross-browser da tela de login continua depois do merge e o PR deixa de subir 2
+engines. Os dois projetos sao deslogados (sem setup/storageState), sem secret novo.
+
+Trava em scripts/ci/ci-e2e-projects.unit.mjs (3 testes novos): ci.yml sem os dois
+projetos, e2e-logado.yml com os dois, e os dois seguem deslogados no config.
+Prova red-first: workflows revertidos -> 2 failed; restaurados -> 9 passed.
+actionlint 1.7.12 nos dois YAML: exit 0.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 5c8e4efb0 fix(ci/devops): move firefox-auth/webkit-auth do PR para o e2e-logado (SL-119)
+# No commands remaining.
+# You are currently rebasing branch 'v2/sl-119-firefox-webkit-e2e-logado-26100817422c72' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   .github/workflows/ci.yml
+#	modified:   .github/workflows/e2e-logado.yml
+#	modified:   scripts/ci/ci-e2e-projects.unit.mjs
+#

@@ -1,0 +1,11 @@
+feat(talkx): salva e resolve varios segmentos por campanha (X057b)
+
+A X057a entregou talkx_campaign_segments, mas nenhuma RPC a lia ou
+escrevia: rascunho nao gravava a lista e o snapshot resolvia so o
+segment_id legado, sem carimbar recipients.segment_id.
+
+save_talkx_campaign_draft passa a ler segment_ids do payload (1..10
+uuids na ordem de envio), valida 22023 antes de qualquer escrita e
+regrava a lista na mesma transacao, com segment_id = position 1.
+snapshot_talkx_campaign_audience une os segmentos em ordem de position
+sem duplicar contato, carimbando o primeiro segmento que o contem.

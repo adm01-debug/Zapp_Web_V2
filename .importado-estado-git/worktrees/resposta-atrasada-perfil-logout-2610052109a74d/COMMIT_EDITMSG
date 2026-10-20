@@ -1,0 +1,14 @@
+fix(auth): descarta resposta de perfil de identidade antiga apos logout ou troca de usuario
+
+R2-AUTH-005 (item 239). O AuthProvider guardava so um booleano (fetchingRef)
+para a busca de perfil: a resposta nao era vinculada a identidade vigente.
+Uma consulta disparada antes do SIGNED_OUT (ou da troca A->B) resolvia depois
+da limpeza e repunha o perfil antigo no estado, em qualquer ordem de resolucao.
+
+Agora cada busca carrega a geracao e a identidade a que pertence; a resposta so
+entra no estado se ainda for a vigente. Trocar (ou sair de) a identidade
+invalida as consultas em voo e zera o perfil anterior na hora.
+
+Prova: src/hooks/auth/__tests__/useAuth.perfil-identidade.test.tsx cobre
+resposta tardia apos logout, as duas ordens de resolucao A/B na troca de
+usuario e o zeramento do perfil ao iniciar outra identidade.

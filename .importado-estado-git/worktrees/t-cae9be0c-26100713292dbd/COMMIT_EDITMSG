@@ -1,0 +1,3 @@
+fix(volume): painel de volume abre no clique com controles
+
+Rebase linear sobre a dia/2026-10-09 (o merge anterior não é aceito pelo integrador). Mesmo conteúdo do commit 8f78b284f260af2d909ff863633fccc1d2cb6962.

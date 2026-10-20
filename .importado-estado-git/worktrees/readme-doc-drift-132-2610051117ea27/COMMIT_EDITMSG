@@ -1,0 +1,5 @@
+docs(dashboard): corrige drift do mapa — plano de 50 etapas inexistente e correções já feitas (#132)
+
+O README do Dashboard (DASH-DOC-DRIFT-001) apontava para claude/PLANO_DASHBOARD_50_ETAPAS.md, que não existe no HEAD nem no histórico, e reabria correções concluídas: ranking descrito como all-time (hoje é a RPC dashboard_leaderboard(p_period, p_limit)), scheduled_report_configs como staff-only compartilhado (hoje é owner-only por created_by, E40) e ausência de leitura direta de audit_logs (useAIStats.ts ainda lê). Também isola a linhagem do E53 (Search Box), que não é etapa do Dashboard.
+
+Nova guarda scripts/ci/dashboard-readme-drift.unit.mjs trava as duas pontas: o texto do README e as âncoras no código/migrations que ele afirma.

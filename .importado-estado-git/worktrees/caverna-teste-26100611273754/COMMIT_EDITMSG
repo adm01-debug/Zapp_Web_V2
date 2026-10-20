@@ -1,0 +1,12 @@
+fix(voz): comando de voz substituído não aplica mais a ação antiga
+
+Cada transcript passa a ter uma geração própria (generationRef) e só a vigente
+aplica ação, registra log de sucesso ou muda de fase. Antes, após o await do TTS,
+a checagem era só de mountedRef: um comando antigo que terminasse depois do mais
+recente reaplicava navegação e estado ultrapassados (R2-INB-048, item 342).
+
+Ao substituir o comando a fala anterior é interrompida (stop) e o await da fala
+sai pelo sinal de abort, liberando os recursos sem travar a execução antiga.
+
+Teste: src/hooks/__tests__/useVoiceAgent.comandoSubstituido.test.ts reproduz
+A falando -> B chega -> B termina -> A termina e exige só a ação de B.

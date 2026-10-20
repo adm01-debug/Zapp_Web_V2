@@ -1,0 +1,6 @@
+fix(seguranca): pontuação do overview normalizada pelo teto medido
+
+A escala visual (cor e barra) usava limiares de 0-100 sobre um teto de
+75, então 75/75 aparecia em amarelo com a barra a 75%. Agora cor e
+Progress usam scorePct = totalScore/maxScore*100; o número exibido
+continua sendo o totalScore.

@@ -1,0 +1,11 @@
+fix(ci/devops): ESTADO.md, FEATURE_REGISTRY.md e TESTING_CONVENTION.md (SL-122)
+
+Fecha a lacuna 009-010 (PLANO_100_ETAPAS_PARIDADE_V1_V3): nenhum dos tres
+arquivos existia. ESTADO.md mapeia as 74 edges por chamador real (front, outra
+edge, pg_cron, entrada externa, orfa); FEATURE_REGISTRY.md registra as 56 views
+do ViewRouter com componente, arquivo e classificacao; TESTING_CONVENTION.md
+documenta as cinco camadas de teste e seus runners.
+
+Guarda scripts/ci/docs-estado-registry-convention.unit.mjs recalcula as tabelas a
+partir do codigo e falha se divergirem (edge/view nova, ancora removida, orfa
+com chamador, runner que mudou).

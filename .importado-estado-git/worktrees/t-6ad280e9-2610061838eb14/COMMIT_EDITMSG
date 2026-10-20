@@ -1,0 +1,10 @@
+fix(observabilidade): coletor local agrega CLS por janela de sessão e INP pelo p98
+
+O coletor de Web Vitals somava todos os layout shifts da sessão visível e usava
+o maior duration bruto de evento. As definições são a MAIOR janela de sessão de
+shifts (gap < 1 s, janela < 5 s desde o primeiro) e o p98 das interações (uma por
+interactionId, descartando a mais longa a cada 50). Dois shifts de 0,06 a 2 s
+davam 0,12 no lugar de 0,06; 50 interações com pico de 1000 ms davam 1000 no
+lugar de 160, contra os alvos de performance-budget.json.
+
+Ref: R2-INF-031 (#489)

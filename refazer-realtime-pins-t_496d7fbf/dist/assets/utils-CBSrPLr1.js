@@ -1,0 +1,1 @@
+import{rn as e,tn as t}from"./vendor-ui-CVtGZr-z.js";function n(...n){return t(e(n))}export{n as t};

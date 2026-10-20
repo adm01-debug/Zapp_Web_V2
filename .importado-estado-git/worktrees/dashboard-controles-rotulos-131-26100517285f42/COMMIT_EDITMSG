@@ -1,0 +1,13 @@
+fix(dashboard): liga controles e rotulos aos dados calculados (DASH-CONTROLS-001)
+
+- AIQuickAccess: select de periodo passa a alimentar query real de insights
+  e "Analises Recentes" lista conversation_analyses em vez do vazio fixo
+- SatisfactionMetrics: modo "CSAT e NPS" desenha a serie NPS real de
+  nps_surveys (antes so CSAT com legenda NPS); eixo cobre -100..100
+- ActivityHeatmap: queryFn honra a metrica (mensagens, conversas por
+  contato distinto, resolucoes via conversation_closures)
+- DemandPrediction: remove alegacao de "confianca 95%" (faixa estimada
+  heuristica) e capacidade vem de global_settings.demand_capacity_per_hour
+  em vez do 35 fixo; sem configuracao mostra "Nao configurada"
+- ScheduledReportsManager: um so mapa de rotulos de frequencia; criacao
+  oferece so o que o executor real agenda (daily/weekly/monthly)

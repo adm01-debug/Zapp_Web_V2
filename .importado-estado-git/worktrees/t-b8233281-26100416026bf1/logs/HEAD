@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 73db70ca41f0cceacb2ef556e9fe4869f8bbd865 Joaquim Ataides <ti@promobrindes.com.br> 1791140520 -0300	
+73db70ca41f0cceacb2ef556e9fe4869f8bbd865 73db70ca41f0cceacb2ef556e9fe4869f8bbd865 Joaquim Ataides <ti@promobrindes.com.br> 1791140521 -0300	reset: moving to HEAD
+73db70ca41f0cceacb2ef556e9fe4869f8bbd865 e2b3fb821ae47567ea5345cf8a7a4c2af178f81f Joaquim Ataides <ti@promobrindes.com.br> 1791141096 -0300	commit: fix(edge): deduplica entrega e checa insert do webhook ElevenLabs (IA-WEBHOOK-001)

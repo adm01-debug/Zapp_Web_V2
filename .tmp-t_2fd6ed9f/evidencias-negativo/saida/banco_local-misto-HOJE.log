@@ -1,0 +1,14 @@
+[columns] só produção=1 só local=3 diferentes=0
+    só produção: clientes.antiga
+    só local: cartao_dinamico.coluna_gerada
+    só local: cartao_novo.id
+    só local: cartao_novo.payload
+[indexes] só produção=0 só local=1 diferentes=0
+    só local: cartao_novo.cartao_novo_pkey
+[rls] só produção=0 só local=1 diferentes=0
+    só local: cartao_novo
+[relation_grants] só produção=0 só local=1 diferentes=0
+    só local: r:public.cartao_novo|service_role|SELECT|grantor=postgres
+[functions] só produção=0 só local=0 diferentes=1
+    diferente: f:fn_antiga()
+ESTRUTURA: 8 diferença(s) em relação ao retrato da produção

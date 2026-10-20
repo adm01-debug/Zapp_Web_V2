@@ -1,0 +1,25 @@
+fix(db): cria a outbox durável do log essencial de IA que o código já usa (#44)
+
+Retomada do item 44 (IA-TIMEOUT-001). A ponta de dia/2026-10-08 já traz a
+implementação da outbox do log essencial (`_shared/ai-usage.ts`, c8c6018f9):
+ela grava a linha que falhou em `public.ai_usage_outbox` e só dá baixa
+(`processed_at`) depois de entregar. NENHUMA migration criava essa tabela — o
+POST batia num alvo inexistente e o `catch` do código engolia a falha, então o
+log essencial voltava a ser best effort: o defeito do cartão.
+
+- `20261008210159_ia_usage_outbox_duravel.sql`: tabela nova (id, payload,
+  motivo, tentativas, created_at, processed_at), o índice parcial da consulta da
+  fila (`tentativas, created_at` WHERE processed_at IS NULL), RLS ligada e
+  policy de service_role; anon/authenticated/public revogados (valem contra os
+  privilégios PADRÃO do Supabase) e GRANT só para service_role. Aditiva e
+  idempotente, sem backfill e sem tocar tabela existente.
+- `scripts/db-audit/ia-usage-outbox-duravel.test.sh`: Postgres descartável com
+  os papéis reais — bloco A reproduz o defeito (alvo inexistente, escrita do
+  service_role falhando), bloco B prova a estrutura, o contrato de colunas que o
+  código usa, a ACL por papel, a RLS (service_role sem BYPASSRLS lê; sem a
+  policy não lê nenhuma linha), entrada inválida recusada e o Rollback.
+
+Os ajustes de nome de policy (minúsculo) e a citação do papel dono no cabeçalho
+são o que faz o passo `banco_local` do zapp-verify explicar as 30 diferenças de
+estrutura deste cartão (medido: 30/30 explicadas; a versão anterior da migration
+deixava 9 sem explicação).

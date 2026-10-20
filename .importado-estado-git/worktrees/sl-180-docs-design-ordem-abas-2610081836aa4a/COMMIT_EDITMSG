@@ -1,0 +1,10 @@
+docs(design-system/ui): corrige a ordem das abas e a tipografia citadas nos docs de design (SL-180)
+
+PLANO_INBOX_360_CONVERSA (23, 39, 139) e PLANO_INBOX_FIDELIDADE_CARVAO (75)
+citavam a ordem antiga da barra de abas do centro (Chat · IA · CRM 360° ·
+Tarefas · Notas · Arquivos · Histórico); a ordem contratada hoje e Chat ->
+Arquivos -> IA -> CRM 360 -> SalesView -> Journey -> Tarefas -> Notas, pinada
+em src/components/inbox/chat/ConversationTabs.tsx. TAREFAS_QUADRO_STATUS (158,
+165) citava text-[12px] como a classe do subcabecalho de Proximas; o codigo usa
+text-xs. Guarda nova scripts/ci/docs-design-drift.unit.mjs prende as citacoes ao
+codigo (TABS do componente e classe real em TasksListMode.tsx).

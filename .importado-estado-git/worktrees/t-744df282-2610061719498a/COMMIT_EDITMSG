@@ -1,0 +1,7 @@
+fix(journey): normaliza tarefa concluída do modelo atual na linha do tempo
+
+buildTimeline concluía a pílula só com status === 'completed' (modelo legado); o
+modelo atual grava 'done' e carimba completed_at, então tarefa feita aparecia como
+'Pendente'. A consulta de conversation_tasks também não pedia completed_at — a coluna
+nunca chegava ao front. Agora isTaskConcluded decide por 'done'/'completed' ou pelo
+carimbo, e o select traz completed_at.

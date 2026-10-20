@@ -1,0 +1,3 @@
+fix(talkx): ação Novo template abre o editor de template vazio, não o wizard de campanha (#494)
+
+O item "Novo template" do menu Templates chamava openNew() do TalkXView, que é o wizard de campanha. Agora ele navega para a aba de templates pedindo o editor vazio (startNew), que é derivado no modo do editor e usa key própria para não herdar campos do template aberto. O pedido é limpo ao fechar o editor e ao sair da aba.

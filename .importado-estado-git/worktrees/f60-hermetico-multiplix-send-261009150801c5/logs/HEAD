@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791569324 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791569325 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 109c45f25ea7151255b7a5f38a8d58a65f01b102 Joaquim Ataides <ti@promobrindes.com.br> 1791569436 -0300	cherry-pick: fix(multiplix): worker le capabilities da conexao e bloqueia bloco incompativel (TL-035)

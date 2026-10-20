@@ -1,0 +1,9 @@
+fix(dashboard/analytics): remove o painel RealtimeMetricsPanel sem uso (SL-170)
+
+O RealtimeMetricsPanel saiu da Visão Geral no redesign Navy (substituído pelo
+DashboardKpiRow) e ficou com zero importadores: `git grep -n RealtimeMetricsPanel
+-- src` devolvia só o próprio arquivo e um comentário em DashboardView.tsx. A
+remoção estava pendente no inventário (RES-limpeza). O teste de resíduo em
+src/components/dashboard/__tests__/ResiduoVisaoGeral.test.ts fica vermelho com o
+arquivo presente e verde sem ele, e trava o retorno silencioso (o histórico tem um
+"Restored dead files", a2b733ecf).

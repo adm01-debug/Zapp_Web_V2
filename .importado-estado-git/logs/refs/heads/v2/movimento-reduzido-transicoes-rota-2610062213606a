@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791335618 -0300	branch: Created from dia/2026-10-06
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 115ad90a9c515491d4735b19cff4a959c0fcc6d0 iris <iris@fabrica.local> 1791336654 -0300	commit: fix(telas): transições de rota usam a mesma preferência de movimento reduzido do painel (#379)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791223817 -0300	
+b082bce893ba74365248c56c31e898f05a13dc69 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791223818 -0300	reset: moving to HEAD
+b082bce893ba74365248c56c31e898f05a13dc69 7531ab7b2af9d5a6abea524709945d8fcf9f8b60 Joaquim Ataides <ti@promobrindes.com.br> 1791224029 -0300	commit (cherry-pick): fix(automacoes): preserva condições e demais ações ao salvar automação (R2-MOD-002)
+7531ab7b2af9d5a6abea524709945d8fcf9f8b60 ee22b71cfbf07f19b0a4496974d1ad706261d85d Joaquim Ataides <ti@promobrindes.com.br> 1791224049 -0300	commit: fix(automacoes): preserva configuração válida ao salvar ação

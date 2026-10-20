@@ -1,0 +1,10 @@
+ci(e2e): roda o modulo MAPA (chromium-mapa) no job obrigatorio do ci.yml (#463)
+
+O job e2e do ci.yml listava 9 projects e nenhum coletava location-picker,
+contact-address ou contact-map-pin: PRs passavam com E2E VERDE sem executar
+spec alguma do mapa (E75). chromium-mapa e deslogado (sem setup/storageState,
+sessao falsa via installFakeSession), logo roda no job de PR sem arrastar
+E2E_TEST_EMAIL/E2E_TEST_PASSWORD.
+
+Guarda de contrato em scripts/ci/ci-e2e-projects.unit.mjs (roda no CI via
+node --test scripts/ci/*.unit.mjs).

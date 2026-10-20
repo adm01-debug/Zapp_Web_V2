@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503108 -0300	branch: Created from dia/2026-10-08
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 5284805f5eb7dd459475866e41dedfe42fac214b Joaquim Ataides <ti@promobrindes.com.br> 1791507458 -0300	commit: chore(sl-079): fecha sem codigo — reabertura do inbound so existe como migration (regra sem DDL/migration)

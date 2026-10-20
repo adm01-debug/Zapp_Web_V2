@@ -1,0 +1,3 @@
+test(qa): confirma no base que a prova dos classificadores correlaciona o consumo por chamada (#367)
+
+O achado R2-INF-020 (item 367) ja esta corrigido em dia/2026-10-06 pelo cartao 2610061022cf53 (commit f84635d09, aprovado pelo revisor para o sha b5b8c17d2 e integrado em 06/10 13:09). Nenhum arquivo de codigo foi alterado: git diff --stat contra dia/2026-10-06 sai vazio. Commit vazio apenas para o fechamento/fila rodarem. Prova no .tmp/relato.md: vermelho contra o harness ANTES do fix (o pin da auditoria, sha256 020ad659...), verde no codigo de hoje (6/6), mutacao minima provando a exigencia por chamada e zapp-verify . --rapido VERDE.

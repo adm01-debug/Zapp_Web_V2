@@ -1,0 +1,13 @@
+test(calls): prova no commit que o alerta nao abre WebSocket real
+
+A rodada anterior foi recusada porque a prova do bug (sonda temporaria)
+nao entrou no diff. Agora o commit carrega o teste de regressao:
+um duble do construtor de WebSocket (via vi.hoisted + defineProperty em
+globalThis, instalado antes da avaliacao de @/integrations/supabase/client)
+registra cada socket criado; beforeEach/afterEach e um it deterministico
+garantem que o render do IncomingCallAlert nao abre nenhum socket.
+
+Sem o mock do cliente, o subscribe() real do useTerminoRemoto cria o
+socket (verificado: falha com 1 URL wss://.../realtime capturada) e o
+undici estouraria "The event argument must be an instance of Event"
+depois do teardown, derrubando o passo testes do zapp-verify full.

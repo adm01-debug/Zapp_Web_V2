@@ -1,0 +1,10 @@
+fix(testes): isola EVOLUTION_API_* no teste de egress de sticker
+
+O teste falhava no CI porque deno test roda os arquivos no mesmo
+processo e cron-secret-authz-l5.test.ts seta EVOLUTION_API_URL/KEY em
+nível de módulo sem restaurar — o fallback legítimo ao provedor
+configurado disparava e a assertiva esperava zero chamadas.
+
+O teste agora fixa e restaura o ambiente e prova a garantia real: a URL
+arbitrária do payload nunca é buscada; com provedor configurado, só o
+endpoint sintético do Evolution pode ser chamado.

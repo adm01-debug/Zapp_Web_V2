@@ -1,0 +1,3 @@
+fix(outros): Experiência de uso e acessibilidade (SL-216)
+
+Botão de fechar do ToolPanel passa a ter nome acessível 'Fechar painel' (aria-label) e o ícone X vira aria-hidden; teste de comportamento novo em ToolPanel.accessibility.test.tsx.

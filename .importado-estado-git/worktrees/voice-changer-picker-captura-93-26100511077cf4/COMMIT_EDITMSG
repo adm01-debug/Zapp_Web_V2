@@ -1,0 +1,11 @@
+fix(inbox): VoiceChangerPicker para a captura ao fechar ou desmontar (R2-INB-057)
+
+O picker mantinha o MediaRecorder e os tracks de audio vivos depois de
+fechar o popover ou desmontar, e um getUserMedia pendente iniciava a
+captura com o componente ja fechado/desmontado.
+
+- releaseCapture(): desanexa ondataavailable/onstop e para o MediaRecorder
+  e os tracks; chamado pelo cleanup (fechar) e no unmount.
+- mountedRef/openRef: descarta o stream concedido se o popover fechar ou o
+  componente desmontar antes do getUserMedia resolver.
+- Teste de regressao (5 casos, vermelho antes / verde depois).

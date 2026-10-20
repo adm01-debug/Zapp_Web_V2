@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 bd0e6794fe1aebfffe77783f97ab99542e569f20 Joaquim Ataides <ti@promobrindes.com.br> 1791237510 -0300	
+bd0e6794fe1aebfffe77783f97ab99542e569f20 bd0e6794fe1aebfffe77783f97ab99542e569f20 Joaquim Ataides <ti@promobrindes.com.br> 1791237511 -0300	reset: moving to HEAD
+bd0e6794fe1aebfffe77783f97ab99542e569f20 a23b9b403cdf0130c9e94de8057a8b116b9da984 Joaquim Ataides <ti@promobrindes.com.br> 1791237811 -0300	commit: test(design-system): travar honestidade dos checkpoints do ledger Promo Gifts
+a23b9b403cdf0130c9e94de8057a8b116b9da984 e05320cb4e053b2f355bf2b15798d36ef28d52f3 Joaquim Ataides <ti@promobrindes.com.br> 1791237813 -0300	commit: docs(design-system): marcar checkpoints parciais como [~] e resumir gates

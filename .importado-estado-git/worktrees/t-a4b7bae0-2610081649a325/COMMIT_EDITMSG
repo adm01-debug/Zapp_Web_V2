@@ -1,0 +1,19 @@
+feat(edge): valida o corpo de evolution-api com schema Zod (E45/SL-050)
+
+O corpo de `evolution-api` ia cru para as decisões (ação, instância) e para o
+provedor: ação desconhecida no corpo virava 404 do handler e instância com tipo
+errado virava `"5"`, mirando instância inexistente.
+
+- `EvolutionApiRequestSchema` (em `_shared/schemas.ts`): `action` restrita às
+  ações que o handler implementa + `instanceName`/`instance` como string,
+  passthrough para o payload específico de cada ação.
+- A lista de ações vem de `CONTROL_ACTIONS ∪ SEND_ACTIONS ∪ READ_ACTIONS`
+  (fonte única já provada exaustiva pelo teste da matriz de autorização) — sem
+  uma segunda lista de 113 literais para dessincronizar.
+- Corpo inválido e instância ausente (E17) saem no formato único de validação
+  (422 + VALIDATION_ERROR, docs/contracts.md) antes de qualquer I/O.
+
+Teste: 5 casos deno com o handler real e o provedor falso (ação desconhecida,
+instância ausente, corpo válido que segue ao provedor, ação global isenta, e
+deriva entre a lista do schema e as ações do handler) + linha na tabela de
+contrato de schemas.

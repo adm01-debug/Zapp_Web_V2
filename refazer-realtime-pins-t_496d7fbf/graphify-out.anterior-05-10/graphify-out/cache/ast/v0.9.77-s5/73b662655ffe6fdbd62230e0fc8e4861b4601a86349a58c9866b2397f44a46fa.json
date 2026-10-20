@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260926200500_revoke_anon_grant_agent_achievement_sql", "label": "20260926200500_revoke_anon_grant_agent_achievement.sql", "file_type": "code", "source_file": "supabase/migrations/20260926200500_revoke_anon_grant_agent_achievement.sql", "source_location": null}], "edges": []}

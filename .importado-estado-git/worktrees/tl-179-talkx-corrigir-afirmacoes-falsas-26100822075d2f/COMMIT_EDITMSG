@@ -1,0 +1,16 @@
+fix(talk-x): acompanha o drift que apareceu só com o rebase (TL-179)
+
+Rebase em dia/2026-10-09: 2 cartões do mesmo "lote grande" avançaram o código
+depois que este relato foi escrito e o próprio guarda-de-honestidade que este
+cartão criou (talkx-docs-drift.unit.mjs) pegou os dois:
+
+- e2e/talkx.spec.ts ganhou 2 testes (o modal de ajuda virou tela com busca +
+  atalho Cmd/Ctrl+K — 7 titulos antigos nao existem mais, 9 titulos reais
+  agora): atualizei a lista de cobertura da OPERACAO.md para os 9 titulos
+  reais.
+- TL-075 criou src/components/talkx/TalkXCampaignPaused.tsx (mas nao ligou em
+  TalkXView.tsx: "paused" continua abrindo TalkXCampaignRunning). O banner da
+  ARQUITETURA.md ainda dizia que o arquivo "nao existe" — false agora.
+  Corrigi o banner e o teste para checar os 3 componentes pelo que cada um
+  realmente e (2 inexistentes, 1 existente-mas-nao-ligado), em vez do mesmo
+  "nao existe" para os 3.

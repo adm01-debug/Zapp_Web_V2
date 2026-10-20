@@ -1,0 +1,12 @@
+test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast
+
+Retomada da entrega aprovada (0b679fb14) sobre a ponta de dia/2026-10-09:
+o conflito era só neste arquivo (a ponta trazia a versão que ainda asseria
+`toast.info`). Resolvi preservando o que já entrou na branch do dia — o
+ponteiro para a correção do hook `go-to-dashboard` (5dc966476, entrada
+equivalente dbf679062), que já está na base — e sem a asserção/import de
+`toast`, que o revisor proíbe como prova.
+
+A prova da regressão é de comportamento: o `currentView` entregue ao
+`AppShell` e a URL canônica `?view=dashboard`, com o `Index` real dentro do
+`GlobalKeyboardProvider` real. Escopo: apenas este arquivo de teste.

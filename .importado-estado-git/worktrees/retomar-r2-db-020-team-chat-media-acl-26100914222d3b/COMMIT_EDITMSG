@@ -1,0 +1,7 @@
+fix(db): ACL e media_path do Team Chat derivam do objeto e da conversa (R2-DB-020)
+
+Retoma o trabalho perdido do cartao t_f1c4bc72 sobre a base de HOJE (dia/2026-10-09):
+- migration reemite a versao de hoje (20261009172324), substitui a de 05/10;
+- rollback devolve o DADO (tabela de apoio com o media_bucket antigo), na ordem certa;
+- reconciliacao suspende o gatilho BEFORE UPDATE de updated_at (nao reescreve a data);
+- teste ganha as provas do efeito colateral e da devolucao do dado, e entra no db-guard.yml.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 66727f895120d1457a60c4b77b7bc59b3f4626dc Joaquim Ataides <ti@promobrindes.com.br> 1791238383 -0300	branch: Created from dia/2026-10-05
+66727f895120d1457a60c4b77b7bc59b3f4626dc 84040a40e68db9a9c7de0da9fca98892b153eb68 Joaquim Ataides <ti@promobrindes.com.br> 1791238408 -0300	cherry-pick: fix(multiplix-send): bloquear envio com variavel nao resolvida (MX06)
+84040a40e68db9a9c7de0da9fca98892b153eb68 a230a30a860257c8d1314ce763b3ccbb874bdf18 Joaquim Ataides <ti@promobrindes.com.br> 1791238408 -0300	cherry-pick: test(multiplix-send): ancorar payload do MX06 em literal alem do oraculo do kernel

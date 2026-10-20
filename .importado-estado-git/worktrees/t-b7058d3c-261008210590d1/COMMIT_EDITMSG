@@ -1,0 +1,3 @@
+feat(ia): separar categoria e falha técnica nos classificadores de visão
+
+classify-sticker e classify-emoji passam a devolver, ao lado de `category`, o `state` da classificação ('ok', 'unknown', 'input_error', 'low_confidence', 'provider_error', 'unexpected_error') e o `error_code` do motivo técnico: só 'ok' é conclusão (IA-132). A recusa tipada da imagem viaja do helper até a resposta, e a reclassificação em lote (useMediaLibrary) só grava categoria em estado 'ok'.

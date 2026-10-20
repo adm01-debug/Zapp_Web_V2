@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 6afc5e8cf491dc81a99c85cf28eaf0678795db82 Joaquim Ataides <ti@promobrindes.com.br> 1791401129 -0300	
+6afc5e8cf491dc81a99c85cf28eaf0678795db82 6afc5e8cf491dc81a99c85cf28eaf0678795db82 Joaquim Ataides <ti@promobrindes.com.br> 1791401130 -0300	reset: moving to HEAD
+6afc5e8cf491dc81a99c85cf28eaf0678795db82 679a7be4be39c72519f6b5a5e937131a490aeab3 Joaquim Ataides <ti@promobrindes.com.br> 1791401142 -0300	cherry-pick: fix(db): talkx_engine_cron_runs passa a exigir admin/supervisor ou service_role (#118)
+679a7be4be39c72519f6b5a5e937131a490aeab3 25c95b75cd0d73441d4c13728e91287be40dfcce Joaquim Ataides <ti@promobrindes.com.br> 1791401883 -0300	commit: fix(ci): registrar prova do gate do cron Talk X

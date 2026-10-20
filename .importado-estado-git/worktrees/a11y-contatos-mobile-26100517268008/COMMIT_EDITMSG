@@ -1,0 +1,18 @@
+fix(a11y): nome acessível e contraste AA na navegação móvel de Contatos
+
+O gate E98 só media o viewport desktop, que não renderiza o header
+móvel nem a barra inferior — as 3 violações achadas em 390x844
+passavam invisíveis:
+
+- gatilho Radix do menu "Colunas" sem nome acessível (<640px o span
+  fica oculto): aria-label="Colunas" no botão (button-name critical);
+- iniciais do avatar no MobileHeader com text-primary sobre
+  bg-primary/15 (3,05:1): texto passa a usar o token existente
+  --primary-text (7,78:1 no escuro);
+- rótulo do item ativo da BottomNavigation em text-primary
+  (3,72:1): idem --primary-text (9,50:1 no escuro).
+
+Cobertura: describe aninhado 390x844 no spec a11y-contraste com o
+mesmo axe (color-contrast + button-name) e projeto deslogado
+chromium-a11y no Playwright/CI, no padrão chromium-contacts-visual.
+Tokens globais intocados — correção local com --primary-text.

@@ -1,0 +1,14 @@
+fix(talk-x): unificar o hook de supressão e paginar a tabela no servidor (TL-165)
+
+X178. `useTalkXSuppression` passa a ser o único ponto de acesso à lista:
+leitura paginada no servidor (pageSize/offset, filtros de origem e motivo,
+ordenação com desempate, `count` exato) e mutações de adicionar, editar e
+remover — remover é UPDATE de `removed_at`/`removed_by`, nunca DELETE — todas
+com `onError`. `TalkXSuppression.tsx` deixa de falar com o Supabase: usa o hook,
+mostra as colunas reais (e-mail do contato, telefone formatado, nome da
+campanha, status Suprimido/Expirado/Removido) e o total do SERVIDOR no rodapé.
+Erro 42501 vira o estado "sem permissão" em vez de lista vazia.
+
+A RPC `talkx_suppression_list` (X176) ainda não está no banco vivo, então a
+leitura vem da tabela `talkx_blacklist`; `fetchSuppressionPage` é o único ponto
+a trocar quando ela entrar.

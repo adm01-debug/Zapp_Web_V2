@@ -1,0 +1,20 @@
+fix(emoji): confirmar sucesso só após a persistência aceita (#226)
+
+Operações de emoji e de exclusão de conteúdo anunciavam sucesso com o
+resultado do PostgREST descartado (R2-API-053):
+
+- useCustomEmojis: favorito e categoria passam a conferir o `error` do
+  UPDATE, revertem o estado otimista e mostram erro em vez de "sucesso".
+- useCustomEmojis: a exclusão remove a LINHA antes do arquivo (a linha é a
+  referência durável) e só anuncia sucesso com o DELETE aceito. Falha do
+  DELETE devolve o emoji à lista; falha só do Storage (arquivo órfão, nunca
+  referência quebrada) entra numa fila de pendências retomada na próxima
+  leitura do seletor — sem toast de sucesso.
+- useKnowledgeBase.deleteArticle: confere o `error`, mostra erro destrutivo
+  e devolve false; o fetch de revalidação só roda com o DELETE aceito.
+- WhatsAppFlowsBuilder.deleteFlow: confere o `error` e mostra erro
+  destrutivo em vez de "Flow removido".
+
+Testes que provam o defeito (vermelho-sem-correção -> verde-com-correção):
+11 casos novos em 3 arquivos, chamando o hook/componente reais com o cliente
+Supabase mockado.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791343344 -0300	branch: Created from dia/2026-10-07
+e58beff67df277afa73c179058c38190a5dd5d5c 9d158e790867408fe3c64d1f11bf67b508ad5608 Joaquim Ataides <ti@promobrindes.com.br> 1791343389 -0300	cherry-pick: fix(talkx): insights elegem campanha por taxa de resposta e usam status completed
+9d158e790867408fe3c64d1f11bf67b508ad5608 f25ab78fb0bb51a3748b06186cba1f5461cedb4f Joaquim Ataides <ti@promobrindes.com.br> 1791343390 -0300	cherry-pick: test(hooks): prova vermelho→verde de #223 (eleição por taxa e concluídas no alerta)

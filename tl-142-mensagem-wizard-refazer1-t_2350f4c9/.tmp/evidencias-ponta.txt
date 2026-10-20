@@ -1,0 +1,28 @@
+== ponta ==
+f5885801b1 fix(talk-x): refaz RPCs guardadas de ações em massa
+== 91f721a2ed ancestor da ponta? ==
+SIM
+== f2a95a2 ancestor da ponta? ==
+NAO
+== stat f2a95a2 ==
+f2a95a2c7b fix(talk-x): mensagem no wizard com o editor único: chips do mock, inserção no cursor e limite 4096 (TL-142)
+ src/components/talkx/TalkXCampaignWizard.tsx       | 31 +++++++++++---
+ .../talkx/__tests__/useCampaignEditor.test.tsx     | 48 ++++++++++++++++++++++
+ src/components/talkx/kit/constants.ts              |  8 +++-
+ src/components/talkx/useCampaignEditor.ts          | 35 +++++++++++++---
+ 4 files changed, 110 insertions(+), 12 deletions(-)
+== VARIABLE_KEYS ponta ==
+73:export const VARIABLE_KEYS = ['{{nome}}', '{{nome_completo}}', '{{apelido}}', '{{empresa}}', '{{saudacao}}', '{{vendedor}}', '{{data_atual}}', '{{link}}'] as const;
+== insertVariable em useCampaignEditor ponta (0=ausente) ==
+0
+== MESSAGE_LIMIT/MORE_VARIABLES hook ponta ==
+28:export const MORE_VARIABLES = [
+38:export const MESSAGE_LIMIT = 4096;
+827:    2: messageTemplate.length <= MESSAGE_LIMIT
+== X128 its teste ponta ==
+1019:  it('X128 — o chip de variável insere NA POSIÇÃO DO CURSOR (não anexa ao fim do texto)', () => {
+1033:  it('X128 — mensagem acima do teto do provedor (4.096) bloqueia o Continuar do passo 2', () => {
+1048:  it('X128 — chips de variável na ordem do mock 08 e as demais em "Mais variáveis"', () => {
+== mock layout-test ponta ==
+43:    MESSAGE_LIMIT: 4096,
+44:    MORE_VARIABLES: [],

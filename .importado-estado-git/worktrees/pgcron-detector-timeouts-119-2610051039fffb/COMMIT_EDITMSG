@@ -1,0 +1,25 @@
+feat(talkx): detector de cron no sensor — timeouts e ≥5 falhas seguidas (#119)
+
+Por quê: em 03/10 o pg_cron registrou 'job startup timeout' em massa (~2.006). O
+detector cron_degraded do sensor (talkx_engine_alerts) só olhava as últimas 3
+execuções do job talkx-scheduler-1min, exigia as 3 falhas e não lia
+return_message: não enxergava a assinatura do evento (job startup timeout) nem
+contava falhas seguidas.
+
+Agora cron_degraded avalia as últimas 10 execuções e abre quando há ≥5 falhas
+consecutivas OU quando a execução mais recente falhou com 'job startup timeout'
+(exaustão de backends; docs/ops/runbook-pg-cron-capacidade.md). O payload passa a
+levar reason (timeout | consecutive_failures), consecutive_failures, timeouts e
+last_return_message (200 chars), atualizado enquanto o alerta segue aberto
+(ON CONFLICT DO UPDATE, mesmo padrão do purge_failed). Dedup por (tipo, campanha)
+e fechamento automático preservados; purge_failed continua fora do fechamento.
+Causa já documentada no runbook; o escalonamento de 20261002541230 não é tocado.
+
+Verificação: scripts/db-audit/talkx-engine-health.test.sh (Docker
+postgres:17-alpine) verde — RED prova que 1 timeout não abria cron_degraded na
+regra antiga; GREEN cobre timeout na mais recente, 5 falhas seguidas, 2 falhas
+seguidas sem disparo, auto-resolução ao voltar o sucesso e idempotência.
+zapp-verify . --rapido VERDE (db_guard, tipos, lint, migrations). Migration
+aplicada no banco LOCAL v2-2610051039fffb.
+
+Cartão: t_7699b1bf (P2 #119 / M-DB-06).

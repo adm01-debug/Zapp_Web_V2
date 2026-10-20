@@ -1,0 +1,12 @@
+test(e2e): guarda de coletor pula a spec Y10 em projeto de sessão salva
+
+O único projeto da playwright.config.ts que coleta e2e/tarefas-quadro.spec.ts é o
+catch-all de sessão salva (`chromium-authenticated`: `use.storageState` +
+`dependencies: ['setup']`), que o `.github/workflows/e2e-logado.yml:115` roda na main.
+Sem guarda, a spec executaria login e escrita de tarefas no backend do ambiente logado.
+
+A guarda é um `test.beforeEach` declarado ANTES do login e sem pedir a fixture `page`:
+com `use.storageState` no projeto coletor o arquivo inteiro sai "skipped" e o arquivo
+de sessão nem é lido; num projeto deslogado ela não dispara e os cenários seguem
+normalmente. Nenhuma alteração em playwright.config.ts, package, produto, fixture ou
+helper.

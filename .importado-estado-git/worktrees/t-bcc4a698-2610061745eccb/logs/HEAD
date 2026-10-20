@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319547 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319548 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 30dfd17150240d92ab584ff5758fb6cf13d602dc Joaquim Ataides <ti@promobrindes.com.br> 1791320043 -0300	commit: fix(queues): descarta a comparação de um período antigo que chega atrasada

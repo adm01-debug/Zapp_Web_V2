@@ -1,0 +1,9 @@
+docs(talk-me): separar baseline, piloto e observação no fechamento
+
+Cartão V2: t_e7bb4a60 (branch v2/t-e7bb4a60-26100519021555 @ bd0e6794f)
+
+Mantém P95/PILOT/HUMAN/OBSERVATION como dimensões próprias no relatório de
+execução do Talk Me e explicita a ausência de p95 de leitura/claim, de piloto
+(público/critério/resultado), de homologação nominal e de janela de observação.
+A faixa 091–100 deixa de tratar registro de publicação como observabilidade
+medida. Guarda nova: scripts/ci/talk-me-closure-dimensions.unit.mjs.

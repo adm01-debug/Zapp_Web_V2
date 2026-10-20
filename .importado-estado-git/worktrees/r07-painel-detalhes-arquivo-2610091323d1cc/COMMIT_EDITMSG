@@ -1,0 +1,6 @@
+feat(arquivos): painel de detalhes com remetente, baixar pela política e encaminhar
+
+R07 (S49-S53): o painel de detalhes mostra quem enviou (SenderAvatar com foto e nome,
+D01/D04), mantém a legenda, baixa pela política do sistema (D06: sem permissão continua o
+cadeado com o motivo) e habilita o Encaminhar pelo MESMO caminho do cartão (S52).
+Cores, efeitos e canais: nada novo; sem DDL/Edge/migration/dependência.

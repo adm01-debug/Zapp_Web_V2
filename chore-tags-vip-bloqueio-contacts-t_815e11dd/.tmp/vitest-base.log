@@ -1,0 +1,330 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automacoes-sem-tag-2610140700fa2c/.tmp/prova-base
+
+xx·xxxxxx·····xx······
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/automations/__tests__/AutomationsManager.obsoleta.test.tsx > AutomationsManager — automação de tipo removido fica marcada e desativada (sem apagar) > o registro antigo continua na lista, com o rótulo obsoleta e o controle desabilitado
+TestingLibraryElementError: Unable to find an element with the text: Obsoleta (tag removida). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-between"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-zap w-5 h-5 text-primary"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mAutomações[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [0mConfigure respostas e ações automáticas[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<div />[39m
+            [36m<div>[39m
+              [36m<button[39m
+                [33mdata-value[39m=[32m"all"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mTodas[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mdata-value[39m=[32m"active"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mAtivas[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mdata-value[39m=[32m"inactive"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mInativas[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus w-4 h-4 mr-2"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mNova[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"p-4 rounded-lg border transition-all bg-card border-primary/20"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-start gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"p-2 rounded-lg shrink-0 bg-primary/20"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-zap w-5 h-5 text-primary"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex-1 min-w-0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-2"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"font-medium text-sm truncate"[39m
+                    [36m>[39m
+                      [0mGrupo antigo[0m
+                    [36m</h4>[39m
+                    [36m<span>[39m
+                      [0mAtivo[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground mt-0.5 line-clamp-1"[39m
+                  [36m>[39m
+                    [0mdesc[0m
+                  [36m</p>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-1 mt-2 flex-wrap"[39m
+                  [36m>[39m
+                    [36m<span />[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-arrow-right w-3 h-3 text-muted-foreground"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M5 12h14"[39m
+        ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/automations/__tests__/AutomationsManager.obsoleta.test.tsx:191:19
+    189|     // 1. o registro antigo NÃO some da lista (não apagamos nada)
+    190|     expect(await screen.findByText('Grupo antigo')).toBeInTheDocument(…
+    191|     expect(screen.getByText(ROTULO_OBSOLETA)).toBeInTheDocument();
+       |                   ^
+    192|
+    193|     // 2. ele aparece desativado mesmo gravado como ativo, e o usuário…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/components/automations/__tests__/AutomationsManager.obsoleta.test.tsx > AutomationsManager — automação de tipo removido fica marcada e desativada (sem apagar) > o filtro "Inativas" acolhe o registro obsoleto e o "Ativas" não o mostra
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <h4
+  class="font-medium text-sm truncate"
+>
+  Grupo antigo
+</h4> instead[39m
+ ❯ src/components/automations/__tests__/AutomationsManager.obsoleta.test.tsx:221:52
+    219|     fireEvent.click(screen.getByRole('button', { name: 'Ativas' }));
+    220|     expect(screen.getByText('Boas-vindas vive')).toBeInTheDocument();
+    221|     expect(screen.queryByText('Grupo antigo')).not.toBeInTheDocument();
+       |                                                    ^
+    222|
+    223|     fireEvent.click(screen.getByRole('button', { name: 'Inativas' }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > automationConstants — as opções de tag saíram do editor > TRIGGER_TYPES é exatamente a lista viva, na ordem
+AssertionError: expected [ 'new_message', 'keyword', …(3) ] to deeply equal [ 'new_message', 'keyword', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "new_message",
+    "keyword",
+    "time_inactive",
++   "tag_added",
+    "business_hours",
+  ]
+
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:19:46
+     17| describe('automationConstants — as opções de tag saíram do editor', ()…
+     18|   it('TRIGGER_TYPES é exatamente a lista viva, na ordem', () => {
+     19|     expect(TRIGGER_TYPES.map((t) => t.type)).toEqual(GATILHOS_VIVOS);
+       |                                              ^
+     20|   });
+     21|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > automationConstants — as opções de tag saíram do editor > ACTION_TYPES é exatamente a lista viva, na ordem
+AssertionError: expected [ Array(5) ] to deeply equal [ Array(4) ]
+
+- Expected
++ Received
+
+  [
+    "send_message",
+    "assign_agent",
++   "add_tag",
+    "send_notification",
+    "close_conversation",
+  ]
+
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:23:45
+     21|
+     22|   it('ACTION_TYPES é exatamente a lista viva, na ordem', () => {
+     23|     expect(ACTION_TYPES.map((a) => a.type)).toEqual(ACOES_VIVAS);
+       |                                             ^
+     24|   });
+     25|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > isObsoleteAutomation — reconhece o registro antigo, sem apagar nada > automação só com tipos vivos não é obsoleta
+TypeError: isObsoleteAutomation is not a function
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:39:12
+     37|
+     38|   it('automação só com tipos vivos não é obsoleta', () => {
+     39|     expect(isObsoleteAutomation(viva)).toBe(false);
+       |            ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > isObsoleteAutomation — reconhece o registro antigo, sem apagar nada > gatilho que a tela não oferece mais marca a automação como obsoleta
+TypeError: isObsoleteAutomation is not a function
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:43:12
+     41|
+     42|   it('gatilho que a tela não oferece mais marca a automação como obsol…
+     43|     expect(isObsoleteAutomation({ ...viva, trigger_type: 'gatilho_que_…
+       |            ^
+     44|   });
+     45|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > isObsoleteAutomation — reconhece o registro antigo, sem apagar nada > qualquer ação que a tela não oferece mais marca a automação como obsoleta
+TypeError: isObsoleteAutomation is not a function
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:48:7
+     46|   it('qualquer ação que a tela não oferece mais marca a automação como…
+     47|     expect(
+     48|       isObsoleteAutomation({
+       |       ^
+     49|         trigger_type: 'keyword',
+     50|         actions: [{ type: 'send_message', config: {} }, { type: 'acao_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > isObsoleteAutomation — reconhece o registro antigo, sem apagar nada > chave de config desconhecida NÃO torna a automação obsoleta (só o tipo importa)
+TypeError: isObsoleteAutomation is not a function
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:57:7
+     55|   it('chave de config desconhecida NÃO torna a automação obsoleta (só …
+     56|     expect(
+     57|       isObsoleteAutomation({
+       |       ^
+     58|         trigger_type: 'keyword',
+     59|         actions: [{ type: 'assign_agent', config: { parametro_futuro: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > isObsoleteAutomation — reconhece o registro antigo, sem apagar nada > ações ausentes não marcam; item de ação sem tipo marca (sem quebrar a lista)
+TypeError: isObsoleteAutomation is not a function
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:65:12
+     63|
+     64|   it('ações ausentes não marcam; item de ação sem tipo marca (sem queb…
+     65|     expect(isObsoleteAutomation({ trigger_type: 'keyword' })).toBe(fal…
+       |            ^
+     66|     expect(isObsoleteAutomation({ trigger_type: 'keyword', actions: [{…
+     67|     expect(isObsoleteAutomation({ trigger_type: 'keyword', actions: 't…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/components/automations/__tests__/automationConstants.test.ts > isObsoleteAutomation — reconhece o registro antigo, sem apagar nada > o rótulo mostrado na lista é o combinado com o dono
+AssertionError: expected undefined to be 'Obsoleta (tag removida)' // Object.is equality
+
+- Expected:
+"Obsoleta (tag removida)"
+
++ Received:
+undefined
+
+ ❯ src/components/automations/__tests__/automationConstants.test.ts:71:39
+     69|
+     70|   it('o rótulo mostrado na lista é o combinado com o dono', () => {
+     71|     expect(OBSOLETE_AUTOMATION_LABEL).toBe('Obsoleta (tag removida)');
+       |                                       ^
+     72|   });
+     73| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  10 failed | 12 passed (22)
+   Start at  07:17:45
+   Duration  3.40s (transform 913ms, setup 902ms, import 1.52s, tests 1.98s, environment 3.02s)
+

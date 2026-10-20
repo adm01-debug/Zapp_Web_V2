@@ -1,0 +1,9 @@
+fix(telefonia): OutboundCallDialog tolerante fora do CallSessionProvider
+
+O overlay global é montado lazy no App (DeferredProviders, sob
+ErrorBoundary fallback={null}) e usava useCallSession(), que lança sem
+provider — derrubava todos os irmãos do bloco (listener do Team Chat
+nunca montava, falha TC-007 no lote do integrador).
+
+useCallSessionOptional() devolve undefined sem provider e o diálogo
+renderiza null; com provider o comportamento é idêntico.

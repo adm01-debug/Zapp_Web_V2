@@ -1,0 +1,14 @@
+fix(ai-audio): limita streaming e cobre leitura no timeout
+
+A leitura do corpo do Storage deixava de ser protegida depois dos headers:
+sem content-length (ou com valor falso) o arrayBuffer materializava o corpo
+inteiro antes de rejeitar, e o timer era limpo logo após o fetch, deixando
+uma leitura travada pendente para sempre.
+
+Agora o corpo é lido por streaming com getReader: os bytes são somados a cada
+pedaço e, ao estourar o teto, o reader é cancelado e rejeita AUDIO_TOO_LARGE
+sem materializar o restante. O clearTimeout passa para um finally externo que
+cobre requisição, validações e leitura; cada read() corre contra o sinal do
+AbortController (o fetch injetado pode ignorá-lo), virando AUDIO_DOWNLOAD_FAILED
+com texto de timeout, e erro do stream vira AUDIO_DOWNLOAD_FAILED com o texto
+do erro.

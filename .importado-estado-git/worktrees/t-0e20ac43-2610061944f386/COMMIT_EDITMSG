@@ -1,0 +1,13 @@
+fix(campaigns): público e mídia exigem os campos correspondentes (R2-MOD-005)
+
+O CampaignCreateDialog oferecia etiqueta/fila/grupo/seleção manual e
+imagem/vídeo/documento sem pedir o dado que os especifica: a campanha era
+gravada com o tipo escolhido, sem seleção de público e sem mídia, e a tela
+ainda iniciava a campanha (só trocando o status) sem audiência nenhuma.
+
+- URL da mídia passa a ser exigida em imagem, vídeo e documento e vai no
+  payload como media_url;
+- etiqueta/fila/grupo/IDs de contatos passam a ser exigidos no público
+  escolhido e vão em target_filter;
+- iniciar campanha só fica disponível com audiência materializada
+  (total_contacts > 0) e, sem ela, o motivo aparece na linha.

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 77354ad042ecac6ae9e334bfafdeae845de885fb Joaquim Ataides <ti@promobrindes.com.br> 1791347301 -0300	branch: Created from dia/2026-10-07
+77354ad042ecac6ae9e334bfafdeae845de885fb 013127d4c4c82349afc72437b5316e91e43f879a Joaquim Ataides <ti@promobrindes.com.br> 1791347343 -0300	commit (cherry-pick): fix(db): fecha anon/PUBLIC nas 5 DEFINER e corrige as provas do M-DB-05 (#474)

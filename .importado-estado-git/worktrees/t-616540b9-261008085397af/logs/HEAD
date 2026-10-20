@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791460403 -0300	
+56917f551f1e9d834297f0df48c33726666b992d 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791460404 -0300	reset: moving to HEAD
+56917f551f1e9d834297f0df48c33726666b992d 7683b4bd94591cd7659c7794bfdead05962791f1 Joaquim Ataides <ti@promobrindes.com.br> 1791461392 -0300	commit: fix(settings): não gravar campos operacionais no useUserSettings

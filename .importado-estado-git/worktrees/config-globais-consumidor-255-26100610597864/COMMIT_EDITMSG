@@ -1,0 +1,10 @@
+fix(configuracoes): marca configurações globais e chave ElevenLabs como registro sem efeito
+
+Cartão V2: t_58e00904 (R2-AUTH-030). Alertas identificam que as quatro
+chaves globais só são gravadas em global_settings e que a autoridade do
+TTS é a env var ELEVENLABS_API_KEY do servidor; badge passa a dizer
+"Registrada (não usada pelo TTS)"; updateSetting rejeita quando nenhuma
+linha é atualizada, impedindo toast de sucesso sem escrita.
+
+Provas (vermelho antes, verde depois): GlobalSettingsSection.sem-consumidor.test.tsx,
+IntegrationKeysSection.sem-consumidor.test.tsx e useGlobalSettings.zero-linhas.test.tsx.

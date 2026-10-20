@@ -1,0 +1,26 @@
+fix(multiplix): cancela sucessores quando o bloco fecha sem envio
+
+R2-DB-006 (item 294, P2): com o predecessor em estado terminal sem envio (skipped,
+failed ou outcome_unknown), `list_multiplix_claimable_items` nunca liberava os
+blocos seguintes do mesmo destinatario — eles ficavam `pending` para sempre, o
+sweeper so olhava `sending` e a drenagem por itens recusa qualquer pending: fila
+sem progresso e dispatch preso em `sending`.
+
+Duas funcoes substituidas, nada mais:
+- `complete_multiplix_item`: ao fechar o item como skipped/failed/outcome_unknown,
+  cancela os itens ainda nao tentados (pending/failed_transient) do mesmo
+  (dispatch, destinatario) com block_order maior — a cadeia inteira, transitivo
+  por construcao. Item enviado (sent/delivered/read) e item em voo (sending com
+  lease de outro worker) nao sao tocados.
+- `sweep_multiplix_stuck_items`: mesma cascata ao fechar o item preso e
+  reconciliacao das linhas ja presas antes da correcao (o sweeper roda no cron,
+  entao converge sozinho).
+
+`cancelled` e o estado do enum que nao era usado em lugar nenhum do repositorio;
+cancelar nao envia nada, e terminal e destrava a drenagem. Retorno do sweeper
+segue sendo descartado pelos chamadores (o cron faz PERFORM).
+
+Teste: supabase/tests/multiplix_cascata_bloco_terminal.sql (RPC real, fixture
+sintetica) — T0 a T9: opt-out, sem destino, falha permanente, resultado incerto,
+sweeper reconciliando linha presa, cadeia com predecessor pending intacta, ordem
+do F55 preservada e contadores do dispatch sem inflar.

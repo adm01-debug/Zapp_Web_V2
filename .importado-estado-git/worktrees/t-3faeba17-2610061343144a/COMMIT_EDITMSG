@@ -1,0 +1,13 @@
+fix(edge): get-call-recording entrega JSON com a URL da gravacao (#62)
+
+A Edge respondia `new Response(upstream.body)` com Content-Type de audio; o
+player (`useCallRecording` -> `RecordingPlayer`) le `data.url` e monta
+`<audio src={url}>`. Corpo de audio nao tem `.url`: o player devolvia null e a
+gravacao disponivel nunca aparecia para ouvir.
+
+A resposta passa a ser JSON `{ url }` (200), o contrato que o hook e o player
+ja consomem, com `Cache-Control: no-store`. O caminho de streaming sai, junto
+com `cabecalhosDoAudio`; a URL do provedor continua saindo so para quem passa
+pela RLS do proprio JWT, e a origem continua validada antes de responder
+(mesmo ramo de 502). Os testes passam a chamar o handler REAL (401/403/404/500/
+502/429/405/400 e o 200 com JSON), no lugar dos seis que so cobriam cabecalhos.

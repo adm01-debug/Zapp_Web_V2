@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491881 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc dbd0612130dccd6de373e1fb1e81bd03c1feda50 Joaquim Ataides <ti@promobrindes.com.br> 1791492275 -0300	commit: fix(catálogo): badges de destaque do card pintam por token do tema (SL-038)

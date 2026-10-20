@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72946d5e8d0a9f3977526ec99bca88f406914b91 Joaquim Ataides <ti@promobrindes.com.br> 1791302558 -0300	branch: Created from dia/2026-10-06
+72946d5e8d0a9f3977526ec99bca88f406914b91 be29a1a592371479630d5f0f083c65789a0dcfb0 Joaquim Ataides <ti@promobrindes.com.br> 1791303218 -0300	commit: fix(logger): contexto de quarentena não sobrescreve mais o attempt do logger filho (#475)

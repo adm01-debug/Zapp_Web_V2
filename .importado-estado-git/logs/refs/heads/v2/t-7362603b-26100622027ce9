@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791334951 -0300	branch: Created from dia/2026-10-06
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 ecc433f92dc1d07b0981913292ba04799867a527 hermes <hermes@local> 1791337199 -0300	commit: fix(banco): unifica o contrato de mídia do Team Chat no storage e na mensagem (#54)

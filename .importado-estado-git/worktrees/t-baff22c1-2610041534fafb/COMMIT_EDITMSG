@@ -1,0 +1,5 @@
+fix(seguranca): usa escape dinâmico para auth_session_id ainda fora do types.ts (R2-AUTH-004)
+
+auth_session_id é adicionado pela migration do cartão backend (t_29b824ad) e o
+types.ts gerado ainda não o conhece. Acesso via fromTable evita erro de tipo até
+o types-sync regenerar após o merge.

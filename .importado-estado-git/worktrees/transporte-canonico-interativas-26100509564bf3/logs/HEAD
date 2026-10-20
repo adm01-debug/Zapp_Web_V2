@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791204978 -0300	
+24d62d71031b256f8590067fae660ee76dd69a97 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791204979 -0300	reset: moving to HEAD
+24d62d71031b256f8590067fae660ee76dd69a97 20204fffad8bad5d32a5e2a23e3b799e8c04fe49 Joaquim Ataides <ti@promobrindes.com.br> 1791205056 -0300	cherry-pick: fix(inbox): construtor interativo não confirma envio sem transporte (R2-INB-003)
+20204fffad8bad5d32a5e2a23e3b799e8c04fe49 aa5e3f388ab6bd7187c40069dac06523975a2016 Joaquim Ataides <ti@promobrindes.com.br> 1791207528 -0300	commit: feat(inbox): transporte canônico de botões e listas interativas (R2-INB-003)

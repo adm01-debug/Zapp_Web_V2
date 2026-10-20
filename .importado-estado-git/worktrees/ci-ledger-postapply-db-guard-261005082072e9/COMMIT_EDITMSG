@@ -1,0 +1,10 @@
+fix(ci): ledger pos-apply usa o gate de prontidão do harness e o docker-shim
+
+O teste R2-INF-005 sondava o container próprio com pg_isready, que responde
+na janela do servidor temporário do initdb (mesmo socket); o psql seguinte
+caía no vazio e o passo falhava deterministicamente nas 6 tentativas.
+
+O gate passa a ser o mesmo do wait_for_postgres() do harness — marcador de
+init nos docker logs + SELECT 1 —, o que permite remover o SKIP_DOCKER_SHIM
+e rotear o teste pelo PostgreSQL descartável compartilhado do job, como os
+demais testes do DB Guard.

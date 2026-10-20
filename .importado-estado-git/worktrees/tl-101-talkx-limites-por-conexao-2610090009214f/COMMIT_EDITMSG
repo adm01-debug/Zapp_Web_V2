@@ -1,0 +1,16 @@
+fix(talk-x): conta a fila por item no teto compartilhado por conexão (MX04)
+
+O orçamento por conexão (minuto/dia) somava o Multiplix por
+multiplix_recipients.sent_at, mas o worker atual carimba o envio em
+multiplix_delivery_items.sent_at e não toca no recipient — as mensagens do
+motor novo desapareciam do teto e a reentrada do cron renovava saldo.
+
+A migration nova define a unidade (mensagem: 1 item = 1 mensagem) e a fonte
+única (talkx_multiplix_connection_sent_count), usada pelas duas RPCs
+(talkx_connection_send_budget e multiplix_connection_daily_usage), sem dupla
+contagem quando legado e fila por item coexistem.
+
+Prova: scripts/db-audit/talkx-send-budget.test.sh agora cobre o caminho da
+fila por item, o teto fechado pelos dois motores, a igualdade do consumo
+diário entre as duas RPCs e o caso negado (helper e RPC sem service_role).
+Vermelho antes: sem a migration, minute_sent=2 (5 itens ignorados).

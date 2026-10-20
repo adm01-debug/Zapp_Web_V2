@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e248e23bec1f63f229e6c0232becddbd25e198d9 Joaquim Ataides <ti@promobrindes.com.br> 1791245048 -0300	branch: Created from dia/2026-10-05
+e248e23bec1f63f229e6c0232becddbd25e198d9 9e980a3d7c372243ad45d0e7886438df4f7310c3 Joaquim Ataides <ti@promobrindes.com.br> 1791245501 -0300	commit: fix(admin): carrega roles e perfis sem embed PostgREST inexistente

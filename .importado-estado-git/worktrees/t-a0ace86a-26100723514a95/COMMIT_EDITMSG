@@ -1,0 +1,5 @@
+test(e2e): abre a secao pelo primeiro item DO MAPA
+
+Com 'CRM 360°' fora da varredura, a comparacao com itens[0] nunca casava para
+'Vendas & CRM': a secao ficava fechada e o clique em 'Carteira' pendurava ate o
+teto de 20 min do teste (medido em 08/10 no conjunto t-a0ace86a).

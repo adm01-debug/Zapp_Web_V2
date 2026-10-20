@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526223 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526224 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 22426b6f37924602aeecbdf70f2d9be9366776d5 Joaquim Ataides <ti@promobrindes.com.br> 1791527222 -0300	commit: fix(talk-x): Os 7 filtros de audiência com o catálogo de filtros dos segmentos (TL-141)
+22426b6f37924602aeecbdf70f2d9be9366776d5 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543066 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 19a74e378b3fd3f3f3fcb46ad92fb5c8fc52fe99 Joaquim Ataides <ti@promobrindes.com.br> 1791543066 -0300	rebase (pick): fix(talk-x): Os 7 filtros de audiência com o catálogo de filtros dos segmentos (TL-141)
+19a74e378b3fd3f3f3fcb46ad92fb5c8fc52fe99 19a74e378b3fd3f3f3fcb46ad92fb5c8fc52fe99 Joaquim Ataides <ti@promobrindes.com.br> 1791543066 -0300	rebase (finish): returning to refs/heads/v2/t-76f85efb-26100903101deb
+19a74e378b3fd3f3f3fcb46ad92fb5c8fc52fe99 c1640018f333f401fa68260da4f228f2966b8cb4 Joaquim Ataides <ti@promobrindes.com.br> 1791543527 -0300	commit: fix(talk-x): filtros de audiência mostram as outras regras, normalizam UF e leem o mesmo grupo que gravam (TL-141)

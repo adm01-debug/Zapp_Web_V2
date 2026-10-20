@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321696 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321696 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 24ce585484e3e1071adc259bd9e83be7acadce44 Joaquim Ataides <ti@promobrindes.com.br> 1791322182 -0300	commit: fix(gmail-oauth): não anunciar sucesso quando disconnect falha

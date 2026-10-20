@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791268391 -0300	branch: Created from dia/2026-10-06
+55a428d7a89316109e71d975c4193d67f7b3b051 5a567f1a9c8e2e8f3336abf6b749215800444ec4 Joaquim Ataides <ti@promobrindes.com.br> 1791269587 -0300	commit: fix(dashboard): restaura trava E33, fuso SP e dedupe do SLA em dashboard_contact_counts (#38)

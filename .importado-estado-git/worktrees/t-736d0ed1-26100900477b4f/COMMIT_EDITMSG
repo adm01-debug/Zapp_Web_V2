@@ -1,0 +1,6 @@
+fix(multiplix): motion-safe no spinner de "Carregar mais" (regra permanente)
+
+O hunk de "Carregar mais" herdado da dia no rebase trouxe animate-spin sem
+motion-safe: (a dia tinha essa regressão; a branch original deste cartão
+não). Corrige o único ponto que ficou sem o prefixo — os outros 4 Loader2
+do arquivo já estavam corretos antes e depois do rebase.

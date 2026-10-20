@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524555 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 84873e2dc393284a34410d8eb883a7ea8e40fa70 hermes <hermes@local> 1791526532 -0300	commit: fix(talk-x): unificar ações de template (menu ⋮, duplicar que abre a cópia, testar, excluir) e aprovação (TL-122)
+84873e2dc393284a34410d8eb883a7ea8e40fa70 dacfd6e7223f05a1d1d0f833b9c1aac43da4d02c Joaquim Ataides <ti@promobrindes.com.br> 1791543775 -0300	rebase (finish): refs/heads/v2/tl-122-talkx-acoes-template-2610090242853a onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

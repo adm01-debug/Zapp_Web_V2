@@ -1,0 +1,8 @@
+feat(telefonia): Ligar do inbox disca na hora no cartão do contato
+
+O "Ligar" do painel do contato e do cabeçalho do chat voltava à Telefonia
+porque o consumidor de zapp:start-call chamava openDialer() e o próprio
+dial() navegava. Agora o pedido inbox/voip vira chamadaSaida e um
+OutboundCallDialog global disca com dial(phone, { abrirDiscador: false }),
+sem mudar a URL; avatar vai no payload do evento. DialPad, histórico,
+autoDial e o caminho WhatsApp (Telefonia preenchida) seguem como estavam.

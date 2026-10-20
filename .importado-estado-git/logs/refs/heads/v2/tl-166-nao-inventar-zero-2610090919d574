@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791548341 -0300	branch: Created from dia/2026-10-09
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 6c022e21e7fd5cbee88131d6b2f1cbb8a9f7d310 Joaquim Ataides <ti@promobrindes.com.br> 1791548345 -0300	cherry-pick: fix(talk-x): KPIs da supressão com janela e comparativo; Centro de proteção com medidor (X179)
+6c022e21e7fd5cbee88131d6b2f1cbb8a9f7d310 47be17896737cb973a70b8273574a8fcc982eebb Joaquim Ataides <ti@promobrindes.com.br> 1791548721 -0300	commit: fix(talk-x): sem resposta da RPC a supressão mostra "—" e não 0 no rail e no medidor
+47be17896737cb973a70b8273574a8fcc982eebb 67d636843e5f7647a728f83cf4ec1a9f89e49e10 Joaquim Ataides <ti@promobrindes.com.br> 1791548838 -0300	commit: chore(talk-x): alinha o relato do TL-166 aos numeros do diff da branch
+67d636843e5f7647a728f83cf4ec1a9f89e49e10 ba94a69193579097babe4560f1301f27c04c5afb Joaquim Ataides <ti@promobrindes.com.br> 1791566078 -0300	rebase (finish): refs/heads/v2/tl-166-nao-inventar-zero-2610090919d574 onto cdf3e975ea5f37a2ec9d90dffa14043660b5f658

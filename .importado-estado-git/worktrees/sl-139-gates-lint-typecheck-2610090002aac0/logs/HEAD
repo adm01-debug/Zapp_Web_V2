@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791514933 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791514934 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 c5669270fcf5de547a59bec679163c3b83e242ea Joaquim Ataides <ti@promobrindes.com.br> 1791516872 -0300	commit: fix(ci/devops): tipa 'linha' no teste do termino remoto e fecha o gate implicit-any (SL-139)

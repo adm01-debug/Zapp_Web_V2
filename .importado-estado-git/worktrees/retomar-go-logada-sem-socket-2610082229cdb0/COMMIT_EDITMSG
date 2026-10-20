@@ -1,0 +1,15 @@
+chore(edge): confirma GO logada sem socket já corrigida na ponta do dia
+
+O pedido do cartão [retomar] (item 65 · TRA-003) já está na ponta dia/2026-10-08:
+o commit b3fe542c1 ("fix(edge): classifica GO logada sem socket como
+reconectando"), do mesmo pedido e da mesma correção, é ancestral do HEAD e
+entrega o contrato E25 em supabase/functions/_shared/evolution-send.ts —
+`extractConnectionState` exige socket E sessão para 'open' e devolve
+'connecting' quando a socket cai com a sessão viva.
+
+O motivo registrado da falha (contrato tests/contracts/_adv_edge_legacy_producers.test.ts)
+não se reproduz na ponta: o arquivo é de vitest e passa (13/13); o ratchet
+deixou de pinar o total global de arquivos.
+
+Commit vazio de propósito, como manda o cartão: "se já foi corrigido, escreva
+isso em .tmp/relato.md com a prova e feche sem commit de código".

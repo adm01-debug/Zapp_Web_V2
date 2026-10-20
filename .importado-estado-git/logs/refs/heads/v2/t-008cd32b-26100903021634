@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791525780 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 ab7c531d8b6749661e6f68fdb109ce556ff2bfd2 Joaquim Ataides <ti@promobrindes.com.br> 1791526521 -0300	commit: fix(talk-x): passo 1 com nome 3-200, descricao do objetivo e responsavel admin/supervisor (X124)
+ab7c531d8b6749661e6f68fdb109ce556ff2bfd2 dd931c89b09dea77134e1a00d0ae854e9e5ab905 Joaquim Ataides <ti@promobrindes.com.br> 1791526821 -0300	commit: fix(talk-x): avatar do responsável em 24px (tamanho aceito pelo InitialsAvatar)

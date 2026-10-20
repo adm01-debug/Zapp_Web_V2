@@ -1,0 +1,11 @@
+fix(ai-conversao): trava atômica de versão na projeção de análise (R2-INF-023)
+
+A revalidação de contexto lia contacts.ai_projection_updated_at numa consulta
+separada e descartava o valor; a RPC recebia só p_analyzed_at (new Date() do
+handler) e projetava por `<= p_analyzed_at`. Uma leitura atrasada em trânsito
+deixava a análise antiga substituir a projeção concorrente.
+
+Agora a versão medida vira p_expected_projection_updated_at e a RPC compara
+ATOMICAMENTE sob lock da linha do contato; divergência devolve superseded=true
+sem gravar nada e o handler responde o envelope 'cancelled' canônico. A
+sobrecarga de 3 argumentos foi DROPada (proteção não é opcional).

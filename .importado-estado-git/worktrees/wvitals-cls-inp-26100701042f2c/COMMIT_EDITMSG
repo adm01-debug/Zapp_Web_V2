@@ -1,0 +1,13 @@
+fix(observabilidade): INP ignora eventos sem interactionId e teste de CLS prova o corte de 5 s
+
+Entradas `event` com interactionId ausente ou 0 (pointermove/pointerover com
+duracao >= 40 ms) nao sao interacao, mas entravam no p98 via chave `anon:` e
+inflavam o INP: um pointermove de 1000 ms junto de uma interacao real de 100
+ms reportava 1000. Agora o observer descarta `!interactionId` e o contador
+`inpAnonymousCount` deixou de existir.
+
+O teste "a janela fecha em 5 s" fechava a janela pelo gap > 1 s e passava
+mesmo sem a condicao `< 5000` (provado por mutacao). Reescrito com shifts de
+0,1 encadeados a 900 ms em 0..5400: sem o corte seriam 0,7; com o corte, 0,6.
+
+Ref: R2-INF-031 (#489)

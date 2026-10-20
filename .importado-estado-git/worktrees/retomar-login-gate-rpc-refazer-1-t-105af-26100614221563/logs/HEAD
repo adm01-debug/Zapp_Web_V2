@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791307349 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791307350 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd e0bd03f4492505900f6ba22e9cec507dd1af627d Joaquim Ataides <ti@promobrindes.com.br> 1791307362 -0300	cherry-pick: fix(auth-login): consolida gate de login na RPC consume_login_gate
+e0bd03f4492505900f6ba22e9cec507dd1af627d e59a0d3536147e93c9e35999ed27ae244ba5694b Joaquim Ataides <ti@promobrindes.com.br> 1791310457 -0300	commit (amend): fix(auth-login): consolida gate de login na RPC consume_login_gate

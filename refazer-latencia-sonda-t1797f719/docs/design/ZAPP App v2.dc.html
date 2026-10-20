@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#04050a;color:#e8eaf2;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}
+    :root{--accent:#22d3ee;--accent2:#8b5cf6;--text:#e8eaf2;--muted:rgba(232,234,242,.42);--dim:rgba(232,234,242,.22);--border:rgba(110,231,255,.07);--card:rgba(10,12,20,.7);--success:#34d399;--warn:#fbbf24;--error:#f87171;--sg:system-ui,-apple-system,sans-serif;}
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:rgba(110,231,255,.15);border-radius:4px;}
+    input::placeholder,textarea::placeholder{color:var(--dim);}
+    @keyframes aurora1{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,-40px);}}
+    @keyframes aurora2{0%,100%{transform:translate(0,0);}50%{transform:translate(-80px,50px);}}
+    @keyframes float-y{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+    @keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(52,211,153,.5);}70%{box-shadow:0 0 0 5px rgba(52,211,153,0);}100%{box-shadow:0 0 0 0 rgba(52,211,153,0);}}
+    @keyframes msg-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes typing-dot{0%,80%,100%{transform:scale(.55);opacity:.25;}40%{transform:scale(1);opacity:1;}}
+    @keyframes border-flow{0%{background-position:0%;}100%{background-position:200%;}}
+    @keyframes slide-in{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes pop-in{from{opacity:0;transform:scale(.93) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes sla-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.5);}50%{box-shadow:0 0 0 5px rgba(244,63,94,0);}}
+    @keyframes count-up{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
+    @keyframes kanban-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes waveform{0%,100%{transform:scaleY(.4);}50%{transform:scaleY(1);}}
+    .shimmer-line{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:400px 100%;animation:shimmer 1.4s ease-in-out infinite;}
+    .sg{font-family:var(--sg);}
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:#04050a;position:relative;">
+
+<!-- Aurora BG -->
+<div style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
+  <div style="position:absolute;top:-10%;left:10%;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.1),transparent 65%);filter:blur(60px);animation:aurora1 20s ease-in-out infinite;"></div>
+  <div style="position:absolute;bottom:-15%;right:5%;width:540px;height:540px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.1),transparent 65%);filter:blur(70px);animation:aurora2 24s ease-in-out infinite;"></div>
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(110,231,255,.016) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,255,.016) 1px,transparent 1px);background-size:52px 52px;mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,black 30%,transparent 75%);"></div>
+</div>
+
+<!-- SIDEBAR -->
+<aside style="position:relative;z-index:10;width:{{ sideW }};min-width:{{ sideW }};height:100vh;display:flex;flex-direction:column;background:rgba(8,10,18,.85);backdrop-filter:blur(24px);border-right:1px solid var(--border);transition:width .32s cubic-bezier(.34,1.56,.64,1);overflow:hidden;flex-shrink:0;">
+  <!-- Logo -->
+  <div style="padding:14px 12px 10px;flex-shrink:0;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div onClick="{{ goHome }}" style="width:36px;height:36px;min-width:36px;border-radius:11px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 18px rgba(34,211,238,.35);animation:float-y 4s ease-in-out infinite;flex-shrink:0;">
+        <span style="color:#04070d;font-family:var(--sg);font-weight:700;font-size:16px;">Z</span>
+      </div>
+      <sc-if value="{{ !sideCollapsed }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-width:0;">
+          <p style="font-family:var(--sg);font-size:14px;font-weight:700;color:#e8eaf2;white-space:nowrap;">ZAPP</p>
+          <p style="font-size:9.5px;color:var(--dim);white-space:nowrap;">{{ clock }}</p>
+        </div>
+        <button onClick="{{ toggleSide }}" style="border:none;background:transparent;cursor:pointer;color:var(--dim);flex-shrink:0;" style-hover="color:rgba(232,234,242,.7);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </sc-if>
+      <sc-if value="{{ sideCollapsed }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ toggleSide }}" style="border:none;background:transparent;cursor:pointer;color:var(--dim);" style-hover="color:rgba(232,234,242,.7);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      </sc-if>
+    </div>
+  </div>
+  <!-- Nav items -->
+  <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:6px;">
+    <sc-for list="{{ navItems }}" as="ni">
+      <div style="position:relative;margin-bottom:1px;">
+        <sc-if value="{{ ni.active }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:2.5px;height:18px;border-radius:0 2px 2px 0;background:linear-gradient(180deg,#22d3ee,#8b5cf6);"></span></sc-if>
+        <button onClick="{{ ni.go }}" style="width:100%;height:36px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:0 10px;justify-content:{{ sideCollapsed ? 'center' : 'flex-start' }};transition:all .15s;background:{{ ni.active ? 'rgba(34,211,238,.1)' : 'transparent' }};color:{{ ni.active ? '#6ee7ff' : 'var(--muted)' }};" style-hover="background:rgba(255,255,255,.05);color:rgba(232,234,242,.8);" title="{{ ni.label }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" style="flex-shrink:0;"><sc-for list="{{ ni.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+          <sc-if value="{{ !sideCollapsed }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:left;">{{ ni.label }}</span></sc-if>
+          <sc-if value="{{ ni.badge && !sideCollapsed }}" hint-placeholder-val="{{ false }}"><span style="min-width:17px;height:17px;border-radius:8px;background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;flex-shrink:0;">{{ ni.badge }}</span></sc-if>
+        </button>
+        <sc-if value="{{ ni.badge && sideCollapsed }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#f43f5e;border:1.5px solid #0a0c14;"></span></sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <!-- Footer -->
+  <div style="padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;">
+    <div style="width:30px;height:30px;min-width:30px;border-radius:50%;padding:1.5px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);flex-shrink:0;">
+      <div style="width:100%;height:100%;border-radius:50%;background:#0a0c14;display:flex;align-items:center;justify-content:center;position:relative;">
+        <span style="color:#6ee7ff;font-size:9.5px;font-weight:700;font-family:var(--sg);">JQ</span>
+        <span style="position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:#34d399;border:1.5px solid #0a0c14;animation:pulse-ring 2.5s infinite;"></span>
+      </div>
+    </div>
+    <sc-if value="{{ !sideCollapsed }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;min-width:0;">
+        <p style="font-size:11.5px;font-weight:500;color:rgba(232,234,242,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Joaquim</p>
+        <p style="font-size:9px;color:var(--dim);">Online · Sync: {{ syncLabel }}</p>
+      </div>
+      <button onClick="{{ toggleSound }}" style="border:none;background:transparent;cursor:pointer;font-size:13px;" title="Som">{{ soundLabel }}</button>
+    </sc-if>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main style="position:relative;z-index:2;flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
+
+  <!-- INBOX -->
+  <sc-if value="{{ screen === 'inbox' }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;height:100vh;animation:slide-in .2s ease both;">
+      <!-- Conv List -->
+      <div style="width:290px;min-width:290px;height:100vh;display:flex;flex-direction:column;background:rgba(10,12,20,.65);backdrop-filter:blur(24px);border-right:1px solid var(--border);">
+        <div style="padding:14px 12px 8px;flex-shrink:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <h2 style="font-family:var(--sg);font-size:16px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,#6ee7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.3px;">Conversas</h2>
+            <div style="display:flex;gap:4px;">
+              <button onClick="{{ nextUrgent }}" style="height:26px;padding:0 9px;border-radius:7px;border:1px solid rgba(34,211,238,.25);background:rgba(34,211,238,.08);color:#6ee7ff;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--sg);transition:all .15s;display:flex;align-items:center;gap:4px;" style-hover="background:rgba(34,211,238,.18);" title="Próximo urgente"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Próximo</button>
+              <button style="width:26px;height:26px;border-radius:7px;border:1px solid rgba(34,211,238,.2);background:rgba(34,211,238,.07);color:#6ee7ff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;" style-hover="background:rgba(34,211,238,.18);"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+          </div>
+          <div style="position:relative;margin-bottom:7px;">
+            <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,.4)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Buscar… ⌘K" onInput="{{ onConvSearch }}" style="width:100%;height:32px;border-radius:9px;border:1px dashed rgba(110,231,255,.2);background:rgba(255,255,255,.03);color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:11.5px;padding:0 10px 0 30px;outline:none;transition:border .2s;" onfocus="this.style.border='1px solid rgba(34,211,238,.5)'" onblur="this.style.border='1px dashed rgba(110,231,255,.2)'"/>
+          </div>
+          <div style="display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:8px;padding:2px;">
+            <sc-for list="{{ convTabs }}" as="t"><button onClick="{{ t.go }}" style="flex:1;height:24px;border-radius:6px;border:none;cursor:pointer;font-size:10px;font-weight:{{ t.active ? '600' : '400' }};transition:all .15s;background:{{ t.active ? 'rgba(34,211,238,.14)' : 'transparent' }};color:{{ t.active ? '#6ee7ff' : 'var(--muted)' }};display:flex;align-items:center;justify-content:center;gap:3px;">{{ t.label }}<sc-if value="{{ t.count }}" hint-placeholder-val="{{ false }}"><span style="font-size:8px;min-width:14px;height:14px;border-radius:7px;background:{{ t.active ? 'rgba(34,211,238,.3)' : 'rgba(255,255,255,.1)' }};color:{{ t.active ? '#6ee7ff' : 'var(--muted)' }};display:flex;align-items:center;justify-content:center;padding:0 3px;">{{ t.count }}</span></sc-if></button></sc-for>
+          </div>
+        </div>
+        <!-- Conversations -->
+        <div style="flex:1;overflow-y:auto;padding:0 6px 6px;">
+          <!-- Pinned -->
+          <sc-if value="{{ pinnedConvs }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:7.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-family:var(--sg);padding:4px 8px 3px;">⭐ Fixadas</p>
+            <sc-for list="{{ pinnedConvs }}" as="pc">
+              <div onClick="{{ pc.select }}" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:9px;cursor:pointer;margin-bottom:2px;transition:all .15s;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.1);" style-hover="background:rgba(251,191,36,.09);">
+                <div style="width:32px;height:32px;border-radius:10px;background:{{ pc.avatarBg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--sg);flex-shrink:0;">{{ pc.initials }}</div>
+                <div style="flex:1;min-width:0;"><p style="font-size:11.5px;font-weight:500;color:rgba(232,234,242,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ pc.name }}</p></div>
+              </div>
+            </sc-for>
+            <div style="height:1px;background:var(--border);margin:5px 4px 6px;"></div>
+          </sc-if>
+          <!-- Groups -->
+          <sc-for list="{{ dateGroups }}" as="dg">
+            <p style="font-size:7.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;font-family:var(--sg);padding:2px 8px 3px;">{{ dg.label }}</p>
+            <sc-for list="{{ dg.convs }}" as="conv" hint-placeholder-count="4" hint-placeholder-class="shimmer-line" hint-placeholder-height="52px">
+              <div onClick="{{ conv.select }}" style="display:flex;align-items:center;gap:9px;padding:{{ conv.compactPad }};border-radius:10px;cursor:pointer;margin-bottom:2px;transition:all .15s;background:{{ conv.cardBg }};border:1px solid {{ conv.cardBorder }};animation:{{ conv.cardAnim }};" style-hover="background:rgba(110,231,255,.04);transform:translateX(1px);">
+                <div style="position:relative;flex-shrink:0;"><div style="width:38px;height:38px;border-radius:11px;background:{{ conv.avatarBg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:var(--sg);">{{ conv.initials }}</div><sc-if value="{{ conv.online }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:#34d399;border:2px solid #0a0c14;"></span></sc-if></div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span style="font-size:12px;font-weight:600;color:#e8eaf2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">{{ conv.name }}</span><span style="font-size:9px;color:var(--dim);">{{ conv.time }}</span></div>
+                  <sc-if value="{{ conv.listTyping }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;color:#6ee7ff;display:flex;align-items:center;gap:3px;">digitando<span style="display:inline-flex;gap:2px;"><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite 0s;"></span><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite .15s;"></span><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite .3s;"></span></span></span></sc-if>
+                  <sc-if value="{{ !conv.listTyping }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:3px;"><sc-if value="{{ conv.mediaIcon }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;">{{ conv.mediaIcon }}</span></sc-if><span style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">{{ conv.lastMsg }}</span><sc-if value="{{ conv.unread }}" hint-placeholder-val="{{ false }}"><span style="min-width:15px;height:15px;border-radius:8px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04050a;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;flex-shrink:0;">{{ conv.unread }}</span></sc-if><sc-if value="{{ conv.hasDraftIndicator }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;">✏</span></sc-if><sc-if value="{{ conv.slaCrit }}" hint-placeholder-val="{{ false }}"><span style="font-size:7px;padding:1px 4px;border-radius:4px;font-weight:700;background:rgba(244,63,94,.12);color:#fb7185;animation:sla-pulse 1.4s infinite;">SLA!</span></sc-if></div></sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:#04050a;position:relative;">
+        <!-- Header -->
+        <div style="height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:rgba(8,10,18,.6);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:11px;">
+            <div style="position:relative;"><div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:var(--sg);">MF</div><span style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:#34d399;border:2px solid #080a12;animation:pulse-ring 2.4s infinite;"></span></div>
+            <div><h3 style="font-family:var(--sg);font-size:14px;font-weight:600;color:#e8eaf2;letter-spacing:-.2px;">Maria Fernanda</h3><p style="font-size:10px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:4px;"><sc-if value="{{ isTyping }}" hint-placeholder-val="{{ false }}"><span style="color:#6ee7ff;">digitando<span style="display:inline-flex;gap:2px;margin-left:4px;"><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite 0s;"></span><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite .15s;"></span><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite .3s;"></span></span></span></sc-if><sc-if value="{{ !isTyping }}" hint-placeholder-val="{{ true }}">Online · WhatsApp</sc-if></p></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div style="padding:3px 9px;border-radius:7px;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.22);display:flex;align-items:center;gap:4px;"><span style="width:4px;height:4px;border-radius:50%;background:{{ syncColor }};"></span><span style="font-size:9.5px;font-weight:700;color:#34d399;font-family:var(--sg);">SLA {{ slaClock }}</span></div>
+            <button onClick="{{ toggleWhisper }}" style="height:24px;padding:0 8px;border-radius:6px;border:1px solid {{ whisperMode ? 'rgba(251,191,36,.4)' : 'var(--border)' }};background:{{ whisperMode ? 'rgba(251,191,36,.1)' : 'transparent' }};color:{{ whisperMode ? '#fbbf24' : 'var(--muted)' }};font-size:9.5px;font-weight:600;cursor:pointer;font-family:var(--sg);transition:all .15s;">Whisper</button>
+            <button onClick="{{ togglePresentMode }}" style="height:24px;width:26px;border-radius:6px;border:1px solid {{ presentMode ? 'rgba(251,191,36,.4)' : 'var(--border)' }};background:{{ presentMode ? 'rgba(251,191,36,.1)' : 'transparent' }};cursor:pointer;font-size:12px;transition:all .15s;" title="Modo apresentação">🛡</button>
+            <button onClick="{{ cycleFontSize }}" style="height:24px;padding:0 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#6ee7ff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--sg);">{{ fontSize }}A</button>
+            <button onClick="{{ startCall }}" style="height:24px;width:26px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:all .15s;" style-hover="background:rgba(110,231,255,.07);color:#6ee7ff;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.7 3.56 2 2 0 0 1 3.67 1.36h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.72-.72a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16.92z"/></svg></button>
+          </div>
+        </div>
+        <!-- Pinned banner -->
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 16px;background:rgba(251,191,36,.04);border-bottom:1px solid rgba(251,191,36,.09);flex-shrink:0;cursor:pointer;" style-hover="background:rgba(251,191,36,.08);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round"><path d="M12 17v5M8 3h8l1 8H7zM7 11s-.5 3 5 3 5-3 5-3"/></svg><span style="font-size:10px;color:rgba(232,234,242,.5);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span style="color:#fbbf24;font-weight:500;">Fixado:</span> O código BR-4921-8847-XZ.</span></div>
+        <!-- Whisper bar -->
+        <sc-if value="{{ whisperMode }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:7px;padding:5px 14px;background:rgba(251,191,36,.07);border-bottom:1px solid rgba(251,191,36,.2);flex-shrink:0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span style="font-size:10px;color:#fbbf24;font-weight:600;font-family:var(--sg);">NOTA INTERNA</span></div></sc-if>
+        <!-- Messages -->
+        <div style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:1px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(110,231,255,.1));"></div><span style="font-size:9px;font-weight:600;color:rgba(110,231,255,.4);font-family:var(--sg);letter-spacing:.12em;">HOJE</span><div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(110,231,255,.1),transparent);"></div></div>
+          <sc-for list="{{ messages }}" as="msg" hint-placeholder-count="4">
+            <div onMouseEnter="{{ msg.hover }}" onMouseLeave="{{ msg.leave }}" style="display:flex;flex-direction:column;align-items:{{ msg.sent ? 'flex-end' : 'flex-start' }};margin-bottom:{{ msg.gap ? '12px' : '2px' }};animation:msg-in .24s ease both;position:relative;">
+              <sc-if value="{{ msg.hovered }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;{{ msg.sent ? 'right:0' : 'left:0' }};top:-34px;display:flex;gap:2px;padding:4px 6px;border-radius:9px;background:rgba(10,12,22,.98);border:1px solid rgba(110,231,255,.15);z-index:10;"><sc-for list="{{ rxnEmojis }}" as="em"><button style="width:24px;height:24px;border:none;border-radius:6px;cursor:pointer;background:transparent;font-size:14px;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(110,231,255,.1);transform:scale(1.25);">{{ em }}</button></sc-for></div></sc-if>
+              <div style="max-width:64%;min-width:0;position:relative;">
+                <div style="padding:9px 13px;font-size:{{ msgFontSize }};line-height:1.57;word-break:break-word;border-radius:{{ msg.sent ? '13px 4px 13px 13px' : '4px 13px 13px 13px' }};background:{{ msg.sent ? 'linear-gradient(135deg,#22d3ee,#8b5cf6)' : 'rgba(255,255,255,.045)' }};color:{{ msg.sent ? '#04070d' : 'rgba(232,234,242,.88)' }};border:{{ msg.sent ? 'none' : '1px solid var(--border)' }};box-shadow:{{ msg.sent ? '0 4px 16px rgba(34,211,238,.2)' : 'none' }};">{{ msg.text }}</div>
+                <div style="display:flex;align-items:center;gap:3px;margin-top:3px;justify-content:{{ msg.sent ? 'flex-end' : 'flex-start' }};"><span style="font-size:9px;color:var(--dim);">{{ msg.time }}</span><sc-if value="{{ msg.sent }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="{{ msg.read ? '#6ee7ff' : 'var(--muted)' }}"><path d="M18 7l-1.41-1.41-6.34 6.34-2.83-2.83-1.41 1.41 4.24 4.24zM3.5 12l-1.41 1.41 6.02 6.02L21.09 7l-1.41-1.41-11.07 11.07z"/></svg></sc-if></div>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ isTyping }}" hint-placeholder-val="{{ false }}"><div style="display:flex;margin-bottom:10px;animation:msg-in .2s ease both;"><div style="padding:10px 14px;border-radius:4px 13px 13px 13px;background:rgba(255,255,255,.045);border:1px solid var(--border);display:flex;gap:5px;align-items:center;"><span style="width:5px;height:5px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.3s infinite 0s;"></span><span style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;animation:typing-dot 1.3s infinite .18s;"></span><span style="width:5px;height:5px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.3s infinite .36s;"></span></div></div></sc-if>
+        </div>
+        <!-- Copilot -->
+        <sc-if value="{{ showAI }}" hint-placeholder-val="{{ true }}">
+          <div style="margin:0 14px 6px;border-radius:10px;padding:1px;background:linear-gradient(90deg,rgba(139,92,246,.5),rgba(34,211,238,.5),rgba(139,92,246,.5));background-size:200% auto;animation:border-flow 4s linear infinite;flex-shrink:0;"><div style="border-radius:9px;background:rgba(10,12,22,.95);padding:7px 11px;display:flex;align-items:center;gap:8px;"><div style="width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#04070d" stroke-width="2.2" stroke-linecap="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div><div style="flex:1;min-width:0;"><p style="font-size:7.5px;font-weight:700;color:#a78bfa;letter-spacing:.12em;font-family:var(--sg);">COPILOT IA</p><p style="font-size:10.5px;color:rgba(232,234,242,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"O código BR-4921-8847-XZ. Acompanhe em tempo real."</p></div><button onClick="{{ applyAI }}" style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04070d;font-size:10px;font-weight:700;font-family:var(--sg);flex-shrink:0;" style-hover="transform:scale(1.04);">Usar</button><button onClick="{{ dismissAI }}" style="border:none;background:transparent;cursor:pointer;color:var(--dim);" style-hover="color:rgba(232,234,242,.7);"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div></div>
+        </sc-if>
+        <!-- Input -->
+        <div style="padding:0 14px 14px;flex-shrink:0;">
+          <!-- Slash popup -->
+          <sc-if value="{{ slashOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius:12px;background:rgba(8,10,18,.98);border:1px solid rgba(110,231,255,.22);box-shadow:0 -8px 32px rgba(0,0,0,.6);overflow:hidden;margin-bottom:6px;max-height:200px;overflow-y:auto;">
+              <div style="padding:5px 10px;border-bottom:1px solid var(--border);"><span style="font-size:8.5px;font-weight:700;color:rgba(110,231,255,.4);letter-spacing:.1em;font-family:var(--sg);">RESPOSTAS RÁPIDAS</span></div>
+              <sc-for list="{{ slashCmds }}" as="slCmd">
+                <div onClick="{{ applySlash(slCmd.text) }}" style="display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;transition:all .12s;" style-hover="background:rgba(110,231,255,.06);">
+                  <span style="font-size:15px;flex-shrink:0;">{{ slCmd.icon }}</span>
+                  <div style="flex:1;min-width:0;"><p style="font-size:11.5px;font-weight:600;color:#e8eaf2;">{{ slCmd.label }}</p><p style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ slCmd.desc }}</p></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="border-radius:14px;padding:1px;background:{{ inputFocused ? 'linear-gradient(90deg,#22d3ee,#8b5cf6,#22d3ee)' : 'rgba(110,231,255,.12)' }};background-size:200% auto;animation:{{ inputFocused ? 'border-flow 3s linear infinite' : 'none' }};transition:all .3s;">
+            <div style="display:flex;align-items:flex-end;gap:7px;background:rgba(8,10,18,.97);border-radius:13px;padding:7px 7px 7px 12px;">
+              <textarea id="msgArea" placeholder="Mensagem…" onFocus="{{ onIFocus }}" onBlur="{{ onIBlur }}" onInput="{{ onIChange }}" onKeyDown="{{ onIKey }}" rows="1" style="flex:1;background:transparent;border:none;outline:none;color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:12.5px;line-height:1.55;resize:none;min-height:22px;max-height:90px;padding-top:3px;"></textarea>
+              <button onClick="{{ sendMsg }}" style="height:31px;padding:0 13px;border-radius:9px 0 0 9px;border:none;cursor:pointer;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04070d;font-family:var(--sg);font-size:11px;font-weight:700;transition:all .18s;display:flex;align-items:center;gap:5px;" style-hover="transform:scale(1.03);"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>Enviar</button>
+              <button onClick="{{ sendAndResolve }}" style="height:31px;width:28px;border-radius:0 9px 9px 0;border:none;border-left:1px solid rgba(4,5,10,.3);cursor:pointer;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04070d;display:flex;align-items:center;justify-content:center;" style-hover="filter:brightness(1.12);" title="Enviar + encerrar"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Panel -->
+      <div style="width:248px;min-width:248px;height:100vh;background:rgba(10,12,20,.65);backdrop-filter:blur(24px);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;">
+        <div style="margin:12px 10px 0;border-radius:15px;padding:1px;background:linear-gradient(160deg,rgba(34,211,238,.4),rgba(139,92,246,.3),transparent);flex-shrink:0;"><div style="border-radius:14px;background:rgba(8,10,18,.94);padding:14px 12px;text-align:center;">
+          <div style="width:50px;height:50px;border-radius:15px;margin:0 auto 9px;padding:2px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);"><div style="width:100%;height:100%;border-radius:12px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;font-family:var(--sg);">MF</div></div>
+          <h3 style="font-family:var(--sg);font-size:13px;font-weight:700;color:#e8eaf2;letter-spacing:-.2px;">Maria Fernanda</h3>
+          <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px;">
+            <p style="font-size:9px;color:var(--muted);">+55 11 99999-0000</p>
+            <button onClick="{{ copyPhone }}" style="width:15px;height:15px;border:none;border-radius:4px;background:transparent;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(110,231,255,.12);color:#6ee7ff;" title="Copiar"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:7px;"><span style="padding:2px 7px;border-radius:4px;font-size:8px;font-weight:700;background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.24);">CLIENTE</span><span style="padding:2px 7px;border-radius:4px;font-size:8px;font-weight:700;background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.24);">★ VIP</span></div>
+        </div></div>
+        <!-- Metrics -->
+        <div style="padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:5px;flex-shrink:0;">
+          <sc-for list="{{ contactMetrics }}" as="cm"><div style="padding:7px 8px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border);"><p style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;font-family:var(--sg);font-weight:600;">{{ cm.label }}</p><p style="font-size:13px;font-weight:700;color:{{ cm.color }};margin-top:2px;font-family:var(--sg);">{{ cm.value }}</p></div></sc-for>
+        </div>
+        <!-- Eng score -->
+        <div style="padding:0 10px 8px;">
+          <div style="padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--border);margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;"><p style="font-size:8px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-family:var(--sg);">Engajamento</p><span style="font-size:13px;font-weight:700;color:#22d3ee;font-family:var(--sg);">82</span></div>
+            <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;"><div style="height:100%;border-radius:2px;background:linear-gradient(90deg,#22d3ee,#8b5cf6);width:82%;"></div></div>
+          </div>
+          <!-- Purchases -->
+          <p style="font-size:8px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-family:var(--sg);">Compras</p>
+          <sc-for list="{{ contactPurchases }}" as="pu"><div style="padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border);margin-bottom:4px;"><div style="display:flex;justify-content:space-between;"><p style="font-size:10px;color:rgba(232,234,242,.7);">{{ pu.name }}</p><span style="font-size:10px;font-weight:700;color:#34d399;font-family:var(--sg);">{{ pu.value }}</span></div><p style="font-size:8.5px;color:var(--dim);margin-top:1px;font-family:var(--sg);">{{ pu.date }}</p></div></sc-for>
+        </div>
+        <div style="padding:6px 10px 10px;display:flex;gap:6px;flex-shrink:0;">
+          <button style="flex:1;height:28px;border-radius:8px;border:1px solid rgba(34,211,238,.25);cursor:pointer;background:rgba(34,211,238,.08);color:#6ee7ff;font-family:var(--sg);font-size:9.5px;font-weight:600;transition:all .18s;" style-hover="background:rgba(34,211,238,.18);">CRM 360°</button>
+          <button onClick="{{ openTransferModal }}" style="flex:1;height:28px;border-radius:8px;border:1px solid rgba(139,92,246,.25);cursor:pointer;background:rgba(139,92,246,.08);color:#a78bfa;font-family:var(--sg);font-size:9.5px;font-weight:600;transition:all .18s;" style-hover="background:rgba(139,92,246,.18);">Transferir</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- DASHBOARD -->
+  <sc-if value="{{ screen === 'dashboard' }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100vh;overflow-y:auto;padding:18px 22px;animation:slide-in .2s ease both;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div><h1 style="font-family:var(--sg);font-size:18px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,#6ee7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;">Dashboard</h1><p style="font-size:10.5px;color:var(--muted);margin-top:2px;">{{ clock }}</p></div>
+        <div style="display:flex;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px;">
+          <sc-for list="{{ dashPeriods }}" as="dp"><button onClick="{{ dp.go }}" style="height:24px;padding:0 11px;border-radius:6px;border:none;cursor:pointer;font-size:11px;background:{{ dp.active ? 'rgba(255,255,255,.07)' : 'transparent' }};color:{{ dp.active ? '#f0f0fa' : 'var(--muted)' }};transition:all .15s;">{{ dp.label }}</button></sc-for>
+        </div>
+      </div>
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px;">
+        <sc-for list="{{ kpis }}" as="k">
+          <div style="padding:13px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--border);position:relative;overflow:hidden;transition:all .15s;" style-hover="border-color:rgba(110,231,255,.15);">
+            <div style="position:absolute;top:-10px;right:-10px;width:44px;height:44px;border-radius:50%;background:{{ k.glow }};filter:blur(14px);pointer-events:none;"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;"><div style="width:26px;height:26px;border-radius:7px;background:{{ k.bg }};display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ k.color }}" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ k.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg></div><span style="font-size:10px;font-weight:700;color:{{ k.up ? '#34d399' : '#f87171' }};">{{ k.delta }}</span></div>
+            <p style="font-size:20px;font-weight:700;color:#f0f0fa;letter-spacing:-.5px;font-family:var(--sg);animation:count-up .5s ease both;">{{ k.value }}</p>
+            <p style="font-size:10px;color:var(--muted);margin-top:2px;">{{ k.label }}</p>
+            <div style="display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:5px;">
+              <sc-for list="{{ k.sparkline }}" as="sb"><div style="flex:1;border-radius:1px 1px 0 0;background:{{ sb.color }};height:{{ sb.h }};"></div></sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <!-- Charts -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:9px;margin-bottom:12px;">
+        <div style="padding:14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><p style="font-family:var(--sg);font-size:12px;font-weight:600;color:#e8eaf2;">Conversas por hora</p><span style="font-size:9.5px;color:var(--dim);">HOJE</span></div>
+          <div style="display:flex;align-items:flex-end;gap:2px;height:58px;">
+            <sc-for list="{{ bars }}" as="b"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;"><div style="width:100%;border-radius:2px 2px 0 0;height:{{ b.h }}px;background:{{ b.peak ? 'linear-gradient(180deg,#22d3ee,#6ee7ff)' : 'rgba(255,255,255,.18)' }};transition:height .3s ease;"></div><span style="font-size:7px;color:var(--dim);">{{ b.label }}</span></div></sc-for>
+          </div>
+        </div>
+        <div style="padding:14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--border);">
+          <p style="font-family:var(--sg);font-size:12px;font-weight:600;color:#e8eaf2;margin-bottom:10px;">Por Canal</p>
+          <sc-for list="{{ channelDist }}" as="cd"><div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="width:6px;height:6px;border-radius:50%;background:{{ cd.color }};flex-shrink:0;"></span>{{ cd.label }}</span><span style="font-size:10.5px;font-weight:700;color:{{ cd.color }};font-family:var(--sg);">{{ cd.count }}</span></div><div style="height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;"><div style="height:100%;border-radius:2px;background:{{ cd.color }};width:{{ cd.pct }}%;"></div></div></div></sc-for>
+        </div>
+      </div>
+      <!-- Agent ranking -->
+      <div style="padding:14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><p style="font-family:var(--sg);font-size:12px;font-weight:600;color:#e8eaf2;">Ranking · Hoje</p></div>
+        <sc-for list="{{ agents }}" as="ag"><div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);margin-bottom:4px;transition:all .12s;" style-hover="background:rgba(255,255,255,.04);"><span style="font-size:12px;width:16px;text-align:center;flex-shrink:0;">{{ ag.medal }}</span><div style="width:26px;height:26px;border-radius:7px;background:{{ ag.bg }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:var(--sg);flex-shrink:0;">{{ ag.init }}</div><div style="flex:1;min-width:0;"><p style="font-size:11.5px;font-weight:500;color:#e8eaf2;">{{ ag.name }}</p><p style="font-size:9px;color:var(--muted);">{{ ag.tickets }} tickets · CSAT {{ ag.csat }}</p></div><div style="text-align:right;flex-shrink:0;"><p style="font-size:11px;font-weight:700;color:{{ ag.xc }};font-family:var(--sg);">{{ ag.xp }}</p></div></div></sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- OTHER SCREENS — compact cards -->
+  <sc-if value="{{ screen !== 'inbox' && screen !== 'dashboard' }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100vh;overflow-y:auto;padding:18px 22px;animation:slide-in .2s ease both;">
+      <div style="margin-bottom:18px;"><h1 style="font-family:var(--sg);font-size:18px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,#6ee7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;">{{ screenTitle }}</h1><p style="font-size:10.5px;color:var(--muted);margin-top:2px;">{{ screenSubtitle }}</p></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <sc-for list="{{ screenCards }}" as="sc2">
+          <div style="padding:16px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);transition:all .15s;" style-hover="border-color:rgba(34,211,238,.2);background:rgba(34,211,238,.03);">
+            <div style="width:34px;height:34px;border-radius:10px;background:{{ sc2.bg }};display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 0 12px {{ sc2.glow }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ sc2.color }}" stroke-width="1.75" stroke-linecap="round"><sc-for list="{{ sc2.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg></div>
+            <p style="font-size:12.5px;font-weight:600;color:#e8eaf2;font-family:var(--sg);margin-bottom:3px;">{{ sc2.label }}</p>
+            <p style="font-size:10px;color:var(--muted);line-height:1.4;">{{ sc2.desc }}</p>
+            <sc-if value="{{ sc2.badge }}" hint-placeholder-val="{{ false }}"><span style="font-size:8.5px;padding:2px 7px;border-radius:4px;font-weight:700;background:{{ sc2.badgeBg }};color:{{ sc2.badgeColor }};margin-top:7px;display:inline-block;">{{ sc2.badge }}</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+</main>
+
+<!-- Transfer modal -->
+<sc-if value="{{ showTransferModal }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:pop-in .2s ease;">
+    <div style="width:340px;border-radius:18px;padding:1px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);">
+      <div style="border-radius:17px;background:rgba(8,10,18,.98);padding:20px;">
+        <h3 style="font-family:var(--sg);font-size:14px;font-weight:700;color:#e8eaf2;margin-bottom:4px;">Transferir Maria Fernanda</h3>
+        <p style="font-size:10px;color:var(--muted);margin-bottom:14px;">O receptor verá o contexto antes de aceitar.</p>
+        <label style="font-size:10.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;">Motivo *</label>
+        <textarea onInput="{{ onTransferContext }}" placeholder="Ex: Fora da minha alçada…" rows="2" style="width:100%;border-radius:9px;border:1px solid rgba(110,231,255,.2);background:rgba(255,255,255,.04);color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:11.5px;padding:9px;resize:none;outline:none;margin-bottom:14px;line-height:1.55;"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button onClick="{{ closeTransferModal }}" style="padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;cursor:pointer;color:var(--muted);font-family:var(--sg);font-size:11.5px;">Cancelar</button>
+          <button onClick="{{ confirmTransfer }}" style="padding:7px 18px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04070d;font-family:var(--sg);font-size:11.5px;font-weight:700;" style-hover="transform:scale(1.03);">Transferir →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- Undo toast -->
+<sc-if value="{{ undoVisible }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:400;display:flex;align-items:center;gap:10px;padding:9px 18px;border-radius:12px;background:rgba(8,10,18,.96);border:1px solid rgba(110,231,255,.2);box-shadow:0 8px 32px rgba(0,0,0,.5);animation:pop-in .2s ease;">
+    <span style="font-size:12px;color:#e8eaf2;">{{ undoMsg }}</span>
+    <button onClick="{{ doUndo }}" style="font-size:10.5px;color:#6ee7ff;border:1px solid rgba(34,211,238,.3);border-radius:6px;background:transparent;cursor:pointer;padding:2px 8px;">Desfazer</button>
+  </div>
+</sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  // Screen cards cached in window to avoid static field issues
+  _getScreens(P) {
+    if(window.__zapp_screens) return window.__zapp_screens;
+    const mk=(label,desc,badge,badgeBg,badgeColor,color,bg,glow,paths)=>({label,desc,badge:badge||null,badgeBg:badgeBg||null,badgeColor:badgeColor||null,color,bg,glow,paths});
+    window.__zapp_screens = {
+      pipeline:{title:'Pipeline',subtitle:'Kanban de vendas',cards:[mk('Prospecção','24 oportunidades',null,'','','#22d3ee','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.pipe),mk('Qualificação','18 em análise',null,'','','#6ee7ff','rgba(110,231,255,.1)','rgba(110,231,255,.08)',P.pipe),mk('Proposta','12 enviadas',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.crm),mk('Negociação','7 em negociação',null,'','','#8b5cf6','rgba(139,92,246,.1)','rgba(139,92,246,.08)',P.pipe),mk('Fechado','4 ganhos · R$82k','MÊS','rgba(52,211,153,.12)','#34d399','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.pipe),mk('Total','65 oportunidades',null,'','','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.dash)]},
+      contacts:{title:'Contatos',subtitle:'8 contatos · 3 online',cards:[mk('Maria Fernanda','CLIENTE · R$7.1k LTV',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.contacts),mk('Pedro Alves','VIP · R$24k LTV','VIP','rgba(251,191,36,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.contacts),mk('Carla Mendes','LEAD pendente',null,'','','#f472b6','rgba(244,114,182,.1)','rgba(244,114,182,.08)',P.contacts),mk('Roberto Silva','CLIENTE · R$3.4k',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.contacts),mk('Ana Costa','CLIENTE · R$11k',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.contacts),mk('Marcos Lima','FORNECEDOR',null,'','','#0ea5e9','rgba(14,165,233,.1)','rgba(14,165,233,.08)',P.contacts)]},
+      agents:{title:'Equipe',subtitle:'5 agentes · 3 online',cards:[mk('Joaquim','Supervisor · CSAT 9.8',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.agents),mk('Maria Santos','Senior · CSAT 9.5',null,'','','#f472b6','rgba(244,114,182,.1)','rgba(244,114,182,.08)',P.agents),mk('Pedro Costa','Agente · Ausente','AUSENTE','rgba(245,158,11,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.agents),mk('Ana Rocha','Junior · CSAT 9.0',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.agents),mk('Lucas Melo','Offline','OFFLINE','rgba(255,255,255,.06)','rgba(232,234,242,.4)','rgba(232,234,242,.4)','rgba(255,255,255,.04)','rgba(255,255,255,.04)',P.agents),mk('Convidar','Novo agente','NOVO','rgba(34,211,238,.12)','#6ee7ff','#22d3ee','rgba(34,211,238,.08)','rgba(34,211,238,.06)',P.agents)]},
+      chatbot:{title:'Chatbot & Fluxos',subtitle:'5 fluxos ativos · 12.847 exec.',cards:[mk('Boas-vindas','68% resolução','ATIVO','rgba(52,211,153,.12)','#34d399','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.chatbot),mk('Pedidos','81% resolução','ATIVO','rgba(52,211,153,.12)','#34d399','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.chatbot),mk('Orçamento','44% resolução','ATIVO','rgba(52,211,153,.12)','#34d399','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.chatbot),mk('NPS','95% resolução','ATIVO','rgba(52,211,153,.12)','#34d399','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.chatbot),mk('Rascunho','0 execuções','RASCUNHO','rgba(255,255,255,.06)','rgba(232,234,242,.4)','rgba(232,234,242,.4)','rgba(255,255,255,.04)','rgba(255,255,255,.04)',P.chatbot),mk('Novo Fluxo','Criar','NOVO','rgba(34,211,238,.12)','#6ee7ff','#22d3ee','rgba(34,211,238,.08)','rgba(34,211,238,.06)',P.chatbot)]},
+      reports:{title:'Analytics',subtitle:'Tempo real',cards:[mk('TM Resposta','1m 42s · -18%',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.dash),mk('SLA','94.8% · +2.1%',null,'','','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.dash),mk('CSAT','9.4 · +0.3',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.dash),mk('NPS','72 · +8',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.dash),mk('Resolução','87% · +4%',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.dash),mk('Tendência','+24% este mês',null,'','','#f472b6','rgba(244,114,182,.1)','rgba(244,114,182,.08)',P.dash)]},
+      campaigns:{title:'Campanhas',subtitle:'3 campanhas ativas',cards:[mk('Black Friday','2.847 VIPs · Enviando','LIVE','rgba(34,211,238,.12)','#6ee7ff','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.campaigns),mk('Kit Premium','8.120 clientes','CONCLUÍDA','rgba(52,211,153,.12)','#34d399','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.campaigns),mk('Reativação Q3','5.240 inativos','AGENDADA','rgba(251,191,36,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.campaigns),mk('Entregues','48.2k · 94%',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.dash),mk('Lidas','31.4k · 65%',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.dash),mk('Nova','Criar','NOVO','rgba(34,211,238,.12)','#6ee7ff','#22d3ee','rgba(34,211,238,.08)','rgba(34,211,238,.06)',P.campaigns)]},
+      crm360:{title:'CRM 360°',subtitle:'Visão completa',cards:[mk('Maria Fernanda','R$7.1k · Score 82',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.crm),mk('Pedro Alves','R$24k · Score 94','VIP','rgba(251,191,36,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.crm),mk('Ana Costa','R$11k · Score 78',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.crm),mk('Tickets','47 · 3 abertos',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.contacts),mk('Compras','R$87k total',null,'','','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.crm),mk('Funil','65% conversão',null,'','','#f472b6','rgba(244,114,182,.1)','rgba(244,114,182,.08)',P.pipe)]},
+      warroom:{title:'War Room',subtitle:'Monitoramento live',cards:[mk('SLA — Carla','23min sem resposta','CRÍTICO','rgba(244,63,94,.12)','#f87171','#f87171','rgba(244,63,94,.08)','rgba(244,63,94,.06)',P.warroom),mk('Conexão oscilando','WA Orçamentos · 72%','ALERTA','rgba(245,158,11,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.08)','rgba(251,191,36,.06)',P.conn),mk('Pico volume','142 abertas · +34%','ALTO','rgba(34,211,238,.12)','#6ee7ff','#6ee7ff','rgba(34,211,238,.08)','rgba(34,211,238,.06)',P.dash),mk('CSAT em queda','8.1 última hora','MONIT.','rgba(245,158,11,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.08)','rgba(251,191,36,.06)',P.dash),mk('Agentes','14/18 online',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.agents),mk('Intervir','Atender Carla agora','URGENTE','rgba(244,63,94,.12)','#f87171','#f87171','rgba(244,63,94,.08)','rgba(244,63,94,.06)',P.warroom)]},
+      email:{title:'E-mail',subtitle:'5 threads · 2 não lidas',cards:[mk('Maria Fernanda','RE: Orçamento Canetas','NÃO LIDA','rgba(34,211,238,.12)','#6ee7ff','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.email),mk('Pedro Alves','NF #2024-847','NÃO LIDA','rgba(34,211,238,.12)','#6ee7ff','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.email),mk('Gráfica','Catálogo 2026',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.email),mk('RH','Treinamento Q3',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.email),mk('Evolution','API Update v2.1',null,'','','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.email),mk('Redigir','Nova mensagem','NOVO','rgba(34,211,238,.12)','#6ee7ff','#22d3ee','rgba(34,211,238,.08)','rgba(34,211,238,.06)',P.email)]},
+      connections:{title:'Conexões',subtitle:'4 instâncias WA',cards:[mk('WA Vendas','CONECTADO · 94%','OK','rgba(52,211,153,.12)','#34d399','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.conn),mk('WA Suporte','CONECTADO · 87%','OK','rgba(52,211,153,.12)','#34d399','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.conn),mk('WA Orçamentos','CONECTADO · 72%','ATENÇÃO','rgba(245,158,11,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.conn),mk('WA Teste','DESCONECTADO · 38%','DESCON.','rgba(244,63,94,.12)','#f87171','#f87171','rgba(244,63,94,.1)','rgba(244,63,94,.08)',P.conn),mk('12.4k msgs','2.847 contatos',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.dash),mk('Nova conexão','Adicionar','NOVO','rgba(34,211,238,.12)','#6ee7ff','#22d3ee','rgba(34,211,238,.08)','rgba(34,211,238,.06)',P.conn)]},
+      settings:{title:'Configurações',subtitle:'ZAPP v2.9.0',cards:[mk('Horário','08:00–18:00 · Seg–Sex',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.settings),mk('Copilot IA','Gemini 2.0 · R$142/mês',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.ai),mk('SLA','1ª Resp: 5min',null,'','','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.dash),mk('Segurança','2FA ativo',null,'','','#f87171','rgba(244,63,94,.1)','rgba(244,63,94,.08)',P.settings),mk('Notificações','Som ativo',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.chatbot),mk('Integrações','Google · Meta',null,'','','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.conn)]},
+      ai:{title:'IA & Automação',subtitle:'Copilot · Chatbot · KB',cards:[mk('Copilot IA','Ativo · Tempo real','ATIVO','rgba(52,211,153,.12)','#34d399','#6ee7ff','rgba(34,211,238,.1)','rgba(34,211,238,.08)',P.ai),mk('Base KB','142 docs',null,'','','#a78bfa','rgba(167,139,250,.1)','rgba(167,139,250,.08)',P.ai),mk('Churn IA','3 em risco','NOVO','rgba(244,114,182,.12)','#f472b6','#f472b6','rgba(244,114,182,.1)','rgba(244,114,182,.08)',P.ai),mk('Automações','8 ativas',null,'','','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.chatbot),mk('Custo','R$142 · 536k tokens',null,'','','#34d399','rgba(52,211,153,.1)','rgba(52,211,153,.08)',P.dash),mk('WA Flows','3 aprovados','BETA','rgba(251,191,36,.12)','#fbbf24','#fbbf24','rgba(251,191,36,.1)','rgba(251,191,36,.08)',P.chatbot)]},
+    };
+    return window.__zapp_screens;
+  }
+
+  state = {
+    screen:'inbox', sideCollapsed:true, tab:0, activeConv:0,
+    isTyping:false, showAI:true, inputFocused:false,
+    whisperMode:false, presentMode:false,
+    slashOpen:false, slashQuery:'', inputValue:'',
+    drafts:{}, convSearch:'',
+    showTransferModal:false, transferContext:'',
+    undoVisible:false, undoMsg:'',
+    sla:272, clock:'', lastSyncAgo:0,
+    syncStatus:'online',
+    fontSize:'M', soundEnabled:true, dashPeriod:0,
+    msgs:[
+      {text:'Olá! Gostaria de saber quando chega meu pedido #PB-2024-1847.',sent:false,time:'14:22',gap:true,read:null,reactions:null,hovered:false},
+      {text:'Estou aguardando há alguns dias e preciso para um evento!',sent:false,time:'14:23',gap:false,read:null,reactions:null,hovered:false},
+      {text:'Olá Maria! Vou verificar agora mesmo. ✨',sent:true,time:'14:24',gap:true,read:true,reactions:['👍 2'],hovered:false},
+      {text:'Seu pedido saiu para entrega hoje às 08h. Previsão até as 18h.',sent:true,time:'14:24',gap:false,read:true,reactions:null,hovered:false},
+      {text:'Ótimo!! Muito obrigada 😊',sent:false,time:'14:25',gap:true,read:null,reactions:['❤️'],hovered:false},
+      {text:'Qual é o número de rastreio?',sent:false,time:'14:26',gap:false,read:null,reactions:null,hovered:false},
+    ],
+  };
+
+  componentDidMount(){
+    this._t=setInterval(()=>{const d=new Date();this.setState(s=>({clock:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),sla:s.sla+5}));},5000);
+    this._ty=setInterval(()=>{this.setState({isTyping:true});setTimeout(()=>this.setState({isTyping:false}),3000);},30000);
+    this._sync=setInterval(()=>{this.setState({syncStatus:'syncing'});setTimeout(()=>this.setState({syncStatus:'online',lastSyncAgo:0}),1200);},60000);
+    setTimeout(()=>document.getElementById('msgArea')?.focus(),400);
+    this._kbd=(e)=>{
+      const tag=document.activeElement?.tagName;
+      const typing=tag==='TEXTAREA'||tag==='INPUT';
+      if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();return;}
+      if(e.key==='Escape'){this.setState({showTransferModal:false,undoVisible:false});return;}
+      if(typing)return;
+      if(e.key==='j')this.setState(s=>({activeConv:Math.min(s.activeConv+1,5)}));
+      if(e.key==='k')this.setState(s=>({activeConv:Math.max(s.activeConv-1,0)}));
+      if(e.key==='e')this._showUndo('Conversa encerrada');
+      if(e.key==='1')this.setState({screen:'inbox'});
+      if(e.key==='2')this.setState({screen:'dashboard'});
+    };
+    window.addEventListener('keydown',this._kbd);
+  }
+  componentWillUnmount(){clearInterval(this._t);clearInterval(this._ty);clearInterval(this._sync);window.removeEventListener('keydown',this._kbd);}
+  _sla(){const m=Math.floor(this.state.sla/60),s=this.state.sla%60;return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+  _showUndo(msg){this.setState({undoVisible:true,undoMsg:msg});clearTimeout(this._undo);this._undo=setTimeout(()=>this.setState({undoVisible:false}),5000);}
+  _applySlash(text){const inp=document.getElementById('msgArea');if(inp)inp.value=text;this.setState({slashOpen:false,slashQuery:'',inputValue:text});}
+  _send(){const inp=document.getElementById('msgArea');const t=(inp?.value||'').trim();if(!t)return;const time=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});if(inp)inp.value='';if(this.state.soundEnabled){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.08,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start();o.stop(ctx.currentTime+0.15);}catch(e){}}this.setState(st=>({msgs:[...st.msgs,{text:t,sent:true,time,gap:true,read:false,reactions:null,hovered:false}],inputValue:'',drafts:{...st.drafts,[st.activeConv]:''}}));}
+
+  renderVals(){
+    const s=this.state;
+    const go=(sc)=>()=>this.setState({screen:sc});
+
+    const P={
+      chat:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+      dash:['M18 20V10','M12 20V4','M6 20v-6'],
+      pipe:['M8 6h13','M8 12h13','M8 18h13','M3 6h.01','M3 12h.01','M3 18h.01'],
+      contacts:['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2','M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],
+      agents:['M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2','M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'],
+      chatbot:['M12 2a4 4 0 0 1 4 4v1h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1V6a4 4 0 0 1 4-4z','M9 14h.01','M15 14h.01'],
+      reports:['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z','M14 2v6h6','M16 13H8','M16 17H8'],
+      conn:['M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71','M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'],
+      settings:['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],
+      campaigns:['M3 11l19-9-9 19-2-8-8-2z'],
+      crm:['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z','M9 22V12h6v10'],
+      warroom:['M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z','M12 9v4M12 17h.01'],
+      email:['M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z','M22 6l-10 7L2 6'],
+      ai:['m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'],
+    };
+
+    const navItems=[
+      {id:'inbox',label:'Chat',paths:P.chat,badge:6},
+      {id:'dashboard',label:'Dashboard',paths:P.dash,badge:null},
+      {id:'pipeline',label:'Pipeline',paths:P.pipe,badge:null},
+      {id:'contacts',label:'Contatos',paths:P.contacts,badge:null},
+      {id:'agents',label:'Equipe',paths:P.agents,badge:null},
+      {id:'chatbot',label:'Chatbot',paths:P.chatbot,badge:3},
+      {id:'reports',label:'Analytics',paths:P.reports,badge:null},
+      {id:'campaigns',label:'Campanhas',paths:P.campaigns,badge:null},
+      {id:'crm360',label:'CRM 360°',paths:P.crm,badge:null},
+      {id:'warroom',label:'War Room',paths:P.warroom,badge:2},
+      {id:'email',label:'E-mail',paths:P.email,badge:2},
+      {id:'connections',label:'Conexões',paths:P.conn,badge:null},
+      {id:'settings',label:'Config',paths:P.settings,badge:null},
+      {id:'ai',label:'IA',paths:P.ai,badge:null},
+    ].map(n=>({...n,active:s.screen===n.id,go:go(n.id)}));
+
+    const rawC=[
+      {name:'Maria Fernanda',lastMsg:'Qual é o número de rastreio?',time:'agora',unread:2,online:true,avatarBg:'linear-gradient(135deg,#6366f1,#a855f7)',initials:'MF',tag:null,slaCrit:false},
+      {name:'Pedro Alves',lastMsg:'Obrigado pelo atendimento!',time:'2min',unread:null,online:true,avatarBg:'linear-gradient(135deg,#f59e0b,#ef4444)',initials:'PA',tag:'VIP',tagBg:'rgba(251,191,36,.1)',tagColor:'#fbbf24',slaCrit:false},
+      {name:'Grupo OS #142',lastMsg:'✅ Aprovado',time:'5min',unread:1,online:false,avatarBg:'linear-gradient(135deg,#10b981,#0d9488)',initials:'OS',tag:'O.S.',slaCrit:false},
+      {name:'Carla Mendes',lastMsg:'Preciso de orçamento urgente',time:'12min',unread:3,online:false,avatarBg:'linear-gradient(135deg,#ec4899,#8b5cf6)',initials:'CM',tag:'URGENTE',slaCrit:true},
+      {name:'Roberto Silva',lastMsg:'Qual o prazo de entrega?',time:'1h',unread:null,online:true,avatarBg:'linear-gradient(135deg,#0ea5e9,#6366f1)',initials:'RS',tag:null,slaCrit:false},
+      {name:'Ana Costa',lastMsg:'Recebi o produto! 😊',time:'2h',unread:null,online:false,avatarBg:'linear-gradient(135deg,#f97316,#fbbf24)',initials:'AC',tag:null,slaCrit:false},
+    ];
+    const filteredC=s.convSearch?rawC.filter(c=>c.name.toLowerCase().includes(s.convSearch.toLowerCase())):rawC;
+    const tabF=s.tab===1?filteredC.filter(c=>c.unread):s.tab===3?filteredC.filter(c=>c.tag==='O.S.'):filteredC;
+    const isCompact=tabF.length>5;
+    const mediaIcon=(m)=>{if(m.includes('🎤')||m.includes('[áudio]'))return'🎤';if(m.includes('.jpg')||m.includes('[imagem]'))return'📷';if(m.includes('.pdf'))return'📄';return null;};
+    const relTime=(t)=>{if(!t)return'';if(t.includes('min')||t.includes('h')||t==='agora')return t;return t;};
+    const conversations=tabF.map((c,i)=>({...c,active:i===s.activeConv,listTyping:i===0&&s.isTyping,mediaIcon:mediaIcon(c.lastMsg),compactPad:isCompact?'6px 8px':'8px 8px',hasDraftIndicator:!!(s.drafts[i]&&i!==s.activeConv),cardBg:i===s.activeConv?'linear-gradient(120deg,rgba(34,211,238,.1),rgba(139,92,246,.08))':'transparent',cardBorder:c.slaCrit?'rgba(244,63,94,.5)':i===s.activeConv?'rgba(34,211,238,.2)':'transparent',cardAnim:c.slaCrit?'sla-pulse 1.8s infinite':'none',select:()=>{this.setState({activeConv:i});setTimeout(()=>document.getElementById('msgArea')?.focus(),80);}}));
+    const pinnedConvs=tabF.filter(c=>['MF','PA'].includes(c.initials)).map((c,i)=>({...c,select:()=>{}}));
+    const dateGroups=[{label:'HOJE',convs:conversations.slice(0,3)},{label:'ONTEM',convs:conversations.slice(3)}].filter(g=>g.convs.length>0);
+    const allCount=filteredC.length,unreadCount=filteredC.filter(c=>c.unread).length;
+    const convTabs=[{label:'Todos',count:allCount},{label:'Não lidos',count:unreadCount},{label:'Grupos',count:0},{label:'O.S.',count:1}].map((t,i)=>({...t,active:s.tab===i,go:()=>this.setState({tab:i})}));
+
+    const messages=s.msgs.map((m,i)=>({...m,hover:()=>this.setState(st=>{const ms=[...st.msgs];ms[i]={...ms[i],hovered:true};return{msgs:ms};}),leave:()=>this.setState(st=>{const ms=[...st.msgs];ms[i]={...ms[i],hovered:false};return{msgs:ms};})}));
+    const rxnEmojis=['👍','❤️','😂','😮','🔥','⚡'];
+
+    // Simple sparkline bars (no React.createElement overhead)
+    const mkSpark=(vals,color)=>vals.map((v,i)=>({h:Math.round((v/Math.max(...vals))*18)+'px',color:i===vals.length-1?color:'rgba(255,255,255,.15)'}));
+    const spC=mkSpark([180,220,195,240,210,247],'#6ee7ff');
+    const spR=mkSpark([140,120,115,108,100,102],'#34d399');
+    const spS=mkSpark([8.8,9.0,8.9,9.1,9.3,9.4],'#fbbf24');
+    const spO=mkSpark([10,11,12,13,12,14],'#f472b6');
+
+    const rawB=[12,18,24,31,28,42,55,68,74,60,48,38,52,66,72,58,44,35,28,22];
+    const maxB=Math.max(...rawB);
+    const bars=rawB.map((v,i)=>({h:Math.round((v/maxB)*54),label:i%4===0?String(i).padStart(2,'0'):'',peak:i>=8&&i<=14}));
+    const kpis=[{label:'Conversas',value:'247',delta:'+12%',up:true,color:'#6ee7ff',bg:'rgba(34,211,238,.1)',glow:'rgba(34,211,238,.09)',paths:P.chat,sparkline:spC},{label:'TM Resposta',value:'1m42s',delta:'-8%',up:true,color:'#34d399',bg:'rgba(52,211,153,.1)',glow:'rgba(52,211,153,.09)',paths:['M12 2v10l4 2','M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0z'],sparkline:spR},{label:'CSAT',value:'9.4',delta:'+0.3',up:true,color:'#fbbf24',bg:'rgba(251,191,36,.1)',glow:'rgba(251,191,36,.09)',paths:['M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'],sparkline:spS},{label:'Online',value:'14',delta:'+2',up:true,color:'#f472b6',bg:'rgba(244,114,182,.1)',glow:'rgba(244,114,182,.09)',paths:P.agents,sparkline:spO}];
+    const agents=[{name:'Joaquim',init:'JQ',bg:'linear-gradient(135deg,#6366f1,#a855f7)',medal:'🥇',tickets:47,csat:'9.8',xp:'+1.240',xc:'#fbbf24'},{name:'Maria S.',init:'MS',bg:'linear-gradient(135deg,#ec4899,#8b5cf6)',medal:'🥈',tickets:41,csat:'9.5',xp:'+980',xc:'rgba(200,200,210,.8)'},{name:'Pedro C.',init:'PC',bg:'linear-gradient(135deg,#f97316,#fbbf24)',medal:'🥉',tickets:38,csat:'9.1',xp:'+820',xc:'rgba(205,127,50,.9)'},{name:'Ana R.',init:'AR',bg:'linear-gradient(135deg,#10b981,#0d9488)',medal:'4',tickets:35,csat:'9.0',xp:'+710',xc:'rgba(232,234,242,.4)'}];
+    const channelDist=[{label:'WhatsApp',pct:72,count:'178',color:'#34d399'},{label:'E-mail',pct:18,count:'45',color:'#6ee7ff'},{label:'VoIP',pct:7,count:'17',color:'#a78bfa'},{label:'Outros',pct:3,count:'7',color:'rgba(232,234,242,.3)'}];
+    const dashPeriods=['Hoje','7 dias','30 dias'].map((label,i)=>({label,active:s.dashPeriod===i,go:()=>this.setState({dashPeriod:i})}));
+
+    // Screen cards from static cache
+    const screenData=this._getScreens(P);
+
+    const currentSd=screenData[s.screen]||screenData.settings;
+    const screenTitle=currentSd.title;
+    const screenSubtitle=currentSd.subtitle;
+    const screenCards=currentSd.cards;
+
+    const contactMetrics=[{label:'TICKETS',value:'47',color:'#6ee7ff'},{label:'LTV',value:'R$7.1k',color:'#34d399'},{label:'RESP',value:'1m42s',color:'#a78bfa'},{label:'CSAT',value:'9.4',color:'#fbbf24'}];
+    const contactPurchases=[{name:'Caneta ×500',date:'15 AGO 2026',value:'R$1.250'},{name:'Camiseta ×100',date:'02 JUL 2026',value:'R$3.800'},{name:'Squeeze ×200',date:'20 MAI 2026',value:'R$2.100'}];
+
+    const slashCmds=[
+      {icon:'👤',label:'Saudar',desc:'{{nome}} personalizado',text:'Olá, Maria Fernanda! Como posso ajudar?'},
+      {icon:'📋',label:'Orçamento',desc:'Modelo padrão',text:'Olá! Segue o orçamento conforme solicitado.'},
+      {icon:'📦',label:'Rastreio',desc:'Consultar pedido',text:'Vou verificar seu pedido agora mesmo!'},
+      {icon:'✅',label:'Resolver',desc:'Encerramento',text:'Fico feliz em ter ajudado! Até breve!'},
+      {icon:'⏰',label:'Prazo',desc:'Informar prazo',text:'O prazo é de 10 dias úteis após confirmação.'},
+      {icon:'💰',label:'Pagamento',desc:'Formas aceitas',text:'Aceitamos PIX, boleto e cartão em até 12x.'},
+    ].filter(c=>!s.slashQuery||c.label.toLowerCase().includes(s.slashQuery.toLowerCase()));
+
+    const syncLabel=s.lastSyncAgo===0?'agora':s.lastSyncAgo<60?`${s.lastSyncAgo}s atrás`:`${Math.floor(s.lastSyncAgo/60)}min`;
+    const syncColor=s.syncStatus==='online'?'#34d399':s.syncStatus==='syncing'?'#fbbf24':'#f87171';
+
+    return {
+      navItems, sideW:s.sideCollapsed?'62px':'226px', sideCollapsed:s.sideCollapsed,
+      screen:s.screen, clock:s.clock||'—', syncLabel, syncColor,
+      slaClock:this._sla(), isTyping:s.isTyping, showAI:s.showAI,
+      inputFocused:s.inputFocused, inputValue:s.inputValue,
+      whisperMode:s.whisperMode, presentMode:s.presentMode,
+      slashOpen:s.slashOpen, slashCmds,
+      conversations, pinnedConvs, dateGroups, convTabs,
+      messages, rxnEmojis, msgFontSize:{S:'11px',M:'12.5px',L:'14.5px'}[s.fontSize],
+      contactMetrics, contactPurchases,
+      kpis, bars, agents, dashPeriods, channelDist,
+      screenTitle, screenSubtitle, screenCards,
+      showTransferModal:s.showTransferModal, transferContext:s.transferContext,
+      undoVisible:s.undoVisible, undoMsg:s.undoMsg,
+      soundLabel:s.soundEnabled?'🔔':'🔕', fontSize:s.fontSize,
+      goHome:go('inbox'),
+      toggleSide:()=>this.setState(st=>({sideCollapsed:!st.sideCollapsed})),
+      nextUrgent:()=>{this.setState(s=>({activeConv:s.activeConv<5?s.activeConv+1:0}));setTimeout(()=>document.getElementById('msgArea')?.focus(),80);},
+      onConvSearch:(e)=>this.setState({convSearch:e.target.value,activeConv:0}),
+      onIFocus:()=>this.setState({inputFocused:true}),
+      onIBlur:()=>this.setState({inputFocused:false}),
+      onIChange:(e)=>{const v=e.target.value;this.setState(st=>({inputValue:v,slashOpen:v.startsWith('/')&&v.length>1,slashQuery:v.startsWith('/')?v.slice(1):'',drafts:{...st.drafts,[st.activeConv]:v}}));},
+      onIKey:(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this._send();}},
+      sendMsg:()=>this._send(),
+      sendAndResolve:()=>{this._showUndo('Conversa encerrada + mensagem enviada');},
+      applySlash:(text)=>()=>this._applySlash(text),
+      applyAI:()=>{const inp=document.getElementById('msgArea');if(inp)inp.value='O código BR-4921-8847-XZ. Acompanhe em tempo real.';this.setState({showAI:false});},
+      dismissAI:()=>this.setState({showAI:false}),
+      copyPhone:()=>{navigator.clipboard?.writeText('+55 11 99999-0000').then(()=>this._showUndo('Telefone copiado!'));},
+      startCall:()=>this._showUndo('Chamada iniciada com Maria Fernanda'),
+      openTransferModal:()=>this.setState({showTransferModal:true}),
+      closeTransferModal:()=>this.setState({showTransferModal:false}),
+      onTransferContext:(e)=>this.setState({transferContext:e.target.value}),
+      confirmTransfer:()=>{this.setState({showTransferModal:false});this._showUndo('Maria transferida para Pedro Alves ✓');},
+      toggleWhisper:()=>this.setState(st=>({whisperMode:!st.whisperMode})),
+      togglePresentMode:()=>this.setState(st=>({presentMode:!st.presentMode})),
+      cycleFontSize:()=>this.setState(st=>({fontSize:{S:'M',M:'L',L:'S'}[st.fontSize]})),
+      toggleSound:()=>this.setState(st=>({soundEnabled:!st.soundEnabled})),
+      doUndo:()=>this.setState({undoVisible:false}),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

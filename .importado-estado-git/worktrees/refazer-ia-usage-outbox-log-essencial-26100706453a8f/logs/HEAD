@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 786a156bb765f8f5edfa6e9b8e236ffe30240e57 Joaquim Ataides <ti@promobrindes.com.br> 1791366348 -0300	
+786a156bb765f8f5edfa6e9b8e236ffe30240e57 786a156bb765f8f5edfa6e9b8e236ffe30240e57 Joaquim Ataides <ti@promobrindes.com.br> 1791366348 -0300	reset: moving to HEAD
+786a156bb765f8f5edfa6e9b8e236ffe30240e57 51dfc987d1f45b20e3669defa985cc40eed334bb Joaquim Ataides <ti@promobrindes.com.br> 1791366382 -0300	commit (cherry-pick): fix(edge): outbox de IA nao trava a fila e log essencial nunca lanca
+51dfc987d1f45b20e3669defa985cc40eed334bb b0ec1f74e2f183f506c1cdce19c9dfa76f58e9f9 Joaquim Ataides <ti@promobrindes.com.br> 1791367063 -0300	commit: fix(edge): preservar contrato do roteador no log essencial

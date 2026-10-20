@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791242429 -0300	branch: Created from dia/2026-10-05
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b c6dc45d40e262ca07032491838f942e091406986 Joaquim Ataides <ti@promobrindes.com.br> 1791243120 -0300	commit: fix(inbox): mantém o volume de vídeo viável no fallback do iOS (#185)

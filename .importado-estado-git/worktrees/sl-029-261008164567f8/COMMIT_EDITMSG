@@ -1,0 +1,3 @@
+test(ci/devops): drill de restore de backup com evidência (SL-029)
+
+Executa a receita de docs/BACKUP-RECOVERY-STRATEGY.md (pg_dump -F c -> pg_restore -c) em PostgreSQL 17 descartável e prova que o banco restaurado reproduz esquema e dados (linhas, digest, constraint, índice, RLS e policy), com a unicidade em vigor. Registra o teste na ALLOWLIST do inventário de CI e documenta o drill em §3.4.

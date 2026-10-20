@@ -1,0 +1,6 @@
+test(telemetria): exercitar página e tabela reais no estado de falha
+
+Cartão V2: 2610060720d6d4 (branch v2/t-2254ac28-2610060720d6d4 @ 8139cc3ec)
+Sem mock do gráfico: o caso de sucesso monta a TelemetryCharts real (recharts em jsdom). Novo caso
+chama a TelemetryTable real direto com isError, provando a precedência erro > vazio no componente.
+12 testes verdes na pasta admin-telemetria.

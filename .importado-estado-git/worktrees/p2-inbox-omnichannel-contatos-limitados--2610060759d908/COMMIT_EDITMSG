@@ -1,0 +1,10 @@
+test(omnichannel): restaura casos existentes e cobre a projeção de conversas (#236)
+
+O juiz automático apontou remoção de testes que já existiam na base. Todos os
+casos do arquivo original foram restaurados (com asserção real sobre a tela no
+lugar da cópia manual do filtro): "accepts search input", "filters by name
+(logic)", "filters by phone (logic)", "shows all when filter is all",
+"computes channel stats from contacts", "handles null channel_type defaulting
+to whatsapp" e "handles empty contacts list".
+
+Contagem do arquivo: base 33 testes -> 43 testes (nada pulado ou enfraquecido).

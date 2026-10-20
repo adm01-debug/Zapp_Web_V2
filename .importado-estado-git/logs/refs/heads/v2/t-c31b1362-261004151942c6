@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791137964 -0300	branch: Created from dia/2026-10-04
+4b97aa57c9ee4140bffb232536c003bfa92f1809 4850750bf3ecb4e7881ead0a2d1d28c9ccd397d0 Joaquim Ataides <ti@promobrindes.com.br> 1791139516 -0300	commit: fix(auth): MFA entra na cadeia de autorização das rotas (R2-AUTH-003)

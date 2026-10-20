@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 fb181319d53a90adf6ee076b22854c754a814df4 Joaquim Ataides <ti@promobrindes.com.br> 1791245355 -0300	branch: Created from dia/2026-10-05
+fb181319d53a90adf6ee076b22854c754a814df4 21f8d53a30c8c5191858ac421d556998394b64eb worker <worker@hermes.local> 1791246032 -0300	commit: fix(auth): descarta resposta de perfil de identidade antiga apos logout ou troca de usuario

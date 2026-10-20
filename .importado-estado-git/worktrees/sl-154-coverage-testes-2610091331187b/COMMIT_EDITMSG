@@ -1,0 +1,14 @@
+test(catalogo): confirma na dia a correcao do caminho do teste de coverage (SL-154)
+
+Commit VAZIO de proposito. O [refazer 2] pede reaplicar o commit 1b185f715 da branch
+v2/sl-154-coverage-refazer-1-26100822224155 e corrigir o ponto recusado, mas a correcao ja
+esta em dia/2026-10-09 (commit a585063c5, integrado desta mesma branch de refazer - registro
+do integrador: .v2-fila/26100822224155.json = "integrado"). Os dois arquivos do cartao
+(vitest.config.ts e src/__tests__/coverage-catalogo.test.ts) sao byte a byte iguais a entrega
+anterior (git diff b959a6bd7 HEAD -> vazio), logo reaplicar o commit produz diff zero.
+
+Entreguei a prova pedida pelo cartao, registrada em .tmp/relato.md:
+- zapp-verify full . -> VERDE (Test Files 1036 passed; Tests 9836 passed);
+- teste do Catalogo: 3 passed;
+- 3 mutacoes (caminho duplicado, glob errado, piso 60/60) -> as 3 ficam VERMELHAS;
+- zapp-verify . --rapido -> VERDE.

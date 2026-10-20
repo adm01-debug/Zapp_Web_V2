@@ -1,0 +1,133 @@
+--- a/supabase/migrations/20261013210006_autoria_e_oraculo_de_papel.sql
++++ b/supabase/migrations/20261013210006_autoria_e_oraculo_de_papel.sql
+@@ -1,5 +1,7 @@
+ -- autoria_e_oraculo_de_papel
+--- Rollback: devolve os 4 corpos anteriores das funcoes de papel, recria as 4 policies originais (sem autoria/WITH CHECK) e remove os 2 gatilhos + 2 funcoes de gatilho desta migration.
++-- Rollback: devolve os 4 corpos anteriores das funcoes de papel (com o EXECUTE para
++-- public/anon que elas tinham), recria as 4 policies originais (sem autoria/WITH CHECK)
++-- e remove os 2 gatilhos + 2 funcoes de gatilho desta migration.
+ -- Rollback (SQL executável, na ordem):
+ --   create or replace function public.has_role(_user_id uuid, _role public.app_role) returns boolean language sql stable security definer set search_path = public as $f$ select exists (select 1 from public.user_roles where user_id = _user_id and role = _role) $f$;
+ --   create or replace function public.is_admin_or_supervisor(_user_id uuid) returns boolean language sql stable security definer set search_path = public as $f$ select exists (select 1 from public.user_roles where user_id = _user_id and role in ('admin','supervisor')) $f$;
+@@ -17,6 +19,12 @@
+ --   create policy "Users can update their calls" on public.calls for update to authenticated using (agent_id in (select id from public.profiles where user_id = auth.uid()));
+ --   drop policy if exists "Users can update messages of own accounts" on public.email_messages;
+ --   create policy "Users can update messages of own accounts" on public.email_messages for update to authenticated using (exists (select 1 from public.gmail_accounts ga where ga.id = gmail_account_id and (ga.user_id = auth.uid() or public.is_admin_or_supervisor(auth.uid()))));
++--   grant execute on function public.has_role(uuid, public.app_role) to public, anon;
++--   grant execute on function public.is_admin_or_supervisor(uuid) to public, anon;
++--   grant execute on function public.is_admin(uuid) to public, anon;
++--   grant execute on function public.get_profile_role_for_check(uuid) to public, anon;
++--   (as 4 funcoes de papel nascem com EXECUTE para PUBLIC por padrao; a migration
++--   revoga de public/anon e o rollback devolve, alem dos corpos, esse EXECUTE).
+ --
+ -- Defeitos corrigidos (um por frente):
+ --   F1 (autoria)  conversation_closures.closed_by e conversation_events.performed_by nao
+@@ -37,9 +45,14 @@
+ --                 comum so consulta o proprio uid. Fail-closed (retorna false/vazio),
+ --                 sem excecao que distinga usuario existente de inexistente.
+ --
+--- Sem DDL destrutivo: nenhum DROP de tabela/coluna, nenhum DELETE/TRUNCATE, nenhum GRANT
+--- novo. As funcoes de gatilho nascem com EXECUTE fechado (PUBLIC/anon/authenticated),
+--- como manda 20261001191230.
++-- Sem DDL destrutivo: nenhum DROP de tabela/coluna, nenhum DELETE/TRUNCATE. Ha
++-- REVOKE de PUBLIC/anon + GRANT a authenticated/service_role nas 4 funcoes de papel
++-- (fechamento exigido pela guarda check-secdef-public-execute) e nas 2 funcoes de
++-- gatilho novas (EXECUTE fechado de PUBLIC/anon/authenticated), como manda
++-- 20261001191230. As policies de INSERT de closures/eventos sao recriadas com WITH
++-- CHECK de autoria espelhando o gatilho (a de eventos troca 'performed_by is null
++-- or performed_by = ...' por 'performed_by = ...', pois o gatilho carimba sempre o
++-- chamador). O Rollback no topo desfaz tudo isso.
+ 
+ -- ============================================================================
+ -- F1. Autoria nao falsificavel (gatilho BEFORE INSERT)
+--- a/supabase/tests/autoria_e_oraculo_de_papel.sql
++++ b/supabase/tests/autoria_e_oraculo_de_papel.sql
+@@ -39,8 +39,9 @@
+   ('00000000-0000-0000-0000-0000000a0003', 'agent');
+ 
+ insert into public.contacts (id, name, phone, assigned_to) values
+-  ('00000000-0000-0000-0000-0000000c0001', 'Contato Um',  '+5511900000001', '00000000-0000-0000-0000-0000000f0002'),
+-  ('00000000-0000-0000-0000-0000000c0002', 'Contato Dois','+5511900000002', '00000000-0000-0000-0000-0000000f0002');
++  ('00000000-0000-0000-0000-0000000c0001', 'Contato Um',  '+551****0001', '00000000-0000-0000-0000-0000000f0002'),
++  ('00000000-0000-0000-0000-0000000c0002', 'Contato Dois','+551****0002', '00000000-0000-0000-0000-0000000f0002'),
++  ('00000000-0000-0000-0000-0000000c0003', 'Contato Tres','+551****0003', '00000000-0000-0000-0000-0000000f0002');
+ 
+ insert into public.calls (id, contact_id, agent_id, direction, status) values
+   ('00000000-0000-0000-0000-0000000d0005', '00000000-0000-0000-0000-0000000c0001', '00000000-0000-0000-0000-0000000f0002', 'outbound', 'ended');
+@@ -116,6 +117,53 @@
+ end $$;
+ 
+ -- ============================================================================
++-- F1e/F1f. RPCs DEFINER chamadas por autenticado passam pelo mesmo carimbo
++-- ============================================================================
++-- F1e: set_conversation_status como agente grava o closure com o chamador
++-- (antes: closed_by NULL) e a RPC segue funcionando sob a nova WITH CHECK.
++-- Usa contato virgem (c0003): o insert direto de F1a sincroniza o status do
++-- contato via trg_sync_contact_status_on_closure e o re-fechamento sem
++-- reabertura e rejeitado — a RPC faria no-op e nao haveria linha para conferir.
++set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000a0002","role":"authenticated"}';
++set local role authenticated;
++do $$
++declare v_closed uuid; v_st text;
++begin
++  perform public.set_conversation_status('00000000-0000-0000-0000-0000000c0003', 'resolved', 'f1e-teste');
++  select conversation_status into v_st from public.contacts where id = '00000000-0000-0000-0000-0000000c0003';
++  if v_st is distinct from 'resolved' then
++    raise exception 'F1e FALHOU: set_conversation_status nao resolveu (status=%)', v_st;
++  end if;
++  select closed_by into v_closed from public.conversation_closures where contact_id = '00000000-0000-0000-0000-0000000c0003' and close_reason = 'f1e-teste';
++  if v_closed is distinct from '00000000-0000-0000-0000-0000000f0002' then
++    raise exception 'F1e FALHOU: closure da RPC ficou closed_by=% (esperado o chamador)', v_closed;
++  end if;
++  raise notice 'F1e OK: set_conversation_status grava o chamador e resolve';
++end $$;
++
++-- F1f: transfer_conversation como autenticado (admin) grava o evento com o
++-- chamador (a RPC ja escrevia o autor explicito: o gatilho preserva o valor) e
++-- a transferencia segue atomica sob a nova policy de INSERT de eventos.
++-- (Agente nao-admin nao transfere para outro agente: o gatilho
++-- prevent_contact_assignee_hijack nega — comportamento anterior preservado.)
++set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000a0001","role":"authenticated"}';
++set local role authenticated;
++do $$
++declare v_event uuid; v_perf uuid; v_assigned uuid;
++begin
++  select public.transfer_conversation('00000000-0000-0000-0000-0000000c0002', '00000000-0000-0000-0000-0000000f0003', null, 'f1f-teste') into v_event;
++  select assigned_to into v_assigned from public.contacts where id = '00000000-0000-0000-0000-0000000c0002';
++  if v_assigned is distinct from '00000000-0000-0000-0000-0000000f0003' then
++    raise exception 'F1f FALHOU: transferencia nao moveu o contato (assigned_to=%)', v_assigned;
++  end if;
++  select performed_by into v_perf from public.conversation_events where id = v_event;
++  if v_perf is distinct from '00000000-0000-0000-0000-0000000f0001' then
++    raise exception 'F1f FALHOU: evento da transferencia ficou performed_by=% (esperado o chamador admin)', v_perf;
++  end if;
++  raise notice 'F1f OK: transfer_conversation grava o chamador e move o contato';
++end $$;
++
++-- ============================================================================
+ -- F2. WITH CHECK nas policies de UPDATE (calls e email_messages)
+ -- ============================================================================
+ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000a0002","role":"authenticated"}';
+@@ -208,6 +256,22 @@
+   raise notice 'F3a-e OK: agente nao consulta papel alheio e nao ha oraculo';
+ end $$;
+ 
++-- (a2) o usuario comum CONTINUA consultando o proprio papel (nao foi bloqueado
++-- junto): has_role proprio = true e get_profile_role_for_check proprio = 1 linha.
++do $$
++declare v boolean; v_n int;
++begin
++  v := public.has_role('00000000-0000-0000-0000-0000000a0002', 'agent');
++  if v is not true then
++    raise exception 'F3m FALHOU: agente nao consulta o proprio papel (has_role proprio=%)', v;
++  end if;
++  select count(*) into v_n from public.get_profile_role_for_check('00000000-0000-0000-0000-0000000a0002');
++  if v_n <> 1 then
++    raise exception 'F3n FALHOU: get_profile_role_for_check proprio devolveu % linha(s)', v_n;
++  end if;
++  raise notice 'F3m-n OK: usuario comum segue consultando o proprio papel';
++end $$;
++
+ -- (b) admin pode consultar qualquer papel (regra interna preservada).
+ reset role;
+ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000a0001","role":"authenticated"}';

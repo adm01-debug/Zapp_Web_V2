@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4bf733779305d147f46854aa9e38b49bd5e7dab1 Joaquim Ataides <ti@promobrindes.com.br> 1791365203 -0300	
+4bf733779305d147f46854aa9e38b49bd5e7dab1 4bf733779305d147f46854aa9e38b49bd5e7dab1 Joaquim Ataides <ti@promobrindes.com.br> 1791365204 -0300	reset: moving to HEAD
+4bf733779305d147f46854aa9e38b49bd5e7dab1 e22e92522ab39e599432dc6b46612ecdddd6bf10 Joaquim Ataides <ti@promobrindes.com.br> 1791365237 -0300	commit (cherry-pick): fix(busca): preserva limpeza de histórico carregado
+e22e92522ab39e599432dc6b46612ecdddd6bf10 1a46c86e74c92844a222c964739c898b0f3352ed Joaquim Ataides <ti@promobrindes.com.br> 1791366303 -0300	commit: test(busca): isola histórico no teste de tag global

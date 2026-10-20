@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791334064 -0300	branch: Created from dia/2026-10-06
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 b8d014c7c7c7e2a98ec8f205c9d60a25b9fd9c6c Joaquim Ataides <ti@promobrindes.com.br> 1791334092 -0300	cherry-pick: test(talkx): matriz por tela e contrato de adocao dos estados (X047)
+b8d014c7c7c7e2a98ec8f205c9d60a25b9fd9c6c 7da051b4f9858c54b33a2d21a373eab2f85c09c7 Joaquim Ataides <ti@promobrindes.com.br> 1791334092 -0300	cherry-pick: test(talkx): restaura matriz isolada de estados X047
+7da051b4f9858c54b33a2d21a373eab2f85c09c7 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791335083 -0300	reset: moving to 799ff2c79
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 3160179d3c4f2e0db713b5909a2cf1bbebda0272 Joaquim Ataides <ti@promobrindes.com.br> 1791335083 -0300	commit: test(talkx): matriz por tela e contrato de adocao dos estados (X047)

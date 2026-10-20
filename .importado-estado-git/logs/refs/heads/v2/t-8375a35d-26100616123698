@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791313921 -0300	branch: Created from dia/2026-10-06
+7c26f709642e9058b3f6a016072d9516a70e55f3 64c1b9ea285b8a9d8958ad61ffb62587721c0095 Hugo (worker hooks) <ti@promobrindes.com.br> 1791314121 -0300	commit: test(quarentena): prova monitor conservando decisão antiga e parando em erro transitório (#238)
+64c1b9ea285b8a9d8958ad61ffb62587721c0095 043828d9d5c8e5a2aa257127f0b34ff3d4791c61 Hugo (worker hooks) <ti@promobrindes.com.br> 1791314278 -0300	commit: fix(quarentena): monitor reconcilia liberações por versão e retoma após erro transitório (#238)
+043828d9d5c8e5a2aa257127f0b34ff3d4791c61 07a8bafb05fb08112396999419f27d1cf87fc36c Hugo (worker hooks) <ti@promobrindes.com.br> 1791314531 -0300	commit (amend): fix(quarentena): monitor reconcilia liberações por versão e retoma após erro transitório (#238)

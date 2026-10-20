@@ -1,0 +1,3 @@
+test(security): confirma no base que salvar regras de rate limit não apaga a configuração (R2-AUTH-023 #249)
+
+Achado R2-AUTH-023 (item 249) já corrigido em dia/2026-10-06 pelo cartão 26100610323d5a (commit 61910c99d), ancestral do HEAD deste cartão. Nenhum arquivo de código foi alterado: git diff --stat contra a base do dia sai vazio. Commit vazio apenas para o hermes-tarefa-fechar e a fila do integrador rodarem. Prova no .tmp/relato.md: vermelho contra o componente pré-correção (7 failed | 18 passed) e verde no código de hoje (25/25), ausência do DELETE global e da opção de ação sem consumidor, e zapp-verify . --rapido VERDE.

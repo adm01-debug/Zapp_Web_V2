@@ -1,0 +1,12 @@
+fix(ci): baseline do usage-guard aceita a RPC da conexao padrao ainda fora da base (#174)
+
+A guarda scripts/db-audit/supabase-usage-guard.mjs reprovou a entrega do
+hook (1 violacao nova: rpc:set_default_whatsapp_connection em
+useConnectionsManager.ts) porque a migration da RPC
+(20261006234158_whatsapp_default_connection_rpc_atomica.sql, de
+t_ae0a55a6/t_ab6e64b7) ainda nao esta em dia/2026-10-08. A guarda esta
+correta; falta o alvo na arvore. Registro a chave no baseline ratchet,
+como a propria guarda prescreve e como ja foi feito em c7e646c3e.
+
+E temporario e auto-anunciado: quando a migration entrar na dia, a
+entrada vira obsoleta e a guarda volta a falhar pedindo a remocao.

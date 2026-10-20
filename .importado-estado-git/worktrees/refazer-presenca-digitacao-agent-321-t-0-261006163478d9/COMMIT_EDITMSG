@@ -1,0 +1,4 @@
+fix(inbox): presença de digitação entre agentes usa identidade real da sessão (R2-INB-026)
+
+# Conflicts:
+#	src/hooks/__tests__/useTypingPresence.identidade.test.tsx

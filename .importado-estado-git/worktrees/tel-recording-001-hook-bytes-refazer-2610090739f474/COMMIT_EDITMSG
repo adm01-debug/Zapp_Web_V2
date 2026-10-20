@@ -1,0 +1,17 @@
+fix(telefonia): hook de gravacao entrega os BYTES da Edge como Blob, nunca endereco (TEL-RECORDING-001)
+
+O useCallRecording devolvia um endereco (url) e criava ele mesmo a object URL,
+duplicando o ciclo createObjectURL/revokeObjectURL que o RecordingPlayer ja faz a
+partir dos bytes. Agora o contrato e { disponivel, blob, buscando }: a resposta da
+Edge e lida como Response.blob() e o audio chega inteiro com qualquer Content-Type;
+blob de tamanho 0 e resposta JSON (o formato dos erros da Edge) nao sao gravacao
+valida, e a URL de origem nunca passa pelo hook.
+
+Transporte preservado: POST com { callId } no corpo (nunca na query string), bearer
+da sessao e cache no-store; 403/404 viram { disponivel: false } e qualquer outra
+falha propaga (rede, 401, 5xx, sem sessao). O campo url continua no retorno apenas
+para o tipo do consumidor atual e nunca carrega endereco.
+
+Teste novo sobre a fronteira de rede (fetch global com Response realistas) e bytes
+com sequencias invalidas em UTF-8: vermelho antes (7 failed | 5 passed com o hook do
+dia), verde depois (12/12). RecordingPlayer.test.tsx segue verde (10/10).

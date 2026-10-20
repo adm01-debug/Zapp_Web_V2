@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555283 -0300	branch: Created from dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 e9183dc8995712b5166a886b8cfcf78a6c84b548 Joaquim Ataides <ti@promobrindes.com.br> 1791555297 -0300	cherry-pick: fix(ai-transcribe-audio): escolher o tipo de áudio pelos magic bytes
+e9183dc8995712b5166a886b8cfcf78a6c84b548 6926bad251b8963160f2b437474ca90d57b77a91 Joaquim Ataides <ti@promobrindes.com.br> 1791555297 -0300	cherry-pick: fix(ai-transcribe-audio): filtra magic bytes de áudio
+6926bad251b8963160f2b437474ca90d57b77a91 bf6fedf1c2d6c0fbcd6646c75b28d778200f802d Joaquim Ataides <ti@promobrindes.com.br> 1791555480 -0300	commit: fix(ai-transcribe-audio): mantém literais do contrato no caminho de produção
+bf6fedf1c2d6c0fbcd6646c75b28d778200f802d 3b08fdacc4a727222710961865988ce798eff8eb Joaquim Ataides <ti@promobrindes.com.br> 1791557827 -0300	commit: test(ai-transcribe-audio): prova o caminho NEGADO da autorização por objeto (IA-014)

@@ -1,0 +1,9 @@
+fix(agenda): agenda pede os pendentes da faixa visível, paginados, e expõe erro de leitura
+
+A consulta global do hook (todos os status, sem faixa e sem páginas, ordenada por
+scheduled_at crescente) era ocupada pelo histórico: o PostgREST devolve só a
+primeira página (1000 linhas) e os agendamentos futuros sumiam da Agenda, que
+ainda filtrava pending no cliente. Agora o hook pede status=pending dentro da
+faixa exibida, com ordem estável (scheduled_at, id) e paginação por range; o
+calendário pede a faixa do mês exibido e mostra falha de leitura em vez de
+agenda vazia.

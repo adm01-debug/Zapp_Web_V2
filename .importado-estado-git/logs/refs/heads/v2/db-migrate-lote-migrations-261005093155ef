@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791203470 -0300	branch: Created from dia/2026-10-05
+b58c615056ec3756606163a249e5d8b26352f355 207a2f50d7174e0d14207d4dbb127d09eccefde8 Joaquim Ataides <ti@promobrindes.com.br> 1791203479 -0300	cherry-pick: feat(ci): db-migrate aceita lote de migrations via lote_versions
+207a2f50d7174e0d14207d4dbb127d09eccefde8 6c1dd2b7040e51284c83954c63fef335c9e63d60 Joaquim Ataides <ti@promobrindes.com.br> 1791204314 -0300	commit: fix(ci): passo de runtime do db-migrate volta a aceitar contrato generico
+6c1dd2b7040e51284c83954c63fef335c9e63d60 444e55bedb979ea5ea08f14d89acd7d590edf5b7 Joaquim Ataides <ti@promobrindes.com.br> 1791206156 -0300	commit: test(ci): executa o passo real de runtime no teste do lote do db-migrate

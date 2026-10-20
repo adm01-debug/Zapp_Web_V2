@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 db2ae6b5e1b579c58f6e376f6b5428da8f09d7b8 Joaquim Ataides <ti@promobrindes.com.br> 1791198721 -0300	
+db2ae6b5e1b579c58f6e376f6b5428da8f09d7b8 db2ae6b5e1b579c58f6e376f6b5428da8f09d7b8 Joaquim Ataides <ti@promobrindes.com.br> 1791198722 -0300	reset: moving to HEAD
+db2ae6b5e1b579c58f6e376f6b5428da8f09d7b8 43f882623b9757374764cbf2c727c7d7b7483c18 Joaquim Ataides <ti@promobrindes.com.br> 1791199909 -0300	commit: fix(auth): política de rede não derruba login por RPC ausente ou geo sem lista (QA5-08)

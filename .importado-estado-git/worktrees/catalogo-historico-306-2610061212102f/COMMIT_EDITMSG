@@ -1,0 +1,3 @@
+fix(docs): tela de funcionalidades reflete o estado real em vez de 100% do catálogo (#306)
+
+R2-GOV-002: o selo literal '100% Implementado' e a lista estática anunciavam push e Service Worker, desligados por decisão em src/config/service_worker.ts. Agora o estado de cada item e o selo do topo saem da configuração ativa; itens dependentes de capacidade desligada aparecem marcados como desativados.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562388 -0300	branch: Created from dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 ae262713027fbb8a1c26253211d5e9e66f34dfd9 Joaquim Ataides <ti@promobrindes.com.br> 1791562635 -0300	commit (cherry-pick): fix(talk-x): extrai as secoes do passo Entrega e mostra o horario comercial real (TL-145)
+ae262713027fbb8a1c26253211d5e9e66f34dfd9 68c0b059d1680b84807cf9930fdcaa284d40b2ce Joaquim Ataides <ti@promobrindes.com.br> 1791563247 -0300	commit: fix(talk-x): propaga falha ao ler limite diario
+68c0b059d1680b84807cf9930fdcaa284d40b2ce b147f548583bdfc4981b1a41d9da7a5b0dba254b Joaquim Ataides <ti@promobrindes.com.br> 1791563313 -0300	commit (amend): fix(talk-x): propaga falha ao ler limite diario

@@ -1,0 +1,9 @@
+fix(telefonia): it.todo: enforcement de SRTP explicito nas opcoes do Se (SL-002)
+
+A lacuna era real: as opcoes de midia pediam so audio e nenhum ponto do app olhava o SDP negociado - sessao em RTP/AVP (em claro) seguia para o audio remoto como se fosse segura.
+
+- SipCallAdapter: midiaUsaSrtp(sdp) (perfil do m= tem de ser SAVP) e midiaCriptografada(session) lendo o SDP negociado (remoteDescription); null = nao atestado, com warn.
+- CallAdapter: o metodo no contrato (so o SipCallAdapter implementa; so o CallEngine chama).
+- CallEngine: no Established, consulta o adapter ANTES do bookkeeping - midia em claro nao fica ativa, nao vira chamada atendida e a sessao e encerrada como acao nossa, com o motivo na tela.
+- useSipConnection: sessionDescriptionHandlerFactoryOptions exige RTCP muxado e bundle (o RTCPeerConnection de toda sessao).
+- Testes: 4 casos de comportamento no CallEngine (real), veredito do SDP no calls-access (o it.todo da linha 231 virou teste) e a prova de que as opcoes chegam ao UserAgent.

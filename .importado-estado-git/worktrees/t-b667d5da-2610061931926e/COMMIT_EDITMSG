@@ -1,0 +1,1 @@
+fix(performance): score para de tratar APIs ausentes como memoria livre, RTT zero e conexao 4g (#375)

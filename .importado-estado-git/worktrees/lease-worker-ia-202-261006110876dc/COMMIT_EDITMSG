@@ -1,0 +1,22 @@
+fix(ai-jobs): renova o lease durante o handler e impede retry cego de efeito incerto
+
+O worker de IA renovava o lease só antes e depois do await handler(): um
+handler mais longo que a janela perdia o lease no meio e, ao ser recolocado
+na fila pelo reaper, a 2ª tentativa refazia o efeito externo sem saber se a
+1ª já tinha começado — risco de 2ª cobrança no provedor.
+
+- lease keeper por job (setInterval janela/3, clearInterval garantido em
+  finally) renova o heartbeat durante o handler
+- AbortController por job: heartbeat false aborta o signal agora repassado
+  em AiJobHandlerInput; perda de lease não é mais só warn+continue
+- EFFECTFUL_KINDS: kinds com efeito externo chamam
+  mark_ai_job_effect_started(id, lease_token) antes de executar (CAS no
+  banco); marca recusada => efeito não roda
+- timeout da geração derivado do orçamento do lease (janela - margem),
+  cobrindo requisição e corpo da resposta
+- migration nova: coluna ai_jobs.effect_started_at, RPC
+  mark_ai_job_effect_started e reapers em três vias — lease vencido com
+  marca vai a outcome_unknown/EFFECT_OUTCOME_UNKNOWN (terminal, para
+  reconciliação) em vez de voltar a queued; sem marca nada muda
+
+R2-API-026 (P2) / t_ccaf5924

@@ -1,0 +1,26 @@
+fix(outros): Agentes especializados e ações supervisionadas (SL-218)
+
+Revisa a evidencia do Bloco 18 (IA-171..IA-180) na ponta de 08/10/2026
+(dia/2026-10-08, 210c3e7c1) e registra o estado REAL de cada etapa, que e o
+que o proprio bloco exige ("evidencias dos dez criterios de aceite revisadas;
+itens nao comprovados permanecem pendentes").
+
+Achado: o inventario de 07/10 ("sem entrega das etapas 171-180") erra para
+IA-177 - o treinamento por simulacao esta entregue (TrainingMode.tsx, nota por
+criterios observaveis no texto do atendente, cenarios anonimizados fixos;
+teste TrainingMode.avaliacao.test.tsx; tabela training_sessions). IA-172,
+IA-175, IA-176 e IA-179 tem parte real sob outro nome (infra de IA, nao
+supervisao de acao); IA-171, IA-173, IA-174, IA-178 e IA-180 nao tem caminho no
+repositorio.
+
+O bloco pede camada NOVA (catalogo de ferramentas, executor deterministico,
+aprovacao vinculada ao efeito, caixa de propostas) que exige tabela propria,
+executor em Edge Function e tela de aprovacao - fora das regras deste cartao
+(sem DDL/Edge/migration) e do tamanho de um cartao de nivel worker; fica
+registrado como pendencia de trilha separada, nao como entregue.
+
+Prova: contrato novo tests/contracts/sl218-bloco18-estado.contract.test.ts
+(6/6), vermelho com o documento ausente (ENOENT) e verde com ele; todo caminho
+citado como prova e conferido no disco. zapp-verify . --rapido VERDE.
+
+Cartao V2: t_38778cb9 (SL-218)

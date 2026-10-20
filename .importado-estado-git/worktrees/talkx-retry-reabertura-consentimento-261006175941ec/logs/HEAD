@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320392 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320393 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 c99141ef0d93f183667bbf4780225b8b3e9582c5 Joaquim Ataides <ti@promobrindes.com.br> 1791321438 -0300	commit: fix(talkx): reabertura por retry exige a nova confirmacao de lancamento (#124)
+c99141ef0d93f183667bbf4780225b8b3e9582c5 4a0074b604dd47b46d12359351b21353ff255801 Joaquim Ataides <ti@promobrindes.com.br> 1791323289 -0300	commit: fix(talkx): corpo do retry preserva a validacao de lote do #123 na reabertura (#124)

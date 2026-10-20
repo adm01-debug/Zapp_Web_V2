@@ -1,0 +1,11 @@
+fix(team-chat): fonte única do mute e listener global de notificações (#162)
+
+TC-007: o mute era lido em `user_settings.muted_conversations` (painel) e escrito em
+`team_conversation_members.is_muted` (useToggleMuteConversation); a fonte única passa a ser
+a membership, então silenciar/reativar preserva o estado exibido. O listener de
+notificações só era montado em TeamChatView, deixando o atendente sem alerta fora da tela:
+agora é único e global (App.tsx), e a conversa em foco chega por um store que a view
+publica/limpa — sem duplicar canal.
+
+Prova: `useTeamChatPanel.mute.test.tsx` (vermelho->verde), `useTeamChatNotifications.global.test.tsx`
+e `team-chat-notifications-mount.test.ts`.

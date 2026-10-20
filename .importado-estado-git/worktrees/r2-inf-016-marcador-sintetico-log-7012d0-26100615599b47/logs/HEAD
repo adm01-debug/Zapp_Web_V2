@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 4877339ccae047a149f483b439f1ff68330cf546 Joaquim Ataides <ti@promobrindes.com.br> 1791313192 -0300	
+4877339ccae047a149f483b439f1ff68330cf546 4877339ccae047a149f483b439f1ff68330cf546 Joaquim Ataides <ti@promobrindes.com.br> 1791313192 -0300	reset: moving to HEAD
+4877339ccae047a149f483b439f1ff68330cf546 a1f2647925761329c9f7be8b6f9def5853aa1cbf Joaquim Ataides <ti@promobrindes.com.br> 1791313664 -0300	commit: fix(edge): sanitiza handlers 500 com marcador sintetico

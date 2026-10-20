@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260930580000_ai_block03_pr2_zero_default_only_projection_sql", "label": "20260930580000_ai_block03_pr2_zero_default_only_projection.sql", "file_type": "code", "source_file": "supabase/migrations/20260930580000_ai_block03_pr2_zero_default_only_projection.sql", "source_location": null}], "edges": []}

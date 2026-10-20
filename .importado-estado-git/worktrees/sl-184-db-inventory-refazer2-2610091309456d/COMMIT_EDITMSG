@@ -1,0 +1,12 @@
+fix(docs): inventario do banco acerta talkx_campaign_segments pela TL-162 (SL-184)
+
+A guarda scripts/ci/db-inventory-doc.unit.mjs recusava o documento na ponta de hoje:
+talkx_campaign_segments estava como parcial com um unico consumidor de ferramental, mas
+src/hooks/integrations/useTalkXResumeChecklist.ts (criado pelo commit 6ed0eb439, TL-162,
+que entrou na dia depois da base da entrega anterior) consulta a tabela em
+fromTable('talkx_campaign_segments') (linha 233) — e o teste dele tambem a cita. O
+repositorio diz ativo; a linha passa a ativo com os dois consumidores de produto e o
+ferramental, e a Nota historica deixa de listar a tabela entre as parciais.
+
+Prova: node --test scripts/ci/db-inventory-doc.unit.mjs -> 15 pass / 0 fail
+(antes: 2 violacoes, as duas citando talkx_campaign_segments)

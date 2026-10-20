@@ -1,0 +1,16 @@
+fix(send-scheduled-report): autoriza envio de relatório agendado (R2-API-022)
+
+Fecha o P1 de autorização do R2-API-022 somente em send-scheduled-report.
+
+- autorização acontece antes de parsear reportId e antes de criar/usar o
+  cliente service-role (preflight CORS segue livre);
+- execução automática exige CRON_SECRET não vazio via header x-cron-secret,
+  comparado em tempo constante (timingSafeEqual);
+- execução manual exige JWT válido de admin/supervisor via RPC canônica
+  is_admin_or_supervisor (cliente anon, sem service-role no gate);
+- falha fechada: CRON_SECRET vazio/ausente ou erro na RPC de papel não
+  autoriza; usuário comum não recebe reportData.
+
+Novo teste index.test.ts cobre 401 sem identidade, 403 para usuário comum,
+cron inválido/ausente rejeitado, admin/supervisor e cron válido admitidos, e
+zero lookup/Resend/service-role após rejeição.

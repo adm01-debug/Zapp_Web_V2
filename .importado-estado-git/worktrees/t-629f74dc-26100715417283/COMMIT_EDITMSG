@@ -1,0 +1,7 @@
+test(journey): travar o mapa de cores por categoria (trilho e selo do mesmo token)
+
+O teste do modelo passa a derivar o token do `iconClass` de cada categoria e exigir
+que `railClass` e `badgeClass` usem o MESMO token — o par neutro
+`bg-muted text-muted-foreground border-border` (igual ao PILL_CLASS.muted da aba)
+para Arquivos e Atendimento. Assim o mapa de cor não sai do lugar sem teste
+vermelho, e nenhuma categoria troca de cor entre tile, trilho e selo.

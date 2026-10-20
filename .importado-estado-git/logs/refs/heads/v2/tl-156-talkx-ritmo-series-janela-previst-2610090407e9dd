@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529649 -0300	branch: Created from dia/2026-10-09
+5a9731645d266ea721f679d6886b83822ac16f6b f1bc84618ae318692892eb576fdda8fcf38e76c1 Joaquim Ataides <ti@promobrindes.com.br> 1791530488 -0300	commit: fix(talk-x): card do ritmo por minuto com janela, previsto e término (TL-156)
+f1bc84618ae318692892eb576fdda8fcf38e76c1 cb998d3f09e358957fcfa0a3542d0616e2b5828b Joaquim Ataides <ti@promobrindes.com.br> 1791530564 -0300	commit: fix(talk-x): esqueleto do card do ritmo respeita prefers-reduced-motion (TL-156)
+cb998d3f09e358957fcfa0a3542d0616e2b5828b 69a985dfada2a7021335704f1b7f5b5cdd166504 Joaquim Ataides <ti@promobrindes.com.br> 1791563438 -0300	rebase (finish): refs/heads/v2/tl-156-talkx-ritmo-series-janela-previst-2610090407e9dd onto 12e407210db0ea4d9f817618d30848304ca932d5

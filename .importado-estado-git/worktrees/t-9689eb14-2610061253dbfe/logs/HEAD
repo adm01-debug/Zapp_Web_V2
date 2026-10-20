@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fab4394b10028d4b48475c9313bd219493d509b6 Joaquim Ataides <ti@promobrindes.com.br> 1791301988 -0300	
+fab4394b10028d4b48475c9313bd219493d509b6 fab4394b10028d4b48475c9313bd219493d509b6 Joaquim Ataides <ti@promobrindes.com.br> 1791301989 -0300	reset: moving to HEAD
+fab4394b10028d4b48475c9313bd219493d509b6 5cd00df756466e4493275b2d0f3a13277899c5e7 Hugo <hugo@promobrindes.local> 1791302510 -0300	commit: fix(navegacao): reconcilia travessia do historico pela identidade da entrada (#439)

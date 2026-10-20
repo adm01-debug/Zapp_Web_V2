@@ -1,0 +1,4 @@
+fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)
+
+# Conflicts:
+#	src/hooks/system/useNotifications.ts

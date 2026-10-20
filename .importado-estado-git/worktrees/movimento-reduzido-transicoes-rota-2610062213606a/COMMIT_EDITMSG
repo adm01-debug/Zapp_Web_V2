@@ -1,0 +1,15 @@
+fix(telas): transições de rota usam a mesma preferência de movimento reduzido do painel (#379)
+
+O painel de Acessibilidade (HighContrastProvider) grava `reducedMotion` e liga a
+classe `reduced-motion` no <html>; as transições de rota liam a chave privada
+`zapp:reduce-motion`, que nenhum controle escrevia. Com "Reduzir Movimento" ligado
+na tela e o sistema sem preferência, o RouteTransition continuava escolhendo
+slide/zoom/fade em vez de `none` (R2-INF-037).
+
+- useTransitionPreferences passa a ler a preferência de usuário do contexto global
+  de acessibilidade, combinada com `prefers-reduced-motion`;
+- remove o store privado `zapp:reduce-motion` (sem writer: ninguém tinha preferência
+  gravada nele) e os exports mortos do barrel;
+- o contexto expõe `setReducedMotion(value)` para escrever a MESMA preferência;
+- testes: matriz painel ligado/desligado x sistema ligado/desligado e prova no DOM
+  com o Framer Motion real (vermelho antes, verde depois).

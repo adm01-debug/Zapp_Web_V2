@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d572c447dfea8aa4d924f19c51d8d349a445054a Joaquim Ataides <ti@promobrindes.com.br> 1791484812 -0300	branch: Created from dia/2026-10-08
+d572c447dfea8aa4d924f19c51d8d349a445054a dd74f7a62936abe75b6a38de3873e0afb3ce9488 Joaquim Ataides <ti@promobrindes.com.br> 1791484831 -0300	cherry-pick: fix(banco): pre-valida jobs do pg_cron antes da mitigacao
+dd74f7a62936abe75b6a38de3873e0afb3ce9488 7116f382e321c3acba05345eb14c994169653c05 Joaquim Ataides <ti@promobrindes.com.br> 1791486989 -0300	commit: fix(banco): pre-valida EXECUTE em cron.alter_job antes da mitigacao

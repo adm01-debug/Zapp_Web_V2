@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791519877 -0300	branch: Created from dia/2026-10-09
+bc539491e56a91557290e0b15c0e561646c7e553 be455fced1c94f7570ff8c248557df2e329e65be Joaquim Ataides <ti@promobrindes.com.br> 1791520543 -0300	commit: fix(inbox): deep link ?contact= abre a conversa do contato na inbox (SL-206)

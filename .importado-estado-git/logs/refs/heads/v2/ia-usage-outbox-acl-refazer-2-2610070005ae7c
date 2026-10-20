@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342346 -0300	branch: Created from dia/2026-10-07
+e58beff67df277afa73c179058c38190a5dd5d5c fc7517f732de7a08350437cbd8023c5bef9e1785 Joaquim Ataides <ti@promobrindes.com.br> 1791342526 -0300	cherry-pick: fix(db): isola schema e unicidade de event_id da outbox de IA

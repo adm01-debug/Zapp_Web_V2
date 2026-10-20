@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fab4394b10028d4b48475c9313bd219493d509b6 Joaquim Ataides <ti@promobrindes.com.br> 1791301794 -0300	
+fab4394b10028d4b48475c9313bd219493d509b6 fab4394b10028d4b48475c9313bd219493d509b6 Joaquim Ataides <ti@promobrindes.com.br> 1791301794 -0300	reset: moving to HEAD
+fab4394b10028d4b48475c9313bd219493d509b6 111d8c6d2ba78c54238205d73c80266ca891d9c3 Iris <iris@hermes.local> 1791302366 -0300	commit: fix(tts): cancela a fala do chat ao desmontar e impede geração duplicada da mesma mensagem (#334)

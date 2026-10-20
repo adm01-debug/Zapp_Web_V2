@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ca4d4609f9ce4bb7e56dfd2f4142edd4e632293d Joaquim Ataides <ti@promobrindes.com.br> 1791474745 -0300	
+ca4d4609f9ce4bb7e56dfd2f4142edd4e632293d ca4d4609f9ce4bb7e56dfd2f4142edd4e632293d Joaquim Ataides <ti@promobrindes.com.br> 1791474745 -0300	reset: moving to HEAD
+ca4d4609f9ce4bb7e56dfd2f4142edd4e632293d 5522537743b1a59fd641ccecf2d4629c66acc8d5 Joaquim Ataides <ti@promobrindes.com.br> 1791476352 -0300	commit: fix(banco): tolera pg_cron local sem alter_job

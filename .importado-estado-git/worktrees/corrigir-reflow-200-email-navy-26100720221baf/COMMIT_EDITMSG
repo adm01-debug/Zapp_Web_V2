@@ -1,0 +1,11 @@
+test(e2e): zoom de 200% garantido no reflow do email-navy depois do portao de boot
+
+O reflow 200% mede overflow depois de aplicar font-size 200% no <html>. Se um
+reload (chunk error -> boundary global) repusesse o app, a medicao rodaria numa
+tela sem zoom e passaria em falso. A spec agora confere que o zoom continua
+aplicado antes de medir, e documenta por que o zoom entra depois do boot e nao
+por addInitScript. O portao de boot explicito que este cartao tambem trazia ja
+existe na dia (abrirEmail, f73548534), entao nao e duplicado aqui.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

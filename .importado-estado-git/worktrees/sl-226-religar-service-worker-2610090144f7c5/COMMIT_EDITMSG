@@ -1,0 +1,3 @@
+fix(performance): Religar Service Worker com banner de atualização (SL-226)
+
+Conferência de lacuna: a etapa 093 do plano tem portão [DECISÃO] (exige APROVADO) e o aceite dela depende de migration + Edge Function (push web), proibidas neste cartão. Entrega sem código; ver .tmp/relato.md.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791456142 -0300	branch: Created from dia/2026-10-08
+0203871564cbc198c32d6c501cd414e24ddb10ab 28aecd523f47efb6dddfc54a9de0a08c4cd9a905 Joaquim Ataides <ti@promobrindes.com.br> 1791457544 -0300	commit: fix(notificacoes): isola erro de notificacoes por usuario
+28aecd523f47efb6dddfc54a9de0a08c4cd9a905 06db89fd8f3e5baef1037bba0407192e942882df Joaquim Ataides <ti@promobrindes.com.br> 1791543559 -0300	commit: fix(notificacoes): spinner do popover com contraste AA e motion-safe

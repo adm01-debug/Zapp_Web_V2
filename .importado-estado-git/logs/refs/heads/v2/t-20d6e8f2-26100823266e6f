@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791512771 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 7ce4e20a8ed27f311bd82e6246fbefb2a62a04cf Joaquim Ataides <ti@promobrindes.com.br> 1791512783 -0300	cherry-pick: fix(multiplix): lista de publico virtualizada e selecionar todos os N do servidor (TL-007)
+7ce4e20a8ed27f311bd82e6246fbefb2a62a04cf 55f66b60ba31bee7f7516e796f023771dc3daafc Joaquim Ataides <ti@promobrindes.com.br> 1791512783 -0300	cherry-pick: fix(multiplix): spinner do botao de selecionar todos respeita prefers-reduced-motion (TL-007)
+55f66b60ba31bee7f7516e796f023771dc3daafc a9fa408fb2048ce951083acddc3d9e1a6b87bf55 Joaquim Ataides <ti@promobrindes.com.br> 1791512998 -0300	commit: fix(multiplix): corrige avisos e corrida ao selecionar todos

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287764 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287765 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 57b9950c24fc9ad93e940c6015b8bfa679c2ab89 Joaquim Ataides <ti@promobrindes.com.br> 1791288140 -0300	commit: fix(vendor): agrupa por indice inteiro o detector de ataques do lamejs (#436)

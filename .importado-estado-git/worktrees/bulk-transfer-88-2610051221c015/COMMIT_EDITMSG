@@ -1,0 +1,27 @@
+fix(inbox): transferência em lote atômica via RPC bulk_transfer_contacts (R2-INB-009 / #88)
+
+Refazer 1: a entrega anterior gravava os eventos em conversation_events e, em
+seguida, atualizava contacts em duas chamadas separadas do cliente. Quando o
+update falhava — ou o RLS filtrava as linhas em silêncio, sem erro — os eventos
+de transferência ficavam gravados para contatos que não mudaram de dono.
+
+Agora o hook chama a RPC public.bulk_transfer_contacts (SECURITY INVOKER, sem
+DEFINER: mantém o RLS das duas tabelas; SET search_path = public) que, numa
+única transação, insere os eventos de transfer (performed_by = perfil do
+auth.uid()) e atualiza contacts com RETURNING id; aborta quando o número de
+linhas atualizadas difere do número de ids, e a exceção desfaz também os
+eventos já inseridos.
+
+- supabase/migrations/20261005152348_bulk_transfer_contacts_rpc_atomica.sql:
+  RPC nova, com '-- Rollback:' real e idempotente (DROP FUNCTION IF EXISTS
+  antes do CREATE, o banco local reaplica as migrations a cada up);
+- src/hooks/inbox/useInboxBulkActions.ts: uma chamada supabase.rpc(...) com
+  p_contact_ids/p_to_agent_id/p_to_queue_id/p_note no lugar das duas escritas;
+- src/integrations/supabase/types.ts: tipa a RPC;
+- src/components/inbox/BulkActionsToolbar.tsx + testes da toolbar: mantidos do
+  trabalho anterior (aguardam a Promise, não fecham durante a pendência e
+  permanecem abertos após a rejeição);
+- scripts/db-audit/bulk-transfer-contacts-rpc.test.sh: contrato comportamental
+  em Postgres descartável — red (RPC ausente) → green, rollback no update que
+  falha por trigger anti-hijack, no update parcial (conferência RETURNING) e no
+  id inexistente, além da mutação que remove a conferência e é pega pelo teste.

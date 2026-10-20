@@ -1,0 +1,1 @@
+fix(inbox/chat): retoma a busca sozinha quando a pausa de 429 expira (SL-080)

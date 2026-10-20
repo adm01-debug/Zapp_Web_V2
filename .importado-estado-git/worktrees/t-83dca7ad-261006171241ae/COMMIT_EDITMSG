@@ -1,0 +1,3 @@
+fix(base-conhecimento): processa o documento enviado até a IA (#227)
+
+Upload da base só armazenava: nenhum consumidor tocava processing_status/extracted_text e a IA lê knowledge_base_articles publicados. Novo pipeline ai-kb-ingest extrai o texto do bucket permitido, publica o artigo recuperável e registra progresso/erro por arquivo; uploadFile passa a chamá-lo.

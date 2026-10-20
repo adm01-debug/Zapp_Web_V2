@@ -1,0 +1,22 @@
+fix(talk-x): Revisão: linhas com dado real e "Editar" que leva ao pa (TL-146)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 31eadcd02 fix(talk-x): Revisão: linhas com dado real e "Editar" que leva ao pa (TL-146)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-0f01df80-2610090332235c' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXCampaignWizard.tsx
+#	modified:   src/components/talkx/TalkXView.tsx
+#	modified:   src/components/talkx/TalkXWizardDelivery.tsx
+#	new file:   src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx
+#	modified:   src/components/talkx/__tests__/TalkXView.route.test.tsx
+#	modified:   src/components/talkx/__tests__/talkxWizardRoute.test.ts
+#	modified:   src/components/talkx/kit/constants.ts
+#	modified:   src/components/talkx/talkxWizardRoute.ts
+#	modified:   src/components/talkx/useCampaignEditor.ts
+#

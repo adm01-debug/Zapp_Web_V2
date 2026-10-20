@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791500222 -0300	
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791500223 -0300	reset: moving to HEAD
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe e5dd0ad19e37d9b9203e16a6413375de66226348 hugo <hugo@promobrindes.local> 1791501549 -0300	commit: fix(ci/devops): ligar piso de cobertura por arquivo (perfile) (SL-123)
+e5dd0ad19e37d9b9203e16a6413375de66226348 a4635b1db9afeb9354a7e59bb34a899ee9635f5e hugo <hugo@promobrindes.local> 1791501637 -0300	commit (amend): fix(ci/devops): ligar piso de cobertura por arquivo (perfile) (SL-123)
+a4635b1db9afeb9354a7e59bb34a899ee9635f5e 4425b9710bb821750be372c2097dc72a3586a0b4 hugo <hugo@promobrindes.local> 1791501765 -0300	commit (amend): fix(ci/devops): ligar piso de cobertura por arquivo (perfile) (SL-123)

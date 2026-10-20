@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791515753 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 0205619069956a2e0f13c59d503e303f66f5303b Joaquim Ataides <ti@promobrindes.com.br> 1791516303 -0300	cherry-pick: fix(inbox): presença de digitação entre agentes usa identidade real da sessão (R2-INB-026) — já corrigido na ponta, sem mudança de código

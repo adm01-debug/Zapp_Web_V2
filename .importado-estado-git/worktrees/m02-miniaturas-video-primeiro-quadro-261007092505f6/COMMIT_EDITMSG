@@ -1,0 +1,7 @@
+feat(arquivos): miniatura de vídeo mostra o primeiro quadro em cartão, linha e célula
+
+O <video> do MediaTile só era montado no tamanho 'card'; 'row' e 'cell' ficavam no
+ícone de play. Agora os três tamanhos montam o primeiro quadro dentro da zona de
+pré-carregamento (useInView passa a valer para todo vídeo), com '#t=0.1', preload
+metadata, muted e playsInline. O selo de duração aparece em cartão e linha, e uma
+falha de carga (onError) cai no ícone de play como fallback.

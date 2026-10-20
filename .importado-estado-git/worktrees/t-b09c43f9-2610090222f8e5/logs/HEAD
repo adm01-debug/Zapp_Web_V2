@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523331 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523331 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 0a7c9ebb95d4fda3a80a9e5aa43d615df8e4d450 Joaquim Ataides <ti@promobrindes.com.br> 1791524192 -0300	commit: fix(talk-x): Completar o "Resumo do Segmento" e a amostra de contato (TL-132)
+0a7c9ebb95d4fda3a80a9e5aa43d615df8e4d450 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791560580 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb e0614dd6df955c68426896dae1f3c08547719dca Joaquim Ataides <ti@promobrindes.com.br> 1791561010 -0300	rebase (continue): fix(talk-x): Completar o "Resumo do Segmento" e a amostra de contato (TL-132)
+e0614dd6df955c68426896dae1f3c08547719dca e0614dd6df955c68426896dae1f3c08547719dca Joaquim Ataides <ti@promobrindes.com.br> 1791561010 -0300	rebase (finish): returning to refs/heads/v2/t-b09c43f9-2610090222f8e5
+e0614dd6df955c68426896dae1f3c08547719dca 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561167 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 ad097db54c1d07603b0469bec6c5b47e88e2f9d8 Joaquim Ataides <ti@promobrindes.com.br> 1791561167 -0300	rebase (pick): fix(talk-x): Completar o "Resumo do Segmento" e a amostra de contato (TL-132)
+ad097db54c1d07603b0469bec6c5b47e88e2f9d8 ad097db54c1d07603b0469bec6c5b47e88e2f9d8 Joaquim Ataides <ti@promobrindes.com.br> 1791561167 -0300	rebase (finish): returning to refs/heads/v2/t-b09c43f9-2610090222f8e5

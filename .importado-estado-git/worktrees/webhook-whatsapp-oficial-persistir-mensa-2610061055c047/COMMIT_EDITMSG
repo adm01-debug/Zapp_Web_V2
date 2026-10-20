@@ -1,0 +1,7 @@
+fix(whatsapp-webhook): placeholder para body vazio e nao atribuir mensagem sem telefone
+
+- p_content usava `text.body ?? placeholder`, mas string vazia/so espacos nao e
+  nullish e gravava content='' no inbox; agora o placeholder cobre body vazio.
+- p_phone podia ficar '' quando `from` nao tem digito, criando contato com
+  telefone vazio; nesse caso o handler nao chama a RPC, loga e trata o evento
+  como nao atribuido (mesmo caminho 400 do D3), sem escrever nada.

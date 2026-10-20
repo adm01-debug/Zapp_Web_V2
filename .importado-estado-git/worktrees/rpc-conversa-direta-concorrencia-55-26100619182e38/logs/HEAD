@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 26dd0ef2dbcafd97c0a94141e67686f04000b815 Joaquim Ataides <ti@promobrindes.com.br> 1791325086 -0300	
+26dd0ef2dbcafd97c0a94141e67686f04000b815 26dd0ef2dbcafd97c0a94141e67686f04000b815 Joaquim Ataides <ti@promobrindes.com.br> 1791325087 -0300	reset: moving to HEAD
+26dd0ef2dbcafd97c0a94141e67686f04000b815 11debc01c9855a6fdca3831b0ca662461a8c9bc6 worker (sql) <workersql@promo.invalid> 1791327599 -0300	commit: fix(banco): restabelece o par ordenado e o UPSERT da RPC de conversa direta (#55)

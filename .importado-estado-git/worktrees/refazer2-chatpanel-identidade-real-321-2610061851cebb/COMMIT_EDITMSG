@@ -1,0 +1,6 @@
+fix(hooks): corrigir identidade real da presença de digitação
+
+O ChatPanel passa a identidade e o nome do agente LOGADO (sessão autenticada) ao
+useTypingPresence, em vez do literal 'agent' e de conversation.assignedTo?.name.
+Novo teste de fluxo real no nível do ChatPanel: agente B aparece com o nome de B
+e a outra aba do próprio agente não vira colega.

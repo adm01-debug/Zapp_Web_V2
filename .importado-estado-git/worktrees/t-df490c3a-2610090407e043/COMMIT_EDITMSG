@@ -1,0 +1,8 @@
+fix(talk-x): Mostrar KPIs ao vivo com comparativos e mini-gráficos nas telas 11 e 12 (X146)
+
+Cria src/components/talkx/tracking/TalkXLiveKpiRow.tsx: faixa apresentacional
+alimentada só pelo payload do painel (useTalkXMonitorPanel, X144), com mini-barras
+por cartão, linha de comparativo que não existe quando não há dado (A9) e o cartão
+"Destinatários Restantes" absorvendo a barra do antigo bloco "Progresso geral".
+Tela 11 (TalkXLiveMonitor) e tela 12 (TalkXCampaignRunning) passam a renderizar a
+faixa; o clique em "N a confirmar" filtra a tabela de destinatários.

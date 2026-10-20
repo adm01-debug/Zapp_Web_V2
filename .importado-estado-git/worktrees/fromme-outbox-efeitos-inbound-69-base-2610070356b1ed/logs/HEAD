@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 484315d5bd1fa112557613aee2f03eb3a33e6915 Joaquim Ataides <ti@promobrindes.com.br> 1791356176 -0300	
+484315d5bd1fa112557613aee2f03eb3a33e6915 484315d5bd1fa112557613aee2f03eb3a33e6915 Joaquim Ataides <ti@promobrindes.com.br> 1791356177 -0300	reset: moving to HEAD
+484315d5bd1fa112557613aee2f03eb3a33e6915 fe5e54c03615d45e62f80aeb6a7232cc78f4e1a2 Joaquim Ataides <ti@promobrindes.com.br> 1791356642 -0300	commit: fix(webhook): opt-out e atribuição duráveis em outbox idempotente, retomados no replay (#69)
+fe5e54c03615d45e62f80aeb6a7232cc78f4e1a2 32dce67ffb4e32ffe914c4b05539faff4bc28c41 Joaquim Ataides <ti@promobrindes.com.br> 1791356660 -0300	commit: fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)
+32dce67ffb4e32ffe914c4b05539faff4bc28c41 f5b524d2f78dfc2cc401842cbb92734dac60de79 Joaquim Ataides <ti@promobrindes.com.br> 1791356862 -0300	commit: test(webhook): adapta fixtures R2-API-008 ao harness do outbox (#69)
+f5b524d2f78dfc2cc401842cbb92734dac60de79 d5bb9fddc68d5d373ce4e9c725e78f3454aebbde Joaquim Ataides <ti@promobrindes.com.br> 1791358840 -0300	commit (amend): test(webhook): adapta fixtures R2-API-008 ao harness do outbox (#69)
+d5bb9fddc68d5d373ce4e9c725e78f3454aebbde 1fc47f831c7d8be9126a7213bd2956de4dc365be Joaquim Ataides <ti@promobrindes.com.br> 1791359698 -0300	commit: fix(webhook): torna explicita a guarda fromMe no opt-out e prova botao em mensagem propria (#69)
+1fc47f831c7d8be9126a7213bd2956de4dc365be 1fc47f831c7d8be9126a7213bd2956de4dc365be Joaquim Ataides <ti@promobrindes.com.br> 1791359834 -0300	reset: moving to HEAD
+1fc47f831c7d8be9126a7213bd2956de4dc365be 40e8ba6cd80d041755173229abd4161b7b86e5f8 Joaquim Ataides <ti@promobrindes.com.br> 1791359834 -0300	commit: chore: enxuga prosa de comentarios para caber no teto do portao (#69)
+40e8ba6cd80d041755173229abd4161b7b86e5f8 cb783e9d64c1877e064564d1350dac43b9513d68 Joaquim Ataides <ti@promobrindes.com.br> 1791359875 -0300	commit: chore: enxuga docblocks dos contratos #69 para o teto do portao
+cb783e9d64c1877e064564d1350dac43b9513d68 64410dee7ab492aeb23c81b79823ee2dbd148a17 Joaquim Ataides <ti@promobrindes.com.br> 1791359890 -0300	commit: chore: enxuga docblock do contrato de atribuicao #69
+64410dee7ab492aeb23c81b79823ee2dbd148a17 6523ef37f53d85e420731e1b5ddb0e827c0080b0 Joaquim Ataides <ti@promobrindes.com.br> 1791360064 -0300	commit: revert: devolve a migration do #69 ao conteudo original (prosa enxuta em outros arquivos)
+6523ef37f53d85e420731e1b5ddb0e827c0080b0 c21f9d8c930bccb782d7127c8386a9b48cfa4d54 Joaquim Ataides <ti@promobrindes.com.br> 1791360100 -0300	commit: chore: enxuga prosa dos comentarios do contrato de direcao (#69)

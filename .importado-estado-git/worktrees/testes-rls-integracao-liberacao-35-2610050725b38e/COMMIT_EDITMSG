@@ -1,0 +1,10 @@
+test(dashboard): extrai helpers/policies das migrations e valida contra pg_policies
+
+Corrige a recusa do DASH-092: o teste recriava à mão as 5 helpers
+SECURITY DEFINER e as 4 policies RLS do Dashboard. Agora elas são
+extraídas verbatim dos arquivos de migration que guardam a definição
+final (mesmo padrão awk da extração de dashboard_kpi), e um bloco
+pg_policies/pg_proc confere que o aplicado é idêntico ao extraído.
+
+Abrir a RLS numa migration agora derruba o teste (mutação B1:
+esperado 1206, obtido 1208).

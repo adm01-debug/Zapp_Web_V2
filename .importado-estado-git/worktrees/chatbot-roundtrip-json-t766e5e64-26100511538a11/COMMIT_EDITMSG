@@ -1,0 +1,11 @@
+fix(chatbot): grava nodes/edges como JSONB e reabre o grafo no roundtrip (#104)
+
+O hook useChatbotFlows gravava nodes/edges/variables com JSON.stringify dentro
+de colunas JSONB; o PostgREST persistia uma string e o editor reabria o grafo
+vazio (Array.isArray(flow.nodes) === false).
+
+- createFlow/updateFlow passam o array/objeto cru (JSONB), sem stringify.
+- leitura normaliza campos que ainda voltem como string JSON (linhas legadas).
+
+Teste: src/hooks/integrations/__tests__/useChatbotFlows.roundtrip.test.tsx
+(4/4 vermelho antes -> 4/4 verde depois).

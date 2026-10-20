@@ -1,0 +1,8 @@
+fix(busca): escopa o histórico de buscas recentes por usuário (#444)
+
+O hook usava a chave global 'global-search-history' e a lia no mount, então as
+buscas de uma conta apareciam para a próxima conta no mesmo perfil de navegador
+(R2-PLAT-006). Passa a gravar em 'zapp.search.history:<userId>' (convenção
+zapp.<area>:<dono>, a mesma dos rascunhos do Team Chat), mantém o histórico de
+cada identidade entre sessões e não lê nem grava sem usuário; a chave legada é
+removida sem leitura.

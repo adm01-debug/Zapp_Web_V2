@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8088a69a714303234a61547f46470954377c81a5 Joaquim Ataides <ti@promobrindes.com.br> 1791136851 -0300	branch: Created from dia/2026-10-04
+8088a69a714303234a61547f46470954377c81a5 95c38c81a70b779e786d3400d35c49557580ac6f Joaquim Ataides <ti@promobrindes.com.br> 1791137293 -0300	commit: fix(send-scheduled-report): autoriza envio de relatório agendado (R2-API-022)

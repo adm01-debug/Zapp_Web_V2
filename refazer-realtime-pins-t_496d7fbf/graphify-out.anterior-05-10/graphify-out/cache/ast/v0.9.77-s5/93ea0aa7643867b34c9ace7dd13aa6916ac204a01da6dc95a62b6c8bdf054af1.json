@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260927480000_revoke_accept_department_invite_public_anon_sql", "label": "20260927480000_revoke_accept_department_invite_public_anon.sql", "file_type": "code", "source_file": "supabase/migrations/20260927480000_revoke_accept_department_invite_public_anon.sql", "source_location": null}], "edges": []}

@@ -1,0 +1,8 @@
+refactor(tarefas): repassa o gutter do ViewContainer para Lista e Agenda (E15)
+
+Com `tasks` em layout:'full' o ViewContainer deixa de aplicar
+`overflow-y-auto p-[var(--layout-gutter)]`. As raizes de Lista e Agenda
+recebem as MESMAS classes (scroller + gutter 2.25rem) em todas as raizes
+que cada modo devolve (conteudo, carregamento e os dois vazios da Lista),
+para a aparencia nao mudar. O `pb-8` da raiz da Lista saiu: ele disputa
+padding-bottom com o gutter e o vencedor dependeria da ordem do CSS.

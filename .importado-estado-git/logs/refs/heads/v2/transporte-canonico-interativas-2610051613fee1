@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791227600 -0300	branch: Created from dia/2026-10-05
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 51fa8ecd88d989d8bae346be982eb2c95bfe6c2d Joaquim Ataides <ti@promobrindes.com.br> 1791227612 -0300	cherry-pick: feat(inbox): transporte canônico de mensagens interativas botões/lista (R2-INB-003)
+51fa8ecd88d989d8bae346be982eb2c95bfe6c2d 0614a8e611d4f156df5800cc6cb7199c432d3c75 Joaquim Ataides <ti@promobrindes.com.br> 1791228069 -0300	commit: docs(chat): marca 'call' como tipo canonico de InteractiveButton ('phone' e alias legado)
+0614a8e611d4f156df5800cc6cb7199c432d3c75 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791229400 -0300	reset: moving to 72cacb5d2
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 805ead447ba91dffd238b0f3ee9d15bf1054d04e Joaquim Ataides <ti@promobrindes.com.br> 1791229400 -0300	commit: feat(inbox): transporte canônico de mensagens interativas botões/lista (R2-INB-003)
+805ead447ba91dffd238b0f3ee9d15bf1054d04e 75737e7f972b1d460df04af82670fa10db1e9747 Joaquim Ataides <ti@promobrindes.com.br> 1791229409 -0300	commit: docs(chat): marca 'call' como tipo canonico de InteractiveButton ('phone' e alias legado)

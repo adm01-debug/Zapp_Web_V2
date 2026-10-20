@@ -1,0 +1,11 @@
+fix(inbox): Enter respeita o limite de caracteres do botao Enviar (#312)
+
+O botao Enviar era desabilitado por isOverLimit, mas o Enter chamava
+handleSend direto, sem validar comprimento: com 4097 caracteres no
+editor o payload saia. A validacao agora vive no comando de envio
+compartilhado (useChatPanelHandlers.handleSend), mede o texto do
+editor — o mesmo criterio de isOverLimit do botao —, vale tambem para
+a edicao e preserva o texto em rejeicao com aviso ao usuario.
+CHAR_LIMIT passa a ser a fonte unica, exportada de useChatInputLogic.
+O limite do payload com assinatura (o texto enviado pode crescer apos
+applySignature) fica para decisao de produto em cartao separado.

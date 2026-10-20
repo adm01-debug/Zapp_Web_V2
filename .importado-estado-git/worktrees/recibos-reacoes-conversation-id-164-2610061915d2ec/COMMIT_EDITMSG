@@ -1,0 +1,7 @@
+fix(db): recibos e reacoes derivam conversation_id da mensagem (TC-009)
+
+Item 164 / R2-DB-011: o trigger de recibos so preenchia conversation_id quando vinha NULL e so no INSERT, e o UPDATE que troca message_id conservava o cid antigo; a reacao nao tinha trigger nenhum — o INSERT direto do hook mandava o cid do painel. Com a leitura e o filtro de realtime usando a COLUNA gravada, recibo de mensagem do Time A aparecia dentro do Time B e a reacao sumia da conversa dela.
+
+Agora o cid e derivado incondicionalmente da mensagem (BEFORE INSERT OR UPDATE) nas duas tabelas, mensagem inexistente e recusada e as linhas divergentes sao reconciliadas pelo backfill.
+
+Prova: scripts/db-audit/team-receipts-reactions-conversation-id.test.sh (Postgres descartavel, bloco A no estado anterior e bloco B apos a migration), registrado no db-guard.yml.

@@ -1,0 +1,10 @@
+fix(telefonia): historico refaz a consulta quando a pagina esta fora do intervalo (#395)
+
+A RPC search_my_calls devolve o total por linha (count(*) over ()), entao uma
+pagina vazia nao carrega total nenhum. Com page=99 o hook anunciava 'pagina 1'
+(paginaForaDoIntervalo + pageEfetiva) mas mantinha os dados vazios e o total 0
+da pagina invalida, sem refazer a consulta.
+
+Agora, quando a pagina pedida volta vazia e page > 1, o hook consulta a pagina 1
+e devolve os dados e o total reais dela. Pagina 1 vazia (fim real do historico)
+continua com uma consulta so.

@@ -1,0 +1,9 @@
+fix(filas): Editar do card e Configurar da fila passam a gravar a fila (R2-QUE-006)
+
+O item Editar do menu do card (QueueCard) e o botao Configurar do cabecalho
+da fila (QueueDetails) apareciam sem nenhum callback: prometiam edicao e nao
+faziam nada, embora useQueues.updateQueue existisse sem consumidor.
+
+Agora os dois abrem um formulario real (EditQueueDialog) preenchido com os
+dados da fila - nome, descricao, cor e tempo maximo de espera - e a gravacao
+usa QueueService.updateQueue; o dialogo so fecha quando a escrita resolve.

@@ -1,0 +1,9 @@
+fix(db-migrate): passo do ledger do pacote herda o DSN endurecido em vez de reler o secret
+
+A junção da main (passo de validação do ledger do pacote de 05/10) com o conserto
+R2-INF-003 da branch do dia deixou uma segunda leitura de secrets.DESTINO_URL, que
+o teste db-migrate-workflow.unit.mjs recusa. O passo passa a herdar DESTINO_URL do
+GITHUB_ENV, como os demais.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NuZ7WYqf38Zz5TogJEdDgf

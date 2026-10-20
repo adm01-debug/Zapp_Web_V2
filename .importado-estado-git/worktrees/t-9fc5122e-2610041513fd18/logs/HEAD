@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b8dd449ce2846fbc72d0a735fe2435f741af1525 Joaquim Ataides <ti@promobrindes.com.br> 1791137594 -0300	
+b8dd449ce2846fbc72d0a735fe2435f741af1525 b8dd449ce2846fbc72d0a735fe2435f741af1525 Joaquim Ataides <ti@promobrindes.com.br> 1791137595 -0300	reset: moving to HEAD
+b8dd449ce2846fbc72d0a735fe2435f741af1525 1da55aa314f7681a3f27143c3c0f4534e7ad3ec1 Joaquim Ataides <ti@promobrindes.com.br> 1791137831 -0300	commit: fix(auth-login): bloqueia login de perfil inativo antes do GoTrue (R2-AUTH-004)
+1da55aa314f7681a3f27143c3c0f4534e7ad3ec1 7e7728cb08946716e7cee6fbb785cbaaddbd54bf Joaquim Ataides <ti@promobrindes.com.br> 1791138093 -0300	commit: style(auth-login): anota 'any' do injetor com eslint-disable (ratchet)

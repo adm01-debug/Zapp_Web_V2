@@ -1,0 +1,9 @@
+fix(talkx): alinha gramática de variáveis do editor/resumo à prévia (#498)
+
+O editor acusava `{{nome|cliente}}` como variável desconhecida e o resumo não
+listava `{{custom_1}}`, embora `personalizePreview` (que replica o envio real)
+já resolvesse os dois. As três pontas passam a ler o token com o mesmo parser
+puro (`kit/placeholders.ts`): o primeiro `|` separa chave de padrão, a chave é
+trimada e comparada sem caixa e aceita dígito/underscore.
+
+R2-MOD-062.

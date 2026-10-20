@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283734 -0300	
+a463ef22afa83c4d00654d03782a15cc3263a0e7 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283735 -0300	reset: moving to HEAD
+a463ef22afa83c4d00654d03782a15cc3263a0e7 5bff7f6af7b335b9a8e4e356ee01a97f9535b37e Joaquim Ataides <ti@promobrindes.com.br> 1791283743 -0300	cherry-pick: fix(edge): GO logada sem socket deixa de ser classificada como conexão aberta (#65)
+5bff7f6af7b335b9a8e4e356ee01a97f9535b37e c6ef5063c1177e3527065c93e20916104e05fa2d Joaquim Ataides <ti@promobrindes.com.br> 1791284285 -0300	commit: test(edge): atualiza inventário para prova TRA-003

@@ -1,0 +1,11 @@
+fix(rotas): redireciona view=tags removido e limpa resíduos da remoção de Etiquetas
+
+TRA-010/#178: a remoção do módulo Etiquetas deixou pontas soltas. Agora o
+favorito/link antigo ?view=tags é resolvido para a tela vigente contacts
+(com a URL reescrita, sem empilhar histórico) e o ViewRouter não cai mais no
+fallback. TagsEmptyState e o contexto 'tags' dos empty-states (dead code)
+saem de vez; o comentário do barril hooks/crm não ensina mais o hook useTags
+removido; o inventário de produto passa a distinguir contact_tags (local,
+removido) de contacts.tags (array vigente), ai_conversation_tags (local) e
+contact_tags_ext (contrato externo do CRM); o cabeçalho do plano de remoção
+deixa de afirmar que nada foi removido.

@@ -1,0 +1,10 @@
+test(calls): useCallRecording confere o Blob sem depender do construtor do jsdom
+
+No CI (Unit Tests com cobertura) `Response.blob()` devolve o Blob do fetch
+do Node, e `toBeInstanceOf(Blob)` compara com o Blob do jsdom: "expected
+Blob { size: 10, type: 'audio/mpeg' } to be an instance of Blob". A
+checagem passa a ser a marca do objeto ('[object Blob]'), mais o tipo,
+o tamanho e os bytes, que já provam a entrega. Só teste; 12/12 local.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

@@ -1,0 +1,15 @@
+feat(arquivos): resolver quem enviou cada arquivo (você, contato ou atendente)
+
+R01 do plano do cartão de arquivo (etapas S02-S12 / decisões D01, D02 e D04).
+
+- useContactMedia: `messages.agent_id` entra no SELECT e vira `agentId` no
+  ContactMediaItem (mudança mínima; `classify`/paginação intactos).
+- src/lib/fileSenderIdentity.ts (novo, função pura): `resolveSenderIdentity`
+  (contato, "Você", outro atendente, "Equipe" sem agent_id, "Atendente" quando o
+  perfil não carrega) + `initialsOf` e `stableColorOf` (cor por pessoa).
+- src/hooks/chat/useMediaSenderProfiles.ts (novo): perfis em UMA consulta em lote
+  (`.in('id', ids)`), chave de cache pelo conjunto ordenado de ids, reaproveita o
+  que já foi resolvido e devolve mapa vazio (sem exceção) em erro/RLS.
+
+Testes: 46 verdes nos arquivos tocados (o do useContactMedia fica vermelho sem a
+mudança) e 199 verdes nos consumidores do tipo, sem regressão.

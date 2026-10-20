@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791296582 -0300	
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791296582 -0300	reset: moving to HEAD
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c f19cdab3bacbf4cb60219cc206bac4cfa7852387 Joaquim Ataides <ti@promobrindes.com.br> 1791297017 -0300	commit: fix(edge): presença humanizada não segura o envio além do prazo do chamador
+f19cdab3bacbf4cb60219cc206bac4cfa7852387 a9f4d701afd8ff670a9cb84560d5c7070e8f61ae Joaquim Ataides <ti@promobrindes.com.br> 1791297266 -0300	commit: test(edge): provar o teto PADRÃO da presença pelo caminho real (R2-API-031)

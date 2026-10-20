@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791495526 -0300	
+165168bf7800066e51592380b0ee1a51b75d0548 165168bf7800066e51592380b0ee1a51b75d0548 Joaquim Ataides <ti@promobrindes.com.br> 1791495527 -0300	reset: moving to HEAD
+165168bf7800066e51592380b0ee1a51b75d0548 241fff4178174db041cf3ba72db1c56427515c5c Joaquim Ataides <ti@promobrindes.com.br> 1791495539 -0300	cherry-pick: fix(talkx): reabertura por retry exige a nova confirmacao de lancamento (#124)
+241fff4178174db041cf3ba72db1c56427515c5c d96a983b7f1e242f4946ecbd66380209f72d5368 Joaquim Ataides <ti@promobrindes.com.br> 1791495539 -0300	cherry-pick: fix(talkx): corpo do retry preserva a validacao de lote do #123 na reabertura (#124)
+d96a983b7f1e242f4946ecbd66380209f72d5368 d8e38996e65c749d1be780b1acdc235519587d09 Joaquim Ataides <ti@promobrindes.com.br> 1791495539 -0300	cherry-pick: test(talkx): secao #123 roda antes da migration do #124 no harness do retry
+d8e38996e65c749d1be780b1acdc235519587d09 499bf27667b56616f827d14a559623d34a15d4ad Joaquim Ataides <ti@promobrindes.com.br> 1791495539 -0300	cherry-pick: docs(talkx): rollback do #124 restaura o corpo do #123 (nao o de X031)

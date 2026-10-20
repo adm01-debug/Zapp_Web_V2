@@ -1,0 +1,12 @@
+fix(multiplix): criacao do disparo pela edge de dominio multiplix-dispatch (TL-026)
+
+A criacao do rascunho passa a sair por `multiplix-dispatch`/`draft.create` — a
+acao que absorve o F08 — em vez da edge irma `multiplix-audience`, deixando UM
+caminho de criacao (o mesmo que ja serve as leituras do monitor). A edge resolve
+o `profiles.id` do dono a partir do JWT (o `created_by` guarda profiles.id, nao
+o auth.uid) e re-resolve o publico no Singu sob o escopo assinado; o navegador
+so manda a REFERENCIA (company_ids/contact_ids), nunca destinatarios.
+
+O teto de destinatarios (F17) continua chegando como o erro nomeado que o
+`MultiplixComposerDialog` confirma por `instanceof`, e a idempotencia por
+`client_request_id` segue igual.

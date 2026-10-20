@@ -1,0 +1,23 @@
+test(talkx): fixtures sintéticas mínimas das telas 02-17 para a régua de acessibilidade (TL-175D-b)
+
+Por quê: a régua TL-175D só media a tela 01, e as 17 fixtures iam no mesmo diff da régua,
+que passava de 146 mil caracteres (o portão recusa acima de 90 mil). Esta fatia entrega SÓ
+os dados sintéticos das telas 02..17 — o spec da régua é o cartão t_1cd59d34.
+
+O que entra (16 arquivos de e2e/fixtures/talkx-demo/, todos na lista do cartão): 1 a 2
+linhas por tabela que a tela lê — segmentos; templates, versões e variantes; supressão;
+métricas + links + cliques + destinatários; campanhas por status (agendada/em andamento/
+pausada/monitor) com destinatários e eventos; configurações; e a conexão WhatsApp que o
+assistente de Nova campanha consulta para chegar ao cartão "Contatos" (telas 08 e 09).
+
+Telas 14 e 15 declaram {"tela":{"aplicavel":false,"motivo":"..."}} no próprio JSON: não há
+componente/rota de relatório de concluída nem de importação CRM360 no Talk X. A tela 13 traz
+a campanha PAUSADA como primeira linha de talkx_campaigns, para ela ser alcançável na 1ª
+página da lista. Nenhum dado real: ids seg-*/tpl-*/camp-*/ct-*, telefones 551190000000x,
+domínio exemplo.test, e nada das tabelas de contato do produto.
+
+Verificação: contrato de crescimento + coerência das fixtures + cobertura da régua, rodados
+contra estes JSONs → 12 passed, 2 skipped; varredura da régua no Chromium real (17 capturas
+das telas, axe e teclado) sem nenhuma falha que venha do dado — as falhas de axe/teclado são
+os defeitos de contraste/nome já mapeados nos cartões pais, ainda fora da dia; zapp-verify
+. --rapido VERDE (db_guard/tipos/lint/migrations).

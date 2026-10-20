@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791203239 -0300	
+b58c615056ec3756606163a249e5d8b26352f355 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791203241 -0300	reset: moving to HEAD
+b58c615056ec3756606163a249e5d8b26352f355 8156d536822c844b8187279ae05c4d519ce49396 Joaquim Ataides <ti@promobrindes.com.br> 1791203297 -0300	cherry-pick: fix(multiplix): draft.* resolve profiles.id, colunas reais e destinatarios no servidor (MX08)
+8156d536822c844b8187279ae05c4d519ce49396 33ca63174c5c9e7df848cbf0ec2bf49ce9a7961c Joaquim Ataides <ti@promobrindes.com.br> 1791203297 -0300	cherry-pick: fix(multiplix): manage_all edita rascunho alheio sem tomar a posse (MX08)
+33ca63174c5c9e7df848cbf0ec2bf49ce9a7961c b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791203315 -0300	reset: moving to b58c61505
+b58c615056ec3756606163a249e5d8b26352f355 e511ae7f749b2b65a75fea2db933f3cb3664c861 Joaquim Ataides <ti@promobrindes.com.br> 1791203320 -0300	commit: fix(multiplix): draft.* resolve identidades/colunas reais e destino no servidor (MX08)
+e511ae7f749b2b65a75fea2db933f3cb3664c861 bcaff2f1258373bd0b914a7a55a99545185bda47 Joaquim Ataides <ti@promobrindes.com.br> 1791204035 -0300	commit (amend): fix(multiplix): draft.* resolve identidades/colunas reais e destino no servidor (MX08)

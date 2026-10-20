@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508688 -0300	
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508689 -0300	reset: moving to HEAD
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf cb4a994af2b1f7e028342ae32a747231112602c2 Joaquim Ataides <ti@promobrindes.com.br> 1791508843 -0300	commit: fix(edge): confirma na ponta do dia que o ratchet do circuito IA-050 ja esta resolvido

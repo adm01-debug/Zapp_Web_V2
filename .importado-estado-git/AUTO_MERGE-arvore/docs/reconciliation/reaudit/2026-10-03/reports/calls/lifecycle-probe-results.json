@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/lib/calls/tabLeaderStore.ts",
+      "git_blob_sha": "57f7bd70390fe8c804b41fc2d1e49a7fae53b0fe",
+      "sha256": "d95133483ba356b6869cb1ed6a2f0147cb12580193afc65fc9524ab17d4b551b"
+    },
+    {
+      "path": "src/hooks/sip/useSipConnection.ts",
+      "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+      "sha256": "934678c5451c75f112422d916c52afa2b88ca159643a6058ad322d1f39f3105f"
+    }
+  ],
+  "script_sha256": "8a8f5d3b27bdbf48737d94eca5f368b8f05bb8d867a3626e18e631376e3744b6",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "CALL-P04",
+      "status": "PASS",
+      "title": "Suspended leader resumes after follower promotion; both retain leader role",
+      "observed": {
+        "ttl_ms": 10000,
+        "resume_ms": 11000,
+        "roles": [
+          "leader",
+          "leader"
+        ],
+        "lock_owner": "tab-A"
+      },
+      "limitations": "Two exact module instances, shared fake localStorage and delivered BroadcastChannel messages, deterministic withheld timer. Proves coordination violation under scheduling precondition; no real browser or SIP registration."
+    },
+    {
+      "id": "CALL-P05",
+      "status": "PASS",
+      "title": "disconnect retains stopped UA and next connect exits at the existing-UA guard",
+      "observed": {
+        "user_agents_created": 1,
+        "retained_stopped_reference": true,
+        "status": "idle"
+      },
+      "limitations": "Exact exported hook with minimal state/ref/effect substitutions. Contract sequence is reproduced; current visible disconnect-button reachability is not claimed."
+    },
+    {
+      "id": "CALL-P06",
+      "status": "PASS",
+      "title": "In-flight connect continues to REGISTER after disconnect, leadership loss and unmount",
+      "observed": {
+        "registered_after_cancel": true,
+        "user_agent_stopped": false,
+        "status": "registered"
+      },
+      "limitations": "Pending fake ua.start at a real await boundary. Unmount/leadership flags are deliberate scenario inputs; this does not prove these events happened in production."
+    },
+    {
+      "id": "CALL-P07",
+      "status": "PASS",
+      "title": "Two connect invocations before the first await completes each allocate and register a UA",
+      "observed": {
+        "user_agents_created": 2,
+        "registerers_created": 2
+      },
+      "limitations": "Concurrent exported-hook calls; browser click timing and actual SIP server behavior are outside this probe. Variant of missing pending-operation lifecycle, not a separate counted defect."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0,
+  "method": "Exact source modules transpiled only after HEAD and every consumed blob validated. Synthetic browser clocks/storage/channels, React hook primitives and SIP classes."
+}

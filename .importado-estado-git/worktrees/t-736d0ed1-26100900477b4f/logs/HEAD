@@ -1,0 +1,10 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517665 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517666 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517699 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517702 -0300	reset: moving to df19b16dac284603bb9296f51c7258b1d49e9fa7
+df19b16dac284603bb9296f51c7258b1d49e9fa7 a821d4fc433253ed0e2d7c350cf5d63936e0d1de Joaquim Ataides <ti@promobrindes.com.br> 1791518041 -0300	commit: fix(multiplix): restaura limpeza da seleção no disparo TL-006
+a821d4fc433253ed0e2d7c350cf5d63936e0d1de b3f990848f37742352549962d8bffadb87950af2 Joaquim Ataides <ti@promobrindes.com.br> 1791518059 -0300	commit (amend): fix(multiplix): restaura limpeza da seleção no disparo TL-006
+b3f990848f37742352549962d8bffadb87950af2 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556894 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 b60e061e27ca5b0cd1d595ff308d135af7dc5b1f Joaquim Ataides <ti@promobrindes.com.br> 1791560272 -0300	commit: fix(multiplix): resolve rebase em dia/09/10 e porta TL-007/TL-010/TL-015 (TL-006)
+b60e061e27ca5b0cd1d595ff308d135af7dc5b1f b60e061e27ca5b0cd1d595ff308d135af7dc5b1f Joaquim Ataides <ti@promobrindes.com.br> 1791560289 -0300	rebase (finish): returning to refs/heads/v2/t-736d0ed1-26100900477b4f
+b60e061e27ca5b0cd1d595ff308d135af7dc5b1f bd94066efffa3e4d64e2d45959da18e3ed4a225c Joaquim Ataides <ti@promobrindes.com.br> 1791560448 -0300	commit: fix(multiplix): motion-safe no spinner de "Carregar mais" (regra permanente)

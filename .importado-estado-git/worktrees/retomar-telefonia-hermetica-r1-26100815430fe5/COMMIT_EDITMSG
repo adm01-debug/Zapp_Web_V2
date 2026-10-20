@@ -1,0 +1,11 @@
+test(e2e): telefonia hermética com projeto dedicado e sem o ref do banco real
+
+Entrega em UM commit: o histórico anterior tinha um commit intermediário que
+ainda adicionava o identificador do banco real à guarda de rede, e o verificador
+de fechamento reprova o diff por isso (ele varre TODOS os commits da tarefa, não
+só o estado final). O conteúdo final é o mesmo já medido: guarda de rede genérica
+(`.supabase.co`), `afterEach` real, discador, validações de número, ligar do
+painel, estados sem provedor/conexão, histórico vazio e semeado, teclado e foco.
+
+playwright.config.ts: só o projeto dedicado `chromium-telefonia`, com
+`storageState` vazio explícito, sem `setup` e sem sessão salva.

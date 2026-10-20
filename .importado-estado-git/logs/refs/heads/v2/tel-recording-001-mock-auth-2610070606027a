@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 19365036be0e33102a2f8ba7ad357bf59d57c2ea Joaquim Ataides <ti@promobrindes.com.br> 1791363996 -0300	branch: Created from dia/2026-10-07
+19365036be0e33102a2f8ba7ad357bf59d57c2ea f75a1ef80022f77d0ea33722d6d5df38a8d49b3c Joaquim Ataides <ti@promobrindes.com.br> 1791364240 -0300	commit: test(telefonia): mock de RecordingPlayer devolve auth e anon key (TEL-RECORDING-001)

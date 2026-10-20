@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339105 -0300	
+b6a5800086896490ef4415de1f616aa77b69b9b6 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339106 -0300	reset: moving to HEAD
+b6a5800086896490ef4415de1f616aa77b69b9b6 9f5e1b64bbd095c29a9804cbd73d04f1215356f9 Joaquim Ataides <ti@promobrindes.com.br> 1791339138 -0300	cherry-pick: fix(talkx): reabertura por retry exige a nova confirmacao de lancamento (#124)
+9f5e1b64bbd095c29a9804cbd73d04f1215356f9 05f5a2c8009ddc3fec7d739538f21514f79ce10c Joaquim Ataides <ti@promobrindes.com.br> 1791339138 -0300	cherry-pick: fix(talkx): corpo do retry preserva a validacao de lote do #123 na reabertura (#124)

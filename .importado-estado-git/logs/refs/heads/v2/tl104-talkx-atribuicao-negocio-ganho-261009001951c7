@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791515978 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 889a5ca1f36a6b496693c6dd2b0b96948de13282 Joaquim Ataides <ti@promobrindes.com.br> 1791517366 -0300	commit: fix(talk-x): atribui negócio ganho na janela como conversão e calcula receita/ROI (TL-104)
+889a5ca1f36a6b496693c6dd2b0b96948de13282 05e1fcb8c2a5515442ded2ac8bb07070605e266f Joaquim Ataides <ti@promobrindes.com.br> 1791517595 -0300	commit: chore(talk-x): rollback executável de X041 com o corpo anterior de record_talkx_conversion (TL-104)

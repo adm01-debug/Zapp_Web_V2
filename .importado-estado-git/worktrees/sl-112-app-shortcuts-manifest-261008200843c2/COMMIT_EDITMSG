@@ -1,0 +1,8 @@
+fix(acessibilidade): adiciona app shortcuts ao manifest PWA (SL-112)
+
+O manifest instalavel nao declarava shortcuts: o icone do app nao
+oferecia entrada direta para nenhuma tela. Declara as 4 telas de topo
+do menu (Chat, Teams, Email, Contatos) via ?view= (formato canonico
+lido por useNavigationHistory), com icone 192/512 ja existente em
+public/icons. Teste de contrato trava tela inexistente, nome fora do
+menu e icone ausente.

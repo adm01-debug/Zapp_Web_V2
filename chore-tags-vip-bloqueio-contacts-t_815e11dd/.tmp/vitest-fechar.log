@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automacoes-sem-tag-2610140700fa2c
+
+······················
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  07:17:38
+   Duration  4.45s (transform 703ms, setup 1.31s, import 1.38s, tests 2.09s, environment 5.13s)
+

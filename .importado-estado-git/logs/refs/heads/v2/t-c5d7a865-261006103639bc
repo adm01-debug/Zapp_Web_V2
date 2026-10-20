@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd Joaquim Ataides <ti@promobrindes.com.br> 1791293810 -0300	branch: Created from dia/2026-10-06
+1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd 08d576cd4c26ef4f6bf568fc765d79ffd722ed88 Joaquim Ataides <ti@promobrindes.com.br> 1791294393 -0300	commit: fix(seguranca): overview mede 2FA, senha e alertas antes de exibir estado (#250)

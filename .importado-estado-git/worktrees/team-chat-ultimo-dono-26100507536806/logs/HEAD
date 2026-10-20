@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 673f8e3f2384fbc2ebbfd3c0e566ce9ee25a042b Joaquim Ataides <ti@promobrindes.com.br> 1791197604 -0300	
+673f8e3f2384fbc2ebbfd3c0e566ce9ee25a042b 673f8e3f2384fbc2ebbfd3c0e566ce9ee25a042b Joaquim Ataides <ti@promobrindes.com.br> 1791197605 -0300	reset: moving to HEAD
+673f8e3f2384fbc2ebbfd3c0e566ce9ee25a042b f59f4230cd0df5c9bd54a75d980179775711e853 Joaquim Ataides <ti@promobrindes.com.br> 1791199366 -0300	commit: fix(team-chat): trata DELETE filtrado como erro e fecha frestas de owner no banco

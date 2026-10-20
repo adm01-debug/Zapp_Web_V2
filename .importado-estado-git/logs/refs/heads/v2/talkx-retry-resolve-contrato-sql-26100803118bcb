@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 bf41457605b947945dd1188e1a26095b679c782e Joaquim Ataides <ti@promobrindes.com.br> 1791439888 -0300	branch: Created from dia/2026-10-08
+bf41457605b947945dd1188e1a26095b679c782e 620a65fe87e6957e4ed842f93a2bc3f4e45db0bc Joaquim Ataides <ti@promobrindes.com.br> 1791439895 -0300	cherry-pick: fix(talkx): reabertura por retry exige confirmação
+620a65fe87e6957e4ed842f93a2bc3f4e45db0bc 3e39164a93c47c7d563ad20206bdec2db7d18cf4 Joaquim Ataides <ti@promobrindes.com.br> 1791440506 -0300	commit: fix(talkx): assinatura do retry sem DEFAULT rejeita a chamada antiga (#124)

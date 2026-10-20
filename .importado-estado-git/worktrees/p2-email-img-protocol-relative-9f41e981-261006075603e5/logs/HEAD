@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284195 -0300	
+fbb20ec26ffb172a379a820a3fafde28a671aae1 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284196 -0300	reset: moving to HEAD
+fbb20ec26ffb172a379a820a3fafde28a671aae1 0a8d9af273db332b29ec23c54444a0f56349dadf Joaquim Ataides <ti@promobrindes.com.br> 1791284539 -0300	commit: fix(email): bloqueia imagem com URL relativa ao protocolo (//host)

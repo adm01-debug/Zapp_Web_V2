@@ -1,0 +1,8 @@
+fix(edge): log essencial de consumo de IA deixa de ser best effort
+
+Base da outbox do log essencial (parte de ai-usage do commit 3abda0372):
+metadata.log_key (SHA-256 dos campos estáveis) torna o reenvio idempotente;
+o insert retenta transitório (sem resposta, 429, 5xx) conferindo a existência
+antes de cada reenvio e, esgotado o teto, emite o marcador durável
+[ai-usage][LOG-ESSENCIAL-PERDIDO] com a linha em JSON, recuperável por
+reprocessarLogEssencial sem risco de cobrança dupla.

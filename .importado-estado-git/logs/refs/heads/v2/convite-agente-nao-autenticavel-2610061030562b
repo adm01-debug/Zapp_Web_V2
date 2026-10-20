@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd Joaquim Ataides <ti@promobrindes.com.br> 1791293409 -0300	branch: Created from dia/2026-10-06
+1cc110ebb81e9e9cbd1ce4f03a5168df282b70fd 7b58f07a3481e8d7bdd24d4342b41778f24ba5af Joaquim Ataides <ti@promobrindes.com.br> 1791295673 -0300	commit: feat(db): convite de agente com destinatario, papel autorizado, validade e uso unico (R2-AUTH-015)
+7b58f07a3481e8d7bdd24d4342b41778f24ba5af eee82078989e19fd30e9f820a2c40b1388539fb9 Joaquim Ataides <ti@promobrindes.com.br> 1791295673 -0300	commit: fix(agents): dialogo de convite cria o convite de verdade e mostra o estado (R2-AUTH-015)
+eee82078989e19fd30e9f820a2c40b1388539fb9 9e26ca126cd7dec2c875662df06eb31d837433ed Joaquim Ataides <ti@promobrindes.com.br> 1791295674 -0300	commit: test(db): prova em Postgres descartavel o fluxo de convite de agente (R2-AUTH-015)

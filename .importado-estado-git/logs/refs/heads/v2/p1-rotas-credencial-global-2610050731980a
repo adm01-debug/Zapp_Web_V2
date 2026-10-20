@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c43b8593faad4aab291d16be3fe308a36c005159 Joaquim Ataides <ti@promobrindes.com.br> 1791196279 -0300	branch: Created from dia/2026-10-05
+c43b8593faad4aab291d16be3fe308a36c005159 5675c90e3a7c593d4a8a5e67f5074b384dc2b562 Joaquim Ataides <ti@promobrindes.com.br> 1791196440 -0300	commit (cherry-pick): fix(edge): isola credencial de instância por conexão na Evolution GO (TRA-002)
+5675c90e3a7c593d4a8a5e67f5074b384dc2b562 8d5780ec0c8a918edd202057b8e798623737a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791197131 -0300	commit: fix(edge): endurece o gate pre-auth do evolution-webhook contra abuso de instanceName (TRA-002)

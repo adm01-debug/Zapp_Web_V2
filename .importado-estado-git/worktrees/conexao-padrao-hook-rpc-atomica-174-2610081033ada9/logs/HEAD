@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7538413a5bc8a7f679961fbcb3c80557d47ccb63 Joaquim Ataides <ti@promobrindes.com.br> 1791466413 -0300	
+7538413a5bc8a7f679961fbcb3c80557d47ccb63 7538413a5bc8a7f679961fbcb3c80557d47ccb63 Joaquim Ataides <ti@promobrindes.com.br> 1791466414 -0300	reset: moving to HEAD
+7538413a5bc8a7f679961fbcb3c80557d47ccb63 4073f2943b1b871884d0e0de33a6a9eeae1c1533 Joaquim Ataides <ti@promobrindes.com.br> 1791466426 -0300	cherry-pick: fix(inbox): troca de conexão padrão usa RPC atômica e confere erro (#174)
+4073f2943b1b871884d0e0de33a6a9eeae1c1533 d38b321e11ca22f5c387e224d78356a90859e1be Joaquim Ataides <ti@promobrindes.com.br> 1791466700 -0300	commit: fix(ci): baseline do usage-guard aceita a RPC da conexao padrao ainda fora da base (#174)

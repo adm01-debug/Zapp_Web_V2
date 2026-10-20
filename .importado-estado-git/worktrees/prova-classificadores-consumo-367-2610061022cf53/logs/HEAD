@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292945 -0300	
+9771aacba0ef60787d64631780e660cf381e98e8 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292946 -0300	reset: moving to HEAD
+9771aacba0ef60787d64631780e660cf381e98e8 b5c8199bc5e0f8276ab4f6194e31aeb7448ef637 Joaquim Ataides <ti@promobrindes.com.br> 1791292954 -0300	cherry-pick: fix(qa): correlaciona o consumo das duas chamadas na prova dos classificadores (#367)
+b5c8199bc5e0f8276ab4f6194e31aeb7448ef637 b5b8c17d25286eb6f58b3d550753b6203e18aabe Joaquim Ataides <ti@promobrindes.com.br> 1791293234 -0300	commit: test(qa): prova registros novos por função nos classificadores

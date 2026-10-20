@@ -1,0 +1,1 @@
+fix(db): leitura de mídia privada ligada ao contato visível, não à media_url do cliente (SEC-STORAGE-01)

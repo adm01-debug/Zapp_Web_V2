@@ -1,0 +1,12 @@
+fix(gmail): avanço de cursor incremental com CAS em sync e cron (R2-API-011B)
+
+Os updates de history_id do sync-incremental e do cron-sync eram
+incondicionais e engoliam o erro da escrita: podiam sobrescrever cursor
+movido por outro fluxo e declarar sucesso com o cursor não gravado.
+
+Cada fluxo agora grava com compare-and-swap (.eq no history_id lido para
+a tentativa + .select): 0 linhas = conflito, devolve cursor_advanced
+false sem sobrescrever nem marcar a conta como erro; erro real do
+UPDATE propaga. Handlers exportados atrás de import.meta.main e o
+avanço extraído para função exportada por arquivo, no padrão já usado
+na base, para o teste chamar o código real contra o banco local.

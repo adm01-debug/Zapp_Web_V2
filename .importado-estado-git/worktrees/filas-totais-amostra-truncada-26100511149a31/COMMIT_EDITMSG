@@ -1,0 +1,1 @@
+fix(filas): totais de fila vem de contagem do servidor, nao da pagina truncada (R2-QUE-003)

@@ -1,0 +1,1 @@
+fix(team-chat): handleAudioSend devolve boolean e sinaliza falha do envio de áudio (#350-B)

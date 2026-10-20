@@ -1,0 +1,1 @@
+test(edge): prova correlation_id por request e log sem conteudo nos dois senders (F43/TL-025)

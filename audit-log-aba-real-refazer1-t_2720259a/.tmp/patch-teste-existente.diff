@@ -1,0 +1,53 @@
+--- .tmp/base-dia/test-base.test.tsx	2026-10-15 00:55:58.219951817 -0300
++++ src/components/security/__tests__/AuditLogDashboard.test.tsx	2026-10-15 01:01:47.953635840 -0300
+@@ -16,6 +16,7 @@
+   dados: [] as unknown[],
+   chamadas: {
+     select: '' as string,
++    porTabela: {} as Record<string, string>,
+     eq: [] as Array<[string, unknown]>,
+     in: [] as Array<[string, unknown[]]>,
+     like: [] as Array<[string, string]>,
+@@ -31,9 +32,10 @@
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+-    from: vi.fn(() => ({
++    from: vi.fn((tabela: string) => ({
+       select: vi.fn((cols: string) => {
+         estado.chamadas.select = cols;
++        estado.chamadas.porTabela[tabela] = cols;
+         return ({
+           order: vi.fn(() => ({
+             limit: vi.fn(() => {
+@@ -83,6 +85,7 @@
+     estado.chamadas.in.length = 0;
+     estado.chamadas.like.length = 0;
+     estado.chamadas.select = '';
++    estado.chamadas.porTabela = {};
+   });
+ 
+   // ===== QUERY COLUMNS =====
+@@ -90,10 +93,18 @@
+     it('selects explicit columns instead of * for audit_logs', async () => {
+       render(<AuditLogDashboard />);
+       await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
+-      expect(estado.chamadas.select).not.toBe('*');
+-      expect(estado.chamadas.select).toContain('id');
+-      expect(estado.chamadas.select).toContain('action');
+-      expect(estado.chamadas.select).toContain('created_at');
++      // Aguarda as duas consultas (lista + nomes) antes de conferir as colunas.
++      await waitFor(() => expect(estado.chamadas.porTabela['profiles']).toBeTruthy());
++      // A tela faz duas consultas: a lista (audit_logs) e os nomes dos
++      // autores (profiles). Cada uma seleciona colunas explícitas.
++      const colunasAuditoria = estado.chamadas.porTabela['audit_logs'] ?? '';
++      expect(colunasAuditoria).not.toBe('*');
++      expect(colunasAuditoria).toContain('id');
++      expect(colunasAuditoria).toContain('action');
++      expect(colunasAuditoria).toContain('created_at');
++      const colunasPerfis = estado.chamadas.porTabela['profiles'] ?? '';
++      expect(colunasPerfis).toContain('user_id');
++      expect(colunasPerfis).toContain('name');
+     });
+   });
+ 

@@ -1,0 +1,22 @@
+fix(edge): fechar autorização da manutenção de rate limit (R2-API-022)
+
+P1 de segurança: as duas rotinas de manutenção do rate limit escreviam
+com a service role sem gate correto.
+
+- send-rate-limit-alert agora exige INTERNAL_ALERT_SECRET configurado e não
+  vazio, enviado no header X-Internal-Secret com comparação em tempo
+  constante. Antes o `if (internalSecret)` deixava a chamada passar sem gate
+  quando o segredo estava ausente/vazio (fail-open). Agora falha fechado
+  (401) antes de criar o cliente service-role ou confiar no corpo.
+- cleanup-rate-limit-logs não tinha gate local: agora autoriza ANTES de
+  qualquer DELETE via CRON_SECRET não vazio (header x-cron-secret, tempo
+  constante) ou execução manual com JWT admin/supervisor (RPC canônica
+  is_admin_or_supervisor). Preflight CORS segue livre.
+
+Predicados de retenção preservados: logs > 7 dias, bloqueios temporários
+vencidos (is_permanent=false) e alertas resolvidos > 30 dias.
+
+Testes novos (RED→GREEN) dentro das duas pastas: alerta cobre segredo
+ausente/vazio/incorreto/correto provando zero escrita após rejeição; limpeza
+cobre 401/403, cron válido e admin/supervisor válido, provando zero DELETE
+após rejeição e a preservação exata dos predicados.

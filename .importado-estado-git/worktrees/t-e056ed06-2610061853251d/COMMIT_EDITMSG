@@ -1,0 +1,1 @@
+fix(tarefas): trocar de dia com criacao pendente nao restaura o prazo anterior (#424)

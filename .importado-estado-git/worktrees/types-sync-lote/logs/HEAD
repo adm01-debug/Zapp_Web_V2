@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 01b753e7ddb38af2a73ae831172e31801d8914af Joaquim Ataides <ti@promobrindes.com.br> 1791506946 -0300	
+01b753e7ddb38af2a73ae831172e31801d8914af 01b753e7ddb38af2a73ae831172e31801d8914af Joaquim Ataides <ti@promobrindes.com.br> 1791506947 -0300	reset: moving to HEAD
+01b753e7ddb38af2a73ae831172e31801d8914af 4991d7c3fa20b464916d0fa9f326b3832ea91d78 Claude <noreply@anthropic.com> 1791507052 -0300	commit: chore(db): sincronizar artefatos derivados após a migration ai_jobs_efeito_externo_lease (#1908)

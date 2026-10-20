@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791564018 -0300	
+12e407210db0ea4d9f817618d30848304ca932d5 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791564019 -0300	reset: moving to HEAD
+12e407210db0ea4d9f817618d30848304ca932d5 9b558377f4123cab6ef170195b22935fa1e067df Joaquim Ataides <ti@promobrindes.com.br> 1791565520 -0300	cherry-pick: fix(performance): compara os alvos de Web Vitals com o campo e ajusta o conjunto (SL-229)
+9b558377f4123cab6ef170195b22935fa1e067df 294ccb908859fbe22e1e3b79ffc2555c38413daa Joaquim Ataides <ti@promobrindes.com.br> 1791565521 -0300	cherry-pick: test(performance): prova que o codigo usa o alvo do FCP e mantem o do FID (SL-229)
+294ccb908859fbe22e1e3b79ffc2555c38413daa 6326b4beaa3e73b6fef10d647f55bc5b95b93ebb Joaquim Ataides <ti@promobrindes.com.br> 1791565521 -0300	cherry-pick: docs(performance): alinha auditoria de Web Vitals ao contrato de 12 testes e cita FID (SL-229)

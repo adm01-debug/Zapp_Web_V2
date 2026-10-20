@@ -1,0 +1,8 @@
+feat(auth): módulo compartilhado de decisão de política de rede (R2-AUTH-022)
+
+Converte Request + endpoint canônico na decisão da RPC public.resolve_network_policy
+(27.1) e produz negação HTTP consistente (403 negado / 503 indecidível), sem ligar os
+handlers. IP via getClientIP; país só de header confiável (cf-ipcountry) normalizado
+ISO alpha-2; endpoint explícito e validado; falha da RPC falha fechada. Teste unitário
+offline com 12 casos (allow, bloqueio IP, whitelist IP sem isentar país, geo vazia/país
+ausente, erro RPC, endpoint inválido).

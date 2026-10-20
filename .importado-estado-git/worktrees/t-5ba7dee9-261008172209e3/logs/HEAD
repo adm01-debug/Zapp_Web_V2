@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490951 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490952 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 91c7098d408c78578c829387c340231f3a46b547 Joaquim Ataides <ti@promobrindes.com.br> 1791491253 -0300	commit: fix(ci/devops): peter-evans/create-pull-request com labels automerge-ok (SL-025)

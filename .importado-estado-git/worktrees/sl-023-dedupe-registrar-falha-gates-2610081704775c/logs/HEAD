@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489856 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489857 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc ac061e264ae23e137c8e80c354acba2d2be1effc Joaquim Ataides <ti@promobrindes.com.br> 1791490386 -0300	commit: fix(ci/devops): dedupe do alerta de falha dos gates do types-sync por causa

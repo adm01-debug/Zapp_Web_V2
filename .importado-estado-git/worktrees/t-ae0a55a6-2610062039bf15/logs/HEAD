@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791329949 -0300	
+7e801f8582265bc03aba115f8871f1dd0abcdb35 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791329950 -0300	reset: moving to HEAD
+7e801f8582265bc03aba115f8871f1dd0abcdb35 076d3262bd399dde4cb936b8856fe794bf651bb2 worker (sql) <workersql@local> 1791330567 -0300	commit: fix(conexoes): troca de conexao padrao vira RPC atomica no banco (#174)
+076d3262bd399dde4cb936b8856fe794bf651bb2 96fb877ea0b92f720cc26ab9d2bdd66e9ffa5da6 worker (sql) <workersql@local> 1791331299 -0300	commit: test(conexoes): prova que a troca de padrao toca so as linhas alteradas (#174)

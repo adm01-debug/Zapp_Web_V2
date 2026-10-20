@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211657 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211658 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f 3d849286777347db29a0cfa4cde765e107a1dc8f Joaquim Ataides <ti@promobrindes.com.br> 1791211676 -0300	cherry-pick: fix(inbox): transferência da sidebar persiste evento com nota e rejeita em erro
+3d849286777347db29a0cfa4cde765e107a1dc8f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791213825 -0300	reset: moving to HEAD~1
+c59d333a084df35e69ac5b87318e75495a9c226f fd428549339ba54aa991e97654d35270b13cab1b Joaquim Ataides <ti@promobrindes.com.br> 1791213825 -0300	commit: fix(inbox): transferência da sidebar passa a ser atômica via RPC transfer_contact
+fd428549339ba54aa991e97654d35270b13cab1b 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213864 -0300	rebase (start): checkout dia/2026-10-05
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 8fd09592b54877e0612ac0e11ffda6dc2fa67671 Joaquim Ataides <ti@promobrindes.com.br> 1791213864 -0300	rebase (pick): fix(inbox): transferência da sidebar passa a ser atômica via RPC transfer_contact
+8fd09592b54877e0612ac0e11ffda6dc2fa67671 8fd09592b54877e0612ac0e11ffda6dc2fa67671 Joaquim Ataides <ti@promobrindes.com.br> 1791213864 -0300	rebase (finish): returning to refs/heads/v2/p1-88-contrato-transferencia-sidebar-2610051147e82a

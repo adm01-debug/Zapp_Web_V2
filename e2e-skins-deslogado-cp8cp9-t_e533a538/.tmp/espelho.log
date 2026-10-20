@@ -1,0 +1,11 @@
+guarda: scripts/ci/implicit-any-ratchet.mjs
+node: --staged ignora divida antiga fora do commit e acusa divida nova nos arquivos staged
+node: --staged nao combina com --update-baseline
+node: --staged reconhece arquivo renomeado pelo hash em vez de contar divida nova
+node: --staged sem arquivo lintavel no commit sai com sucesso sem rodar o ESLint
+node: Talk X evaluates the delivery window in the campaign timezone and fails closed
+node: Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respects schedule_timezone)
+node: documento FLAG_CHANGES.md contem todos os usos de useCRMIntegrationEnabled
+node: stagedLintableFiles devolve so fontes staged que ainda existem
+node: stagedRemovedFiles lista remocoes e origens de renomeacao do commit
+ESPELHO_RC=0

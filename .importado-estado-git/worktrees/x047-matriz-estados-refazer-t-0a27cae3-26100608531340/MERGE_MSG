@@ -1,0 +1,7 @@
+fix(talkx): estados de consulta na tela Em andamento (X047)
+
+Aplica o TalkXQueryBoundary em cada consulta visível da tela (campanhas, histórico de envios, destinatários, mensagens e logs), na ordem carregando -> erro -> vazio -> conteúdo, com cabeçalho e lista juntos.
+
+Os queryFn de destinatários e do histórico engoliam o erro (data ?? [] / if (!data?.length)): a falha virava lista vazia. A carga inicial dos logs não expunha erro nenhum e virava 'Aguardando eventos de envio…'; agora é consulta com retry e o realtime escreve no cache dela.
+
+Tentar novamente refaz só a consulta correspondente e preserva a campanha e a aba selecionadas (estado nunca é resetado pelo boundary).

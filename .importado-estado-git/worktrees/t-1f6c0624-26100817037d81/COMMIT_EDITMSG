@@ -1,0 +1,5 @@
+fix(telefonia): recibo da homologacao coleta provider_call_id do aceite (SL-019)
+
+O recibo do roteiro de homologacao era a peca que a execucao preenche e nao pedia o provider_call_id exigido pelo aceite do T96 (e pelo criterio 1 do TEL-RUNTIME-001): a homologacao seria executada e o aceite nao teria como ser conferido. A consulta do recibo tambem filtrava agent_id por nome de perfil, e a coluna e uuid - a consulta nao rodava assim.
+
+Duas guardas novas em scripts/db-audit/telefonia-homologacao-runbook.test.mjs travam o cabecalho do recibo (com os 5 campos do aceite) e o filtro por uuid.

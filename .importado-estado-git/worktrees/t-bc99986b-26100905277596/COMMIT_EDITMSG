@@ -1,0 +1,16 @@
+fix(a11y): nome acessível nos menus de ações da lista de contatos (SL-022)
+
+Os botoes Radix de menu de acoes (⋮) das tres vistas de lista populada de
+contatos nao tinham nome acessivel (axe button-name critical, reproduzido em
+t_41ad819d). Cada gatilho passa a ter `aria-label` especifico por contato
+(`Ações do contato <nome>`), alinhado ao padrao do modulo
+(`Detalhes do contato <nome>`, `Selecionar <nome>`), sem tocar na logica dos
+menus.
+
+Os checkboxes de linha de ContactListItem e ContactsTable, no mesmo caminho,
+seguiam sem nome e mantinham `button-name` critical aberto (mesmo padrao ja
+usado no ContactCard desde sempre); recebem o mesmo par
+`Selecionar/Desmarcar <nome>`.
+
+O spec e2e da frente a11y ganha o cenario de lista populada (sessao falsa,
+backend mockado) cobrindo as 3 vistas com axe button-name.

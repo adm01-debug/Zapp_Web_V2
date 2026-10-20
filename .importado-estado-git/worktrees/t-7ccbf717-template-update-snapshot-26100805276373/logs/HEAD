@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791448042 -0300	
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791448043 -0300	reset: moving to HEAD
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a ad4a0a7a933669405334688e19aeb9a291728b71 Joaquim Ataides <ti@promobrindes.com.br> 1791448051 -0300	cherry-pick: fix(db): snapshot do estado novo grava o carimbo que o guard da RPC casa (#298)
+ad4a0a7a933669405334688e19aeb9a291728b71 6859888c863ab66ea7b3d9cb98eb942900eb2cc3 Joaquim Ataides <ti@promobrindes.com.br> 1791448451 -0300	commit: fix(ci): registra harness de snapshot do template no db guard

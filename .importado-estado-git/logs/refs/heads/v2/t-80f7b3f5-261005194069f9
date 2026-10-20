@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 927f042dc443c02c72ad703a546987aaded91003 Joaquim Ataides <ti@promobrindes.com.br> 1791240044 -0300	branch: Created from dia/2026-10-05
+927f042dc443c02c72ad703a546987aaded91003 6c35ab1a3f197e86dc5740ce6c88271c418eebe9 Joaquim Ataides <ti@promobrindes.com.br> 1791240724 -0300	commit: fix(midia-volume): AudioContext da mídia só nasce no caminho WebAudio e nunca fica sem dono

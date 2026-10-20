@@ -1,0 +1,20 @@
+docs(multiplix): runbook de incidentes e métricas do F91 com dono e ação (TL-049)
+
+F91/TL-049 — a parte documental da lacuna de observabilidade do Multiplix:
+
+- docs/runbooks/multiplix-incidentes.md (novo): os SEIS cenários do item — fila travada,
+  worker morto, TTS fora, conexão caída, consumo estourado e Singu indisponível — cada um
+  com sintoma, consulta somente-leitura (tabelas reais do módulo), ação, dono e severidade.
+  Inclui a seção "Rastreio de 1 envio (correlation_id)" com o estado atual MEDIDO: o id do
+  clique vive em multiplix_events.correlation_id, o worker gera o próprio id por requisição
+  e o webhook não carrega nenhum — o mesmo id ainda não atravessa os três saltos.
+- docs/runbooks/slo.md: seção "Métricas do Multiplix" com as seis métricas do F91 (tempo de
+  fila, falhas por classe, latência de voz, consumo estimado × real, não conciliados,
+  conexão em risco), cada linha com fonte real, alvo, dono e ação. Latência de voz é
+  declarada SEM FONTE HOJE (a fila de TTS do F65 não existe) em vez de inventar número.
+- docs/INCIDENT-RUNBOOK.md: referência ao runbook novo (critério do item).
+- src/components/multiplix/__tests__/observabilidade-docs.contract.test.ts (novo): contrato
+  de conteúdo que prova os pontos acima. Fica sob src/ porque o passo mecânico de fechar
+  roda `vitest run <arquivo alterado>` com o config raiz (include `src/**`): um teste em
+  tests/contracts não é encontrado ali e o fechar recusa a entrega ("No test files found").
+  Em CI ele roda em `bun run test:coverage` (o mesmo config raiz).

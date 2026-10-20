@@ -1,0 +1,22 @@
+fix(notificacoes): persiste os tres controles de evento do painel (#441)
+
+Por quê: os botoes "Novas Mensagens", "Menções" e "Violação de SLA" da seção
+Tipos de Notificação só mudavam a cópia em memória (update otimista do
+react-query). O hook useNotificationSettings não selecionava, não mapeava e não
+convertia os três em dbUpdates, e a leitura repunha o default: depois do F5 os
+três voltavam habilitados. A chave de Novas Mensagens tampouco silenciava o som
+no consumidor Realtime (R2-PLAT-003 / item 441).
+
+- Migration aditiva 20261006155916: colunas new_message_sound_enabled,
+  mention_sound_enabled e sla_breach_sound_enabled em public.user_settings
+  (default true, igual ao DEFAULT_SETTINGS), aplicada no banco LOCAL;
+- useNotificationSettings: select + mapDbToSettings + dbUpdates + reset;
+- useRealtimeNotifications: o som de mensagem passa a exigir `soundEnabled` E
+  `newMessageSound`, o mesmo par que SLA e menção já exigiam;
+- types.ts gerado: as três colunas em Row/Insert/Update.
+
+Verificação: 11 testes novos (useNotificationSettings.test.tsx e
+useRealtimeNotifications.behavior.test.ts) vermelhos com o hook revertido e
+verdes com o fix; prova no banco local: linha sintética desligada lê false em
+outra sessão, linha nova sem as colunas nasce true. zapp-verify . --rapido:
+VERDE (db_guard, tipos, lint, migrations).

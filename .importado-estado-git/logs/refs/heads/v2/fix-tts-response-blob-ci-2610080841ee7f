@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 3dbc4754c30208005a82321b713b8e1dfa3be749 Joaquim Ataides <ti@promobrindes.com.br> 1791459672 -0300	branch: Created from dia/2026-10-08
+3dbc4754c30208005a82321b713b8e1dfa3be749 36cae9fb5e3dca1cc2c8242e9cb4f82144705935 Joaquim Ataides <ti@promobrindes.com.br> 1791460011 -0300	commit: test(tts): resposta falsa do teste de ciclo de vida usa corpo em texto (Blob.stream ausente no ambiente do CI)

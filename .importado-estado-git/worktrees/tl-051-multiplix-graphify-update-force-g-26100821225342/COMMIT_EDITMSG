@@ -1,0 +1,18 @@
+fix(multiplix): graphify update . --force com GRAPH_REPORT.md no commit (TL-051)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 0a12591c6 fix(multiplix): graphify update . --force com GRAPH_REPORT.md no commit (TL-051)
+# No commands remaining.
+# You are currently rebasing branch 'v2/tl-051-multiplix-graphify-update-force-g-26100821225342' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   CHANGELOG.md
+#	modified:   docs/COMPLETE_SYSTEM_FEATURES.md
+#	modified:   docs/README.md
+#	new file:   docs/multiplix/CHANGELOG_MULTIPLIX.md
+#	new file:   src/__tests__/multiplix-changelog-registry.test.ts
+#

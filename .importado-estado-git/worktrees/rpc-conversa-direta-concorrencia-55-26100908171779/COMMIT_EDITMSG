@@ -1,0 +1,3 @@
+Revert "fix(ci): estabiliza inventario de testes no deno"
+
+This reverts commit c75624babf96527683de57e948bd9ed500622b27.

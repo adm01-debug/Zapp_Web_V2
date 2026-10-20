@@ -1,0 +1,8 @@
+fix(edge): erro de lookup de conexão lança em vez de virar cache negativo
+
+getConnectionByInstance ignorava error e cacheava data=null por 5min;
+send/update/delete de mensagens então saíam sem filtro de
+whatsapp_connection_id (mutação global). Agora erro lança
+ConnectionLookupError (a borda responde 500 e a Evolution reentrega) e os
+três handlers retornam cedo sem conexão, com filtros de isolamento
+incondicionais (#188, R2-API-004).

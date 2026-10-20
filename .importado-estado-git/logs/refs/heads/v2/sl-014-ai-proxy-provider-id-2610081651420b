@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489082 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 57b639fe32c7a8a24162d1404ccd88d71190ebc7 Joaquim Ataides <ti@promobrindes.com.br> 1791489434 -0300	commit: fix(ia): ai-proxy nao aceita provider_id/model do cliente (SL-014)

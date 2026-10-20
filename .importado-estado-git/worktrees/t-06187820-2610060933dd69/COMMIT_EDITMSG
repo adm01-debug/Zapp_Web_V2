@@ -1,0 +1,20 @@
+chore(ci): regenera manifest de deploy e sobe o pino do ratchet para 244
+
+Os dois artefatos sao consequencia direta do fix de IA-TIMEOUT-001 e sao
+exigidos por passos da CI que ficam vermelhos sem eles:
+
+- supabase/deployment-manifest.json: o manifest pina bytes/sha256 de
+  supabase/functions/_shared/ai-providers.ts (12443 -> 14668 bytes). Sem
+  regerar, `node scripts/edge-deploy/generate-manifest.mjs --check` responde
+  "Deployment manifest is stale" (ci.yml, passo de frescor do manifest).
+- tests/contracts/_adv_edge_legacy_producers.test.ts: o contrato e um RATCHET
+  de arquivos .ts e o cartao t_06187820 exige um arquivo de teste novo em
+  supabase/functions/_shared/ai-providers.test.ts, que eleva a varredura de
+  243 para 244. E a convencao declarada no cabecalho do proprio contrato e o
+  precedente dos commits 2d3dd7b8d e 8744bb38c. Sem isso,
+  `bun run test:contracts` (passo "Run Edge Function contract tests",
+  ci.yml:233) fica vermelho.
+
+O cartao limitava o diff a ai-providers.ts e ai-providers.test.ts; a
+contradicao (o arquivo de teste exigido e o fix mudam a contagem do ratchet e
+o hash do manifest) esta registrada em comentario no cartao com a medicao.

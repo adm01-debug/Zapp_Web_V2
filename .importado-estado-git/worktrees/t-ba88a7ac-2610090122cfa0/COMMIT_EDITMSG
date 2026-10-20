@@ -1,0 +1,7 @@
+test(inbox/chat): prova que 'Últimos 7 dias' do Histórico já é 7 dias de calendário (SL-204)
+
+Item R3-06 já resolvido na ponta (fix 409e8fa5f, 01/10/2026): a janela do
+Histórico é startOfDay(subDays(now, period-1)), não Date.now()-period*24h.
+Teste src/hooks/chat/__tests__/useConversationHistoryTimeline.janela.test.tsx
+(3/3 verde) fica vermelho se a janela voltar a ser rolante (mutação conferida).
+Sem diff de código: o cartão manda fechar sem commit quando já resolvido.

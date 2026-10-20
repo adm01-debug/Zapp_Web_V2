@@ -1,0 +1,7 @@
+revert(config): tira o projeto chromium-tarefas do diff do Y10
+
+Ordem do supervisor (21:11): o cartao Y10 e spec-only; playwright.config.ts NAO pode
+aparecer no diff. O arquivo volta byte a byte a versao da base (dia/2026-10-07, mesmo
+conteudo de a0c24340a), sem o projeto dedicado e sem a entrada no ignore do catch-all.
+Nada mais do commit anterior foi alterado. O spec segue verde no banco local; o que
+falta (entrada de projeto) vira pedido de excecao no relato.

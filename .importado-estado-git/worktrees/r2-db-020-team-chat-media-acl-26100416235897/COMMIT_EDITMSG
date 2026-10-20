@@ -1,0 +1,10 @@
+fix(team-chat): vincula ACL e media_path de mídia ao objeto e à conversa (R2-DB-020)
+
+A policy de leitura do bucket team-chat-files comparava tm.media_path = name sem
+qualificação; no subselect o name resolvia para profiles.name, liberando a leitura
+de qualquer objeto do bucket para quem tivesse o nome de perfil igual ao media_path
+de uma mensagem de conversa própria. Agora a autorização deriva de storage.objects.name
+(qualificação explícita) + usuário autenticado (dono da pasta, admin/supervisor ou
+membro da conversa do 2º segmento), e a persistência de team_messages.media_path exige
+1º segmento = sender_id e 2º segmento = conversation_id via CHECK (caminho curto/
+malformado é recusado, sem cast). Teste runtime SQL em scripts/db-audit.

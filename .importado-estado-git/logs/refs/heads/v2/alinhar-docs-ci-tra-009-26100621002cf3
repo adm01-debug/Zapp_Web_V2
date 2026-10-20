@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791331220 -0300	branch: Created from dia/2026-10-06
+7e801f8582265bc03aba115f8871f1dd0abcdb35 ca679112aa75424b4cbe957a02e776d082586a53 Joaquim Ataides <ti@promobrindes.com.br> 1791331232 -0300	cherry-pick: docs(ci): alinhar documentação à baseline atual
+ca679112aa75424b4cbe957a02e776d082586a53 547f43e8289b216e8b26cb9e4cd894fa645e944e Joaquim Ataides <ti@promobrindes.com.br> 1791332102 -0300	commit: docs(ci): completar limitações truncadas e deduplicar cabeçalho do plano
+547f43e8289b216e8b26cb9e4cd894fa645e944e d0d1e6d9eafbba81d8344aef638e7e69ae7ba5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791332406 -0300	commit: chore(ci): enxugar comentario do teste documental para caber no teto de diff
+d0d1e6d9eafbba81d8344aef638e7e69ae7ba5c3 161413412b6e0a3d4e53b5a759d15b2d9c28f572 Joaquim Ataides <ti@promobrindes.com.br> 1791333055 -0300	commit: docs(ci): resumir celulas longas da reconciliacao para caber no teto de diff
+161413412b6e0a3d4e53b5a759d15b2d9c28f572 54ce9e1e030fc4f689132815cd2baecf27dd8658 Joaquim Ataides <ti@promobrindes.com.br> 1791333369 -0300	reset: moving to dia/2026-10-06
+54ce9e1e030fc4f689132815cd2baecf27dd8658 27cc49265cf92f6b18e478a8155ae57f61074dae Joaquim Ataides <ti@promobrindes.com.br> 1791333369 -0300	commit: docs(ci): alinhar documentação à baseline atual (TRA-009)
+27cc49265cf92f6b18e478a8155ae57f61074dae 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791333404 -0300	reset: moving to 7e801f858
+7e801f8582265bc03aba115f8871f1dd0abcdb35 f8abde7fd6a76e25e88d202b11e99fac4efa2b32 Joaquim Ataides <ti@promobrindes.com.br> 1791333404 -0300	commit: docs(ci): alinhar documentação à baseline atual (TRA-009)

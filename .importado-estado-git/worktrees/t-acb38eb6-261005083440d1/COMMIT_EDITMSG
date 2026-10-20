@@ -1,0 +1,21 @@
+fix(email): conversa para de atualizar em ciclo ao repassar contexto ao painel (R2-COM-001)
+
+O EmailChatInbox entregava `onContextDataChange` como arrow inline — identidade
+nova a cada render do pai — e o efeito do EmailChatThread dependia dessa função.
+Cada emissão gravava um objeto novo em `threadContext`, o que re-renderizava o
+pai, trocava a identidade da função e disparava o efeito de novo: ciclo fechado
+mesmo com mensagens e anexos estáveis (a key da thread não corta o ciclo).
+
+- EmailChatInbox: callback memoizado (`useCallback`) e `setThreadContext` com
+  bail-out quando conta/mensagens/anexos não mudaram de identidade.
+- EmailChatThread: callback guardado em ref (sai das dependências do efeito) e
+  emissão só quando mensagens/anexos mudam de identidade.
+- useGmail: `EMPTY_MESSAGES`/`EMPTY_ATTACHMENTS` de identidade estável — o `= []`
+  do destructuring criava referência nova a cada render enquanto a consulta
+  carregava, re-disparando o mesmo efeito.
+
+Teste: src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx
+monta o par real (EmailChatInbox + EmailChatThread) com a mesma thread,
+mensagens estáveis e anexo chegando depois. Antes: 32 renderizações do pai num
+teto de 30 (ciclo detectado). Depois: um render por tecla no pai, sem emissão
+extra, e o painel recebe o anexo e estabiliza.

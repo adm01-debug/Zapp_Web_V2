@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529667 -0300	
+5a9731645d266ea721f679d6886b83822ac16f6b 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791529667 -0300	reset: moving to HEAD
+5a9731645d266ea721f679d6886b83822ac16f6b f225fe3a527556dde1e0e2f4ea554eb3d0acd225 Joaquim Ataides <ti@promobrindes.com.br> 1791530357 -0300	commit: fix(talk-x): ler a linha do tempo operacional do servidor com tipos e "Ver todos" (TL-159)
+f225fe3a527556dde1e0e2f4ea554eb3d0acd225 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791558039 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 8433a8ff94737940d9e0cce5f3f11495b2807d2e Joaquim Ataides <ti@promobrindes.com.br> 1791558129 -0300	rebase (continue): fix(talk-x): ler a linha do tempo operacional do servidor com tipos e "Ver todos" (TL-159)
+8433a8ff94737940d9e0cce5f3f11495b2807d2e 8433a8ff94737940d9e0cce5f3f11495b2807d2e Joaquim Ataides <ti@promobrindes.com.br> 1791558129 -0300	rebase (finish): returning to refs/heads/v2/t-3271425b-26100904070efd

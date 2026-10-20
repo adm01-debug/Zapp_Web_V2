@@ -1,0 +1,185 @@
+--- a/src/components/admin/__tests__/SupervisorCopilot.test.tsx
++++ b/src/components/admin/__tests__/SupervisorCopilot.test.tsx
+@@ -4,9 +4,29 @@
+ import { supabase } from '@/integrations/supabase/client';
+ 
+ /**
+- * IA-117 — a resposta gerencial tem de ser reproduzível: o contexto enviado ao
+- * modelo identifica a consulta, o período, a amostra e o que NÃO foi medido.
++ * PG-02 — snapshot medido devolvido pela RPC supervisor_copilot_snapshot (PG-01R).
+  */
++const { SNAPSHOT } = vi.hoisted(() => ({
++  SNAPSHOT: {
++    generatedAt: '2026-10-14T12:00:00-03:00',
++    timezone: 'America/Sao_Paulo',
++    todayStart: '2026-10-14T00:00:00-03:00',
++    queues: [
++      { queueId: 'q1', queueName: 'Vendas', openConversations: 3, unansweredOver1h: 2, slaAtRisk: 1, slaBreachedToday: 0 },
++    ],
++    agents: [
++      { agentId: 'p1', agentName: 'Ana', openAssigned: 4, responsesToday: 5, avgFirstResponseSecondsToday: 120 },
++    ],
++    closureReasons7d: [{ reason: 'resolvido', count: 7 }],
++    unavailable: {
++      csat: 'nao medido no V2',
++      nps: 'nao medido no V2',
++      capacidadeAtendente: 'nao medido no V2',
++      filaEsperaIntegracao: 'nao medido no V2',
++    },
++  },
++}));
++
+ vi.mock('@/integrations/supabase/client', () => {
+   const makeBuilder = (result: unknown) => {
+     const self: Record<string, unknown> = {};
+@@ -25,27 +45,46 @@
+         if (table === 'profiles') return makeBuilder({ data: [{ id: 'p1', name: 'Ana', role: 'agent', is_active: true }], error: null });
+         return makeBuilder({ count: 42, error: null });
+       }),
++      rpc: vi.fn().mockResolvedValue({ data: SNAPSHOT, error: null }),
+       functions: { invoke: vi.fn().mockResolvedValue({ data: { content: 'ok' }, error: null }) },
+       auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) },
+     },
+   };
+ });
+ 
+-describe('SupervisorCopilot (IA-117)', () => {
++const QUICK_QUESTIONS = [
++  'Quais filas estão em risco de SLA?',
++  'Quem está com maior backlog?',
++  'Quantas conversas estão sem resposta há mais de 1h?',
++  'Qual atendente tem melhor performance hoje?',
++  'Quais são os motivos de encerramento mais comuns?',
++];
++
++const CHIP_FILA = 'Quais filas estão em risco de SLA?';
++const CHIP_SEM_RESPOSTA = 'Quantas conversas estão sem resposta há mais de 1h?';
++
++function contextoEnviado(indice = 0): string {
++  const chamada = vi.mocked(supabase.functions.invoke).mock.calls[indice];
++  const corpo = chamada[1]?.body as { messages: Array<{ role: string; content: string }> };
++  return corpo.messages[0].content;
++}
++
++describe('SupervisorCopilot (IA-117/PG-02)', () => {
+   beforeEach(() => {
+     vi.mocked(supabase.functions.invoke).mockClear();
++    vi.mocked(supabase.functions.invoke).mockResolvedValue({ data: { content: 'ok' }, error: null });
++    vi.mocked(supabase.rpc).mockClear();
++    vi.mocked(supabase.rpc).mockResolvedValue({ data: SNAPSHOT, error: null } as never);
+   });
+ 
+   it('envia um contexto gerencial reproduzível (consulta, período, amostra e lacunas)', async () => {
+     render(<SupervisorCopilot />);
+ 
+-    fireEvent.click(screen.getByText('Quais filas estão em risco de SLA?'));
++    fireEvent.click(screen.getByTitle(CHIP_FILA));
+ 
+     await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
+ 
+-    const chamada = vi.mocked(supabase.functions.invoke).mock.calls[0];
+-    const corpo = chamada[1]?.body as { messages: Array<{ role: string; content: string }> };
+-    const sistema = corpo.messages[0].content;
++    const sistema = contextoEnviado();
+ 
+     expect(sistema).toContain('Consulta gerencial (base reproduzível)');
+     expect(sistema).toContain('Período: últimas 24h');
+@@ -55,4 +94,98 @@
+     expect(sistema).toContain('Não medido nesta consulta');
+     expect(sistema).toContain('não estime nem invente');
+   });
++
++  it('as cinco perguntas rápidas levam ao copiloto os números medidos do snapshot', async () => {
++    render(<SupervisorCopilot />);
++
++    for (const [indice, pergunta] of QUICK_QUESTIONS.entries()) {
++      fireEvent.click(screen.getByTitle(pergunta));
++      await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(indice + 1));
++
++      const sistema = contextoEnviado(indice);
++
++      // Números medidos no banco: Vendas responde 3 abertas / 2 sem resposta >1h /
++      // 1 SLA em risco / 0 estourado; Ana 4 abertas / 5 respostas / 120s; 7 encerramentos.
++      expect(sistema).toContain('Snapshot por fila');
++      expect(sistema).toContain('Vendas: 3 / 2 / 1 / 0');
++      expect(sistema).toContain('Ana: 4 / 5 / 120');
++      expect(sistema).toContain('resolvido: 7');
++      expect(sistema).not.toContain('Não medido nesta consulta: SLA');
++    }
++  });
++
++  it('SLA, backlog e motivos saem da lista de lacunas; o que o V2 não registra continua lacuna', async () => {
++    render(<SupervisorCopilot />);
++
++    fireEvent.click(screen.getByTitle(CHIP_FILA));
++
++    await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
++
++    const sistema = contextoEnviado();
++    const lacunas = sistema.split('Não medido nesta consulta:')[1];
++
++    expect(lacunas).toBeDefined();
++    expect(lacunas).not.toContain('SLA');
++    expect(lacunas).not.toContain('backlog');
++    expect(lacunas).not.toContain('motivos de encerramento');
++    expect(lacunas).toContain('CSAT (pesquisa de satisfação)');
++    expect(lacunas).toContain('NPS');
++    expect(lacunas).toContain('fila de espera de integração (Singu)');
++  });
++
++  it('Enter durante o carregamento não dispara uma segunda pergunta', async () => {
++    vi.mocked(supabase.functions.invoke).mockReturnValueOnce(new Promise(() => {}) as never);
++    render(<SupervisorCopilot />);
++
++    fireEvent.click(screen.getByTitle(CHIP_FILA));
++    await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
++
++    const input = screen.getByPlaceholderText('Pergunte sobre a operação...');
++    fireEvent.change(input, { target: { value: 'E agora, quem atende?' } });
++    fireEvent.keyDown(input, { key: 'Enter' });
++    fireEvent.keyDown(input, { key: 'Enter' });
++
++    expect(supabase.functions.invoke).toHaveBeenCalledTimes(1);
++  });
++
++  it('limite de uso da IA tem mensagem própria, diferente da indisponibilidade', async () => {
++    render(<SupervisorCopilot />);
++
++    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
++      data: null,
++      error: { context: { status: 429 }, message: 'rate limited' },
++    } as never);
++    fireEvent.click(screen.getByTitle(CHIP_FILA));
++    await screen.findByText('Limite de uso do copiloto atingido. Tente novamente em alguns minutos.');
++
++    vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
++      data: null,
++      error: { message: 'boom' },
++    } as never);
++    fireEvent.click(screen.getByTitle(CHIP_SEM_RESPOSTA));
++    await screen.findByText('O copiloto está indisponível agora. Tente novamente.');
++  });
++
++  it('sem o snapshot medido, a tela avisa e não pergunta à IA (nada de zero inventado)', async () => {
++    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { message: 'function does not exist' } } as never);
++    render(<SupervisorCopilot />);
++
++    fireEvent.click(screen.getByTitle(CHIP_FILA));
++
++    await screen.findByText('Não foi possível carregar as métricas gerenciais agora. Tente novamente.');
++    expect(supabase.functions.invoke).not.toHaveBeenCalled();
++  });
++
++  it('o envio é acessível e a resposta mostra o horário', async () => {
++    render(<SupervisorCopilot />);
++
++    expect(screen.getByLabelText('Perguntar ao copiloto')).toBeTruthy();
++    const chip = screen.getByText('Quem está com maior backlog?').closest('button');
++    expect(chip?.getAttribute('title')).toBe('Quem está com maior backlog?');
++
++    fireEvent.click(screen.getByTitle(CHIP_FILA));
++
++    await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
++    expect(await screen.findByText(/^\d{2}:\d{2}$/)).toBeTruthy();
++  });
+ });

@@ -1,0 +1,12 @@
+fix(inbox): contraste AA no subtítulo dos indicadores (KpiStrip)
+
+O subtítulo da faixa de KPIs (texto de 11px embaixo do número — "Mensagens,
+ligações e ações" em JourneyTab.tsx:123) pintava `text-muted-foreground/70`: o
+alfa compõe a tinta sobre o `bg-card` e derruba a razão para 3,16:1 no tema
+claro, abaixo dos 4,5:1 que a régua AA pede para texto normal. É o achado
+A11Y-CHAT_INBOX_TEAMS-04 (axe color-contrast, serious).
+
+O subtítulo passa a usar o token de texto sem alfa. Teste novo
+(KpiStrip.contraste.test.tsx) renderiza o componente real, lê as classes que o
+subtítulo recebeu, resolve os tokens de tokens.css/accessibility.css e fecha a
+razão WCAG nos quatro estados de tema — vermelho antes, verde depois.

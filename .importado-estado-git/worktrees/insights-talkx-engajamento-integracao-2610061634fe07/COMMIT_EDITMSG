@@ -1,0 +1,22 @@
+fix(talkx): insights elegem campanha por taxa de resposta e usam status completed
+
+Integra o trabalho do cartão #223 (R2-API-049) sobre a branch do dia, que já
+trazia a correção irmã de #135 (fb181319d) no mesmo arquivo.
+
+O insight "Mensagem com maior engajamento" escolhia a campanha por contagem
+absoluta de respostas (order by replied_count) e o ramo de cliques filtrava
+status='finished', que o CHECK de talkx_campaigns.status nao admite ('completed').
+Agora a metrica de engajamento e a taxa de resposta (replied_count/sent_count),
+com amostra minima de 10 envios, e o ramo de cliques usa 'completed'.
+
+Conflito com dia/2026-10-05 resolvido preservando as duas contribuições:
+- veio da branch do dia (fb181319d): pickBestHour com fuso America/Sao_Paulo e
+  amostra, baixo clique POR CAMPANHA (taxa cliques/envios), guardas de
+  truncagem/erro das leituras e o texto de buildInsights;
+- reaplicado deste commit: TALKX_COMPLETED_STATUS, BestTemplate/TemplateCandidate
+  e o desempate determinístico de pickBestTemplate (taxa, respostas, envios,
+  nome, id) — a eleição não depende mais da ordem devolvida pelo banco.
+O bloco final `export { fetchInsightData, buildInsights }` virou export duplicado
+(as duas declarações já saem exportadas) e foi removido para o build não quebrar.
+
+Cartao: t_c0abeb92 (#223 / R2-API-049); integracao em t_b2640130.

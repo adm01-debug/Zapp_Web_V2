@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260927260000_revoke_gamification_rpc_anon_execute_sql", "label": "20260927260000_revoke_gamification_rpc_anon_execute.sql", "file_type": "code", "source_file": "supabase/migrations/20260927260000_revoke_gamification_rpc_anon_execute.sql", "source_location": null}], "edges": []}

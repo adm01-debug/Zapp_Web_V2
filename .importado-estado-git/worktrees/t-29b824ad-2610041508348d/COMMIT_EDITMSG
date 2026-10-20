@@ -1,0 +1,14 @@
+feat(auth): revoke-auth-sessions revoga sessões Auth reais (R2-AUTH-004)
+
+Primitiva server-side de revogação Auth, item 6 do R2-AUTH-004:
+- Edge Function revoke-auth-sessions (único endpoint de mutação) com contrato
+  POST versionado { scope: global|local|others, target_user_id?, target_session_id? }.
+- Função SQL SECURITY DEFINER revoke_auth_sessions encapsula o acesso a
+  auth.sessions (DELETE cascateia os refresh tokens); REVOKE de PUBLIC/anon/
+  authenticated, só service_role executa. local/others são self-only no próprio
+  SQL (p_actor_user_id).
+- Vínculo user_sessions.auth_session_id (uuid) + índice único parcial + trigger
+  de guarda contra associação cruzada.
+- Trigger em profiles: is_active true->false revoga todas as sessões Auth do
+  usuário; reativar não cria sessão.
+- Inventário público mantido coerente (is_active=false, ended_at) após revogar.

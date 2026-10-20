@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791199557 -0300	
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791199558 -0300	reset: moving to HEAD
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f 4c0ab96811019f6733e93c8ee4a7eb96ad0d88db Joaquim Ataides <ti@promobrindes.com.br> 1791199562 -0300	cherry-pick: fix(edge): envio GO usa o token da instância e falha fechado sem ele (MX07)
+4c0ab96811019f6733e93c8ee4a7eb96ad0d88db 31739c9d9452d5915eabbed4855cfea24ecce354 Joaquim Ataides <ti@promobrindes.com.br> 1791200977 -0300	commit: fix(edge): presença pré-envio do multiplix sai com o token da instância (MX07)
+31739c9d9452d5915eabbed4855cfea24ecce354 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201429 -0300	reset: moving to dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 31739c9d9452d5915eabbed4855cfea24ecce354 Joaquim Ataides <ti@promobrindes.com.br> 1791201437 -0300	reset: moving to 31739c9d9

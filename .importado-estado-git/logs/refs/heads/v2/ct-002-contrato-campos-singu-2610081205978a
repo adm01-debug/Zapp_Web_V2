@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 bce13e7c076bc96da3ea76ccfece1210aea52171 Joaquim Ataides <ti@promobrindes.com.br> 1791471909 -0300	branch: Created from dia/2026-10-08
+bce13e7c076bc96da3ea76ccfece1210aea52171 ff33fe21425ab2ae290527250cc67cd1dbc88df1 Joaquim Ataides <ti@promobrindes.com.br> 1791472642 -0300	commit: feat(contatos): contrato único dos campos do Singu com adaptador real e de teste (CT-002)

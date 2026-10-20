@@ -1,0 +1,19 @@
+fix(talk-x): carrega sob demanda cada tela do módulo e mede o orçamento (TL-177)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    iris <iris@hermes.local>
+#
+# interactive rebase in progress; onto 1f9252a86
+# Last command done (1 command done):
+#    pick 5ec3fbaaf fix(talk-x): carrega sob demanda cada tela do módulo e mede o orçamento (TL-177)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-bd501a84-2610090522c8c1' on '1f9252a86'.
+#
+# Changes to be committed:
+#	new file:   docs/talkx/v4/DESEMPENHO.md
+#	modified:   src/components/talkx/TalkXView.tsx
+#	new file:   src/components/talkx/__tests__/TalkXView.carregamento.test.tsx
+#	modified:   src/components/talkx/__tests__/TalkXView.route.test.tsx
+#

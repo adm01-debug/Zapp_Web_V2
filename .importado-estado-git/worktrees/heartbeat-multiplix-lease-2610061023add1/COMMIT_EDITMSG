@@ -1,0 +1,1 @@
+fix(multiplix-send): heartbeat do lease consome a RPC e limpa o timer em toda saida (R2-API-013)

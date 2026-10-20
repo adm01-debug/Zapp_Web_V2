@@ -1,0 +1,28 @@
+fix(team-chat): migra gestão de departamento para o contrato atual de convites e WhatsApp
+
+O hook falava o contrato aposentado: lia/gravava/removia `department_invites`
+e chamava `get_department_whatsapp_credentials`, que é service_role-only
+(`access_denied` para `authenticated`).
+
+- convites: leitura e revogação (status='revoked', com checagem de linhas
+  afetadas) em `department_invitations`; criação pela RPC
+  `create_department_invite` (1 uso / 7 dias, como antes) e novo
+  `useAcceptDepartmentInvite` pela RPC `accept_department_invite`, com o motivo
+  tipado (`invalid_or_expired_code`, `invite_exhausted`) como erro.
+- WhatsApp: leitura por `get_department_whatsapp_config` (tabela
+  mode/instance_id/has_api_key, sem a chave) e gravação por
+  `set_department_whatsapp_config`; sai o upsert em
+  `department_whatsapp_configs` (tabela inexistente, único `@ts-expect-error`
+  do arquivo) e o INSERT de auditoria no cliente, revogado para authenticated.
+- testes: reescritos para o contrato vivo (9 vermelhos com o hook antigo).
+
+Fora do escopo (comentado no cartão): departmentInviteCode.random.test.tsx e
+rls-contract.test.ts pinam `department_invites`; known-violations.json fica com
+entrada obsoleta; schema-catalog.json sem a RPC de leitura.
+
+(cherry picked from commit a3677664079e58d4b27fdda105f37d9d55a8ae01)
+
+# Conflicts:
+#	src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx
+#	src/hooks/team-chat/__tests__/useDepartmentWhatsAppCredentials.contrato-rpc.test.tsx
+#	src/hooks/team-chat/useDepartmentManagement.ts

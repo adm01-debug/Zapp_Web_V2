@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791502998 -0300	
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791502999 -0300	reset: moving to HEAD
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c b544a4d365b93f95c63a9712b85f3159f43445f7 Joaquim Ataides <ti@promobrindes.com.br> 1791504937 -0300	commit: fix(multiplix): worker fecha o disparo pelo dreno POR ITEM (MX03, TL-033)
+b544a4d365b93f95c63a9712b85f3159f43445f7 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556233 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 7e3089fd3f8aeaa3dcebf9fddd4763c2ca38f2d7 Joaquim Ataides <ti@promobrindes.com.br> 1791556684 -0300	rebase (continue): fix(multiplix): worker fecha o disparo pelo dreno POR ITEM (MX03, TL-033)
+7e3089fd3f8aeaa3dcebf9fddd4763c2ca38f2d7 7e3089fd3f8aeaa3dcebf9fddd4763c2ca38f2d7 Joaquim Ataides <ti@promobrindes.com.br> 1791556684 -0300	rebase (finish): returning to refs/heads/v2/tl033-multiplix-leases-testes-2610082043d6ce
+7e3089fd3f8aeaa3dcebf9fddd4763c2ca38f2d7 0186fd588238d966436e739b632566a06a2e7a03 Joaquim Ataides <ti@promobrindes.com.br> 1791556782 -0300	commit: fix(multiplix): rollback executavel na migration do cast MX03
+0186fd588238d966436e739b632566a06a2e7a03 453c7b722dc53061b899acd46530bc710dcc87fb Joaquim Ataides <ti@promobrindes.com.br> 1791557359 -0300	commit: fix(multiplix): remove case duplicado do mock e ajusta os 2 testes MX03 novos

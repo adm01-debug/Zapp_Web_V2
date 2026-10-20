@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567218 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567219 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 d84b9a1e98497e93c9880f1c4bef3444792d9273 Joaquim Ataides <ti@promobrindes.com.br> 1791567402 -0300	commit: fix(ia): detector de objeções não confunde falha com "nenhuma objeção" (N-169)
+d84b9a1e98497e93c9880f1c4bef3444792d9273 9ea276b0c95112c7f33389933aa2adce39524181 Joaquim Ataides <ti@promobrindes.com.br> 1791567837 -0300	commit (amend): fix(ia): detector de objeções não confunde falha com "nenhuma objeção" (N-169)

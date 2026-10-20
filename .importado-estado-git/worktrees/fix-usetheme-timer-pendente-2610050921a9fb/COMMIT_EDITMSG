@@ -1,0 +1,12 @@
+fix(ui): cancela timers de transicao do useTheme no unmount
+
+O `setTimeout` de 350ms do `setTheme` ficava pendente e disparava depois do
+teardown do jsdom (`ReferenceError: document is not defined`), virando
+unhandled error do vitest e derrubando a suite completa mesmo com 0 teste
+falhando (bloqueava a integracao de qualquer cartao).
+
+Agora os dois timers de transicao sao rastreados e cancelados quando o ultimo
+hook desmonta, o callback do `setTheme` usa o no capturado (nao o global
+`document`) e o guarda de DOM virou `typeof document !== 'undefined'`.
+Teste de regressao em useTheme.test.tsx prova que o unmount nao deixa timer do
+tema pendente (vermelho antes, verde depois).

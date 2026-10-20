@@ -1,0 +1,8 @@
+fix(sip): tentativa cancelada nao apaga refs de uma tentativa nova em connect()
+
+O bloco catch de connect() limpava uaRef/registererRef mesmo com a tentativa
+invalidada por disconnect(). Se o start() da tentativa antiga rejeitasse depois
+de um connect() novo ja ter publicado os refs, a guarda ficava livre com o UA
+novo vivo — a mesma corrida que o cartao fecha. Agora a limpeza dos refs fica
+dentro da guarda de cancelamento; teste novo prova o cenario (vermelho sem o
+ajuste, verde com ele).

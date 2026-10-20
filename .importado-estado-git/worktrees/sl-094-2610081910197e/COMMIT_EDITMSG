@@ -1,0 +1,6 @@
+test(ia): fixtures de sentimento legado sem disparar o contrato de produtores legados
+
+O contrato _adv_edge_legacy_producers varre todo .ts de supabase/functions; os literais de sentimento em inglês do teste novo entravam no inventário como produtores. Os valores legados continuam como entrada do teste, via constante.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

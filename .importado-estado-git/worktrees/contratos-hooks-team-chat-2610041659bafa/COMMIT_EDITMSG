@@ -1,0 +1,12 @@
+fix(team-chat): alinhar credenciais do departamento ao contrato da RPC
+
+O hook useDepartmentWhatsAppCredentials devolvia o payload cru da RPC
+get_department_whatsapp_credentials, cujo jsonb real e
+{whatsapp_mode, whatsapp_api_key, whatsapp_instance_id}, mas o tipo declarado
+era {mode, evolution_url}. credentials.mode ficava indefinido e a tela de
+WhatsApp do departamento nunca carregava o modo salvo.
+
+Mapeia o jsonb real para o tipo declarado (modo fora do enum -> 'none'; sem
+linha -> default) e pina o contrato (parametro + formato de retorno) com teste
+de regressao. Item 59 / TC-015: os outros tres pontos da auditoria so existiam
+na branch em quarentena e nao estao no codigo vivo.

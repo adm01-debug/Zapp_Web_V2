@@ -1,0 +1,10 @@
+fix(inbox): chat repassa queueId, grava evento de transferência e rejeita em erro (#88)
+
+O header do chat omitia queueId do TransferDialog (filtro self-claim escondia
+colegas), usava cast com 'connection' fora do contrato, descartava a nota e
+resolvia a Promise mesmo com a escrita falhando — o diálogo fechava em erro.
+
+Agora onTransfer usa TransferDialogProps['onTransfer'], o update em contacts é
+seguido do insert em conversation_events (event_type='transfer', to_agent_id ou
+to_queue_id, metadata.note) e qualquer falha rejeita o callback, mantendo o
+diálogo aberto com toast de erro.

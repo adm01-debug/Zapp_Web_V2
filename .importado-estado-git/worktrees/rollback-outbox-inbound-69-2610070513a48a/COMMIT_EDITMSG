@@ -1,0 +1,3 @@
+chore(edge-deploy): confere o manifesto de deploy regenerado (#69)
+
+Passo pedido pelo revisor: 'node scripts/edge-deploy/generate-manifest.mjs' + '--check' rodados neste estado. A regeneracao e byte-identica ao arquivo ja versionado (sha256 8a62fc5e..., git diff --numstat vazio), porque este commit nao toca supabase/functions/**; nao ha conteudo novo a versionar. Sem alteracao de conteudo (commit vazio de registro).

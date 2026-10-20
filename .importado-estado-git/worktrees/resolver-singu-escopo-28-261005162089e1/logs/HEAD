@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791228025 -0300	
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 Joaquim Ataides <ti@promobrindes.com.br> 1791228026 -0300	reset: moving to HEAD
+72cacb5d2c018ad3cfd9f5a1c455ea3aedf7fd56 cecbd696767ae0adaa99f12703f25e7be5336601 Joaquim Ataides <ti@promobrindes.com.br> 1791228035 -0300	cherry-pick: fix(multiplix): resolve nao devolve metadados de empresa fora do escopo
+cecbd696767ae0adaa99f12703f25e7be5336601 9d7b51abd7c6a7068df0c6c02748a11fce679863 Joaquim Ataides <ti@promobrindes.com.br> 1791228723 -0300	commit: fix(multiplix): tira ref de producao do teste e detalha rollback da redacao

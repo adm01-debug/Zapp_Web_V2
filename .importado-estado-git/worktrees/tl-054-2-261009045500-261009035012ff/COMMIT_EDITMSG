@@ -1,0 +1,20 @@
+refactor(talk-x): Visao geral usa o hook unico de ciclo de vida (X051)
+
+A Visao geral (TalkXOverview) tinha handler proprio para iniciar/pausar/
+retomar/cancelar e tres dialogos locais (TalkXConfirmDialog) para duas
+delas. Passa a usar o controlador unico `useTalkXLifecycle` (TL-054A/X050):
+os itens do menu pedem `lifecycle.request({ kind, target: c })` e a tela
+monta um so `<TalkXLifecycleDialog controller={lifecycle} />`. A exclusao
+continua no TalkXConfirmDialog, porque nao e acao de ciclo de vida.
+
+- TalkXOverview.tsx: `useTalkXLifecycle()` no lugar das props de ciclo de
+  vida; estado local reduzido ao confirm de exclusao; dialogos de
+  start/cancel removidos.
+- TalkXView.tsx: nao passa mais onStart/onPause/onCancel para a Visao geral
+  (os involucros com toast sairam junto); props seguem opcionais na
+  interface da tela para nao quebrar chamadores e mocks existentes.
+- __tests__/TalkXOverview.lifecycle.test.tsx (novo): abre o menu "Acoes" e
+  prova que cada acao passa pelo hook, que as props nao sao chamadas e que
+  excluir continua no dialogo local.
+- e2e/talkx-launch.spec.ts: o rotulo do confirmar do disparo passou a ser o
+  do hook ("Confirmar envio").

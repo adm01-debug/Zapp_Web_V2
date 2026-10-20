@@ -1,0 +1,8 @@
+test(edge): prova que a falha de enfileiramento e a baixa nao confirmada da outbox nao passam em silencio
+
+Cartao V2: t_75c77015 (refazer 2). O defeito nominal do cartao (devolverPendenciaAOutbox
+ignorando resposta.ok) nao existe na base: a ponta ja tem c8c6018f9 com a cadeia equivalente
+correta. Faltava a prova: 2 testes que exigem marcador de ultimo recurso quando o POST da
+outbox conflita e que exigem item pendente quando o PATCH de baixa e recusado. Ao final do
+POST na outbox em conflito nao conta como pendencia e emite o marcador de ultimo recurso;
+ao final do PATCH recusado, nada e baixado.

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791530982 -0300	
+5a9731645d266ea721f679d6886b83822ac16f6b 5a9731645d266ea721f679d6886b83822ac16f6b Joaquim Ataides <ti@promobrindes.com.br> 1791530983 -0300	reset: moving to HEAD
+5a9731645d266ea721f679d6886b83822ac16f6b 9556878eb165381c74511a4c07af53cbb4b34801 Joaquim Ataides <ti@promobrindes.com.br> 1791531821 -0300	commit: fix(talk-x): Tela 12: montar "Ações da campanha", "Configurações atuais" e a aba Configurações (TL-161)
+9556878eb165381c74511a4c07af53cbb4b34801 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791558306 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 48c8c0c0eecb7a3b5c9a840ecf3ed6c78265c79e Joaquim Ataides <ti@promobrindes.com.br> 1791558487 -0300	rebase (continue): fix(talk-x): Tela 12: montar "Ações da campanha", "Configurações atuais" e a aba Configurações (TL-161)
+48c8c0c0eecb7a3b5c9a840ecf3ed6c78265c79e 48c8c0c0eecb7a3b5c9a840ecf3ed6c78265c79e Joaquim Ataides <ti@promobrindes.com.br> 1791558487 -0300	rebase (finish): returning to refs/heads/v2/t-17751f9b-26100904292d70

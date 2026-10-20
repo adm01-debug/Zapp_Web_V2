@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 79b62d45b4c5f9955c5ce05128f4715a0c48ffd3 Joaquim Ataides <ti@promobrindes.com.br> 1791307240 -0300	branch: Created from dia/2026-10-06
+79b62d45b4c5f9955c5ce05128f4715a0c48ffd3 891a954d57d900b2c3a876b2acc7381537c4a251 worker-mensageria <worker-mensageria@local> 1791307562 -0300	commit: fix(multiplix): resolve do Singu nao devolve metadados de empresa fora do escopo (R2-DB-003)
+891a954d57d900b2c3a876b2acc7381537c4a251 5e6108e36d7311617e9a3888d2fd7ae3c066b8a1 worker-mensageria <worker-mensageria@local> 1791307594 -0300	commit (amend): fix(multiplix): resolve do Singu nao devolve metadados de empresa fora do escopo (R2-DB-003)

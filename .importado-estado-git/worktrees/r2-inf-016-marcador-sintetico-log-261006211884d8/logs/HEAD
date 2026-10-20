@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332340 -0300	
+f8309fb2679055122550ca345e0a90edf6e34853 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332340 -0300	reset: moving to HEAD
+f8309fb2679055122550ca345e0a90edf6e34853 745d555d4ac44bee9409e9aca20c0941984637a7 Joaquim Ataides <ti@promobrindes.com.br> 1791332352 -0300	cherry-pick: fix(edge): sanitiza handlers 500 com marcador sintetico
+745d555d4ac44bee9409e9aca20c0941984637a7 dc13addf3d64c56b5d905e0d8806fe5479128ebe Joaquim Ataides <ti@promobrindes.com.br> 1791332820 -0300	commit: fix(edge): reforça guarda de exposição 5xx

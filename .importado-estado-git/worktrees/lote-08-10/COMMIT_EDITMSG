@@ -1,0 +1,6 @@
+fix(hooks): useDebounce cancela o disparo pendente ao desmontar (evita 'window is not defined' no fim da suíte)
+
+Com todos os testes verdes o job Unit Tests reprovava por um erro não tratado: o temporizador de 300 ms da paleta de comandos disparava depois do ambiente jsdom ser desmontado.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

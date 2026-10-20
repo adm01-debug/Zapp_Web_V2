@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4ff5d77217832e5762e4009e271c4a3179bbc9cd Joaquim Ataides <ti@promobrindes.com.br> 1791386942 -0300	branch: Created from dia/2026-10-07
+4ff5d77217832e5762e4009e271c4a3179bbc9cd f85853932c010cf80e516521acf258f4a6265f2e Joaquim Ataides <ti@promobrindes.com.br> 1791387354 -0300	commit: fix(hooks): descarta refresh obsoleto de URL assinada

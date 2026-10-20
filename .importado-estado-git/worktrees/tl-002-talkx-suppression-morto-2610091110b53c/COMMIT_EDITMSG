@@ -1,0 +1,3 @@
+test(talk-x): exercita a leitura da atividade no guarda do hook morto (TL-002)
+
+O guarda passa a chamar fetchTalkXSuppressionActivity de verdade (cliente dublando so o from) e confere tabela, colunas, ordem deterministica com desempate, a fatia do range e o total do servidor.

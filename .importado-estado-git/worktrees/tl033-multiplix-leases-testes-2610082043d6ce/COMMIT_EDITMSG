@@ -1,0 +1,17 @@
+fix(multiplix): remove case duplicado do mock e ajusta os 2 testes MX03 novos
+
+O auto-merge do rebase deixou DOIS 'case complete_multiplix_dispatch_if_items_drained'
+no mock de supabase.rpc em index.test.ts: o da dia/2026-10-09 (fiel ao banco,
+conclui so quando ctx.remaining esvazia) e o deste cartao (flag opts.itemsDrainResult).
+O primeiro sempre ganha (switch-case), entao o segundo ficava morto e os 2 testes
+MX03 novos dependiam dele silenciosamente — 1 deles falhou (dreno 'fiel' via
+ctx.remaining nao estava vazio com o lote de 25 e lote padrao de 20).
+
+Removi o case morto e ajustei os 2 testes para o mock fiel: o primeiro usa
+batchSendingOpts(.., 20) para esvaziar ctx.remaining de verdade na unica
+passada (prova completed:true sem fingir nada); o segundo ja funcionava por
+coincidencia (25 recipients - lote de 20 = 5 sobram) e so perdeu a flag
+cosmetica. Nenhuma asselacao de nenhum dos 82 testes foi afrouxada.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

@@ -1,0 +1,3 @@
+fix(e-mail): Comparação pixel a pixel contra referencias/01_EMAIL_DI (SL-186)
+
+Cartão NAO_VERIFICAVEL: o artefato de referência (referencias/01_EMAIL_DIRECAO_VISUAL.png) não existe no repositório e o plano proíbe simulá-lo. Sem mudança de código; lacuna provada e relatada em .tmp/relato.md.

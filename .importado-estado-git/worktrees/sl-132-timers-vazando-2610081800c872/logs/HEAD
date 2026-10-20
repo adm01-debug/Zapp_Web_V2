@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791493252 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791493253 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 0be4c15e8ba01e2bc1c50de9335f666483a03505 worker (testes) <worker-testes@hermes.local> 1791493852 -0300	commit: test(catalogo): prende a guarda de teardown do retry de openContactChat (SL-132)

@@ -1,0 +1,5 @@
+chore(edge): regera deployment-manifest no escopo do cartao IA-050
+
+Manifest gerado (node scripts/edge-deploy/generate-manifest.mjs) sobre a arvore limpa do cartao. Mudam apenas as entradas de _shared/ai-circuit.ts, _shared/ai-generate.ts e _shared/ai-usage.ts e o source_sha256 das 14 funcoes que as importam; _shared/messaging/evolution-go.ts, multiplix-send/index.ts e os source_sha256 de multiplix-dispatch/multiplix-send/talkx-send NAO aparecem (git status limpo para esses arquivos).
+
+Prova: node scripts/edge-deploy/generate-manifest.mjs --check => MANIFEST FRESCO; source_file_count 143->144.

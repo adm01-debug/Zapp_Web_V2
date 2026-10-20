@@ -1,0 +1,1 @@
+fix(db): schema, unicidade de event_id e ACL da outbox do log essencial de IA

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791531955 -0300	
+09cac15983207293252c5a4602e8b347bd4b8c91 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791531956 -0300	reset: moving to HEAD
+09cac15983207293252c5a4602e8b347bd4b8c91 2b00a75c134caa042c2a55e3ffc6082e3cceed52 Joaquim Ataides <ti@promobrindes.com.br> 1791532680 -0300	commit: fix(talk-x): Card Ações da lista, modal Adicionar contato e modal Ge (TL-168)
+2b00a75c134caa042c2a55e3ffc6082e3cceed52 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791541421 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b fba57041afcdc657ef5b24c2f1de72815dded9fb Joaquim Ataides <ti@promobrindes.com.br> 1791541487 -0300	rebase (continue): fix(talk-x): Card Ações da lista, modal Adicionar contato e modal Ge (TL-168)
+fba57041afcdc657ef5b24c2f1de72815dded9fb fba57041afcdc657ef5b24c2f1de72815dded9fb Joaquim Ataides <ti@promobrindes.com.br> 1791541540 -0300	rebase (finish): returning to refs/heads/v2/tl-168-2610090445716a

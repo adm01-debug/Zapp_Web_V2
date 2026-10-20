@@ -1,0 +1,179 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
+import { useState } from 'react';
+import { VolumeDial, type VolumeDialProps } from '@/components/ui/VolumeDial';
+
+// `useReducedMotion` é controlado pelo teste: o ambiente jsdom não tem mídia de verdade.
+const estado = vi.hoisted(() => ({ reduzido: false }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const real = await importOriginal<typeof import('framer-motion')>();
+  return { ...real, useReducedMotion: () => estado.reduzido };
+});
+
+type HarnessProps = Partial<VolumeDialProps> & { inicial?: number; onNovo?: (v: number) => void };
+
+/** Envolve o dial controlado, como os consumidores reais fazem. */
+function Harness({ inicial = 50, onNovo, ...props }: HarnessProps) {
+  const [valor, setValor] = useState(inicial);
+  return (
+    <VolumeDial
+      ariaLabel="Volume"
+      {...props}
+      value={valor}
+      onChange={(v) => {
+        onNovo?.(v);
+        setValor(v);
+      }}
+    />
+  );
+}
+
+const dial = () => screen.getByRole('slider');
+
+beforeEach(() => {
+  estado.reduzido = false;
+});
+
+describe('VolumeDial — papel, nome e valores acessíveis', () => {
+  it('expõe role=slider focável com min/max/now/valuetext', () => {
+    render(<Harness inicial={40} />);
+    expect(dial()).toHaveAttribute('aria-valuemin', '0');
+    expect(dial()).toHaveAttribute('aria-valuemax', '100');
+    expect(dial()).toHaveAttribute('aria-valuenow', '40');
+    expect(dial()).toHaveAttribute('aria-valuetext', '40 por cento');
+    expect(dial()).toHaveAttribute('tabindex', '0');
+  });
+
+  it('usa valueLabel no centro e no texto falado quando informado', () => {
+    render(<Harness inicial={70} valueLabel="70%" />);
+    expect(screen.getByTestId('volume-dial-value')).toHaveTextContent('70%');
+    expect(dial()).toHaveAttribute('aria-valuetext', '70%');
+  });
+
+  it('não tem violação de acessibilidade', async () => {
+    const { container } = render(<Harness inicial={50} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe('VolumeDial — teclado', () => {
+  it('setas ±step, PageUp/PageDown ±5 passos, Home/End nos extremos e limites', () => {
+    render(<Harness inicial={50} step={5} />);
+    const el = dial();
+    el.focus();
+
+    fireEvent.keyDown(el, { key: 'ArrowRight' });
+    expect(el).toHaveAttribute('aria-valuenow', '55');
+
+    fireEvent.keyDown(el, { key: 'PageUp' });
+    expect(el).toHaveAttribute('aria-valuenow', '80');
+
+    fireEvent.keyDown(el, { key: 'ArrowDown' });
+    expect(el).toHaveAttribute('aria-valuenow', '75');
+
+    fireEvent.keyDown(el, { key: 'PageDown' });
+    expect(el).toHaveAttribute('aria-valuenow', '50');
+
+    fireEvent.keyDown(el, { key: 'Home' });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+
+    fireEvent.keyDown(el, { key: 'End' });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+
+    // Já no teto: a seta para cima não passa de 100.
+    fireEvent.keyDown(el, { key: 'ArrowUp' });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+  });
+});
+
+describe('VolumeDial — ponteiro', () => {
+  it('converte o ângulo em valor (clique no trilho salta para aquele valor)', () => {
+    render(<Harness inicial={0} />);
+    const el = dial();
+    // Topo do anel (90° acima do centro) = meio do arco → 50%.
+    fireEvent.pointerDown(el, { clientX: 0, clientY: -100, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '50');
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('não salta de 100 para 0 ao cruzar a abertura inferior do arco', () => {
+    render(<Harness inicial={0} />);
+    const el = dial();
+    // Base direita do arco (45°) = ponta → 100%.
+    fireEvent.pointerDown(el, { clientX: 71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+
+    // Arrasta para a abertura (base, 90°): o valor fica na ponta, não volta a 0.
+    fireEvent.pointerMove(el, { clientX: 0, clientY: 100, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('respeita min/max/step na conversão do ângulo', () => {
+    render(<Harness inicial={0} min={0} max={50} step={10} />);
+    const el = dial();
+    // Base esquerda do arco (135°) = início → min.
+    fireEvent.pointerDown(el, { clientX: -71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+
+    // Topo (meio do arco) → 25, ajustado à grade de 10 → 20 ou 30 (múltiplo de 10).
+    fireEvent.pointerMove(el, { clientX: 0, clientY: -100, pointerId: 1 });
+    const agora = Number(el.getAttribute('aria-valuenow'));
+    expect(agora).toBeGreaterThanOrEqual(20);
+    expect(agora).toBeLessThanOrEqual(30);
+    expect(agora % 10).toBe(0);
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('a roda do mouse não muda o valor', () => {
+    const onNovo = vi.fn();
+    render(<Harness inicial={50} onNovo={onNovo} />);
+    fireEvent.wheel(dial(), { deltaY: -120 });
+    fireEvent.wheel(dial(), { deltaY: 120 });
+    expect(onNovo).not.toHaveBeenCalled();
+    expect(dial()).toHaveAttribute('aria-valuenow', '50');
+  });
+
+  it('disabled não muda por teclado nem por ponteiro', () => {
+    const onNovo = vi.fn();
+    render(<Harness inicial={50} disabled onNovo={onNovo} />);
+    const el = dial();
+    expect(el).toHaveAttribute('tabindex', '-1');
+
+    fireEvent.keyDown(el, { key: 'ArrowUp' });
+    fireEvent.pointerDown(el, { clientX: 0, clientY: -100, pointerId: 1 });
+
+    expect(onNovo).not.toHaveBeenCalled();
+    expect(el).toHaveAttribute('aria-valuenow', '50');
+  });
+});
+
+describe('VolumeDial — estados', () => {
+  it('muted mostra "Mudo" no centro e no texto falado', () => {
+    render(<Harness inicial={70} muted />);
+    expect(screen.getByTestId('volume-dial-value')).toHaveTextContent('Mudo');
+    expect(dial()).toHaveAttribute('aria-valuetext', 'Mudo');
+  });
+});
+
+describe('VolumeDial — movimento', () => {
+  it('com movimento reduzido o número troca direto, sem animação', () => {
+    estado.reduzido = true;
+    const { rerender } = render(<VolumeDial ariaLabel="Volume" value={20} onChange={() => {}} />);
+    expect(screen.getByTestId('volume-dial-value')).toHaveTextContent('20%');
+
+    rerender(<VolumeDial ariaLabel="Volume" value={90} onChange={() => {}} />);
+    expect(screen.getByTestId('volume-dial-value')).toHaveTextContent('90%');
+  });
+
+  it('com movimento ligado o número conta até o novo valor', async () => {
+    estado.reduzido = false;
+    const { rerender } = render(<VolumeDial ariaLabel="Volume" value={20} onChange={() => {}} />);
+
+    rerender(<VolumeDial ariaLabel="Volume" value={90} onChange={() => {}} />);
+    await waitFor(() =>
+      expect(screen.getByTestId('volume-dial-value')).toHaveTextContent('90%'),
+    );
+  });
+});

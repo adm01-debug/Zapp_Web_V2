@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 aaedbbdabebccd16cf1730129e4632741a0bf661 Joaquim Ataides <ti@promobrindes.com.br> 1791140383 -0300	branch: Created from dia/2026-10-04
+aaedbbdabebccd16cf1730129e4632741a0bf661 b8a042f7dfb9b74a16146e57a12e93a943b95aca Joaquim Ataides <ti@promobrindes.com.br> 1791141256 -0300	commit: fix(auth): endurecer verificação criptográfica WebAuthn (R2-AUTH-001)

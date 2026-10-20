@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791493082 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc a62942a6f5f29e9a2de0b23836fad5df596de81a Joaquim Ataides <ti@promobrindes.com.br> 1791493993 -0300	commit: fix(team-chat): badge Teams via useTeamUnreadTotal e digitando com throttle 2s (F83/F85)

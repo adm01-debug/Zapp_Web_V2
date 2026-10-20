@@ -1,0 +1,35 @@
+[branch "main"]
+	gk-last-accessed = 2026-10-01T16:21:28.150Z
+	gk-last-modified = 2026-10-01T16:21:28.150Z
+[branch "docs/plano-ordem-banner-20-etapas-2026-09-30"]
+	gk-last-accessed = 2026-09-30T11:13:14.423Z
+	gk-last-modified = 2026-09-30T11:13:14.423Z
+[branch "docs/plano-contatos-cabecalho-botao-50-etapas-2026-09-30"]
+	gk-last-accessed = 2026-09-30T11:37:36.701Z
+	gk-last-modified = 2026-09-30T11:37:36.701Z
+[branch "fix/remover-assistente-ia-barra-inferior"]
+	gk-last-accessed = 2026-09-30T14:04:44.873Z
+	gk-last-modified = 2026-09-30T14:04:44.873Z
+[branch "verify/remover-assistente-ia-main"]
+	gk-last-accessed = 2026-09-30T15:01:19.504Z
+	gk-last-modified = 2026-09-30T15:01:19.504Z
+[branch "fix/mover-zen-cabecalho-conversas"]
+	gk-last-accessed = 2026-09-30T15:22:22.620Z
+	gk-last-modified = 2026-09-30T15:27:12.359Z
+[branch "feat/talk-me-queue"]
+	gk-last-accessed = 2026-09-30T17:13:52.603Z
+	gk-last-modified = 2026-09-30T17:13:52.603Z
+[branch "codex/plano-refinamento-talk-me-50-20260930"]
+	gk-last-accessed = 2026-09-30T22:15:26.798Z
+	gk-last-modified = 2026-09-30T22:15:26.798Z
+[branch "codex/talk-me-carousel-refinement-20260930"]
+	gk-last-accessed = 2026-09-30T22:25:28.746Z
+[branch "codex/talk-me-compact-viewport"]
+	gk-last-accessed = 2026-10-01T10:33:04.824Z
+	gk-last-modified = 2026-10-01T10:33:04.824Z
+[branch "fix/talk-me-audit-remediation-20261001"]
+	gk-last-accessed = 2026-10-01T13:04:50.918Z
+	gk-last-modified = 2026-10-01T13:04:50.918Z
+[branch "fix/strict-branch-protection-automation-20261001"]
+	gk-last-accessed = 2026-10-01T15:50:21.432Z
+	gk-last-modified = 2026-10-01T15:50:21.432Z

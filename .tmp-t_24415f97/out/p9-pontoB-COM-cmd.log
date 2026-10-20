@@ -1,0 +1,4 @@
+zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>

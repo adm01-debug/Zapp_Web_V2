@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791333013 -0300	branch: Created from dia/2026-10-06
+f8309fb2679055122550ca345e0a90edf6e34853 86f5948dee3afa889afa5784bc23063efc9225dd Joaquim Ataides <ti@promobrindes.com.br> 1791333242 -0300	commit: fix(queues): bloqueia inicio posterior ao fim no periodo personalizado (#454)

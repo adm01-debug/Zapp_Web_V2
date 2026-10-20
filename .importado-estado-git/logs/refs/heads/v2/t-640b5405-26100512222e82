@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 Joaquim Ataides <ti@promobrindes.com.br> 1791213764 -0300	branch: Created from dia/2026-10-05
+4913a095d2e1fd7f24d5da5fea4696e7fb06cd42 2bfaeb4922253f7203819139cf13ae0626db10eb Joaquim Ataides <ti@promobrindes.com.br> 1791214342 -0300	commit: fix(layout): eliminar falsos positivos do guard

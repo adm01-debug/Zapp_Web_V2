@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791564820 -0300	branch: Created from dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 45b535a8ccbaaac569d8faf005ab6939f0656915 Joaquim Ataides <ti@promobrindes.com.br> 1791564863 -0300	cherry-pick: fix(performance): limpa o timer de retry de openContactChat (SL-101)

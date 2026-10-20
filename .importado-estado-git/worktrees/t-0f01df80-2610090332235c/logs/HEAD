@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527538 -0300	
+2a47986959e01fcd590be2a63199a8b6db27f86d 2a47986959e01fcd590be2a63199a8b6db27f86d Joaquim Ataides <ti@promobrindes.com.br> 1791527539 -0300	reset: moving to HEAD
+2a47986959e01fcd590be2a63199a8b6db27f86d 31eadcd02f7899a5bf979734f651bd615e7ead5d Joaquim Ataides <ti@promobrindes.com.br> 1791528606 -0300	commit: fix(talk-x): Revisão: linhas com dado real e "Editar" que leva ao pa (TL-146)
+31eadcd02f7899a5bf979734f651bd615e7ead5d 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791557847 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 4716556cb422b85459697034a53bbb9b88bcdbaf Joaquim Ataides <ti@promobrindes.com.br> 1791557894 -0300	rebase (continue): fix(talk-x): Revisão: linhas com dado real e "Editar" que leva ao pa (TL-146)
+4716556cb422b85459697034a53bbb9b88bcdbaf 4716556cb422b85459697034a53bbb9b88bcdbaf Joaquim Ataides <ti@promobrindes.com.br> 1791557894 -0300	rebase (finish): returning to refs/heads/v2/t-0f01df80-2610090332235c

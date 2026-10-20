@@ -1,0 +1,41 @@
+fix(talk-x): Atividade recente da supressão lida dos eventos de enti (TL-169)
+
+X184: o rail da Supressão não tinha o card de atividade e nenhum evento era lido
+(grep "Atividade" na tela = 0). O card passa a ler a trilha da lista dos eventos
+de ENTIDADE de `talkx_campaign_events` — suppression_add/remove/update (tipos que
+o CHECK do banco já aceita desde a V11) e os dois de lote da importação e da
+exportação (V74/V75): ícone por tipo, título em português, contato (e-mail;
+telefone quando não há e-mail) e data relativa, em trilho vertical. "Ver todas"
+abre o histórico paginado (20 por página, contagem exata do servidor) com filtro
+por tipo, e as mutações da tela relêem a trilha.
+
+- src/hooks/integrations/useTalkXSuppression.ts: leitura da trilha por fatia
+  (`.range` depois de ordem determinística com desempate por id), total vindo do
+  `count` do servidor, títulos por tipo e resolução do contato pelo `entity_id`
+  (linha de `talkx_blacklist` -> contato).
+- src/components/talkx/TalkXSuppression.tsx: card "Atividade recente" no rail com
+  os 5 últimos itens, estado vazio "Nenhuma atividade ainda" e erro visível com
+  retry; modal "Ver todas" com filtro por tipo e paginação.
+- src/components/talkx/__tests__/TalkXSuppression.atividade.test.tsx (novo):
+  6 casos sobre a tela real (títulos, contato, datas de hoje/ontem/antes, trilha
+  vazia, erro sem vazio, página 2 pedindo a fatia 20-39, mutação relendo o card).
+- src/components/talkx/__tests__/TalkXSuppression.states.test.tsx e
+  src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx: o mock de
+  `fromTable` acompanha a consulta nova da tela (a trilha responde vazia).
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto e423ffa63
+# Last command done (1 command done):
+#    pick 21d680bd5 fix(talk-x): Atividade recente da supressão lida dos eventos de enti (TL-169)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-1ae84b47-26100904235965' on 'e423ffa63'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXSuppression.tsx
+#	new file:   src/components/talkx/__tests__/TalkXSuppression.atividade.test.tsx
+#	modified:   src/components/talkx/__tests__/TalkXSuppression.states.test.tsx
+#	modified:   src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx
+#	modified:   src/hooks/integrations/useTalkXSuppression.ts
+#

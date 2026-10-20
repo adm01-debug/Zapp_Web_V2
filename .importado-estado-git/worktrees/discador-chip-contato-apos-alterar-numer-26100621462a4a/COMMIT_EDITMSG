@@ -1,0 +1,5 @@
+fix(calls): nao mantem o chip do contato quando o numero muda pelo teclado (#493)
+
+R2-MOD-016: as teclas do discador mudam 'numero' sem passar por 'escolherContato', entao o chip do contato escolhido (T57) ficava ao lado de outro destino e 'ligar' levava o contactId antigo. O painel agora reconcilia a identidade com o numero exibido (chip some quando o numero muda, volta quando volta a ser o do contato) e a discagem le a mesma identidade do chip.
+
+Prova: 4 testes novos renderizando o NewCallPanel real; vermelho antes (4 failed | 10 passed) e verde depois (14 passed).

@@ -1,0 +1,3 @@
+fix(university): descarta resposta de analise gerada antes da troca do periodo (#393)
+
+O efeito de periodo limpava resposta/selecao mas nao invalidava a requisicao em voo: o callback assincrono reaplicava o texto do recorte antigo (e o toast de sucesso) depois da troca. O hook passa a usar useAiRequestGeneration, o mesmo contrato de invalidação de Resumo, objecoes, assistente e sugestoes; a checagem de contexto vem depois do await e um efeito sem setState invalida a geracao na troca de contato/periodo.

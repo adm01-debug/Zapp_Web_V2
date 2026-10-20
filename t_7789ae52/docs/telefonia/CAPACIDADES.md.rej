@@ -1,0 +1,15 @@
+--- docs/telefonia/CAPACIDADES.md
++++ docs/telefonia/CAPACIDADES.md
+@@ -12,11 +12,11 @@
+ | Capacidade | VoIP | WhatsApp | Evidência |
+ 
+ |---|---|---|---|
+ 
+ | **Discar (saída)** | ✅ sim | ❌ **não** | VoIP: SIP.js `Inviter` no adapter `src/lib/calls/adapters/SipCallAdapter.ts:54` (T09 — saiu do hook). WhatsApp: nenhum endpoint de originação é chamado em nenhum lugar do código; o webhook Evolution só **recebe** eventos. |
+ 
+-| **Receber (entrada)** | ⚠️ código existe, **não homologado** | ⚠️ evento sim, **áudio não** | VoIP: `src/hooks/sip/useSipConnection.ts:103` monta `delegate.onInvite` (PR #868) e `CallSessionProvider` está montado; chamada real nunca foi exercitada nesta análise. WhatsApp: `handleCallEvent` (`supabase/functions/_shared/evolution-webhook-handlers.ts:270`) → RPC `record_incoming_call_event`, com a direção tirada do payload (`p_direction`, T26 — `:322`). O áudio **não passa pelo app** (a linha toca no aparelho da conexão). |
+ 
++| **Receber (entrada)** | ⚠️ código existe, **não homologado** | ⚠️ evento sim, **áudio não** | VoIP: `src/hooks/sip/useSipConnection.ts:90` monta `delegate.onInvite` (PR #868) e `CallSessionProvider` está montado; chamada real nunca foi exercitada nesta análise. WhatsApp: `handleCallEvent` (`supabase/functions/_shared/evolution-webhook-handlers.ts:270`) → RPC `record_incoming_call_event`, com a direção tirada do payload (`p_direction`, T26 — `:322`). O áudio **não passa pelo app** (a linha toca no aparelho da conexão). |
+ 
+ | **Áudio ponta a ponta no navegador** | ⚠️ mídia de saída implementada (`getUserMedia`, tracks, DTMF); entrada sem prova | ❌ não | Nenhum teste de áudio foi executado. `setSinkId` não é usado. |
+ 

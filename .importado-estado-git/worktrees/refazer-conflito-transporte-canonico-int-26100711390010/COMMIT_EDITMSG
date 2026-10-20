@@ -1,0 +1,30 @@
+feat(inbox): reaplica transporte canônico interativo
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 864dcc523 feat(inbox): reaplica transporte canônico interativo
+# No commands remaining.
+# You are currently rebasing branch 'v2/refazer-conflito-transporte-canonico-int-26100711390010' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   .github/workflows/db-guard.yml
+#	new file:   scripts/db-audit/interactive-buttons-list-behavior.test.sh
+#	modified:   src/components/inbox/ChatPanel.tsx
+#	modified:   src/components/inbox/InteractiveMessage.tsx
+#	modified:   src/components/inbox/InteractiveMessageBuilder.tsx
+#	new file:   src/components/inbox/__tests__/InteractiveMessage.call-button.test.tsx
+#	modified:   src/components/inbox/__tests__/InteractiveMessageBuilder.r2-inb-003.test.tsx
+#	modified:   src/components/inbox/chat/ChatDialogs.tsx
+#	modified:   src/components/inbox/chat/__tests__/useChatPanelHandlers.r2-inb-003.test.tsx
+#	modified:   src/components/inbox/chat/useChatPanelHandlers.ts
+#	modified:   src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx
+#	modified:   src/components/inbox/interactive-builder/useInteractiveMessage.ts
+#	modified:   src/services/outbound-message.service.ts
+#	modified:   src/types/chat.ts
+#	modified:   supabase/functions/message-delivery/index.test.ts
+#	modified:   supabase/functions/message-delivery/index.ts
+#	new file:   supabase/migrations/20261005130925_interactive_buttons_list_rich_outbound.sql
+#

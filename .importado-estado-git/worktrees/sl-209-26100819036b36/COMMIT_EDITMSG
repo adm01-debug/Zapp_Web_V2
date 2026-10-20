@@ -1,0 +1,5 @@
+fix(inbox): deduplica alerta de queda da conexao no warroom_alerts (E26)
+
+A GO entrega o evento de queda em dobro (ou o retry reenvia o POST) e o MESMO alerta era gravado 2x no War Room. O guard de transicao (prevConn === connected) nao segura a corrida em que as duas entregas leem o status antes de qualquer uma gravar.
+
+Antes de inserir, consulta a janela curta (source+title nos ultimos 60s) — sem DDL. Teste novo com 6 casos (vermelho antes, verde depois); duble do F60 ganhou gte/limit para encadear como o PostgREST.

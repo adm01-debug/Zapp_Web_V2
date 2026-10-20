@@ -1,0 +1,3 @@
+fix(mobile): cabecalho mostra "Tarefas" na view tasks e perde o rotulo pipeline
+
+E11 da fusao Quadro->Tarefas: a view tasks caia no fallback do id e aparecia como "Tasks"; agora tem rotulo proprio em pt-BR. A entrada pipeline do mapa de rotulos foi removida (a view deixa de existir como porta de entrada).

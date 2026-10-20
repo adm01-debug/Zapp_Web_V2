@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522707 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 24f0c2c5a731cf225aaffb21be008fdc54025ef7 Joaquim Ataides <ti@promobrindes.com.br> 1791524203 -0300	commit: fix(talk-x): Tabela da Visão geral nas colunas do mock, sobre `TalkXTable` (TL-115)
+24f0c2c5a731cf225aaffb21be008fdc54025ef7 29b7aefbbd06a058e7b44eb5a25419ece2bc9323 Joaquim Ataides <ti@promobrindes.com.br> 1791558046 -0300	rebase (finish): refs/heads/v2/tl-115-2610090211712d onto 1098da5a935929b171674a99b425d6b515fd6072
+29b7aefbbd06a058e7b44eb5a25419ece2bc9323 b752b41cd71fbd08386e13d892ac4748f3874e68 Joaquim Ataides <ti@promobrindes.com.br> 1791561672 -0300	commit: fix(talk-x): selectionKey inclui canal e período (recusa do revisor, TL-115)

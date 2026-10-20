@@ -1,0 +1,8 @@
+fix(team-chat): lista colegas por RPC get_team_profiles com department_id
+
+Amplia o contrato de get_team_profiles() com department_id (uuid anulável)
+via DROP+CREATE na mesma transação, preservando filtro de ativos,
+mascaramento de PII e grants; useDepartmentProfiles consome a RPC e ordena
+por nome no cliente, sem leitura direta de profiles.
+
+Cartão #240-B.

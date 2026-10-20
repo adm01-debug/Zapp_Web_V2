@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211925 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211926 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791212455 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f 46a701218b6374653536fcb6d0df78c6cde8a745 Joaquim Ataides <ti@promobrindes.com.br> 1791212639 -0300	commit: fix(multiplix): worker envia o conteudo do bloco do item, nao o global do disparo (#46)

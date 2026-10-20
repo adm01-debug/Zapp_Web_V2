@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791283946 -0300	
+fbb20ec26ffb172a379a820a3fafde28a671aae1 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791283947 -0300	reset: moving to HEAD
+fbb20ec26ffb172a379a820a3fafde28a671aae1 53ce901bdc3831957f32b3e171f5f095fd08858b Joaquim Ataides <ti@promobrindes.com.br> 1791284569 -0300	commit: fix(catalogo): is_new exige created_at dentro da janela de 30 dias

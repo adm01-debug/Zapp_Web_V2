@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556572 -0300	
+1098da5a935929b171674a99b425d6b515fd6072 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556573 -0300	reset: moving to HEAD
+1098da5a935929b171674a99b425d6b515fd6072 a831c568393cbe59d721a6afd2d10acf212d8f26 Joaquim Ataides <ti@promobrindes.com.br> 1791556590 -0300	cherry-pick: fix(inbox): erro de imagem dos detalhes de arquivo nao passa para o proximo item (#352)
+a831c568393cbe59d721a6afd2d10acf212d8f26 b43ac24cf5292f8eb445dbb4be93b050336a1f09 Joaquim Ataides <ti@promobrindes.com.br> 1791557476 -0300	commit (amend): fix(inbox): erro de imagem dos detalhes de arquivo nao passa para o proximo item (#352)

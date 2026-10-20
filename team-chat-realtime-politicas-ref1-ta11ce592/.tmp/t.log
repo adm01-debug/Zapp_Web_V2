@@ -1,0 +1,35 @@
+== container: zapp-v2-team-realtime-test-1726274 (imagem postgres:17-alpine) ==
+WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+
+============ BLOCO A — estado ANTERIOR (defeitos) ============
+[PASS] A.0 pre-condicao: PEDRO NAO e mais membro do Time A
+[PASS] A.1 (DEFEITO) team_message_reactions fora da publicacao supabase_realtime
+[PASS] A.2 (DEFEITO) REPLICA IDENTITY DEFAULT nas duas tabelas
+[PASS] A.3 (DEFEITO) duas policies de SELECT em team_message_reactions
+[PASS] A.4 (DEFEITO) duas policies de DELETE em team_message_reactions
+[PASS] A.5 pre-condicao: so existe UMA policy de SELECT em team_messages
+[PASS] A.6 (DEFEITO LATENTE) com a leitura ampliada, EX-MEMBRO PEDRO edita a propria mensagem antiga
+[PASS] A.7 (DEFEITO LATENTE) e a edicao passou — o UPDATE nao tem trava de vinculo propria
+[PASS] A.8 (DEFEITO LATENTE) com a leitura ampliada, EX-MEMBRO PEDRO apaga a propria mensagem antiga
+[PASS] A.9 (DEFEITO LATENTE) e a mensagem sumiu — o DELETE tambem nao tem trava propria
+[PASS] A.10 hoje o EX-MEMBRO nao edita (a linha nem aparece para ele)
+[PASS] A.11 e nada mudou sob a leitura canonica
+[PASS] A.12 hoje o EX-MEMBRO nao apaga (idem)
+[PASS] A.13 e a mensagem continua la sob a leitura canonica
+
+============ BLOCO B — migration aplicada ============
+[PASS] B.1 (CORRIGIDO) team_message_reactions entrou na publicacao supabase_realtime
+[PASS] B.2 (CORRIGIDO) REPLICA IDENTITY FULL nas duas tabelas
+[PASS] B.3 (CORRIGIDO) uma policy por comando em team_message_reactions: SELECT
+[PASS] B.4 (CORRIGIDO) uma policy por comando em team_message_reactions: DELETE
+[PASS] B.5 (CORRIGIDO) a policy de INSERT da reacao segue existindo (nao foi tocada)
+[PASS] B.6 (CORRIGIDO) EX-MEMBRO PEDRO tenta editar a propria mensagem antiga
+[PASS] B.7 (CORRIGIDO) nada foi editado — a RLS barrou o EX-MEMBRO
+[PASS] B.8 (CORRIGIDO) EX-MEMBRO PEDRO tenta apagar a propria mensagem antiga
+[PASS] B.9 (CORRIGIDO) a mensagem continua la — o EX-MEMBRO nao apagou
+[PASS] B.10 (CORRIGIDO) mesmo com a leitura ampliada, EX-MEMBRO PEDRO nao edita
+[PASS] B.11 (CORRIGIDO) o UPDATE agora tem trava de vinculo propria — nao editou
+[PASS] B.12 (CORRIGIDO) mesmo com a leitura ampliada, EX-MEMBRO PEDRO nao apaga
+[PASS] B.13 (CORRIGIDO) o DELETE agora tem trava de vinculo propria — a mensagem continua
+[FAIL] B.14 membro ANA ve as DUAS reacoes da conversa: esperado '2', obtido '0'

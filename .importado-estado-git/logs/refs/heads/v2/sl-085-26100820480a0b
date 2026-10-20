@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 1a1bc3179945c166215ae4555093c9f6dc5c7b5c Joaquim Ataides <ti@promobrindes.com.br> 1791503287 -0300	branch: Created from dia/2026-10-08
+1a1bc3179945c166215ae4555093c9f6dc5c7b5c 5a1d463ac5cf3ae69d2221ec1b25c1c1346757fb hermes-worker <worker@zapp.local> 1791504693 -0300	commit: fix(outros): Zod schemas + zodResolver + maxLength nos formulários (SL-085)

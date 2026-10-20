@@ -1,0 +1,11 @@
+fix(db): convite vencido de agente vira revoked e libera o e-mail para novo convite (t_825f4fb1)
+
+create_agent_invite marcava o e-mail como bloqueado para sempre: o indice unico
+parcial WHERE status='pending' continuava valendo para convite vencido, entao um
+novo convite devolvia already_pending enquanto a lista mostrava 'expired'.
+
+Antes do INSERT, convites pendentes e ja vencidos do mesmo e-mail vao a estado
+terminal 'revoked' (ja previsto no CHECK). O indice passa a bloquear apenas
+pendente ainda valido; a segunda chamada concorrente perde no unique_violation
+e devolve already_pending em jsonb. Teste prova vermelho/verde com o SQL real
+em Postgres descartavel, inclusive corrida de duas chamadas.

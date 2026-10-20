@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791303603 -0300	
+421f4a59c7ba7d52bad931d367a68d859d374465 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791303604 -0300	reset: moving to HEAD
+421f4a59c7ba7d52bad931d367a68d859d374465 b07a71739e9e0e011174af5a299a73e15895d0a9 Joaquim Ataides <ti@promobrindes.com.br> 1791304305 -0300	commit: fix(inbox): filtro de grupos preserva o hífen exigido pela expressão (#348)

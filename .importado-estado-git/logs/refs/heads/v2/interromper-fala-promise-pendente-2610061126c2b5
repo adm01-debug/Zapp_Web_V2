@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791296802 -0300	branch: Created from dia/2026-10-06
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c 980deb9bdd139332f1c6221194279989bb11d5e7 Joaquim Ataides <ti@promobrindes.com.br> 1791297112 -0300	commit: fix(voice): interromper a fala encerra a Promise aguardada pela ação (#341)

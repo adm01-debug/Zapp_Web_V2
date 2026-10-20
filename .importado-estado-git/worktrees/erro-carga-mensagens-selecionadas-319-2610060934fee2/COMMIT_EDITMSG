@@ -1,0 +1,14 @@
+fix(inbox): preserva o erro da carga das mensagens da conversa ativa (#319)
+
+R2-INB-024: `useMessages` termina o `loading` mesmo quando a busca falha e publica
+o motivo em `error`. A ponte `useRealtimeInbox` só repassava `selectedMessagesLoading`,
+então o consumidor não tinha como distinguir falha de transporte/permissão de um
+contato sem histórico: a conversa abria vazia, sem aviso e sem retry daquela consulta.
+
+- `useRealtimeInbox` passa a publicar `selectedMessagesError` e `refetchSelectedMessages`;
+- `RealtimeInboxView` e `ChatPopup` anunciam a falha e oferecem o retry da própria
+  consulta em vez de um painel vazio — e preservam as mensagens já renderizadas quando
+  a falha é de um refetch silencioso de conversa carregada.
+
+Testes: 6 casos novos (hook, Inbox ativa e popup), vermelhos antes do fix e verdes
+depois; vizinhos (R2-INB-004/paginação e useMessages) seguem verdes (25/25).

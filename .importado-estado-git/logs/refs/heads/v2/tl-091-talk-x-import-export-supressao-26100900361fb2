@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516999 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 45cfd6bee6f8a1774c645da7c0fb817d02c59b4e Joaquim Ataides <ti@promobrindes.com.br> 1791517222 -0300	commit: chore(talk-x): TL-091 (X183) fechado sem código — importar/exportar a supressão exige migration (X177) e contraria a regra permanente

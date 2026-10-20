@@ -1,0 +1,9 @@
+feat(gmail): hook da contagem de e-mails não lidos de um contato (U02)
+
+Conta e-mails recebidos e ainda não lidos (email_messages.is_read=false,
+direction='inbound') das conversas do contato, com a junção embutida
+email_threads!inner(contact_id) e count exato (count:'exact', head:true).
+Contato vazio devolve {count:0, status:'idle'} sem consulta; troca de contato
+descarta a resposta obsoleta; tempo real em email_threads filtrado por
+contact_id com debounce de 500 ms; erro vira status 'erro' com count 0,
+nunca exceção.

@@ -1,0 +1,20 @@
+fix(catálogo): payload de list_products enxuto por padrão (CT-73/SL-042)
+
+A grade chama `list_products` sem `compact` e caía no payload completo (50
+colunas) — foi esse caminho PADRÃO que a medição de 02/10/2026 pegou com
+81,5 KB por página de 24, contra o teto de < 30 KB do CT-73.
+
+- `compact` passa a valer por PADRÃO na edge (`default(true)`); o payload
+  completo continua disponível no opt-in `compact: false` e, para o detalhe,
+  em `get_product` (inalterado).
+- `PRODUCT_FIELDS_COMPACT` ganha `color_swatches` e `materials`, os dois
+  campos que a grade lê e que o conjunto enxuto não trazia: os pontinhos de
+  cor do card (`CatalogProductCard.tsx:103`) e o segundo filtro de material
+  (`ExternalProductManagement.tsx:327`, que sem o campo esvazia a grade).
+- Campos que só o detalhe usa (description, images, tags, engraving_*,
+  weight_g, ncm_code, view_count, ...) saem da página; os dois diálogos já
+  buscam o produto completo por id.
+
+Testes CT-73 em index.actions.test.ts (vermelho com o default antigo, verde
+agora). A re-medição real do payload em produção segue pendente (exige a
+edge publicada / sessão autenticada — Joaquim/infra).

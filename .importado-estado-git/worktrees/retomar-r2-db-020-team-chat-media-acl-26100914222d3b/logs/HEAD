@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566563 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566564 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 333c2633aea63908f8173a01982d1146e226e127 Joaquim Ataides <ti@promobrindes.com.br> 1791566599 -0300	cherry-pick: fix(team-chat): ACL de midia segura sem assumir tabela vazia (R2-DB-020)
+333c2633aea63908f8173a01982d1146e226e127 3a381d212689ccb50282251a2711444eb7bcfa76 Joaquim Ataides <ti@promobrindes.com.br> 1791566901 -0300	commit: fix(db): ACL e media_path do Team Chat derivam do objeto e da conversa (R2-DB-020)

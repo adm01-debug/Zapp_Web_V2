@@ -1,0 +1,20 @@
+fix(talkx): painel do editor de template vira gaveta abaixo de 1280 px (X193/TL-176)
+
+O painel direito do editor de template (pre-visualizacao, variacoes A/B,
+historico de versoes e desempenho) era `hidden xl:flex`: abaixo de 1280 px nao
+havia caminho para ele e o historico de versoes ficava inacessivel em 1024 e 390.
+
+- o corte de 1280 (o mesmo `xl` do Tailwind) passa a ser lido no navegador
+  (matchMedia + useSyncExternalStore, sem setState em efeito);
+- abaixo de 1280 o painel vem pela gaveta aberta pelo botao "Previa e historico"
+  do cabecalho do editor; a partir de xl vale o rail de sempre, com largura menor
+  em 1280 (w-[260px]) e cheia no 2xl;
+- o painel virou uma variavel unica (`painelLateral`) usada no rail e na gaveta;
+- a faixa "Variacoes A/B" que so existia como remendo abaixo de xl saiu: ela
+  duplicava o bloco da gaveta e os dois botoes mexiam no mesmo estado showVariants;
+- o cabecalho do editor ganhou flex-wrap para o botao novo nao empurrar
+  Testar/Salvar para fora em 390 px.
+
+Teste: src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx
+(2 casos: gaveta abaixo de 1280 com previa/variações/histórico; em 1280 inline e
+sem botao de gaveta). Vermelho antes, verde depois; suite do modulo 43/43 verde.

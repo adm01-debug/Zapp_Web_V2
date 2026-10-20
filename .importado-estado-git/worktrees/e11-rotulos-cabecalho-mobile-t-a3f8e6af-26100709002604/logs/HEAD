@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 31d20bffaf93442786ebccb7b20b1224bb3eb054 Joaquim Ataides <ti@promobrindes.com.br> 1791374431 -0300	
+31d20bffaf93442786ebccb7b20b1224bb3eb054 31d20bffaf93442786ebccb7b20b1224bb3eb054 Joaquim Ataides <ti@promobrindes.com.br> 1791374431 -0300	reset: moving to HEAD
+31d20bffaf93442786ebccb7b20b1224bb3eb054 c64983058880635ee399c89be6179423157e9bb4 Joaquim Ataides <ti@promobrindes.com.br> 1791374452 -0300	cherry-pick: fix(mobile): cabecalho mostra "Tarefas" na view tasks e perde o rotulo pipeline

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791336072 -0300	
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791336073 -0300	reset: moving to HEAD
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 35ec677c8157f59f5f7ebc69814147fcef80c5e9 Joaquim Ataides <ti@promobrindes.com.br> 1791337834 -0300	commit: fix(monitoring): SLA de 24h e disponibilidade de 7 dias usam a janela prometida e nao aprovam ausencia de checks

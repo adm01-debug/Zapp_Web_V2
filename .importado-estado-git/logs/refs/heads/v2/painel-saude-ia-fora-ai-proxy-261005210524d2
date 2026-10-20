@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e248e23bec1f63f229e6c0232becddbd25e198d9 Joaquim Ataides <ti@promobrindes.com.br> 1791245123 -0300	branch: Created from dia/2026-10-05
+e248e23bec1f63f229e6c0232becddbd25e198d9 f55c85abae458987c8a80946e9b9060f94fd7670 Joaquim Ataides <ti@promobrindes.com.br> 1791246217 -0300	commit: fix(ia): painel de saude cobre chamadas de IA fora do ai-proxy (R2-API-043)

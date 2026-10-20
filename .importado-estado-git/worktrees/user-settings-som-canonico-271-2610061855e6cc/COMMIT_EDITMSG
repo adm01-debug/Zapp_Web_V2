@@ -1,0 +1,16 @@
+fix(settings): useUserSettings para de sobrescrever as preferências de som do hook canônico (#271)
+
+O payload do upsert em saveSettings incluía sound_enabled,
+quiet_hours_enabled, quiet_hours_start e quiet_hours_end com os valores
+lidos no mount da instância. Com várias instâncias do hook na sessão
+(SettingsView, ChatPanel, SoundCustomizationPanel), um clique em "Salvar
+Alterações" reescrevia esses campos e desfazia o que o hook canônico
+useNotificationSettings acabou de gravar — era a queixa "o botão Salvar
+não persiste nem aplica aos alertas".
+
+Os quatro campos saem do payload (permanecem no tipo, no fetch e nos
+consumidores, que só leem settings.sound_enabled). As colunas têm DEFAULT
+no banco, então a primeira gravação de um usuário novo segue funcionando.
+
+Teste: payload do upsert não contém os quatro campos e contém theme/compact_mode
+atualizados via updateSettings.

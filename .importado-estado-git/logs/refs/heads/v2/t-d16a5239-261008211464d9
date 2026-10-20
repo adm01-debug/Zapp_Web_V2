@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791504868 -0300	branch: Created from dia/2026-10-08
+0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 dffdcf1e75852f02f02d843d395261633a2f8f1f edgar <edgar@hermes.local> 1791505929 -0300	commit: fix(outros): churn usa a última interação real, não o updated_at do cadastro (IA-111)

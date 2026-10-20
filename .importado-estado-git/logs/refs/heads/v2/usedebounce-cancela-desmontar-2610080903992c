@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791461033 -0300	branch: Created from dia/2026-10-08
+56917f551f1e9d834297f0df48c33726666b992d 6e8e78ec1ee925e8675df3637ab84c56756a096d Hugo (worker hooks) <ti@promobrindes.com.br> 1791461182 -0300	commit: fix(hooks): useDebounce cancela o disparo pendente ao desmontar

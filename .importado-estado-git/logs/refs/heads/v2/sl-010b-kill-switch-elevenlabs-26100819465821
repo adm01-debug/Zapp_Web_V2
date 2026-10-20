@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791499614 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe ce5f91faa8c9a3f240c58b72d712b88cba406a1a Joaquim Ataides <ti@promobrindes.com.br> 1791499638 -0300	cherry-pick: fix(ia): kill switch de IA lido no servidor (SL-010, IA-009)
+ce5f91faa8c9a3f240c58b72d712b88cba406a1a 261cdf09825fff0758bf35018970aef6ae209985 Joaquim Ataides <ti@promobrindes.com.br> 1791500604 -0300	commit: fix(ia): kill switch nas Edge ElevenLabs de voz/audio restantes (SL-010b, IA-009)
+261cdf09825fff0758bf35018970aef6ae209985 2217837f968110fff6bbaad19c4c941b4748214c Joaquim Ataides <ti@promobrindes.com.br> 1791555589 -0300	rebase (finish): refs/heads/v2/sl-010b-kill-switch-elevenlabs-26100819465821 onto 1098da5a935929b171674a99b425d6b515fd6072
+2217837f968110fff6bbaad19c4c941b4748214c afc6b272697ea6c1093b96db7e084fa49f216d22 Joaquim Ataides <ti@promobrindes.com.br> 1791556040 -0300	commit: test(ia): ajusta fixtures de SL-010b apos o rebase na dia de 09/10

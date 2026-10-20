@@ -1,0 +1,16 @@
+test(calls): dubla o realtime nas provas do IncomingCallAlert
+
+Os testes do alerta renderizavam `IncomingCallAlert` sem dublar o realtime e o
+`useTerminoRemoto` (nao mockado) assinava `public.calls` pelo cliente padrao,
+abrindo um WebSocket REAL. A guarda de rede de `src/test/setup.ts` so troca o
+`fetch` — o WebSocket passa direto.
+
+Quando o socket conecta (inclusive depois do teardown), o `dispatchEvent(new
+Event(...))` do undici estoura `ERR_INVALID_ARG_TYPE` ("The \"event\" argument must
+be an instance of Event. Received an instance of Event"), vira "Uncaught Exception"
+e o vitest sai 1: o passo `testes` de `zapp-verify full .` fechava VERMELHO com
+0 testes falhando.
+
+Dubla `channel`/`removeChannel` nos 2 arquivos que renderizam o alerta com `callId`
+(IncomingCallAlert.provider e IncomingCallAlert.ringtone), o mesmo padrao de
+`src/components/inbox/__tests__/MediaVolume.test.tsx`.

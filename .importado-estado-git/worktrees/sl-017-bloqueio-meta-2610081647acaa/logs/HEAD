@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488836 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791488837 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 840c967db92d58ae66b44394617daab0fd542542 Joaquim Ataides <ti@promobrindes.com.br> 1791489582 -0300	commit: fix(inbox/chat): faixa de conexões anuncia o motivo da edge no bloqueio da Meta (SL-017)

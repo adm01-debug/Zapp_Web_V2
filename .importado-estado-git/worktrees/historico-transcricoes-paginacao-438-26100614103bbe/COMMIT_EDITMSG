@@ -1,0 +1,12 @@
+fix(transcricoes): historico carrega todas as paginas, nao so uma implicita
+
+O historico de transcricoes oferecia 'Todo periodo' e busca sobre uma unica pagina
+implicita: o select sem range so devolvia a primeira pagina do PostgREST (teto do
+projeto), entao transcricao/busca/agrupamento ignoravam o resto em silencio.
+
+A leitura passa a percorrer todas as paginas via fetchAllRows, com ordem estavel
+(created_at desc, id asc) para nao duplicar/omitir na virada de pagina. Falha de
+consulta deixa de virar 'nenhuma transcricao': loadError separa falha de vazio e
+incomplete avisa quando a leitura nao cobriu tudo.
+
+Ref: #438 / R2-MOD-077.

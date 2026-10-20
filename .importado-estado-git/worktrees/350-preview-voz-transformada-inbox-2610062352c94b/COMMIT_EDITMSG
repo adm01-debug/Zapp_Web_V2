@@ -1,0 +1,19 @@
+fix(inbox): encerra a entrega duplicada do #350 — a ponta já sinaliza a falha do envio
+
+A dia/2026-10-09 já traz o conserto do #350 nos dois pontos do pedido:
+
+- `useChatMediaSending.handleSendAudioMeme` relança o erro depois do toast
+  (commit 271b870bd, cartão #350-A): a Promise REJEITA na falha e resolve só
+  no envio confirmado;
+- `VoiceChangerPicker` só descarta a prévia e fecha o popover no sucesso
+  (commit 1149f80fc, byte a byte igual ao meu 0e11a02a4).
+
+O conflito registrado em `useChatMediaSending.ts` era de conteúdo equivalente
+(uma constante a mais, mesmo comportamento), não de sentido. Por isso este
+commit é VAZIO de propósito: entregar o mesmo conserto de novo só criaria uma
+segunda cópia no gargalo de revisão. Nenhum arquivo de código muda aqui.
+
+Achado fora do escopo deste cartão (NÃO corrigido aqui, para virar cartão
+próprio): em `src/components/inbox/AudioMemePicker.tsx` o `handleSend` do
+`useAudioMemes` chama `onSend(url)` sem `catch` — como o hook do inbox passou a
+rejeitar, a falha do envio de um áudio meme termina em rejeição não tratada.

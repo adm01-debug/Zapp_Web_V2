@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791205741 -0300	
+24d62d71031b256f8590067fae660ee76dd69a97 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791205742 -0300	reset: moving to HEAD
+24d62d71031b256f8590067fae660ee76dd69a97 101d8567bd46bd35d23201bb93ed32fd80737431 Joaquim Ataides <ti@promobrindes.com.br> 1791206191 -0300	commit: fix(inbox): transferência em lote aguarda a Promise, grava evento e rejeita em erro
+101d8567bd46bd35d23201bb93ed32fd80737431 b987afad8b68cd74e457dcb6711c0fed0c0ff18b Joaquim Ataides <ti@promobrindes.com.br> 1791207175 -0300	commit (amend): fix(inbox): transferência em lote aguarda a Promise, grava evento e rejeita em erro

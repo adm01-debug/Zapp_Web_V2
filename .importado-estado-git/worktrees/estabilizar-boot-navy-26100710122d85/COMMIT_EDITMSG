@@ -1,0 +1,8 @@
+test(e2e): alinha o orçamento do teste ao teto de boot declarado
+
+RUN 08 da primeira série de 10 (t_fd2a03ec) morreu com "Test timeout of
+30000ms exceeded" DENTRO da espera de prontidão: a spec declara 60 s de
+boot ao app (`__BOOT_DEADLINE_MS`) mas o teto padrão de 30 s do Playwright
+cortava a espera no meio. `test.setTimeout(BOOT_DEADLINE_MS + 30_000)`,
+mesmo padrão já usado em e2e/onboarding-dispensar.spec.ts pelo mesmo motivo
+(dev server frio). Nenhuma asserção foi tocada.

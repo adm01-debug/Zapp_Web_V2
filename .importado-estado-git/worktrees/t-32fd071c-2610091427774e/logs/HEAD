@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566833 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566834 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 c15bc8c5b05e69487411a849cd5c87eb141667f5 Joaquim Ataides <ti@promobrindes.com.br> 1791567343 -0300	commit: fix(multiplix): encerra a entrega duplicada do TL-042 — a ponta já traz o estado de erro do monitor

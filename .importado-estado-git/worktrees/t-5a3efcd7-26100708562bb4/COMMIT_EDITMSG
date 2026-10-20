@@ -1,0 +1,3 @@
+test(tarefas): cobre a acessibilidade do modo Quadro (E22)
+
+Arquivo novo (nenhuma linha de produção mudou): região viva anuncia a movimentação com a contagem real do alvo, o menu "Mover para" do card opera só com teclado e a faixa de colunas nomeia cada coluna (dots com aria-label + aria-current). A coluna sem nome acessível no contêiner fica registrada como it.todo — fechar isso exige mudar BoardColumn.tsx, fora dos arquivos deste cartão.

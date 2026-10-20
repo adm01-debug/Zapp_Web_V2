@@ -1,0 +1,3 @@
+fix(catalogo): reabrir o detalhe nao exibe o produto navegado antes
+
+R2-MOD-046 (#415): o painel do detalhe fica montado no CatalogProductCard (o caller so alterna `open`), entao o override de navegacao `nav` sobrevivia ao fechamento — reabrir o MESMO cartao A mantinha baseId=A e mostrava o produto B navegado na visita anterior. O override agora e zerado quando `open` muda (ajuste de estado no render, mesmo padrao do focusApplied da galeria), entao cada abertura comeca pelo produto do cartao clicado.

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791298917 -0300	branch: Created from dia/2026-10-06
+7e3d30cb5be2c801088f200d54191d09416ae334 de68c1e043656911e6ef1cef8073f21136cd913a Joaquim Ataides <ti@promobrindes.com.br> 1791299380 -0300	commit: fix(university): descarta resposta de analise gerada antes da troca do periodo (#393)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300714 -0300	
+d6bfd59751f26503e528dfa54b704daf0f497157 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300715 -0300	reset: moving to HEAD
+d6bfd59751f26503e528dfa54b704daf0f497157 03afe38b9af84592d7d4e8187610576ad23eff7b Joaquim Ataides <ti@promobrindes.com.br> 1791300962 -0300	commit: fix(whatsapp-templates): aprovação de template não é escolhida localmente (R2-MOD-067)
+03afe38b9af84592d7d4e8187610576ad23eff7b 05a4d2e2ec8a56a9d314ed69a50424a0ce680e4d Joaquim Ataides <ti@promobrindes.com.br> 1791301033 -0300	commit: test(whatsapp-templates): prova pelo fluxo do hook que a aprovação não vem do formulário

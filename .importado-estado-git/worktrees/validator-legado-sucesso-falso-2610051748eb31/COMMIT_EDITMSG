@@ -1,0 +1,10 @@
+fix(ci): corrige contratos e sucesso falso do validator do Team Chat (#167)
+
+TC-012 (P2). scripts/team-chat-db-validate.mjs:
+- checkRpc aceitava qualquer status != 404 como sucesso, então 401/403/5xx
+  contavam como aprovado e o script saía 0 sem validar nada. Agora só HTTP 2xx
+  aprova; 404 e demais erros reprovam com status + corpo sanitizado.
+- contratos canônicos: team_members -> team_conversation_members,
+  department_invites.token -> department_invites.code, RPC p_token -> p_code.
+- teste consumidor ganha 3 blocos: erro de RPC (500/401/403) reprova e sai != 0,
+  RPC 200 aprova, e auditoria dos nomes/payload consultados.

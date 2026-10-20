@@ -1,0 +1,1 @@
+fix(ci/devops): Hooks de commit: husky + lint-staged + commitlint (SL-035)

@@ -1,0 +1,5 @@
+fix(ci/devops): aperta o baseline do lint-ratchet em commit proprio (SL-130)
+
+O baseline valia 522 ocorrencias mas so 498 existem na ponta de 08/10: as 24 entradas que nao casam com nenhuma ocorrencia atual (as 'fantasma' do inventario #8) podem reaparecer sem o gate acusar. Saem apenas essas 24; as 498 que casam ficam byte a byte.
+
+A regeneracao completa (--update-baseline) foi medida: ela tambem reescreve o sha256 de 274 arquivos e o diff vai a 170.543 caracteres, acima do teto de 90.000 do hermes-tarefa-fechar. A remocao minima usa a comparacao do proprio lint-ratchet (compareBaseline) e o diff fica em 36.658 caracteres.

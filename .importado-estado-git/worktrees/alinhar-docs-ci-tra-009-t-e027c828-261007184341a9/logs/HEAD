@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 739cad46d7327d8f99be1570856941a5550ac65c Joaquim Ataides <ti@promobrindes.com.br> 1791409383 -0300	
+739cad46d7327d8f99be1570856941a5550ac65c 739cad46d7327d8f99be1570856941a5550ac65c Joaquim Ataides <ti@promobrindes.com.br> 1791409384 -0300	reset: moving to HEAD
+739cad46d7327d8f99be1570856941a5550ac65c 851c5431347db9d15d72790e78b41e6524475599 Joaquim Ataides <ti@promobrindes.com.br> 1791409392 -0300	cherry-pick: docs(ci): alinhar documentação à baseline atual (TRA-009)
+851c5431347db9d15d72790e78b41e6524475599 bfa804db476df60680a370ddaab00f4bfadba3dc Joaquim Ataides <ti@promobrindes.com.br> 1791409429 -0300	commit: test(ci): cobrir docs TRA-009 no glob do CI

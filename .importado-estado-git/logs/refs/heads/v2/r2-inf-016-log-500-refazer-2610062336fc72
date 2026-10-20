@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791340563 -0300	branch: Created from dia/2026-10-06
+b6a5800086896490ef4415de1f616aa77b69b9b6 8dfb34c794f1360b2ae56a249db647ff2e870e76 Joaquim Ataides <ti@promobrindes.com.br> 1791340705 -0300	cherry-pick: fix(edge): guarda de exposicao de erro passa a enxergar o 500 montado a mao (#363)
+8dfb34c794f1360b2ae56a249db647ff2e870e76 6940cb2815cb15975795cfa642f20f9611617a44 Joaquim Ataides <ti@promobrindes.com.br> 1791340705 -0300	cherry-pick: test(edge): caso da guarda le o conteudo real dos dois arquivos citados (#363)
+6940cb2815cb15975795cfa642f20f9611617a44 a26f3cddb55e629ce39955c3d5b55a1894ce6329 Joaquim Ataides <ti@promobrindes.com.br> 1791340705 -0300	cherry-pick: test(edge): prova o detalhe sintetico no log dos handlers 500 (#363)
+a26f3cddb55e629ce39955c3d5b55a1894ce6329 3610ec56da41fcf74c7b7378d4656c19fc208767 Joaquim Ataides <ti@promobrindes.com.br> 1791341827 -0300	commit: fix(ci): guarda de exposicao fecha a cegueira do jsonResponse 5xx (#363)

@@ -1,0 +1,1 @@
+fix(quarentena): monitor reconcilia liberações por versão e retoma após erro transitório (#238)

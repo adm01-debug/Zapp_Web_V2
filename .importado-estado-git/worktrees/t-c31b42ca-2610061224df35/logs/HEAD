@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300256 -0300	
+d6bfd59751f26503e528dfa54b704daf0f497157 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300257 -0300	reset: moving to HEAD
+d6bfd59751f26503e528dfa54b704daf0f497157 deef635a40f12fb67490d6b8074e909c589adc14 Joaquim Ataides <ti@promobrindes.com.br> 1791300538 -0300	commit: fix(tarefas): desfazer cancelamento/conclusão restaura status e alarme e só confirma após gravar (#421)

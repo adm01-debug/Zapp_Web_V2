@@ -1,0 +1,18 @@
+feat(talk-x): RPC guardada de ações em massa da biblioteca de segmentos (TL-135a2)
+
+public.talkx_segment_bulk_action(p_action, p_segment_ids, p_tag) aplica
+rascunhar/publicar-ativar/inativar/arquivar/adicionar tag em vários segmentos e
+devolve uma linha POR SEGMENTO (sucesso ou falha com SQLSTATE e mensagem), cada
+item na sua subtransação: o item recusado pela guarda de uso de X101 não derruba o
+lote nem altera a linha. A guarda é a do banco (gatilho talkx_segments_usage_guard,
+TL-129) — a RPC não reescreve a regra; o erro P0001 com o nome da campanha volta na
+linha daquele segmento. Exige authenticated com perfil ativo e papel
+admin/supervisor (A12), e por item repete o predicado da RLS de talkx_segments
+(defesa em profundidade: a função é SECURITY DEFINER). Entrada inválida (ação
+desconhecida, lote vazio/acima de 200, id nulo, tag ausente/vazia/longa, tag em
+ação que não é tag) → 22023 antes de qualquer escrita; id inexistente → P0002 sem
+citar o id, igual para ids diferentes.
+
+Prova: supabase/tests/talkx_segment_bulk_actions.sql (T1..T9b, roda como
+authenticated/anon no banco local) — vermelho sem a migration (42883) e verde com
+ela; o rollback do cabeçalho roda e derruba a função.

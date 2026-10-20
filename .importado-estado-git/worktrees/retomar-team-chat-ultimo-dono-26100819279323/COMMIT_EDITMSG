@@ -1,0 +1,6 @@
+test(team-chat): prova o rollback das guardas de departamento e transferencia (QA5-10)
+
+O bloco C extrai o SQL do proprio '-- Rollback:' da migration, executa no
+Postgres descartavel e confere que o defeito VOLTA (nao-membro cria, ex-membro
+transfere); depois reaplica a migration e confere que a guarda vale de novo.
+Rollback que o teste nao executa e rollback nao provado (skill rollback-de-verdade).

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791568223 -0300	branch: Created from dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 2a952cc6d960d4fd363e456944eedd8c6047dc43 Joaquim Ataides <ti@promobrindes.com.br> 1791568673 -0300	cherry-pick: fix(team-chat): liga busca server-side e os itens sem chamador no TeamChatPanel (SL-082)
+2a952cc6d960d4fd363e456944eedd8c6047dc43 196c1911b1aa21047b2c7b06f42684fc0cb1c250 Joaquim Ataides <ti@promobrindes.com.br> 1791568673 -0300	cherry-pick: fix(team-chat): trata falha da busca como erro real e usa motion-safe no spinner (SL-082)
+196c1911b1aa21047b2c7b06f42684fc0cb1c250 ffe684586f233eb70a02219622f607fc209580f2 Joaquim Ataides <ti@promobrindes.com.br> 1791568673 -0300	cherry-pick: fix(team-chat): limpa o aviso de falha da busca quando a resposta chega (SL-082)
+ffe684586f233eb70a02219622f607fc209580f2 9310d70a6d553b5def7f1df62430aafea041de80 Joaquim Ataides <ti@promobrindes.com.br> 1791568673 -0300	cherry-pick: test(team-chat): prova a variante de movimento pela lista de animacoes do icone (SL-082)
+9310d70a6d553b5def7f1df62430aafea041de80 07a3623b3b16b29f1253afedb7f731825a9d702c Joaquim Ataides <ti@promobrindes.com.br> 1791568673 -0300	cherry-pick: fix(team-chat): prende erro e resultado da busca a conversa e termo (SL-082)

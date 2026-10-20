@@ -1,0 +1,16 @@
+fix(db): RPCs de contato nao distinguem inexistente de fora do alcance (SEC-RLS-02/03)
+
+require_contact_edit_permission e set_conversation_status respondiam com texto
+diferente para uuid inexistente ('contact not found: <id>') e uuid existente
+fora do alcance ('contact_not_authorized'), e can_delete_contacts devolvia
+linha (can_delete=false) para contato invisivel -- oraculo de enumeracao de
+UUID alcancavel por qualquer authenticated.
+
+- require_contact_edit_permission: UM unico ponto de recusa (v_encontrado +
+  can_edit_contact) => mesmo texto, mesmo SQLSTATE 42501 e mesmo contexto.
+- set_conversation_status: levanta 'contact not found' antes de delegar; a
+  delegacao passa a ser o unico ponto de recusa do chamador comum.
+- can_delete_contacts: predicado de alcance (can_edit_contact) no WHERE.
+- Prova: scripts/db-audit/wa-tag-and-status-authorization.test.sh (BLOCO C
+  RED -> BLOCO D GREEN) e contacts-soft-delete-and-status.test.sh (RED ->
+  GREEN), com SET ROLE authenticated e request.jwt.claims.

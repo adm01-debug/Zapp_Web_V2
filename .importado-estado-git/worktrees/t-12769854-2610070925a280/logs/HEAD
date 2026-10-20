@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1e0e6ce1504f1e622f437d1b617b1e13ac5bb6d3 Joaquim Ataides <ti@promobrindes.com.br> 1791375959 -0300	
+1e0e6ce1504f1e622f437d1b617b1e13ac5bb6d3 1e0e6ce1504f1e622f437d1b617b1e13ac5bb6d3 Joaquim Ataides <ti@promobrindes.com.br> 1791375960 -0300	reset: moving to HEAD
+1e0e6ce1504f1e622f437d1b617b1e13ac5bb6d3 3339ae861474dd758f75d04e73f75483d0566fc7 Hugo <hugo@promobrindes.local> 1791376921 -0300	commit: feat(arquivos): miniatura da primeira pagina de PDF (biblioteca e hook)
+3339ae861474dd758f75d04e73f75483d0566fc7 b44387e1a0ea4cd8959d7db8ecb9139bcfd3e884 Joaquim Ataides <ti@promobrindes.com.br> 1791377798 -0300	commit: fix(arquivos): prazo de 15s aborta o download em voo e abort na fila resolve null na hora

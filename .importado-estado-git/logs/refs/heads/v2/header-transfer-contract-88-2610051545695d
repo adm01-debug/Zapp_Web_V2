@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 b082bce893ba74365248c56c31e898f05a13dc69 Joaquim Ataides <ti@promobrindes.com.br> 1791225921 -0300	branch: Created from dia/2026-10-05
+b082bce893ba74365248c56c31e898f05a13dc69 e8375984d7586eac994ac2322eaf8aebe3f5c753 Joaquim Ataides <ti@promobrindes.com.br> 1791225939 -0300	cherry-pick: fix(inbox): chat repassa queueId, grava evento de transferência e rejeita em erro (#88)
+e8375984d7586eac994ac2322eaf8aebe3f5c753 bf10e93ab4a52ab52e1cb600d3d9ffb62e48790d Joaquim Ataides <ti@promobrindes.com.br> 1791228247 -0300	commit: fix(inbox): transferência de chat atômica via RPC transacional (#88)

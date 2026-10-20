@@ -1,0 +1,21 @@
+fix(chatbot-l1): não manda a mensagem de entrada duas vezes ao modelo (IA-106/SL-086)
+
+O webhook grava a fala do cliente em `messages` ANTES de acionar o bot, então
+ela já é a linha mais recente do histórico da conversa (consulta em ordem
+decrescente) — e o handler anexava a MESMA fala outra vez em
+`{ role: 'user', content: message }`. O modelo recebia a pergunta em duplicidade
+e o contexto declarado (histórico + fala do cliente) deixava de corresponder à
+conversa real.
+
+Correção mínima (IA-106, Bloco 11): descarta a linha mais recente do histórico
+apenas quando ela é a PRÓPRIA mensagem que chegou (sender 'contact' e conteúdo
+idêntico). Se o chamador não persistiu a mensagem, o histórico não a contém e
+nada é removido; fala do ATENDENTE com o mesmo texto continua no histórico.
+
+Prova: supabase/functions/chatbot-l1/index.test.ts (10/10 verde) pelo handler
+REAL com PostgREST e provedor de IA falsos em 127.0.0.1. Vermelho antes com o
+teste novo: "recebi 2, esperava 1" (mensagem já persistida). Cobre também a
+entrada ainda não persistida (anexada uma vez) e o não-dedupe da fala do
+atendente.
+
+Cartão V2: t_57e6f977 (SL-086)

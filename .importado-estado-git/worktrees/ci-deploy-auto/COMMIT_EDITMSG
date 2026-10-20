@@ -1,0 +1,8 @@
+docs(ci): regenera docs/ci/README.md com o novo gatilho do deploy de Edge Functions
+
+O check "Verify workflow docs are fresh" do CI reprovou o PR #1901: o README e gerado do bloco
+`# docs:` de cada workflow e o gatilho do deploy-functions mudou para push na main + dispatch.
+Regenerado com scripts/ci/render-workflow-docs.mjs (--check passa).
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NuZ7WYqf38Zz5TogJEdDgf

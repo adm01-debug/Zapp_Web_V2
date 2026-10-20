@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4ff5d77217832e5762e4009e271c4a3179bbc9cd Joaquim Ataides <ti@promobrindes.com.br> 1791387000 -0300	branch: Created from dia/2026-10-07
+4ff5d77217832e5762e4009e271c4a3179bbc9cd ed54a87669d3237c6ac60d83b04a1e59320dc381 Joaquim Ataides <ti@promobrindes.com.br> 1791387022 -0300	cherry-pick: fix(edge): erro de lookup de conexão não vira cache negativo
+ed54a87669d3237c6ac60d83b04a1e59320dc381 2da644ba27c763412550c983c3781f9dec4e3049 Joaquim Ataides <ti@promobrindes.com.br> 1791387111 -0300	commit: test(edge): prova o fail-closed quando a conexão resolvida não tem id
+2da644ba27c763412550c983c3781f9dec4e3049 344022ef9c7fc869f46ff66ccd8bf83815bfe2f0 Joaquim Ataides <ti@promobrindes.com.br> 1791387191 -0300	commit: fix(edge): guardas de topo voltam a exigir connection.id (fail-closed)

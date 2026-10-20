@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791303826 -0300	branch: Created from dia/2026-10-06
+421f4a59c7ba7d52bad931d367a68d859d374465 0b238a8f279a09ac5c01b155cdc7742e4e572d48 Joaquim Ataides <ti@promobrindes.com.br> 1791304047 -0300	commit: fix(hooks): desfazer do aviso anterior nao reverte a operacao seguinte (#445)
+0b238a8f279a09ac5c01b155cdc7742e4e572d48 a1491e7c3680d404b268b187dd3e6cd7ff9a92d3 Joaquim Ataides <ti@promobrindes.com.br> 1791304339 -0300	commit (amend): fix(hooks): desfazer do aviso anterior nao reverte a operacao seguinte (#445)
+a1491e7c3680d404b268b187dd3e6cd7ff9a92d3 7fe8dee9e6699642c053fc69923194c7b3209894 Joaquim Ataides <ti@promobrindes.com.br> 1791304682 -0300	commit (amend): fix(hooks): desfazer do aviso anterior nao reverte a operacao seguinte (#445)

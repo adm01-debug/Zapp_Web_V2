@@ -1,0 +1,28 @@
+fix(auth): passkey só anuncia login com a sessão do usuário validado (R2-AUTH-002)
+
+Refazer 2 do item 71 — resolve os dois pontos da recusa da rodada anterior:
+
+- Front (`useAuthForm.ts`): `signInWithOtp` só ENVIA o link de acesso por e-mail,
+  não cria sessão; anunciar "Autenticado com Passkey!" e navegar para '/' derrubava
+  o usuário de volta no /auth. A rodada anterior aceitava QUALQUER sessão existente
+  como prova do login, então uma sessão antiga de outra conta ainda anunciava e
+  navegava. Agora exige `session.user.id === result.userId` (usuário que a passkey
+  validou). Sessão de outra conta cai no estado "link de acesso enviado", sem
+  anúncio nem navegação. Teste novo: sessão de OUTRA conta (outro-u2) contra o
+  userId u1 validado pela passkey (vermelho antes, verde depois).
+
+- Edge `webauthn`: a paginação de `admin.listUsers` sai deste commit — alterava
+  comportamento fora do escopo do título. Volta à chamada única `listUsers()`, com
+  o fake e os testes de paginação removidos; permanece teste de
+  `authentication-options` achando a conta pelo e-mail e devolvendo allowCredentials.
+
+Mantido da rodada anterior (não questionado): em `verify-authentication` o challenge
+é localizado pelo VALOR presente no clientDataJSON assinado, aceitando o user_id do
+dono da credencial ou nulo (login discoverable), e consome só a linha usada, por id,
+sem depender de recência. Handler extraído para `handleWebAuthn(req, deps)`, com
+`Deno.serve` sob `if (import.meta.main)` (padrão de `auth-login`), o que permite os
+testes Deno offline da edge.
+
+Prova: vitest do cartão 5/5 verde (com o teste de sessão de outra conta vermelho no
+código anterior); `deno test ... supabase/functions/webauthn` 16/16 verde;
+`zapp-verify . --rapido` VERDE.

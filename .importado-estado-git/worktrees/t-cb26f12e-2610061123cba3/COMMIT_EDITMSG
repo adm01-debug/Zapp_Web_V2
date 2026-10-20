@@ -1,0 +1,5 @@
+test(edge): provar o teto PADRÃO da presença pelo caminho real (R2-API-031)
+
+O caso do teto embutido não pode conferir só a constante: passa a chamar
+send() sem override de presenceTimeoutMs, com a presença pendurada, e
+exige que o envio autorizado saia dentro do teto padrão.

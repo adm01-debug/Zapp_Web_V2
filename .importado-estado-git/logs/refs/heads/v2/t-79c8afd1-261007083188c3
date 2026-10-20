@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 ecfba91b8c1cef084b0de013726f672c716a3a17 Joaquim Ataides <ti@promobrindes.com.br> 1791372705 -0300	branch: Created from dia/2026-10-07
+ecfba91b8c1cef084b0de013726f672c716a3a17 ec6027c3e388ca03fbee79fddce5ea4029f5bc80 Hugo <hugo@promobrindes.local> 1791372840 -0300	commit: fix(integrations): tira `pipeline` das views válidas do retorno do OAuth do Gmail

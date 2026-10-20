@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543145 -0300	branch: Created from dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b bff0a3eefe4909c717a2b55ba176c3f922eae9bb Joaquim Ataides <ti@promobrindes.com.br> 1791545388 -0300	commit: fix(talkx): Esc fecha a Ajuda e devolve o foco ao gatilho (telas 16 e 01)

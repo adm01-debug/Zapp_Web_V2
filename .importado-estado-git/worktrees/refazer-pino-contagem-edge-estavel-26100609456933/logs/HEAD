@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290732 -0300	
+33df2adf85cbf443494e294d1c25be40deacfac9 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290733 -0300	reset: moving to HEAD
+33df2adf85cbf443494e294d1c25be40deacfac9 98b53e38b29f08f1d0abfaa23668898a619f6794 Joaquim Ataides <ti@promobrindes.com.br> 1791290744 -0300	cherry-pick: test(contratos): total de arquivos varridos das Edges vira piso em vez de pino exato
+98b53e38b29f08f1d0abfaa23668898a619f6794 51f9cda352a756f8d88cb7c7675e4591296e1011 Joaquim Ataides <ti@promobrindes.com.br> 1791291056 -0300	commit: test(contratos): valida cobertura exata das Edges
+51f9cda352a756f8d88cb7c7675e4591296e1011 98b53e38b29f08f1d0abfaa23668898a619f6794 Joaquim Ataides <ti@promobrindes.com.br> 1791291077 -0300	reset: moving to HEAD^
+98b53e38b29f08f1d0abfaa23668898a619f6794 b4f3a565c37bc1c5ccb755b28b61249c0771a63d Joaquim Ataides <ti@promobrindes.com.br> 1791291155 -0300	commit: test(contratos): valida cobertura exata das Edges

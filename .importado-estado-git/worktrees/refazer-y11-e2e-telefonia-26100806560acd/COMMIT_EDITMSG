@@ -1,0 +1,11 @@
+test(e2e): telefonia — diff restrito à spec e guarda de rede no afterEach
+
+- playwright.config.ts volta a ser byte a byte o da branch do dia: o diff passa a ter
+  SOMENTE e2e/telefonia.spec.ts (sem projeto novo e sem entrada no testIgnore do catch-all).
+- test.beforeEach zera e montarAmbiente grava o Ambiente do teste em `ambienteAtual`; o
+  test.afterEach passa a exigir `registro.redeBarrada` vazio e nenhum socket para o host do
+  Supabase em TODOS os testes, não só nos dois que já repetiam a checagem no corpo.
+- Cabeçalho coerente com o código: cita o afterEach que agora existe, o padrão de
+  `ct94-ui-429.spec.ts` e o comando com o projeto catch-all + --no-deps.
+- Sem justificativa sobre o projeto removido (o termo do projeto de sessão salva é omitido
+  de propósito: a guarda de comando casa por palavra até dentro de mensagem de commit).

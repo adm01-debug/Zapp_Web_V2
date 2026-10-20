@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 bcbd3b74146b1bd91e218d608922ecc2b70f924a Joaquim Ataides <ti@promobrindes.com.br> 1791470920 -0300	branch: Created from dia/2026-10-08
+bcbd3b74146b1bd91e218d608922ecc2b70f924a 54f476c727bb799c3886dd21bb963beb150d7f97 Joaquim Ataides <ti@promobrindes.com.br> 1791470928 -0300	cherry-pick: fix(biblioteca-midia): exclusao simples e em lote consideram Storage, linha e aborto (#336-C)
+54f476c727bb799c3886dd21bb963beb150d7f97 51719701a2d6237e31f2e237385d5a7fa9246258 Joaquim Ataides <ti@promobrindes.com.br> 1791471387 -0300	commit: test(biblioteca-midia): adapta mock da leitura paginada

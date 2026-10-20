@@ -1,0 +1,3 @@
+82	5	supabase/functions/gmail-cron-sync/index.ts
+357	0	supabase/functions/gmail-cron-sync/watch-renewal.test.ts
+13	5	supabase/functions/gmail-sync/index.ts

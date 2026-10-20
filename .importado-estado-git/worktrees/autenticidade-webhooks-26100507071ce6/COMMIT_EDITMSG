@@ -1,0 +1,12 @@
+fix(webhooks): exige e-mail exato do service account no gate OIDC do gmail-webhook
+
+JWT Google válido com aud correta não prova a origem: qualquer service
+account de qualquer projeto GCP emite token com audience arbitrária (a
+audience é a URL pública, conhecida). GMAIL_OIDC_EMAIL passa a ser
+obrigatório — sem ele o veredito é missing_secret -> 401 — e o claim
+email é conferido por match exato (timingSafeEqual), sem fallback por
+sufixo gserviceaccount.com que aceitaria SAs de projetos alheios.
+
+Testes provam: sem GMAIL_OIDC_EMAIL -> 401 mesmo com JWT perfeito;
+token de outra service account -> 401. Doc de secrets (E28/E29)
+atualizada com a proteção OIDC real e os dois novos secrets.

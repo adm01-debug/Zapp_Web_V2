@@ -1,0 +1,10 @@
+fix(inbox): seletor de anexos aproveita todos os arquivos selecionados
+
+O input nativo do FileUploader tem 'multiple', mas handleFileChange
+aproveitava so e.target.files?.[0]: do segundo arquivo em diante nada
+entrava no preview/envio e o usuario nao era avisado (R2-INB-011).
+
+Agora o seletor nativo encaminha TODOS os arquivos escolhidos pelo mesmo
+pipeline de multiplos (handleExternalFiles) ja usado por drag/paste/chip.
+Teste novo renderiza o FileUploader real, seleciona dois arquivos e exige
+os dois na fila (vermelho antes, verde depois).

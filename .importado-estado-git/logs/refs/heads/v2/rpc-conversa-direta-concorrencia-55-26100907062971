@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540412 -0300	branch: Created from dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 7703dd03aa33016b33abfc54ec8c82b0cc8c3943 Joaquim Ataides <ti@promobrindes.com.br> 1791540449 -0300	commit (cherry-pick): fix(banco): preserva papel padrão na conversa direta (#55)
+7703dd03aa33016b33abfc54ec8c82b0cc8c3943 4ed86653f69bd8ab16e90efa160b42e873d9d7c4 Joaquim Ataides <ti@promobrindes.com.br> 1791541093 -0300	commit: ci(db): registra prova TC-002 no inventario
+4ed86653f69bd8ab16e90efa160b42e873d9d7c4 945bcb204596f92e7937bdde19bf0512511ffd26 Joaquim Ataides <ti@promobrindes.com.br> 1791543016 -0300	commit: fix(db): explicita rollback TC-002 executavel

@@ -1,0 +1,8 @@
+fix(talkx): erros do editor interativo em text-warning e transição só com motion-safe
+
+Recusa do revisor de 09/10: a lista de erros usava text-dash-amber (fora dos
+tokens permitidos) e MODE_BUTTON tinha transition-colors sem motion-safe.
+Teste novo trava os dois pontos.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

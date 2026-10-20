@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791322528 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 04134d5e8223575071e4eabcd598728cbc17b088 Joaquim Ataides <ti@promobrindes.com.br> 1791325529 -0300	commit: fix(team-chat): leitura segura do WhatsApp de departamento por RPC admin (#56)
+04134d5e8223575071e4eabcd598728cbc17b088 c7d07d0c2fb63553f9a7b8b071a09bb67bb36aa2 worker (sql) <ti@promobrindes.com.br> 1791327592 -0300	commit: fix(team-chat): escrita do WhatsApp de departamento usa a mesma guarda da leitura e audita o estado

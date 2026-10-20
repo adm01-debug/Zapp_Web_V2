@@ -1,0 +1,7 @@
+test(tts): resposta falsa do teste de ciclo de vida usa corpo em texto (Blob.stream ausente no ambiente do CI)
+
+O Blob do ambiente jsdom de teste nao tem .stream(); passar o Blob para new Response()
+faz o runtime do CI chamar object.stream() e falhar com 'TypeError: object.stream is not a
+function', reprovando os 4 testes do arquivo no job Unit Tests (local passava). O hook so
+le response.blob() (src/hooks/communication/useTextToSpeech.ts:187), entao o corpo em texto
+com Content-Type: audio/mpeg entrega o mesmo contrato sem depender de Blob.stream().

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320384 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791320386 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 a761e7c566f8721ada83d161e96cdcb45ffc7e90 Joaquim Ataides <ti@promobrindes.com.br> 1791320390 -0300	cherry-pick: test(db): alinha a prova da ACL de midia WhatsApp ao contrato sem messages.media_url (R2-DB-022 B1)
+a761e7c566f8721ada83d161e96cdcb45ffc7e90 c7a70797ac47d45a1bda8d381db2fa7e1ec61844 Joaquim Ataides <ti@promobrindes.com.br> 1791322329 -0300	commit: test(db): trava da ACL de midia pega join em messages sem schema e --sem-acl so aceita o vermelho esperado (R2-DB-022 B1)

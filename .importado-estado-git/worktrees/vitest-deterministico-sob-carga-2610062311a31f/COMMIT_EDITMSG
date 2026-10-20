@@ -1,0 +1,24 @@
+test(vitest): espera assíncrona da suíte deixa de estourar 1 s sob carga
+
+O passo `testes` do `zapp-verify full` (`bun run test`) reprovava ao acaso com a
+máquina carregada, em arquivos diferentes a cada rodada. Causa medida: as
+consultas assíncronas do Testing Library (`findBy*`/`waitFor`) esperam por
+condição, mas com teto padrão de 1000 ms (`asyncUtilTimeout`), medido no relógio
+de parede do worker; sob roubo de CPU o próprio trabalho que o teste espera
+(`import()` dinâmico do `ChatPanel` por `lazy`, efeito do React, virtualizador de
+1000 linhas) passa de 1 s para resolver.
+
+Medições (base dia/2026-10-06, 715 arquivos / 6803 testes; carga média induzida
+de 60 a 105):
+- baseline, carga 70-100: `Test Files 5 failed | 710 passed (715)`, 893 s —
+  ChatPopup.pagination, ChatPopup.messageBalloon, ChatPopup.rolagem-mensagem-nova,
+  CustomModalFocus e SkillBasedRoutingSettings, com esperas de 1230 a 2145 ms e a
+  mesma assinatura `waitForWrapper ... wait-for.js`;
+- com o teto de 5 s, 3 rodadas seguidas sob carga: `715 passed (715)` e
+  `6763 passed | 40 todo`, 729 s / 706 s / 715 s;
+- o teste continua mordendo: com `hasOlderMessages={false}` em ChatPopup.tsx
+  (mutações revertidas) o arquivo reprova 3/3 em ~5014-5105 ms.
+
+Nenhuma asserção, consulta ou teste foi removido, pulado ou afrouxado: a condição
+exigida é a mesma, muda só o orçamento de tempo; o teto segue abaixo do
+`testTimeout: 15000`.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516068 -0300	
+df19b16dac284603bb9296f51c7258b1d49e9fa7 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791516069 -0300	reset: moving to HEAD
+df19b16dac284603bb9296f51c7258b1d49e9fa7 3007806cee6f0654e2baad4d70469115d7d66fb6 iris <iris@hermes.local> 1791516642 -0300	commit: fix(multiplix): MultiplixView em 3 regiões simultâneas (01 PÚBLICO / 02 COMPOSIÇÃO / 03 PRÉVIA & REVISÃO) com composição na tela e rodapé fixo (TL-006)
+3007806cee6f0654e2baad4d70469115d7d66fb6 64e2c0902af97b358440b5f0e66c80f49dcca65c iris <iris@hermes.local> 1791516787 -0300	commit: fix(multiplix): spinners do módulo com motion-safe:animate-spin (TL-006)

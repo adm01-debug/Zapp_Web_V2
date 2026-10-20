@@ -1,0 +1,14 @@
+refactor(design-system/ui): remove as 4 cópias sem consumidor dos componentes duplicados (SL-175)
+
+Do inventário de 7 pares com o mesmo nome (docs/REFACTORING_REPORT_2026-06-12.md),
+4 eram duplicata real na ponta de dia/2026-10-08: a cópia de fora do módulo não
+tinha nenhum importador. Segue o canônico já registrado na ADR-005:
+- src/components/BulkActionsBar.tsx          -> contacts/BulkActionsBar.tsx
+- src/components/dashboard/TrendIndicator.tsx -> dashboard/metrics/TrendIndicator.tsx
+- src/components/dashboard/MetricComparison.tsx -> dashboard/metrics/MetricComparison.tsx
+- src/components/dashboard/MiniSparkline.tsx -> dashboard/metrics/MiniSparkline.tsx
+  (wrapper @deprecated; o único consumidor, GamificationEffects, passa a usar o
+  canônico direto com color/height equivalentes)
+
+Os outros 3 pares (FloatingParticles, ConversationHeatmap, ScheduledReportsManager)
+não são duplicatas: os dois lados estão vivos, com API e render próprios.

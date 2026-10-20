@@ -1,0 +1,7 @@
+fix(theme): aplicar --gradient-success do preset diversity no DOM
+
+O preset `diversity` guarda `gradient-success` (degrade pride verde->azul) desde o port do Promo Gifts, mas o unico aplicador — `applyThemePreset` — so percorre `CSS_VARS_TO_APPLY`, lista congelada por teste que NAO inclui o token (ele e fixo, grupo C, definido em tokens.css:246/486). O override existia apenas no objeto do preset: nunca chegava ao DOM, embora o comentario de `FIXED_TOKENS` (presets.ts:105) prometesse o efeito.
+
+Efeito desejado por paridade: no Promo Gifts `gradient-success` esta em `CSS_VARS_TO_APPLY` (PG src/lib/theme-presets.ts:148) e o preset diversity o define em :467/:510, entao o degrade pride chega ao DOM em todas as skins.
+
+Correcao: `PRESET_FIXED_OVERRIDES` declara os tokens FIXOS que uma skin pode sobrescrever e `applyThemePreset` os escreve/remove explicitamente, fora da lista global (que segue intacta). Sem valor na skin o inline e removido — trocar de diversity para outra skin nao deixa o degrade grudado — e o cache do boot (index.html:38) leva o mesmo valor, ja sob a guarda de alto contraste existente. `clearThemeOverrides` limpa o token tambem. ThemePreset.light/dark passam a declarar as chaves opcionais (PresetFixedOverrides), o que dispensa os casts `as ThemeModeColors` que escondiam a chave extra em buildDiversityPreset.

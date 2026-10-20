@@ -1,0 +1,3 @@
+test(e2e): cobre Tarefas e o modo Quadro com o limite de WIP 3/3
+
+Spec E21 do plano de fusao Quadro->Tarefas: abre Tarefas e alterna Lista/Quadro/Agenda gravando a preferencia, cria pelo QuickAdd conferindo a coluna Caixa de entrada, e move o card entre colunas pelo teclado provando o limite 3/3 de Fazendo (controle positivo + negacao). Hermetico: sessao falsa, app shell mockado, rede real barrada e conversation_tasks em memoria.

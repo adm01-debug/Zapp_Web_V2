@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791499062 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe e80d19ad635f51b5414184d87bb42f31ce8958c6 Joaquim Ataides <ti@promobrindes.com.br> 1791500184 -0300	commit: fix(inbox/chat): banner de conexão não cobre mais a barra de abas (SL-076)

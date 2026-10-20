@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791310149 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791310149 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd e160d5452a31451a4193d62c7a63dedb7e758856 Joaquim Ataides <ti@promobrindes.com.br> 1791310156 -0300	cherry-pick: fix(ai-proxy): diagnostico exige admin, limita conteudo/modelo/orcamento e registra consumo (R2-API-032)
+e160d5452a31451a4193d62c7a63dedb7e758856 e2b791fd606e5fab08900fafe45c1d0002567dc7 Joaquim Ataides <ti@promobrindes.com.br> 1791310246 -0300	commit: fix(ai-proxy): preserva requestId no consumo de diagnostico

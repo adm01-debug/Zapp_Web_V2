@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508431 -0300	branch: Created from dia/2026-10-08
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 898fdaff4c2fea4d5f97c51a15e4d66d88961f9c Joaquim Ataides <ti@promobrindes.com.br> 1791508877 -0300	commit: fix(design-system/ui): remove escala fluida morta do Tailwind e os tokens --text-* orfaos (SL-177)

@@ -1,0 +1,7 @@
+test(edge-functions): prova regressiva SL-052 — disconnect zera os tokens cifrados e não chama store_gmail_tokens vazio
+
+M5 (disconnect engole erro de store_gmail_tokens): o fix já está na ponta de dia (commit 5160d9c67 +
+cf193cae6), mas NENHUMA asserção provava o ponto central — que a limpeza zera
+access_token_encrypted/refresh_token_encrypted por UPDATE direta e que o RPC store_gmail_tokens
+(token vazio) não é mais chamado. Este teste fecha a lacuna de cobertura; vermelho no código
+pré-fix (undefined != null), verde no atual.

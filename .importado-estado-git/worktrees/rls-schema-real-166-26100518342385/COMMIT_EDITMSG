@@ -1,0 +1,21 @@
+test(rls): validar policies contra o schema real das migrations (R2-GOV-003)
+
+Os testes de RLS verificavam funcoes-espelho em TypeScript — continuavam
+verdes mesmo se a policy real mudasse (e ja divergiam: o espelho dizia que
+todo autenticado lia whatsapp_connections e contatos sem dono, o schema real
+restringe a admin/supervisor e a can_edit_contact).
+
+- helper rlsSchema resolve o estado efetivo das policies lendo
+  supabase/migrations/*.sql em ordem cronologica (CREATE/DROP/ALTER/RENAME,
+  drop dinamico via format(%I), filtro cmd= do pg_policies, remocao de tabela);
+  validado 100% contra schema-manifest.json
+- rlsGroupAccess e rlsConversationAccess reescritos para afirmar os
+  predicados reais de whatsapp_groups, whatsapp_connections, contacts e
+  messages; migration que enfraquecer um predicado fica vermelha
+- rlsSchemaGuard: proibe funcoes-espelho nos testes rls*, exige leitura do
+  schema real e trava a fidelidade do resolvedor contra o manifest
+- a paridade com o manifest tolera tabela tocada por migration de policy
+  POSTERIOR ao snapshot: o manifest e artefato derivado, sincronizado pelo
+  types-sync depois do push (docs/MIGRATIONS.md proibe commitá-lo junto da
+  migration) — sem isso, um cartao de RLS legitimo travaria em vermelho; a
+  deteccao de enfraquecimento segue nas assercoes de predicado

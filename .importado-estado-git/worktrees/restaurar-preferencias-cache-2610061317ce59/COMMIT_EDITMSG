@@ -1,0 +1,9 @@
+fix(notificacoes): restaurar preferencias so anuncia sucesso com o banco gravado (#442)
+
+O upsert do supabase-js devolve `{ error }` em vez de lancar: o reset nao
+conferia esse erro, entao o catch nunca disparava, o cache ficava no padrao que
+o banco recusou gravar e o painel anunciava "restauradas ao padrao".
+
+- resetSettings confere o erro, desfaz o otimista (rollback pela invalidacao,
+  como no updateSettings), avisa o usuario e devolve se gravou;
+- o painel so anuncia sucesso quando o hook confirma a gravacao.

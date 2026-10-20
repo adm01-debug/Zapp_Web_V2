@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791538360 -0300	branch: Created from dia/2026-10-09
+ce8f99e418dde54bc50badba5044cfbd48e351f2 7bf2c3ad5398dcfa5a26ac8f78eca54e0ae9c601 Joaquim Ataides <ti@promobrindes.com.br> 1791538528 -0300	merge v2/t-ceb242af-26100906070806: Merge made by the 'ort' strategy.
+7bf2c3ad5398dcfa5a26ac8f78eca54e0ae9c601 21a828524e05c96d928165fe41669112333acf9f Joaquim Ataides <ti@promobrindes.com.br> 1791538563 -0300	merge v2/t-ae6d5374-2610090236b633: Merge made by the 'ort' strategy.
+21a828524e05c96d928165fe41669112333acf9f e3ae5ab3ce432538cdae1eb8b7a9cebf466e41ed Joaquim Ataides <ti@promobrindes.com.br> 1791539127 -0300	commit: feat(talk-x): alternar lista/grade e aplicar acoes em massa na biblioteca de segmentos (TL-135d)

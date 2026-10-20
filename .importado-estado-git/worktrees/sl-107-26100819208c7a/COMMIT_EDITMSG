@@ -1,0 +1,18 @@
+fix(telefonia): e2e/telefonia.spec.ts no e2e-logado.yml (SL-107)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    Hugo <hugo@zapp.local>
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 0c145a5e4 fix(telefonia): e2e/telefonia.spec.ts no e2e-logado.yml (SL-107)
+# No commands remaining.
+# You are currently rebasing branch 'v2/sl-107-26100819208c7a' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   .github/workflows/e2e-logado.yml
+#	new file:   e2e/telefonia-historico.spec.ts
+#	modified:   playwright.config.ts
+#

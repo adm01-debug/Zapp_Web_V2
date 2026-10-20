@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791514824 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 c85a1a937515da8349b6247ab8016493e9734429 Joaquim Ataides <ti@promobrindes.com.br> 1791515565 -0300	commit: fix(talk-x): Trocar o campo de URL por envio de arquivo com validação de 16 MB e metadados (TL-066)
+c85a1a937515da8349b6247ab8016493e9734429 5a0db9ae722265fdb29870ed33143ab7fc96378e Joaquim Ataides <ti@promobrindes.com.br> 1791543986 -0300	rebase (finish): refs/heads/v2/t-c4fe08ca-2610090000b05c onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

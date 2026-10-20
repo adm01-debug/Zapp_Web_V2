@@ -1,0 +1,4 @@
+test(multiplix): helper de última chamada genérico no teste novo (TL-041C)
+
+O retorno unknown[] deixava 'entrada'/'opcoes' como unknown (TS18046/TS2571 no
+zapp-verify); o genérico mantém o tipo da chamada do mock.

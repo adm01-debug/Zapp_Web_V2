@@ -1,0 +1,27 @@
+fix(inbox): transferência da sidebar passa a ser atômica via RPC transfer_contact
+
+A transferência disparada pela sidebar (queueId/agente + nota opcional) fazia
+UPDATE contacts e, numa segunda chamada, INSERT conversation_events. Não era
+atômica — se o INSERT falhasse o contato já havia mudado de dono — e o INSERT
+do próprio autor era NEGADO pela RLS (a policy exige que o contato pertença ao
+chamador, e o UPDATE já trocou o dono antes): nota descartada, erro na tela e
+convite a repetir a transferência.
+
+- nova RPC public.transfer_contact(p_contact_id, p_target_type, p_target_id,
+  p_note) SECURITY DEFINER: valida destino ('agent' | 'queue', sem 'connection'),
+  reimplementa a mesma autorização da policy de UPDATE de contacts
+  (can_edit_contact), faz UPDATE + INSERT na MESMA transação e levanta exceção
+  em qualquer falha (as duas escritas caem juntas). -- Rollback real.
+- log_assignment_change() (trigger legado AFTER UPDATE de contacts) deixa de
+  duplicar o evento quando a mudança vem da RPC (marca transacional
+  app.transfer_contact_rpc); corpo original preservado.
+- useConversationActions.transferContact passa a fazer UMA chamada de RPC, sem
+  escrita direta e sem cast; em erro mostra toast e rejeita (a sidebar só fecha
+  o diálogo no sucesso).
+- types.ts: entrada transfer_contact em Functions.
+
+Prova: 25 testes focais verdes (com mutações derrubando os casos de erro e de
+fila); prova no banco local da tarefa (conjunto v2-2610051147e82a) com agente
+authenticated comum: 26 PASS/0 FAIL — caminho antigo negado pela RLS (A/D2),
+RPC grava evento único com metadata.note (B/B2), falha desfaz o UPDATE (C),
+not_authorized (E), anon sem EXECUTE (F).

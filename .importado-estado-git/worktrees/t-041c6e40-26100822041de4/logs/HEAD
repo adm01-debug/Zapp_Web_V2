@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791507895 -0300	
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791507896 -0300	reset: moving to HEAD
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf cf36c8cba69a01e1a64d1aec799b48185837eedc Joaquim Ataides <ti@promobrindes.com.br> 1791507909 -0300	cherry-pick: feat(ia): separar categoria e falha técnica nos classificadores de visão
+cf36c8cba69a01e1a64d1aec799b48185837eedc 10d59174c0e19c4696bc45cf096b444f7a1ee370 Joaquim Ataides <ti@promobrindes.com.br> 1791508143 -0300	commit: fix(ia): resposta vazia do provedor nao vira categoria 'outros' concluida (IA-132)

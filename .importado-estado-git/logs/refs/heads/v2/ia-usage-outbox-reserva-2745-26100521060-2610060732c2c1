@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6f752a05709f2ff19eac17aefc662e3d631e21ce Joaquim Ataides <ti@promobrindes.com.br> 1791282765 -0300	branch: Created from dia/2026-10-06
+6f752a05709f2ff19eac17aefc662e3d631e21ce 094b9613811741a5e67261698902fe556a961e73 Joaquim Ataides <ti@promobrindes.com.br> 1791282782 -0300	cherry-pick: fix(edge): estabiliza a reserva do event_id no reprocessamento da outbox

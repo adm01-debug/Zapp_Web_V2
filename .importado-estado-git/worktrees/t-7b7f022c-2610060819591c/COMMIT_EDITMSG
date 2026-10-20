@@ -1,0 +1,5 @@
+feat(recarga): registro central de bloqueios de recarga
+
+Cria src/lib/reload-blockers.ts com contrato em memoria para partes da aplicacao declararem que um recarregamento interromperia trabalho em andamento. Cada registro ganha token proprio (dois bloqueios nao se cancelam), a limpeza devolvida e idempotente e o observador so e avisado nas transicoes agregadas livre<->bloqueado.
+
+Prova: src/lib/__tests__/reload-blockers.test.ts (9 testes) falha sem o modulo (import nao resolve) e fica verde com ele.

@@ -1,0 +1,15 @@
+fix(a11y): contraste do horário do balão fecha a régua AA
+
+O horário/estado do balão pintava a cor do balão COM ALFA e ficava abaixo de
+AA em texto de 11px. Tira o alfa (`text-primary-foreground/60` → `text-primary-foreground`,
+`text-muted-foreground/70` → `text-muted-foreground`): as classes passam a ser as mesmas
+do corpo do balão, sem tocar em token, skin ou cor de tema.
+
+Medido em Chromium real (CSS compilado pelo tailwind CLI, getComputedStyle):
+  ENVIADO  claro/escuro ...... 2,86:1 → 5,17:1
+  RECEBIDO claro ............. 2,82:1 → 5,04:1
+  RECEBIDO escuro ............ 4,43:1 → 7,33:1
+  ENVIADO  alto contraste .... 3,69:1 → 8,77:1
+  RECEBIDO alto contraste .... 4,40:1 → 10,12:1
+Resíduo declarado: no alto contraste ESCURO o par do tema --primary ×
+--primary-foreground fica em 4,46:1 (2,90 → 4,46 aqui) — token vetado (#1458).

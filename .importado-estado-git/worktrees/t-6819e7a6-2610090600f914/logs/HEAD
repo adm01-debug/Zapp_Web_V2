@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536412 -0300	
+ce8f99e418dde54bc50badba5044cfbd48e351f2 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536413 -0300	reset: moving to HEAD
+ce8f99e418dde54bc50badba5044cfbd48e351f2 3a0f2f8f41d7778b198cc0ed7fed68b05fc974fb edgar <edgar@zapp.local> 1791536880 -0300	commit: fix(segurança): external-db-bridge exige papel admin/supervisor para leitura (Y27 P0-01)
+3a0f2f8f41d7778b198cc0ed7fed68b05fc974fb 7a32402ff5eac64dd7e55a96f8c93a092a40af4f edgar <edgar@zapp.local> 1791536947 -0300	commit (amend): fix(seguranca): external-db-bridge exige papel admin/supervisor para leitura (Y27 P0-01)

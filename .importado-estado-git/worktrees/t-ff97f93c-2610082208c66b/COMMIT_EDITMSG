@@ -1,0 +1,1 @@
+fix(ci): da teto explicito de 30s a suite de contratos (contrato pdfjs reprovava por PRAZO sob carga)

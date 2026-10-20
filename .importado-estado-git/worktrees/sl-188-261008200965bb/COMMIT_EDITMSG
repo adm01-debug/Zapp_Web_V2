@@ -1,0 +1,10 @@
+feat(edge-functions): registry de provedores de WhatsApp e provider fake (SL-188)
+
+Ponto unico de resolucao do provedor de envio (evolution | cloud | fake), com
+contrato neutro de transporte, adaptador do Evolution delegando ao kernel de
+mensageria e provedor falso em memoria para a suite rodar sem rede.
+
+Fail-closed: id desconhecido, 'cloud' (reservado, sem implementacao) e 'fake'
+fora de DENO_ENV=test negam; PROVIDER_UNDER_TEST so vale com DENO_ENV=test.
+Teste: supabase/functions/_shared/providers/__tests__/registry.test.ts
+(9 passed / 5 failed com a resolucao ingenua; 14 passed com o registry).

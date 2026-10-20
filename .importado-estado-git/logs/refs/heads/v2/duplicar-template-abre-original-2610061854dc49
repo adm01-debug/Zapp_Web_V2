@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323698 -0300	branch: Created from dia/2026-10-06
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 6739bb8058db9f5c0a1138530b4fab71ad575bf2 Joaquim Ataides <ti@promobrindes.com.br> 1791323931 -0300	commit: fix(talkx-templates): atalho Duplicar template do rail duplica em vez de abrir o editor do original
+6739bb8058db9f5c0a1138530b4fab71ad575bf2 f67f1a0b904383e34743b2d543557c58921db721 Joaquim Ataides <ti@promobrindes.com.br> 1791323997 -0300	commit: test(talkx-templates): atalho Duplicar duplica o template selecionado e nao abre o original

@@ -1,0 +1,16 @@
+fix(db): RPC de conversa direta recupera a protecao contra criacao concorrente (#55)
+
+A RPC public.find_or_create_direct_conversation foi recriada por 20260929190000
+(E29) e por 20261003272707 (reconciliacao com o canonico) sem gravar o par
+(direct_member_a/b) e sem ON CONFLICT: a corrida voltou a ser decidida por
+consulta-antes-de-inserir e duas chamadas ao mesmo tempo criavam duas conversas.
+
+A migration restaura a protecao usando a garantia que ja existe no banco (o
+indice unico parcial idx_team_conversations_direct_pair), faz o backfill do par
+ordenado nas conversas diretas legadas de 2 membros (registrando o que mexeu numa
+tabela de apoio, que e o inverso do Rollback) e RECUSA aplicar se o indice nao
+existir. ACL, contrato e guardas seguem iguais.
+
+Prova: scripts/db-audit/team-direct-conversation-race.test.sh (Postgres 17
+descartavel, migrations reais, papel authenticated com JWT e anon): a corrida de
+duas sessoes produzia 2 conversas antes e 1 depois.

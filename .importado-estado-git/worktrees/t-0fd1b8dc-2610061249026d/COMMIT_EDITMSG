@@ -1,0 +1,13 @@
+fix(audio): recarrega o script do lamejs após falha e limita a espera (#434)
+
+R2-MOD-071: depois de um erro no carregamento do codificador, o
+`loadLamejs` limpava só a promise compartilhada e deixava no documento o
+`<script data-lamejs="1">` que já tinha falhado. A tentativa seguinte
+encontrava esse elemento encerrado, apenas anexava listeners a ele — sem
+novo carregamento e sem prazo — e o `await` ficava pendente para sempre,
+prendendo o estado ocupado de useAudioMemes/useMediaUpload.
+
+Agora cada tentativa é um carregamento novo: o elemento anterior sai do
+documento antes de criar o seguinte, os listeners são removidos no primeiro
+evento (load/error) e um prazo de 15 s encerra a espera com
+`encoder-unavailable`, devolvendo resultado discriminado ao chamador.

@@ -1,0 +1,5 @@
+[columns] só produção=1 só local=0 diferentes=0
+    só produção: clientes.antiga
+[functions] só produção=0 só local=0 diferentes=1
+    diferente: f:fn_antiga()
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção

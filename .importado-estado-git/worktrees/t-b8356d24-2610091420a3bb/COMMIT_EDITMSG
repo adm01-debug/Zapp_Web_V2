@@ -1,0 +1,8 @@
+test(seguranca): contrato da trava de escalada de privilegio em profiles (N-002)
+
+O gatilho prevent_privilege_escalation (migration 20260830161547) impedia a
+auto-promocao em public.profiles sem nenhum teste. O contrato aplica os
+arquivos de migration reais num PostgreSQL 17 descartavel: reproduz o defeito
+que a flag interna corrigiu (bloco A), prova agente/supervisor recusados nos
+campos protegidos, admin trocando o papel de outro e o sync interno
+(user_roles -> profiles, auth.uid() nulo) preservado. Ligado ao db-guard.yml.

@@ -1,0 +1,3 @@
+chore(ci/devops): confere W4 secao 7 na ponta e fecha sem codigo (SL-115)
+
+A lacuna W4-7 (secao 7 do relatorio W4: concorrencia 30k/100k, sort updated_at, CREATE INDEX concorrente, cenarios extras em 30k/100k) segue aberta na ponta dia/2026-10-08. Fechado SEM commit de codigo: a medicao exige DDL (item 5, proibido pelo cartao), exige reviver o harness .txt (decisao W4-8) e exige campanha nos volumes 30k/100k - nao cabe em 1 defeito/1 camada. Prova no relato.

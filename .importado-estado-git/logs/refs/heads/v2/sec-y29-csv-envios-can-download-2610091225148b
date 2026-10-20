@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559510 -0300	branch: Created from dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 8676249b657d492ea83417ab69ea277e2c9a5363 Joaquim Ataides <ti@promobrindes.com.br> 1791559521 -0300	cherry-pick: fix(segurança): todo download passa pelo gate de permissão (Y29 P0-01/02)
+8676249b657d492ea83417ab69ea277e2c9a5363 c291e1202196d196bedf0ca0a9787c435f67c0f4 Joaquim Ataides <ti@promobrindes.com.br> 1791560212 -0300	commit: fix(segurança): CSV de envios passa pelo gate antes de ser montado (Y29-02)

@@ -1,0 +1,14 @@
+fix(chat): não anunciar edição rejeitada
+
+R2-INB-014 (item 90): no ramo de edição do handleSend o builder do Supabase era
+aguardado sem inspecionar `{ error }`. Como o PostgREST rejeita via `{ error }` e
+não lança exceção, a UI mostrava "Mensagem editada", limpava o editor e encerrava
+o fluxo como sucesso mesmo com a gravação recusada.
+
+Agora o `{ error }` é verificado: sucesso só existe quando a atualização local
+retorna sem erro; a rejeição cai no caminho de erro já existente (log + toast
+destrutivo) e o texto permanece no editor para retry. O tratamento da Evolution
+API é preservado.
+
+Teste dedicado: src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx
+(vermelho no HEAD: 3 falhas nas asserções de rejeição; verde depois: 7/7).

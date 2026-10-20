@@ -1,0 +1,10 @@
+fix(volume): volume das mídias por usuário no aparelho, com sincronia entre abas
+
+S33/S34/S35 (D07, B7): as chaves passam a ser zapp.media.volume.<userId> e
+zapp.media.muted.<userId>, com a identidade lida da sessão que o supabase-js já
+persiste no localStorage (players montam fora do AuthProvider, onde useAuth
+lança). A chave antiga é copiada uma única vez para o primeiro usuário resolvido,
+com marca zapp.media.migrated, sem apagar nada e sem sobrescrever valor próprio.
+Todos os canais (escrita, BroadcastChannel, evento storage, leitura preguiçosa)
+aplicam o escopo: outra conta no mesmo navegador não vê nem escreve no meu valor.
+API pública do store e do hook intacta.

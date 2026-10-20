@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540599 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791540600 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 1576c9b12baa4aca8e856446b83d45ed563705de Joaquim Ataides <ti@promobrindes.com.br> 1791540635 -0300	commit (cherry-pick): fix(db): protege fechamento repetido sem reabertura (#295)

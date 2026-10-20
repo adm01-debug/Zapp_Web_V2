@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 Joaquim Ataides <ti@promobrindes.com.br> 1791356816 -0300	branch: Created from dia/2026-10-07
+2ea3fe09f2b27126275b2bf3b748ac9f7a298f73 9564b3a714c1473d732d654346b21e2264ecab3d Joaquim Ataides <ti@promobrindes.com.br> 1791356829 -0300	cherry-pick: fix(db): ACL da outbox de IA com rollback real e contrato por papel

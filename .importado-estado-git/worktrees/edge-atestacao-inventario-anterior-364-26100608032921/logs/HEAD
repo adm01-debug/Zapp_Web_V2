@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284611 -0300	
+fbb20ec26ffb172a379a820a3fafde28a671aae1 fbb20ec26ffb172a379a820a3fafde28a671aae1 Joaquim Ataides <ti@promobrindes.com.br> 1791284612 -0300	reset: moving to HEAD
+fbb20ec26ffb172a379a820a3fafde28a671aae1 a3bdeb0bdfbe18684ffb19345b16b4174f997eea Joaquim Ataides <ti@promobrindes.com.br> 1791285393 -0300	commit: fix(ci): atestacao de Edge exige prova de no-op do deploy para aceite por digest

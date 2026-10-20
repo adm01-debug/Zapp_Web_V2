@@ -1,0 +1,15 @@
+feat(ci): db-migrate aceita lote de migrations via lote_versions
+
+O preflight só seguia quando faltava exatamente uma version no ledger (ou
+um dos dois bundles fixos de setembro); a branch do dia já soma 8
+migrations novas e o caminho oficial falharia com missing_count=8.
+
+A decisão de escopo sai do YAML para scripts/ci/db-migrate-preflight-scope.sh,
+que ganha o modo lote: a lista declarada em lote_versions precisa estar em
+ordem crescente, terminar na migration_version e ser exatamente o conjunto
+das versions ausentes — aí liga o modo bundle. Os braços antigos (alvo
+único, bundles de setembro, já registrado, remote-only) ficam preservados.
+
+Teste em shell reproduz o preflight com ledger simulado (1 ausente, lote
+de 8, lote divergente e demais bordas); wrapper .unit.mjs faz o teste rodar
+no passo `node --test scripts/ci/*.unit.mjs` do ci.yml.

@@ -1,0 +1,10 @@
+fix(webhook): escopa edições e reações por whatsapp_connection_id (#187)
+
+handleMessagesEdited e handleReactionEvent recebiam só o payload e
+resolviam o alvo por external_id sem filtrar a conexão — a edição ou
+reação de uma instância podia gravar na mensagem homônima de outra
+conexão, e o maybeSingle estourava com external_id repetido.
+
+Os dois handlers agora recebem `instance`, resolvem a conexão e filtram
+o alvo por whatsapp_connection_id (reaction também por sender quando
+key.fromMe vem). Sem conexão resolvida o evento é ignorado (fail-closed).

@@ -1,0 +1,14 @@
+test(calls): versiona prova de zero WebSocket no IncomingCallAlert
+
+Fecha a recusa da rodada 1: o reparo que dubla o cliente de realtime estava
+comprovado apenas por uma sonda temporaria, sem teste de regressao versionado.
+
+`websocketSpy.ts` troca o construtor global de `WebSocket` por um duble que so
+anota a URL construida e nunca abre conexao. Os dois arquivos de teste do alerta
+importam o espiao ANTES de `../IncomingCallAlert` (o transporte do realtime
+resolve o construtor no import de `@/integrations/supabase/client`) e passam a
+assertar `construcoesWebSocket` vazio ao montar o alerta.
+
+RED/GREEN: sem o `vi.mock('@/integrations/supabase/client')` a assercao falha
+detectando 1 construcao real (endpoint realtime do projeto Supabase); com o mock,
+passa com contagem zero. Nenhuma mudanca de codigo de aplicacao.

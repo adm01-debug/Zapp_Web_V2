@@ -1,0 +1,3 @@
+fix(edge): devolverPendenciaAOutbox devolve e propaga a falha do reenfileiramento
+
+Correcao pontual pedida pelo revisor: devolverPendenciaAOutbox passa a devolver boolean (resposta.ok; false quando o corpo/texto falha ou o fetch lanca) e gravarNaOutbox devolve esse resultado em vez de descartar. Com o conflito absorvido pelo UNIQUE(event_id) e o PATCH de reenfileiramento falhando, a falha nova nao fica silenciosa: registrarFalhaDeLog ve false e emite [ai-usage][LOG-ESSENCIAL-PERDIDO].

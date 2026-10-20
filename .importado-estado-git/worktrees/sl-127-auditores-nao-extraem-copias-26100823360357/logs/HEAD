@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791513366 -0300	
+7191519fee4fc88f060f5257d20401fd374dc223 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791513367 -0300	reset: moving to HEAD
+7191519fee4fc88f060f5257d20401fd374dc223 33417fd700af44274ca8b5c6ecb3cdea93fc9ec5 Joaquim Ataides <ti@promobrindes.com.br> 1791514518 -0300	commit: fix(ci/devops): auditores não extraem cópias do repo dentro de .tmp do workspace (SL-127)

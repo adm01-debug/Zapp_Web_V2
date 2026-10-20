@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201265 -0300	branch: Created from dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 fbfde792319c924a59dcd3e5fbf11754b8b5dc04 Joaquim Ataides <ti@promobrindes.com.br> 1791201492 -0300	cherry-pick: fix(webhook): escopar rename/delete de label do WhatsApp por conexão
+fbfde792319c924a59dcd3e5fbf11754b8b5dc04 7e913f118e1e5670ac2d95e143e6652ece99a6bf Joaquim Ataides <ti@promobrindes.com.br> 1791202855 -0300	commit: fix(webhook): provar isolamento por conexão das etiquetas de WhatsApp no banco

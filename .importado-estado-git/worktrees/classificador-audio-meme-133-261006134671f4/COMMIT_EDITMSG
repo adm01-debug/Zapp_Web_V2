@@ -1,0 +1,14 @@
+fix(ai-audio): nao aguarda o cancel() do corpo grande (IA-131)
+
+Recusa da 2a revisao: no estouro do teto de 5 MiB o ramo fazia
+`await reader.cancel()`; se o cancel() da fonte fica PENDENTE, a operacao
+ficava pendurada e o prazo do download (que so destrava `read()`) nao a
+resolvia. Agora o cancelamento e DISPARADO sem ser aguardado e o erro
+`AUDIO_TOO_LARGE` sai na hora, com o restante do corpo nao consumido.
+
+- `supabase/functions/_shared/ai-audio-input.ts`: ramo de estouro troca
+  `await reader.cancel()` por `void reader.cancel().catch(...)`.
+- `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts`: prova com
+  fonte infinita e `cancel()` que devolve promessa pendente — rejeita
+  prontamente com `AUDIO_TOO_LARGE` e para de puxar pedacos. Vermelho com o
+  codigo anterior (o teste estoura os 5000 ms), verde com este commit.

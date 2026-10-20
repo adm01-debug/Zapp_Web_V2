@@ -1,0 +1,16 @@
+fix(auth): bloquear login de perfil inativo com resposta indistinguível (R2-AUTH-004)
+
+auth-login resolve o perfil pelo e-mail antes de chamar o GoTrue e exige
+profiles.is_active = true. Perfil ausente ou inativo passa pelo MESMO caminho
+de falha da credencial inválida (recordFailure): registra a tentativa via
+record_failed_login (p_email, p_ip_address, p_user_agent) e devolve o mesmo
+401 com os contadores do lockout, para que o lockout progrida igual e o fim
+seja o mesmo 423 — sem oráculo de enumeração de contas.
+
+O lookup de perfil não admite curinga: e-mail com `*` é rejeitado na validação
+(400 uniforme, antes de qualquer lookup/efeito) e o `*` também é escapado no
+padrão ilike, fechando o curinga que o PostgREST aplica em ilike.
+
+Erro de consulta de perfil e e-mail duplicado seguem fail-closed (500), sem
+tocar no GoTrue e sem emitir token. Sem migration: a RPC de igualdade exata
+exigiria migration, fora do escopo do cartão.

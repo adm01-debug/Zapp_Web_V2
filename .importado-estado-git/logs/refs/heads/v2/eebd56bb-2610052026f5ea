@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f25f100adf13b17d7817c9a0c3ce1da9c3bb38f9 Joaquim Ataides <ti@promobrindes.com.br> 1791242773 -0300	branch: Created from dia/2026-10-05
+f25f100adf13b17d7817c9a0c3ce1da9c3bb38f9 9888a09d77dfecc311316d6fc4431fa8fb67776c worker <worker@promobrindes.local> 1791243237 -0300	commit: fix(conexoes): isola identidade de resposta e polling no diálogo de QR Code

@@ -1,0 +1,1 @@
+fix(edge): confirma na ponta do dia que a outbox de IA nao trava a fila e o log essencial nunca lanca

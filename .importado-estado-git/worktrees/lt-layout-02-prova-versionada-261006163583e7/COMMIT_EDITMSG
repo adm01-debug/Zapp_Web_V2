@@ -1,0 +1,12 @@
+docs(reconciliation): registrar prova versionada do LT-LAYOUT-02 (#137)
+
+A prova do achado LT-LAYOUT-02 (dois dos cinco apontamentos do layoutguard
+eram limitacao de analise) tinha ficado so em .tmp/, ignorado pelo git.
+Esta nota registra no repositorio, em arquivo versionado:
+
+- sha256 da evidencia da auditoria (baseline 2e7cf81) e do estado atual;
+- o commit cccf81707, unico que toca o guard depois do baseline;
+- a saida antes/depois de scripts/ui-audit/layout-guard.unit.mjs (4/4);
+- a tabela da PROVA 2 (5 -> 3 apontamentos, 51 -> 52 arquivos).
+
+Sem alteracao de codigo, de TasksModule ou de script do layoutguard.

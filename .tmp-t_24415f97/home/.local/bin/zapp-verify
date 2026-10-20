@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+printf 'zapp-verify   argc=%d argv=<%s>\n' "$#" "$*" >> "${STUB_LOG:?}"
+case "${1:-}" in fast|full) shift;; esac
+NOME="${2:-}"; [ "${NOME#--}" != "$NOME" ] && NOME=""
+if [ -z "$NOME" ]; then
+  printf 'AVISO   %-12s NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)\n' banco_local
+  echo "VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado"
+else
+  printf 'OK      %-12s\n' banco_local
+  echo "VERIFY: VERDE — conjunto $NOME"
+fi
+exit 0

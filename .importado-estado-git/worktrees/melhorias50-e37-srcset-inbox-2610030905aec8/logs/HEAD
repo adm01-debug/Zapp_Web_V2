@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 00186198fbfd39e9534d7ab1996bd7ab280c2f57 Joaquim Ataides <ti@promobrindes.com.br> 1791029152 -0300	
+00186198fbfd39e9534d7ab1996bd7ab280c2f57 00186198fbfd39e9534d7ab1996bd7ab280c2f57 Joaquim Ataides <ti@promobrindes.com.br> 1791029153 -0300	reset: moving to HEAD
+00186198fbfd39e9534d7ab1996bd7ab280c2f57 dd2b00189751a65c74a1153d4d52089b1b1f4ac9 Joaquim Ataides <ti@promobrindes.com.br> 1791034757 -0300	commit: feat(inbox): avatares e anexos usam as variantes do CF Images
+dd2b00189751a65c74a1153d4d52089b1b1f4ac9 60762ce20a30fedb36fd6f6aa52bea37f17fd853 Joaquim Ataides <ti@promobrindes.com.br> 1791034879 -0300	rebase (start): checkout origin/main
+60762ce20a30fedb36fd6f6aa52bea37f17fd853 dd2b00189751a65c74a1153d4d52089b1b1f4ac9 Joaquim Ataides <ti@promobrindes.com.br> 1791034942 -0300	rebase (abort): returning to refs/heads/hermes/melhorias50-e37-srcset-inbox-2610030905aec8
+dd2b00189751a65c74a1153d4d52089b1b1f4ac9 60762ce20a30fedb36fd6f6aa52bea37f17fd853 Joaquim Ataides <ti@promobrindes.com.br> 1791035006 -0300	reset: moving to origin/main

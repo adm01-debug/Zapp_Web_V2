@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 24d62d71031b256f8590067fae660ee76dd69a97 Joaquim Ataides <ti@promobrindes.com.br> 1791206360 -0300	branch: Created from dia/2026-10-05
+24d62d71031b256f8590067fae660ee76dd69a97 3f921dd994c2a6e882438de688d85c43f6bc5f77 Joaquim Ataides <ti@promobrindes.com.br> 1791207580 -0300	commit: fix(multiplix): resolve nao devolve metadados de empresa fora do escopo

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489650 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489651 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 695f301470d979df1a0cbd24cc29bb63d5ae0479 Joaquim Ataides <ti@promobrindes.com.br> 1791491684 -0300	commit: fix(edge-functions): health-check por instancia usa a credencial de cada conexao (SL-053)
+695f301470d979df1a0cbd24cc29bb63d5ae0479 681e56040b603cada7d218de025680fbebfa5113 Joaquim Ataides <ti@promobrindes.com.br> 1791491921 -0300	commit: test(edge-functions): prova o ramo de leitura de credencial que falha (SL-053)

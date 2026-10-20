@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791534002 -0300	
+09cac15983207293252c5a4602e8b347bd4b8c91 09cac15983207293252c5a4602e8b347bd4b8c91 Joaquim Ataides <ti@promobrindes.com.br> 1791534003 -0300	reset: moving to HEAD
+09cac15983207293252c5a4602e8b347bd4b8c91 471b718ba2c12f0ce4e0f921dc4f9b93cd73a7dd Joaquim Ataides <ti@promobrindes.com.br> 1791534083 -0300	commit: chore(talk-x): traz para a base o hook unico do ciclo de vida e o teste (TL-054A2)
+471b718ba2c12f0ce4e0f921dc4f9b93cd73a7dd 94a7323f59f8bd555a5f7a9720cd51b323bd1e2c Joaquim Ataides <ti@promobrindes.com.br> 1791534338 -0300	commit: refactor(talk-x): passo de revisao do wizard usa o hook unico (X051)
+94a7323f59f8bd555a5f7a9720cd51b323bd1e2c 1f9252a86502ac1b3ce1e1bce704508d8ee420fb Joaquim Ataides <ti@promobrindes.com.br> 1791559848 -0300	rebase (start): checkout dia/2026-10-09
+1f9252a86502ac1b3ce1e1bce704508d8ee420fb 50af2f64675a9a938e1861185b38033d25af84fd Joaquim Ataides <ti@promobrindes.com.br> 1791559909 -0300	rebase (continue): chore(talk-x): traz para a base o hook unico do ciclo de vida e o teste (TL-054A2)
+50af2f64675a9a938e1861185b38033d25af84fd 26661d588de0ceb6e5a99a6af67f20dfceaa3e86 Joaquim Ataides <ti@promobrindes.com.br> 1791559909 -0300	rebase (pick): refactor(talk-x): passo de revisao do wizard usa o hook unico (X051)
+26661d588de0ceb6e5a99a6af67f20dfceaa3e86 26661d588de0ceb6e5a99a6af67f20dfceaa3e86 Joaquim Ataides <ti@promobrindes.com.br> 1791559909 -0300	rebase (finish): returning to refs/heads/v2/t-95caf8cf-26100905204b77
+26661d588de0ceb6e5a99a6af67f20dfceaa3e86 90be9d8d6304925444de1d1b038be05df9de2ede Joaquim Ataides <ti@promobrindes.com.br> 1791560051 -0300	commit (amend): refactor(talk-x): passo de revisao do wizard usa o hook unico (X051)

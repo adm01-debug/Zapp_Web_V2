@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791513374 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 6f9186bd160563047fdfb768709c0111c11670b5 Joaquim Ataides <ti@promobrindes.com.br> 1791513515 -0300	commit: fix(talk-x): Criar o bucket privado `talkx-media` e aceitar caminho (TL-057)

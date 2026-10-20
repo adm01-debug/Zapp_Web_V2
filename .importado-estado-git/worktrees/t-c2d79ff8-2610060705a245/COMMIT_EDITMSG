@@ -1,0 +1,14 @@
+fix(qa): prova de orcamento/rate limit exige veredito medido (#359)
+
+R2-INF-012: o provador terminava com FIM_PROVA=ok sem conferir nada — tres erros
+HTTP ou uma falha de transporte 'passavam'. Agora o script mede transporte, codigo
+HTTP, corpo e o registro de consumo CORRELACIONADO ao run (function_name + created_at
+>= RUN_INICIO, nunca totais globais) e emite FIM_PROVA=aprovado|inconclusivo|falha
+com exit 0|2|1; 429 conta como prova do limite, nao como falha.
+
+ZAPP_SUPABASE_URL passa a ser obrigatorio: a URL do projeto deixa de ficar embutida
+no script e vem do arquivo de escopo.
+
+Teste novo em scripts/ci (rodado por 'node --test scripts/ci/*.unit.mjs') executa o
+script de verdade contra um servidor local: vermelho no script antigo (1/7), verde
+no novo (7/7).

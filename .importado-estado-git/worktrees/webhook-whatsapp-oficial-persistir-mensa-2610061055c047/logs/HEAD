@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 bee70440c4e23db21430212a22af80d0d5d8572e Joaquim Ataides <ti@promobrindes.com.br> 1791294937 -0300	
+bee70440c4e23db21430212a22af80d0d5d8572e bee70440c4e23db21430212a22af80d0d5d8572e Joaquim Ataides <ti@promobrindes.com.br> 1791294937 -0300	reset: moving to HEAD
+bee70440c4e23db21430212a22af80d0d5d8572e 9b37e9a59e197ec28ed10dd54e97f0a6fca449fd Joaquim Ataides <ti@promobrindes.com.br> 1791296118 -0300	commit: fix(whatsapp-webhook): persistir inbound via RPC e status monotonico por conta
+9b37e9a59e197ec28ed10dd54e97f0a6fca449fd 699dfe72b8b2f886ce8b6079f782bdf9a518b620 Joaquim Ataides <ti@promobrindes.com.br> 1791296768 -0300	commit: fix(whatsapp-webhook): placeholder para body vazio e nao atribuir mensagem sem telefone

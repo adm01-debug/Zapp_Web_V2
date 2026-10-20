@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791554900 -0300	
+1098da5a935929b171674a99b425d6b515fd6072 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791554901 -0300	reset: moving to HEAD
+1098da5a935929b171674a99b425d6b515fd6072 5153ae84808b60a8a046ed1b3a9f3621d0b15c3a Joaquim Ataides <ti@promobrindes.com.br> 1791554912 -0300	cherry-pick: fix(multiplix): render isolado por linha no monitor de destinatarios (F87/TL-046)
+5153ae84808b60a8a046ed1b3a9f3621d0b15c3a e944ee47b36c4e8bb1749a4b770362d39e4c055d Joaquim Ataides <ti@promobrindes.com.br> 1791554912 -0300	cherry-pick: test(multiplix): e2e de responsividade nas 4 viewports do F87 (TL-046)
+e944ee47b36c4e8bb1749a4b770362d39e4c055d 15a28df434c8abb997b9993d8d9848155767650e Joaquim Ataides <ti@promobrindes.com.br> 1791554997 -0300	commit: test(multiplix): prova de render por linha usa mock parcial do modulo real (TL-046)

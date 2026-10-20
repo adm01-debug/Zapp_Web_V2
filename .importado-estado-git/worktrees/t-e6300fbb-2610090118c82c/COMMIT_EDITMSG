@@ -1,0 +1,6 @@
+chore(inbox/chat): registra que o card de produto na mensagem exige a camada de mensageria (SL-200)
+
+Sem commit de codigo: a lacuna nao fecha em 1 camada. O unico produtor real de
+message_type='product' (whatsapp-webhook, Edge Function) descarta o payload do
+produto e o enqueue outbound recusa o tipo 'product' (migration) - os dois
+arquivos estao na lista PROIBIDA do cartao. Prova completa em .tmp/relato.md.

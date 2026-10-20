@@ -1,0 +1,13 @@
+fix(e-mail): registra responsável e critério de desbloqueio da pendência Singu (SL-049)
+
+A pendência nominal 1 (ES-03, aceite do contrato empresarial contra o Singu
+vivo) tinha só o motivo ("bloqueio externo"), contrariando a regra de
+fechamento do próprio plano. Passa a citar responsável e critério de
+desbloqueio.
+
+O validador determinístico da matriz OTH-013 (scripts/ci/matriz-oth013-validar.py)
+passa a exigir, na linha de pendência do ES-03, motivo, responsável e
+critério de desbloqueio: falhava antes da correção (vermelho) e passa depois
+(verde), com controle negativo por cláusula removida.
+
+Cartão V2: t_6e869503

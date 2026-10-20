@@ -1,0 +1,7 @@
+fix(auth): política de rede não derruba login por RPC ausente ou geo sem lista (QA5-08)
+
+- RPC resolve_network_policy ausente (42883/PGRST202, deploy fora de ordem)
+  degrada para "permite com defaults" + notice, em vez de 503 em massa;
+- allowlist vazia e país ausente (sem cf-ipcountry) passam a permitir com
+  aviso (geo_empty_allowlist/geo_country_unknown) na migration 20261005111846;
+- bloqueios reais (ip_blocked, país fora da allowlist/blacklist) intactos.

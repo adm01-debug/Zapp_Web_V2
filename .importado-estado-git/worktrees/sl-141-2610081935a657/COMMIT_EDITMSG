@@ -1,0 +1,5 @@
+docs(ci/devops): runbook da revisao de 7 dias pos-go-live (SL-141)
+
+O passo 100 do plano de migracao (revisao de 7 dias: logs, cron, webhooks, custo) e atividade operacional, nao verificavel em codigo. Registra o procedimento e o pina com contrato:
+- docs/runbooks/revisao-7-dias-pos-go-live.md: os 4 eixos do titulo viram secoes com fonte de evidencia real (Edge logs/csp-report/edge_rate_limits, cron.job_run_details, evolution-webhook/hmac/connection_health_logs, usage-guard/searchbox-budget-alert), dono (Joaquim) e perimetro (producao somente leitura, agente nao acessa).
+- tests/contracts/revisao-7-dias-pos-go-live.contract.test.ts: pina os 4 eixos, o dono/perimetro e recusa caminho de repositorio citado que nao existe (contra referencia quebrada).

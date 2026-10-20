@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4877339ccae047a149f483b439f1ff68330cf546 Joaquim Ataides <ti@promobrindes.com.br> 1791313135 -0300	branch: Created from dia/2026-10-06
+4877339ccae047a149f483b439f1ff68330cf546 1689f6a24950e8dc2efb3f534ac0fe17b0d16eab Joaquim Ataides <ti@promobrindes.com.br> 1791313944 -0300	commit: fix(ai-audio): preserva modalidades no audio_stt do OpenRouter

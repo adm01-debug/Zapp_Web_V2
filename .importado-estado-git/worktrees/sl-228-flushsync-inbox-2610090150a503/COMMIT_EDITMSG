@@ -1,0 +1,3 @@
+fix(performance): Aviso flushSync em todo o inbox (vem de dependência) (SL-228)
+
+Investigacao da origem do aviso: nao ha flushSync em src; o aviso vem do React DOM dev, emitido de dentro de dependencias (@tanstack/react-virtual, @floating-ui/react-dom, @radix-ui/react-primitive). Sem mudanca de codigo.

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193655 -0300	branch: Created from dia/2026-10-05
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 85046e911526da42c92ed134c36c4900be5b71d1 Joaquim Ataides <ti@promobrindes.com.br> 1791194371 -0300	commit: fix(calls): ignorar evento tardio da sessão SIP anterior (#75)

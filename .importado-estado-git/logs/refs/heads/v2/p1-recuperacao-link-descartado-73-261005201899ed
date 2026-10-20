@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 161cdf41a6596da5d2295f1ed2b3d8fbff769b8b Joaquim Ataides <ti@promobrindes.com.br> 1791242331 -0300	branch: Created from dia/2026-10-05
+161cdf41a6596da5d2295f1ed2b3d8fbff769b8b c50c1fcc98679d16d4028306742f7b2accd045c1 Joaquim Ataides <ti@promobrindes.com.br> 1791243567 -0300	commit: fix(auth): aprovação de reset envia e-mail real e registra estado de entrega
+c50c1fcc98679d16d4028306742f7b2accd045c1 e5df71c786f2529d50d1f8dcf8e9edbd21d5d548 Joaquim Ataides <ti@promobrindes.com.br> 1791244287 -0300	commit (amend): fix(auth): aprovação de reset envia e-mail real e registra o estado de entrega

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791317995 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 c528d42f36e95360f710102c1c915fb7e74b2a0f hugo <hugo@zapp.local> 1791319225 -0300	commit: fix(agenda): agenda pede os pendentes da faixa visível, paginados, e expõe erro de leitura

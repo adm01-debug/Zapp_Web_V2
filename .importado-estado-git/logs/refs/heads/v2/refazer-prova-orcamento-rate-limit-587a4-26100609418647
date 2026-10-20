@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 33df2adf85cbf443494e294d1c25be40deacfac9 Joaquim Ataides <ti@promobrindes.com.br> 1791290463 -0300	branch: Created from dia/2026-10-06
+33df2adf85cbf443494e294d1c25be40deacfac9 ef0af491e13bf662cf2bc5085515152c0eb9796f Joaquim Ataides <ti@promobrindes.com.br> 1791290483 -0300	cherry-pick: fix(qa): prova de orcamento/rate limit exige veredito medido (#359)
+ef0af491e13bf662cf2bc5085515152c0eb9796f 6228599e13e9ce2b97c2abd3dd1f64b2a44cf4e9 Joaquim Ataides <ti@promobrindes.com.br> 1791290609 -0300	commit: fix(qa): rejeita leitura de consumo ilegível

@@ -1,0 +1,17 @@
+fix(settings): useUserSettings para de gravar os campos operacionais das abas Horário/Mensagens/Automação (#273)
+
+O payload do upsert de `user_settings` em `saveSettings` reescrevia os 11 campos
+operacionais das abas Horário/Mensagens/Automação mesmo depois de a posse ter
+saído do `user_settings` (por conexão em `business_hours`/`away_messages`; global
+em `global_settings`/`auto_close_config`). O botão "Salvar Alterações"
+(SettingsView) seguia reescrevendo-os — a "persistência da preferência" sem
+executor que o achado aponta.
+
+- Remove do payload: business_hours_enabled/_start/_end, work_days,
+  welcome_message, away_message, closing_message, auto_assignment_enabled,
+  auto_assignment_method, inactivity_timeout, auto_transcription_enabled.
+- Tipo `UserSettings`, defaults, fetch e consumidores ficam como estão.
+- Comentário no código registra a posse de cada grupo (por conexão / global).
+- Teste novo prova que nenhum dos 11 campos vai no upsert e que os campos
+  remanescentes (theme/language/compact_mode/tts_*/browser_notifications_enabled)
+  continuam indo com o valor atualizado. Linhas de som (#271) intactas.

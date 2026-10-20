@@ -1,0 +1,14 @@
+fix(a11y): botao de acessibilidade se basta sem TooltipProvider externo
+
+A entrega anterior do Q04 foi recusada: a dica usava Tooltip do Radix sem
+montar o TooltipProvider, e o routeTransitionReducedMotion.test.tsx monta o
+painel REAL sem passar pelo AppProviders — os 6 testes do arquivo morriam com
+"Tooltip must be used within TooltipProvider".
+
+- HighContrastToggle.tsx: o AccessibilitySettings passa a montar o proprio
+  TooltipProvider (mesmo padrao ja usado em EmailChatBubble/EmailChatThread);
+  delayDuration 200 e side="right"/sideOffset 8 seguem iguais aos do botao de
+  tema vizinho, e o aria-label nao muda.
+- teste novo com o nome mais adequado (HighContrastToggle.test.tsx), montando
+  o painel SEM provider externo — a condicao exata da recusa — e provando a
+  dica em hover, em foco, o lado direito e o aria-label.

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321777 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 6ab63f59bee4bb2ecbb5db1e8ae3a89609aaf73e hugo <hugo@hermes.local> 1791321886 -0300	commit: fix(knowledge-base): limpar a busca cancela o temporizador do debounce pendente

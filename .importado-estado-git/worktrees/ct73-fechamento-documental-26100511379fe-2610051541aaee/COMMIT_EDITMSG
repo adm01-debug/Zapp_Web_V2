@@ -1,0 +1,18 @@
+test(catalogo): CT-73 fecha condicionalmente — só com nova medição real < 30 KB
+
+Corrige o ponto da recusa: o invariante do CT-73 deixa de travar o item pendente
+para sempre. Agora o item só pode ficar `[x]`, FEITO/✅ ou com aceite cumprido
+quando o bloco do plano OU a seção do PERF.md registrar uma NOVA medição real —
+com data posterior ao baseline de 02/10/2026 (81,5 KB) e valor medido < 30 KB.
+O próprio teto (`< 30 KB`, com sinal) não conta como medição. Sem essa medição, o
+item continua obrigatoriamente pendente.
+
+- 7 casos (era 4): 3 fixtures em string provam os DOIS lados — fechar sem nova
+  medição falha; fechar com medição real < 30 KB posterior ao baseline passa —
+  mais a fronteira (valor no teto / data do baseline não fecham) e a origem
+  alternativa (medição registrada no PERF.md também autoriza).
+- Teto `< 30 KB` e baseline `81,5 KB` passam a ser invariantes incondicionais.
+- RED/GREEN: contra os docs pré-correção, 3 passam / 4 falham; contra os docs
+  corrigidos, 7/7 passam.
+
+Nenhuma alteração de teto, payload ou produção.

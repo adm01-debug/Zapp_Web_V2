@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791457229 -0300	
+0203871564cbc198c32d6c501cd414e24ddb10ab 0203871564cbc198c32d6c501cd414e24ddb10ab Joaquim Ataides <ti@promobrindes.com.br> 1791457230 -0300	reset: moving to HEAD
+0203871564cbc198c32d6c501cd414e24ddb10ab b266ddb75380547070aab32458d5a2951fab3d65 Joaquim Ataides <ti@promobrindes.com.br> 1791457266 -0300	cherry-pick: test(rls): detectar enfraquecimento por policies ALL
+b266ddb75380547070aab32458d5a2951fab3d65 4d2b062028f41c56a9c2fbdde124890169ea3f5a Joaquim Ataides <ti@promobrindes.com.br> 1791457935 -0300	commit: test(rls): restaura regressivo de DELETE parcial em messages e amplia guarda FOR ALL

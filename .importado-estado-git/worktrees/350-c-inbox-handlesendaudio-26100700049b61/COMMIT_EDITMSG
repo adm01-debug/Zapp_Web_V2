@@ -1,0 +1,3 @@
+fix(inbox): ponte do áudio rejeita a falha em vez de resolver sucesso (#350-C)
+
+handleSendAudio do useRealtimeInbox passa a REJEITAR quando não há contato selecionado e quando ChatService.uploadAudio/sendMessage falha, preservando o erro original mesmo se o refresh da conversa cair; no sucesso resolve true (o valor que o ChatPanel lê para fechar o gravador). Remove os toasts duplicados: o aviso ao usuário é da camada de cima.

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 f6417a8b2b0b01c458637909296539bc80c772e8 Joaquim Ataides <ti@promobrindes.com.br> 1791455854 -0300	
+f6417a8b2b0b01c458637909296539bc80c772e8 f6417a8b2b0b01c458637909296539bc80c772e8 Joaquim Ataides <ti@promobrindes.com.br> 1791455855 -0300	reset: moving to HEAD
+f6417a8b2b0b01c458637909296539bc80c772e8 257c21d9d270e63996f912bc21a81795a1c14484 Joaquim Ataides <ti@promobrindes.com.br> 1791455862 -0300	cherry-pick: test(e2e): telefonia — diff restrito à spec e guarda de rede no afterEach
+257c21d9d270e63996f912bc21a81795a1c14484 83b35a00940fbc9bb0369fe84911e0b8c1e04928 Joaquim Ataides <ti@promobrindes.com.br> 1791455862 -0300	cherry-pick: test(e2e): projeto dedicado chromium-telefonia executa a spec hermética sem sessão salva
+83b35a00940fbc9bb0369fe84911e0b8c1e04928 289af2fa9475ebc0d5ba38bc4b571a28bfc32ac3 Joaquim Ataides <ti@promobrindes.com.br> 1791455924 -0300	commit: test(e2e): telefonia — guarda de rede com padrão genérico (sem o identificador do projeto)

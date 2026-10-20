@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791245893 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791245893 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 cacd428832aa40693daaf5e53355a3d58860181c Joaquim Ataides <ti@promobrindes.com.br> 1791246106 -0300	cherry-pick: fix(admin): carrega roles e perfis sem embed PostgREST inexistente
+cacd428832aa40693daaf5e53355a3d58860181c 1f257908d2015e8428924c7848f5e6fd3d9be3dd Joaquim Ataides <ti@promobrindes.com.br> 1791246818 -0300	commit: fix(admin): exibir erro ao carregar roles em vez de listas vazias

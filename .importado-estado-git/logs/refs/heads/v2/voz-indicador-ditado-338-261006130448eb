@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72946d5e8d0a9f3977526ec99bca88f406914b91 Joaquim Ataides <ti@promobrindes.com.br> 1791302669 -0300	branch: Created from dia/2026-10-06
+72946d5e8d0a9f3977526ec99bca88f406914b91 ead1205875911513eb1c869f703de27b3ce9f076 Íris (Hermes) <iris@hermes.local> 1791302807 -0300	commit: fix(voz): evento final do ditado anterior nao desliga o indicador da nova sessao (#338)

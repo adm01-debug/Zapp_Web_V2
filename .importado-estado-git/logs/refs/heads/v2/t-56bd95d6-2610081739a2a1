@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491972 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc b6114dc2a8a647bc55debc7205f00be8bb7d2700 Joaquim Ataides <ti@promobrindes.com.br> 1791492605 -0300	commit: fix(ci): guard da protecao da main passa a conferir as aprovacoes exigidas (SL-032)

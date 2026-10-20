@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791201017 -0300	branch: Created from dia/2026-10-05
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 c59dcc3980f7141ceeb1ba2d84be2d6526b2b176 Joaquim Ataides <ti@promobrindes.com.br> 1791201035 -0300	cherry-pick: test(dashboard): prova fronteira RLS real das RPCs e gate de liberação
+c59dcc3980f7141ceeb1ba2d84be2d6526b2b176 a16d13578c7d85f64500d9c38d6bfe22d1461596 Joaquim Ataides <ti@promobrindes.com.br> 1791201035 -0300	cherry-pick: test(dashboard): extrai helpers/policies das migrations e valida contra pg_policies
+a16d13578c7d85f64500d9c38d6bfe22d1461596 df5cd607fd82ec88e5652bbc43e54e4b0061ce96 Joaquim Ataides <ti@promobrindes.com.br> 1791202035 -0300	reset: moving to df5cd607fd82ec88e5652bbc43e54e4b0061ce96
+df5cd607fd82ec88e5652bbc43e54e4b0061ce96 191bec59d1f3f0a44323a95b56172906883f1802 Joaquim Ataides <ti@promobrindes.com.br> 1791202035 -0300	commit: test(dashboard): endurece guarda de RLS e cenarios de KPI

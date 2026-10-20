@@ -1,0 +1,5 @@
+fix(sip): desconectar devolve o UA encerrado e permite reconectar
+
+disconnect() parava o transporte e voltava para idle, mas mantinha uaRef/registererRef apontando para o UserAgent encerrado. O connect seguinte morria na guarda `if (uaRef.current) return`, entao a sequencia desconectar -> reconectar terminava sem nova conexao (R2-CALL-004).
+
+Os refs da sessao encerrada agora saem no finally do teardown, inclusive quando unregister/stop estoura; um UA que tenha nascido durante o teardown nao e descartado pela limpeza.

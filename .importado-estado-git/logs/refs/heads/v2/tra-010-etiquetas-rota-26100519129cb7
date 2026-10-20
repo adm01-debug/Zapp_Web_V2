@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 66727f895120d1457a60c4b77b7bc59b3f4626dc Joaquim Ataides <ti@promobrindes.com.br> 1791238373 -0300	branch: Created from dia/2026-10-05
+66727f895120d1457a60c4b77b7bc59b3f4626dc 8d6e4dd4758eefeff3e55c9d94addea3a792dafd Joaquim Ataides <ti@promobrindes.com.br> 1791239205 -0300	commit: fix(rotas): redireciona view=tags removido e limpa resíduos da remoção de Etiquetas

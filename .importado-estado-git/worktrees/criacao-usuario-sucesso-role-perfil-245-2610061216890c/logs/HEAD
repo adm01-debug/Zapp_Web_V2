@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299812 -0300	
+7e3d30cb5be2c801088f200d54191d09416ae334 7e3d30cb5be2c801088f200d54191d09416ae334 Joaquim Ataides <ti@promobrindes.com.br> 1791299813 -0300	reset: moving to HEAD
+7e3d30cb5be2c801088f200d54191d09416ae334 1f7979d36bb629dd4cc190c43e9fde009e576f34 Joaquim Ataides <ti@promobrindes.com.br> 1791301043 -0300	commit: fix(create-user): responde erro e compensa usuário quando escrita dependente falha (#245)
+1f7979d36bb629dd4cc190c43e9fde009e576f34 cef5de53a99bf7c385fc6eeee0a1671d6010657e Joaquim Ataides <ti@promobrindes.com.br> 1791301250 -0300	commit: fix(create-user): compensacao apaga a conta Gmail antes do deleteUser (#245)

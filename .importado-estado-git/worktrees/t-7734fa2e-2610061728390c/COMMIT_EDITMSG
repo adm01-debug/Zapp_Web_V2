@@ -1,0 +1,12 @@
+test(db): alinha a prova da ACL de midia WhatsApp ao contrato sem messages.media_url (R2-DB-022 B1)
+
+A suite rls_whatsapp_media_select_via_messages.sql exigia a policy removida
+"whatsapp media readable via visible message" e um predicado consultando messages —
+contrato revogado por 20261006175251_r2_db_022_storage_acl.sql. Passa a travar a
+ausencia dessa policy e a proibir qualquer policy SELECT de storage.objects que
+autorize por messages.media_url ou por join em public.messages, validando o locator
+canonico (foldername[1] = contact_id visivel) + admin/supervisor.
+
+Nova prova descartavel (PostgreSQL 17, migrations reais, papel real sem BYPASSRLS):
+bloco A reproduz a forja como usuario autenticado (defeito), bloco B prova o contrato
+com a migration aplicada. Vermelha sem a migration / com a policy removida recriada.

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791498956 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe 829d1091196c9382cd67cb8b70486c2a7c7cbd00 Joaquim Ataides <ti@promobrindes.com.br> 1791499416 -0300	commit: perf(bundle): tira o framer-motion do skip-link (SL-103)

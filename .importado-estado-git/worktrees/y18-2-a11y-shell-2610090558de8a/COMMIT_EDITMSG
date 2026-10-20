@@ -1,0 +1,11 @@
+fix(a11y): menu do celular, painéis de notificações e Skins acessíveis (Y18-2)
+
+SHELL-03: aria-label no botão Sair do rodapé do menu do celular.
+SHELL-04: nome acessível na seta de voltar das Skins (o fechar do painel de
+notificações do celular já tinha sido corrigido no commit 3692aab78).
+SHELL-07: aria-labelledby no PopoverContent do desktop apontando para o título.
+SHELL-08: painel de notificações do celular vira diálogo (role/aria-modal/
+aria-labelledby), h3 -> h2 e foco inicial dentro do painel.
+SHELL-09: selos das Skins e iniciais do avatar do menu usam o par de TEXTO
+--primary-text (o preenchimento não muda) e os títulos de seção usam
+muted-foreground sem alfa.

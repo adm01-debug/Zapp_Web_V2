@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211902 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211903 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f c05bbbcdcd13ccbb0a64d33fa423a5d1585b749b Joaquim Ataides <ti@promobrindes.com.br> 1791211934 -0300	cherry-pick: fix(inbox): transferência da sidebar persiste evento+nota e rejeita em falha (#88)
+c05bbbcdcd13ccbb0a64d33fa423a5d1585b749b 07837fed0f9c673b5d28b4cb1fa0d6a4b11211ee Joaquim Ataides <ti@promobrindes.com.br> 1791212196 -0300	commit: fix(inbox): falha no evento de transferencia resolve com aviso distinto (#88)
+07837fed0f9c673b5d28b4cb1fa0d6a4b11211ee c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791213089 -0300	reset: moving to c59d333a0
+c59d333a084df35e69ac5b87318e75495a9c226f c8e50b6c039676e0445617c14c33ca7f114abcbd Joaquim Ataides <ti@promobrindes.com.br> 1791213103 -0300	commit: fix(inbox): transferência da sidebar grava evento com nota e trata falha parcial (#88)

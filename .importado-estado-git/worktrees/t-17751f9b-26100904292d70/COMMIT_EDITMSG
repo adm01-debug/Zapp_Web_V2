@@ -1,0 +1,30 @@
+fix(talk-x): Tela 12: montar "Ações da campanha", "Configurações atuais" e a aba Configurações (TL-161)
+
+X154: o card de ações sai da faixa horizontal e vira tracking/TalkXCampaignActionsCard.tsx,
+com os botões empilhados (Pausar, Cancelar campanha, Editar Limites, Ver Monitor ao Vivo) e o
+bloco "Configurações Atuais" (limite por minuto, horário, dias e DND — linha sem coluna no
+banco não renderiza, A9). O modal de limites vai para tracking/TalkXLimitsDialog.tsx mantendo
+as funções de X006 (segundos na tela, milissegundos no payload da RPC). A aba Configurações
+mostra a conexão pelo nome e número, nunca o UUID, e ganha fuso e dias.
+
+Verificação: npx vitest run src/components/talkx/__tests__ -> 37 arquivos, 252 testes, exit 0;
+typecheck-rapido/tipos.sh -> novas=0; lint-ratchet --staged -> novas=0; zapp-verify . --rapido
+-> VERDE SEM BANCO.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 9556878eb fix(talk-x): Tela 12: montar "Ações da campanha", "Configurações atuais" e a aba Configurações (TL-161)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-17751f9b-26100904292d70' on '1098da5a9'.
+#
+# Changes to be committed:
+#	modified:   src/components/talkx/TalkXCampaignRunning.tsx
+#	new file:   src/components/talkx/__tests__/TalkXCampaignActionsCard.test.tsx
+#	new file:   src/components/talkx/__tests__/TalkXLimitsDialog.test.tsx
+#	new file:   src/components/talkx/tracking/TalkXCampaignActionsCard.tsx
+#	new file:   src/components/talkx/tracking/TalkXLimitsDialog.tsx
+#	new file:   src/components/talkx/tracking/talkxCampaignRules.ts
+#

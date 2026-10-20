@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562695 -0300	
+12e407210db0ea4d9f817618d30848304ca932d5 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562696 -0300	reset: moving to HEAD
+12e407210db0ea4d9f817618d30848304ca932d5 ffa2014c40071ee102c697e1a73a01c99c7253f0 workersql <workersql@hermes.local> 1791563197 -0300	commit: fix(db): messages nao aceita status/carimbos de entrega nem reescrita do texto do cliente (SEC-RLS-01)
+ffa2014c40071ee102c697e1a73a01c99c7253f0 5918df2f8d77753ba1e0b165af0287764bd8aa19 workersql <workersql@hermes.local> 1791563946 -0300	commit (amend): fix(db): messages nao aceita status/carimbos de entrega nem reescrita do texto do cliente (SEC-RLS-01)

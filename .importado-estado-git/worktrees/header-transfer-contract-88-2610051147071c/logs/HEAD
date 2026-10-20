@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211647 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211648 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f 5beecaa9a477c35a22942f76edc6f53e71ce26fb Joaquim Ataides <ti@promobrindes.com.br> 1791211659 -0300	cherry-pick: fix(inbox): chat repassa queueId, grava evento de transferência e rejeita em erro (#88)

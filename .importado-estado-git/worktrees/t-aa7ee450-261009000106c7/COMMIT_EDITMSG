@@ -1,0 +1,1 @@
+fix(ci/devops): Coordenar checkout local com outro agente e preservar objetos recuperáveis (SL-134)

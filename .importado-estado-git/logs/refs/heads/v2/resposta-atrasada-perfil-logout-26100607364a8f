@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6f752a05709f2ff19eac17aefc662e3d631e21ce Joaquim Ataides <ti@promobrindes.com.br> 1791283014 -0300	branch: Created from dia/2026-10-06
+6f752a05709f2ff19eac17aefc662e3d631e21ce 2077daac7f4e1e69e6c136679bc9f57c001f539e Joaquim Ataides <ti@promobrindes.com.br> 1791283020 -0300	cherry-pick: fix(auth): descarta resposta de perfil de identidade antiga apos logout ou troca de usuario

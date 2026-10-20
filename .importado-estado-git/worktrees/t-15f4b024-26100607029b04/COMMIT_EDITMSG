@@ -1,0 +1,12 @@
+fix(ci): inventario de testes passa a cobrir as suites Node de scripts/ (#360)
+
+O check-test-inventory so olhava .test.ts e .test.sh: sete suites Node
+(scripts/catalog, scripts/lib, scripts/qa, scripts/team-chat-db-validate e
+scripts/ui-audit) rodam por fora dos globos do CI e o verificador dizia OK.
+
+Agora todo caminho/globo de suite Node citado em um bloco `run:` de qualquer
+workflow conta como coberto (linha comentada dentro do bloco nao conta); o que
+nao aparece em bloco nenhum precisa estar na ALLOWLIST_NODE com justificativa.
+
+Teste: scripts/ci/check-test-inventory.unit.mjs (vermelho antes: o import das
+funcoes novas falhava e o verificador antigo ignorava as sete suites).

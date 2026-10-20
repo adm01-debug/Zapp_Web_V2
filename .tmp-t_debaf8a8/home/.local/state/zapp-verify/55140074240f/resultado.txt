@@ -1,0 +1,7 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: functions|f:accept_department_invite(p_code text); indexes|sonda_cartao.sonda_cartao_pkey
+VERIFY: VERMELHO em banco_local (0s)

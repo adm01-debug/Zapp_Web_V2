@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a Joaquim Ataides <ti@promobrindes.com.br> 1791351738 -0300	branch: Created from dia/2026-10-07
+2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a 08159c0f5a38ed2b69e740a5c3ced8f9b1ca3814 Joaquim Ataides <ti@promobrindes.com.br> 1791351749 -0300	cherry-pick: fix(talkx): aceita origem webhook e aplica os defaults da conversão (#210)
+08159c0f5a38ed2b69e740a5c3ced8f9b1ca3814 845aa9be9d05dd8d1192d363f2f1e75614073a43 Joaquim Ataides <ti@promobrindes.com.br> 1791353851 -0300	commit: fix(talkx): defaults da conversao por NULL explicito sem afrouxar a lista de origens (#210)
+845aa9be9d05dd8d1192d363f2f1e75614073a43 2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a Joaquim Ataides <ti@promobrindes.com.br> 1791353940 -0300	reset: moving to HEAD~2
+2a9f0f6375e2f38b6e5219bb3e94ce53632b9b0a aa4df235295457d21ea09a821983e633b25b5c4f Joaquim Ataides <ti@promobrindes.com.br> 1791353940 -0300	commit: fix(talkx): defaults da conversao por NULL explicito sem afrouxar a lista de origens (#210)

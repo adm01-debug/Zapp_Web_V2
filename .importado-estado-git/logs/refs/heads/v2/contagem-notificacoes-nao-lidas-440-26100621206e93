@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f8309fb2679055122550ca345e0a90edf6e34853 Joaquim Ataides <ti@promobrindes.com.br> 1791332457 -0300	branch: Created from dia/2026-10-06
+f8309fb2679055122550ca345e0a90edf6e34853 693d43e2943ba5d39d47e22d7e7fc403f4927c3f Joaquim Ataides <ti@promobrindes.com.br> 1791333173 -0300	commit: fix(notificacoes): deriva contagem de nao lidas da lista reconciliada (#440)

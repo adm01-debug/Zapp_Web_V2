@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "pdf-viewer@synced": false,
+    "operations@synced": false,
+    "engineering@synced": false,
+    "design@synced": false,
+    "human-resources@synced": false,
+    "legal@synced": false,
+    "productivity@synced": false,
+    "sales@synced": false,
+    "small-business@synced": false,
+    "product-management@synced": false,
+    "bio-research@synced": false,
+    "marketing@synced": false,
+    "customer-support@synced": false,
+    "finance@synced": false,
+    "enterprise-search@synced": false,
+    "data@synced": false
+  }
+}

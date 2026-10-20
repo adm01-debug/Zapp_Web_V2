@@ -1,0 +1,3 @@
+test(db): trava da ACL de midia pega join em messages sem schema e --sem-acl so aceita o vermelho esperado (R2-DB-022 B1)
+
+O deparse de pg_policies.qual nao qualifica o schema (FROM messages m, FROM (messages m JOIN contacts c ...)) e cita funcoes reservadas com aspas ("right", "substring"); o filtro T2 (no .sql) e o bloco (6) (no .test.sh) passam a usar \m(from|join)\s+\(?(public\.)?messages\M e "?X"?\(, sem casar audio-messages. Novo BLOCO C prova no container que uma policy SELECT dos buckets do contrato com EXISTS/JOIN em messages sem media_url deixa T2 vermelho. O modo --sem-acl so aceita o vermelho esperado se o log trouxer 'FALHOU: A enxerga o objeto canonico de B'; erro de sintaxe/objeto ausente sai 1 sem [OK].

@@ -1,0 +1,22 @@
+test(calls): dubla o realtime nas provas do IncomingCallAlert
+
+Os testes do alerta renderizavam `IncomingCallAlert` sem dublar o realtime e o
+`useTerminoRemoto` (nao mockado) assinava `public.calls` pelo cliente de PRODUCAO
+fixo em `src/integrations/supabase/client.ts`, abrindo WebSocket REAL para
+`wss://tnnnlkbymytvtqngbbqh.supabase.co/realtime/v1/websocket`. A guarda de rede de
+`src/test/setup.ts` so troca o `fetch` — o WebSocket passa direto.
+
+Quando o socket conecta (inclusive depois do teardown), o `dispatchEvent(new
+Event(...))` do undici estoura `ERR_INVALID_ARG_TYPE` ("The \"event\" argument must
+be an instance of Event. Received an instance of Event"), vira "Uncaught Exception"
+e o vitest sai 1: o passo `testes` de `zapp-verify full .` fechava VERMELHO com
+0 testes falhando.
+
+Dubla `channel`/`removeChannel` nos 2 arquivos que renderizam o alerta com `callId`
+(IncomingCallAlert.provider e IncomingCallAlert.ringtone), o mesmo padrao de
+`src/components/inbox/__tests__/MediaVolume.test.tsx`.
+
+Prova: sem o reparo, `Errors 1 error` + exit 1 com 0 testes falhando (alerta montado
+e com teardown + conexao pendente); com o reparo, `PROBE_WS_URLS=[]` e `Errors 0`;
+pasta `calls/__tests__` (21 arquivos) sob carga artificial: 168 passed, `Errors 0`.
+Sem `--dangerouslyIgnoreUnhandledErrors`, sem subir `testTimeout`.

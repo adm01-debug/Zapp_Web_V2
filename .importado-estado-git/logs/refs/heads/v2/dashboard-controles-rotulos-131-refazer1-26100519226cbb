@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 48001a459f82ace6e4c72114e3d3205f1efba9a6 Joaquim Ataides <ti@promobrindes.com.br> 1791238934 -0300	branch: Created from dia/2026-10-05
+48001a459f82ace6e4c72114e3d3205f1efba9a6 80cdf2b2c1dfe22e4ffd107b115e87f9a15f201f Joaquim Ataides <ti@promobrindes.com.br> 1791238942 -0300	cherry-pick: fix(dashboard): liga controles e rotulos aos dados calculados (DASH-CONTROLS-001)
+80cdf2b2c1dfe22e4ffd107b115e87f9a15f201f 1da6db7b1b107637e8a9506ee58b78f656d29ac1 Joaquim Ataides <ti@promobrindes.com.br> 1791239243 -0300	commit: fix(dashboard): cobre classes de sentimento nos insights

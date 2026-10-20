@@ -1,0 +1,18 @@
+feat(edge): circuito por provedor no despacho de IA (IA-050)
+
+Falhas consecutivas do mesmo provedor na janela do ledger (ai_usage_logs)
+abrem o circuito: a tentativa e bloqueada sem fetch com 503/CIRCUIT_OPEN
+explicito. Passado o cooldown, a meia-abertura admite uma sonda atomica via
+edge_rate_limits/ai_rate_limit_hit; sucesso fecha, fracasso reabre.
+
+Estado derivado do ledger existente (sem migration, sem subsistema novo,
+conforme IA-007). O bloqueio grava status 'circuit_open' — nao e falha do
+provedor nem consumo pago. O circuito nunca escreve ai_providers.is_active:
+desligar a capacidade segue decisao humana e nao impede o atendimento.
+
+Prova: supabase/functions/_shared/ai-circuit.test.ts (vermelho antes, verde
+depois; suite _shared 569/569, contrato do despacho 33/33). Claims dos docs
+de IA corrigidos para refletir a entrega sem confundir degradacao honesta
+com abertura de circuito.
+
+(cherry picked from commit 82d6017fe16ceb301f455c426482364ab1e86048)

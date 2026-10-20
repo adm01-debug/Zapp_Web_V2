@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d279c795feba69022b6603c79169c914886901fb Joaquim Ataides <ti@promobrindes.com.br> 1791222533 -0300	
+d279c795feba69022b6603c79169c914886901fb d279c795feba69022b6603c79169c914886901fb Joaquim Ataides <ti@promobrindes.com.br> 1791222534 -0300	reset: moving to HEAD
+d279c795feba69022b6603c79169c914886901fb 26880f3b1595d860a37c757e644679d646dd8521 Joaquim Ataides <ti@promobrindes.com.br> 1791222541 -0300	cherry-pick: fix(chatbot-l1): selecionar flow e histórico pela conexão da mensagem
+26880f3b1595d860a37c757e644679d646dd8521 1396fdc101a440c8cd6ed9fface3f1d9dbeb03d2 Joaquim Ataides <ti@promobrindes.com.br> 1791222905 -0300	commit: fix(chatbot-l1): exigir conexão para flow e histórico

@@ -1,0 +1,3 @@
+fix(reconciliation): atestar HEAD e hashes das fontes nos probes transversal, other e volume
+
+Os tres probes aceitavam RECONCILIATION_REPO e rotulavam baseline_commit fixo sem conferir HEAD nem os bytes executados. Agora atestam HEAD + SHA-256 de cada fonte antes de ler/importar (Provenance refusal em divergencia), separam esperado/observado/codigo adaptado, bloqueiam a rede antes da carga do codigo e medem network_requests em vez de declarar 0 (R2-INF-015, #362).

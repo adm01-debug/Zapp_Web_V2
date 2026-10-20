@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 d572c447dfea8aa4d924f19c51d8d349a445054a Joaquim Ataides <ti@promobrindes.com.br> 1791484307 -0300	
+d572c447dfea8aa4d924f19c51d8d349a445054a d572c447dfea8aa4d924f19c51d8d349a445054a Joaquim Ataides <ti@promobrindes.com.br> 1791484308 -0300	reset: moving to HEAD
+d572c447dfea8aa4d924f19c51d8d349a445054a d572c447dfea8aa4d924f19c51d8d349a445054a Joaquim Ataides <ti@promobrindes.com.br> 1791484500 -0300	reset: moving to HEAD
+d572c447dfea8aa4d924f19c51d8d349a445054a 7214a69defaef121207a4ac37887f861534cdd32 Joaquim Ataides <ti@promobrindes.com.br> 1791484503 -0300	cherry-pick: feat(arquivos): filtro por data na aba Arquivos
+7214a69defaef121207a4ac37887f861534cdd32 8fb7c380dde617d3d764e5b4f8632f6d649bb2a4 Joaquim Ataides <ti@promobrindes.com.br> 1791484503 -0300	cherry-pick: fix(arquivos): periodo personalizado so com "Ate" varre as paginas antigas
+8fb7c380dde617d3d764e5b4f8632f6d649bb2a4 11aca378f730c22ff2dc30c454bf107f54a4b0a7 Joaquim Ataides <ti@promobrindes.com.br> 1791484706 -0300	commit: fix(arquivos): conta figurinhas nas contagens do periodo

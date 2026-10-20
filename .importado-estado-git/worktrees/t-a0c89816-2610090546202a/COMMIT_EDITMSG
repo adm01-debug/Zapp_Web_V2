@@ -1,0 +1,7 @@
+feat(talkx): KPIs da biblioteca de segmentos pela RPC (TL-135b)
+
+A tela 02 deixa de somar os KPIs no navegador: Total de segmentos, Ativos este
+mes (uso real no mes, mini-barras de 8 meses e variacao contra o mes anterior),
+CRM 360 conectados (com variacao) e Conversao media (% e p.p., com o estado
+'Sem dados ainda' abaixo da base minima) vem de talkx_segment_library_stats.
+'Contatos cobertos' sai da biblioteca.

@@ -1,0 +1,6 @@
+fix(send-email): rejeita campos extras do convite e escapa nome no HTML
+
+Corrige os pontos da recusa do t_febada44: schema do convite passa a
+strict() (extras viram 422, não descarte silencioso), teste de conteúdo
+arbitrário agora envia email válido para provar a rejeição, e `name` é
+escapado (& < > " ') antes de interpolar no template.

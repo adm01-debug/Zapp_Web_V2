@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 77354ad042ecac6ae9e334bfafdeae845de885fb Joaquim Ataides <ti@promobrindes.com.br> 1791347390 -0300	
+77354ad042ecac6ae9e334bfafdeae845de885fb 77354ad042ecac6ae9e334bfafdeae845de885fb Joaquim Ataides <ti@promobrindes.com.br> 1791347391 -0300	reset: moving to HEAD
+77354ad042ecac6ae9e334bfafdeae845de885fb d139ca70c57bb06505d080eab667d75c6d824177 Joaquim Ataides <ti@promobrindes.com.br> 1791347401 -0300	cherry-pick: fix(talkx): saude do motor avalia business_hours no fuso proprio e fecha em valor invalido
+d139ca70c57bb06505d080eab667d75c6d824177 474d7b29e444a68a3c3ab785db0dd519d9e68efe Joaquim Ataides <ti@promobrindes.com.br> 1791348277 -0300	commit: fix(talkx): estabiliza teste e valida dias do business_hours

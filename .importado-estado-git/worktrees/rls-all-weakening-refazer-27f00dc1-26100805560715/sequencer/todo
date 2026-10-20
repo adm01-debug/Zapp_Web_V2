@@ -1,0 +1,4 @@
+pick a5507192c test(rls): trazer verificacao de RLS contra o schema real (R2-GOV-003)
+pick decf49026 test(rls): detectar enfraquecimento por policies ALL
+pick 1a119c83d test(rls): validar DELETE de messages em policies ALL
+pick 313fc5aee test(rls): recusar DELETE de messages por ramo permissivo extra

@@ -1,0 +1,23 @@
+fix(talk-x): Trocar leituras com teto fixo por hooks das RPCs, com tempo real e modo degradado (TL-153)
+
+X144 — frente de front. Cria a camada de leitura do acompanhamento do Talk X e
+tira os tetos fixos do monitor:
+
+- useTalkXLiveChannel: UM canal por campanha (talkx_campaigns, talkx_recipients,
+  talkx_campaign_events), invalidação em lote (no máximo 1 passagem por segundo
+  e só das leituras desta campanha), estado live/degraded/offline com polling de
+  10 s (painel) e 15 s (tabela) e reconexão em espera crescente até 30 s.
+- useTalkXMonitorPanel (talkx_monitor_panel), useTalkXRecipientsPage
+  (talkx_campaign_recipients_page, cursor + total), useTalkXCampaignTimeline
+  (talkx_campaign_timeline, cursor + tipos) e useTalkXSegmentProgress
+  (talkx_campaign_segment_progress): contrato de front das RPCs de X140/X141/X142,
+  erro da RPC vira isError (nunca lista vazia ou painel zerado).
+- useTalkXMonitor: leitura do ritmo recortada pela JANELA do gráfico (sem teto de
+  linhas) e série parcial declarada (truncated/total).
+- TalkXLiveMonitor e TalkXCampaignRunning (aba Logs): passam a usar o canal único
+  e o selo "Ao vivo"/"Tempo real indisponível"; o histórico da tela 12 troca o
+  teto fixo pela janela da série.
+
+Testes: 5 arquivos novos (canal, painel, página por cursor, linha do tempo,
+progresso por segmento) + useTalkXMonitor.test.tsx atualizado; 4 testes de
+componente ajustados ao canal único e ao recorte por janela.

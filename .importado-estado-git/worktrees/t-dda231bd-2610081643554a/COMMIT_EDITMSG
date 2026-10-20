@@ -1,0 +1,28 @@
+fix(ci): prova de orcamento nao expoe credencial em argv nem sessao Auth na saida (#358)
+
+Retomada do cartao (#358, R2-INF-011): o commit anterior entrava em conflito com
+dia/2026-10-08 em scripts/qa/prova-orcamento-rate-limit.sh. O conflito foi
+resolvido PRESERVANDO a ponta do dia — a correlacao por RUN_ID do commit
+d5e872903 (x-ai-request-id em cada chamada, leitura de ai_usage_logs filtrada
+por request_id, veredito medido aprovado/inconclusivo/falha) continua inteira —
+e o fix de credenciais foi aplicado por cima dela, com o `veredito()` e o
+`umask 077` preservados. Nenhuma linha da ponta do dia foi perdida.
+
+Defeito (evidencia da auditoria, docs/reconciliation/reaudit/2026-10-03/
+reports/infra/report.md): o corpo do login era montado com `jq --arg` e entregue
+ao curl por `--data`, entao senha e corpo iam para argv de processo; os
+cabecalhos `apikey`/`Authorization` tambem iam em `-H`; e a resposta completa do
+Auth (access_token/refresh_token/user) ficava gravada em `OUT/login.json`.
+
+Agora o corpo do login sai do ambiente via `jq $ENV` e chega ao curl por stdin
+(`--data-binary @-`), os cabecalhos com credencial vivem num `--config` privado
+do curl dentro de um `mktemp -d` removido por trap em EXIT/INT/TERM, e o
+diretorio de saida traz so um resumo redigido do login (`login-resumo.json`).
+
+Prova: `scripts/ci/prova-orcamento-argv-secrets.unit.mjs` executa o roteiro de
+verdade (bash, processo filho) com curl e jq falsos que auditam o proprio argv,
+o stdin e o --config, sem rede. Fica vermelho — pela assercao do defeito — com
+cada um dos 5 mutantes (senha em argv, cabecalhos em argv, sessao no diretorio
+de saida, senha fora do corpo, credencial removida em vez de movida) e verde com
+o roteiro corrigido. As 13 provas ja existentes do roteiro (RUN_ID) seguem
+verdes.

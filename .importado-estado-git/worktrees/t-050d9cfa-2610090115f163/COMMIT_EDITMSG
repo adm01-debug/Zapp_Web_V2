@@ -1,0 +1,11 @@
+fix(multiplix): restaura rigor do contrato de acessibilidade das campanhas
+
+O rebase contra dia/2026-10-09 trouxe `tests/contracts/axe-campanhas.contract.test.ts`
+já ajustado para os dois filtros que viraram Popover (Público/Ramo), mas com asserções
+mais soltas (toContain/regex sem o elemento) do que o original tinha para o SelectTrigger.
+Troca por regex que exige o aria-label no PRÓPRIO elemento gatilho (<Button> para
+Público/Ramo, <SelectTrigger> para UF) — mesma força do contrato anterior, adaptada aos
+novos controles, em vez de só confirmar que a string aparece em algum lugar do arquivo.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

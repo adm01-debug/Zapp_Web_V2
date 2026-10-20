@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 40b49e3f993fa06a1d3c10082a9656e7fed178e5 Joaquim Ataides <ti@promobrindes.com.br> 1791140834 -0300	branch: Created from dia/2026-10-04
+40b49e3f993fa06a1d3c10082a9656e7fed178e5 fcf0ead2e616c8cfeff4d8da59431e36dee52207 Joaquim Ataides <ti@promobrindes.com.br> 1791141526 -0300	commit: fix(hooks): tira proxies, caps e fallbacks dos totais e da ausência de dados (#36)

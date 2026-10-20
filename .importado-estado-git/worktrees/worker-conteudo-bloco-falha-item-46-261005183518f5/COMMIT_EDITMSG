@@ -1,0 +1,28 @@
+fix(multiplix): isola a gravacao do snapshot do catch da resolucao do bloco
+
+Refazer 2 do item #46 (MX02). O commit anterior (preserva escopo e falhas por
+item) colocou `persist_multiplix_item_message_snapshot` DENTRO do try/catch que
+trata a resolucao deterministica do bloco. Uma falha transitoria do RPC passava
+a encerrar o item como 'failed' com o codigo enganoso
+`multiplix_block_resolution_failed` (o erro real, `multiplix_message_snapshot_failed`,
+ficava so concatenado na mensagem) e sem 500 — o item nunca era retomado.
+
+- `multiplix-send/index.ts`: dentro do try/catch ficam SOMENTE `resolveBlockContent`,
+  a derivacao do ativo/pending_media e a montagem do texto (tudo deterministico);
+  a gravacao do snapshot sai para FORA. Falha do RPC volta a subir como
+  `multiplix_message_snapshot_failed` (500, lease vence, item retomavel) e nenhuma
+  chamada conclui o item como 'failed'. Um sinalizador (`persistSnapshot`) preserva
+  a condicao original: so grava quando o texto veio do bloco e nao e vazio.
+- `multiplix-send/index.test.ts`: stub do RPC ganha o modo `snapshotRpcError` e
+  teste novo prova que a falha do snapshot nao conclui o item nem e engolida pelo
+  catch da resolucao (log estruturado + 500 + nenhum complete_multiplix_item).
+
+Sem migration: `multiplix_delivery_items.personalized_message` ja existe (f32a,
+linha 42) e `persist_multiplix_item_message_snapshot` ja grava nela (f32b, linhas
+206 e 225).
+
+Prova: `multiplix-send` 56/56 verde (55 anteriores + 1 novo); `multiplix-dispatch`
+64/64. Vermelho medido: com o `index.ts` do commit anterior o teste novo FALHA —
+item 1 concluido como 'failed' com
+`multiplix_block_resolution_failed: multiplix_message_snapshot_failed: snapshot write failed`
+e resposta 200.

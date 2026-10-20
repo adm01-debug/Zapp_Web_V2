@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323311 -0300	
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323312 -0300	reset: moving to HEAD
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 26ecb3c69343b260448ca8d231792f3293d462c1 Joaquim Ataides <ti@promobrindes.com.br> 1791325288 -0300	commit: fix(db): protege proveniência de messages e corrige caminho de áudio
+26ecb3c69343b260448ca8d231792f3293d462c1 26dd0ef2dbcafd97c0a94141e67686f04000b815 Joaquim Ataides <ti@promobrindes.com.br> 1791325296 -0300	rebase (start): checkout dia/2026-10-06
+26dd0ef2dbcafd97c0a94141e67686f04000b815 90331637630e17cbf6ea405bac8106a433045d90 Joaquim Ataides <ti@promobrindes.com.br> 1791325296 -0300	rebase (pick): fix(db): protege proveniência de messages e corrige caminho de áudio
+90331637630e17cbf6ea405bac8106a433045d90 90331637630e17cbf6ea405bac8106a433045d90 Joaquim Ataides <ti@promobrindes.com.br> 1791325296 -0300	rebase (finish): returning to refs/heads/v2/r2-db-022-provenance-t-d620059f-2610061848c7d1

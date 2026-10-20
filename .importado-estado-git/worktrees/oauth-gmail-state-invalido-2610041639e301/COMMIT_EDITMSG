@@ -1,0 +1,16 @@
+fix(edge): exige e consome state OAuth do Gmail no servidor (R2-COM-009)
+
+Por quê: o retorno OAuth do Gmail prosseguia com state ausente ou inválido —
+a troca do code não verificava tentativa vinculada, abrindo CSRF de vínculo
+de conta (RFC 6749 §10.12). Agora o get-auth-url registra a tentativa por
+usuário (tabela gmail_oauth_states) e o exchange-code a consome atomicamente
+(uso único, expira em 10 min) ANTES de chamar o Google; o cliente aborta o
+retorno sem state/nonce válido e envia o state na troca. Allowlists de
+navegação e a guarda 409 de proprietário preservadas.
+
+Verificação: zapp-verify . --rapido verde; vitest 10 testes novos
+(vermelho→verde), deno test 8 novos (vermelho→verde), contracts 1048,
+mutation test nos guards (todos mortos), semântica do consume provada com
+SQL real no banco local (consume/replay/outro usuário/expirado).
+
+Plano: cartão t_b93c42e4 — item 17 do BACKLOG_VERIFICADO (P1 segurança)

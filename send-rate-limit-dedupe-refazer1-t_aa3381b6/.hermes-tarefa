@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=send-rate-limit-dedupe
+ID=26101313394ee3
+BRANCH=v2/send-rate-limit-dedupe-26101313394ee3
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/send-rate-limit-dedupe-26101313394ee3
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T13:39:12-03:00
+KANBAN=t_499a66ad
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/send-rate-limit-dedupe-26101313394ee3/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101313394ee3
+PRONTO_SHA=15367507ebafc6d36fd3e68801cdb0bf3a1b2613

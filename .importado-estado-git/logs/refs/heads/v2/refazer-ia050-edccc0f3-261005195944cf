@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241149 -0300	branch: Created from dia/2026-10-05
+c773b85ea000696fbcd37c6368f87978de8bebba 0996d7bda8e5e4fbc665ce6011fa01e15bf45721 Joaquim Ataides <ti@promobrindes.com.br> 1791241159 -0300	cherry-pick: feat(edge): circuito por provedor no despacho de IA (IA-050)
+0996d7bda8e5e4fbc665ce6011fa01e15bf45721 fb30e460502655183eeba4bf05b06e06f378cab8 Joaquim Ataides <ti@promobrindes.com.br> 1791241448 -0300	commit: test(edge): provar chave canônica do circuito IA-050
+fb30e460502655183eeba4bf05b06e06f378cab8 ea9626a84f72a48e8f39aa88ae13e18c36ee5997 Joaquim Ataides <ti@promobrindes.com.br> 1791241528 -0300	commit: docs(ia): corrigir cartão da entrega IA-050

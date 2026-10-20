@@ -1,0 +1,1 @@
+fix(edge): devolverPendenciaAOutbox devolve e propaga a falha do reenfileiramento

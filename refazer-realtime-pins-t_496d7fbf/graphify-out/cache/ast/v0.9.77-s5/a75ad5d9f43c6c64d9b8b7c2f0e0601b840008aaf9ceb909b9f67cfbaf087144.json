@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260830150000_gate16_admin_only_write_policies_sql", "label": "20260830150000_gate16_admin_only_write_policies.sql", "file_type": "code", "source_file": "supabase/migrations/20260830150000_gate16_admin_only_write_policies.sql", "source_location": null}], "edges": []}

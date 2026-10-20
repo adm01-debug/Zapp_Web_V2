@@ -1,0 +1,4 @@
+fix(migrações): torna rollback de reactions resiliente a conflito
+
+# Conflicts:
+#	scripts/ci/check-test-inventory.mjs

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e58beff67df277afa73c179058c38190a5dd5d5c Joaquim Ataides <ti@promobrindes.com.br> 1791342707 -0300	branch: Created from dia/2026-10-07
+e58beff67df277afa73c179058c38190a5dd5d5c c4cb8ef10634bae6f610c31b61b4740d7f7cfc2d Joaquim Ataides <ti@promobrindes.com.br> 1791343654 -0300	commit: fix(edge): alerta de rate limit preserva bloqueio permanente

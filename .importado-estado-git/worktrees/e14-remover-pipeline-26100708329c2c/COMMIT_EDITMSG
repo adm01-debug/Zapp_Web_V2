@@ -1,0 +1,15 @@
+refactor(tarefas): remove a entrada Quadro (item de menu, rota pipeline e contrato B7)
+
+O item 'Quadro' do menu (id pipeline) era a mesma tela de Tarefas forçada no
+modo Quadro (contrato B7/etapa 47). A visão Quadro continua existindo como um
+dos três modos de Tarefas.
+
+- navigation.service.ts: item 'pipeline' removido e 'tasks' com layout 'full'
+  (menu primário passa de 11 para 10 itens)
+- ViewRouter.tsx: rota especial 'pipeline' e o import de TASKS_ROUTE_PROPS
+- viewRouteProps.ts: arquivo apagado
+- TasksModule.tsx: props defaultMode/forceMode e a lógica que as lia; o modo
+  inicial agora vem só de 'tasks-mode' salvo (ou Lista)
+- ViewContainer.tsx: comentário do exemplo de view 'full'
+- testes acoplados atualizados (navigation.service.test.ts, TasksModule.test.tsx
+  e contagensReaisVsFiltradas.test.tsx, que também passava as props removidas)

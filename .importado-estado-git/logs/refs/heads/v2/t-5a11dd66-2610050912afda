@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791202330 -0300	branch: Created from dia/2026-10-05
+b58c615056ec3756606163a249e5d8b26352f355 a70cff004b90088c76fd902a4237df30adba54b1 Joaquim Ataides <ti@promobrindes.com.br> 1791202719 -0300	commit: fix(inbox): preserva o id da resposta até o transporte

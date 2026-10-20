@@ -1,0 +1,53 @@
+--- a/supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
++++ b/supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+@@ -87,8 +87,8 @@
+     assert(!READ_ACTIONS.has(action), `${action} não pode estar em READ_ACTIONS`);
+     // Agente sem papel: 403. Admin/supervisor: conserva a operação.
+     const denied = decideControlAuthz(false);
+-    assertEquals(denied.status, 403);
+     assert(!denied.allowed, `${action}: agent deve ser negado`);
++    assertEquals(denied.status, 403);
+     assert(decideControlAuthz(true).allowed, `${action}: admin deve passar`);
+   }
+ });
+@@ -99,7 +99,9 @@
+   assertEquals(classifyEvolutionAction("reconcile-instances"), "control");
+   assert(CONTROL_ACTIONS.has("reconcile-instances"));
+   assert(!READ_ACTIONS.has("reconcile-instances"));
+-  assertEquals(decideControlAuthz(false).status, 403);
++  const negado = decideControlAuthz(false);
++  assert(!negado.allowed);
++  assertEquals(negado.status, 403);
+   assert(decideControlAuthz(true).allowed);
+ });
+ 
+--- a/supabase/functions/_shared/evolution-control-authz.ts
++++ b/supabase/functions/_shared/evolution-control-authz.ts
+@@ -112,9 +112,10 @@
+   'group-participants',
+   // reconcile-instances: compara o que existe no provedor com o que está em
+   // whatsapp_connections e devolve as duas listas divergentes (só nomes, nunca
+-  // tokens). É leitura, mas enxerga a topologia de todas as conexões — fica no
+-  // mesmo escopo de admin/supervisor de list-instances (a tela de Conexões só
+-  // a mostra para admin). NUNCA importa: nenhuma linha é criada.
++  // tokens). É leitura, mas enxerga a topologia de TODAS as conexões — ao
++  // contrário de list-instances, que é read com consumidor no front. Por isso
++  // fica em CONTROL, restrita a admin/supervisor (a tela de Conexões só a
++  // mostra para admin). NUNCA importa: nenhuma linha é criada.
+   'reconcile-instances',
+ ]);
+ 
+--- a/docs/audits/edge-functions-authz-coverage.md
++++ b/docs/audits/edge-functions-authz-coverage.md
+@@ -7,9 +7,9 @@
+ | ai-auth.ts | 27 | 59 | 45.8% |
+ | ai-audio-authz.ts | 37 | 54 | 68.5% |
+ | cron-secret-auth.ts | 29 | 30 | 96.7% |
+-| evolution-control-authz.ts | 137 | 137 | 100.0% |
++| evolution-control-authz.ts | 134 | 134 | 100.0% |
+ | voice-copilot-authz.ts | 25 | 25 | 100.0% |
+-| **Total** | **255** | **305** | **83.6%** |
++| **Total** | **252** | **302** | **83.4%** |
+ 
+ Testes medidos (só estes entram no `deno test` da régua):
+ 

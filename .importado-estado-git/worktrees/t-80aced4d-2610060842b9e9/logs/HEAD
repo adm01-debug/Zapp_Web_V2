@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791286972 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791286973 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 40de25502a3d19a9e7f2eead9b50b118a407ea83 Joaquim Ataides <ti@promobrindes.com.br> 1791287461 -0300	commit: fix(omnichannel): declara canais e regras de roteamento sem executor versionado (#237)

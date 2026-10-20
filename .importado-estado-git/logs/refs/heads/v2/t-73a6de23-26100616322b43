@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791315139 -0300	branch: Created from dia/2026-10-06
+7c26f709642e9058b3f6a016072d9516a70e55f3 07fd81a1c41d79bdfc83d02b15c422998387d124 worker (sql) <workersql@zapp.local> 1791316934 -0300	commit: fix(db): talkx_engine_cron_runs passa a exigir admin/supervisor ou service_role (#118)

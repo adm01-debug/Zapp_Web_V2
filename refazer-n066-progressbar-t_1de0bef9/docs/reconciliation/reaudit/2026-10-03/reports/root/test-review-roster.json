@@ -1,0 +1,783 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "root",
+  "status": "PENDING_READING",
+  "files": [
+    {
+      "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+      "line_start": 1,
+      "line_end": 148,
+      "git_blob_sha": "97de049fe73709a9da7f048c51d8eac33c0735de",
+      "source_sha256": "48f97722f1163d660a2045780e234aef3eeeefaad497bf20cc8756bc7ca9c88d",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
+      "line_start": 1,
+      "line_end": 194,
+      "git_blob_sha": "fcde975678be6389d73cd8b6bd2c33cd371255da",
+      "source_sha256": "75b1b1534591660f92c99e6a33e7c9116a9b1bdac31848e7e143e2ebc9bd9987",
+      "uncontained_bodies_at_allocation": 58,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/groups/__tests__/GroupsView.test.tsx",
+      "line_start": 1,
+      "line_end": 124,
+      "git_blob_sha": "825ddafcb9facef3c04860aedd5cf2170e1874f1",
+      "source_sha256": "9d4c0e6a1f243140e7a9d14e6bd39c83741599bbe09cea46082f03e877f4aa73",
+      "uncontained_bodies_at_allocation": 47,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
+      "line_start": 1,
+      "line_end": 219,
+      "git_blob_sha": "88132d3b58c63bdf18ae3f0c07083d90dde7f422",
+      "source_sha256": "9fe82088749ed6a0dbc22c5db8a016f9c585de0de45d5a3d01907def5bac2b00",
+      "uncontained_bodies_at_allocation": 43,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+      "line_start": 1,
+      "line_end": 173,
+      "git_blob_sha": "5aee084886dd9e6a36c7bd81d512ed942d296c32",
+      "source_sha256": "d2360813130d40680edeb138228602a9893ed0126fe1dfeaceccd7831d2d465f",
+      "uncontained_bodies_at_allocation": 28,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/onboarding/__tests__/OnboardingTour.test.tsx",
+      "line_start": 1,
+      "line_end": 310,
+      "git_blob_sha": "0a7a61f51cba62668147882b7835a25a24a458fc",
+      "source_sha256": "f61a69b03193baf163d3c0a5b74f734311ba8537395635f15ca2622f84e87296",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/helpers/alertBehaviorTestKit.ts",
+      "line_start": 1,
+      "line_end": 123,
+      "git_blob_sha": "5ee23dbaf4344b9ff02c4f99a07fe6f0dfe210ba",
+      "source_sha256": "205cd1b3faec1038dbfa9542e1f58562fd9721c8e9ee957b8044f176a2326764",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/sentimentAlerts.behavior.test.ts",
+      "line_start": 1,
+      "line_end": 153,
+      "git_blob_sha": "b272f04430f8ea2f7c161a8ce94579a53e6c68b4",
+      "source_sha256": "b7604fad0a97c63909a8aae3e0d45e4361482d56f81203657b75bbafa8aaf794",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useApplicableSLA.test.ts",
+      "line_start": 1,
+      "line_end": 276,
+      "git_blob_sha": "5efa3500a81ef5cfee81e4cfb647746eb91e5d85",
+      "source_sha256": "93a259f513d07cc29cbb24ed63d25eb4a5399e0367d15954ce3475562deb67ed",
+      "uncontained_bodies_at_allocation": 25,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useAutoCloseConversations.test.tsx",
+      "line_start": 1,
+      "line_end": 123,
+      "git_blob_sha": "8033a65d65708cb88cd4af8bdba057c5e8aaec77",
+      "source_sha256": "6648d8010e0c8085b3472457f572ef9b04018fad9396add03fe3f3f763aff415",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useBulkActions.test.tsx",
+      "line_start": 1,
+      "line_end": 179,
+      "git_blob_sha": "db4969dc8aa0f58835adbecf73bacefe10bb483b",
+      "source_sha256": "2b2768c294cfb62b846b13e35ff904a736183e4c31d6473f9b4b63e0f28475ab",
+      "uncontained_bodies_at_allocation": 36,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useCRUD.test.tsx",
+      "line_start": 1,
+      "line_end": 169,
+      "git_blob_sha": "d09f6a05b800e3173a2a0889da0623d82a571e85",
+      "source_sha256": "8eee9c2f17d089de2ceccbc3b415246334228341a7d00f2d61442139f0f106dc",
+      "uncontained_bodies_at_allocation": 25,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useChatSearch.test.ts",
+      "line_start": 1,
+      "line_end": 260,
+      "git_blob_sha": "6655f35c1c70303f61469c935c10c1c23a679f97",
+      "source_sha256": "33e6710bc2c37f5f77d5951d221dc9f06541c8e7939a1b9244ef73f851b0076a",
+      "uncontained_bodies_at_allocation": 84,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useGlobalKeyboardShortcuts.test.tsx",
+      "line_start": 1,
+      "line_end": 134,
+      "git_blob_sha": "8bb4c5fd02dba0466e640e439e7b11c4c5c1d75f",
+      "source_sha256": "c0854ae75dcd455c2e454216bb1a17c545adff819a3f32bf4105678ccf6e557f",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useNotificationSettings.test.tsx",
+      "line_start": 1,
+      "line_end": 367,
+      "git_blob_sha": "61df2f3b11a1d59e1f4f6196d9d270d0d71cb5c6",
+      "source_sha256": "ae4f1bedd917d458af7415fbb645139e24b1edb51ba535e5d824af015b3c6735",
+      "uncontained_bodies_at_allocation": 70,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useOfflineCache.test.ts",
+      "line_start": 1,
+      "line_end": 125,
+      "git_blob_sha": "98de6996347136259afa0ec71a1dbe52fa0fb696",
+      "source_sha256": "d176efbcc096edcf02d624d316fe8ac21351dcd1d4793da3be23b09499cc42f8",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useOnboarding.test.tsx",
+      "line_start": 1,
+      "line_end": 150,
+      "git_blob_sha": "fbc1073fa8bcb960a6ef7eec4c3b44b611725740",
+      "source_sha256": "f0de42be44f8836f7426c1f50f701963228e6a182dca58c5713adfea3f6edea3",
+      "uncontained_bodies_at_allocation": 37,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useOnboardingChecklist.test.tsx",
+      "line_start": 1,
+      "line_end": 135,
+      "git_blob_sha": "bfd23b0bbbd5b9dbb29acba134a873d0b4f4b906",
+      "source_sha256": "1bc226ff5538eae5226e5e71cbfa56c60219a24d9f8f12cddd2837e9081e6dcd",
+      "uncontained_bodies_at_allocation": 30,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useQueues.test.tsx",
+      "line_start": 1,
+      "line_end": 122,
+      "git_blob_sha": "81b22e22acabaf186db8449e6fe61aaa62f4836e",
+      "source_sha256": "dceb7e5954ab707eecab7e27b792d2a4c1cd74bebb6973e70f1215a669fc0916",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useQueuesComparison.test.tsx",
+      "line_start": 1,
+      "line_end": 122,
+      "git_blob_sha": "f9037560dfec18d06edbe35ca78f8ea783762a9b",
+      "source_sha256": "11316ce6c70255601f8a0d215444d575b63c42fc1735ae85d063eaa63d627273",
+      "uncontained_bodies_at_allocation": 18,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+      "line_start": 1,
+      "line_end": 156,
+      "git_blob_sha": "1429eaa096f3b5c136ef0fe52a8b360cf75c000e",
+      "source_sha256": "43cc00f7bb7411457695599a0c9753f1336707cf6abbeae61e638fb63073be08",
+      "uncontained_bodies_at_allocation": 51,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useResourcePrefetch.test.ts",
+      "line_start": 1,
+      "line_end": 370,
+      "git_blob_sha": "563c4be7bb9c3cce40ade0e3668b4c4bf1f47c88",
+      "source_sha256": "b7944df65fb43fe35c1b4ffbb4974a114d5439fd3b983932364d762e82acb273",
+      "uncontained_bodies_at_allocation": 110,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useSLACalculation.test.ts",
+      "line_start": 1,
+      "line_end": 172,
+      "git_blob_sha": "fa69a17aae52f96bbf5caeb38531fcbbf696c7b8",
+      "source_sha256": "d0e0a377df187b2be7c63252d697e6b177c67399656ee04fbde4c22a11724f78",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useSLAHistory.test.tsx",
+      "line_start": 1,
+      "line_end": 124,
+      "git_blob_sha": "10ec94529898f664c3b026b9bb37b5ab1c1ce431",
+      "source_sha256": "fe4a1898599c4b7cff9ef00240ab2067e67e0eef833abc2a371cbf170d5ef3aa",
+      "uncontained_bodies_at_allocation": 35,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useSavedFilters.test.tsx",
+      "line_start": 1,
+      "line_end": 127,
+      "git_blob_sha": "0db310dce87a1adab277fe5de2db9175170a9cb3",
+      "source_sha256": "c86b22e69b12aa8658b2c9199d983f364f6f8a3f53af39a9b4811759520158b5",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useSearchHistory.test.ts",
+      "line_start": 1,
+      "line_end": 163,
+      "git_blob_sha": "74a693b486467b10ddb6de887d7b15c748064eb1",
+      "source_sha256": "f0113df30a817299e426e02c272f1bbb8863f43024db67c554175f99b989fd31",
+      "uncontained_bodies_at_allocation": 44,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
+      "line_start": 1,
+      "line_end": 260,
+      "git_blob_sha": "d97c507dbb791daed7bf304b513a8b5c289ba5fe",
+      "source_sha256": "37c780826782dba5fff8ac00c38cddff481807ee7648ea4eb20cdefb2c974ef2",
+      "uncontained_bodies_at_allocation": 44,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts",
+      "line_start": 1,
+      "line_end": 186,
+      "git_blob_sha": "2e6850e5037e005237a181740acde464ce93e6a8",
+      "source_sha256": "ef7176c4ec1cbd7ae8706ae3ca77accaa35b08cfa021b92c45da62919c376b2d",
+      "uncontained_bodies_at_allocation": 42,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useUserRole.test.tsx",
+      "line_start": 1,
+      "line_end": 208,
+      "git_blob_sha": "549509c3ec9c363f970c994f09ab2c332ac351d3",
+      "source_sha256": "caa1e8d7841fb3b795cebb4a3cdeaff8ec39d9d1fb583da3a4cd96806411955f",
+      "uncontained_bodies_at_allocation": 28,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useVisiblePolling.test.tsx",
+      "line_start": 1,
+      "line_end": 136,
+      "git_blob_sha": "f041d9e983a3f4dc586b9468132b7de82b56b5d1",
+      "source_sha256": "9d2e2fc4c5ab49a73b77b44ad8431e7cc2a547461ef4dbe5bd39ffadb54c644f",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useConversationActions.test.ts",
+      "line_start": 1,
+      "line_end": 355,
+      "git_blob_sha": "fc01adb434a208c8fa986996cdc50ea3b761d008",
+      "source_sha256": "7141cc88acd8a87791d56983020a208812910cb72244a8ff27cebbb46b29054b",
+      "uncontained_bodies_at_allocation": 75,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx",
+      "line_start": 1,
+      "line_end": 140,
+      "git_blob_sha": "513f33d12e2656a996c733a6cb6505499d627d4d",
+      "source_sha256": "7850cd33ae9d56b67ce1780e9bff45e3dbd4e599ccb5e68cdb34722906fe1085",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useFilesViewState.test.tsx",
+      "line_start": 1,
+      "line_end": 163,
+      "git_blob_sha": "25f9333d68ddd55a8cb1a2cb25b0e2bfe7e11999",
+      "source_sha256": "de735b430851ea7005cd9ec8b2130f1d0afb2970a3d0365c034cf4ec8eb73c9b",
+      "uncontained_bodies_at_allocation": 44,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useForwardMedia.test.ts",
+      "line_start": 1,
+      "line_end": 229,
+      "git_blob_sha": "04f2b36a1c07367755469d0fdaf4a80f2b3adb18",
+      "source_sha256": "9a9b7d24aff20ee22757981c9e13254d995a3c5a22edaf448530e198a0b022c1",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useNewConversation.test.tsx",
+      "line_start": 1,
+      "line_end": 139,
+      "git_blob_sha": "51fe1e51c610abe3029dad20091ac9b870b462ff",
+      "source_sha256": "8de0d8022e2fa3abf01c994cd8ccf0494956b3c97571be2aaca0deead9e723ea",
+      "uncontained_bodies_at_allocation": 30,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/ui/__tests__/useVolumeRocker.test.tsx",
+      "line_start": 1,
+      "line_end": 179,
+      "git_blob_sha": "395fcf827f0fbe349ccb517fd39fe125b7833e07",
+      "source_sha256": "9ae85b4471740391454e4434bcf680cd3fd0ea4d0a79455be9b85a2fff802f81",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/groupsAutoSync.test.ts",
+      "line_start": 1,
+      "line_end": 247,
+      "git_blob_sha": "8a65a8570ff2aa076ef3016b26239efa91bfa480",
+      "source_sha256": "02524b08e73376fc2b5904a8e80ee3a6d983dbb8d7c1200dd261bd80c02729e1",
+      "uncontained_bodies_at_allocation": 42,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/mapboxGeocode.test.ts",
+      "line_start": 1,
+      "line_end": 415,
+      "git_blob_sha": "ef3391d719daff14fb58498cbc0da966aa89a54e",
+      "source_sha256": "dddf704ae7d3788c1cb501118f9506021806a593f1363965eafb708e207b7e1f",
+      "uncontained_bodies_at_allocation": 85,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/mapboxSession.test.ts",
+      "line_start": 1,
+      "line_end": 158,
+      "git_blob_sha": "3e4f56a478f721373b7d2d1eec2e633188b74c7a",
+      "source_sha256": "4b685bab43c8389e61921e68c0221fa02cef0d0603bc0fbfaf0919eb415a2cf9",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/mapboxToken.test.ts",
+      "line_start": 1,
+      "line_end": 132,
+      "git_blob_sha": "a83c13e832a4cf0cd2c8d66f6507501f3d178b98",
+      "source_sha256": "ddbf2a5a4d139b165c4cc47f9c617ff638526d7e5c6518c0d4b0513e90bbf39e",
+      "uncontained_bodies_at_allocation": 27,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/mediaVolumeElement.test.ts",
+      "line_start": 1,
+      "line_end": 210,
+      "git_blob_sha": "30b9c6bb629a22aa206707e48097ce920c8b3983",
+      "source_sha256": "43a1845033aa105e7280007248bd3816e184d30a1e7fc8e51e9485d9775f7e02",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/mediaVolumeStore.test.ts",
+      "line_start": 1,
+      "line_end": 219,
+      "git_blob_sha": "bcff7d098be6002baec7a4d9ab28edfef8e1aa10",
+      "source_sha256": "beb80cc92b35d0ac0b4dc9da36a858bd556c9bddef6dd9c4852fa2c54542bdbd",
+      "uncontained_bodies_at_allocation": 30,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/rateLimiter.test.ts",
+      "line_start": 1,
+      "line_end": 195,
+      "git_blob_sha": "a3661794378cd003c0fd1922019d677848abd534",
+      "source_sha256": "a5c069a4d0e6b82445c4bde2a620244ae7c5225a99ed003c7ff2e0c4433515b0",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/runGuard-simulation.test.ts",
+      "line_start": 1,
+      "line_end": 314,
+      "git_blob_sha": "2507bdab008f52d305ddd6d6db14d79df0317d22",
+      "source_sha256": "52e9d3fbf95d1b718a1104d3d529cac64cc3ba6a82d7b6f88c90f0fd8c3a60d1",
+      "uncontained_bodies_at_allocation": 28,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/scenario-simulation.test.ts",
+      "line_start": 1,
+      "line_end": 316,
+      "git_blob_sha": "f6f014a70eaa20e30880e0b8080e0cc85ec0dc97",
+      "source_sha256": "1919b30bdf9df30b0d4c0e20147ecacce32288ebbe0f3a4deac96771602cda76",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/serverLogin.test.ts",
+      "line_start": 1,
+      "line_end": 135,
+      "git_blob_sha": "054a04735a2df0b0f11858bff6d9b96e8beb5630",
+      "source_sha256": "4efdcfe3fedb87709330f64a6fef7fe90477d2b50a546d0bc77c455aff054a89",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/services/__tests__/navigation.service.test.ts",
+      "line_start": 1,
+      "line_end": 138,
+      "git_blob_sha": "3622c6089689477508066db9e1014a4a208a8539",
+      "source_sha256": "411afa7179f6b2a1ed67c4cd417bc84b39fb10a2c5fd636f369132d5402752a2",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/test/mocks/tarefas.ts",
+      "line_start": 1,
+      "line_end": 133,
+      "git_blob_sha": "8bf246a046aa7a3c6aaba21deac31b9eb4742f7f",
+      "source_sha256": "518c92f064b981a70309fab4866872579f634fb5c4bb21dfa0a1443a719be1ae",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/test/setup.ts",
+      "line_start": 1,
+      "line_end": 127,
+      "git_blob_sha": "be4a8e3b9f5aa4e2731a308ce224ca3d86c378b6",
+      "source_sha256": "04c5e098ad0199f831cd92f598212356fffb24c62970321f9f9b41cf406693ea",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+      "line_start": 1,
+      "line_end": 256,
+      "git_blob_sha": "2204a619ab1d269dc65b69500ab3af5e5c03665c",
+      "source_sha256": "148dc546dd551b196d4ceb22167e396012e98c52e6552298d3468e605cb86746",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
+      "line_start": 1,
+      "line_end": 217,
+      "git_blob_sha": "a89c5ce5fa296ece34310ce6e505a053b0ca77f3",
+      "source_sha256": "6682177aa669737848715f71b9d34f3a785e94e9bc887b6d097975a532f2ea16",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-capabilities.contract.test.ts",
+      "line_start": 1,
+      "line_end": 684,
+      "git_blob_sha": "e3c77149d831e131150e8126bd3ff12fe9764f50",
+      "source_sha256": "5503389e45330d09b4137e399dcdefe275753725e7a0b491e2d10564c5249288",
+      "uncontained_bodies_at_allocation": 57,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-central-routing-ratchet.contract.test.ts",
+      "line_start": 1,
+      "line_end": 315,
+      "git_blob_sha": "75e337ef881aa6981d27a0511e4e7e1ad3c7e8e2",
+      "source_sha256": "2872f8fb0791692a1acbb24312c4b411b3c9b1cce5bdc1e34bf601754568c196",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-conversation-analysis-contract.test.ts",
+      "line_start": 1,
+      "line_end": 134,
+      "git_blob_sha": "793e52c75e9a1dfe8638168b00b62e8483c50561",
+      "source_sha256": "0bc3fd3f155c6932e2b0665bfca0fcbc8eb0914a1b78f523f874b81d1a84b9a9",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-conversation-summary-contract.test.ts",
+      "line_start": 1,
+      "line_end": 200,
+      "git_blob_sha": "7f17009b11ee33af6a38537256686984af393f8b",
+      "source_sha256": "8a497126906a472927cfdb2f75aa06bde52921cc88151e8e52ef03a03efb739a",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-fallback-and-test.contract.test.ts",
+      "line_start": 1,
+      "line_end": 403,
+      "git_blob_sha": "c987e532562bf8899c7f599d4c5f501b4e899552",
+      "source_sha256": "f085af408fff70ef48f8ac22d9ed9d08f1c57e51a7145ce387f8d0c0d16f4d66",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-generate.contract.test.ts",
+      "line_start": 1,
+      "line_end": 661,
+      "git_blob_sha": "70997a3a44af6d4068eb052775cbfa991512f959",
+      "source_sha256": "1cafafabd7d621a4180345b94e27fd8ab858a8b850c2beb92f5e4140843b8ed2",
+      "uncontained_bodies_at_allocation": 69,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-image-input.contract.test.ts",
+      "line_start": 1,
+      "line_end": 372,
+      "git_blob_sha": "24a52484e28f1956c8ae424459926e9b16cc1ed9",
+      "source_sha256": "36964f6a02117f0454938e32b4c1acee4e7dcb1d1d31ad948e07189f9fbbee4d",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts",
+      "line_start": 1,
+      "line_end": 786,
+      "git_blob_sha": "1cf091d0981fa2e6980b6e8e7b4a3b51e3058bea",
+      "source_sha256": "702095af98565a95dcc44de7ea38c17e0272fae9bd31c5dcf2ea314b7f3483e4",
+      "uncontained_bodies_at_allocation": 85,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts",
+      "line_start": 1,
+      "line_end": 825,
+      "git_blob_sha": "88578e12b58c4abd9adaba10190dede5325629da",
+      "source_sha256": "db71f1a1c1d83b28799a215f507ebaf631515c3891f7a4774e031d80b9ae28cb",
+      "uncontained_bodies_at_allocation": 107,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-resilience-prazos-retry.contract.test.ts",
+      "line_start": 1,
+      "line_end": 631,
+      "git_blob_sha": "a89e4e7a26aa7d4dcf1c02b080c4063c99f53e70",
+      "source_sha256": "31edd0e7922837e361514e1dfe3506735ccd803d52aadab9c3a140806e4a95d4",
+      "uncontained_bodies_at_allocation": 78,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-response-contracts.behavior.contract.test.ts",
+      "line_start": 1,
+      "line_end": 178,
+      "git_blob_sha": "ecdf66ae7a3d2ace5c2fb4041fa3f0bb55003280",
+      "source_sha256": "e7a1e6be138ab4c55ab5289ad484dc80006d624f7847ef2463c0d400822f5a4e",
+      "uncontained_bodies_at_allocation": 25,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-routing.contract.test.ts",
+      "line_start": 1,
+      "line_end": 668,
+      "git_blob_sha": "0957cdded4e2070bb1c5743fb2ba60ce7620eedf",
+      "source_sha256": "4a4da8710f9b59acc13841f5c09d8043c7dcefb87fb00c0be7b5f275b8506e3c",
+      "uncontained_bodies_at_allocation": 64,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-vision-classifiers-mock.contract.test.ts",
+      "line_start": 1,
+      "line_end": 814,
+      "git_blob_sha": "b07468ab4bf137ba0f546fc005589e054d2d5476",
+      "source_sha256": "f5614bcaa92a83cabeba0f22a99dd593dc4d965027b433e5ce100e665f6e2a97",
+      "uncontained_bodies_at_allocation": 82,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-vision-modality.contract.test.ts",
+      "line_start": 1,
+      "line_end": 326,
+      "git_blob_sha": "ce345d5fd1c01bdbdf24d42e13ca9bd6dbded844",
+      "source_sha256": "2ea872eb9ce115795cfdae2d6ded79e16b12eb84dd5f9e30643928c3bec32eb8",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
+      "line_start": 1,
+      "line_end": 198,
+      "git_blob_sha": "1e32d7b695dffb59ce3b5ca3d61428c4c2b6e0a2",
+      "source_sha256": "a8b2703afb51b93ef83c07c391fedf06b13c2a9ad70566be3cce409527a1449f",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-vocabulary-parity.contract.test.ts",
+      "line_start": 1,
+      "line_end": 234,
+      "git_blob_sha": "8be79fbdeaafa7daea8aa527041639ab3ac8869e",
+      "source_sha256": "ecb5a88aecbedffb77602c3594e04ef7cf57eb28dcc70b9609a19df171b906a3",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ai-vocabulary.behavior.contract.test.ts",
+      "line_start": 1,
+      "line_end": 130,
+      "git_blob_sha": "c4289db2cfdf084aa3b9d1e20cf0dc5af984faf3",
+      "source_sha256": "29282bef920873614cf50fe86be90ac8bc01b4626bd6595124abd506b12d243d",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/axe-contatos.contract.test.ts",
+      "line_start": 1,
+      "line_end": 28,
+      "git_blob_sha": "72cc9fe920f1091c474fa7b660b76b46252e59de",
+      "source_sha256": "f442524ebd54a44c881753053b543bc8f11e72572bbdae7186cca59a56b050bc",
+      "uncontained_bodies_at_allocation": 2,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/contraste-aa-componentes.contract.test.ts",
+      "line_start": 1,
+      "line_end": 290,
+      "git_blob_sha": "89cdd9b9f3c46d79583eaa59fe79166892ee0dbe",
+      "source_sha256": "09938e25d7a0f0afd0310e8d71bdb526a820590d7a60209dad287e7d1c7a3f2f",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/contraste-balao-midia.contract.test.ts",
+      "line_start": 1,
+      "line_end": 144,
+      "git_blob_sha": "3f680b4f6b7e5eea45133e2794893221c1144df5",
+      "source_sha256": "956e95f0a002d08fe2a7b497e960fa483fdc7ff8e725012464334f90e230b21f",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts",
+      "line_start": 1,
+      "line_end": 273,
+      "git_blob_sha": "be9f4976b2b0b78e95b4041ec7b076dd5dd087e6",
+      "source_sha256": "3186fec3408a4f838e04d51c7d977ce1eb61c522bb904ec8817165b2ab217374",
+      "uncontained_bodies_at_allocation": 36,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ia051-correlacao-no-caminho-sincrono.test.ts",
+      "line_start": 1,
+      "line_end": 126,
+      "git_blob_sha": "e9b9a52683e9b9b78bf1c4a396bbc725a0242ac7",
+      "source_sha256": "2d1b96eea39894e83c8430676efc797895d81b7c948d09d7c77ed5c2ef8e011d",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ia052-rota-efetiva.test.ts",
+      "line_start": 1,
+      "line_end": 147,
+      "git_blob_sha": "b835360ca08d5bfa9c06298b03d18e2609378c97",
+      "source_sha256": "545d7e33a8ebadfbf4775126592f2476810d30a85a73ba90876f241aaa0280bb",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/ia056-agregacao-no-servidor.test.ts",
+      "line_start": 1,
+      "line_end": 138,
+      "git_blob_sha": "9ce5726ed03c490bd1ec656ad71262dcd2471159",
+      "source_sha256": "85993d46b153d32a7dea3431705e02bd0c051b6fcd555e27b42b87667b594c4d",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/messaging-adapter.contract.test.ts",
+      "line_start": 1,
+      "line_end": 253,
+      "git_blob_sha": "99863979a026d857afc70e72a00ceb3785098b40",
+      "source_sha256": "1bcd03c8fef41aa57514a154060874dbdf100bbe19ec70a369b0034939dbc74d",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/notification-sound-persistence.contract.test.ts",
+      "line_start": 1,
+      "line_end": 125,
+      "git_blob_sha": "bfd8e79e6624a9d20c7f5267168724d9f5d8b517",
+      "source_sha256": "53bf781f6a59e89110366817fe8af9d1ed3ba3b81129dcb4f3c1f0c9d951ca76",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "root",
+      "review_status": "PENDING_READING"
+    }
+  ],
+  "limits": [
+    "Finite allocation only; no file is promoted to semantic review by this roster.",
+    "Read assertions, mocks, fixtures and consumers as needed; do not equate test existence with runtime acceptance.",
+    "Existing later whole-file reviews may be cited and skipped, with their exact evidence source recorded."
+  ]
+}

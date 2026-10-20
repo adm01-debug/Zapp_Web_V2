@@ -1,0 +1,3 @@
+test(talkx): matriz por tela e contrato de adocao dos estados (X047)
+
+Prova a ADOCAO do TalkXQueryBoundary nas nove telas da X047 (Visao geral, Segmentos, Templates, Supressao, Analytics, Configuracoes, Monitor, Em andamento, Agendada) e o carregamento do wizard: por tela, erro vence o vazio, o retry refaz a consulta e a carga expoe aria-busy. Contrato estatico: no minimo 9 usos reais de TalkXQueryBoundary em src/components/talkx/*.tsx e nenhum resquicio do placeholder legado.

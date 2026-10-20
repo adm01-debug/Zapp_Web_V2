@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791517892 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 708c9f596512bc9b07d9002bc92e9d74889155de Joaquim Ataides <ti@promobrindes.com.br> 1791517994 -0300	cherry-pick: feat(edge): evento de IA não confirmado vai para outbox_events assinado (SL-195c2)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 9881d6a3e34f1768df5f288f0d5df6adad47ad3c Joaquim Ataides <ti@promobrindes.com.br> 1791295784 -0300	branch: Created from dia/2026-10-06
+9881d6a3e34f1768df5f288f0d5df6adad47ad3c 347341e6e98603c1d49a5d0f07b8d29d8d13f07d Joaquim Ataides <ti@promobrindes.com.br> 1791296301 -0300	commit: fix(inbox): parar TTS e prévia de meme solta o bind do player descartado (#335)

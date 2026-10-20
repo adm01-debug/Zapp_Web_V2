@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791324543 -0300	
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791324544 -0300	reset: moving to HEAD
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 c92bf7d9a69719c4ec74980e4ef69a52896431e0 Joaquim Ataides <ti@promobrindes.com.br> 1791324548 -0300	cherry-pick: fix(db): purga LGPD nao vira "falha recente" na saude do Talk X (#126)
+c92bf7d9a69719c4ec74980e4ef69a52896431e0 8a3bf6fe51ca3b02b5e736d3fa62ecae454ec32c worker <worker@zapp.local> 1791326068 -0300	commit: fix(db): backfill do status_changed_at nao regrava updated_at em massa (#126)

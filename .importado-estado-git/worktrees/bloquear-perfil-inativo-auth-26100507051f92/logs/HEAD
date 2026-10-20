@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194716 -0300	
+80899b98968e007020313a034ed0c94b72bc4083 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194717 -0300	reset: moving to HEAD
+80899b98968e007020313a034ed0c94b72bc4083 d91a1690ce3ff4c475e657bc8bad7aa11f95c2b2 Joaquim Ataides <ti@promobrindes.com.br> 1791194722 -0300	cherry-pick: fix(auth): bloquear perfil inativo no AuthProvider (R2-AUTH-004)
+d91a1690ce3ff4c475e657bc8bad7aa11f95c2b2 37e4c2cb38de5ca01b5f667adc48876ec9e6b63c Joaquim Ataides <ti@promobrindes.com.br> 1791195354 -0300	commit: fix(auth): corrige recusa — callback síncrono e erro preservado no signOut

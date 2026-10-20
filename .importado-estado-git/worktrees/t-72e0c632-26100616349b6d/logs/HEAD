@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315277 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315278 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 65c270f7db35aabf0b5e941be30d1ac1e6d65dd2 Joaquim Ataides <ti@promobrindes.com.br> 1791318039 -0300	commit: fix(ia): auto-tag limpa etiquetas antigas quando a classificação válida não tem tags (#207)

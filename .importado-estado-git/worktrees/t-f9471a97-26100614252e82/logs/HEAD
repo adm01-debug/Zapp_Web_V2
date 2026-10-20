@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791307517 -0300	
+1a367b13dd8456a44e967ef882041d70e876ebdd 1a367b13dd8456a44e967ef882041d70e876ebdd Joaquim Ataides <ti@promobrindes.com.br> 1791307517 -0300	reset: moving to HEAD
+1a367b13dd8456a44e967ef882041d70e876ebdd 56d64d8f14c4925e01d2b407852936783e268051 Joaquim Ataides <ti@promobrindes.com.br> 1791307564 -0300	commit (cherry-pick): fix(omnichannel): declara canais e regras de roteamento sem executor versionado (#237)

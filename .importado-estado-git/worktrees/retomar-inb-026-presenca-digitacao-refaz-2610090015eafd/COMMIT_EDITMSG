@@ -1,0 +1,1 @@
+fix(inbox): presença de digitação entre agentes usa identidade real da sessão (R2-INB-026) — já corrigido na ponta, sem mudança de código

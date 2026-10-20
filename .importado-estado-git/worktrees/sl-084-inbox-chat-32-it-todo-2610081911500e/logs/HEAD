@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 8b6c77917938252e54b01b3ace2edfd337240642 Joaquim Ataides <ti@promobrindes.com.br> 1791497475 -0300	
+8b6c77917938252e54b01b3ace2edfd337240642 8b6c77917938252e54b01b3ace2edfd337240642 Joaquim Ataides <ti@promobrindes.com.br> 1791497476 -0300	reset: moving to HEAD
+8b6c77917938252e54b01b3ace2edfd337240642 86f02e9e4bb8d1c9fec1be7367b10712897cafb8 Joaquim Ataides <ti@promobrindes.com.br> 1791497989 -0300	commit: fix(inbox/chat): 32 it.todo com corpo e titulos corrompidos ("imagesmag (SL-084)
+86f02e9e4bb8d1c9fec1be7367b10712897cafb8 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791555418 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 00ad1ad8171178b6fe343701629d731d36f2caf8 Joaquim Ataides <ti@promobrindes.com.br> 1791555484 -0300	rebase (continue): fix(inbox/chat): 32 it.todo com corpo e titulos corrompidos ("imagesmag (SL-084)
+00ad1ad8171178b6fe343701629d731d36f2caf8 00ad1ad8171178b6fe343701629d731d36f2caf8 Joaquim Ataides <ti@promobrindes.com.br> 1791555484 -0300	rebase (finish): returning to refs/heads/v2/sl-084-inbox-chat-32-it-todo-2610081911500e

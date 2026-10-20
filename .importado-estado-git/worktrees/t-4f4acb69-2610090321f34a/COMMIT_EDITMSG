@@ -1,0 +1,27 @@
+feat(multiplix): expõe público do disparo (select/save/apply) na camada de hooks
+
+O caminho de criação só expunha company_ids/contact_ids; a tela não tinha como
+selecionar público por referência, salvar público nem aplicar um público salvo
+pela edge multiplix-dispatch (TL-041A).
+
+- src/hooks/integrations/useMultiplixDispatches.ts: tipos e chamadas para
+  audience.select, audience.save e audience.apply; payload montado com a
+  intenção (manual, publics, filters, exclude, primary_per_company, select_all),
+  sem expandir lista no navegador; o retorno entrega eligible_count,
+  dropped_out_of_filter, excluded_removed e signals lidos do servidor.
+- teste novo cobre caminho verde, erro de payload (400), erro da edge (502/404)
+  e resposta sem forma esperada.
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 12e407210
+# Last command done (1 command done):
+#    pick 3826cf663 feat(multiplix): expõe público do disparo (select/save/apply) na camada de hooks
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-4f4acb69-2610090321f34a' on '12e407210'.
+#
+# Changes to be committed:
+#	new file:   src/hooks/integrations/__tests__/useMultiplixDispatches.multiplix-audience.test.ts
+#	modified:   src/hooks/integrations/useMultiplixDispatches.ts
+#

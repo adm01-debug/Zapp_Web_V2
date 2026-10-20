@@ -1,0 +1,15 @@
+fix(chamadas): aba lider suspensa cede a lideranca a nova lider ao retomar
+
+A aba lider renovava o lock (localStorage) no tick sem reler o dono: se ela
+ficou suspensa pelo navegador, o TTL venceu, outra aba assumiu e, ao retomar,
+o tick atrasado regravava o tabId antigo por cima do dono vigente - duas abas
+lideres renovando o lock em alternancia.
+
+renewLeadership() agora rele o lock antes de renovar: lock vivo de terceiro
+significa que esta aba perdeu a lideranca enquanto dormia, entao ela cede
+(role follower, leaderId do dono) em vez de regravar. handleMessage() cobre a
+retomada que recebe o CLAIM/HEARTBEAT da nova lider antes do proprio tick:
+a lider so cede a quem comprova segurar o lock vivo.
+
+Teste novo em tabLeaderStore.test.ts reproduz a suspensao (clearInterval no
+tick) e a retomada (callback do tick atrasado) e prova vermelho->verde.

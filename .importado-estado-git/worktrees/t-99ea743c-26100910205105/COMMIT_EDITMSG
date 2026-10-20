@@ -1,0 +1,10 @@
+fix(bundle): atalhos e CallSessionProvider saem do import estático do sonner
+
+A retomada na ponta de 09/10 mostrou dois quebras: (1) o teste de bundle
+voltou a ficar vermelho porque o commit cb2bebc18 devolveu o import
+estático de 'sonner' ao CallSessionProvider, que é montado no boot; (2) o
+caso de Ctrl+2 da view dashboard afirma toast.info de forma síncrona.
+Os dois passam pela fachada @/lib/lazyToast, que mantém a chamada
+síncrona com a lib já carregada (o caso real do atalho).
+
+Cartão V2: t_99ea743c

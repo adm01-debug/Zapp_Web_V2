@@ -1,0 +1,14 @@
+test(talkx): placar da régua declara o motivo real de cada ausência (#479)
+
+O lado-a-lado rotulava TODA tela sem captura como "Tela ainda não existe",
+escondendo que as telas 02..17 existem e só não têm fixture ainda (contrato de
+crescimento X003/X004). Agora o placar lê a fixture real e o que a execução do
+spec deixou no disco e declara o motivo de cada ausência: sem dados ainda,
+sem componente no app ou sem captura; captura de execução anterior com a
+fixture esvaziada não é reexibida. Nenhuma fixture, componente ou contrato foi
+alterado.
+
+Prova: scripts/talkx/lado-a-lado.unit.mjs (novo) - 9/9 verde; com a produção
+anterior o arquivo nem importa (export ausente) e com a regra mutada
+(sem-dados -> sem-componente) caem 4 testes com actual 'sem-componente' x
+expected 'sem-dados'.

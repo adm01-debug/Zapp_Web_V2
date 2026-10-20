@@ -1,0 +1,7 @@
+fix(inbox): selos de SLA com o par de texto AA (N-029)
+
+O statusStyles do SLAIndicator pintava o TEXTO do selo com a cor de
+PREENCHIMENTO do estado (text-warning L50 e text-destructive L60) sobre a
+propria tinta bg-*/10: 1,98:1 (atencao) e 3,32:1 (violado) no tema claro.
+Passa ao par de TEXTO do sistema (--warning-text / --destructive-text);
+tinta, borda e arco nao mudam. Teste mede o par real nos 4 temas.

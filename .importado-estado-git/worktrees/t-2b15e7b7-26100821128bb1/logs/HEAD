@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791504755 -0300	
+0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791504756 -0300	reset: moving to HEAD
+0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 Joaquim Ataides <ti@promobrindes.com.br> 1791504794 -0300	reset: moving to 0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8
+0d3d00bb9a3bccd0a227b09c25e2a76c5d14a7c8 580268ae6130563bfaf899a17481096bd55689c2 Joaquim Ataides <ti@promobrindes.com.br> 1791504797 -0300	cherry-pick: fix(telefonia): Scripts measure/colors/func/axe (E.2-E.5) (SL-240)
+580268ae6130563bfaf899a17481096bd55689c2 dd6bd5623eb93ea44ac2af43b306f363221b9b6c Joaquim Ataides <ti@promobrindes.com.br> 1791504798 -0300	cherry-pick: fix(telefonia): valida passos funcionais locais do QA
+dd6bd5623eb93ea44ac2af43b306f363221b9b6c 93829fa1b35485e8b72cf68df31432adf3fb97f9 Joaquim Ataides <ti@promobrindes.com.br> 1791505227 -0300	commit: fix(telefonia): prova efeitos reais no QA funcional
+93829fa1b35485e8b72cf68df31432adf3fb97f9 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543805 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 9aa702b1255e578fedc9639bc7e1b4fdb24d1558 Joaquim Ataides <ti@promobrindes.com.br> 1791543805 -0300	rebase (pick): fix(telefonia): Scripts measure/colors/func/axe (E.2-E.5) (SL-240)
+9aa702b1255e578fedc9639bc7e1b4fdb24d1558 ff1f5b21e54b96d20fe022d46854e5447793db1c Joaquim Ataides <ti@promobrindes.com.br> 1791543805 -0300	rebase (pick): fix(telefonia): valida passos funcionais locais do QA
+ff1f5b21e54b96d20fe022d46854e5447793db1c 7696460d5beecf54ee51cd9c5a0dfbb5070e6cc7 Joaquim Ataides <ti@promobrindes.com.br> 1791543805 -0300	rebase (pick): fix(telefonia): prova efeitos reais no QA funcional
+7696460d5beecf54ee51cd9c5a0dfbb5070e6cc7 7696460d5beecf54ee51cd9c5a0dfbb5070e6cc7 Joaquim Ataides <ti@promobrindes.com.br> 1791543805 -0300	rebase (finish): returning to refs/heads/v2/t-2b15e7b7-26100821128bb1

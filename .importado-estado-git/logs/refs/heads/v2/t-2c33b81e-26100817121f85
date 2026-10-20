@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490329 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc f76003ca4801b829f52393915b96477c01cc7766 Joaquim Ataides <ti@promobrindes.com.br> 1791490341 -0300	cherry-pick: fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)
+f76003ca4801b829f52393915b96477c01cc7766 e93ca58e72e74bba9b3e4fcf23f297bbb12af6a1 Joaquim Ataides <ti@promobrindes.com.br> 1791490480 -0300	commit (amend): fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)
+e93ca58e72e74bba9b3e4fcf23f297bbb12af6a1 4e68d2de3ee2ef4d630db00e1f3ada37f839802e Joaquim Ataides <ti@promobrindes.com.br> 1791490668 -0300	commit (amend): fix(notificacoes): separa carregando, erro e vazio confirmado no popover (#443)

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791565172 -0300	branch: Created from dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 f65a9eeeb9d39d0227b0c0e2f06fb8bdfd7208da Joaquim Ataides <ti@promobrindes.com.br> 1791565279 -0300	cherry-pick: fix(catálogo): badges de destaque do card fecham 4,5:1 nos 4 temas (SL-041)
+f65a9eeeb9d39d0227b0c0e2f06fb8bdfd7208da 0132e1f5f3bcebedc1a8a9225fb9319e3075b642 Joaquim Ataides <ti@promobrindes.com.br> 1791565279 -0300	cherry-pick: fix(testes): SL038 acompanha o par Promo do SL-041 (destructive-text/background)
+0132e1f5f3bcebedc1a8a9225fb9319e3075b642 a2fe13794521acdd2c494abd81bba367ce34173b Joaquim Ataides <ti@promobrindes.com.br> 1791565897 -0300	commit: docs(testes): CT69 descreve a base real (SL-038 tirou a paleta crua) (SL-041)
+a2fe13794521acdd2c494abd81bba367ce34173b ee407b3c8282596a6f0825d0c300400e35e7feb2 Joaquim Ataides <ti@promobrindes.com.br> 1791565900 -0300	rebase (finish): refs/heads/v2/sl-041-catalogo-alt-descritivo-2610091359db4f onto cdf3e975ea5f37a2ec9d90dffa14043660b5f658
+ee407b3c8282596a6f0825d0c300400e35e7feb2 1c8bad193f05ad56ab645d53d53221f2017aec17 Joaquim Ataides <ti@promobrindes.com.br> 1791566308 -0300	commit (amend): test(catalogo): CT69 descreve a base real e usa só tokens no controle negativo (SL-041)

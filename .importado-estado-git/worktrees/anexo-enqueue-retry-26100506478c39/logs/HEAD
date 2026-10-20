@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193654 -0300	
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 cae26e4b592f5f6b4b4b08504654ea5a402bb336 Joaquim Ataides <ti@promobrindes.com.br> 1791193654 -0300	reset: moving to HEAD
+cae26e4b592f5f6b4b4b08504654ea5a402bb336 42f733f9103b95545d51a15c495d11cffe6ce9bc Joaquim Ataides <ti@promobrindes.com.br> 1791194267 -0300	commit: fix(inbox): preserva anexo enfileirado e não duplica ação no retry (R2-INB-006)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791331511 -0300	
+dba4ece1f104a2757a954051b06b2c1bd7589050 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791331512 -0300	reset: moving to HEAD
+dba4ece1f104a2757a954051b06b2c1bd7589050 a787ece351c15be3d6b21ce2cc49b826fc85f2e3 Joaquim Ataides <ti@promobrindes.com.br> 1791332189 -0300	commit: fix(tarefas): arrasto entre colunas filtradas grava a ordem da coluna completa (#423)

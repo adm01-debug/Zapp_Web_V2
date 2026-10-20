@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489814 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791489815 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc c7a1cb052c422dbe5cc3a540f52d3ef55a5e2007 Joaquim Ataides <ti@promobrindes.com.br> 1791490564 -0300	commit: fix(telefonia): recibo da homologacao coleta provider_call_id do aceite (SL-019)

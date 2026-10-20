@@ -1,0 +1,4 @@
+fix(ci/devops): fonte única de versões .github/toolchain.json (SL-116)
+
+E75: cria .github/toolchain.json (bun, deno, node, go, supabase-cli, playwright, postgres-image)
+e faz o check-workflow-pins.mjs falhar quando um workflow literaliza versão diferente da fonte.

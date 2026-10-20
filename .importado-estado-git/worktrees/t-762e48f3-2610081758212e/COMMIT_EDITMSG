@@ -1,0 +1,8 @@
+fix(team-chat): badge Teams via useTeamUnreadTotal e digitando com throttle 2s (F83/F85)
+
+- useTeamUnreadTotal soma o unread_count da lista do inbox JA em cache
+  (chave team-conversations/:id), sem consulta nova e sem localStorage; o
+  useTeamUnreadCount (localStorage, sem consumidor) sai.
+- useTeamTyping: throttle de 2 s no aviso enviado, parada explicita nao
+  duplica o timer pendente e nenhum timer sobrevive ao unmount (F88).
+- Testes: 12 casos (5 do badge, 7 do digitando), 3 vermelhos sem a correcao.

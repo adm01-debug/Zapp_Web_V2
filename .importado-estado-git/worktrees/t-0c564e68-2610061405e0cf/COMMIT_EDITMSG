@@ -1,0 +1,3 @@
+fix(multiplix-send): aceita multiplix.dispatch.create no gate de entrada do worker (#143)
+
+O worker exigia is_admin_or_supervisor ou multiplix.dispatch.manage_all antes de checar o dono, ignorando multiplix.dispatch.create (F25) — o agent autorizado pelo front levava 403 ao iniciar o proprio disparo. A permissao nomeada passa a abrir a ENTRADA; o dono continua exigido em canManageDispatch e o disparo alheio segue exigindo manage_all.

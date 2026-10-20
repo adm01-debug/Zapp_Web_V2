@@ -1,0 +1,19 @@
+test(design-system/ui): mede os gates do CP1 — ΔE page/card/sidebar, fonts, light e skin (SL-181)
+
+O CP1 do ledger do Design System Promo Gifts mantinha seis campos NÃO DEMONSTRADO
+(ΔE page/card/sidebar, fonts PJS/Outfit, light e skin) sem nenhuma medição
+reproduzível: a "prova" era a própria linha do ledger. O teste novo lê o
+tokens.css, aplica a skin padrão por cima e mede:
+
+- ΔE76 page=0,00 (rgb(14,14,16)=#0e0e10) · card=0,00 · sidebar=0,66 · primary=0,08
+  contra #2563eb · nenhuma das 7 superfícies amostradas é navy (215–218, sat>40%)
+- fonts: Plus Jakarta Sans (corpo) e Outfit (display) declaradas em tokens.css,
+  pedidas e pré-carregadas pelo index.html e consumidas por base.css
+- light: superfícies L≥97% e carvão exclusivo do .dark
+- skin: o boot do index.html aceita v6 = STORAGE_VERSION; v5 migra, v4 é descartada
+
+Prova de sensibilidade (mutação temporária do .dark para o navy pré-port):
+7 dos 17 testes ficam vermelhos, com ΔE page=6,08 · card=9,62 · sidebar=4,16 ·
+primary=13,48 e o gate de navy acusando 3 superfícies; revertida em seguida.
+
+O ledger passa a registrar a medição e o comando que a reproduz.

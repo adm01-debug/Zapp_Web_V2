@@ -1,0 +1,7 @@
+fix(talkx): variação do card Total de Templates compara criados do mês (TL-123)
+
+O card segue mostrando o total acumulado como valor, mas a variação passa a usar
+created_current_month contra created_previous_month (12 vs 10 = +20%), em vez de
+comparar o total com os criados do mês anterior (48 vs 10 = +380%). O KpiCard ganha
+o campo opcional comparison.current para separar o valor exibido da grandeza
+comparada. enviosDelta deixa de repetir o literal 50 e usa TALKX_STATS_MIN_BASE.

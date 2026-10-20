@@ -1,0 +1,7 @@
+fix(talkx): grava a edição pendente ao sair do wizard antes do autosave
+
+R2-MOD-027 (#402). A navegação interna (Voltar, histórico do navegador e troca de rota) desmonta o wizard sem disparar beforeunload; o cleanup do autosave só cancelava o timer de 3 s e a edição pendente se perdia.
+
+- useCampaignEditor acompanha 'alteração pendente' (snapshot atual x último confirmado pelo servidor) e limpa a marca em todo save confirmado (autosave, retry, salvar rascunho e lançamento);
+- novo flushPendingAutosave(): ao desmontar, grava o que estava pendente antes de o editor morrer;
+- o beforeunload passa a olhar a alteração real (hasUnsavedChanges()) em vez de nome/contato, que disparavam o aviso até em rascunho já salvo.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305157 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791305158 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 8ad449261dbb2c26e98fafa8754a6be99c6db1a0 Joaquim Ataides <ti@promobrindes.com.br> 1791305652 -0300	commit: fix(ci): artifact de deploy nao sobe quando a limpeza do log falha
+8ad449261dbb2c26e98fafa8754a6be99c6db1a0 88f58a4451243290a5b64f5a6a38e07a22130f85 Joaquim Ataides <ti@promobrindes.com.br> 1791305711 -0300	commit: test(ci): exercita o shell real do passo que limpa o log do deploy

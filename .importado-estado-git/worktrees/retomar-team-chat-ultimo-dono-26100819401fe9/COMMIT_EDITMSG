@@ -1,0 +1,16 @@
+fix(team-chat): trata DELETE filtrado como erro e fecha frestas de owner no banco
+
+Por quê: QA5-10 — a policy de 20261004185228 filtra a linha do último dono sem
+erro e o app mostrava sucesso com 0 linhas afetadas; além disso qualquer
+autenticado criava a conversa de qualquer departamento como owner e ex-membro
+(created_by sem membership) seguia transferindo a propriedade.
+
+Verificação: teste SQL descartável prova o defeito e a correção nos 3 casos;
+teste do hook reprova 0 linhas (vermelho antes, verde depois);
+zapp-verify . --rapido verde.
+
+Plano: cartão t_ab98c520 (QA5-10).
+(cherry picked from commit d8dfcb3712f6cb0e56a2a0675e0dad20d4eeb3fe)
+
+# Conflicts:
+#	.github/workflows/db-guard.yml

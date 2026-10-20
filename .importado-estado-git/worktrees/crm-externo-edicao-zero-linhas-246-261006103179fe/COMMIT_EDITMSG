@@ -1,0 +1,12 @@
+fix(crm360): edição sem linha gravada deixa de ser anunciada como sucesso (#246)
+
+R2-AUTH-019: o gateway crm-integration devolve HTTP 200 com data=[] quando o
+UPDATE de um único id não atinge nenhuma linha (empresa/contato removido entre
+abrir o form e salvar). Os forms ignoravam o conteúdo da resposta, anunciavam
+"atualizado" e fechavam o diálogo — zero linhas virava sucesso.
+
+Agora zero linhas mantém o diálogo aberto com o erro na tela; uma linha gravada
+segue anunciando sucesso e fechando, sem regressão.
+
+Prova: src/components/crm360/__tests__/crm360FormDialogs.zeroLinhas.test.tsx
+(vermelho antes: 2 falhas; verde depois: 4 passam).

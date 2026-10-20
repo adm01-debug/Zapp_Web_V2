@@ -1,0 +1,15 @@
+fix(ci): atestacao de Edge exige prova de no-op do deploy para aceite por digest
+
+Por que: o digest remoto identico ao baseline bastava para aceitar uma
+funcao do escopo sem bump de versao, mesmo com knownUnchanged vazio — um
+inventario pre-deploy repetido satisfazia o ramo e versao antiga era
+atribuida ao run (R2-INF-017; probe mediu 73 versoes antigas aceitas aos
+60 s). Agora o aceite por digest exige o slug em knownUnchanged ("No
+change found" reportado pelo proprio passo de deploy); sem prova, segue
+no laco com erro transitorio que nomeia a funcao ate a exaustao. O aceite
+por baseline sem versao (E08) nao regride e passa a ser explicito em
+verification.accepted_without_version_baseline.
+
+Verificacao: node --test scripts/edge-deploy/stable-inventory.unit.mjs ->
+vermelho antes (3 falhas, Missing expected rejection), 24/24 verde depois;
+zapp-verify . --rapido -> VERDE SEM BANCO (cartao sem banco).

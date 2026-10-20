@@ -1,0 +1,6 @@
+OK      db_guard       27s
+OK      tipos          65s
+FALHOU  lint          742s  (ver /home/joaquim_ataides/.local/state/zapp-verify/88463faf1907/lint.log)
+Lint rápido: 12333 arquivos alterados (> 400); rodando o lint-ratchet completo.
+ERRO no lint ratchet: ESLint falhou com exit null: <--- Last few GCs ---> [3746208:0x1b8dd000] 682410 ms: Scavenge 4088.7 (4096.0) -> 4085.6 (4096.0) MB, pooled: 0 MB, 5.16 / 0.00 ms (average mu = 0.4
+VERIFY: VERMELHO em lint (834s)

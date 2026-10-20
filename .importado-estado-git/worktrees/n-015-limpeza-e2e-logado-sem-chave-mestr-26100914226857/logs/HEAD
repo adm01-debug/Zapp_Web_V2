@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566565 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791566567 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567036 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 21bc4433eae2d85f5776533ae2ef36077391d0c5 Joaquim Ataides <ti@promobrindes.com.br> 1791567068 -0300	commit: fix(ci/devops): limpeza do E2E logado sem a chave mestra do banco (N-015/E25)
+21bc4433eae2d85f5776533ae2ef36077391d0c5 08dba6b4690760f5a04d0dc2fb5347007a498956 Joaquim Ataides <ti@promobrindes.com.br> 1791567116 -0300	commit (amend): fix(ci/devops): limpeza do E2E logado sem a chave mestra do banco (N-015/E25)

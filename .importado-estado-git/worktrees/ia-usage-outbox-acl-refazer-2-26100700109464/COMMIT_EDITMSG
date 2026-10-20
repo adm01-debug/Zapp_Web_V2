@@ -1,0 +1,3 @@
+fix(db): ACL da outbox de IA com rollback real e contrato por papel
+
+Rollback de verdade (REVOKE do service_role + restauracao exata do privilegio anterior; nada para anon/authenticated/PUBLIC), RLS com policy so do service_role e contrato SQL por papel (Postgres 17 descartavel) com bloco de rollback extraido do proprio arquivo.

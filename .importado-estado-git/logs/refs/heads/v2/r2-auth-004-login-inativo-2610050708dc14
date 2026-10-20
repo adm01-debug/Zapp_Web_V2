@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 80899b98968e007020313a034ed0c94b72bc4083 Joaquim Ataides <ti@promobrindes.com.br> 1791194923 -0300	branch: Created from dia/2026-10-05
+80899b98968e007020313a034ed0c94b72bc4083 06810805384c3b0b1b2b8c053ce0b1c63b04e57e Joaquim Ataides <ti@promobrindes.com.br> 1791195723 -0300	commit: fix(auth): bloqueia login de perfil inativo com lookup robusto (R2-AUTH-004)

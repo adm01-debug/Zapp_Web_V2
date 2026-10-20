@@ -1,0 +1,5 @@
+OK      db_guard        0s
+OK      tipos          26s
+OK      lint           38s
+OK      migrations      0s
+VERIFY: VERDE (65s) — registros em /home/joaquim_ataides/.local/state/zapp-verify/ef03bcc8d522

@@ -1,0 +1,11 @@
+test(rls): detectar enfraquecimento por policies ALL
+
+FOR ALL passa a contar em SELECT, INSERT, UPDATE e DELETE: cobreComando
+define a cobertura e predicadoEfetivo aplica a semantica do Postgres
+(INSERT pelo WITH CHECK, caindo no USING quando omitido; FOR ALL sem
+WITH CHECK usa o proprio USING como CHECK efetivo). Assim um
+FOR ALL USING (true) WITH CHECK (is_admin_or_supervisor(auth.uid()))
+reprova em SELECT/UPDATE/DELETE mesmo com o CHECK restritivo.
+
+normSql deixou de truncar predicados terminados em parentese
+(f(auth.uid()) virava f(auth.uid().

@@ -1,0 +1,17 @@
+fix(talkx): corrige regressoes das acoes de template no editor, cartao e lista (TL-122)
+
+Refazer 1 da TL-122, sobre o commit recusado (cherry-pick 84873e2dc).
+
+- setStatus devolve a linha gravada pela RPC; o editor renova o
+  expectedUpdatedAt depois de Aprovar/Devolver/Enviar para revisao,
+  sem cair em talkx_template_stale_version no proximo salvar.
+- TalkXTemplateTestDialog repassa customVariables (as da tela no editor,
+  ou template.custom_variables) no envio de teste.
+- TalkXTemplateStatusControl corta a propagacao do clique: aprovar no
+  cartao/linha nao alterna a selecao do container.
+- Duplicar no cabecalho do editor abre a copia criada (onOpenCopy ->
+  openEdit), em vez de apenas fechar o editor.
+- 'Enviar para revisao' fica restrito ao autor da linha, o mesmo recorte
+  que a RPC de snapshot autoriza (dono ou admin/supervisor).
+- Mocks de teste ajustados aos contratos que o trabalho anterior mudou
+  (duplicacao devolve a linha; o controle le o dono da linha).

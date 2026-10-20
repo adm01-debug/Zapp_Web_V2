@@ -1,0 +1,10 @@
+fix(dashboard): restaura trava E33, fuso SP e dedupe do SLA em dashboard_contact_counts (#38)
+
+A migration 20260930400000 (soft-delete, #1371) recopiou o corpo inicial da RPC e so
+acrescentou deleted_at IS NULL, reintroduzindo DASH-SQL-REGRESSION-001: p_agent cru
+(sem a trava E33), sem guard de staff, sem SET search_path, dia civil em UTC e
+LEFT JOIN de conversation_sla sem pre-agregacao.
+
+Esta migration restaura o corpo correto (20260925221406) preservando o filtro
+deleted_at IS NULL, e o teste dashboard-rls-authorization.test.sh passa a exigir o
+contrato estrito (spoof de p_agent == proprio chamador), sem [GAP-CONHECIDO].

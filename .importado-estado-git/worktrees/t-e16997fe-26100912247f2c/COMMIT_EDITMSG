@@ -1,0 +1,14 @@
+fix(ci/devops): enumera os eventos typebot na cobertura do webhook (SL-149)
+
+A retomada sobre a dia/2026-10-09 quebrava o teste de cobertura: o roteador
+ganhou o ramo `typebot.start`/`typebot.change.status` (SL-190, posterior a
+08/10) e a enumeração não tinha as duas linhas. Fecha a lacuna:
+
+- enumeracao (CASOS) ganha os dois eventos, com prova comportamental
+  (toca-banco) passando pelo handler real handleTypebotEvent;
+- runbook TROUBLESHOOTING.md ganha as duas linhas da tabela, cada uma
+  apontando a prova;
+- a checagem de "handler citado = handler chamado" exigia camelCase
+  (`handle` + maiúscula): sem isso o sufixo `evolution-webhook-handlers.ts`
+  casava como um handler "handlers" e a asserção morria — defeito latente
+  que só apareceu agora porque a asserção de enumeração falhava antes dele.

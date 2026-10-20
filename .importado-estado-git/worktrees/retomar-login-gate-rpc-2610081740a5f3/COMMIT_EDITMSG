@@ -1,0 +1,17 @@
+fix(auth-login): consolida gate de login na RPC consume_login_gate
+
+A edge fazia quatro idas ao banco: a conta travada só era consultada depois
+de consumir os dois rate limits. A RPC nova decide o bloqueio antes de
+consumir contadores, aplica os tetos de IP e de e-mail na mesma transação
+(corpo inválido conta só o IP) e é executável apenas por service_role.
+
+Retomada do conflito com dia/2026-10-08: traz o conteúdo da entrega aprovada
+(refazer-2, 15c990166) para a ponta viva, preservando o R2-AUTH-021
+(isCredentialRefusal; 503 sem registrar tentativa) e as 13 provas da base,
+que passam a 20. Na allowlist do inventário o conflito foi resolvido
+mantendo as entradas da ponta e só acrescentando a do teste novo.
+
+Prova (executada nesta retomada): scripts/db-audit/login_gate_rpc.test.sh em
+Postgres descartável — 32 asserções verdes; p95 da chamada única 7.248ms <
+10.171ms da sequência antiga. Suite offline do handler: 20 passed | 0 failed.
+Migration aplicada no banco LOCAL com hermes-db-migrar (papéis reais).

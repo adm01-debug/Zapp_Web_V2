@@ -1,0 +1,11 @@
+fix(talk-x): dublê de useTalkXCampaignSummary no teste de encaixe do wizard
+
+Rebase contra dia/2026-10-09: TL-143 fez o rail do wizard (sempre visível, em
+qualquer passo) ler o resumo via useTalkXCampaignSummary (react-query). A dia
+trouxe TalkXCampaignWizard.layout.test.tsx (TL-138, cartão independente) que
+monta o wizard real sem QueryClientProvider — sem dublê, qualquer teste desse
+arquivo quebra com "No QueryClient set, use QueryClientProvider to set one".
+Mesmo padrão já usado neste arquivo para useAudienceEstimate.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

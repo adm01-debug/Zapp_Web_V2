@@ -1,0 +1,3 @@
+fix(arquivos): player de áudio do cartão obedece o volume das mídias
+
+Q08 (S043): prova, com o elemento real, que o volume e o mudo globais das mídias chegam ao player do cartão e o acompanham enquanto toca. O attachMediaVolume de produção veio do A01 (f89120556); o que faltava era o teste — antes ele mockava o módulo como no-op e nada media element.volume.

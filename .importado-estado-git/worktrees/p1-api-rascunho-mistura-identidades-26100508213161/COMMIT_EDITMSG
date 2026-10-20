@@ -1,0 +1,16 @@
+fix(multiplix): manage_all edita rascunho alheio sem tomar a posse (MX08)
+
+Correcao da recusa do cartao t_63050d64 (refazer 1):
+
+- draft.update nao reatribui mais created_by ao profile do operador:
+  quem tem multiplix.dispatch.manage_all edita o rascunho alheio sem
+  mudar o dono (mudanca de regra de negocio fora do escopo do titulo).
+- draft.update e draft.discard agora checam o erro do SELECT previo de
+  created_by e sobem DispatchError 502, como o draft.get — falha de
+  banco nao vira mais 404 falso.
+- Teste MX08 passa a afirmar que created_by de D2 continua o dono
+  original apos update por manage_all.
+- deployment-manifest regerado: alem do multiplix-dispatch, sincroniza
+  entradas que ja estavam atrasadas em HEAD (hmac-validation,
+  gmail-webhook, send-email, whatsapp-webhook, detect-new-device,
+  evolution-webhook) — nenhuma e mudanca deste cartao.

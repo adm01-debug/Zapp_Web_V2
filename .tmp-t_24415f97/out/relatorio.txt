@@ -1,0 +1,147 @@
+### matriz da prova controlada — t_24415f97 — 2026-10-07T11:26:48-03:00
+REF=/home/joaquim_ataides/projetos/Zapp_Web_V2 (somente leitura)  COM=689345d7f SEM=05859cedf BASE_04=cae26e4b5 BASE_07=3ac56c0e3
+== cenario p1-pontoA-COM (pristino/pontoA) dia=dia/2026-10-07 fila=aaa111aaa222.json 
+   (referencia sem a correcao) rc=0
+   marcador .base-verde-3ac56c0e3: ausente
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p2-pontoA-COM (novo/pontoA) dia=dia/2026-10-07 fila=aaa111aaa222.json 
+HERMES-GUARD (git): não é um repositório git: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador
+2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+2026-10-07T11:26:49-03:00 a BASE (dia/2026-10-07 @ 3ac56c0e3) voltou a ficar verde; integração retomada
+   marcador .base-verde-3ac56c0e3: CRIADO
+   argv efetivo:
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+     saida do stub: VERIFY: VERDE — conjunto v2-integrador
+
+== cenario p3-pontoA-SEM (pristino/pontoA) dia=dia/2026-10-07 fila=bbb111bbb222.json 
+   (referencia sem a correcao) rc=0
+   marcador .base-verde-3ac56c0e3: ausente
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p4-pontoA-SEM (novo/pontoA) dia=dia/2026-10-07 fila=bbb111bbb222.json 
+HERMES-GUARD (git): não é um repositório git: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador
+2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+2026-10-07T11:26:49-03:00 a BASE (dia/2026-10-07 @ 3ac56c0e3) voltou a ficar verde; integração retomada
+   marcador .base-verde-3ac56c0e3: CRIADO
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p5-pontoA-MISTO (novo/pontoA) dia=dia/2026-10-07 fila=aaa111aaa222.json bbb111bbb222.json 
+HERMES-GUARD (git): não é um repositório git: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador
+2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+2026-10-07T11:26:49-03:00 a BASE (dia/2026-10-07 @ 3ac56c0e3) voltou a ficar verde; integração retomada
+   marcador .base-verde-3ac56c0e3: CRIADO
+   argv efetivo:
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+     saida do stub: VERIFY: VERDE — conjunto v2-integrador
+
+== cenario p6-pontoA-SHA-RUIM (novo/pontoA) dia=dia/2026-10-07 fila=ccc111ccc222.json 
+HERMES-GUARD (git): não é um repositório git: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador
+2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+2026-10-07T11:26:49-03:00 a BASE (dia/2026-10-07 @ 3ac56c0e3) voltou a ficar verde; integração retomada
+   marcador .base-verde-3ac56c0e3: CRIADO
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:49-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p7-pontoA-BASE-RUIM (novo/pontoA) dia=dia/2026-10-07 fila=ddd111ddd222.json 
+HERMES-GUARD (git): não é um repositório git: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador
+2026-10-07T11:26:50-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+2026-10-07T11:26:50-03:00 a BASE (dia/2026-10-07 @ 3ac56c0e3) voltou a ficar verde; integração retomada
+   marcador .base-verde-3ac56c0e3: CRIADO
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:50-03:00 base dia/2026-10-07 @ 3ac56c0e3 (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p8-pontoB-COM (pristino/pontoB) ID=aaa111aaa222 base=cae26e4b5 ponta=689345d7f migration_na_ponta=supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql
+   marcador: base VERDE (.base-verde)
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p9-pontoB-COM (novo/pontoB) ID=aaa111aaa222 base=cae26e4b5 ponta=689345d7f migration_na_ponta=supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql
+2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+   marcador: base VERDE (.base-verde)
+   argv efetivo:
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+     saida do stub: VERIFY: VERDE — conjunto v2-integrador
+
+== cenario p10-pontoB-SEM (pristino/pontoB) ID=aaa111aaa222 base=cae26e4b5 ponta=05859cedf migration_na_ponta=(nenhuma)
+   marcador: base VERDE (.base-verde)
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p11-pontoB-SEM (novo/pontoB) ID=aaa111aaa222 base=cae26e4b5 ponta=05859cedf migration_na_ponta=(nenhuma)
+2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+   marcador: base VERDE (.base-verde)
+   argv efetivo:
+     zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, como sempre)
+     saida do stub: AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+     saida do stub: VERIFY: VERDE SEM BANCO — o banco NÃO foi verificado
+
+== cenario p12-pontoB-COM-base-de-hoje (novo/pontoB) ID=aaa111aaa222 base=3ac56c0e3 ponta=689345d7f migration_na_ponta=supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql
+2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+   marcador: base VERDE (.base-verde)
+   argv efetivo:
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+     zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>
+   log do integrador (rota escolhida):
+     2026-10-07T11:26:50-03:00 aaa111aaa222 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco_local ficaria só AVISO/NÃO VERIFICADO)
+     saida do stub: VERIFY: VERDE — conjunto v2-integrador
+
+### comandos efetivos (resumo)
+p1-pontoA-COM             | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p10-pontoB-SEM            | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p11-pontoB-SEM            | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p12-pontoB-COM-base-de-hoje  | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador> 
+p2-pontoA-COM             | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador> 
+p3-pontoA-SEM             | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p4-pontoA-SEM             | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p5-pontoA-MISTO           | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador> 
+p6-pontoA-SHA-RUIM        | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p7-pontoA-BASE-RUIM       | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p8-pontoB-COM             | zapp-verify   argc=2 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador> 
+p9-pontoB-COM             | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<up /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-verify   argc=3 argv=<full /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador>  | zapp-db-local argc=3 argv=<down /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador> 

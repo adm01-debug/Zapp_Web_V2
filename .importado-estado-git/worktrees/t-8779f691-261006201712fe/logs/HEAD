@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791328635 -0300	
+7e801f8582265bc03aba115f8871f1dd0abcdb35 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791328637 -0300	reset: moving to HEAD
+7e801f8582265bc03aba115f8871f1dd0abcdb35 d6804223d43472137e84ac9195b18d1177a832c8 Joaquim Ataides <ti@promobrindes.com.br> 1791329375 -0300	commit: fix(multiplix): monitor abre disparo por id e lista de recentes nao corta em oito (#398)

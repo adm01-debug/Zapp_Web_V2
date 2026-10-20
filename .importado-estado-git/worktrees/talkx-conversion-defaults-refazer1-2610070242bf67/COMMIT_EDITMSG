@@ -1,0 +1,8 @@
+fix(talkx): defaults da conversao por NULL explicito sem afrouxar a lista de origens (#210)
+
+A migration deixa de tocar no CHECK talkx_conversions_source_check e a RPC
+volta a aceitar so as 5 origens da X021; fica so o COALESCE de
+currency/occurred_at (NULL explicito -> 'BRL'/now()) com REVOKE/GRANT por
+assinatura. O rollback restaura o corpo X021 da funcao sem reescrever dados.
+O teste prova o contrato com papel real (SET LOCAL role), inclui prova
+explicita de anon e confere que o rollback nao mexe nos dados gravados.

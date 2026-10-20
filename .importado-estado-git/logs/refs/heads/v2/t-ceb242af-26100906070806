@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791536859 -0300	branch: Created from dia/2026-10-09
+ce8f99e418dde54bc50badba5044cfbd48e351f2 c049b104aca59effdf4b2fcd0f04451998856475 Joaquim Ataides <ti@promobrindes.com.br> 1791536901 -0300	reset: moving to v2/t-a0c89816-2610090546202a
+c049b104aca59effdf4b2fcd0f04451998856475 a5dc5793a42781dd13e65b184543c36c4faa59ab iris <iris@fabrica.local> 1791538105 -0300	commit: feat(talk-x): filtros por tag, proprietario e rascunho e paginacao da biblioteca (TL-135c)
+a5dc5793a42781dd13e65b184543c36c4faa59ab ab88efa83e667a81e9021042e0a1e376bd55819d Joaquim Ataides <ti@promobrindes.com.br> 1791568099 -0300	rebase (finish): refs/heads/v2/t-ceb242af-26100906070806 onto cdf3e975ea5f37a2ec9d90dffa14043660b5f658

@@ -1,0 +1,13 @@
+fix(auto-close): nao conta encerramento quando mensagem, closure ou desatribuicao falham (#203)
+
+O laco de auto-close-conversations ignorava o `error` do insert em messages,
+do insert em conversation_closures e do update em contacts, e somava closed++
+de qualquer jeito: o cron anunciava "Auto-closed N" para conversas que nao
+foram encerradas.
+
+Agora cada escrita e conferida; a conversa so conta em `closed` quando as tres
+concluem e a falha vira `failed` + `errors` (truncado a 10) + log.error com o
+id do contato. Caminho de sucesso e autorizacao seguem iguais (200/closed).
+
+Prova: deno test nos dois estados — ANTES FAILED 8 passed | 5 failed
+({"closed":1} com a escrita falhando); DEPOIS ok 13 passed | 0 failed.

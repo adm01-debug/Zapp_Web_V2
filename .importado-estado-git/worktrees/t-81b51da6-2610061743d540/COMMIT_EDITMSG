@@ -1,0 +1,16 @@
+fix(contatos): mesclagem autorizada com nota deixa de ser bloqueada pelo guard de identidade
+
+R2-DB-016 (item 301): merge_contacts_atomic move contact_notes.contact_id para o
+contato primario, mas o guard posterior guard_contact_note_identity rejeitava
+qualquer mudanca do par (contact_id, author_id) sem bypass, abortando a mesclagem
+inteira (23514) mesmo para admin/supervisor e service_role.
+
+A mesclagem autorizada passa a sinalizar a operacao numa GUC transacional
+(app.contact_merge_identity) setada apenas dentro da RPC SECURITY DEFINER; o guard
+dispensa a checagem somente com esse sinal e segue negando no caminho padrao
+(UPDATE direto do cliente, do service_role ou do proprio postgres).
+
+Prova em PostgreSQL 17 descartavel (crm-sync-outbox-behavior.test.sh): bloco RED
+reproduz o defeito com o guard REAL da 20260909200000 e o bloco GREEN exige que a
+mesma operacao conclua depois da correcao, alem de dois casos NEGADOS (postgres e
+authenticated) e o caminho do admin autenticado.

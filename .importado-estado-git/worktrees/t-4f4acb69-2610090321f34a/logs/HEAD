@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526886 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526887 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 3826cf663d871cc76d860c7adf3bd781d7142f25 Joaquim Ataides <ti@promobrindes.com.br> 1791527265 -0300	commit: feat(multiplix): expõe público do disparo (select/save/apply) na camada de hooks
+3826cf663d871cc76d860c7adf3bd781d7142f25 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791564072 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 d5aa07d96c6424ffeb5186cdc6162b16840b628f Joaquim Ataides <ti@promobrindes.com.br> 1791564156 -0300	rebase (continue): feat(multiplix): expõe público do disparo (select/save/apply) na camada de hooks
+d5aa07d96c6424ffeb5186cdc6162b16840b628f d5aa07d96c6424ffeb5186cdc6162b16840b628f Joaquim Ataides <ti@promobrindes.com.br> 1791564156 -0300	rebase (finish): returning to refs/heads/v2/t-4f4acb69-2610090321f34a

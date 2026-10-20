@@ -1,0 +1,19 @@
+fix(db-audit): executor de contrato de runtime extrai o SQL e cai no generico (#94)
+
+Os 12 contratos em scripts/db-audit/contracts guardam o texto do braco do `case` de
+origem (shell) e o executor o entregava ao psql via -c, como se fosse SQL: a rota
+"Provar estado runtime antes do push" nunca produzia a prova JSON. Versao sem contrato
+dedicado saia com 2 antes de qualquer fallback, embora o workflow tenha o ramo
+`proof.contract === 'generic'` esperando o contrato generico (767 versoes na auditoria).
+
+- le o contrato declarado e EXTRAI os flags do cliente e o SQL (inline `-c "<sql>"` ou
+  `-f <arquivo>`); shell, flag nao declarada, SQL sem ON_ERROR_STOP=1 e texto que nao e
+  SQL sao recusados: shell nunca chega ao psql (fail-closed preservado)
+- mapa versao->invocacao pela mesma rotulagem do `case`, incluindo os rotulos que
+  agrupam versoes (`|`) e o ramo generico (`*)`)
+- versao sem contrato dedicado usa generic-migration-runtime.sql (aviso no stderr)
+- prova: scripts/db-audit/runtime-contract-runner.test.sh em PostgreSQL 17 descartavel
+  (3 classes de contrato com a forma completa do JSON, cobertura das 793 versoes de
+  supabase/migrations e recusa de shell disfarcado de SQL)
+- ALLOWLIST do inventario de testes atualizada (o passo em db-guard.yml fica com o dono
+  do workflow); doc de evidencia deixa de mandar rodar o comando defeituoso

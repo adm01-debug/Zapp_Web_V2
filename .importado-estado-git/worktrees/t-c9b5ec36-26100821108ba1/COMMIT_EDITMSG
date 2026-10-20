@@ -1,0 +1,5 @@
+fix(telefonia): encerra o ledger antigo e fecha a documentacao do T100 (SL-245)
+
+TELEFONIA_STATUS.md recebe a linha final 'Superado por docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md' (o T100 do plano pedia exatamente isso); o plano ganha a secao 12 (checklist final 73/100, links das PRs das fases 0-7 com sha e Pendencias/residuos honestos), o T100 marcado com o paragrafo FEITO e o §11 preenchido nas fases 2-7.
+
+Prova: tests/contracts/telefonia-encerramento.contract.test.ts - 6 dos 12 casos vermelhos com os documentos anteriores, 12/12 verdes com o fechamento.

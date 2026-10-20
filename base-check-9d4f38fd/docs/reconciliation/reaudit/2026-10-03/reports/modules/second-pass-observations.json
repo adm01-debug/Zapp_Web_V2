@@ -1,0 +1,992 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "/root/grill_me_primary_review",
+  "counting_rule": "Observações, limites e extensões sem novos IDs de finding. Não somar às contagens de findings.json.",
+  "observations": [
+    {
+      "id": "MOD-OBS-001",
+      "classification": "PRIOR_FAMILY_RECONFIRMED",
+      "title": "Metas de atendimento continuam apoiadas em proxies e desafios fixos",
+      "prior_finding_ids": [
+        "DASH-METRICS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-063",
+        "R2-MOD-064"
+      ],
+      "observation": "DailyGoalsCard usa totalConversations para o rótulo Responder 10 mensagens e não avalia a hora no desafio das 18h. DashboardWidgetRenderer repete proxies de desafios e exibe progresso fixo. Isso reforça a família anterior; os novos IDs 063 e 064 tratam causas distintas de notificação e persistência de configuração.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/overview/DailyGoalsCard.tsx",
+          "line_start": 16,
+          "line_end": 40,
+          "git_blob_sha": "136f0de71774fabe8b7c0cb364774fad905d96e5",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/DailyGoalsCard.tsx#L16-L40",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
+          "line_start": 155,
+          "line_end": 181,
+          "git_blob_sha": "566782938f8de0bebcd166ded452b4f89970abe3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DashboardWidgetRenderer.tsx#L155-L181",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-002",
+      "classification": "CROSS_AGENT_EXTENSION_NO_NEW_ID",
+      "title": "Formulário SLA não expõe o prazo e os históricos usam janelas diferentes",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-SLA-003"
+      ],
+      "observation": "SLAConfigTable oferece nome, prioridade e padrão, sem input para first_response_minutes. SLAMetricsDashboard usa o período selecionado no resumo e 30 dias no histórico. AgentPerformancePanel fixa SLA em week enquanto o ranking recebe outro período. A ausência do prazo foi incorporada por root em R2-SLA-003; as janelas são observações de apresentação, sem aumentar o total de achados.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/sla/SLAConfigTable.tsx",
+          "line_start": 101,
+          "line_end": 130,
+          "git_blob_sha": "f6ea145c093e0d4cda003759890393f60cd9e5a3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/sla/SLAConfigTable.tsx#L101-L130",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/SLAMetricsDashboard.tsx",
+          "line_start": 30,
+          "line_end": 56,
+          "git_blob_sha": "b18ad017fa90900ec24625ffa36014d71e2993ff",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/SLAMetricsDashboard.tsx#L30-L56",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/AgentPerformancePanel.tsx",
+          "line_start": 43,
+          "line_end": 56,
+          "git_blob_sha": "eea32a8b217c0a2a3ab30e1c16b4f16e9829fe38",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/AgentPerformancePanel.tsx#L43-L56",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-003",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "TalkX.test inclui implementações locais que não exercitam a produção",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-062"
+      ],
+      "observation": "A primeira parte testa useTalkX real com backend simulado, inclusive rejeição lógica. Já os blocos de personalização, duração e filtro declaram funções locais e testam essas cópias. Alterar a função de produção não necessariamente faz esses testes falharem; isso não invalida os testes reais do hook nem os testes separados que importam os helpers de produção.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/__tests__/TalkX.test.tsx",
+          "line_start": 1,
+          "line_end": 127,
+          "git_blob_sha": "940b0de55d924661138f06b994a0156d49f0f5fe",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkX.test.tsx#L1-L127",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkX.test.tsx",
+          "line_start": 131,
+          "line_end": 305,
+          "git_blob_sha": "940b0de55d924661138f06b994a0156d49f0f5fe",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkX.test.tsx#L131-L305",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-004",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Fixtures do editor não cobrem a audiência maior que a página nem a saída antes do debounce",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-024",
+        "R2-MOD-025",
+        "R2-MOD-027"
+      ],
+      "observation": "useCampaignEditor.test substitui useQuery pela lista persistida do fixture, portanto não exercita paginação real. A hidratação de público usa um contato; o roundtrip espera 3.100 ms antes de desmontar. Esses cenários não cobrem truncação do público nem saída antes do autosave. A serialização de saves e a reutilização de chave de criação de TalkX possuem testes úteis e não devem ser confundidas com o defeito distinto de Multiplix.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+          "line_start": 65,
+          "line_end": 99,
+          "git_blob_sha": "a1883276e9f2c6cb6479b509b50ae6367ab9f96e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L65-L99",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+          "line_start": 240,
+          "line_end": 295,
+          "git_blob_sha": "a1883276e9f2c6cb6479b509b50ae6367ab9f96e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L240-L295",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+          "line_start": 441,
+          "line_end": 522,
+          "git_blob_sha": "a1883276e9f2c6cb6479b509b50ae6367ab9f96e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L441-L522",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-005",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Testes de rota não executam o ciclo do wizard",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-027"
+      ],
+      "observation": "TalkXView.route substitui TalkXCampaignWizard por um componente de teste. Ele valida navegação e callbacks da rota, mas não o salvamento automático, cancelamento ou recuperação de erro do wizard real.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+          "line_start": 23,
+          "line_end": 28,
+          "git_blob_sha": "90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L23-L28",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+          "line_start": 95,
+          "line_end": 114,
+          "git_blob_sha": "90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L95-L114",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+          "line_start": 152,
+          "line_end": 243,
+          "git_blob_sha": "90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L152-L243",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-006",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Kit de estado e filtro testado isoladamente não comprova adoção pelos consumidores",
+      "prior_finding_ids": [
+        "TX03"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-036",
+        "R2-MOD-059",
+        "R2-MOD-060"
+      ],
+      "observation": "A matriz do QueryBoundary e os testes de FilterBar/Table são úteis para seus componentes controlados. Eles não asseguram que cada tela entregue error/retry, onPeriodChange ou onPageSizeChange. Os defeitos registrados permanecem nos consumidores. TalkXAnalytics.hooks declara explicitamente que verifica ordem dos hooks e simula os dados, sem validar a correção das métricas.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx",
+          "line_start": 1,
+          "line_end": 40,
+          "git_blob_sha": "c7b5c00d4f3c072bae0919f699e5b8e9de507284",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx#L1-L40",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx",
+          "line_start": 1,
+          "line_end": 35,
+          "git_blob_sha": "95fd5e2e894d733d33ad56a821e14de25f29d4af",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx#L1-L35",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx",
+          "line_start": 1,
+          "line_end": 45,
+          "git_blob_sha": "69085a95cefa7af3883dc0384388e9c26c66dd01",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx#L1-L45",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-007",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Teste de fuso do Dashboard não cobre selecionar Personalizada",
+      "prior_finding_ids": [
+        "DASH-CONTROLS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-065"
+      ],
+      "observation": "DashboardFilters.fuso testa getDefaultFilters, sem interação no seletor custom. DashboardView.test simula filtros e painéis: valida permissões e roteamento para o consumidor, mas não o seletor real. Por isso não contradiz o caminho sem ação de Personalizada encontrado em 065.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts",
+          "line_start": 1,
+          "line_end": 36,
+          "git_blob_sha": "2b5c96da0eff2cf1dacd82ea353546efc8396a9b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts#L1-L36",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/__tests__/DashboardView.test.tsx",
+          "line_start": 11,
+          "line_end": 69,
+          "git_blob_sha": "17021de5e159190af8811a52dcb07468d5867ef6",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/DashboardView.test.tsx#L11-L69",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-008",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Resumo de IA com 1.500 declarados é teste de contrato de consumo, não de completude da consulta",
+      "prior_finding_ids": [
+        "DASH-METRICS-001"
+      ],
+      "related_finding_ids": [],
+      "observation": "useAIUsageDashboard.agregacao simula um resumo RPC com 1.500 análises e uma página de 50 linhas. Isso demonstra a separação correta entre resumo e página no hook, sem demonstrar que 1.500 registros reais atravessam o SQL, a política ou a janela temporal. useDashboardData.presence também usa respostas simuladas e não comprova a identidade profile_id versus auth.uid no banco.",
+      "evidence": [
+        {
+          "path": "src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx",
+          "line_start": 32,
+          "line_end": 91,
+          "git_blob_sha": "e96dd2b6a38b2b479b3c330062a44b267db557cd",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx#L32-L91",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx",
+          "line_start": 1,
+          "line_end": 42,
+          "git_blob_sha": "e0f9d5c59494d439d03f351e6c97cf7c43abc4b2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx#L1-L42",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-009",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Teste offline da fila verifica texto, não todos os sinais visuais nomeados",
+      "prior_finding_ids": [
+        "DASH-REALTIME-001"
+      ],
+      "related_finding_ids": [],
+      "observation": "O caso offline de QueueHealthTable verifica a presença de Tempo real. Apesar do nome mencionar tom e pulso, o trecho não faz asserções desses atributos. O limite é específico a esse teste; a revisão não realizou renderização visual nem conclui, por esse teste, defeito adicional de presença.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/__tests__/QueueHealthTable.test.tsx",
+          "line_start": 34,
+          "line_end": 44,
+          "git_blob_sha": "a891068b82bb3cc724c12fedf606d225b0b96c7f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/QueueHealthTable.test.tsx#L34-L44",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-010",
+      "classification": "RELATED_CAUSE_ADDITIONAL_CONSUMER",
+      "title": "Chatbot também fecha o editor antes de a mutation salvar",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-003",
+        "R2-MOD-051"
+      ],
+      "observation": "ChatbotFlowsView chama updateFlow.mutate e imediatamente desmonta o editor. Uma rejeição posterior só gera toast no hook e o draft local é perdido. Mesmo padrão de fechamento prematuro já registrado nos consumidores de automações e Tasks; esta ocorrência adicional é preservada sem outro ID.",
+      "evidence": [
+        {
+          "path": "src/components/chatbot/ChatbotFlowsView.tsx",
+          "line_start": 83,
+          "line_end": 92,
+          "git_blob_sha": "ca4f94a6562741dc68ee477bbccc46465d264e8b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L83-L92",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useChatbotFlows.ts",
+          "line_start": 90,
+          "line_end": 110,
+          "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L90-L110",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-011",
+      "classification": "PRIOR_FAMILY_ADDITIONAL_CONSUMER",
+      "title": "Chatbot usa amostra limitada como Total e oculta error das consultas",
+      "prior_finding_ids": [
+        "DASH-METRICS-001",
+        "TX03"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-036"
+      ],
+      "observation": "ChatbotExecutionsDashboard limita os registros mais recentes a 200, calcula Total/Concluídos/Falhas sobre essa amostra e não oferece paginação. O filtro de status muda também os denominadores dos cards. O erro de useQuery não é consumido: a view cai em zero/Nenhuma execução encontrada. A listagem de fluxos também não devolve error ao consumidor e é uma consulta sem paginação. São extensões de completude e estado vazio já presentes nas famílias anteriores; não afirmam falha de uma execução externa.",
+      "evidence": [
+        {
+          "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+          "line_start": 25,
+          "line_end": 49,
+          "git_blob_sha": "85b234c418f538b1d568c290ee0f7aa6af1de3e2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L25-L49",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+          "line_start": 64,
+          "line_end": 108,
+          "git_blob_sha": "85b234c418f538b1d568c290ee0f7aa6af1de3e2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L64-L108",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+          "line_start": 129,
+          "line_end": 135,
+          "git_blob_sha": "85b234c418f538b1d568c290ee0f7aa6af1de3e2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L129-L135",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useChatbotFlows.ts",
+          "line_start": 53,
+          "line_end": 62,
+          "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L53-L62",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useChatbotFlows.ts",
+          "line_start": 143,
+          "line_end": 151,
+          "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L143-L151",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowsView.tsx",
+          "line_start": 149,
+          "line_end": 159,
+          "git_blob_sha": "ca4f94a6562741dc68ee477bbccc46465d264e8b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L149-L159",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-012",
+      "classification": "CROSS_MODULE_DOMAIN_MISMATCH",
+      "title": "Dashboard de execuções Chatbot troca estados válidos por Aguardando",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-006"
+      ],
+      "observation": "O CHECK versionado permite running/completed/failed/paused/cancelled. A UI oferece waiting e não mapeia paused/cancelled; ambos caem no fallback STATUS_CONFIG.waiting, portanto podem ser apresentados como Aguardando e não há filtro para eles. Database confirmou que não há redefinição posterior do CHECK. Registrado como variante adicional de divergência de domínio de status, sem outro ID de finding.",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql",
+          "line_start": 60,
+          "line_end": 71,
+          "git_blob_sha": "a1a23feb27c2f8e804ec43fb70924c60fff2622b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql#L60-L71",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+          "line_start": 15,
+          "line_end": 20,
+          "git_blob_sha": "85b234c418f538b1d568c290ee0f7aa6af1de3e2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L15-L20",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+          "line_start": 120,
+          "line_end": 139,
+          "git_blob_sha": "85b234c418f538b1d568c290ee0f7aa6af1de3e2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L120-L139",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-013",
+      "classification": "PRIOR_FAMILY_ADDITIONAL_CONSUMER",
+      "title": "Previsão de relatórios injeta ruído aleatório e usa até 1.000 mensagens",
+      "prior_finding_ids": [
+        "DASH-CONTROLS-001",
+        "DASH-METRICS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-018",
+        "R2-MOD-019"
+      ],
+      "observation": "DemandForecast calcula a média por dia da semana dividindo contagens limitadas a 1.000 por quatro, e adiciona ruído de até cerca de 15% aos dias futuros. secureRandomFloat usa uma nova amostra de crypto, portanto o mesmo histórico pode produzir previsões diferentes ao remontar, sem que o gráfico exponha esse ruído como simulação. O heatmap de relatórios também limita 1.000 sem paginação. Essas variantes reforçam as famílias anteriores de previsões/contagens e não geram novos IDs.",
+      "evidence": [
+        {
+          "path": "src/components/reports/DemandForecast.tsx",
+          "line_start": 19,
+          "line_end": 69,
+          "git_blob_sha": "fbe3b569223a491fd3cada132a95ba41d9daa99c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/DemandForecast.tsx#L19-L69",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/reports/DemandForecast.tsx",
+          "line_start": 89,
+          "line_end": 121,
+          "git_blob_sha": "fbe3b569223a491fd3cada132a95ba41d9daa99c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/DemandForecast.tsx#L89-L121",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/secureRandom.ts",
+          "line_start": 14,
+          "line_end": 17,
+          "git_blob_sha": "476661d7819c1a27d1bc04b106ba3e2a537d5b8c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/secureRandom.ts#L14-L17",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/reports/ConversationHeatmap.tsx",
+          "line_start": 44,
+          "line_end": 73,
+          "git_blob_sha": "454ec67a134445dc5a45295fdf52773e9b68552a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/ConversationHeatmap.tsx#L44-L73",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/reports/AdvancedReportsView.tsx",
+          "line_start": 173,
+          "line_end": 185,
+          "git_blob_sha": "fd9f20064b81966425e411717e80365383cbf34e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/AdvancedReportsView.tsx#L173-L185",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-014",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "QuickAdd cobre submissão imediata, sem troca de dia enquanto a criação está pendente",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-056"
+      ],
+      "observation": "QuickAdd.test usa onAdd resolvido imediatamente ou função async vazia. Testa presets e o payload de hora, mas não muda defaultDueDate enquanto um create aguarda. QuickAddCompacto cobre somente abertura dos chips por atalhos. Os testes não contradizem a corrida reproduzida por MOD056.",
+      "evidence": [
+        {
+          "path": "src/components/tasks/__tests__/QuickAdd.test.tsx",
+          "line_start": 27,
+          "line_end": 46,
+          "git_blob_sha": "e1d12d963ea1e17c71ead52eacd636344f9a233a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/QuickAdd.test.tsx#L27-L46",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/tasks/__tests__/QuickAdd.test.tsx",
+          "line_start": 138,
+          "line_end": 175,
+          "git_blob_sha": "e1d12d963ea1e17c71ead52eacd636344f9a233a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/QuickAdd.test.tsx#L138-L175",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/tasks/__tests__/QuickAddCompacto.test.tsx",
+          "line_start": 41,
+          "line_end": 70,
+          "git_blob_sha": "79134c4b5881cf687043e8869db9af7849ad177c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/QuickAddCompacto.test.tsx#L41-L70",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-015",
+      "classification": "DORMANT_HELPER_AND_TEST_SCOPE_LIMIT",
+      "title": "Opacidade de gráfico altera o fechamento de var; teste só procura o número",
+      "prior_finding_ids": [],
+      "related_finding_ids": [],
+      "observation": "getChartColorWithOpacity troca o primeiro parêntese de fechamento em hsl(var(--chart-1)), produzindo hsl(var(--chart-1 / 0.5)) para opacidade 0.5, dentro de var em vez de depois de var. O teste verifica somente que a string contém 0.5 e que índices 0/10 coincidem; não valida a expressão CSS resultante. A busca em src não encontrou consumidor de produção desse helper, apenas sua definição e testes, portanto não se conta tela quebrada nem novo finding. getChartColor com índice negativo também não foi promovido sem chamador correspondente.",
+      "evidence": [
+        {
+          "path": "src/lib/chartColors.ts",
+          "line_start": 115,
+          "line_end": 149,
+          "git_blob_sha": "ae6b51526e540eb6673c018c3ccdbb09dace3145",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/chartColors.ts#L115-L149",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/__tests__/chartColors.test.ts",
+          "line_start": 100,
+          "line_end": 110,
+          "git_blob_sha": "1e6b5eb11393c80414c1a021585303fc42a16e2b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/chartColors.test.ts#L100-L110",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-016",
+      "classification": "REJECTED_GENERALIZATION_AND_TEST_SCOPE_LIMIT",
+      "title": "Compressão: MIME original não é repassado ao envio; teste não importa o compressor",
+      "prior_finding_ids": [],
+      "related_finding_ids": [],
+      "observation": "A hipótese inicial de que toda conversão JPEG para WebP enviaria o MIME antigo foi rejeitada ao ler sendFileViaApi: o payload fornece categoria e URL, sem repassar file.type nem o nome antigo para imagens. A construção do File usa outputType e não blob.type; uma hipótese de encoder do canvas retornar tipo diferente permanece dependente de uma precondição de navegador não verificada. imageCompression.test não importa nenhuma função de produção: testa startsWith, números e constantes locais, logo não demonstra qualidade, limite final, fallback ou metadata da compressão.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/useFileUploadLogic.ts",
+          "line_start": 119,
+          "line_end": 136,
+          "git_blob_sha": "af489a0f3136df5d5316ed2b2a409795ba457304",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/useFileUploadLogic.ts#L119-L136",
+          "purpose": ""
+        },
+        {
+          "path": "src/utils/imageCompression.ts",
+          "line_start": 115,
+          "line_end": 142,
+          "git_blob_sha": "182947325a0edc043c7d7ac284fbb837638c11bd",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/imageCompression.ts#L115-L142",
+          "purpose": ""
+        },
+        {
+          "path": "src/utils/__tests__/imageCompression.test.ts",
+          "line_start": 1,
+          "line_end": 37,
+          "git_blob_sha": "b17eebf2927a3ba04469a961deb7a10fb6925f4b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/__tests__/imageCompression.test.ts#L1-L37",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-017",
+      "classification": "UNPROVEN_INPUT_OR_REACHABILITY_PRECONDITIONS",
+      "title": "URLs e formatadores: hipóteses condicionais mantidas sem impacto inventado",
+      "prior_finding_ids": [],
+      "related_finding_ids": [],
+      "observation": "normalizeMediaUrl aplica substituição de barras à URL inteira, mas não foi encontrado um URL efetivamente produzido no fluxo com componente opaco cuja alteração prove falha. cfImagesSrcSet reconstrói origem/caminho sem query; os consumidores existem, porém a precondição de imagens privadas assinadas do Cloudflare não foi comprovada neste repositório. Testes do helper usam somente URL pública sem query. labelOrRaw usa lookup em objeto comum e formatDuration pode arredondar o resto para 60 segundos; as buscas não localizaram consumidor ativo dos helpers específicos suficiente para atribuir uma falha de interface. Esses limites não são certificados de correção dos utilitários.",
+      "evidence": [
+        {
+          "path": "src/utils/normalizeMediaUrl.ts",
+          "line_start": 1,
+          "line_end": 9,
+          "git_blob_sha": "c97154c4c10957f7d22032a9cd77afda2ad22f75",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/normalizeMediaUrl.ts#L1-L9",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/cfImages.ts",
+          "line_start": 33,
+          "line_end": 48,
+          "git_blob_sha": "c403cb3f434de24be786d1de1f73bd70d602f702",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/cfImages.ts#L33-L48",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/__tests__/cfImages.test.ts",
+          "line_start": 11,
+          "line_end": 44,
+          "git_blob_sha": "ebfb8f2ff73c29893c67d06b0f81817a03290dc2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/cfImages.test.ts#L11-L44",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/singuLabels.ts",
+          "line_start": 131,
+          "line_end": 140,
+          "git_blob_sha": "538a6e033bc4de6e63712cccb4bdfd169cfb944e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/singuLabels.ts#L131-L140",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/formatters.ts",
+          "line_start": 118,
+          "line_end": 125,
+          "git_blob_sha": "1425fed7827d7f1416711164bbaa627c79a147d9",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/formatters.ts#L118-L125",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-018",
+      "classification": "FINITE_REVIEW_BOUNDARY",
+      "title": "Mapbox e helpers transversais: corpos lidos, contratos externos delimitados",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-071",
+        "R2-MOD-072"
+      ],
+      "observation": "O recorte finito de 40 caminhos de src/lib e src/utils foi lido integralmente. Inclui token/cache Mapbox, sessão/contagem, guarda de orçamento, loader, normalização de filtros, deduplicação, retry, helpers de autenticação, paletas e áudio. Os 40 caminhos e exclusões estão em lib-utils-scope.json. Não se infere preço vigente, limite financeiro rígido ou validade do codec a partir de comentários. O consumidor useAddressAutocomplete e mapboxGeocode pertencem a Inbox; o endpoint de alerta de orçamento pertence a Providers. Os arquivos de chamadas e helpers de email permanecem sob root. Leitura integral de um helper não prova adoção correta por todos os consumidores.",
+      "evidence": [
+        {
+          "path": "src/lib/mapboxToken.ts",
+          "line_start": 1,
+          "line_end": 136,
+          "git_blob_sha": "318729640cd7d9a0aadfb286423a43039fef1340",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxToken.ts#L1-L136",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/mapboxSession.ts",
+          "line_start": 1,
+          "line_end": 128,
+          "git_blob_sha": "73c814b08cdfc10de209b8935eccf1f95a68eb3c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxSession.ts#L1-L128",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/mapboxCostGuard.ts",
+          "line_start": 1,
+          "line_end": 152,
+          "git_blob_sha": "33f635b2a1e7bf81286871d29d3ec5622a385404",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxCostGuard.ts#L1-L152",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/mapboxLoader.ts",
+          "line_start": 1,
+          "line_end": 21,
+          "git_blob_sha": "7c9fc731bf2cf53f9d7790ade5f389045d165a36",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxLoader.ts#L1-L21",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/aiJobs/status.ts",
+          "line_start": 1,
+          "line_end": 116,
+          "git_blob_sha": "ff5a17a390e95753e543ccc5e2c9b67d6b012bbc",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/aiJobs/status.ts#L1-L116",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-019",
+      "title": "Previsão do VolumeChart mistura população filtrada com média geral e perde a data futura",
+      "classification": "EXTENSION_WITHOUT_NEW_FINDING_ID",
+      "prior_finding_ids": [
+        "DASH-METRICS-001",
+        "DASH-CONTROLS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-076"
+      ],
+      "observation": "VolumeChart passa queueId/agentId apenas a useTodayHourlyVolume; useDemandPrediction consulta mensagens de sete dias sem esses filtros e sem paginação. A linha Média7dias compara população geral disponível com a série filtrada. O mapa de previsões usa apenas a hora de p.time: previsões após a meia-noite podem ocupar horas do começo do próprio dia exibido. A conversão para média simples e a heurística95% já tinham família anterior; estas fronteiras do consumidor são registradas sem multiplicar IDs. Não se afirmou cobertura SQL da consulta de mensagens ou incidência em dados reais.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/overview/VolumeChart.tsx",
+          "line_start": 46,
+          "line_end": 68,
+          "git_blob_sha": "e072c9396e7f84de3cd81422d852b283a3832799",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/VolumeChart.tsx#L46-L68",
+          "purpose": "Filtro somente para volume e previsão indexada por hora"
+        },
+        {
+          "path": "src/hooks/business/useDemandPrediction.ts",
+          "line_start": 39,
+          "line_end": 47,
+          "git_blob_sha": "efefaa72acbddb4f9e2e4402068cd32aebe30c6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L39-L47",
+          "purpose": "Previsão pode atravessar meia-noite sem identidade de data"
+        },
+        {
+          "path": "src/hooks/business/useDemandPrediction.ts",
+          "line_start": 53,
+          "line_end": 74,
+          "git_blob_sha": "efefaa72acbddb4f9e2e4402068cd32aebe30c6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L53-L74",
+          "purpose": "Histórico sem filtros do topo nem paginação"
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-020",
+      "title": "Meta CAPI declara demonstração, mas totais e preferências continuam limitados ao contrato local",
+      "classification": "HONEST_UNAVAILABLE_STATE_WITH_DATA_LIMITS",
+      "prior_finding_ids": [],
+      "related_finding_ids": [],
+      "observation": "A view declara explicitamente que não envia para graph.facebook.com e desabilita Configurar/testes. Isso é um estado indisponível honesto, não prova de integração concluída. O hook, lido como fronteira e já integral no relatório Providers, limita eventos a100; Total Eventos usa esse comprimento e os tipos usam a mesma amostra. O erro de settingsResult não é verificado pelo hook, podendo apresentar Não configurado/Inativo sem distinguir falha de leitura. A view mostra alerta para isError dos eventos, mas também pode renderizar vazio/zeros. A recomendação de apresentação é delimitar últimos100 e separar preferências indisponíveis; sem novo ID de ausência de integração.",
+      "evidence": [
+        {
+          "path": "src/components/meta-capi/MetaCAPIView.tsx",
+          "line_start": 23,
+          "line_end": 60,
+          "git_blob_sha": "38f95287a5890d2b4a9afeb3e8edb2fb69af04a2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/meta-capi/MetaCAPIView.tsx#L23-L60",
+          "purpose": "Contagem local e aviso/ações desabilitadas"
+        },
+        {
+          "path": "src/components/meta-capi/MetaCAPIView.tsx",
+          "line_start": 65,
+          "line_end": 108,
+          "git_blob_sha": "38f95287a5890d2b4a9afeb3e8edb2fb69af04a2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/meta-capi/MetaCAPIView.tsx#L65-L108",
+          "purpose": "Erro e cards"
+        },
+        {
+          "path": "src/hooks/integrations/useMetaCAPIData.ts",
+          "line_start": 17,
+          "line_end": 44,
+          "git_blob_sha": "e0d3466b7649e30d1d6f95fe712d51833418c05e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useMetaCAPIData.ts#L17-L44",
+          "purpose": "Limit100 e omissão do erro de settings"
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-021",
+      "title": "Testes dos auxiliares cobrem formato e som sem fechar os novos contratos de fronteira",
+      "classification": "SPECIFIC_TEST_LIMITS",
+      "prior_finding_ids": [
+        "DASH-ACCEPTANCE-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-074",
+        "R2-MOD-075"
+      ],
+      "observation": "useTodayHourlyVolume.test chama o agregador real, mas monta relógio e day do fixture no mesmo fuso local; não simula buckets SQL de São Paulo com navegador em UTC. useRecentConversationEvents.test testa somente eventText, não o fallback/lookup/query. Os testes WarRoomAlerts usam violações vazias ou mocks sem coleção de violações e verificam existência/array/volume; o teste de mute entrega um INSERT manual e verifica play. Têm valor nesses contratos estreitos, sem verificar idempotência com >50 violações e republicação de página. useDashboardUrlFilters.test simula useSearchParams diretamente e testa callbacks/roundtrip; não monta MemoryRouter nem comprova um calendário de dias inválidos. Nenhuma suíte foi executada.",
+      "evidence": [
+        {
+          "path": "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+          "line_start": 4,
+          "line_end": 56,
+          "git_blob_sha": "3ef4669e48374ddc940312abf2ef196c90d2e2cc",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts#L4-L56",
+          "purpose": "Relógio/fixture no mesmo fuso e assertions da transformação"
+        },
+        {
+          "path": "src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts",
+          "line_start": 1,
+          "line_end": 29,
+          "git_blob_sha": "de0618a5353e6d33e448d58acf5de5cf613a153a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts#L1-L29",
+          "purpose": "Só eventText"
+        },
+        {
+          "path": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+          "line_start": 55,
+          "line_end": 115,
+          "git_blob_sha": "1dac6cacbebe56679921b7d81479b2e848174ef3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlerts.test.tsx#L55-L115",
+          "purpose": "Fixtures e assertions"
+        },
+        {
+          "path": "src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx",
+          "line_start": 71,
+          "line_end": 113,
+          "git_blob_sha": "18d1541040a1f2402dfaed44d9547e2a30e0ddb4",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx#L71-L113",
+          "purpose": "INSERT manual e gates de som"
+        },
+        {
+          "path": "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+          "line_start": 4,
+          "line_end": 18,
+          "git_blob_sha": "2bf3a2c258c110d50936a69bf3b92774633284dc",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx#L4-L18",
+          "purpose": "Router simulado"
+        },
+        {
+          "path": "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+          "line_start": 73,
+          "line_end": 110,
+          "git_blob_sha": "2bf3a2c258c110d50936a69bf3b92774633284dc",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx#L73-L110",
+          "purpose": "Callbacks do setter/serialização"
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-022",
+      "title": "Auxiliares finais: erros secundários e limites que não foram promovidos",
+      "classification": "LIMITED_CONTRACT_OBSERVATIONS",
+      "prior_finding_ids": [
+        "DASH-METRICS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-077"
+      ],
+      "observation": "Eventos recentes têm janela24h e fallback para consulta sem embed; falha da consulta principal é lançada. Já os erros nos lookups de contatos/perfis/filas são ignorados e o ator pode cair em Sistema apesar de performed_by preenchido. QueueHealth preserva null para SLA ausente em vez de afirmar100. URL filters usa calendário do aplicativo, mas parse de data aceita normalização de Date e não impõe from<=to; não foi mostrado um formulário atual que produza datas inválidas. TranscriptionAudio ignora error da assinatura e pode manter Pausar sem áudio disponível; o helper de volume usa layout effect em cada commit, portanto a hipótese de volume não aplicado por montagem após loading foi rejeitada. Os helpers de URL/volume estão integralmente no relatório Inbox; não se duplica uma análise de seu kernel.",
+      "evidence": [
+        {
+          "path": "src/hooks/dashboard/useRecentConversationEvents.ts",
+          "line_start": 45,
+          "line_end": 95,
+          "git_blob_sha": "a7b43b2f40aebd1e6d10ec0a59840d48391b7674",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useRecentConversationEvents.ts#L45-L95",
+          "purpose": "Consulta principal e lookups secundários"
+        },
+        {
+          "path": "src/hooks/dashboard/useQueueHealth.ts",
+          "line_start": 26,
+          "line_end": 45,
+          "git_blob_sha": "c0e8eea5ac0c8844a787fc8cc564e08edac1a734",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useQueueHealth.ts#L26-L45",
+          "purpose": "Ausência de SLA continua null"
+        },
+        {
+          "path": "src/hooks/dashboard/useDashboardUrlFilters.ts",
+          "line_start": 55,
+          "line_end": 81,
+          "git_blob_sha": "3fd3df0971a8fbf132caa26fd324bbb928ff2a6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useDashboardUrlFilters.ts#L55-L81",
+          "purpose": "Parse e validação de datas"
+        },
+        {
+          "path": "src/components/transcriptions/TranscriptionContactGroup.tsx",
+          "line_start": 34,
+          "line_end": 42,
+          "git_blob_sha": "4eef0fd214e9d01ef6c8df5b16b6d5f1709cf9a3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionContactGroup.tsx#L34-L42",
+          "purpose": "URL/erro e reprodução"
+        },
+        {
+          "path": "src/components/transcriptions/TranscriptionContactGroup.tsx",
+          "line_start": 110,
+          "line_end": 118,
+          "git_blob_sha": "4eef0fd214e9d01ef6c8df5b16b6d5f1709cf9a3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionContactGroup.tsx#L110-L118",
+          "purpose": "Estado de botão por playingAudio"
+        },
+        {
+          "path": "src/hooks/communication/useMediaElementVolume.ts",
+          "line_start": 40,
+          "line_end": 60,
+          "git_blob_sha": "2cadfe5febb85a3a502c75f43f5bdf275abb9c44",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useMediaElementVolume.ts#L40-L60",
+          "purpose": "Layout effect em cada commit"
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    }
+  ]
+}

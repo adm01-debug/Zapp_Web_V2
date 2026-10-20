@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323720 -0300	
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323721 -0300	reset: moving to HEAD
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 a539d4074be432f7148d2be12cf4401ee47456f7 Joaquim Ataides <ti@promobrindes.com.br> 1791324954 -0300	commit: fix(settings): aba Sons le e grava as preferencias no hook canonico dos alertas (#271)

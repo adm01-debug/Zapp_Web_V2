@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323488 -0300	
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 313f4134ef1bc81f0887d7fc868f02e0962d10b8 Joaquim Ataides <ti@promobrindes.com.br> 1791323489 -0300	reset: moving to HEAD
+313f4134ef1bc81f0887d7fc868f02e0962d10b8 6e017d7185e47a0e0258bbdcfe252ff587ea422d Joaquim Ataides <ti@promobrindes.com.br> 1791323513 -0300	cherry-pick: fix(inbox): presença de digitação entre agentes usa identidade real
+6e017d7185e47a0e0258bbdcfe252ff587ea422d 88e14e9fa1019e5127f45709d8500fdc4cd71a9b Joaquim Ataides <ti@promobrindes.com.br> 1791324344 -0300	commit: fix(hooks): corrigir identidade real da presença de digitação

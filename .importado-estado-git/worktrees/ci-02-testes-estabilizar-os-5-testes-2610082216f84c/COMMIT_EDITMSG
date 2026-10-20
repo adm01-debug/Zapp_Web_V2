@@ -1,0 +1,13 @@
+test(estabilidade): testes instáveis sob carga deixam de derrubar lotes
+
+- ChatPopup.pagination: aquece o módulo lazy do ChatPanel em beforeAll — a
+  primeira asserção pagava a avaliação do módulo dentro do orçamento de 5 s
+  (12 reprovações nos logs do integrador, sempre com o fallback de Suspense no
+  dump). 1196 ms -> 530 ms no primeiro teste, mesmo comando.
+- useReportsData.integrity: orçamento por teste (120 s) com a causa medida —
+  chartData roda 30 dias x 1500 mensagens = 45.000 chamadas de appDayKey (novo
+  Intl.DateTimeFormat por chamada): 6119 ms contra o orçamento de 15 s; 7
+  reprovações por 'Test timed out in 15000ms' nos logs.
+- MediaLibraryAdmin: orçamento por teste nos dois casos que reprovaram
+  ('renders the main title' e 'handles 100 items without crash': 2943 ms de
+  render ocioso). Nenhuma asserção alterada.

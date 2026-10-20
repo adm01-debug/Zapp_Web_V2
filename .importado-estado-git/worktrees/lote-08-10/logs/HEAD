@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 3d1d2233ef4fbe0cbb3effdd554adbde2c7d393a Joaquim Ataides <ti@promobrindes.com.br> 1791456477 -0300	
+3d1d2233ef4fbe0cbb3effdd554adbde2c7d393a 3d1d2233ef4fbe0cbb3effdd554adbde2c7d393a Joaquim Ataides <ti@promobrindes.com.br> 1791456478 -0300	reset: moving to HEAD
+3d1d2233ef4fbe0cbb3effdd554adbde2c7d393a f577da04d7fd946980e43bbbe6770db516139789 Joaquim Ataides <ti@promobrindes.com.br> 1791456491 -0300	commit: Lote 07–08/10/2026: 99 correções da fábrica (integradas e verificadas na branch dia/2026-10-08)
+f577da04d7fd946980e43bbbe6770db516139789 6bed2834345e57f332792476cababfad2c37124c Joaquim Ataides <ti@promobrindes.com.br> 1791457879 -0300	commit: docs(ci): plano de Actions cita as 1510 linhas reais do db-migrate.yml (guarda E62/E76)
+6bed2834345e57f332792476cababfad2c37124c 1109f73d741b212133e05f0672720753f5a9a12c Joaquim Ataides <ti@promobrindes.com.br> 1791458479 -0300	commit: chore(edge): regenera o manifesto de deploy das Edge Functions do lote
+1109f73d741b212133e05f0672720753f5a9a12c 9f009fc0b45f733ca5fceed2ce99874a9270fd22 Joaquim Ataides <ti@promobrindes.com.br> 1791459630 -0300	commit: test(tts): resposta falsa do teste de ciclo de vida usa corpo em texto (Blob.stream ausente no ambiente do CI)
+9f009fc0b45f733ca5fceed2ce99874a9270fd22 7a534ee3f70f6fd19a1e2339d3f920e90ea0135f Joaquim Ataides <ti@promobrindes.com.br> 1791461009 -0300	commit: fix(hooks): useDebounce cancela o disparo pendente ao desmontar (evita 'window is not defined' no fim da suíte)

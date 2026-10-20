@@ -1,0 +1,15 @@
+test(inbox): estabiliza a espera do dialogo lazy no teste do encaminhar
+
+A verificacao de integracao do cartao #29 ficou VERMELHA em `testes` por 1
+unico arquivo: FilesTab.encaminhar-fora-do-filtro.test.tsx falhava em
+`await screen.findByRole('dialog')`. O dialogo de encaminhamento vem de
+`React.lazy` (chunk proprio) e o `findBy*` do testing-library usa 1s por
+padrao: sob a suite inteira carregada (a maquina roda a suite em paralelo com
+dezenas de jobs) o import preguiçoso nao entra no DOM dentro dessa janela e o
+teste falha de forma intermitente, sem relacao com o codigo sob teste (o
+cartao so mexe em .github/ e scripts/, fora do `include` do vitest).
+
+A espera passa a ter timeout explicito de 5s (sempre abaixo do testTimeout de
+15s do vitest). Nao ha afrouxamento da assercao: com o defeito reintroduzido
+(FilesTab usando `filtered` no lugar de `items` na selecao canonica) os DOIS
+testes do arquivo continuam falhando; restaurado, passam.

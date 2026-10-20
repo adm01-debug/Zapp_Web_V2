@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791544647 -0300	
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791544649 -0300	reset: moving to HEAD
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 9856041b617206a135dc83228972f249ee7b3ee1 Joaquim Ataides <ti@promobrindes.com.br> 1791544663 -0300	cherry-pick: fix(banco): preserva papel padrão na conversa direta (#55)
+9856041b617206a135dc83228972f249ee7b3ee1 b5af402738dae1d73d9205b519c885dd6984f5fc Joaquim Ataides <ti@promobrindes.com.br> 1791544664 -0300	cherry-pick: ci(db): registra prova TC-002 no inventario
+b5af402738dae1d73d9205b519c885dd6984f5fc ba52bb183188bad79afb6b482a32f0bf2e8fab27 Joaquim Ataides <ti@promobrindes.com.br> 1791544664 -0300	cherry-pick: fix(db): explicita rollback TC-002 executavel
+ba52bb183188bad79afb6b482a32f0bf2e8fab27 a9a100eee9a5e3763c4e7d18f7f9ddf78a3897c8 Joaquim Ataides <ti@promobrindes.com.br> 1791544966 -0300	commit: fix(ci): estabiliza inventario de testes no deno
+a9a100eee9a5e3763c4e7d18f7f9ddf78a3897c8 c75624babf96527683de57e948bd9ed500622b27 Joaquim Ataides <ti@promobrindes.com.br> 1791545906 -0300	commit (amend): fix(ci): estabiliza inventario de testes no deno
+c75624babf96527683de57e948bd9ed500622b27 d66de6ac0b9e0bc98333c25872a821d7f4fc4c8e Joaquim Ataides <ti@promobrindes.com.br> 1791547130 -0300	revert: Revert "fix(ci): estabiliza inventario de testes no deno"

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e248e23bec1f63f229e6c0232becddbd25e198d9 Joaquim Ataides <ti@promobrindes.com.br> 1791245113 -0300	branch: Created from dia/2026-10-05
+e248e23bec1f63f229e6c0232becddbd25e198d9 5f9ad8e7937e989c2bf5e7e10107534c394469da adm01-debug <agent@promobrindes.local> 1791245431 -0300	commit: fix(grupos): preservar texto e destinatarios do broadcast quando todos os envios falham (#234)

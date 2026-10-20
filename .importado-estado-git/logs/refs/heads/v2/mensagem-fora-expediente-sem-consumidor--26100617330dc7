@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318805 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 d979a1eb7676f2d377bca53b5b09d365ca61a595 Joaquim Ataides <ti@promobrindes.com.br> 1791319530 -0300	commit: fix(mensageria): webhook entrega a mensagem de ausencia configurada por conexao (#219)

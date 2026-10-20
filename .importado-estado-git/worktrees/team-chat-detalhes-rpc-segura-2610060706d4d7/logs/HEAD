@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791281186 -0300	
+55a428d7a89316109e71d975c4193d67f7b3b051 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791281186 -0300	reset: moving to HEAD
+55a428d7a89316109e71d975c4193d67f7b3b051 ed455e5d6fafea6a3850cc3ecdbdbb71328c011d Joaquim Ataides <ti@promobrindes.com.br> 1791281819 -0300	commit: fix(team-chat): detalhes de colegas usam a RPC segura get_team_profiles

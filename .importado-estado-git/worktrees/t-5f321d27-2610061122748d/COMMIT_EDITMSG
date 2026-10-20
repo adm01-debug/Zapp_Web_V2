@@ -1,0 +1,18 @@
+fix(multiplix-dispatch): le o publico inteiro em resumo/estimativa (R2-API-030)
+
+O PostgREST corta a RESPOSTA no teto de linhas (1.000 no projeto) e devolve
+200 com o resto descartado: o SELECT unico de `loadRecipients` lia so a
+primeira pagina, e resumo (F49) e estimativa (F50) a tratavam como o publico
+inteiro — total, baldes, mensagens e consumo de voz subestimados, e classes
+de elegibilidade/roteiros fora da 1a pagina nunca apareciam.
+
+Agora o publico e lido em `range()` DETERMINISTICO (ORDER BY id) com
+`count: 'exact'` ate esgotar, comparando o conjunto lido com a contagem
+autoritativa. Leitura que nao fecha vira erro NOMEADO (multiplix_recipients_
+incomplete), publico que muda no meio vira erro NOMEADO (multiplix_recipients_
+unstable) — nunca total parcial. Sem contagem autoritativa a acao se recusa
+(fail-closed). O corpo nomeado sai via `jsonResponse` a 502, como o F27
+(`multiplix_resolve_truncated`), porque `errorResponse` mascara todo 5xx.
+
+Testes: fixture de 2.500 destinatarios (> teto) com classes e roteiros
+distintos so na ultima pagina; provam RED sem o fix (5 falhas) e GREEN (69).

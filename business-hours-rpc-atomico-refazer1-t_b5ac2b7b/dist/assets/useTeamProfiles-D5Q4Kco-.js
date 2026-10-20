@@ -1,0 +1,1 @@
+import{r as e}from"./vendor-data-ToHYVQ6_.js";import{r as t}from"./client-BV8iPb2f.js";function n(n=!0){return e({queryKey:[`team-profiles-rpc`],queryFn:async()=>{let{data:e,error:n}=await t.rpc(`get_team_profiles`);if(n)throw n;return e||[]},enabled:n,staleTime:3e4})}export{n as t};

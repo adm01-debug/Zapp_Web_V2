@@ -1,0 +1,26 @@
+fix(multiplix): draft.* resolve identidades/colunas reais e destino no servidor (MX08)
+
+O draft.* da edge multiplix-dispatch misturava identidades (auth.uid onde
+created_by guarda profiles.id), lia colunas inexistentes (template/
+recipient_count -> 42703/502) e confiava em `recipients` prontos do
+navegador com destino/elegibilidade forjaveis.
+
+- draft.create recebe company_ids/contact_ids e resolve destino +
+  elegibilidade no servidor via ponte Singu com escopo assinado (mesma via
+  do create_draft da edge irma multiplix-audience); p_created_by recebe o
+  profiles.id resolvido do JWT.
+- draft.get/update/discard e a guarda de blocks.* usam o resolveOwnerScope
+  canonico do index.ts (dono por profiles.id OU multiplix.dispatch.manage_all),
+  agora unico para toda a edge — listing/lifecycle/inspect delegam a ele.
+- draft.update nao reatribui mais created_by ao profile do operador: quem
+  tem manage_all edita o rascunho alheio sem mudar o dono.
+- draft.update/discard passam a checar o erro do SELECT previo de
+  created_by e sobem DispatchError 502, como o draft.get: falha de banco
+  nao vira 404 falso.
+- Teste draft.test.ts prova o achado (vermelho antes, verde depois) e a
+  idempotencia por client_request_id; contrato write-path atualizado.
+- Sem regenerar supabase/deployment-manifest.json (arquivo gerado): a
+  regeracao vinha arrastando entradas de outros edges e inflava o diff
+  desta tarefa sem relacao com o defeito (recusa: diff > 90k).
+- Pino de contagem de .ts de edge em tests/contracts/_adv_edge_legacy_producers
+  levado ao numero medido da arvore (242 do dia + 1 teste deste cartao = 243).

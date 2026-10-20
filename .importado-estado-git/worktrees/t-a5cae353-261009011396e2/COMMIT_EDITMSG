@@ -1,0 +1,5 @@
+feat(multiplix): selo NOVO na entrada da nav, por permissao nomeada (F71)
+
+A entrada 'Multiplix' da nav primaria ganha o selo 'NOVO' que o item do plano (F71) pede. O selo e DA ENTRADA: herda o gate por permissao nomeada multiplix.dispatch.create (F25), sem criar gate proprio.
+
+navigation.service.ts: campo opcional pill no NavItem + pill NOVO na entrada multiplix. SidebarNavItem.tsx: pinta o selo ao lado do rotulo (text-3xs, bg-primary/15, text-primary; motion-safe) e no tooltip do modo recolhido, e leva o selo ao nome acessivel do botao (aria-label mascara o texto interno). Sidebar.test.tsx: 2 casos novos (com e sem a permissao).

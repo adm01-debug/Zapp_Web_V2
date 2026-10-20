@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791509998 -0300	
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791509999 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 28238ec38cbae22aeca5252b1794cde4cee76f37 Joaquim Ataides <ti@promobrindes.com.br> 1791510901 -0300	commit: fix(telefonia): Remover useCalls.startCall/answerCall e useCallHistory (SL-251)

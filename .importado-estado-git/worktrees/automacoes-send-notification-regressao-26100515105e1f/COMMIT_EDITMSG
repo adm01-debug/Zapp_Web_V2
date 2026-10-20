@@ -1,0 +1,10 @@
+fix(automacoes): preserva configuração válida ao salvar ação
+
+Corrige a regressão introduzida pelo commit 6debb312c (R2-MOD-002): buildFirstAction
+apagava config.message para todo tipo != send_message, e send_notification também
+exige message — salvar/renomear esse tipo ficava bloqueado.
+
+Agora config.message só é sobrescrito para send_message. Ao TROCAR o tipo da ação,
+descarta-se apenas as chaves que não pertencem ao novo tipo (REQUIRED_ACTION_CONFIG),
+evitando arrastar configuração obsoleta (ex.: tag_id ao virar assign_agent); dentro
+do mesmo tipo, tudo o que a UI não edita continua preservado.

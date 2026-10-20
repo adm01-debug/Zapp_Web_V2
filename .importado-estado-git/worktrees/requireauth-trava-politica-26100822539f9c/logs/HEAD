@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510810 -0300	
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791510811 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 835334d74d67f317d0163a34791bfd34afde9f44 Joaquim Ataides <ti@promobrindes.com.br> 1791511487 -0300	commit: feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)
+835334d74d67f317d0163a34791bfd34afde9f44 1dd6c246f85dc52be363d73120234bd13145e5c8 Joaquim Ataides <ti@promobrindes.com.br> 1791511867 -0300	commit (amend): feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)

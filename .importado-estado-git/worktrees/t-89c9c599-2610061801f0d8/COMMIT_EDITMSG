@@ -1,0 +1,16 @@
+fix(filas): salvar metas nao fecha o formulario quando a gravacao falha (#452)
+
+Por que: `useQueueGoals.saveGoal` engolia o erro do UPDATE/INSERT no `catch`
+(mostrava o aviso de erro e resolvia normalmente), entao o
+`QueueGoalsDialog.handleSave` fechava o dialogo incondicionalmente depois do
+`await`: o rascunho saia de tela mesmo com a gravacao recusada (R2-QUE-005 /
+item 452 do BACKLOG_VERIFICADO).
+
+`saveGoal` agora devolve `true` somente quando o banco confirma a gravacao e
+`false` na recusa (erro explicito do UPDATE/INSERT); o dialogo fecha apenas no
+sucesso confirmado e, na recusa, mantem o formulario aberto com o rascunho
+intacto para o usuario corrigir e tentar de novo.
+
+Verificacao: npx vitest run src/components/queues/__tests__/QueueGoalsDialog.salvarMetas.test.tsx
+src/hooks/__tests__/useQueueGoals.test.tsx -> 2 arquivos, 16 testes passed;
+com o codigo de producao revertido (git stash), os mesmos testes dao 5 failed.

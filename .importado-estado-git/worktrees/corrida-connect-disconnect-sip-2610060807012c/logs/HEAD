@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791284857 -0300	
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 Joaquim Ataides <ti@promobrindes.com.br> 1791284857 -0300	reset: moving to HEAD
+fc84d3b5c18bf5de2d094bace9ebcd4b9e6a4e14 c09ca51dab29f61eba3628c227ddd0de0e663b59 Joaquim Ataides <ti@promobrindes.com.br> 1791286288 -0300	commit: fix(sip): serializa connect com tentativa em voo e invalida em disconnect
+c09ca51dab29f61eba3628c227ddd0de0e663b59 682921e7885e81b08b0cede7d0a27c1e7ddaf7d5 hermes-complexo <hermes@promo.local> 1791286678 -0300	commit: fix(sip): tentativa cancelada nao apaga refs de uma tentativa nova em connect()
+682921e7885e81b08b0cede7d0a27c1e7ddaf7d5 4fb6c774a967ed83051952105117b3e24d724ccc hermes-complexo <hermes@promo.local> 1791286924 -0300	commit (amend): fix(sip): tentativa cancelada nao apaga refs de uma tentativa nova em connect()

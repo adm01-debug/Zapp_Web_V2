@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260902023200_consolidate_rls_select_messages_contacts_sql", "label": "20260902023200_consolidate_rls_select_messages_contacts.sql", "file_type": "code", "source_file": "supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql", "source_location": null}], "edges": []}

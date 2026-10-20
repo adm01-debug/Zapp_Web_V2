@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791519933 -0300	
+bc539491e56a91557290e0b15c0e561646c7e553 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791519934 -0300	reset: moving to HEAD
+bc539491e56a91557290e0b15c0e561646c7e553 ed431d2656cd35c7516e6a8e0f281b87771e026d Joaquim Ataides <ti@promobrindes.com.br> 1791520958 -0300	commit: fix(multiplix): render isolado por linha no monitor de destinatarios (F87/TL-046)
+ed431d2656cd35c7516e6a8e0f281b87771e026d be5659015b16315cac7e7e5e0d365538f9372c82 Joaquim Ataides <ti@promobrindes.com.br> 1791520960 -0300	commit: test(multiplix): e2e de responsividade nas 4 viewports do F87 (TL-046)
+be5659015b16315cac7e7e5e0d365538f9372c82 d02b8e6c94e4409f0d06a8cb1cdb3a88c109cad6 Joaquim Ataides <ti@promobrindes.com.br> 1791520997 -0300	commit (amend): test(multiplix): e2e de responsividade nas 4 viewports do F87 (TL-046)
+d02b8e6c94e4409f0d06a8cb1cdb3a88c109cad6 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791521004 -0300	reset: moving to HEAD~2
+bc539491e56a91557290e0b15c0e561646c7e553 bc539491e56a91557290e0b15c0e561646c7e553 Joaquim Ataides <ti@promobrindes.com.br> 1791521004 -0300	reset: moving to HEAD
+bc539491e56a91557290e0b15c0e561646c7e553 9df79c8ea6ca9ea4b061e9eb52b9580bf225ba09 Joaquim Ataides <ti@promobrindes.com.br> 1791521009 -0300	commit: fix(multiplix): render isolado por linha no monitor de destinatarios (F87/TL-046)
+9df79c8ea6ca9ea4b061e9eb52b9580bf225ba09 4eb8ae2303aa8bc7c55fc39afab5e7be3bdec3c4 Joaquim Ataides <ti@promobrindes.com.br> 1791521011 -0300	commit: test(multiplix): e2e de responsividade nas 4 viewports do F87 (TL-046)

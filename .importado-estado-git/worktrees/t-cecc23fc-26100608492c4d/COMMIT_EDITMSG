@@ -1,0 +1,5 @@
+fix(inbox): cache offline alimenta a conversa selecionada apos falha de carga (#311)
+
+R2-INB-015: useOfflineCache so escolhia o cache enquanto isOffline&&loading; quando a busca falhava sem conexao, loading=false zerava a lista e abandonava um cache valido (o Inbox aparecia e desaparecia). Agora o cache sustenta a leitura offline enquanto nao houver dados vivos, e os dados ao vivo o substituem (recuperacao explicita).
+
+A conversa selecionada passa a oferecer o recorte de mensagens guardado no cache (identificado por selectedMessagesFromCache) quando a lista ao vivo esta vazia, e a tela de erro global deixa de engolir a Inbox quando ha cache valido.

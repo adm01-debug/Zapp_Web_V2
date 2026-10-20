@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791202947 -0300	
+b58c615056ec3756606163a249e5d8b26352f355 b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791202948 -0300	reset: moving to HEAD
+b58c615056ec3756606163a249e5d8b26352f355 ca860edf6977c9af352fe0fc641ce8f1f73abb5f Joaquim Ataides <ti@promobrindes.com.br> 1791203008 -0300	cherry-pick: fix(team-chat): vincula ACL e media_path de mídia ao objeto e à conversa (R2-DB-020)
+ca860edf6977c9af352fe0fc641ce8f1f73abb5f 7465052ad20ad5a143f7c495ecea2f3b64926054 Joaquim Ataides <ti@promobrindes.com.br> 1791203008 -0300	cherry-pick: fix(team-chat): prova contrato canonico de midia e torna o rollback real (R2-DB-020)
+7465052ad20ad5a143f7c495ecea2f3b64926054 fd0064b7ff9bdb64255fcd45b7bbb9149991ba8d Joaquim Ataides <ti@promobrindes.com.br> 1791203849 -0300	commit: fix(team-chat): torna a migration segura sem assumir tabela vazia (R2-DB-020)
+fd0064b7ff9bdb64255fcd45b7bbb9149991ba8d b58c615056ec3756606163a249e5d8b26352f355 Joaquim Ataides <ti@promobrindes.com.br> 1791204679 -0300	reset: moving to b58c615056ec3756606163a249e5d8b26352f355
+b58c615056ec3756606163a249e5d8b26352f355 6f3e3e825fa0b23775b91f8269d6ca3240f67a4b Joaquim Ataides <ti@promobrindes.com.br> 1791204679 -0300	commit: fix(team-chat): ACL de midia segura sem assumir tabela vazia (R2-DB-020)

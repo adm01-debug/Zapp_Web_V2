@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 ecedcd357953316187ecb706521ce6c337410a42 Joaquim Ataides <ti@promobrindes.com.br> 1791198572 -0300	branch: Created from dia/2026-10-05
+ecedcd357953316187ecb706521ce6c337410a42 de3cd5f9a5a70259d697cc8784870005a246d613 Joaquim Ataides <ti@promobrindes.com.br> 1791201257 -0300	commit: fix(departamentos): usa RPC de modo do WhatsApp acessível ao usuário logado (QA5-09)

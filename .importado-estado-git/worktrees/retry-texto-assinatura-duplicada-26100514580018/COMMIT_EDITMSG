@@ -1,0 +1,16 @@
+test(inbox): alinha o retry à assinatura real de onSendMessage (R2-INB-007)
+
+O commit 072296b86 (R2-INB-001: preserva o id da resposta até o transporte)
+passou a chamar onSendMessage(content, replyToId ?? null). O teste do retry
+ainda declarava o fake com UM parâmetro e usava toHaveBeenNthCalledWith com um
+argumento só — o Vitest compara a lista de argumentos inteira, então a
+asserção quebrava na integração (expected 1st call with [text] / received
+[text, null]) mesmo com o defeito já corrigido.
+
+- fake tipado com o contrato real (content, replyToId?)
+- asserções passam a fixar o segundo argumento (null quando não há resposta),
+  igual ao contrato já coberto em useChatPanelHandlers.reply.test.tsx
+- compara também calls[1][1] === calls[0][1] (retry não inventa vínculo)
+
+Prova: vermelho antes (revertendo o fix do hook: inputValue volta assinado),
+verde depois.

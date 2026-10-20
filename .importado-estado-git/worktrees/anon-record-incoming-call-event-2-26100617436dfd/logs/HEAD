@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319402 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319403 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 f4b86287fcf7338d0905df29de6eca0ae1fa4540 Joaquim Ataides <ti@promobrindes.com.br> 1791320042 -0300	commit: test(db): confirma que record_incoming_call_event (7 args) não é mais executável por anon (M-DB-02 #2)

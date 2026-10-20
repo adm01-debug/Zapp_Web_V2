@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 7191519fee4fc88f060f5257d20401fd374dc223 Joaquim Ataides <ti@promobrindes.com.br> 1791514266 -0300	branch: Created from dia/2026-10-08
+7191519fee4fc88f060f5257d20401fd374dc223 fd010ea97d405d682188789de8b095250be10e95 Joaquim Ataides <ti@promobrindes.com.br> 1791514275 -0300	cherry-pick: test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+fd010ea97d405d682188789de8b095250be10e95 d7f1eb1a9fdb8421574551ba63a61d990a5cf264 Joaquim Ataides <ti@promobrindes.com.br> 1791514319 -0300	commit (amend): test(e2e): cobre fidelidade das 19 skins e os 14 checks da tela de temas (CP8/CP9)
+d7f1eb1a9fdb8421574551ba63a61d990a5cf264 b50ebb2dd603195e2b22a0224e33ea96fe742e79 Joaquim Ataides <ti@promobrindes.com.br> 1791558234 -0300	rebase (finish): refs/heads/v2/t-be1045b1-2610082351995d onto 1098da5a935929b171674a99b425d6b515fd6072
+b50ebb2dd603195e2b22a0224e33ea96fe742e79 1ed4660a30d7e9f114a35e48e57f68c2c1911037 Joaquim Ataides <ti@promobrindes.com.br> 1791559127 -0300	rebase (finish): refs/heads/v2/t-be1045b1-2610082351995d onto 1f9252a86502ac1b3ce1e1bce704508d8ee420fb

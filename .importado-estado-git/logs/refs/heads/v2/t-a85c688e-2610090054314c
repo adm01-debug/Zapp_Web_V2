@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 df19b16dac284603bb9296f51c7258b1d49e9fa7 Joaquim Ataides <ti@promobrindes.com.br> 1791518093 -0300	branch: Created from dia/2026-10-09
+df19b16dac284603bb9296f51c7258b1d49e9fa7 5088715511db53e5fec0639b904dcf35bb0e87df Joaquim Ataides <ti@promobrindes.com.br> 1791518117 -0300	cherry-pick: fix(talk-x): permite varios segmentos por campanha e grava o segmento de cada destinatario (X057b)
+5088715511db53e5fec0639b904dcf35bb0e87df 7866a722ec85cd587471ea5b5a9fa529536319d2 Joaquim Ataides <ti@promobrindes.com.br> 1791518117 -0300	cherry-pick: docs(talk-x): rollback executavel da X057b com os corpos anteriores das duas RPCs
+7866a722ec85cd587471ea5b5a9fa529536319d2 88587330289b008b002bcd6db3d5fc774e6a7cd3 Joaquim Ataides <ti@promobrindes.com.br> 1791518207 -0300	commit: fix(talk-x): alinhar segment_id ao primeiro segment_ids
+88587330289b008b002bcd6db3d5fc774e6a7cd3 ca6e7d206922ebca4c5736d3e8d76439ba711649 Joaquim Ataides <ti@promobrindes.com.br> 1791518225 -0300	commit (amend): fix(talk-x): alinhar segment_id ao primeiro segment_ids

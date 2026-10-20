@@ -1,0 +1,5 @@
+fix(vendor): agrupa por indice inteiro o detector de ataques do lamejs (#436)
+
+O trecho L3psycho_anal_ns do lamejs 1.2.1 distribuido usava F/3 como indice de array, onde o C original faz divisao inteira. Em 8 das 12 posicoes o indice virava chave fracionaria: ta[F/3] lia undefined (o guard 0==... nao marcava o ataque e os grupos nunca recebiam o ordinal 2 ou 3) e ya[1+F/3]+=Ga criava chave fracionaria com NaN em vez de somar no grupo inteiro.
+
+Passa a usar Math.floor(F/3) nos dois pontos (flags de ataque e acumulador de energia). Limiares, tabelas, API e parametros do codec ficam intactos.

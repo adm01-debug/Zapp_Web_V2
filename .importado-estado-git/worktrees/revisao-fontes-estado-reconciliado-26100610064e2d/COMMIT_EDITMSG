@@ -1,0 +1,5 @@
+docs(tipografia): separar o snapshot de 24/09 do estado reconciliado (LT-TYPE-01)
+
+O documento abria como estado atual um retrato de 24/09/2026: placar de 47%, fila de PRs abertas e 17 arquivos de graficos pendentes. A reconciliacao LT-TYPE-01 (docs/reconciliation/FINDINGS.json) registra que #590, #593, #595, #596, #611, #801 e #1428 ja foram integradas.
+
+Preserva as tabelas e numeros datados como historico e acrescenta, no inicio, uma secao rotulada de atualizacao posterior que aponta LT-TYPE-01 como base e nega nova medicao visual. Guarda nova em scripts/ci/revisao-fontes-doc.unit.mjs prova os dois lados por fixture e le o documento real (RED antes, GREEN depois).

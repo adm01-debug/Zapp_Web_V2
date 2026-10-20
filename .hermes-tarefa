@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=n-007-storage-avatar-private
+ID=261009153000
+BRANCH=v2/n-007-storage-avatar-private-261009153000
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n-007-storage-avatar-private-261009153000
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-09T18:11:00-03:00
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n-007-storage-avatar-private-261009153000/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-09
+DB_LOCAL=v2-261009153000
+PRONTO_SHA=
+APLICADA_LOCAL=

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339519 -0300	branch: Created from dia/2026-10-06
+b6a5800086896490ef4415de1f616aa77b69b9b6 c68e51156dfbe9ad59b977cba3f51c0e8f46feac Joaquim Ataides <ti@promobrindes.com.br> 1791340013 -0300	commit: fix(settings): useUserSettings para de gravar os campos operacionais das abas Horário/Mensagens/Automação (#273)

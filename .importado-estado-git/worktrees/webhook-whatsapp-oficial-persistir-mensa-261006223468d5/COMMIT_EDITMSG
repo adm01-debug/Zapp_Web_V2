@@ -1,0 +1,17 @@
+fix(edge): webhook oficial nao descarta o lote por contato sem profile.name (R2-API-019)
+
+Refazer 1 do cartao R2-API-019. O cherry-pick de 9b37e9a59 e 699dfe72b da
+branch v2/webhook-whatsapp-oficial-persistir-mensa-2610061055c047 nao produz
+diff: a base dia/2026-10-06 ja carrega os dois commits, integrados como
+e9fa90b4b com blobs identicos (entrada duravel via ingest_inbound_message +
+status monotonico por conexao).
+
+O que entra aqui e o caminho que faltava do MESMO defeito: exigir
+`contacts[].profile.name` no schema derrubava o payload inteiro para
+"Invalid payload format" (200 + warning, nada persistido) quando a Meta
+omite o nome de perfil. Agora `profile.name` e opcional; sem nome o
+p_push_name vai nulo e o RPC cai no telefone (comportamento do proprio RPC).
+
+Caso (i) do index.test.ts chama o handler real com HMAC valido: vermelho
+(FAILED | 8 passed | 1 failed, "Required" em contacts.0.profile.name, zero
+POST no RPC) e verde (ok | 9 passed | 0 failed) com a correcao.

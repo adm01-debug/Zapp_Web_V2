@@ -1,0 +1,15 @@
+fix(inbox): compara responsavel pelo profile id, nao pelo id de autenticacao (#349)
+
+O chip "Em atendimento" (StatusChips) e o "esconder o badge quando a conversa
+e minha" (VirtualizedRealtimeList) comparavam contact.assigned_to com o id de
+auth.users (user?.id do useAuth). assigned_to e FK para public.profiles(id),
+que e OUTRO id: o contador zerava e a conversa atribuida ao proprio usuario
+exibia o mini-avatar dele mesmo como se fosse de outro atendente.
+
+- StatusChips: compara com profile?.id, o mesmo id que o filtro da lista ja usa
+  (useInboxFilters, profileId = inbox.profile?.id).
+- VirtualizedRealtimeList: currentUserId -> currentProfileId (prop interna do
+  arquivo), alimentada por profile?.id.
+- Testes: os mocks davam um unico id aos dois papeis (e o agentsMap do teste
+  nao trazia o proprio perfil), o que escondia o defeito. Agora os dois ids
+  aparecem com valores distintos e a prova falha sem a correcao.

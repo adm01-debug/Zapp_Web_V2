@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791506925 -0300	branch: Created from dia/2026-10-08
+5bb8664d243f0787d35e99d55ec899187a39121b 904f6964196542cdf8c4870ca009e2783d70b337 iris <iris@hermes.local> 1791507700 -0300	commit: fix(catálogo): Incluir src/components/catalog/** no coverage.include e (SL-154)
+904f6964196542cdf8c4870ca009e2783d70b337 9483fb68e1d07a5328f5b337f46e44a7005efb19 Joaquim Ataides <ti@promobrindes.com.br> 1791543332 -0300	rebase (finish): refs/heads/v2/sl-154-261008214830a7 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+9483fb68e1d07a5328f5b337f46e44a7005efb19 e908f779a701342be0bd51fd9d466be55b6922ba Joaquim Ataides <ti@promobrindes.com.br> 1791544030 -0300	commit: fix(catalogo): teste do gate monta o caminho real dos arquivos do Catálogo
+e908f779a701342be0bd51fd9d466be55b6922ba 44076f7a847aaf85e7065e1174dd28276e4d5bac Joaquim Ataides <ti@promobrindes.com.br> 1791560997 -0300	rebase (finish): refs/heads/v2/sl-154-261008214830a7 onto 1f9252a86502ac1b3ce1e1bce704508d8ee420fb

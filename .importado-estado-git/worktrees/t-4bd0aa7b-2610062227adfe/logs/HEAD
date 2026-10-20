@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791336453 -0300	
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791336454 -0300	reset: moving to HEAD
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 c10cad62116221338e6b47e39fa0616fd6235392 Joaquim Ataides <ti@promobrindes.com.br> 1791337153 -0300	commit: fix(db): permite encerrar de novo no mesmo dia uma conversa reaberta (#295)
+c10cad62116221338e6b47e39fa0616fd6235392 ffe953a7ccbd51a6040054bf07b98810e7fd38bc Joaquim Ataides <ti@promobrindes.com.br> 1791337196 -0300	commit: test(ci): registra o teste novo de encerramento no inventario de CI (#295)

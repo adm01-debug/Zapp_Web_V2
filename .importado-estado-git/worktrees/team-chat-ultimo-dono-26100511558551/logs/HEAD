@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791212109 -0300	
+c59d333a084df35e69ac5b87318e75495a9c226f c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791212110 -0300	reset: moving to HEAD
+c59d333a084df35e69ac5b87318e75495a9c226f a95d8a984e0c68ee64aae2288673bb359cd8e606 Joaquim Ataides <ti@promobrindes.com.br> 1791212226 -0300	cherry-pick: fix(team-chat): trata DELETE filtrado como erro e fecha frestas de owner no banco

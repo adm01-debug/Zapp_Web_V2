@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791289986 -0300	
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791289987 -0300	reset: moving to HEAD
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 e296aaa018d6b2a77b58dc359a44677a1e79aa71 Joaquim Ataides <ti@promobrindes.com.br> 1791290045 -0300	cherry-pick: fix(edge): prazo de IA cobre o consumo completo do corpo da resposta
+e296aaa018d6b2a77b58dc359a44677a1e79aa71 eafa62ea10897087f6a79fa5bfdc2ce14d9d89b7 Joaquim Ataides <ti@promobrindes.com.br> 1791291086 -0300	commit (amend): fix(ai): cobrir consumo completo da resposta no prazo
+eafa62ea10897087f6a79fa5bfdc2ce14d9d89b7 bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 Joaquim Ataides <ti@promobrindes.com.br> 1791291116 -0300	reset: moving to HEAD~1
+bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68 244ccdde87a156b72b572f8257ab19a0a57df208 Joaquim Ataides <ti@promobrindes.com.br> 1791291116 -0300	commit: fix(ai): cobrir consumo completo da resposta no prazo
+244ccdde87a156b72b572f8257ab19a0a57df208 1125d3aaafb4a97055bae149f396df2ab3b66d82 Joaquim Ataides <ti@promobrindes.com.br> 1791291118 -0300	commit: chore(ci): regenera manifest de deploy e sobe o pino do ratchet para 244

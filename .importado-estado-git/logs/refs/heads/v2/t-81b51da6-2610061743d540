@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319381 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 d5835d566d30b13ed50fe1b3e57db410dc7339c2 worker-auth <worker-auth@example.test> 1791320331 -0300	commit: fix(contatos): mesclagem autorizada com nota deixa de ser bloqueada pelo guard de identidade

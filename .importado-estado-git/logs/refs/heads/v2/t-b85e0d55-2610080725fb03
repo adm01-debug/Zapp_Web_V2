@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f6417a8b2b0b01c458637909296539bc80c772e8 Joaquim Ataides <ti@promobrindes.com.br> 1791455152 -0300	branch: Created from dia/2026-10-08
+f6417a8b2b0b01c458637909296539bc80c772e8 6b3ce9aaa7da139da2071186b8dabca6a4215f38 Joaquim Ataides <ti@promobrindes.com.br> 1791455164 -0300	cherry-pick: fix(catalogo): cota do rate limit vem de configuracao confiavel, nao dos argumentos da RPC (#296)
+6b3ce9aaa7da139da2071186b8dabca6a4215f38 351115eee3d46de935c58dd82c77b1e68ca87e18 Joaquim Ataides <ti@promobrindes.com.br> 1791457690 -0300	commit (amend): fix(catalogo): cota do rate limit vem de configuracao confiavel, nao dos argumentos da RPC (#296)

@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526875 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791526876 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 5aebe7a367d09b6b0211d1825a306981a710fc1c Joaquim Ataides <ti@promobrindes.com.br> 1791527314 -0300	commit: fix(talk-x): Painel "Resumo da campanha" calculado no servidor (TL-143)
+5aebe7a367d09b6b0211d1825a306981a710fc1c 508205c8242d0ed0ab4453415a95ef657457ef8a Joaquim Ataides <ti@promobrindes.com.br> 1791527670 -0300	commit: test(talk-x): prova o resumo do rail pelo hook real (TL-143)
+508205c8242d0ed0ab4453415a95ef657457ef8a 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561080 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 51420db64a107830fc41f40f86575f1a7c02900a Joaquim Ataides <ti@promobrindes.com.br> 1791561156 -0300	rebase (continue): fix(talk-x): Painel "Resumo da campanha" calculado no servidor (TL-143)
+51420db64a107830fc41f40f86575f1a7c02900a fe727924aff7280a67288cd10762971ae539cc33 Joaquim Ataides <ti@promobrindes.com.br> 1791561156 -0300	rebase (pick): test(talk-x): prova o resumo do rail pelo hook real (TL-143)
+fe727924aff7280a67288cd10762971ae539cc33 fe727924aff7280a67288cd10762971ae539cc33 Joaquim Ataides <ti@promobrindes.com.br> 1791561156 -0300	rebase (finish): returning to refs/heads/v2/tl-143-2610090321717d
+fe727924aff7280a67288cd10762971ae539cc33 5153887a8858574309802c4aba3c784674eac066 Joaquim Ataides <ti@promobrindes.com.br> 1791561301 -0300	commit: fix(talk-x): dublê de useTalkXCampaignSummary no teste de encaixe do wizard

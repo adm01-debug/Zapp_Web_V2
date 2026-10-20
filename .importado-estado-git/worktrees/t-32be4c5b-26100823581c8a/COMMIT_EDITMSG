@@ -1,0 +1,3 @@
+fix(multiplix): evolution-webhook: READ/PLAYED → read_at; resposta do c (TL-036)
+
+Commit vazio de proposito, como manda o cartao: a lacuna F62 JA ESTA fechada na ponta do dia (base 7191519fe). A prova (com a mutacao que mostra o teste mordendo) esta em .tmp/relato.md.

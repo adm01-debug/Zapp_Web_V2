@@ -1,0 +1,10 @@
+docs(plano): nota de superação da decisão dos dois itens de menu (E26)
+
+Por quê: o plano de 100 etapas descreve Tarefas e Quadro como dois itens de
+menu (etapa 47/B7). O PLANO_FUSAO_QUADRO_TAREFAS_50_ETAPAS_2026-10-07.md
+remove o item "Quadro" (id pipeline) e mantém a visão Quadro como modo de
+Tarefas; quem lê o plano antigo precisa saber disso no topo.
+
+Verificação: nota na linha 3, dentro do cabeçalho (antes do 1o separador);
+restante intacto — diff de 2 inserções e 0 remoções e hash das linhas 4..N
+igual ao das linhas 2..N da base (30eaea8f...). Só documentação.

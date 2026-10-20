@@ -1,0 +1,3 @@
+fix(multiplix): retentativa limitada para rejeicao transitoria do provedor (MX05)
+
+429/408/425 e falhas de rede deixam de concluir o item como 'failed': o worker volta a fila com o backoff com teto do kernel (30 s / 2 min / 10 min) e a RPC de reagendamento segue sendo o teto (dead letter na 3a tentativa). 5xx continua em outcome_unknown (POST ambiguo) e permanente continua dead letter + risco de conexao.

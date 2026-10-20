@@ -1,0 +1,7 @@
+feat(inbox): transporte canônico de botões e listas interativas (R2-INB-003)
+
+enqueue_rich_outbound_message aceita 'buttons'/'list' com validação de
+payload (CTA URL é botão type='url'), o CHECK de message_type inclui
+'buttons', e a message-delivery monta sendButtons/sendList a partir do
+payload imutável. O construtor envia de verdade via sendRichOutboundMessage
+e só fecha/limpa após o aceite do transporte.

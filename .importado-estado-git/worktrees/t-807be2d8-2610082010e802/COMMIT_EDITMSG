@@ -1,0 +1,16 @@
+docs(ia): comentários do kill switch batem com a semântica aprovada (SL-009)
+
+O refazer 1 apontou dois comentários que ainda descreviam a semântica antiga
+(ausência como desligada) num kill switch cuja lógica já estava correta — o
+próximo mantenedor leria o contrário do que o código faz.
+
+- ai-guards.ts, passo 0: o comentário agora diz que desliga SÓ o `enabled=false`
+  booleano explícito, que chave AUSENTE vale LIGADA e que erro de leitura ou valor
+  não booleano FECHAM (fail-closed/503).
+- ai-feature-flags.ts, doc de `CapabilityFlagReader`: linha ausente devolve `true`,
+  `enabled=false` devolve `false`, valor não booleano devolve `null`.
+- teste: `comAmbiente` passa a RESTAURAR `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`
+  ao fim (antes vazava o valor semeado para o caso seguinte, no mesmo processo do
+  `deno test`); caso novo prova a restauração — vermelho antes, verde depois.
+
+Nenhuma linha de lógica foi alterada: a semântica aprovada segue igual.

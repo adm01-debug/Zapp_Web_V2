@@ -1,0 +1,16 @@
+fix(multiplix): conclusão do disparo usa a drenagem por ITEM (MX03/TL-034)
+
+O worker encerrava a passada chamando complete_multiplix_dispatch_if_drained,
+cuja última definição (20260929600000:90) conta pending/sending em
+multiplix_recipients — fila que record_multiplix_item_sent e
+complete_multiplix_item NÃO alimentam. Consequência (achado MX03): mesmo com
+todo item terminal o recipient seguia 'pending' e o disparo NUNCA concluía no
+fluxo atual, com o cron reinvocando à toa e contadores/UI inconsistentes.
+
+Passa a chamar a equivalente por item complete_multiplix_dispatch_if_items_drained
+(f32b §10), que decide a conclusão pela fila que este worker consome. A antiga
+está marcada DEPRECATED em 20261001231230:677 e segue existindo só para os
+workers ainda não migrados — nenhuma função foi removida.
+
+Prova: supabase/functions/multiplix-send/index.test.ts — 2 testes novos (MX03)
+falham sem a correção (78 passed | 2 failed) e passam com ela (80 passed | 0 failed).

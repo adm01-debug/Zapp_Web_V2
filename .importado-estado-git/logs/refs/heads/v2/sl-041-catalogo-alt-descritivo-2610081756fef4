@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791493018 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc e03799182f5af72483ddcae3fc168a7f3d4baa7d Joaquim Ataides <ti@promobrindes.com.br> 1791493533 -0300	commit: fix(catálogo): badges de destaque do card fecham 4,5:1 nos 4 temas (SL-041)
+e03799182f5af72483ddcae3fc168a7f3d4baa7d 67c500738541c7cb1393ce7e50efdad21e31fd29 Joaquim Ataides <ti@promobrindes.com.br> 1791493964 -0300	commit (amend): fix(catálogo): badges de destaque do card fecham 4,5:1 nos 4 temas (SL-041)
+67c500738541c7cb1393ce7e50efdad21e31fd29 323ab9ed891e9c3d7797d0c34aa9b302007ac140 Joaquim Ataides <ti@promobrindes.com.br> 1791555306 -0300	rebase (finish): refs/heads/v2/sl-041-catalogo-alt-descritivo-2610081756fef4 onto 1098da5a935929b171674a99b425d6b515fd6072
+323ab9ed891e9c3d7797d0c34aa9b302007ac140 0f3a001be1f29c5a6ad0089f46f6a8fda5391e3d Joaquim Ataides <ti@promobrindes.com.br> 1791555507 -0300	commit: fix(testes): SL038 acompanha o par Promo do SL-041 (destructive-text/background)

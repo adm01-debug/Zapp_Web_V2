@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 3ff2cc72197643067d1943deda2cbe17d55b1e51 Joaquim Ataides <ti@promobrindes.com.br> 1791141518 -0300	
+3ff2cc72197643067d1943deda2cbe17d55b1e51 3ff2cc72197643067d1943deda2cbe17d55b1e51 Joaquim Ataides <ti@promobrindes.com.br> 1791141519 -0300	reset: moving to HEAD
+3ff2cc72197643067d1943deda2cbe17d55b1e51 4feb83bcd5742abb607f96b118d3d61cfa7815b3 Joaquim Ataides <ti@promobrindes.com.br> 1791141927 -0300	commit: test(dashboard): prova enforcement de RLS com permissão real (DASH-092)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318136 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791318136 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 fad59c943ba114df1f8d5283b61100d1441e201e Joaquim Ataides <ti@promobrindes.com.br> 1791318862 -0300	commit: test(db-tests): decodifica o envelope do mcp_exec e recusa suite com zero assertivas

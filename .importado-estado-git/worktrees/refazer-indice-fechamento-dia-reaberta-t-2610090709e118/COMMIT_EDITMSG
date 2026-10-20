@@ -1,0 +1,5 @@
+fix(db): protege fechamento repetido sem reabertura (#295)
+
+# Conflicts:
+#	scripts/db-audit/conversation-closures-reopen-same-day.test.sh
+#	supabase/migrations/20261007013217_conversation_closures_reopen_same_day.sql

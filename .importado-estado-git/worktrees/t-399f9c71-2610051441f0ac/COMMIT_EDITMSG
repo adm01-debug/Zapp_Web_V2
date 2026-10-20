@@ -1,0 +1,19 @@
+feat(popup): liga a paginacao do historico antigo ao ChatPopup (R2-INB-004)
+
+O popup chamava useMessages mas extraia apenas `messages`/`loading` e
+descartava `hasOlder`/`loadingOlder`/`loadOlderMessages` do hook; a janela
+destacada ficava presa na primeira pagina (1000 mensagens) mesmo depois de a
+Inbox ativa consumir o contrato. Agora o popup repassa os tres valores ao
+contrato de prop do ChatPanel (hasOlderMessages/loadingOlderMessages/
+onLoadOlderMessages), sem paginacao propria, sem estado paralelo e sem
+consulta direta ao Supabase — a UI do controle e a preservacao de ancora
+seguem as entregues pelos pais.
+
+Prova: teste novo monta o caminho real ChatPopup -> ChatPanel ->
+ChatMessagesArea (so o useMessages e a rota vem de fachada) e cobre 1005
+mensagens em duas paginas: controle exposto, um clique = exatamente uma
+chamada, o loadingOlder do hook desabilita o controle e impede disparo
+concorrente, o inicio do historico e anunciado e a mensagem mais antiga
+(forma da pagina inicial de 1000) passa a estar renderizada. Vermelho no HEAD
+(4 falhas: sem controle, sem inicio do historico) e verde com a correcao
+(4 passed).

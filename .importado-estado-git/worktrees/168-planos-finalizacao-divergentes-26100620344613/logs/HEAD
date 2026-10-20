@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791329699 -0300	
+7e801f8582265bc03aba115f8871f1dd0abcdb35 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791329700 -0300	reset: moving to HEAD
+7e801f8582265bc03aba115f8871f1dd0abcdb35 a5e9bbb876ad268e4e846b5ef619e5ebf1eabac2 Joaquim Ataides <ti@promobrindes.com.br> 1791330447 -0300	commit: fix(banco): reconcilia a autoridade dos dois planos de finalizacao do Team Chat (#168)
+a5e9bbb876ad268e4e846b5ef619e5ebf1eabac2 beda4d6104c23962bdbf72392b1bdd56087bd9ca Joaquim Ataides <ti@promobrindes.com.br> 1791330525 -0300	commit: test(banco): prova que a guarda de autoridade do Team Chat reprova cada reconciliacao quebrada (#168)

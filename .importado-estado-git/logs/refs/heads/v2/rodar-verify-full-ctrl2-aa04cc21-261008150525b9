@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a980fada3dc8fdf9579b4e5391913db37c4365fb Joaquim Ataides <ti@promobrindes.com.br> 1791482713 -0300	branch: Created from dia/2026-10-08
+a980fada3dc8fdf9579b4e5391913db37c4365fb 0b679fb148acd6b9b33e9f10e18e1e2040bbf812 Joaquim Ataides <ti@promobrindes.com.br> 1791482721 -0300	cherry-pick: test(atalhos): regressão de Ctrl+2 provada pela view do shell, sem asserção de toast
+0b679fb148acd6b9b33e9f10e18e1e2040bbf812 2feb97bc963a339269ef995f66ddaf171a5f6695 Joaquim Ataides <ti@promobrindes.com.br> 1791540297 -0300	rebase (finish): refs/heads/v2/rodar-verify-full-ctrl2-aa04cc21-261008150525b9 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

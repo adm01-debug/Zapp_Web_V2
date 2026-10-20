@@ -1,0 +1,12 @@
+fix(ci/devops): ESTADO.md e FEATURE_REGISTRY.md batem com a dia/2026-10-09 (SL-122)
+
+A verificação do lote de 09/10 quebrou com a guarda dos docs: em cima da
+dia, o ESTADO.md estava em 75 edges (o repo tem 80) e o FEATURE_REGISTRY.md
+em 56 views (o ViewRouter tem 55). Recálculo pela guarda e atualizo:
+
+- ESTADO.md: 5 edges novas (ai-kb-ingest, health, metrics, status, talkx-ai),
+  âncoras relidas do código, órfãs de 13 para 16, totais A=54 B=1 C=3 D=6 E=16.
+- FEATURE_REGISTRY.md: sai a view pipeline (fora do ViewRouter), voip passa a
+  TelefoniaView/useCalls (Full), Partial de 13 para 12.
+
+A guarda scripts/ci/docs-estado-registry-convention.unit.mjs passa 11/11.

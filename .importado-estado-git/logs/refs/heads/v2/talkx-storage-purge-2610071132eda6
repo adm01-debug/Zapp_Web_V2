@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 3ac56c0e332d4dafb65a01bf6e77640b149e9b02 Joaquim Ataides <ti@promobrindes.com.br> 1791383556 -0300	branch: Created from dia/2026-10-07
+3ac56c0e332d4dafb65a01bf6e77640b149e9b02 1410ffc3fa1d640eb2837b78283275723a12f545 Joaquim Ataides <ti@promobrindes.com.br> 1791383660 -0300	cherry-pick: feat(talkx): drena a fila de expurgo de midia pela Storage API a partir do tick (QA5-05)

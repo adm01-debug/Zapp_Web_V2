@@ -1,0 +1,7 @@
+fix(onboarding): nomes acessíveis nos botões expandir/dispensar, label no progressbar e ícone respeita prefers-reduced-motion
+
+- Adiciona aria-label 'Expandir passos'/'Recolher passos' no botão de toggle
+- Adiciona aria-label 'Dispensar configuração da conta' no botão de dismiss
+- Adiciona aria-label 'Progresso da configuração da conta' nos dois Progress
+- Usa useReducedMotion() para desativar animação de rotação do ícone Sparkles
+- Adiciona 5 testes de acessibilidade (4 nomes acessíveis + 1 reduced-motion)

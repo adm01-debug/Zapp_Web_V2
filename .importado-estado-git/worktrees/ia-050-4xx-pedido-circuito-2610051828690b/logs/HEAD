@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235709 -0300	
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235710 -0300	reset: moving to HEAD
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235825 -0300	reset: moving to HEAD
+c28a1a97af8b9fc34ccb54db845a29a48169f257 fb36729e1a1da9cc1ead8d4f0a3380e9138918fe Joaquim Ataides <ti@promobrindes.com.br> 1791235860 -0300	commit: chore(edge): traz o circuito por provedor da dependencia t_4e3bf2dc (IA-050)
+fb36729e1a1da9cc1ead8d4f0a3380e9138918fe feb681b3c2f178fb7aaf8c5960e145dd5825b95b Joaquim Ataides <ti@promobrindes.com.br> 1791235865 -0300	cherry-pick: fix(edge): 4xx do pedido nao abre o circuito de IA (IA-050)
+feb681b3c2f178fb7aaf8c5960e145dd5825b95b 548112e53936780788de831d35582a187486ce69 Joaquim Ataides <ti@promobrindes.com.br> 1791236218 -0300	commit: test(edge): realimenta o ledger no teste de 4xx do pedido (IA-050)

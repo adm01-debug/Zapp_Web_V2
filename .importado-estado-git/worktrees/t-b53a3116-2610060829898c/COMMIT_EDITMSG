@@ -1,0 +1,1 @@
+fix(inbox): bloqueia recarga enquanto ha mensagem em edicao

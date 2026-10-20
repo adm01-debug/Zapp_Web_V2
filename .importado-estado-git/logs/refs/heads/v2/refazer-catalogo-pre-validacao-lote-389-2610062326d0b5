@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b6a5800086896490ef4415de1f616aa77b69b9b6 Joaquim Ataides <ti@promobrindes.com.br> 1791339969 -0300	branch: Created from dia/2026-10-06
+b6a5800086896490ef4415de1f616aa77b69b9b6 71ac61cbc648b0a7c1a24b1f67ad2bbe65c9f3d3 Joaquim Ataides <ti@promobrindes.com.br> 1791339985 -0300	cherry-pick: fix(catalogo): lote aplica a mesma pre-validacao de envio e falha fechada quando a consulta cai (#389)

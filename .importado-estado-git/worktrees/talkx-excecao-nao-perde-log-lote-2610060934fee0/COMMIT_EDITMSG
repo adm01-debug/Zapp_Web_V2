@@ -1,0 +1,1 @@
+fix(talkx-send): nao perde log do lote quando um destinatario lanca (#127)

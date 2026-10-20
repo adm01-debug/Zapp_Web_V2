@@ -1,0 +1,3 @@
+fix(configuracoes/notifi): Integracao com Google Calendar (SL-160)
+
+A permissao google_calendar era oferecida no dialogo de novo usuario e gravada em user_service_accounts sem nenhum consumidor (integracao inexistente em src/ e supabase/functions). A opcao fica visivel, desligada e rotulada em desenvolvimento, com teste que prova.

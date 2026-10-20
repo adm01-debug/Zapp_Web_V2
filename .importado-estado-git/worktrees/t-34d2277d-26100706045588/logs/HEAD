@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 19365036be0e33102a2f8ba7ad357bf59d57c2ea Joaquim Ataides <ti@promobrindes.com.br> 1791363842 -0300	
+19365036be0e33102a2f8ba7ad357bf59d57c2ea 19365036be0e33102a2f8ba7ad357bf59d57c2ea Joaquim Ataides <ti@promobrindes.com.br> 1791363842 -0300	reset: moving to HEAD
+19365036be0e33102a2f8ba7ad357bf59d57c2ea f77dafb35afe28d5dff3f71bc21fefc6435b920d Joaquim Ataides <ti@promobrindes.com.br> 1791364285 -0300	commit: fix(db): evita efeitos em duplicate do outbox inbound

@@ -1,0 +1,34 @@
+fix(inbox): persiste a nota da transferência e rejeita falha na sidebar
+
+A transferência disparada pela sidebar descartava a nota opcional digitada no
+TransferDialog e fechava o diálogo mesmo quando a gravação falhava.
+
+O que o base fazia: o callback chamava transferContact(contactId, 'agent'|'queue',
+targetId) SEM a nota, e transferContact fazia só `UPDATE contacts`
+(assigned_to/queue_id). O evento já era gravado na MESMA transação pelo trigger
+legado log_assignment_change — não existia "duas chamadas não atômicas" —, porém
+sem `metadata.note`. E como o callback fazia setTransferTarget(null) depois do
+await, o diálogo fechava e o erro aparecia só como toast.
+
+Correção:
+- public.transfer_contact(p_contact_id, p_target_type, p_target_id, p_note) é
+  SECURITY INVOKER: não reimplementa autorização. O DESTINO é validado pela
+  própria policy de UPDATE de contacts (USING = can_edit_contact, que sem
+  WITH CHECK próprio vale também para a linha NOVA) e pelos triggers
+  trg_prevent_contact_assignee_hijack / trg_prevent_contact_queue_hijack; a
+  origem, pelo USING da mesma policy. Zero linhas atualizadas => 'not_authorized'.
+- A função apenas publica a nota num GUC transacional (app.transfer_note) e faz
+  o UPDATE; nenhuma inserção de evento pelo cliente (a policy de INSERT de
+  conversation_events exige o contato ainda atribuído ao chamador).
+- log_assignment_change continua o ÚNICO escritor do evento e mantém os
+  event_type legados ('assign'/'unassign'/'transfer'/'queue_transfer'); passa a
+  acrescentar somente `metadata.note` quando há nota.
+- useConversationActions.transferContact repassa a nota e propaga o erro (throw);
+  a sidebar só fecha o diálogo no sucesso. types.ts ganha a entrada da RPC.
+
+Prova: 8 testes focais VERMELHOS contra o código base e 25 verdes depois
+(vitest, useConversationActions + ConversationListSidebar); suíte SQL no banco
+local (supabase/tests/transfer_contact_rls.sql, 14 asserts PASS/0 FAIL) cobrindo
+not_authorized, destino agente inválido, destino fila inválido, rollback total
+(contato intacto e zero evento) e um único evento por transferência com
+metadata.note e event_type legado. zapp-verify . --rapido verde.

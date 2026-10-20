@@ -1,0 +1,9 @@
+fix(ci): artifacts do ci.yml so em dispatch (dist), main (coverage) e falha (playwright-report) (SL-100)
+
+E72 (G-32): todo PR publicava os tres uploads do ci.yml e o repo acumulou 2.333
+artifacts em 01/10/2026. O plano pede dist so em workflow_dispatch (a Vercel
+builda sozinha), coverage-report so na push da main com 7 dias, e
+playwright-report so if: failure(). O teste novo le a expressao de `if:` do
+bloco real e a avalia nos eventos (PR, push, dispatch, falha): vermelho nos tres
+antes da correcao, verde depois. Verificacao do plano: 'PR verde cria 0
+artifacts'.

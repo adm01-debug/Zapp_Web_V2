@@ -1,0 +1,7 @@
+test(inbox): robustecer teste de paginacao contra timing do lazy do ChatPanel (R2-INB-004)
+
+O chunk lazy do ChatPanel podia resolver depois do timeout padrao de 1s do
+findBy* na suite completa (integrador ~4x mais lento), falhando o teste; a
+importacao tardia ainda carregava modulos reais sem os mocks e abria WebSocket
+real (ERR_INVALID_ARG_TYPE). Pre-carrega o modulo no beforeAll sob os mocks do
+arquivo e da espera de 10s aos findBy* do boundary Suspense.

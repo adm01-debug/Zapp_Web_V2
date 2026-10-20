@@ -1,0 +1,8 @@
+fix(integrations): tira `pipeline` das views válidas do retorno do OAuth do Gmail
+
+Etapa E10 da fusão Quadro→Tarefas: a rota `pipeline` deixa de ser porta de
+entrada. Um retorno de OAuth que carregue view=pipeline (state ou contexto
+guardado na sessão) passa a cair na view de fallback `integrations`.
+
+Teste novo cobre os dois canais (state e contexto guardado) e prova que as
+demais views seguem preservadas.

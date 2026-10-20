@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494783 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc cbd7f2eb689115fae84f52afa4b445ef008dbcb4 Joaquim Ataides <ti@promobrindes.com.br> 1791494804 -0300	cherry-pick: fix(tarefas): Salvar espera a escrita e não dispara estado e campos em paralelo (#419)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791234794 -0300	branch: Created from dia/2026-10-05
+c28a1a97af8b9fc34ccb54db845a29a48169f257 4b2a067016219d5dbc34785acf6bbb8bb64fe980 Joaquim Ataides <ti@promobrindes.com.br> 1791234857 -0300	cherry-pick: fix(inbox): retry de texto reusa o texto original e não duplica a assinatura (R2-INB-007)
+4b2a067016219d5dbc34785acf6bbb8bb64fe980 7d0533ac275956ee8817b1af4f6865221d9743c9 Joaquim Ataides <ti@promobrindes.com.br> 1791234864 -0300	cherry-pick: test(inbox): tipa o fake de onSendMessage no teste de retry (R2-INB-007)
+7d0533ac275956ee8817b1af4f6865221d9743c9 e590c7612d603e1639f18535e95a8abbdf56147f Joaquim Ataides <ti@promobrindes.com.br> 1791234864 -0300	cherry-pick: test(inbox): alinha o retry à assinatura real de onSendMessage (R2-INB-007)

@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 fc43af374a38304a738983aeccac72e29394e6d9 Joaquim Ataides <ti@promobrindes.com.br> 1791232177 -0300	
+fc43af374a38304a738983aeccac72e29394e6d9 fc43af374a38304a738983aeccac72e29394e6d9 Joaquim Ataides <ti@promobrindes.com.br> 1791232178 -0300	reset: moving to HEAD
+fc43af374a38304a738983aeccac72e29394e6d9 7d8e2ea7acbec971285dca46586f4074fca7d5d6 Joaquim Ataides <ti@promobrindes.com.br> 1791233615 -0300	commit: test(team-chat): substituir 271 asserts tautologicos por testes reais e validar RLS contra migrations
+7d8e2ea7acbec971285dca46586f4074fca7d5d6 7dce4ba1291be463430a84b47aaba7f7813b13e7 Joaquim Ataides <ti@promobrindes.com.br> 1791234209 -0300	commit: test(team-chat): eliminar 271 asserts tautologicos do Team Chat com cobertura real e guarda
+7dce4ba1291be463430a84b47aaba7f7813b13e7 fc43af374a38304a738983aeccac72e29394e6d9 Joaquim Ataides <ti@promobrindes.com.br> 1791234259 -0300	reset: moving to fc43af374
+fc43af374a38304a738983aeccac72e29394e6d9 80fa110b5c405449ee38c1b53c4144dff0980503 Joaquim Ataides <ti@promobrindes.com.br> 1791234259 -0300	commit: test(team-chat): eliminar 271 asserts tautologicos do Team Chat com cobertura real e guarda
+80fa110b5c405449ee38c1b53c4144dff0980503 63700833480be12a0f89b5555f763227954721b5 Joaquim Ataides <ti@promobrindes.com.br> 1791234321 -0300	commit (amend): test(team-chat): eliminar 271 asserts tautologicos do Team Chat com cobertura real e guarda
+63700833480be12a0f89b5555f763227954721b5 99cf80bf37de03c0c977d73d1adf58e6905d0585 Joaquim Ataides <ti@promobrindes.com.br> 1791234761 -0300	commit (amend): test(team-chat): eliminar 271 asserts tautologicos do Team Chat com cobertura real e guarda

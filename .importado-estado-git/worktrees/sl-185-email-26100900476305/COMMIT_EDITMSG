@@ -1,0 +1,9 @@
+revert(e-mail): remove o cliente de tracking que dependia de Edge inexistente (SL-185)
+
+Recusa de 09/10 (revisor): src/lib/emailTracking.ts só montava URLs para
+as Edge Functions email-track-pixel/email-track-link, que não existem, e o
+cartão proíbe Edge/DDL. O módulo e o teste saem; a entrega fecha sem
+código (diff líquido vazio contra a dia), com 081/082/083 como NÃO FEITO.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Fe3EvoxC2huVnosZSJZ6G3

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561704 -0300	
+12e407210db0ea4d9f817618d30848304ca932d5 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561706 -0300	reset: moving to HEAD
+12e407210db0ea4d9f817618d30848304ca932d5 2505a4bfbbff93eaa7628c5739fac4c0a94c20e4 Joaquim Ataides <ti@promobrindes.com.br> 1791561729 -0300	cherry-pick: fix(busca): monta a busca global sem exigir AuthProvider

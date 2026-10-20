@@ -1,0 +1,3 @@
+7	0	scripts/ci/check-test-inventory.mjs
+448	0	scripts/db-audit/team-chat-realtime-membership-guards.test.sh
+86	0	supabase/migrations/20261014101843_team_chat_realtime_reactions_membership_guards.sql

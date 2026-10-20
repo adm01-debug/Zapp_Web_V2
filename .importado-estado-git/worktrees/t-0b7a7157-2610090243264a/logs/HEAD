@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524633 -0300	
+fd6847638e051c559539a1cac87e11beb7c9d746 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524634 -0300	reset: moving to HEAD
+fd6847638e051c559539a1cac87e11beb7c9d746 f25473f5e3229d2565c3137a8d9afcf271880a54 Joaquim Ataides <ti@promobrindes.com.br> 1791524647 -0300	cherry-pick: fix(telefonia): Painel vira Sheet <1280, CallRowMobile em 390 (SL-106)
+f25473f5e3229d2565c3137a8d9afcf271880a54 7da7d8d5bf4c72a8f9cfbda22ec9ff62e191836c Joaquim Ataides <ti@promobrindes.com.br> 1791525038 -0300	commit: fix(telefonia): listbox ARIA valido (li presentacional) e comentario T77 junto do Sheet (SL-106)

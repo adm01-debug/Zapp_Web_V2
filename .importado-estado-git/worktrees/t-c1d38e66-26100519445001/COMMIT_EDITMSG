@@ -1,0 +1,3 @@
+refactor(talkx): TalkXLiveMonitor usa o TalkXQueryBoundary (X047)
+
+Consulta da campanha, lista de destinatarios, ritmo de entrega e linha do tempo passam a declarar carga/erro/vazio pelo boundary, nessa ordem, cada bloco com refetch proprio. Antes, com a consulta da campanha em erro a tela ficava em esqueleto para sempre (if (!campaign) return esqueleto), sem dizer que falhou e sem botao de retry. O retry refaz a consulta que falhou mantendo a campanha aberta; durante a carga ha aria-busy.

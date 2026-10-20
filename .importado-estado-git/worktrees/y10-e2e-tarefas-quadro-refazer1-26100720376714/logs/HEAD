@@ -1,0 +1,15 @@
+0000000000000000000000000000000000000000 d5df15aacd40db59cb415fa03917e7b3a4d7975c Joaquim Ataides <ti@promobrindes.com.br> 1791416271 -0300	
+d5df15aacd40db59cb415fa03917e7b3a4d7975c d5df15aacd40db59cb415fa03917e7b3a4d7975c Joaquim Ataides <ti@promobrindes.com.br> 1791416271 -0300	reset: moving to HEAD
+d5df15aacd40db59cb415fa03917e7b3a4d7975c 206968a773b39532126ac5f77adf1b37538f7739 Joaquim Ataides <ti@promobrindes.com.br> 1791416290 -0300	cherry-pick: test(e2e): tarefas e quadro (criar, mover, concluir, filtros)
+206968a773b39532126ac5f77adf1b37538f7739 cf6e65f26249028eec748a7d547c2f1386f0ca30 Joaquim Ataides <ti@promobrindes.com.br> 1791416290 -0300	cherry-pick: revert(config): tira o projeto chromium-tarefas do diff do Y10
+cf6e65f26249028eec748a7d547c2f1386f0ca30 045da83c30e2bf63f80984e4c2f8825a02a18444 Joaquim Ataides <ti@promobrindes.com.br> 1791416290 -0300	cherry-pick: docs(e2e): cabecalho do spec do Y10 registra a pendencia do projeto dedicado
+045da83c30e2bf63f80984e4c2f8825a02a18444 55dc65fedabe17b3eeba54569b439cc3d62f572c Joaquim Ataides <ti@promobrindes.com.br> 1791416290 -0300	cherry-pick: test(e2e): Y10 eleva o teto do watchdog de boot no navegador de teste
+55dc65fedabe17b3eeba54569b439cc3d62f572c c0db9c6b79215118ed1908a0c8e85441972fd308 Joaquim Ataides <ti@promobrindes.com.br> 1791416290 -0300	cherry-pick: test(e2e): Y10 le o KPI depois da Lista carregar (prazo de hoje)
+c0db9c6b79215118ed1908a0c8e85441972fd308 206968a773b39532126ac5f77adf1b37538f7739 Joaquim Ataides <ti@promobrindes.com.br> 1791416303 -0300	rebase (start): checkout 206968a77
+206968a773b39532126ac5f77adf1b37538f7739 126d3a999646bd66f7b5957fba1d3233b57cca1a Joaquim Ataides <ti@promobrindes.com.br> 1791416303 -0300	rebase (pick): docs(e2e): cabecalho do spec do Y10 registra a pendencia do projeto dedicado
+126d3a999646bd66f7b5957fba1d3233b57cca1a 17bfc503d1fd1d2c8a0bbb686ff45fadacfd6307 Joaquim Ataides <ti@promobrindes.com.br> 1791416303 -0300	rebase (pick): test(e2e): Y10 eleva o teto do watchdog de boot no navegador de teste
+17bfc503d1fd1d2c8a0bbb686ff45fadacfd6307 14f42918e05d44e6d754b5f6ed1fcf2d6d1a5855 Joaquim Ataides <ti@promobrindes.com.br> 1791416303 -0300	rebase (pick): test(e2e): Y10 le o KPI depois da Lista carregar (prazo de hoje)
+14f42918e05d44e6d754b5f6ed1fcf2d6d1a5855 14f42918e05d44e6d754b5f6ed1fcf2d6d1a5855 Joaquim Ataides <ti@promobrindes.com.br> 1791416303 -0300	rebase (finish): returning to refs/heads/v2/y10-e2e-tarefas-quadro-refazer1-26100720376714
+14f42918e05d44e6d754b5f6ed1fcf2d6d1a5855 84f23655c72e55f8e0e83c87e939be6f8bba8eb7 Joaquim Ataides <ti@promobrindes.com.br> 1791416675 -0300	commit: docs(e2e): cabecalho do Y10 aponta o projeto dedicado chromium-tarefas
+84f23655c72e55f8e0e83c87e939be6f8bba8eb7 37d42dcb615b1f700b07d33ea741b65f07178e0f Joaquim Ataides <ti@promobrindes.com.br> 1791417218 -0300	commit: test(e2e): Y10 tolera o teto de 12s da edge no login local
+37d42dcb615b1f700b07d33ea741b65f07178e0f 4f698ae8b7f57ab879add97567408bbc68aa1c7a Joaquim Ataides <ti@promobrindes.com.br> 1791418428 -0300	commit: revert(config): tira o projeto chromium-tarefas do diff do Y10

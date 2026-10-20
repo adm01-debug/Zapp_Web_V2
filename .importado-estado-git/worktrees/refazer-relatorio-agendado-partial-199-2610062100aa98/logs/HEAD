@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791331221 -0300	
+7e801f8582265bc03aba115f8871f1dd0abcdb35 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791331222 -0300	reset: moving to HEAD
+7e801f8582265bc03aba115f8871f1dd0abcdb35 86154dd92d57d176055fa88e4e9e60ab9eb0c6fd Joaquim Ataides <ti@promobrindes.com.br> 1791331234 -0300	cherry-pick: fix(relatorios): relatório agendado não é marcado como enviado quando o envio falha
+86154dd92d57d176055fa88e4e9e60ab9eb0c6fd 6a21ab01eb2ae3d38da84125d769b0b6db31776a Joaquim Ataides <ti@promobrindes.com.br> 1791331617 -0300	commit: fix(relatorios): avançar agendamento em envio parcial

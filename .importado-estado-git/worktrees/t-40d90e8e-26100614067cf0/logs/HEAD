@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791306379 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791306380 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 067ba549dc0ac1410cd0a3dabd9400c10c9a45a3 Joaquim Ataides <ti@promobrindes.com.br> 1791306938 -0300	commit: test(dashboard): prova a liberação do realtime do Dashboard ao desmontar (#35)

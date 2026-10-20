@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 4ff5d77217832e5762e4009e271c4a3179bbc9cd Joaquim Ataides <ti@promobrindes.com.br> 1791386624 -0300	
+4ff5d77217832e5762e4009e271c4a3179bbc9cd 4ff5d77217832e5762e4009e271c4a3179bbc9cd Joaquim Ataides <ti@promobrindes.com.br> 1791386625 -0300	reset: moving to HEAD
+4ff5d77217832e5762e4009e271c4a3179bbc9cd 4ff5d77217832e5762e4009e271c4a3179bbc9cd Joaquim Ataides <ti@promobrindes.com.br> 1791386693 -0300	reset: moving to HEAD
+4ff5d77217832e5762e4009e271c4a3179bbc9cd e659ef5175b53f1eb16c11ac0d823298c3965424 Joaquim Ataides <ti@promobrindes.com.br> 1791387090 -0300	commit: fix(sip): limpa tentativa cancelada quando espera rejeita
+e659ef5175b53f1eb16c11ac0d823298c3965424 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791554509 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 e659ef5175b53f1eb16c11ac0d823298c3965424 Joaquim Ataides <ti@promobrindes.com.br> 1791554569 -0300	rebase (abort): returning to refs/heads/v2/refazer-conflito-sip-limpa-tentativa-can-2610071223bdea

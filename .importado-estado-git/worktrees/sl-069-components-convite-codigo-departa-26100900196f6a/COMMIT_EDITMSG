@@ -1,0 +1,5 @@
+fix(team-chat): admin abre canal de departamento e acao com o nome do plano (SL-069 F80)
+
+F80: isChannelMember ganha a clausula do papel (admin/supervisor, via canTransfer do hook) — sem ela a administracao ficava presa no aviso e nao alcancava o canal nem o codigo do convite.
+
+F79: o botao do fluxo de entrada passa a dizer "Entrar via codigo", o nome que o plano e o criterio de pronto usam para a acao.

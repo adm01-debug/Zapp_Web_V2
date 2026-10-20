@@ -1,0 +1,105 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "P16/P17 exact source URL-selection and download blocks + imported visibility/storage parser; P18 full unchanged handler. Only SDK and runtime boundaries replaced. User identity and valid input are preconditions; no claim to execute the full transcription endpoint or its schema/provider.",
+  "source_hashes": {
+    "supabase/functions/ai-transcribe-audio/index.ts": "c73272af51caee03c03852dc1731199934414d75aea2d61df6b8938641883ee7",
+    "supabase/functions/_shared/ai-audio-authz.ts": "4a8f377b2dc1b08c99916fcc060820cb55ea5b991a6a6c1514d307c2a33af24d",
+    "supabase/functions/_shared/ssrf.ts": "9330ea91548aeea4fb241e9eae651e258169c2a2b7bb0a59b6715c75bc42f097",
+    "supabase/functions/auto-close-conversations/index.ts": "c1536c9e9c9b84543773ac854c601360dd518e5478ebab8ef4160bda9d7f5ec3"
+  },
+  "results": [
+    {
+      "id": "P16",
+      "visibleMessageMedia": null,
+      "selected": "https://db.invalid/storage/v1/object/sign/whatsapp-media/other-contact/private.ogg",
+      "download": {
+        "scope": "service",
+        "bucket": "whatsapp-media",
+        "path": "other-contact/private.ogg"
+      },
+      "outcome": "visible text message authorizes caller-selected storage object under service scope"
+    },
+    {
+      "id": "P17",
+      "visibleMessageMedia": "https://db.invalid/storage/v1/object/sign/whatsapp-media/own-contact/own.ogg",
+      "selected": "https://db.invalid/storage/v1/object/sign/whatsapp-media/own-contact/own.ogg",
+      "download": {
+        "scope": "service",
+        "bucket": "whatsapp-media",
+        "path": "own-contact/own.ogg"
+      },
+      "outcome": "control: non-null canonical media_url wins"
+    },
+    {
+      "id": "P18",
+      "responseStatus": 200,
+      "body": {
+        "message": "Auto-closed 1 conversations",
+        "closed": 1
+      },
+      "authChecks": 0,
+      "writesAttempted": [
+        {
+          "table": "messages",
+          "scope": "service",
+          "operation": "insert",
+          "filters": [],
+          "payload": {
+            "contact_id": "fixture-contact",
+            "content": "synthetic closure",
+            "sender": "agent",
+            "message_type": "text"
+          }
+        },
+        {
+          "table": "conversation_closures",
+          "scope": "service",
+          "operation": "insert",
+          "filters": [],
+          "payload": {
+            "contact_id": "fixture-contact",
+            "close_reason": "inactivity",
+            "outcome": "auto_closed",
+            "notes": "Auto-closed after 24h of inactivity"
+          }
+        },
+        {
+          "table": "contacts",
+          "scope": "service",
+          "operation": "update",
+          "filters": [
+            {
+              "method": "eq",
+              "args": [
+                "id",
+                "fixture-contact"
+              ]
+            }
+          ],
+          "payload": {
+            "assigned_to": null
+          }
+        }
+      ],
+      "outcome": "all three writes refused; actual handler still returns closed=1"
+    }
+  ]
+}

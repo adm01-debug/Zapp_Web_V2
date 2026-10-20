@@ -1,0 +1,6 @@
+fix(inbox): troca de conexão padrão usa RPC atômica e confere erro (#174)
+
+handleSetDefault fazia dois updates separados de is_default e anunciava
+sucesso mesmo com a troca falhando no meio. Agora chama
+set_default_whatsapp_connection (t_ae0a55a6): sucesso só com data
+preenchido; erro revalida via fetchConnections com toast destrutivo.

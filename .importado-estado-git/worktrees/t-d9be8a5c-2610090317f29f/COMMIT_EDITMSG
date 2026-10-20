@@ -1,0 +1,3 @@
+feat(talk-x): aba Variações A/B lado a lado com pesos em 100, resultado e vencedora (TL-126)
+
+O componente TalkXTemplateVariants substitui os dois blocos duplicados (rail xl e faixa < xl) do editor de template: colunas Controle/B/C, peso do controle como resto de 100%, dividir igualmente, save explícito do conjunto (sem save no blur) e resultado por variante.

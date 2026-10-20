@@ -1,0 +1,6 @@
+fix(catalogo): ranking Mais enviados ignora envios que falharam por inteiro
+
+R2-MOD-044 (item 413): a agregacao de 30 dias contava toda linha de
+catalog_send_events, inclusive status 'failed' — tentativa em que nenhuma
+mensagem chegou ao contato. Agora le a coluna status e descarta esses eventos;
+'sent' e 'partial' continuam contando. Teste novo prova vermelho->verde.

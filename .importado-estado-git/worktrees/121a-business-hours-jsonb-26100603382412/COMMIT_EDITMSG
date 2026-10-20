@@ -1,0 +1,17 @@
+fix(talkx): business_hours JSONB unificado no sender e scheduler (#121A)
+
+talkx_settings.business_hours e JSONB e o banco devolve {start,end,tz,days},
+mas parseBusinessHours so aceitava string: o sender ignorava o valor salvo e
+caia no default, e o scheduler nem lia a configuracao. Agora:
+
+- parseBusinessHours aceita o objeto JSONB (string JSON so por compatibilidade)
+  e preserva start/end/tz/days; valor PRESENTE fora do contrato vem marcado
+  (invalid) em vez de virar null/default.
+- deliveryWindowStatus usa o tz PROPRIO do business_hours (ausente ->
+  America/Sao_Paulo, default 08:00-18:00 seg-sex) e FECHA a janela em valor
+  presente e invalido; send_window_* segue no fuso da campanha, sem mudanca.
+- a politica de retomada recebe a configuracao EXPLICITAMENTE e o scheduler le
+  o mesmo talkx_settings.business_hours que o sender.
+
+Prova: 5 testes novos ficam vermelhos sem a correcao (23 passed/5 failed) e
+verdes com ela (28 passed/0 failed) nos 3 arquivos de teste do cartao.

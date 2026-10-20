@@ -1,0 +1,16 @@
+fix(inbox): aplica prazo de SLA granular no cabeçalho da conversa
+
+O ChatPanelHeader enviava firstResponseMinutes={5} fixo ao SLAIndicator,
+então salvar uma regra granular (ex.: 2 min) não mudava o SLA exibido no
+cabeçalho (R2-SLA-003).
+
+O cabeçalho passa a consumir useApplicableSLA — fonte única da hierarquia
+contact > company > job_title > contact_type > queue > agent — com os
+atributos já presentes na conversa (contactId, company, jobTitle,
+contactType, queueId, agentId) e repassa o firstResponseMinutes resolvido.
+Enquanto o dado não chega, usa o padrão seguro de 5 min; nenhuma nova
+hierarquia é duplicada no componente.
+
+Testes: ChatPanelHeader.test.tsx prova vermelho→verde (SLAIndicator recebe
+2, não 5), que os identificadores disponíveis chegam ao resolvedor e que o
+padrão seguro vale antes do dado.

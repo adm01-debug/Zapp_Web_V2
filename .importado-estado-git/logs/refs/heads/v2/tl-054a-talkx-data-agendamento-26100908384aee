@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 36ed8568dec2e3ae8db5f896e39c821fdb41b1fb Joaquim Ataides <ti@promobrindes.com.br> 1791545883 -0300	branch: Created from dia/2026-10-09
+36ed8568dec2e3ae8db5f896e39c821fdb41b1fb 2c1e0faae906347cfe8b1124e01ff8eb629e0006 Joaquim Ataides <ti@promobrindes.com.br> 1791545893 -0300	cherry-pick: feat(talk-x): hook unico de ciclo de vida (X050) com dialogo, pendente e erro
+2c1e0faae906347cfe8b1124e01ff8eb629e0006 55bffdce1e1dd7d765994028a6a0c07592d402a7 Joaquim Ataides <ti@promobrindes.com.br> 1791545893 -0300	cherry-pick: fix(talk-x): usa motion-safe no giro do botao pendente do lifecycle
+55bffdce1e1dd7d765994028a6a0c07592d402a7 c7b89e4e48244ebfe0fc6f87b02d59808b4abde3 Joaquim Ataides <ti@promobrindes.com.br> 1791545965 -0300	commit: test(talk-x): prova que agendar sem data valida nao chama a mutacao
+c7b89e4e48244ebfe0fc6f87b02d59808b4abde3 8e1ae8e6cfb672bf2fbb8a7d05208468ddd0c7e5 Joaquim Ataides <ti@promobrindes.com.br> 1791545988 -0300	commit: fix(talk-x): barra agendamento sem data valida no lifecycle
+8e1ae8e6cfb672bf2fbb8a7d05208468ddd0c7e5 44a57c220646e688572302b21bc995c673101530 Joaquim Ataides <ti@promobrindes.com.br> 1791560929 -0300	rebase (finish): refs/heads/v2/tl-054a-talkx-data-agendamento-26100908384aee onto 1f9252a86502ac1b3ce1e1bce704508d8ee420fb

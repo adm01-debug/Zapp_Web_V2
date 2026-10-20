@@ -1,0 +1,15 @@
+fix(skins): autosave só confirma o tema quando a gravação tem sucesso
+
+O autosave chamava `saveThemeConfig(next)` e avançava `savedConfig` sem olhar
+o retorno, então uma falha por quota zerava `hasUnsavedChanges` e `applyPreset`
+anunciava sucesso com o storage intacto — a skin se perdia no reload. O reset
+repetia a política.
+
+Agora a mudança entra em memória/tela na hora, mas `savedConfig` só avança com
+`saveThemeConfig === true`; em falha o usuário vê o toast de erro e a pendência
+continua visível. O cálculo do próximo estado saiu do updater do React (que
+precisa ser puro) para `mergeConfig` + espelho síncrono em ref.
+
+Cobertura: 3 casos novos reproduzem o defeito com `Storage.prototype.setItem`
+lançando (quota), sem mockar `saveThemeConfig`; bateria de mutação 4/4 morta
+(controle de texto sobrevive, declarado).

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791522017 -0300	branch: Created from dia/2026-10-09
+e9f4855a1862da4782923accbc32d8d7b7d53b37 18b9d3344cd2b1e0823b9c87755e96839d1161ca worker <worker@promo> 1791523337 -0300	commit: fix(telefonia): tipa os callbacks de mock.calls no teste do useTerminoRemoto (SL-249)

@@ -1,0 +1,18 @@
+fix(chatbot-l1): selecionar flow e histórico pela conexão da mensagem
+
+O handler recebia `connectionId` no corpo (schema `ChatbotL1Schema`) e o
+descartava: a consulta de `chatbot_flows` não filtrava por conexão e
+`.limit(1)` pegava um flow ativo qualquer; o histórico de `messages` era só
+por `contact_id`. Um flow e um histórico de OUTRO número respondiam por esta
+conexão (IA-CHATBOT-001).
+
+- flow: `.eq('whatsapp_connection_id', connectionId)` quando a conexão é
+  informada — sem flow da conexão, a resposta é `no_active_flow`;
+- histórico: mesmo filtro em `messages.whatsapp_connection_id`, para não
+  colocar no prompt mensagens de outro canal;
+- chamador que não informa `connectionId` mantém o comportamento anterior;
+- `Deno.serve` passa a rodar só com `import.meta.main`, permitindo exercitar o
+  handler direto pelos testes de contrato (mesmo padrão de `send-email`).
+
+Prova: supabase/functions/chatbot-l1/index.test.ts (4 testes, com PostgREST e
+provedor de IA falsos em 127.0.0.1). Antes do fix: 3 falham; depois: 4 passam.

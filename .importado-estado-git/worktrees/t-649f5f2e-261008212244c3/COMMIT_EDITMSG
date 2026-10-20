@@ -1,0 +1,10 @@
+fix(outros): Reduzir baseline de lint (1115 na época) (SL-092)
+
+O registro do ratchet (scripts/ci/eslint-baseline.json) contava 522 ocorrencias enquanto a varredura do
+mesmo commit da 498: 24 entradas de divida ja paga por cartoes integrados continuavam contadas e o CLI
+imprimia so "OK". Descida 522 -> 498 ocorrencias (e 291 -> 274 arquivos no indice), removendo apenas as
+entradas pagas (404 linhas, 0 insercao), e o ratchet passa a avisar quando o registro fica acima do codigo
+(exit code inalterado: divida paga nao reprova o gate).
+
+Prova: teste vermelho->verde em scripts/ci/lint-ratchet.unit.mjs; ratchet depois -> baseline=498,
+atual=498, mantidas=498, removidas=0, novas=0; zapp-verify . --rapido verde.

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287490 -0300	
+614e613981c3e43231ee02999d12e09b8fb055b4 614e613981c3e43231ee02999d12e09b8fb055b4 Joaquim Ataides <ti@promobrindes.com.br> 1791287491 -0300	reset: moving to HEAD
+614e613981c3e43231ee02999d12e09b8fb055b4 2d04d7830ea9d2cc3e6fa37166441fae6c3ebf66 Joaquim Ataides <ti@promobrindes.com.br> 1791287496 -0300	cherry-pick: fix(webhook): opt-out e atribuição duráveis em outbox idempotente, retomados no replay (#69)
+2d04d7830ea9d2cc3e6fa37166441fae6c3ebf66 d3a616171c06b5496ea2cd3613227c84d0a936a7 Joaquim Ataides <ti@promobrindes.com.br> 1791288996 -0300	commit: fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)
+d3a616171c06b5496ea2cd3613227c84d0a936a7 c29325db031b52b27427463583d9baff49e7f41a Joaquim Ataides <ti@promobrindes.com.br> 1791289830 -0300	commit (amend): fix(webhook): preserva mensagem recebida no outbox de efeitos do inbound (#69)

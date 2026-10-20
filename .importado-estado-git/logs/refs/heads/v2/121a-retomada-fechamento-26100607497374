@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 a463ef22afa83c4d00654d03782a15cc3263a0e7 Joaquim Ataides <ti@promobrindes.com.br> 1791283758 -0300	branch: Created from dia/2026-10-06
+a463ef22afa83c4d00654d03782a15cc3263a0e7 6c662215e509814c5065e95ad955e6675f2ff834 Joaquim Ataides <ti@promobrindes.com.br> 1791283763 -0300	cherry-pick: fix(talkx): business_hours JSONB unificado no sender e scheduler (#121A)

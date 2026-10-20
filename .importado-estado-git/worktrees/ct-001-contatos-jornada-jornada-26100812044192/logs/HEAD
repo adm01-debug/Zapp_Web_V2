@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 bce13e7c076bc96da3ea76ccfece1210aea52171 Joaquim Ataides <ti@promobrindes.com.br> 1791471876 -0300	
+bce13e7c076bc96da3ea76ccfece1210aea52171 bce13e7c076bc96da3ea76ccfece1210aea52171 Joaquim Ataides <ti@promobrindes.com.br> 1791471877 -0300	reset: moving to HEAD
+bce13e7c076bc96da3ea76ccfece1210aea52171 7556a08f762edb51b83e00511e765ce68cf118f9 worker (testes) <workertestes@promobrindes.local> 1791473506 -0300	commit: test(contatos): mede o caminho até abrir a conversa (CT-001, números de antes)
+7556a08f762edb51b83e00511e765ce68cf118f9 acf0a3c4790d69a79e83adbc990af0784214a251 worker (testes) <workertestes@promobrindes.local> 1791474054 -0300	commit: test(contatos): guarda de rede por allowlist no roteiro (sem host de produção no código)
+acf0a3c4790d69a79e83adbc990af0784214a251 bce13e7c076bc96da3ea76ccfece1210aea52171 Joaquim Ataides <ti@promobrindes.com.br> 1791474062 -0300	reset: moving to 7556a08f7~1
+bce13e7c076bc96da3ea76ccfece1210aea52171 53892fb57e9cb6d9b2cde1001e4475a3a94f213c worker (testes) <workertestes@promobrindes.local> 1791474062 -0300	commit: test(contatos): mede o caminho até abrir a conversa (CT-001, números de antes)

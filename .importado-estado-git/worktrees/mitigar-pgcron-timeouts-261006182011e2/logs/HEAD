@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321605 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321606 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 a4f253c46bb5ee27596a361fa469808b80b0a82c Joaquim Ataides <ti@promobrindes.com.br> 1791322526 -0300	commit: fix(banco): nenhum minuto do pg_cron chega a 6 jobs, condicao do job startup timeout

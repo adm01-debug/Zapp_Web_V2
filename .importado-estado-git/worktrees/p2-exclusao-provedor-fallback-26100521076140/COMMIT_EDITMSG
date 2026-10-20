@@ -1,0 +1,17 @@
+fix(ai-providers): confirmação de remoção para de prometer fallback inexistente
+
+R2-API-046 (#220): a confirmação de remoção dizia que as funcionalidades
+usando o provedor seriam "automaticamente redirecionadas para o provedor
+padrão (Lovable AI)". O roteador não faz isso: `resolveProvider` exige um
+provedor ATIVO + PADRÃO que declare a finalidade em `use_for` e lança
+NO_PROVIDER (503) quando não sobra candidato, de propósito. O único trigger
+do banco é BEFORE INSERT OR UPDATE (desmarca padrões sobrepostos) — no DELETE
+ninguém é eleito sucessor.
+
+Agora a confirmação calcula (purposesLosingDefaultProvider, espelhando o
+predicado do roteador) e declara exatamente as finalidades que ficam sem
+provedor, sem prometer redirecionamento. Sucessor inativo, não-padrão ou sem
+a finalidade em use_for não conta como sucessor.
+
+Teste: src/components/settings/ai-providers/__tests__/remocao-provedor-fallback.test.tsx
+(3 testes falham no código anterior; 12 passam com a correção).

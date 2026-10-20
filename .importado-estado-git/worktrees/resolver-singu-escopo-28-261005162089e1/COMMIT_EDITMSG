@@ -1,0 +1,7 @@
+fix(multiplix): tira ref de producao do teste e detalha rollback da redacao
+
+Refazer do cartao t_69602171 (rodada 2): troca a URL do Zapp por uma
+ficticia, liga o SINGU_URL e o JWT do stub a EXPECTED_EXTERNAL_PROJECT_REF
+do contrato compartilhado e remove o teste que validava o espelho .sql
+por regex — a execucao real ja e provada por multiplix-resolve-escopo.test.sh.
+O rollback da migration passa a apontar arquivo, linhas (243-351) e md5.

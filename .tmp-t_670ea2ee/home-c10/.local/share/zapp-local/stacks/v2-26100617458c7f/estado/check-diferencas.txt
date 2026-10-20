@@ -1,0 +1,6 @@
+indexes|r:public.tab_snap.ind_snap
+indexes|r:public.tab_led.ind_ledger
+indexes|r:public.tab_both.ind_both
+indexes|r:public.tab_none.ind_none
+indexes|r:public.tab_cartao.ind_cartao
+indexes|r:public.sonda_cartao.sonda_cartao_pkey

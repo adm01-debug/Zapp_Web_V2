@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ZAPP WEB</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Instalável (PWA): sem estas tags o beforeinstallprompt nunca dispara e a
+         página /install não conseguia oferecer o app. O manifesto e o ícone já
+         existiam em public/ sem ninguém apontar para eles. O tema acompanha o
+         theme_color do manifesto (mesmo valor que o Chrome usa na barra).
+         Service Worker/Push seguem DESLIGADOS por decisão
+         (src/config/service_worker.ts) — instalar NÃO depende deles. -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#25d366" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ZAPP Web" />
+    <!-- Preconnect to Google Fonts for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload critical fonts for faster LCP.
+         Faixas variaveis (wght@min..max), nao pesos estaticos: o CSS pede
+         450/550/650/800/900 no dark (src/styles/base.css) que nenhum peso
+         estatico cobre — o navegador tinha que sintetizar. Faixa continua
+         cobre qualquer peso pedido dentro do eixo da fonte (Jakarta vai ate
+         800 — nao existe corte 900 publicado; Outfit cobre 100-900 inteiro).
+         JetBrains Mono entra pela mesma URL: font-mono/.text-code citavam
+         essa familia sem nenhum @font-face carregando ela. -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('theme');
+          var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', isDark);
+          
+          var skin = localStorage.getItem('theme-custom-colors');
+          if (skin) {
+            var c = JSON.parse(skin), root = document.documentElement;
+            if (c.v === 6) {
+              var mode = isDark ? 'dark' : 'light';
+              // Alto contraste: as cores vêm da classe `.high-contrast` (accessibility.css).
+              // Escrever o cache inline aqui venceria a classe e anularia o modo (mesmo
+              // cuidado do applyThemePreset); a classe entra já no boot para não piscar.
+              var altoContraste = localStorage.getItem('highContrast') === 'true';
+              if (altoContraste) root.classList.add('high-contrast');
+              if (!altoContraste && c.cssVarsCache && c.cacheMode === mode) {
+                for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
+              }
+              if (typeof c.borderRadius === 'number' && isFinite(c.borderRadius)) {
+                var r = Math.max(0, Math.min(20, c.borderRadius));
+                root.style.setProperty('--radius', (r / 16) + 'rem');
+              }
+              if (c.preset) root.setAttribute('data-preset-id', c.preset);
+            } else if (c.v !== 5) {
+              localStorage.removeItem('theme-custom-colors'); /* v5 fica: ThemeInitializer migra */
+            }
+          }
+        } catch(e) {
+          console.error('[BOOT] Theme init failed:', e);
+        }
+      })();
+    </script>
+    <script>
+      try { sessionStorage.removeItem('zapp-preview-boot-retry-done'); } catch(e) {}
+    </script>
+    <script>
+      // Boot diagnostic – captures any error before React mounts and surfaces
+      // a visible reason if mount doesn't happen within the timeout.
+      (function() {
+        // O default de produção é 8s. O override (window.__BOOT_DEADLINE_MS) existe
+        // para o CI/spec visual: com o dev server vite frio e vários workers em
+        // paralelo, o React 19 pode levar >8s para montar e o watchdog destruiria
+        // o app (#root zerado) — falha flaky "Falha ao inicializar o app".
+        var deadline = Date.now() + (window.__BOOT_DEADLINE_MS || 8000);
+        var interval = setInterval(function() {
+          if (document.getElementById('root') && document.getElementById('root').firstChild) {
+            clearInterval(interval);
+            return;
+          }
+          if (Date.now() > deadline) {
+            clearInterval(interval);
+            var errs = (window.__bootErrors || []).map(function(e) { return e; }).join('\n');
+            var root = document.getElementById('root');
+            if (!root) return;
+            root.innerHTML = ''
+            + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:system-ui,sans-serif;padding:24px;overflow:auto;">'
+            + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">&#9888;&#65039; Falha ao inicializar o app</h1>'
+            + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React n\u00e3o montou em 8s. Detalhes abaixo:</p>'
+            + '<div style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;">'
+            + (errs || '(sem erros capturados — verifique o console)')
+            + '</div>'
+            + '<button onclick="location.reload()" style="margin-top:16px;background:#2563eb;color:#fff;border:0;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Recarregar</button>'
+            + '</div>';
+          }
+        }, 500);
+
+        window.__bootErrors = window.__bootErrors || [];
+        window.onerror = function(msg, src, line, col, err) {
+          window.__bootErrors.push(
+            '[JS] ' + msg + (src ? ' @ ' + src + ':' + line : '')
+          );
+        };
+        window.addEventListener('unhandledrejection', function(ev) {
+          var reason = ev.reason;
+          window.__bootErrors.push(
+            '[Promise] ' + (reason && reason.stack ? reason.stack : String(reason))
+          );
+        });
+      })();
+    </script>
+    <style>#root-loading{z-index:9999;color:#181c25;text-align:center;background:#f6f7f9;justify-content:center;align-items:center;font-family:Outfit,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity .3s;display:flex;position:fixed;inset:0}#root-loading .root-loading__marca{font-size:18px;font-weight:700}#root-loading .root-loading__status{color:#5c6270;margin-top:6px;font-size:13px}#root-loading .root-loading__pontos{justify-content:center;gap:6px;margin-top:14px;display:flex}#root-loading .root-loading__ponto{background:#2463eb;border-radius:50%;width:10px;height:10px;animation:1.5s ease-in-out infinite root-loading-pulso}#root-loading .root-loading__ponto:nth-child(2){animation-delay:.2s}#root-loading .root-loading__ponto:nth-child(3){animation-delay:.4s}@keyframes root-loading-pulso{0%,80%,to{opacity:.5;transform:scale(.6)}40%{opacity:1;transform:scale(1)}}html.dark #root-loading{color:#f8fafc;background:#0e0e10}html.dark #root-loading .root-loading__status{color:#b3bdcc}@media (prefers-reduced-motion:reduce){#root-loading{transition:none}#root-loading .root-loading__ponto{opacity:1;animation:none;transform:none}}</style>
+    <script type="module" crossorigin src="/assets/index-ZlgiVmC8.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-B0Z9INg1.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-core-Cv0p2dBW.js">
+    <link rel="modulepreload" crossorigin href="/assets/logger-gbOimhm6.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-data-ToHYVQ6_.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-19NejiXx.js">
+    <link rel="modulepreload" crossorigin href="/assets/createLucideIcon-B9q1sJMV.js">
+    <link rel="modulepreload" crossorigin href="/assets/loader-circle-pSB4aFl_.js">
+    <link rel="modulepreload" crossorigin href="/assets/utils-Dzq_KGRH.js">
+    <link rel="modulepreload" crossorigin href="/assets/client-BV8iPb2f.js">
+    <link rel="modulepreload" crossorigin href="/assets/audit-CpcaacEB.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-utils-Dz_4VLXF.js">
+    <link rel="modulepreload" crossorigin href="/assets/formatters-CuyIYd4A.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DcodcqYo.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="root-loading">
+      <div>
+        <div class="root-loading__marca">ZAPP Web</div>
+        <div class="root-loading__status" role="status">Carregando…</div>
+        <div class="root-loading__pontos" aria-hidden="true">
+          <span class="root-loading__ponto"></span>
+          <span class="root-loading__ponto"></span>
+          <span class="root-loading__ponto"></span>
+        </div>
+      </div>
+    </div>
+    <script>
+      // A abertura sai assim que o app desenha algo em #root (o React insere os filhos
+      // ali). Se o watchdog de 8s escrever a mensagem de erro em #root, o observador
+      // dispara também e o aviso de erro aparece no lugar da abertura.
+      (function () {
+        var root = document.getElementById('root');
+        var abertura = document.getElementById('root-loading');
+        if (!root || !abertura) return;
+        var soltar = function () {
+          if (abertura.parentNode) abertura.parentNode.removeChild(abertura);
+        };
+        var remover = function () {
+          abertura.style.opacity = '0';
+          var reduzido =
+            window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduzido) {
+            soltar();
+          } else {
+            setTimeout(soltar, 300);
+          }
+        };
+        var observador = new MutationObserver(function () {
+          if (root.childElementCount > 0) {
+            observador.disconnect();
+            remover();
+          }
+        });
+        observador.observe(root, { childList: true });
+      })();
+    </script>
+  </body>
+</html>

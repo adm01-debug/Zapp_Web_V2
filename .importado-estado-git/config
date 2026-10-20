@@ -1,0 +1,97 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	hooksPath = .husky/_
+[remote "origin"]
+	url = https://github.com/adm01-debug/Zapp_Web_V2.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+	vscode-merge-base = origin/main
+[branch "hermes/audit-a1-db-26092914149334"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/audit-a2-mutacao-26092914145987"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/audit-a4-consumidores-2609291414919f"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/audit-a5-ci-26092914142369"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/bloco-b-permissoes-cache-docs-26100113494d7c"]
+	remote = origin
+	merge = refs/heads/main
+[merge "regenmanifest"]
+	name = regenera manifest de edge no conflito
+	driver = "node scripts/edge-deploy/generate-manifest.mjs >/dev/null 2>&1; git add %A; exit 0"
+[branch "hermes/melhorias50-e37-srcset-inbox-2610030905aec8"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/ia059-conteudo-sensivel-em-logs-261003120417db"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/e53-resumo-drift-2610031218798a"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/bloco-h-f65-fila-tts-26100314023a90"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/lint-ratchet-lote-5-2610031437beb8"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/arquivos-fase9-pr-i-261003155456cc"]
+	remote = origin
+	merge = refs/heads/main
+[branch "hermes/ci-e97b-26100406533794"]
+	remote = origin
+	merge = refs/heads/main
+[merge "graphify"]
+	name = graphify graph.json union merge
+	driver = \"/home/joaquim_ataides/.local/share/uv/tools/graphifyy/bin/python\" -m graphify merge-driver %O %A %B
+[branch "hermes/talkx-vinculo-crm-lote-26100410258435"]
+	remote = origin
+	merge = refs/heads/main
+[branch "chore/graphifyignore-imagem-sensivel"]
+	remote = origin
+	merge = refs/heads/chore/graphifyignore-imagem-sensivel
+[branch "local/fase0-banco-local"]
+	remote = origin
+	merge = refs/heads/main
+[branch "lote/2026-10-06-0800"]
+	remote = origin
+	merge = refs/heads/lote/2026-10-06-0800
+[branch "ci/cors-zappweb-app-br"]
+	remote = origin
+	merge = refs/heads/ci/cors-zappweb-app-br
+[branch "lote/2026-10-06-07"]
+	remote = origin
+	merge = refs/heads/main
+[branch "ci/deploy-functions-automatico"]
+	remote = origin
+	merge = refs/heads/ci/deploy-functions-automatico
+[branch "lote/2026-10-07-tarde"]
+	remote = origin
+	merge = refs/heads/lote/2026-10-07-tarde
+[branch "lote/2026-10-08-completo"]
+	remote = origin
+	merge = refs/heads/lote/2026-10-08-completo
+[branch "lote/2026-10-08-tarde"]
+	remote = origin
+	merge = refs/heads/lote/2026-10-08-tarde
+[branch "chore/types-sync-lote-0810"]
+	remote = origin
+	merge = refs/heads/chore/types-sync-lote-0810
+[branch "lote/2026-10-09"]
+	remote = origin
+	merge = refs/heads/lote/2026-10-09
+[user]
+	email = joaquim@ataides
+	name = Joaquim Ataides

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491892 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791491893 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 661a7ddf0c8b38e127ddb950f1333779e8b48615 Joaquim Ataides <ti@promobrindes.com.br> 1791492193 -0300	commit: fix(ci/devops): Hooks de commit: husky + lint-staged + commitlint (SL-035)

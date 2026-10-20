@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 2e425424415e87d77c15c19334177a6753f8fb17 Joaquim Ataides <ti@promobrindes.com.br> 1791382669 -0300	branch: Created from dia/2026-10-07
+2e425424415e87d77c15c19334177a6753f8fb17 0d41f5a8e030bac48468943049f8f85baab0b9b5 Joaquim Ataides <ti@promobrindes.com.br> 1791384876 -0300	commit: feat(email): ícone de e-mail do contato abre a conversa dele ou o compositor
+0d41f5a8e030bac48468943049f8f85baab0b9b5 0e87d19e73fa64ee13a36651f7a1f51d8242a1ff Joaquim Ataides <ti@promobrindes.com.br> 1791540226 -0300	rebase (finish): refs/heads/v2/c03-painel-contato-email-26100711176198 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b

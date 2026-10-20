@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "script_sha256": "1059b58b83942c796ad1d38351fea0b7d85de8d0bbea0591084ba0d4b4625d81",
+  "typescript_version": "5.9.3",
+  "source_files": [
+    {
+      "path": "src/components/email/EmailChatInbox.tsx",
+      "git_blob_sha": "622fba3b046728a8c3aa64e7f24b79dc819b72ec",
+      "sha256": "8a1e14f8597d9d4ab8b062306b3732aa453ab8d824ba63dcc9ce9d754a1e0183"
+    },
+    {
+      "path": "src/components/email/EmailChatThread.tsx",
+      "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+      "sha256": "055636133ffc98af398c4e805fa9e3a95a2a6df5ea5e967f4422deb5d49c2ef8"
+    },
+    {
+      "path": "src/components/gmail/EmailComposer.tsx",
+      "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+      "sha256": "2a9c76a0306128dafb0cc821953df8896d49c5ddd0748441cf0146e07fa6e588"
+    },
+    {
+      "path": "src/components/email/EmailChatReplyBar.tsx",
+      "git_blob_sha": "d704c3edda9a1bbfc558121376cd6a10ca22c902",
+      "sha256": "ee4c0099aea5ca29f00e467a52efbefb2a7db982cd78b8109ec471ad12eeb9d6"
+    }
+  ],
+  "probes": [
+    {
+      "id": "COM-P01",
+      "title": "Context notification creates another parent update on every callback identity change",
+      "status": "PASS",
+      "observed": {
+        "bounded_parent_renders": 6,
+        "parent_updates": 6,
+        "stable_message_and_attachment_arrays": true,
+        "dependency_names": [
+          "contextualAttachments",
+          "onContextDataChange",
+          "threadMessages"
+        ]
+      },
+      "limits": "Executes the exact parent callback and effect; models dependency identity with Object.is. It is not a DOM render, browser hang measurement or production incident."
+    },
+    {
+      "id": "COM-P02",
+      "title": "Late preview for A replaces bytes beneath attachment B",
+      "status": "PASS",
+      "observed": {
+        "selected_attachment": "fixture-B",
+        "displayed_content_from": "fixture-A",
+        "requests_finished_in_order": [
+          "B",
+          "A"
+        ]
+      },
+      "limits": "Synthetic attachment content and deferred promises; no actual email, file download or DOM. A can be closed before B is opened; the callback has no cancellation/identity check."
+    },
+    {
+      "id": "COM-P03",
+      "title": "Discard deletes the local draft and closes despite remote delete denial",
+      "status": "PASS",
+      "observed": {
+        "remote_delete_rejected": true,
+        "local_draft_removed": true,
+        "composer_closed": true,
+        "promise_rejected": false
+      },
+      "limits": "Runs the exact discard callback with a rejected remote mutation; does not delete a real draft."
+    },
+    {
+      "id": "COM-P04",
+      "title": "Forward attachment selection stays empty when metadata arrives after mount",
+      "status": "PASS",
+      "observed": {
+        "attachments_at_composer_mount": 0,
+        "attachments_after_query": 1,
+        "selected_for_forward_after_query": 0
+      },
+      "limits": "Executes exact initializer/selector with React state initialization semantics; not a mounted React integration test. The async metadata precondition is established by the source consumer/query chain."
+    },
+    {
+      "id": "COM-P05",
+      "title": "Reply completion clears text typed while the previous reply was pending",
+      "status": "PASS",
+      "observed": {
+        "sent_text": "original text",
+        "unsent_text_typed_during_wait": "new text typed while waiting",
+        "draft_after_success": ""
+      },
+      "limits": "Exact handler with synthetic pending mutation. Static JSX confirms the textarea is editable during the wait; no real send or DOM typing."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0,
+  "method": "Exact AST source expressions transpiled and executed with explicit synthetic boundaries. Each read checks the Git blob; checkout HEAD is checked before execution."
+}

@@ -1,0 +1,9 @@
+fix(webauthn): busca paginada e limite por IP nao revelam se o e-mail existe
+
+SEC-EDGE-FUNCTIONS-04 (N-161): a acao publica authentication-options
+- responde IGUAL para e-mail inexistente e conta sem passkey;
+- troca listUsers() sem paginacao por busca paginada por e-mail (com teto e
+  parada no nextPage nulo), que antes lia so a primeira pagina;
+- aplica enforceRateLimit por IP antes de ler o corpo (429);
+- exporta handleWebAuthn(req, deps) com Deno.serve atras de import.meta.main
+  para o teste chamar o handler real.

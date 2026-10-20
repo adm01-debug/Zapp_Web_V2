@@ -1,0 +1,4 @@
+BEGIN
+CREATE TABLE
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qr-attempts-refazer1-t_6719927d/.tmp/sonda-t4f.sql:11: ERROR:  new row for relation "probe_qr" violates check constraint "probe_ttl"
+DETAIL:  Failing row contains (fbeb1043-04a6-432e-ac89-e61ebf6e12a2, c0000000-0000-0000-0000-000000000001, 2026-10-14 17:31:21.064824+00, 2026-10-14 17:32:21.064824+00).

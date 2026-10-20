@@ -1,0 +1,12 @@
+fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)
+
+O ramo 'cancel' de public.transition_talkx_campaign fechava pending/sending e
+limpava delivery_claim_* inclusive de destinatário com POST em voo
+(provider_dispatch_started_at preenchido). Com o token apagado, o recibo do
+provedor falhava no fencing e o worker lançava antes de enfileirar a
+reconciliação (R2-DB-014).
+
+A guarda provider_dispatch_started_at IS NULL preserva o em-voo (mesma regra
+F14/F59 de multiplix_recipients); quem não saiu para o provedor segue sendo
+cancelado. Teste em Postgres descartável prova RED (descarte) e GREEN
+(sent/failed/outcome_unknown + sweeper).

@@ -1,0 +1,8 @@
+fix(gmail): arquivar thread legada remove INBOX e só então volta
+
+O botão Arquivar da thread Gmail legada não tinha onClick e aceitava o
+clique sem executar nada. Agora ele usa o fluxo canônico do
+EmailChatThread: modifyThreadLabels.mutateAsync remove o rótulo INBOX da
+thread inteira e onBack só é chamado depois de a mutação resolver; uma
+rejeição exibe erro e não navega de volta. O botão também ganha
+aria-label e fica desabilitado durante a mutação.

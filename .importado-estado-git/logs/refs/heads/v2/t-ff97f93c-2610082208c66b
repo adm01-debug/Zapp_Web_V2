@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508121 -0300	branch: Created from dia/2026-10-08
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 05e37ecdd8d82f40f6312ddb660600f8c82721e9 Joaquim Ataides <ti@promobrindes.com.br> 1791508441 -0300	commit: fix(ci): da teto explicito de 30s a suite de contratos (contrato pdfjs reprovava por PRAZO sob carga)

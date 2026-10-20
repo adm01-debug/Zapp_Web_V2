@@ -1,0 +1,8 @@
+test(edge): harness dual deno/vitest no contrato de schemas
+
+O shim só-Deno (import https://deno.land + Deno.test) derrubava a suíte
+inteira no CI: o vitest do Node não carrega URL https e a coleta morria
+com 0 testes. O arquivo volta a rodar nos dois runners — Deno.test sob
+Deno, it() do vitest via import dinâmico não-literal sob Node, asserções
+locais em Error — mesmo padrão dos contratos multiplix-*. Nenhum caso de
+teste removido ou afrouxado; 154 testes verdes nos dois runtimes.

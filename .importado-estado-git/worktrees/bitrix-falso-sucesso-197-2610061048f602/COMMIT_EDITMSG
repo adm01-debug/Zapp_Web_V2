@@ -1,0 +1,11 @@
+fix(edge): rejeicao do Bitrix nao vira sucesso de criacao no bitrix-api (#197)
+
+R2-API-018: os ramos especiais de criacao (push_contact e create_lead_from_conversation) faziam o fetch, liam o JSON e devolviam success=true sem olhar HTTP, envelope de erro nem ID. O front (useBitrixApi) mostra o toast de criacao so com result.success, entao uma criacao recusada pelo provedor aparecia como concluida.
+
+Agora existe uma classificacao unica das respostas do Bitrix (classifyBitrixResponse): HTTP nao-ok -> 502 sanitizado; HTTP 200 com envelope {error, error_description} -> 400 com a mensagem do provedor (mesma regra que o ramo generico ja usava); 200 sem erro -> result/total. Criacao so e sucesso com o ID devolvido pelo Bitrix (createdEntityId), nos dois ramos especiais e em action=create.
+
+sync_contacts passa pela mesma classificacao (erro do Bitrix nao cai mais em 'Endpoint nao definido') e devolve estado parcial explicito por item: failed + failures[{id, reason}] com razao sanitizada (missing_phone/upsert_failed); a mensagem crua do banco fica no log do servidor.
+
+Handler exportado e Deno.serve atras de import.meta.main (padrao das edges do repo) para o teste chamar o handler real com um Request. Teste novo supabase/functions/bitrix-api/index.test.ts: 9 casos, offline (globalThis.fetch roteirizado); 5 falhavam antes da correcao.
+
+supabase/deployment-manifest.json e arquivo derivado e nao foi regenerado (fica com o integrador, conforme a skill area-edge-api).

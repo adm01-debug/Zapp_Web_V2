@@ -1,0 +1,12 @@
+fix(ci): prova de orcamento nao expoe credencial em argv nem sessao Auth na saida (#358)
+
+A prova de orcamento/rate-limit montava o corpo do login com jq --arg e o
+entregava ao curl por --data: senha e corpo iam para argv de processo. Os
+cabecalhos apikey/Authorization tambem iam em -H, e a resposta completa do
+Auth (access_token/refresh_token/user) ficava gravada em OUT/login.json.
+
+Agora o corpo do login sai do ambiente via jq $ENV e chega ao curl por stdin
+(--data-binary @-), os cabecalhos com credencial vivem num --config privado
+do curl dentro de um mktemp -d removido por trap em EXIT/INT/TERM, e a saida
+publicavel traz so um resumo redigido do login. O teste unitario executa o
+script com curl/jq falsos que auditam o proprio argv e o stdin, sem rede.

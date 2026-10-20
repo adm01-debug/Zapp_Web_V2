@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 Joaquim Ataides <ti@promobrindes.com.br> 1791229518 -0300	branch: Created from dia/2026-10-05
+07eaf6ea7ef0a427dbd1f26487e6fbe0024c8378 09de8433c7f681c8738d60191e4f9a0cd1730dc5 Joaquim Ataides <ti@promobrindes.com.br> 1791229532 -0300	cherry-pick: fix(db): persiste first_response_breached com o prazo granular aplicavel

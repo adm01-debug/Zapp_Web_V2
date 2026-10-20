@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791310868 -0300	
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 Joaquim Ataides <ti@promobrindes.com.br> 1791310869 -0300	reset: moving to HEAD
+1ab1914d9e02ce9ad170b9dac7af84fdff90ab00 5500aae42488aa4f0698720ea1769fe102745482 Joaquim Ataides <ti@promobrindes.com.br> 1791310891 -0300	cherry-pick: fix(inbox): filtro por tag da busca entra na consulta e vale para mensagens (#316)
+5500aae42488aa4f0698720ea1769fe102745482 3a83a8c2a7fed4751ce5ec556c477726af524de1 Joaquim Ataides <ti@promobrindes.com.br> 1791311375 -0300	commit: fix(inbox): filtrar busca por tag sem lista de IDs

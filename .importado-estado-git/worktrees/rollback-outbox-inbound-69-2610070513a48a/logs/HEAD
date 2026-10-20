@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 ab517174e553a3c60589d8bedcd08b2958e8d8fc Joaquim Ataides <ti@promobrindes.com.br> 1791360828 -0300	
+ab517174e553a3c60589d8bedcd08b2958e8d8fc ab517174e553a3c60589d8bedcd08b2958e8d8fc Joaquim Ataides <ti@promobrindes.com.br> 1791360829 -0300	reset: moving to HEAD
+ab517174e553a3c60589d8bedcd08b2958e8d8fc f47155c075427a0ca41e922aa5180cd8f3416542 v2-complexo <v2@local> 1791360846 -0300	commit: chore(webhook): reaproveita a base do outbox inbound #69 (t_1accb485)
+f47155c075427a0ca41e922aa5180cd8f3416542 38bd481eaeab097929ab86178d7c397f18ce3c4c Joaquim Ataides <ti@promobrindes.com.br> 1791360847 -0300	cherry-pick: fix(migrations): restaura o rollback executavel do outbox inbound (#69)
+38bd481eaeab097929ab86178d7c397f18ce3c4c 9b0c7acfa0eb30defc656f5760eceb9b0bf5d5ca Joaquim Ataides <ti@promobrindes.com.br> 1791360847 -0300	cherry-pick: test(db-audit): executa o rollback do outbox no Postgres descartavel (#69)
+9b0c7acfa0eb30defc656f5760eceb9b0bf5d5ca 1149f80fcedd49c9b8aeb5c0e5d0da34627dbe6b Joaquim Ataides <ti@promobrindes.com.br> 1791362375 -0300	reset: moving to dia/2026-10-07
+1149f80fcedd49c9b8aeb5c0e5d0da34627dbe6b 46cb846be168abebeca1209e0f198f381ee3dfe1 v2-complexo <v2@local> 1791362395 -0300	commit: fix(migrations): rollback executavel do outbox inbound (#69)
+46cb846be168abebeca1209e0f198f381ee3dfe1 1c4797b8b3c02088deafe0e8a708dd3e19f7130d v2-complexo <v2@local> 1791362396 -0300	commit: test(db-audit): executa o rollback do outbox no Postgres descartavel (#69)
+1c4797b8b3c02088deafe0e8a708dd3e19f7130d 1860fbcc04c3518bdc309704d20e5745e792f664 v2-complexo <v2@local> 1791363290 -0300	commit: chore(edge-deploy): confere o manifesto de deploy regenerado (#69)

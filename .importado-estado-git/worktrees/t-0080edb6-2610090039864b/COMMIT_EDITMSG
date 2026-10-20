@@ -1,0 +1,11 @@
+fix(talk-x): corrige corrida no Cancelar e limpeza destrutiva no envio de mídia (TL-066)
+
+- id de envio por chamada: resultado de envio cancelado/substituído é
+  descartado e o objeto que gerou é removido; o finally de envio antigo não
+  derruba o uploading do envio novo.
+- só objetos enviados nesta sessão do componente são apagados na hora; valor
+  persistido em talkx-media/<profile_id>/<uuid>-<arquivo> nunca é removido
+  antes de o editor salvar.
+- upload recusa antes do Storage quando não há profile.id; caminho sem
+  prefixo não é mais gerável (assinatura exige profileId).
+- comentários de TalkxMediaValue e talkxMediaUrl alinhados ao formato real.

@@ -1,0 +1,8 @@
+fix(tarefas): desfazer cancelamento/conclusão restaura status e alarme e só confirma após gravar (#421)
+
+O trigger do banco zera remind_at/notified_at ao entrar em done/cancelled e o
+undo só repunha status/completed_at (cancel) ou forçava 'todo' (complete), então
+o alarme anterior se perdia. O undo agora reescreve o snapshot completo do item
+e confere a escrita (erro do PostgREST/RLS e 0 linhas falham). O undoToast passa
+a anunciar 'Ação desfeita' só depois de onUndo resolver; em falha mostra o erro
+e reoferece o Desfazer com o mesmo contexto.

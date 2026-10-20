@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562528 -0300	branch: Created from dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 05b3b7387c553c919888873f58b6cd188f206125 Joaquim Ataides <ti@promobrindes.com.br> 1791562556 -0300	cherry-pick: fix(performance): alvos FCP 1,5 s e TTI 3 s medidos pelo coletor (SL-105)

@@ -1,0 +1,18 @@
+test(hooks): teste de useMessages acompanha o teto do GET e nao quebra a suite (SL-099)
+
+O teto do GET de mensagens caiu de 1000 para 100 linhas (SL-099), mas o teste
+useMessages.test.tsx montava a pagina com 1000 linhas fixas e exigia
+hasOlder === true: com o teto novo, data.length === MESSAGES_PAGE_SIZE dava
+falso e o vitest quebrava — a recusa do [refazer 1].
+
+O teste passa a tirar o tamanho da pagina do codigo de producao: o range que o
+ChatService manda ao banco na primeira carga define tamanhoPagina, e sobre ele
+sao verificados a pagina cheia (hasOlder), o lote anterior por cursor
+(loadOlderMessages) e o refetch silencioso. Nenhuma asercao foi removida nem
+afrouxada: o teste continua provando que as paginas antigas sobrevivem ao
+refetch.
+
+Prova: useMessages.test.tsx vermelho antes (expected false to be true, linha
+258) e verde depois; com o teto mutado de volta para 1000,
+useMessages.paginacao.test.tsx fica vermelho (expected 1000 to be less than or
+equal to 200).

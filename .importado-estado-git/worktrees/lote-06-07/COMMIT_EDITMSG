@@ -1,0 +1,10 @@
+chore(perf): sobe o teto do JS inicial de 341 para 343 KB para o lote 06-07/10
+
+O Build do PR #1900 reprovou no orcamento de bundle: JS inicial 341,1 KB gzip contra teto de 341 KB
+(main: ~339,9 KB). O aumento de ~1,2 KB vem de correcoes legitimas que entraram no grafo inicial
+(QuarantineMonitorProvider, useCustomShortcuts, reload-blockers, quarantineStore, deployment-update).
+Mesmo precedente do aumento de 1 KB de 01/10 (gate de microfone). Decisao do dono do produto
+(Joaquim) em 07/10; justificativa registrada no proprio performance-budget.json.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NuZ7WYqf38Zz5TogJEdDgf

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6c57dfa54443435babc08970f517261076314176 Joaquim Ataides <ti@promobrindes.com.br> 1791345273 -0300	branch: Created from dia/2026-10-07
+6c57dfa54443435babc08970f517261076314176 8410eb85b1c823dcd2e2e52d7b97bafe8eba74ef Joaquim Ataides <ti@promobrindes.com.br> 1791347121 -0300	commit: fix(tts): cancela fala do chat ao desmontar

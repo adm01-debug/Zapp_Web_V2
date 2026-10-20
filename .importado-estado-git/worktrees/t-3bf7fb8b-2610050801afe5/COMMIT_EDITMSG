@@ -1,0 +1,25 @@
+fix(calls): encaminha Atender/Ignorar do alerta pelo canal da notificação (#76)
+
+R2-CALL-007: o alerta escolhia rótulo e capacidade pelo canal, mas
+`handleAnswer`/`handleDecline` chamavam `accept()`/`reject()` do provider de
+sessão sem canal e sem identidade — e o provider fala sempre com o SIP. Com uma
+notificação de WhatsApp B na tela e uma sessão SIP A tocando/ativa, o clique em
+B mexia em A, e o contrato local do canal WhatsApp (gravar o desfecho + abrir a
+conversa, T24) nunca rodava.
+
+- `src/lib/calls/acaoDoAlerta.ts` (novo): regra pura — canal da notificação,
+  executor da ação (contrato do canal × sessão SIP) e a identidade mínima que o
+  contrato do WhatsApp exige (id da notificação + contato).
+- `src/hooks/calls/useAcoesDoAlerta.ts` (novo): única porta de ação do alerta.
+  WhatsApp vai pelo `WhatsAppCallAdapter` (`upsertMyCall` + `openContactChat`);
+  VoIP continua na máquina da sessão. Devolve `ok` da operação ALVO.
+- `IncomingCallAlert.tsx`: usa o hook (não conhece mais SIP nem adapter) e só
+  abre o estado "atendido" com resultado válido da operação do canal alvo.
+- Testes: novo `IncomingCallAlert.canal.test.tsx` (6 casos: WhatsApp não toca no
+  SIP de A, identidade da notificação B no payload, `declined` local, porta
+  fechada em falha da gravação, VoIP intacto); `IncomingCallAlert.provider.test.tsx`
+  passa a fixar o comportamento correto por canal.
+
+Prova: 6/6 no arquivo novo (vermelho antes: 3 falhas; verde depois), mutação em
+`executorDaAcao` derruba 4 testes; suíte completa 570 arquivos / 6341 testes
+verdes; `tsc -b --force` e ESLint sem erros; `zapp-verify . --rapido` VERDE.

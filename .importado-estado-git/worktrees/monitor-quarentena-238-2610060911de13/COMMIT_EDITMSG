@@ -1,0 +1,10 @@
+fix(quarentena): consulta separada de liberações e provas da reconciliação
+
+Refinamento do commit anterior (janela única de 500 misturava ativos e
+liberações): a consulta de liberações passa a ordem crescente por
+created_at, para a linha mais recente vencer no cache; teste novo prova que
+um `pending` antigo PERMANECE hidratado com mais de 500 liberações na
+origem; o caso de toast passa a observar `allowed`/`whitelisted` pela
+consulta à parte e afirma que nenhuma delas dispara toast.
+
+Co-Authored-By: Devin <devin@cognition.ai>

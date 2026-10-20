@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 c59d333a084df35e69ac5b87318e75495a9c226f Joaquim Ataides <ti@promobrindes.com.br> 1791211920 -0300	branch: Created from dia/2026-10-05
+c59d333a084df35e69ac5b87318e75495a9c226f 7421e09f191400b2bae9a46cbb339f10740b10f2 Joaquim Ataides <ti@promobrindes.com.br> 1791213489 -0300	commit: fix(multiplix): inicia disparo so depois de materializar a fila por itens (MX01)

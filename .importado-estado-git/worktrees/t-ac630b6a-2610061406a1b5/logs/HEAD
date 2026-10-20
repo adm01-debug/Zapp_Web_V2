@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791306392 -0300	
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 Joaquim Ataides <ti@promobrindes.com.br> 1791306393 -0300	reset: moving to HEAD
+a023c85d432eecd5e0cff75c68d4a4f2cb6bd349 ed655d17956c4c54aeafe3077763446d28489fe7 worker (testes) <ti@promobrindes.com.br> 1791306958 -0300	commit: test(team-chat): contrato do schema real no lugar da fixture fictícia de RLS (#166)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315189 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315190 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 42063e89a8de85e94b1087af65e9f9c1b1841092 Joaquim Ataides <ti@promobrindes.com.br> 1791316035 -0300	commit: fix(banco): cursor composto (created_at, id) no log do Talk X (#122)

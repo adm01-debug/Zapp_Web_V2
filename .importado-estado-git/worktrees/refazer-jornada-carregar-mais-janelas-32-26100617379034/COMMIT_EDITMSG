@@ -1,0 +1,5 @@
+fix(historico): ordena as atividades do negocio antes do limite na Jornada (#328)
+
+A consulta de deal_activities recebeu .limit(fetchLimit) sem ORDER BY, entao com mais linhas que o limite o PostgREST devolvia um subconjunto arbitrario e a atividade mais recente do negocio podia ficar fora da Jornada. O .order('created_at', { ascending: false }) entra antes do .limit, na mesma forma das outras cinco fontes.
+
+O mock do cliente Supabase no teste de paginacao passa a dublar a ordenacao do servidor (registra coluna/ascending e ordena antes de fatiar) e um caso novo com 250 deal_activities prova que a pagina traz a mais recente, omite a mais antiga e mantem hasMore=true.

@@ -1,0 +1,12 @@
+fix(inbox): nao descarta a gravacao de audio quando o envio falha (R2-INB-022)
+
+handleAudioSend fechava o gravador (isRecordingAudio=false) incondicionalmente;
+como o AudioRecorder guarda o blob so no proprio estado, qualquer falha de upload/
+transporte desmontava o componente e perdia a gravacao que o usuario poderia reenviar.
+A ponte (useRealtimeInbox/ChatPopup) ainda engolia o erro, entao o popup nem sabia da falha.
+
+- handleAudioSend so fecha o gravador quando o envio CONFIRMA; devolve true/false.
+- useRealtimeInbox.handleSendAudio e ChatPopup.handleSendAudio passam a retornar
+  boolean (false em falha), em vez de engolir o erro.
+- guarda de reenvio (ref) evita envios concorrentes agora que o gravador fica aberto.
+- teste pina: rejeicao e retorno false mantem o gravador aberto; true fecha.

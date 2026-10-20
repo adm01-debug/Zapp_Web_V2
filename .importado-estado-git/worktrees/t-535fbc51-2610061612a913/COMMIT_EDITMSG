@@ -1,0 +1,1 @@
+fix(relatorios): relatorio agendado deixa de avancar last_sent_at e de anunciar sucesso quando o envio falha (#199)

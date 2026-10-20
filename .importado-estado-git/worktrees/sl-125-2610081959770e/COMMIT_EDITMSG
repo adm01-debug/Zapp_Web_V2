@@ -1,0 +1,3 @@
+fix(ci/devops): baseline eslint 522->498 achados e aviso de divida paga (SL-125)
+
+O registro do ratchet estava 24 ocorrencias acima do codigo (divida ja paga por cartoes integrados); baixado para a varredura real (498 em 274 arquivos) e o ratchet passa a avisar quando a divida cai sem o registro descer. Teste vermelho->verde em scripts/ci/lint-ratchet.unit.mjs.

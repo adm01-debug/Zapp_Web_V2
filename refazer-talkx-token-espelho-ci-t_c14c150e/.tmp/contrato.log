@@ -1,0 +1,24 @@
+✔ Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site (1.163478ms)
+✔ Talk X personalize() resolves every placeholder in a single pass over the original template (0.14719ms)
+✔ Talk X personalize() never lets a custom field with a reserved name override a built-in placeholder (0.08793ms)
+✔ Talk X custom-fields pagination orders by a stable unique key (0.083202ms)
+✔ Talk X custom-fields lookup chunks contact ids before querying (0.124819ms)
+✔ Talk X custom-fields bucket preserves a field literally named __proto__ (0.095781ms)
+✔ Talk X wizard preview also preserves a field literally named __proto__ (0.140811ms)
+✔ Talk X custom-fields lookup resolves case-colliding field names the same way the preview does (0.130474ms)
+✔ Talk X personalize() and personalizePreview() both guard against inherited Object.prototype keys (0.11657ms)
+✔ Talk X personalizePreview() resolves every placeholder in a single pass, matching the real send (0.147509ms)
+✔ Talk X link redirect enforces rate limiting on both GET and POST (0.141736ms)
+✔ Talk X link redirect uses the shared, spoof-resistant client IP extractor (0.127068ms)
+✔ Talk X link click IP hash salt is not a hardcoded public literal (3.479551ms)
+✔ Talk X link click/convert reject cross-campaign recipient and link_id (IDOR) (0.178107ms)
+✔ Talk X link slug matching is case-insensitive end to end (0.066551ms)
+✔ Talk X E90 tables ship with RLS on and zero public grants by default (0.248208ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79.373041

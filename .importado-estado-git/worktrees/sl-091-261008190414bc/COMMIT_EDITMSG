@@ -1,0 +1,3 @@
+fix(outros): Reduzir dívida de lint (955 problemas em 29/09) em 6 fa (SL-091)
+
+Baixa o baseline do lint ratchet de 522 para 514 (as 8 entradas pagas de no-restricted-imports e os 7 arquivos que ficaram sem divida) e avisa quando a varredura deixa divida antiga para tras. O diff do arquivo do baseline e caro (1 entrada ~4 mil chars com contexto) e o revisor recusa acima de 90.000: a descida inteira mede 100.291 e a regeneracao 241.812.

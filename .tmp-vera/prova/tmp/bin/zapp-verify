@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+echo "CMD  zapp-verify $*" >> "$PROVA_CMD"
+printf 'FALHOU  testes  10s  (stub)\n'
+exit 1

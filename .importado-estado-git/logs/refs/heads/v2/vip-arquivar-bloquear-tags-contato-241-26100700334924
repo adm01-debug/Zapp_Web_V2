@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1b54b038779d726bc1535d5e292eb1b1f5308c31 Joaquim Ataides <ti@promobrindes.com.br> 1791344031 -0300	branch: Created from dia/2026-10-07
+1b54b038779d726bc1535d5e292eb1b1f5308c31 36825e3b276cf7bee41dcf4440dd930fdf7dd0cc Joaquim Ataides <ti@promobrindes.com.br> 1791344071 -0300	cherry-pick: fix(inbox): persistir VIP, arquivar, bloquear e tags no detalhe do contato (#241)
+36825e3b276cf7bee41dcf4440dd930fdf7dd0cc 5239001edf6f8db87d2283977a2f2b11a2cd398a Joaquim Ataides <ti@promobrindes.com.br> 1791344075 -0300	cherry-pick: fix(inbox): Desfazer do Arquivar reabre o contato quando o FSM recusa o status anterior (#241)
+5239001edf6f8db87d2283977a2f2b11a2cd398a 47d25088a30218fe0d98e0fe8df61e65537efd1a Joaquim Ataides <ti@promobrindes.com.br> 1791346006 -0300	commit: fix(inbox): semântica do dono nas ações do detalhe do contato (#241)

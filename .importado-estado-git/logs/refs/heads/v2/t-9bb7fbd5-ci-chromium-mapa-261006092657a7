@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 5f4c799a871a942419186f1dfc27c31f09928d39 Joaquim Ataides <ti@promobrindes.com.br> 1791289578 -0300	branch: Created from dia/2026-10-06
+5f4c799a871a942419186f1dfc27c31f09928d39 d621a1703c698a3590d6076d943a000b2f9f0475 Joaquim Ataides <ti@promobrindes.com.br> 1791289910 -0300	commit: ci(e2e): roda o modulo MAPA (chromium-mapa) no job obrigatorio do ci.yml (#463)

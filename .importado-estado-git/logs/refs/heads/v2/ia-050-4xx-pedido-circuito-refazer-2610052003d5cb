@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241388 -0300	branch: Created from dia/2026-10-05
+c773b85ea000696fbcd37c6368f87978de8bebba 820ab92e4d981b1466ee5f7083e2f5dea89ed55e Joaquim Ataides <ti@promobrindes.com.br> 1791241534 -0300	cherry-pick: feat(edge): circuito por provedor no despacho de IA (IA-050)
+820ab92e4d981b1466ee5f7083e2f5dea89ed55e 1fc06e4c945f1a73c4270d45bca05f4b608f7bcc Joaquim Ataides <ti@promobrindes.com.br> 1791241534 -0300	cherry-pick: test(edge): provar chave canônica do circuito IA-050
+1fc06e4c945f1a73c4270d45bca05f4b608f7bcc ca1bb18e1cf837eb3b25b51abda484f0268d5e22 Joaquim Ataides <ti@promobrindes.com.br> 1791241630 -0300	commit (cherry-pick): fix(edge): 4xx do pedido nao abre o circuito de IA (IA-050)
+ca1bb18e1cf837eb3b25b51abda484f0268d5e22 f242ab06c11333bce75615f7790be539829693f2 Joaquim Ataides <ti@promobrindes.com.br> 1791241701 -0300	commit (cherry-pick): test(edge): realimenta o ledger no teste de 4xx do pedido (IA-050)
+f242ab06c11333bce75615f7790be539829693f2 e18d048c9c1f8deb623012e1c065315740fb7acc Joaquim Ataides <ti@promobrindes.com.br> 1791242017 -0300	reset: moving to e18d048c9

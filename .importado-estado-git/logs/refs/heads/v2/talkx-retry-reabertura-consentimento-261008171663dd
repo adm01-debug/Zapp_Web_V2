@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791490606 -0300	branch: Created from dia/2026-10-08
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc a8464759bb7fc6080a0c58526926f40d453f7dc5 Joaquim Ataides <ti@promobrindes.com.br> 1791490752 -0300	commit (cherry-pick): fix(talkx): reabertura por retry exige a nova confirmacao de lancamento (#124)
+a8464759bb7fc6080a0c58526926f40d453f7dc5 ece10e8671f006f789726fd0799af8a1b369d3ba Joaquim Ataides <ti@promobrindes.com.br> 1791490771 -0300	commit (cherry-pick): fix(talkx): corpo do retry preserva a validacao de lote do #123 na reabertura (#124)
+ece10e8671f006f789726fd0799af8a1b369d3ba 4fcd18459c7fd44c00155b0192bdd483a2244a77 Joaquim Ataides <ti@promobrindes.com.br> 1791490839 -0300	commit: test(talkx): secao #123 roda antes da migration do #124 no harness do retry
+4fcd18459c7fd44c00155b0192bdd483a2244a77 de59353b7348d08baf5e67344dc6de8896508845 Joaquim Ataides <ti@promobrindes.com.br> 1791491745 -0300	commit: docs(talkx): rollback do #124 restaura o corpo do #123 (nao o de X031)

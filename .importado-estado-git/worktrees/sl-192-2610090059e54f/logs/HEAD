@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 Joaquim Ataides <ti@promobrindes.com.br> 1791518389 -0300	
+0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 Joaquim Ataides <ti@promobrindes.com.br> 1791518390 -0300	reset: moving to HEAD
+0f5bbfc5e188602f12ec51dd3b00d7bdef6621b3 fa0b769e58a154587c51f8a47e160dc146e39062 Joaquim Ataides <ti@promobrindes.com.br> 1791519250 -0300	commit: fix(filas/sla): Roteador sticky + round-robin + skills; rebalanceamento (SL-192)
+fa0b769e58a154587c51f8a47e160dc146e39062 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543539 -0300	rebase (start): checkout dia/2026-10-09
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 0eb887c8ac811f6bb20130c2a3dd0461905011c9 Joaquim Ataides <ti@promobrindes.com.br> 1791543539 -0300	rebase (pick): fix(filas/sla): Roteador sticky + round-robin + skills; rebalanceamento (SL-192)
+0eb887c8ac811f6bb20130c2a3dd0461905011c9 0eb887c8ac811f6bb20130c2a3dd0461905011c9 Joaquim Ataides <ti@promobrindes.com.br> 1791543539 -0300	rebase (finish): returning to refs/heads/v2/sl-192-2610090059e54f
+0eb887c8ac811f6bb20130c2a3dd0461905011c9 d33737fcf618384e4834a4b1a4a60b66f617b023 Joaquim Ataides <ti@promobrindes.com.br> 1791544286 -0300	commit: fix(filas/sla): atribuição por habilidade só toma contato que ainda aguarda (SL-192)

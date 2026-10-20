@@ -1,0 +1,50 @@
+== rotas-base-dry-run — fixture do integrador (rotas com e sem migration) ==
+integrador sob teste: /home/joaquim_ataides/arquitetura-v2/integrador/integrar.sh
+  md5 d48e0769b5f5eba9 | 470 linhas | 2026-10-06 22:00
+areia (HOME sintético): /tmp/v2-rotas-base.YEIRQQ
+
+extraído de integrar.sh: definições 154 linhas | ponto A 17 linhas (a partir da 251) | ponto B 10 linhas (a partir da 436)
+
+-- A-com (ponto A, base vermelha) (ponto A; ponta com migration)
+   ok    ponto A exercitou a conferência da BASE (1 chamada(s))
+   FALHA rota COM migration NÃO usou conjunto explícito — conjunto(s): [- ] (esperado v2-integrador)
+   FALHA rota COM migration deixou o banco NÃO VERIFICADO no log da BASE
+   nota  conjunto montado antes? 0 chamada(s) ao banco citando v2-integrador
+   zapp-verify (todas)  : zapp-verify	n=1	set=-	out=/tmp/v2-rotas-base.YEIRQQ/A-com/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : (nenhuma chamada)
+   log da BASE          : AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   rota no log          : 0 a BASE (dia/2026-10-07 @ b9d2cf546) voltou a ficar verde; integração retomada
+
+-- A-sem (ponto A, base vermelha) (ponto A; ponta sem migration)
+   ok    ponto A exercitou a conferência da BASE (1 chamada(s))
+   ok    rota SEM migration manteve o comando sem nome de conjunto (como hoje)
+   ok    rota SEM migration não fez nenhuma chamada ao banco
+   ok    o fluxo manteve AVISO/NÃO VERIFICADO no log da BASE
+   zapp-verify (todas)  : zapp-verify	n=1	set=-	out=/tmp/v2-rotas-base.YEIRQQ/A-sem/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : (nenhuma chamada)
+   log da BASE          : AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   rota no log          : 0 a BASE (dia/2026-10-07 @ 745233ae3) voltou a ficar verde; integração retomada
+
+-- B-com (ponto B, pós-cartão vermelho) (ponto B; ponta com migration)
+   ok    ponto B exercitou a conferência da BASE (1 chamada(s))
+   FALHA rota COM migration NÃO usou conjunto explícito — conjunto(s): [- ] (esperado v2-integrador)
+   FALHA rota COM migration deixou o banco NÃO VERIFICADO no log da BASE
+   nota  conjunto montado antes? 0 chamada(s) ao banco citando v2-integrador
+   zapp-verify (todas)  : zapp-verify	n=1	set=-	out=/tmp/v2-rotas-base.YEIRQQ/B-com/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : (nenhuma chamada)
+   log da BASE          : AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   rota no log          : (o arquivo-alvo nao loga a rota)
+
+-- B-sem (ponto B, pós-cartão vermelho) (ponto B; ponta sem migration)
+   ok    ponto B exercitou a conferência da BASE (1 chamada(s))
+   ok    rota SEM migration manteve o comando sem nome de conjunto (como hoje)
+   ok    rota SEM migration não fez nenhuma chamada ao banco
+   ok    o fluxo manteve AVISO/NÃO VERIFICADO no log da BASE
+   zapp-verify (todas)  : zapp-verify	n=1	set=-	out=/tmp/v2-rotas-base.YEIRQQ/B-sem/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : (nenhuma chamada)
+   log da BASE          : AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   rota no log          : (o arquivo-alvo nao loga a rota)
+
+== resumo: 4 falha(s)
+ROTAS FORA DO CONTRATO (ver FALHA acima).
+areia em /tmp/v2-rotas-base.YEIRQQ (V2_TESTE_LIMPAR=1 para apagar)

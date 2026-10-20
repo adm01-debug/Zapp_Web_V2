@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508789 -0300	branch: Created from dia/2026-10-08
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 94bf428ce3d6478ae04fb4b6170f0b5bebc1c22e Joaquim Ataides <ti@promobrindes.com.br> 1791508802 -0300	cherry-pick: feat(talk-x): cria a edge talkx-ai com ai-proxy, teto de custo e trilha (TL-063)
+94bf428ce3d6478ae04fb4b6170f0b5bebc1c22e c791fd384fa7b1a6219b4541a0724be718044ba1 Joaquim Ataides <ti@promobrindes.com.br> 1791509676 -0300	commit: fix(talk-x): grava trilha conferida em todo caminho pago do talkx-ai

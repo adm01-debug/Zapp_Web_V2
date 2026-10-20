@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511764 -0300	
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511765 -0300	reset: moving to HEAD
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 f2d812e8f89d9738e4b43700c87ad915225edcde Joaquim Ataides <ti@promobrindes.com.br> 1791513389 -0300	commit: feat(edge): evento de IA não confirmado vai para outbox_events assinado (SL-195c2)

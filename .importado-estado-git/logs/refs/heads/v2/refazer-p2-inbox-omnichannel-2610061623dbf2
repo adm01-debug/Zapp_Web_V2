@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 7c26f709642e9058b3f6a016072d9516a70e55f3 Joaquim Ataides <ti@promobrindes.com.br> 1791314616 -0300	branch: Created from dia/2026-10-06
+7c26f709642e9058b3f6a016072d9516a70e55f3 8047859952ee44a6152ee8d6aac11c04f0595dc0 Joaquim Ataides <ti@promobrindes.com.br> 1791314872 -0300	commit (cherry-pick): fix(omnichannel): carrega conversas reais e abre o chat no inbox (#236)
+8047859952ee44a6152ee8d6aac11c04f0595dc0 8ea6ab03ef6fc98ca53f2a8b67baa9f982d8db31 Joaquim Ataides <ti@promobrindes.com.br> 1791314872 -0300	cherry-pick: test(omnichannel): restaura casos existentes e cobre a projeção de conversas (#236)
+8ea6ab03ef6fc98ca53f2a8b67baa9f982d8db31 bbeee5a7cb2603e3665cacc3bac8c26e0532f4c0 Joaquim Ataides <ti@promobrindes.com.br> 1791314872 -0300	cherry-pick: fix(omnichannel): não inventa histórico ao truncar busca (#236)
+bbeee5a7cb2603e3665cacc3bac8c26e0532f4c0 d05803998db71c590e7136b779f3e2c81e495677 Joaquim Ataides <ti@promobrindes.com.br> 1791315327 -0300	commit: fix(omnichannel): não afirma não lidas vindas de página truncada (#236)

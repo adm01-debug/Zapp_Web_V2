@@ -1,0 +1,4 @@
+fix(omnichannel): declara canais e regras de roteamento sem executor versionado (#237)
+
+# Conflicts:
+#	src/components/omnichannel/OmnichannelManager.tsx

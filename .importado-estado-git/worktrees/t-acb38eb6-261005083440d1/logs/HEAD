@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200086 -0300	
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f f30fdf29d0fb4735edb00ad45c16becabcd1fb9f Joaquim Ataides <ti@promobrindes.com.br> 1791200087 -0300	reset: moving to HEAD
+f30fdf29d0fb4735edb00ad45c16becabcd1fb9f bb43c4ffcf7342fdbd20c46c1ca77a83f209585d Joaquim Ataides <ti@promobrindes.com.br> 1791200793 -0300	commit: fix(email): conversa para de atualizar em ciclo ao repassar contexto ao painel (R2-COM-001)

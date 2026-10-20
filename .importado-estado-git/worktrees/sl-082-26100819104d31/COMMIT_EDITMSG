@@ -1,0 +1,11 @@
+fix(team-chat): liga busca server-side e os itens sem chamador no TeamChatPanel (SL-082)
+
+A busca filtrava so o que estava carregado; a RPC search_team_messages existia
+sem chamador. O header nao recebia showStats/onToggleStats, canTransfer/
+onTransfer e isGroupCreator/onRenameGroup/onLeaveGroup; o TTS usava o estado
+local em vez do handler que persiste em user_settings; e GroupManagementDialog,
+TransferConversationDialog e ParticipantStatsGraph existiam sem nenhum chamador.
+
+Liga tudo no painel ativo (nada de feature nova, migration ou dependencia) e
+prova com teste que falha antes: busca server-side (mensagem antiga fora do
+lote carregado) e cada ligacao do header/dialogos/estatisticas.

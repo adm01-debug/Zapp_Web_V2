@@ -1,0 +1,18 @@
+fix(dashboard): separa escopo, conexao, lote mutavel e janelas
+
+DASH-REALTIME-001 (item 37). Cada defeito isolado virou uma separacao:
+
+- lote: o flush copia e zera o objeto de deltas ANTES do updater do setState
+  (antes o updater lia o mesmo objeto ja zerado e unread/contatos se perdiam);
+- snapshot: watermark dos deltas aplicados — leitura em voo soma o que chegou
+  depois dela em vez de sobrescrever;
+- escopo: useRealtimeDashboard aceita { queueId, agentId } (mesmo recorte dos
+  KPIs) e re-le ao mudar; DashboardView passa os filtros do topo;
+- leitura: count null (erro/ausencia) mantem o ultimo valor bom, sem virar 0;
+- conexao: isConnected e o estado do canal, nunca o sucesso da leitura;
+- janela: messagesThisHour e derivado de uma janela de 1 h que expira sozinha,
+  sem depender do refresh de 5 min;
+- dupla entrega: transicao nao-lida -> lida so decrementa 1x, so para mensagem
+  de contato, com dedup por id;
+- refetch de useDashboardStats devolve Promise.all das tres leituras;
+- useLeaderboard descarta resposta de periodo superado (geracao da requisicao).

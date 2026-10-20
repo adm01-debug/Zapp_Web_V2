@@ -1,0 +1,14 @@
+fix(db): purga LGPD nao vira "falha recente" na saude do Talk X (#126)
+
+A purga (public.purge_talkx_expired_data) grava updated_at = now() nos
+destinatarios que expurga e a view public.talkx_engine_health media
+failure_rate_15m / outcome_unknown_24h por r.updated_at: a purga diaria fazia
+destinatarios antigos de campanhas terminais aparecerem como "mudou agora" e
+talkx_engine_alerts() abria alertas falsos (high_failure_rate/outcome_unknown).
+
+A view passa a ler public.talkx_recipients.status_changed_at, mantida por um
+gatilho que so move o carimbo em troca REAL de status; o expurgo segue anulando
+a PII e a falha real continua sendo detectada e alertada.
+
+Migration nova (20261006193547) com rollback completo (BEGIN/END-ROLLBACK-SQL),
+teste em Postgres descartavel com vermelho/verde e ALLOWLIST do inventario.

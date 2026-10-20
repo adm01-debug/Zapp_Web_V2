@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315291 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 16bcffcfe1f60f01285141d9fc1e5f62a6ea0a2a Joaquim Ataides <ti@promobrindes.com.br> 1791317861 -0300	commit: fix(talkx): expurgo diario drena o acervo vencido em lotes (retencao em volume)

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791554908 -0300	branch: Created from dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 4c1616ab4f5db3f5bc48a82d44c5c6dcd7b0c828 Joaquim Ataides <ti@promobrindes.com.br> 1791554966 -0300	cherry-pick: feat(ia): separar categoria e falha técnica nos classificadores de visão
+4c1616ab4f5db3f5bc48a82d44c5c6dcd7b0c828 d6e225bac52ef335ec3bc951c1fdb091087e3004 Joaquim Ataides <ti@promobrindes.com.br> 1791554970 -0300	cherry-pick: fix(ia): resposta vazia do provedor nao vira categoria 'outros' concluida (IA-132)
+d6e225bac52ef335ec3bc951c1fdb091087e3004 200702cad0d8245689b8c2a5318d63c368c4d18d edgar <edgar@zapp.local> 1791555109 -0300	commit: test(ia): alinha o contrato R2-INF-022 do classify-emoji ao novo state/error_code (IA-132)

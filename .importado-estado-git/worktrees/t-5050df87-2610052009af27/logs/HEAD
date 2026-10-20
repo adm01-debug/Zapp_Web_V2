@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 25fb4ec51c17e6c91a3815362c75da7831a8f085 Joaquim Ataides <ti@promobrindes.com.br> 1791241764 -0300	
+25fb4ec51c17e6c91a3815362c75da7831a8f085 25fb4ec51c17e6c91a3815362c75da7831a8f085 Joaquim Ataides <ti@promobrindes.com.br> 1791241765 -0300	reset: moving to HEAD
+25fb4ec51c17e6c91a3815362c75da7831a8f085 4b747908a72c37baa14369ffc401c2a1559db712 Joaquim Ataides <ti@promobrindes.com.br> 1791241780 -0300	cherry-pick: fix(inbox): transferência da sidebar grava evento com nota e trata falha parcial (#88)
+4b747908a72c37baa14369ffc401c2a1559db712 60eaac4950f88455ab3373164805a46c0e6b4498 Joaquim Ataides <ti@promobrindes.com.br> 1791241780 -0300	cherry-pick: test(inbox): prova que a rejeicao do transferContact propaga ao TransferDialog (#88)
+60eaac4950f88455ab3373164805a46c0e6b4498 dbfb34016e9878ccfe28888a5aacd2b6b92e9748 Joaquim Ataides <ti@promobrindes.com.br> 1791241780 -0300	cherry-pick: fix(inbox): rejeita transferência quando evento falha (#88)
+dbfb34016e9878ccfe28888a5aacd2b6b92e9748 233a665ab1f104dd5f6092ee99779fce0e224ec4 Joaquim Ataides <ti@promobrindes.com.br> 1791241943 -0300	commit: fix(inbox): restaura bloqueio de transferência por conexão (#88)

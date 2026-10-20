@@ -1,0 +1,13 @@
+fix(edge): recupera audio na instancia da propria conexao por mensagem do lote (#208)
+
+recover-corrupted-audios resolvia a instancia de origem uma unica vez, a partir
+de messages[0], e usava essa mesma instancia em todo o lote. Como o lote e
+paginado por created_at, ele pode misturar whatsapp_connections (E20/plano
+multi-conexao): as demais mensagens iam buscar a midia na instancia errada (ou
+inexistente) e eram reportadas como falha em vez de recuperadas.
+
+Agora a instancia e resolvida por mensagem, pelo whatsapp_connection_id dela,
+com cache de leitura por conexao. Sem conexao (ou sem instance_id) a mensagem
+conta como falha, em vez de derrubar o lote inteiro. O dry_run devolve um array
+com uma instancia por amostra e mantem o campo unico quando o lote e de uma so
+conexao.

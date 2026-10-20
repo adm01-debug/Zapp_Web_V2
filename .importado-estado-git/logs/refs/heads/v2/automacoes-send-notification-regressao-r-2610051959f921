@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c773b85ea000696fbcd37c6368f87978de8bebba Joaquim Ataides <ti@promobrindes.com.br> 1791241149 -0300	branch: Created from dia/2026-10-05
+c773b85ea000696fbcd37c6368f87978de8bebba 8173a8272f3195f77b394622b8a587e73acfb39a Joaquim Ataides <ti@promobrindes.com.br> 1791241182 -0300	commit (cherry-pick): fix(automacoes): separa configuração permitida da obrigatória
+8173a8272f3195f77b394622b8a587e73acfb39a 403f7f91851d520f99927ca5f1e3f7ec313737c6 Joaquim Ataides <ti@promobrindes.com.br> 1791241477 -0300	commit: fix(automacoes): prova limpeza na troca de ação

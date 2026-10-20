@@ -1,0 +1,18 @@
+fix(contacts): só anuncia nota excluída quando o DELETE devolve a linha (#251)
+
+O painel de detalhe do contato (ContactNotes) oferecia o botão de excluir para
+toda nota e tirava a nota da lista ao receber o DELETE sem erro. A policy
+contact_notes_delete_policy só apaga a nota cujo author_id é o perfil logado,
+enquanto o SELECT libera as notas do contato visível: para nota de colega o RLS
+filtra a linha, o DELETE altera zero linhas sem erro, o componente anunciava
+"Nota excluída" e a nota reaparecia no reload.
+
+- capacidade de excluir vem do autor real da nota (note.author_id === perfil do
+  useAuth), mesma regra da aba Notas do inbox; sem perfil carregado não oferece
+  a ação;
+- pede a representação do DELETE (select('id')) e só remove do estado com linha
+  confirmada; zero linhas vira recusa explícita mais releitura do banco;
+- botão de ícone ganha aria-label ("Excluir nota").
+
+Teste: src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx
+(3 dos 5 testes falham sem a correção).

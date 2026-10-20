@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72946d5e8d0a9f3977526ec99bca88f406914b91 Joaquim Ataides <ti@promobrindes.com.br> 1791302728 -0300	branch: Created from dia/2026-10-06
+72946d5e8d0a9f3977526ec99bca88f406914b91 c48b26b5ae6ae2184c0e8927363f1c44bd39842d Joaquim Ataides <ti@promobrindes.com.br> 1791302951 -0300	commit: fix(biblioteca-midia): remove do Storage o objeto orfao quando o insert falha

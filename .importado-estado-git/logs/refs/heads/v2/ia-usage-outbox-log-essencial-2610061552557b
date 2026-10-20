@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 4877339ccae047a149f483b439f1ff68330cf546 Joaquim Ataides <ti@promobrindes.com.br> 1791312725 -0300	branch: Created from dia/2026-10-06
+4877339ccae047a149f483b439f1ff68330cf546 c1b993e06b473bfa8ba0c07105688e5e30e9e111 Joaquim Ataides <ti@promobrindes.com.br> 1791312752 -0300	cherry-pick: fix(edge): log essencial de consumo de IA deixa de ser best effort
+c1b993e06b473bfa8ba0c07105688e5e30e9e111 5993d1ff45e91e94371887936f6bcc55e4d2fe97 Joaquim Ataides <ti@promobrindes.com.br> 1791312752 -0300	cherry-pick: fix(edge): persiste falhas do log essencial na outbox
+5993d1ff45e91e94371887936f6bcc55e4d2fe97 d73305799b6166d8f20854eee227df45781def2a Joaquim Ataides <ti@promobrindes.com.br> 1791314083 -0300	commit: fix(edge): outbox de IA nao trava a fila e log essencial nunca lanca

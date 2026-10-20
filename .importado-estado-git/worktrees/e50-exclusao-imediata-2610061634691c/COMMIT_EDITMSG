@@ -1,0 +1,18 @@
+docs(mapa): E50 comprova a exclusao do ramo legado e rebaixa o item nao conferivel
+
+O encerramento E50 fechava o checklist sem prova verificavel: nenhuma referencia
+arquivo:linha, nenhum comando e nenhuma palavra sobre a exclusao do ramo legado do
+picker (o "ramo" que o fechamento tinha de comprovar).
+
+- tabela de evidencia item a item no E50 (cascata, custo por sessao, flag/limites,
+  Apendice B, pendencias) com o comando que reproduz cada uma;
+- exclusao do ramo legado datada: commit 3d2b7d572 (2026-09-30 12:54:56 -0300),
+  migration 20260930210000 e o teste LocationPicker.test.tsx:452 que impede a volta
+  do ramo; nada de afirmar "imediatamente" sem artefato do intervalo;
+- item 2 (areas/mapa-localizacao-whatsapp.md, memoria externa) sai de [x] e vira
+  pendencia aberta: o arquivo nao existe neste repo (achado P6 da auditoria);
+- auditoria de 2026-09-29 atualizada nas linhas 83 (P6) e 146 (E50), com o historico
+  do achado preservado.
+
+Prova: node .tmp/e50-evidencia.test.mjs (16 checagens de doc + 9 de arquivo real) -
+vermelho antes (15 falhas), verde depois (0 falhas).

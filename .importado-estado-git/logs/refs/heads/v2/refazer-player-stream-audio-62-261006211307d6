@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 dba4ece1f104a2757a954051b06b2c1bd7589050 Joaquim Ataides <ti@promobrindes.com.br> 1791332036 -0300	branch: Created from dia/2026-10-06
+dba4ece1f104a2757a954051b06b2c1bd7589050 3b06d2c773c07aaee33fa534feffbfd0bb8e2651 Joaquim Ataides <ti@promobrindes.com.br> 1791332793 -0300	commit: fix(calls): consumir stream de gravacao como blob
+3b06d2c773c07aaee33fa534feffbfd0bb8e2651 37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 Joaquim Ataides <ti@promobrindes.com.br> 1791354165 -0300	reset: moving to dia/2026-10-07
+37202fa10e0858bbaf4ecdb2f6dd6ae5410d56c3 d6a5d1b1e1bb77d6ab9944ef343fa65982adbce2 Joaquim Ataides <ti@promobrindes.com.br> 1791354166 -0300	cherry-pick: test(telefonia): reentrega do #62 sem perder os testes de cabecalhosDoAudio

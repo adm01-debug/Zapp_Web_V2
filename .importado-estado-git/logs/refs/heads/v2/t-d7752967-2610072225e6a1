@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 f2bbae9ee544d1b58dc82a310a204e75e7c0bc95 Joaquim Ataides <ti@promobrindes.com.br> 1791422746 -0300	branch: Created from dia/2026-10-07
+f2bbae9ee544d1b58dc82a310a204e75e7c0bc95 2cd8d4cf9b38376f1831fec59565d273d142cf6b Joaquim Ataides <ti@promobrindes.com.br> 1791423438 -0300	commit: fix(edge): evita fetch externo no log essencial da IA

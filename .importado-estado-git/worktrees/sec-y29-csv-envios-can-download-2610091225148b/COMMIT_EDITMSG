@@ -1,0 +1,9 @@
+fix(segurança): CSV de envios passa pelo gate antes de ser montado (Y29-02)
+
+handleExportSentHistory montava buildSendHistoryCsv(...) como argumento de
+triggerCsvDownload, que só então conferia can_download: sem permissão o CSV
+com nome de contato/agente era gerado e só a gravação era recusada. Agora
+!canDownload avisa (notifyDownloadBlocked) e retorna antes do builder.
+
+Prova: Y29_gateDownloadManagement.test.tsx espia a implementação real do
+builder e exige zero chamadas sem permissão (vermelho antes, verde depois).

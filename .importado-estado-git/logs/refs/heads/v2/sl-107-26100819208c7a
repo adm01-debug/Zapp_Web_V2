@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe Joaquim Ataides <ti@promobrindes.com.br> 1791498022 -0300	branch: Created from dia/2026-10-08
+c79b2e34c1a3b74ce92633b6d9f38bf36ddec1fe 0c145a5e4ce01abd127e8acb82d7b0c307e723ea Hugo <hugo@zapp.local> 1791499719 -0300	commit: fix(telefonia): e2e/telefonia.spec.ts no e2e-logado.yml (SL-107)
+0c145a5e4ce01abd127e8acb82d7b0c307e723ea c96d8009097e778db4376f1edde4953be2e77217 Joaquim Ataides <ti@promobrindes.com.br> 1791556443 -0300	rebase (finish): refs/heads/v2/sl-107-26100819208c7a onto 1098da5a935929b171674a99b425d6b515fd6072

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 54ce9e1e030fc4f689132815cd2baecf27dd8658 Joaquim Ataides <ti@promobrindes.com.br> 1791333168 -0300	branch: Created from dia/2026-10-06
+54ce9e1e030fc4f689132815cd2baecf27dd8658 db2fc2d2b66c407cd58a208520b88b8e5e014625 Joaquim Ataides <ti@promobrindes.com.br> 1791333187 -0300	cherry-pick: docs(ci): alinhar documentação à baseline atual
+db2fc2d2b66c407cd58a208520b88b8e5e014625 13fc4c484816859715b87f0d2aca4671741dc11e Joaquim Ataides <ti@promobrindes.com.br> 1791335884 -0300	commit: test(chat): estabiliza ChatPopup no zapp-verify full
+13fc4c484816859715b87f0d2aca4671741dc11e 84f5d92b56c985ac57bcbe9644c25a56519ceb23 Joaquim Ataides <ti@promobrindes.com.br> 1791336341 -0300	commit: test(ci): reduz ruido do teste de baseline
+84f5d92b56c985ac57bcbe9644c25a56519ceb23 053b1f80f4cf4866f1465d54dde7940602a25108 Joaquim Ataides <ti@promobrindes.com.br> 1791336788 -0300	commit: docs(ci): evita segredos no diff da baseline
+053b1f80f4cf4866f1465d54dde7940602a25108 ca56bda67a0243e83fed203271759fda81af622c Joaquim Ataides <ti@promobrindes.com.br> 1791337273 -0300	commit: test(ci): compacta mensagens do teste TRA-009

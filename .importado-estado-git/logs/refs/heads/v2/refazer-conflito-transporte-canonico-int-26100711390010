@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 237fdb469e5d9e84980e06fe6530221fb1c3bbcf Joaquim Ataides <ti@promobrindes.com.br> 1791383989 -0300	branch: Created from dia/2026-10-07
+237fdb469e5d9e84980e06fe6530221fb1c3bbcf 2edc054e3a1998497bcc72359fe86720b043ea7d Joaquim Ataides <ti@promobrindes.com.br> 1791384334 -0300	commit: feat(inbox): reaplica transporte canônico interativo
+2edc054e3a1998497bcc72359fe86720b043ea7d 864dcc523e15d382bc3124d4270f9efb3e254187 Joaquim Ataides <ti@promobrindes.com.br> 1791384483 -0300	commit (amend): feat(inbox): reaplica transporte canônico interativo
+864dcc523e15d382bc3124d4270f9efb3e254187 cb7fb369184e32045c5e597d8daaadd26cb9d16f Joaquim Ataides <ti@promobrindes.com.br> 1791554681 -0300	rebase (finish): refs/heads/v2/refazer-conflito-transporte-canonico-int-26100711390010 onto 1098da5a935929b171674a99b425d6b515fd6072

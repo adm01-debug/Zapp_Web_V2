@@ -1,0 +1,1 @@
+test(db-audit): executa o rollback do outbox no Postgres descartavel (#69)

@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791319141 -0300	branch: Created from dia/2026-10-06
+cab247e7b8185d785a0f6b152fe9478834f43789 97ba2c0fd495ad7108d02a35c2311c6f0f89abec Joaquim Ataides <ti@promobrindes.com.br> 1791319147 -0300	cherry-pick: feat(db): convite de agente com destinatario, papel autorizado, validade e uso unico (R2-AUTH-015)
+97ba2c0fd495ad7108d02a35c2311c6f0f89abec 657c93781d3205cf6b64648dcc4fbc94acb2541a Joaquim Ataides <ti@promobrindes.com.br> 1791319147 -0300	cherry-pick: fix(agents): dialogo de convite cria o convite de verdade e mostra o estado (R2-AUTH-015)
+657c93781d3205cf6b64648dcc4fbc94acb2541a e0b0a45f6654323cdb03f7d17e29e811b0346dea Joaquim Ataides <ti@promobrindes.com.br> 1791319147 -0300	cherry-pick: test(db): prova em Postgres descartavel o fluxo de convite de agente (R2-AUTH-015)
+e0b0a45f6654323cdb03f7d17e29e811b0346dea d017fcee1e43be05bc1f4a0c355ca5e11bb904dd Joaquim Ataides <ti@promobrindes.com.br> 1791319629 -0300	commit: fix(db): convite vencido vira estado terminal e libera o e-mail para reenvio (R2-AUTH-015)

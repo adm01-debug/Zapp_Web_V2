@@ -1,0 +1,22 @@
+fix(telefonia): retoma TEL-RECORDING-001 com POST na Edge e ciclo de blob no efeito
+
+Reaproveita a entrega recusada (cherry-pick de b9816a012) e corrige os tres
+pontos objetivos da recusa, sem reimplementar nada:
+
+1. transporte: a chamada a Edge `get-call-recording` volta a ser POST com
+   `edgeAuthHeaders()` + `Content-Type: application/json` e
+   `JSON.stringify({ callId })` no corpo; `callId` sai da query string. O
+   teste do hook afirma metodo, headers e body.
+2. ciclo do blob: a URL `blob:` passa a ser criada E revogada no mesmo
+   `useEffect`. O endereco vivo mora num registro local lido por
+   `useSyncExternalStore` (padrao que o repo ja usa para sistema externo) em
+   vez de `useMemo`, que criava o endereco na renderizacao: sob StrictMode a
+   limpeza revogava o endereco e a remontagem nao criava outro - o `<audio>`
+   ficava com um `blob:` revogado e o endereco descartado vazava. Um teste
+   sob remontagem de efeito (root com StrictMode real) prova o ciclo.
+3. teste do player: os cenarios c3 e c4 ficam em casos independentes, com um
+   unico player renderizado por teste.
+
+Vermelho->verde: com o hook recusado, o teste de contrato falha no transporte
+(GET + `?callId=c1`) e o de remontagem falha com "expected ['blob:audio-1']
+to not include 'blob:audio-1'". Os dois passam depois da correcao.

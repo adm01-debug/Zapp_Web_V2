@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791334947 -0300	
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 799ff2c7978a14ae3b28a025ca2874eae3c98f22 Joaquim Ataides <ti@promobrindes.com.br> 1791334948 -0300	reset: moving to HEAD
+799ff2c7978a14ae3b28a025ca2874eae3c98f22 bab699bd805d65c7048c9dab8dccb66f3d92720a Joaquim Ataides <ti@promobrindes.com.br> 1791335964 -0300	commit: fix(db-audit): executor de contrato de runtime extrai o SQL e cai no generico (#94)
+bab699bd805d65c7048c9dab8dccb66f3d92720a 0e407f6fa37cbeefbc5a8eb6149cea1758d0d7d2 Joaquim Ataides <ti@promobrindes.com.br> 1791336050 -0300	commit (amend): fix(db-audit): executor de contrato de runtime extrai o SQL e cai no generico (#94)

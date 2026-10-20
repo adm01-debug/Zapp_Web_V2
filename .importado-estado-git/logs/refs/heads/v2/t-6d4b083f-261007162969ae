@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 6afc5e8cf491dc81a99c85cf28eaf0678795db82 Joaquim Ataides <ti@promobrindes.com.br> 1791401397 -0300	branch: Created from dia/2026-10-07
+6afc5e8cf491dc81a99c85cf28eaf0678795db82 8410aaed37477c705ac4a68699c478ce2bdfd8bc Joaquim Ataides <ti@promobrindes.com.br> 1791401412 -0300	cherry-pick: feat(journey): resolver de período com calendário e período anterior equivalente
+8410aaed37477c705ac4a68699c478ce2bdfd8bc a0d63c9a5e519b99a00a6d41b6821d9618356593 Joaquim Ataides <ti@promobrindes.com.br> 1791401412 -0300	cherry-pick: test(journey): fixa um unico instante no teste de fuso de periodRange

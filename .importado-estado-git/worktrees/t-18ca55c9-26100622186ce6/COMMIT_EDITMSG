@@ -1,0 +1,1 @@
+fix(catalog): favorito deixa de converter preço e estoque desconhecidos em zero

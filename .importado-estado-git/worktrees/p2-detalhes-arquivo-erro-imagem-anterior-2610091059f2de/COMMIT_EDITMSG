@@ -1,0 +1,10 @@
+fix(inbox): erro de imagem dos detalhes de arquivo nao passa para o proximo item (#352)
+
+O FileDetailContent guardava hasError num booleano solto, enquanto o FilesTab
+troca o arquivo selecionado na mesma instancia do painel. Agora o erro fica
+associado a URL que falhou: selecionar outro arquivo (ou uma URL renovada)
+volta a renderizar a imagem.
+
+# Conflicts:
+#	src/components/inbox/tabs/FileDetailPanel.tsx
+#	src/components/inbox/tabs/__tests__/FileDetailPanel.test.tsx

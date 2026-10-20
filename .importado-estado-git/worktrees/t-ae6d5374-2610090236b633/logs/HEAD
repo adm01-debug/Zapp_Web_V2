@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791524190 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791524191 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 40fa5284e5cad40c05d674a0bb303d1ec9a4cf7d Joaquim Ataides <ti@promobrindes.com.br> 1791525068 -0300	commit: feat(talk-x): criar a lista lateral "Meus Segmentos" no construtor com abas, busca, funil e cartões (TL-134)
+40fa5284e5cad40c05d674a0bb303d1ec9a4cf7d 5918f7d9bd98ca00eb0008d8a71ce6c6a1362c66 Joaquim Ataides <ti@promobrindes.com.br> 1791525079 -0300	commit (amend): feat(talk-x): criar a lista lateral "Meus Segmentos" no construtor com abas, busca, funil e cartões (TL-134)
+5918f7d9bd98ca00eb0008d8a71ce6c6a1362c66 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561347 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 5c4623b5e3e8fb2992108a1ffbc10def0758e214 Joaquim Ataides <ti@promobrindes.com.br> 1791561660 -0300	rebase (continue): feat(talk-x): criar a lista lateral "Meus Segmentos" no construtor com abas, busca, funil e cartões (TL-134)
+5c4623b5e3e8fb2992108a1ffbc10def0758e214 5c4623b5e3e8fb2992108a1ffbc10def0758e214 Joaquim Ataides <ti@promobrindes.com.br> 1791561660 -0300	rebase (finish): returning to refs/heads/v2/t-ae6d5374-2610090236b633

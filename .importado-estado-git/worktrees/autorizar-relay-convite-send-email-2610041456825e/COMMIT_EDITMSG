@@ -1,0 +1,10 @@
+fix(send-email): autoriza relay de convite com JWT + papel admin/supervisor
+
+R2-API-022 (P1): send-email aceitava destinatario/conteudo arbitrarios e usava
+RESEND_API_KEY sem getUser/role. Agora exige JWT (401 sem identidade), papel
+admin/supervisor via RPC canonica is_admin_or_supervisor (403 usuario comum) e
+deriva remetente/assunto/corpo de template do servidor (payload estreito
+email/nome/cargo; subject/html/text/cc/bcc/attachments rejeitados).
+
+Prova: 8 testes edge (deno) + 2 testes do chamador (vitest) verdes;
+zapp-verify --rapido verde.

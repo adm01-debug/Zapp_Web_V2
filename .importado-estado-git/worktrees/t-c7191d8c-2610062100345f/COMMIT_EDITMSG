@@ -1,0 +1,16 @@
+fix(catalogo): cota do rate limit vem de configuracao confiavel, nao dos argumentos da RPC (#296)
+
+A RPC public.catalog_rate_limit_hit recebia a janela como argumento livre e a usava
+no DELETE de expurgo: com p_window_ms=0 o usuario autenticado apagava os proprios
+hits (inclusive o recem-inserido) e a chamada seguinte voltava liberada; p_limit
+arbitrario liberava pelo mesmo caminho.
+
+A cota e a janela passam a vir de public.catalog_rate_limit_policy (RLS ligada e
+sem acesso para anon/authenticated), lida so pela funcao SECURITY DEFINER. Os
+argumentos continuam na assinatura (a edge segue chamando igual) mas nao decidem o
+expurgo nem a contagem; acao fora da politica cai no balde global.
+
+Prova: scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh (Postgres 17
+descartavel, migrations reais, papel real authenticated) — vermelho sem a correcao
+(CATALOG_RATE_LIMIT_SEM_FIX=1) e verde com ela; executa tambem o bloco
+BEGIN-ROLLBACK extraido da propria migration.

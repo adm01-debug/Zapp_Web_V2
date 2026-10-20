@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321301 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791321302 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 b145980f1e77f9c759ad6a09b03b230896e5c47e Joaquim Ataides <ti@promobrindes.com.br> 1791321423 -0300	cherry-pick: docs(ci): alinhar documentação à baseline atual
+b145980f1e77f9c759ad6a09b03b230896e5c47e 6421d4eb11eb9dc45ccced249c9fe0fdc89dc5ec Joaquim Ataides <ti@promobrindes.com.br> 1791321423 -0300	cherry-pick: fix(ci): restaura a evidencia da E13 na abertura e contextualiza a E11
+6421d4eb11eb9dc45ccced249c9fe0fdc89dc5ec 9834d3a386bbcb1a0b802a6877ea7176f5a23c0c Joaquim Ataides <ti@promobrindes.com.br> 1791321423 -0300	cherry-pick: test(ci): guarda a tabela de abertura e o bloco concluido do plano
+9834d3a386bbcb1a0b802a6877ea7176f5a23c0c 0e4504ac84415e0c1d62f42bca14c98d0ec25ade Joaquim Ataides <ti@promobrindes.com.br> 1791321423 -0300	cherry-pick: chore(ci): tira do recorte o hunk de CLAUDE.md trazido pelo cherry-pick
+0e4504ac84415e0c1d62f42bca14c98d0ec25ade cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791322689 -0300	reset: moving to cab247e7b
+cab247e7b8185d785a0f6b152fe9478834f43789 c1842f7d3ae4e4bba4ba1f050caa19f52599835e Joaquim Ataides <ti@promobrindes.com.br> 1791322689 -0300	commit: docs(ci): alinha o plano de 100 etapas a baseline TRA-009, restaura a evidencia da E13 na abertura e contextualiza a E11
+c1842f7d3ae4e4bba4ba1f050caa19f52599835e 2fe19fdd4633222b888ccbf0ff744f625cae0e85 Joaquim Ataides <ti@promobrindes.com.br> 1791322690 -0300	commit: test(ci): guarda a tabela de abertura do plano (E01/E13/E14/E16) e o bloco [x] que ainda diz estar bloqueado

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791521189 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791521190 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 de4136b7d5daee1624e26f879160021c9da09b2f Joaquim Ataides <ti@promobrindes.com.br> 1791521571 -0300	commit: fix(performance): Preconnect do index.html para Google Fonts gera request (SL-227)

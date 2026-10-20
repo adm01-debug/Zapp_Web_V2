@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304094 -0300	
+421f4a59c7ba7d52bad931d367a68d859d374465 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791304095 -0300	reset: moving to HEAD
+421f4a59c7ba7d52bad931d367a68d859d374465 cc37e0e2f6f6cab73db3e0c99a47ef461074bec4 Joaquim Ataides <ti@promobrindes.com.br> 1791304190 -0300	commit: fix(talkx-send): decisao A/B nao depende da ordem das variantes (#483)

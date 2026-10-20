@@ -1,0 +1,12 @@
+fix(edge): outbox de IA nao trava a fila e log essencial nunca lanca
+
+P1: a leitura do reprocessamento passa a ordenar por tentativas.asc,created_at.asc
+e da baixa EXPLICITA (motivo + processed_at) em pendencia com payload invalido ou
+acima do teto, em vez de deixar venenosa na frente da fila para sempre.
+
+P2: Deno.env.get e montarLinhaDeConsumo entram no try/catch externo de logAiUsage;
+sem linha montada, o motivo sai por console.error com o marcador
+[ai-usage][LOG-ESSENCIAL-PERDIDO] e a funcao resolve sem lancar.
+
+Testes: stub da outbox honra order/limit/tentativas=lt.N; novos testes provam a fila
+destravada (mais venenosas que o limite) e o metadata que faz a montagem explodir.

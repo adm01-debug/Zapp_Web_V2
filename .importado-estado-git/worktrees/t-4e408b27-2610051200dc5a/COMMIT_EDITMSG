@@ -1,0 +1,18 @@
+fix(email): lista de threads filtra e pagina no servidor (OTH-005)
+
+A lista de Email coletava todas as páginas da conta por range/offset (até 50 mil
+linhas), mandava ao servidor só o filtro de conta, filtrava estado, período,
+marcador, anexo e busca no array em memória e a UI recortava 20 itens. O custo
+crescia com a caixa inteira e a página exibida não era o que o servidor devolveu.
+
+- src/lib/emailThreadQuery.ts: contrato puro (filtros -> cláusulas do PostgREST,
+  janela de uma página, corte de período, busca saneada, colunas do select).
+- useGmail passa a aceitar a consulta da lista e busca UMA página com
+  `count: 'exact'`; a contagem exata do filtro corrente alimenta o rodapé.
+- o filtro de anexo vira join `email_messages!inner` no servidor, antes da
+  paginação; o caminho legado (conjunto completo) fica explícito em `full: true`
+  e é usado só pela tela legada GmailInboxView.
+- EmailThreadList vira apresentação: recebe a página e a contagem do servidor e
+  devolve intenção de filtro/página; a espera curta da busca vive na consulta.
+- useEmailThreadListQuery guarda filtros e página fora da lista, mantendo o deep
+  link na URL (mesmas chaves `emailFilter`/`emailPeriod`/…).

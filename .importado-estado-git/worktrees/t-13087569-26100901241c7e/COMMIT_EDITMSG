@@ -1,0 +1,3 @@
+fix(inbox): deep link ?contact= abre a conversa do contato na inbox (SL-206)
+
+pendingContactId nasce da URL (?contact=<id>) em vez de nascer sempre null, alimentando o mesmo caminho que o evento open-contact-chat ja usava (RealtimeInboxView seleciona, marca como lida e limpa). Id vazio ou so espacos nao abre conversa. Teste vermelho->verde em useInboxUIState.test.ts.

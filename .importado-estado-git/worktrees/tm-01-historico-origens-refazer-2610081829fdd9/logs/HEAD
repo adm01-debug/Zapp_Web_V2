@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494955 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791494956 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 56d0ca90fb2b134ecc2cd382d9e84894f943dea9 Joaquim Ataides <ti@promobrindes.com.br> 1791495081 -0300	commit (cherry-pick): feat(talk-me): histórico pendente do cliente antes do aceite
+56d0ca90fb2b134ecc2cd382d9e84894f943dea9 e8cbb44a8b4bfa859d7eb0dae1391cfaf8ade508 Joaquim Ataides <ti@promobrindes.com.br> 1791495085 -0300	cherry-pick: fix(talk-me): distinguir origens no histórico pendente
+e8cbb44a8b4bfa859d7eb0dae1391cfaf8ade508 2ebbea608b93523a336db93bd1e205c8e23fe444 Joaquim Ataides <ti@promobrindes.com.br> 1791496532 -0300	commit: fix(talk-me): historico pendente com origens e contato nulo negado por padrao

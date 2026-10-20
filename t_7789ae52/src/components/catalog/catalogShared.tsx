@@ -1,0 +1,988 @@
+/* eslint-disable react-refresh/only-export-components */
+/**
+ * Helpers e primitivos compartilhados do módulo Catálogo.
+ * Ponto único para evitar duplicação entre ExternalProductCard,
+ * ProductDetailDialog e demais componentes de src/components/catalog/.
+ */
+import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
+// E37: helper de srcSet do CF Images extraído para src/lib/ para ser usável fora do catálogo.
+import { cfImagesSrcSet } from '@/lib/cfImages';
+import { Package, type LucideIcon, X } from 'lucide-react';
+// CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
+// public.zapp_catalog_stats()); reimportado aqui para não duplicar.
+import type { CatalogStats, CatalogFavorite } from '@/hooks/integrations/useExternalCatalog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FilterBarV2, type FilterDefinition, TalkXDataUnavailableState, AlertCard } from '@/components/talkx/talkxShared';
+import { toast } from 'sonner';
+
+/** R$ 63,78 (pt-BR, BRL). */
+export const formatPrice = (price: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+
+/** "1573 un." — plural simples (o domínio não usa singular/plural PT completo aqui). */
+export const formatStock = (qty: number) => `${qty} un.`;
+
+export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  e.currentTarget.style.display = 'none';
+  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+  if (fallback) fallback.style.display = 'flex';
+};
+
+// ─── CT-68/CT-69 — acessibilidade visual e alt do módulo ────────────────
+/**
+ * CT-68 — anel de foco visível reutilizável (WCAG 2.4.7 "Focus Visible").
+ * Usa só tokens (`ring-ring`/`ring-offset-background`, isto é, `--ring` e
+ * `--background`) — nenhuma cor literal. O `:focus-visible` global
+ * (src/styles/base.css:210) já cobre o caso genérico; a classe explícita
+ * garante o anel sobre as superfícies próprias do módulo (card, mídia, chip) e
+ * deixa o alvo de foco legível no próprio componente.
+ */
+export const CATALOG_FOCUS_VISIBLE =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+/**
+ * CT-69 — texto alternativo descritivo das imagens de produto/variação:
+ * `Nome — Cor` quando a cor é conhecida, só `Nome` quando não é. O `alt=""`
+ * proposital das miniaturas decorativas do strip (ProductDetailDialog) segue
+ * vazio de propósito: é decorativo e repetiria o mesmo nome a cada thumb.
+ */
+export function productImageAlt(name: string, color?: string | null): string {
+  const extra = color?.trim();
+  return extra ? `${name} — ${extra}` : name;
+}
+
+/**
+ * CT-69 — cor de capa do produto para o alt: só devolve uma cor quando o
+ * produto tem EXATAMENTE uma cor nomeada. Em produto multi-cor a capa não é de
+ * uma cor específica e rotulá-la com a 1ª descreveria errado a foto — nesse
+ * caso o alt fica só com o nome.
+ */
+export function singleProductColor(product: Pick<ExternalProduct, 'colors' | 'color_swatches'>): string | null {
+  const swatches = (product.color_swatches ?? [])
+    .map((s) => s.color_name?.trim())
+    .filter((n): n is string => !!n);
+  const names = swatches.length > 0
+    ? swatches
+    : (product.colors ?? []).map((c) => c.trim()).filter((n) => n.length > 0);
+  const unique = Array.from(new Set(names));
+  return unique.length === 1 ? unique[0] : null;
+}
+
+/**
+ * CT-68/CT-71 — fallback do `Suspense` dos modais lazy: spinner curto e
+ * discreto, com tokens. Nunca texto grande (troca o dialog inteiro por uma
+ * frase). Os `Sheet`/`Dialog` sempre montados (fechados desde o 1º paint) usam
+ * `fallback={null}` — um spinner apareceria na página enquanto o chunk carrega,
+ * o que é pior que o silêncio; ao abrir, o chunk já resolveu.
+ */
+export function CatalogDialogFallback() {
+  return (
+    <div className="flex items-center justify-center py-6 text-muted-foreground" role="status" aria-label="Carregando">
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden="true" />
+    </div>
+  );
+}
+
+// ProductImage removido na E15 — substituído por ProductThumb (skeleton + srcSet real + fallback em cascata).
+
+// ─── ProductBadge (E12) ─────────────────────────────────────────
+import { Check, Flame, Sparkles, Star, User, XCircle } from 'lucide-react';
+import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+
+export type ProductBadgeKind = 'out' | 'bestseller' | 'new' | 'featured' | 'instock';
+
+const BADGE_CONFIG: Record<ProductBadgeKind, { label: string; Icon: typeof Check }> = {
+  out: { label: 'Esgotado', Icon: XCircle },
+  bestseller: { label: 'Mais vendido', Icon: Flame },
+  new: { label: 'Novidade', Icon: Sparkles },
+  featured: { label: 'Destaque', Icon: Star },
+  instock: { label: 'Em estoque', Icon: Check },
+};
+
+/**
+ * Resolve qual badge mostrar, por prioridade: esgotado > mais vendido >
+ * novidade > destaque > em estoque. Antes da E21/E48 (flags e expiração
+ * completas) os campos vêm `undefined` e o produto cai em instock/out.
+ */
+export function resolveProductBadge(
+  p: Pick<ExternalProduct, 'is_stockout' | 'is_bestseller' | 'is_new' | 'is_featured'>
+): ProductBadgeKind {
+  if (p.is_stockout) return 'out';
+  if (p.is_bestseller) return 'bestseller';
+  if (p.is_new) return 'new';
+  if (p.is_featured) return 'featured';
+  return 'instock';
+}
+
+interface ProductBadgeProps {
+  kind: ProductBadgeKind;
+  size?: 'sm' | 'md';
+}
+
+export function ProductBadge({ kind, size = 'md' }: ProductBadgeProps) {
+  const { label, Icon } = BADGE_CONFIG[kind];
+  return (
+    <span
+      className={`catalog-badge catalog-badge--${kind}`}
+      style={size === 'sm' ? { height: 18, fontSize: 10, padding: '0 0.375rem' } : undefined}
+      aria-label={label}
+    >
+      <Icon className={size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+      {label}
+    </span>
+  );
+}
+
+// ─── ColorChips / ColorSwatch (E13) ────────────────────────────
+export interface CatalogColorLike {
+  color_name?: string | null;
+  name?: string | null;
+  color_hex?: string | null;
+}
+
+interface ColorSwatchProps {
+  hex?: string | null;
+  name: string;
+  size?: number;
+}
+
+/** Bolinha de cor com borda; sem hex, mostra só um chip de texto (E64 reusa). */
+export function ColorSwatch({ hex, name, size = 16 }: ColorSwatchProps) {
+  if (!hex) {
+    return <span className="catalog-chip" title={name}>{name}</span>;
+  }
+  return (
+    <span
+      className="inline-block rounded-full border"
+      style={{ width: size, height: size, backgroundColor: hex, borderColor: 'hsl(var(--border) / 0.6)' }}
+      title={name}
+      role="img"
+      aria-label={`Cor ${name}`}
+    />
+  );
+}
+
+interface ColorChipsProps {
+  colors: (string | CatalogColorLike)[];
+  max?: number;
+}
+
+function colorLabel(c: string | CatalogColorLike): string {
+  return typeof c === 'string' ? c : c.color_name || c.name || 'Padrão';
+}
+
+/** Chips "BRANCO NATURAL PRETO" do card, com "+N" quando excede `max`. */
+export function ColorChips({ colors, max = 3 }: ColorChipsProps) {
+  if (!colors || colors.length === 0) return null;
+  const visible = colors.slice(0, max);
+  const extra = colors.length - visible.length;
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {visible.map((c, i) => (
+        <span key={i} className="catalog-chip" title={colorLabel(c)}>
+          {colorLabel(c)}
+        </span>
+      ))}
+      {extra > 0 && <span className="catalog-chip">+{extra}</span>}
+    </div>
+  );
+}
+
+// ─── PriceTag / StockPill / LowStockPill (E14) ─────────────────
+interface PriceTagProps {
+  value: number;
+  suggested?: number | null;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const PRICE_SIZE_CLASS: Record<NonNullable<PriceTagProps['size']>, string> = {
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-2xl',
+};
+
+/** Preço em destaque (.catalog-price da E11); sugerido riscado ao lado só se diferente. */
+export function PriceTag({ value, suggested, size = 'md' }: PriceTagProps) {
+  return (
+    <span className="inline-flex items-baseline gap-2">
+      <span className={`catalog-price tabular-nums ${PRICE_SIZE_CLASS[size]}`}>{formatPrice(value)}</span>
+      {suggested != null && suggested !== value && (
+        <span className="text-xs text-muted-foreground line-through tabular-nums">{formatPrice(suggested)}</span>
+      )}
+    </span>
+  );
+}
+
+interface StockPillProps {
+  qty: number;
+  stockout?: boolean;
+}
+
+/** "1573 em estoque" (verde) ou "Esgotado" (vermelho). */
+export function StockPill({ qty, stockout }: StockPillProps) {
+  if (stockout || qty <= 0) {
+    return <span className="catalog-badge catalog-badge--out">Esgotado</span>;
+  }
+  return <span className="catalog-badge catalog-badge--instock tabular-nums">{qty} em estoque</span>;
+}
+
+/** "2 un." em âmbar — só entre 1 e `threshold` (padrão 10, mesmo limiar dos 308 produtos reais). */
+export function LowStockPill({ qty, threshold = 10 }: { qty: number; threshold?: number }) {
+  if (qty < 1 || qty > threshold) return null;
+  return <span className="catalog-badge catalog-badge--featured tabular-nums">{formatStock(qty)}</span>;
+}
+
+// ─── ProductThumb (E15) ─────────────────────────────────────────
+// As variantes do CF Images e o `cfImagesSrcSet` vivem em src/lib/cfImages.ts (E37) para
+// serem usáveis fora do catálogo — o Inbox também renderiza imagem que pode vir do CF.
+
+interface ProductThumbProps {
+  src: string | null;
+  fallbackSrc?: string | null;
+  alt: string;
+  ratio?: 'square' | '4/3';
+  priority?: boolean;
+  iconSize?: string;
+  sizes?: string;
+}
+
+/**
+ * Imagem do card/galeria com skeleton até carregar, srcSet real do
+ * Cloudflare Images (quando aplicável) e fallback em cascata
+ * src -> fallbackSrc -> ícone Package. Substitui ProductImage (E04) nos
+ * dois usos existentes; ProductImage continua exportado (sem uso restante
+ * após esta etapa, mas outros pontos futuros podem precisar do fallback simples).
+ */
+export function ProductThumb({ src, fallbackSrc, alt, ratio = 'square', priority, iconSize = 'w-8 h-8', sizes }: ProductThumbProps) {
+  const [stage, setStage] = useState<'loading' | 'loaded' | 'error-src' | 'error-fallback'>(
+    src ? 'loading' : fallbackSrc ? 'loading' : 'error-fallback'
+  );
+  const effectiveSrc = stage === 'error-src' ? fallbackSrc : src ?? fallbackSrc;
+
+  if (!effectiveSrc || stage === 'error-fallback') {
+    return (
+      <div className={`w-full h-full flex items-center justify-center ${ratio === '4/3' ? 'aspect-[4/3]' : 'aspect-square'}`}>
+        <Package className={`${iconSize} text-muted-foreground`} />
+      </div>
+    );
+  }
+
+  const srcSet = cfImagesSrcSet(effectiveSrc);
+
+  return (
+    <div className={`relative w-full h-full ${ratio === '4/3' ? 'aspect-[4/3]' : 'aspect-square'}`}>
+      {stage === 'loading' && <div className="absolute inset-0 animate-pulse bg-muted/40" />}
+      <img
+        src={effectiveSrc}
+        srcSet={srcSet ?? undefined}
+        sizes={srcSet ? sizes ?? '(min-width: 1280px) 220px, (min-width: 768px) 33vw, 50vw' : undefined}
+        alt={alt}
+        className={`w-full h-full object-contain transition-opacity ${stage === 'loading' ? 'opacity-0' : 'opacity-100'}`}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={priority ? 'high' : undefined}
+        onLoad={() => setStage('loaded')}
+        onError={() => setStage((s) => (s === 'error-src' ? 'error-fallback' : 'error-src'))}
+      />
+    </div>
+  );
+}
+
+// ─── FavoriteButton (E16) ───────────────────────────────────────
+import { Heart } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+
+interface FavoriteButtonProps {
+  active: boolean;
+  onToggle: () => void;
+  busy?: boolean;
+  size?: number;
+}
+
+/**
+ * Coração do canto superior direito (card e galeria). Sem persistência
+ * até a E27 (catalog_favorites) — não montar nos cards antes disso.
+ */
+export function FavoriteButton({ active, onToggle, busy, size = 32 }: FavoriteButtonProps) {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <motion.button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!busy) onToggle();
+      }}
+      disabled={busy}
+      aria-pressed={active}
+      aria-label={active ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+      className="flex items-center justify-center rounded-full bg-background/70 backdrop-blur disabled:opacity-60"
+      style={{ width: size, height: size }}
+      animate={!prefersReducedMotion && active ? { scale: [1, 1.2, 1] } : undefined}
+      transition={{ duration: 0.3 }}
+    >
+      <Heart
+        className={active ? 'w-4 h-4 fill-destructive text-destructive' : 'w-4 h-4 text-foreground/70'}
+      />
+    </motion.button>
+  );
+}
+
+// ─── CatalogKpiStrip (E17) ──────────────────────────────────────
+import { Box, Folder, Users, Package as PackageIcon, Star as StarIcon, Sparkles as SparklesIcon } from 'lucide-react';
+import { KpiCard, KpiCardSkeleton, type TileColor } from '@/components/talkx/talkxShared';
+
+interface KpiDef {
+  key: keyof CatalogStats;
+  label: string;
+  icon: typeof Box;
+  color: TileColor;
+}
+
+const CATALOG_KPI_DEFS: KpiDef[] = [
+  { key: 'total', label: 'Produtos no total', icon: Box, color: 'blue' },
+  { key: 'categories_root', label: 'Categorias', icon: Folder, color: 'amber' },
+  { key: 'suppliers_active', label: 'Fornecedores', icon: Users, color: 'blue' },
+  { key: 'in_stock', label: 'Em estoque', icon: PackageIcon, color: 'green' },
+  { key: 'featured', label: 'Em destaque', icon: StarIcon, color: 'blue' },
+  { key: 'new_30d', label: 'Novidades', icon: SparklesIcon, color: 'amber' },
+];
+
+interface CatalogKpiStripProps {
+  stats: CatalogStats | null | undefined;
+  loading?: boolean;
+  /** Clique aplica o filtro correspondente (ligado nas etapas E33/E36). */
+  onSelect?: (key: keyof CatalogStats) => void;
+}
+
+/**
+ * 6 KPIs do topo do mock A. Cada card só aparece se o campo vier como
+ * número (nada de "—" decorativo). Sem nenhum número, o strip **mantém o
+ * espaço** com o esqueleto em vez de sumir — ver o comentário de CLS abaixo.
+ */
+export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripProps) {
+  const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
+  // CT-74 — CLS medido em produção (02/10): 0,2211 dos 0,2455 vinham deste bloco, porque
+  // ele devolvia `null` sem dados e assim NASCIA depois do primeiro paint, empurrando a
+  // grade para baixo. Sem dados, o esqueleto ocupa o lugar (mesma grade, mesma altura).
+  if (loading || visible.length === 0) {
+    return (
+      <div
+        data-testid="catalog-kpi-strip-placeholder"
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"
+        aria-hidden="true"
+      >
+        {Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} compact />)}
+      </div>
+    );
+  }
+  return (
+    <div data-testid="catalog-kpi-strip" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      {visible.map((d, i) => (
+        <button
+          key={d.key}
+          type="button"
+          onClick={() => onSelect?.(d.key)}
+          disabled={!onSelect}
+          className="text-left disabled:cursor-default"
+        >
+          <KpiCard
+            icon={d.icon}
+            color={d.color}
+            label={d.label}
+            value={(stats![d.key] as number).toLocaleString('pt-BR')}
+            compact
+            index={i}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── CategoryChips (E18) ────────────────────────────────────────
+export interface CatalogCategoryLike {
+  id: string;
+  name: string;
+  products_count?: number | null;
+  icon?: string | null;
+}
+
+// Resolve um icone lucide-react a partir do nome vindo do banco
+// (categories.icon, E25). O mapa curado (catalogCategoryIcons.ts) usa
+// chaves kebab-case (ex: "shopping-bag") - normaliza o nome recebido
+// antes de olhar no mapa. Nome desconhecido/ausente -> nenhum icone
+// (fallback previsto no plano), nunca um erro.
+function toKebabCase(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/[\s_]+/g, '-').toLowerCase();
+}
+
+// Cache do modulo (nao e um Hook, sobrevive entre montagens/desmontagens -
+// o import() do mapa curado roda uma unica vez por sessao).
+let categoryIconsPromise: Promise<typeof import('./catalogCategoryIcons')> | null = null;
+let categoryIconsModule: typeof import('./catalogCategoryIcons') | null = null;
+
+/** O mapa de icones vem por import() dinamico: importar estaticamente
+ * lucide-react/dynamicIconImports referenciava os ~1500 icones e, com o
+ * grupo unico de chunk do lucide, empurrava a biblioteca inteira
+ * (152 KB gzip) para o bundle inicial - estourou o budget de 350 KB
+ * (regressao introduzida no PR #415). Sem React.lazy/Suspense
+ * (react-hooks/static-components rejeita React.lazy no corpo do render);
+ * o unico setState fica num callback assincrono (.then), nunca sincrono
+ * no corpo do effect (react-hooks/set-state-in-effect). */
+function CategoryChipIcon({ name }: { name: string }) {
+  const key = toKebabCase(name);
+  const [loaded, setLoaded] = useState(() => categoryIconsModule !== null);
+  useEffect(() => {
+    if (categoryIconsModule) return;
+    let active = true;
+    categoryIconsPromise ??= import('./catalogCategoryIcons');
+    categoryIconsPromise.then((mod) => {
+      categoryIconsModule = mod;
+      if (active) setLoaded(true);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const Icon = loaded && categoryIconsModule ? categoryIconsModule.CATEGORY_ICONS[key] ?? null : null;
+  if (!Icon) return null;
+  const Comp = Icon;
+  return <Comp className="w-3.5 h-3.5" />;
+}
+
+interface CategoryChipsProps {
+  categories: CatalogCategoryLike[];
+  activeId: string | null;
+  onChange: (id: string | null) => void;
+  max?: number;
+}
+
+/** Linha "Todos · Agro · Chapéus · … · Mais ▾" ordenada por products_count. */
+export function CategoryChips({ categories, activeId, onChange, max = 7 }: CategoryChipsProps) {
+  const sorted = [...categories].sort((a, b) => (b.products_count ?? 0) - (a.products_count ?? 0));
+  const visible = sorted.slice(0, max);
+  const rest = sorted.slice(max);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className={cn('catalog-category-chip', activeId === null && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
+      >
+        Todos
+      </button>
+      {visible.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onChange(c.id)}
+          title={c.products_count != null ? `${c.products_count} produtos` : undefined}
+          className={cn('catalog-category-chip', activeId === c.id && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
+        >
+          {c.icon && <CategoryChipIcon name={c.icon} />}
+          {c.name}
+        </button>
+      ))}
+      {rest.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className={cn('catalog-category-chip', CATALOG_FOCUS_VISIBLE)}>
+              Mais <ChevronDown className="w-3 h-3 ml-1" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+            {rest.map((c) => (
+              <DropdownMenuItem key={c.id} onSelect={() => onChange(c.id)}>
+                {c.icon && <CategoryChipIcon name={c.icon} />}
+                {c.name}
+                {c.products_count != null && (
+                  <span className="ml-auto text-xs text-muted-foreground tabular-nums">{c.products_count}</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+}
+
+// ─── CatalogFilterBar (E18) ─────────────────────────────────────
+interface CatalogFilterBarProps {
+  search: string;
+  onSearch: (v: string) => void;
+  categories: CatalogCategoryLike[];
+  categoryId: string;
+  onCategoryChange: (id: string) => void;
+  suppliers: { id: string; name: string }[];
+  supplierId: string;
+  onSupplierChange: (id: string) => void;
+  onlyInStock: boolean;
+  onOnlyInStockChange: (v: boolean) => void;
+  view: 'grid' | 'list';
+  onViewChange: (v: 'grid' | 'list') => void;
+  hasActiveFilters?: boolean;
+  onClear?: () => void;
+  onAdvancedFilters?: () => void;
+  advancedFiltersCount?: number;
+}
+
+/**
+ * Composição da tela A: busca + categoria + fornecedor + "Em estoque" +
+ * "Filtros avançados" + toggle grade/lista. Reusa FilterBarV2 via
+ * rightSlot (switch + botão) — sem novas props no componente do Talk X.
+ */
+export function CatalogFilterBar({
+  search, onSearch, categories, categoryId, onCategoryChange,
+  suppliers, supplierId, onSupplierChange,
+  onlyInStock, onOnlyInStockChange, view, onViewChange,
+  hasActiveFilters, onClear, onAdvancedFilters, advancedFiltersCount,
+}: CatalogFilterBarProps) {
+  const filters: FilterDefinition[] = [
+    {
+      key: 'category', label: 'Categoria',
+      // CT-60 — contagem real de ExternalCategory.products_count.
+      options: categories.map((c) => ({ value: c.id, label: countLabel(c.name, c.products_count) })),
+    },
+    {
+      key: 'supplier', label: 'Fornecedor',
+      options: suppliers.map((s) => ({ value: s.id, label: s.name })),
+    },
+  ];
+  return (
+    <FilterBarV2
+      search={search}
+      onSearch={onSearch}
+      placeholder="Buscar por nome, SKU ou marca…"
+      filters={filters}
+      values={{ category: categoryId, supplier: supplierId }}
+      onFilter={(key, val) => (key === 'category' ? onCategoryChange(val) : onSupplierChange(val))}
+      hasActive={hasActiveFilters}
+      onClear={onClear}
+      view={view === 'grid' ? 'grid' : 'list'}
+      onView={(v) => onViewChange(v)}
+      rightSlot={
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Switch id="catalog-only-in-stock" checked={onlyInStock} onCheckedChange={onOnlyInStockChange} />
+            <Label htmlFor="catalog-only-in-stock" className="text-xs text-muted-foreground cursor-pointer">
+              Em estoque
+            </Label>
+          </div>
+          {onAdvancedFilters && (
+            <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5" onClick={onAdvancedFilters}>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Filtros avançados
+              {!!advancedFiltersCount && (
+                <span className="ml-0.5 rounded-full bg-primary text-primary-foreground text-3xs px-1.5 leading-4">
+                  {advancedFiltersCount}
+                </span>
+              )}
+            </Button>
+          )}
+        </div>
+      }
+    />
+  );
+}
+
+// ─── CT-59/CT-60 — contagem em rótulo + estado de erro por código ──────
+/**
+ * CT-60 — rótulo de option de filtro com contagem. `count` vem de
+ * `ExternalCategory.products_count` (única contagem real disponível);
+ * quando a fonte não traz número (ex.: fornecedor — ver comentário em
+ * ExternalProductManagement/ExternalProductCatalog), o rótulo é o nome puro,
+ * nunca um número inventado.
+ */
+export function countLabel(name: string, count: number | null | undefined): string {
+  return count != null ? `${name} (${count.toLocaleString('pt-BR')})` : name;
+}
+
+/**
+ * CT-59 — cooldown de 10 s depois de um 429 da edge: dispara o toast
+ * "Muitas requisições, aguarde 1 min" e mantém os botões de ação
+ * desabilitados até o fim da janela (a edge libera a cota em 60 s; 10 s é o
+ * bloqueio de UI pedido no plano, tempo suficiente para a rajada passar).
+ * O setState fica dentro de setTimeout(0) fora do corpo síncrono do efeito
+ * (react-hooks/set-state-in-effect) — mesmo padrão já usado em
+ * ExternalProductManagement (E78).
+ */
+export function useRateLimitCooldown(rateLimited: boolean, seconds = 10): boolean {
+  const [coolingDown, setCoolingDown] = useState(false);
+  useEffect(() => {
+    const start = setTimeout(() => {
+      if (!rateLimited) {
+        setCoolingDown(false);
+        return;
+      }
+      setCoolingDown(true);
+      toast.error('Muitas requisições, aguarde 1 min');
+    }, 0);
+    if (!rateLimited) return () => clearTimeout(start);
+    const stop = setTimeout(() => setCoolingDown(false), seconds * 1000);
+    return () => {
+      clearTimeout(start);
+      clearTimeout(stop);
+    };
+  }, [rateLimited, seconds]);
+  return coolingDown;
+}
+
+interface CatalogErrorStateProps {
+  /** Código do erro (CatalogErrorCode); null em falha sem código. */
+  code?: string | null;
+  /** Mensagem crua da edge, usada só no fallback genérico. */
+  message?: string | null;
+  onRetry?: () => void;
+  /** CT-59 — true durante o cooldown do 429: desabilita o "Tentar de novo". */
+  retryDisabled?: boolean;
+}
+
+/**
+ * CT-59 — estado de erro por código da edge:
+ * - CATALOG_UPSTREAM_ERROR → TalkXDataUnavailableState + "Tentar de novo";
+ * - CATALOG_NOT_CONFIGURED / CATALOG_CREDENTIALS_INVALID → aviso de admin
+ *   com o código visível (o agente não resolve credencial de PromoGifts);
+ * - 429 e demais falhas → mensagem crua + retry (o toast/cooldown do 429 é
+ *   responsabilidade de useRateLimitCooldown, chamado pelo componente pai).
+ */
+export function CatalogErrorState({ code, message, onRetry, retryDisabled }: CatalogErrorStateProps) {
+  const retryButton = onRetry && (
+    <Button variant="outline" size="sm" onClick={onRetry} disabled={retryDisabled} className="mt-2">
+      Tentar de novo
+    </Button>
+  );
+
+  if (code === 'CATALOG_UPSTREAM_ERROR') {
+    return (
+      <div className="space-y-3">
+        <TalkXDataUnavailableState what="O catálogo PromoGifts" />
+        {retryButton && <div className="flex justify-center">{retryButton}</div>}
+      </div>
+    );
+  }
+
+  if (code === 'CATALOG_NOT_CONFIGURED' || code === 'CATALOG_CREDENTIALS_INVALID') {
+    return (
+      <AlertCard tone="danger">
+        <p className="font-semibold">Catálogo PromoGifts indisponível para os agentes</p>
+        <p>
+          Fale com um administrador para revisar as credenciais de integração.
+          {' '}Código do erro: <code className="font-mono">{code}</code>.
+        </p>
+      </AlertCard>
+    );
+  }
+
+  return (
+    <AlertCard tone="danger">
+      {message}
+      {retryButton}
+    </AlertCard>
+  );
+}
+
+// ─── MetaTile / SectionCard (E19) ───────────────────────────────
+/**
+ * Tile de metadado do detalhe do produto (Qtd. mínima / Prazo / Origem),
+ * em grade de 3 colunas. RailCard/RailAction/MetaRow (rail) e
+ * GhostButton/TalkXPrimaryButton (botões) já existem em talkxShared.tsx
+ * e DashboardCard.tsx — reusados diretamente nos pontos de uso (F5/F6),
+ * sem wrapper novo aqui.
+ */
+export function MetaTile({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/20 p-2.5">
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+      <div className="min-w-0">
+        <p className="text-3xs text-muted-foreground uppercase tracking-wide leading-none mb-1">{label}</p>
+        <p className="text-[13px] font-semibold text-foreground leading-tight truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Card interno com título (Descrição, Ficha técnica) para o modal de detalhes. */
+export function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4">
+      <h4 className="text-[13px] font-semibold text-foreground mb-2">{title}</h4>
+      {children}
+    </div>
+  );
+}
+
+// ── CT-37: PhonePreview (prévia estilo WhatsApp) ──────────────────────────
+export interface PhonePreviewImage {
+  url: string;
+  label: string;
+}
+
+interface PhonePreviewProps {
+  message: string;
+  images: PhonePreviewImage[];
+  /** Nome exibido no cabeçalho do mock; padrão "Cliente". */
+  title?: string;
+}
+
+/**
+ * Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74),
+ * extraída do SendProductDialog para virar primitivo reutilizável do módulo.
+ *
+ * - a moldura e as partes internas usam as classes `.catalog-phone*`
+ *   (src/styles/components.css), cujas cores saem dos tokens `--wa-*`
+ *   (tokens.css) — nenhum hex/rgb/hsl literal neste arquivo;
+ * - os ícones são decorativos (aria-hidden) e o texto alternativo da foto
+ *   continua em pt-BR.
+ */
+export function PhonePreview({ message, images, title = 'Cliente' }: PhonePreviewProps) {
+  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const firstImage = images[0];
+  return (
+    <div className="space-y-2">
+      <span className="text-sm text-muted-foreground">Pré-visualização</span>
+      <div className="catalog-phone">
+        <div className="catalog-phone__header">
+          <div className="catalog-phone__avatar">
+            <User className="w-4 h-4" aria-hidden="true" />
+          </div>
+          <span className="text-sm font-medium">{title}</span>
+        </div>
+        <div className="catalog-phone__body">
+          {firstImage && (
+            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
+              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
+              {images.length > 1 && (
+                <span className="catalog-phone__counter text-3xs leading-none">
+                  1/{images.length}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="catalog-phone__bubble">
+            <p className="text-sm whitespace-pre-line">{message}</p>
+            <div className="flex items-center justify-end gap-0.5 mt-1">
+              <span className="catalog-phone__time text-3xs">{time}</span>
+              <Check className="catalog-phone__tick w-3 h-3" aria-hidden="true" />
+              <Check className="catalog-phone__tick w-3 h-3 -ml-2" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── E36: tipos e helpers de filtros avançados ─────────────────────────────
+export interface AdvancedFilters {
+  isBestseller: boolean;
+  priceMin: string;
+  priceMax: string;
+  /** Nomes exatos (rótulos de stats.top_colors) selecionados — OR entre si. */
+  colors: string[];
+  /** Nomes exatos (rótulos de stats.top_materials) selecionados — OR entre si. */
+  materials: string[];
+}
+
+/** Estado "zerado" de AdvancedFilters — fonte única de verdade para reset
+ * (Sheet "Limpar" e ExternalProductManagement), evita literais divergentes
+ * espalhados pelos dois arquivos. */
+export const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
+  isBestseller: false,
+  priceMin: '',
+  priceMax: '',
+  colors: [],
+  materials: [],
+};
+
+export function countAdvancedFilters(f: AdvancedFilters): number {
+  return (
+    (f.isBestseller ? 1 : 0) +
+    (f.priceMin ? 1 : 0) +
+    (f.priceMax ? 1 : 0) +
+    f.colors.length +
+    f.materials.length
+  );
+}
+
+/** Chips de filtros avançados ativos, remíveis individualmente */
+export function AdvancedFilterChips({
+  filters,
+  onChange,
+}: {
+  filters: AdvancedFilters;
+  onChange: (next: AdvancedFilters) => void;
+}) {
+  const chips: Array<{ label: string; key: string; onRemove: () => void }> = [];
+  if (filters.isBestseller) {
+    chips.push({ label: 'Mais pedidos', key: 'isBestseller', onRemove: () => onChange({ ...filters, isBestseller: false }) });
+  }
+  if (filters.priceMin) {
+    chips.push({ label: 'Preço min R$ ' + filters.priceMin, key: 'priceMin', onRemove: () => onChange({ ...filters, priceMin: '' }) });
+  }
+  if (filters.priceMax) {
+    chips.push({ label: 'Preço máx R$ ' + filters.priceMax, key: 'priceMax', onRemove: () => onChange({ ...filters, priceMax: '' }) });
+  }
+  filters.colors.forEach((c) => {
+    chips.push({
+      label: 'Cor: ' + c,
+      key: 'color:' + c,
+      onRemove: () => onChange({ ...filters, colors: filters.colors.filter((x) => x !== c) }),
+    });
+  });
+  filters.materials.forEach((m) => {
+    chips.push({
+      label: 'Material: ' + m,
+      key: 'material:' + m,
+      onRemove: () => onChange({ ...filters, materials: filters.materials.filter((x) => x !== m) }),
+    });
+  });
+  if (chips.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          type="button"
+          onClick={chip.onRemove}
+          className={cn(
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
+            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors',
+            CATALOG_FOCUS_VISIBLE
+          )}
+        >
+          {chip.label}
+          <X className="w-3 h-3" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── E36: multi-select de cor/material (chips clicáveis) ────────────────────
+/**
+ * Normaliza um elemento de products.colors/materials (jsonb) para uma
+ * label exibível. O dado real tem duas formas (mesma heterogeneidade já
+ * tratada no filtro server-side de supabase/functions/promogifts-catalog/
+ * index.ts, action list_products): a maioria dos elementos é string pura
+ * ("Azul"), uma minoria é objeto `{ nome: "Azul" }`. Qualquer outro
+ * formato (número, null, objeto sem `nome`) é ignorado silenciosamente.
+ */
+function normalizeTagLabel(entry: unknown): string | null {
+  if (typeof entry === 'string') return entry;
+  if (entry && typeof entry === 'object' && 'nome' in entry) {
+    const nome = (entry as { nome?: unknown }).nome;
+    return typeof nome === 'string' ? nome : null;
+  }
+  return null;
+}
+
+/**
+ * true se `raw` (products.colors ou products.materials — array jsonb de
+ * strings e/ou `{nome}`) contém algum dos valores de `selected`
+ * (comparação por label, case-insensitive; é OR entre os selecionados).
+ * `selected` vazio sempre casa — filtro inativo não exclui produto nenhum.
+ * Usada pelo filtro client-side em ExternalProductManagement (E36-2):
+ * segunda camada sobre o que o edge promogifts-catalog já filtrou
+ * (agora aceita array em color/material, OR entre valores) — mantida
+ * como salvaguarda, sem custo real.
+ */
+export function matchesAnySelected(raw: unknown, selected: string[]): boolean {
+  if (selected.length === 0) return true;
+  if (!Array.isArray(raw)) return false;
+  const wanted = new Set(selected.map((s) => s.toLowerCase()));
+  return raw.some((entry) => {
+    const label = normalizeTagLabel(entry);
+    return label != null && wanted.has(label.toLowerCase());
+  });
+}
+
+interface TagMultiSelectChipsProps {
+  /** stats.top_colors / stats.top_materials (E24) — já vem limitado a 20 pela RPC. */
+  options: { label: string; count: number }[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}
+
+/**
+ * Chips clicáveis de seleção múltipla (cor/material no Sheet de filtros
+ * avançados). Mesmas classes visuais de CategoryChips
+ * (catalog-category-chip[--active]) — sem o overflow "+N mais" daquele
+ * componente: top_colors/top_materials já chegam limitados a 20 itens, e
+ * um DropdownMenu fecharia a cada clique (ruim para multi-seleção).
+ */
+export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSelectChipsProps) {
+  if (!options || options.length === 0) return null;
+  const isSelected = (label: string) => selected.some((s) => s.toLowerCase() === label.toLowerCase());
+  const toggle = (label: string) => {
+    onChange(
+      isSelected(label)
+        ? selected.filter((s) => s.toLowerCase() !== label.toLowerCase())
+        : [...selected, label]
+    );
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt.label}
+          type="button"
+          onClick={() => toggle(opt.label)}
+          title={`${opt.count} produtos`}
+          aria-pressed={isSelected(opt.label)}
+          className={cn('catalog-category-chip', isSelected(opt.label) && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── favoriteToProduct (CT-16) ───────────────────────────────────────────────
+/**
+ * Constrói um `ExternalProduct` mínimo a partir de um `CatalogFavorite`
+ * (a snapshot de catalog_favorites não guarda preço/estoque/variantes).
+ * O `SendProductDialog` busca o produto completo pelo id quando precisar
+ * (useExternalProduct com `needsFullProduct`).
+ *
+ * Ficava duplicado em CatalogFavoritesTab; subiu para cá no CT-16, quando o
+ * dialog do chat passou a listar favoritos também.
+ */
+export function favoriteToProduct(fav: CatalogFavorite): ExternalProduct {
+  return {
+    id: fav.product_id,
+    name: fav.product_name,
+    sku: fav.product_sku,
+    sale_price: 0,
+    stock_quantity: 0,
+    is_stockout: false,
+    primary_image_url: fav.primary_image_url,
+    primary_image_fallback_url: null,
+    is_featured: false,
+    is_new: false,
+    is_bestseller: false,
+    is_on_sale: false,
+    is_kit: false,
+    allows_personalization: false,
+    categories: null,
+    suppliers: null,
+    brand: null,
+    colors: null,
+    color_swatches: null,
+    images: null,
+    variants: null,
+    description: null,
+    short_description: null,
+    dimensions_display: null,
+    weight_g: null,
+    origin_country: null,
+    lead_time_days: null,
+    min_quantity: null,
+    ncm_code: null,
+    suggested_price: null,
+  } as unknown as ExternalProduct;
+}

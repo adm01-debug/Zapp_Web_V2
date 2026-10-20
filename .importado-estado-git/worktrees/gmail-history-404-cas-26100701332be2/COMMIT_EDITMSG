@@ -1,0 +1,7 @@
+fix(gmail-webhook): reset do history 404 com CAS sobre o cursor lido
+
+O reset por history 404 limpava history_id com um update filtrado só por id;
+um 404 atrasado podia sobrescrever um cursor já movido por outro fluxo.
+Extrai resetGmailHistoryCursor em _shared/gmail-helpers.ts aplicando
+compare-and-swap (.eq('history_id', cursor lido) + select) com ramo de
+conflito, e o webhook passa a chamá-lo só no caminho 404.

@@ -1,0 +1,7 @@
+fix(email): bloqueia imagem com URL relativa ao protocolo (//host)
+
+sanitizeEmailHtml so reconhecia http:, https: e cid:; <img src="//cdn.host/x.gif">
+mantinha o src e podia acionar pixel externo. A regra agora trata //host/... como
+remota (mesmo placeholder/titulo das imagens externas), classificando a origem sem
+espacos (TAB/CR/LF em qualquer posicao, como o navegador descarta). Caminho local
+sem host (/assets/logo.png) segue permitido.

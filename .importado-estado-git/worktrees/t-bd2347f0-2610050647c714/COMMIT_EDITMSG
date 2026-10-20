@@ -1,0 +1,8 @@
+fix(admin): troca de papel via RPC atômica admin_set_role (R2-AUTH-008)
+
+O handleRoleChange fazia delete+insert não-transacional em user_roles:
+se o insert falhasse após o delete, o usuário ficava sem role. Agora usa
+a RPC admin_set_role (SECURITY DEFINER, já existente), que valida JWT,
+autoriza só admin, protege auto-rebaixamento e o último administrador,
+e grava de forma atômica. Erros da RPC são traduzidos para mensagens
+claras e não anunciam sucesso nem disparam refetch.

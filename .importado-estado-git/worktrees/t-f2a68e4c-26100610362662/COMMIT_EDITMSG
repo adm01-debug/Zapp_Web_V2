@@ -1,0 +1,18 @@
+fix(a11y): tornar indisponíveis os controles sem efeito dos atendentes
+
+O AgentsView renderizava `Filtrar`, `Editar`, `Configurações` e `Desativar`
+como controles acionáveis, mas nenhum tinha efeito: o usuário acreditava ter
+filtrado ou gerenciado um atendente sem nada acontecer.
+
+Sem integração canônica nesta tela, os quatro passam a se declarar
+indisponíveis, no mesmo padrão de FileActionsMenu/FileDetailPanel
+(`disabled` + motivo visível + `title`):
+
+- `Filtrar` fica `disabled`/`aria-disabled` e diz o motivo na face;
+- os três itens do menu ficam `disabled` (Radix emite `aria-disabled=true`,
+  tira do teclado e não fecha o menu ao clique/Enter) e dizem o motivo;
+- o gatilho do menu ganha `aria-label` (era botão só de ícone sem nome
+  acessível, impossível de operar por leitor de tela).
+
+Prova: src/components/agents/__tests__/AgentsView.actions.test.tsx (5 testes,
+vermelho sem a correção / verde com ela).

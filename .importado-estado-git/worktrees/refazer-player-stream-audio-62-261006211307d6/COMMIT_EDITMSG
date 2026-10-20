@@ -1,0 +1,8 @@
+test(telefonia): reentrega do #62 sem perder os testes de cabecalhosDoAudio
+
+Reentrega do refazer #62 (edge get-call-recording devolve stream de audio sem
+expor recording_url) restaurando os 3 testes puros de cabecalhosDoAudio que a
+entrega anterior removeu com o helper ainda em uso: nao inventar
+Content-Length/Content-Range, nao carregar URL/bitrix/location e manter o CORS
+recebido. O teste do handler real tambem passa a conferir os cabecalhos finais
+da resposta. Suite: 14 -> 17 testes, verde.

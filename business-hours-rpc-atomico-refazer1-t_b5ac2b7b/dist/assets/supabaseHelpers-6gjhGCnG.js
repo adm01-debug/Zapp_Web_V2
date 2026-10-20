@@ -1,0 +1,1 @@
+import{r as e}from"./client-BV8iPb2f.js";function t(t){return e.from(t)}async function n(t,n){let{data:r,error:i}=await e.functions.invoke(t,{body:n});if(i)throw i;return r}export{n,t};

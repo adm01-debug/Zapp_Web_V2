@@ -1,0 +1,14 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508062 -0300	
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791508063 -0300	reset: moving to HEAD
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf b0bf7eac74bad9ed773c9b57bb17073e98d6d505 worker (ci) <worker-ci@zapp.local> 1791508459 -0300	commit: fix(talk-x): corrige afirmações falsas da OPERACAO e do CHANGELOG (TL-179)
+b0bf7eac74bad9ed773c9b57bb17073e98d6d505 b81ba06c4c0884e4063ebb7d4fa82f40ce2f5880 worker (ci) <worker-ci@zapp.local> 1791508676 -0300	commit: chore(talk-x): reabre o fechamento com os números reais no relato (TL-179)
+b81ba06c4c0884e4063ebb7d4fa82f40ce2f5880 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791556278 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 c9b32b8df8e6ed337da84742405fd603cc24705f Joaquim Ataides <ti@promobrindes.com.br> 1791556342 -0300	rebase (continue): fix(talk-x): corrige afirmações falsas da OPERACAO e do CHANGELOG (TL-179)
+c9b32b8df8e6ed337da84742405fd603cc24705f 4f83d628ca4d760c6e8a046c97cdde29600b1e00 Joaquim Ataides <ti@promobrindes.com.br> 1791556342 -0300	rebase (pick): chore(talk-x): reabre o fechamento com os números reais no relato (TL-179)
+4f83d628ca4d760c6e8a046c97cdde29600b1e00 4f83d628ca4d760c6e8a046c97cdde29600b1e00 Joaquim Ataides <ti@promobrindes.com.br> 1791556342 -0300	rebase (finish): returning to refs/heads/v2/tl-179-talkx-corrigir-afirmacoes-falsas-26100822075d2f
+4f83d628ca4d760c6e8a046c97cdde29600b1e00 e6e4331ff18317911aec855fbd5f8b326e5699f7 Joaquim Ataides <ti@promobrindes.com.br> 1791556563 -0300	commit: fix(talk-x): acompanha o drift que apareceu só com o rebase (TL-179)
+e6e4331ff18317911aec855fbd5f8b326e5699f7 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562555 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 ba76f204c8332fda29c86a0edadd8ca37166b710 Joaquim Ataides <ti@promobrindes.com.br> 1791562555 -0300	rebase (pick): fix(talk-x): corrige afirmações falsas da OPERACAO e do CHANGELOG (TL-179)
+ba76f204c8332fda29c86a0edadd8ca37166b710 374d6eaaa0ac95917ac9dd3655d7214d9bd1a473 Joaquim Ataides <ti@promobrindes.com.br> 1791562555 -0300	rebase (pick): chore(talk-x): reabre o fechamento com os números reais no relato (TL-179)
+374d6eaaa0ac95917ac9dd3655d7214d9bd1a473 0efb370e8d1bbdca4969921170b86049db3dc11c Joaquim Ataides <ti@promobrindes.com.br> 1791562555 -0300	rebase (pick): fix(talk-x): acompanha o drift que apareceu só com o rebase (TL-179)
+0efb370e8d1bbdca4969921170b86049db3dc11c 0efb370e8d1bbdca4969921170b86049db3dc11c Joaquim Ataides <ti@promobrindes.com.br> 1791562555 -0300	rebase (finish): returning to refs/heads/v2/tl-179-talkx-corrigir-afirmacoes-falsas-26100822075d2f

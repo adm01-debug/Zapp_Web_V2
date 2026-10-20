@@ -1,0 +1,6 @@
+docs(ia): 12 metas de qualidade com prova por meta e guarda de medição (IA-005)
+
+Cada uma das 12 metas (M1..M12) passa a ter estado de medição declarado no
+documento e a guarda scripts/ci/ia-metas-qualidade-docs.unit.mjs trava: meta
+sem prova existente, alvo do M4 (>=95% em 200 casos) apagado, teto numérico de
+M8/M9 sem medição de referência e meta cumprida sem data e fonte.

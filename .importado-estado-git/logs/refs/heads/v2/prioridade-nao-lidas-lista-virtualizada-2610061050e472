@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 15249f18b9233d4f615f5d2f2d5c059c2037e9ea Joaquim Ataides <ti@promobrindes.com.br> 1791294609 -0300	branch: Created from dia/2026-10-06
+15249f18b9233d4f615f5d2f2d5c059c2037e9ea cb3e1109949e91c3c3b36501df9fc05a415bf9be Joaquim Ataides <ti@promobrindes.com.br> 1791294767 -0300	commit: fix(inbox): mantém a prioridade de não lidas ao agrupar a lista virtualizada

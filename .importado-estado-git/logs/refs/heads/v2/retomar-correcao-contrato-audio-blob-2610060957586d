@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 1dcf8dda0d44f9c647a24ef6146f54cf882490f3 Joaquim Ataides <ti@promobrindes.com.br> 1791291432 -0300	branch: Created from dia/2026-10-06
+1dcf8dda0d44f9c647a24ef6146f54cf882490f3 a687908392a40dcbc485c8d8fa64200cbe26c665 Joaquim Ataides <ti@promobrindes.com.br> 1791291443 -0300	cherry-pick: fix(telefonia): retoma TEL-RECORDING-001 com POST na Edge e ciclo de blob no efeito
+a687908392a40dcbc485c8d8fa64200cbe26c665 752c3d0af5d19eeb5f0d88ac43085d26a8109603 Joaquim Ataides <ti@promobrindes.com.br> 1791291577 -0300	commit: fix(telefonia): rejeita gravação com corpo vazio

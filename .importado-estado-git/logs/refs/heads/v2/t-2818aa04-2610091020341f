@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 68980bf5e3486ca611a90742053bfdb008fcb5c3 Joaquim Ataides <ti@promobrindes.com.br> 1791552043 -0300	branch: Created from dia/2026-10-09
+68980bf5e3486ca611a90742053bfdb008fcb5c3 51163d291e024460d45cadc238616eca789d265c Joaquim Ataides <ti@promobrindes.com.br> 1791552086 -0300	cherry-pick: feat(auth): trava de política de rede no requireAuth das Edges (R2-AUTH-022)
+51163d291e024460d45cadc238616eca789d265c e9cd4b4b34dc981371b12284dee89e6878bd04d3 Joaquim Ataides <ti@promobrindes.com.br> 1791552744 -0300	commit: test(edge): stubs das Edges respondem a politica de rede do requireAuth (R2-AUTH-022)
+e9cd4b4b34dc981371b12284dee89e6878bd04d3 9739ee808e7ea10760393bad21007eb59ff8f062 Joaquim Ataides <ti@promobrindes.com.br> 1791554346 -0300	commit: test(edge): contrato prova orcamentos atuais alimentando a regra efetiva (R2-AUTH-022)

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235598 -0300	
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235599 -0300	reset: moving to HEAD
+c28a1a97af8b9fc34ccb54db845a29a48169f257 c28a1a97af8b9fc34ccb54db845a29a48169f257 Joaquim Ataides <ti@promobrindes.com.br> 1791235671 -0300	reset: moving to c28a1a97af8b9fc34ccb54db845a29a48169f257
+c28a1a97af8b9fc34ccb54db845a29a48169f257 5518f2383afae8d8176a4c5f3f2e43adf08381b6 Joaquim Ataides <ti@promobrindes.com.br> 1791235671 -0300	cherry-pick: fix(talkx): insights expõem base calculada e ritmo usa minutos consecutivos
+5518f2383afae8d8176a4c5f3f2e43adf08381b6 f9aaf820bb4af688848d0690b428e28a2f757690 Joaquim Ataides <ti@promobrindes.com.br> 1791235671 -0300	cherry-pick: test(talkx): expõe erro, truncagem e ritmo zero nos insights (RED)
+f9aaf820bb4af688848d0690b428e28a2f757690 1e91e6cdf6daa24df9b5139ee6c78188ff0d016c Joaquim Ataides <ti@promobrindes.com.br> 1791235671 -0300	cherry-pick: fix(talkx): trata falha das consultas, teto de cliques e ETA sem ritmo

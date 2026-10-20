@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=diagnostico-latencia-sonda-261013
+ID=2610131052de2c
+BRANCH=v2/diagnostico-latencia-sonda-261013-2610131052de2c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/diagnostico-latencia-sonda-261013-2610131052de2c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T10:52:59-03:00
+KANBAN=t_97ca8f79
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/diagnostico-latencia-sonda-261013-2610131052de2c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610131052de2c
+PRONTO_SHA=0e5e41530ab6a136c0b8e5cbe9b8a0366dd4c3ab

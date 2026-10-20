@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 5bb8664d243f0787d35e99d55ec899187a39121b Joaquim Ataides <ti@promobrindes.com.br> 1791506232 -0300	branch: Created from dia/2026-10-08
+5bb8664d243f0787d35e99d55ec899187a39121b 965ff1c544507106ffcf6b031fd89fd63680b707 Joaquim Ataides <ti@promobrindes.com.br> 1791506523 -0300	commit: fix(ai-transcribe-audio): escolher o tipo de áudio pelos magic bytes
+965ff1c544507106ffcf6b031fd89fd63680b707 63ca1501d6ea0befd0f3e9757312408958b14adc Joaquim Ataides <ti@promobrindes.com.br> 1791543388 -0300	rebase (finish): refs/heads/v2/sl-195a-ia-stt-magic-bytes-26100821377706 onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+63ca1501d6ea0befd0f3e9757312408958b14adc 0773985e81e1e477ae79d294020cbc05398a655c Joaquim Ataides <ti@promobrindes.com.br> 1791544390 -0300	commit: fix(ai-transcribe-audio): magic bytes só valem para áudio conhecido; MP4 vai como m4a

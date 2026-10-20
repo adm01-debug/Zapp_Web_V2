@@ -1,0 +1,6 @@
+chore(ci): tira do recorte o hunk de CLAUDE.md trazido pelo cherry-pick
+
+O cartao proibe tocar o CLAUDE.md (a escrita no arquivo de instrucao de agente exige aprovacao do
+dono) e o diff passava do limite de 90 mil caracteres do portao de fechamento, que pede para tirar do
+commit o que nao e deste cartao. O arquivo volta ao estado da branch do dia; a reconciliacao do
+CLAUDE.md segue no cartao t_bd92cc1f.

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791561736 -0300	branch: Created from dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 abc7942d874b4be0f6d605d3b1a0a6e94bfbf248 Joaquim Ataides <ti@promobrindes.com.br> 1791561763 -0300	cherry-pick: fix(multiplix): worker fecha o disparo pelo dreno POR ITEM (MX03, TL-033)
+abc7942d874b4be0f6d605d3b1a0a6e94bfbf248 ebfe57aba3d8536a72acde58f96605fac2ed983f Joaquim Ataides <ti@promobrindes.com.br> 1791561763 -0300	cherry-pick: fix(multiplix): rollback executavel na migration do cast MX03
+ebfe57aba3d8536a72acde58f96605fac2ed983f 6c2b6a4ab89e60b89a909f8bcfa5d589da3c1374 Joaquim Ataides <ti@promobrindes.com.br> 1791561763 -0300	cherry-pick: fix(multiplix): remove case duplicado do mock e ajusta os 2 testes MX03 novos

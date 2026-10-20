@@ -1,0 +1,14 @@
+fix(grupos): manter grupo já selecionado no menu "Enviar mensagem"
+
+R2-API-061 (#233): o item "Enviar mensagem" do menu do card chamava
+toggleGroupSelection, então com o grupo já selecionado ele saía dos
+destinatários — com A e B selecionados, o menu de A deixava só B; com
+apenas A, o diálogo abria sem nenhum destinatário.
+
+O hook passa a expor selectGroup (adição idempotente, nunca remove) e o
+menu usa essa ação: o público pretendido fica explícito e a revisão de
+destinatários do diálogo (contagem + nomes) continua visível antes do
+disparo.
+
+# Conflicts:
+#	src/components/groups/__tests__/GroupsView.test.tsx

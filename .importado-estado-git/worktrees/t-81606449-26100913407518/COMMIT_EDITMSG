@@ -1,0 +1,6 @@
+feat(arquivos): subtitulo e funil com periodo e remetente
+
+Titulo 'Arquivos compartilhados' + subtitulo do mockup no cabecalho da aba.
+O seletor de periodo (F04) passa a morar no painel do funil, ao lado do filtro de
+remetente (Voce, contato, cada atendente e Equipe; selecao multipla, nenhum marcado
+= todos), com contagem por remetente. Ordem padrao segue 'Mais recentes'.

@@ -1,0 +1,12 @@
+fix(inbox): Desfazer do Arquivar reabre o contato quando o FSM recusa o status anterior (#241)
+
+O FSM `enforce_conversation_status_transition` so desarquiva para open/pending.
+Desfazer um contato arquivado cujo status anterior era waiting/resolved/closed
+era recusado pelo banco e virava um toast de erro sem desfazer nada. Agora,
+quando o banco recusa o status anterior e ele nao e open/pending, a segunda
+escrita reabre como 'open' (transicao permitida) com toast.info explicando —
+nunca sucesso falso, nunca Desfazer sem efeito.
+
+Teste novo cobre o caso 'waiting' (1a escrita recusada, 2a grava open, sem
+toast.error). Passada de codigo do perfil complexo (a 2a chamada do Devin no
+mesmo workspace e recusada pela guarda).

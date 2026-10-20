@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8e356134fda9647151a80e3fee8969eb952afe5a Joaquim Ataides <ti@promobrindes.com.br> 1791388002 -0300	branch: Created from dia/2026-10-07
+8e356134fda9647151a80e3fee8969eb952afe5a 6a0840dae6882cdc6842a0b3d4c0c7e45d8c4832 Joaquim Ataides <ti@promobrindes.com.br> 1791388342 -0300	commit: fix(tts): cancela geracao duplicada ao desmontar chat

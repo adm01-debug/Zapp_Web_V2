@@ -1,0 +1,26 @@
+fix(multiplix): resolve rebase em dia/09/10 e porta TL-007/TL-015 (TL-008)
+
+Rebase em dia/2026-10-09: 2 cartões do mesmo lote grande (a mesma base de 3
+regiões simultâneas reaproveitada por este cartão, TL-006/F72) avançaram
+MultiplixView.tsx:
+
+- TL-007 (lista virtualizada @tanstack/react-virtual + "Selecionar todos os
+  N resultados"): mantido na região 01, só reposicionado dentro do layout
+  deste cartão; resíduo do antigo MAX_SELECTABLE no rodapé corrigido para
+  POLICY_MAX_IDS/fmtInt (mesmo achado da entrega irmã t_736d0ed1).
+- TL-015 (e2e/multiplix.spec.ts, hermético): adaptado para a tela sem
+  diálogo — region 02 sem a conta N×M (feature do TL-010, não presente
+  nesta ponta: aqui o campo "Nome do disparo" continua obrigatório e o
+  bloco de texto tem o contador "N/65536 caracteres" do próprio TL-008) e
+  os chips inserem no CURSOR (`inserirNoCursor`), sem espaço separador —
+  "{{empresa}}{{saudacao}}", não "{{empresa}} {{saudacao}}".
+
+ACHADO QUE NÃO É REGRESSÃO DESTE CARTÃO (mesmo do t_736d0ed1): o
+"Visualizar como" da região 03 lista `selectedRows.map(...)` sem teto — com
+`selectAllResults` (TL-007) selecionando até 10.000 linhas, são 10.000
+<SelectItem> do Radix. Adicionei o mesmo PREVIEW_OPTIONS_MAX=200.
+
+Testes de componente adaptados para a virtualização real (dublê de
+@tanstack/react-virtual) e para os dois rodapés "N empresa(s)
+selecionada(s)" (região 01 + global) — mesmo padrão já usado na entrega
+irmã.

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ce8f99e418dde54bc50badba5044cfbd48e351f2 Joaquim Ataides <ti@promobrindes.com.br> 1791538851 -0300	branch: Created from dia/2026-10-09
+ce8f99e418dde54bc50badba5044cfbd48e351f2 38480a7e9c5e25d2409005073fba3d8175133865 Joaquim Ataides <ti@promobrindes.com.br> 1791539145 -0300	commit (cherry-pick): docs(team-chat): corrige comentario invertido do contrato de handleAudioSend (#350)
+38480a7e9c5e25d2409005073fba3d8175133865 d9e4ecd0f83a5c16361af443ba553bc3a5f02e44 Joaquim Ataides <ti@promobrindes.com.br> 1791539323 -0300	commit (amend): docs(team-chat): corrige comentário invertido do contrato de handleAudioSend (#350)

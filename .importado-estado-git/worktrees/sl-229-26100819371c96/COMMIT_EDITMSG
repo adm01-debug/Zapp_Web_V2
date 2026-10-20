@@ -1,0 +1,14 @@
+test(performance): prova que o codigo usa o alvo do FCP e mantem o do FID (SL-229)
+
+A outra ponta do contrato dos alvos: o guarda de tests/contracts prova que a
+secao 'web-vitals' cobre o que o campo publica; aqui a prova e o CODIGO REAL
+(getVitalTargets/getRating) — o alvo novo do FCP chega em quem decide e o FID,
+declarado sem par de campo, continua medido contra o alvo dele (nao cai no
+'desconhecido = good').
+
+- src/lib/web-vitals.ts: 'FCP' entra no tipo VitalName (a uniao descreve as
+  metricas do mapa) e o cabecalho lista o FCP.
+- src/lib/__tests__/web-vitals-alvos.test.ts (novo, 4 testes).
+
+Vermelho antes: com o JSON anterior ao cartao, 3 dos 4 falham (nao ha alvo de
+FCP); com o alvo, 4/4 verdes.

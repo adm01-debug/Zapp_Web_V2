@@ -1,0 +1,14 @@
+fix(edge): deduplica entrega e checa insert do webhook ElevenLabs (IA-WEBHOOK-001)
+
+O webhook assinado aceitava replay — cada entrega válida caía num novo
+INSERT em audit_logs — e o {error} do insert era ignorado antes do 200,
+então falha de persistência era respondida como sucesso (incluindo a
+quebra certa: id textual do provedor na coluna uuid entity_id).
+
+- migration aditiva: audit_logs.dedupe_key + índice único parcial
+  ux_audit_logs_dedupe_key (postura da IA-047)
+- dedupe_key estável (elevenlabs:<tipo>:<id|sha256 do corpo>); 23505 =>
+  200 { duplicate: true } sem novo efeito; outro erro de insert => 5xx
+- entity_id só recebe o id do evento quando é UUID válido
+- handler exportado com deps injetáveis + 7 Deno.test (vermelho antes,
+  verde depois); dedupe provado no banco local com 23505 real

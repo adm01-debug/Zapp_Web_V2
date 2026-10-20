@@ -1,0 +1,48 @@
+== rotas-base-dry-run — fixture do integrador (rotas com e sem migration) ==
+integrador sob teste: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-vera/ENTREGA/integrar.sh
+  md5 8fbd40f84c4145d7 | 493 linhas | 2026-10-06 19:41
+areia (HOME sintético): /tmp/v2-rotas-base.zmgbS5
+
+extraído de integrar.sh: definições 165 linhas | ponto A 18 linhas (a partir da 272) | ponto B 10 linhas (a partir da 459)
+
+-- A-com (ponto A, base vermelha) (ponto A; ponta com migration)
+   ok    ponto A exercitou a conferência da BASE (1 chamada(s))
+   ok    rota COM migration usou conjunto explícito (v2-integrador)
+   nota  conjunto montado antes? 3 chamada(s) ao banco citando v2-integrador
+   zapp-verify (todas)  : zapp-verify	n=1	set=v2-integrador	out=/tmp/v2-rotas-base.zmgbS5/A-com/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : zapp-db-local	down /tmp/v2-rotas-base.zmgbS5/A-com/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador zapp-db-local	up /tmp/v2-rotas-base.zmgbS5/A-com/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador zapp-db-local	down /tmp/v2-rotas-base.zmgbS5/A-com/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador 
+   log da BASE          : VERIFY: VERDE (1s) — registros em /dev/null
+   rota no log          : 0 base dia/2026-10-07 @ 7b93f1900 (ponta da fila): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o 
+
+-- A-sem (ponto A, base vermelha) (ponto A; ponta sem migration)
+   ok    ponto A exercitou a conferência da BASE (1 chamada(s))
+   ok    rota SEM migration manteve o comando sem nome de conjunto (como hoje)
+   ok    rota SEM migration não fez nenhuma chamada ao banco
+   ok    o fluxo manteve AVISO/NÃO VERIFICADO no log da BASE
+   zapp-verify (todas)  : zapp-verify	n=1	set=-	out=/tmp/v2-rotas-base.zmgbS5/A-sem/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : (nenhuma chamada)
+   log da BASE          : AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   rota no log          : 0 base dia/2026-10-07 @ 036020a9e (ponta da fila): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICAD
+
+-- B-com (ponto B, pós-cartão vermelho) (ponto B; ponta com migration)
+   ok    ponto B exercitou a conferência da BASE (1 chamada(s))
+   ok    rota COM migration usou conjunto explícito (v2-integrador)
+   nota  conjunto montado antes? 3 chamada(s) ao banco citando v2-integrador
+   zapp-verify (todas)  : zapp-verify	n=1	set=v2-integrador	out=/tmp/v2-rotas-base.zmgbS5/B-com/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : zapp-db-local	down /tmp/v2-rotas-base.zmgbS5/B-com/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador zapp-db-local	up /tmp/v2-rotas-base.zmgbS5/B-com/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador zapp-db-local	down /tmp/v2-rotas-base.zmgbS5/B-com/home/hermes-workspaces/Zapp_Web_V2/.integrador v2-integrador 
+   log da BASE          : VERIFY: VERDE (1s) — registros em /dev/null
+   rota no log          : 0 abcdef012345 (base após cartão vermelho): a ponta traz migration — BASE conferida COM o conjunto v2-integrador (sem nome de conjunto o banco
+
+-- B-sem (ponto B, pós-cartão vermelho) (ponto B; ponta sem migration)
+   ok    ponto B exercitou a conferência da BASE (1 chamada(s))
+   ok    rota SEM migration manteve o comando sem nome de conjunto (como hoje)
+   ok    rota SEM migration não fez nenhuma chamada ao banco
+   ok    o fluxo manteve AVISO/NÃO VERIFICADO no log da BASE
+   zapp-verify (todas)  : zapp-verify	n=1	set=-	out=/tmp/v2-rotas-base.zmgbS5/B-sem/home/arquitetura-v2/integrador/.verificacao-da-base.log 
+   zapp-db-local        : (nenhuma chamada)
+   log da BASE          : AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+   rota no log          : 0 abcdef012345 (base após cartão vermelho): a ponta não traz migration — BASE conferida sem banco (banco_local fica AVISO/NÃO VERIFICADO, co
+
+== resumo: 0 falha(s)
+TODAS AS ROTAS CONFORME O CONTRATO.
+areia em /tmp/v2-rotas-base.zmgbS5 (V2_TESTE_LIMPAR=1 para apagar)

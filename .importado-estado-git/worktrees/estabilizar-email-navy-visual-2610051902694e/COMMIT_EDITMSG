@@ -1,0 +1,9 @@
+test(e2e): estabiliza as duas intermitências do email-navy-visual
+
+- painel CRM a 320 px: congela as transições (freezeVisualTransitions) ANTES de medir
+  o boundingBox de 'Fechar detalhes', para não ler a gaveta em posição intermediária.
+- 'superfícies do Email herdam os mesmos tokens': espera a instância global do axe
+  (@axe-core/react em DEV) ficar ociosa no mesmo frame que dispara a nossa auditoria,
+  eliminando o 'Axe is already running' intermitente no Firefox.
+
+Nenhuma asserção de contraste, foco, token ou tamanho foi removida ou afrouxada.

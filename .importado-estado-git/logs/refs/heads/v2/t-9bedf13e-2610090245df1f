@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 fd6847638e051c559539a1cac87e11beb7c9d746 Joaquim Ataides <ti@promobrindes.com.br> 1791524711 -0300	branch: Created from dia/2026-10-09
+fd6847638e051c559539a1cac87e11beb7c9d746 774de2f00988500a2b8f4066eff10ffdf59e1265 Joaquim Ataides <ti@promobrindes.com.br> 1791525499 -0300	commit: fix(talk-x): painel "Detalhes do segmento" com cabeçalho fixo, critérios legíveis, origem e recontagem (TL-137)
+774de2f00988500a2b8f4066eff10ffdf59e1265 c6dd489ca1499b356fc3043bc223de5150d0c756 Joaquim Ataides <ti@promobrindes.com.br> 1791525516 -0300	commit (amend): fix(talk-x): Completar o painel "Detalhes do segmento": critérios, origem, composição e tags (TL-137)
+c6dd489ca1499b356fc3043bc223de5150d0c756 a879548461ab63ecdf3ff1044916f1d06f0fccfb Joaquim Ataides <ti@promobrindes.com.br> 1791563556 -0300	rebase (finish): refs/heads/v2/t-9bedf13e-2610090245df1f onto 12e407210db0ea4d9f817618d30848304ca932d5

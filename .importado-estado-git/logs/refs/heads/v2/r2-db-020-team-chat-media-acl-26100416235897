@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 72471e4ab1fbcf23842d5726c5bdcc8553e61687 Joaquim Ataides <ti@promobrindes.com.br> 1791141813 -0300	branch: Created from dia/2026-10-04
+72471e4ab1fbcf23842d5726c5bdcc8553e61687 91b020740d542cc8bc2c1624ebc3eac633c79e58 Joaquim Ataides <ti@promobrindes.com.br> 1791142639 -0300	commit: fix(team-chat): vincula ACL e media_path de mídia ao objeto e à conversa (R2-DB-020)

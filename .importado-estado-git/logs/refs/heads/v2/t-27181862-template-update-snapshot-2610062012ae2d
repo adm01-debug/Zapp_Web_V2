@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 7e801f8582265bc03aba115f8871f1dd0abcdb35 Joaquim Ataides <ti@promobrindes.com.br> 1791328373 -0300	branch: Created from dia/2026-10-06
+7e801f8582265bc03aba115f8871f1dd0abcdb35 ecf4f5886c7de535984bc5f76e678819bc955a32 Joaquim Ataides <ti@promobrindes.com.br> 1791331055 -0300	commit: fix(db): snapshot do estado novo grava o carimbo que o guard da RPC casa (#298)

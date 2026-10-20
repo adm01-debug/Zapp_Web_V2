@@ -1,0 +1,3 @@
+test(team-chat): pinos dos convites de departamento no contrato atual (department_invitations + RPC)
+
+departmentInviteCode.random.test.tsx: o codigo do convite vem do servidor (RPC create_department_invite) — o hook devolve exatamente o codigo da RPC, o cliente nao sorteia nada e nao escreve em tabela nenhuma (nem department_invites, nem a auditoria revogada). rls-contract.test.ts: o contrato de schema mirado passa a ser department_invitations e a assinatura da RPC no schema-manifest.json (o cliente nao tem mais INSERT de convite para conferir coluna a coluna).

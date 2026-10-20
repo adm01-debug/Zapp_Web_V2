@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791461033 -0300	
+56917f551f1e9d834297f0df48c33726666b992d 56917f551f1e9d834297f0df48c33726666b992d Joaquim Ataides <ti@promobrindes.com.br> 1791461034 -0300	reset: moving to HEAD
+56917f551f1e9d834297f0df48c33726666b992d 6e8e78ec1ee925e8675df3637ab84c56756a096d Hugo (worker hooks) <ti@promobrindes.com.br> 1791461182 -0300	commit: fix(hooks): useDebounce cancela o disparo pendente ao desmontar
+6e8e78ec1ee925e8675df3637ab84c56756a096d 1098da5a935929b171674a99b425d6b515fd6072 Joaquim Ataides <ti@promobrindes.com.br> 1791554673 -0300	rebase (start): checkout dia/2026-10-09
+1098da5a935929b171674a99b425d6b515fd6072 6e8e78ec1ee925e8675df3637ab84c56756a096d Joaquim Ataides <ti@promobrindes.com.br> 1791554694 -0300	rebase (abort): returning to refs/heads/v2/usedebounce-cancela-desmontar-2610080903992c

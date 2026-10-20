@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 f0536ff170b4c4739a436efa42e6afa5e6a48536 Joaquim Ataides <ti@promobrindes.com.br> 1791236599 -0300	
+f0536ff170b4c4739a436efa42e6afa5e6a48536 f0536ff170b4c4739a436efa42e6afa5e6a48536 Joaquim Ataides <ti@promobrindes.com.br> 1791236600 -0300	reset: moving to HEAD
+f0536ff170b4c4739a436efa42e6afa5e6a48536 44c5fd1592915746dc4766a199b20238010b9ca3 Joaquim Ataides <ti@promobrindes.com.br> 1791236613 -0300	cherry-pick: test(email): mede memória, consultas, iframes, listeners e blobs do Email (#154)
+44c5fd1592915746dc4766a199b20238010b9ca3 24f4fd30ee131b668e0c2833df2f1b9582984d1b Joaquim Ataides <ti@promobrindes.com.br> 1791237422 -0300	commit: test(email): corrige medição real de consultas EN-088 (#154)

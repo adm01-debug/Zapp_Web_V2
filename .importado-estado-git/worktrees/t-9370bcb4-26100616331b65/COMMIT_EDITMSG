@@ -1,0 +1,3 @@
+test(auth): prova que o veredito de vazamento pertence sempre a consulta vigente (#256)
+
+R2-AUTH-031 (item 256): o defeito ja estava corrigido na BASE_DIA pelo commit fc5768180, mas o teste de regressao dele nao cobria dois caminhos. Pinos aqui: (F) voltar para a MESMA senha (A -> B -> A) nao deixa a consulta original encerrada sobrescrever o veredito da vigente; (G) a resposta da consulta antiga nao derruba o aviso de checagem da vigente nem antecipa o veredito dela. Os dois casos falham no componente anterior a correcao (8/8 FAIL) e passam no atual (8/8 PASS).

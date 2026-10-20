@@ -1,0 +1,25 @@
+test(multiplix): cobre confirm, drenagem e reconciliacao da fila no banco de teste (TL-048/F89)
+
+O harness da fila por item comecava com a fila JA materializada por INSERT direto:
+provava claim/lease/pausa/cancel/sweep, mas nao o caminho que MATERIALIZA a fila
+(multiplix_confirm_dispatch, F51) nem o que a CONCLUI. Era a lacuna do F89
+("integracao da confirmacao ate dreno esta quebrada e nao coberta").
+
+- carrega f33/f51c/f58 na cadeia de migrations do harness (a definicao CONTRATO do
+  confirm; a parte aditiva f51a usa CREATE FUNCTION e abortaria com 42723);
+- (6) confirma: 1 item por (destinatario APTO x bloco), total_recipients so com os
+  aptos (quem nao tem pessoa e quem esta suprimido ficam FORA), 2o clique idempotente
+  e recusa sem apto (no_eligible_recipients);
+- (7) drenagem com fila aberta NAO conclui o disparo;
+- (8) o ACK reconcilia o item que estava em outcome_unknown (com controle positivo e
+  negativo de external_id desconhecido).
+
+A drenagem ATE a conclusao ficou bloqueada por defeito de producao medido: as duas
+RPCs de drenagem atribuem um CASE de literais text a coluna enum e levantam 42804
+justamente no UPDATE que conclui o disparo (mesma classe que o F59 consertou em
+transition_multiplix_dispatch). Conserto e DDL e este cartao proibe DDL -> cartao
+t_1ecff9cb; as duas assercoes ja escritas estao no TODO no fim do arquivo.
+
+Mutantes que morrem por assercao: (M1) predicado de aptidao do confirm -> F89.6 falha
+com 6/6; (M2) checagem de pendentes da drenagem -> F89.7 falha; (M3) status do ACK
+-> F89.8 falha.

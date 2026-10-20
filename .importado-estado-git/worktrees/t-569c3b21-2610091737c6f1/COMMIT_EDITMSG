@@ -1,0 +1,7 @@
+fix(inbox): selo de engajamento usa tokens do sistema e contraste AA
+
+- Substitui getScoreBadgeBg de HSL literals para tokens do sistema (hsl(var(--success)), hsl(var(--warning)), hsl(var(--destructive)))
+- Adiciona getScoreBadgeFg usando --success-foreground, --warning-foreground, --destructive-foreground
+- Substitui color: 'white' por color: getScoreBadgeFg(engagementScore)
+- Atualiza testes para verificar tokens do sistema via getAttribute('style')
+- Testes passam: 43/43

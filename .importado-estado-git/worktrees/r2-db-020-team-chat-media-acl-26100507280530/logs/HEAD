@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c43b8593faad4aab291d16be3fe308a36c005159 Joaquim Ataides <ti@promobrindes.com.br> 1791196135 -0300	
+c43b8593faad4aab291d16be3fe308a36c005159 c43b8593faad4aab291d16be3fe308a36c005159 Joaquim Ataides <ti@promobrindes.com.br> 1791196135 -0300	reset: moving to HEAD
+c43b8593faad4aab291d16be3fe308a36c005159 12f2584374c50c56fb214c21ecbe2e6424332fea Joaquim Ataides <ti@promobrindes.com.br> 1791196197 -0300	cherry-pick: fix(team-chat): vincula ACL e media_path de mídia ao objeto e à conversa (R2-DB-020)
+12f2584374c50c56fb214c21ecbe2e6424332fea 70f3fa687de92d7fda49243140b01c58d854f379 Joaquim Ataides <ti@promobrindes.com.br> 1791198426 -0300	commit: fix(team-chat): prova contrato canonico de midia e torna o rollback real (R2-DB-020)

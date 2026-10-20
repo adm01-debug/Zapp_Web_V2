@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e5dcb3c0fa9000ed7a2078f4468ebc7f4cbe055f Joaquim Ataides <ti@promobrindes.com.br> 1791395652 -0300	
+e5dcb3c0fa9000ed7a2078f4468ebc7f4cbe055f e5dcb3c0fa9000ed7a2078f4468ebc7f4cbe055f Joaquim Ataides <ti@promobrindes.com.br> 1791395653 -0300	reset: moving to HEAD
+e5dcb3c0fa9000ed7a2078f4468ebc7f4cbe055f 68edd441a35cffc7034f225633770068c7e865c2 Joaquim Ataides <ti@promobrindes.com.br> 1791395662 -0300	commit: Lote 07/10 (tarde): 49 correções e melhorias da fábrica (Talk X, inbox, tarefas, SLA, filas, catálogo, paleta, journey, hooks)
+68edd441a35cffc7034f225633770068c7e865c2 8e855e465a7a065d2807dd29d1e16b65b04ae32d Joaquim Ataides <ti@promobrindes.com.br> 1791402145 -0300	commit: chore(catalogo): acrescenta get_inbox_contact_summaries e warroom_alerts.dedupe_key depois de aplicar as migrations 20261005124628 e 20261006155408 no banco canônico

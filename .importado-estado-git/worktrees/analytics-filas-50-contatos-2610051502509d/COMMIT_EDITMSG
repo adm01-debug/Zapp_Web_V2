@@ -1,0 +1,15 @@
+fix(filas): calcula analytics sobre toda a fila
+
+Os cartoes de QueueDetails ainda saiam da pagina de 50 contatos: total,
+atribuidos e resolvedToday eram derivados da amostra visual e o SLA vinha de
+uma lista de IDs dos 50 exibidos. Agora as contagens vem do servidor
+(count: 'exact', head: true) sobre a fila inteira, resolvedToday recorta
+conversation_status = 'resolved' com janela semiaberta no
+conversation_status_changed_at e o tempo medio le todas as amostras de
+conversation_sla da fila por relacao com contacts.queue_id, paginando com
+fetchAllRows. Erro na leitura de SLA e fail-closed: registra e mostra
+Sem dados sem derrubar as contagens.
+
+O teste irmao de totais (R2-QUE-003) teve o mock estendido para modelar as
+consultas novas (gte/lt e conversation_sla) e ganhou o caso do cartao
+Resolvidos Hoje; nenhuma assercao existente foi enfraquecida.

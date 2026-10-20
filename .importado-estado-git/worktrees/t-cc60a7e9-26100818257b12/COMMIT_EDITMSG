@@ -1,0 +1,19 @@
+fix(telefonia): Scripts measure/colors/func/axe (E.2-E.5) (SL-240)
+
+T81-T84 do PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS: o harness de QA da
+Telefonia vivia só em /workspace/qa/tel/ (fora do repo) e os quatro scripts
+nunca foram escritos. Versiona o conjunto em qa/tel/, com o núcleo de decisão
+separado da coleta e provado por teste.
+
+- qa/tel/lib/regras.mjs — tolerância (igual/min/max), ΔE CIE76, agregação do
+  aceite {ok, fail, consoleErrors}; nada cria cor, só converte para comparar.
+- qa/tel/lib/especificacao.mjs — tabelas do E.2 (17 eixos, alvos publicados:
+  contentX 278±6, painel 408±8, tile 78±4, teclas 46±2, CTA 56±2), do E.3
+  (elemento × token que ele diz usar) e do E.5 (os 20 passos + corte
+  serious/critical do axe).
+- qa/tel/lib/coleta.mjs — só lê a página (Playwright já instalado); headless,
+  alvo local (dev server do cartão ou fixture file://). Nunca produção (R1).
+- qa/tel/{measure,colors,func,axe}.mjs — as quatro pontas de linha de comando.
+- qa/tel/lib/especificacao.unit.mjs + qa/tel/provas.unit.mjs + fixtures/
+  telefonia.html — prova offline: 15 testes do núcleo puro e uma corrida de
+  Chromium de ponta a ponta contra a fixture, que reprova o eixo mutado.

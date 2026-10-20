@@ -1,0 +1,11 @@
+fix(auth): bloquear perfil inativo no AuthProvider (R2-AUTH-004)
+
+AuthProvider só publica estado autenticado depois de carregar o perfil e
+confirmar is_active === true. Perfil inativo/ausente ou consulta que falhou
+encerram a sessão local (fail-closed), limpam caches e fazem signOut
+best-effort. Guarda por sequência descarta resposta atrasada de perfil para
+não repor usuário antigo após troca/signOut. refreshProfile reavalia o
+perfil e derruba a sessão se virar inativo.
+
+Prova: teste RED→GREEN em useAuth.test.tsx (5 falham no código antigo, 8
+passam no novo); zapp-verify --rapido verde; suíte completa 6220/6220.

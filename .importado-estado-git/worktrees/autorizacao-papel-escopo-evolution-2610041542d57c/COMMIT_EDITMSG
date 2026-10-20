@@ -1,0 +1,18 @@
+fix(evolution-api): matriz de autorização por ação nas ações de controle (R2-API-001)
+
+Fecha o defeito P1 R2-API-001: o gate global de evolution-api só validava
+getUser, deixando ações de controle/escopo (set-webhook, disconnect,
+update-privacy, delete-instance, bootstrap-instance-token) abertas a
+qualquer JWT válido.
+
+- Novo _shared/evolution-control-authz.ts: classifyEvolutionAction +
+  decideControlAuthz + decideSendAuthz (controle exige admin/supervisor;
+  envio direto exige admin/supervisor OU contato visível).
+- evolution-api aplica a matriz ANTES de qualquer fetch/RPC privilegiado.
+- webhook-diagnostic (leitura sensível + auto-fix) passa a exigir
+  admin/supervisor — o reparo não é exceção ao gate.
+- Ambos refatorados para handler exportável com deps injetáveis
+  (testabilidade, mesmo padrão das edges com guard).
+
+Testes (RED→GREEN): index.test.ts (5), diagnostic-authz.test.ts (2),
+evolution-control-authz.test.ts (7). RED demonstrado ao desativar o gate.

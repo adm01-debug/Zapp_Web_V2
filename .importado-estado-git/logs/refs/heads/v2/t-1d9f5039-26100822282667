@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791509313 -0300	branch: Created from dia/2026-10-08
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf 9816b32406eb3fe6c481ce6791fea0d64061d644 Joaquim Ataides <ti@promobrindes.com.br> 1791510054 -0300	commit: feat(multiplix): edge multiplix-prepare-voice deduplica o TTS por roteiro distinto (F65/TL-003)
+9816b32406eb3fe6c481ce6791fea0d64061d644 8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf Joaquim Ataides <ti@promobrindes.com.br> 1791510297 -0300	reset: moving to HEAD~1
+8ea6509b4b81ecb5cc7f93c92dbbd2f93affe4cf a9e256784a25636fe3d709edee793e6d712db06f Joaquim Ataides <ti@promobrindes.com.br> 1791510308 -0300	commit: chore(multiplix): confere o F65 na ponta e fecha sem codigo — o item e Edge Function, proibida pelas regras do cartao (TL-003)

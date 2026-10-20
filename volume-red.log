@@ -1,0 +1,8 @@
+     × não salta de 100 para 0 ao cruzar a abertura inferior do arco 13ms
+     × não salta de 0 para 100 ao cruzar a abertura no sentido inverso 8ms
+     × ignora o pointerdown no centro (raio abaixo de 60% do raio do anel) 14ms
+     × no size padrão (96) mantém knob de 14px e número de 24px 9ms
+     × escala knob e número junto com o prop size (192 → 28px / 48px) 5ms
+     × com movimento reduzido o knob não tem transição CSS e vai direto à posição 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 12 passed (18)

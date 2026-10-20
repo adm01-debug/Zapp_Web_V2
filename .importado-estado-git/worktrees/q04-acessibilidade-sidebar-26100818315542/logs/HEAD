@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791495097 -0300	
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 210c3e7c1bdadeeaa6197294387b4fad53aeefbc Joaquim Ataides <ti@promobrindes.com.br> 1791495098 -0300	reset: moving to HEAD
+210c3e7c1bdadeeaa6197294387b4fad53aeefbc 614a9070dca24926b9dc18fe073c085fec81881b Joaquim Ataides <ti@promobrindes.com.br> 1791495113 -0300	cherry-pick: fix(a11y): dica no botão de acessibilidade da sidebar
+614a9070dca24926b9dc18fe073c085fec81881b 4ce13550fb680dff03239e458ce0dd02e8f5e235 Joaquim Ataides <ti@promobrindes.com.br> 1791495244 -0300	commit: fix(a11y): botao de acessibilidade se basta sem TooltipProvider externo
+4ce13550fb680dff03239e458ce0dd02e8f5e235 26fc8094033f900e67a91e9debd06cda36c5f3ef Joaquim Ataides <ti@promobrindes.com.br> 1791495253 -0300	commit (amend): fix(a11y): botao de acessibilidade se basta sem TooltipProvider externo

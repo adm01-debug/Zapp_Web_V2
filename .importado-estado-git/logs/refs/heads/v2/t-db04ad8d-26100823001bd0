@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 e3349b70ce3c5695fd480dcbbed9d213c91cab84 Joaquim Ataides <ti@promobrindes.com.br> 1791511237 -0300	branch: Created from dia/2026-10-08
+e3349b70ce3c5695fd480dcbbed9d213c91cab84 bf2126d7c35a3d73fa9da6dffc55b7727737f7f5 Joaquim Ataides <ti@promobrindes.com.br> 1791511686 -0300	commit: fix(telefonia): Remover alias VoIPPanel (SL-241)

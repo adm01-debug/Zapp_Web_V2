@@ -1,0 +1,13 @@
+fix(tarefas): Salvar espera a escrita e não dispara estado e campos em paralelo (#419)
+
+R2-MOD-051: o `salvar` do WorkItemSheet chamava `onMove` e `onSave` sem
+aguardar e fechava o Sheet na mesma batida, com as duas respostas ainda
+pendentes. As props de escrita passam a devolver a promessa, o Salvar
+trava o botão enquanto ela não volta e só fecha quando a edição inteira
+conclui; uma falha mantém o formulário aberto com o rascunho digitado. O
+estado vai primeiro (a máquina de estados valida destino e motivo) e o
+patch dos campos em seguida: nada de duas escritas concorrentes.
+
+# Conflicts:
+#	src/components/tasks/__tests__/WorkItemSheet.test.tsx
+#	src/components/tasks/shared/WorkItemSheet.tsx

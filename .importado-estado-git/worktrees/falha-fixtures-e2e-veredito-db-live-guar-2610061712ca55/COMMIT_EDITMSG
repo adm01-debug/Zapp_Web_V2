@@ -1,0 +1,10 @@
+fix(db-live-guard): falha dos fixtures de E2E entra no veredito e no alerta (#368)
+
+O check de fixtures de E2E (E85) rodava com continue-on-error e sem id, fora da
+consolidacao do veredito e do alerta: a falha dele nao aparecia na tabela do Job
+Summary, nao gerava causa/dedupe, nao entrava no alerta e o job fechava verde.
+
+A regra de consolidacao saiu do heredoc bash do YAML para
+scripts/db-audit/consolidar-veredito.mjs, com lista fechada de passos e falha
+fechada quando um passo registrado nao aparece no contexto steps. O veredito
+passa STEPS_JSON (toJSON(steps)) e o alerta recebe os logs do proprio veredito.

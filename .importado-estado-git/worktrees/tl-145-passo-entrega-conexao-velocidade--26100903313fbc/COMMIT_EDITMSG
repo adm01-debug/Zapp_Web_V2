@@ -1,0 +1,17 @@
+fix(talk-x): extrai as secoes do passo Entrega e mostra o horario comercial real (TL-145)
+
+X133 — as secoes de Entrega sairam de TalkXWizardDelivery para
+TalkXDeliverySections (valor + callbacks), reutilizaveis pelo wizard e pela
+tela 10; as regras puras ficam em talkxDeliveryRules.
+
+- fuso: lista unica em talkxTimezones com rotulo "(UTC-03:00) Brasilia (BRT)",
+  agora lida pelo passo Entrega e pela tela 10 (antes cada tela tinha a sua);
+- horario comercial: passa a exibir o talkx_settings.business_hours gravado
+  (mesma fonte do motor) em vez da constante "segunda a sexta, 08:00-18:00";
+- velocidade: o intervalo e as mensagens/min saem do valor real do perfil, e
+  os limites (por minuto da campanha e diario da conexao) aparecem com "leva N dias";
+- conexao WhatsApp: virou secao do passo Entrega (V25) e valida o passo 3;
+- sliders de digitacao/intervalo foram para "Avancado".
+
+Prova: src/components/talkx/__tests__/TalkXDeliverySections.test.tsx (10 casos).
+zapp-verify . --rapido: VERDE (db_guard, tipos, lint).

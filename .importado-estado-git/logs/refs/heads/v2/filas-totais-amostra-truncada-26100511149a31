@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 8bcb7f6b31b366a3e952fea19987fc5ee271e6fc Joaquim Ataides <ti@promobrindes.com.br> 1791209651 -0300	branch: Created from dia/2026-10-05
+8bcb7f6b31b366a3e952fea19987fc5ee271e6fc 34fba1025c18062ed20d8c372849f2536db35c43 Joaquim Ataides <ti@promobrindes.com.br> 1791210331 -0300	commit: fix(filas): totais de fila vem de contagem do servidor, nao da pagina truncada (R2-QUE-003)

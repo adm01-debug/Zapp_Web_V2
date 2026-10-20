@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567234 -0300	branch: Created from dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 745e4080d00a6e7422d86f11553d01becb86b5cc edgar <edgar@hermes.local> 1791568627 -0300	commit: fix(webauthn): busca paginada e limite por IP nao revelam se o e-mail existe
+745e4080d00a6e7422d86f11553d01becb86b5cc b49aadb6d6dbc561fcece22415b66c3f5515207a edgar <edgar@hermes.local> 1791568859 -0300	commit (amend): fix(webauthn): busca paginada e limite por IP nao revelam se o e-mail existe
+b49aadb6d6dbc561fcece22415b66c3f5515207a ae0d6c7fcee11068d041cc222d297f11ec156b48 edgar <edgar@hermes.local> 1791568886 -0300	commit (amend): fix(webauthn): busca paginada e limite por IP nao revelam se o e-mail existe

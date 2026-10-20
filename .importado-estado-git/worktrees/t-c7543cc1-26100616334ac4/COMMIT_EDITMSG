@@ -1,0 +1,12 @@
+fix(banco): cursor composto (created_at, id) no log do Talk X (#122)
+
+A RPC public.talkx_campaign_logs paginava por created_at com
+`created_at > p_after`. Como o log e gravado em lote (varias linhas no
+mesmo created_at), a pagina seguinte descartava a cauda empatada com o
+cursor: linhas sumiam sem erro.
+
+O cursor passa a ser composto (created_at, id) — o mesmo keyset do
+ORDER BY. p_after_id entra como ultimo argumento com default para nao
+quebrar a chamada de 1a pagina ja documentada; p_after sem p_after_id
+agora erra (talkx_campaign_logs_cursor_incompleto) em vez de perder
+linhas.

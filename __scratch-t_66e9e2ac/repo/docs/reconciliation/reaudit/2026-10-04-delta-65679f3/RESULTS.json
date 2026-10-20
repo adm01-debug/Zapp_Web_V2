@@ -1,0 +1,146 @@
+{
+  "reference_date": "2026-10-04",
+  "code_pin": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+  "audit_pin": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+  "runtime": {
+    "python": "3.13.5",
+    "node": "v22.16.0"
+  },
+  "source_integrity": [
+    {
+      "ref": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+      "path": "docs/reconciliation/reproduce/validate_package.py",
+      "bytes": 12085,
+      "sha256": "4c40b6ec8b22684a81ecc507b72867fc79216a85645a550e42daf079e1e0bdbe",
+      "git_blob_sha": "51f0856032f5c17bc1d6e39ae534e680a15a4abe"
+    },
+    {
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "path": "scripts/edge-deploy/deployment-record.mjs",
+      "bytes": 2710,
+      "sha256": "65a5490f7299537e3bc60e56463a21b27eb319613ced196ba771d414c3d4ca90",
+      "git_blob_sha": "f22b809a64e73f940c2220809ee07392ed9cb33d"
+    },
+    {
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "path": "scripts/edge-deploy/register-deployment.mjs",
+      "bytes": 4547,
+      "sha256": "0a56ca6a0ec5652efe0adef19bfdbf797dc4d935f25a36a781f3f62325471488",
+      "git_blob_sha": "abbc4300dee03138c164873b7d00a3539d09a5a5"
+    },
+    {
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "path": "scripts/edge-deploy/log-injection.unit.mjs",
+      "bytes": 4766,
+      "sha256": "9b453c7a52fa3101e54b3092820b520a52ba0f7dea1a741f8de60d364dbd55fb",
+      "git_blob_sha": "8743be77762b2e6cca334d2079e9de85a5944b0f"
+    }
+  ],
+  "original_validator": {
+    "scope": "Actual unmodified audit validator executed on isolated synthetic packages; not the complete real audit package.",
+    "validator_pin": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+    "validator_path": "docs/reconciliation/reproduce/validate_package.py",
+    "validator_sha256": "4c40b6ec8b22684a81ecc507b72867fc79216a85645a550e42daf079e1e0bdbe",
+    "validator_git_blob": "51f0856032f5c17bc1d6e39ae534e680a15a4abe",
+    "cases": [
+      {
+        "id": "AUD-CTRL-01",
+        "scenario": "complete_manifest",
+        "observed_result": "PASS",
+        "expected_observed_result": "PASS",
+        "desired_integrity_result": "PASS",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 6,
+        "errors": []
+      },
+      {
+        "id": "AUD-REPRO-01",
+        "scenario": "missing_manifest",
+        "observed_result": "PASS",
+        "expected_observed_result": "PASS",
+        "desired_integrity_result": "FAIL",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 0,
+        "errors": []
+      },
+      {
+        "id": "AUD-REPRO-02",
+        "scenario": "extra_unlisted_file",
+        "observed_result": "PASS",
+        "expected_observed_result": "PASS",
+        "desired_integrity_result": "FAIL",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 6,
+        "errors": []
+      },
+      {
+        "id": "AUD-REPRO-03",
+        "scenario": "duplicate_manifest_entry",
+        "observed_result": "PASS",
+        "expected_observed_result": "PASS",
+        "desired_integrity_result": "FAIL",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 7,
+        "errors": []
+      },
+      {
+        "id": "AUD-REPRO-04",
+        "scenario": "wrong_manifest_totals",
+        "observed_result": "PASS",
+        "expected_observed_result": "PASS",
+        "desired_integrity_result": "FAIL",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 6,
+        "errors": []
+      },
+      {
+        "id": "AUD-CTRL-02",
+        "scenario": "tampered_listed_file",
+        "observed_result": "FAIL",
+        "expected_observed_result": "FAIL",
+        "desired_integrity_result": "FAIL",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 6,
+        "errors": [
+          "artifact_hash_README.md"
+        ]
+      },
+      {
+        "id": "AUD-CTRL-03",
+        "scenario": "missing_listed_file",
+        "observed_result": "FAIL",
+        "expected_observed_result": "FAIL",
+        "desired_integrity_result": "FAIL",
+        "observed_matches_reproduction": true,
+        "artifact_hashes_checked": 5,
+        "errors": [
+          "artifact_exists_README.md"
+        ]
+      }
+    ],
+    "all_reproductions_matched": true,
+    "product_code_changed": false,
+    "production_accessed": false
+  },
+  "node_regression": {
+    "original_test_file_executed": true,
+    "fetch_stubbed_by_original_tests": true,
+    "exit_code": 0,
+    "four_tests_passed": true,
+    "stdout": "TAP version 13\n# Subtest: S5145: valor da API com quebra de linha NAO forja comando de workflow no log\nok 1 - S5145: valor da API com quebra de linha NAO forja comando de workflow no log\n  ---\n  duration_ms: 50.587007\n  type: 'test'\n  ...\n# Subtest: S5145: valor da API com quebra de linha NAO cria variavel nova no GITHUB_OUTPUT\nok 2 - S5145: valor da API com quebra de linha NAO cria variavel nova no GITHUB_OUTPUT\n  ---\n  duration_ms: 37.210797\n  type: 'test'\n  ...\n# Subtest: S5145: mensagem de erro da API com quebra de linha NAO forja ::error:: no warning\nok 3 - S5145: mensagem de erro da API com quebra de linha NAO forja ::error:: no warning\n  ---\n  duration_ms: 36.016072\n  type: 'test'\n  ...\n# Subtest: S5145: o fluxo legitimo continua escrevendo deployment_id normalmente\nok 4 - S5145: o fluxo legitimo continua escrevendo deployment_id normalmente\n  ---\n  duration_ms: 38.385927\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 221.929367\n",
+    "stderr": ""
+  },
+  "all_reproductions_matched": true,
+  "production_accessed": false,
+  "database_executed": false,
+  "n8n_workflow_executed": false,
+  "warning": "A reproduced validator PASS can be the defect. These results do not certify the full R2 package or production.",
+  "extension_verifier_tests": {
+    "test_file": "test_verify_bundle.py",
+    "tests": 9,
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "test_complete_manifest_passes (__main__.IntegrityTests.test_complete_manifest_passes) ... ok\ntest_composed_synthetic_parent (__main__.IntegrityTests.test_composed_synthetic_parent) ... ok\ntest_duplicate_entry_rejected (__main__.IntegrityTests.test_duplicate_entry_rejected) ... ok\ntest_missing_listed_file_rejected (__main__.IntegrityTests.test_missing_listed_file_rejected) ... ok\ntest_missing_manifest_rejected (__main__.IntegrityTests.test_missing_manifest_rejected) ... ok\ntest_modified_evidence_rejected (__main__.IntegrityTests.test_modified_evidence_rejected) ... ok\ntest_parent_traversal_rejected (__main__.IntegrityTests.test_parent_traversal_rejected) ... ok\ntest_unlisted_extra_rejected (__main__.IntegrityTests.test_unlisted_extra_rejected) ... ok\ntest_wrong_totals_rejected (__main__.IntegrityTests.test_wrong_totals_rejected) ... ok\n\n----------------------------------------------------------------------\nRan 9 tests in 0.008s\n\nOK\n",
+    "note": "Inclui composição em pacote pai sintético; não é validação dos 759 arquivos históricos reais."
+  }
+}

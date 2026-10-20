@@ -1,0 +1,8 @@
+fix(chamadas): mede a duracao pelo instante real do encerramento
+
+O talkSeconds era calculado dentro do .then() do callIdPromise, usando o
+relogio do momento em que o registro resolvia. Quando a criacao da linha
+demorava mais que a sessao, a espera entrava na duracao gravada. Agora o
+instante do encerramento e capturado de forma sincrona na entrada de
+encerrar() e a conta usa esse valor fixo; null para nao atendida e o
+arredondamento/clamp seguem iguais.

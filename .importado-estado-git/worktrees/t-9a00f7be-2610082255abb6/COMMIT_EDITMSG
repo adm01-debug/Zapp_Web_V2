@@ -1,0 +1,14 @@
+fix(telefonia): Auditoria de contraste WCAG nos 3 temas (contraste.md) (SL-238)
+
+Por quê: T78 do plano da Telefonia — o baseline só tinha pos-fase-0.json e não
+havia o laudo de contraste WCAG dos temas. Mede os pares que o módulo
+(src/components/calls/**) realmente pinta, sobre os tokens reais, nos 4 estados
+(claro, escuro, alto-contraste e alto-contraste+escuro), e registra os 10
+resíduos sem repintar cor nenhuma (o plano manda medir e registrar).
+
+Verificação: npx vitest run src/components/calls/__tests__/telefoniaContraste.test.tsx
+-> 23 passed; zapp-verify . --rapido -> VERDE (tipos, lint, db_guard, migrations).
+Prova de mutação: text-warning->text-info em CallResultCell e --warning 50%->42%
+em tokens.css derrubam o teste (revertidos).
+
+Plano: docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md (T78)

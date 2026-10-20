@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 bb0bbbf4d4ed43bb89f086a29a077ec69904dbbe Joaquim Ataides <ti@promobrindes.com.br> 1791140085 -0300	branch: Created from dia/2026-10-04
+bb0bbbf4d4ed43bb89f086a29a077ec69904dbbe 6b76682ed69cfb3123eaece8ead025f623728d41 Joaquim Ataides <ti@promobrindes.com.br> 1791142982 -0300	commit: test(dashboard): prova fronteira RLS real das RPCs e gate de liberação

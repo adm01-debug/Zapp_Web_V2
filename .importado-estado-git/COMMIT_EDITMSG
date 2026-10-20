@@ -1,0 +1,15 @@
+fix(supabase): revogar permissoes de tabela de anon e authenticated em 8 tabelas
+
+Problema: visitante sem login (anon) ainda tem permissao de tabela
+(incluindo DELETE e TRUNCATE) em 8 tabelas. A regra RLS de acesso
+barra, mas a permisso de tabela e uma porta destrancada.
+
+Correcao: REVOKE ALL ON TABLES FROM anon e REVOKE TRUNCATE,
+REFERENCES, TRIGGER ON TABLES FROM authenticated para cada uma
+das 8 tabelas: calls, conversation_tasks, deal_activities,
+email_messages, email_threads, gmail_accounts, sales_deals,
+user_settings.
+
+Verificado: psql aplicou 16 REVOKEs sem erros. Pos-apply check
+confirma anon sem permissoes e authenticated sem TRUNCATE/
+REFERENCES/TRIGGER em todas as 8 tabelas.

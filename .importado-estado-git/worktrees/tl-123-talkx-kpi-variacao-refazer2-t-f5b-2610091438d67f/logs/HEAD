@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567518 -0300	
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567519 -0300	reset: moving to HEAD
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791567582 -0300	reset: moving to cdf3e975ea5f37a2ec9d90dffa14043660b5f658
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 3f35ebd248a795ceaf0bf4555b8dc261d84ea09b Joaquim Ataides <ti@promobrindes.com.br> 1791567697 -0300	commit (cherry-pick): feat(talk-x): liga os KPIs das telas 04 e 05, "Desempenho deste template" e "Em andamento" às RPCs de métricas (TL-123/X091)
+3f35ebd248a795ceaf0bf4555b8dc261d84ea09b 3360afee5bd5ca1dea51e7b3890fc22f66fa255c Joaquim Ataides <ti@promobrindes.com.br> 1791567697 -0300	cherry-pick: fix(talk-x): tipagem das RPCs pendentes de types-sync e `bars` anulável no KpiCard (TL-123)
+3360afee5bd5ca1dea51e7b3890fc22f66fa255c d8f7f26030e0b1ee29f1ea6cc3b056e88035c913 Joaquim Ataides <ti@promobrindes.com.br> 1791567697 -0300	cherry-pick: fix(talkx): variação do card Total de Templates compara criados do mês (TL-123)
+d8f7f26030e0b1ee29f1ea6cc3b056e88035c913 2a96fca82880333c2696a061905d3c53ddc3056d Joaquim Ataides <ti@promobrindes.com.br> 1791567781 -0300	commit: fix(talkx): trata current nulo no KPI de templates

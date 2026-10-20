@@ -1,0 +1,8 @@
+fix(multiplix): envia voice_ai com ativo renderizado em vez de reenfileirar
+
+O resolvedor marca todo bloco voice_ai com url=null, entao o item com ativo
+ja renderizado girava como pendente ate dead-letter. Agora o worker le
+multiplix_voice_assets.caminho — voice_asset_id do item no modo
+personalizado, asset_id do bloco em same_audio — e assina pelo mecanismo
+privado existente (resolvePrivateBucketUrl, bucket multiplix-voice). Ativo
+ausente ou invalidado segue multiplix_block_pending_media.

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 6653bbe05ba03734957cc0efa7995e2918f2c7a8 Joaquim Ataides <ti@promobrindes.com.br> 1791435114 -0300	branch: Created from dia/2026-10-08
+6653bbe05ba03734957cc0efa7995e2918f2c7a8 58b0eb047cb448b276bbad2b2c2506bfcf0c2355 Joaquim Ataides <ti@promobrindes.com.br> 1791437421 -0300	commit: fix(db): bloqueia autoescala de can_download

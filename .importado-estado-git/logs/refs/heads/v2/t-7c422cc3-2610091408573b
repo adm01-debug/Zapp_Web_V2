@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 cdf3e975ea5f37a2ec9d90dffa14043660b5f658 Joaquim Ataides <ti@promobrindes.com.br> 1791565735 -0300	branch: Created from dia/2026-10-09
+cdf3e975ea5f37a2ec9d90dffa14043660b5f658 63dd1a3c5c0901d6dc9e2608da53c5921291ec16 Joaquim Ataides <ti@promobrindes.com.br> 1791565818 -0300	commit (cherry-pick): fix(performance): cache do Bun nos jobs com bun install (SL-095)

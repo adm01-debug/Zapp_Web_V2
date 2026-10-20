@@ -1,0 +1,8 @@
+fix(ci): artifact de deploy nao sobe mais se a remocao de secrets falhar
+
+R2-INF-002: o redator e o upload usavam always() independentes — falha da
+redacao publicava o deploy-output.log bruto (com access_token) no storage
+de artifacts. O passo de sanitizacao ganha id, monta a versao publicavel
+num diretorio separado sem o log bruto (ele so entra redigido via staging,
+com conferencia de chave residual) e o upload exige
+steps.redigir_log.outcome == 'success': falha do redator = nenhum artifact.

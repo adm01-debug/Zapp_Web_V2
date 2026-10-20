@@ -1,0 +1,3 @@
+test(e2e): aquece o runtime do conjunto em passadas ate uma fechar limpa
+
+Com o cache npm do conjunto frio, a primeira passada deixa ~20 funcoes com 503 BOOT_ERROR (File exists os error 17 no desempacotamento) e uma segunda passada conclui. O aquecimento agora repete a passada ate uma delas fechar sem BOOT_ERROR; funcao que nao arrancar em nenhuma passada continua reprovando.

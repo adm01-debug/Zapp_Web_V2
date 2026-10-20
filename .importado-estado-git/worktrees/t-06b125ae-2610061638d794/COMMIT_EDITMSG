@@ -1,0 +1,7 @@
+fix(talkx): conclusão remota encerra modais e limpa a seleção da campanha
+
+O efeito que fechava modais e limpava a seleção quando a campanha saía de
+sending/paused estava morto: o primeiro useEffect gravava campaign=null em
+prevCampaignRef antes de o segundo testar prevCampaignRef.current !== null.
+Agora a transição é um efeito único que compara o estado anterior antes de
+atualizar a referência (R2-MOD-032, item 405).

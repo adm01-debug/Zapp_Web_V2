@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348381 -0300	
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 98264df7d076d2a6747d1562bdaf02b14a7dd9e2 Joaquim Ataides <ti@promobrindes.com.br> 1791348382 -0300	reset: moving to HEAD
+98264df7d076d2a6747d1562bdaf02b14a7dd9e2 c3ae9d6369e210404e7d5e4a27ce5537ead51e58 Joaquim Ataides <ti@promobrindes.com.br> 1791348415 -0300	cherry-pick: fix(db): permite encerrar de novo no mesmo dia uma conversa reaberta (#295)
+c3ae9d6369e210404e7d5e4a27ce5537ead51e58 6f8daf9d8398dd4109b9c2cc431dbdf58d43798d Joaquim Ataides <ti@promobrindes.com.br> 1791348415 -0300	cherry-pick: test(ci): registra o teste novo de encerramento no inventario de CI (#295)
+6f8daf9d8398dd4109b9c2cc431dbdf58d43798d a8b6ad41349a5322c2731c52158c25ef2aa0d105 Joaquim Ataides <ti@promobrindes.com.br> 1791349524 -0300	commit: fix(db): protege fechamento repetido sem reabertura (#295)
+a8b6ad41349a5322c2731c52158c25ef2aa0d105 0fafd523988a50abe46c3683e729f17ca682f544 Joaquim Ataides <ti@promobrindes.com.br> 1791540022 -0300	commit (merge): Merge branch 'dia/2026-10-09' into v2/refazer-indice-fechamento-dia-reaberta-2-26100701462ae5
+0fafd523988a50abe46c3683e729f17ca682f544 e423ffa63805fe443cd3b561cf1c1997ffc9de6b Joaquim Ataides <ti@promobrindes.com.br> 1791543082 -0300	reset: moving to e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+e423ffa63805fe443cd3b561cf1c1997ffc9de6b 2f6cfc9fbba45cf071eb708cb830d3537a74d6a5 Joaquim Ataides <ti@promobrindes.com.br> 1791543082 -0300	commit: fix(db): protege fechamento repetido sem reabertura (#295)

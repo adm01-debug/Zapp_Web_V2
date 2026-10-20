@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 6c57dfa54443435babc08970f517261076314176 Joaquim Ataides <ti@promobrindes.com.br> 1791345885 -0300	branch: Created from dia/2026-10-07
+6c57dfa54443435babc08970f517261076314176 ae4b26387472e606d258bbb27f28b5bc93c065c5 Joaquim Ataides <ti@promobrindes.com.br> 1791345899 -0300	cherry-pick: fix(observabilidade): coletor local agrega CLS por janela de sessão e INP pelo p98
+ae4b26387472e606d258bbb27f28b5bc93c065c5 69348b551b6f5e11628ff69a8bf351f968bf317a Joaquim Ataides <ti@promobrindes.com.br> 1791346449 -0300	commit: fix(observabilidade): INP ignora eventos sem interactionId e teste de CLS prova o corte de 5 s

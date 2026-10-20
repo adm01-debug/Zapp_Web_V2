@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d6bfd59751f26503e528dfa54b704daf0f497157 Joaquim Ataides <ti@promobrindes.com.br> 1791300473 -0300	branch: Created from dia/2026-10-06
+d6bfd59751f26503e528dfa54b704daf0f497157 5df8536af916b93a3321a43d83fce96878983a1c Joaquim Ataides <ti@promobrindes.com.br> 1791301403 -0300	commit: fix(tarefas): pagina a leitura de tarefas e do badge alem do teto do PostgREST (#422)

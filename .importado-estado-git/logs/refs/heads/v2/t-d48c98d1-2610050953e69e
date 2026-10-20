@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 b6b2b8fd38135cbac0a443bf4a0e25c072147595 Joaquim Ataides <ti@promobrindes.com.br> 1791204813 -0300	branch: Created from dia/2026-10-05
+b6b2b8fd38135cbac0a443bf4a0e25c072147595 68a0c66f30ac55b91302b4e53e666f5541056517 Joaquim Ataides <ti@promobrindes.com.br> 1791205159 -0300	commit: refactor(inbox): restringe contrato do TransferDialog a agent|queue (#88)

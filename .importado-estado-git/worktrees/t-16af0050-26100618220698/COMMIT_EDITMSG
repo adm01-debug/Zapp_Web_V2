@@ -1,0 +1,9 @@
+fix(knowledge-base): limpar a busca cancela o temporizador do debounce pendente
+
+O clear() zerava query e debouncedQuery mas deixava de pé o setTimeout de
+300 ms agendado pelo ultimo handleSearch: ao limpar logo depois de digitar,
+o temporizador antigo repunha o termo apagado e a RPC search_knowledge_base
+voltava a ser chamada com a busca descartada (#484 / R2-API-052).
+
+Teste novo prova o defeito (vermelho antes, verde depois) e guarda a
+regressao do debounce normal e de uma busca nova apos limpar.

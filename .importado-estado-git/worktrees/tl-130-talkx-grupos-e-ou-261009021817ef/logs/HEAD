@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523117 -0300	
+e9f4855a1862da4782923accbc32d8d7b7d53b37 e9f4855a1862da4782923accbc32d8d7b7d53b37 Joaquim Ataides <ti@promobrindes.com.br> 1791523118 -0300	reset: moving to HEAD
+e9f4855a1862da4782923accbc32d8d7b7d53b37 7fc2aa87875a92b513871e86a34687d5eaac1f39 Joaquim Ataides <ti@promobrindes.com.br> 1791524135 -0300	commit: fix(talk-x): Desenhar os grupos E/OU como no mock 03: selo, divisor, (TL-130)
+7fc2aa87875a92b513871e86a34687d5eaac1f39 1c7cc1d3bb490838500c38a2e473077f18654283 Joaquim Ataides <ti@promobrindes.com.br> 1791524225 -0300	commit: test(talk-x): prova o rules.join no payload do construtor de segmentos (TL-130)
+1c7cc1d3bb490838500c38a2e473077f18654283 12e407210db0ea4d9f817618d30848304ca932d5 Joaquim Ataides <ti@promobrindes.com.br> 1791562595 -0300	rebase (start): checkout dia/2026-10-09
+12e407210db0ea4d9f817618d30848304ca932d5 acb084b5bec3aa07a7a9219de3a0bafaf3fa44aa Joaquim Ataides <ti@promobrindes.com.br> 1791562963 -0300	rebase (continue): fix(talk-x): Desenhar os grupos E/OU como no mock 03: selo, divisor, (TL-130)
+acb084b5bec3aa07a7a9219de3a0bafaf3fa44aa 5a0e52f02866d392ba260af6261fb74cfc0b4d0a Joaquim Ataides <ti@promobrindes.com.br> 1791562964 -0300	rebase (pick): test(talk-x): prova o rules.join no payload do construtor de segmentos (TL-130)
+5a0e52f02866d392ba260af6261fb74cfc0b4d0a 5a0e52f02866d392ba260af6261fb74cfc0b4d0a Joaquim Ataides <ti@promobrindes.com.br> 1791562964 -0300	rebase (finish): returning to refs/heads/v2/tl-130-talkx-grupos-e-ou-261009021817ef
+5a0e52f02866d392ba260af6261fb74cfc0b4d0a 95f473c4a244c2b18b1c7ca8fbffd683b85101d7 Joaquim Ataides <ti@promobrindes.com.br> 1791563256 -0300	commit: fix(talk-x): porta grupos E/OU (TL-130) para o TalkXSegmentBuilder extraído (TL-128)

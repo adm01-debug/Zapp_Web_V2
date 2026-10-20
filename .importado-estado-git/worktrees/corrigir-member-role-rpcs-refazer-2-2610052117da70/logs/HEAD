@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 058d4e3f01e5695f7384f42c5b0dd22c5428e8fa Joaquim Ataides <ti@promobrindes.com.br> 1791245878 -0300	
+058d4e3f01e5695f7384f42c5b0dd22c5428e8fa 058d4e3f01e5695f7384f42c5b0dd22c5428e8fa Joaquim Ataides <ti@promobrindes.com.br> 1791245879 -0300	reset: moving to HEAD
+058d4e3f01e5695f7384f42c5b0dd22c5428e8fa 0db52b19967e020c2b2131686bdfc1ccee27e357 Joaquim Ataides <ti@promobrindes.com.br> 1791245898 -0300	cherry-pick: fix(db): corrigir member_role nas RPCs leave_team_group e remove_team_member
+0db52b19967e020c2b2131686bdfc1ccee27e357 3ca7c035b0d59c655aebc82af397d3e15096bd7f Joaquim Ataides <ti@promobrindes.com.br> 1791245898 -0300	cherry-pick: fix(db): ajustar escopo do refazer das RPCs

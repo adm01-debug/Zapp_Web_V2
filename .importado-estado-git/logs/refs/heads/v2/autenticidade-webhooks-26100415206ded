@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 4b97aa57c9ee4140bffb232536c003bfa92f1809 Joaquim Ataides <ti@promobrindes.com.br> 1791138030 -0300	branch: Created from dia/2026-10-04
+4b97aa57c9ee4140bffb232536c003bfa92f1809 05f8c230e55275f54f40f0ffffe850f3fa74edae Joaquim Ataides <ti@promobrindes.com.br> 1791139728 -0300	commit: fix(webhooks): autenticidade fail-closed nos webhooks públicos (R2-API-021)

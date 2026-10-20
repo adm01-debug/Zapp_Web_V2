@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 81619a359dc43c9aee3939a15ec13ba18f23b646 Joaquim Ataides <ti@promobrindes.com.br> 1791209980 -0300	
+81619a359dc43c9aee3939a15ec13ba18f23b646 81619a359dc43c9aee3939a15ec13ba18f23b646 Joaquim Ataides <ti@promobrindes.com.br> 1791209980 -0300	reset: moving to HEAD
+81619a359dc43c9aee3939a15ec13ba18f23b646 343770a1d879aa8aa03f0cda7cebed90c60b88f5 Joaquim Ataides <ti@promobrindes.com.br> 1791209994 -0300	cherry-pick: fix(crm-integration): inteligência e lote recusam identidade externa divergente (R2-AUTH-018)
+343770a1d879aa8aa03f0cda7cebed90c60b88f5 657db9e5f1d496123f62ef0476db63e47e80f9a0 Joaquim Ataides <ti@promobrindes.com.br> 1791210356 -0300	commit: fix(crm-integration): lote fecha brechas de vínculo inválido e telefone compartilhado (R2-AUTH-018)

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292591 -0300	
+9771aacba0ef60787d64631780e660cf381e98e8 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292591 -0300	reset: moving to HEAD
+9771aacba0ef60787d64631780e660cf381e98e8 97c221f35772598de66ed9fc6f02c8e2c590e06b Joaquim Ataides <ti@promobrindes.com.br> 1791292955 -0300	commit: fix(edge): nao anunciar autoresposta de opt-out quando o provedor responde erro

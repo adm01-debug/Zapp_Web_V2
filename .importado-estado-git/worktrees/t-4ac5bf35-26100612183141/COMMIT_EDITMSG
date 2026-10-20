@@ -1,0 +1,1 @@
+fix(inbox): navegação da busca não gera NaN e alcança as ações rápidas (#315)

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 421f4a59c7ba7d52bad931d367a68d859d374465 Joaquim Ataides <ti@promobrindes.com.br> 1791303631 -0300	branch: Created from dia/2026-10-06
+421f4a59c7ba7d52bad931d367a68d859d374465 826069022cdd19f045bd7678cdd6c0944a2f6c99 Hugo (area-front-hooks) <hugo@zapp.local> 1791304708 -0300	commit: fix(busca): escopa o histórico de buscas recentes por usuário (#444)

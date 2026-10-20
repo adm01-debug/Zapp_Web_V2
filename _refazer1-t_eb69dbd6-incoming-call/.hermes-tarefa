@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=incoming-call-destinatarios-sem-responsa
+ID=26101407060c75
+BRANCH=v2/incoming-call-destinatarios-sem-responsa-26101407060c75
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/incoming-call-destinatarios-sem-responsa-26101407060c75
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-14T07:06:08-03:00
+KANBAN=t_d33b0511
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/incoming-call-destinatarios-sem-responsa-26101407060c75/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-14
+DB_LOCAL=v2-26101407060c75
+APLICADA_LOCAL=20261014101033_incoming_call_destinatarios_sem_responsavel.sql sha=d5babe1b5d543f8a
+PRONTO_SHA=48046bc5a2fb1777774cb1c3d1a634d64babe50b

@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 2f43009d970b7626c41c18b4f95653a0e1b5937e Joaquim Ataides <ti@promobrindes.com.br> 1791143157 -0300	branch: Created from dia/2026-10-04
+2f43009d970b7626c41c18b4f95653a0e1b5937e 5f6d533242f1c96ab77c9ce3c5c0abfc99889a99 Joaquim Ataides <ti@promobrindes.com.br> 1791144973 -0300	commit: fix(edge): isola credencial de instância por conexão na Evolution GO (TRA-002)

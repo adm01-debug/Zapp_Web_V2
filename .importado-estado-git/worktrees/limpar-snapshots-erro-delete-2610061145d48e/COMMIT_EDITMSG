@@ -1,0 +1,9 @@
+fix(analytics): confirma remoção de snapshots antes de anunciar sucesso (#376)
+
+clearOldSnapshots ignorava o envelope {error} do DELETE (erro de
+PostgREST/RLS resolve a Promise, não lança) e anunciava 'Dados antigos
+removidos' mesmo sem remoção. Passa a inspecionar error, a pedir as
+linhas removidas (zero linhas não é remoção) e a só recarregar o
+histórico com a limpeza confirmada, preservando o período selecionado.
+
+Refs: R2-INF-030

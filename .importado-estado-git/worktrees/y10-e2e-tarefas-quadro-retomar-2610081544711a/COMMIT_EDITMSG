@@ -1,0 +1,1 @@
+test(e2e): Y10 de tarefas e o quadro no banco local (preserva o spec E21 e conserta o flake do login)

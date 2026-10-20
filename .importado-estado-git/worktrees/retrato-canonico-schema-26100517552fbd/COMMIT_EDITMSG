@@ -1,0 +1,3 @@
+chore(db): atualiza retrato canônico do schema
+
+Regenera supabase/schema-manifest.json pelo SQL canônico scripts/db-audit/manifest.sql contra a produção, exclusivamente pelo gateway MCP somente leitura (db_query, apenas SELECT/WITH). Zera o drift do portão banco_local: zapp-db-local check/gate passam sem --aceitar.

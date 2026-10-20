@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292591 -0300	
+9771aacba0ef60787d64631780e660cf381e98e8 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292591 -0300	reset: moving to HEAD
+9771aacba0ef60787d64631780e660cf381e98e8 9771aacba0ef60787d64631780e660cf381e98e8 Joaquim Ataides <ti@promobrindes.com.br> 1791292626 -0300	reset: moving to 9771aacba0ef60787d64631780e660cf381e98e8
+9771aacba0ef60787d64631780e660cf381e98e8 601fce49cad3944379ebc56a4cb9a2a5bd172f7c Joaquim Ataides <ti@promobrindes.com.br> 1791292626 -0300	cherry-pick: fix(sip): serializa connect com tentativa em voo e invalida em disconnect
+601fce49cad3944379ebc56a4cb9a2a5bd172f7c d3e017828c590b0f47455776fcb5c81b4af75b5c Joaquim Ataides <ti@promobrindes.com.br> 1791292632 -0300	cherry-pick: fix(sip): tentativa cancelada nao apaga refs de uma tentativa nova em connect()
+d3e017828c590b0f47455776fcb5c81b4af75b5c dd1e9ce80972c2f9841e38759eb9276c44b45edb Joaquim Ataides <ti@promobrindes.com.br> 1791292894 -0300	commit: fix(sip): limpa tentativa cancelada quando espera rejeita

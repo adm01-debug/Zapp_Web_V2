@@ -1,0 +1,1 @@
+fix(recuperacao): pedido anonimo de reset de senha passa a persistir solicitacao (#72)

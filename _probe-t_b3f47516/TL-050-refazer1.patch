@@ -1,0 +1,107 @@
+--- a/docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md
++++ b/docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md
+@@ -179,7 +179,7 @@
+ - [ ] **F90** · `e2e/multiplix.spec.ts` no `e2e-logado.yml` (seleção persistente, prévia, confirmação bloqueada por placeholder inválido, monitor) + teste de escopo ponta a ponta (lista, contagem, histórico, mídia, export) + degradação (Singu fora → erro claro, Chat intocado). **Feito quando:** os 3 no CI.
+ - [ ] **F91** · Observabilidade: `correlation_id` rastreado do clique ao webhook em 1 envio real (sem conteúdo no log); métricas com dono e ação em `docs/runbooks/slo.md` (tempo de fila, falhas por classe, latência de voz, consumo estimado × real, não conciliados, conexão em risco); `docs/runbooks/multiplix-incidentes.md` (fila travada, worker morto, TTS fora, conexão caída, consumo estourado, Singu indisponível) referenciado em `INCIDENT-RUNBOOK.md`. **Feito quando:** 1 envio real rastreado; runbook mergeado.
+ - [ ] **F92** · Feature flag `multiplix_enabled_departments` em `global_settings` (kill switch sem deploy: desligar esconde rota e nav) + telemetria (abrir, confirmar, erro). **Feito quando:** desligar esconde tudo em < 1 min sem deploy.
+-- [x] **F93** · Guards do banco: `schema-catalog.json`, `schema-manifest.json`, `grants-baseline.json`, `realtime-publication-baseline.json`, `known-violations.json` regenerados; `check-migration-drift` e `supabase-usage-guard` verdes cobrindo as 8+ tabelas. **Feito quando:** `db-guard` e `db-live-guard` verdes. — **feito (09/10):** conferido na ponta de hoje (`dia/2026-10-09`); os dois guardas do critério estão **VERDES** na `main` e os runs atuais ficam vinculados aqui. (a) `db-live-guard` estava **VERMELHO** em 08/10 13:19Z (run [37783508980](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37783508980), sha `15494eecc`, schedule) exatamente nos artefatos desta etapa: `##[error]Contrato vivo quebrado em: Regenerar catalogo e comparar com o commitado, Regenerar manifesto e comparar com o commitado, Verificar frescor do types.ts, Paridade tripla (migrations, edges, grants)`. A sincronização dos derivados entrou na `main` por `24bb722fa` (#1907) e de novo em `72dcc6d28` (#1910, depois do lote #1908). (b) Runs atuais sobre `72dcc6d28` (HEAD da `main`, 09/10 01:26Z), os dois VERDES: `db-live-guard` [37869771355](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37869771355) e `db-guard` offline [37869771170](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37869771170) — este com "Validar .from() e .rpc() contra o catalogo", "Validar subscriptions contra a publicacao Realtime" e "Testar comparadores de catalogo, manifesto e migrations" success. (c) Cobertura medida no repositório (ponta do dia, `df19b16da`): 9 tabelas `multiplix_*` e 146 colunas no `schema-catalog.json`, RLS nas 9/9 no `schema-manifest.json`, `public.multiplix_dispatches`/`public.multiplix_recipients` no baseline de realtime, `known-violations.json` com 1 entrada (nenhuma do Multiplix); executado agora: `node scripts/db-audit/supabase-usage-guard.mjs` -> "Violacoes totais: 1 | no baseline: 1 | novas: 0" e `node scripts/db-audit/check-realtime-subscriptions.mjs` -> "26 subscribed tables are present in the canonical baseline". (d) Frescor dos derivados: os 3 arquivos desta cópia são de 2026-10-04 (`schema-catalog.json`, `grants-baseline.json`) e 2026-10-05T21:05Z (`schema-manifest.json`), e a `main` já os tem de 2026-10-09 — quem os regera é o `types-sync`, no push da `main` que tocar `supabase/migrations/**`, a mesma cadeia que trouxe `24bb722fa` e `72dcc6d28`.
++- [x] **F93** · Guards do banco: `schema-catalog.json`, `schema-manifest.json`, `grants-baseline.json`, `realtime-publication-baseline.json`, `known-violations.json` regenerados; `check-migration-drift` e `supabase-usage-guard` verdes cobrindo as 8+ tabelas. **Feito quando:** `db-guard` e `db-live-guard` verdes. — **feito (09/10):** conferido na ponta de hoje (`dia/2026-10-09`); os dois guardas do critério estão **VERDES** na `main` e os runs atuais ficam vinculados aqui. (a) `db-live-guard` estava **VERMELHO** em 08/10 13:19Z (run [37783508980](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37783508980), sha `15494eecc`, schedule) exatamente nos artefatos desta etapa: `##[error]Contrato vivo quebrado em: Regenerar catalogo e comparar com o commitado, Regenerar manifesto e comparar com o commitado, Verificar frescor do types.ts, Paridade tripla (migrations, edges, grants)`. A sincronização dos derivados entrou na `main` por `24bb722fa` (#1907) e de novo em `72dcc6d28` (#1910, depois do lote #1908). (b) Runs atuais sobre `72dcc6d28` (HEAD da `main`, 09/10 01:26Z), os dois VERDES: `db-live-guard` [37869771355](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37869771355) e `db-guard` offline [37869771170](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37869771170) — este com "Validar .from() e .rpc() contra o catalogo", "Validar subscriptions contra a publicacao Realtime" e "Testar comparadores de catalogo, manifesto e migrations" success. (c) Cobertura medida no repositório (ponta do dia, `df19b16da`): 9 tabelas `multiplix_*` e 146 colunas no `schema-catalog.json`, RLS nas 9/9 no `schema-manifest.json`, `public.multiplix_dispatches`/`public.multiplix_recipients` no baseline de realtime, `known-violations.json` com 1 entrada (nenhuma do Multiplix); executado agora: `node scripts/db-audit/supabase-usage-guard.mjs` -> "Violacoes totais: 1 | no baseline: 1 | novas: 0" e `node scripts/db-audit/check-realtime-subscriptions.mjs` -> "26 subscribed tables are present in the canonical baseline". (d) Frescor dos derivados: os 3 arquivos desta cópia são de 2026-10-04 (`schema-catalog.json`, `grants-baseline.json`) e 2026-10-05T21:05Z (`schema-manifest.json`), e a `main` já os tem de 2026-10-09 — quem os regera é o `types-sync`, no push da `main` que tocar `supabase/migrations/**`, a mesma cadeia que trouxe `24bb722fa` e `72dcc6d28`. (e) Re-runs em 15/10 sobre a ponta `dia/2026-10-13` + TL-050 (copia local, sem rede). `db-guard`: `node scripts/db-audit/supabase-usage-guard.mjs` -> "Violacoes totais: 2 | no baseline: 2 | novas: 0" (exit 0); `node scripts/db-audit/check-realtime-subscriptions.mjs` -> "26 subscribed tables are present in the canonical baseline" (exit 0); `node --test scripts/db-audit/check-catalog-fresh.test.mjs` -> 21 pass / 0 fail; `node scripts/db-audit/check-migration-drift.mjs` -> 831 arquivos validos (exit 0, comparacao com ledger pulada sem DESTINO_URL). `db-live-guard` (etapa do catalogo, offline): `psql -X -v ON_ERROR_STOP=1 -At -f scripts/db-audit/catalog.sql` no banco local PostgreSQL 17 -> exit 0; diff das secoes do TL-050 (`gmail_oauth_states`, `talkx_storage_purge_queue`, `user_sessions.auth_session_id`, `audit_logs.dedupe_key`) entre a geracao fresca e o commitado = vazio; o drift restante e so de objetos de migrations posteriores (ex.: `ai_usage_outbox`) ou sem migration na arvore (`contact_block_audit`), fora do escopo deste cartao. A etapa viva completa exige DESTINO_URL de producao e nao foi rodada aqui.
+ - [ ] **F94** · Docs: `docs/multiplix/SCHEMA.md`, `ARQUITETURA.md` (padrão de `docs/talkx/ARQUITETURA.md`: mermaid + métrica→fonte), `COMPONENTES.md`, receita de módulo completa (`lazyViews` + nav + permissão + flag) em `DESIGN_TOKENS_MAP.md`. **Feito quando:** mergeado.
+ - [ ] **F95** · Piloto Compras: fornecedores reais (84 com pessoa + WhatsApp; 285 com telefone de empresa), teto de destinatários e de voz — 5 envios reais revisados com o operador. **Feito quando:** 5 envios registrados com `correlation_id` e feedback.
+ - [ ] **F96** · Piloto Logística: transportadoras (58 com pessoa) — 3 envios reais; ajustes só do que os operadores apontaram (PRs mergeadas). **Feito quando:** 3 envios + PRs de ajuste.
+--- a/supabase/schema-catalog.json
++++ b/supabase/schema-catalog.json
+@@ -971,12 +971,12 @@
+         "gmail_accounts_safe.token_expires_at:timestamp with time zone:nullable",
+         "gmail_accounts_safe.created_at:timestamp with time zone:nullable",
+         "gmail_accounts_safe.updated_at:timestamp with time zone:nullable",
+-        "gmail_oauth_states.consumed_at:timestamp with time zone:nullable",
++        "gmail_oauth_states.id:uuid:not-null",
++        "gmail_oauth_states.user_id:uuid:not-null",
++        "gmail_oauth_states.state:text:not-null",
+         "gmail_oauth_states.created_at:timestamp with time zone:not-null",
+         "gmail_oauth_states.expires_at:timestamp with time zone:not-null",
+-        "gmail_oauth_states.id:uuid:not-null",
+-        "gmail_oauth_states.state:text:not-null",
+-        "gmail_oauth_states.user_id:uuid:not-null",
++        "gmail_oauth_states.consumed_at:timestamp with time zone:nullable",
+         "goals_configurations.id:uuid:not-null",
+         "goals_configurations.profile_id:uuid:nullable",
+         "goals_configurations.queue_id:uuid:nullable",
+@@ -1832,15 +1832,15 @@
+         "talkx_settings.value:jsonb:not-null",
+         "talkx_settings.description:text:nullable",
+         "talkx_settings.updated_at:timestamp with time zone:not-null",
++        "talkx_storage_purge_queue.id:uuid:not-null",
++        "talkx_storage_purge_queue.bucket_id:text:not-null",
++        "talkx_storage_purge_queue.object_name:text:not-null",
++        "talkx_storage_purge_queue.object_id:uuid:nullable",
++        "talkx_storage_purge_queue.reason:text:not-null",
++        "talkx_storage_purge_queue.enqueued_at:timestamp with time zone:not-null",
+         "talkx_storage_purge_queue.attempts:integer:not-null",
+-        "talkx_storage_purge_queue.bucket_id:text:not-null",
+-        "talkx_storage_purge_queue.enqueued_at:timestamp with time zone:not-null",
+-        "talkx_storage_purge_queue.id:uuid:not-null",
+         "talkx_storage_purge_queue.last_error:text:nullable",
+-        "talkx_storage_purge_queue.object_id:uuid:nullable",
+-        "talkx_storage_purge_queue.object_name:text:not-null",
+         "talkx_storage_purge_queue.processed_at:timestamp with time zone:nullable",
+-        "talkx_storage_purge_queue.reason:text:not-null",
+         "talkx_template_variants.id:uuid:not-null",
+         "talkx_template_variants.template_id:uuid:not-null",
+         "talkx_template_variants.label:text:not-null",
+--- a/scripts/db-audit/check-catalog-fresh.test.mjs
++++ b/scripts/db-audit/check-catalog-fresh.test.mjs
+@@ -250,8 +250,8 @@
+ // falso-positivo — o objeto existe no banco, com RLS, e o `.from()` reprova. Este
+ // teste le os quatro arquivos commitados e exige que o catalogo cubra o que os
+ // outros tres citam; o valor esperado vem dos artefatos gerados pelo banco, nao do
+-// proprio catalogo. Cobre os dois sentidos: sobrando objeto no catalogo tambem e
+-// falha (o banco deixou de ter o objeto).
++// proprio catalogo. (O sentido inverso — objeto que sobra no catalogo — esta no
++// proximo teste.)
+ function lerArtefato(relativo) {
+   return JSON.parse(fs.readFileSync(path.join(ROOT, relativo), 'utf8'));
+ }
+@@ -307,7 +307,7 @@
+   );
+ });
+ 
+-test('a secao tables do catalogo nao perde relacao que o retrato canonico cita', () => {
++test('catalogo nao tem tabela que o retrato canonico nao cita', () => {
+   // Sentido inverso: relacao que so o catalogo tem e o retrato canonico nao cita
+   // significa catalogo escrito a mao/adiantado em relacao ao banco.
+   const catalogo = lerArtefato('supabase/schema-catalog.json');
+@@ -321,3 +321,32 @@
+   assert.deepEqual(soNoCatalogo, [], 'tabela do schema-catalog.json que o retrato canonico nao cita');
+ });
+ 
++test('colunas das tabelas novas seguem a ordem do banco (attnum), nao alfabetica', () => {
++  // TL-050 (refazer 1, ponto 2): o scripts/db-audit/catalog.sql emite as colunas
++  // em ORDER BY relname, attnum (id primeiro). Edicao a mao em ordem alfabetica
++  // passa nos comparadores de conjunto mas quebra a proxima regeneracao byte a
++  // byte. A ordem esperada abaixo saiu da geracao fresca (psql -f
++  // scripts/db-audit/catalog.sql no banco local, 2026-10-15).
++  const catalogo = lerArtefato('supabase/schema-catalog.json');
++  const colunasDe = (tabela) => catalogo.columns.filter((c) => c.startsWith(tabela + '.'));
++  assert.deepEqual(colunasDe('gmail_oauth_states'), [
++    'gmail_oauth_states.id:uuid:not-null',
++    'gmail_oauth_states.user_id:uuid:not-null',
++    'gmail_oauth_states.state:text:not-null',
++    'gmail_oauth_states.created_at:timestamp with time zone:not-null',
++    'gmail_oauth_states.expires_at:timestamp with time zone:not-null',
++    'gmail_oauth_states.consumed_at:timestamp with time zone:nullable',
++  ]);
++  assert.deepEqual(colunasDe('talkx_storage_purge_queue'), [
++    'talkx_storage_purge_queue.id:uuid:not-null',
++    'talkx_storage_purge_queue.bucket_id:text:not-null',
++    'talkx_storage_purge_queue.object_name:text:not-null',
++    'talkx_storage_purge_queue.object_id:uuid:nullable',
++    'talkx_storage_purge_queue.reason:text:not-null',
++    'talkx_storage_purge_queue.enqueued_at:timestamp with time zone:not-null',
++    'talkx_storage_purge_queue.attempts:integer:not-null',
++    'talkx_storage_purge_queue.last_error:text:nullable',
++    'talkx_storage_purge_queue.processed_at:timestamp with time zone:nullable',
++  ]);
++});
++

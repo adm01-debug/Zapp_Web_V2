@@ -1,0 +1,18 @@
+fix(talk-x): Criar TalkXMessagePreview fiel ao WhatsApp com midia, interativo e tela cheia (TL-120)
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 1098da5a9
+# Last command done (1 command done):
+#    pick 3ee8e0f55 fix(talk-x): Criar TalkXMessagePreview fiel ao WhatsApp com midia, interativo e tela cheia (TL-120)
+# No commands remaining.
+# You are currently rebasing branch 'v2/t-33579d39-2610090240b08c' on '1098da5a9'.
+#
+# Changes to be committed:
+#	new file:   src/components/talkx/TalkXMessagePreview.tsx
+#	modified:   src/components/talkx/TalkXTemplateEditor.tsx
+#	new file:   src/components/talkx/__tests__/TalkXMessagePreview.test.tsx
+#	modified:   src/components/talkx/kit/preview.tsx
+#	new file:   src/hooks/integrations/useTalkXMediaUrl.ts
+#

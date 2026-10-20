@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 54ce9e1e030fc4f689132815cd2baecf27dd8658 Joaquim Ataides <ti@promobrindes.com.br> 1791333482 -0300	
+54ce9e1e030fc4f689132815cd2baecf27dd8658 54ce9e1e030fc4f689132815cd2baecf27dd8658 Joaquim Ataides <ti@promobrindes.com.br> 1791333483 -0300	reset: moving to HEAD
+54ce9e1e030fc4f689132815cd2baecf27dd8658 3e486611de9992699737e784fa72ef93999cdbf3 iris <iris@hermes.local> 1791333731 -0300	commit: fix(filas): falha ao buscar atendentes nao e mais exibida como fila completa (#456)

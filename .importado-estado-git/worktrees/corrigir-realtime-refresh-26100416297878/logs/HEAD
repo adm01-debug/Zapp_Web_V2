@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 4ca29195faf69abc7a6d63fbc2ccc951153129c0 Joaquim Ataides <ti@promobrindes.com.br> 1791142179 -0300	
+4ca29195faf69abc7a6d63fbc2ccc951153129c0 4ca29195faf69abc7a6d63fbc2ccc951153129c0 Joaquim Ataides <ti@promobrindes.com.br> 1791142180 -0300	reset: moving to HEAD
+4ca29195faf69abc7a6d63fbc2ccc951153129c0 4ca29195faf69abc7a6d63fbc2ccc951153129c0 Joaquim Ataides <ti@promobrindes.com.br> 1791142577 -0300	reset: moving to HEAD
+4ca29195faf69abc7a6d63fbc2ccc951153129c0 fdb2ed58bf8d90103ec9b151fce516fdb17d8cb7 Joaquim Ataides <ti@promobrindes.com.br> 1791142577 -0300	commit: test(dashboard): reproduz DASH-REALTIME-001 no realtime e no refresh
+fdb2ed58bf8d90103ec9b151fce516fdb17d8cb7 1f26eed607cdd79f2ca3775da9023f8a9f176a23 Joaquim Ataides <ti@promobrindes.com.br> 1791142579 -0300	commit: fix(dashboard): separa escopo, conexao, lote mutavel e janelas

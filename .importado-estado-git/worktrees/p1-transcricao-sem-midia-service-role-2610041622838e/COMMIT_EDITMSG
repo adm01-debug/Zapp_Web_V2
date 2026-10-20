@@ -1,0 +1,1 @@
+fix(ai-transcribe-audio): recusa mensagem visível sem mídia em vez de baixar objeto do cliente (R2-API-027)

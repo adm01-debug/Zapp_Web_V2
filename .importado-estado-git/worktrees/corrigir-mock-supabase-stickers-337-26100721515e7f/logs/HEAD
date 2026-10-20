@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 216809cd35a0712d602acd597b3a7dd78e33dd00 Joaquim Ataides <ti@promobrindes.com.br> 1791420709 -0300	
+216809cd35a0712d602acd597b3a7dd78e33dd00 216809cd35a0712d602acd597b3a7dd78e33dd00 Joaquim Ataides <ti@promobrindes.com.br> 1791420710 -0300	reset: moving to HEAD
+216809cd35a0712d602acd597b3a7dd78e33dd00 eea668f7aeaa9ab022c17ed4c0791b63d1080f59 Joaquim Ataides <ti@promobrindes.com.br> 1791420715 -0300	cherry-pick: fix(inbox): desfaz uploads pendentes ao fechar pickers
+eea668f7aeaa9ab022c17ed4c0791b63d1080f59 752c12be893889571e35b26c2cb9a023981d99ac Joaquim Ataides <ti@promobrindes.com.br> 1791420856 -0300	commit: test(stickers): mock do catálogo suporta a cadeia order().order().range()

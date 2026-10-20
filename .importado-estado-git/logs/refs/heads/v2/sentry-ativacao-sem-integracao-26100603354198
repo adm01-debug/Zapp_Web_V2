@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 55a428d7a89316109e71d975c4193d67f7b3b051 Joaquim Ataides <ti@promobrindes.com.br> 1791268524 -0300	branch: Created from dia/2026-10-06
+55a428d7a89316109e71d975c4193d67f7b3b051 03f0953275bb911b3ffb3f7911bf4957f74fc549 Joaquim Ataides <ti@promobrindes.com.br> 1791268948 -0300	commit: fix(integracoes): tela do Sentry não confirma ativação nem exibe métricas sem integração (#221)

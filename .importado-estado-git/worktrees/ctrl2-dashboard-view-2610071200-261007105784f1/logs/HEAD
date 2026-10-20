@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 329af3d693f3b1efb4198b900ad89f5bba78389c Joaquim Ataides <ti@promobrindes.com.br> 1791381463 -0300	
+329af3d693f3b1efb4198b900ad89f5bba78389c 329af3d693f3b1efb4198b900ad89f5bba78389c Joaquim Ataides <ti@promobrindes.com.br> 1791381464 -0300	reset: moving to HEAD
+329af3d693f3b1efb4198b900ad89f5bba78389c 5dc96647686d62fa2a06b190a8c66646242ddfb0 Joaquim Ataides <ti@promobrindes.com.br> 1791381476 -0300	cherry-pick: fix(atalhos): Ctrl+2 seleciona a view dashboard pela navegação canônica
+5dc96647686d62fa2a06b190a8c66646242ddfb0 f37261b965f64b69cba0f378b2ca69d4d1eec10f Joaquim Ataides <ti@promobrindes.com.br> 1791382224 -0300	commit: fix(atalhos): prova do evento de Ctrl+2 pelo campo view do detail

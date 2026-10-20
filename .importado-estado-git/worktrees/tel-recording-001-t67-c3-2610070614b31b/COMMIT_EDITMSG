@@ -1,0 +1,21 @@
+fix(telefonia): player de gravacao usa so o blob local - URL de origem nunca entra no DOM
+
+O `RecordingPlayer` deixa de usar `gravacao.url` (`const src = enderecoDoBlob`): o endereco do
+`<audio>` e do link de download passa a ser SO o `blob:` local que o proprio player monta a partir
+dos BYTES entregues pelo hook (`useEnderecoDoBlob`). Sem bytes locais o player NAO renderiza
+(falha fechada) - a URL de origem da gravacao nunca entra no DOM, que e a garantia do T73
+(`get-call-recording` entrega bytes, nunca `recording_url`). A interface `GravacaoDoPlayer` perde
+o campo `url` e fica `{ disponivel, blob? }`. Ordem dos hooks, early return, `useMediaElementVolume`,
+`useEnderecoDoBlob`, testids e classes intactos.
+
+Teste T67 c3 (so passava por timing): neutraliza o `xmlns` dos icones lucide ANTES de conferir
+`'http'` no innerHTML (padrao de 951caf22e), espera a resposta da Edge assentar no cache do
+react-query (`qc.getQueryState`), faz um flush deterministico e entao afirma player ausente +
+innerHTML sem `'http'`. Nenhuma assercao afrouxada: reintroduzir o fallback `?? gravacao.url`
+deixa o c3 VERMELHO (comprovado). `v1`/`v2` (VOL-02) entregam os BYTES pelo override do hook
+(sem tocar nas assercoes de volume) e o `c4` passa a entregar bytes E url de origem, provando que
+o endereco local vence.
+
+Medicoes: `npx vitest run src/components/calls/__tests__/RecordingPlayer.test.tsx` 7/7; no estado
+integrado (base + 4de9a22e4 + f75a1ef80) tambem 7/7; defeito reproduzido antes (6 passed | 1 failed
+com o AssertionError do cartao); sem a correcao o c3 fica vermelho.

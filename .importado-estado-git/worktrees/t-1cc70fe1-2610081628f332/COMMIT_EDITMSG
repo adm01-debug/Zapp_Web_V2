@@ -1,0 +1,7 @@
+fix(arquivos): recorte por periodo conta figurinhas (tipo sticker)
+
+A dia de hoje ganhou o tipo proprio 'sticker' (chip Figurinhas) e
+ContactMediaCounts passou a exigir o campo: o periodCounts do recorte por
+periodo ficava incompleto e derrubava o typecheck da pilha (TS2345 em
+FilesTab.tsx). Agora o recorte conta as figurinhas como os outros tipos e o
+teste de periodo prova o chip mudando de contagem quando o periodo entra.

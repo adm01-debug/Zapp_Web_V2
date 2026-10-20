@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315278 -0300	
+cab247e7b8185d785a0f6b152fe9478834f43789 cab247e7b8185d785a0f6b152fe9478834f43789 Joaquim Ataides <ti@promobrindes.com.br> 1791315279 -0300	reset: moving to HEAD
+cab247e7b8185d785a0f6b152fe9478834f43789 4e93d970e90c8780a3411dca8fd85916bdfed075 Joaquim Ataides <ti@promobrindes.com.br> 1791316001 -0300	commit: fix(talkx): retry em lote recusa IDs inexistentes e nao reabre campanha sem destinatario (#123)

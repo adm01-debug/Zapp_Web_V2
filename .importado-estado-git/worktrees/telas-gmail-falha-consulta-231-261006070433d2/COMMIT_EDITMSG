@@ -1,0 +1,13 @@
+fix(gmail): falha de consulta não vira conta desconectada nem histórico vazio (#231)
+
+R2-API-059. GmailWebhookMonitor descartava o error das três respostas (RPC +
+dois counts) e publicava 0/nenhuma conta; GmailIntegrationCard e GmailInboxView
+liam conta ausente como "Desconectado"/"Gmail não conectado"; EmailThreadView
+trocava consulta fracassada por "Sem mensagens".
+
+Agora os quatro consomem error/loading antes de derivar ausência: o monitor só
+publica o resultado depois das três consultas passarem (erro não sobrescreve o
+último dado bom, que fica marcado como desatualizado; sem dado prévio os campos
+aparecem como desconhecidos, não como zero) e todos oferecem "Tentar de novo".
+
+Cartão V2: telas-gmail-falha-consulta-231 (branch v2/telas-gmail-falha-consulta-231-261006070433d2)

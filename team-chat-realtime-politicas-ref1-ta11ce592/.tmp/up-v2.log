@@ -1,0 +1,223 @@
+FALHAS NOVAS (fora da lista esperada):
+  20260930350000_user_settings_sound_integridade.sql
+  20260930370000_revoke_authenticated_on_audit_functions_and_service_role_writes.sql
+  20260930380000_talkx_update_campaign_limits_22009.sql
+  20260930400000_dashboard_contact_counts_filter_deleted_at.sql
+  20260930450000_contacts_include_legacy_filter.sql
+  20260930460000_harden_talk_me_client_table_privileges.sql
+  20260930500000_ai_block03_pr1_drop_defaults_sentiment.sql
+  20260930530000_l11_departments_acl_escrita.sql
+  20260930550000_talkx_send_interval_max_teto_24h.sql
+  20260930580000_ai_block03_pr2_zero_default_only_projection.sql
+  20260930590000_fix_talkx_recipients_replica_identity.sql
+  20260930620000_multiplix_role_permissions_matrix.sql
+  20260930640000_talkx_v21_launch_flags.sql
+  20260930650000_talkx_v12_server_lifecycle_events.sql
+  20260930680000_talkx_v17_read_at.sql
+  20260930690000_cleanup_seed_contacts_auditoria.sql
+  20260930700000_fix_whatsapp_storage_policies.sql
+  20260930740000_catalogo_send_stats.sql
+  20260930750000_talkx_v15_replied_count_guard_and_drop_increment.sql
+  20260930770000_talkx_v23_draft_step.sql
+  20260930780000_ia033_visao_openrouter.sql
+  20261001201230_f30_multiplix_enums_modelo_v2.sql
+  20261001211230_f31_multiplix_dispatch_recipient_columns.sql
+  20261001221230_f32a_multiplix_delivery_items_table.sql
+  20261001231230_f32b_multiplix_item_queue_rpcs.sql
+  20261001241230_f33_multiplix_blocks_content.sql
+  20261001251230_f34_multiplix_events_append_only.sql
+  20261001271230_talkx_v25_campaign_owner.sql
+  20261001281230_talkx_campaigns_draft_step_responsible.sql
+  20261001291230_talkx_v26_template_version.sql
+  20261001311230_talkx_campaign_worker_lease.sql
+  20261001341230_f51_multiplix_confirm_dispatch.sql
+  20261001381230_talkx_current_version_backfill_fix.sql
+  20261002361230_ia043_ia044_rate_limit_e_orcamento.sql
+  20261002381230_talkx_role_gates.sql
+  20261002391230_talkx_audience_rpc.sql
+  20261002411230_ia047_idempotencia_de_efeitos.sql
+  20261002421230_talkx_audience_snapshot.sql
+  20261002431230_talkx_regressoes_fix.sql
+  20261002441230_f44_revoga_escrita_dispatches.sql
+  20261002451230_talkx_owner_responsible_unify.sql
+  20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
+  20261002511230_cron_ai_jobs_tick_fora_do_minuto_zero.sql
+  20261002521230_f59_transition_dispatch_enum_cast.sql
+  20261002551230_talkx_limits_ritmo.sql
+  20261002581230_talkx_v4_x029_optout.sql
+  20261002601230_searchbox_budget_alert_cron.sql
+  20261002611230_ia051_correlacao_de_execucao.sql
+  20261002631230_talkx_v4_x072_overview_stats.sql
+  20261002641230_talkx_v4_x057_segmentos.sql
+  20261002671230_f60_conexao_capacidades_e_risco.sql
+  20261002691230_talkx_v4_x021_links_conversoes_investimento.sql
+  20261003072707_ia056_agregacao_no_servidor.sql
+  20261003082707_ia055_tarifas_versionadas.sql
+  20261003102707_ia055_custo_no_relatorio.sql
+  20261003152707_cleanup_e2e_conversation_closures.sql
+  20261003172707_talkx_lifecycle_events_delta.sql
+  20261003202707_talkx_counters_checklist_duplicate.sql
+  20261003212707_talkx_receipts_replies.sql
+  20261003222707_talkx_retry_resolve.sql
+  20261003232707_talkx_lgpd_consentimento_expurgo.sql
+  20261003242707_talkx_log_saude_alertas.sql
+  20261003252707_f65_voice_asset_por_item.sql
+  20261003272707_reconcile_local_replay_with_canonical.sql
+  20261004172554_fecha_record_incoming_call_event.sql
+  20261004173439_talkx_tick_nao_aborta_no_expurgo.sql
+  20261004185228_team_membership_bootstrap_owner_grants.sql
+  20261005124628_inbox_agregado_por_contato.sql
+  20261005134241_pg_cron_detector_timeouts_e_falhas_seguidas.sql
+  20261006064630_dashboard_contact_counts_restaura_trava_e33.sql
+  20261006100606_ia131_audio_stt_openrouter.sql
+  20261006152414_team_chat_direct_conversation_race_guard.sql
+  20261006170742_fix_reminders_migrated_task_identity.sql
+  20261006193650_talkx_retry_lote_ids_inexistentes.sql
+  20261006200459_ia_usage_cost_janela_aberta.sql
+  20261006205100_contact_notes_identity_merge_bypass.sql
+  20261006205236_talkx_retry_terminal_elegivel.sql
+  20261006210406_talkx_retry_reabertura_consentimento.sql
+  20261006213734_team_chat_f10_department_whatsapp_safe_config.sql
+  20261006214011_team_profiles_department_id.sql
+  20261006222024_team_receipts_reactions_conversation_id_forced.sql
+  20261007004545_secd_caller_check_13.sql
+  20261007010651_team_chat_media_contract_locators.sql
+  20261007012808_department_invite_contract_audit_vocabulary.sql
+  20261007013217_conversation_closures_reopen_same_day.sql
+  20261009000118_revoke_whatsapp_connections_anon_grants.sql
+  20261014101843_team_chat_realtime_reactions_membership_guards.sql
+  20260930110000_ai_block03_analysis_persistence.sql
+  20260930150000_ai_block03_vocabulary_contract.sql
+  20260930450000_contacts_include_legacy_filter.sql
+  20260930580000_ai_block03_pr2_zero_default_only_projection.sql
+  20261001261230_f35_multiplix_audiences.sql
+  20261003132707_f64_voz_assets_e_grants.sql
+  20261004195051_gmail_oauth_state_attempts.sql
+  20261006160117_ai_context_version_atomic_persist.sql
+migrations: 802 ok, 120 falha(s) de 833 (1 reaplicadas como supabase_admin) | seed: ok | 659s
+[rls] só produção=0 só local=1 diferentes=0
+    só local: ai_usage_outbox
+[columns] só produção=10 só local=12 diferentes=0
+    só produção: contacts.ai_projection_analysis_id
+    só produção: contacts.ai_projection_updated_at
+    só produção: conversation_analyses.agent_performance
+    só produção: conversation_analyses.analysis_version
+    só produção: conversation_analyses.analyzed_at
+    só produção: conversation_analyses.churn_risk
+    só produção: conversation_analyses.coverage
+    só produção: conversation_analyses.model
+    só local: ai_jobs.effect_started_at
+    só local: ai_usage_outbox.created_at
+    só local: ai_usage_outbox.id
+    só local: ai_usage_outbox.motivo
+    só local: ai_usage_outbox.payload
+    só local: ai_usage_outbox.processed_at
+    só local: ai_usage_outbox.tentativas
+    só local: conversation_tasks.migrated_from_reminder_id
+[indexes] só produção=2 só local=4 diferentes=0
+    só produção: ai_conversation_tags.ai_conversation_tags_contact_tag_uidx
+    só produção: conversation_closures.conversation_closures_contact_day_uidx
+    só local: ai_usage_outbox.ai_usage_outbox_pkey
+    só local: ai_usage_outbox.idx_ai_usage_outbox_pendentes
+    só local: conversation_tasks.uq_conversation_tasks_migrated_from_reminder
+    só local: warroom_alerts.ux_warroom_alerts_dedupe_key
+[defaults] só produção=2 só local=10 diferentes=0
+    só produção: conversation_analyses.analysis_version
+    só produção: conversation_analyses.analyzed_at
+    só local: ai_usage_outbox.created_at
+    só local: ai_usage_outbox.id
+    só local: ai_usage_outbox.tentativas
+    só local: contacts.ai_priority
+    só local: contacts.ai_sentiment
+    só local: conversation_analyses.customer_satisfaction
+    só local: conversation_analyses.sentiment_score
+    só local: user_settings.mention_sound_enabled
+[policies] só produção=2 só local=1 diferentes=2
+    só produção: team_message_reactions.team_message_reactions_delete
+    só produção: team_message_reactions.team_message_reactions_select
+    só local: ai_usage_outbox.ai_usage_outbox_service_role
+    diferente: team_messages."Senders can delete own messages"
+    diferente: team_messages.team_messages_update_own
+[triggers] só produção=0 só local=4 diferentes=1
+    só local: conversation_closures.trg_reject_repeated_conversation_closure_without_reopen
+    só local: department_invitations.department_invitations_code_format_insert_trg
+    só local: messages.trg_guard_message_provenance_fields
+    só local: team_message_reactions.team_reactions_force_conversation_id_trig
+    diferente: team_message_receipts.team_receipts_fill_conversation_id_trig
+[functions] só produção=7 só local=19 diferentes=32
+    só produção: f:contacts_count_by_type(include_legacy boolean)
+    só produção: f:persist_conversation_analysis(p_contact_id uuid, p_analysis jsonb, p_analyzed_at timestamp with time zone)
+    só produção: f:remove_wa_label_from_all_contacts(p_label_prefix text)
+    só produção: f:rename_wa_label_on_all_contacts(p_label_prefix text, p_new_tag text)
+    só produção: f:replace_ai_conversation_tags(p_contact_id uuid, p_tags jsonb)
+    só produção: f:resolve_talkx_outcome_unknown(p_recipient_id uuid, p_resolution text, p_note text, p_confirm_duplicate_risk 
+    só produção: f:retry_talkx_recipients(p_campaign_id uuid, p_recipient_ids uuid[])
+    só local: f:backfill_reminders_to_conversation_tasks()
+    só local: f:consume_login_gate(p_email text, p_ip text, p_ip_max integer, p_ip_window_seconds integer, p_email_max integ
+    só local: f:contacts_count_by_type()
+    só local: f:enforce_department_invitations_code_format_on_insert()
+    só local: f:get_department_whatsapp_config(p_department_id uuid)
+    só local: f:get_department_whatsapp_mode(p_department_id uuid)
+    só local: f:get_inbox_contact_summaries(p_contact_ids uuid[])
+    só local: f:grant_agent_achievement_internal(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_rewar
+    diferente: f:accept_department_invite(p_code text)
+    diferente: f:ai_usage_cost_summary(p_since timestamp with time zone, p_until timestamp with time zone, p_top_functions in
+    diferente: f:claim_ai_jobs(p_worker text, p_limit integer, p_lease_seconds integer)
+    diferente: f:complete_multiplix_dispatch_if_drained(p_dispatch_id uuid)
+    diferente: f:complete_multiplix_dispatch_if_items_drained(p_dispatch_id uuid)
+    diferente: f:count_searchbox_sessions_this_month()
+    diferente: f:create_department_invite(p_department_id uuid, p_max_uses integer, p_expires_hours integer)
+    diferente: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)
+[constraints] só produção=8 só local=4 diferentes=3
+    só produção: relation:ai_conversation_tags.ai_conversation_tags_source_known
+    só produção: relation:contacts.contacts_ai_priority_canonical
+    só produção: relation:contacts.contacts_ai_projection_analysis_id_fkey
+    só produção: relation:contacts.contacts_ai_sentiment_canonical
+    só produção: relation:conversation_analyses.conversation_analyses_churn_risk_canonical
+    só produção: relation:conversation_analyses.conversation_analyses_sentiment_canonical
+    só produção: relation:conversation_analyses.conversation_analyses_urgency_canonical
+    só produção: relation:department_invitations.department_invitations_code_format
+    só local: relation:ai_usage_outbox.ai_usage_outbox_pkey
+    só local: relation:conversation_tasks.conversation_tasks_migrated_from_reminder_id_fkey
+    só local: relation:department_invitations.department_invitations_status_check
+    só local: relation:department_invitations.department_invitations_use_count_within_max
+    diferente: relation:department_audit_logs.department_audit_logs_action_check
+    diferente: relation:team_messages.team_messages_content_not_empty
+    diferente: relation:team_messages.team_messages_media_consistency
+[routine_grants] só produção=35 só local=49 diferentes=0
+    só produção: f:contacts_count_by_type(include_legacy boolean)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:contacts_count_by_type(include_legacy boolean)|postgres|EXECUTE|grantor=postgres
+    só produção: f:contacts_count_by_type(include_legacy boolean)|service_role|EXECUTE|grantor=postgres
+    só produção: f:effective_role(_user_id uuid)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:fn_list_audio_meme_categories()|authenticated|EXECUTE|grantor=postgres
+    só produção: f:is_country_allowed(check_country_code text)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:is_country_blocked(check_country_code text)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:is_ip_blocked(check_ip text)|authenticated|EXECUTE|grantor=postgres
+    só local: f:backfill_reminders_to_conversation_tasks()|postgres|EXECUTE|grantor=postgres
+    só local: f:backfill_reminders_to_conversation_tasks()|service_role|EXECUTE|grantor=postgres
+    só local: f:consume_gmail_oauth_state(p_user_id uuid, p_state text)|authenticated|EXECUTE|grantor=postgres
+    só local: f:consume_login_gate(p_email text, p_ip text, p_ip_max integer, p_ip_window_seconds integer, p_email_max integ
+    só local: f:consume_login_gate(p_email text, p_ip text, p_ip_max integer, p_ip_window_seconds integer, p_email_max integ
+    só local: f:contacts_count_by_type()|authenticated|EXECUTE|grantor=postgres
+    só local: f:contacts_count_by_type()|postgres|EXECUTE|grantor=postgres
+    só local: f:contacts_count_by_type()|service_role|EXECUTE|grantor=postgres
+[relation_grants] só produção=944 só local=16 diferentes=0
+    só produção: r:public.agent_achievements|anon|DELETE|grantor=postgres
+    só produção: r:public.agent_achievements|anon|INSERT|grantor=postgres
+    só produção: r:public.agent_achievements|anon|MAINTAIN|grantor=postgres
+    só produção: r:public.agent_achievements|anon|REFERENCES|grantor=postgres
+    só produção: r:public.agent_achievements|anon|SELECT|grantor=postgres
+    só produção: r:public.agent_achievements|anon|TRIGGER|grantor=postgres
+    só produção: r:public.agent_achievements|anon|TRUNCATE|grantor=postgres
+    só produção: r:public.agent_achievements|anon|UPDATE|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|DELETE|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|INSERT|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|MAINTAIN|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|REFERENCES|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|SELECT|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|TRIGGER|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|TRUNCATE|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|UPDATE|grantor=postgres
+ESTRUTURA: 1168 diferença(s) em relação ao retrato da produção
+TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)
+EXIT=1

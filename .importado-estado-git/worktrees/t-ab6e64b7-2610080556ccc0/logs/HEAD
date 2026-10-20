@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791449787 -0300	
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791449787 -0300	reset: moving to HEAD
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a Joaquim Ataides <ti@promobrindes.com.br> 1791449831 -0300	reset: moving to 3019e406ce4e4ab9c9c497b4793a4df1c86acd0a
+3019e406ce4e4ab9c9c497b4793a4df1c86acd0a 1196361932acf2373982f7dd78391ecefbf59a86 Joaquim Ataides <ti@promobrindes.com.br> 1791449834 -0300	cherry-pick: fix(conexoes): troca de conexao padrao vira RPC atomica no banco (#174)
+1196361932acf2373982f7dd78391ecefbf59a86 1bd811dfa8298bb28b968f2400e9cd1587af01e0 Joaquim Ataides <ti@promobrindes.com.br> 1791449834 -0300	cherry-pick: test(conexoes): prova que a troca de padrao toca so as linhas alteradas (#174)
+1bd811dfa8298bb28b968f2400e9cd1587af01e0 d7921bc9d5298090bb38b61fcd29c0c112194fab Joaquim Ataides <ti@promobrindes.com.br> 1791450914 -0300	commit: ci(db): registra teste da conexao padrao no db-guard (#174)

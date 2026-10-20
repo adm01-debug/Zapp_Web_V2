@@ -1,0 +1,32 @@
+fix(edge): sugestões fora do contrato não entram na interface nem viram frases fixas (#370)
+
+O ai-suggest-reply extraía o objeto por regex e devolvia o JSON.parse direto:
+JSON sintaticamente válido com forma errada (`suggestions` em string/objeto,
+quantidade != 3, item sem texto) saía com HTTP 200 e a interface renderizava em
+cima dele (o cliente só conferia `data.suggestions` truthy). E quando o parse
+falhava, a função FABRICAVA três frases fixas e as devolvia com 200, como se
+fossem resultado do modelo. Nenhum dos dois casos sinalizava degradação
+(R2-INF-024).
+
+Agora a saída do modelo passa pelo contrato da capacidade (IA-025):
+
+- `SuggestedRepliesEnvelope` (novo, em `_shared/ai-response-contracts.ts`) valida
+  o envelope `{ suggestions: [...] }` e CADA sugestão (array, exatamente 3 itens,
+  texto não vazio). `source` entra no schema do item para o parse não descartar em
+  silêncio a fonte que o prompt pede e a interface exibe;
+- forma errada não entra no render normal: resposta 502 com `buildAiEnvelope`
+  (capability/status/error + evidência do contrato), o mesmo formato que
+  `ai-conversation-analysis/-summary` usam para saída rejeitada;
+- o caminho de sucesso devolve só `{ suggestions, requestId }` já validados — o
+  eco do requestId (IA-048/IA-051) continua no corpo.
+
+Handler exportado com seam de dependências (auth, guarda de IA e roteador de IA)
+e `Deno.serve` sob `import.meta.main`; o caminho PADRÃO continua chamando
+`generateWithRouting` literalmente com o `requestId` à vista (ratchet do IA-051 e
+aceite IA-032). O `any` do campo do provedor saiu junto: o campo é lido por tipo
+explícito e o ratchet de lint não ganha ocorrência nova.
+
+Teste: supabase/functions/ai-suggest-reply/index.test.ts — 12 dos 13 casos ficam
+vermelhos sem a correção (deno test: 13 passed). O pin que CONGELAVA o defeito em
+tests/contracts/_adv_edge_legacy_producers.test.ts virou a guarda inversa (não
+fabricar frases / não devolver 200 com sugestão de forma inválida).

@@ -1,0 +1,13 @@
+docs(audits): marca plano Banco Unico como proposta de baseline divergente (TRA-001)
+
+O plano presume origem self-hosted/VPS e destino Singu, divergindo do
+canonico (ZAPP = Cloud tnnnlkbymytvtqngbbqh). O documento vira proposta
+nao executavel ate reconciliar origem/destino/modelo: banner de STATUS
+com projetos/Auth/escopo atuais, inventario que distingue contacts.tags
+das tabelas tags/contact_tags ja dropadas, e toda PR externa qualificada
+como Singu_V2 (numero homonimo nao valida entrega neste repo). Etapas
+perigosas (2, 94, 107, 144, 148, 181, 197) marcadas inline.
+
+Guarda novo: scripts/ci/plano-banco-unico-baseline.unit.mjs falha se o
+documento perder a declaracao de baseline divergente ou voltar a citar
+PR sem repositorio.

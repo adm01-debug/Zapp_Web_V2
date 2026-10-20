@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc Joaquim Ataides <ti@promobrindes.com.br> 1791244218 -0300	
+7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc 7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc Joaquim Ataides <ti@promobrindes.com.br> 1791244219 -0300	reset: moving to HEAD
+7941eb209c9a6ab61c3e3d1d9ff222ccfc5ca2bc e67c6dd090580615602e20b18ed31bb0c97769d8 worker <worker@hermes.local> 1791244914 -0300	commit: fix(integracoes): manter Salvar acessível ao desativar uma integração

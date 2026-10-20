@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 191d2c60bc8c6124c81f6a318d838723ea5aa4b2 Joaquim Ataides <ti@promobrindes.com.br> 1791415367 -0300	branch: Created from dia/2026-10-07
+191d2c60bc8c6124c81f6a318d838723ea5aa4b2 a641a198c8ddc5058a893259a8aaaf5d5bf4c08e Joaquim Ataides <ti@promobrindes.com.br> 1791415373 -0300	cherry-pick: test(e2e): portão de boot explícito e zoom garantido no reflow 200% do email-navy
+a641a198c8ddc5058a893259a8aaaf5d5bf4c08e 7d73b933b5813f8157e582862e4bc7021414f0aa Joaquim Ataides <ti@promobrindes.com.br> 1791541408 -0300	rebase (finish): refs/heads/v2/corrigir-reflow-200-email-navy-26100720221baf onto e423ffa63805fe443cd3b561cf1c1997ffc9de6b
+7d73b933b5813f8157e582862e4bc7021414f0aa 3d539f010fdf23a7d2be52cd0f00216b89bbafaa Joaquim Ataides <ti@promobrindes.com.br> 1791541409 -0300	commit (amend): test(e2e): zoom de 200% garantido no reflow do email-navy depois do portao de boot

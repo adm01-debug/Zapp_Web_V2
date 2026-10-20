@@ -1,0 +1,7 @@
+fix(multiplix-dispatch): paginacao para no total autoritativo, sem pedir a pagina alem do fim
+
+Publico multiplo exato da pagina (1.000, 2.000...) tinha a ultima pagina
+cheia e o laco pedia o range com offset == count — o PostgREST com
+count=exact responde 416, que virava MULTIPLIX_RECIPIENTS_LOOKUP 502.
+loadRecipients agora encerra quando rows.length >= expected, e o duble
+reproduz o 416 real em range com offset >= count (R2-API-030).

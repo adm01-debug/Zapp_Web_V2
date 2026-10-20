@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 5fbe9ae2e61dfe972148ed679b2a604432c228ab Joaquim Ataides <ti@promobrindes.com.br> 1791487295 -0300	
+5fbe9ae2e61dfe972148ed679b2a604432c228ab 5fbe9ae2e61dfe972148ed679b2a604432c228ab Joaquim Ataides <ti@promobrindes.com.br> 1791487296 -0300	reset: moving to HEAD
+5fbe9ae2e61dfe972148ed679b2a604432c228ab 33a1a900fa486b4faba2c10608768a2b9222c5b3 Joaquim Ataides <ti@promobrindes.com.br> 1791487309 -0300	cherry-pick: fix(multiplix-dispatch): le o publico inteiro em resumo/estimativa (R2-API-030)
+33a1a900fa486b4faba2c10608768a2b9222c5b3 42c1db6e3c1f647dda99dccab2c394449feab0d8 Joaquim Ataides <ti@promobrindes.com.br> 1791487309 -0300	cherry-pick: fix(multiplix-dispatch): paginacao para no total autoritativo, sem pedir a pagina alem do fim
+42c1db6e3c1f647dda99dccab2c394449feab0d8 0cb30fe98b0b6f6d3dc648137a10879900ef18a0 Joaquim Ataides <ti@promobrindes.com.br> 1791487309 -0300	cherry-pick: fix(multiplix-dispatch): remove log direto de inspect.ts que furava o contrato F54

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "status": "COMPLETED_FINITE_STATIC_REVIEW",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "runtime_tested": false,
+  "source_changed": false,
+  "new_finding_count": 21,
+  "coverage": {
+    "function_bodies": 311,
+    "snapshot_signature_matches": 303,
+    "policy_bodies_snapshot": 446,
+    "policy_bodies_extras": 56,
+    "do_bodies": 107,
+    "views": 11,
+    "view_alters": 7,
+    "trigger_bindings": 123,
+    "ddl_original_units": 2425,
+    "ddl_own_units": 1695,
+    "ddl_peer_acl_units": 730,
+    "dml_seed_units": 127,
+    "top_level_cron_units": 16,
+    "control_units": 44,
+    "comment_intent_units": 231,
+    "test_files": 156,
+    "test_lines": 14463,
+    "shell_files": 12,
+    "shell_lines": 3546,
+    "published_targeted_sql_files": 672,
+    "published_semantic_test_shell_files": 168
+  },
+  "validation": {
+    "json_artifacts_checked": 25,
+    "line_ranges_checked": 31150,
+    "file_hash_references_checked": 25661,
+    "git_blob_references_checked": 1677
+  },
+  "validation_errors": 0,
+  "artifact_sha256": {
+    "report.md": "8f38496a29e2dff87eb51fdb462bec182c608809d240fd3f85440e00c40f4bcb",
+    "findings.json": "8c475a560b14770682767a004f64d64f76e91352d39af8f0d4bbcbffd6baad48",
+    "coverage.json": "f6214eee183cfcaaf230ea7164c4b8cd82ddbbeabe05d45e3aab0d1f41043136",
+    "function_review.json": "2807e8bdb96bf2e7e8fc8a0dd141a746d9429e1954cdf20d2cd61a7c31f3ebd6",
+    "ddl_completion.json": "505103360242ab9f7801b536540079d258d35e891105e0cb0a417164638ef988",
+    "ddl_adjudications.json": "78476969a5b247c5811a33acb2a79c6da770e2fd463025d128a669c8838e7891",
+    "test-review.json": "3531b2e4483caeaa0e6a22d339e651cc1cb58723e56d69a46d4c6846e990bfd4",
+    "shell-review.json": "d39536cb0e0ecef38d9334b3b9a65d6c716a33fa210bdf8f02a7bc749a21dea0",
+    "reference_validation.json": "6d22f0baf3ea3acf93e751448c390de9266dec448ee8ae3902fcceb9dd124a81"
+  },
+  "limits": [
+    "Finite assigned source sets manually reviewed; no claim every historical SQL body was read or every behavior proved.",
+    "No DB, SQL, application test suite, Docker or service executed; production acceptance remains unknown.",
+    "Peer authorship kept in test-review and ddl_completion; ranges are explicit and global paths require deduplication."
+  ]
+}

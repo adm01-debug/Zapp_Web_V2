@@ -1,0 +1,10 @@
+fix(edge): política de egress no download de mídia do webhook (R2-API-009)
+
+persistMediaToStorage, sticker e persistProfilePicture buscavam qualquer
+URL vinda do payload/provedor com fetch direto — SSRF para loopback,
+link-local e host arbitrário, sem teto de bytes nem revalidação de redirect.
+
+Novo _shared/media-egress.ts fail-closed: só baixa *.whatsapp.net via
+https e origens exatas confiáveis (EVOLUTION_API_URL, SUPABASE_URL e
+MEDIA_EGRESS_ALLOWED_ORIGINS/HOSTS), revalida cada redirect manual e lê
+o corpo em streaming com teto de bytes.
