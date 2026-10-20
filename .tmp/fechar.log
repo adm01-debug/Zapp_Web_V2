@@ -1,0 +1,7 @@
+On branch v2/auditoria-config-operacional-26101518086c9d
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Algum teste novo não chama o código que você mudou (confere um literal, uma cópia feita à mão ou só um mock). Faça o teste exercitar o código real.
+  *. CONFERÊNCIA: supabase/migrations/20261015211601_auditoria_config_operacional.sql: há LOOP que apaga/altera sem LIMIT nem teto de voltas (recusa real de 06/10: drenagem sem teto numa transação só). Ponha um teto por chamada.
+FECHADO (modo V2, local): v2/auditoria-config-operacional-26101518086c9d @ e33e7cf2b — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101518086c9d.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.

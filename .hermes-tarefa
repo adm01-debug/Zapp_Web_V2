@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditoria-config-operacional
+ID=26101518086c9d
+BRANCH=v2/auditoria-config-operacional-26101518086c9d
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-config-operacional-26101518086c9d
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T18:08:43-03:00
+KANBAN=t_a8be1908
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-config-operacional-26101518086c9d/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101518086c9d
+APLICADA_LOCAL=20261015211601_auditoria_config_operacional.sql sha=a49623369d19ff5d
+PRONTO_SHA=e33e7cf2be74587d304cba18a74d914f2fbb23c5

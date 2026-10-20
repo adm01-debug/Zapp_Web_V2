@@ -1,0 +1,2 @@
+130	0	supabase/migrations/20261015211601_auditoria_config_operacional.sql
+483	0	supabase/tests/auditoria_config_operacional.sql

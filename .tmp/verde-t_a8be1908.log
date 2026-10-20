@@ -1,0 +1,574 @@
+BEGIN
+CREATE ROLE
+CREATE ROLE
+CREATE ROLE
+CREATE SCHEMA
+CREATE FUNCTION
+CREATE FUNCTION
+GRANT
+GRANT
+CREATE TABLE
+CREATE SCHEMA
+CREATE TABLE
+CREATE TABLE
+CREATE FUNCTION
+WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+CREATE PUBLICATION
+CREATE TABLE
+CREATE TABLE
+SET
+INSERT 0 2
+SET
+── aplicando as migrations REAIS (schema base + as quatro tabelas) ──
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE TYPE
+CREATE TABLE
+ALTER TABLE
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+INSERT 0 1
+CREATE POLICY
+CREATE POLICY
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+ALTER PUBLICATION
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE TRIGGER
+ALTER PUBLICATION
+ALTER PUBLICATION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE TRIGGER
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+INSERT 0 21
+INSERT 0 21
+INSERT 0 15
+INSERT 0 6
+INSERT 0 5
+ALTER PUBLICATION
+ALTER PUBLICATION
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+INSERT 0 5
+CREATE FUNCTION
+CREATE TRIGGER
+DROP POLICY
+CREATE TRIGGER
+CREATE TRIGGER
+GRANT
+GRANT
+GRANT
+GRANT
+SET
+INSERT 0 2
+INSERT 0 2
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+
+── T0: a barreira e a RLS, e os gatilhos sao os do cartao ───────────────
+NOTICE:  PASS [T0a authenticated TEM INSERT em audit_logs (barra e a policy, nao o GRANT)] -> true
+NOTICE:  PASS [T0b RLS ligada em queues] -> true
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [T0c RLS ligada em queue_members] -> true
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [T0d RLS ligada em whatsapp_connection_queues] -> true
+NOTICE:  PASS [T0e RLS ligada em rate_limit_configs] -> true
+NOTICE:  PASS [T0f nenhuma policy de INSERT em audit_logs para authenticated (forja barrada)] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+── aplicando a migration SOB TESTE (os gatilhos) ──
+CREATE FUNCTION
+REVOKE
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO A: criar fila (INSERT) deixa UMA linha com o autor certo ───────
+NOTICE:  PASS [T0g os quatro gatilhos do cartao existem] -> 4
+NOTICE:  PASS [A1 admin cria a fila (1 linha)] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [A2 a trilha tem 1 linha para a fila nova] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [A3 acao = queue_created] -> queue_created
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [A4 entity_type = queues] -> queues
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [A5 autor = o admin que fez a mudanca] -> 11111111-1111-1111-1111-11111111111a
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [A6 details.new guarda o estado criado] -> Fila A
+NOTICE:  PASS [A7 details.actor_kind = jwt (nao veio de SQL direto)] -> jwt
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO B: UPDATE grava SO o que mudou (e updated_at fica fora) ────────
+NOTICE:  PASS [B1 admin troca o nome da fila (1 linha)] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [B2 acao = queue_updated] -> queue_updated
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [B3 o diff tem EXATAMENTE {name:{old,new}} — updated_at fora] -> {"name": {"new": "Fila B", "old": "Fila A"}}
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [B4 updated_at mudou de fato na linha (o gatilho real tocou)] -> true
+NOTICE:  PASS [B5 trocar descricao e cor grava as duas colunas, e so elas] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO C: DELETE grava o estado ANTERIOR ─────────────────────────────
+NOTICE:  PASS [B6 o diff do segundo UPDATE tem exatamente description e color] -> color,description
+NOTICE:  PASS [B7 a fila tem 1 created + 2 updated = 3 eventos (1 evento = 1 linha)] -> 3
+NOTICE:  PASS [C1 admin apaga a fila (1 linha)] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [C2 acao = queue_deleted e details.old guarda o nome anterior] -> queue_deleted|Fila B
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO D: membros da fila ────────────────────────────────────────────
+NOTICE:  PASS [C3 a trilha sobreviveu ao DELETE da fila (4 eventos)] -> 4
+NOTICE:  PASS [D1a admin poe o agente na fila (1 linha)] -> OK 1
+NOTICE:  PASS [D1b agente entra na fila (1 linha)] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [D2 acao = queue_member_created] -> queue_member_created
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [D3 desativar o membro grava so is_active] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO E: vinculo conexao-fila ───────────────────────────────────────
+NOTICE:  PASS [D4 acao = queue_member_updated com diff so de is_active] -> queue_member_updated|{"is_active": {"new": false, "old": true}}
+NOTICE:  PASS [D5 remover o membro grava queue_member_deleted] -> OK 1
+NOTICE:  PASS [D6 acao final do membro] -> queue_member_deleted
+INSERT 0 1
+NOTICE:  PASS [E1 admin vinculou conexao<->fila (1 linha)] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [E2 acao = connection_queue_linked com entity_type da tabela] -> connection_queue_linked|whatsapp_connection_queues
+NOTICE:  PASS [E3 desvincular grava connection_queue_unlinked com o estado anterior] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO F: limites de taxa ────────────────────────────────────────────
+NOTICE:  PASS [E4 acao final do vinculo] -> connection_queue_unlinked|c1111111-0000-0000-0000-00000000000c
+NOTICE:  PASS [F1 admin cria o limite (1 linha)] -> OK 1
+NOTICE:  PASS [F2 acao = rate_limit_config_created] -> rate_limit_config_created
+NOTICE:  PASS [F3 subir o limite grava so max_requests] -> OK 1
+NOTICE:  PASS [F4 acao = rate_limit_config_updated com diff minimo] -> rate_limit_config_updated|{"max_requests": {"new": 99, "old": 10}}
+NOTICE:  PASS [F5 apagar o limite grava rate_limit_config_deleted] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [F6 acao final do limite] -> rate_limit_config_deleted
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO G: usuario COMUM nao altera configuracao nem deixa rastro ─────
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [G1 antes: 1 evento da fila D (o created)] -> 1
+NOTICE:  PASS [G2 agente comum NAO renomeia a fila (RLS: 0 linhas)] -> OK 0
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [G3 agente comum NAO apaga a fila (RLS: 0 linhas)] -> OK 0
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [G4 a tentativa nao virou evento (continua 1)] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO H: usuario COMUM nao executa a funcao de gatilho ──────────────
+NOTICE:  PASS [G5 o nome da fila segue intacto] -> Fila D
+NOTICE:  PASS [H1 anon NAO tem EXECUTE na funcao de auditoria] -> false
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [H2 authenticated NAO tem EXECUTE na funcao de auditoria] -> false
+NOTICE:  PASS [H3 nem o PUBLIC herdou EXECUTE] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO I: usuario COMUM nao forja linha na trilha ───────────────────
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [I1 authenticated NAO insere em audit_logs direto (RLS 42501)] -> ERRO 42501
+NOTICE:  PASS [I2 a forja nao entrou na trilha] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [I3 anon NAO le a trilha (nem por SELECT direto)] -> ERRO 42501
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO J: rollback do arquivo e de verdade (sem gatilho, sem rastro) ─
+   rodando as cinco linhas do cabecalho -- Rollback:
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP FUNCTION
+NOTICE:  PASS [J1 o admin ainda cria fila (1 linha) — a migration nao bloqueia DML] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [J2 com o rollback aplicado, a fila nova NAO gera evento] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [J3 a fila existe mesmo sem trilha (prova que o gatilho e quem grava)] -> 1
+CREATE FUNCTION
+REVOKE
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TRIGGER
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO K: idempotencia (reaplicar a migration nao duplica evento) ────
+NOTICE:  PASS [J4 reaplicar a migration devolve os quatro gatilhos] -> 4
+ espera 
+--------
+ 
+(1 row)
+
+NOTICE:  PASS [K1 admin renomeia a fila D] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+
+── TOTAL: quantas mudancas, quantos eventos (1 mudanca = 1 evento) ─────
+NOTICE:  PASS [K2 a fila D acumula 2 eventos (1 created + 1 updated), nao 3] -> 2
+ espera 
+--------
+ 
+(1 row)
+
+
+TODOS OS BLOCOS PASSARAM — auditoria da configuracao operacional
+NOTICE:  PASS [L1 total de eventos do cartao = 14] -> 14
+ROLLBACK
