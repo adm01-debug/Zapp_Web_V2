@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107250 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107252 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 06383152256ea6bfd5483825a4fca5b49b716d36 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107293 -0300	cherry-pick: feat(admin): RPCs admin_list_cron_jobs e admin_toggle_cron_job com auditoria
+06383152256ea6bfd5483825a4fca5b49b716d36 8045a09d2977c682c77bcfa1f51038d68f8ee576 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107366 -0300	commit (cherry-pick): test(admin): contrato em Postgres descartavel das RPCs de cron jobs
+8045a09d2977c682c77bcfa1f51038d68f8ee576 f548ddfbeddc1524816080196629e2f44fd4a4a5 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792108496 -0300	commit: feat(admin): aba Tarefas agendadas so para admin com pausa e ativacao
+f548ddfbeddc1524816080196629e2f44fd4a4a5 fc2e77932acb3e357eb8021ca1919eeffde026ee Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792108601 -0300	commit: chore(ci): devolve a quebra de linha final do db-guard

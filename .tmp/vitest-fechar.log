@@ -1,0 +1,21 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tarefas-agendadas-2610152034e026
+
+·······Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+···················
+
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  21:05:13
+   Duration  13.98s (transform 8.85s, setup 2.74s, import 14.28s, tests 11.21s, environment 3.67s)
+
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tarefas-agendadas-2610152034e026
+
+·········
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  21:05:28
+   Duration  544ms (transform 65ms, setup 0ms, import 89ms, tests 21ms, environment 0ms)
+

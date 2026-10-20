@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-tarefas-agendadas
+ID=2610152034e026
+BRANCH=v2/admin-tarefas-agendadas-2610152034e026
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tarefas-agendadas-2610152034e026
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T20:34:12-03:00
+KANBAN=t_309e6d1e
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tarefas-agendadas-2610152034e026/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610152034e026
+PRONTO_SHA=fc2e77932acb3e357eb8021ca1919eeffde026ee

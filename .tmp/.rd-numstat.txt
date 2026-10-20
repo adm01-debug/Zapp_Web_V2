@@ -1,0 +1,11 @@
+12	0	.github/workflows/db-guard.yml
+349	0	scripts/db-audit/admin-cron-jobs-rpc.test.sh
+25	3	src/components/admin/AdminView.tsx
+173	0	src/components/admin/CronJobsTab.tsx
+2	2	src/components/admin/__tests__/AdminView.a11y.test.tsx
+92	0	src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx
+212	0	src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx
+102	0	src/components/admin/useTarefasAgendadas.ts
+16	0	src/integrations/supabase/types.ts
+175	0	supabase/migrations/20261011173000_admin_cron_jobs.sql
+144	0	tests/contracts/admin-cron-jobs-rpc.contract.test.ts
