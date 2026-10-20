@@ -617,7 +617,7 @@ export async function handleConnectionHealthCheck(
                     newStatus: dbStatus,
                   });
                   if (dbStatus === 'disconnected' && conn.status === 'connected') {
-                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'disconnected', reason: openReason });
                   }
                 }
               }
@@ -687,6 +687,11 @@ export async function handleConnectionHealthCheck(
       // Schema real de warroom_alerts: alert_type/title/message/source
       // (severity/description/metadata nao existem — o insert antigo falhava
       // com PGRST204 e o alerta critico nunca era gravado).
+      const desconectada = alert.kind === 'disconnected';
+      const title = desconectada ? `WhatsApp ${alert.instance_id} desconectado` : `Conexão ${alert.instance_id} degradada`;
+      const message = desconectada
+        ? `A instância ${alert.instance_id} perdeu conexão com o WhatsApp.`
+        : `A instância ${alert.instance_id}: ${REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada'}.`;
       await supabase.from('warroom_alerts').insert({
         alert_type: alert.kind === 'disconnected' ? 'critical' : 'warning',
         title,
@@ -708,6 +713,7 @@ export async function handleConnectionHealthCheck(
     // aqui quebra o guard de espelho do CI. Até o cartão de SQL criá-la, a lista de
     // opt-ins é vazia e a notificação falha fechada: o episódio fica registrado no
     // warroom, mas nenhum push/e-mail dispara. Nunca volta a mandar para todos.
+    const newAlerts = dedupeAlerts(alertsToCreate);
     const prefs: Array<Record<string, unknown>> = [];
     const resendKey = Deno.env.get('RESEND_API_KEY');
     for (const alert of newAlerts) {
