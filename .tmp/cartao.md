@@ -1,0 +1,71 @@
+Task t_afc0e9a5: feat(edge): envia a mensagem de ausência fora do horário pela fila canônica de saída
+  status:    running
+  assignee:  edgar
+  workspace: scratch @ C:\Users\Joaquim Ataides\AppData\Local\hermes\kanban\boards\zapp-web-v2\workspaces\t_afc0e9a5
+  max-retries: 2 (default)
+  created:   2026-10-13 08:52 by claude
+  started:   2026-10-15 19:09
+  parents:   t_8010d4a7
+
+Body:
+ESPECIALISTA DA ÁREA: edgar (Edge Functions). Abra a skill de área do seu perfil antes de editar. A PRIMEIRA LINHA do `.tmp/relato.md` deve ser EXATAMENTE `Especialista: edgar`; o relato diz o que mudou, o comando de verificação rodado e a linha de resultado (ex.: `Test Files 3 passed, Tests 27 passed`), sem 'parcial'.
+CONTEXTO: segunda passada da auditoria de paridade V3 -> V2 do doc `docs/estado/16-components-connections-dashboard.md` (telas de conexões e dashboard). Plano e relatórios: `~/arquitetura-v2/paridade-16/achados_*.md` (cópia para agentes em `~/hermes-workspaces/.assets/paridade-16/`). A V3 é só REFERÊNCIA (`~/projetos/Zapp_Web_V3`, leia com `git -C ~/projetos/Zapp_Web_V3 show origin/main:<caminho>`); a V2 costuma estar melhor: NÃO devolva o que a V2 já faz melhor. FORA DE ESCOPO (decisões do dono): tags/etiquetas de contato ou conversa (função excluída), exportar/importar/edição em massa de contatos, ciclo de vida de negócios, SLA de Resolução, webhook externo de alerta, persistir QR no navegador. Os achados abaixo foram CONFERIDOS no código da cópia viva da V2 em 13/10/2026 (leitores + conferência do Claude em migrations e código); o BANCO REAL não foi consultado: confira no banco LOCAL o que o cartão mandar. A cópia lida não tem cartões `done` ainda não integrados: antes de editar, procure cartões irmãos em `~/hermes-workspaces/.v2-fila/*.json` e no quadro e, se algo já estiver feito, prove no relato em vez de refazer.
+REGRAS: o cartão compila e passa sozinho (`zapp-verify . --rapido` verde); atualize ou crie testes dos arquivos que tocar e liste-os no relato; sem dependência nova; migrations só ADITIVAS, com `-- Rollback:` completo no topo, `SET search_path` e grants explícitos, e PROVA no banco LOCAL com o papel real (agent/supervisor/admin/anon/service_role) mostrando o que passa e o que é negado; NADA vai para produção (quem aplica é o Joaquim). Texto de interface em pt-BR; nada novo que exporte, baixe, copie ou imprima dados; sem log de telefone, token ou texto de mensagem; efeitos sutis respeitando reduzir movimento; cores só as do sistema.
+
+PAI LÓGICO: PL-04. Se a migration ainda não integrou, implemente tolerante (a RPC ausente = não envia) e diga no relato.
+
+PROBLEMA (evidência conferida)
+Depois do PL-04 existe a decisão no banco, mas ninguém envia. A mensagem deve sair pela mesma fila das demais (`enqueue_outbound_message` → `message-delivery`) para herdar idempotência, lease e auditoria.
+
+O QUE FAZER
+1. Depois que o PL-04 integrar, no caminho do webhook de mensagem recebida (ou em uma Edge chamada por ele, siga o desenho existente: leia o webhook antes) chame `should_send_away_message`; se devolver texto, enfileire pela RPC canônica com `client_message_id` determinístico (`away-<contact>-<yyyymmdd>`), marcada como mensagem automática de sistema.
+2. Falha na decisão ou no enfileiramento NUNCA impede o recebimento da mensagem do cliente (try/catch, log sem telefone nem texto).
+3. Registre com `record_away_message` só depois de enfileirar.
+4. Testes Deno: dentro do horário não envia; fora envia uma vez; erro na decisão não derruba o webhook; idempotência pelo id.
+
+ARQUIVOS QUE PODE TOCAR
+- supabase/functions/<webhook de mensagem recebida> (confirme o nome)
+- supabase/functions/_shared/
+- testes Deno
+
+CRITÉRIO DE PRONTO
+1. Mensagem de ausência sai uma vez por 24 h.
+2. Webhook nunca falha por causa dela.
+3. `zapp-verify . --rapido` verde.
+
+
+Comments (1):
+  [2026-10-15 19:02] workersql: worker(sql) / PL-04 (t_8010d4a7) — recado para o PL-05 (edgar), dependencia direta:
+
+A migration `20261015211150_away_message_decision.sql` entra com a trava de segurança do cartão: coluna NOVA `away_messages.enabled boolean NOT NULL DEFAULT false`.
+
+Consequência para a sua fixture: `public.should_send_away_message(contato, conexao)` só devolve o texto com `away_messages.enabled = true` (e `is_enabled` diferente de false). Sem ligar `enabled`, a RPC devolve NULL por desenho (nasce desligada) e o webhook não envia — não é bug.
+
+Também: as duas RPCs são SECURITY DEFINER com EXECUTE só para `service_role` (revogado de PUBLIC/anon/authenticated). Chame como service_role. `record_away_message(contato, conexao[, sent_at])` é idempotente na janela de 24 h (devolve NULL quando já houve envio).
+
+Prova no banco local: `supabase/tests/away_message_decision.sql` (11 blocos, verde; T1/T2/T3a/T3b/T4/T5/T8 provam os casos e o enforcement).
+
+Events (48):
+  [2026-10-15 19:30] [run 18674] heartbeat
+  [2026-10-15 19:31] [run 18674] heartbeat
+  [2026-10-15 19:32] [run 18674] heartbeat
+  [2026-10-15 19:33] [run 18674] heartbeat
+  [2026-10-15 19:34] [run 18674] heartbeat
+  [2026-10-15 19:35] [run 18674] heartbeat
+  [2026-10-15 19:36] [run 18674] heartbeat
+  [2026-10-15 19:37] [run 18674] heartbeat
+  [2026-10-15 19:38] [run 18674] heartbeat
+  [2026-10-15 19:39] [run 18674] heartbeat
+  [2026-10-15 19:40] [run 18674] heartbeat
+  [2026-10-15 19:41] [run 18674] heartbeat
+  [2026-10-15 19:42] [run 18674] heartbeat
+  [2026-10-15 19:43] [run 18674] heartbeat
+  [2026-10-15 19:44] [run 18674] heartbeat
+  [2026-10-15 19:45] [run 18674] heartbeat
+  [2026-10-15 19:46] [run 18674] heartbeat
+  [2026-10-15 19:47] [run 18674] heartbeat
+  [2026-10-15 19:48] [run 18674] heartbeat
+  [2026-10-15 19:49] [run 18674] heartbeat
+
+Runs (1):
+  #18674 running      @edgar  active  2026-10-15 19:09

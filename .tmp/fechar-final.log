@@ -1,0 +1,6 @@
+On branch v2/away-message-fila-saida-26101519099d3a
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Números ou lista de arquivos/testes do relato não batem com o diff (2 arquivos, 1 de teste, 3 casos de teste novos). Corrija o relato para os números reais.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.
+rc=3

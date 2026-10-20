@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=away-message-fila-saida
+ID=26101519099d3a
+BRANCH=v2/away-message-fila-saida-26101519099d3a
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/away-message-fila-saida-26101519099d3a
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T19:12:45-03:00
+KANBAN=t_afc0e9a5
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/away-message-fila-saida-26101519099d3a/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101519099d3a
+PRONTO_SHA=ec42a709113477dd3905c66d6d8db26852bb84d1

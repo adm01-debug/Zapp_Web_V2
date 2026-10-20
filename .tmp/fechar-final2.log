@@ -1,0 +1,6 @@
+On branch v2/away-message-fila-saida-26101519099d3a
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 3: O diff não traz evidência de execução de `zapp-verify . --rapido` verde; nada no diff prova essa passagem.
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.
+rc=3
