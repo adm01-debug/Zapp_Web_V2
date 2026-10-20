@@ -1,0 +1,1156 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-2610112015f508/.tmp/prova-base
+
+·····xx·xxx·xx·xx···xx···x····
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/tasks/__tests__/WorkItemCard.test.tsx [ src/components/tasks/__tests__/WorkItemCard.test.tsx ]
+Error: Failed to resolve import "@/components/tasks/shared/TasksUiContext" from "src/components/tasks/__tests__/WorkItemCard.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-2610112015f508/.tmp/prova-base/src/components/tasks/__tests__/WorkItemCard.test.tsx:21:32
+  17 |  import { makeTaskRow } from "@/test/mocks/tarefas";
+  18 |  import { WorkItemCard } from "@/components/tasks/shared/WorkItemCard";
+  19 |  import { TasksUiProvider } from "@/components/tasks/shared/TasksUiContext";
+     |                                   ^
+  20 |  import { useTasksUi } from "@/components/tasks/shared/tasksUi";
+  21 |  var _jsxFileName = "/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-261011...
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/tasks/__tests__/TasksListMode.test.tsx > TasksListMode — etapa 86 (seções, vazios e portas do card) > o checkbox conclui sem abrir o card (onToggleDone sem onOpen)
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name "Concluir tarefa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Concluir tarefa":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Concluir tarefa"[39m
+    [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_21_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<article[39m
+  [33maria-label[39m=[32m"Concluir sem abrir, todo"[39m
+  [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+  [33mdata-item-id[39m=[32m"k1"[39m
+  [33mdata-mode[39m=[32m"list"[39m
+  [33mdata-testid[39m=[32m"work-item-card"[39m
+  [33mrole[39m=[32m"article"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Concluir tarefa"[39m
+      [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m/>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+    [36m>[39m
+      [0mConcluir sem abrir[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+      [33mtitle[39m=[32m"Prioridade: Média"[39m
+    [36m>[39m
+      [0mM[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33maria-haspopup[39m=[32m"menu"[39m
+      [33maria-label[39m=[32m"Mais opções"[39m
+      [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mid[39m=[32m"radix-_r_21_"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"12"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"5"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"19"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+  [36m/>[39m
+[36m</article>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/TasksListMode.test.tsx:156:34
+    154|
+    155|     const card = screen.getByRole('article');
+    156|     fireEvent.click(within(card).getByRole('checkbox', { name: 'Conclu…
+       |                                  ^
+    157|
+    158|     expect(onToggleDone).toHaveBeenCalledWith(alvo);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/components/tasks/__tests__/TasksListMode.test.tsx > TasksListMode — etapa 86 (seções, vazios e portas do card) > na seção "Concluídas" o checkbox é o de reabrir e desfaz pelo onToggleDone
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name "Reabrir tarefa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Reabrir tarefa":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reabrir tarefa"[39m
+    [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_28_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<article[39m
+  [33maria-label[39m=[32m"Já foi, done"[39m
+  [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/40 opacity-60"[39m
+  [33mdata-item-id[39m=[32m"c1"[39m
+  [33mdata-mode[39m=[32m"list"[39m
+  [33mdata-testid[39m=[32m"work-item-card"[39m
+  [33mrole[39m=[32m"article"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Reabrir tarefa"[39m
+      [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"block h-2.5 w-2.5 rounded-sm bg-primary"[39m
+      [36m/>[39m
+    [36m</button>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate line-through text-muted-foreground"[39m
+    [36m>[39m
+      [0mJá foi[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+      [33mtitle[39m=[32m"Prioridade: Média"[39m
+    [36m>[39m
+      [0mM[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33maria-haspopup[39m=[32m"menu"[39m
+      [33maria-label[39m=[32m"Mais opções"[39m
+      [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mid[39m=[32m"radix-_r_28_"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"12"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"5"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"19"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+  [36m/>[39m
+[36m</article>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/TasksListMode.test.tsx:168:34
+    166|     fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    167|     const card = screen.getByRole('article');
+    168|     fireEvent.click(within(card).getByRole('checkbox', { name: 'Reabri…
+       |                                  ^
+    169|
+    170|     expect(onToggleDone).toHaveBeenCalledWith(feita);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 55 > o card da Agenda é uma linha só de 44px, com checkbox e sem motivo de espera (etapa 56)
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name "Concluir tarefa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Concluir tarefa":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Concluir tarefa"[39m
+    [33mclass[39m=[32m" h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "11:00":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33mclass[39m=[32m"inline-flex items-center gap-1 text-xs font-medium text-destructive"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdata-testid[39m=[32m"remind-chip"[39m
+    [33mtitle[39m=[32m"Lembrete: dom., 11/10 11:00"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m" h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_1a_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<article[39m
+  [33maria-label[39m=[32m"Aguardando retorno, waiting"[39m
+  [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-row h-11 items-center gap-2 rounded-xl px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+  [33mdata-item-id[39m=[32m"i5"[39m
+  [33mdata-mode[39m=[32m"agenda"[39m
+  [33mdata-testid[39m=[32m"work-item-card"[39m
+  [33mrole[39m=[32m"article"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<button[39m
+    [33maria-label[39m=[32m"Concluir tarefa"[39m
+    [33mclass[39m=[32m" h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+  [36m>[39m
+    [0mAguardando retorno[0m
+  [36m</span>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"ml-auto flex shrink-0 items-center gap-1.5 min-w-0 overflow-hidden"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+      [33mtitle[39m=[32m"Prioridade: Média"[39m
+    [36m>[39m
+      [0mM[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33maria-haspopup[39m=[32m"dialog"[39m
+      [33mclass[39m=[32m"inline-flex items-center gap-1 text-xs font-medium text-destructive"[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mdata-testid[39m=[32m"remind-chip"[39m
+      [33mtitle[39m=[32m"Lembrete: dom., 11/10 11:00"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-bell-ring h-3 w-3"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M10.268 21a2 2 0 0 0 3.464 0"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M22 8c0-2.3-.8-4.3-2-6"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M4 2C2.8 3.7 2 5.7 2 8"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m11:00[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m" h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_1a_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<circle[39m
+        [33mcx[39m=[32m"12"[39m
+        [33mcy[39m=[32m"12"[39m
+        [33mr[39m=[32m"1"[39m
+      [36m/>[39m
+      [36m<circle[39m
+        [33mcx[39m=[32m"12"[39m
+        [33mcy[39m=[32m"5"[39m
+        [33mr[39m=[32m"1"[39m
+      [36m/>[39m
+      [36m<circle[39m
+        [33mcx[39m=[32m"12"[39m
+        [33mcy[39m=[32m"19"[39m
+        [33mr[39m=[32m"1"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+  [36m</button>[39m
+[36m</article>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:179:25
+    177|     expect(card.className).toContain('flex-row');
+    178|     // checkbox presente na Agenda (na Lista ele já era; no Quadro não)
+    179|     expect(within(card).getByRole('checkbox', { name: 'Concluir tarefa…
+       |                         ^
+    180|     // nada de motivo de espera na linha
+    181|     expect(screen.queryByText('cliente vai responder')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 094 — polimento do arrastar > o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado
+TestingLibraryElementError: Unable to find an element by: [data-testid="drag-overlay"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs font-bold tabular-nums "[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+      ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:113:28
+    111|     comecarArrasto('backlog');
+    112|
+    113|     const overlay = screen.getByTestId('drag-overlay');
+       |                            ^
+    114|     expect(overlay.getAttribute('data-item-id'), 'o overlay é o envolt…
+    115|     expect(overlay.querySelector('[data-item-id="b1"]'), 'o cartão b1 …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 094 — polimento do arrastar > no toque o arrasto só pega depois da pressão longa; toque curto desarma
+AssertionError: expected undefined to be 'Pressione e segure para arrastar' // Object.is equality
+
+- Expected:
+"Pressione e segure para arrastar"
+
++ Received:
+undefined
+
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:133:35
+    131|       const dica = () => coluna('backlog')!.querySelector<HTMLElement>…
+    132|       expect(ctl.bloqueado['b1'], 'no toque o arrasto nasce bloqueado'…
+    133|       expect(dica()?.textContent).toBe('Pressione e segure para arrast…
+       |                                   ^
+    134|
+    135|       fireEvent.pointerDown(corpo);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapas 095/096 — alvo de soltura > a coluna de destino mostra a borda primary e a dica com a contagem que fica
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-drop-target"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs font-bold tabular-nums "[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+      ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:168:25
+    166|     comecarArrasto('backlog');
+    167|
+    168|     const dica = screen.getByTestId('board-drop-target');
+       |                         ^
+    169|     expect(dica.closest('[data-board-column]')?.getAttribute('data-boa…
+    170|     expect(dica.textContent).toBe('Solte para mover para Fazendo (2 de…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapas 095/096 — alvo de soltura > a coluna Aguardando se realça em âmbar durante o arrasto (o painel do motivo é preservado)
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-waiting-emphasis"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs font-bold tabular-nums "[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+      ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:190:27
+    188|     comecarArrasto('backlog');
+    189|
+    190|     const realce = screen.getByTestId('board-waiting-emphasis');
+       |                           ^
+    191|     expect(realce.getAttribute('data-board-column')).toBe('waiting');
+    192|     expect(realce.className).toContain('ring-warning/60');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 097 — teclado do Quadro > ←/→ andam entre colunas (pulando as vazias) e ↑/↓ entre os cartões
+AssertionError: ↓ desce para o próximo cartão da coluna: expected <article …(8)>…(2)</article> to be <article …(8)>…(2)</article> // Object.is equality
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  <article
+    aria-label="Ligar para o cliente, backlog"
+    aria-roledescription="tarefa arrastável"
+    class="group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"
+-   data-item-id="b2"
++   data-item-id="b1"
+    data-mode="board"
+    data-testid="work-item-card"
+    role="article"
+    tabindex="0"
+  >
+@@ -26,11 +26,11 @@
+        aria-expanded="false"
+        aria-haspopup="menu"
+        aria-label="Mais opções"
+        class="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"
+        data-state="closed"
+-       id="radix-_r_1c_"
++       id="radix-_r_1a_"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"
+
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:211:79
+    209|
+    210|     fireEvent.keyDown(b1, { key: 'ArrowDown' });
+    211|     expect(document.activeElement, '↓ desce para o próximo cartão da c…
+       |                                                                               ^
+    212|
+    213|     fireEvent.keyDown(b2, { key: 'ArrowUp' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 097 — teclado do Quadro > Alt+→ move o cartão para a coluna seguinte, com o índice do destino
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:234:20
+    232|     fireEvent.keyDown(b1, { key: 'ArrowRight', altKey: true });
+    233|
+    234|     expect(onMove).toHaveBeenCalledTimes(1);
+       |                    ^
+    235|     expect(onMove.mock.calls[0][0]).toMatchObject({ id: 'b1' });
+    236|     expect(onMove.mock.calls[0][1]).toBe('todo');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 097 — teclado do Quadro > Alt+→ para Aguardando abre o painel do motivo em vez de escrever no banco
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:253:36
+    251|     fireEvent.keyDown(d1, { key: 'ArrowRight', altKey: true });
+    252|
+    253|     expect(onRequestWaitingReason).toHaveBeenCalledTimes(1);
+       |                                    ^
+    254|     expect(onRequestWaitingReason.mock.calls[0][0]).toMatchObject({ id…
+    255|     expect(onMove, 'Aguardando sem motivo não escreve no banco').not.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 098 — rolagem horizontal > o trilho rola com snap e encaixe animado, e a coluna rola por dentro
+AssertionError: expected 'flex w-full min-w-0 gap-3 flex-1 min-…' to contain 'motion-safe:scroll-smooth'
+
+Expected: "motion-safe:scroll-smooth"
+Received: "flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"
+
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:302:25
+    300|     expect(t.className).toMatch(/(^|\s)overflow-x-auto(\s|$)/);
+    301|     expect(t.className).toMatch(/(^|\s)snap-x(\s|$)/);
+    302|     expect(t.className).toContain('motion-safe:scroll-smooth');
+       |                         ^
+    303|
+    304|     expect(coluna('backlog')!.querySelector('[class*="overflow-y-auto"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 098 — rolagem horizontal > as sombras das bordas aparecem só onde há coluna escondida
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-scroll-shadow-right"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs font-bold tabular-nums "[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+      ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:322:19
+    320|     medir(0);
+    321|     expect(screen.queryByTestId('board-scroll-shadow-left')).toBeNull(…
+    322|     expect(screen.getByTestId('board-scroll-shadow-right')).toBeTruthy…
+       |                   ^
+    323|
+    324|     medir(300);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  12 failed | 18 passed (30)
+   Start at  20:42:17
+   Duration  5.43s (transform 2.18s, setup 1.22s, import 5.65s, tests 3.79s, environment 3.73s)
+
