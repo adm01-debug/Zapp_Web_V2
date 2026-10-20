@@ -1,0 +1,149 @@
+20/10 12:02:27 ======================================================================
+20/10 12:02:27 INICIO RODADA 1: importar (nao apaga nada)
+20/10 12:02:27 autoteste OK: arvore recalculada aqui == git (7540 arquivos); hash de arquivo == git
+20/10 12:02:50 passo 1: soltos no repositorio: commits=4477 (uteis 4117, so repetem conteudo ja existente 360) blobs=324 arvores=36335
+20/10 12:02:52    OK: 4117 refs criadas e conferidas
+20/10 12:02:52 commits preservados no repositorio: 50348
+20/10 12:02:53 Kanban: 796 cartoes abertos
+20/10 12:02:53 passo 2: clone n142 (~/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-espelho-ci-26101418239f52) [memoria do script 82 MB]
+20/10 12:03:22    o clone sera importado mas NAO apagado: ['~/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-espelho-ci-26101418239f52 (atividade nas ultimas 72 h)']
+20/10 12:03:22    refs a importar=7 stash=0 pontas soltas uteis=589 (repetidas 337) objetos soltos=121 indices de worktrees sumidas=0; pasta: 5811 do indice + 1560 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:03:27    OK: 598 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:03:27 passo 2: clone retomar (~/hermes-workspaces/Zapp_Web_V2/retomar-automation-suggest-reply-t-e494c228) [memoria do script 197 MB]
+20/10 12:04:01    refs a importar=1 stash=0 pontas soltas uteis=0 (repetidas 336) objetos soltos=0 indices de worktrees sumidas=0; pasta: 4804 do indice + 1851 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:04:04    OK: 2 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:04:04 passo 2: clone t_682cc676 (~/hermes-workspaces/Zapp_Web_V2/t_682cc676_v2) [memoria do script 211 MB]
+20/10 12:04:29    refs a importar=1 stash=0 pontas soltas uteis=292 (repetidas 254) objetos soltos=60 indices de worktrees sumidas=0; pasta: 4956 do indice + 3108 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:04:35    OK: 295 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:04:35 passo 2: clone clone-ws (~/hermes-workspaces/Zapp_Web_V2) [memoria do script 220 MB]
+20/10 12:05:08    o clone sera importado mas NAO apagado: ['~/zapp-worktrees/teste-real (atividade nas ultimas 72 h)']
+20/10 12:05:08    refs a importar=2 stash=1 pontas soltas uteis=4 (repetidas 254) objetos soltos=16 indices de worktrees sumidas=0; pasta: 5806 do indice + 214147 do disco; worktrees proprias=1; repos desconhecidos dentro=0
+20/10 12:05:58    OK: 11 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:05:58 passo 2: clone r2a5 (~/hermes-workspaces/.verificacao/r2a5/repo) [memoria do script 311 MB]
+20/10 12:05:58    clone raso: os 1 pontos de corte ja estao no repositorio (o repositorio NAO vira raso)
+20/10 12:06:01    refs a importar=1 stash=0 pontas soltas uteis=0 (repetidas 25) objetos soltos=0 indices de worktrees sumidas=0; pasta: 3212 do indice + 1 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:06:02    OK: 2 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:06:02 passo 2: clone chat-h353953 (~/hermes-workspaces/chat-h353953/repo) [memoria do script 249 MB]
+20/10 12:06:02    clone raso: os 2 pontos de corte ja estao no repositorio (o repositorio NAO vira raso)
+20/10 12:06:02    refs a importar=0 stash=0 pontas soltas uteis=0 (repetidas 0) objetos soltos=0 indices de worktrees sumidas=0; pasta: 1890 do indice + 0 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:06:04    OK: 1 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:06:04 passo 2: clone mapa-zapp-v2 (~/projetos/Zapp_Web_V2-anexos/arquivo/mapa-zapp-v2) [memoria do script 189 MB]
+20/10 12:06:07    refs a importar=2 stash=1 pontas soltas uteis=1 (repetidas 78) objetos soltos=0 indices de worktrees sumidas=0; pasta: 4890 do indice + 0 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:06:08    OK: 5 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:06:08 passo 2: clone qa4-ref (~/projetos/Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/ref) [memoria do script 207 MB]
+20/10 12:06:12    refs a importar=0 stash=0 pontas soltas uteis=0 (repetidas 81) objetos soltos=0 indices de worktrees sumidas=0; pasta: 4873 do indice + 0 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 12:06:13    OK: 1 refs importadas (sha conferido) e estado da pasta igual byte a byte
+20/10 12:06:15 passo 3: bundle ~/backups/zapp-sync-20261019-200821/commits-locais-nao-publicados.bundle: 3785 refs; 0 com commit que ainda falta no repositorio
+20/10 12:06:15    OK: todos os 3785 objetos de ponta do bundle estao no repositorio
+20/10 12:06:28 passo 3: bundle ~/backups-sync-2026-10-17/bundles/retomar-automation-suggest-reply-t-e494c228.bundle: 7615 refs; 0 com commit que ainda falta no repositorio
+20/10 12:06:28    OK: todos os 7615 objetos de ponta do bundle estao no repositorio
+20/10 12:06:42 passo 3: bundle ~/backups-sync-2026-10-17/bundles/n142-banco-leitura-reacoes-espelho-ci-26101418239f52.bundle: 7612 refs; 0 com commit que ainda falta no repositorio
+20/10 12:06:42    OK: todos os 7612 objetos de ponta do bundle estao no repositorio
+20/10 12:06:56 passo 3: bundle ~/backups-sync-2026-10-17/bundles/t_682cc676_v2.bundle: 5029 refs; 0 com commit que ainda falta no repositorio
+20/10 12:06:56    OK: todos os 5029 objetos de ponta do bundle estao no repositorio
+20/10 12:07:09 passo 3: bundle ~/backups-sync-2026-10-17/bundles/Zapp_Web_V2.bundle: 5065 refs; 0 com commit que ainda falta no repositorio
+20/10 12:07:10    OK: todos os 5065 objetos de ponta do bundle estao no repositorio
+20/10 12:07:23 passo 3: bundle ~/backups-sync-2026-10-17/zapp-referencia.bundle: 8955 refs; 2 com commit que ainda falta no repositorio
+20/10 12:07:24    OK: todos os 8955 objetos de ponta do bundle estao no repositorio
+20/10 12:07:24 passo 3: bundle ~/projetos/_arquivo_zapp/consolidacao_v2_20261004/local_fase0-banco-local.bundle: 1 refs; 0 com commit que ainda falta no repositorio
+20/10 12:07:24    OK: todos os 1 objetos de ponta do bundle estao no repositorio
+20/10 12:07:38 passo 3: bundle ~/projetos/_arquivo_zapp/consolidacao_v2_20261004/Zapp_Web_V2_all_refs.bundle: 478 refs; 4 com commit que ainda falta no repositorio
+20/10 12:07:39    OK: todos os 478 objetos de ponta do bundle estao no repositorio
+20/10 12:07:52 passo 3: bundle ~/projetos/_arquivo_zapp/consolidacao_v2_20261004/zapp-web-v2-main_all_refs.bundle: 348 refs; 7 com commit que ainda falta no repositorio
+20/10 12:07:54    OK: todos os 348 objetos de ponta do bundle estao no repositorio
+20/10 12:07:55 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/Zapp_Web_V2_inbox_resgate_20260922.bundle: 340 refs; 312 com commit que ainda falta no repositorio
+20/10 12:07:57    OK: todos os 340 objetos de ponta do bundle estao no repositorio
+20/10 12:07:57 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/design_20260831.bundle: 80 refs; 6 com commit que ainda falta no repositorio
+20/10 12:07:59    OK: todos os 80 objetos de ponta do bundle estao no repositorio
+20/10 12:07:59 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/postmerge_hotfix_clone_20260829.bundle: 5 refs; 0 com commit que ainda falta no repositorio
+20/10 12:07:59    OK: todos os 5 objetos de ponta do bundle estao no repositorio
+20/10 12:07:59 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/catalog_fix_20260829.bundle: 121 refs; 31 com commit que ainda falta no repositorio
+20/10 12:08:02    OK: todos os 121 objetos de ponta do bundle estao no repositorio
+20/10 12:08:02 passo 3: bundle ~/projetos/_arquivo_zapp/v2_all_refs_20260925.bundle: 19 refs; 10 com commit que ainda falta no repositorio
+20/10 12:08:03    OK: todos os 19 objetos de ponta do bundle estao no repositorio
+20/10 12:08:04 passo 3: bundle ~/zapp-audit-backup/zapp-backup-20260916-0816.bundle: 386 refs; 29 com commit que ainda falta no repositorio
+20/10 12:08:06    OK: todos os 386 objetos de ponta do bundle estao no repositorio
+20/10 12:08:12 passo 4: worktrees: 3100 saem, 203 ficam {'estado da fabrica (.integra)': 10, 'atividade nas ultimas 72 h': 36, 'cartao aberto no Kanban': 153, 'travada': 1, 'usada por servico': 3}
+20/10 12:08:19    lote 1-40: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:08:26    lote 41-80: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:08:37    lote 81-120: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:08:43    lote 121-160: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:08:50    lote 161-200: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:08:58    lote 201-240: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:03    lote 241-280: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:11    lote 281-320: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:19    lote 321-360: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:25    lote 361-400: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:31    lote 401-440: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:37    lote 441-480: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:44    lote 481-520: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:52    lote 521-560: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:09:58    lote 561-600: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:03    lote 601-640: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:09    lote 641-680: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:15    lote 681-720: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:20    lote 721-760: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:27    lote 761-800: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:32    lote 801-840: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:38    lote 841-880: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:44    lote 881-920: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:51    lote 921-960: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:10:58    lote 961-1000: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:05    lote 1001-1040: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:10    lote 1041-1080: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:16    lote 1081-1120: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:21    lote 1121-1160: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:27    lote 1161-1200: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:39    lote 1201-1240: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:46    lote 1241-1280: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:11:52    lote 1281-1320: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:00    lote 1321-1360: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:08    lote 1361-1400: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:14    lote 1401-1440: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:20    lote 1441-1480: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:28    lote 1481-1520: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:36    lote 1521-1560: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:41    lote 1561-1600: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:46    lote 1601-1640: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:52    lote 1641-1680: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:12:58    lote 1681-1720: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:13:03    lote 1721-1760: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:13:08    lote 1761-1800: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:13:46    lote 1801-1840: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:13:58    lote 1841-1880: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:04    lote 1881-1920: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:09    lote 1921-1960: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:16    lote 1961-2000: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:21    lote 2001-2040: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:27    lote 2041-2080: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:34    lote 2081-2120: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:39    lote 2121-2160: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:44    lote 2161-2200: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:51    lote 2201-2240: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:14:55    lote 2241-2280: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:06    lote 2281-2320: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:13    lote 2321-2360: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:20    lote 2361-2400: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:29    lote 2401-2440: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:40    lote 2441-2480: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:46    lote 2481-2520: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:52    lote 2521-2560: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:15:58    lote 2561-2600: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:04    lote 2601-2640: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:15    lote 2641-2680: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:22    lote 2681-2720: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:29    lote 2721-2760: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:37    lote 2761-2800: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:42    lote 2801-2840: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:48    lote 2841-2880: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:16:54    lote 2881-2920: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:17:03    lote 2921-2960: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:17:21    lote 2961-3000: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:17:29    lote 3001-3040: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:17:39    lote 3041-3080: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:17:44    lote 3081-3100: importadas e conferidas (rodada 1: nada apagado)
+20/10 12:17:44    copias de banco que nao entram (somem com as pastas): kb.db x20 1483 MB, kanban.db x20 1335 MB, board.db x11 588 MB, board2.db x2 214 MB, k.db x7 213 MB, kb2.db x2 170 MB, board_copy.db x2 114 MB, board3.db x1 99 MB, b.db x1 89 MB, board_copy2.db x1 82 MB, kanban-read.db x1 81 MB, kb_copy.db x1 36 MB
+20/10 12:17:49 passo 5: avulsos: 71 raizes (11 com .git emprestado), 144180 arquivos, 15 bundles (ja tratados no passo 3), 3 patches redundantes
+20/10 12:18:25    OK: avulsos importados e conferidos byte a byte (refs/heads/importado/arquivos-avulsos, 144180 arquivos)
+20/10 12:18:25 refs: antes 5822, depois 14380; refs antigas que mudaram durante a execucao (outros chats podem mexer nas branches deles): 0
+20/10 12:18:25 RESUMO: {"passo1: refs de commits soltos": 4117, "clones: refs criadas": 915, "bundles: refs a criar": 401, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 7, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 23, "worktrees: pastas regeneraveis (nao entram)": 59444, "worktrees: ficaram por repositorio desconhecido dentro": 0}
