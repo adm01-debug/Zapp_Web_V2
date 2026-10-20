@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-acesso-negado-rota-261014071718bc
+
+··············
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  07:31:48
+   Duration  2.74s (transform 319ms, setup 732ms, import 427ms, tests 137ms, environment 2.44s)
+

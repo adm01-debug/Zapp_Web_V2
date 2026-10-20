@@ -1,0 +1,3 @@
+74	0	src/components/auth/__tests__/ProtectedRoute.auditoria-rota.test.tsx
+89	5	src/lib/__tests__/audit.test.ts
+35	3	src/lib/audit.ts

@@ -1,0 +1,267 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-acesso-negado-rota-261014071718bc/.tmp/prova-base
+
+····xxxxxxxxxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > audit logging > rota nao-UUID nao vai para a coluna uuid e segue registrada nos detalhes
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'log_audit_event', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "log_audit_event",
+-   ObjectContaining {
++   {
+      "p_action": "unauthorized_access",
+      "p_details": {
+-       "entity_id_text": "/painel",
+        "method": "NAVIGATE",
+        "required": [
+          "admin",
+        ],
+      },
+-     "p_entity_id": undefined,
++     "p_entity_id": "/painel",
+      "p_entity_type": "route",
++     "p_user_agent": "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/29.1.1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/lib/__tests__/audit.test.ts:86:21
+     84|     });
+     85|
+     86|     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.obj…
+       |                     ^
+     87|       p_action: 'unauthorized_access',
+     88|       p_entity_type: 'route',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > audit logging > rota nao-UUID sem detalhes ainda leva o texto para os detalhes
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'log_audit_event', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "log_audit_event",
+-   ObjectContaining {
+-     "p_details": {
+-       "entity_id_text": "/config",
+-     },
+-     "p_entity_id": undefined,
++   {
++     "p_action": "unauthorized_access",
++     "p_details": null,
++     "p_entity_id": "/config",
++     "p_entity_type": "route",
++     "p_user_agent": "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/29.1.1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/lib/__tests__/audit.test.ts:101:21
+     99|     await logAudit({ action: 'unauthorized_access', entityType: 'route…
+    100|
+    101|     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.obj…
+       |                     ^
+    102|       p_entity_id: undefined,
+    103|       p_details: { entity_id_text: '/config' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > audit logging > rota com espacos nas bordas e aparada antes de ir para os detalhes
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'log_audit_event', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "log_audit_event",
+-   ObjectContaining {
+-     "p_details": {
+-       "entity_id_text": "/painel",
+-     },
++   {
++     "p_action": "unauthorized_access",
++     "p_details": null,
++     "p_entity_id": "  /painel ",
++     "p_entity_type": "route",
++     "p_user_agent": "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/29.1.1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/lib/__tests__/audit.test.ts:110:21
+    108|     await logAudit({ action: 'unauthorized_access', entityType: 'route…
+    109|
+    110|     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.obj…
+       |                     ^
+    111|       p_details: { entity_id_text: '/painel' },
+    112|     }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > audit logging > entityId vazio nao polui os detalhes
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'log_audit_event', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "log_audit_event",
+-   ObjectContaining {
++   {
++     "p_action": "login",
+      "p_details": null,
+-     "p_entity_id": undefined,
++     "p_entity_id": "   ",
++     "p_entity_type": undefined,
++     "p_user_agent": "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/29.1.1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/lib/__tests__/audit.test.ts:118:21
+    116|     await logAudit({ action: 'login', entityId: '   ' });
+    117|
+    118|     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.obj…
+       |                     ^
+    119|       p_entity_id: undefined,
+    120|       p_details: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > normalizeEntityId > UUID valido passa para a coluna e mantem os detalhes
+TypeError: normalizeEntityId is not a function
+ ❯ src/lib/__tests__/audit.test.ts:127:12
+    125| describe('normalizeEntityId', () => {
+    126|   it('UUID valido passa para a coluna e mantem os detalhes', () => {
+    127|     expect(normalizeEntityId(UUID, { a: 1 })).toEqual({
+       |            ^
+    128|       entityId: UUID,
+    129|       details: { a: 1 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > normalizeEntityId > UUID em caixa alta tambem e aceito
+TypeError: normalizeEntityId is not a function
+ ❯ src/lib/__tests__/audit.test.ts:135:12
+    133|   it('UUID em caixa alta tambem e aceito', () => {
+    134|     const upper = UUID.toUpperCase();
+    135|     expect(normalizeEntityId(upper)).toEqual({ entityId: upper, detail…
+       |            ^
+    136|   });
+    137|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > normalizeEntityId > nao-UUID vira null na coluna e texto nos detalhes
+TypeError: normalizeEntityId is not a function
+ ❯ src/lib/__tests__/audit.test.ts:139:12
+    137|
+    138|   it('nao-UUID vira null na coluna e texto nos detalhes', () => {
+    139|     expect(normalizeEntityId('/painel')).toEqual({
+       |            ^
+    140|       entityId: null,
+    141|       details: { entity_id_text: '/painel' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > normalizeEntityId > JID do WhatsApp (telefone) nao e UUID
+TypeError: normalizeEntityId is not a function
+ ❯ src/lib/__tests__/audit.test.ts:146:12
+    144|
+    145|   it('JID do WhatsApp (telefone) nao e UUID', () => {
+    146|     expect(normalizeEntityId('551146375517@s.whatsapp.net')).toEqual({
+       |            ^
+    147|       entityId: null,
+    148|       details: { entity_id_text: '551146375517@s.whatsapp.net' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/lib/__tests__/audit.test.ts > normalizeEntityId > vazio/ausente devolve null sem detalhes inventados
+TypeError: normalizeEntityId is not a function
+ ❯ src/lib/__tests__/audit.test.ts:153:12
+    151|
+    152|   it('vazio/ausente devolve null sem detalhes inventados', () => {
+    153|     expect(normalizeEntityId(undefined)).toEqual({ entityId: null, det…
+       |            ^
+    154|     expect(normalizeEntityId('   ')).toEqual({ entityId: null, details…
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/components/auth/__tests__/ProtectedRoute.auditoria-rota.test.tsx > ProtectedRoute — a rota negada chega na auditoria > manda a rota em details.entity_id_text e nao na coluna uuid
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'log_audit_event', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "log_audit_event",
+-   ObjectContaining {
++   {
+      "p_action": "unauthorized_access",
+-     "p_details": ObjectContaining {
+-       "entity_id_text": "/painel",
++     "p_details": {
+        "method": "NAVIGATE",
+        "required": [
+          "admin",
+        ],
+      },
+-     "p_entity_id": undefined,
++     "p_entity_id": "/painel",
+      "p_entity_type": "route",
++     "p_user_agent": "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/29.1.1",
+    },
+  ]
+
+
+Number of calls: 1
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/auth/__tests__/ProtectedRoute.auditoria-rota.test.tsx:61:23
+     59|
+     60|     await waitFor(() => {
+     61|       expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.o…
+       |                       ^
+     62|         p_action: 'unauthorized_access',
+     63|         p_entity_type: 'route',
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 4 passed (14)
+   Start at  07:31:54
+   Duration  7.22s (transform 396ms, setup 653ms, import 412ms, tests 5.09s, environment 2.21s)
+

@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791973027 -0300	
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791973029 -0300	reset: moving to HEAD
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 3b5d5aeb001d96982acc89d6138391ddfe1f8676 Hermes Senior <hermes-senior@promobrindes.local> 1791973261 -0300	commit: fix(seguranca): auditoria de acesso negado grava a rota tentada
+3b5d5aeb001d96982acc89d6138391ddfe1f8676 2422694e0bf16cd07a56b5d49d9d8df41e545cb0 Hermes Senior <hermes-senior@promobrindes.local> 1791973306 -0300	commit: docs(tmp): relato do fechamento (auditoria rota negada)
+2422694e0bf16cd07a56b5d49d9d8df41e545cb0 1334ce3b26f7d26976e88b05be74eb9526c5b7aa Hermes Senior <hermes-senior@promobrindes.local> 1791973899 -0300	commit: fix(seguranca): p_entity_id nao-uuid vira omitido e a rota fica nos detalhes
+1334ce3b26f7d26976e88b05be74eb9526c5b7aa 8bc0cda4e3f6fc1082541fac8954875f6bb0ba74 Hermes Senior <hermes-senior@promobrindes.local> 1792039936 -0300	commit: test(seguranca): empilhamento usa UUID valido no fixture de auditoria
+8bc0cda4e3f6fc1082541fac8954875f6bb0ba74 2fef263c6ace2d632078287c106e368116a9db78 Hermes Senior <hermes-senior@promobrindes.local> 1792040127 -0300	commit: docs(relato): registra resultado do verify full (travas=infra)
