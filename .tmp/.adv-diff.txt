@@ -1,0 +1,1543 @@
+diff --git a/ESTADO.md b/ESTADO.md
+new file mode 100644
+index 000000000..665996b0a
+--- /dev/null
++++ b/ESTADO.md
+@@ -0,0 +1,158 @@
++# ESTADO.md — o que está ligado e quem chama
++
++Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está ligado
++de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
++(que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
++
++Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
++
++## Como manter
++
++A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula esta tabela a
++partir do código e falha quando:
++
++* aparece uma edge nova que não está aqui (ou uma linha aponta para edge que não existe);
++* uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador removido;
++* o grupo publicado deixa de ser o primeiro chamador real na ordem A → B → C → D;
++* uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
++  `supabase/config.toml` (ou vice-versa).
++
++Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
++
++## Grupos (prioridade nesta ordem)
++
++| Grupo | Significado |
++|---|---|
++| A | front (`invoke`/rota em `src/`) |
++| B | outra edge (`supabase/functions/`) |
++| C | agendador `pg_cron`/`pg_net` (migration) |
++| D | entrada externa (declarada em `supabase/config.toml`) |
++| E | órfã (sem chamador no repositório) |
++
++Uma edge pode ter mais de um chamador; o grupo registra o **primeiro** recalculado pela
++guarda na ordem acima (A → B → C → D) e a coluna de âncoras lista as evidências achadas.
++Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatro fontes.
++
++## Totais
++
++| Grupo | Edges |
++|---|---|
++| A | 54 |
++| B | 1 |
++| C | 3 |
++| D | 6 |
++| E | 17 |
++| **total** | **81** |
++
++## Tabela
++
++| Edge | Grupo | Âncora do chamador (arquivo:linha) |
++|---|---|---|
++| `ai-auto-tag` | A | `src/components/settings/AIAutoTagsConfig.tsx:55` |
++| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:182` |
++| `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:204` |
++| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
++| `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
++| `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
++| `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
++| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:99` |
++| `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
++| `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
++| `automation-suggest-reply` | E | — sem chamador no repositório — |
++| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:61` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
++| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:53` · `src/components/security/PasswordResetRequestsPanel.tsx:65` |
++| `auth-login` | A | `src/lib/serverLogin.ts:72` · `supabase/config.toml:39` |
++| `auto-close-conversations` | E | — sem chamador no repositório — |
++| `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:143` · `src/hooks/chat/useNewConversation.ts:107` · `src/hooks/chat/useNewConversation.ts:115` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
++| `bitrix-api` | A | `src/hooks/integrations/useBitrixApi.ts:33` · `src/components/integrations/BitrixIntegrationView.tsx:29` |
++| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` |
++| `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:207` · `src/components/settings/media-library/AIGenerateDialog.tsx:56` |
++| `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:93` |
++| `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:147` · `src/components/inbox/chat/MessageBubble.tsx:317` · `supabase/functions/_shared/evolution-webhook-messages.ts:711` |
++| `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
++| `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:241` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
++| `create-user` | A | `src/components/admin/useAdminData.ts:256` |
++| `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
++| `csp-report` | D | `supabase/config.toml:58` |
++| `detect-new-device` | A | `src/hooks/ui/useDeviceDetection.ts:112` |
++| `elevenlabs-agent-token` | E | — sem chamador no repositório — |
++| `elevenlabs-dialogue` | A | `src/components/voice/ElevenLabsDialogue.tsx:63` |
++| `elevenlabs-scribe-token` | A | `src/hooks/communication/useVoiceAgent.ts:223` · `src/components/inbox/RealtimeTranscription.tsx:62` |
++| `elevenlabs-sfx` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:31` |
++| `elevenlabs-sts` | A | `src/components/inbox/VoiceChanger.tsx:54` |
++| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:65` · `src/components/inbox/VoiceSelector.tsx:84` |
++| `elevenlabs-tts-stream` | A | `src/hooks/voice/playTtsAudio.ts:165` |
++| `elevenlabs-voice-design` | A | `src/components/voice/ElevenLabsVoiceDesign.tsx:32` |
++| `elevenlabs-webhook` | D | `supabase/config.toml:29` |
++| `evolution-api` | A | `src/hooks/groups/actions.ts:51` · `src/hooks/groups/actions.ts:121` · `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` |
++| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:69` |
++| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:30` · `src/components/monitoring/hooks/useMonitoringActions.ts:59` · `supabase/functions/webhook-diagnostic/index.ts:131` · `supabase/functions/webhook-diagnostic/index.ts:253` · `supabase/functions/webhook-diagnostic/index.ts:263` · `supabase/functions/evolution-api/index.ts:474` · `supabase/functions/evolution-api/index.ts:540` · `supabase/functions/evolution-api/index.ts:701` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:215` · `supabase/functions/_shared/evolution-sync-actions.ts:292` · `supabase/config.toml:8` |
++| `external-db-bridge` | E | — sem chamador no repositório — |
++| `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
++| `fetch-link-preview` | A | `src/services/chat.service.ts:16` · `supabase/functions/_shared/evolution-webhook-messages.ts:270` |
++| `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:77` |
++| `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
++| `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:22` |
++| `gmail-cron-sync` | C | `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:18` · `supabase/config.toml:17` |
++| `gmail-oauth` | A | `src/hooks/integrations/useGmailOAuth.ts:79` |
++| `gmail-send` | E | — sem chamador no repositório — |
++| `gmail-sync` | E | — sem chamador no repositório — |
++| `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
++| `health` | E | — sem chamador no repositório — |
++| `message-delivery` | A | `src/services/outbound-message.service.ts:223` · `supabase/config.toml:49` |
++| `metrics` | E | — sem chamador no repositório — |
++| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
++| `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:8` |
++| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:6` |
++| `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:397` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
++| `multiplix-voices` | E | — sem chamador no repositório — |
++| `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `supabase/config.toml:44` |
++| `public-api` | D | `supabase/config.toml:35` |
++| `recover-corrupted-audios` | E | — sem chamador no repositório — |
++| `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:196` · `src/hooks/ui/useDeviceDetection.ts:227` · `src/hooks/ui/useDeviceDetection.ts:238` · `src/components/admin/ForceLogoutButton.tsx:39` |
++| `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:68` |
++| `send-email` | A | `src/components/agents/InviteAgentDialog.tsx:40` |
++| `send-rate-limit-alert` | E | — sem chamador no repositório — |
++| `send-scheduled-report` | A | `src/hooks/chat/useScheduledReports.ts:142` |
++| `sentiment-alert` | A | `src/hooks/inbox/useSentimentAlerts.ts:39` |
++| `status` | E | — sem chamador no repositório — |
++| `sync-call-records` | D | `supabase/config.toml:73` |
++| `talkx-ai` | D | `supabase/config.toml:83` |
++| `talkx-link` | B | `supabase/functions/talkx-send/index.ts:455` · `supabase/config.toml:65` |
++| `talkx-report` | E | — sem chamador no repositório — |
++| `talkx-scheduler` | E | — sem chamador no repositório — |
++| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:450` · `src/hooks/integrations/useTalkX.ts:466` · `src/hooks/integrations/useTalkX.ts:475` · `src/hooks/integrations/useTalkXTemplates.ts:182` · `supabase/functions/talkx-scheduler/index.ts:294` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
++| `talkx-storage-purge` | E | — sem chamador no repositório — |
++| `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
++| `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:158` |
++| `voice-copilot-action` | E | — sem chamador no repositório — |
++| `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
++| `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
++| `whatsapp-webhook` | D | `supabase/config.toml:11` |
++
++## Órfãs (17) — GATE B
++
++Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
++`invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
++`supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso não quer dizer "morta" — o chamador pode ser externo
++(N8N, cron do provedor, operação manual) — quer dizer **não comprovada no repositório**.
++As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
++mantém a lista honesta.
++
++- `auto-close-conversations`
++- `automation-suggest-reply`
++- `cleanup-rate-limit-logs`
++- `elevenlabs-agent-token`
++- `external-db-bridge`
++- `gmail-send`
++- `gmail-sync`
++- `health`
++- `metrics`
++- `multiplix-voices`
++- `recover-corrupted-audios`
++- `send-rate-limit-alert`
++- `status`
++- `talkx-report`
++- `talkx-scheduler`
++- `talkx-storage-purge`
++- `voice-copilot-action`
+diff --git a/FEATURE_REGISTRY.md b/FEATURE_REGISTRY.md
+new file mode 100644
+index 000000000..067ceb2e7
+--- /dev/null
++++ b/FEATURE_REGISTRY.md
+@@ -0,0 +1,89 @@
++# FEATURE_REGISTRY.md — registro das views do V2
++
++Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para cada
++`view` do mapa, o componente que a renderiza, o arquivo da evidência e a
++**classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
++aqui, o que cada view entrega hoje.
++
++Base: `dia/2026-10-09`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
++
++## Classificação
++
++| Estado | Regra (verificada pela guarda) |
++|---|---|
++| **Full** | a view resolve para um componente real e a busca de dados alcança o banco/edge — evidência é o arquivo que contém `.from(`, `.rpc(` ou `invoke(` (o próprio componente ou um hook/serviço/lib importado por ele) |
++| **Partial** | a view resolve para componente real, mas a busca de dados **não** foi comprovada no arquivo do componente nem em um hook/serviço/lib importado por ele (a coluna de evidência aponta o próprio componente) |
++| **Suggested** | a view está no mapa/módulos mas o componente não se resolve em `src/pages/lazyViews.ts` — a rota existe e não entrega tela comprovada |
++
++A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula as três colunas
++a partir do código: componente, arquivo e classificação. View nova, componente trocado
++ou rota vazia derrubam o teste até este arquivo ser atualizado.
++
++## Totais
++
++| Estado | Views |
++|---|---|
++| Full | 43 |
++| Partial | 12 |
++| Suggested | 0 |
++| **total** | **55** |
++
++## Tabela
++
++| View | Componente | Arquivo | Estado | Evidência |
++|---|---|---|---|---|
++| `inbox` | `RealtimeInboxView` | `src/components/inbox/RealtimeInboxView.tsx` | Full | `src/hooks/inbox/useInboxBulkActions.ts` |
++| `dashboard` | `DashboardView` | `src/components/dashboard/DashboardView.tsx` | Full | `src/hooks/analytics/useRealtimeDashboard.ts` |
++| `agents` | `AgentsView` | `src/components/agents/AgentsView.tsx` | Full | `src/hooks/crm/useAgents.ts` |
++| `queues` | `QueuesView` | `src/components/queues/QueuesView.tsx` | Full | `src/hooks/business/useQueues.ts` |
++| `contacts` | `ContactsView` | `src/components/contacts/ContactsView.tsx` | Full | `src/hooks/crm/useCRMAdminAccess.ts` |
++| `groups` | `GroupsView` | `src/components/groups/GroupsView.tsx` | Full | `src/components/groups/GroupsView.tsx` |
++| `connections` | `ConnectionsView` | `src/components/connections/ConnectionsView.tsx` | Full | `src/components/connections/ConnectionsView.tsx` |
++| `wallet` | `ClientWalletView` | `src/components/wallet/ClientWalletView.tsx` | Full | `src/hooks/business/useClientWallet.ts` |
++| `catalog` | `ProductManagement` | `src/components/catalog/ExternalProductManagement.tsx` | Full | `src/hooks/integrations/useExternalCatalog.ts` |
++| `transcriptions` | `TranscriptionsHistoryView` | `src/components/transcriptions/TranscriptionsHistoryView.tsx` | Full | `src/components/transcriptions/TranscriptionsHistoryView.tsx` |
++| `admin` | `AdminView` | `src/components/admin/AdminView.tsx` | Partial | `src/components/admin/AdminView.tsx` |
++| `sentiment` | `SentimentAlertsDashboard` | `src/components/dashboard/SentimentAlertsDashboard.tsx` | Partial | `src/components/dashboard/SentimentAlertsDashboard.tsx` |
++| `reports` | `AdvancedReportsView` | `src/components/reports/AdvancedReportsView.tsx` | Partial | `src/components/reports/AdvancedReportsView.tsx` |
++| `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useSecurityPushNotifications.ts` |
++| `settings` | `SettingsView` | `src/components/settings/SettingsView.tsx` | Full | `src/components/settings/SettingsView.tsx` |
++| `docs` | `SystemFeaturesView` | `src/components/docs/SystemFeaturesView.tsx` | Partial | `src/components/docs/SystemFeaturesView.tsx` |
++| `campaigns` | `CampaignsView` | `src/components/campaigns/CampaignsView.tsx` | Full | `src/hooks/communication/useCampaigns.ts` |
++| `chatbot` | `ChatbotFlowsView` | `src/components/chatbot/ChatbotFlowsView.tsx` | Full | `src/hooks/integrations/useChatbotFlows.ts` |
++| `automations` | `AutomationsManager` | `src/components/automations/AutomationsManager.tsx` | Partial | `src/components/automations/AutomationsManager.tsx` |
++| `integrations` | `IntegrationsHub` | `src/components/integrations/IntegrationsHub.tsx` | Partial | `src/components/integrations/IntegrationsHub.tsx` |
++| `privacy` | `LGPDComplianceView` | `src/components/compliance/LGPDComplianceView.tsx` | Full | `src/components/compliance/LGPDComplianceView.tsx` |
++| `tasks` | `TasksModule` | `src/components/tasks/TasksModule.tsx` | Full | `src/components/tasks/TasksModule.tsx` |
++| `knowledge` | `KnowledgeBaseView` | `src/components/knowledge/KnowledgeBaseView.tsx` | Full | `src/hooks/integrations/useKnowledgeBase.ts` |
++| `payments` | `PaymentLinksView` | `src/components/payments/PaymentLinksView.tsx` | Full | `src/hooks/payments/usePaymentLinks.ts` |
++| `wa-flows` | `WhatsAppFlowsBuilder` | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` | Full | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
++| `meta-capi` | `MetaCAPIView` | `src/components/meta-capi/MetaCAPIView.tsx` | Full | `src/hooks/integrations/useMetaCAPIData.ts` |
++| `diagnostics` | `DiagnosticsView` | `src/components/diagnostics/DiagnosticsView.tsx` | Full | `src/hooks/system/useDiagnosticsData.ts` |
++| `voip` | `TelefoniaView` | `src/components/calls/TelefoniaView.tsx` | Full | `src/hooks/communication/useCalls.ts` |
++| `auto-export` | `AutoExportManager` | `src/components/reports/AutoExportManager.tsx` | Partial | `src/components/reports/AutoExportManager.tsx` |
++| `google-calendar` | `GoogleCalendarIntegration` | `src/components/integrations/GoogleCalendarIntegration.tsx` | Partial | `src/components/integrations/GoogleCalendarIntegration.tsx` |
++| `themes` | `ThemeCustomizer` | `src/components/settings/ThemeCustomizer.tsx` | Partial | `src/components/settings/ThemeCustomizer.tsx` |
++| `schedule` | `ScheduleCalendarView` | `src/components/schedule/ScheduleCalendarView.tsx` | Full | `src/components/schedule/ScheduleCalendarView.tsx` |
++| `warroom` | `WarRoomDashboard` | `src/components/dashboard/WarRoomDashboard.tsx` | Full | `src/hooks/business/useWarRoomAlerts.ts` |
++| `wa-templates` | `WhatsAppTemplatesManager` | `src/components/catalog/WhatsAppTemplatesManager.tsx` | Full | `src/hooks/integrations/useWhatsAppTemplates.ts` |
++| `omnichannel` | `OmnichannelManager` | `src/components/omnichannel/OmnichannelManager.tsx` | Full | `src/components/omnichannel/OmnichannelManager.tsx` |
++| `churn` | `ChurnPredictionDashboard` | `src/components/ai/ChurnPredictionDashboard.tsx` | Full | `src/components/ai/ChurnPredictionDashboard.tsx` |
++| `ticket-classifier` | `AutoTicketClassifier` | `src/components/ai/AutoTicketClassifier.tsx` | Full | `src/components/ai/AutoTicketClassifier.tsx` |
++| `performance` | `PerformanceMonitor` | `src/components/performance/PerformanceMonitor.tsx` | Full | `src/hooks/analytics/usePerformanceSnapshots.ts` |
++| `omni-inbox` | `OmnichannelInbox` | `src/components/omnichannel/OmnichannelInbox.tsx` | Full | `src/components/omnichannel/OmnichannelInbox.tsx` |
++| `audit-logs` | `AuditLogDashboard` | `src/components/security/AuditLogDashboard.tsx` | Full | `src/components/security/AuditLogDashboard.tsx` |
++| `telemetry` | `AdminTelemetriaPage` | `src/pages/AdminTelemetriaPage.tsx` | Full | `src/pages/AdminTelemetriaPage.tsx` |
++| `nps` | `NPSDashboard` | `src/components/nps/NPSDashboard.tsx` | Full | `src/hooks/business/useNPSSurveys.ts` |
++| `team-chat` | `TeamChatView` | `src/components/team-chat/TeamChatView.tsx` | Full | `src/hooks/chat/useTeamChatNotifications.ts` |
++| `email-chat` | `EmailChatView` | `src/components/email/EmailChatInbox.tsx` | Full | `src/hooks/integrations/useGmail.ts` |
++| `gmail` | `GmailInboxView` | `src/components/gmail/GmailInboxView.tsx` | Full | `src/hooks/integrations/useGmail.ts` |
++| `public-api` | `PublicApiDashboard` | `src/components/admin/PublicApiDashboard.tsx` | Partial | `src/components/admin/PublicApiDashboard.tsx` |
++| `gmail-webhook` | `GmailWebhookMonitor` | `src/components/admin/GmailWebhookMonitor.tsx` | Full | `src/components/admin/GmailWebhookMonitor.tsx` |
++| `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/components/admin/MediaMigrationTool.tsx` |
++| `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Partial | `src/components/crm360/CRM360ExplorerView.tsx` |
++| `ai-usage` | `AIUsageDashboard` | `src/components/admin/AIUsageDashboard.tsx` | Full | `src/hooks/analytics/useAIUsageDashboard.ts` |
++| `sla` | `SLADashboardView` | `src/components/queues/SLADashboard.tsx` | Full | `src/hooks/sla/useSLAMetrics.ts` |
++| `talkx` | `TalkXView` | `src/components/talkx/TalkXView.tsx` | Full | `src/hooks/integrations/useTalkX.ts` |
++| `multiplix` | `MultiplixView` | `src/components/multiplix/MultiplixView.tsx` | Full | `src/components/multiplix/MultiplixView.tsx` |
++| `evolution-monitor` | `EvolutionMonitoringDashboard` | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | Partial | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` |
++| `achievements` | `AchievementsSystemLazy` | `src/components/gamification/AchievementsSystem.tsx` | Full | `src/hooks/gamification/useAgentGamification.ts` |
+diff --git a/TESTING_CONVENTION.md b/TESTING_CONVENTION.md
+new file mode 100644
+index 000000000..47331dd45
+--- /dev/null
++++ b/TESTING_CONVENTION.md
+@@ -0,0 +1,96 @@
++# TESTING_CONVENTION.md — onde cada teste mora e como ele roda
++
++Convenção de testes do Zapp Web V2 na ponta do dia `dia/2026-10-08`. O objetivo é
++responder, para qualquer teste novo, **onde ele mora e qual comando o executa** — sem
++descobrir isso lendo o `package.json` e o `ci.yml`.
++
++Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de existir.
++
++## 1. Testes de unidade/componente do app — `src/`
++
++* Moram em `src/`, como `*.test.ts(x)`/`*.spec.ts(x)` perto do código ou em
++  `src/**/__tests__/` (exemplo real: `src/adapters/__tests__/evolutionAdapter.test.ts`
++  cobre `src/adapters/evolutionAdapter.ts`).
++* Runner: **Vitest** com ambiente `jsdom` e `setupFiles: ['./src/test/setup.ts']`
++  (`vitest.config.ts`, `include: ['src/**/*.{test,spec}.{ts,tsx}']`, `testTimeout: 15000`).
++* Comando: `bun run test` (alias de `vitest run`). Cobertura: `bun run test:coverage`
++  (pisos em `vitest.config.ts`; ratchet — o piso só sobe).
++* É esta a suíte que o portão local da fábrica (`zapp-verify`, sem `--rapido`) executa,
++  via `zapp-db-guard run -- bun run test`.
++
++## 2. Contratos das Edge Functions — `tests/contracts/`
++
++* Todo arquivo do diretório é `*.test.ts` (predomina o sufixo
++  `*.contract.test.ts`).
++* Runner: **Vitest em `environment: 'node'`**, por uma config própria,
++  `vitest.contracts.config.ts` (`include: ['tests/contracts/**/*.test.ts']`). A config
++  existe também para reescrever o import Deno `https://esm.sh/zod@3.23.8` do
++  `_shared/schemas.ts` para o alias `zod3` — o fonte continua igual e o Deno em produção
++  segue resolvendo a URL.
++* Comando: `bun run test:contracts` (alias de
++  `vitest run --config vitest.contracts.config.ts`).
++* Vive fora de `src/` de propósito: contrato do servidor roda em Node, não em jsdom.
++
++## 3. Testes Deno das próprias edges — `supabase/functions/**/*.test.ts`
++
++* Moram dentro da pasta da edge (`supabase/functions/<edge>/index.test.ts`) e importam o
++  handler direto.
++* Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio.
++* Comando (CI, passo "Run executable Edge handler contracts"):
++  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')`.
++  O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`
++  roda antes, no mesmo job.
++
++## 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`
++
++* Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
++  (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).
++* Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`, mas a CI
++  também roda contratos `.test.mjs` de `scripts/db-audit/`.
++* Comando (CI, passo "Test CI and Edge deployment guards"):
++  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
++* Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
++  dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
++* Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
++
++## 5. E2E no navegador — `e2e/`
++
++* Moram em `e2e/`, specs `*.spec.ts`; fixtures e helpers em `e2e/fixtures/` e `e2e/support/`.
++* Runner: **Playwright** (`playwright.config.ts`; `bun run test:e2e`).
++* **Regra R1 (obrigatória):** E2E autenticado roda SÓ contra o **banco local**, com usuário
++  sintético criado localmente. É proibido usar a URL/credencial de produção, reaproveitar
++  `e2e/.auth/*` de outra sessão, rodar o projeto `chromium-authenticated` fora disso, ou
++  subir o app com `--mode production`. Fixture "real" de produção não é fixture.
++* **Quarentena com prazo:** um spec quebrado e adiado entra em `e2e/quarantine.js` (módulo
++  que exporta a lista `quarentena`), com `spec`, `motivo`, `issue` e `prazo` (`AAAA-MM-DD`). O verificador
++  `scripts/ci/check-quarantine.mjs` recusa item sem forma completa e **derruba o CI** quando
++  o prazo vence. Quarentena sem prazo é `skip` com outro nome.
++
++## Regras de nome e de escolha
++
++| Quero testar | Onde crio | Runner |
++|---|---|---|
++| Lógica/componente do app | `src/…/<arquivo>.test.ts(x)` ou `src/…/__tests__/` | Vitest (jsdom) |
++| Contrato de handler de Edge | `tests/contracts/<assunto>.contract.test.ts` | Vitest (node) |
++| Handler Deno no próprio runtime | `supabase/functions/<edge>/index.test.ts` | Deno |
++| Guarda de CI, doc ou deploy | `scripts/<área>/<nome>.unit.mjs` | `node --test` |
++| Fluxo no navegador | `e2e/<fluxo>.spec.ts` | Playwright |
++
++* Nome do arquivo diz o que ele é: `.test.ts`/`.spec.ts` = suíte de código;
++  `.unit.mjs` = guarda executável de CI. Em scripts, o passo da CI varre
++  `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/talkx/*.unit.mjs`
++  e os dois contratos `.test.mjs` de `scripts/db-audit/`.
++* Teste que prova correção de defeito nasce **vermelho** e fica verde com a correção; teste
++  que não falha sem a correção não prova nada.
++* Nada de produção: nenhuma camada acima aponta para banco, edge ou segredo de produção.
++  Dado de cliente não entra em fixture — use amostra sintética.
++
++## Portão local (fora do repositório)
++
++`zapp-verify <cópia>` roda, nesta ordem: trava contra produção, `db_guard`, tipos
++(`typecheck-ratchet`), lint (`lint-ratchet`), migrations (`check-migration-drift`) e — só
++sem `--rapido` — `bun run test` e `bun run build`. `zapp-verify . --rapido` é a checagem a
++cada edição; ele **pula** unidade e build, então não substitui a suíte completa.
++
++As camadas 3, 4 e 5 **não** entram no `zapp-verify`: rodam na CI (`.github/workflows/ci.yml`)
++e, no caso do E2E, pelo job próprio com banco local.
+diff --git a/scripts/ci/docs-estado-registry-convention.unit.mjs b/scripts/ci/docs-estado-registry-convention.unit.mjs
+new file mode 100644
+index 000000000..48698fe24
+--- /dev/null
++++ b/scripts/ci/docs-estado-registry-convention.unit.mjs
+@@ -0,0 +1,463 @@
++#!/usr/bin/env node
++// Guarda dos três documentos de inventário do V2: ESTADO.md, FEATURE_REGISTRY.md e
++// TESTING_CONVENTION.md (lacuna 009-010 do PLANO_100_ETAPAS_PARIDADE_V1_V3).
++//
++// O defeito que estes testes fecham é o de documentação que envelhece calada: nenhum dos
++// três arquivos existia, e um inventário escrito à mão ("quem chama cada edge", "o que cada
++// view entrega") vira mentira na primeira edge nova ou no primeiro componente trocado. Aqui
++// a tabela é RECALCULADA a partir do código e comparada com o texto publicado:
++//
++//   * ESTADO.md      — conjunto de edges == conjunto de `supabase/functions/*/index.ts`;
++//                      grupo == primeiro chamador real na ordem A→B→C→D;
++//                      toda âncora `arquivo:linha` citada existe e cita a própria edge;
++//                      edge marcada como órfã (grupo E) não tem chamador nenhum no repo.
++//   * FEATURE_REGISTRY.md — conjunto de views == `VIEW_MAP` + `SPECIAL_VIEWS` do
++//                      ViewRouter; componente, arquivo e classificação batem com o código.
++//   * TESTING_CONVENTION.md — cada pasta/runner que o texto afirma existe de fato, e as
++//                      linhas de comando citadas estão no `ci.yml`/`package.json` reais.
++//
++// Mudou o código? O vermelho obriga a atualizar o documento na mesma entrega.
++
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
++const IGNORAR = new Set(['node_modules', '.git', 'dist', 'coverage', '.tmp']);
++const ler = (rel) => fs.readFileSync(path.join(raiz, rel), 'utf8');
++const linhasDe = (p) => fs.readFileSync(p, 'utf8').split('\n');
++const relativo = (p) => path.relative(raiz, p).split(path.sep).join('/');
++const normalizaEspacos = (texto) => texto.replace(/\s+/g, ' ').trim();
++
++function andar(dir, filtro) {
++  const achados = [];
++  const pilha = [dir];
++  while (pilha.length > 0) {
++    const atual = pilha.pop();
++    for (const entrada of fs.readdirSync(atual, { withFileTypes: true })) {
++      if (entrada.isDirectory()) {
++        if (!IGNORAR.has(entrada.name)) pilha.push(path.join(atual, entrada.name));
++      } else if (filtro(entrada.name)) {
++        achados.push(path.join(atual, entrada.name));
++      }
++    }
++  }
++  return achados;
++}
++
++const ehTeste = (p) => /\.test\.[a-z]+$/.test(p) || /__tests__/.test(p);
++
++// ---------------------------------------------------------------- edges (ESTADO.md)
++const dirFuncoes = path.join(raiz, 'supabase/functions');
++const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
++  .filter((e) => e.isDirectory() && e.name !== '_shared' && !e.name.startsWith('.'))
++  .map((e) => e.name)
++  .filter((n) => fs.existsSync(path.join(dirFuncoes, n, 'index.ts')))
++  .sort();
++
++const invoca = (n) => new RegExp(`invoke\\(\\s*['"\`]${n}['"\`]`);
++const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
++const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
++
++const srcTs = andar(path.join(raiz, 'src'), (n) => /\.(ts|tsx)$/.test(n)).filter((p) => !ehTeste(p));
++const funcoesTs = andar(dirFuncoes, (n) => /\.ts$/.test(n)).filter((p) => !ehTeste(p));
++const migracoes = andar(path.join(raiz, 'supabase/migrations'), (n) => n.endsWith('.sql'));
++
++const linhasConfigSupabase = linhasDe(path.join(raiz, 'supabase/config.toml'));
++const funcoesExternasConfig = new Map();
++for (let i = 0; i < linhasConfigSupabase.length; i++) {
++  const m = linhasConfigSupabase[i].match(/^\[functions\.([\w-]+)]$/);
++  if (m) funcoesExternasConfig.set(m[1], `supabase/config.toml:${i + 1}`);
++}
++
++/** Chamadores reais de uma edge, no formato `arquivo:linha`. */
++function chamadores(nome) {
++  const doFront = [];
++  const deOutraEdge = [];
++  const deCron = [];
++  const deConfig = [];
++  for (const p of srcTs) {
++    const ls = linhasDe(p);
++    for (let i = 0; i < ls.length; i++) {
++      if (invoca(nome).test(ls[i]) || rota(nome).test(ls[i])) doFront.push(`${relativo(p)}:${i + 1}`);
++    }
++  }
++  for (const p of funcoesTs) {
++    if (relativo(p).startsWith(`supabase/functions/${nome}/`)) continue;
++    const ls = linhasDe(p);
++    for (let i = 0; i < ls.length; i++) {
++      if (invoca(nome).test(ls[i]) || rota(nome).test(ls[i])) deOutraEdge.push(`${relativo(p)}:${i + 1}`);
++    }
++  }
++  for (const p of migracoes) {
++    const ls = linhasDe(p);
++    if (!ls.some((l) => CRON.test(l))) continue;   // arquivo sem agendador não prova cron
++    const i = ls.findIndex((l) => rota(nome).test(l));
++    if (i >= 0) deCron.push(`${relativo(p)}:${i + 1}`);
++  }
++  if (funcoesExternasConfig.has(nome)) deConfig.push(funcoesExternasConfig.get(nome));
++  return { doFront, deOutraEdge, deCron, deConfig };
++}
++
++function grupoPublicadoEsperado(c) {
++  if (c.doFront.length > 0) return 'A';
++  if (c.deOutraEdge.length > 0) return 'B';
++  if (c.deCron.length > 0) return 'C';
++  if (c.deConfig.length > 0) return 'D';
++  return 'E';
++}
++
++function totaisPorColunaMarkdown(doc, titulo) {
++  const inicio = doc.indexOf(`## ${titulo}`);
++  assert.notEqual(inicio, -1, `${titulo} não encontrado`);
++  const resto = doc.slice(inicio);
++  const fimRel = resto.slice(1).search(/\n## /);
++  const bloco = fimRel >= 0 ? resto.slice(0, fimRel + 1) : resto;
++  const totais = new Map();
++  for (const m of bloco.matchAll(/^\| (\*\*)?([A-Za-z]+|[A-E]|total)\1? \| (\*\*)?(\d+)\3? \|$/gm)) {
++    totais.set(m[2], Number(m[4]));
++  }
++  return totais;
++}
++
++const LACUNA_ORFA = 'sem chamador no repositório';
++
++/** Lê um dos três documentos; sem ele o teste falha nomeando a lacuna 009-010 do plano. */
++function lerDoc(nome) {
++  const caminho = path.join(raiz, nome);
++  assert.ok(fs.existsSync(caminho), `${nome} não existe (lacuna 009-010 do PLANO_100_ETAPAS_PARIDADE_V1_V3)`);
++  return fs.readFileSync(caminho, 'utf8');
++}
++
++/** Linhas da tabela do ESTADO.md: | `edge` | grupo | âncora | */
++function tabelaDoEstado() {
++  return lerDoc('ESTADO.md').split('\n')
++    .map((l) => l.match(/^\| `([\w.-]+)` \| ([A-E]) \| (.*) \|$/))
++    .filter(Boolean)
++    .map((m) => ({ edge: m[1], grupo: m[2], ancora: m[3] }));
++}
++
++test('ESTADO.md lista exatamente as edges que existem no repositório', () => {
++  const linhasDaTabelaEstado = tabelaDoEstado();
++  assert.ok(edgesReais.length > 0, 'nenhuma edge encontrada — o teste perdeu o alvo');
++  const noDoc = linhasDaTabelaEstado.map((l) => l.edge);
++  assert.equal(new Set(noDoc).size, noDoc.length, 'ESTADO.md tem edge repetida na tabela');
++  for (const nome of edgesReais) {
++    assert.ok(noDoc.includes(nome), `ESTADO.md não tem linha para a edge \`${nome}\` (rode a guarda de novo)`);
++  }
++  for (const nome of noDoc) {
++    assert.ok(edgesReais.includes(nome), `ESTADO.md lista \`${nome}\`, que não é edge de supabase/functions/`);
++  }
++});
++
++test('ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge', () => {
++  for (const linha of tabelaDoEstado()) {
++    if (linha.ancora.includes(LACUNA_ORFA)) continue;
++    const ancoras = [...linha.ancora.matchAll(/`([^`]+:\d+)`/g)].map((m) => m[1]);
++    assert.ok(ancoras.length > 0, `\`${linha.edge}\` (grupo ${linha.grupo}) não tem âncora nem declara órfã`);
++    for (const ancora of ancoras) {
++      const [arquivo, numero] = ancora.split(/:(?=\d+$)/);
++      const caminho = path.join(raiz, arquivo);
++      assert.ok(fs.existsSync(caminho), `ESTADO.md cita \`${ancora}\` para \`${linha.edge}\`, arquivo que não existe`);
++      const conteudo = linhasDe(caminho)[Number(numero) - 1] || '';
++      assert.ok(
++        conteudo.includes(linha.edge),
++        `âncora desatualizada: ${ancora} não cita \`${linha.edge}\``,
++      );
++    }
++  }
++});
++
++test('edge marcada como órfã (grupo E) realmente não tem chamador no repositório', () => {
++  const tabela = tabelaDoEstado();
++  const orfas = tabela.filter((l) => l.grupo === 'E');
++  for (const linha of orfas) {
++    const c = chamadores(linha.edge);
++    assert.deepEqual(
++      [c.doFront.length, c.deOutraEdge.length, c.deCron.length, c.deConfig.length],
++      [0, 0, 0, 0],
++      `\`${linha.edge}\` está marcada como órfã em ESTADO.md, mas tem chamador agora: ` +
++        JSON.stringify([...c.doFront, ...c.deOutraEdge, ...c.deCron, ...c.deConfig]),
++    );
++  }
++  for (const linha of tabela.filter((l) => l.grupo !== 'E')) {
++    assert.ok(!linha.ancora.includes(LACUNA_ORFA), `\`${linha.edge}\` está no grupo ${linha.grupo} mas sem âncora`);
++  }
++});
++
++test('ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D', () => {
++  for (const linha of tabelaDoEstado()) {
++    const c = chamadores(linha.edge);
++    assert.equal(
++      linha.grupo,
++      grupoPublicadoEsperado(c),
++      `grupo de \`${linha.edge}\` divergiu dos chamadores reais: ` +
++        JSON.stringify({ A: c.doFront, B: c.deOutraEdge, C: c.deCron, D: c.deConfig }),
++    );
++  }
++});
++
++test('ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada', () => {
++  const doc = lerDoc('ESTADO.md');
++  assert.ok(doc.includes('existe em `supabase/functions/`'), 'ESTADO.md precisa limitar órfã ao que o repo comprova');
++  assert.ok(!doc.includes('existe e é deployada'), 'ESTADO.md não pode afirmar deploy sem prova no repositório');
++  const tabela = tabelaDoEstado();
++  const contagem = new Map(['A', 'B', 'C', 'D', 'E'].map((g) => [g, tabela.filter((l) => l.grupo === g).length]));
++  const totais = totaisPorColunaMarkdown(doc, 'Totais');
++  for (const grupo of ['A', 'B', 'C', 'D', 'E']) {
++    assert.equal(totais.get(grupo), contagem.get(grupo), `total do grupo ${grupo} em ESTADO.md divergiu da tabela`);
++  }
++  assert.equal(totais.get('total'), tabela.length, 'total geral de ESTADO.md divergiu da tabela');
++
++  const cabecalhoOrfas = doc.match(/## Órfãs \((\d+)\)/);
++  assert.ok(cabecalhoOrfas, 'ESTADO.md não tem cabeçalho de órfãs com contagem');
++  assert.equal(Number(cabecalhoOrfas[1]), contagem.get('E'), 'contagem do cabeçalho de órfãs divergiu da tabela');
++
++  const listaOrfas = [...doc.matchAll(/^- `([\w-]+)`$/gm)].map((m) => m[1]).sort();
++  const orfasDaTabela = tabela.filter((l) => l.grupo === 'E').map((l) => l.edge).sort();
++  assert.deepEqual(listaOrfas, orfasDaTabela, 'lista Órfãs de ESTADO.md divergiu das linhas grupo E');
++});
++
++test('total de edges do cabeçalho do ESTADO.md bate com a tabela', () => {
++  const total = Number((lerDoc('ESTADO.md').match(/Base: .*?\.\s*(\d+) edges/) || [])[1]);
++  assert.equal(total, edgesReais.length, 'o cabeçalho do ESTADO.md ficou para trás do número de edges');
++});
++
++// ------------------------------------------------------- views (FEATURE_REGISTRY.md)
++const viewRouter = ler('src/pages/ViewRouter.tsx');
++const lazyViews = ler('src/pages/lazyViews.ts');
++
++const mapaDeComponentes = {};
++for (const m of lazyViews.matchAll(
++  /export const (\w+)\s*=\s*lazyWithRetry\((?:async\s*)?\(\)\s*=>\s*(?:\{[\s\S]*?await\s+)?import\('(@\/[^']+)'\)/g,
++)) {
++  mapaDeComponentes[m[1]] = m[2].replace('@/', 'src/');
++}
++
++const viewsReais = [];
++const blocoMapa = viewRouter.match(/const VIEW_MAP[\s\S]*?\n};/);
++for (const m of blocoMapa[0].matchAll(/'([\w-]+)':\s*Views\.(\w+)/g)) {
++  viewsReais.push({ view: m[1], componente: m[2] });
++}
++const blocoEspeciais = viewRouter.match(/const SPECIAL_VIEWS[\s\S]*?\n};/);
++for (const m of blocoEspeciais[0].matchAll(/'([\w-]+)':/g)) {
++  const trecho = blocoEspeciais[0].split(`'${m[1]}':`)[1] || '';
++  const componente = trecho.match(/Views\.(\w+)/);
++  viewsReais.push({ view: m[1], componente: componente ? componente[1] : '?' });
++}
++
++const usaBanco = (texto) => /\.from\(|\.rpc\(|\binvoke\(/.test(texto);
++const hooksImportados = (texto) =>
++  [...texto.matchAll(/from '@\/(hooks|services|lib)\/([\w/.-]+)'/g)].map((m) => `src/${m[1]}/${m[2]}`);
++const acharArquivo = (base) => {
++  for (const c of [base, base + '.tsx', base + '.ts', base + '/index.ts', base + '/index.tsx']) {
++    if (base && fs.existsSync(path.join(raiz, c)) && fs.statSync(path.join(raiz, c)).isFile()) return c;
++  }
++  return null;
++};
++
++/** Recalcula componente/arquivo/classificação de cada view, como o documento declara. */
++function registroReal(view) {
++  const arquivo = acharArquivo(mapaDeComponentes[view.componente] || '');
++  if (!arquivo) return { componente: view.componente, arquivo: null, classe: 'Suggested', evid: null };
++  let alvo = null;
++  if (usaBanco(ler(arquivo))) alvo = arquivo;
++  else {
++    for (const hook of hooksImportados(ler(arquivo))) {
++      const candidato = acharArquivo(hook);
++      if (candidato && /\.(ts|tsx)$/.test(candidato) && usaBanco(ler(candidato))) {
++        alvo = candidato;
++        break;
++      }
++    }
++  }
++  return alvo
++    ? { componente: view.componente, arquivo, classe: 'Full', evid: alvo }
++    : { componente: view.componente, arquivo, classe: 'Partial', evid: arquivo };
++}
++
++/** Linhas da tabela do FEATURE_REGISTRY.md: | view | componente | arquivo | estado | evidência | */
++function valorRegistroMarkdown(valor) {
++  return valor === '—' ? null : valor.slice(1, -1);
++}
++
++function tabelaDoRegistro() {
++  return lerDoc('FEATURE_REGISTRY.md').split('\n')
++    .map((l) => l.match(/^\| `([\w-]+)` \| `(\w+)` \| (`[^`]+`|—) \| (Full|Partial|Suggested) \| (`[^`]+`|—) \|$/))
++    .filter(Boolean)
++    .map((m) => ({
++      view: m[1],
++      componente: m[2],
++      arquivo: valorRegistroMarkdown(m[3]),
++      classe: m[4],
++      evid: valorRegistroMarkdown(m[5]),
++    }));
++}
++
++test('FEATURE_REGISTRY.md lista exatamente as views do ViewRouter', () => {
++  const linhasRegistro = tabelaDoRegistro();
++  assert.ok(viewsReais.length > 0, 'nenhuma view encontrada — o teste perdeu o alvo');
++  const totalCabecalho = Number((lerDoc('FEATURE_REGISTRY.md').match(/Base: .*?\.\s*(\d+) views/) || [])[1]);
++  assert.equal(totalCabecalho, viewsReais.length, 'o cabeçalho de FEATURE_REGISTRY.md ficou para trás do número de views');
++  const noDoc = linhasRegistro.map((l) => l.view);
++  assert.equal(new Set(noDoc).size, noDoc.length, 'FEATURE_REGISTRY.md repete uma view');
++  const esperadas = viewsReais.map((v) => v.view).sort();
++  assert.deepEqual(noDoc.slice().sort(), esperadas);
++});
++
++test('FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada', () => {
++  const doc = lerDoc('FEATURE_REGISTRY.md');
++  const tabela = tabelaDoRegistro();
++  const totais = totaisPorColunaMarkdown(doc, 'Totais');
++  for (const classe of ['Full', 'Partial', 'Suggested']) {
++    assert.equal(
++      totais.get(classe),
++      tabela.filter((l) => l.classe === classe).length,
++      `total ${classe} de FEATURE_REGISTRY.md divergiu da tabela`,
++    );
++  }
++  assert.equal(totais.get('total'), tabela.length, 'total geral de FEATURE_REGISTRY.md divergiu da tabela');
++});
++
++test('FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais', () => {
++  const doc = lerDoc('FEATURE_REGISTRY.md');
++  assert.ok(
++    doc.includes('não se resolve em `src/pages/lazyViews.ts`'),
++    'a regra Suggested precisa descrever a classificação real da guarda',
++  );
++  assert.ok(!doc.includes('FallbackView'), 'FEATURE_REGISTRY.md não pode dizer que a guarda procura FallbackView');
++  const linhasRegistro = tabelaDoRegistro();
++  for (const linha of linhasRegistro) {
++    const real = viewsReais.find((v) => v.view === linha.view);
++    assert.ok(real, `\`${linha.view}\` está no registro mas não no ViewRouter`);
++    assert.equal(linha.componente, real.componente, `componente de \`${linha.view}\` divergiu`);
++    const calc = registroReal(real);
++    assert.equal(linha.classe, calc.classe, `classificação de \`${linha.view}\` divergiu do código`);
++    assert.equal(linha.arquivo, calc.arquivo, `arquivo de \`${linha.view}\` divergiu do código`);
++    if (calc.classe === 'Suggested') {
++      assert.equal(linha.evid, null, `view Suggested \`${linha.view}\` deve usar — na evidência`);
++      continue;
++    }
++    assert.ok(
++      fs.existsSync(path.join(raiz, linha.arquivo)),
++      `FEATURE_REGISTRY.md aponta \`${linha.arquivo}\` para \`${linha.view}\`, que não existe`,
++    );
++    assert.ok(
++      fs.existsSync(path.join(raiz, linha.evid)),
++      `evidência \`${linha.evid}\` de \`${linha.view}\` não existe`,
++    );
++    assert.equal(linha.evid, calc.evid, `evidência de \`${linha.view}\` divergiu do código`);
++  }
++});
++
++// --------------------------------------------- convenção de testes (TESTING_CONVENTION.md)
++test('TESTING_CONVENTION.md aponta só para caminhos que existem', () => {
++  const doc = lerDoc('TESTING_CONVENTION.md');
++  assert.ok(doc.length > 500, 'TESTING_CONVENTION.md ficou vazio');
++  const caminhos = [...doc.matchAll(/`((?:src|tests|scripts|e2e|supabase|\.github)\/[\w./*-]+)`/g)].map((m) => m[1]);
++  assert.ok(caminhos.length > 0, 'nenhum caminho citado — o teste perdeu o alvo');
++  for (const bruto of caminhos) {
++    if (bruto.includes('*')) continue; // globos (ex.: scripts/ci/*.unit.mjs) não são arquivo
++    assert.ok(fs.existsSync(path.join(raiz, bruto)), `TESTING_CONVENTION.md cita \`${bruto}\`, que não existe`);
++  }
++});
++
++function comandoFoldedDaCi(ci, primeiraLinha) {
++  const linhas = ci.split('\n');
++  const indice = linhas.findIndex((l) => l.trim().startsWith(primeiraLinha));
++  assert.notEqual(indice, -1, `ci.yml não tem mais o comando iniciado por \`${primeiraLinha}\``);
++  let run = indice - 1;
++  while (run >= 0 && !linhas[run].trim().startsWith('run:')) run--;
++  assert.ok(run >= 0 && linhas[run].includes('>-'), `comando \`${primeiraLinha}\` não está em bloco run: >-`);
++  const indentacao = linhas[indice].match(/^\s*/)[0].length;
++  const partes = [];
++  for (let i = indice; i < linhas.length; i++) {
++    if (!linhas[i].trim()) continue;
++    const atual = linhas[i].match(/^\s*/)[0].length;
++    if (atual < indentacao) break;
++    partes.push(linhas[i].trim());
++  }
++  return normalizaEspacos(partes.join(' '));
++}
++
++test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', async () => {
++  const doc = lerDoc('TESTING_CONVENTION.md');
++  const vitest = ler('vitest.config.ts');
++  const contratos = ler('vitest.contracts.config.ts');
++  const pacote = JSON.parse(ler('package.json'));
++  const ci = ler('.github/workflows/ci.yml');
++
++  // 1. unidade do app: glob do Vitest citado no doc == glob do arquivo
++  const globApp = "src/**/*.{test,spec}.{ts,tsx}";
++  assert.ok(vitest.includes(globApp), 'o include do vitest.config.ts mudou');
++  assert.ok(doc.includes(globApp), `TESTING_CONVENTION.md não cita o glob real da suíte do app (${globApp})`);
++  assert.ok(
++    !doc.includes('Moram **ao lado do arquivo testado**'),
++    'TESTING_CONVENTION.md não pode dizer que todo teste de src mora ao lado do arquivo testado',
++  );
++
++  // 2. contratos: o doc cita o glob real da config de contratos e o script certo
++  if (doc.includes('tests/contracts/**/*.test.ts')) {
++    assert.ok(contratos.includes('tests/contracts/**/*.test.ts'), 'o include da config de contratos mudou');
++    assert.equal(pacote.scripts['test:contracts'], 'vitest run --config vitest.contracts.config.ts');
++  } else {
++    assert.fail('TESTING_CONVENTION.md não descreve a suíte de contratos (tests/contracts/**/*.test.ts)');
++  }
++
++  // 3. scripts do package.json citados no doc precisam existir de verdade
++  for (const nome of ['test', 'test:contracts', 'test:e2e', 'test:coverage']) {
++    assert.ok(pacote.scripts[nome], `package.json perdeu o script \`${nome}\``);
++  }
++  assert.equal(pacote.scripts.test, 'vitest run');
++  assert.equal(pacote.scripts['test:e2e'], 'playwright test');
++
++  // 4. os comandos de CI citados precisam estar no ci.yml, incluindo a linha completa de node:test.
++  for (const trecho of [
++    "deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1",
++    "deno check --config scripts/ci/deno.json --frozen",
++  ]) {
++    assert.ok(ci.includes(trecho), `ci.yml não tem mais o passo \`${trecho}\``);
++    assert.ok(doc.includes(trecho), `TESTING_CONVENTION.md não cita o passo real da CI: \`${trecho}\``);
++  }
++  const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs');
++  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]+)`/);
++  assert.ok(comandoNodeDoc, 'TESTING_CONVENTION.md não cita o comando node:test da CI');
++  assert.equal(
++    normalizaEspacos(comandoNodeDoc[1]),
++    comandoNodeCi,
++    'TESTING_CONVENTION.md divergiu da linha completa de node:test no ci.yml',
++  );
++  assert.ok(
++    !doc.includes('a CI só varre `*.unit.mjs` em\n  `scripts/ci/`'),
++    'TESTING_CONVENTION.md não pode reduzir a varredura da CI a scripts/ci/*.unit.mjs',
++  );
++
++  // 5. a camada Deno das edges: o doc precisa citar o glob de teste das edges que a CI usa
++  assert.ok(ci.includes("git ls-files 'supabase/functions/**/*.test.ts'"), 'a CI perdeu o glob dos testes Deno');
++  assert.ok(doc.includes('supabase/functions/**/*.test.ts'), 'TESTING_CONVENTION.md não cita os testes Deno das edges');
++
++  // 6. a convenção de nome do diretório de contratos vale para todos os arquivos de lá
++  const arquivosContrato = fs.readdirSync(path.join(raiz, 'tests/contracts'));
++  assert.ok(arquivosContrato.length > 0, 'tests/contracts ficou vazio');
++  for (const arquivo of arquivosContrato) {
++    assert.match(arquivo, /\.test\.ts$/, `tests/contracts/${arquivo} não segue a convenção *.test.ts`);
++  }
++
++  // 7. quarentena do E2E: arquivo, campos e verificador citados no doc existem
++  const moduloQuarentena = await import(new URL('../../e2e/quarantine.js', import.meta.url));
++  const quarentena = moduloQuarentena.quarentena;
++  assert.ok(Array.isArray(quarentena), 'e2e/quarantine.js perdeu a lista `quarentena`');
++  const verificador = ler('scripts/ci/check-quarantine.mjs');
++  for (const campo of ['spec', 'motivo', 'issue', 'prazo']) {
++    assert.ok(verificador.includes(`'${campo}'`), `check-quarantine.mjs não exige mais \`${campo}\``);
++    assert.ok(doc.includes(`\`${campo}\``), `TESTING_CONVENTION.md não documenta o campo \`${campo}\` da quarentena`);
++  }
++  assert.ok(doc.includes('scripts/ci/check-quarantine.mjs'), 'TESTING_CONVENTION.md não cita o verificador da quarentena');
++
++  // 8. a quarentena real respeita a convenção que o doc descreve (prazo em AAAA-MM-DD)
++  for (const item of quarentena) {
++    assert.match(item.prazo, /^\d{4}-\d{2}-\d{2}$/, `quarentena de ${item.spec} sem prazo ISO`);
++  }
++});
+diff --git a/supabase/functions/automation-suggest-reply/index.test.ts b/supabase/functions/automation-suggest-reply/index.test.ts
+new file mode 100644
+index 000000000..d58894e7c
+--- /dev/null
++++ b/supabase/functions/automation-suggest-reply/index.test.ts
+@@ -0,0 +1,353 @@
++/**
++ * `automation-suggest-reply` — prova do handler REAL com os dois pontos de rede
++ * substituídos por seams (client do banco e roteador de IA). Nada de provedor,
++ * credencial ou Postgres: quem responde é o handler de produção.
++ *
++ * O que este arquivo prova:
++ *   1. o contexto é resolvido pelo SERVIDOR: as mensagens entram pelo client do
++ *      chamador (RLS) e a consulta da base usa a ÚLTIMA mensagem RECEBIDA do
++ *      cliente — não a do atendente;
++ *   2. contato sem mensagem visível (RLS devolve zero linhas) vira sugestões
++ *      VAZIAS (200), sem chamar a IA e sem vazar contexto de outro contato;
++ *   3. sem artigo relevante a sugestão sai com `source: null`; com artigo, a
++ *      fonte é carimbada NO SERVIDOR (`article_id` + título); id alucinado pelo
++ *      modelo vira `source: null`, nunca título fabricado;
++ *   4. o limite de IA é respeitado: o guarda (429) e o teto de orçamento
++ *      (BUDGET_EXCEEDED) devolvem HTTP 429 com CÓDIGO ESTÁVEL
++ *      (`rate_limited`/`ai_budget_exceeded`) e a IA não é chamada duas vezes;
++ *   5. saída com forma errada não entra no render normal (502), e o `contact_id`
++ *      inválido é recusado (400).
++ *
++ * Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read \
++ *           supabase/functions/automation-suggest-reply/index.test.ts
++ */
++import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
++import {
++  handleAutomationSuggestReply,
++  type AuthedClientLike,
++  type AutomationSuggestReplyDeps,
++} from "./index.ts";
++import {
++  AI_BUDGET_ERROR_CODE,
++  type GenerateParams,
++  type GenerateResult,
++} from "../_shared/ai-generate.ts";
++
++const CONTATO = "11111111-2222-4333-8444-555555555555";
++const ARTIGO_A = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
++
++interface Mensagem {
++  content: string;
++  sender: "contact" | "agent";
++  created_at: string;
++}
++
++interface FakeOpts {
++  mensagens?: Mensagem[];
++  mensagensError?: { message: string } | null;
++  artigos?: Array<{ id: string; title: string; content: string }>;
++  artigosError?: { message: string } | null;
++  rpcCalls?: Array<{ fn: string; args: Record<string, unknown> }>;
++}
++
++/** Client do banco falso: registra a RPC e devolve o que cada cenário configurou. */
++function clientFalso(opts: FakeOpts): AuthedClientLike {
++  return {
++    from(table: string) {
++      assertEquals(table, "messages");
++      const resultado = {
++        data: opts.mensagensError ? null : (opts.mensagens ?? []),
++        error: opts.mensagensError ?? null,
++      };
++      const builder = {
++        eq: () => builder,
++        order: () => builder,
++        limit: () => Promise.resolve(resultado),
++      };
++      return { select: () => builder };
++    },
++    rpc(fn: string, args: Record<string, unknown>) {
++      opts.rpcCalls?.push({ fn, args });
++      return Promise.resolve({
++        data: opts.artigosError ? null : (opts.artigos ?? []),
++        error: opts.artigosError ?? null,
++      });
++    },
++  };
++}
++
++/** Provedor sintético: `content` é o texto cru que o modelo devolveu. */
++function fakeProvider(
++  content: unknown,
++  overrides: Partial<GenerateResult> = {},
++): { generate: AutomationSuggestReplyDeps["generate"]; seen: GenerateParams[] } {
++  const seen: GenerateParams[] = [];
++  const generate = (params: GenerateParams): Promise<GenerateResult> => {
++    seen.push(params);
++    return Promise.resolve({
++      ok: true,
++      response: new Response(JSON.stringify({}), { status: 200 }),
++      data: { choices: [{ message: { content } }] },
++      providerId: "provedor-de-teste",
++      providerName: "provedor-de-teste",
++      model: "modelo-de-teste",
++      durationMs: 1,
++      status: "ok",
++      ...overrides,
++    });
++  };
++  return { generate, seen };
++}
++
++let pedidos = 0;
++/** Uma requisição por teste, com IP próprio (o guarda local é por IP). */
++function pedido(body: unknown): Request {
++  pedidos += 1;
++  return new Request("https://local.test/automation-suggest-reply", {
++    method: "POST",
++    headers: {
++      "content-type": "application/json",
++      authorization: "Bearer token-de-teste",
++      "x-forwarded-for": `10.7.0.${pedidos}`,
++    },
++    body: JSON.stringify(body),
++  });
++}
++
++/** Autorização e cota substituídas: aqui a pergunta é outra. */
++const SEM_DONO: AutomationSuggestReplyDeps = {
++  authorize: () => Promise.resolve({ userId: "0f1e2d3c-4b5a-4978-8899-aabbccddeeff" }),
++  enforceGuards: () => Promise.resolve(null),
++};
++
++const CONVERSA: Mensagem[] = [
++  { content: "Bom dia, cadê meu pedido?", sender: "contact", created_at: "2026-10-11T12:00:00Z" },
++  { content: "Bom dia! Já vou verificar.", sender: "agent", created_at: "2026-10-11T12:01:00Z" },
++];
++
++const ARTIGO_PRAZO = {
++  id: ARTIGO_A,
++  title: "Prazo de entrega",
++  content: "O prazo padrão é de 3 dias úteis após a confirmação.",
++};
++
++Deno.test("RLS: contato sem mensagem visível devolve sugestões vazias e NÃO chama a IA", async () => {
++  const { generate, seen } = fakeProvider("{}");
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: [], rpcCalls: [] })),
++  });
++
++  assertEquals(res.status, 200);
++  assertEquals((await res.json()).suggestions, []);
++  assertEquals(seen.length, 0, "sem contexto visível a IA não pode ser chamada");
++});
++
++Deno.test("sem mensagem RECEBIDA do cliente (só do atendente) também devolve vazio", async () => {
++  const { generate, seen } = fakeProvider("{}");
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () =>
++      Promise.resolve(clientFalso({
++        mensagens: [{
++          content: "Já vou verificar.",
++          sender: "agent",
++          created_at: "2026-10-11T12:01:00Z",
++        }],
++      })),
++  });
++
++  assertEquals(res.status, 200);
++  assertEquals((await res.json()).suggestions, []);
++  assertEquals(seen.length, 0);
++});
++
++Deno.test("a busca da base usa a ÚLTIMA mensagem recebida, não a do atendente", async () => {
++  const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
++  const { generate } = fakeProvider(JSON.stringify({ suggestions: [{ text: "Ok.", article_id: null }] }));
++  await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, rpcCalls })),
++  });
++
++  assertEquals(rpcCalls.length, 1);
++  assertEquals(rpcCalls[0].fn, "search_knowledge_base");
++  assertEquals(rpcCalls[0].args.search_query, "Bom dia, cadê meu pedido?");
++  assertEquals(rpcCalls[0].args.max_results, 3);
++});
++
++Deno.test("sem artigo relevante a sugestão sai com source null (200)", async () => {
++  const { generate } = fakeProvider(JSON.stringify({
++    suggestions: [
++      { text: "Seu pedido já está a caminho.", article_id: null },
++      { text: "Quer que eu confirme o prazo?", article_id: null },
++    ],
++  }));
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [] })),
++  });
++
++  assertEquals(res.status, 200);
++  const body = await res.json();
++  assertEquals(body.suggestions.length, 2);
++  assertEquals(body.suggestions[0].source, null);
++  assertEquals(body.suggestions[1].source, null);
++});
++
++Deno.test("artigo citado pelo modelo vira fonte com o título carimbado NO SERVIDOR", async () => {
++  const { generate, seen } = fakeProvider(JSON.stringify({
++    suggestions: [
++      { text: "O prazo é de 3 dias úteis.", article_id: ARTIGO_A },
++      { text: "Quer que eu acompanhe?", article_id: null },
++    ],
++  }));
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [ARTIGO_PRAZO] })),
++  });
++
++  assertEquals(res.status, 200);
++  const body = await res.json();
++  assertEquals(body.suggestions[0].source, { article_id: ARTIGO_A, title: "Prazo de entrega" });
++  assertEquals(body.suggestions[1].source, null);
++  // O artigo oferecido vai no prompt (id + título), para o modelo poder citá-lo.
++  assert(JSON.stringify(seen[0].messages).includes(ARTIGO_A));
++  assertEquals(seen[0].functionName, "automation-suggest-reply");
++  assertEquals(seen[0].purpose, "copilot");
++});
++
++Deno.test("article_id alucinado (fora dos artigos oferecidos) vira source null", async () => {
++  const { generate } = fakeProvider(JSON.stringify({
++    suggestions: [{ text: "O prazo é de 2 dias.", article_id: "id-que-nao-existe" }],
++  }));
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [ARTIGO_PRAZO] })),
++  });
++
++  assertEquals(res.status, 200);
++  assertEquals((await res.json()).suggestions[0].source, null);
++});
++
++Deno.test("limite de IA: guarda 429 → 429 com código estável e sem chamar o provedor", async () => {
++  const { generate, seen } = fakeProvider("{}");
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    authorize: SEM_DONO.authorize,
++    enforceGuards: () =>
++      Promise.resolve(
++        new Response(JSON.stringify({ error: "Per-user rate limit exceeded (30/min)" }), {
++          status: 429,
++        }),
++      ),
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA })),
++  });
++
++  assertEquals(res.status, 429);
++  const body = await res.json();
++  assertEquals(body.code, "rate_limited");
++  assertEquals(body.error, "Per-user rate limit exceeded (30/min)");
++  assertEquals(seen.length, 0, "guarda 429 não pode deixar a chamada de IA acontecer");
++});
++
++Deno.test("orçamento estourado (BUDGET_EXCEEDED) → 429 com código ai_budget_exceeded", async () => {
++  const { generate } = fakeProvider(null, {
++    ok: false,
++    response: new Response(JSON.stringify({ error: "budget" }), { status: 429 }),
++    data: null,
++    status: "error",
++    errorCode: AI_BUDGET_ERROR_CODE,
++  });
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [] })),
++  });
++
++  assertEquals(res.status, 429);
++  assertEquals((await res.json()).code, "ai_budget_exceeded");
++});
++
++Deno.test("429 do provedor (sem BUDGET_EXCEEDED) → 429 com código rate_limited", async () => {
++  const { generate } = fakeProvider(null, {
++    ok: false,
++    response: new Response(JSON.stringify({ error: "rate" }), { status: 429 }),
++    data: null,
++    status: "error",
++  });
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [] })),
++  });
++
++  assertEquals(res.status, 429);
++  assertEquals((await res.json()).code, "rate_limited");
++});
++
++Deno.test("saída do modelo com forma errada não vira resposta normal (502)", async () => {
++  const invalido = JSON.stringify({ suggestions: [{ text: "" }] });
++  const { generate } = fakeProvider(invalido);
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [] })),
++  });
++
++  assertEquals(res.status, 502);
++  const body = await res.json();
++  assertEquals(body.code, "ai_contract_rejected");
++  assertEquals(body.suggestions, undefined);
++});
++
++Deno.test("mais de 3 sugestões é rejeitado pelo contrato (502)", async () => {
++  const quatro = JSON.stringify({
++    suggestions: [
++      { text: "a", article_id: null },
++      { text: "b", article_id: null },
++      { text: "c", article_id: null },
++      { text: "d", article_id: null },
++    ],
++  });
++  const { generate } = fakeProvider(quatro);
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () => Promise.resolve(clientFalso({ mensagens: CONVERSA, artigos: [] })),
++  });
++
++  assertEquals(res.status, 502);
++});
++
++Deno.test("contact_id ausente ou fora do formato UUID é recusado (400) sem tocar no banco", async () => {
++  for (const body of [{}, { contact_id: "não-é-uuid" }, { contact_id: 42 }]) {
++    const res = await handleAutomationSuggestReply(pedido(body), {
++      ...SEM_DONO,
++      authedClient: () => {
++        throw new Error("não deveria consultar o banco");
++      },
++    });
++    assertEquals(res.status, 400);
++  }
++});
++
++Deno.test("falha de leitura das mensagens não inventa contexto: vazio (200)", async () => {
++  const { generate, seen } = fakeProvider("{}");
++  const res = await handleAutomationSuggestReply(pedido({ contact_id: CONTATO }), {
++    ...SEM_DONO,
++    generate,
++    authedClient: () =>
++      Promise.resolve(clientFalso({ mensagensError: { message: "boom" }, rpcCalls: [] })),
++  });
++
++  assertEquals(res.status, 200);
++  assertEquals((await res.json()).suggestions, []);
++  assertEquals(seen.length, 0);
++});
+diff --git a/supabase/functions/automation-suggest-reply/index.ts b/supabase/functions/automation-suggest-reply/index.ts
+new file mode 100644
+index 000000000..108040a2c
+--- /dev/null
++++ b/supabase/functions/automation-suggest-reply/index.ts
+@@ -0,0 +1,348 @@
++import {
++  handleCors,
++  errorResponse,
++  jsonResponse,
++  isValidUUID,
++  Logger,
++  requireAuth,
++  createAuthedClient,
++} from "../_shared/validation.ts";
++import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
++import {
++  AI_BUDGET_ERROR_CODE,
++  generateWithRouting,
++  type GenerateParams,
++  type GenerateResult,
++} from "../_shared/ai-generate.ts";
++import { enforceAiGuards } from "../_shared/ai-guards.ts";
++import { parseJsonObject } from "../_shared/ai-json.ts";
++
++/**
++ * `automation-suggest-reply` — sugestões para a barra de automação do chat.
++ *
++ * Diferença para o `ai-suggest-reply` (copilot): aqui o servidor descobre o
++ * contexto sozinho. O chamador manda SÓ o `contact_id`; a mensagem que dispara a
++ * busca e os artigos da base são resolvidos no servidor:
++ *   1. as últimas 10 mensagens entram pelo client do PRÓPRIO chamador (RLS de
++ *      `messages`/`contacts` é a fonte de verdade da visibilidade — sem chave de
++ *      serviço lendo conversa de contato que o usuário não enxerga);
++ *   2. a última mensagem RECEBIDA do cliente vira a consulta da base de
++ *      conhecimento (RPC `search_knowledge_base`, 3 artigos por relevância);
++ *   3. o modelo devolve até 3 respostas curtas em pt-BR, cada uma apontando o
++ *      id do artigo usado ou `null`. O TÍTULO da fonte é carimbado AQUI, a partir
++ *      dos artigos que realmente foram oferecidos — id desconhecido vira
++ *      `source: null`, nunca um título inventado pelo modelo.
++ *
++ * Saída: `{ "suggestions": [{ "text": string, "source": { "article_id", "title" } | null }] }`.
++ *
++ * Erros de orçamento/limite devolvem HTTP 429 com CÓDIGO ESTÁVEL
++ * (`ai_budget_exceeded` para orçamento/provedor sem crédito, `rate_limited` para
++ * o guarda de ritmo/cota e para o 429 do provedor) — o front distingue os dois.
++ *
++ * Sem PII em log: registra só contagens e booleanos, jamais conteúdo de mensagem.
++ */
++
++/** Seam de teste (mesmo padrão de `ai-suggest-reply`/`ai-auto-tag`): o handler
++ *  exportado recebe os pontos que a prova offline substitui. Em produção nada é
++ *  injetado e as implementações reais valem — o teste chama o handler REAL. */
++export interface AutomationSuggestReplyDeps {
++  /** Resolve a identidade do chamador (default: `requireAuth`). */
++  authorize?: (req: Request) => Promise<{ userId: string } | Response>;
++  /** Guarda de uso/cota de IA (default: `enforceAiGuards`). */
++  enforceGuards?: (
++    opts: { functionName: string; userId: string; req: Request },
++  ) => Promise<Response | null>;
++  /** Roteador de IA (default: `generateWithRouting`). */
++  generate?: (params: GenerateParams) => Promise<GenerateResult>;
++  /** Client Supabase com o JWT do chamador (default: `createAuthedClient`). */
++  authedClient?: (req: Request) => Promise<AuthedClientLike>;
++}
++
++/** Linha crua de `messages` (só as colunas pedidas no select). */
++interface MensagemRow {
++  content?: unknown;
++  sender?: unknown;
++  created_at?: unknown;
++}
++
++/** Artigo devolvido pela RPC `search_knowledge_base`. */
++interface ArtigoRow {
++  id: unknown;
++  title: unknown;
++  content?: unknown;
++}
++
++/** Builder mínimo do PostgREST que o handler usa (`limit` é o ponto de espera). */
++interface SelectBuilder {
++  eq(column: string, value: unknown): SelectBuilder;
++  order(column: string, opts: { ascending: boolean }): SelectBuilder;
++  limit(
++    count: number,
++  ): PromiseLike<{ data: MensagemRow[] | null; error: { message?: string } | null }>;
++}
++
++/** Superfície do client autenticado que este handler consome. */
++export interface AuthedClientLike {
++  from(table: string): { select(columns: string): SelectBuilder };
++  rpc(
++    fn: string,
++    args: Record<string, unknown>,
++  ): PromiseLike<{ data: unknown; error: { message?: string } | null }>;
++}
++
++/** Código estável para orçamento estourado (reserva de tokens / provedor sem crédito). */
++const AI_BUDGET_EXCEEDED_CODE = "ai_budget_exceeded";
++/** Código estável para limite de ritmo/cota e para o 429 do provedor. */
++const AI_RATE_LIMITED_CODE = "rate_limited";
++
++const MENSAGENS_LIMITE = 10;
++const ARTIGOS_LIMITE = 3;
++const ARTIGO_TRECHO_CHARS = 300;
++
++const SYSTEM_PROMPT = `Você é o copilot de um atendente de uma empresa distribuidora/comercial. A partir da última mensagem recebida do cliente e dos artigos da base de conhecimento, sugira ATÉ 3 respostas curtas, prontas para enviar pelo WhatsApp, em português do Brasil.
++
++Regras:
++- Cada sugestão é a frase pronta para envio: sem explicações, sem aspas, sem prefixo do tipo "Resposta:".
++- Use um artigo da base SOMENTE quando ele responder de fato à mensagem; nesse caso preencha "article_id" com o id EXATO do artigo usado.
++- Quando nenhum artigo se aplicar, use "article_id": null. NUNCA invente id nem título.
++- No máximo 3 sugestões; a primeira deve ser a resposta mais direta.
++
++Responda APENAS com JSON, neste formato:
++{"suggestions":[{"text":"texto da resposta","article_id":"<id do artigo ou null>"}]}`;
++
++/** Corpo da chamada: só o `contact_id`. */
++function parseInput(raw: unknown): { contact_id: string } | null {
++  if (!raw || typeof raw !== "object") return null;
++  const id = (raw as { contact_id?: unknown }).contact_id;
++  return typeof id === "string" && isValidUUID(id) ? { contact_id: id } : null;
++}
++
++/**
++ * Valida a saída crua do modelo SEM coagir nada (mesma regra do
++ * `_shared/ai-response-contracts.ts`): forma errada é rejeitada, não corrigida.
++ * Array vazio, mais de 3 itens, item que não é objeto, texto vazio ou
++ * `article_id` de tipo errado devolvem `null` — e nada é apresentado como se o
++ * modelo o tivesse gerado.
++ */
++function parseSuggestions(
++  raw: unknown,
++): Array<{ text: string; article_id: string | null }> | null {
++  if (!raw || typeof raw !== "object") return null;
++  const lista = (raw as { suggestions?: unknown }).suggestions;
++  if (!Array.isArray(lista) || lista.length < 1 || lista.length > 3) return null;
++  const out: Array<{ text: string; article_id: string | null }> = [];
++  for (const item of lista) {
++    if (!item || typeof item !== "object") return null;
++    const texto = (item as { text?: unknown }).text;
++    const artigoId = (item as { article_id?: unknown }).article_id;
++    if (typeof texto !== "string" || texto.trim().length === 0) return null;
++    if (artigoId !== null && artigoId !== undefined && typeof artigoId !== "string") {
++      return null;
++    }
++    out.push({ text: texto.trim(), article_id: typeof artigoId === "string" ? artigoId : null });
++  }
++  return out;
++}
++
++/** Identidade textual da linha; `null` quando não é mensagem recebida com texto. */
++function textoRecebido(m: MensagemRow): string | null {
++  if (m.sender !== "contact") return null;
++  const conteudo = typeof m.content === "string" ? m.content.trim() : "";
++  return conteudo.length > 0 ? conteudo : null;
++}
++
++/** 429 do guarda traduzido para o código estável, preservando o motivo quando legível. */
++async function guardaNegada(req: Request, guarda: Response): Promise<Response> {
++  if (guarda.status !== 429) return guarda;
++  let detalhe = "Limite de uso da IA excedido.";
++  try {
++    const corpo = await guarda.clone().json();
++    if (corpo && typeof corpo.error === "string" && corpo.error.length > 0) detalhe = corpo.error;
++  } catch {
++    // Corpo não-JSON: mantém a mensagem padrão. O código estável é o contrato.
++  }
++  return jsonResponse({ error: detalhe, code: AI_RATE_LIMITED_CODE }, 429, req);
++}
++
++export async function handleAutomationSuggestReply(
++  req: Request,
++  deps: AutomationSuggestReplyDeps = {},
++): Promise<Response> {
++  const cors = handleCors(req);
++  if (cors) return cors;
++
++  const authorize = deps.authorize ?? requireAuth;
++  const authCheck = await authorize(req);
++  if (authCheck instanceof Response) return authCheck;
++  const uid = (authCheck as { userId: string }).userId;
++
++  const guards = deps.enforceGuards ?? enforceAiGuards;
++  const guarda = await guards({ functionName: "automation-suggest-reply", userId: uid, req });
++  if (guarda) return await guardaNegada(req, guarda);
++
++  const log = new Logger("automation-suggest-reply");
++  const userId = extractUserIdFromRequest(req);
++
++  try {
++    let rawBody: unknown;
++    try {
++      rawBody = await req.json();
++    } catch {
++      return errorResponse("Corpo JSON inválido.", 400, req);
++    }
++    const entrada = parseInput(rawBody);
++    if (!entrada) return errorResponse("contact_id ausente ou inválido.", 400, req);
++    const contactId = entrada.contact_id;
++
++    const getClient = deps.authedClient ??
++      ((r: Request) => createAuthedClient(r) as unknown as Promise<AuthedClientLike>);
++    const client = await getClient(req);
++
++    // 1) Mensagens pelo client do CHAMADOR: a RLS decide o que existe. Um contato
++    //    que o usuário não enxerga devolve zero linhas — e zero linhas vira
++    //    sugestão vazia, nunca dado de outro contato.
++    const mensagens = await client
++      .from("messages")
++      .select("content, sender, created_at")
++      .eq("contact_id", contactId)
++      .eq("is_deleted", false)
++      .order("created_at", { ascending: false })
++      .limit(MENSAGENS_LIMITE);
++
++    if (mensagens.error) {
++      // Fail-closed interno: sem leitura confiável, não se inventa contexto.
++      log.warn("Falha ao ler mensagens do contato", { erro: mensagens.error.message ? 1 : 0 });
++      return jsonResponse({ suggestions: [] }, 200, req);
++    }
++
++    const recentes = (mensagens.data ?? []).filter(
++      (m): m is MensagemRow => !!m && typeof m === "object",
++    );
++    const ultimaRecebida = recentes.map(textoRecebido).find((t): t is string => t !== null);
++    if (!ultimaRecebida) {
++      log.info("Sem mensagem recebida visível para o contato", { linhas: recentes.length });
++      return jsonResponse({ suggestions: [] }, 200, req);
++    }
++
++    // 2) Base de conhecimento por relevância (FTS). Sem artigo aplicável, a
++    //    sugestão sai sem fonte — o modelo não é obrigado a citar nada.
++    let artigos: Array<{ id: string; title: string; content: string }> = [];
++    const busca = await client.rpc("search_knowledge_base", {
++      search_query: ultimaRecebida,
++      max_results: ARTIGOS_LIMITE,
++    });
++    if (busca.error) {
++      log.warn("Falha na busca da base de conhecimento", { erro: busca.error.message ? 1 : 0 });
++    } else if (Array.isArray(busca.data)) {
++      artigos = busca.data
++        .filter((a): a is ArtigoRow => !!a && typeof a === "object")
++        .map((a) => ({
++          id: typeof a.id === "string" ? a.id : "",
++          title: typeof a.title === "string" ? a.title : "",
++          content: typeof a.content === "string" ? a.content : "",
++        }))
++        .filter((a) => a.id.length > 0 && a.title.length > 0);
++    }
++
++    const cronologico = recentes.slice().reverse();
++    const historico = cronologico
++      .map((m) => {
++        const quem = m.sender === "agent" ? "atendente" : "cliente";
++        const conteudo = typeof m.content === "string" ? m.content.slice(0, 500) : "";
++        return `- ${quem}: ${conteudo}`;
++      })
++      .join("\n");
++
++    const blocoArtigos = artigos.length > 0
++      ? artigos
++        .map((a) => `- id ${a.id} — ${a.title}: ${a.content.slice(0, ARTIGO_TRECHO_CHARS)}`)
++        .join("\n")
++      : "Nenhum artigo da base de conhecimento corresponde à mensagem.";
++
++    const conteudoUsuario =
++      `Últimas mensagens da conversa (mais antiga primeiro):\n${historico}\n\n` +
++      `Última mensagem RECEBIDA do cliente:\n${ultimaRecebida}\n\n` +
++      `Artigos da base de conhecimento (id — título: conteúdo):\n${blocoArtigos}`;
++
++    log.info("Gerando sugestões da automação", {
++      linhas: recentes.length,
++      artigos: artigos.length,
++    });
++
++    const params: GenerateParams = {
++      purpose: "copilot",
++      functionName: "automation-suggest-reply",
++      userId,
++      system: SYSTEM_PROMPT,
++      messages: [{ role: "user", content: conteudoUsuario }],
++      temperature: 0.7,
++    };
++
++    const generate = deps.generate;
++    const result = generate
++      ? await generate(params)
++      : await generateWithRouting(params);
++    const { response, data } = result;
++
++    if (!response.ok || !data) {
++      if (result.errorCode === AI_BUDGET_ERROR_CODE || response.status === 402) {
++        return jsonResponse(
++          { error: "Orçamento de IA esgotado.", code: AI_BUDGET_EXCEEDED_CODE },
++          429,
++          req,
++        );
++      }
++      if (response.status === 429) {
++        return jsonResponse(
++          { error: "Limite de requisições de IA excedido.", code: AI_RATE_LIMITED_CODE },
++          429,
++          req,
++        );
++      }
++      return jsonResponse(
++        { error: "Falha ao gerar sugestões.", code: "ai_provider_error" },
++        502,
++        req,
++      );
++    }
++
++    const conteudo = (data as { choices?: Array<{ message?: { content?: unknown } }> })
++      .choices?.[0]?.message?.content;
++
++    const bruto = typeof conteudo === "string" ? parseJsonObject(conteudo) : null;
++    const sugestoes = parseSuggestions(bruto);
++    if (!sugestoes) {
++      log.warn("Saída do modelo rejeitada pelo contrato");
++      return jsonResponse(
++        {
++          error: "A resposta do modelo não atende ao contrato das sugestões; nada foi apresentado.",
++          code: "ai_contract_rejected",
++        },
++        502,
++        req,
++      );
++    }
++
++    // 3) O título da fonte é carimbado AQUI, só a partir dos artigos oferecidos:
++    //    id desconhecido (alucinado) vira `source: null` em vez de título inventado.
++    const porId = new Map(artigos.map((a) => [a.id, a]));
++    const saida = sugestoes.map((s) => {
++      const artigo = s.article_id ? porId.get(s.article_id) : undefined;
++      return {
++        text: s.text,
++        source: artigo ? { article_id: artigo.id, title: artigo.title } : null,
++      };
++    });
++
++    log.done(200);
++    return jsonResponse({ suggestions: saida }, 200, req);
++  } catch (error: unknown) {
++    const mensagem = error instanceof Error ? error.message : "Erro desconhecido";
++    log.error("Erro não tratado", { erro: mensagem });
++    return errorResponse("Erro ao gerar sugestões.", 500, req);
++  }
++}
++
++if (import.meta.main) {
++  Deno.serve((req) => handleAutomationSuggestReply(req));
++}
