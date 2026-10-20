@@ -1,0 +1,2105 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-nome-papel-6-pontos-26101406531182/.tmp/prova-base
+
+stderr | src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx > SystemFeaturesView — cabeçalho de seção acessível (t_90dcdcc8) > o cabeçalho de seção é botão com tabIndex e aria-expanded
+In HTML, <div> cannot be a descendant of <p>.
+This will cause a hydration error.
+
+  <SystemFeaturesView>
+    <div className="h-full fle...">
+      <div className="border-b b...">
+        <div className="flex items...">
+          <div className="flex items...">
+            <div>
+            <div>
+              <h1>
+>             <p className="text-sm text-muted-foreground mt-1">
+                <span>
+                <span>
+                <Badge variant="secondary" className="text-xs" data-testid="catalog-st...">
+>                 <div
+>                   ref={null}
+>                   className="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-col..."
+>                   data-testid="catalog-status-badge"
+>                 >
+              ...
+          ...
+        ...
+      ...
+
+<p> cannot contain a nested <div>.
+See this log for the ancestor stack trace.
+
+xNot implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+stderr | src/components/connections/__tests__/ConnectionCard.a11y.test.tsx > ConnectionCard — nome acessível do menu (t_90dcdcc8) > o botão de mais opções nomeia a conexão
+React does not recognize the `whileHover` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `whilehover` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+React does not recognize the `whileTap` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `whiletap` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+x·x···xx·xNot implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+xstderr | src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx > ExternalProductManagement — axe: sem violação séria (t_90dcdcc8) > os filtros do catálogo não têm violações critical/serious
+An update to ExternalProductManagement inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xNot implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+x··x·x·Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+··
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx > ExternalProductManagement — a11y do toggle Grade/Lista (t_90dcdcc8) > o modo ativo é anunciado por aria-pressed e alterna ao clicar
+Error: [2mexpect([22m[31melement[39m[2m).toHaveAttribute([22m[32m[32m"aria-pressed"[32m[39m[2m, [22m[32m[32m"true"[32m[39m[2m) // element.getAttribute("aria-pressed") === "true"[22m
+
+Expected the element to have attribute:
+[32m  aria-pressed="true"[39m
+Received:
+[31m  null[39m
+ ❯ src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx:115:19
+    113|     const lista = screen.getByRole('button', { name: 'Lista' });
+    114|
+    115|     expect(grade).toHaveAttribute('aria-pressed', 'true');
+       |                   ^
+    116|     expect(lista).toHaveAttribute('aria-pressed', 'false');
+    117|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx > ExternalProductManagement — a11y do toggle Grade/Lista (t_90dcdcc8) > os seletores de categoria e fornecedor (Select real) têm nome acessível
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Filtrar por categoria"
+
+Here are the accessible roles:
+
+  tablist:
+
+  Name "":
+  [36m<div[39m
+    [33maria-orientation[39m=[32m"horizontal"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded-xl bg-muted/40 border border-border/40 p-1 text-foreground/80 mb-4 h-auto sm:h-9"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mrole[39m=[32m"tablist"[39m
+    [33mstyle[39m=[32m"outline: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  tab:
+
+  Name "Produtos1":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"radix-_r_n_-content-produtos"[39m
+    [33maria-selected[39m=[32m"true"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"active"[39m
+    [33mid[39m=[32m"radix-_r_n_-trigger-produtos"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Favoritos0":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"radix-_r_n_-content-favoritos"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"inactive"[39m
+    [33mid[39m=[32m"radix-_r_n_-trigger-favoritos"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Enviados0":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"radix-_r_n_-content-enviados"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"inactive"[39m
+    [33mid[39m=[32m"radix-_r_n_-trigger-enviados"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  tabpanel:
+
+  Name "Produtos1":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_n_-trigger-produtos"[39m
+    [33mclass[39m=[32m"mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-state[39m=[32m"active"[39m
+    [33mid[39m=[32m"radix-_r_n_-content-produtos"[39m
+    [33mrole[39m=[32m"tabpanel"[39m
+    [33mstyle[39m=[32m"animation-duration: 0s;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Catálogo de Produtos":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-3xl leading-tight font-bold font-display text-foreground tracking-[-0.02em] truncate"[39m
+  [36m/>[39m
+
+  Name "Resumo do catálogo":
+  [36m<h3[39m
+    [33mclass[39m=[32m"flex"[39m
+    [33mdata-orientation[39m=[32m"vertical"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] text-foreground-secondary mt-0.5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium text-muted-foreground mb-1 uppercase tracking-wide truncate text-3xs"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium text-muted-foreground mb-1 uppercase tracking-wide truncate text-3xs"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] font-semibold text-foreground line-clamp-2 leading-snug cursor-pointer hover:text-primary transition-colors"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-3xs text-muted-foreground mt-0.5 truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] font-semibold text-foreground leading-snug"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-muted-foreground mt-1 leading-snug"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[15px] font-bold text-foreground leading-tight"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-foreground-secondary mt-0.5 leading-snug"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] font-semibold text-foreground truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-2xs text-muted-foreground truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[15px] font-bold text-foreground leading-tight"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-2xs font-semibold text-success uppercase tracking-wide mb-0.5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-foreground leading-snug"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Ajuda":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Atualizar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Produtos no total 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"text-left disabled:cursor-default"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Em estoque 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"text-left disabled:cursor-default"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Todos":
+  [36m<button[39m
+    [33mclass[39m=[32m"catalog-category-chip catalog-category-chip--active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Canetas":
+  [36m<button[39m
+    [33mclass[39m=[32m"catalog-category-chip focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Grade":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 rounded-r-none"[39m
+    [33mtitle[39m=[32m"Grade"[39m
+  [36m/>[39m
+
+  Name "Lista":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-10 w-10 rounded-l-none"[39m
+    [33mtitle[39m=[32m"Lista"[39m
+  [36m/>[39m
+
+  Name "Selecionar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3 gap-1.5"[39m
+  [36m/>[39m
+
+  Name "Filtros avançados":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3 relative"[39m
+  [36m/>[39m
+
+  Name "Ordenar: Nome A–Z":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:shadow-glow-accent-sm rounded-md px-3 h-7 gap-1 text-muted-foreground hover:text-foreground"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_t_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Resumo do catálogo":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"flex flex-1 items-center justify-between py-4 transition-all [&[data-state=open]>svg]:rotate-180 text-sm font-semibold hover:no-underline"[39m
+    [33mdata-orientation[39m=[32m"vertical"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_v_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Selecionar produto":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Selecionar produto"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-150 border-border/60 bg-background/80 backdrop-blur-sm text-transparent hover:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Adicionar aos favoritos":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Adicionar aos favoritos"[39m
+    [33mclass[39m=[32m"absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center bg-background/70 backdrop-blur-sm border border-border/30 hover:scale-110 transition-transform text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ações do produto Caneta Plástica Azul":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Ações do produto Caneta Plástica Azul"[39m
+    [33mclass[39m=[32m"talkx-glow-ring inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_15_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ver":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm rounded-md px-3 flex-1 h-8 text-xs"[39m
+  [36m/>[39m
+
+  Name "Enviar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 rounded-md px-3 flex-1 h-8 text-xs"[39m
+  [36m/>[39m
+
+  Name "Ver novidades →":
+  [36m<button[39m
+    [33mclass[39m=[32m"mt-3 text-[13px] font-semibold text-primary-glow hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Gerenciar no PromoGifts Abrir o painel em nova aba":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-primary/40 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Produtos em estoque1":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full text-left rounded-lg hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Em destaque0":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full text-left rounded-lg hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Novidades0":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full text-left rounded-lg hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  link:
+
+  Name "Gerenciar no PromoGifts":
+  [36m<a[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+    [33mhref[39m=[32m"https://promogifts.com.br"[39m
+    [33mrel[39m=[32m"noopener noreferrer"[39m
+    [33mtarget[39m=[32m"_blank"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-9"[39m
+    [33mplaceholder[39m=[32m"Buscar por nome, SKU ou marca..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "":
+  [36m<button[39m
+    [33maria-autocomplete[39m=[32m"none"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-[200px]"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mrole[39m=[32m"combobox"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33maria-autocomplete[39m=[32m"none"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-[170px]"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mrole[39m=[32m"combobox"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  switch:
+
+  Name "Em estoque":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mdata-state[39m=[32m"unchecked"[39m
+    [33mid[39m=[32m"stock-mgmt"[39m
+    [33mrole[39m=[32m"switch"[39m
+    [33mtype[39m=[32m"button"[39m
+    [33mvalue[39m=[32m"on"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"catalog-rail sticky top-4 hidden xl:block"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"space-y-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"w-full min-w-0"[39m
+      [33mdata-orientation[39m=[32m"horizontal"[39m
+      [33mdir[39m=[32m"ltr"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-orientation[39m=[32m"horizontal"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center rounded-xl bg-muted/40 border border-border/40 p-1 text-foreground/80 mb-4 h-auto sm:h-9"[39m
+        [33mdata-orientation[39m=[32m"horizontal"[39m
+        [33mrole[39m=[32m"tablist"[39m
+        [33mstyle[39m=[32m"outline: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"radix-_r_n_-content-produtos"[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+          [33mdata-orientation[39m=[32m"horizontal"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"active"[39m
+          [33mid[39m=[32m"radix-_r_n_-trigger-produtos"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-package w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 22V12"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"3.29 7 12 12 20.71 7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m7.5 4.27 9 5.15"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mProdutos[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"ml-1 rounded-full bg-muted px-1.5 text-2xs tabular-nums text-muted-foreground"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"radix-_r_n_-content-favoritos"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+          [33mdata-orientation[39m=[32m"horizontal"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"inactive"[39m
+          [33mid[39m=[32m"radix-_r_n_-trigger-favoritos"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-heart w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mFavoritos[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"ml-1 rounded-full bg-muted px-1.5 text-2xs tabular-nums text-muted-foreground"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"radix-_r_n_-content-enviados"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+          [33mdata-orientation[39m=[32m"horizontal"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"inactive"[39m
+          [33mid[39m=[32m"radix-_r_n_-trigger-enviados"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-send w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx:128:19
+    126|     renderManagement();
+    127|
+    128|     expect(screen.getByRole('combobox', { name: 'Filtrar por categoria…
+       |                   ^
+    129|     expect(screen.getByRole('combobox', { name: 'Filtrar por fornecedo…
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx > ExternalProductManagement — a11y do toggle Grade/Lista (t_90dcdcc8) > o botão de limpar a busca tem nome acessível e limpa o filtro
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Limpar busca"
+
+Here are the accessible roles:
+
+  tablist:
+
+  Name "":
+  [36m<div[39m
+    [33maria-orientation[39m=[32m"horizontal"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded-xl bg-muted/40 border border-border/40 p-1 text-foreground/80 mb-4 h-auto sm:h-9"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mrole[39m=[32m"tablist"[39m
+    [33mstyle[39m=[32m"outline: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  tab:
+
+  Name "Produtos1":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"radix-_r_25_-content-produtos"[39m
+    [33maria-selected[39m=[32m"true"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"active"[39m
+    [33mid[39m=[32m"radix-_r_25_-trigger-produtos"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Favoritos0":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"radix-_r_25_-content-favoritos"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"inactive"[39m
+    [33mid[39m=[32m"radix-_r_25_-trigger-favoritos"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Enviados0":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"radix-_r_25_-content-enviados"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"inactive"[39m
+    [33mid[39m=[32m"radix-_r_25_-trigger-enviados"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  tabpanel:
+
+  Name "Produtos1":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_25_-trigger-produtos"[39m
+    [33mclass[39m=[32m"mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mdata-state[39m=[32m"active"[39m
+    [33mid[39m=[32m"radix-_r_25_-content-produtos"[39m
+    [33mrole[39m=[32m"tabpanel"[39m
+    [33mstyle[39m=[32m"animation-duration: 0s;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Catálogo de Produtos":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-3xl leading-tight font-bold font-display text-foreground tracking-[-0.02em] truncate"[39m
+  [36m/>[39m
+
+  Name "Resumo do catálogo":
+  [36m<h3[39m
+    [33mclass[39m=[32m"flex"[39m
+    [33mdata-orientation[39m=[32m"vertical"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] text-foreground-secondary mt-0.5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium text-muted-foreground mb-1 uppercase tracking-wide truncate text-3xs"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium text-muted-foreground mb-1 uppercase tracking-wide truncate text-3xs"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] font-semibold text-foreground line-clamp-2 leading-snug cursor-pointer hover:text-primary transition-colors"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-3xs text-muted-foreground mt-0.5 truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] font-semibold text-foreground leading-snug"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-muted-foreground mt-1 leading-snug"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[15px] font-bold text-foreground leading-tight"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-foreground-secondary mt-0.5 leading-snug"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[13px] font-semibold text-foreground truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-2xs text-muted-foreground truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-[15px] font-bold text-foreground leading-tight"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-2xs font-semibold text-success uppercase tracking-wide mb-0.5"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-foreground leading-snug"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Ajuda":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Atualizar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Produtos no total 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"text-left disabled:cursor-default"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Em estoque 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"text-left disabled:cursor-default"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Todos":
+  [36m<button[39m
+    [33mclass[39m=[32m"catalog-category-chip catalog-category-chip--active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Canetas":
+  [36m<button[39m
+    [33mclass[39m=[32m"catalog-category-chip focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"[39m
+  [36m/>[39m
+
+  Name "Grade":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 rounded-r-none"[39m
+    [33mtitle[39m=[32m"Grade"[39m
+  [36m/>[39m
+
+  Name "Lista":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-10 w-10 rounded-l-none"[39m
+    [33mtitle[39m=[32m"Lista"[39m
+  [36m/>[39m
+
+  Name "Selecionar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3 gap-1.5"[39m
+  [36m/>[39m
+
+  Name "Filtros avançados":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3 relative"[39m
+  [36m/>[39m
+
+  Name "Limpar filtros":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary underline-offset-4 hover:underline hover:text-primary/80 rounded-md h-auto p-0"[39m
+  [36m/>[39m
+
+  Name "Ordenar: Nome A–Z":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:shadow-glow-accent-sm rounded-md px-3 h-7 gap-1 text-muted-foreground hover:text-foreground"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_2b_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Resumo do catálogo":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"flex flex-1 items-center justify-between py-4 transition-all [&[data-state=open]>svg]:rotate-180 text-sm font-semibold hover:no-underline"[39m
+    [33mdata-orientation[39m=[32m"vertical"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_2d_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Selecionar produto":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Selecionar produto"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-150 border-border/60 bg-background/80 backdrop-blur-sm text-transparent hover:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Adicionar aos favoritos":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Adicionar aos favoritos"[39m
+    [33mclass[39m=[32m"absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center bg-background/70 backdrop-blur-sm border border-border/30 hover:scale-110 transition-transform text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ações do produto Caneta Plástica Azul":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Ações do produto Caneta Plástica Azul"[39m
+    [33mclass[39m=[32m"talkx-glow-ring inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_2j_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ver":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm rounded-md px-3 flex-1 h-8 text-xs"[39m
+  [36m/>[39m
+
+  Name "Enviar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 rounded-md px-3 flex-1 h-8 text-xs"[39m
+  [36m/>[39m
+
+  Name "Ver novidades →":
+  [36m<button[39m
+    [33mclass[39m=[32m"mt-3 text-[13px] font-semibold text-primary-glow hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Gerenciar no PromoGifts Abrir o painel em nova aba":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-primary/40 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Produtos em estoque1":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full text-left rounded-lg hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Em destaque0":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full text-left rounded-lg hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Novidades0":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full text-left rounded-lg hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  link:
+
+  Name "Gerenciar no PromoGifts":
+  [36m<a[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+    [33mhref[39m=[32m"https://promogifts.com.br"[39m
+    [33mrel[39m=[32m"noopener noreferrer"[39m
+    [33mtarget[39m=[32m"_blank"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-9"[39m
+    [33mplaceholder[39m=[32m"Buscar por nome, SKU ou marca..."[39m
+    [33mvalue[39m=[32m"caneta"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "":
+  [36m<button[39m
+    [33maria-autocomplete[39m=[32m"none"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-[200px]"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mrole[39m=[32m"combobox"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33maria-autocomplete[39m=[32m"none"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-[170px]"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mrole[39m=[32m"combobox"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  switch:
+
+  Name "Em estoque":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"false"[39m
+    [33mclass[39m=[32m"peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mdata-state[39m=[32m"unchecked"[39m
+    [33mid[39m=[32m"stock-mgmt"[39m
+    [33mrole[39m=[32m"switch"[39m
+    [33mtype[39m=[32m"button"[39m
+    [33mvalue[39m=[32m"on"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"catalog-rail sticky top-4 hidden xl:block"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"space-y-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"w-full min-w-0"[39m
+      [33mdata-orientation[39m=[32m"horizontal"[39m
+      [33mdir[39m=[32m"ltr"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-orientation[39m=[32m"horizontal"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center rounded-xl bg-muted/40 border border-border/40 p-1 text-foreground/80 mb-4 h-auto sm:h-9"[39m
+        [33mdata-orientation[39m=[32m"horizontal"[39m
+        [33mrole[39m=[32m"tablist"[39m
+        [33mstyle[39m=[32m"outline: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"radix-_r_25_-content-produtos"[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+          [33mdata-orientation[39m=[32m"horizontal"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"active"[39m
+          [33mid[39m=[32m"radix-_r_25_-trigger-produtos"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-package w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 22V12"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"3.29 7 12 12 20.71 7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m7.5 4.27 9 5.15"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mProdutos[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"ml-1 rounded-full bg-muted px-1.5 text-2xs tabular-nums text-muted-foreground"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"radix-_r_25_-content-favoritos"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+          [33mdata-orientation[39m=[32m"horizontal"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"inactive"[39m
+          [33mid[39m=[32m"radix-_r_25_-trigger-favoritos"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-heart w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mFavoritos[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"ml-1 rounded-full bg-muted px-1.5 text-2xs tabular-nums text-muted-foreground"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"radix-_r_25_-content-enviados"[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1.5 text-xs min-h-11 sm:min-h-0"[39m
+          [33mdata-orientation[39m=[32m"horizontal"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"inactive"[39m
+          [33mid[39m=[32m"radix-_r_25_-trigger-enviados"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-send w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx:147:27
+    145|     });
+    146|
+    147|     const limpar = screen.getByRole('button', { name: 'Limpar busca' }…
+       |                           ^
+    148|     fireEvent.click(limpar);
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx > ExternalProductManagement — axe: sem violação séria (t_90dcdcc8) > os filtros do catálogo não têm violações critical/serious
+Error: expect(received).toHaveNoViolations(expected)
+
+Expected the HTML found at $('.w-\[200px\]') to have no violations:
+
+<button type="button" role="combobox" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex h-10 items-cent...">
+
+Received:
+
+"Buttons must have discernible text (button-name)"
+
+Fix any of the following:
+  Element does not have inner text that is visible to screen readers
+  aria-label attribute does not exist or is empty
+  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty
+  Element has no title attribute
+  Element does not have an implicit (wrapped) <label>
+  Element does not have an explicit <label>
+  Element's default semantics were not overridden with role="none" or role="presentation"
+
+You can find more information on this issue here: 
+https://dequeuniversity.com/rules/axe/4.13/button-name?application=axeAPI
+
+Expected the HTML found at $('.w-\[170px\]') to have no violations:
+
+<button type="button" role="combobox" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex h-10 items-cent...">
+
+Received:
+
+"Buttons must have discernible text (button-name)"
+
+Fix any of the following:
+  Element does not have inner text that is visible to screen readers
+  aria-label attribute does not exist or is empty
+  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty
+  Element has no title attribute
+  Element does not have an implicit (wrapped) <label>
+  Element does not have an explicit <label>
+  Element's default semantics were not overridden with role="none" or role="presentation"
+
+You can find more information on this issue here: 
+https://dequeuniversity.com/rules/axe/4.13/button-name?application=axeAPI
+ ❯ src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx:163:8
+    161|       ...results,
+    162|       violations: results.violations.filter((v) => SERIOUS.has(v.impac…
+    163|     }).toHaveNoViolations();
+       |        ^
+    164|   });
+    165|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/components/connections/__tests__/ConnectionCard.a11y.test.tsx > ConnectionCard — axe: sem violação séria (t_90dcdcc8) > o card não tem violações critical/serious
+Error: expect(received).toHaveNoViolations(expected)
+
+Expected the HTML found at $('#radix-_r_5_') to have no violations:
+
+<div whilehover="[object Object]" whiletap="[object Object]" type="button" id="radix-_r_5_" aria-haspopup="menu" aria-expanded="false" data-state="closed">
+
+Received:
+
+"Elements must only use supported ARIA attributes (aria-allowed-attr)"
+
+Fix all of the following:
+  ARIA attribute is not allowed: aria-expanded="false"
+
+You can find more information on this issue here: 
+https://dequeuniversity.com/rules/axe/4.13/aria-allowed-attr?application=axeAPI
+ ❯ src/components/connections/__tests__/ConnectionCard.a11y.test.tsx:91:8
+     89|       ...results,
+     90|       violations: results.violations.filter((v) => SERIOUS.has(v.impac…
+     91|     }).toHaveNoViolations();
+       |        ^
+     92|   });
+     93|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx > SystemFeaturesView — cabeçalho de seção acessível (t_90dcdcc8) > o cabeçalho de seção é botão com tabIndex e aria-expanded
+AssertionError: expected 0 to be greater than 0
+ ❯ src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx:34:26
+     32|     render(<SystemFeaturesView />);
+     33|     const cards = cardsDeSecao();
+     34|     expect(cards.length).toBeGreaterThan(0);
+       |                          ^
+     35|     expect(cards[0]).toHaveAttribute('tabindex', '0');
+     36|     expect(cards[0]).toHaveAttribute('aria-expanded', 'false');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx > SystemFeaturesView — cabeçalho de seção acessível (t_90dcdcc8) > Enter e Espaço expandem e recolhem a seção
+Error: Unable to fire a "keydown" event - please provide a DOM element.
+ ❯ createEvent ../../node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ createEvent.<computed> [as keyDown] ../../node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ fireEvent.<computed> [as keyDown] ../../node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ fireEvent.<computed> [as keyDown] ../../node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx:43:15
+     41|     const card = cardsDeSecao()[0];
+     42|
+     43|     fireEvent.keyDown(card, { key: 'Enter' });
+       |               ^
+     44|     expect(card).toHaveAttribute('aria-expanded', 'true');
+     45|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/components/groups/__tests__/GroupsView.a11y.test.tsx > GroupsView — card de grupo selecionável por teclado (t_90dcdcc8) > o card do grupo tem checkbox de seleção com nome acessível
+TestingLibraryElementError: Unable to find role="checkbox" and name "Selecionar Meu Grupo"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4 sm:space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1>[39m
+          [0mGrupos WhatsApp[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 flex-wrap"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-cw w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 16H3v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mSincronizar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"[39m
+            [33mdata-state[39m=[32m"closed"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAdicionar Grupo[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33manimate[39m=[32m"[object Object]"[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-3"[39m
+        [33minitial[39m=[32m"[object Object]"[39m
+        [33mtransition[39m=[32m"[object Object]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-9"[39m
+            [33mplaceholder[39m=[32m"Buscar por nome ou ID do grupo..."[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-autocomplete[39m=[32m"none"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Filtrar por categoria"[39m
+          [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-full sm:w-[220px]"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4 sm:space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1>[39m
+          [0mGrupos WhatsApp[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 flex-wrap"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-cw w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 16H3v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mSincronizar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"[39m
+            [33mdata-state[39m=[32m"closed"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAdicionar Grupo[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33manimate[39m=[32m"[object Object]"[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-3"[39m
+        [33minitial[39m=[32m"[object Object]"[39m
+        [33mtransition[39m=[32m"[object Object]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-9"[39m
+            [33mplaceholder[39m=[32m"Buscar por nome ou ID do grupo..."[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-autocomplete[39m=[32m"none"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Filtrar por categoria"[39m
+          [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-full sm:w-[220px]"...
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ checkboxDoGrupo src/components/groups/__tests__/GroupsView.a11y.test.tsx:108:17
+    106|   // ATENÇÃO: `{ name }` aqui capturaria o global `window.name` ('' no…
+    107|   // não o parâmetro — por isso o explícito `name: nome`.
+    108|   return screen.findByRole('checkbox', { name: nome });
+       |                 ^
+    109| }
+    110|
+ ❯ src/components/groups/__tests__/GroupsView.a11y.test.tsx:122:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/components/groups/__tests__/GroupsView.a11y.test.tsx > GroupsView — card de grupo selecionável por teclado (t_90dcdcc8) > checkbox é alcançável por teclado (foco) e alterna a seleção
+TestingLibraryElementError: Unable to find role="checkbox" and name "Selecionar Meu Grupo"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4 sm:space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1>[39m
+          [0mGrupos WhatsApp[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 flex-wrap"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-cw w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 16H3v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mSincronizar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"[39m
+            [33mdata-state[39m=[32m"closed"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAdicionar Grupo[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33manimate[39m=[32m"[object Object]"[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-3"[39m
+        [33minitial[39m=[32m"[object Object]"[39m
+        [33mtransition[39m=[32m"[object Object]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-9"[39m
+            [33mplaceholder[39m=[32m"Buscar por nome ou ID do grupo..."[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-autocomplete[39m=[32m"none"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Filtrar por categoria"[39m
+          [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-full sm:w-[220px]"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4 sm:space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<h1>[39m
+          [0mGrupos WhatsApp[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 flex-wrap"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-cw w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 16H3v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mSincronizar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"[39m
+            [33mdata-state[39m=[32m"closed"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAdicionar Grupo[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33manimate[39m=[32m"[object Object]"[39m
+        [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-3"[39m
+        [33minitial[39m=[32m"[object Object]"[39m
+        [33mtransition[39m=[32m"[object Object]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-9"[39m
+            [33mplaceholder[39m=[32m"Buscar por nome ou ID do grupo..."[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-autocomplete[39m=[32m"none"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33maria-label[39m=[32m"Filtrar por categoria"[39m
+          [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-full sm:w-[220px]"...
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ checkboxDoGrupo src/components/groups/__tests__/GroupsView.a11y.test.tsx:108:17
+    106|   // ATENÇÃO: `{ name }` aqui capturaria o global `window.name` ('' no…
+    107|   // não o parâmetro — por isso o explícito `name: nome`.
+    108|   return screen.findByRole('checkbox', { name: nome });
+       |                 ^
+    109| }
+    110|
+ ❯ src/components/groups/__tests__/GroupsView.a11y.test.tsx:128:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/components/inbox/__tests__/StatusChips.a11y.test.tsx > StatusChips — nome/papel acessível (t_90dcdcc8) > o grupo de filtros é um tablist nomeado
+TestingLibraryElementError: Unable to find an accessible element with the role "tablist" and name "Filtros de conversa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Todas2":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center status-chip-active bg-accent border-primary/50 text-foreground"[39m
+    [33mdata-testid[39m=[32m"status-chip-all"[39m
+  [36m/>[39m
+
+  Name "Não lidas0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-unread"[39m
+  [36m/>[39m
+
+  Name "Em atendimento0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-attending"[39m
+  [36m/>[39m
+
+  Name "Aguardando2":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-waiting"[39m
+  [36m/>[39m
+
+  Name "Resolvidas0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-resolved"[39m
+  [36m/>[39m
+
+  Name "Arquivadas0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-archived"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-wrap gap-1.5 px-4 pb-3"[39m
+      [33mdata-testid[39m=[32m"status-chips"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center status-chip-active bg-accent border-primary/50 text-foreground"[39m
+        [33mdata-testid[39m=[32m"status-chip-all"[39m
+      [36m>[39m
+        [0mTodas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-primary text-primary-foreground"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-unread"[39m
+      [36m>[39m
+        [0mNão lidas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-destructive/20 text-destructive"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-attending"[39m
+      [36m>[39m
+        [0mEm atendimento[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-muted text-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-waiting"[39m
+      [36m>[39m
+        [0mAguardando[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-warning/20 text-warning"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-resolved"[39m
+      [36m>[39m
+        [0mResolvidas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-muted text-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-archived"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-archive h-3 w-3 mr-1"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"5"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"20"[39m
+            [33mx[39m=[32m"2"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M10 12h4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mArquivadas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-muted text-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/StatusChips.a11y.test.tsx:39:28
+     37|   it('o grupo de filtros é um tablist nomeado', () => {
+     38|     render(<StatusChips conversations={conversations} chipTab="all" on…
+     39|     const tablist = screen.getByRole('tablist', { name: 'Filtros de co…
+       |                            ^
+     40|     expect(tablist).toBeInTheDocument();
+     41|     expect(tablist).toBe(screen.getByTestId('status-chips'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/components/inbox/__tests__/StatusChips.a11y.test.tsx > StatusChips — nome/papel acessível (t_90dcdcc8) > cada chip é um tab e só o ativo fica aria-selected
+TestingLibraryElementError: Unable to find an accessible element with the role "tab"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Todas2":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-all"[39m
+  [36m/>[39m
+
+  Name "Não lidas0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center status-chip-active bg-accent border-primary/50 text-foreground"[39m
+    [33mdata-testid[39m=[32m"status-chip-unread"[39m
+  [36m/>[39m
+
+  Name "Em atendimento0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-attending"[39m
+  [36m/>[39m
+
+  Name "Aguardando2":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-waiting"[39m
+  [36m/>[39m
+
+  Name "Resolvidas0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-resolved"[39m
+  [36m/>[39m
+
+  Name "Arquivadas0":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+    [33mdata-testid[39m=[32m"status-chip-archived"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-wrap gap-1.5 px-4 pb-3"[39m
+      [33mdata-testid[39m=[32m"status-chips"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-all"[39m
+      [36m>[39m
+        [0mTodas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-primary text-primary-foreground"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center status-chip-active bg-accent border-primary/50 text-foreground"[39m
+        [33mdata-testid[39m=[32m"status-chip-unread"[39m
+      [36m>[39m
+        [0mNão lidas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-destructive/20 text-destructive"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-attending"[39m
+      [36m>[39m
+        [0mEm atendimento[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-muted text-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-waiting"[39m
+      [36m>[39m
+        [0mAguardando[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-warning/20 text-warning"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-resolved"[39m
+      [36m>[39m
+        [0mResolvidas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-muted text-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center bg-muted/40 border-border text-muted-foreground hover:bg-muted/70"[39m
+        [33mdata-testid[39m=[32m"status-chip-archived"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-archive h-3 w-3 mr-1"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"5"[39m
+            [33mrx[39m=[32m"1"[39m
+            [33mwidth[39m=[32m"20"[39m
+            [33mx[39m=[32m"2"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M10 12h4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mArquivadas[0m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center bg-muted text-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/components/inbox/__tests__/StatusChips.a11y.test.tsx:47:25
+     45|     render(<StatusChips conversations={conversations} chipTab="unread"…
+     46|
+     47|     const tabs = screen.getAllByRole('tab');
+       |                         ^
+     48|     expect(tabs).toHaveLength(6);
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  11 failed | 11 passed (22)
+   Start at  07:33:44
+   Duration  18.99s (transform 11.92s, setup 2.41s, import 20.32s, tests 22.80s, environment 8.87s)
+

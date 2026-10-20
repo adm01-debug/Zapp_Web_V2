@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-nome-papel-6-pontos
+ID=26101406531182
+BRANCH=v2/a11y-nome-papel-6-pontos-26101406531182
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-nome-papel-6-pontos-26101406531182
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-14T06:53:26-03:00
+KANBAN=t_16329d3c
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-nome-papel-6-pontos-26101406531182/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-14
+DB_LOCAL=v2-26101406531182
+PRONTO_SHA=23c1e8ebc6b05f22aef5ff61348750b5f9e62d5b

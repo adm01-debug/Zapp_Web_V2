@@ -1,0 +1,800 @@
+diff --git a/src/components/catalog/ExternalProductManagement.tsx b/src/components/catalog/ExternalProductManagement.tsx
+index dac2817c03..3f59efdf22 100644
+--- a/src/components/catalog/ExternalProductManagement.tsx
++++ b/src/components/catalog/ExternalProductManagement.tsx
+@@ -846,14 +846,14 @@ export const ExternalProductManagement: React.FC = () => {
+             className="pl-9"
+           />
+           {search && (
+-            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => dispatch({ type: 'search', value: '' })}>
++            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca" onClick={() => dispatch({ type: 'search', value: '' })}>
+               <X className="w-4 h-4" />
+             </Button>
+           )}
+         </div>
+ 
+         <Select value={categoryId} onValueChange={handleCategoryChange} disabled={coolingDown}>
+-          <SelectTrigger className="w-[200px]">
++          <SelectTrigger className="w-[200px]" aria-label="Filtrar por categoria">
+             <SelectValue placeholder="Categoria" />
+           </SelectTrigger>
+           <SelectContent>
+@@ -877,7 +877,7 @@ export const ExternalProductManagement: React.FC = () => {
+         </Select>
+ 
+         <Select value={supplierId} onValueChange={(v) => dispatch({ type: 'supplier', id: v })} disabled={coolingDown}>
+-          <SelectTrigger className="w-[170px]">
++          <SelectTrigger className="w-[170px]" aria-label="Filtrar por fornecedor">
+             <SelectValue placeholder="Fornecedor" />
+           </SelectTrigger>
+           <SelectContent>
+@@ -898,10 +898,10 @@ export const ExternalProductManagement: React.FC = () => {
+         </div>
+ 
+         <div className="flex border rounded-md">
+-          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" onClick={() => handleViewMode('grid')} title="Grade">
++          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" aria-pressed={viewMode === 'grid'} onClick={() => handleViewMode('grid')} title="Grade">
+             <Grid3X3 className="w-4 h-4" />
+           </Button>
+-          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" onClick={() => handleViewMode('list')} title="Lista">
++          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" aria-pressed={viewMode === 'list'} onClick={() => handleViewMode('list')} title="Lista">
+             <List className="w-4 h-4" />
+           </Button>
+         </div>
+diff --git a/src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx b/src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx
+new file mode 100644
+index 0000000000..02e57dfe91
+--- /dev/null
++++ b/src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx
+@@ -0,0 +1,181 @@
++import { describe, it, expect, vi, beforeAll } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { axe } from 'vitest-axe';
++import './catalogMocks';
++import { toastError } from './catalogMocks';
++
++// Cartão t_90dcdcc8, item 6 [refazer 1]: os botões de modo Grade/Lista só tinham `title`,
++// sem `aria-pressed` — o estado não era anunciado. Prova: renderiza o
++// componente REAL e exige o aria-pressed refletindo o modo.
++//
++// O que a recusa mandou corrigir aqui:
++// - primitivos de UI REAIS: Button, Switch e Select NÃO são dublados (só os
++//   hooks de dados); os dois SelectTrigger (categoria/fornecedor) ganharam
++//   nome acessível e o botão de limpar a busca também;
++// - sel (SelectTrigger real — em jsdom, exige o stub do pointerdown);
++// - axe real com o filtro de impactos sérios do aceite + teste de controle.
++
++// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
++// `hasPointerCapture` no pointerdown que o abre.
++beforeAll(() => {
++  if (typeof Element !== 'undefined' && !Element.prototype.hasPointerCapture) {
++    Element.prototype.hasPointerCapture = () => false;
++    Element.prototype.setPointerCapture = () => {};
++    Element.prototype.releasePointerCapture = () => {};
++  }
++});
++
++const mockUseAuth = vi.fn();
++vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => mockUseAuth() }));
++
++const mockUseExternalCatalog = vi.fn();
++const mockUseCatalogStats = vi.fn();
++const mockFavorites = vi.fn();
++vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
++  const actual = await vi.importActual<typeof import('@/hooks/integrations/useExternalCatalog')>(
++    '@/hooks/integrations/useExternalCatalog'
++  );
++  return {
++    ...actual,
++    useExternalCatalog: () => mockUseExternalCatalog(),
++    useCatalogStats: () => mockUseCatalogStats(),
++    useCatalogFavorites: () => mockFavorites(),
++  };
++});
++
++const produto = (overrides: Record<string, unknown> = {}) => ({
++  id: 'p1', name: 'Caneta Plástica Azul', description: null, short_description: 'Caneta azul',
++  sku: 'CAN-001', sale_price: 3.99, suggested_price: null, stock_quantity: 5000,
++  primary_image_url: null, colors: ['Azul'], brand: 'Spot', origin_country: 'China',
++  min_quantity: 50, dimensions_display: null, weight_g: 12, combined_sizes: null,
++  product_type: 'single', is_kit: false, is_active: true, is_stockout: false,
++  allows_personalization: true, lead_time_days: 3, supply_mode: null,
++  category_id: 'cat1', supplier_id: 'sup1', slug: 'caneta', capacity_ml: null, ncm_code: null,
++  categories: { id: 'cat1', name: 'Canetas', slug: 'canetas', parent_id: null },
++  suppliers: { id: 'sup1', name: 'Spot' },
++  ...overrides,
++});
++
++function renderManagement() {
++  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++  return render(
++    <QueryClientProvider client={client}>
++      <ExternalProductManagement />
++    </QueryClientProvider>
++  );
++}
++
++mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
++mockUseExternalCatalog.mockReturnValue({
++  products: [produto()],
++  totalProducts: 1,
++  categories: [{ id: 'cat1', name: 'Canetas', slug: 'canetas', parent_id: null }],
++  suppliers: [{ id: 'sup1', name: 'Spot' }],
++  loading: false,
++  error: null,
++  errorCode: null,
++  errorStatus: null,
++  fetchProducts: vi.fn(),
++  fetchProduct: vi.fn(),
++  fetchCategories: vi.fn(),
++  fetchSuppliers: vi.fn(),
++  isFetching: false,
++  isInitialLoading: false,
++  invalidate: vi.fn(),
++});
++mockUseCatalogStats.mockReturnValue({
++  data: { total: 1, in_stock: 1, last_sync_at: new Date().toISOString() },
++  isLoading: false,
++  error: null,
++});
++mockFavorites.mockReturnValue({
++  favorites: [],
++  favoriteIds: new Set<string>(),
++  isFavorite: () => false,
++  isLoading: false,
++  toggle: vi.fn(),
++});
++void toastError;
++
++import { ExternalProductManagement } from '../ExternalProductManagement';
++
++/** Impactos sérios segundo o aceite (mesma régua da skill de a11y do repo). */
++const SERIOUS = new Set(['critical', 'serious']);
++const ids = (violations: { id: string }[]) => violations.map((v) => v.id).sort();
++
++describe('ExternalProductManagement — a11y do toggle Grade/Lista (t_90dcdcc8)', () => {
++  it('o modo ativo é anunciado por aria-pressed e alterna ao clicar', () => {
++    window.localStorage.setItem('catalog.view', 'grid');
++    renderManagement();
++
++    const grade = screen.getByRole('button', { name: 'Grade' });
++    const lista = screen.getByRole('button', { name: 'Lista' });
++
++    expect(grade).toHaveAttribute('aria-pressed', 'true');
++    expect(lista).toHaveAttribute('aria-pressed', 'false');
++
++    fireEvent.click(lista);
++
++    expect(screen.getByRole('button', { name: 'Lista' })).toHaveAttribute('aria-pressed', 'true');
++    expect(screen.getByRole('button', { name: 'Grade' })).toHaveAttribute('aria-pressed', 'false');
++  });
++
++  it('os seletores de categoria e fornecedor (Select real) têm nome acessível', () => {
++    window.localStorage.setItem('catalog.view', 'grid');
++    renderManagement();
++
++    expect(screen.getByRole('combobox', { name: 'Filtrar por categoria' })).toBeInTheDocument();
++    expect(screen.getByRole('combobox', { name: 'Filtrar por fornecedor' })).toBeInTheDocument();
++  });
++
++  it('o interruptor "Em estoque" (Switch real) tem nome acessível', () => {
++    window.localStorage.setItem('catalog.view', 'grid');
++    renderManagement();
++
++    expect(screen.getByRole('switch', { name: 'Em estoque' })).toBeInTheDocument();
++  });
++
++  it('o botão de limpar a busca tem nome acessível e limpa o filtro', () => {
++    window.localStorage.setItem('catalog.view', 'grid');
++    renderManagement();
++
++    fireEvent.change(screen.getByPlaceholderText(/Buscar por nome, SKU ou marca/), {
++      target: { value: 'caneta' },
++    });
++
++    const limpar = screen.getByRole('button', { name: 'Limpar busca' });
++    fireEvent.click(limpar);
++
++    expect(screen.queryByRole('button', { name: 'Limpar busca' })).not.toBeInTheDocument();
++  });
++});
++
++describe('ExternalProductManagement — axe: sem violação séria (t_90dcdcc8)', () => {
++  it('os filtros do catálogo não têm violações critical/serious', async () => {
++    window.localStorage.setItem('catalog.view', 'grid');
++    renderManagement();
++
++    const results = await axe(document.body);
++    expect({
++      ...results,
++      violations: results.violations.filter((v) => SERIOUS.has(v.impact ?? '')),
++    }).toHaveNoViolations();
++  });
++
++  /**
++   * Controle: prova que o matcher acusa violação REAL. Um `<button>` só de ícone
++   * sem nome viola `button-name` (critical) — é exatamente o defeito corrigido.
++   * Se o axe nunca rodasse, o controle (e o teste acima) deixaria de reprovar.
++   */
++  it('controle: um botão só de ícone sem nome CONTÉM button-name', async () => {
++    render(
++      <button type="button">
++        <span data-testid="icone" />
++      </button>,
++    );
++    const results = await axe(document.body);
++
++    expect(ids(results.violations)).toContain('button-name');
++  });
++});
+diff --git a/src/components/connections/ConnectionCard.tsx b/src/components/connections/ConnectionCard.tsx
+index 5766d8cac3..33ba531eba 100644
+--- a/src/components/connections/ConnectionCard.tsx
++++ b/src/components/connections/ConnectionCard.tsx
+@@ -1,6 +1,6 @@
+ import { useState } from 'react';
+ import { Card, CardContent } from '@/components/ui/card';
+-import { Button } from '@/components/ui/button';
++import { Button, MotionButton } from '@/components/ui/button';
+ import { Badge } from '@/components/ui/badge';
+ import {
+   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+@@ -146,9 +146,7 @@ export function ConnectionCard({
+ 
+               <DropdownMenu>
+                 <DropdownMenuTrigger asChild>
+-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+-                    <Button variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></Button>
+-                  </motion.div>
++                  <MotionButton variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></MotionButton>
+                 </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end">
+                   <DropdownMenuItem onClick={() => onSetDefault(connection.id)}><Star className="w-4 h-4 mr-2" />Definir como padrão</DropdownMenuItem>
+diff --git a/src/components/connections/__tests__/ConnectionCard.a11y.test.tsx b/src/components/connections/__tests__/ConnectionCard.a11y.test.tsx
+new file mode 100644
+index 0000000000..4e9361cd7d
+--- /dev/null
++++ b/src/components/connections/__tests__/ConnectionCard.a11y.test.tsx
+@@ -0,0 +1,109 @@
++import { render, screen } from '@testing-library/react';
++import { describe, expect, it, vi, beforeEach } from 'vitest';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { axe } from 'vitest-axe';
++
++// Cartão t_90dcdcc8, item 1 [refazer 1]: o botão "mais opções" (MoreVertical)
++// não tinha nome acessível — leitor de tela anunciava só "botão".
++//
++// O que a recusa mandou corrigir aqui:
++// - o teste anterior dublava `@/components/ui/dropdown-menu` (o próprio
++//   primitivo que dá papel ao gatilho) e esperava o rótulo genérico
++//   "Mais opções da conexão". A ponta do dia já traz o rótulo específico
++//   `Ações da conexão ${connection.name}` — este teste trava ELE, com o
++//   DropdownMenu REAL, o Button REAL e o Card REAL. Só hooks de dados são
++//   dublados (useUserRole, supabase, toast); framer-motion é passthrough que
++//   repassa todas as props (incluindo as de a11y).
++
++vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
++vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
++vi.mock('framer-motion', () => ({
++  motion: {
++    div: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => (
++      <div {...props}>{children}</div>
++    ),
++  },
++}));
++vi.mock('@/hooks/system/useUserRole', () => ({
++  useUserRole: () => ({ isAdmin: false, isSupervisor: false, roles: [], loading: false }),
++}));
++vi.mock('../BusinessHoursIndicator', () => ({ BusinessHoursIndicator: () => null }));
++
++import { ConnectionCard } from '../ConnectionCard';
++
++const connection = {
++  id: 'conn-1',
++  name: 'Principal',
++  phone_number: '+55 11 90000-0000',
++  instance_id: 'inst-1',
++  status: 'connected',
++  qr_code: null,
++  is_default: true,
++  created_at: '2026-10-08T00:00:00Z',
++};
++const props = {
++  connection,
++  syncingHistory: null,
++  onShowQrCode: vi.fn(),
++  onCopyId: vi.fn(),
++  onDisconnect: vi.fn(),
++  onSetDefault: vi.fn(),
++  onDelete: vi.fn(),
++  onBusinessHours: vi.fn(),
++  onQueues: vi.fn(),
++  onSettings: vi.fn(),
++  onSyncHistory: vi.fn(),
++};
++
++function renderCard() {
++  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++  return render(
++    <QueryClientProvider client={client}>
++      <ConnectionCard {...props} />
++    </QueryClientProvider>,
++  );
++}
++
++/** Impactos sérios segundo o aceite (mesma régua da skill de a11y do repo). */
++const SERIOUS = new Set(['critical', 'serious']);
++const ids = (violations: { id: string }[]) => violations.map((v) => v.id).sort();
++
++beforeEach(() => {
++  vi.clearAllMocks();
++});
++
++describe('ConnectionCard — nome acessível do menu (t_90dcdcc8)', () => {
++  it('o botão de mais opções nomeia a conexão', () => {
++    renderCard();
++    const botao = screen.getByRole('button', { name: 'Ações da conexão Principal' });
++    expect(botao).toBeInTheDocument();
++  });
++});
++
++describe('ConnectionCard — axe: sem violação séria (t_90dcdcc8)', () => {
++  it('o card não tem violações critical/serious', async () => {
++    renderCard();
++
++    const results = await axe(document.body);
++    expect({
++      ...results,
++      violations: results.violations.filter((v) => SERIOUS.has(v.impact ?? '')),
++    }).toHaveNoViolations();
++  });
++
++  /**
++   * Controle: prova que o matcher acusa violação REAL. Um `<button>` só de ícone
++   * sem nome viola `button-name` (critical) — é exatamente o defeito corrigido.
++   * Se o axe nunca rodasse, o controle (e o teste acima) deixariam de reprovar.
++   */
++  it('controle: um botão só de ícone sem nome CONTÉM button-name', async () => {
++    render(
++      <button type="button">
++        <span data-testid="icone" />
++      </button>,
++    );
++    const results = await axe(document.body);
++
++    expect(ids(results.violations)).toContain('button-name');
++  });
++});
+diff --git a/src/components/docs/SystemFeaturesView.tsx b/src/components/docs/SystemFeaturesView.tsx
+index f91a401991..89dba2d935 100644
+--- a/src/components/docs/SystemFeaturesView.tsx
++++ b/src/components/docs/SystemFeaturesView.tsx
+@@ -83,7 +83,19 @@ export function SystemFeaturesView() {
+ 
+             return (
+               <motion.div key={section.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.id * 0.02 }}>
+-                <Card className="cursor-pointer hover:shadow-md transition-shadow border-border/50" onClick={() => !searchTerm && toggleSection(section.id)}>
++                <Card
++                  role="button"
++                  tabIndex={0}
++                  aria-expanded={isExpanded}
++                  className="cursor-pointer hover:shadow-md transition-shadow border-border/50"
++                  onClick={() => !searchTerm && toggleSection(section.id)}
++                  onKeyDown={(e) => {
++                    if (!searchTerm && (e.key === 'Enter' || e.key === ' ')) {
++                      e.preventDefault();
++                      toggleSection(section.id);
++                    }
++                  }}
++                >
+                   <CardHeader className="py-3 px-4">
+                     <CardTitle className="flex items-center justify-between text-sm">
+                       <div className="flex items-center gap-3">
+diff --git a/src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx b/src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx
+new file mode 100644
+index 0000000000..7a96ae7b3f
+--- /dev/null
++++ b/src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx
+@@ -0,0 +1,77 @@
++import { describe, it, expect, vi } from 'vitest';
++import { fireEvent, render, screen } from '@testing-library/react';
++import { axe } from 'vitest-axe';
++
++// Cartão t_90dcdcc8, item 3 [refazer 1]: o cabeçalho de seção clicável (expandir/recolher)
++// era uma Card/div sem papel nem operação por teclado. Padrão copiado do
++// PresetCard.tsx (ThemeCustomizer): role + tabIndex + handler de Enter/Espaço.
++//
++// O Card é o REAL (`@/components/ui/card` não é dublado) — o axe enxerga o
++// markup de verdade. Só configuração é dublada.
++
++vi.mock('@/config/service_worker', () => ({
++  get SERVICE_WORKER_ENABLED() { return false; },
++  get PUSH_NOTIFICATIONS_ENABLED() { return false; },
++}));
++
++import { SystemFeaturesView } from '@/components/docs/SystemFeaturesView';
++
++/** Cabeçalhos de seção: role="button" cujo nome começa com "<id>. <título>". */
++function cardsDeSecao() {
++  return screen
++    .getAllByRole('button')
++    .filter((el) => /^\d+\.\s/.test(el.textContent ?? ''));
++}
++
++/** Impactos sérios segundo o aceite (mesma régua da skill de a11y do repo). */
++const SERIOUS = new Set(['critical', 'serious']);
++const ids = (violations: { id: string }[]) => violations.map((v) => v.id).sort();
++
++describe('SystemFeaturesView — cabeçalho de seção acessível (t_90dcdcc8)', () => {
++  it('o cabeçalho de seção é botão com tabIndex e aria-expanded', () => {
++    render(<SystemFeaturesView />);
++    const cards = cardsDeSecao();
++    expect(cards.length).toBeGreaterThan(0);
++    expect(cards[0]).toHaveAttribute('tabindex', '0');
++    expect(cards[0]).toHaveAttribute('aria-expanded', 'false');
++  });
++
++  it('Enter e Espaço expandem e recolhem a seção', () => {
++    render(<SystemFeaturesView />);
++    const card = cardsDeSecao()[0];
++
++    fireEvent.keyDown(card, { key: 'Enter' });
++    expect(card).toHaveAttribute('aria-expanded', 'true');
++
++    fireEvent.keyDown(card, { key: ' ' });
++    expect(card).toHaveAttribute('aria-expanded', 'false');
++  });
++});
++
++describe('SystemFeaturesView — axe: sem violação séria (t_90dcdcc8)', () => {
++  it('a lista de seções não tem violações critical/serious', async () => {
++    render(<SystemFeaturesView />);
++
++    const results = await axe(document.body);
++    expect({
++      ...results,
++      violations: results.violations.filter((v) => SERIOUS.has(v.impact ?? '')),
++    }).toHaveNoViolations();
++  });
++
++  /**
++   * Controle: prova que o matcher acusa violação REAL. Um `<button>` só de ícone
++   * sem nome viola `button-name` (critical) — é exatamente o defeito corrigido.
++   * Se o axe nunca rodasse, o controle (e o teste acima) deixaria de reprovar.
++   */
++  it('controle: um botão só de ícone sem nome CONTÉM button-name', async () => {
++    render(
++      <button type="button">
++        <span data-testid="icone" />
++      </button>,
++    );
++    const results = await axe(document.body);
++
++    expect(ids(results.violations)).toContain('button-name');
++  });
++});
+diff --git a/src/components/groups/GroupsView.tsx b/src/components/groups/GroupsView.tsx
+index 0d7b62f78a..360a2f0f2d 100644
+--- a/src/components/groups/GroupsView.tsx
++++ b/src/components/groups/GroupsView.tsx
+@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
+ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+ import { Button } from '@/components/ui/button';
++import { Checkbox } from '@/components/ui/checkbox';
+ import { Badge } from '@/components/ui/badge';
+ import { Input } from '@/components/ui/input';
+ import {
+@@ -221,6 +222,13 @@ export function GroupsView() {
+                   <CardHeader className="pb-3">
+                     <div className="flex items-start justify-between">
+                       <div className="flex items-center gap-3">
++                        <div onClick={(e) => e.stopPropagation()}>
++                          <Checkbox
++                            checked={isSelected}
++                            onCheckedChange={() => toggleGroupSelection(group.id)}
++                            aria-label={isSelected ? `Desmarcar ${group.name}` : `Selecionar ${group.name}`}
++                          />
++                        </div>
+                         <Avatar className="w-12 h-12">
+                           <AvatarImage src={group.avatar_url || undefined} alt={group.name || 'Grupo'} />
+                           <AvatarFallback className="bg-whatsapp/10 text-whatsapp"><Users className="w-6 h-6" /></AvatarFallback>
+diff --git a/src/components/groups/__tests__/GroupsView.a11y.test.tsx b/src/components/groups/__tests__/GroupsView.a11y.test.tsx
+new file mode 100644
+index 0000000000..ad5b225ced
+--- /dev/null
++++ b/src/components/groups/__tests__/GroupsView.a11y.test.tsx
+@@ -0,0 +1,181 @@
++import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
++import { fireEvent, render, screen } from '@testing-library/react';
++import { axe } from 'vitest-axe';
++
++// Cartão t_90dcdcc8, item 2 [refazer 1]: o card de grupo selecionável para broadcast era uma
++// Card/div com onClick só de mouse — impossível selecionar só com teclado. A primeira
++// tentativa (role="button" no Card inteiro) criou `nested-interactive` sério, porque o
++// Card contém o menu "Ações do grupo" e o Select de categoria. Padrão copiado do
++// ContactListItem.tsx: Card com onClick (mouse) + Checkbox REAL por card
++// ("Selecionar <nome>"/"Desmarcar <nome>") — operável por teclado e leitor de tela,
++// sem interativo aninhado.
++//
++// O que a recusa mandou corrigir aqui:
++// - primitivos de UI REAIS: Card, Button, Select e DropdownMenu NÃO são dublados
++//   (só dados: supabase, useAuth, toast, feedback e componentes decorativos);
++// - sel (SelectTrigger real — em jsdom, exige o stub do pointerdown);
++// - axe real com o filtro de impactos sérios do aceite + teste de controle.
++
++// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
++// `hasPointerCapture` no pointerdown que o abre.
++beforeAll(() => {
++  if (typeof Element !== 'undefined' && !Element.prototype.hasPointerCapture) {
++    Element.prototype.hasPointerCapture = () => false;
++    Element.prototype.setPointerCapture = () => {};
++    Element.prototype.releasePointerCapture = () => {};
++  }
++});
++
++const mockData = vi.hoisted(() => ({
++  grupos: [
++    {
++      id: 'g1', group_id: '1@g.us', name: 'Meu Grupo', description: 'Desc',
++      participant_count: 10, avatar_url: null, is_admin: true, whatsapp_connection_id: 'c1',
++      created_at: '2025-01-01', updated_at: '2025-01-01',
++    },
++  ],
++  conexoes: [{ id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' }],
++}));
++
++// Mock por TABELA (não por ordem de chamada): refetch/realtime repetem a mesma
++// resposta, então a grade nunca some no meio do teste.
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: (table: string) => ({
++      select: vi.fn().mockReturnValue({
++        order: vi.fn().mockResolvedValue(
++          table === 'whatsapp_groups'
++            ? { data: mockData.grupos, error: null }
++            : { data: mockData.conexoes, error: null }
++        ),
++      }),
++      insert: vi.fn().mockResolvedValue({ error: null }),
++      delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
++      upsert: vi.fn().mockResolvedValue({ error: null }),
++      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
++    }),
++    functions: { invoke: vi.fn() },
++    channel: vi.fn().mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() }),
++    removeChannel: vi.fn(),
++    auth: {
++      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
++      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
++    },
++  },
++}));
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'user-1' }, session: {}, profile: null, loading: false }),
++  AuthProvider: ({ children }: { children?: import('react').ReactNode }) => children,
++}));
++vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
++vi.mock('framer-motion', () => ({
++  motion: {
++    div: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div>,
++    span: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => <span {...props}>{children}</span>,
++  },
++  AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => children,
++}));
++vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
++vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
++vi.mock('@/components/ui/empty-state', () => ({
++  EmptyState: ({ title }: { title?: string }) => <div data-testid="empty-state"><span>{title}</span></div>,
++}));
++vi.mock('@/components/layout/PageHeader', () => ({
++  PageHeader: ({ title, actions }: { title?: string; actions?: import('react').ReactNode }) => <div><h1>{title}</h1>{actions}</div>,
++}));
++vi.mock('@/hooks/ui/useActionFeedback', () => ({
++  useActionFeedback: () => ({
++    warning: vi.fn(),
++    withFeedback: vi.fn(async (fn: () => Promise<void>, opts?: { onSuccess?: () => void }) => { try { await fn(); opts?.onSuccess?.(); } catch { /* noop */ } }),
++  }),
++}));
++
++import { GroupsView } from '@/components/groups/GroupsView';
++
++async function renderGrupos() {
++  render(<GroupsView />);
++  await screen.findByText('Meu Grupo');
++}
++
++/**
++ * O checkbox de seleção ("Selecionar <nome>"/"Desmarcar <nome>") é o controle
++ * de teclado do card. O botão interno ("Ações do grupo ...") e o Select de
++ * categoria continuam existindo — por isso a busca é pelo papel `checkbox`.
++ */
++function checkboxDoGrupo(nome: string | RegExp) {
++  // ATENÇÃO: `{ name }` aqui capturaria o global `window.name` ('' no jsdom),
++  // não o parâmetro — por isso o explícito `name: nome`.
++  return screen.findByRole('checkbox', { name: nome });
++}
++
++/** Impactos sérios segundo o aceite (mesma régua da skill de a11y do repo). */
++const SERIOUS = new Set(['critical', 'serious']);
++const ids = (violations: { id: string }[]) => violations.map((v) => v.id).sort();
++
++describe('GroupsView — card de grupo selecionável por teclado (t_90dcdcc8)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it('o card do grupo tem checkbox de seleção com nome acessível', async () => {
++    await renderGrupos();
++    const box = await checkboxDoGrupo('Selecionar Meu Grupo');
++    expect(box).toHaveAttribute('aria-checked', 'false');
++  });
++
++  it('checkbox é alcançável por teclado (foco) e alterna a seleção', async () => {
++    await renderGrupos();
++    const box = await checkboxDoGrupo('Selecionar Meu Grupo');
++
++    // Teclado chega ao controle: Tab para nele (o jsdom não sintetiza o `click`
++    // que o navegador dispara no Espaço/Enter sobre um <button> nativo — esse
++    // comportamento é da plataforma e o Checkbox Radix é um <button> real).
++    box.focus();
++    expect(document.activeElement).toBe(box);
++
++    fireEvent.click(box);
++    expect(await screen.findByRole('button', { name: 'Enviar para 1 grupo(s)' })).toBeInTheDocument();
++    expect(await checkboxDoGrupo('Desmarcar Meu Grupo')).toHaveAttribute('aria-checked', 'true');
++
++    fireEvent.click(await checkboxDoGrupo('Desmarcar Meu Grupo'));
++    expect(screen.queryByRole('button', { name: 'Enviar para 1 grupo(s)' })).not.toBeInTheDocument();
++    expect(await checkboxDoGrupo('Selecionar Meu Grupo')).toHaveAttribute('aria-checked', 'false');
++  });
++
++  it('o filtro de categoria (Select real) tem nome acessível', async () => {
++    await renderGrupos();
++    expect(screen.getByRole('combobox', { name: 'Filtrar por categoria' })).toBeInTheDocument();
++  });
++});
++
++describe('GroupsView — axe: sem violação séria (t_90dcdcc8)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it('a grade de grupos não tem violações critical/serious', async () => {
++    await renderGrupos();
++
++    const results = await axe(document.body);
++    expect({
++      ...results,
++      violations: results.violations.filter((v) => SERIOUS.has(v.impact ?? '')),
++    }).toHaveNoViolations();
++  });
++
++  /**
++   * Controle: prova que o matcher acusa violação REAL. Um `<button>` só de ícone
++   * sem nome viola `button-name` (critical) — é exatamente o defeito corrigido.
++   * Se o axe nunca rodasse, o controle (e o teste acima) deixariam de reprovar.
++   */
++  it('controle: um botão só de ícone sem nome CONTÉM button-name', async () => {
++    render(
++      <button type="button">
++        <span data-testid="icone" />
++      </button>,
++    );
++    const results = await axe(document.body);
++
++    expect(ids(results.violations)).toContain('button-name');
++  });
++});
+diff --git a/src/components/inbox/__tests__/StatusChips.a11y.test.tsx b/src/components/inbox/__tests__/StatusChips.a11y.test.tsx
+new file mode 100644
+index 0000000000..bd0e3db992
+--- /dev/null
++++ b/src/components/inbox/__tests__/StatusChips.a11y.test.tsx
+@@ -0,0 +1,83 @@
++import { describe, it, expect, vi } from 'vitest';
++import { render, screen } from '@testing-library/react';
++import { axe } from 'vitest-axe';
++import { StatusChips } from '../conversation-list/StatusChips';
++import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
++
++// Só o hook de dados é dublado (o componente exige AuthProvider via useAuth);
++// os botões/chips são os REAIS — nenhum primitivo de UI é mockado.
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'auth-user-1' }, profile: { id: 'perfil-atual-1' } }),
++}));
++
++// Cartão t_90dcdcc8, item 4 [refazer 1]: os chips de filtro funcionam como seleção única
++// (Todas/Não lidas/etc) mas não anunciavam papel/estado ao leitor de tela.
++// Padrão copiado de TeamConversationList.tsx:104-119 (role="tablist" no grupo
++// + role="tab"/aria-selected em cada botão).
++//
++// O componente é renderizado REAL (sem dublê de primitivo de UI): os chips são
++// `<button>` nativos, então o axe enxerga o markup de verdade.
++
++function makeConversation(id: string): ConversationWithMessages {
++  return {
++    contact: { id, assigned_to: null } as ConversationWithMessages['contact'],
++    messages: [{ id: `m-${id}` } as never],
++    unreadCount: 0,
++    lastMessage: null,
++  };
++}
++
++const conversations: ConversationWithMessages[] = [makeConversation('c1'), makeConversation('c2')];
++
++/** Impactos sérios segundo o aceite (mesma régua da skill de a11y do repo). */
++const SERIOUS = new Set(['critical', 'serious']);
++const ids = (violations: { id: string }[]) => violations.map((v) => v.id).sort();
++
++describe('StatusChips — nome/papel acessível (t_90dcdcc8)', () => {
++  it('o grupo de filtros é um tablist nomeado', () => {
++    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
++    const tablist = screen.getByRole('tablist', { name: 'Filtros de conversa' });
++    expect(tablist).toBeInTheDocument();
++    expect(tablist).toBe(screen.getByTestId('status-chips'));
++  });
++
++  it('cada chip é um tab e só o ativo fica aria-selected', () => {
++    render(<StatusChips conversations={conversations} chipTab="unread" onChipTabChange={() => {}} />);
++
++    const tabs = screen.getAllByRole('tab');
++    expect(tabs).toHaveLength(6);
++
++    expect(screen.getByTestId('status-chip-unread')).toHaveAttribute('aria-selected', 'true');
++    for (const id of ['all', 'attending', 'waiting', 'resolved', 'archived']) {
++      expect(screen.getByTestId(`status-chip-${id}`)).toHaveAttribute('aria-selected', 'false');
++    }
++  });
++});
++
++describe('StatusChips — axe: sem violação séria (t_90dcdcc8)', () => {
++  it('os filtros não têm violações critical/serious', async () => {
++    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
++
++    const results = await axe(document.body);
++    expect({
++      ...results,
++      violations: results.violations.filter((v) => SERIOUS.has(v.impact ?? '')),
++    }).toHaveNoViolations();
++  });
++
++  /**
++   * Controle: prova que o matcher acusa violação REAL. Um `<button>` só de ícone
++   * sem nome viola `button-name` (critical) — é exatamente o defeito corrigido.
++   * Se o axe nunca rodasse, o controle (e o teste acima) deixaria de reprovar.
++   */
++  it('controle: um botão só de ícone sem nome CONTÉM button-name', async () => {
++    render(
++      <button type="button">
++        <span data-testid="icone" />
++      </button>,
++    );
++    const results = await axe(document.body);
++
++    expect(ids(results.violations)).toContain('button-name');
++  });
++});
+diff --git a/src/components/inbox/conversation-list/StatusChips.tsx b/src/components/inbox/conversation-list/StatusChips.tsx
+index 0b4a2f850c..97625c6f5d 100644
+--- a/src/components/inbox/conversation-list/StatusChips.tsx
++++ b/src/components/inbox/conversation-list/StatusChips.tsx
+@@ -68,7 +68,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
+   ];
+ 
+   return (
+-    <div className="flex flex-wrap gap-1.5 px-4 pb-3" data-testid="status-chips">
++    <div className="flex flex-wrap gap-1.5 px-4 pb-3" data-testid="status-chips" role="tablist" aria-label="Filtros de conversa">
+       {chips.map(chip => {
+         const isActive = chipTab === chip.id;
+         const tone = COUNTER_TONE[chip.id];
+@@ -76,6 +76,8 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
+           <button
+             key={chip.id}
+             data-testid={`status-chip-${chip.id}`}
++            role="tab"
++            aria-selected={isActive}
+             onClick={() => onChipTabChange(chip.id)}
+             className={cn(
+               'h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center',
