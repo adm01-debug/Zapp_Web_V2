@@ -1,14 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync as lerArquivo, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   agregar,
   coletarJobs,
   coletarRuns,
   corpoDoKpi,
   duracaoMinutos,
+  gravarKpi,
   maisLentos,
+  montarKpi,
   paginaTemMais,
+  percentil,
   tabela,
   tabelaLentos,
 } from './actions-kpi.mjs';
@@ -81,7 +87,7 @@ test('E79: a tabela traz as colunas pedidas e o total', () => {
   assert.match(tabelaLentos([]), /nenhum job/);
 });
 
-test.skip('E79: o workflow semanal chama o KPI com as permissoes que ele precisa', () => {
+test('E79: o workflow semanal chama o KPI com as permissoes que ele precisa', () => {
   const y = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
   assert.match(y, /node scripts\/ci\/actions-kpi\.mjs/, 'o workflow tem de rodar o KPI');
   // O zizmor reprova `write` no nivel do WORKFLOW (excessive-permissions, severidade
@@ -93,6 +99,10 @@ test.skip('E79: o workflow semanal chama o KPI com as permissoes que ele precisa
   const job = y.slice(y.indexOf('jobs:'));
   assert.match(job, /actions:\s*read/, 'listar runs exige actions: read (no job)');
   assert.match(job, /issues:\s*write/, 'publicar a issue semanal exige issues: write (no job)');
+  // GA92: o passo do KPI nao pode derrubar o hygiene de segunda se a API
+  // limitar (1.014 runs em 7 d > limite de 1.000/h do GITHUB_TOKEN).
+  assert.match(job, /continue-on-error:\s*true/, 'KPI com continue-on-error (GA92)');
+  assert.match(job, /KPI_JSON_PATH/, 'KPI grava o kpi.json (GA93)');
 });
 
 // ---------------------------------------------------------------- #365
@@ -152,7 +162,7 @@ test('#365: coletarJobs consulta os jobs de cada run e herda o nome do workflow'
     }
     return { jobs: [] };
   };
-  const jobs = await coletarJobs([{ id: 1, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });
+  const jobs = await coletarJobs([{ id: 1, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });
   assert.equal(jobs.length, 2);
   assert.match(chamadas[0], /\/repos\/o\/r\/actions\/runs\/1\/jobs\?per_page=100&page=1$/);
   assert.equal(jobs[0].workflow_name, 'CI', 'o run da o nome do workflow quando o job nao traz');
@@ -172,7 +182,7 @@ test('#365: coletarJobs pagina um run com mais de 100 jobs', async () => {
     if (pagina === 2) return { jobs: [cheia[0]] };
     return { jobs: [] };
   };
-  const jobs = await coletarJobs([{ id: 7, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });
+  const jobs = await coletarJobs([{ id: 7, name: 'CI', conclusion: 'timed_out' }], { repo: 'o/r', token: 't', pedir: pedirFake });
   assert.equal(jobs.length, 101, 'a segunda pagina de jobs nao pode ser ignorada');
 });
 
@@ -186,4 +196,73 @@ test('#365: o corpo do KPI publica o ranking real dos jobs, nao um ranking vazio
   assert.match(md, /build/, 'o job mais lento tem de aparecer — antes o ranking saia vazio');
   assert.doesNotMatch(md, /nenhum job/, 'com jobs reais o placeholder nao pode aparecer');
   assert.match(md, /\| workflow \| runs \|/);
+});
+
+// ---------------------------------------------------------------- GA92/GA93
+test('GA92: coletarJobs ignora runs verdes (1 GET por run so onde doi)', async () => {
+  const chamadas = [];
+  const pedirFake = async (caminho) => {
+    chamadas.push(caminho);
+    return { jobs: [] };
+  };
+  const runs = [
+    { id: 1, name: 'CI', conclusion: 'success' },
+    { id: 2, name: 'CI', conclusion: 'success' },
+  ];
+  const jobs = await coletarJobs(runs, { repo: 'o/r', token: 't', pedir: pedirFake });
+  assert.equal(jobs.length, 0);
+  assert.equal(chamadas.length, 0, 'run verde nao gera chamada de jobs');
+});
+
+test('GA92: fixture com 1.500 runs com falha gera < 300 chamadas', async () => {
+  let chamadas = 0;
+  const pedirFake = async () => {
+    chamadas += 1;
+    return { jobs: [] };
+  };
+  const runs = Array.from({ length: 1500 }, (_, i) => ({ id: i + 1, name: 'CI', conclusion: 'failure' }));
+  await coletarJobs(runs, { repo: 'o/r', token: 't', pedir: pedirFake });
+  assert.ok(chamadas < 300, `${chamadas} chamadas estourariam o limite de 1.000/h`);
+  assert.ok(chamadas > 0, 'amostra vazia nao mede nada');
+});
+
+test('GA93: percentil p50/p95', () => {
+  assert.equal(percentil([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 50), 6);
+  assert.equal(percentil([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 95), 10);
+  assert.equal(percentil([], 50), 0);
+});
+
+test('GA93: montarKpi por arquivo com desperdicio, precoces, p50/p95 e causas', () => {
+  const AG = Date.parse('2026-10-20T12:00:00Z');
+  const mk = (min, concl) => ({
+    name: 'CI/CD Pipeline',
+    conclusion: concl,
+    run_started_at: new Date(AG - min * 60000).toISOString(),
+    updated_at: new Date(AG).toISOString(),
+  });
+  const kpi = montarKpi(
+    [mk(10, 'success'), mk(0, 'cancelled'), mk(30, 'cancelled'), mk(5, 'failure')],
+    [],
+    { agora: AG, janelaDias: 7, mapaNomeArquivo: { 'CI/CD Pipeline': 'ci.yml' } },
+  );
+  const ci = kpi['ci.yml'];
+  assert.ok(ci, 'indexado pelo arquivo .yml (o render le por arquivo)');
+  assert.equal(ci.custo_semana_min, 45);
+  assert.equal(ci.taxa_falha_7d, 25);
+  assert.equal(ci.cancelados_precoces, 1, 'cancelado com < 1 min nem comecou');
+  assert.equal(ci.minutos_desperdicados, 30);
+  assert.deepEqual(ci.causas, { success: 1, cancelled: 2, failure: 1 });
+  assert.ok(ci.p50_min >= 0 && ci.p95_min >= ci.p50_min, 'p95 >= p50');
+});
+
+test('GA93: gravarKpi escreve JSON legivel pelo render', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kpi-'));
+  try {
+    const caminho = join(dir, 'docs', 'ci', 'kpi.json');
+    await gravarKpi(caminho, { 'ci.yml': { custo_semana_min: 12.5, taxa_falha_7d: 0 } });
+    const lido = JSON.parse(lerArquivo(caminho, 'utf8'));
+    assert.equal(lido['ci.yml'].custo_semana_min, 12.5);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

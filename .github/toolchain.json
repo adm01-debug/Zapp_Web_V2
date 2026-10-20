@@ -7,11 +7,8 @@
   "postgres-image": "postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
   "actionlint": "1.7.7",
   "actionlint-sha256-linux-amd64": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757",
-  "actionlint-version": "1.7.7",
-  "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757",
   "shellcheck-version": "0.10.0",
   "shellcheck-sha256": "6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87",
   "zizmor": "1.30.1",
-  "zizmor-version": "1.30.1",
-  "zizmor-sha256": "e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a"
+  "playwright": "1.63.0"
 }

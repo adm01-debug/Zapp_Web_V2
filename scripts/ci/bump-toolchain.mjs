@@ -71,14 +71,28 @@ const FERRAMENTAS = [
     changelog: 'https://github.com/supabase/cli/releases',
   },
   {
-    chave: 'playwright',
-    repo: 'microsoft/playwright',
-    changelog: 'https://github.com/microsoft/playwright/releases',
-  },
-  {
-    chave: 'actionlint-version',
+    // GA88: chave canonica do toolchain.json ('actionlint', sem duplicata).
+    chave: 'actionlint',
     repo: 'rhysd/actionlint',
     changelog: 'https://github.com/rhysd/actionlint/releases',
+  },
+  // GA88: go/zizmor/shellcheck passam a ser cobertos (antes so bun/deno/cli).
+  // Playwright fora daqui de proposito: a versao e resolvida no bun.lock
+  // (devDependency) e conferida pelo check-workflow-pins contra o toolchain.
+  {
+    chave: 'go',
+    repo: 'golang/go',
+    changelog: 'https://github.com/golang/go/releases',
+  },
+  {
+    chave: 'zizmor',
+    repo: 'zizmor-rs/zizmor',
+    changelog: 'https://github.com/zizmor-rs/zizmor/releases',
+  },
+  {
+    chave: 'shellcheck-version',
+    repo: 'koalaman/shellcheck',
+    changelog: 'https://github.com/koalaman/shellcheck/releases',
   },
 ];
 
