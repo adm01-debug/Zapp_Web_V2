@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=acessibilidade-auth-boot
+ID=2610130149b9a1
+BRANCH=v2/acessibilidade-auth-boot-2610130149b9a1
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:49:24-03:00
+KANBAN=t_258e72a5
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130149b9a1
+PRONTO_SHA=ce8267dac450654eb9c6279260c96d2db406d8a5

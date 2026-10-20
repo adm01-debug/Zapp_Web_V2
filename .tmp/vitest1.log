@@ -1,0 +1,320 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1
+
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: Window's scrollTo() method
+ ❯ src/pages/__tests__/auth-telas-a11y.test.tsx (5 tests | 1 failed) 5592ms
+     × expoe <main> e anuncia o email invalido em role=alert 5263ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/__tests__/auth-telas-a11y.test.tsx > ForgotPassword — landmark e erro anunciado > expoe <main> e anuncia o email invalido em role=alert
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"w-full max-w-md"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border text-card-foreground transition-all duration-300 border-border bg-card shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 text-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-mail w-6 h-6 text-primary"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"20"[39m
+                  [33mx[39m=[32m"2"[39m
+                  [33my[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</div>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight"[39m
+            [36m>[39m
+              [0mEsqueceu sua senha?[0m
+            [36m</h3>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0mDigite seu email e envie uma solicitação de reset. Um administrador irá analisar.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"[39m
+                  [33mfor[39m=[32m"email"[39m
+                [36m>[39m
+                  [0mEmail[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2"[39m
+                  [33mid[39m=[32m"email"[39m
+                  [33mplaceholder[39m=[32m"seu@email.com"[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m"nao-eh-email"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"[39m
+                  [33mfor[39m=[32m"reason"[39m
+                [36m>[39m
+                  [0mMotivo (opcional)[0m
+                [36m</label>[39m
+                [36m<textarea[39m
+                  [33mclass[39m=[32m"flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"[39m
+                  [33mid[39m=[32m"reason"[39m
+                  [33mplaceholder[39m=[32m"Ex: Esqueci minha senha após férias..."[39m
+                  [33mrows[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                [36m>[39m
+                  [0mAjuda o administrador a validar sua identidade[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 w-full"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mSolicitar Reset de Senha[0m
+              [36m</button>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-10 px-4 py-2 w-full"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/auth"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-left w-4 h-4 mr-2"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 19-7-7 7-7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M19 12H5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVoltar para login[0m
+              [36m</a>[39m
+            [36m</form>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"w-full max-w-md"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border text-card-foreground transition-all duration-300 border-border bg-card shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 text-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-mail w-6 h-6 text-primary"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"20"[39m
+                  [33mx[39m=[32m"2"[39m
+                  [33my[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</div>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight"[39m
+            [36m>[39m
+              [0mEsqueceu sua senha?[0m
+            [36m</h3>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0mDigite seu email e envie uma solicitação de reset. Um administrador irá analisar.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"[39m
+                  [33mfor[39m=[32m"email"[39m
+                [36m>[39m
+                  [0mEmail[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2"[39m
+                  [33mid[39m=[32m"email"[39m
+                  [33mplaceholder[39m=[32m"seu@email.com"[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m"nao-eh-email"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"[39m
+                  [33mfor[39m=[32m"reason"[39m
+                [36m>[39m
+                  [0mMotivo (opcional)[0m
+                [36m</label>[39m
+                [36m<textarea[39m
+                  [33mclass[39m=[32m"flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"[39m
+                  [33mid[39m=[32m"reason"[39m
+                  [33mplaceholder[39m=[32m"Ex: Esqueci minha senha após férias..."[39m
+                  [33mrows[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                [36m>[39m
+                  [0mAjuda o administrador a validar sua identidade[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 w-full"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mSolicitar Reset de Senha[0m
+              [36m</button>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-10 px-4 py-2 w-full"[39m
+                [33mdata-discover[39m=[32m"true"[39m
+                [33mhref[39m=[32m"/auth"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-left w-4 h-4 mr-2"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 19-7-7 7-7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M19 12H5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVoltar para login[0m
+              [36m</a>[39m
+            [36m</form>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/__tests__/auth-telas-a11y.test.tsx:70:33
+     68|     fireEvent.click(screen.getByRole('button', { name: /Solicitar Rese…
+     69|
+     70|     const alerta = await screen.findByRole('alert');
+       |                                 ^
+     71|     expect(alerta.textContent).toBe('Email inválido');
+     72|     expect(alerta.getAttribute('aria-live')).toBe('polite');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 16 passed (17)
+   Start at  01:59:17
+   Duration  7.90s (transform 1.05s, setup 1.28s, import 3.12s, tests 7.31s, environment 4.22s)
+

@@ -1,0 +1,81 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1
+
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+···Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+·······Not implemented: Window's scrollTo() method
+·Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+····stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+[2026-10-13T05:03:24.899Z] [INFO] [App] [sid:17be5b0d] [BOOT] AuthProvider initialized, starting session check
+
+stderr | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+[2026-10-13T05:03:24.908Z] [ERROR] [App] [sid:17be5b0d] [BOOT] Error fetching session: Error: rede fora
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:61:59
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+[2026-10-13T05:03:24.914Z] [INFO] [App] [sid:17be5b0d] [BOOT] Auth initial load finished
+
+·stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:03:24.970Z] [INFO] [App] [sid:17be5b0d] [BOOT] AuthProvider initialized, starting session check
+
+stderr | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:03:24.972Z] [ERROR] [App] [sid:17be5b0d] [BOOT] Error fetching session: Error: rede fora
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:72:30
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-2610130149b9a1/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:03:24.972Z] [INFO] [App] [sid:17be5b0d] [BOOT] Auth initial load finished
+
+·stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:03:25.026Z] [INFO] [App] [sid:17be5b0d] [BOOT] AuthProvider initialized, starting session check
+
+··stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:03:25.028Z] [INFO] [App] [sid:17be5b0d] [BOOT] Initial session retrieved: User Found
+[2026-10-13T05:03:25.030Z] [INFO] [App] [sid:17be5b0d] [BOOT] Auth initial load finished
+
+··stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > boot normal (sessão nula) não marca erro
+[2026-10-13T05:03:25.090Z] [INFO] [App] [sid:17be5b0d] [BOOT] AuthProvider initialized, starting session check
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > boot normal (sessão nula) não marca erro
+[2026-10-13T05:03:25.091Z] [INFO] [App] [sid:17be5b0d] [BOOT] Initial session retrieved: No User
+[2026-10-13T05:03:25.091Z] [INFO] [App] [sid:17be5b0d] [BOOT] Auth initial load finished
+
+········stderr | src/lib/__tests__/safeStorage.adapter.test.ts > createSafeStorage > cai para a memória quando o acesso ao localStorage lança
+[2026-10-13T05:03:26.518Z] [WARN] [SafeStorage] [sid:2060ef28] localStorage indisponível; sessão mantida em memória nesta aba
+
+stderr | src/lib/__tests__/safeStorage.adapter.test.ts > createSafeStorage > mantém o valor em memória quando a escrita no localStorage falha
+[2026-10-13T05:03:26.519Z] [WARN] [SafeStorage] [sid:2060ef28] Failed to write key "zapp-sessao"
+
+········
+
+ Test Files  10 passed (10)
+      Tests  37 passed (37)
+   Start at  02:03:18
+   Duration  8.16s (transform 2.33s, setup 3.27s, import 7.42s, tests 4.50s, environment 11.14s)
+
