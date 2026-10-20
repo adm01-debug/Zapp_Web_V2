@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=avisos-mensagem-nova-global
+ID=261015154459e9
+BRANCH=v2/avisos-mensagem-nova-global-261015154459e9
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T15:44:07-03:00
+KANBAN=t_6bcce858
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-261015154459e9
+PRONTO_SHA=ff16f0dff7e169307912335c77c71c4388e11e3b

@@ -1,0 +1,663 @@
+diff --git a/src/App.tsx b/src/App.tsx
+index b70ebe06cc..8ea2ad95da 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -8,6 +8,8 @@ import { LiveRegion } from "@/components/ui/visually-hidden";
+ import { GlobalKeyboardProvider } from "@/components/keyboard/GlobalKeyboardProvider";
+ import { AppProviders } from "@/providers/AppProviders";
+ import { AppRoutes } from "@/routes/AppRoutes";
++import { useAuth } from "@/hooks/auth/useAuth";
++import { useGlobalIncomingMessageAlerts } from "@/hooks/realtime/useGlobalIncomingMessageAlerts";
+ 
+ const log = getLogger('App');
+ 
+@@ -65,6 +67,14 @@ const Sonner = lazy(() =>
+  * AppProviders (src/providers/AppProviders.tsx), not here.
+  */
+ function DeferredProviders() {
++  // Aviso de mensagem nova em QUALQUER tela (aba oculta ou view fora da inbox).
++  // Vive aqui como os outros listeners globais (TeamChatNotificationsListener):
++  // é side-effect, self-render (toast) e precisa de AuthProvider + QueryClient,
++  // que estão acima (AppProviders). `profile.id` é o valor de
++  // `contacts.assigned_to` — nunca o auth user id.
++  const { profile } = useAuth();
++  useGlobalIncomingMessageAlerts({ myProfileId: profile?.id ?? null });
++
+   return (
+     // ARCH-3 FIX: fallback={null} is intentional for side-effect providers —
+     // the app must remain usable even if a non-critical overlay fails to load.
+diff --git a/src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx b/src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx
+new file mode 100644
+index 0000000000..58c85e49ce
+--- /dev/null
++++ b/src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx
+@@ -0,0 +1,225 @@
++/**
++ * Aviso de mensagem nova em QUALQUER tela (VM-06 / critérios de aceite).
++ *
++ * O aviso antigo só existia na inbox: quem estava em outra view não recebia
++ * som/notificação. Aqui o alvo é o consumidor global (`useGlobalIncomingMessageAlerts`),
++ * montado em App.tsx/DeferredProviders — os testes dirigem o hook REAL pelo callback do canal e
++ * observam o efeito (som, toast), com o andaime de mocks compartilhado.
++ */
++import '@/hooks/__tests__/helpers/alertMocks';
++import { describe, it, expect, beforeEach, vi } from 'vitest';
++import { renderHook, waitFor, act } from '@testing-library/react';
++import type { ReactElement } from 'react';
++
++import {
++  callbacks,
++  dedupeResult,
++  playNotificationSound,
++  resetAlertKit,
++  toast,
++} from '@/hooks/__tests__/helpers/alertBehaviorTestKit';
++
++const h = vi.hoisted(() => ({
++  fetchContactsByIds: vi.fn(),
++  openContactChat: vi.fn(),
++}));
++
++vi.mock('@/services/realtime.service', () => ({
++  RealtimeService: { fetchContactsByIds: h.fetchContactsByIds },
++}));
++
++vi.mock('@/components/catalog/useSendProduct', () => ({
++  openContactChat: h.openContactChat,
++}));
++
++import { useGlobalIncomingMessageAlerts } from '@/hooks/realtime/useGlobalIncomingMessageAlerts';
++import { resetOpenConversation, setOpenConversationId } from '@/hooks/realtime/openConversationStore';
++import {
++  TEAM_ALERTS_STORAGE_KEY,
++  getIncomingAlertScope,
++  resetIncomingAlertScope,
++  setAlertProfileId,
++  setTeamAlertsEnabled,
++  shouldAlertIncomingMessage,
++  useTeamAlertsPreference,
++} from '@/hooks/realtime/incomingAlertScope';
++
++const CONTATO_SEM_DONO = { id: 'c1', name: 'Fulano', phone: '1199', avatar_url: null };
++
++/** `profiles.id` de quem está logado: é o valor de `contacts.assigned_to`. */
++const MEU_PERFIL = 'perfil-1';
++
++function montar() {
++  renderHook(() => useGlobalIncomingMessageAlerts({ myProfileId: MEU_PERFIL }));
++}
++
++function mensagemNova(over: Record<string, unknown> = {}) {
++  return {
++    id: 'm1',
++    contact_id: 'c1',
++    sender: 'contact',
++    is_read: false,
++    content: 'oi, tudo bem?',
++    created_at: new Date().toISOString(),
++    ...over,
++  };
++}
++
++let visibility: 'visible' | 'hidden' = 'visible';
++
++/**
++ * Dispatcher do canal físico. O canal é COMPARTILHADO (`useSupabaseRealtime`):
++ * entre testes ele pode ser reaproveitado, e aí o `.on()` não roda de novo e o
++ * kit não recria a entrada em `callbacks` — por isso guardar o último
++ * dispatcher visto e reusar.
++ */
++let dispatcher: ((payload: unknown) => unknown) | null = null;
++
++function canalAtual(): (payload: unknown) => unknown {
++  const registrado = callbacks[callbacks.length - 1] as ((payload: unknown) => unknown) | undefined;
++  if (registrado) dispatcher = registrado;
++  if (!dispatcher) throw new Error('canal de Realtime não registrado pelo hook');
++  return dispatcher;
++}
++
++/** Entrega o INSERT no canal registrado por este hook e espera o efeito. */
++async function entregarInsert(message: Record<string, unknown>) {
++  const entregar = canalAtual();
++  await act(async () => {
++    await entregar({ eventType: 'INSERT', new: message });
++  });
++}
++
++/** Espera a consulta do contato acontecer (ela precede qualquer decisão). */
++async function esperarConsultaDoContato() {
++  await waitFor(() => expect(h.fetchContactsByIds).toHaveBeenCalled());
++  await act(async () => {});
++}
++
++beforeEach(() => {
++  resetAlertKit();
++  // O kit limpa os espiões de som/notificação, mas não o do toast: limpar aqui
++  // para contar os avisos em tela desta suíte.
++  toast.mockClear();
++  // A preferência do supervisor é persistida local: sem limpar, a escolha de um
++  // teste vaza para o seguinte.
++  localStorage.clear();
++  resetOpenConversation();
++  resetIncomingAlertScope();
++  h.fetchContactsByIds.mockReset().mockResolvedValue([CONTATO_SEM_DONO]);
++  h.openContactChat.mockClear();
++  visibility = 'visible';
++  Object.defineProperty(document, 'visibilityState', {
++    configurable: true,
++    get: () => visibility,
++  });
++});
++
++describe('useGlobalIncomingMessageAlerts — aviso fora da inbox', () => {
++  it('avisa mensagem de conversa sem dono com som e toast, sem a inbox montada', async () => {
++    montar();
++    // O aviso depende de assinatura: o consumidor global entra no canal de messages.
++    expect(canalAtual()).toBeTypeOf('function');
++
++    await entregarInsert(mensagemNova());
++
++    await waitFor(() => expect(playNotificationSound).toHaveBeenCalledWith('message', 'chime', 55));
++    expect(toast).toHaveBeenCalledTimes(1);
++    expect(toast.mock.calls[0][0]).toMatchObject({ title: 'Nova mensagem de Fulano' });
++  });
++
++  it('não avisa a conversa que está aberta na tela com a aba visível', async () => {
++    setOpenConversationId('c1');
++    montar();
++
++    await entregarInsert(mensagemNova());
++    await esperarConsultaDoContato();
++
++    expect(playNotificationSound).not.toHaveBeenCalled();
++    expect(toast).not.toHaveBeenCalled();
++  });
++
++  it('avisa a conversa aberta quando a aba está oculta (usuário não está lendo)', async () => {
++    setOpenConversationId('c1');
++    visibility = 'hidden';
++    montar();
++
++    await entregarInsert(mensagemNova());
++
++    await waitFor(() => expect(playNotificationSound).toHaveBeenCalledTimes(1));
++  });
++
++  it('não avisa conversa de outro atendente (o padrão é negado)', async () => {
++    h.fetchContactsByIds.mockResolvedValue([
++      { id: 'c9', name: 'Outro', phone: '1188', assigned_to: 'perfil-2', avatar_url: null },
++    ]);
++    montar();
++
++    await entregarInsert(mensagemNova({ contact_id: 'c9' }));
++    await esperarConsultaDoContato();
++
++    expect(playNotificationSound).not.toHaveBeenCalled();
++    expect(toast).not.toHaveBeenCalled();
++  });
++
++  it('supervisor com a opção "avisar também da equipe" LIGADA é avisado da conversa de colega', async () => {
++    setTeamAlertsEnabled(true);
++    h.fetchContactsByIds.mockResolvedValue([
++      { id: 'c9', name: 'Outro', phone: '1188', assigned_to: 'perfil-2', avatar_url: null },
++    ]);
++    montar();
++
++    await entregarInsert(mensagemNova({ contact_id: 'c9' }));
++
++    await waitFor(() => expect(playNotificationSound).toHaveBeenCalledTimes(1));
++    expect(toast).toHaveBeenCalledTimes(1);
++  });
++
++  it('entrega o aviso a um dono só quando outro consumidor já reivindicou a mensagem', async () => {
++    // `dedupeResult` é a porta que o kit expõe para o caminho do dedupe: aqui
++    // ele simula a inbox (ou um replay do Realtime) já tendo avisado este id.
++    dedupeResult.valor = false;
++    montar();
++
++    await entregarInsert(mensagemNova());
++    await esperarConsultaDoContato();
++
++    expect(playNotificationSound).not.toHaveBeenCalled();
++    expect(toast).not.toHaveBeenCalled();
++  });
++
++  it('abre a conversa ao clicar no aviso', async () => {
++    montar();
++
++    await entregarInsert(mensagemNova());
++    await waitFor(() => expect(toast).toHaveBeenCalledTimes(1));
++
++    const args = toast.mock.calls[0][0] as { action: ReactElement<{ onClick: () => void }> };
++    act(() => args.action.props.onClick());
++
++    expect(h.openContactChat).toHaveBeenCalledWith('c1');
++  });
++});
++
++describe('preferência "avisar também da equipe" (supervisor)', () => {
++  it('começa DESLIGADA, liga, grava a escolha e mantém módulo e tela em sincronia', () => {
++    // Interruptor do painel de Configurações: lê o valor, grava a escolha e a
++    // decisão do alerta (`shouldAlertIncomingMessage`) passa a enxergá-la.
++    const { result } = renderHook(() => useTeamAlertsPreference());
++    expect(result.current.teamAlertsEnabled).toBe(false);
++
++    act(() => result.current.setTeamAlertsEnabled(true));
++
++    expect(result.current.teamAlertsEnabled).toBe(true);
++    expect(localStorage.getItem(TEAM_ALERTS_STORAGE_KEY)).toBe('1');
++    expect(getIncomingAlertScope().teamAlerts).toBe(true);
++
++    // Com a identidade publicada, a conversa de colega deixa de ser negada.
++    setAlertProfileId('perfil-1');
++    expect(shouldAlertIncomingMessage({ assigned_to: 'perfil-2' })).toBe(true);
++
++    act(() => result.current.setTeamAlertsEnabled(false));
++    expect(shouldAlertIncomingMessage({ assigned_to: 'perfil-2' })).toBe(false);
++    expect(shouldAlertIncomingMessage({ assigned_to: null })).toBe(true);
++  });
++});
+diff --git a/src/hooks/realtime/incomingAlertScope.ts b/src/hooks/realtime/incomingAlertScope.ts
+new file mode 100644
+index 0000000000..56e893043b
+--- /dev/null
++++ b/src/hooks/realtime/incomingAlertScope.ts
+@@ -0,0 +1,132 @@
++/**
++ * Ponto ÚNICO da decisão "esta mensagem nova deve me avisar?".
++ *
++ * O caminho do inbox (`useRealtimeMessages` -> `notifyAboutIncomingMessage`) e o
++ * aviso global (`useGlobalIncomingMessageAlerts`, montado em `App.tsx`/
++ * `DeferredProviders`) chamam a MESMA função: se a regra morasse em cada canal,
++ * ela valeria num só.
++ *
++ * A identidade (profiles.id — o valor de `contacts.assigned_to`, nunca o auth
++ * user id) é PUBLICADA por quem tem o dado (`profile.id`, que `App.tsx` lê de
++ * `useAuth`) e lida aqui do módulo. O `useRealtimeNotifications` é usado por
++ * telas e testes que não têm o AuthProvider em volta: pedir o contexto ali seria
++ * um contrato novo e quebraria consumidores que hoje só precisam de notificação.
++ */
++import { useCallback, useEffect, useState } from 'react';
++
++/** Chave local da opção "avisar também da equipe" (supervisor). */
++export const TEAM_ALERTS_STORAGE_KEY = 'zapp:avisar-tambem-da-equipe';
++
++export interface IncomingAlertScope {
++  myProfileId: string | null;
++  /** Supervisor: avisar também das conversas de outros atendentes. Desligada por padrão. */
++  teamAlerts: boolean;
++}
++
++export interface AlertableContact {
++  assigned_to?: string | null;
++}
++
++/** Lê a preferência salva. Sem storage (SSR/teste sem jsdom) o padrão é DESLIGADO. */
++function lerTeamAlertsSalvo(): boolean {
++  try {
++    return globalThis.localStorage?.getItem(TEAM_ALERTS_STORAGE_KEY) === '1';
++  } catch {
++    return false;
++  }
++}
++
++let scope: IncomingAlertScope = { myProfileId: null, teamAlerts: lerTeamAlertsSalvo() };
++
++/** Publica a identidade de quem está logado (o dono das conversas que avisam). */
++export function setAlertProfileId(profileId: string | null): void {
++  if (scope.myProfileId === profileId) return;
++  scope = { ...scope, myProfileId: profileId };
++}
++
++export function getIncomingAlertScope(): IncomingAlertScope {
++  return scope;
++}
++
++/**
++ * Liga/desliga o aviso das conversas da equipe (supervisor) e grava a escolha.
++ *
++ * Quem chama é o interruptor do painel de notificações, via
++ * `useTeamAlertsPreference` — a preferência é do usuário, então persiste local
++ * (`localStorage`): a coluna em `user_settings` é trilha de banco, que este
++ * cartão não abre.
++ */
++export function setTeamAlertsEnabled(enabled: boolean): void {
++  scope = { ...scope, teamAlerts: enabled };
++  try {
++    globalThis.localStorage?.setItem(TEAM_ALERTS_STORAGE_KEY, enabled ? '1' : '0');
++  } catch {
++    /* sem storage: a escolha vale só nesta sessão */
++  }
++}
++
++/**
++ * Preferência "avisar também da equipe", para o interruptor do painel.
++ *
++ * Devolve o valor atual e um setter que mantém o módulo e a tela em sincronia.
++ * O valor inicial sai do módulo (`incomingAlertScope`), que já nasce com a
++ * escolha salva — não há efeito relendo depois da montagem.
++ */
++export function useTeamAlertsPreference(): {
++  teamAlertsEnabled: boolean;
++  setTeamAlertsEnabled: (enabled: boolean) => void;
++} {
++  const [teamAlertsEnabled, setEnabled] = useState(() => getIncomingAlertScope().teamAlerts);
++
++  const update = useCallback((enabled: boolean) => {
++    setTeamAlertsEnabled(enabled);
++    setEnabled(enabled);
++  }, []);
++
++  return { teamAlertsEnabled, setTeamAlertsEnabled: update };
++}
++
++export function resetIncomingAlertScope(): void {
++  scope = { myProfileId: null, teamAlerts: false };
++}
++
++/**
++ * Publica a identidade de quem está logado — `profile.id`, que é o valor de
++ * `contacts.assigned_to` (nunca o auth user id).
++ *
++ * Quem TEM o dado publica: quem monta o consumidor global já tem `profile` em
++ * mãos (`App.tsx`, via `useAuth()`) — pedir o AuthProvider aqui derrubaria a
++ * tela inteira por causa do aviso em telas que não o têm.
++ *
++ * Sem ninguém publicado, `shouldAlertIncomingMessage` NÃO filtra (falha
++ * aberta): avisar a mais é melhor que emudecer o aviso do app inteiro.
++ */
++export function usePublishIncomingAlertIdentity(profileId: string | null | undefined): void {
++  const id = profileId ?? null;
++  useEffect(() => {
++    setAlertProfileId(id);
++    return () => setAlertProfileId(null);
++  }, [id]);
++}
++
++/**
++ * Devo ser avisado por esta mensagem?
++ *
++ * - conversa sem responsável: sim (está na fila geral, à espera de qualquer um);
++ * - conversa minha (`assigned_to` = meu profiles.id): sim;
++ * - conversa de outro atendente: NÃO — a menos que o supervisor tenha ligado
++ *   "avisar também da equipe" (desligada por padrão);
++ * - identidade ainda não carregada: sim (falha aberta, nunca emudece o app).
++ */
++export function shouldAlertIncomingMessage(
++  contact: AlertableContact | null | undefined,
++  currentScope: IncomingAlertScope = getIncomingAlertScope(),
++): boolean {
++  if (!contact) return false;
++  if (!currentScope.myProfileId) return true;
++
++  const owner = contact.assigned_to ?? null;
++  if (!owner) return true;
++  if (owner === currentScope.myProfileId) return true;
++  return currentScope.teamAlerts;
++}
+diff --git a/src/hooks/realtime/openConversationStore.ts b/src/hooks/realtime/openConversationStore.ts
+new file mode 100644
+index 0000000000..5aa29f3be1
+--- /dev/null
++++ b/src/hooks/realtime/openConversationStore.ts
+@@ -0,0 +1,39 @@
++/**
++ * A "conversa aberta na tela" tem UMA fonte, fora do React.
++ *
++ * Antes ela vivia num `useRef` de `useRealtimeNotifications` — um ref por
++ * instância. Com o aviso global (montado em `App.tsx`/DeferredProviders)
++ * passaram a existir DUAS instâncias decidindo se devem avisar, e cada uma
++ * tinha a sua cópia da seleção: o aviso global não sabia qual conversa estava
++ * aberta e avisava (som + notificação) por cima do que o usuário já estava lendo.
++ *
++ * Módulo (e não contexto) porque o leitor é chamado de dentro de um callback de
++ * Realtime, que precisa do valor no INSTANTE do evento — sem re-render no meio.
++ */
++
++let openContactId: string | null = null;
++
++export function setOpenConversationId(contactId: string | null): void {
++  openContactId = contactId;
++}
++
++export function getOpenConversationId(): string | null {
++  return openContactId;
++}
++
++/**
++ * Verdadeiro só quando a mensagem é da conversa aberta E a aba está visível:
++ * aí o usuário está lendo ali mesmo e não há o que avisar. Conversa aberta com
++ * a aba oculta (troca de aba/minimizado) NÃO suprime — é justamente o caso em
++ * que o aviso faz falta.
++ */
++export function isConversationOpenOnScreen(contactId: string | null | undefined): boolean {
++  if (!contactId || openContactId !== contactId) return false;
++  if (typeof document === 'undefined') return true;
++  return document.visibilityState !== 'hidden';
++}
++
++/** Limpa a seleção (desmontagem do consumidor e isolamento entre testes). */
++export function resetOpenConversation(): void {
++  openContactId = null;
++}
+diff --git a/src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx b/src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx
+new file mode 100644
+index 0000000000..ba1237b78a
+--- /dev/null
++++ b/src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx
+@@ -0,0 +1,103 @@
++/**
++ * Aviso de mensagem nova em QUALQUER tela do app.
++ *
++ * Até aqui o único lugar que avisava era a inbox: quem estava em outra view
++ * (dashboard, contatos, configurações) com a aba em segundo plano não recebia
++ * som nem notificação de uma conversa que estava esperando resposta. Este hook
++ * é montado uma vez em `App.tsx` (`DeferredProviders`, ao lado de
++ * `TeamChatNotificationsListener`) e escuta a mesma tabela `messages` que a
++ * inbox.
++ *
++ * Quem avisa, se a conversa é minha, se a aba está visível e se a mensagem já
++ * foi avisada por outro consumidor é decidido em UM lugar só —
++ * `useRealtimeNotifications.notifyAboutIncomingMessage` (com
++ * `incomingAlertScope` + `openConversationStore` + `lib/notificationDedupe`).
++ * Este arquivo não repete nenhuma dessas regras: se repetisse, a regra voltaria
++ * a valer num canal só.
++ */
++import { useCallback } from 'react';
++import { getLogger } from '@/lib/logger';
++import { RealtimeService } from '@/services/realtime.service';
++import { toast } from '@/hooks/ui/use-toast';
++import { ToastAction } from '@/components/ui/toast';
++import { openContactChat } from '@/components/catalog/useSendProduct';
++import type { ConversationContact, RealtimeMessage } from '../chat/useRealtimeMessages';
++import { normalizeMessage } from './realtimeUtils';
++import { usePublishIncomingAlertIdentity } from './incomingAlertScope';
++import { useRealtimeNotifications } from './useRealtimeNotifications';
++import { useSupabaseRealtime } from './useSupabaseRealtime';
++
++const log = getLogger('GlobalIncomingMessageAlerts');
++
++/**
++ * Mesmo canal físico da inbox de propósito: `useSupabaseRealtime` compartilha
++ * uma única subscription por (canal, schema, tabela, filtro) e cada mensagem
++ * chega uma vez para os dois consumidores — abrir um segundo canal para a mesma
++ * tabela dobraria o tráfego do Realtime sem necessidade.
++ */
++export const GLOBAL_MESSAGE_ALERTS_CHANNEL = 'global-messages-realtime';
++
++export interface GlobalIncomingMessageAlertsOptions {
++  /** Desliga o consumidor global (padrão: ligado). */
++  enabled?: boolean;
++  /**
++   * `profiles.id` de quem está logado — o mesmo valor de `contacts.assigned_to`.
++   * Quem monta o consumidor passa o valor que já tem em mãos (`App.tsx` o lê de
++   * `useAuth()`): assim este hook não exige AuthProvider nem contexto próprio.
++   */
++  myProfileId?: string | null;
++}
++
++export function useGlobalIncomingMessageAlerts({
++  enabled = true,
++  myProfileId = null,
++}: GlobalIncomingMessageAlertsOptions = {}): void {
++  // Este consumidor PUBLICA a identidade para a decisão de aviso
++  // (`incomingAlertScope`), que é lida também pelo caminho da inbox.
++  usePublishIncomingAlertIdentity(myProfileId);
++  const { notifyAboutIncomingMessage } = useRealtimeNotifications();
++
++  const announce = useCallback(
++    async (message: RealtimeMessage) => {
++      if (!message?.contact_id) return;
++      // Filtro barato antes da consulta: mensagem nossa (envio) ou já lida não
++      // merece aviso nem uma ida ao banco.
++      if (message.sender !== 'contact' || message.is_read) return;
++
++      let contact: ConversationContact | undefined;
++      try {
++        [contact] = await RealtimeService.fetchContactsByIds([message.contact_id]);
++      } catch (error) {
++        // Sem o contato não há nome nem responsável: o aviso é descartado, mas
++        // a mensagem segue na lista (a inbox tem o próprio caminho de dados).
++        log.error('Falha ao buscar o contato do aviso global:', error);
++        return;
++      }
++      if (!contact) return;
++
++      // `true` = este é o consumidor dono do aviso desta mensagem.
++      const emitted = notifyAboutIncomingMessage(contact, message);
++      if (!emitted) return;
++
++      toast({
++        title: `Nova mensagem de ${contact.name}`,
++        description: message.content?.trim() || 'Mídia ou anexo sem texto',
++        action: (
++          <ToastAction altText="Abrir a conversa" onClick={() => openContactChat(contact.id)}>
++            Ver conversa
++          </ToastAction>
++        ),
++      });
++    },
++    [notifyAboutIncomingMessage]
++  );
++
++  useSupabaseRealtime<RealtimeMessage>({
++    channelName: GLOBAL_MESSAGE_ALERTS_CHANNEL,
++    table: 'messages',
++    enabled,
++    onInsert: (payload) => {
++      void announce(normalizeMessage(payload.new as RealtimeMessage));
++    },
++  });
++}
+diff --git a/src/hooks/realtime/useRealtimeNotifications.ts b/src/hooks/realtime/useRealtimeNotifications.ts
+index 32cc4e4e3c..3e8ca60237 100644
+--- a/src/hooks/realtime/useRealtimeNotifications.ts
++++ b/src/hooks/realtime/useRealtimeNotifications.ts
+@@ -2,10 +2,13 @@ import { useState, useCallback, useRef, useEffect } from 'react';
+ import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
+ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+ import type { ConversationContact, RealtimeMessage, NewMessageNotification } from '../chat/useRealtimeMessages';
++import { claimNotificationEvent } from '@/lib/notificationDedupe';
++import { getOpenConversationId, isConversationOpenOnScreen, setOpenConversationId } from './openConversationStore';
++import { shouldAlertIncomingMessage } from './incomingAlertScope';
+ 
+ export function useRealtimeNotifications() {
+   const [newMessageNotification, setNewMessageNotification] = useState<NewMessageNotification | null>(null);
+-  const selectedContactIdRef = useRef<string | null>(null);
++  const lastSelectedContactIdRef = useRef<string | null>(null);
+   const soundEnabledRef = useRef(true);
+   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
+ 
+@@ -22,14 +25,35 @@ export function useRealtimeNotifications() {
+     void requestNotificationPermission();
+   }, []);
+ 
++  /**
++   * Emite o aviso e devolve `true` quando foi ESTA instância que o emitiu.
++   *
++   * Duas instâncias escutam a mesma mensagem (o inbox e o aviso global montado
++   * em `App.tsx`/DeferredProviders): `claimNotificationEvent` garante UM aviso
++   * por mensagem, e o consumidor que recebeu `true` é o dono daquele evento — é
++   * ele que mostra o toast, sem duplicar.
++   */
+   const notifyAboutIncomingMessage = useCallback(
+-    (contact: ConversationContact, message: RealtimeMessage) => {
+-      if (message.sender !== 'contact' || message.is_read || selectedContactIdRef.current === message.contact_id) {
+-        return;
+-      }
++    (contact: ConversationContact, message: RealtimeMessage): boolean => {
++      if (message.sender !== 'contact' || message.is_read) return false;
++
++      // Responsável: conversa própria ou sem dono (incomingAlertScope).
++      if (!shouldAlertIncomingMessage(contact)) return false;
++
++      // Replay do Realtime com o mesmo id, ou a outra instância já avisou.
++      if (!claimNotificationEvent(`incoming-message:${message.id}`)) return false;
++
++      // Conversa aberta na tela com a aba visível: o usuário está lendo ali.
++      if (isConversationOpenOnScreen(message.contact_id)) return false;
+ 
+       const notificationsActive = notifSettings.soundEnabled || notifSettings.browserNotifications;
+-      if (!notificationsActive && isQuietHours()) return;
++      if (!notificationsActive && isQuietHours()) return false;
++
++      // `alerted` é o contrato de saída: `true` = ESTA instância emitiu aviso
++      // (som, notificação de navegador ou toast). Quem recebe `true` é o dono do
++      // aviso e pode mostrar o toast global, sem repetir o que ninguém emitiu —
++      // em horário de silêncio e com tudo desligado, nada sai e ninguém mostra.
++      let alerted = false;
+ 
+       // O som de mensagem exige o par que os irmãos já exigiam (useSLANotifications:54 com
+       // `slaBreachSound`, useSentimentAlerts:77 com `mentionSound`): a chave GLOBAL de som E o
+@@ -38,6 +62,7 @@ export function useRealtimeNotifications() {
+       // SOM (como os dois irmãos); o aviso em tela segue `browserNotifications`/`soundEnabled`.
+       if (soundEnabledRef.current && notifSettings.newMessageSound && !isQuietHours()) {
+         playNotificationSound('message', notifSettings.messageSoundType, notifSettings.soundVolume);
++        alerted = true;
+       }
+ 
+       if (notifSettings.browserNotifications && !isQuietHours()) {
+@@ -46,6 +71,7 @@ export function useRealtimeNotifications() {
+           message.content,
+           { icon: contact.avatar_url || undefined }
+         );
++        alerted = true;
+       }
+ 
+       if (notificationsActive && !isQuietHours()) {
+@@ -57,7 +83,10 @@ export function useRealtimeNotifications() {
+           message: message.content,
+           timestamp: new Date(),
+         });
++        alerted = true;
+       }
++
++      return alerted;
+     },
+     [
+       notifSettings.soundEnabled,
+@@ -72,9 +101,23 @@ export function useRealtimeNotifications() {
+   const dismissNotification = useCallback(() => setNewMessageNotification(null), []);
+ 
+   const setSelectedContact = useCallback((contactId: string | null) => {
+-    selectedContactIdRef.current = contactId;
++    lastSelectedContactIdRef.current = contactId;
++    // A seleção vive FORA do React (openConversationStore) porque o aviso
++    // global, montado em App.tsx/DeferredProviders, precisa dela no instante do evento.
++    setOpenConversationId(contactId);
+   }, []);
+ 
++  // Ao desmontar (sair do inbox) a conversa aberta deixa de existir. Só limpa
++  // se a seleção ainda for a DESTA instância: o aviso global nunca seleciona
++  // nada e, ao desmontar, não pode apagar a seleção do inbox.
++  useEffect(
++    () => () => {
++      const last = lastSelectedContactIdRef.current;
++      if (last && getOpenConversationId() === last) setOpenConversationId(null);
++    },
++    []
++  );
++
+   const setSoundEnabled = useCallback((enabled: boolean) => {
+     soundEnabledRef.current = enabled;
+   }, []);

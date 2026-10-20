@@ -1,0 +1,6 @@
+On branch v2/avisos-mensagem-nova-global-261015154459e9
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 2: Filtro de dono (sem dono ou meu) existe e é testado, mas a opção para supervisor não foi entregue: o comentário em incomingAlertScope.ts a d
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.
+EXIT=3

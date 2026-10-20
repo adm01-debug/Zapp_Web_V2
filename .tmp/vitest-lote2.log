@@ -1,0 +1,112 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9
+
+ ❯ src/hooks/__tests__/useBulkActions.removido.test.ts (2 tests | 1 failed) 1175ms
+     × nenhum módulo de src aponta para o hook removido 1159ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: navigation to another Document
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: navigation to another Document
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLMediaElement's pause() method
+ ❯ src/components/layout/__tests__/shellLayout.contrato.test.tsx (8 tests | 2 failed) 119ms
+     × a view fica numa cadeia de flex items de largura própria dentro do main 18ms
+     × o shell é preso à altura da viewport dinâmica, não a 100vh (etapa 16) 11ms
+Not implemented: navigation to another Document
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: Window's resizeTo() method
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/__tests__/useBulkActions.removido.test.ts > resíduo do hook useBulkActions (exclusão por tabela arbitrária) > nenhum módulo de src aponta para o hook removido
+Error: ENOENT: no such file or directory, open '/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9/src/hooks/realtime/incomingAlertScope.ts'
+ ❯ src/hooks/__tests__/useBulkActions.removido.test.ts:45:28
+     43|     const referencias = arquivosFonte(join(raiz, 'src'))
+     44|       .filter((arquivo) => !arquivo.endsWith(ESTE_TESTE))
+     45|       .filter((arquivo) => readFileSync(arquivo, 'utf8').includes(REFE…
+       |                            ^
+     46|       .map((arquivo) => relative(raiz, arquivo));
+     47|
+ ❯ src/hooks/__tests__/useBulkActions.removido.test.ts:45:8
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/components/layout/__tests__/shellLayout.contrato.test.tsx > contrato do shell — coluna de conteúdo (AppShell) > a view fica numa cadeia de flex items de largura própria dentro do main
+ FAIL  src/components/layout/__tests__/shellLayout.contrato.test.tsx > contrato do shell — coluna de conteúdo (AppShell) > o shell é preso à altura da viewport dinâmica, não a 100vh (etapa 16)
+Error: useAuth must be used within an AuthProvider
+ ❯ useAuth src/hooks/auth/useAuth.tsx:243:11
+    241|   const context = useContext(AuthContext);
+    242|   if (!context) {
+    243|     throw new Error('useAuth must be used within an AuthProvider');
+       |           ^
+    244|   }
+    245|   return context;
+ ❯ useIncomingAlertScopePublisher src/hooks/realtime/incomingAlertScope.ts:82:23
+ ❯ useGlobalIncomingMessageAlerts src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx:43:3
+ ❯ AppShell src/components/layout/AppShell.tsx:61:3
+ ❯ Object.react_stack_bottom_frame ../node_modules/react-dom/cjs/react-dom-client.development.js:28571:20
+ ❯ renderWithHooks ../node_modules/react-dom/cjs/react-dom-client.development.js:8030:22
+ ❯ updateForwardRef ../node_modules/react-dom/cjs/react-dom-client.development.js:10123:19
+ ❯ beginWork ../node_modules/react-dom/cjs/react-dom-client.development.js:12536:18
+ ❯ runWithFiberInDEV ../node_modules/react-dom/cjs/react-dom-client.development.js:1048:13
+ ❯ performUnitOfWork ../node_modules/react-dom/cjs/react-dom-client.development.js:19176:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  2 failed | 670 passed | 4 skipped (676)
+      Tests  3 failed | 5734 passed | 18 expected fail | 35 todo (5790)
+   Start at  16:29:00
+   Duration  900.15s (transform 75.43s, setup 408.66s, import 562.13s, tests 676.57s, environment 1557.14s)
+
+EXIT=1

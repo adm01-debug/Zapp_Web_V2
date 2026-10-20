@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9/.tmp/prova-base
+
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx [ src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx ]
+Error: Failed to resolve import "@/hooks/realtime/useGlobalIncomingMessageAlerts" from "src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9/.tmp/prova-base/src/hooks/realtime/__tests__/useGlobalIncomingMessageAlerts.behavior.test.tsx:35:0
+  8  |  const __vi_import_1__ = await import("@testing-library/react");
+  9  |  const __vi_import_2__ = await import("@/hooks/__tests__/helpers/alertBehaviorTestKit");
+  10 |  const __vi_import_3__ = await import("@/hooks/realtime/useGlobalIncomingMessageAlerts");
+     |                                       ^
+  11 |  const __vi_import_4__ = await import("@/hooks/realtime/openConversationStore");
+  12 |  const __vi_import_5__ = await import("@/hooks/realtime/incomingAlertScope");
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  18:14:49
+   Duration  2.33s (transform 333ms, setup 565ms, import 0ms, tests 0ms, environment 1.32s)
+

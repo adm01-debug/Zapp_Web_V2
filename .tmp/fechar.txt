@@ -1,0 +1,7 @@
+On branch v2/avisos-mensagem-nova-global-261015154459e9
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. A checagem de permissão que você criou parece deixar passar o que não está listado. Se o cartão pediu lista de bloqueio ou padrão ligado, diga isso no relato; senão, o que não está na lista deve ser NEGADO.
+  2. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/App.tsx. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.
+RC=3

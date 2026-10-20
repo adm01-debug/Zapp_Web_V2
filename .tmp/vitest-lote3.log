@@ -1,0 +1,96 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-mensagem-nova-global-261015154459e9
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: navigation to another Document
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+ ❯ src/components/layout/__tests__/shellLayout.contrato.test.tsx (8 tests | 2 failed) 248ms
+     × a view fica numa cadeia de flex items de largura própria dentro do main 44ms
+     × o shell é preso à altura da viewport dinâmica, não a 100vh (etapa 16) 10ms
+Not implemented: Window's scrollTo() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: navigation to another Document
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: navigation to another Document
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: Window's resizeTo() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/layout/__tests__/shellLayout.contrato.test.tsx > contrato do shell — coluna de conteúdo (AppShell) > a view fica numa cadeia de flex items de largura própria dentro do main
+ FAIL  src/components/layout/__tests__/shellLayout.contrato.test.tsx > contrato do shell — coluna de conteúdo (AppShell) > o shell é preso à altura da viewport dinâmica, não a 100vh (etapa 16)
+Error: useAuth must be used within an AuthProvider
+ ❯ useAuth src/hooks/auth/useAuth.tsx:243:11
+    241|   const context = useContext(AuthContext);
+    242|   if (!context) {
+    243|     throw new Error('useAuth must be used within an AuthProvider');
+       |           ^
+    244|   }
+    245|   return context;
+ ❯ useIncomingAlertScopePublisher src/hooks/realtime/incomingAlertScope.ts:82:23
+ ❯ useGlobalIncomingMessageAlerts src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx:43:3
+ ❯ AppShell src/components/layout/AppShell.tsx:61:3
+ ❯ Object.react_stack_bottom_frame ../node_modules/react-dom/cjs/react-dom-client.development.js:28571:20
+ ❯ renderWithHooks ../node_modules/react-dom/cjs/react-dom-client.development.js:8030:22
+ ❯ updateForwardRef ../node_modules/react-dom/cjs/react-dom-client.development.js:10123:19
+ ❯ beginWork ../node_modules/react-dom/cjs/react-dom-client.development.js:12536:18
+ ❯ runWithFiberInDEV ../node_modules/react-dom/cjs/react-dom-client.development.js:1048:13
+ ❯ performUnitOfWork ../node_modules/react-dom/cjs/react-dom-client.development.js:19176:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 671 passed | 4 skipped (676)
+      Tests  2 failed | 5735 passed | 18 expected fail | 35 todo (5790)
+   Start at  16:32:30
+   Duration  914.62s (transform 91.64s, setup 397.77s, import 591.10s, tests 775.13s, environment 1514.31s)
+
+EXIT=1
