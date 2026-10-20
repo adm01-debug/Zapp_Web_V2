@@ -1,0 +1,5 @@
+On branch v2/audio-memes-realtime-26101520262013
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 2: Diff não traz evidência de execução de `zapp-verify . --rapido`; relato só cita vitest em 4 arquivos, não o portão verde.
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.

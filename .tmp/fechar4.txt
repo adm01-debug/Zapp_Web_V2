@@ -1,0 +1,8 @@
+On branch v2/audio-memes-realtime-26101520262013
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': supabase/migrations/20261015224516_audio_memes_storage_paths.sql, supabase/tests/audio_memes_storage_paths.sql. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+  *. CONFERÊNCIA: a migration muda permissão/RLS (drop policy if exists "Auth upload audio memes owned" on storage.objects;; create policy "Auth upload audio memes owned" on storage.objects; drop policy if exists "Users can update own audio memes" on storage.objects;) e nem o título nem o relato falam disso. Se não é do cartão, tire; se é, explique no relato o porquê e a prova com o papel real.
+FECHADO (modo V2, local): v2/audio-memes-realtime-26101520262013 @ 965d06145 — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101520262013.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.
+RC=0

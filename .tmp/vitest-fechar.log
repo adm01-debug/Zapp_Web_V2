@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-memes-realtime-26101520262013
+
+stderr | src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx > useAudioMemes — catálogo e favoritos ao vivo > avisa o erro de sincronização e o limpa quando a assinatura volta
+[2026-10-16T00:06:16.149Z] [ERROR] [useAudioMemes] [sid:5bb3ec41] [AudioMeme] Falha ao assinar o canal em tempo real: CHANNEL_ERROR
+
+·······················
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  21:06:13
+   Duration  4.28s (transform 2.18s, setup 1.97s, import 3.55s, tests 1.18s, environment 4.76s)
+

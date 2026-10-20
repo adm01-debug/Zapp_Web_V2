@@ -1,0 +1,6 @@
+On branch v2/audio-memes-realtime-26101520262013
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': supabase/migrations/20261015224516_audio_memes_storage_paths.sql, supabase/tests/audio_memes_storage_paths.sql. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+  *. CONFERÊNCIA: a migration muda permissão/RLS (drop policy if exists "Auth upload audio memes owned" on storage.objects;; create policy "Auth upload audio memes owned" on storage.objects; drop policy if exists "Users can update own audio memes" on storage.objects;) e nem o título nem o relato falam disso. Se não é do cartão, tire; se é, explique no relato o porquê e a prova com o papel real.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.

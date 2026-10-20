@@ -1,0 +1,86 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-memes-realtime-26101520262013/.tmp/prova-base
+
+·····xxxxx·············
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx > useAudioMemes — catálogo e favoritos ao vivo > assina UM canal de nome único nas duas tabelas e o remove ao fechar
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:105:27
+    103|     await act(async () => {});
+    104|
+    105|     expect(mocks.channel).toHaveBeenCalledTimes(1);
+       |                           ^
+    106|     const topic1 = mocks.channel.mock.calls[0][0] as string;
+    107|     // padrão RT2: prefixo estável + sufixo único por instância
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx > useAudioMemes — catálogo e favoritos ao vivo > meme novo aparece sem reabrir o picker (evento em audio_memes refaz a busca)
+AssertionError: expected 0 to be greater than 0
+ ❯ disparar src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:86:27
+     84| function disparar(tabela: string) {
+     85|   const handlers = canalAtual?.handlers[tabela] ?? [];
+     86|   expect(handlers.length).toBeGreaterThan(0);
+       |                           ^
+     87|   return act(async () => { handlers.forEach((h) => h()); });
+     88| }
+ ❯ src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:138:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx > useAudioMemes — catálogo e favoritos ao vivo > favorito ao vivo também refaz a busca (evento em audio_meme_favorites)
+AssertionError: expected 0 to be greater than 0
+ ❯ disparar src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:86:27
+     84| function disparar(tabela: string) {
+     85|   const handlers = canalAtual?.handlers[tabela] ?? [];
+     86|   expect(handlers.length).toBeGreaterThan(0);
+       |                           ^
+     87|   return act(async () => { handlers.forEach((h) => h()); });
+     88| }
+ ❯ src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:149:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx > useAudioMemes — catálogo e favoritos ao vivo > avisa o erro de sincronização e o limpa quando a assinatura volta
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:158:38
+    156|     const { result } = renderPicker(true);
+    157|     await act(async () => {});
+    158|     expect(result.current.syncError).toBeNull();
+       |                                      ^
+    159|
+    160|     act(() => { canalAtual!.callbacks[0]('CHANNEL_ERROR'); });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx > useAudioMemes — catálogo e favoritos ao vivo > evento tardio depois de fechar não refaz a busca (sem vazamento de canal)
+TypeError: Cannot read properties of null (reading 'handlers')
+ ❯ src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:177:36
+    175|
+    176|     // handler do canal antigo disparado depois do fechamento
+    177|     await act(async () => { canal1.handlers['audio_memes'].forEach((h)…
+       |                                    ^
+    178|
+    179|     expect(mocks.rpc).toHaveBeenCalledTimes(chamadasAposFechar);
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx:177:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  5 failed | 18 passed (23)
+   Start at  21:06:21
+   Duration  2.83s (transform 1.93s, setup 2.06s, import 1.99s, tests 974ms, environment 4.27s)
+
