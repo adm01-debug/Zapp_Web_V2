@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-textos-primitivos-ui-2610121623d000
+
+··························································
+
+ Test Files  5 passed (5)
+      Tests  58 passed (58)
+   Start at  16:30:50
+   Duration  4.19s (transform 1.30s, setup 946ms, import 2.99s, tests 3.91s, environment 3.29s)
+

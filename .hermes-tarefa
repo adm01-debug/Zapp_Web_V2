@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-textos-primitivos-ui
+ID=2610121623d000
+BRANCH=v2/a11y-textos-primitivos-ui-2610121623d000
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-textos-primitivos-ui-2610121623d000
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T16:23:46-03:00
+KANBAN=t_4a722b90
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-textos-primitivos-ui-2610121623d000/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610121623d000
+PRONTO_SHA=a2f7990c52a92218c80dcb5dab8935e628674936

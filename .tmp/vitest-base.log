@@ -1,0 +1,1612 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-textos-primitivos-ui-2610121623d000/.tmp/prova-base
+
+····x···x········x····················xxxxxx··········x···
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/catalog/__tests__/ProductDetailDialog.test.tsx > ProductDetailDialog — R2-MOD-046 reabrir o cartão volta ao produto clicado > fechar no Segundo e reabrir o cartão do Primeiro mostra o Primeiro
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Fechar"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Ampliar imagem":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Ampliar imagem"[39m
+    [33mclass[39m=[32m"w-full h-full block cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Próxima imagem":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Próxima imagem"[39m
+    [33mclass[39m=[32m"absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ver imagem 1 de 3":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Ver imagem 1 de 3"[39m
+    [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ver imagem 2 de 3":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Ver imagem 2 de 3"[39m
+    [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all border-transparent opacity-60 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ver imagem 3 de 3":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Ver imagem 3 de 3"[39m
+    [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all border-transparent opacity-60 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Produto anterior":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Produto anterior"[39m
+    [33mclass[39m=[32m"w-8 h-8 rounded-full border border-border/40 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Próximo produto":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Próximo produto"[39m
+    [33mclass[39m=[32m"w-8 h-8 rounded-full border border-border/40 flex items-center justify-center transition-colors text-muted-foreground/40 cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Adicionar aos favoritos":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Adicionar aos favoritos"[39m
+    [33mclass[39m=[32m"mt-0.5 flex-shrink-0 w-8 h-8 rounded-full border border-border/40 flex items-center justify-center transition-all text-muted-foreground hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Copiar SKU":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Copiar SKU"[39m
+    [33mclass[39m=[32m"text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  img:
+
+  Name "Segundo":
+  [36m<img[39m
+    [33malt[39m=[32m"Segundo"[39m
+    [33mclass[39m=[32m"w-full h-full object-contain transition-opacity opacity-0"[39m
+    [33mdecoding[39m=[32m"async"[39m
+    [33mloading[39m=[32m"lazy"[39m
+    [33msrc[39m=[32m"https://x/a.jpg"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  presentation:
+
+  Name "":
+  [36m<img[39m
+    [33malt[39m=[32m""[39m
+    [33mclass[39m=[32m"w-full h-full object-cover"[39m
+    [33mloading[39m=[32m"lazy"[39m
+    [33msrc[39m=[32m"https://x/a.jpg"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<img[39m
+    [33malt[39m=[32m""[39m
+    [33mclass[39m=[32m"w-full h-full object-cover"[39m
+    [33mloading[39m=[32m"lazy"[39m
+    [33msrc[39m=[32m"https://x/b.jpg"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<img[39m
+    [33malt[39m=[32m""[39m
+    [33mclass[39m=[32m"w-full h-full object-cover"[39m
+    [33mloading[39m=[32m"lazy"[39m
+    [33msrc[39m=[32m"https://x/c.jpg"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Segundo":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-foreground flex-1 text-base leading-snug font-bold pr-2"[39m
+    [33mid[39m=[32m"radix-_r_55_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-2xl font-bold text-foreground tabular-nums"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong[39m
+    [33mclass[39m=[32m"text-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  none:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"shrink-0 bg-border h-[1px] w-full"[39m
+    [33mdata-orientation[39m=[32m"horizontal"[39m
+    [33mrole[39m=[32m"none"[39m
+  [36m/>[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"flex items-center gap-1.5 text-2xs text-muted-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Enviar produto no chat":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 w-full"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-labelledby[39m=[32m"radix-_r_55_"[39m
+  [33mclass[39m=[32m"fixed z-50 gap-4 bg-background shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right w-full sm:max-w-xl p-0 flex flex-col overflow-hidden"[39m
+  [33mdata-state[39m=[32m"open"[39m
+  [33mdata-testid[39m=[32m"product-detail-sheet"[39m
+  [33mid[39m=[32m"radix-_r_54_"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"relative overflow-hidden flex-1 overflow-y-auto"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mstyle[39m=[32m"position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full w-full rounded-[inherit]"[39m
+      [33mdata-radix-scroll-area-viewport[39m=[32m""[39m
+      [33mstyle[39m=[32m"overflow-x: hidden; overflow-y: scroll;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"min-width: 100%; display: table;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative bg-muted select-none"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative aspect-square w-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ampliar imagem"[39m
+              [33mclass[39m=[32m"w-full h-full block cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative w-full h-full aspect-square"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"absolute inset-0 animate-pulse bg-muted/40"[39m
+                [36m/>[39m
+                [36m<img[39m
+                  [33malt[39m=[32m"Segundo"[39m
+                  [33mclass[39m=[32m"w-full h-full object-contain transition-opacity opacity-0"[39m
+                  [33mdecoding[39m=[32m"async"[39m
+                  [33mloading[39m=[32m"lazy"[39m
+                  [33msrc[39m=[32m"https://x/a.jpg"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"absolute left-2 top-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur-sm text-2xs font-medium tabular-nums pointer-events-none"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m / [0m
+              [0m3[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Próxima imagem"[39m
+              [33mclass[39m=[32m"absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background/95 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-chevron-right w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-1.5 overflow-x-auto px-3 py-2 scrollbar-hide"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ver imagem 1 de 3"[39m
+              [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33mclass[39m=[32m"w-full h-full object-cover"[39m
+                [33mloading[39m=[32m"lazy"[39m
+                [33msrc[39m=[32m"https://x/a.jpg"[39m
+              [36m/>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ver imagem 2 de 3"[39m
+              [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all border-transparent opacity-60 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33mclass[39m=[32m"w-full h-full object-cover"[39m
+                [33mloading[39m=[32m"lazy"[39m
+                [33msrc[39m=[32m"https://x/b.jpg"[39m
+              [36m/>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ver imagem 3 de 3"[39m
+              [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all border-transparent opacity-60 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33mclass[39m=[32m"w-full h-full object-cover"[39m
+                [33mloading[39m=[32m"lazy"[39m
+                [33msrc[39m=[32m"https://x/c.jpg"[39m
+              [36m/>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-5 s...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/catalog/__tests__/ProductDetailDialog.test.tsx:436:36
+    434|
+    435|     // fecha o painel (mesmo caminho do botão fechar do Sheet)
+    436|     fireEvent.click(within(painel).getByRole('button', { name: 'Fechar…
+       |                                    ^
+    437|     await waitFor(() => expect(screen.queryByTestId('product-detail-sh…
+    438|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/components/email/__tests__/EmailChatThread.previaAnexo.test.tsx > EmailChatThread — prévia de anexo (R2-COM-002) > fechar a prévia invalida a requisição em voo e ela não contamina a seleção seguinte
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Fechar"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "a.txt":
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_8_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_7_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 border p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-4xl border-border bg-popover text-popover-foreground"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_6_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "a.txt":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight truncate"[39m
+    [33mid[39m=[32m"radix-_r_7_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [33mid[39m=[32m"radix-_r_8_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative flex h-full flex-col text-foreground"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 border-b border-border bg-inbox-panel p-3"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Voltar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8 shrink-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"truncate text-sm font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mTest Subject[0m
+          [36m</h3>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 text-3xs text-muted-foreground"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0m•[0m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0m1[0m
+              [0m msg[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-1"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Adicionar aos favoritos"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-star w-4 h-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<span>[39m
+            [0mAdicionar aos favoritos[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Arquivar"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-archive h-4 w-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"5"[39m
+                [33mrx[39m=[32m"1"[39m
+                [33mwidth[39m=[32m"20"[39m
+                [33mx[39m=[32m"2"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 12h4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<span>[39m
+            [0mArquivar[0m
+          [36m</span>[39m
+          [36m<button[3...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/email/__tests__/EmailChatThread.previaAnexo.test.tsx:165:28
+    163|     // Abre A e fecha antes de a resposta chegar: a requisição de A fi…
+    164|     fireEvent.click(screen.getByText('prévia a.txt'));
+    165|     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+       |                            ^
+    166|     await waitFor(() => expect(screen.queryByText('a.txt')).toBeNull()…
+    167|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/components/ui/__tests__/primitivos-a11y-pt.test.tsx > primitivos de UI — nome acessível em PT-BR > Dialog expõe o botão de fechar como "Fechar"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Fechar"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Título":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_0_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Título":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight"[39m
+    [33mid[39m=[32m"radix-_r_1_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_0_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_1_"[39m
+      [36m>[39m
+        [0mTítulo[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/primitivos-a11y-pt.test.tsx:39:19
+     37|     );
+     38|
+     39|     expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDo…
+       |                   ^
+     40|     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/components/ui/__tests__/primitivos-a11y-pt.test.tsx > primitivos de UI — nome acessível em PT-BR > Sheet expõe o botão de fechar como "Fechar"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Fechar"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Título":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_4_"[39m
+    [33mclass[39m=[32m"fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_3_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Título":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-semibold text-foreground"[39m
+    [33mid[39m=[32m"radix-_r_4_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_4_"[39m
+    [33mclass[39m=[32m"fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_3_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-2 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold text-foreground"[39m
+        [33mid[39m=[32m"radix-_r_4_"[39m
+      [36m>[39m
+        [0mTítulo[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/primitivos-a11y-pt.test.tsx:54:19
+     52|     );
+     53|
+     54|     expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDo…
+       |                   ^
+     55|     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/components/ui/__tests__/primitivos-a11y-pt.test.tsx > primitivos de UI — nome acessível em PT-BR > BreadcrumbEllipsis anuncia "Mais"
+TestingLibraryElementError: Unable to find an element with the text: Mais. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"breadcrumb"[39m
+    [36m>[39m
+      [36m<ol[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"flex h-9 w-9 items-center justify-center"[39m
+            [33mrole[39m=[32m"presentation"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"19"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"5"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sr-only"[39m
+            [36m>[39m
+              [0mMore[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ol>[39m
+    [36m</nav>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/primitivos-a11y-pt.test.tsx:69:19
+     67|     );
+     68|
+     69|     expect(screen.getByText('Mais')).toBeInTheDocument();
+       |                   ^
+     70|     expect(screen.queryByText('More')).toBeNull();
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/components/ui/__tests__/primitivos-a11y-pt.test.tsx > primitivos de UI — nome acessível em PT-BR > Pagination expõe rótulos em PT-BR ("Anterior"/"Próximo"/"Mais páginas")
+TestingLibraryElementError: Unable to find a label with the text of: Ir para a página anterior
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"pagination"[39m
+      [33mclass[39m=[32m"mx-auto flex w-full justify-center"[39m
+      [33mrole[39m=[32m"navigation"[39m
+    [36m>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"flex flex-row items-center gap-1"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m""[39m
+        [36m>[39m
+          [36m<a[39m
+            [33maria-label[39m=[32m"Go to previous page"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-10 px-4 py-2 gap-1 pl-2.5"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left h-4 w-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mPrevious[0m
+            [36m</span>[39m
+          [36m</a>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m""[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"flex h-9 w-9 items-center justify-center"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"19"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"5"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sr-only"[39m
+            [36m>[39m
+              [0mMore pages[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m""[39m
+        [36m>[39m
+          [36m<a[39m
+            [33maria-label[39m=[32m"Go to next page"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-10 px-4 py-2 gap-1 pr-2.5"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mNext[0m
+            [36m</span>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-right h-4 w-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 18 6-6-6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</a>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</nav>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/primitivos-a11y-pt.test.tsx:90:19
+     88|     );
+     89|
+     90|     expect(screen.getByLabelText('Ir para a página anterior')).toBeInT…
+       |                   ^
+     91|     expect(screen.getByLabelText('Ir para a próxima página')).toBeInTh…
+     92|     expect(screen.getByText('Anterior')).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/components/ui/__tests__/primitivos-a11y-pt.test.tsx > primitivos de UI — nome acessível em PT-BR > ToastClose expõe o botão de fechar como "Fechar"
+TestingLibraryElementError: Unable to find a label with the text of: Fechar
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Notifications (F8)"[39m
+      [33mrole[39m=[32m"region"[39m
+      [33mstyle[39m=[32m""[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mstyle[39m=[32m"position: fixed; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; word-wrap: normal;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<ol[39m
+        [33mclass[39m=[32m"fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full border bg-background text-foreground"[39m
+          [33mdata-radix-collection-item[39m=[32m""[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mdata-swipe-direction[39m=[32m"right"[39m
+          [33mstyle[39m=[32m"user-select: none; touch-action: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-sm font-semibold"[39m
+          [36m>[39m
+            [0mAviso[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity group-hover:opacity-100 group-[.destructive]:text-destructive hover:text-foreground group-[.destructive]:hover:text-destructive focus:opacity-100 focus:outline-none focus:ring-2 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600"[39m
+            [33mdata-radix-toast-announce-exclude[39m=[32m""[39m
+            [33mtoast-close[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 6 6 18"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m6 6 12 12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</li>[39m
+      [36m</ol>[39m
+      [36m<span[39m
+        [33mstyle[39m=[32m"position: fixed; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; word-wrap: normal;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; word-wrap: normal;"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/primitivos-a11y-pt.test.tsx:112:19
+    110|     );
+    111|
+    112|     expect(screen.getByLabelText('Fechar')).toBeInTheDocument();
+       |                   ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/components/ui/__tests__/primitivos-a11y-pt.test.tsx > primitivos de UI — nome acessível em PT-BR > Sidebar alterna a barra lateral com nome acessível em PT-BR
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Alternar barra lateral"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Toggle Sidebar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-7 w-7"[39m
+    [33mdata-sidebar[39m=[32m"trigger"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"[39m
+      [33mstyle[39m=[32m"--sidebar-width: 16rem; --sidebar-width-icon: 3rem;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-7 w-7"[39m
+        [33mdata-sidebar[39m=[32m"trigger"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-panel-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M9 3v18"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mToggle Sidebar[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/primitivos-a11y-pt.test.tsx:121:19
+    119|       </SidebarProvider>,
+    120|     );
+    121|     expect(screen.getByRole('button', { name: 'Alternar barra lateral'…
+       |                   ^
+    122|     unmount();
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/components/inbox/media-gallery/__tests__/MediaPreviewDialog.test.tsx > MediaPreviewDialog (etapa 30 — visualizador único e navegável) > o X do cabeçalho fecha a janela
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Fechar"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Foto A":
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_n_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-[min(538px,calc(100vw_-_2rem))] max-h-[64vh] p-0 overflow-hidden"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_l_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Foto A":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight min-w-0 flex-1 truncate"[39m
+    [33mid[39m=[32m"radix-_r_m_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-muted-foreground sr-only"[39m
+    [33mid[39m=[32m"radix-_r_n_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Anterior":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Anterior"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Próximo":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Próximo"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  img:
+
+  Name "Foto A":
+  [36m<img[39m
+    [33malt[39m=[32m"Foto A"[39m
+    [33mclass[39m=[32m"max-w-full max-h-[56vh] object-contain"[39m
+    [33msrc[39m=[32m"https://signed.test/a.png"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_n_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-[min(538px,calc(100vw_-_2rem))] max-h-[64vh] p-0 overflow-hidden"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_l_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left p-4 border-b"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight min-w-0 flex-1 truncate"[39m
+          [33mid[39m=[32m"radix-_r_m_"[39m
+        [36m>[39m
+          [0mFoto A[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground sr-only"[39m
+          [33mid[39m=[32m"radix-_r_n_"[39m
+        [36m>[39m
+          [0ma-original.png[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 items-center gap-1"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Anterior"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left w-4 h-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Próximo"[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-8 w-8"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-right w-4 h-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 18 6-6-6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex items-center justify-center p-4 bg-background/90 min-h-[320px]"[39m
+    [36m>[39m
+      [36m<img[39m
+        [33malt[39m=[32m"Foto A"[39m
+        [33mclass[39m=[32m"max-w-full max-h-[56vh] object-contain"[39m
+        [33msrc[39m=[32m"https://signed.test/a.png"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/media-gallery/__tests__/MediaPreviewDialog.test.tsx:107:28
+    105|     render(<CloseHarness />);
+    106|     expect(screen.getByRole('dialog', { name: 'Foto A' })).toBeInTheDo…
+    107|     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+       |                            ^
+    108|     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    109|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/components/settings/media-library/__tests__/AIGenerateDialog.test.tsx > AIGenerateDialog — resposta tardia depois de fechar o diálogo (#409) > não inicia reprodução quando a resposta da geração chega depois de o diálogo fechar
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/fechar/i`
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Gerar Áudio com IA":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-[480px]"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_0_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Gerar Áudio com IA":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+    [33mid[39m=[32m"radix-_r_1_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [33mid[39m=[32m"radix-_r_2_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Efeito Sonoro":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-9 rounded-md px-3 flex-1 gap-1.5"[39m
+  [36m/>[39m
+
+  Name "Música":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3 flex-1 gap-1.5"[39m
+  [36m/>[39m
+
+  Name "Gerando...":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 gap-1.5"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Close":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<textarea[39m
+    [33mclass[39m=[32m"flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mplaceholder[39m=[32m"Ex: Risada de vilão ecoando..."[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  slider:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"w-full accent-primary"[39m
+    [33mmax[39m=[32m"22"[39m
+    [33mmin[39m=[32m"1"[39m
+    [33mtype[39m=[32m"range"[39m
+    [33mvalue[39m=[32m"5"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-[480px]"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_0_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_1_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-sparkles w-5 h-5 text-primary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M20 2v4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M22 4h-4"[39m
+          [36m/>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"4"[39m
+            [33mcy[39m=[32m"20"[39m
+            [33mr[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mGerar Áudio com IA[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_2_"[39m
+      [36m>[39m
+        [0mDescreva o efeito sonoro ou música que deseja gerar usando ElevenLabs[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4 py-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-9 rounded-md px-3 flex-1 gap-1.5"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-volume2 lucide-volume-2 w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 9a5 5 0 0 1 0 6"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19.364 18.364a9 9 0 0 0 0-12.728"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Efeito Sonoro[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3 flex-1 gap-1.5"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-music w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/settings/media-library/__tests__/AIGenerateDialog.test.tsx:78:28
+     76|
+     77|     // O usuário fecha o diálogo antes de a geração responder.
+     78|     fireEvent.click(screen.getByRole('button', { name: /fechar/i }));
+       |                            ^
+     79|     await waitFor(() =>
+     80|       expect(screen.queryByRole('button', { name: /gerar preview/i }))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  10 failed | 48 passed (58)
+   Start at  16:30:56
+   Duration  4.25s (transform 1.26s, setup 877ms, import 2.89s, tests 4.06s, environment 3.46s)
+
