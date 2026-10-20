@@ -1,0 +1,6 @@
+fix(auth): gateway admin-user-sessions consulta auth.sessions via rpc
+
+Troca o caminho GoTrue REST (nao provado, sem precedente no repo) pelas
+RPCs list_auth_sessions/revoke_auth_session sobre auth.sessions, mesma
+fonte da primitiva revoke_auth_sessions. Revoke revalida o alvo no
+retorno (0 linhas = 404) e valida a SUPABASE_URL (falha fechada).

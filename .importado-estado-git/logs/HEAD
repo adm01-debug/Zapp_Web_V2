@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 bff18177fdfe4102533fe688ed374c945f34689d Hermes Senior <hermes-senior@promobrindes.local> 1791816479 -0300	
+bff18177fdfe4102533fe688ed374c945f34689d bff18177fdfe4102533fe688ed374c945f34689d Hermes Senior <hermes-senior@promobrindes.local> 1791816480 -0300	reset: moving to HEAD
+bff18177fdfe4102533fe688ed374c945f34689d e0074d93c977b85bedd0488b935380f4ad4e3741 Hermes Senior <hermes-senior@promobrindes.local> 1791817611 -0300	commit: feat(auth): edge admin-user-sessions lista e encerra sessoes (paridade V3)
+e0074d93c977b85bedd0488b935380f4ad4e3741 b60ead56a25ca6c27ffc9def035d077873389248 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792012398 -0300	commit: fix(auth): gateway admin-user-sessions consulta auth.sessions via rpc

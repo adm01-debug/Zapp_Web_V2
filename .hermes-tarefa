@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-user-sessions-sessoes
+ID=2610121147663c
+BRANCH=v2/admin-user-sessions-sessoes-2610121147663c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-user-sessions-sessoes-2610121147663c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T11:48:00-03:00
+KANBAN=t_3c129d07
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-user-sessions-sessoes-2610121147663c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610121147663c
+PRONTO_SHA=e0074d93c977b85bedd0488b935380f4ad4e3741
