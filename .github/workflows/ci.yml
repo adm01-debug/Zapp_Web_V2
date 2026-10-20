@@ -225,6 +225,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -272,6 +279,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -389,6 +403,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'
