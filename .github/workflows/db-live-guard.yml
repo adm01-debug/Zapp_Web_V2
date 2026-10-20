@@ -227,6 +227,23 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
+      # INV-LIVE (guarda geral de invariantes do banco vivo): RLS ligada em toda
+      # tabela de public, security_invoker em toda view, nenhuma matview exposta a
+      # anon/authenticated, search_path fixo em SECURITY DEFINER, nenhuma policy de
+      # escrita aberta fora da allowlist e nenhuma referencia pendurada em funcao
+      # de public ou em comando de cron. E o MESMO artefato provado no db-guard.yml
+      # sobre um postgres descartavel (scripts/db-audit/check-live-invariants.test.sh).
+      # Fail-closed: o RAISE EXCEPTION de cada invariante derruba o psql com
+      # ON_ERROR_STOP=1, entao esquecer um dos invariantes deixa o guarda vermelho.
+      - name: Verificar invariantes gerais do banco vivo
+        id: live-invariants
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-live-invariants.sql 2>&1 | tee /tmp/step-live-invariants.log
+
       - name: Regenerar catalogo e comparar com o commitado
         id: catalog
         if: steps.credencial.outcome == 'success'
@@ -323,7 +340,7 @@ jobs:
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
 
-      # Une os 11 vereditos individuais (continue-on-error acima) num unico
+      # Une os 12 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # para o dedupe do alerta abaixo (E05/E06/E43/E44).
@@ -539,6 +556,7 @@ jobs:
             /tmp/step-acl-talkx-metrics.log
             /tmp/step-e2e-fixtures.log
             /tmp/step-contract-talkx-transition.log
+            /tmp/step-live-invariants.log
             /tmp/step-catalog.log
             /tmp/step-manifest.log
             /tmp/step-types.log
