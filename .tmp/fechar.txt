@@ -1,0 +1,6 @@
+On branch v2/analises-conversa-cache-query-2610152032dabe
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 2: O diff não traz evidência do zapp-verify --rapido verde; o relato só diz que o fechar registra a execução.
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.
+rc=3

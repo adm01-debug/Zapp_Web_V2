@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107178 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107180 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 30e02fcbab72eaa62f72c0e7d8a60e6399050285 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792107441 -0300	commit: perf(conversa): análises de conversa em cache compartilhado e sem consulta de id inválido
+30e02fcbab72eaa62f72c0e7d8a60e6399050285 6582ec35ade4c2ffda702661298f7eab2f5b93b2 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792109337 -0300	commit: fix(conversa): devolve o refetch do useQuery sem wrapper (lint exhaustive-deps)

@@ -1,0 +1,8 @@
+OK      db_guard        0s
+OK      tipos        1185s
+FALHOU  lint            5s  (ver /home/joaquim_ataides/.local/state/zapp-verify/a3bf00c017cb/lint.log)
+Lint rápido (base dia/2026-10-15, 2 arquivo(s) alterado(s)): baseline=1, atual=1, mantidas=0, removidas=1, novas=1
+src/hooks/chat/useConversationAnalyses.ts:78:6 warning react-hooks/exhaustive-deps - React Hook useCallback has a missing dependency: 'query'. Either include it or remove the dependency array.
+FALHOU: 1 ocorrência(s) nova(s) de lint. Corrija ou, se for dívida conhecida, o ratchet completo do CI decide.
+VERIFY: VERMELHO em lint (1191s)
+rc=1
