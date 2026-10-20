@@ -1,0 +1,3 @@
+FECHADO (modo V2, local): v2/avanco-etapa-deal-performed-by-26101219250fac @ 773ee8d09 — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101219250fac.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.
+RC=0

@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 590ce65a6eeb0206ca6e6311f692b8d3e5a872f1 Hermes Senior <hermes-senior@promobrindes.local> 1791843952 -0300	
+590ce65a6eeb0206ca6e6311f692b8d3e5a872f1 590ce65a6eeb0206ca6e6311f692b8d3e5a872f1 Hermes Senior <hermes-senior@promobrindes.local> 1791843953 -0300	reset: moving to HEAD
+590ce65a6eeb0206ca6e6311f692b8d3e5a872f1 773ee8d09b224330dc1c225d499e0b02c13ac937 Hermes Senior <hermes-senior@promobrindes.local> 1791844438 -0300	commit: fix(crm): grava performed_by e ignora etapa inativa ao avancar negocio
+773ee8d09b224330dc1c225d499e0b02c13ac937 4eab47d7e891b5a64d3657aee7000c48202e58ae Hermes Senior <hermes-senior@promobrindes.local> 1792019250 -0300	commit: fix(crm): [refazer 1] falha parcial do avanco de etapa usa mensagem verdadeira e invalida o cache

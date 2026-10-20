@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=avanco-etapa-deal-performed-by
+ID=26101219250fac
+BRANCH=v2/avanco-etapa-deal-performed-by-26101219250fac
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avanco-etapa-deal-performed-by-26101219250fac
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T19:25:53-03:00
+KANBAN=t_dbddd822
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avanco-etapa-deal-performed-by-26101219250fac/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-26101219250fac
+PRONTO_SHA=773ee8d09b224330dc1c225d499e0b02c13ac937

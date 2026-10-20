@@ -1,0 +1,148 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avanco-etapa-deal-performed-by-26101219250fac/.tmp/prova-base
+
+xxxxxxx············Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+··Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > nextActiveStage > pula estágio inativo e devolve o próximo ativo por posição
+TypeError: nextActiveStage is not a function
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:52:12
+     50|   it('pula estágio inativo e devolve o próximo ativo por posição', () …
+     51|     const stages = [stage('s1', 'Lead', 1), stage('s2', 'Proposta', 2,…
+     52|     expect(nextActiveStage(stages, 's1')?.id).toBe('s3');
+       |            ^
+     53|   });
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > nextActiveStage > devolve null quando não há etapa ativa depois da atual
+TypeError: nextActiveStage is not a function
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:57:12
+     55|   it('devolve null quando não há etapa ativa depois da atual', () => {
+     56|     const stages = [stage('s1', 'Lead', 1), stage('s2', 'Fechamento', …
+     57|     expect(nextActiveStage(stages, 's2')).toBeNull();
+       |            ^
+     58|     expect(nextActiveStage(stages, null)).toBeNull();
+     59|     expect(nextActiveStage(stages, 'inexistente')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > nextActiveStage > ordena por posição (não pela ordem do array) e desempata por id
+TypeError: nextActiveStage is not a function
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:64:12
+     62|   it('ordena por posição (não pela ordem do array) e desempata por id'…
+     63|     const stages = [stage('b', 'B', 2), stage('a', 'A', 1), stage('c',…
+     64|     expect(nextActiveStage(stages, 'a')?.id).toBe('b');
+       |            ^
+     65|   });
+     66| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > useAdvanceDealStage > grava performed_by = perfil do usuário logado na atividade
+AssertionError: expected "vi.fn()" to be called with arguments: [ { deal_id: 'd1', …(3) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "activity_type": "stage_change",
+      "deal_id": "d1",
+      "description": "Movido para Proposta enviada",
+-     "performed_by": "profile-1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:87:24
+     85|     expect(updateMock).toHaveBeenCalledWith({ stage_id: 's2' });
+     86|     expect(eqMock).toHaveBeenCalledWith('id', 'd1');
+     87|     expect(insertMock).toHaveBeenCalledWith({
+       |                        ^
+     88|       deal_id: 'd1',
+     89|       activity_type: 'stage_change',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > useAdvanceDealStage > rejeita e alerta quando o INSERT da atividade falha (INSERT falho deixa de passar em silêncio)
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:101:7
+     99|     await expect(result.current.mutateAsync({
+    100|       dealId: 'd1', nextStageId: 's2', nextStageName: 'Proposta', curr…
+    101|     })).rejects.toBeTruthy();
+       |       ^
+    102|
+    103|     expect(toastError).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > useAdvanceDealStage > não dispara UPDATE nem INSERT quando a etapa de destino já é a atual
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "stage_id": "s1",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:115:28
+    113|     });
+    114|
+    115|     expect(updateMock).not.toHaveBeenCalled();
+       |                            ^
+    116|     expect(insertMock).not.toHaveBeenCalled();
+    117|     expect(toastError).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx > useAdvanceDealStage > sem perfil logado não escreve nada e alerta
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/crm/__tests__/useAdvanceDealStage.test.tsx:126:7
+    124|     await expect(result.current.mutateAsync({
+    125|       dealId: 'd1', nextStageId: 's2', nextStageName: 'Proposta', curr…
+    126|     })).rejects.toBeTruthy();
+       |       ^
+    127|
+    128|     expect(updateMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  7 failed | 15 passed (22)
+   Start at  19:37:22
+   Duration  6.93s (transform 1.29s, setup 1.37s, import 2.49s, tests 2.52s, environment 2.28s)
+

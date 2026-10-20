@@ -1,0 +1,12 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avanco-etapa-deal-performed-by-26101219250fac
+
+···················Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+··Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+·
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  19:37:13
+   Duration  5.76s (transform 540ms, setup 650ms, import 1.63s, tests 2.64s, environment 1.99s)
+
