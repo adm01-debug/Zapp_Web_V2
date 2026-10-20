@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/hooks/system/useNavigationHistory.ts",
+      "git_blob_sha": "849956d750489f1c3e0bbfd3711f5b3f51907fee",
+      "sha256": "77cdcd7a9381df8ad9532406cf71182026cc70a8b23bb2f8a8cb0209ce4909cd"
+    },
+    {
+      "path": "src/hooks/system/useNotifications.ts",
+      "git_blob_sha": "eb6b8ff5408a0707fe51f7b012c9599c8607ae4d",
+      "sha256": "33f0c105bc1cab0fa5548163f213b2e1db89d33a61f6bb6aab077f6639b8e622"
+    },
+    {
+      "path": "src/hooks/system/useNotificationSettings.ts",
+      "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+      "sha256": "48b20814d254fa400cf8f46c5741a4f23f8ab91389ca89ddc10a0ad5c94549ad"
+    },
+    {
+      "path": "src/lib/emailHtml.ts",
+      "git_blob_sha": "5cb7df784ad0c926a4e47a108b9ff5c21b62330c",
+      "sha256": "6ed1c1befbe1c9989a8c9401743205a0fb858a758187c65c67c912cbcb1fa2f5"
+    },
+    {
+      "path": "src/hooks/system/useSearchHistory.ts",
+      "git_blob_sha": "a6006e767ddff617fc67cd17cbbe173241edc411",
+      "sha256": "842fb6a485a69356e6187944f49f7e441c2a815ee64095dff6eb6e053e64fe40"
+    },
+    {
+      "path": "src/hooks/system/useUndoableAction.ts",
+      "git_blob_sha": "526cf33b6b64ac9e003e200809ce0ecb991f2f85",
+      "sha256": "182e7259b9bb12ff869219ba7247d33f549b0e724b95e0474a03440de7a5e342"
+    },
+    {
+      "path": "src/hooks/ui/useCustomShortcuts.ts",
+      "git_blob_sha": "c025972f580a22c522d09178371fc5efb3280e32",
+      "sha256": "f916b35f4dc1a6547d4e614c54f46a11025182a242595325f88e55ee46999561"
+    }
+  ],
+  "script_sha256": "c5442a59e05a59ec9ccfc56dff6cfc7daee13d0f0e33781874ca2428978271fa",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "PLAT-P01",
+      "title": "Forward traversal to repeated view chooses the earlier occurrence",
+      "status": "PASS",
+      "observed": {
+        "history": [
+          "A",
+          "B",
+          "C",
+          "B",
+          "D"
+        ],
+        "before_index": 2,
+        "expected_forward_index": 3,
+        "actual_index": 1
+      },
+      "limitations": "Exact popstate callback with synthetic browser target; does not render the browser back button. URL view is correct but internal traversal index is not."
+    },
+    {
+      "id": "PLAT-P02",
+      "title": "Clicking an already read notification subtracts another unread item",
+      "status": "PASS",
+      "observed": {
+        "visible_unread_items": 1,
+        "badge_count": 0
+      },
+      "limitations": "Exact mutation callback; NotificationItem invokes it even for a read row. Simulated successful update, no database write."
+    },
+    {
+      "id": "PLAT-P03",
+      "title": "Realtime update before mutation completion causes a second unread decrement",
+      "status": "PASS",
+      "observed": {
+        "event_order": [
+          "UPDATE A read",
+          "HTTP update completion"
+        ],
+        "visible_unread_items": 1,
+        "badge_count": 0
+      },
+      "limitations": "Exact event and mutation callbacks with synthetic event order. Variant of the counter reconciliation defect; no actual Supabase subscription."
+    },
+    {
+      "id": "PLAT-P04",
+      "title": "Three notification toggles change cache without issuing a database write",
+      "status": "PASS",
+      "observed": {
+        "writes_for_three_toggles": 0,
+        "optimistic_mention_sound": false,
+        "mention_sound_after_reload": true
+      },
+      "limitations": "Exact whole settings hook with React Query/Auth/DB stubs. The current NotificationTypeSection exposes all three controls."
+    },
+    {
+      "id": "PLAT-P05",
+      "title": "Reset leaves defaults in cache and resolves despite returned database error",
+      "status": "PASS",
+      "observed": {
+        "db_error_returned": true,
+        "promise_rejected": false,
+        "cached_default_sound_enabled": true
+      },
+      "limitations": "Exact reset hook. Static consumer announces reset before awaiting this promise; no real preference changed."
+    },
+    {
+      "id": "COM-P10",
+      "title": "Email image hook preserves protocol-relative remote URL while blocking its absolute equivalent",
+      "status": "PASS",
+      "observed": {
+        "relative_src_survives": true,
+        "absolute_src_removed": true,
+        "resolved_origin": "https://tracker.example.invalid"
+      },
+      "limitations": "Executes exact privacy hook with an Element substitute, not DOMPurify or a DOM/network stack. Official DOMPurify docs permit protocol-relative URLs by default; actual browser request and deployment CSP were not measured."
+    },
+    {
+      "id": "PLAT-P06",
+      "title": "A new hook instance reads the previous instance search history from a global key",
+      "status": "PASS",
+      "observed": {
+        "stored_key": "global-search-history",
+        "second_instance_query": "synthetic private query",
+        "second_instance_result_count": 3
+      },
+      "limitations": "Exact whole hook with synthetic React/localStorage. No actual login/logout or browser profile was exercised. Static Auth logout paths clear other caches but neither this key nor all localStorage; finding requires two sessions in the same browser origin/profile."
+    },
+    {
+      "id": "PLAT-P07",
+      "title": "Undo action from the older toast reverts the newer operation",
+      "status": "PASS",
+      "observed": {
+        "clicked_toast": "archive A",
+        "actual_undo": [
+          "B"
+        ],
+        "expected_undo": [
+          "A"
+        ]
+      },
+      "limitations": "Exact execute callback and its emitted toast closure with synthetic non-firing timers and no-op forward actions. Current bulkArchive consumer permits another operation after its mutation resolves; no Sonner UI, database or real archive executed."
+    },
+    {
+      "id": "PLAT-P08",
+      "title": "Independent shortcut instances overwrite the prior row customization",
+      "status": "PASS",
+      "observed": {
+        "first_save_keys": [
+          "A"
+        ],
+        "second_save_keys": [
+          "B"
+        ],
+        "first_customization_lost": true,
+        "mounted_global_still_default": true
+      },
+      "limitations": "Exact saveShortcuts/updateShortcut callbacks, synthetic two-entry registry and localStorage. Current settings uses one hook per row plus a parent hook; global listener has another. This proves isolated state/write behavior, not a mounted React or keyboard interaction test."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0,
+  "method": "Exact AST callbacks or whole modules, all HEAD/blob checks before evaluation. Explicit synthetic state/DB/Element boundaries; no browser rendering."
+}

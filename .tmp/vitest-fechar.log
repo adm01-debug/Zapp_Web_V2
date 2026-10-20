@@ -1,0 +1,88 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2
+
+·······················stderr | src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > envio que falha nas 3 tentativas mantém a gravação e pede nova tentativa
+[2026-10-13T09:38:20.788Z] [ERROR] [App] [sid:e2b5bf16] [useAudioRecorder] envio falhou em todas as tentativas Error: rede
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:137:46
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+···············stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > rejeita com o erro do upload quando o envio do áudio falha
+[2026-10-13T09:38:20.991Z] [ERROR] [useRealtimeInbox] [sid:07b9990c] Error in handleSendAudio: Error: upload falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:122:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+·stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > rejeita com o erro do transporte quando a mensagem de áudio falha
+[2026-10-13T09:38:25.019Z] [ERROR] [useRealtimeInbox] [sid:07b9990c] Error in handleSendAudio: Error: envio falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:130:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+··stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > não anuncia sucesso falso: falha do envio rejeita mesmo se o refresh cair
+[2026-10-13T09:38:33.060Z] [ERROR] [useRealtimeInbox] [sid:07b9990c] Error in handleSendAudio: Error: upload falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:145:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > não anuncia sucesso falso: falha do envio rejeita mesmo se o refresh cair
+[2026-10-13T09:38:33.061Z] [WARN] [useRealtimeInbox] [sid:07b9990c] Audio send finished, but conversation refresh failed: Error: refresh falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:146:35
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+·stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > não duplica o aviso ao usuário (o toast fica na camada de cima)
+[2026-10-13T09:38:37.085Z] [ERROR] [useRealtimeInbox] [sid:07b9990c] Error in handleSendAudio: Error: upload falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:153:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+····
+
+ Test Files  6 passed (6)
+      Tests  46 passed (46)
+   Start at  06:38:12
+   Duration  28.86s (transform 3.01s, setup 3.51s, import 4.80s, tests 25.29s, environment 8.42s)
+

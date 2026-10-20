@@ -1,0 +1,864 @@
+[
+  {
+    "path": "src/components/team-chat/GroupManagementDialog.tsx",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/components/team-chat/ParticipantStatsGraph.tsx",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/components/team-chat/TeamChatA11y.tsx",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "CANDIDATE_RETIRE_AFTER_REVIEW",
+    "reason": "No proven runtime importer in current repo after AST plus symbols/path scans; review registries, styles and external consumers before reversible removal PR.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/components/team-chat/TeamMessageItem.tsx",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/components/team-chat/TeamPerformancePanel.tsx",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/components/team-chat/TransferConversationDialog.tsx",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/hooks/team-chat/index.ts",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/hooks/team-chat/useTeamPresence.ts",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "CANDIDATE_RETIRE_AFTER_REVIEW",
+    "reason": "No proven runtime importer in current repo after AST plus symbols/path scans; review registries, styles and external consumers before reversible removal PR.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/hooks/team-chat/useTeamTyping.ts",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "KEEP_ACTIVE_PLAN_PENDING_INTEGRATION",
+    "reason": "Explicitly required by active plan; no UI importer proves unfinished integration, not approved deletion.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/hooks/team-chat/useTeamUnreadCount.ts",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "CANDIDATE_RETIRE_AFTER_REVIEW",
+    "reason": "No proven runtime importer in current repo after AST plus symbols/path scans; review registries, styles and external consumers before reversible removal PR.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/i18n/team-chat.ts",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "CANDIDATE_RETIRE_AFTER_REVIEW",
+    "reason": "No proven runtime importer in current repo after AST plus symbols/path scans; review registries, styles and external consumers before reversible removal PR.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [
+      {
+        "path": ".github/workflows/db-guard.yml",
+        "line": 681,
+        "excerpt": "        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh"
+      },
+      {
+        "path": ".github/workflows/db-migrate.yml",
+        "line": 1123,
+        "excerpt": "              SELECT count(*) FILTER (WHERE media_url ~ '/storage/v1/object/sign/(audio-messages|team-chat-files|whatsapp-media)/') AS legacy_count FROM public.messages"
+      },
+      {
+        "path": ".github/workflows/db-migrate.yml",
+        "line": 1125,
+        "excerpt": "              SELECT count(*) FILTER (WHERE media_url ~ '/storage/v1/object/sign/(audio-messages|team-chat-files|whatsapp-media)/') FROM public.scheduled_messages"
+      },
+      {
+        "path": ".github/workflows/db-migrate.yml",
+        "line": 1127,
+        "excerpt": "              SELECT count(*) FILTER (WHERE media_url ~ '/storage/v1/object/sign/(audio-messages|team-chat-files|whatsapp-media)/') FROM public.team_messages"
+      },
+      {
+        "path": ".github/workflows/db-migrate.yml",
+        "line": 1129,
+        "excerpt": "              SELECT count(*) FILTER (WHERE file_url ~ '/storage/v1/object/sign/(audio-messages|team-chat-files|whatsapp-media)/') FROM public.knowledge_base_files"
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 724,
+        "excerpt": "      \"path\": \"src/components/team-chat/TeamChatInputArea.tsx\","
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 728,
+        "excerpt": "      \"path\": \"src/components/team-chat/TeamFileUploader.tsx\","
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 732,
+        "excerpt": "      \"path\": \"src/components/team-chat/TeamMemberProfileHeader.tsx\","
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 5766,
+        "excerpt": "      \"file\": \"src/components/team-chat/TeamChatInputArea.tsx\","
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 5780,
+        "excerpt": "      \"file\": \"src/components/team-chat/TeamFileUploader.tsx\","
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 5794,
+        "excerpt": "      \"file\": \"src/components/team-chat/TeamMemberProfileHeader.tsx\","
+      },
+      {
+        "path": "scripts/ci/eslint-baseline.json",
+        "line": 5808,
+        "excerpt": "      \"file\": \"src/components/team-chat/TeamMemberProfileHeader.tsx\","
+      },
+      {
+        "path": "scripts/db-audit/known-violations.json",
+        "line": 6,
+        "excerpt": "    \"from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts\""
+      },
+      {
+        "path": "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+        "line": 20,
+        "excerpt": "container_name=\"zapp-v2-team-chat-rpc-test-$$\""
+      },
+      {
+        "path": "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+        "line": 23,
+        "excerpt": "  if [[ \"$container_name\" =~ ^zapp-v2-team-chat-rpc-test-[0-9]+$ ]]; then"
+      },
+      {
+        "path": "scripts/team-chat-db-validate.mjs",
+        "line": 9,
+        "excerpt": " *   node scripts/team-chat-db-validate.mjs"
+      },
+      {
+        "path": "scripts/team-chat-db-validate.mjs",
+        "line": 18,
+        "excerpt": "    '[team-chat-db-validate] Vars SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são obrigatórias.'"
+      },
+      {
+        "path": "scripts/team-chat-db-validate.unit.mjs",
+        "line": 12,
+        "excerpt": "const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'team-chat-db-validate.mjs');"
+      },
+      {
+        "path": "scripts/team-chat-db-validate.unit.mjs",
+        "line": 24,
+        "excerpt": "describe('team-chat-db-validate: log injection (jssecurity:S5145)', () => {"
+      },
+      {
+        "path": "src/components/layout/AppShell.tsx",
+        "line": 63,
+        "excerpt": "  const showFloatingZenToggle = currentView === 'team-chat';"
+      },
+      {
+        "path": "src/components/mobile/MobileShell.tsx",
+        "line": 21,
+        "excerpt": "  { id: 'team-chat', icon: <MessagesSquare className=\"w-5 h-5\" />, label: 'Equipe' },"
+      },
+      {
+        "path": "src/components/mobile/MobileShell.tsx",
+        "line": 86,
+        "excerpt": "      {/* Hide FAB when keyboard is open, on team-chat (overlaps the input) and on contacts (has its own FAB) */}"
+      },
+      {
+        "path": "src/components/mobile/MobileShell.tsx",
+        "line": 87,
+        "excerpt": "      {!isKeyboardOpen && currentView !== 'team-chat' && currentView !== 'contacts' && ("
+      },
+      {
+        "path": "src/components/performance/hotRoutePrefetch.ts",
+        "line": 18,
+        "excerpt": " * (label \"Chat\"), `team-chat` (Teams) e `email-chat` (Email). O `ChatPanel` é o"
+      },
+      {
+        "path": "src/components/performance/hotRoutePrefetch.ts",
+        "line": 24,
+        "excerpt": "  teamChat: () => import('@/components/team-chat/TeamChatView').then((m) => ({ default: m.TeamChatView })),"
+      },
+      {
+        "path": "src/components/team-chat/AddMembersDialog.tsx",
+        "line": 8,
+        "excerpt": "import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/AddMembersDialog.tsx",
+        "line": 10,
+        "excerpt": "import { useActiveTeamProfiles, useAddConversationMembers } from '@/hooks/team-chat/useTeamChatMembers';"
+      },
+      {
+        "path": "src/components/team-chat/DepartmentManagementDialog.tsx",
+        "line": 4,
+        "excerpt": "import { ActiveDepartment } from '@/hooks/team-chat/useActiveDepartments';"
+      },
+      {
+        "path": "src/components/team-chat/GroupManagementDialog.tsx",
+        "line": 26,
+        "excerpt": "import type { TeamConversation } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/NewConversationDialog.tsx",
+        "line": 12,
+        "excerpt": "import { useActiveDepartments } from '@/hooks/team-chat/useActiveDepartments';"
+      },
+      {
+        "path": "src/components/team-chat/ParticipantStatsGraph.tsx",
+        "line": 2,
+        "excerpt": "import { useParticipantStats } from '@/hooks/team-chat/useParticipantStats';"
+      },
+      {
+        "path": "src/components/team-chat/TeamChatA11y.tsx",
+        "line": 4,
+        "excerpt": "export function TeamChatSkipLink({ targetId = 'team-chat-messages' }: { targetId?: string }) {"
+      },
+      {
+        "path": "src/components/team-chat/TeamChatHeader.tsx",
+        "line": 1,
+        "excerpt": "import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/TeamConversationList.tsx",
+        "line": 8,
+        "excerpt": "import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/TeamConversationList.tsx",
+        "line": 9,
+        "excerpt": "import { useActiveDepartments, ActiveDepartment } from '@/hooks/team-chat/useActiveDepartments';"
+      },
+      {
+        "path": "src/components/team-chat/TeamFileUploader.tsx",
+        "line": 69,
+        "excerpt": "        .from('team-chat-files')"
+      },
+      {
+        "path": "src/components/team-chat/TeamFileUploader.tsx",
+        "line": 75,
+        "excerpt": "        .from('team-chat-files')"
+      },
+      {
+        "path": "src/components/team-chat/TeamMemberDetails.tsx",
+        "line": 3,
+        "excerpt": "import { useTeamMemberDetails } from '@/hooks/team-chat/useTeamMemberDetails';"
+      },
+      {
+        "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
+        "line": 9,
+        "excerpt": "import type { MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';"
+      },
+      {
+        "path": "src/components/team-chat/TeamMessageItem.tsx",
+        "line": 13,
+        "excerpt": "import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/TeamMessageItem.tsx",
+        "line": 18,
+        "excerpt": "import { normalizeTeamMessageStatus } from '@/hooks/team-chat/teamMessageStatus';"
+      },
+      {
+        "path": "src/components/team-chat/TeamPerformancePanel.tsx",
+        "line": 3,
+        "excerpt": "import { useTeamPerformance } from '@/hooks/team-chat/useTeamPerformance';"
+      },
+      {
+        "path": "src/components/team-chat/TransferConversationDialog.tsx",
+        "line": 15,
+        "excerpt": "import type { TeamConversation } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/TransferConversationDialog.tsx",
+        "line": 16,
+        "excerpt": "import { useTransferConversation } from '@/hooks/team-chat/useTeamChatMutations';"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+        "line": 62,
+        "excerpt": "    it('SECURITY: team-chat-files storage bucket should restrict access', () => {"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+        "line": 63,
+        "excerpt": "      // Storage bucket 'team-chat-files' has public reads for simplicity"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+        "line": 993,
+        "excerpt": "      // Channel: 'team-chat-updates', event: '*'"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+        "line": 1544,
+        "excerpt": "      'Storage: team-chat-files bucket is publicly readable',"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 11,
+        "excerpt": "const panelSrc = readSrc('components/team-chat/TeamChatPanel.tsx');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 12,
+        "excerpt": "const inputSrc = readSrc('components/team-chat/TeamChatInputArea.tsx');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 13,
+        "excerpt": "const headerSrc = readSrc('components/team-chat/TeamChatHeader.tsx');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 14,
+        "excerpt": "const uploaderSrc = readSrc('components/team-chat/TeamFileUploader.tsx');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 15,
+        "excerpt": "const viewSrc = readSrc('components/team-chat/TeamChatView.tsx');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 16,
+        "excerpt": "const hookSrc = readSrc('hooks/team-chat/useTeamMessages.ts');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 17,
+        "excerpt": "const mutationHookSrc = readSrc('hooks/team-chat/useTeamChatMutations.ts');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 18,
+        "excerpt": "const panelHookSrc = readSrc('components/team-chat/useTeamChatPanel.ts');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 72,
+        "excerpt": "      expect(inputSrc).toContain('team-chat-files');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+        "line": 150,
+        "excerpt": "      expect(panelSrc).toContain('team-chat-files');"
+      },
+      {
+        "path": "src/components/team-chat/__tests__/team-chat-security-gaps.test.ts",
+        "line": 372,
+        "excerpt": "      // Channel: 'team-chat-updates', event: '*', table: 'team_messages'"
+      },
+      {
+        "path": "src/components/team-chat/department-management/DepartmentAuditView.tsx",
+        "line": 4,
+        "excerpt": "import { useDepartmentAuditLogs } from '@/hooks/team-chat/useDepartmentManagement';"
+      },
+      {
+        "path": "src/components/team-chat/department-management/DepartmentInvitesView.tsx",
+        "line": 6,
+        "excerpt": "import { useDepartmentInvites, useCreateDepartmentInvite, useDeleteDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';"
+      },
+      {
+        "path": "src/components/team-chat/department-management/DepartmentMembersView.tsx",
+        "line": 8,
+        "excerpt": "import { useDepartmentProfiles, useAddDepartmentMember, useRemoveDepartmentMember } from '@/hooks/team-chat/useDepartmentManagement';"
+      },
+      {
+        "path": "src/components/team-chat/department-management/DepartmentWhatsAppView.tsx",
+        "line": 7,
+        "excerpt": "import { useDepartmentWhatsAppCredentials, useSaveDepartmentWhatsApp } from '@/hooks/team-chat/useDepartmentManagement';"
+      },
+      {
+        "path": "src/components/team-chat/teamChatParts.tsx",
+        "line": 7,
+        "excerpt": "import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/components/team-chat/useTeamChatPanel.ts",
+        "line": 7,
+        "excerpt": "import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';"
+      },
+      {
+        "path": "src/components/team-chat/useTeamChatPanel.ts",
+        "line": 8,
+        "excerpt": "import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';"
+      },
+      {
+        "path": "src/components/team-chat/useTeamChatPanel.ts",
+        "line": 9,
+        "excerpt": "import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';"
+      },
+      {
+        "path": "src/components/team-chat/useTeamChatPanel.ts",
+        "line": 247,
+        "excerpt": "    const { data, error } = await supabase.storage.from('team-chat-files').upload("
+      },
+      {
+        "path": "src/components/team-chat/useTeamChatPanel.ts",
+        "line": 257,
+        "excerpt": "      mediaBucket: 'team-chat-files',"
+      },
+      {
+        "path": "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts",
+        "line": 5,
+        "excerpt": "// Antes este teste exercitava `src/hooks/team-chat/useTeamChatNotifications.ts`, um hook"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChat.ts",
+        "line": 2,
+        "excerpt": "export type { TeamConversation, TeamMember, TeamMessage } from '../team-chat/teamChatTypes';"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChat.ts",
+        "line": 3,
+        "excerpt": "export { useTeamConversations } from '../team-chat/useTeamConversations';"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChat.ts",
+        "line": 4,
+        "excerpt": "export { useTeamMessages } from '../team-chat/useTeamMessages';"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChat.ts",
+        "line": 11,
+        "excerpt": "} from '../team-chat/useTeamChatMutations';"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChatDraft.ts",
+        "line": 70,
+        "excerpt": "            .from('team-chat-files')"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChatDraft.ts",
+        "line": 75,
+        "excerpt": "            .from('team-chat-files')"
+      },
+      {
+        "path": "src/hooks/chat/useTeamChatNotifications.ts",
+        "line": 97,
+        "excerpt": "      .channel('team-chat-notifications')"
+      },
+      {
+        "path": "src/hooks/integrations/useGmailOAuth.ts",
+        "line": 14,
+        "excerpt": "  'omni-inbox', 'email-chat', 'pipeline', 'team-chat',"
+      },
+      {
+        "path": "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+        "line": 33,
+        "excerpt": "import { useCreateDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';"
+      },
+      {
+        "path": "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+        "line": 28,
+        "excerpt": "import { useDepartmentWhatsAppCredentials } from '@/hooks/team-chat/useDepartmentManagement';"
+      },
+      {
+        "path": "src/hooks/team-chat/__tests__/useTeamMessages.test.tsx",
+        "line": 41,
+        "excerpt": "import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';"
+      },
+      {
+        "path": "src/hooks/team-chat/index.ts",
+        "line": 1,
+        "excerpt": "// Barrel export for hooks/team-chat"
+      },
+      {
+        "path": "src/hooks/team-chat/useTeamConversations.ts",
+        "line": 112,
+        "excerpt": "      .channel('team-chat-updates')"
+      },
+      {
+        "path": "src/hooks/team-chat/useTeamUnreadCount.ts",
+        "line": 4,
+        "excerpt": "const storageKey = (cid: string) => `team-chat-unread-${cid}`;"
+      },
+      {
+        "path": "src/hooks/ui/useNavShortcuts.ts",
+        "line": 7,
+        "excerpt": "  KeyM: 'team-chat',"
+      },
+      {
+        "path": "src/lib/storage_object_reference.ts",
+        "line": 8,
+        "excerpt": "  'team-chat-files',"
+      },
+      {
+        "path": "src/main.tsx",
+        "line": 47,
+        "excerpt": "// (useSupabaseRealtime, VoIPPanel, team-chat citam o remount em comentario),"
+      },
+      {
+        "path": "src/pages/ViewRouter.tsx",
+        "line": 88,
+        "excerpt": "  'team-chat': Views.TeamChatView,"
+      },
+      {
+        "path": "src/pages/lazyViews.ts",
+        "line": 48,
+        "excerpt": "export const TeamChatView = lazyWithRetry(() => import('@/components/team-chat/TeamChatView').then(m => ({ default: m.TeamChatView })));"
+      },
+      {
+        "path": "src/services/__tests__/navigation.service.test.ts",
+        "line": 33,
+        "excerpt": "    expect(fullLayoutIds).toEqual(expect.arrayContaining(['inbox', 'team-chat', 'email-chat', 'pipeline', 'omni-inbox']));"
+      },
+      {
+        "path": "src/services/__tests__/navigation.service.test.ts",
+        "line": 38,
+        "excerpt": "  const PRIMARY_IDS = ['inbox', 'team-chat', 'email-chat', 'contacts', 'multiplix', 'catalog', 'voip', 'pipeline', 'tasks', 'achievements', 'dashboard'];"
+      },
+      {
+        "path": "src/services/navigation.service.ts",
+        "line": 51,
+        "excerpt": "      { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 4,
+        "excerpt": "  --team-chat-sidebar-width: 260px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 5,
+        "excerpt": "  --team-chat-header-height: 56px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 6,
+        "excerpt": "  --team-chat-input-min-height: 48px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 7,
+        "excerpt": "  --team-chat-message-max-width: 680px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 10,
+        "excerpt": "  --team-chat-bg: hsl(var(--background));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 11,
+        "excerpt": "  --team-chat-surface: hsl(var(--card));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 12,
+        "excerpt": "  --team-chat-surface-hover: hsl(var(--muted));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 13,
+        "excerpt": "  --team-chat-border: hsl(var(--border));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 14,
+        "excerpt": "  --team-chat-header-bg: hsl(var(--card));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 15,
+        "excerpt": "  --team-chat-input-bg: hsl(var(--background));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 18,
+        "excerpt": "  --team-chat-bubble-own: hsl(var(--primary));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 19,
+        "excerpt": "  --team-chat-bubble-own-fg: hsl(var(--primary-foreground));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 20,
+        "excerpt": "  --team-chat-bubble-other: hsl(var(--muted));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 21,
+        "excerpt": "  --team-chat-bubble-other-fg: hsl(var(--foreground));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 24,
+        "excerpt": "  --team-chat-online: #22c55e;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 25,
+        "excerpt": "  --team-chat-away: #f59e0b;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 26,
+        "excerpt": "  --team-chat-offline: hsl(var(--muted-foreground));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 29,
+        "excerpt": "  --team-chat-badge-bg: hsl(var(--destructive));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 30,
+        "excerpt": "  --team-chat-badge-fg: hsl(var(--destructive-foreground));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 33,
+        "excerpt": "  --team-chat-typing-color: hsl(var(--muted-foreground));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 36,
+        "excerpt": "  --team-chat-analytics-chart-primary: hsl(var(--primary));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 37,
+        "excerpt": "  --team-chat-analytics-chart-secondary: hsl(var(--secondary));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 38,
+        "excerpt": "  --team-chat-analytics-kpi-bg: hsl(var(--card));"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 41,
+        "excerpt": "  --team-chat-transition-fast: 120ms;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 42,
+        "excerpt": "  --team-chat-transition-base: 200ms;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 43,
+        "excerpt": "  --team-chat-transition-slow: 320ms;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 46,
+        "excerpt": "  --team-chat-radius-bubble: 18px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 47,
+        "excerpt": "  --team-chat-radius-bubble-tail: 4px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 48,
+        "excerpt": "  --team-chat-radius-input: 12px;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 49,
+        "excerpt": "  --team-chat-radius-panel: var(--radius);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 52,
+        "excerpt": "  --team-chat-shadow-message: 0 1px 2px rgba(0, 0, 0, 0.08);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 53,
+        "excerpt": "  --team-chat-shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.12);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 58,
+        "excerpt": "    --team-chat-shadow-message: 0 1px 2px rgba(0, 0, 0, 0.32);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 59,
+        "excerpt": "    --team-chat-shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.48);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 64,
+        "excerpt": "  --team-chat-shadow-message: 0 1px 2px rgba(0, 0, 0, 0.32);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 65,
+        "excerpt": "  --team-chat-shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.48);"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 71,
+        "excerpt": "    --team-chat-transition-fast: 0ms;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 72,
+        "excerpt": "    --team-chat-transition-base: 0ms;"
+      },
+      {
+        "path": "src/styles/team-chat-tokens.css",
+        "line": 73,
+        "excerpt": "    --team-chat-transition-slow: 0ms;"
+      }
+    ],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "src/styles/team-chat-tokens.css",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "CANDIDATE_RETIRE_AFTER_REVIEW",
+    "reason": "No proven runtime importer in current repo after AST plus symbols/path scans; review registries, styles and external consumers before reversible removal PR.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "scripts/team-chat-db-validate.mjs",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "REVIEW_RETIRE_AS_PAIRED_MAINTENANCE_UNIT",
+    "reason": "Validator and sanitization unit have an executable dependency; obsolete contract warrants rewrite/retirement review, not dead-code label.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [
+      {
+        "path": "scripts/team-chat-db-validate.unit.mjs",
+        "line": 12,
+        "excerpt": "const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'team-chat-db-validate.mjs');"
+      },
+      {
+        "path": "scripts/team-chat-db-validate.unit.mjs",
+        "line": 24,
+        "excerpt": "describe('team-chat-db-validate: log injection (jssecurity:S5145)', () => {"
+      }
+    ],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "path": "scripts/team-chat-db-validate.unit.mjs",
+    "status": "NEEDS_REVALIDATION",
+    "code_disposition": "REVIEW_RETIRE_AS_PAIRED_MAINTENANCE_UNIT",
+    "reason": "Validator and sanitization unit have an executable dependency; obsolete contract warrants rewrite/retirement review, not dead-code label.",
+    "ast_incoming_imports": [],
+    "symbol_or_path_mentions": [],
+    "scope": "src/scripts/workflows/e2e/public plus TS AST imports; not external clients",
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "object": "get_team_conversation_previews",
+    "status": "PARTIAL",
+    "code_disposition": "KEEP_ACTIVE_CONSUMER",
+    "reason": "Deprecated comment exists but useTeamConversations calls it. Must migrate/deploy consumer before DROP.",
+    "evidence": [
+      {
+        "path": "src/hooks/team-chat/useTeamConversations.ts",
+        "line_start": 26,
+        "line_end": 38,
+        "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "excerpt": "      const [convResult, membersResult, previewsResult, unreadResult] = await Promise.all([\n        supabase\n          .from('team_conversations')\n          .select('*')\n          .in('id', convIds)\n          .order('updated_at', { ascending: false }),\n        supabase\n          .from('team_conversation_members')\n          .select('*, profile:profiles(id, name, email, avatar_url, is_active)')\n          .in('conversation_id', convIds),\n        supabase.rpc('get_team_conversation_previews'),\n        supabase.rpc('get_team_unread_counts'),\n      ]);"
+      }
+    ],
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "object": "get_team_unread_counts",
+    "status": "PARTIAL",
+    "code_disposition": "KEEP_ACTIVE_CONSUMER",
+    "reason": "Deprecated comment exists but useTeamConversations calls it. Must migrate/deploy consumer before DROP.",
+    "evidence": [
+      {
+        "path": "src/hooks/team-chat/useTeamConversations.ts",
+        "line_start": 26,
+        "line_end": 38,
+        "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "excerpt": "      const [convResult, membersResult, previewsResult, unreadResult] = await Promise.all([\n        supabase\n          .from('team_conversations')\n          .select('*')\n          .in('id', convIds)\n          .order('updated_at', { ascending: false }),\n        supabase\n          .from('team_conversation_members')\n          .select('*, profile:profiles(id, name, email, avatar_url, is_active)')\n          .in('conversation_id', convIds),\n        supabase.rpc('get_team_conversation_previews'),\n        supabase.rpc('get_team_unread_counts'),\n      ]);"
+      }
+    ],
+    "deletion_executed": false,
+    "dead_confirmed": false
+  },
+  {
+    "object": "supabase/migrations/*.sql",
+    "code_disposition": "KEEP_IMMUTABLE_HISTORY",
+    "reason": "Historical supersession of SQL objects is not a reason to delete applied migrations.",
+    "dead_confirmed": false,
+    "deletion_executed": false
+  }
+]

@@ -1,0 +1,1741 @@
+diff --git a/src/components/inbox/AudioRecorder.tsx b/src/components/inbox/AudioRecorder.tsx
+index 00ddfb95fd..afe77c37c7 100644
+--- a/src/components/inbox/AudioRecorder.tsx
++++ b/src/components/inbox/AudioRecorder.tsx
+@@ -1,15 +1,15 @@
+ import { useState, useRef, useEffect, useCallback } from 'react';
+ import { motion, useMotionValue, useTransform } from 'framer-motion';
+ import { Button } from '@/components/ui/button';
+-import { Mic, Square, X, Send, Pause, Play, Lock, Trash2 } from 'lucide-react';
++import { Mic, Square, X, Send, Pause, Play, Lock, Trash2, RotateCcw, AlertTriangle } from 'lucide-react';
+ import { cn } from '@/lib/utils';
+-import { useAudioRecorder } from '@/hooks/communication/useAudioRecorder';
++import { useAudioRecorder, levelBufferToHeights, sendWithBackoff } from '@/hooks/communication/useAudioRecorder';
+ import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
+ import { VoiceChanger } from './VoiceChanger';
+ import { useIsMobile } from '@/hooks/ui/use-mobile';
+ 
+ interface AudioRecorderProps {
+-  onSend: (audioBlob: Blob) => void;
++  onSend: (audioBlob: Blob) => void | Promise<unknown>;
+   onCancel: () => void;
+ }
+ 
+@@ -17,23 +17,31 @@ interface AudioRecorderProps {
+ // (regra react-hooks/purity): alem de impuro, o sorteio acontecia a cada re-render — e o timer da
+ // gravacao re-renderiza a cada segundo — entao as barras trocavam de tamanho no meio da gravacao.
+ // Os valores sao fixos por barra: o pulso (4 -> altura -> 4) continua, sem jitter e sem render impuro.
++// Servem de reserva quando nao ha analisador de audio (jsdom, navegador sem AudioContext).
+ const ALTURAS_WAVEFORM = [
+   8, 14, 22, 10, 26, 16, 6, 20, 12, 24,
+   18, 9, 15, 27, 11, 19, 7, 23, 13, 21,
+   17, 10, 25, 14, 8, 22, 16, 12, 20, 9,
+ ];
+ 
++/** Quantidade de barras do waveform. */
++const BARS = ALTURAS_WAVEFORM.length;
++/** Passo da amostragem do nível de áudio: 10 quadros por segundo de waveform. */
++const LEVEL_SAMPLE_MS = 100;
++
+ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+   const [isPlaying, setIsPlaying] = useState(false);
+   const [voiceChanged, setVoiceChanged] = useState(false);
+   const [isLocked, setIsLocked] = useState(false);
+   const [playbackProgress, setPlaybackProgress] = useState(0);
++  const [levels, setLevels] = useState<number[]>([]);
++  const [sendState, setSendState] = useState<'idle' | 'sending' | 'failed'>('idle');
+   const audioRef = useRef<HTMLAudioElement | null>(null);
+   // E36 — a prévia do áudio gravado é "áudio enviado" (mídia de conversa).
+   useMediaElementVolume(audioRef);
+   const isMobile = useIsMobile();
+-  
++
+   // Swipe-to-cancel
+   const swipeX = useMotionValue(0);
+   const cancelOpacity = useTransform(swipeX, [-120, -60, 0], [1, 0.5, 0]);
+@@ -41,35 +49,65 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+ 
+   const {
+     isRecording,
++    isPaused,
+     duration,
+     audioUrl,
+     startRecording,
+     stopRecording,
++    pauseRecording,
++    resumeRecording,
+     cancelRecording,
++    undoDiscard,
++    discardedDraft,
++    discardSecondsLeft,
++    recoveredDraft,
++    draftChecked,
++    acceptRecoveredDraft,
++    dismissRecoveredDraft,
++    clearDraft,
++    getLevel,
+     formatDuration,
+   } = useAudioRecorder({
+     onRecordingComplete: (blob) => setAudioBlob(blob),
++    onDiscardCommitted: () => onCancel(),
+   });
+ 
+-  // Os callbacks do hook sao estaveis (operam em refs, nao em estado capturado),
+-  // entao a lista de deps nao reexecuta o efeito — e o cleanup do desmonte chama
+-  // o cancelRecording correto em vez de uma closure do primeiro render.
++  // Abre o microfone só depois de olhar o disco (uma gravação órfã não pode ser
++  // atropelada por uma nova). O desmonte libera a captura pelo ref real do hook —
++  // nada de `cd`/closure velha — e o trecho já gravado fica como rascunho.
++  const startedRef = useRef(false);
+   useEffect(() => {
++    if (!draftChecked || startedRef.current || recoveredDraft) return;
++    startedRef.current = true;
+     startRecording();
+-    return () => cancelRecording();
+-  }, [startRecording, cancelRecording]);
++  }, [draftChecked, recoveredDraft, startRecording]);
++
++  // Nível real do microfone: 10 amostras por segundo viram as alturas das barras.
++  // Sem analisador (`getLevel()` = -1) o waveform cai no pulso fixo — o jsdom e
++  // qualquer navegador sem AudioContext continuam vendo as barras, sem erro.
++  useEffect(() => {
++    if (!isRecording || isPaused) return;
++    const tick = () => {
++      const level = getLevel();
++      if (level < 0) return;
++      setLevels((prev) => (prev.length >= BARS ? [...prev.slice(1), level] : [...prev, level]));
++    };
++    tick();
++    const timer = setInterval(tick, LEVEL_SAMPLE_MS);
++    return () => clearInterval(timer);
++  }, [getLevel, isPaused, isRecording]);
+ 
+   // Playback progress tracking
+   useEffect(() => {
+     const audio = audioRef.current;
+     if (!audio) return;
+-    
++
+     const updateProgress = () => {
+       if (audio.duration) {
+         setPlaybackProgress((audio.currentTime / audio.duration) * 100);
+       }
+     };
+-    
++
+     audio.addEventListener('timeupdate', updateProgress);
+     return () => audio.removeEventListener('timeupdate', updateProgress);
+   }, [audioUrl]);
+@@ -84,16 +122,35 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+     setIsPlaying(!isPlaying);
+   };
+ 
+-  const handleSend = () => {
+-    if (audioBlob) {
+-      onSend(audioBlob);
++  const handleSend = async () => {
++    if (!audioBlob || sendState === 'sending') return;
++    setSendState('sending');
++    const delivered = await sendWithBackoff(() => Promise.resolve(onSend(audioBlob)));
++    if (!delivered) {
++      // Erro definitivo: a gravação continua na tela para nova tentativa manual.
++      setSendState('failed');
++      return;
+     }
++    setSendState('idle');
++    clearDraft();
+   };
+ 
+-  const handleCancel = () => {
+-    cancelRecording();
++  const handleCancel = useCallback(() => {
++    // Com áudio em andamento ou concluído, descartar abre a janela de desfazer:
++    // o gravador fica na tela por 5 s e só então o dono é avisado para fechar.
++    if (isRecording || audioBlob) {
++      cancelRecording();
++      return;
++    }
+     onCancel();
+-  };
++  }, [audioBlob, cancelRecording, isRecording, onCancel]);
++
++  // "Descartar" da gravação recuperada: some a oferta e abre o microfone para uma nova.
++  const handleDismissRecovered = useCallback(() => {
++    dismissRecoveredDraft();
++    startedRef.current = true;
++    startRecording();
++  }, [dismissRecoveredDraft, startRecording]);
+ 
+   const handleVoiceChanged = (newBlob: Blob) => {
+     setAudioBlob(newBlob);
+@@ -109,6 +166,30 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+     setIsLocked(true);
+   }, []);
+ 
++  // Apertei espaço: pausa/retoma sem soltar o botão. Esc cancela. Só vale durante
++  // a gravação e nunca com o foco num campo de texto (o espaço é do campo lá).
++  useEffect(() => {
++    if (!isRecording) return;
++    const onKeyDown = (event: KeyboardEvent) => {
++      const target = event.target as HTMLElement | null;
++      if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) {
++        return;
++      }
++      if (event.code === 'Space' || event.key === ' ') {
++        event.preventDefault();
++        if (isPaused) resumeRecording();
++        else pauseRecording();
++        return;
++      }
++      if (event.key === 'Escape') {
++        event.preventDefault();
++        handleCancel();
++      }
++    };
++    window.addEventListener('keydown', onKeyDown);
++    return () => window.removeEventListener('keydown', onKeyDown);
++  }, [handleCancel, isPaused, isRecording, pauseRecording, resumeRecording]);
++
+   // Swipe-to-cancel handlers for mobile
+   const handleTouchStart = (e: React.TouchEvent) => {
+     swipeRef.current.startX = e.touches[0].clientX;
+@@ -131,6 +212,20 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+     swipeRef.current.isSwiping = false;
+   };
+ 
++  // Alturas medidas do microfone; sem medição, `null` (o pulso fixo assume).
++  const measuredHeights = levels.length > 0 ? levelBufferToHeights(levels, BARS, 4, 28) : null;
++
++  // Anúncio para leitor de tela: pausa, descarte (com a contagem) e falha de envio.
++  const announcement = discardedDraft
++    ? `Gravação descartada. Desfazer disponível por ${discardSecondsLeft} segundos.`
++    : sendState === 'failed'
++      ? 'Não foi possível enviar o áudio. A gravação continua disponível.'
++      : isRecording && isPaused
++        ? 'Gravação pausada.'
++        : isRecording
++          ? 'Gravando.'
++          : '';
++
+   return (
+     <motion.div
+       initial={{ opacity: 0, y: 10 }}
+@@ -141,6 +236,8 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+       onTouchMove={isRecording && isMobile ? handleTouchMove : undefined}
+       onTouchEnd={isRecording && isMobile ? handleTouchEnd : undefined}
+     >
++      <span role="status" aria-live="polite" className="sr-only">{announcement}</span>
++
+       {/* Swipe-to-cancel overlay (mobile only) */}
+       {isRecording && isMobile && (
+         <motion.div
+@@ -167,119 +264,168 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
+         </Button>
+       </motion.div>
+ 
+-      {/* Recording indicator or playback */}
+-      <div className="flex-1 flex items-center gap-3">
+-        {isRecording ? (
+-          <>
+-            <motion.div
+-              animate={{ scale: [1, 1.2, 1] }}
+-              transition={{ duration: 1, repeat: Infinity }}
+-              className="w-3 h-3 rounded-full bg-destructive shrink-0"
+-            />
+-            <div className="flex-1 flex items-center gap-2">
+-              {/* Waveform visualization */}
+-              <div className="h-8 flex-1 flex items-center gap-0.5">
+-                {Array.from({ length: ALTURAS_WAVEFORM.length }).map((_, i) => (
++      {/* Visão do descarte: a gravação volta enquanto a janela de 5 s correr. */}
++      {discardedDraft ? (
++        <div className="flex-1 flex items-center gap-3">
++          <span className="text-sm text-muted-foreground">Gravação descartada</span>
++          <Button
++            variant="outline"
++            size="sm"
++            onClick={undoDiscard}
++            aria-label="Desfazer descarte da gravação"
++          >
++            <RotateCcw className="w-4 h-4 mr-1" />
++            Desfazer ({discardSecondsLeft}s)
++          </Button>
++        </div>
++      ) : recoveredDraft ? (
++        <div className="flex-1 flex items-center gap-3">
++          <span className="text-sm text-muted-foreground">Gravação recuperada disponível</span>
++          <Button variant="outline" size="sm" onClick={acceptRecoveredDraft}>
++            Usar gravação
++          </Button>
++          <Button variant="ghost" size="sm" onClick={handleDismissRecovered}>
++            Gravar nova
++          </Button>
++        </div>
++      ) : (
++        <>
++          {/* Recording indicator or playback */}
++          <div className="flex-1 flex items-center gap-3">
++            {isRecording ? (
++              <>
++                <motion.div
++                  animate={isPaused ? { scale: 1 } : { scale: [1, 1.2, 1] }}
++                  transition={{ duration: 1, repeat: isPaused ? 0 : Infinity }}
++                  className={cn('w-3 h-3 rounded-full shrink-0', isPaused ? 'bg-muted-foreground' : 'bg-destructive')}
++                />
++                <div className="flex-1 flex items-center gap-2">
++                  {/* Waveform visualization */}
++                  <div className="h-8 flex-1 flex items-center gap-0.5" aria-hidden="true">
++                    {measuredHeights
++                      ? measuredHeights.map((height, i) => (
++                          <div
++                            key={i}
++                            className={cn('w-1 rounded-full', isPaused ? 'bg-muted-foreground' : 'bg-primary')}
++                            style={{ height }}
++                          />
++                        ))
++                      : ALTURAS_WAVEFORM.map((height, i) => (
++                          <motion.div
++                            key={i}
++                            animate={{ height: isPaused ? 4 : [4, height, 4] }}
++                            transition={{ duration: 0.5, repeat: isPaused ? 0 : Infinity, delay: i * 0.02 }}
++                            className={cn('w-1 rounded-full', isPaused ? 'bg-muted-foreground' : 'bg-primary')}
++                          />
++                        ))}
++                  </div>
++                  {/* Timer */}
++                  <span
++                    className={cn(
++                      'text-sm font-mono font-medium w-14 text-right tabular-nums',
++                      isPaused ? 'text-muted-foreground' : 'text-destructive',
++                    )}
++                  >
++                    {formatDuration(duration)}
++                  </span>
++                </div>
++              </>
++            ) : audioUrl ? (
++              <>
++                <Button
++                  variant="ghost"
++                  size="icon"
++                  onClick={handlePlayPause}
++                  className="text-primary shrink-0"
++                  aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
++                >
++                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
++                </Button>
++                <audio
++                  ref={audioRef}
++                  src={audioUrl}
++                  onEnded={() => { setIsPlaying(false); setPlaybackProgress(0); }}
++                  className="hidden"
++                />
++                {/* Progress bar with actual playback tracking */}
++                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                   <motion.div
+-                    key={i}
+-                    animate={{
+-                      height: [4, ALTURAS_WAVEFORM[i], 4],
+-                    }}
+-                    transition={{
+-                      duration: 0.5,
+-                      repeat: Infinity,
+-                      delay: i * 0.02,
+-                    }}
+-                    className="w-1 bg-primary rounded-full"
++                    className={cn("h-full rounded-full transition-all", "bg-primary")}
++                    style={{ width: `${isPlaying ? playbackProgress : 100}%` }}
+                   />
+-                ))}
+-              </div>
+-              {/* Timer */}
+-              <span className="text-sm font-mono text-destructive font-medium w-14 text-right tabular-nums">
+-                {formatDuration(duration)}
+-              </span>
+-            </div>
+-          </>
+-        ) : audioUrl ? (
+-          <>
+-            <Button
+-              variant="ghost"
+-              size="icon"
+-              onClick={handlePlayPause}
+-              className="text-primary shrink-0"
+-              aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
++                </div>
++                <span className="text-sm font-mono text-muted-foreground w-14 text-right tabular-nums">
++                  {formatDuration(duration)}
++                </span>
++              </>
++            ) : null}
++          </div>
++
++          {/* Lock button (during recording, mobile) */}
++          {isRecording && !isLocked && isMobile && (
++            <motion.div
++              initial={{ opacity: 0, scale: 0.8 }}
++              animate={{ opacity: 1, scale: 1 }}
++              whileTap={{ scale: 0.9 }}
+             >
+-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+-            </Button>
+-            <audio
+-              ref={audioRef}
+-              src={audioUrl}
+-              onEnded={() => { setIsPlaying(false); setPlaybackProgress(0); }}
+-              className="hidden"
+-            />
+-            {/* Progress bar with actual playback tracking */}
+-            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+-              <motion.div
+-                className={cn("h-full rounded-full transition-all", "bg-primary")}
+-                style={{ width: `${isPlaying ? playbackProgress : 100}%` }}
++              <Button
++                variant="ghost"
++                size="icon"
++                className="text-muted-foreground hover:text-primary"
++                onClick={handleLock}
++                aria-label="Travar gravação"
++              >
++                <Lock className="w-4 h-4" />
++              </Button>
++            </motion.div>
++          )}
++
++          {/* Stop/Send controls */}
++          {isRecording ? (
++            <div className="flex items-center gap-1">
++              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
++                <Button
++                  variant="ghost"
++                  size="icon"
++                  onClick={isPaused ? resumeRecording : pauseRecording}
++                  className="text-muted-foreground hover:text-primary"
++                  aria-label={isPaused ? 'Retomar gravação' : 'Pausar gravação'}
++                >
++                  {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
++                </Button>
++              </motion.div>
++              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
++                <Button
++                  size="icon"
++                  className="bg-destructive hover:bg-destructive/90"
++                  onClick={stopRecording}
++                  aria-label="Parar gravação"
++                >
++                  <Square className="w-4 h-4" />
++                </Button>
++              </motion.div>
++            </div>
++          ) : audioBlob ? (
++            <div className="flex items-center gap-1">
++              <VoiceChanger
++                audioBlob={audioBlob}
++                onVoiceChanged={handleVoiceChanged}
+               />
++              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
++                <Button
++                  size="icon"
++                  className="bg-primary hover:bg-primary/90"
++                  onClick={handleSend}
++                  disabled={sendState === 'sending'}
++                  aria-label={sendState === 'failed' ? 'Tentar enviar o áudio novamente' : 'Enviar áudio'}
++                >
++                  {sendState === 'failed' ? <AlertTriangle className="w-4 h-4" /> : <Send className="w-4 h-4" />}
++                </Button>
++              </motion.div>
+             </div>
+-            <span className="text-sm font-mono text-muted-foreground w-14 text-right tabular-nums">
+-              {formatDuration(duration)}
+-            </span>
+-          </>
+-        ) : null}
+-      </div>
+-
+-      {/* Lock button (during recording, mobile) */}
+-      {isRecording && !isLocked && isMobile && (
+-        <motion.div
+-          initial={{ opacity: 0, scale: 0.8 }}
+-          animate={{ opacity: 1, scale: 1 }}
+-          whileTap={{ scale: 0.9 }}
+-        >
+-          <Button
+-            variant="ghost"
+-            size="icon"
+-            className="text-muted-foreground hover:text-primary"
+-            onClick={handleLock}
+-            aria-label="Travar gravação"
+-          >
+-            <Lock className="w-4 h-4" />
+-          </Button>
+-        </motion.div>
++          ) : null}
++        </>
+       )}
+-
+-      {/* Stop/Send controls */}
+-      {isRecording ? (
+-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+-          <Button
+-            size="icon"
+-            className="bg-destructive hover:bg-destructive/90"
+-            onClick={stopRecording}
+-            aria-label="Parar gravação"
+-          >
+-            <Square className="w-4 h-4" />
+-          </Button>
+-        </motion.div>
+-      ) : audioBlob ? (
+-        <div className="flex items-center gap-1">
+-          <VoiceChanger
+-            audioBlob={audioBlob}
+-            onVoiceChanged={handleVoiceChanged}
+-          />
+-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+-            <Button
+-              size="icon"
+-              className="bg-primary hover:bg-primary/90"
+-              onClick={handleSend}
+-              aria-label="Enviar áudio"
+-            >
+-              <Send className="w-4 h-4" />
+-            </Button>
+-          </motion.div>
+-        </div>
+-      ) : null}
+     </motion.div>
+   );
+ }
+diff --git a/src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx b/src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx
+new file mode 100644
+index 0000000000..06f529ea5c
+--- /dev/null
++++ b/src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx
+@@ -0,0 +1,173 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { render, fireEvent, act } from '@testing-library/react';
++
++const hv = vi.hoisted(() => ({
++  hook: {} as Record<string, unknown>,
++  opcoes: {} as Record<string, unknown>,
++}));
++
++vi.mock('@/hooks/communication/useAudioRecorder', async () => {
++  const actual = await vi.importActual<Record<string, unknown>>('@/hooks/communication/useAudioRecorder');
++  return {
++    ...actual,
++    useAudioRecorder: (opcoes: Record<string, unknown>) => {
++      hv.opcoes = opcoes;
++      return hv.hook;
++    },
++  };
++});
++
++vi.mock('@/hooks/communication/useMediaElementVolume', () => ({
++  useMediaElementVolume: () => {},
++}));
++vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
++vi.mock('@/components/inbox/VoiceChanger', () => ({
++  VoiceChanger: () => <div data-testid="voice-changer" />,
++}));
++
++import { AudioRecorder } from '../AudioRecorder';
++
++function baseHook(overrides: Record<string, unknown> = {}) {
++  hv.hook = {
++    isRecording: false,
++    isPaused: false,
++    duration: 3,
++    audioUrl: null,
++    draftChecked: true,
++    recoveredDraft: null,
++    discardedDraft: null,
++    discardSecondsLeft: 0,
++    startRecording: vi.fn(),
++    stopRecording: vi.fn(),
++    pauseRecording: vi.fn(),
++    resumeRecording: vi.fn(),
++    cancelRecording: vi.fn(),
++    undoDiscard: vi.fn(),
++    acceptRecoveredDraft: vi.fn(),
++    dismissRecoveredDraft: vi.fn(),
++    clearDraft: vi.fn(),
++    getLevel: () => -1,
++    uploadAudio: vi.fn(),
++    formatDuration: (s: number) => `0:0${s}`,
++    ...overrides,
++  };
++}
++
++describe('AudioRecorder — pausa, descarte desfazível e gravação recuperada', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    baseHook();
++  });
++
++  afterEach(() => {
++    vi.useRealTimers();
++  });
++
++  it('pausa e retoma pelo botão, anunciando o estado para leitor de tela', () => {
++    baseHook({ isRecording: true, isPaused: false });
++    const { getByLabelText, getByRole, rerender } = render(
++      <AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />,
++    );
++
++    expect(getByRole('status').textContent).toContain('Gravando.');
++    fireEvent.click(getByLabelText('Pausar gravação'));
++    expect(hv.hook.pauseRecording).toHaveBeenCalledTimes(1);
++
++    baseHook({ isRecording: true, isPaused: true });
++    rerender(<AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />);
++
++    expect(getByRole('status').textContent).toContain('Gravação pausada.');
++    fireEvent.click(getByLabelText('Retomar gravação'));
++    expect(hv.hook.resumeRecording).toHaveBeenCalledTimes(1);
++  });
++
++  it('espaço pausa e retoma a gravação; escape descarta', () => {
++    baseHook({ isRecording: true, isPaused: false });
++    const { rerender } = render(<AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />);
++
++    fireEvent.keyDown(window, { code: 'Space', key: ' ' });
++    expect(hv.hook.pauseRecording).toHaveBeenCalledTimes(1);
++
++    baseHook({ isRecording: true, isPaused: true });
++    rerender(<AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />);
++
++    fireEvent.keyDown(window, { code: 'Space', key: ' ' });
++    expect(hv.hook.resumeRecording).toHaveBeenCalledTimes(1);
++
++    fireEvent.keyDown(window, { key: 'Escape' });
++    expect(hv.hook.cancelRecording).toHaveBeenCalledTimes(1);
++  });
++
++  it('descarte aparece com a contagem e o desfazer devolve a gravação', () => {
++    baseHook({
++      discardedDraft: { userId: 'u1', blob: new Blob(['x']), createdAt: Date.now() },
++      discardSecondsLeft: 4,
++    });
++    const { getByRole, getByLabelText } = render(<AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />);
++
++    expect(getByRole('status').textContent).toContain('Desfazer disponível por 4 segundos');
++    const desfazer = getByLabelText('Desfazer descarte da gravação');
++    expect(desfazer.textContent).toContain('Desfazer (4s)');
++
++    fireEvent.click(desfazer);
++    expect(hv.hook.undoDiscard).toHaveBeenCalledTimes(1);
++  });
++
++  it('não abre o microfone quando há gravação recuperada e oferece usá-la', () => {
++    baseHook({
++      recoveredDraft: { userId: 'u1', blob: new Blob(['orfao']), createdAt: Date.now() },
++    });
++    const { getByText, getByRole } = render(<AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />);
++
++    expect(hv.hook.startRecording).not.toHaveBeenCalled();
++    expect(getByRole('status')).toBeTruthy();
++
++    fireEvent.click(getByText('Usar gravação'));
++    expect(hv.hook.acceptRecoveredDraft).toHaveBeenCalledTimes(1);
++  });
++
++  it('gravação recuperada expirada (sem oferta) começa a gravar normalmente', () => {
++    baseHook({ draftChecked: true, recoveredDraft: null });
++    render(<AudioRecorder onSend={vi.fn()} onCancel={vi.fn()} />);
++    expect(hv.hook.startRecording).toHaveBeenCalledTimes(1);
++  });
++
++  it('envio que falha nas 3 tentativas mantém a gravação e pede nova tentativa', async () => {
++    vi.useFakeTimers();
++    const onSend = vi.fn().mockRejectedValue(new Error('rede'));
++    baseHook({ isRecording: false, audioUrl: 'blob:gravado' });
++    const { getByLabelText, rerender } = render(<AudioRecorder onSend={onSend} onCancel={vi.fn()} />);
++
++    // O hook real entrega o blob gravado por este callback.
++    act(() => {
++      (hv.opcoes.onRecordingComplete as (blob: Blob, url: string) => void)(new Blob(['audio']), 'blob:gravado');
++    });
++    rerender(<AudioRecorder onSend={onSend} onCancel={vi.fn()} />);
++
++    fireEvent.click(getByLabelText('Enviar áudio'));
++    await act(async () => {
++      await vi.advanceTimersByTimeAsync(5000);
++    });
++
++    expect(onSend).toHaveBeenCalledTimes(3);
++    expect(getByLabelText('Tentar enviar o áudio novamente')).toBeTruthy();
++  });
++
++  it('envio confirmado limpa o rascunho do disco', async () => {
++    const onSend = vi.fn().mockResolvedValue(undefined);
++    baseHook({ isRecording: false, audioUrl: 'blob:gravado' });
++    const { getByLabelText, rerender } = render(<AudioRecorder onSend={onSend} onCancel={vi.fn()} />);
++
++    act(() => {
++      (hv.opcoes.onRecordingComplete as (blob: Blob, url: string) => void)(new Blob(['audio']), 'blob:gravado');
++    });
++    rerender(<AudioRecorder onSend={onSend} onCancel={vi.fn()} />);
++
++    await act(async () => {
++      fireEvent.click(getByLabelText('Enviar áudio'));
++    });
++
++    expect(onSend).toHaveBeenCalledTimes(1);
++    expect(hv.hook.clearDraft).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/src/components/inbox/__tests__/AudioRecorder.test.tsx b/src/components/inbox/__tests__/AudioRecorder.test.tsx
+index 3cb5dc88b3..16e30b062e 100644
+--- a/src/components/inbox/__tests__/AudioRecorder.test.tsx
++++ b/src/components/inbox/__tests__/AudioRecorder.test.tsx
+@@ -5,13 +5,35 @@ import { render } from '@testing-library/react';
+ vi.mock('@/hooks/communication/useAudioRecorder', () => ({
+   useAudioRecorder: () => ({
+     isRecording: true,
++    isPaused: false,
+     duration: 3,
+     audioUrl: null,
++    draftChecked: true,
++    recoveredDraft: null,
++    discardedDraft: null,
++    discardSecondsLeft: 0,
+     startRecording: vi.fn(),
+     stopRecording: vi.fn(),
++    pauseRecording: vi.fn(),
++    resumeRecording: vi.fn(),
+     cancelRecording: vi.fn(),
++    undoDiscard: vi.fn(),
++    acceptRecoveredDraft: vi.fn(),
++    dismissRecoveredDraft: vi.fn(),
++    clearDraft: vi.fn(),
++    getLevel: () => -1,
+     formatDuration: (s: number) => `00:0${s}`,
+   }),
++  levelBufferToHeights: (levels: number[], bars: number, min = 4, max = 28) =>
++    levels.length === 0 ? [] : Array.from({ length: bars }, () => min),
++  sendWithBackoff: async (send: () => Promise<unknown>) => {
++    try {
++      await send();
++      return true;
++    } catch {
++      return false;
++    }
++  },
+ }));
+ vi.mock('@/hooks/communication/useMediaElementVolume', () => ({
+   useMediaElementVolume: () => {},
+diff --git a/src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts b/src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts
+index 60aa2724e5..b4e29148bc 100644
+--- a/src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts
++++ b/src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts
+@@ -185,8 +185,19 @@ describe('useAudioRecorder — ciclo de vida da captura (R2-INB-008)', () => {
+     expect(recorder.stop).toHaveBeenCalledTimes(1);
+     expect(track.stop).toHaveBeenCalledTimes(1);
+     expect(onRecordingComplete).not.toHaveBeenCalled();
+-    expect(vi.getTimerCount()).toBe(0);
+     expect(result.current.isRecording).toBe(false);
++    // Não há mais timer de captura (o cronômetro parou); o que ficou de pé é a
++    // janela de desfazer do descarte (intervalo da contagem + prazo de 5 s).
++    // Nenhuma gravação sai daqui — a captura foi liberada.
++    expect(vi.getTimerCount()).toBe(2);
++    expect(result.current.discardedDraft).not.toBeNull();
++
++    // Desfazer fecha a janela e devolve o áudio para a prévia, sem sobrar timer.
++    act(() => {
++      result.current.undoDiscard();
++    });
++    expect(vi.getTimerCount()).toBe(0);
++    expect(result.current.discardedDraft).toBeNull();
+   });
+ 
+   // PE-24 — o teto de gravação do WhatsApp é 16 min: o padrão do hook vinha de um
+diff --git a/src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts b/src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts
+new file mode 100644
+index 0000000000..38979dd6ca
+--- /dev/null
++++ b/src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts
+@@ -0,0 +1,323 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { renderHook, act } from '@testing-library/react';
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    storage: {
++      from: vi.fn().mockReturnValue({
++        upload: vi.fn().mockResolvedValue({ data: { path: 'test.webm' }, error: null }),
++        getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://example.com/test.webm' } }),
++      }),
++    },
++  },
++}));
++
++vi.mock('@/hooks/ui/use-toast', () => ({
++  toast: vi.fn(),
++  useToast: () => ({ toast: vi.fn() }),
++}));
++
++vi.mock('@/lib/logger', () => ({
++  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
++}));
++
++import {
++  useAudioRecorder,
++  levelBufferToHeights,
++  sendWithBackoff,
++  DRAFT_TTL_MS,
++  type RecordingDraft,
++  type RecordingDraftStore,
++} from '@/hooks/communication/useAudioRecorder';
++
++/** MediaRecorder mínimo: estados reais e contagem de pause/resume. */
++class FakeMediaRecorder {
++  static instances: FakeMediaRecorder[] = [];
++  state: 'inactive' | 'recording' | 'paused' = 'inactive';
++  ondataavailable: ((event: { data: Blob }) => void) | null = null;
++  onstop: (() => void) | null = null;
++  pauseCalls = 0;
++  resumeCalls = 0;
++
++  constructor() {
++    FakeMediaRecorder.instances.push(this);
++  }
++
++  start() {
++    this.state = 'recording';
++  }
++
++  pause() {
++    if (this.state !== 'recording') throw new Error('InvalidStateError');
++    this.state = 'paused';
++    this.pauseCalls += 1;
++  }
++
++  resume() {
++    if (this.state !== 'paused') throw new Error('InvalidStateError');
++    this.state = 'recording';
++    this.resumeCalls += 1;
++  }
++
++  stop() {
++    if (this.state === 'inactive') return;
++    this.state = 'inactive';
++    this.onstop?.();
++  }
++
++  /** Simula o microfone entregando o trecho capturado até aqui. */
++  emitChunk(texto = 'audio') {
++    this.ondataavailable?.({ data: new Blob([texto], { type: 'audio/webm' }) });
++  }
++}
++
++function criarStoreFalso(inicial: RecordingDraft | null = null) {
++  const estado = { draft: inicial as RecordingDraft | null };
++  const store: RecordingDraftStore & { estado: typeof estado } = {
++    estado,
++    save: vi.fn(async (draft: RecordingDraft) => {
++      estado.draft = draft;
++    }),
++    load: vi.fn(async () => estado.draft),
++    clear: vi.fn(async () => {
++      estado.draft = null;
++    }),
++  };
++  return store;
++}
++
++async function iniciarGravacao(result: { current: ReturnType<typeof useAudioRecorder> }) {
++  await act(async () => {
++    await result.current.startRecording();
++  });
++}
++
++describe('useAudioRecorder — pausa, recuperação e desfazer o descarte', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    vi.useFakeTimers();
++    FakeMediaRecorder.instances = [];
++    vi.stubGlobal('MediaRecorder', FakeMediaRecorder);
++    Object.defineProperty(navigator, 'mediaDevices', {
++      configurable: true,
++      value: {
++        getUserMedia: vi.fn().mockResolvedValue({
++          getTracks: () => [{ stop: vi.fn() }],
++        }),
++      },
++    });
++    Object.defineProperty(URL, 'createObjectURL', {
++      configurable: true,
++      value: vi.fn(() => 'blob:fake-url'),
++    });
++  });
++
++  afterEach(() => {
++    vi.useRealTimers();
++    vi.unstubAllGlobals();
++  });
++
++  it('pausa congela o cronômetro e retomar continua de onde parou', async () => {
++    const { result } = renderHook(() => useAudioRecorder({ userId: 'user-1', drafts: criarStoreFalso() }));
++    await iniciarGravacao(result);
++
++    await act(async () => {
++      vi.advanceTimersByTime(2000);
++    });
++    expect(result.current.duration).toBe(2);
++
++    act(() => result.current.pauseRecording());
++    expect(result.current.isPaused).toBe(true);
++    expect(FakeMediaRecorder.instances[0].pauseCalls).toBe(1);
++
++    await act(async () => {
++      vi.advanceTimersByTime(5000);
++    });
++    // Cinco segundos pausados não entram no áudio nem no contador.
++    expect(result.current.duration).toBe(2);
++
++    act(() => result.current.resumeRecording());
++    expect(result.current.isPaused).toBe(false);
++    expect(FakeMediaRecorder.instances[0].resumeCalls).toBe(1);
++
++    await act(async () => {
++      vi.advanceTimersByTime(3000);
++    });
++    expect(result.current.duration).toBe(5);
++  });
++
++  it('descarte abre 5 s de desfazer e o desfazer devolve a gravação para a prévia', async () => {
++    const store = criarStoreFalso();
++    const onRecordingComplete = vi.fn();
++    const { result } = renderHook(() =>
++      useAudioRecorder({ userId: 'user-1', drafts: store, onRecordingComplete }),
++    );
++    await iniciarGravacao(result);
++    act(() => FakeMediaRecorder.instances[0].emitChunk());
++    await act(async () => {
++      vi.advanceTimersByTime(1000);
++    });
++
++    act(() => result.current.cancelRecording());
++    expect(result.current.isRecording).toBe(false);
++    expect(result.current.audioUrl).toBeNull();
++    expect(result.current.discardedDraft).not.toBeNull();
++    expect(result.current.discardSecondsLeft).toBe(5);
++    // O trecho descartado ainda está no disco: descartar não apaga da memória do usuário.
++    expect(store.save).toHaveBeenCalledTimes(1);
++
++    await act(async () => {
++      vi.advanceTimersByTime(4000);
++    });
++    expect(result.current.discardedDraft).not.toBeNull();
++    expect(result.current.discardSecondsLeft).toBe(1);
++
++    act(() => result.current.undoDiscard());
++    expect(result.current.discardedDraft).toBeNull();
++    expect(result.current.discardSecondsLeft).toBe(0);
++    expect(result.current.audioUrl).toBe('blob:fake-url');
++    expect(onRecordingComplete).toHaveBeenCalledWith(expect.any(Blob), 'blob:fake-url');
++    // Desfeito: saiu do disco, está na prévia.
++    expect(store.clear).toHaveBeenCalled();
++  });
++
++  it('sem desfazer em 5 s, avisa o dono e mantém a gravação recuperável no disco', async () => {
++    const store = criarStoreFalso();
++    const onDiscardCommitted = vi.fn();
++    const { result } = renderHook(() =>
++      useAudioRecorder({ userId: 'user-1', drafts: store, onDiscardCommitted }),
++    );
++    await iniciarGravacao(result);
++    act(() => FakeMediaRecorder.instances[0].emitChunk());
++
++    act(() => result.current.cancelRecording());
++    const salvo = await store.load('user-1');
++    expect(salvo?.blob.size).toBeGreaterThan(0);
++
++    await act(async () => {
++      vi.advanceTimersByTime(5000);
++    });
++    expect(result.current.discardedDraft).toBeNull();
++    expect(onDiscardCommitted).toHaveBeenCalledTimes(1);
++    // O rascunho continua no store (recuperável), não foi apagado pelo descarte.
++    expect(store.clear).not.toHaveBeenCalled();
++  });
++
++  it('gravação concluída e não enviada vira rascunho em disco', async () => {
++    const store = criarStoreFalso();
++    const { result } = renderHook(() => useAudioRecorder({ userId: 'user-1', drafts: store }));
++    await iniciarGravacao(result);
++    act(() => FakeMediaRecorder.instances[0].emitChunk());
++
++    act(() => result.current.stopRecording());
++
++    expect(result.current.audioUrl).toBe('blob:fake-url');
++    expect(store.save).toHaveBeenCalledTimes(1);
++    const salvo = await store.load('user-1');
++    expect(salvo?.userId).toBe('user-1');
++    expect(salvo?.blob.size).toBeGreaterThan(0);
++  });
++
++  it('desmontar no meio da gravação guarda o trecho capturado em vez de perdê-lo', async () => {
++    const store = criarStoreFalso();
++    const { result, unmount } = renderHook(() => useAudioRecorder({ userId: 'user-1', drafts: store }));
++    await iniciarGravacao(result);
++    act(() => FakeMediaRecorder.instances[0].emitChunk());
++
++    unmount();
++
++    expect(store.save).toHaveBeenCalledTimes(1);
++    const salvo = await store.load('user-1');
++    expect(salvo?.blob.size).toBeGreaterThan(0);
++  });
++
++  it('recupera o rascunho órfão do usuário na montagem e o devolve para a prévia', async () => {
++    const store = criarStoreFalso({
++      userId: 'user-1',
++      blob: new Blob(['orfao'], { type: 'audio/webm' }),
++      createdAt: Date.now() - 1000,
++    });
++    const onRecordingComplete = vi.fn();
++    const { result } = renderHook(() =>
++      useAudioRecorder({ userId: 'user-1', drafts: store, onRecordingComplete }),
++    );
++
++    await act(async () => {
++      await Promise.resolve();
++    });
++    expect(result.current.draftChecked).toBe(true);
++    expect(result.current.recoveredDraft?.blob.size).toBe(5);
++
++    act(() => result.current.acceptRecoveredDraft());
++    expect(result.current.audioUrl).toBe('blob:fake-url');
++    expect(result.current.recoveredDraft).toBeNull();
++    expect(onRecordingComplete).toHaveBeenCalledWith(expect.any(Blob), 'blob:fake-url');
++    // Saiu do disco (está na mão do usuário): não pode reaparecer como órfão.
++    expect(store.clear).toHaveBeenCalledWith('user-1');
++  });
++
++  it('rascunho fora da janela do PD-63 é descartado sem virar oferta', async () => {
++    const store = criarStoreFalso({
++      userId: 'user-1',
++      blob: new Blob(['velho'], { type: 'audio/webm' }),
++      createdAt: Date.now() - DRAFT_TTL_MS - 1,
++    });
++    const { result } = renderHook(() => useAudioRecorder({ userId: 'user-1', drafts: store }));
++
++    await act(async () => {
++      await Promise.resolve();
++    });
++    expect(result.current.draftChecked).toBe(true);
++    expect(result.current.recoveredDraft).toBeNull();
++    expect(store.clear).toHaveBeenCalledWith('user-1');
++  });
++
++  it('sem analisador de áudio, getLevel devolve -1 e o waveform cai no pulso fixo', async () => {
++    const { result } = renderHook(() => useAudioRecorder({ userId: 'user-1', drafts: criarStoreFalso() }));
++    await iniciarGravacao(result);
++    expect(result.current.getLevel()).toBe(-1);
++  });
++});
++
++describe('sendWithBackoff — retentativa com espera progressiva', () => {
++  it('tenta 3 vezes antes de marcar erro definitivo e avisa o dono em cada espera', async () => {
++    const send = vi.fn().mockRejectedValue(new Error('rede'));
++    const onRetry = vi.fn();
++
++    const entregue = await sendWithBackoff(send, { attempts: 3, backoffMs: [5, 10], onRetry });
++
++    expect(entregue).toBe(false);
++    expect(send).toHaveBeenCalledTimes(3);
++    expect(onRetry).toHaveBeenNthCalledWith(1, 1, 5);
++    expect(onRetry).toHaveBeenNthCalledWith(2, 2, 10);
++  });
++
++  it('a segunda tentativa pode entregar: não marca erro', async () => {
++    const send = vi
++      .fn()
++      .mockRejectedValueOnce(new Error('rede'))
++      .mockResolvedValueOnce(undefined);
++
++    const entregue = await sendWithBackoff(send, { attempts: 3, backoffMs: [5] });
++
++    expect(entregue).toBe(true);
++    expect(send).toHaveBeenCalledTimes(2);
++  });
++});
++
++describe('levelBufferToHeights — waveform determinístico', () => {
++  it('mapeia níveis em alturas entre o mínimo e o máximo, sem sorteio', () => {
++    const random = vi.spyOn(Math, 'random');
++
++    const alturas = levelBufferToHeights([0, 1], 4, 4, 28);
++
++    expect(alturas).toEqual([4, 4, 28, 28]);
++    expect(levelBufferToHeights([0, 1], 4, 4, 28)).toEqual(alturas);
++    expect(random).not.toHaveBeenCalled();
++    random.mockRestore();
++  });
++
++  it('sem amostra nenhuma devolve o mínimo (nada de barra fantasma)', () => {
++    expect(levelBufferToHeights([], 3, 4, 28)).toEqual([4, 4, 4]);
++  });
++});
+diff --git a/src/hooks/communication/useAudioRecorder.ts b/src/hooks/communication/useAudioRecorder.ts
+index a736cf61e2..a135158cb8 100644
+--- a/src/hooks/communication/useAudioRecorder.ts
++++ b/src/hooks/communication/useAudioRecorder.ts
+@@ -6,18 +6,217 @@ import { MAX_PTT_DURATION_SEC } from '@/lib/audio/pttLimits';
+ 
+ interface UseAudioRecorderOptions {
+   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
+-  maxDuration?: number; // in seconds
++  /** Duração máxima de gravação, em segundos. */
++  maxDuration?: number;
++  /**
++   * Dono do rascunho. Ausente, o hook resolve o usuário da sessão atual
++   * (SEC-FRONTEND-03: rascunho sem dono não pode reaparecer para outro login).
++   */
++  userId?: string | null;
++  /** Store do rascunho; injetável para teste (o default é IndexedDB). */
++  drafts?: RecordingDraftStore;
++  /** Chamado quando o descarte deixa de ser desfazível (fim da janela de 5 s). */
++  onDiscardCommitted?: () => void;
++}
++
++/** Rascunho de gravação em disco — sobrevive a reload e a troca de conversa. */
++export interface RecordingDraft {
++  userId: string;
++  blob: Blob;
++  createdAt: number;
++}
++
++/** Acesso ao rascunho recuperável. Toda operação é tolerante a falha. */
++export interface RecordingDraftStore {
++  save(draft: RecordingDraft): Promise<void>;
++  load(userId: string): Promise<RecordingDraft | null>;
++  clear(userId: string): Promise<void>;
++}
++
++/**
++ * Janela do rascunho órfão (PD-63): o áudio de um usuário não fica em disco para
++ * sempre — passado o prazo, o rascunho é descartado na leitura.
++ */
++export const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
++/** Janela em que o descarte pode ser desfeito. */
++export const UNDO_DISCARD_MS = 5000;
++/** Tentativas de envio antes de marcar erro definitivo (1 envio + 2 retentativas). */
++export const SEND_ATTEMPTS = 3;
++/** Espera progressiva entre as tentativas. */
++export const SEND_BACKOFF_MS = [1000, 2000, 4000];
++
++const DB_NAME = 'zapp.audio.drafts';
++const STORE_NAME = 'drafts';
++
++/** Store real: IndexedDB, uma gravação por usuário. Sem IndexedDB (SSR/private), no-op. */
++export const indexedDbDraftStore: RecordingDraftStore = {
++  async save(draft) {
++    const db = await openDraftDb();
++    if (!db) return;
++    try {
++      await new Promise<void>((resolve, reject) => {
++        const tx = db.transaction(STORE_NAME, 'readwrite');
++        tx.objectStore(STORE_NAME).put(draft);
++        tx.oncomplete = () => resolve();
++        tx.onerror = () => reject(tx.error);
++      });
++    } catch (error) {
++      log.warn('[useAudioRecorder] falha ao salvar rascunho', error);
++    } finally {
++      db.close();
++    }
++  },
++
++  async load(userId) {
++    const db = await openDraftDb();
++    if (!db) return null;
++    try {
++      return await new Promise<RecordingDraft | null>((resolve, reject) => {
++        const tx = db.transaction(STORE_NAME, 'readonly');
++        const request = tx.objectStore(STORE_NAME).get(userId);
++        request.onsuccess = () => resolve((request.result as RecordingDraft | undefined) ?? null);
++        request.onerror = () => reject(request.error);
++      });
++    } catch (error) {
++      log.warn('[useAudioRecorder] falha ao ler rascunho', error);
++      return null;
++    } finally {
++      db.close();
++    }
++  },
++
++  async clear(userId) {
++    const db = await openDraftDb();
++    if (!db) return;
++    try {
++      await new Promise<void>((resolve, reject) => {
++        const tx = db.transaction(STORE_NAME, 'readwrite');
++        tx.objectStore(STORE_NAME).delete(userId);
++        tx.oncomplete = () => resolve();
++        tx.onerror = () => reject(tx.error);
++      });
++    } catch (error) {
++      log.warn('[useAudioRecorder] falha ao limpar rascunho', error);
++    } finally {
++      db.close();
++    }
++  },
++};
++
++function openDraftDb(): Promise<IDBDatabase | null> {
++  return new Promise((resolve) => {
++    if (typeof indexedDB === 'undefined') {
++      resolve(null);
++      return;
++    }
++    try {
++      const request = indexedDB.open(DB_NAME, 1);
++      request.onupgradeneeded = () => {
++        const db = request.result;
++        if (!db.objectStoreNames.contains(STORE_NAME)) {
++          db.createObjectStore(STORE_NAME, { keyPath: 'userId' });
++        }
++      };
++      request.onsuccess = () => resolve(request.result);
++      request.onerror = () => resolve(null);
++    } catch {
++      resolve(null);
++    }
++  });
++}
++
++/**
++ * Identidade do dono do rascunho. Lê a sessão (barato, local) e nunca lança:
++ * sem sessão o hook simplesmente não persiste nada.
++ */
++async function resolveSessionUserId(): Promise<string | null> {
++  try {
++    const client = supabase as unknown as {
++      auth?: { getSession?: () => Promise<{ data?: { session?: { user?: { id?: string } } | null } }> };
++    };
++    const response = await client.auth?.getSession?.();
++    return response?.data?.session?.user?.id ?? null;
++  } catch {
++    return null;
++  }
++}
++
++/**
++ * Converte uma amostra de níveis (0..1) em alturas de barra determinísticas.
++ * Puro: mesma entrada, mesmas alturas — nada de `Math.random()` no render.
++ */
++export function levelBufferToHeights(
++  levels: number[],
++  bars: number,
++  min = 4,
++  max = 28,
++): number[] {
++  if (bars <= 0) return [];
++  if (levels.length === 0) return Array.from({ length: bars }, () => min);
++  return Array.from({ length: bars }, (_, i) => {
++    const sample = levels[Math.floor((i / bars) * levels.length)] ?? 0;
++    const clamped = Math.min(1, Math.max(0, sample));
++    return Math.round(min + clamped * (max - min));
++  });
++}
++
++function sleep(ms: number): Promise<void> {
++  return new Promise((resolve) => setTimeout(resolve, ms));
++}
++
++/**
++ * Envia com espera progressiva. Só desiste depois de `attempts` tentativas —
++ * a falha entre tentativas é transitória e não pode custar a gravação.
++ * Devolve `true` quando o envio confirmou.
++ */
++export async function sendWithBackoff(
++  send: () => Promise<unknown>,
++  options: {
++    attempts?: number;
++    backoffMs?: number[];
++    onRetry?: (attempt: number, waitMs: number) => void;
++  } = {},
++): Promise<boolean> {
++  const attempts = options.attempts ?? SEND_ATTEMPTS;
++  const backoff = options.backoffMs ?? SEND_BACKOFF_MS;
++
++  for (let attempt = 1; attempt <= attempts; attempt += 1) {
++    try {
++      await send();
++      return true;
++    } catch (error) {
++      if (attempt >= attempts) {
++        log.error('[useAudioRecorder] envio falhou em todas as tentativas', error);
++        return false;
++      }
++      const waitMs = backoff[Math.min(attempt - 1, backoff.length - 1)];
++      options.onRetry?.(attempt, waitMs);
++      await sleep(waitMs);
++    }
++  }
++  return false;
+ }
+ 
+ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+-  // PE-24: o padrão é o teto de PTT do WhatsApp (16 min) — antes era um 300 s solto,
+-  // que cortava a gravação na metade do limite real.
+-  const { onRecordingComplete, maxDuration = MAX_PTT_DURATION_SEC } = options;
+-  
++  const {
++    onRecordingComplete,
++    maxDuration = MAX_PTT_DURATION_SEC,
++    userId: userIdOption,
++    drafts = indexedDbDraftStore,
++    onDiscardCommitted,
++  } = options;
++
+   const [isRecording, setIsRecording] = useState(false);
++  const [isPaused, setIsPaused] = useState(false);
+   const [duration, setDuration] = useState(0);
+   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+-  
++  const [recoveredDraft, setRecoveredDraft] = useState<RecordingDraft | null>(null);
++  // Só depois de olhar o disco é que o dono pode abrir o microfone: senão uma
++  // gravação órfã seria sobrescrita por uma nova no mesmo instante.
++  const [draftChecked, setDraftChecked] = useState(false);
++  const [discardedDraft, setDiscardedDraft] = useState<RecordingDraft | null>(null);
++  const [discardSecondsLeft, setDiscardSecondsLeft] = useState(0);
++
+   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+   const chunksRef = useRef<Blob[]>([]);
+   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+@@ -25,12 +224,50 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+   const mountedRef = useRef(false);
+   const onRecordingCompleteRef = useRef(onRecordingComplete);
+   const maxDurationRef = useRef(maxDuration);
++  const onDiscardCommittedRef = useRef(onDiscardCommitted);
++  const userIdRef = useRef<string | null>(userIdOption ?? null);
++  const draftsRef = useRef(drafts);
++  const recoveredRef = useRef<RecordingDraft | null>(null);
++  const discardedRef = useRef<RecordingDraft | null>(null);
++  const lastBlobRef = useRef<Blob | null>(null);
++  const undoCommitRef = useRef<NodeJS.Timeout | null>(null);
++  const undoTickRef = useRef<NodeJS.Timeout | null>(null);
++  const audioContextRef = useRef<AudioContext | null>(null);
++  const analyserRef = useRef<AnalyserNode | null>(null);
++  const levelDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+ 
+   useEffect(() => {
+     onRecordingCompleteRef.current = onRecordingComplete;
+     maxDurationRef.current = maxDuration;
++    onDiscardCommittedRef.current = onDiscardCommitted;
++    draftsRef.current = drafts;
+   });
+ 
++  const buildBlobFromChunks = useCallback(() => {
++    if (chunksRef.current.length === 0) return null;
++    return new Blob(chunksRef.current, { type: 'audio/webm' });
++  }, []);
++
++  const persistDraft = useCallback((blob: Blob) => {
++    const userId = userIdRef.current;
++    if (!userId || blob.size === 0) return;
++    void draftsRef.current.save({ userId, blob, createdAt: Date.now() });
++  }, []);
++
++  const stopAnalyser = useCallback(() => {
++    analyserRef.current = null;
++    levelDataRef.current = null;
++    const context = audioContextRef.current;
++    audioContextRef.current = null;
++    if (context) {
++      try {
++        void context.close();
++      } catch {
++        // contexto já fechado/indisponível: a captura não depende dele
++      }
++    }
++  }, []);
++
+   // Libera timer, recorder e microfone olhando so para refs, nunca para estado
+   // capturado num render antigo (era a causa de o limite de duracao e o unmount
+   // nao pararem a captura). `emiteResultado` decide se o onstop entrega o audio:
+@@ -41,6 +278,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+       clearInterval(intervalRef.current);
+       intervalRef.current = null;
+     }
++    stopAnalyser();
+     const recorder = mediaRecorderRef.current;
+     mediaRecorderRef.current = null;
+     if (recorder) {
+@@ -58,20 +296,200 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+     const stream = streamRef.current;
+     streamRef.current = null;
+     stream?.getTracks().forEach((track) => track.stop());
+-  }, []);
++  }, [stopAnalyser]);
+ 
+   const stopRecording = useCallback(() => {
+     releaseCapture(true);
+     setIsRecording(false);
++    setIsPaused(false);
+   }, [releaseCapture]);
+ 
++  const clearUndoTimers = useCallback(() => {
++    if (undoCommitRef.current) {
++      clearTimeout(undoCommitRef.current);
++      undoCommitRef.current = null;
++    }
++    if (undoTickRef.current) {
++      clearInterval(undoTickRef.current);
++      undoTickRef.current = null;
++    }
++  }, []);
++
++  /**
++   * Abre a janela de desfazer do descarte. Enquanto ela corre, o rascunho fica
++   * no store e na memória; no fim, o rascunho só permanece no store (recuperável).
++   */
++  const startUndoWindow = useCallback(() => {
++    clearUndoTimers();
++    setDiscardSecondsLeft(Math.ceil(UNDO_DISCARD_MS / 1000));
++    undoTickRef.current = setInterval(() => {
++      setDiscardSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
++    }, 1000);
++    undoCommitRef.current = setTimeout(() => {
++      clearUndoTimers();
++      discardedRef.current = null;
++      setDiscardedDraft(null);
++      setDiscardSecondsLeft(0);
++      onDiscardCommittedRef.current?.();
++    }, UNDO_DISCARD_MS);
++  }, [clearUndoTimers]);
++
+   const cancelRecording = useCallback(() => {
++    const captured = buildBlobFromChunks();
+     releaseCapture(false);
+-    chunksRef.current = [];
+     setIsRecording(false);
++    setIsPaused(false);
+     setDuration(0);
+     setAudioUrl(null);
+-  }, [releaseCapture]);
++    chunksRef.current = [];
++
++    // Gravação em andamento usa o que já foi capturado; gravação já parada (na
++    // prévia) usa o blob guardado. Sem áudio, não há o que desfazer.
++    const blob = captured ?? lastBlobRef.current;
++    lastBlobRef.current = null;
++    if (!blob || blob.size === 0) return;
++
++    const userId = userIdRef.current;
++    const draft: RecordingDraft = { userId: userId ?? '', blob, createdAt: Date.now() };
++    if (userId) {
++      void draftsRef.current.save(draft);
++    }
++    discardedRef.current = draft;
++    setDiscardedDraft(draft);
++    startUndoWindow();
++  }, [buildBlobFromChunks, releaseCapture, startUndoWindow]);
++
++  /** Desfaz o descarte: o áudio volta para a prévia, pronto para enviar. */
++  const undoDiscard = useCallback(() => {
++    const draft = discardedRef.current;
++    clearUndoTimers();
++    discardedRef.current = null;
++    setDiscardedDraft(null);
++    setDiscardSecondsLeft(0);
++    if (!draft) return;
++
++    if (draft.userId) {
++      void draftsRef.current.clear(draft.userId);
++    }
++    const url = URL.createObjectURL(draft.blob);
++    setAudioUrl(url);
++    onRecordingCompleteRef.current?.(draft.blob, url);
++  }, [clearUndoTimers]);
++
++  /** Chamado pelo dono depois de usar (enviar) o rascunho recuperado. */
++  const clearDraft = useCallback(() => {
++    const userId = userIdRef.current;
++    if (userId) {
++      void draftsRef.current.clear(userId);
++    }
++    lastBlobRef.current = null;
++    recoveredRef.current = null;
++    setRecoveredDraft(null);
++  }, []);
++
++  /** Recupera o rascunho órfão para a prévia (envio ou descarte ficam com o usuário). */
++  const acceptRecoveredDraft = useCallback(() => {
++    const draft = recoveredRef.current;
++    if (!draft) return;
++    recoveredRef.current = null;
++    setRecoveredDraft(null);
++    // O rascunho saiu do disco e está na mão do usuário: apagar daqui evita
++    // que ele reapareça como órfão na próxima abertura.
++    if (draft.userId) {
++      void draftsRef.current.clear(draft.userId);
++    }
++    lastBlobRef.current = draft.blob;
++    const url = URL.createObjectURL(draft.blob);
++    setAudioUrl(url);
++    onRecordingCompleteRef.current?.(draft.blob, url);
++  }, []);
++
++  const dismissRecoveredDraft = useCallback(() => {
++    recoveredRef.current = null;
++    setRecoveredDraft(null);
++    clearDraft();
++  }, [clearDraft]);
++
++  const startAnalyser = useCallback((stream: MediaStream) => {
++    try {
++      const scope = window as unknown as {
++        AudioContext?: typeof AudioContext;
++        webkitAudioContext?: typeof AudioContext;
++      };
++      const Ctor = scope.AudioContext ?? scope.webkitAudioContext;
++      if (!Ctor) return;
++      const context = new Ctor();
++      const source = context.createMediaStreamSource(stream);
++      const analyser = context.createAnalyser();
++      analyser.fftSize = 64;
++      source.connect(analyser);
++      audioContextRef.current = context;
++      analyserRef.current = analyser;
++      levelDataRef.current = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
++    } catch (error) {
++      log.warn('[useAudioRecorder] analisador indisponível; waveform fica estático', error);
++    }
++  }, []);
++
++  /**
++   * Nível de áudio atual (0..1). `-1` quando não há analisador (ambiente sem
++   * AudioContext, ex.: jsdom): o componente então mantém o waveform animado fixo.
++   */
++  const getLevel = useCallback((): number => {
++    const analyser = analyserRef.current;
++    const data = levelDataRef.current;
++    if (!analyser || !data) return -1;
++    try {
++      analyser.getByteFrequencyData(data);
++    } catch {
++      return -1;
++    }
++    let sum = 0;
++    for (let i = 0; i < data.length; i += 1) sum += data[i];
++    return sum / (data.length * 255);
++  }, []);
++
++  const startTimer = useCallback(() => {
++    if (intervalRef.current) {
++      clearInterval(intervalRef.current);
++    }
++    intervalRef.current = setInterval(() => {
++      setDuration((prev) => {
++        if (prev >= maxDurationRef.current) {
++          stopRecording();
++          return prev;
++        }
++        return prev + 1;
++      });
++    }, 1000);
++  }, [stopRecording]);
++
++  const pauseRecording = useCallback(() => {
++    const recorder = mediaRecorderRef.current;
++    if (!recorder || recorder.state !== 'recording') return;
++    try {
++      recorder.pause();
++    } catch {
++      return;
++    }
++    if (intervalRef.current) {
++      clearInterval(intervalRef.current);
++      intervalRef.current = null;
++    }
++    setIsPaused(true);
++  }, []);
++
++  const resumeRecording = useCallback(() => {
++    const recorder = mediaRecorderRef.current;
++    if (!recorder || recorder.state !== 'paused') return;
++    try {
++      recorder.resume();
++    } catch {
++      return;
++    }
++    setIsPaused(false);
++    startTimer();
++  }, [startTimer]);
+ 
+   const startRecording = useCallback(async () => {
+     releaseCapture(false);
+@@ -83,16 +501,16 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+           autoGainControl: true,
+         }
+       });
+-      
++
+       // A permissao pode resolver depois do desmonte: devolve a stream na hora.
+       if (!mountedRef.current) {
+         stream.getTracks().forEach((track) => track.stop());
+         return;
+       }
+-      
++
+       streamRef.current = stream;
+       chunksRef.current = [];
+-      
++
+       let mediaRecorder: MediaRecorder;
+       try {
+         mediaRecorder = new MediaRecorder(stream, {
+@@ -103,39 +521,36 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+         streamRef.current = null;
+         throw error;
+       }
+-      
++
+       mediaRecorderRef.current = mediaRecorder;
+-      
++      startAnalyser(stream);
++
+       mediaRecorder.ondataavailable = (e) => {
+         if (e.data.size > 0) {
+           chunksRef.current.push(e.data);
+         }
+       };
+-      
++
+       mediaRecorder.onstop = () => {
+         if (!mountedRef.current) {
+           return;
+         }
+         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+         const url = URL.createObjectURL(audioBlob);
++        lastBlobRef.current = audioBlob;
+         setAudioUrl(url);
++        // Rascunho desde a gravação concluída: sair da conversa antes de enviar
++        // não pode custar o áudio.
++        persistDraft(audioBlob);
+         onRecordingCompleteRef.current?.(audioBlob, url);
+       };
+-      
++
+       mediaRecorder.start(100);
+       setIsRecording(true);
++      setIsPaused(false);
+       setDuration(0);
+-      
+-      intervalRef.current = setInterval(() => {
+-        setDuration((prev) => {
+-          if (prev >= maxDurationRef.current) {
+-            stopRecording();
+-            return prev;
+-          }
+-          return prev + 1;
+-        });
+-      }, 1000);
+-      
++      startTimer();
++
+     } catch (error) {
+       log.error('Error starting recording:', error);
+       toast({
+@@ -144,27 +559,68 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+         variant: 'destructive',
+       });
+     }
+-  }, [releaseCapture, stopRecording]);
++  }, [persistDraft, releaseCapture, startAnalyser, startTimer]);
++
++  // Dono do rascunho + leitura do órfão na montagem (a janela do PD-63 manda no
++  // que ainda pode ser recuperado; fora dela o rascunho é descartado na leitura).
++  useEffect(() => {
++    let cancelled = false;
++
++    const load = async () => {
++      const userId = userIdOption ?? (await resolveSessionUserId());
++      userIdRef.current = userId;
++      if (!userId) {
++        setDraftChecked(true);
++        return;
++      }
++
++      const draft = await draftsRef.current.load(userId);
++      if (draft && Date.now() - draft.createdAt > DRAFT_TTL_MS) {
++        await draftsRef.current.clear(userId);
++      } else if (draft && !cancelled && mountedRef.current) {
++        recoveredRef.current = draft;
++        setRecoveredDraft(draft);
++      }
++      if (!cancelled) setDraftChecked(true);
++    };
++
++    void load();
++
++    return () => {
++      cancelled = true;
++    };
++  }, [userIdOption]);
+ 
+   // Desmontar no meio da gravacao (trocar de contato, fechar o composer) libera
+   // microfone, recorder e timer pelo ref real — sem depender do isRecording.
++  // O trecho já capturado vira rascunho recuperável em vez de sumir.
+   useEffect(() => {
+     mountedRef.current = true;
+     return () => {
+       mountedRef.current = false;
++      const blob = buildBlobFromChunks();
+       releaseCapture(false);
++      chunksRef.current = [];
++      if (blob) persistDraft(blob);
++      clearUndoTimers();
++      // Saiu da tela no meio da janela de desfazer: o dono precisa saber que a
++      // gravação fechou (o áudio continua no disco, recuperável).
++      if (discardedRef.current) {
++        discardedRef.current = null;
++        onDiscardCommittedRef.current?.();
++      }
+     };
+-  }, [releaseCapture]);
++  }, [buildBlobFromChunks, clearUndoTimers, persistDraft, releaseCapture]);
+ 
+   const uploadAudio = useCallback(async (blob: Blob, conversationId: string) => {
+     const fileName = `${conversationId}/${Date.now()}.webm`;
+-    
++
+     const { error } = await supabase.storage
+       .from('audio-messages')
+       .upload(fileName, blob, {
+         contentType: 'audio/webm',
+       });
+-    
++
+     if (error) {
+       throw error;
+     }
+@@ -190,11 +646,23 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
+ 
+   return {
+     isRecording,
++    isPaused,
+     duration,
+     audioUrl,
+     startRecording,
+     stopRecording,
++    pauseRecording,
++    resumeRecording,
+     cancelRecording,
++    undoDiscard,
++    discardedDraft,
++    discardSecondsLeft,
++    recoveredDraft,
++    draftChecked,
++    acceptRecoveredDraft,
++    dismissRecoveredDraft,
++    clearDraft,
++    getLevel,
+     uploadAudio,
+     formatDuration,
+   };

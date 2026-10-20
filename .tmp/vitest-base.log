@@ -1,0 +1,588 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/.tmp/prova-base
+
+xxxxxxxxxxxxxxxx·xx··
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts [ src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts ]
+Error: Failed to resolve import "@/lib/audio/pttLimits" from "src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/.tmp/prova-base/src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts:25:0
+  18 |  const __vi_import_0__ = await import("@testing-library/react");
+  19 |  const __vi_import_1__ = await import("@/hooks/communication/useAudioRecorder");
+  20 |  const __vi_import_2__ = await import("@/lib/audio/pttLimits");
+     |                                       ^
+  21 |  import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+  22 |  
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx [ src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx ]
+Error: Failed to resolve import "@/lib/audio/pttLimits" from "src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/.tmp/prova-base/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:87:0
+  75 |  const __vi_import_0__ = await import("@testing-library/react");
+  76 |  const __vi_import_1__ = await import("@/hooks/inbox/useRealtimeInbox");
+  77 |  const __vi_import_2__ = await import("@/lib/audio/pttLimits");
+     |                                       ^
+  78 |  /**
+  79 |  * R2-INB-058 / #350-C — a ponte do Inbox precisa SINALIZAR a falha do áudio.
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+ FAIL  src/lib/audio/__tests__/pttLimits.test.ts [ src/lib/audio/__tests__/pttLimits.test.ts ]
+Error: Failed to resolve import "@/lib/audio/pttLimits" from "src/lib/audio/__tests__/pttLimits.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/.tmp/prova-base/src/lib/audio/__tests__/pttLimits.test.ts:14:7
+  5  |  */
+  6  |  import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+  7  |  ...OBE_TIMEOUT_MS, probeAudioDuration, validatePttBlob } from "@/lib/audio/pttLimits";
+     |                                                                 ^
+  8  |  const originalCreateElement = document.createElement.bind(document);
+  9  |  /** Substitui o <audio> do probe: dispara loadedmetadata com a duração pedida. */
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > pausa congela o cronômetro e retomar continua de onde parou
+TypeError: result.current.pauseRecording is not a function
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:129:30
+    127|     expect(result.current.duration).toBe(2);
+    128|
+    129|     act(() => result.current.pauseRecording());
+       |                              ^
+    130|     expect(result.current.isPaused).toBe(true);
+    131|     expect(FakeMediaRecorder.instances[0].pauseCalls).toBe(1);
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:129:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > descarte abre 5 s de desfazer e o desfazer devolve a gravação para a prévia
+AssertionError: expected undefined to be 5 // Object.is equality
+
+- Expected:
+5
+
++ Received:
+undefined
+
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:165:47
+    163|     expect(result.current.audioUrl).toBeNull();
+    164|     expect(result.current.discardedDraft).not.toBeNull();
+    165|     expect(result.current.discardSecondsLeft).toBe(5);
+       |                                               ^
+    166|     // O trecho descartado ainda está no disco: descartar não apaga da…
+    167|     expect(store.save).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > sem desfazer em 5 s, avisa o dono e mantém a gravação recuperável no disco
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:195:30
+    193|     act(() => result.current.cancelRecording());
+    194|     const salvo = await store.load('user-1');
+    195|     expect(salvo?.blob.size).toBeGreaterThan(0);
+       |                              ^
+    196|
+    197|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > gravação concluída e não enviada vira rascunho em disco
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:215:24
+    213|
+    214|     expect(result.current.audioUrl).toBe('blob:fake-url');
+    215|     expect(store.save).toHaveBeenCalledTimes(1);
+       |                        ^
+    216|     const salvo = await store.load('user-1');
+    217|     expect(salvo?.userId).toBe('user-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > desmontar no meio da gravação guarda o trecho capturado em vez de perdê-lo
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:229:24
+    227|     unmount();
+    228|
+    229|     expect(store.save).toHaveBeenCalledTimes(1);
+       |                        ^
+    230|     const salvo = await store.load('user-1');
+    231|     expect(salvo?.blob.size).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > recupera o rascunho órfão do usuário na montagem e o devolve para a prévia
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:248:41
+    246|       await Promise.resolve();
+    247|     });
+    248|     expect(result.current.draftChecked).toBe(true);
+       |                                         ^
+    249|     expect(result.current.recoveredDraft?.blob.size).toBe(5);
+    250|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > rascunho fora da janela do PD-63 é descartado sem virar oferta
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:270:41
+    268|       await Promise.resolve();
+    269|     });
+    270|     expect(result.current.draftChecked).toBe(true);
+       |                                         ^
+    271|     expect(result.current.recoveredDraft).toBeNull();
+    272|     expect(store.clear).toHaveBeenCalledWith('user-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > useAudioRecorder — pausa, recuperação e desfazer o descarte > sem analisador de áudio, getLevel devolve -1 e o waveform cai no pulso fixo
+TypeError: result.current.getLevel is not a function
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:278:27
+    276|     const { result } = renderHook(() => useAudioRecorder({ userId: 'us…
+    277|     await iniciarGravacao(result);
+    278|     expect(result.current.getLevel()).toBe(-1);
+       |                           ^
+    279|   });
+    280| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > sendWithBackoff — retentativa com espera progressiva > tenta 3 vezes antes de marcar erro definitivo e avisa o dono em cada espera
+TypeError: sendWithBackoff is not a function
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:287:28
+    285|     const onRetry = vi.fn();
+    286|
+    287|     const entregue = await sendWithBackoff(send, { attempts: 3, backof…
+       |                            ^
+    288|
+    289|     expect(entregue).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > sendWithBackoff — retentativa com espera progressiva > a segunda tentativa pode entregar: não marca erro
+TypeError: sendWithBackoff is not a function
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:301:28
+    299|       .mockResolvedValueOnce(undefined);
+    300|
+    301|     const entregue = await sendWithBackoff(send, { attempts: 3, backof…
+       |                            ^
+    302|
+    303|     expect(entregue).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > levelBufferToHeights — waveform determinístico > mapeia níveis em alturas entre o mínimo e o máximo, sem sorteio
+TypeError: levelBufferToHeights is not a function
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:312:21
+    310|     const random = vi.spyOn(Math, 'random');
+    311|
+    312|     const alturas = levelBufferToHeights([0, 1], 4, 4, 28);
+       |                     ^
+    313|
+    314|     expect(alturas).toEqual([4, 4, 28, 28]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+
+ FAIL  src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts > levelBufferToHeights — waveform determinístico > sem amostra nenhuma devolve o mínimo (nada de barra fantasma)
+TypeError: levelBufferToHeights is not a function
+ ❯ src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts:321:12
+    319|
+    320|   it('sem amostra nenhuma devolve o mínimo (nada de barra fantasma)', …
+    321|     expect(levelBufferToHeights([], 3, 4, 28)).toEqual([4, 4, 4]);
+       |            ^
+    322|   });
+    323| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > pausa e retoma pelo botão, anunciando o estado para leitor de tela
+TestingLibraryElementError: Unable to find an accessible element with the role "status"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Cancelar gravação":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Cancelar gravação"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:shadow-glow-accent-sm h-10 w-10 text-destructive hover:text-destructive"[39m
+  [36m/>[39m
+
+  Name "Parar gravação":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Parar gravação"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 w-10 bg-destructive hover:bg-destructive/90"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex items-center gap-3 p-3 bg-inbox-panel border border-border rounded-xl relative overflow-hidden"[39m
+      [33mstyle[39m=[32m"opacity: 0; transform: translateY(10px);"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Cancelar gravação"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:shadow-glow-accent-sm h-10 w-10 text-destructive hover:text-destructive"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-x w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M18 6 6 18"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m6 6 12 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 flex items-center gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-3 h-3 rounded-full bg-destructive shrink-0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex items-center gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-8 flex-1 flex items-center gap-0.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 bg-primary rounded-full"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm font-mono text-destructive font-medium w-14 text-right tabular-nums"[39m
+          [36m>[39m
+            [0m0:03[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Parar gravação"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 w-10 bg-destructive hover:bg-destructive/90"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-square w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"18"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"18"[39m
+              [33mx[39m=[32m"3"[39m
+              [33my[39m=[32m"3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:72:12
+     70|     );
+     71|
+     72|     expect(getByRole('status').textContent).toContain('Gravando.');
+       |            ^
+     73|     fireEvent.click(getByLabelText('Pausar gravação'));
+     74|     expect(hv.hook.pauseRecording).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > espaço pausa e retoma a gravação; escape descarta
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:89:36
+     87|
+     88|     fireEvent.keyDown(window, { code: 'Space', key: ' ' });
+     89|     expect(hv.hook.pauseRecording).toHaveBeenCalledTimes(1);
+       |                                    ^
+     90|
+     91|     baseHook({ isRecording: true, isPaused: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > descarte aparece com a contagem e o desfazer devolve a gravação
+TestingLibraryElementError: Unable to find an accessible element with the role "status"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Cancelar gravação":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Cancelar gravação"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:shadow-glow-accent-sm h-10 w-10 text-destructive hover:text-destructive"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex items-center gap-3 p-3 bg-inbox-panel border border-border rounded-xl relative overflow-hidden"[39m
+      [33mstyle[39m=[32m"opacity: 0; transform: translateY(10px);"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Cancelar gravação"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:shadow-glow-accent-sm h-10 w-10 text-destructive hover:text-destructive"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-x w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M18 6 6 18"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m6 6 12 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 flex items-center gap-3"[39m
+      [36m/>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:108:12
+    106|     const { getByRole, getByLabelText } = render(<AudioRecorder onSend…
+    107|
+    108|     expect(getByRole('status').textContent).toContain('Desfazer dispon…
+       |            ^
+    109|     const desfazer = getByLabelText('Desfazer descarte da gravação');
+    110|     expect(desfazer.textContent).toContain('Desfazer (4s)');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > não abre o microfone quando há gravação recuperada e oferece usá-la
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:122:40
+    120|     const { getByText, getByRole } = render(<AudioRecorder onSend={vi.…
+    121|
+    122|     expect(hv.hook.startRecording).not.toHaveBeenCalled();
+       |                                        ^
+    123|     expect(getByRole('status')).toBeTruthy();
+    124|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/21]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > envio que falha nas 3 tentativas mantém a gravação e pede nova tentativa
+AssertionError: expected "vi.fn()" to be called 3 times, but got 1 times
+ ❯ src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:152:20
+    150|     });
+    151|
+    152|     expect(onSend).toHaveBeenCalledTimes(3);
+       |                    ^
+    153|     expect(getByLabelText('Tentar enviar o áudio novamente')).toBeTrut…
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/21]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx > AudioRecorder — pausa, descarte desfazível e gravação recuperada > envio confirmado limpa o rascunho do disco
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx:171:32
+    169|
+    170|     expect(onSend).toHaveBeenCalledTimes(1);
+    171|     expect(hv.hook.clearDraft).toHaveBeenCalledTimes(1);
+       |                                ^
+    172|   });
+    173| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/21]⎯
+
+
+ Test Files  5 failed | 1 passed (6)
+      Tests  18 failed | 3 passed (21)
+   Start at  06:38:45
+   Duration  6.98s (transform 2.52s, setup 4.59s, import 6.19s, tests 1.05s, environment 10.38s)
+

@@ -1,0 +1,10 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791882065 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791882067 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 07c9f47f0cd2a0abc968fcc62d1d483ee0d8ade4 Hermes Senior <hermes-senior@promobrindes.local> 1791882109 -0300	cherry-pick: feat(inbox): recusa áudio fora dos limites de PTT antes do upload
+07c9f47f0cd2a0abc968fcc62d1d483ee0d8ade4 1a160b40eabf6d26e6e5ec6118c3d0da63e10f06 Hermes Senior <hermes-senior@promobrindes.local> 1791882110 -0300	cherry-pick: chore(inbox): relato do fechamento sobre limites de PTT
+1a160b40eabf6d26e6e5ec6118c3d0da63e10f06 17f61853fc35f14d9d0ad6b3e063e1c1d9c56d5a Hermes Senior <hermes-senior@promobrindes.local> 1791883184 -0300	commit: feat(chat): gravador de áudio com pausa, recuperação, desfazer descarte e reenvio
+17f61853fc35f14d9d0ad6b3e063e1c1d9c56d5a b7d7f75d24715aa856ba5705317efefd147be241 Hermes Senior <hermes-senior@promobrindes.local> 1791883265 -0300	commit: chore(chat): relato do fechamento do gravador de audio
+b7d7f75d24715aa856ba5705317efefd147be241 73f094b2eb6ada6d6697ccf6571978da7f90493f Hermes Senior <hermes-senior@promobrindes.local> 1791883327 -0300	commit: chore(chat): relato cita a faixa do pai trazida por cherry-pick
+73f094b2eb6ada6d6697ccf6571978da7f90493f 6f05c81412aa94c875b85ae5495350c6038152ea Hermes Senior <hermes-senior@promobrindes.local> 1791883378 -0300	commit: chore(chat): relato explica a faixa do pai como indispensavel
+6f05c81412aa94c875b85ae5495350c6038152ea f5885801b111986d8f36c1c163b0e54bbe020ab1 Hermes Senior <hermes-senior@promobrindes.local> 1792025968 -0300	rebase (start): checkout dia/2026-10-14
+f5885801b111986d8f36c1c163b0e54bbe020ab1 21416a2eaf6e6413ee45f5b25414b0a52beca738 Hermes Senior <hermes-senior@promobrindes.local> 1792025968 -0300	rebase (pick): feat(chat): gravador de áudio com pausa, recuperação, desfazer descarte e reenvio

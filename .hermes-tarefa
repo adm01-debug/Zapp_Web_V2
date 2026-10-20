@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audio-gravador-pausa-recuperacao
+ID=2610130601fcc2
+BRANCH=v2/audio-gravador-pausa-recuperacao-2610130601fcc2
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T06:01:07-03:00
+KANBAN=t_f2ee7a9a
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-gravador-pausa-recuperacao-2610130601fcc2/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130601fcc2
+PRONTO_SHA=6f05c81412aa94c875b85ae5495350c6038152ea
