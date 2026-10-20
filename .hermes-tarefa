@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=away-message-decisao-refazer-relato
+ID=2610161354fb68
+BRANCH=v2/away-message-decisao-refazer-relato-2610161354fb68
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/away-message-decisao-refazer-relato-2610161354fb68
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T13:54:33-03:00
+KANBAN=t_bcd7e784
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/away-message-decisao-refazer-relato-2610161354fb68/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-2610161354fb68
+PRONTO_SHA=968147b320b14a3e3f31518b8b4ab5c46a43a8a1

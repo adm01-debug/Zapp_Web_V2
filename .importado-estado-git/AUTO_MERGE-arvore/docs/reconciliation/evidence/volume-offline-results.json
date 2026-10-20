@@ -1,0 +1,150 @@
+{
+  "baseline_commit": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "executed_at": "2026-10-03T22:59:33.777Z",
+  "node_version": "v24.19.0",
+  "method": "Actual TypeScript modules stripped in memory; import alias rewritten only to the actual store module. DOM, storage, BroadcastChannel and WebAudio are offline test doubles.",
+  "source_sha256": {
+    "src/lib/mediaVolumeStore.ts": "23f88ce2d68b09f6844e4ef502b3373e6a53fb3ecafe964e9a320cad949cb7ab",
+    "src/lib/mediaVolumeElement.ts": "ebdbe7a1344dad43e7af1f578d321c68e640de6a9c61103d6d715f26944f5854"
+  },
+  "production_changes": false,
+  "network_requests": 0,
+  "database_queries": 0,
+  "results": [
+    {
+      "id": "VOL-P01",
+      "purpose": "Store: default, stable snapshots, persisted values, mute and reload",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "default": 80,
+        "persistedAfterReload": 35,
+        "volumeAfterUnmute": 35
+      }
+    },
+    {
+      "id": "VOL-P02",
+      "purpose": "Store: invalid reads, blocked storage, clamped writes and quadratic gain",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "blockedStorageFallback": 80,
+        "gains": [
+          0,
+          0.25,
+          1
+        ],
+        "clampedWrites": [
+          100,
+          0,
+          35
+        ]
+      }
+    },
+    {
+      "id": "VOL-P03",
+      "purpose": "Store: two module instances broadcast state without echo",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "stateInSecondModule": {
+          "volume": 65,
+          "muted": true
+        },
+        "broadcasts": 2,
+        "subscriberCalls": [
+          2,
+          2
+        ]
+      },
+      "limitation": "Simulated BroadcastChannel; not two real browser tabs."
+    },
+    {
+      "id": "VOL-P04",
+      "purpose": "Store: storage-event fallback and unsubscribe",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "externalVolume": 55,
+        "callbacksBeforeAndAfterUnsubscribe": 1
+      }
+    },
+    {
+      "id": "VOL-P05",
+      "purpose": "Element: native apply, subscription, metadata reload and detached cleanup",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "nativeGain": 0.25,
+        "contextsBeforePlay": 0,
+        "gainAfterDetach": 0.25
+      }
+    },
+    {
+      "id": "VOL-P06",
+      "purpose": "Element: native play creates a context that cleanup never closes",
+      "harness_result": "PASS",
+      "requirement_result": "VALIDATED_FAIL",
+      "finding_id": "VOL-01",
+      "expected": "No context on the native-volume path; if one is created, release it after the last bound element detaches.",
+      "observed": {
+        "afterPlay": {
+          "contexts": 1,
+          "sources": 0,
+          "gains": 0,
+          "closes": 0,
+          "resumes": 0,
+          "disconnects": 0,
+          "broadcasts": 0
+        },
+        "afterDetach": {
+          "contexts": 1,
+          "sources": 0,
+          "gains": 0,
+          "closes": 0,
+          "resumes": 0,
+          "disconnects": 0,
+          "broadcasts": 0
+        }
+      },
+      "limitation": "Control flow and constructor/close calls proven on actual source with browser API doubles; no hardware audio, battery or browser-limit measurement."
+    },
+    {
+      "id": "VOL-P07",
+      "purpose": "Element: fallback nodes are reused and the context closes only after the last element",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "calls": {
+          "contexts": 1,
+          "sources": 2,
+          "gains": 2,
+          "closes": 1,
+          "resumes": 1,
+          "disconnects": 2,
+          "broadcasts": 0
+        },
+        "nodeGains": [
+          0.25,
+          0.25
+        ]
+      },
+      "limitation": "Read-only volume simulated; not iOS playback."
+    },
+    {
+      "id": "VOL-P08",
+      "purpose": "Element: neither native volume nor AudioContext reports unavailable",
+      "harness_result": "PASS",
+      "requirement_result": "PASS",
+      "observed": {
+        "isMediaVolumeControllable": false
+      }
+    }
+  ],
+  "summary": {
+    "probes": 8,
+    "harness_passed": 8,
+    "requirement_passed": 7,
+    "requirement_failed": 1
+  }
+}

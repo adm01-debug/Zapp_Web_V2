@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "batches": [
+    {
+      "id": "UI-01: tema, feedback, atalhos e interação",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "files": [
+        "src/hooks/ui/useTheme.ts",
+        "src/hooks/ui/useActionFeedback.ts",
+        "src/hooks/ui/useCustomShortcuts.ts",
+        "src/hooks/ui/useVolumeRocker.ts",
+        "src/hooks/ui/useSwipeNavigation.ts"
+      ],
+      "assessment": "Corpos integrais lidos. Tema mantém estado compartilhado e listener de preferência do sistema; a preferência global de aparência não foi tratada como dado privado de busca. Volume deduplica teclado nativo/React por defaultPrevented, evita campos editáveis e limpa timer de long-press. Swipe remove listeners/indicador na limpeza; não foi exercitado gesto real. Feedback comum propaga avisos e ações em lote; os helpers withUndo/useConfirmAction passam action ao showFeedback, que apenas concatena o rótulo, mas não foi localizado consumidor atual desses dois helpers e não se atribui bloqueio a uma tela. Atalhos customizados têm estado por instância e leitura de storage só no mount; sincronização entre configuração e listener global confirmada como PLAT008 após leitura dos consumidores."
+    },
+    {
+      "id": "UI-02: consumidores de atalhos, loading, onboarding e gestos",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "files": [
+        "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+        "src/components/settings/KeyboardShortcutsSettings.tsx",
+        "src/components/keyboard/GlobalKeyboardProvider.tsx",
+        "src/hooks/shortcuts/defaultShortcuts.ts",
+        "src/hooks/shortcuts/shortcutLabels.ts",
+        "src/hooks/shortcuts/taskShortcutLabels.ts",
+        "src/hooks/ui/useLoadingState.ts",
+        "src/hooks/ui/useOnboarding.ts",
+        "src/hooks/ui/useOnboardingChecklist.ts",
+        "src/hooks/ui/useParallax.ts",
+        "src/hooks/ui/useSwipeGesture.ts",
+        "src/hooks/ui/usePullToRefresh.ts"
+      ],
+      "assessment": "Corpos integrais lidos, incluindo registro/escopo e caminho de configuração dos atalhos (PLAT008). Registry de tarefas respeita views e campos editáveis; rótulos lazy têm mesclagem determinística. Loading envolve função com tempo mínimo e auto-reset, sem prova de concorrência nos consumidores. Onboarding tem chave por usuário e invalida consulta na limpeza; conclusão remota usa existência de user_settings e erros de persistência só são logados, portanto não foi certificada sincronização entre dispositivos. Checklist usa heurísticas de perfil/configurações/primeira conexão/template, não prova que o usuário cumpriu o tour. Gestos controlam direção/limiar e estados; cenários de touchcancel, mudança de enabled no meio do gesto e interação com gesto nativo não foram executados. Parallax limpa listeners/observer; easing declarado não é aplicado e não foi presumido requisito de tela ativa."
+    },
+    {
+      "id": "UI-03: shell, acessibilidade, navegação e preferências locais",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "files": [
+        "src/pages/Index.tsx",
+        "src/components/layout/AppShell.tsx",
+        "src/components/layout/ZenModeToggle.tsx",
+        "src/hooks/ui/use-toast.ts",
+        "src/hooks/ui/useKeyboardShortcuts.ts",
+        "src/hooks/ui/useKeyboardNavigation.ts",
+        "src/hooks/ui/useNavShortcuts.ts",
+        "src/hooks/ui/useAriaAnnouncer.ts",
+        "src/hooks/ui/useAmbientColor.ts",
+        "src/hooks/ui/useSidebarFavorites.ts",
+        "src/hooks/ui/useZenMode.ts",
+        "src/hooks/ui/useDocumentTitle.ts",
+        "src/hooks/ui/useKeyboardHeight.ts",
+        "src/hooks/ui/usePrefetchOnHover.ts",
+        "src/hooks/ui/useSidebarCollapse.ts",
+        "src/hooks/ui/useViewTransition.ts",
+        "src/hooks/ui/use-mobile.tsx",
+        "src/hooks/ui/useDeepLinks.ts",
+        "src/hooks/ui/useDensity.ts"
+      ],
+      "assessment": "Corpos integrais lidos. PLAT009 registra Ctrl+2 sem seleção de view; Alt+R usa mapa/callback correto e não é classificado como igualmente quebrado. ZenModeToggle recebe estado e ação do AppShell, portanto não há instância isolada nesse caminho (candidato rejeitado). Sidebar collapse escuta seu evento e remove listener; announcer cria/remove região viva e usa textContent; title restaura valor anterior. Hooks de aparência/gestos não executam escrita de dados de negócio. PrefetchOnHover depende de queryFn já disponível no cache/configuração e não certifica pré-carga de consulta inédita; essa limitação de otimização não foi promovida a falha funcional. DeepLinks é navegação por hash genérica; shell atual usa useNavigationHistory com query, sem confundir as implementações. useKeyboardHeight reage a eventos VisualViewport e não mede zoom/teclado real. Nenhum teste de acessibilidade visual, leitor de tela ou dispositivo móvel foi executado."
+    },
+    {
+      "id": "UI-04: mobile, notificações, gestos e instalação",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "files": [
+        "src/components/mobile/SwipeGestures.tsx",
+        "src/components/mobile/swipeUtils.ts",
+        "src/components/mobile/MobileSlidePanel.tsx",
+        "src/components/mobile/MobileDrawerMenu.tsx",
+        "src/components/mobile/MobileShell.tsx",
+        "src/components/mobile/BottomSheet.tsx",
+        "src/components/mobile/MobileNavigation.tsx",
+        "src/components/mobile/MobilePullToRefresh.tsx",
+        "src/components/mobile/MiniChatPiP.tsx",
+        "src/components/mobile/InAppNotificationProvider.tsx",
+        "src/components/mobile/InAppNotification.tsx",
+        "src/components/mobile/MobileHeader.tsx",
+        "src/components/mobile/NotificationsPanel.tsx",
+        "src/components/mobile/MobileFAB.tsx",
+        "src/components/mobile/FloatingActionButtons.tsx",
+        "src/components/mobile/TouchRipple.tsx",
+        "src/components/mobile/SwipeableMessage.tsx",
+        "src/components/mobile/index.ts",
+        "src/pages/Install.tsx"
+      ],
+      "assessment": "Corpos integrais lidos. PLAT010/011 registram busca e notificações desconectadas no shell ativo. Drawer filtra seções e recentes por NavigationService; recents contém IDs de views, não consultas privadas. SwipeableRow/PullToRefresh genérico, SlideOverPanel/PinchZoom/LongPressMenu e FABs genéricos aparecem apenas em exports no rastreio de consumidores; suas limitações de cancelamento/limites não foram convertidas em incidentes de tela ativa. O Inbox usa outro hook usePullToRefresh e um indicador puro. MiniChatPiP ativo não recebe onQuickReply; a chamada Toque para responder apenas expande uma prévia com Abrir conversa completa, limitação explícita sem alegar perda de envio assíncrono inexistente. InAppNotification possui timer com cleanup, mas seu hook não tem consumidor de produção encontrado; não foi alegada perda atual por contexto do provider. MobileFAB encaminha as ações Novo para seleção de view, não dispara formulário diretamente. Install observa o prompt nativo, diferencia iOS e display-mode; não se executou instalação, modo offline, permissões, gestos, teclado móvel nem leitor de tela. O listener appinstalled não é removido no unmount, observação de lifecycle sem impacto produtivo material demonstrado."
+    }
+  ]
+}
