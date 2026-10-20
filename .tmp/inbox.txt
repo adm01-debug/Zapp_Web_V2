@@ -1,0 +1,18 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-exclusivo-posicao-velocidade-2610140751419b
+
+ ❯ src/components/inbox/__tests__/PlaybackSpeed.test.tsx (28 tests | 8 failed) 1083ms
+     × cycles through all speeds in correct order 37ms
+     × wraps around after full cycle (returns to 1x) 80ms
+     × continues cycling after multiple full loops 137ms
+     × sets playbackRate on audio element when speed changes 37ms
+     × shows integer speeds without extra decimals (1x not 1.00x) 38ms
+     × speed button works independently of play state 48ms
+     × speed state persists across play/pause cycles 35ms
+     × each audio player has independent speed state 96ms
+
+ Test Files  1 failed | 201 passed | 1 skipped (203)
+      Tests  8 failed | 1651 passed | 4 todo (1663)
+   Start at  08:15:15
+   Duration  202.49s (transform 22.63s, setup 68.17s, import 177.51s, tests 244.82s, environment 255.06s)
+

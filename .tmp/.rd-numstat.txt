@@ -1,0 +1,4 @@
+231	0	src/hooks/communication/__tests__/audioExclusivo.players.test.tsx
+132	8	src/hooks/communication/useAudioPlayer.ts
+103	0	src/lib/__tests__/audioPlayerState.test.ts
+107	0	src/lib/audioPlayerState.ts

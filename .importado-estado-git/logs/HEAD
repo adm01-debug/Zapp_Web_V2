@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791975083 -0300	
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791975084 -0300	reset: moving to HEAD
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 7646ec90515b9e26246f616513ccf804eeca3890 Hermes Senior <hermes-senior@promobrindes.local> 1791977299 -0300	commit: fix(chat): áudio da conversa toca um por vez e guarda posição e velocidade
+7646ec90515b9e26246f616513ccf804eeca3890 ae1825b0cbd6e8af0c1950ba6980ef87633a2ebc Hermes Senior <hermes-senior@promobrindes.local> 1791977363 -0300	commit: chore(chat): relato do fechamento do cartão de áudio exclusivo

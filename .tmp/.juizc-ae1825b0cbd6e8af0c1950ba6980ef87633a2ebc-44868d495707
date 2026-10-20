@@ -1,0 +1,1 @@
+{"versao": "pronto-5", "estado": "ok", "avisos": [], "fatos": {"files_changed": 5, "test_files_changed": 2, "files": [".tmp/relato.md", "src/hooks/communication/__tests__/audioExclusivo.players.test.tsx", "src/hooks/communication/useAudioPlayer.ts", "src/lib/__tests__/audioPlayerState.test.ts", "src/lib/audioPlayerState.ts"], "diff_truncated": false, "test_cases_added": 10}}

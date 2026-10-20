@@ -1,0 +1,4 @@
+On branch v2/audio-exclusivo-posicao-velocidade-2610140751419b
+nothing to commit, working tree clean
+FECHADO (modo V2, local): v2/audio-exclusivo-posicao-velocidade-2610140751419b @ ae1825b0c — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/2610140751419b.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.

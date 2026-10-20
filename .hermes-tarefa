@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audio-exclusivo-posicao-velocidade
+ID=2610140751419b
+BRANCH=v2/audio-exclusivo-posicao-velocidade-2610140751419b
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-exclusivo-posicao-velocidade-2610140751419b
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-14T07:51:24-03:00
+KANBAN=t_a8b2a47f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-exclusivo-posicao-velocidade-2610140751419b/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-14
+DB_LOCAL=v2-2610140751419b
+PRONTO_SHA=ae1825b0cbd6e8af0c1950ba6980ef87633a2ebc

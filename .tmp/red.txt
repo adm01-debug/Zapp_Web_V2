@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-exclusivo-posicao-velocidade-2610140751419b
+
+ ❯ src/hooks/communication/__tests__/audioExclusivo.players.test.tsx (4 tests | 2 failed) 232ms
+     × tocar o segundo áudio PAUSA o primeiro e o botão do primeiro volta para "tocar" 129ms
+     × desmontar tocando pausa sem perder o ponto; remontar o mesmo messageId devolve posição e velocidade 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/communication/__tests__/audioExclusivo.players.test.tsx > t_a8b2a47f — exclusividade e memória de reprodução no balão da conversa > tocar o segundo áudio PAUSA o primeiro e o botão do primeiro volta para "tocar"
+AssertionError: o elemento de A foi pausado: expected "vi.fn()" to be called at least once
+ ❯ src/hooks/communication/__tests__/audioExclusivo.players.test.tsx:136:57
+    134|     await act(async () => {});
+    135|     expect(getPlayingAudioId(), 'B virou o áudio atual').toBe('msg-b');
+    136|     expect(audioA.pause, 'o elemento de A foi pausado').toHaveBeenCall…
+       |                                                         ^
+    137|     expect(mostraTocando(a.container), 'o botão de A voltou para tocar…
+    138|     expect(mostraTocando(b.container), 'o botão de B mostra pausa').to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/hooks/communication/__tests__/audioExclusivo.players.test.tsx > t_a8b2a47f — exclusividade e memória de reprodução no balão da conversa > desmontar tocando pausa sem perder o ponto; remontar o mesmo messageId devolve posição e velocidade
+AssertionError: desmontar pausou o som (sem som fantasma): expected "vi.fn()" to be called at least once
+ ❯ src/hooks/communication/__tests__/audioExclusivo.players.test.tsx:187:70
+    185|     // Rolar o balão para fora da janela virtualizada desmonta o áudio.
+    186|     a.unmount();
+    187|     expect(audio.pause, 'desmontar pausou o som (sem som fantasma)').t…
+       |                                                                      ^
+    188|     expect(readAudioState('msg-remonta')!.currentTime, 'o ponto sobrev…
+    189|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  08:22:54
+   Duration  1.51s (transform 271ms, setup 163ms, import 392ms, tests 232ms, environment 579ms)
+
