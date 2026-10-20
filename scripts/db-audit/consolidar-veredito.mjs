@@ -72,7 +72,7 @@ export const ORDEM_CAUSA = [
 /** Redacao de credencial em qualquer trecho que for para summary/alert/artefato. */
 export function redigir(texto) {
   return String(texto)
-    .replace(/postgres(?:ql)?\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
+    .replace(/postgres(?:ql)?:\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
     .replace(/password=[^\s&]+/g, 'password=***');
 }
 
