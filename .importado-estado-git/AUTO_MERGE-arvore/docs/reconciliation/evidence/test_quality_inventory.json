@@ -1,0 +1,63 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "files": [
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+      "lines": 1589,
+      "literal_true_assertions": 219,
+      "test_declarations": 257
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+      "lines": 727,
+      "literal_true_assertions": 0,
+      "test_declarations": 101
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-security-gaps.test.ts",
+      "lines": 390,
+      "literal_true_assertions": 52,
+      "test_declarations": 55
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+      "lines": 89,
+      "literal_true_assertions": 0,
+      "test_declarations": 3
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/rls-contract.test.ts",
+      "lines": 75,
+      "literal_true_assertions": 0,
+      "test_declarations": 6
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+      "lines": 48,
+      "literal_true_assertions": 0,
+      "test_declarations": 1
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useTeamMessages.test.tsx",
+      "lines": 65,
+      "literal_true_assertions": 0,
+      "test_declarations": 1
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
+      "lines": 66,
+      "literal_true_assertions": 0,
+      "test_declarations": 4
+    }
+  ],
+  "literal_true_assertions_total": 271,
+  "locally_executed": [
+    "node scripts/db-audit/supabase-usage-guard.mjs (exit0; violations1,baseline1,new0)"
+  ],
+  "not_executed": [
+    "SQL harnesses: Docker and psql unavailable",
+    "production test",
+    "full Vitest/tsc suite"
+  ],
+  "known_usage_violation": "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+}

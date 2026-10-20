@@ -1,0 +1,773 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "providers",
+  "status": "PENDING_READING",
+  "files": [
+    {
+      "path": "src/components/email/__tests__/EmailChatBubble.test.tsx",
+      "line_start": 1,
+      "line_end": 143,
+      "git_blob_sha": "ebc132cdc3092f6bd85c60a950eb642f32031b5b",
+      "source_sha256": "36d59103692c6b4c7f9976c714b5af91a983bc17195cf48a4fe9c21a720e27a9",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/email/__tests__/EmailChatReplyBar.test.tsx",
+      "line_start": 1,
+      "line_end": 244,
+      "git_blob_sha": "8b1faad0d6e64552976081cf32fcbc9ae90a7077",
+      "source_sha256": "3add3d927ed24687c5cb2a4dc4b745202e18fef7d83da39edfbae14d943308ac",
+      "uncontained_bodies_at_allocation": 41,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/email/__tests__/EmailChatThread.test.tsx",
+      "line_start": 1,
+      "line_end": 321,
+      "git_blob_sha": "47496086ecfaf7bc795a46cfd2ef0c1671d884c3",
+      "source_sha256": "ed55b2d9a475a225a80ba1d67e386e1b2dbda876024dab7267871c597c67766f",
+      "uncontained_bodies_at_allocation": 53,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/email/__tests__/EmailThreadList.test.tsx",
+      "line_start": 1,
+      "line_end": 109,
+      "git_blob_sha": "c08e39d4c9f4074f0a250f3a47c9369e9caf0966",
+      "source_sha256": "bdb365dc36c5235cff62b877ca049b1344cac3e38d9fbc50b428b0051e6edb92",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/gmail/__tests__/EmailThreadView.test.tsx",
+      "line_start": 1,
+      "line_end": 245,
+      "git_blob_sha": "50210f0fbf5b70068b5da539edc32f21fcac433f",
+      "source_sha256": "f0b88cc57f375d0c4b6cae63c288c57b947047441e7584362fc91453cd92d762",
+      "uncontained_bodies_at_allocation": 68,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/gmail/__tests__/ThreadListItem.test.tsx",
+      "line_start": 1,
+      "line_end": 180,
+      "git_blob_sha": "ef34f3d60e290c4fbab5060cd93ab6b57ae450ce",
+      "source_sha256": "9a86c9cf6311a961c7d2f06a409d21c81481237ae15d4d0b8fc8160d81f52ff0",
+      "uncontained_bodies_at_allocation": 32,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useBitrixApi.test.ts",
+      "line_start": 1,
+      "line_end": 167,
+      "git_blob_sha": "c694f6074dcc6548b192de78528185cdde30b458",
+      "source_sha256": "34cb22408f8bc05a7523454d63897af094de25840128e3701858cb38c8738890",
+      "uncontained_bodies_at_allocation": 58,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useEvolutionApi.test.ts",
+      "line_start": 1,
+      "line_end": 868,
+      "git_blob_sha": "8048474e180d022c7641d0afc4cdea37a57d1b4e",
+      "source_sha256": "aa01855e490f59be09bce56d91ce68698ffdae2644c366f26d083036fd44004d",
+      "uncontained_bodies_at_allocation": 239,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+      "line_start": 1,
+      "line_end": 211,
+      "git_blob_sha": "41efa3de4d9f4968d67260d2c198e0fccf49a693",
+      "source_sha256": "882993297d244e22aebe463204609841973c7967b4ce68d61a6334ae6531207a",
+      "uncontained_bodies_at_allocation": 46,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAgentPresence.test.ts",
+      "line_start": 1,
+      "line_end": 134,
+      "git_blob_sha": "0ac32f80f40d55d3998e3dee6b93daf7f5b390db",
+      "source_sha256": "15aa82345b82c957230661359b375d6d4950596fd9071a5a0af02372d31442ec",
+      "uncontained_bodies_at_allocation": 27,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useGmail.test.ts",
+      "line_start": 1,
+      "line_end": 288,
+      "git_blob_sha": "0777ffcf2f93ac9096e83f04fe55c9f34b5f3e6c",
+      "source_sha256": "c6d08f758adde5b3b799e3172903c579d31cf356cd0428a766816ef4c23efc0d",
+      "uncontained_bodies_at_allocation": 73,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx",
+      "line_start": 1,
+      "line_end": 182,
+      "git_blob_sha": "ba84143dae64c654bf88399fa0dc6b8d902533b1",
+      "source_sha256": "ce4419387664e07039cc16f930283c762e5db4411b6b25eaa64128108ad47e6f",
+      "uncontained_bodies_at_allocation": 32,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/crmIntegration.test.ts",
+      "line_start": 1,
+      "line_end": 45,
+      "git_blob_sha": "fb3ff565977f5d78a5fcccb5444269d4afd62c7e",
+      "source_sha256": "a07289f6693d53b482539e9a39eeedab489d40c135773aa46bd98ebb677f06a2",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/emailHtml.test.ts",
+      "line_start": 1,
+      "line_end": 337,
+      "git_blob_sha": "82cb71739fde1d3fcb49263b5d30148513ec6378",
+      "source_sha256": "0df1832670460d8868116aa4cbb5a041c219d43727876884b7a08273f9ae133c",
+      "uncontained_bodies_at_allocation": 66,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/webhookStatusPriority.test.ts",
+      "line_start": 1,
+      "line_end": 130,
+      "git_blob_sha": "154b939e33ef726a7e016f4bd8152bb815e84acf",
+      "source_sha256": "5f6bca243c62a7d7ab516b7628288928a14304e4ce41134e9f2700976baf107a",
+      "uncontained_bodies_at_allocation": 28,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx",
+      "line_start": 1,
+      "line_end": 85,
+      "git_blob_sha": "8e406be6052c2ecbf99b5b4573911cdf65cff9c5",
+      "source_sha256": "8c2e56c4c63dd27215eab55a479228df03037411c9d724ac237d175a79e93de9",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
+      "line_start": 1,
+      "line_end": 135,
+      "git_blob_sha": "30993ad47786c3342fe91548e56fc67610b2f4b1",
+      "source_sha256": "f6006323c4dcd4bb5f465d732a5dc289193ddf3fe2f93648406912f939f94d67",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts",
+      "line_start": 1,
+      "line_end": 86,
+      "git_blob_sha": "11dda062acec868f22d05b2c21ca4dd2e7e1e591",
+      "source_sha256": "8627c2935a7b4d6037ccef3f7c0d64e60709c2ae199d46d38fc0f6650a9bd92e",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-auth.test.ts",
+      "line_start": 1,
+      "line_end": 87,
+      "git_blob_sha": "40a7c92f607d9a18a62f121ef0c2550a637c3135",
+      "source_sha256": "2676fcdff3965f951ddf7d8f65a3420fbeeb7630e0a220b3a63bbbdfd4e49145",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts",
+      "line_start": 1,
+      "line_end": 222,
+      "git_blob_sha": "ab9cb60ca09b2cfca613c31a7abc5f67e756460e",
+      "source_sha256": "db2e245bc0e4a9cb256985e72fe8cc4ccd7d5a51e925db804faf4a2ed244aa27",
+      "uncontained_bodies_at_allocation": 25,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-response-contracts.test.ts",
+      "line_start": 1,
+      "line_end": 386,
+      "git_blob_sha": "f56d65b53cda2089ec846b031e23d1aafdeecb8d",
+      "source_sha256": "71e1dd700a05c0db961bbddb64979d93df19852296f9d9ff7bd86bb0870074b4",
+      "uncontained_bodies_at_allocation": 41,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-vocabulary.test.ts",
+      "line_start": 1,
+      "line_end": 241,
+      "git_blob_sha": "d3e140dc9ee1290e97feae6c10bcbfddc7a9e1f4",
+      "source_sha256": "b44e2d18fb71edf72a4ff96c86a3cffb7e0ed4eb482a29b83e2b006d2bbe8d8b",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/chatbot-l1-output.test.ts",
+      "line_start": 1,
+      "line_end": 153,
+      "git_blob_sha": "c63171c865cab2471eee7e4531c2953d2ac1ad5b",
+      "source_sha256": "a09ef818fa889c23132b02035f2967b86e6530c4514b7b78b4b6c168d953ada1",
+      "uncontained_bodies_at_allocation": 18,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
+      "line_start": 1,
+      "line_end": 78,
+      "git_blob_sha": "b183e87e65536073f7d61afa13a3534e48a41331",
+      "source_sha256": "1498c9576ee872c45d5a51a3e1f19a4a5d71c45e8cc509fb616f6d976eb737f1",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
+      "line_start": 1,
+      "line_end": 247,
+      "git_blob_sha": "8129bb1adae474f2d587014e7c6c618f1fa981d4",
+      "source_sha256": "ed87b4a823ee657dc19366dac2dadaa0d83acc6aa42bbae5e5147b0fd198e8e5",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/effect-reconcile.test.ts",
+      "line_start": 1,
+      "line_end": 285,
+      "git_blob_sha": "3946f047057eaf795a9c1253acbd4b3db48da6c1",
+      "source_sha256": "14298729305c23976af84e9fa2231343e0d943cec246ca49ef2155a86491cdde",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-call-events.test.ts",
+      "line_start": 1,
+      "line_end": 131,
+      "git_blob_sha": "3b3f718fe2ed73189cac4c4cca61d4957599d06e",
+      "source_sha256": "492d2cc451d47382088e737d8d437193cf9a4c407ae76edc4ad363f83f5ca124",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts",
+      "line_start": 1,
+      "line_end": 356,
+      "git_blob_sha": "ccebb1addbed2f969535e65d13697c764b5981a4",
+      "source_sha256": "b2751107980df6f850a5d5db9c50157ef119e174c747f7e1bb0630017987402b",
+      "uncontained_bodies_at_allocation": 38,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-webhook-connection-risk.test.ts",
+      "line_start": 1,
+      "line_end": 119,
+      "git_blob_sha": "bbbf480c319f8a144bf37a16cf46a9f2fa8218b0",
+      "source_sha256": "0e42607fb0f65af95723bc11b26e454c0105e69c85c2d62c0c13261c13de0f6d",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/f58-item-receipts.test.ts",
+      "line_start": 1,
+      "line_end": 123,
+      "git_blob_sha": "c27b89c4e09987bab360735ea2b14e948f963a85",
+      "source_sha256": "536d894bcfcd70760284daff62babb6a1f27b5e7d3bc72f5e630072e9ed36992",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts",
+      "line_start": 1,
+      "line_end": 86,
+      "git_blob_sha": "234cd601edd30004b14c34dcb1f50c40a6049d79",
+      "source_sha256": "c363d7e55ce07777e2613ad5ec4c338aab10f1b6f904d716c6ebc958186a6e8a",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/gmail-send-schema.test.ts",
+      "line_start": 1,
+      "line_end": 87,
+      "git_blob_sha": "c11d15a4394b9fe0ed0e92a8a52f0d7524405f8e",
+      "source_sha256": "2363f665deebdb0f120a4364036fdfac0777de9fb0fb86b54d73ce5f6ca50715",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/messaging-errors.test.ts",
+      "line_start": 1,
+      "line_end": 151,
+      "git_blob_sha": "19a16af1d3c14362cf9c7f5b4a39c83343b33444",
+      "source_sha256": "c44723b934938976105d36fbfcf706769c1db8addf670ce49517c865a8a7276d",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts",
+      "line_start": 1,
+      "line_end": 207,
+      "git_blob_sha": "626c3eb9b702bf632a50756f8c71a034d1e7db68",
+      "source_sha256": "108ef0216401b95217f24603f354e56993d68efb187b52f02ae57c426d801585",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts",
+      "line_start": 1,
+      "line_end": 140,
+      "git_blob_sha": "e5d22aec0948ba9b56d3cb84c4427b9df163c53e",
+      "source_sha256": "d576f50798f93f875a67cd6d52140a83efea6694057f903e7131f5fc14ff675f",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/secure-egress.test.ts",
+      "line_start": 1,
+      "line_end": 100,
+      "git_blob_sha": "60ab447b2484b10e48b13b3ba044592cf268875f",
+      "source_sha256": "9e0dce5151dcbf7c2ada9a94f20257c6d72804d8e9b001731d9a9ad77541d41a",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+      "line_start": 1,
+      "line_end": 87,
+      "git_blob_sha": "003af675d225c7aaacf4efe435c52b18f1cc5664",
+      "source_sha256": "e30bd3a3f800610353f868f37adc41d736dd3cd63d7b1acaeab75d04c1933697",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts",
+      "line_start": 1,
+      "line_end": 219,
+      "git_blob_sha": "89826474e2a982bb617b267705633899139ad09a",
+      "source_sha256": "8b451a9c1a8eac4612d96e58a536f27d6b50a6478d2a84b289bddf230e9c9908",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+      "line_start": 1,
+      "line_end": 146,
+      "git_blob_sha": "6a98889637e41908e6d593d1e5f5f84f536df37c",
+      "source_sha256": "7981d2222fa3f16dd77308bbe39188962c45771386236363b7f738fd3cea0a5d",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+      "line_start": 1,
+      "line_end": 180,
+      "git_blob_sha": "03eb64fa69b8a54dda15e11bf7d7ab8404709c12",
+      "source_sha256": "6a039ffce60a2030772f78037f09868e5c1a506f3885697af0008f9363d1a510",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts",
+      "line_start": 1,
+      "line_end": 133,
+      "git_blob_sha": "34bf0fa62dda76591dfb0e8abce1902b5d9eb551",
+      "source_sha256": "12b88bcd8d6e43890ac3e6681044e32d19082141ccc18a7c89dd4351cc5a682a",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts",
+      "line_start": 1,
+      "line_end": 186,
+      "git_blob_sha": "719b80dfc5bccee81f069f747c61101d26c25aaa",
+      "source_sha256": "6fbe80e6a0310b7652488881e762b69d08fc80c6c6f2f214b463c1249d787abc",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/webhook-signature.test.ts",
+      "line_start": 1,
+      "line_end": 211,
+      "git_blob_sha": "515ab334e54a99be7ab63c5f68e89081ee1fde28",
+      "source_sha256": "46f637f705e1197e0788acae941394ac2327f3d44b9fdda5504c3ea9a6f1cb97",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-generate.test.ts",
+      "line_start": 1,
+      "line_end": 184,
+      "git_blob_sha": "b5de3aad7115192dd246b3be7ef7258b92295bb8",
+      "source_sha256": "487d1f631869a9fffec17f24f12b2f0b341175c30ea0fe031769e7b0366d53f1",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-usage.test.ts",
+      "line_start": 1,
+      "line_end": 997,
+      "git_blob_sha": "9dbe85094c1c1638c9a4b0ce2ea53d930b8fea6c",
+      "source_sha256": "4ac3a3919ee492e9468f747380c1961988e7e455137b1810114a6b2716bf96f4",
+      "uncontained_bodies_at_allocation": 63,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/eligibility.test.ts",
+      "line_start": 1,
+      "line_end": 199,
+      "git_blob_sha": "cf79257473ae2edbf213ca33d0f3a9ab53551d48",
+      "source_sha256": "664d3a425c8facca55aca5bf2d8c9aeba209e2cd95bcecbad7cfb75a4dcd8a99",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/media.test.ts",
+      "line_start": 1,
+      "line_end": 251,
+      "git_blob_sha": "86700c6fdf929ac0f0b9aa662b7a6335cefc149d",
+      "source_sha256": "08f4aa1d4fdd5ade07da202bbf42fb6d3b4990295d79f82138ae06e0ab622fa8",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/personalize.test.ts",
+      "line_start": 1,
+      "line_end": 175,
+      "git_blob_sha": "38f188519644e698360c463d523a323c17840f86",
+      "source_sha256": "ef5aac48e24d68fbea9b20347bd8ccee7e71d87f603ad61848a43f6d681101ee",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/phone.test.ts",
+      "line_start": 1,
+      "line_end": 185,
+      "git_blob_sha": "3a000850cb325f63a9d1d889405ae8cb9031101c",
+      "source_sha256": "0656bf99ab5cdda632c552ae759c2d488c7710e9f1dfbef32e5bbcd3f72909e7",
+      "uncontained_bodies_at_allocation": 18,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/ai-jobs-worker/index.test.ts",
+      "line_start": 1,
+      "line_end": 108,
+      "git_blob_sha": "dd8b51fdccb9dbeb9cd6b898d6ef0a227b6d3c92",
+      "source_sha256": "c0a9b1ceed8d82788df76bc8c0d17a15b26b06c9556dcc99d67b6c28a7fa163c",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.test.ts",
+      "line_start": 1,
+      "line_end": 86,
+      "git_blob_sha": "50e1f54e6931beee244cde3bf2456570d5ac1cf4",
+      "source_sha256": "9c6ad2e42255ee577d34e6a6c957431e74eaa6804ec7cba20830cd745f9a987d",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-audience/index.test.ts",
+      "line_start": 1,
+      "line_end": 480,
+      "git_blob_sha": "639a73531787518890f99a3063cd4fc024bf92cf",
+      "source_sha256": "9d1fa678a1b733c82e1a77a1bf604ff4047265841dcdfd0dcdc3c1f33a9ceafc",
+      "uncontained_bodies_at_allocation": 58,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts",
+      "line_start": 1,
+      "line_end": 306,
+      "git_blob_sha": "a895dacd397479ef72d2b1e5f390c4e7c61feb6b",
+      "source_sha256": "5105f42ef888778c1da0cbf75c4cfbfba7ee0987ba08a753699003b2da397d20",
+      "uncontained_bodies_at_allocation": 44,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts",
+      "line_start": 1,
+      "line_end": 469,
+      "git_blob_sha": "d2b49975aa0eeca1e270d5b7fcbceb595d064810",
+      "source_sha256": "e067552c38f0ff421613f5d49336f71f3b5210d7529596afdef4c82e832d2ca2",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts",
+      "line_start": 1,
+      "line_end": 619,
+      "git_blob_sha": "f25744daa7cf3e2c3f54340d22ad344d595e1c88",
+      "source_sha256": "46c8e4f4d738354c2995a299a59652bb97991a0daeb7626eb3c77ae9dfc8e6c9",
+      "uncontained_bodies_at_allocation": 51,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts",
+      "line_start": 1,
+      "line_end": 367,
+      "git_blob_sha": "710b605a078a6805c1af26211ff8707b1db93b01",
+      "source_sha256": "e430e44d541a1dcf1267bf9f29067911e37df4b8c7282549dbe9f3f079b7a7cd",
+      "uncontained_bodies_at_allocation": 38,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts",
+      "line_start": 1,
+      "line_end": 469,
+      "git_blob_sha": "ed700ac174e4ae97e8840ea2abba651acd345068",
+      "source_sha256": "bc53f0622ec6383ec549d9bbdfdadebe7eab204d55eea73202dbb8637b3f66df",
+      "uncontained_bodies_at_allocation": 57,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-send/index.test.ts",
+      "line_start": 1,
+      "line_end": 1269,
+      "git_blob_sha": "93caa808c5265c6c398f880909636b739955b970",
+      "source_sha256": "73052b058b26cb52950a131245095eea56dcdeda9f8d5180c770a4bfd9ba9005",
+      "uncontained_bodies_at_allocation": 107,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/multiplix-voices/index.test.ts",
+      "line_start": 1,
+      "line_end": 329,
+      "git_blob_sha": "3735a2a3a9c6e54ca1205223b2a48e14fdcb58db",
+      "source_sha256": "64850eae7b1451f883951166d8898ce696fcdceabe66a892380fcc31cd552b90",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/promogifts-catalog/index.actions.test.ts",
+      "line_start": 1,
+      "line_end": 616,
+      "git_blob_sha": "51b401ee6cc14e6cf5f62cdc2b6052891d2784cc",
+      "source_sha256": "156cabf0a596361def9a8002b56f6c491786abba59ccfabce39f8ecd68ceb317",
+      "uncontained_bodies_at_allocation": 73,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/promogifts-catalog/index.test.ts",
+      "line_start": 1,
+      "line_end": 87,
+      "git_blob_sha": "a0cd9adbd7dc5dcaab81c1c8a1fc05918f53a011",
+      "source_sha256": "37358abda0f2b265ab22fa39193780959667582428b0d9afdf7c2f9a784a168f",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-link/index.test.ts",
+      "line_start": 1,
+      "line_end": 219,
+      "git_blob_sha": "22184938ace0cb54d0091a2c9d17c3131d49473f",
+      "source_sha256": "d9db60078f98f45d9c04fb26e0082a9aa2c1ab16afad450748e3320a39ec417b",
+      "uncontained_bodies_at_allocation": 27,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-scheduler/index.test.ts",
+      "line_start": 1,
+      "line_end": 320,
+      "git_blob_sha": "452fa427fd09a7d29a4e23df6e4fa5f74c61aee2",
+      "source_sha256": "2c4a86b52bab1e4fd2757403d626d6b2ce7009078e9d90541e60f2684ddd944f",
+      "uncontained_bodies_at_allocation": 34,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-send/_test-utils.ts",
+      "line_start": 1,
+      "line_end": 431,
+      "git_blob_sha": "53217b45e7ef27ba2d2cf4d19ac3cd90f5805603",
+      "source_sha256": "ae3bd2b150b83a601ab606c91ab4fee4e78c3aea808f4962f487e62ecef4604c",
+      "uncontained_bodies_at_allocation": 54,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-send/index.test.ts",
+      "line_start": 1,
+      "line_end": 1107,
+      "git_blob_sha": "5a761a7be15246a53ba47772ed0454a7d2338eb4",
+      "source_sha256": "e41233d007d9d92a94fda0325bbf0196405fa4114b93f9268a73a93497950ed1",
+      "uncontained_bodies_at_allocation": 107,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-send/v20-daily-limit.test.ts",
+      "line_start": 1,
+      "line_end": 92,
+      "git_blob_sha": "f8e17e17dc2d168e0364bee87cb6600656f56376",
+      "source_sha256": "5421bd49f84bc6eb0be1ebcd08ea443cd4d9d4fc104611391099c0b54796b1b8",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-send/x019-connection-budget.test.ts",
+      "line_start": 1,
+      "line_end": 121,
+      "git_blob_sha": "2b17fc982bf8a8f2a7921b4d79e8ae391c8a4273",
+      "source_sha256": "ee8909e4081cc62a771588144509123f07b4676c28a0c65b4342effe8f6984e9",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "supabase/functions/talkx-send/x020-variavel-precedencia.test.ts",
+      "line_start": 1,
+      "line_end": 81,
+      "git_blob_sha": "cb2c82e0606086c1fbe09a0121cdbfe46e30b282",
+      "source_sha256": "0b36b883cbead2129f8621e770b7d9087b4aae58682be8f96ebddd8b48b0b5fa",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/crm-sentiment-boundary.contract.test.ts",
+      "line_start": 1,
+      "line_end": 186,
+      "git_blob_sha": "7849feb47adcdca228468ea263bbee42a26fdd6b",
+      "source_sha256": "f3353fc92eadf94f52a665e5a9fbaafa2c65518738c170b16d11ab17997b3898",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/email-sender-domains.contract.test.ts",
+      "line_start": 1,
+      "line_end": 84,
+      "git_blob_sha": "d8802a988149452eb187b3211b1731820497bc2b",
+      "source_sha256": "46b40f21be93382e794a6ab95074f315f3644c0bb736e9af40837335038e4e50",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/evolution-private-storage-url.test.ts",
+      "line_start": 1,
+      "line_end": 89,
+      "git_blob_sha": "5e0432437b7ed288fa5484c643146d53d5fa8d97",
+      "source_sha256": "85f9c5d4e96136eb40e784c8a9e7a1468eedd0f503fbea9d14f3913ee08255b1",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/multiplix-audience.contract.test.ts",
+      "line_start": 1,
+      "line_end": 223,
+      "git_blob_sha": "caaf6c0929dcd802a677c9bec98a770802379bed",
+      "source_sha256": "9c63f4d30c546e61d92515823173df46c30b96dc11446f3a33bbebdf28ce22f6",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/multiplix-dispatch-domain-api.contract.test.ts",
+      "line_start": 1,
+      "line_end": 157,
+      "git_blob_sha": "a08285497c5b6e21234f9fcf0370dc1f174c973e",
+      "source_sha256": "581b52573bb36a6268cf9c2c0ad5ee7eb52da42c025fe32c2286afd7ba58edd7",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/multiplix-dispatch-no-secret-leak.contract.test.ts",
+      "line_start": 1,
+      "line_end": 132,
+      "git_blob_sha": "837baf4abe344fb309de2d93e359cf4ff6d822c3",
+      "source_sha256": "95623951b2658c04d11d267ce3d344b747f4f3c30ec62ed58d83e1f1a7c62f8e",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/multiplix-dispatch-write-path.contract.test.ts",
+      "line_start": 1,
+      "line_end": 219,
+      "git_blob_sha": "6a171090a63f9ec1152caf939314d8504170ad08",
+      "source_sha256": "257df2970f617a089b5d0960f205ebb05936d884ec625c81fc433ce4bd4f71e3",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/webhooks-versioning.contract.test.ts",
+      "line_start": 1,
+      "line_end": 82,
+      "git_blob_sha": "bb02437ae9cbf659de9f5bfb92c7790a6b02f12e",
+      "source_sha256": "7a574dd802de1f2cb661bf76448892311dd15a015812b9ec93ff1f501693a343",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "providers",
+      "review_status": "PENDING_READING"
+    }
+  ],
+  "limits": [
+    "Finite allocation only; no file is promoted to semantic review by this roster.",
+    "Read assertions, mocks, fixtures and consumers as needed; do not equate test existence with runtime acceptance.",
+    "Existing later whole-file reviews may be cited and skipped, with their exact evidence source recorded."
+  ]
+}
