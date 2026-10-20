@@ -216,6 +216,11 @@ export const ALLOWLIST_NODE = new Set([
   'scripts/talkx/gen-estados.unit.mjs',
   'scripts/talkx/lado-a-lado.unit.mjs',
   'scripts/talkx/v4-status.unit.mjs',
+  // V077: prova unitaria do `ignore-build.sh` do Vercel (sem git real; roda offline
+  // com `node scripts/vercel/ignore-build.unit.mjs`). Suite orfa: nenhum bloco `run:`
+  // de workflow a executa; a promocao a um passo (ou a um glob `scripts/**/*.unit.mjs`)
+  // e do dono do workflow (agente nao edita workflow).
+  'scripts/vercel/ignore-build.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
