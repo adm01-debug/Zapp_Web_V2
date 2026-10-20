@@ -1,0 +1,13 @@
+test(tarefas): linha de base visual em 30 capturas Playwright (etapa 003)
+
+Retomada por rebase: os commits aprovados no mérito saíram da base antiga
+(32c68d56a3) para a ponta viva de dia/2026-10-11 (9372aeb6a4), preservando o
+que já entrou nela — playwright.config.ts e e2e/ não têm outro cartão nesse dia.
+
+- e2e/tarefas-linha-de-base.spec.ts: 5 superfícies de Tarefas (Lista, Quadro,
+  Agenda, QuickAdd e painel de edição) x 360/768/1280 x claro/escuro = 30 PNGs,
+  hermética (sessão falsa, shell mockado, rede real barrada no afterEach).
+- playwright.config.ts: projeto `chromium-tarefas-linha-de-base`, que roda
+  deslogado — sem setup, sem secrets, sem sessão salva.
+
+Cartão V2: t_db5a2a7c

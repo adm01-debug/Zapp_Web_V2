@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=003-capturas-playwright-linha-de-base-vi
+ID=26101114266880
+BRANCH=v2/003-capturas-playwright-linha-de-base-vi-26101114266880
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/003-capturas-playwright-linha-de-base-vi-26101114266880
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T14:26:58-03:00
+KANBAN=t_9807f20f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/003-capturas-playwright-linha-de-base-vi-26101114266880/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-26101114266880
+PRONTO_SHA=b4488936bd6b83722eac9495a55a14869c3e0e75

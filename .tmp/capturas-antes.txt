@@ -1,0 +1,37 @@
+destino: /home/joaquim_ataides/hermes-workspaces/.assets/tarefas/linha-de-base-2026-10-11
+rotulo: antes
+count: 30
+
+01-lista-1280-dark.png 111443 2a25b119142a49bf
+01-lista-1280-light.png 108763 242c2a933ed8880f
+01-lista-360-dark.png 60367 0e9012899fd88409
+01-lista-360-light.png 56646 c74dc41dc6d0d808
+01-lista-768-dark.png 99758 bf228c7a3cef99bf
+01-lista-768-light.png 96267 34db5ea7a3961e3d
+02-quadro-1280-dark.png 165905 e93c885ec465a781
+02-quadro-1280-light.png 167108 5edc7dc7ff49c6bb
+02-quadro-360-dark.png 60363 2536042ab6c8ceff
+02-quadro-360-light.png 56886 e0d7de92af4ea3bf
+02-quadro-768-dark.png 120961 2f8e9464e247dd91
+02-quadro-768-light.png 118432 c74fff0a422a547c
+03-agenda-1280-dark.png 114221 82e3ade7c029a3d5
+03-agenda-1280-light.png 110730 41a9e9c7e1e7858a
+03-agenda-360-dark.png 56204 5b0d09ffeb02c0d8
+03-agenda-360-light.png 52323 e3887d995d2af0b2
+03-agenda-768-dark.png 114529 3f1988ae4dd20a02
+03-agenda-768-light.png 111925 81eca2b035733b9a
+04-quickadd-1280-dark.png 111813 1d6946c7a0cf3ab5
+04-quickadd-1280-light.png 109467 e63eae2663941572
+04-quickadd-360-dark.png 59221 9ca01d80a715a982
+04-quickadd-360-light.png 56569 16e170999337567c
+04-quickadd-768-dark.png 100292 3aa6717a3e079241
+04-quickadd-768-light.png 97351 921fb2fd2b76fd84
+05-painel-edicao-1280-dark.png 111645 7ff11cac8a0aef18
+05-painel-edicao-1280-light.png 110543 1542573f8a8d28e1
+05-painel-edicao-360-dark.png 41352 792cf3579538eb5a
+05-painel-edicao-360-light.png 41396 fd023e877aed7084
+05-painel-edicao-768-dark.png 96352 d72935c2e73d54d5
+05-painel-edicao-768-light.png 97381 54ecccc2b19883d3
+
+bytes_totais: 2816213
+menor_png: 41352
