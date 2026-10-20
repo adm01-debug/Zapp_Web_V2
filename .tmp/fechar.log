@@ -1,0 +1,11 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Números ou lista de arquivos/testes do relato não batem com o diff (5 arquivos, 2 de teste). Corrija o relato para os números reais.
+OK      db_guard        0s
+FALHOU  tipos         113s  (ver /home/joaquim_ataides/.local/state/zapp-verify/5b62a2d8c2fb/tipos.log)
+/home/joaquim_ataides/arquitetura-v2/typecheck-rapido/tc-rapido.sh: line 21: 3246839 Killed                  node node_modules/typescript/bin/tsc -p tsconfig.$p.json --noEmit --incremental --tsBuildIn
+tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: tsc -b falhou com exit null: 
+VERIFY: VERMELHO em tipos (113s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-falha-envio-26101318308772/.tmp/verify-26101318308772.log)
+RC=1

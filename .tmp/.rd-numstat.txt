@@ -1,0 +1,4 @@
+476	0	supabase/migrations/20261013210005_outbound_sweeper_e_claim_por_papel.sql
+168	0	supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql
+409	0	supabase/tests/alerta_falha_envio_por_conexao.sql
+435	0	supabase/tests/outbound_sweeper_e_claim_por_papel.sql

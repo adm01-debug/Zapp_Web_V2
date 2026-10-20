@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alerta-falha-envio
+ID=26101318308772
+BRANCH=v2/alerta-falha-envio-26101318308772
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-falha-envio-26101318308772
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T18:30:07-03:00
+KANBAN=t_106a978a
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-falha-envio-26101318308772/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101318308772
+PRONTO_SHA=a9387dddd1dd58377c71ec986502a98730697713
