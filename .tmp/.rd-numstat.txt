@@ -1,0 +1,12 @@
+8	1	src/components/alerts/EvolutionDisconnectBanner.tsx
+18	5	src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx
+17	4	src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
+18	4	src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+76	0	src/components/alerts/__tests__/EvolutionDisconnectBanner.preferencia.test.tsx
+160	0	src/components/settings/ConnectionAlertPreferences.tsx
+141	0	src/components/settings/__tests__/ConnectionAlertPreferences.test.tsx
+182	0	src/hooks/system/__tests__/useConnectionAlertPreferences.test.tsx
+122	0	src/hooks/system/useConnectionAlertPreferences.ts
+33	0	src/integrations/supabase/types.ts
+74	0	supabase/migrations/20261013044440_connection_alert_preferences.sql
+291	0	supabase/tests/connection_alert_preferences_rls.sql

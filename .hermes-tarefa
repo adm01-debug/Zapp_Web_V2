@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alerta-conexao-prefs
+ID=261015185180e1
+BRANCH=v2/alerta-conexao-prefs-261015185180e1
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-conexao-prefs-261015185180e1
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T18:51:52-03:00
+KANBAN=t_f8b86210
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-conexao-prefs-261015185180e1/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-261015185180e1
+PRONTO_SHA=d8fb2b2f74b14f060916e9c04b01894825a93b86

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792101110 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792101111 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 bd68b528f8f57e42919bc1308b22c37db9a1aacd Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792101283 -0300	commit (cherry-pick): feat(db): tabela connection_alert_preferences com RLS por linha
+bd68b528f8f57e42919bc1308b22c37db9a1aacd 337143c890b5136e78bbf827e4be2d777b7ebd12 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792101289 -0300	commit (cherry-pick): feat(alertas): preferencia de aviso de conexao respeitada pela faixa
+337143c890b5136e78bbf827e4be2d777b7ebd12 4a5ce74fd8a2d115fed6ebec3389d02b5815f509 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792101538 -0300	commit: feat(config): tela de preferencias de alerta de conexao (push, e-mail, degradada, desconectada)
+4a5ce74fd8a2d115fed6ebec3389d02b5815f509 d8fb2b2f74b14f060916e9c04b01894825a93b86 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792101644 -0300	commit: test(config): prova vermelho-verde das quatro preferencias de alerta de conexao

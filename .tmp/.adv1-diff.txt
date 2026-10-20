@@ -1,0 +1,1384 @@
+diff --git a/src/components/alerts/EvolutionDisconnectBanner.tsx b/src/components/alerts/EvolutionDisconnectBanner.tsx
+index 6df0b96ef1..8ae20ac74e 100644
+--- a/src/components/alerts/EvolutionDisconnectBanner.tsx
++++ b/src/components/alerts/EvolutionDisconnectBanner.tsx
+@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+ import { WifiOff, RefreshCw, X } from 'lucide-react';
+ import { cn } from '@/lib/utils';
+ import { toast } from 'sonner';
++import { useConnectionAlertPreferences } from '@/hooks/system/useConnectionAlertPreferences';
+ 
+ interface DisconnectedInstance {
+   id: string;
+@@ -17,6 +18,11 @@ export function EvolutionDisconnectBanner() {
+   const [dismissed, setDismissed] = useState(false);
+   const [reconnecting, setReconnecting] = useState<string | null>(null);
+   const reduceMotion = useReducedMotion() ?? false;
++  // PD-38: o aviso de conexao caida respeita a preferencia do usuario. O TIPO
++  // `alert_on_disconnected` e o interruptor mestre (os canais push/e-mail so escolhem
++  // por onde o aviso sai). Enquanto a leitura esta em voo o padrao e LIGADO, igual a
++  // coluna no banco — assim um aviso real nao e escondido por uma resposta pendente.
++  const { preferences } = useConnectionAlertPreferences();
+ 
+   const fetchStatus = async () => {
+     const { data } = await supabase
+@@ -77,7 +83,8 @@ export function EvolutionDisconnectBanner() {
+     }
+   };
+ 
+-  if (disconnected.length === 0 || dismissed) return null;
++  // PD-38: tipo desligado, a faixa nao aparece — independentemente do canal.
++  if (disconnected.length === 0 || dismissed || !preferences.alert_on_disconnected) return null;
+ 
+   return (
+     <AnimatePresence>
+diff --git a/src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx b/src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx
+index 73309b9c0d..349f45add2 100644
+--- a/src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx
++++ b/src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx
+@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
+ import { render } from '@testing-library/react';
+ import { axe } from 'vitest-axe';
+ import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
++import { TestQueryWrapper } from '@/test/mocks/queryClient';
+ 
+ /**
+  * A faixa de conexões desconectadas é renderizada como irmã do <AppShell> (src/pages/Index.tsx),
+@@ -11,17 +12,29 @@ import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
+  *
+  * Corrigido com `role="region"` + `aria-label` (landmark nomeado) e `aria-live="polite"` para o
+  * aviso ser anunciado quando aparece.
++ *
++ * PD-38: a faixa agora consulte a preferência (`alert_on_disconnected`) via React Query + useAuth,
++ * então os testes montam o banner com o mesmo par de provedores do app.
+  */
+-const h = vi.hoisted(() => ({ rows: [] as unknown[] }));
++const h = vi.hoisted(() => ({ rows: [] as unknown[], preferencias: null as unknown }));
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
++    from: (table: string) => ({
++      select: () =>
++        table === 'connection_alert_preferences'
++          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
++          : { eq: async () => ({ data: h.rows }) },
++    }),
+     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+     removeChannel: () => undefined,
+   },
+ }));
+ 
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
++}));
++
+ const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
+ 
+ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
+@@ -30,7 +43,7 @@ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
+   });
+ 
+   it('a faixa é um landmark nomeado e o aviso fica DENTRO dele', async () => {
+-    const { container, findByText } = render(<EvolutionDisconnectBanner />);
++    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     await findByText(/está desconectada/i);
+ 
+     const faixa = container.querySelector('[role="region"]');
+@@ -42,7 +55,7 @@ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
+   });
+ 
+   it('axe não acusa conteúdo fora de landmark (regra region)', async () => {
+-    const { container, findByText } = render(<EvolutionDisconnectBanner />);
++    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     await findByText(/está desconectada/i);
+ 
+     // jsdom não tem layout: contraste fica fora (declarado); `region` é estrutural e é o alvo aqui.
+@@ -53,7 +66,7 @@ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
+ 
+   it('sem conexão desconectada a faixa não renderiza nada', async () => {
+     h.rows = [];
+-    const { container } = render(<EvolutionDisconnectBanner />);
++    const { container } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     await new Promise((r) => setTimeout(r, 0));
+     expect(container.querySelector('[role="region"]')).toBeNull();
+   });
+diff --git a/src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx b/src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
+index 0d19aac9a7..8a6933a7d9 100644
+--- a/src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
++++ b/src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
+@@ -1,6 +1,7 @@
+ import { describe, it, expect, vi, beforeEach } from 'vitest';
+ import { render, fireEvent, waitFor } from '@testing-library/react';
+ import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
++import { TestQueryWrapper } from '@/test/mocks/queryClient';
+ 
+ /**
+  * R2-API-042 (BACKLOG_VERIFICADO #216): a Edge Function `evolution-api` usa HTTP 200
+@@ -12,6 +13,7 @@ import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
+  */
+ const h = vi.hoisted(() => ({
+   rows: [] as unknown[],
++  preferencias: null as unknown,
+   invoke: vi.fn(),
+   toastSuccess: vi.fn(),
+   toastError: vi.fn(),
+@@ -19,19 +21,30 @@ const h = vi.hoisted(() => ({
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
++    from: (table: string) => ({
++      select: () =>
++        table === 'connection_alert_preferences'
++          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
++          : { eq: async () => ({ data: h.rows }) },
++    }),
+     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+     removeChannel: () => undefined,
+     functions: { invoke: h.invoke },
+   },
+ }));
+ 
++// PD-38: o banner consulta a preferência via React Query + useAuth; os testes montam com os
++// provedores do app (TestQueryWrapper) e um usuário sintético.
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
++}));
++
+ vi.mock('sonner', () => ({ toast: { success: h.toastSuccess, error: h.toastError } }));
+ 
+ const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
+ 
+ async function clicarReconectar() {
+-  const { findByRole } = render(<EvolutionDisconnectBanner />);
++  const { findByRole } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+   const botao = await findByRole('button', { name: /reconectar/i });
+   fireEvent.click(botao);
+ }
+@@ -89,7 +102,7 @@ describe('EvolutionDisconnectBanner — não cobre nem intercepta a barra de aba
+   });
+ 
+   it('o aviso não é um overlay no topo: ancora no rodapé, fora da faixa da barra de abas', async () => {
+-    const { container, findByText } = render(<EvolutionDisconnectBanner />);
++    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     await findByText(/está desconectada/i);
+ 
+     const faixa = container.querySelector('[role="region"]');
+@@ -102,7 +115,7 @@ describe('EvolutionDisconnectBanner — não cobre nem intercepta a barra de aba
+   });
+ 
+   it('não engole o ponteiro: o wrapper é pointer-events-none e só o cartão é pointer-events-auto', async () => {
+-    const { container, findByText } = render(<EvolutionDisconnectBanner />);
++    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     await findByText(/está desconectada/i);
+ 
+     const faixa = container.querySelector('[role="region"]');
+diff --git a/src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx b/src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+index 0cd76f7ec9..99fc3bed89 100644
+--- a/src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
++++ b/src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+@@ -1,5 +1,6 @@
+ import { describe, it, expect, vi, beforeEach } from 'vitest';
+ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
++import { TestQueryWrapper } from '@/test/mocks/queryClient';
+ 
+ /**
+  * Banner honesto (F0/E02 do plano multi-conexão — docs/runbooks/bloqueio-meta.md).
+@@ -13,9 +14,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+  * PRINCIPAL" — sem saber que era bloqueio da Meta —, insistindo no login em loop, que é
+  * exatamente o que estende o bloqueio. Este teste prova que o motivo da edge chega ao operador e
+  * que o aviso de sucesso só aparece quando a edge realmente aceitou a ação.
++ *
++ * PD-38: o banner consulta `connection_alert_preferences` (React Query + useAuth); os testes
++ * montam com os provedores do app e o SELECT de preferência devolve `null` (= padrão ligado).
+  */
+ const h = vi.hoisted(() => ({
+   rows: [] as unknown[],
++  preferencias: null as unknown,
+   invoke: vi.fn(),
+   toastSuccess: vi.fn(),
+   toastError: vi.fn(),
+@@ -23,13 +28,22 @@ const h = vi.hoisted(() => ({
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
++    from: (table: string) => ({
++      select: () =>
++        table === 'connection_alert_preferences'
++          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
++          : { eq: async () => ({ data: h.rows }) },
++    }),
+     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+     removeChannel: () => undefined,
+     functions: { invoke: (...args: unknown[]) => h.invoke(...args) },
+   },
+ }));
+ 
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
++}));
++
+ vi.mock('sonner', () => ({
+   toast: {
+     success: (...args: unknown[]) => h.toastSuccess(...args),
+@@ -54,7 +68,7 @@ describe('faixa de conexões: o motivo da edge chega ao operador', () => {
+       'Ação bloqueada: janela de manutenção do WhatsApp até 26/09/2026 10:00 (proteção contra bloqueio da Meta — evita tentativas de login em loop).';
+     h.invoke.mockResolvedValue({ data: { error: true, message: bloqueio }, error: null });
+ 
+-    render(<EvolutionDisconnectBanner />);
++    render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     fireEvent.click(await screen.findByRole('button', { name: /reconectar/i }));
+ 
+     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith(bloqueio));
+@@ -69,7 +83,7 @@ describe('faixa de conexões: o motivo da edge chega ao operador', () => {
+   it('recusa sem mensagem cai no texto genérico — o banner não inventa motivo', async () => {
+     h.invoke.mockResolvedValue({ data: { error: true }, error: null });
+ 
+-    render(<EvolutionDisconnectBanner />);
++    render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     fireEvent.click(await screen.findByRole('button', { name: /reconectar/i }));
+ 
+     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith('Erro ao reconectar PRINCIPAL'));
+@@ -79,7 +93,7 @@ describe('faixa de conexões: o motivo da edge chega ao operador', () => {
+   it('quando a edge aceita a ação, o aviso de reconexão continua aparecendo', async () => {
+     h.invoke.mockResolvedValue({ data: { qrcode: { base64: 'x' } }, error: null });
+ 
+-    render(<EvolutionDisconnectBanner />);
++    render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+     fireEvent.click(await screen.findByRole('button', { name: /reconectar/i }));
+ 
+     await waitFor(() => expect(h.toastSuccess).toHaveBeenCalled());
+diff --git a/src/components/alerts/__tests__/EvolutionDisconnectBanner.preferencia.test.tsx b/src/components/alerts/__tests__/EvolutionDisconnectBanner.preferencia.test.tsx
+new file mode 100644
+index 0000000000..5f0910b5d9
+--- /dev/null
++++ b/src/components/alerts/__tests__/EvolutionDisconnectBanner.preferencia.test.tsx
+@@ -0,0 +1,76 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, waitFor } from '@testing-library/react';
++import { TestQueryWrapper } from '@/test/mocks/queryClient';
++
++/**
++ * PD-38 — a faixa de conexão caída respeita a preferência do usuário.
++ *
++ * A tabela `connection_alert_preferences` (migration 20261013044440) guarda o TIPO do aviso
++ * (`alert_on_degraded` / `alert_on_disconnected`) e o CANAL (push/e-mail). A faixa in-app é o
++ * aviso de "conexão desconectada", então o interruptor que a governa é `alert_on_disconnected`;
++ * desligado, ela não aparece mesmo com a conexão caída na lista.
++ */
++const h = vi.hoisted(() => ({
++  rows: [] as unknown[],
++  preferencias: null as unknown,
++}));
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: (table: string) => ({
++      select: () =>
++        table === 'connection_alert_preferences'
++          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
++          : { eq: async () => ({ data: h.rows }) },
++    }),
++    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
++    removeChannel: () => undefined,
++  },
++}));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
++}));
++
++vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
++
++import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
++
++const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
++
++describe('EvolutionDisconnectBanner — preferência alert_on_disconnected (PD-38)', () => {
++  beforeEach(() => {
++    h.rows = [desconectada];
++    h.preferencias = null;
++  });
++
++  it('com o tipo desligado, a conexão caída NAO vira faixa', async () => {
++    h.preferencias = { alert_on_disconnected: false };
++    const { container } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
++
++    // dá tempo do SELECT de status e o de preferência assentarem
++    await waitFor(() => expect(h.rows).toEqual([desconectada]));
++    await new Promise((r) => setTimeout(r, 0));
++    expect(container.querySelector('[role="region"]')).toBeNull();
++  });
++
++  it('com o tipo ligado, a faixa aparece normalmente', async () => {
++    h.preferencias = { alert_on_disconnected: true };
++    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
++
++    await findByText(/está desconectada/i);
++    expect(container.querySelector('[role="region"]')).not.toBeNull();
++  });
++
++  it('sem linha salva (padrao do banco) a faixa aparece', async () => {
++    h.preferencias = null;
++    const { findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
++    await findByText(/está desconectada/i);
++  });
++
++  it('desligar só o tipo degradado NAO esconde o aviso de conexão caída', async () => {
++    h.preferencias = { alert_on_degraded: false, alert_on_disconnected: true };
++    const { findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
++    await findByText(/está desconectada/i);
++  });
++});
+diff --git a/src/components/settings/ConnectionAlertPreferences.tsx b/src/components/settings/ConnectionAlertPreferences.tsx
+new file mode 100644
+index 0000000000..dccc92bba0
+--- /dev/null
++++ b/src/components/settings/ConnectionAlertPreferences.tsx
+@@ -0,0 +1,160 @@
++import { useState } from 'react';
++import {
++  Card,
++  CardContent,
++  CardDescription,
++  CardHeader,
++  CardTitle,
++} from '@/components/ui/card';
++import { Label } from '@/components/ui/label';
++import { Switch } from '@/components/ui/switch';
++import { BellRing, Mail, PlugZap, Unplug, type LucideIcon } from 'lucide-react';
++import {
++  useConnectionAlertPreferences,
++  type ConnectionAlertPreferences as ConnectionAlertPreferencesValues,
++} from '@/hooks/system/useConnectionAlertPreferences';
++
++/**
++ * PD-38/39 (paridade V3): secao de Configuracoes com as QUATRO preferencias, por
++ * usuario, de como e quando avisar sobre a saude da conexao de WhatsApp.
++ *
++ * Os CANAIS (push do navegador / e-mail) escolhem POR ONDE o aviso sai; os TIPOS
++ * (degradada / desconectada) ligam e desligam o aviso. Cada interruptor grava na
++ * hora pelo hook `useConnectionAlertPreferences` (upsert otimista com rollback).
++ */
++type PreferenceKey = keyof ConnectionAlertPreferencesValues;
++
++interface PreferenceRow {
++  key: PreferenceKey;
++  label: string;
++  description: string;
++  icon: LucideIcon;
++}
++
++const CANAIS: PreferenceRow[] = [
++  {
++    key: 'push_enabled',
++    label: 'Notificação do navegador',
++    description:
++      'Mostra um aviso do navegador quando a conexão de WhatsApp oscilar ou cair.',
++    icon: BellRing,
++  },
++  {
++    key: 'email_enabled',
++    label: 'E-mail',
++    description:
++      'Envia o aviso para o seu e-mail. Depende do envio de e-mail estar configurado na instalação (PK-15).',
++    icon: Mail,
++  },
++];
++
++const TIPOS: PreferenceRow[] = [
++  {
++    key: 'alert_on_degraded',
++    label: 'Conexão instável',
++    description:
++      'Avisa quando a conexão de WhatsApp oscilar, mesmo sem ter caído de vez.',
++    icon: PlugZap,
++  },
++  {
++    key: 'alert_on_disconnected',
++    label: 'Conexão desconectada',
++    description: 'Avisa quando a conexão de WhatsApp cair.',
++    icon: Unplug,
++  },
++];
++
++export function ConnectionAlertPreferences() {
++  const { preferences, isLoading, isSaving, updatePreferenceAsync } =
++    useConnectionAlertPreferences();
++  const [error, setError] = useState<string | null>(null);
++
++  const handleToggle = async (key: PreferenceKey, value: boolean) => {
++    setError(null);
++    try {
++      await updatePreferenceAsync({ [key]: value });
++    } catch {
++      setError('Não foi possível salvar a preferência. Tente novamente.');
++    }
++  };
++
++  const renderRow = (row: PreferenceRow) => {
++    const Icon = row.icon;
++    const id = `connection-alert-${row.key}`;
++    const descId = `${id}-descricao`;
++    return (
++      <div key={row.key} className="flex items-start justify-between gap-4">
++        <div className="flex items-start gap-3">
++          <Icon className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
++          <div className="space-y-0.5">
++            <Label htmlFor={id} className="font-medium text-foreground">
++              {row.label}
++            </Label>
++            <p id={descId} className="text-sm text-muted-foreground">
++              {row.description}
++            </p>
++          </div>
++        </div>
++        <Switch
++          id={id}
++          checked={preferences[row.key]}
++          disabled={isLoading}
++          onCheckedChange={(value) => {
++            void handleToggle(row.key, value);
++          }}
++          aria-label={`${row.label} — ${preferences[row.key] ? 'ativado' : 'desativado'}`}
++          aria-describedby={descId}
++        />
++      </div>
++    );
++  };
++
++  return (
++    <Card>
++      <CardHeader>
++        <CardTitle className="flex items-center gap-2 text-lg">
++          <BellRing className="h-5 w-5 text-primary" aria-hidden="true" />
++          Alertas de conexão
++        </CardTitle>
++        <CardDescription>
++          Escolha como e quando ser avisado quando a conexão de WhatsApp oscilar ou
++          cair. As preferências são suas: valem só para a sua conta.
++        </CardDescription>
++      </CardHeader>
++      <CardContent className="space-y-6">
++        <section className="space-y-4" aria-labelledby="connection-alert-canais">
++          <h3
++            id="connection-alert-canais"
++            className="text-sm font-medium text-foreground"
++          >
++            Como avisar
++          </h3>
++          {CANAIS.map(renderRow)}
++        </section>
++
++        <section
++          className="space-y-4 border-t pt-4"
++          aria-labelledby="connection-alert-tipos"
++        >
++          <h3
++            id="connection-alert-tipos"
++            className="text-sm font-medium text-foreground"
++          >
++            Quando avisar
++          </h3>
++          {TIPOS.map(renderRow)}
++        </section>
++
++        <p className="text-sm text-muted-foreground" aria-live="polite">
++          {isSaving ? 'Salvando…' : 'As alterações são salvas automaticamente.'}
++        </p>
++
++        {error && (
++          <p role="alert" className="text-sm text-destructive">
++            {error}
++          </p>
++        )}
++      </CardContent>
++    </Card>
++  );
++}
+diff --git a/src/components/settings/__tests__/ConnectionAlertPreferences.test.tsx b/src/components/settings/__tests__/ConnectionAlertPreferences.test.tsx
+new file mode 100644
+index 0000000000..7841a6b5f2
+--- /dev/null
++++ b/src/components/settings/__tests__/ConnectionAlertPreferences.test.tsx
+@@ -0,0 +1,141 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen, fireEvent, waitFor } from '@testing-library/react';
++import { axe } from 'vitest-axe';
++import { ConnectionAlertPreferences } from '@/components/settings/ConnectionAlertPreferences';
++
++/**
++ * PD-38/39 — a tela de Configuracoes tem de deixar o usuario editar AS QUATRO
++ * preferencias: dois canais (navegador/e-mail) e dois tipos (instavel/desconectada).
++ *
++ * O estado controlado aqui e o que o hook devolve; o componente e o REAL.
++ */
++const estado = vi.hoisted(() => ({
++  preferences: {
++    push_enabled: true,
++    email_enabled: true,
++    alert_on_degraded: true,
++    alert_on_disconnected: true,
++  },
++  isLoading: false,
++  isSaving: false,
++  updatePreferenceAsync: vi.fn(() => Promise.resolve()),
++}));
++
++vi.mock('@/hooks/system/useConnectionAlertPreferences', () => ({
++  CONNECTION_ALERT_DEFAULTS: {
++    push_enabled: true,
++    email_enabled: true,
++    alert_on_degraded: true,
++    alert_on_disconnected: true,
++  },
++  useConnectionAlertPreferences: () => ({
++    preferences: estado.preferences,
++    isLoading: estado.isLoading,
++    isSaving: estado.isSaving,
++    updatePreference: vi.fn(),
++    updatePreferenceAsync: estado.updatePreferenceAsync,
++    shouldNotify: () => true,
++  }),
++}));
++
++const trocar = (nome: RegExp) => screen.getByRole('switch', { name: nome });
++
++beforeEach(() => {
++  estado.preferences = {
++    push_enabled: true,
++    email_enabled: true,
++    alert_on_degraded: true,
++    alert_on_disconnected: true,
++  };
++  estado.isLoading = false;
++  estado.isSaving = false;
++  estado.updatePreferenceAsync = vi.fn(() => Promise.resolve());
++});
++
++describe('ConnectionAlertPreferences (tela de Configuracoes)', () => {
++  it('mostra as quatro preferencias refletindo o estado atual do usuario', () => {
++    estado.preferences = {
++      push_enabled: false,
++      email_enabled: true,
++      alert_on_degraded: false,
++      alert_on_disconnected: true,
++    };
++    render(<ConnectionAlertPreferences />);
++
++    expect(screen.getAllByRole('switch')).toHaveLength(4);
++    expect(trocar(/Notificação do navegador/)).not.toBeChecked();
++    expect(trocar(/E-mail/)).toBeChecked();
++    expect(trocar(/Conexão instável/)).not.toBeChecked();
++    expect(trocar(/Conexão desconectada/)).toBeChecked();
++  });
++
++  it('grava cada uma das quatro preferencias com o campo e o valor certos', async () => {
++    render(<ConnectionAlertPreferences />);
++
++    fireEvent.click(trocar(/Notificação do navegador/));
++    await waitFor(() =>
++      expect(estado.updatePreferenceAsync).toHaveBeenCalledWith({ push_enabled: false }),
++    );
++
++    fireEvent.click(trocar(/E-mail/));
++    await waitFor(() =>
++      expect(estado.updatePreferenceAsync).toHaveBeenCalledWith({ email_enabled: false }),
++    );
++
++    fireEvent.click(trocar(/Conexão instável/));
++    await waitFor(() =>
++      expect(estado.updatePreferenceAsync).toHaveBeenCalledWith({ alert_on_degraded: false }),
++    );
++
++    fireEvent.click(trocar(/Conexão desconectada/));
++    await waitFor(() =>
++      expect(estado.updatePreferenceAsync).toHaveBeenCalledWith({
++        alert_on_disconnected: false,
++      }),
++    );
++
++    expect(estado.updatePreferenceAsync).toHaveBeenCalledTimes(4);
++  });
++
++  it('anuncia o erro quando o salvamento falha, sem esconder o interruptor', async () => {
++    estado.updatePreferenceAsync = vi.fn(() => Promise.reject(new Error('boom')));
++    render(<ConnectionAlertPreferences />);
++
++    fireEvent.click(trocar(/Conexão desconectada/));
++
++    const alerta = await screen.findByRole('alert');
++    expect(alerta).toHaveTextContent(/não foi possível salvar/i);
++    expect(trocar(/Conexão desconectada/)).toBeInTheDocument();
++  });
++
++  it('mostra o estado de salvando enquanto a gravacao esta em voo', () => {
++    estado.isSaving = true;
++    render(<ConnectionAlertPreferences />);
++    expect(screen.getByText('Salvando…')).toBeInTheDocument();
++  });
++
++  it('desabilita os interruptores enquanto carrega e nao anuncia salvamento', () => {
++    estado.isLoading = true;
++    render(<ConnectionAlertPreferences />);
++    for (const interruptor of screen.getAllByRole('switch')) {
++      expect(interruptor).toBeDisabled();
++    }
++    expect(screen.queryByText('Salvando…')).not.toBeInTheDocument();
++  });
++
++  it('explica que o e-mail depende do envio configurado (PK-15)', () => {
++    render(<ConnectionAlertPreferences />);
++    expect(screen.getByText(/PK-15/)).toBeInTheDocument();
++  });
++
++  it('nao oferece nenhum controle de exportar', () => {
++    render(<ConnectionAlertPreferences />);
++    expect(screen.queryByRole('button', { name: /exportar|baixar/i })).not.toBeInTheDocument();
++    expect(screen.queryByRole('link', { name: /exportar/i })).not.toBeInTheDocument();
++  });
++
++  it('nao tem violacao de acessibilidade', async () => {
++    const { container } = render(<ConnectionAlertPreferences />);
++    expect(await axe(container)).toHaveNoViolations();
++  });
++});
+diff --git a/src/hooks/system/__tests__/useConnectionAlertPreferences.test.tsx b/src/hooks/system/__tests__/useConnectionAlertPreferences.test.tsx
+new file mode 100644
+index 0000000000..0b5e76ee08
+--- /dev/null
++++ b/src/hooks/system/__tests__/useConnectionAlertPreferences.test.tsx
+@@ -0,0 +1,182 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { renderHook, act, waitFor } from '@testing-library/react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import type { ReactNode } from 'react';
++
++/**
++ * PD-38: preferencias de alerta de conexao. O hook le a PROPRIA linha (RLS) e grava
++ * com upsert otimista em onConflict=user_id: o interruptor muda na hora e, se o banco
++ * recusar, o cache volta ao valor anterior (rollback) com a falha anunciada.
++ */
++const h = vi.hoisted(() => ({
++  user: { id: 'user-1' } as { id: string } | null,
++  row: null as Record<string, unknown> | null,
++  upsertArgs: null as { payload: Record<string, unknown>; opts: unknown } | null,
++  upsertPromise: Promise.resolve({ data: null, error: null }) as Promise<{ data: unknown; error: unknown }>,
++  toastError: vi.fn(),
++}));
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: () => ({
++      select: () => ({
++        maybeSingle: async () => ({ data: h.row, error: null }),
++      }),
++      upsert: (payload: Record<string, unknown>, opts: unknown) => {
++        h.upsertArgs = { payload, opts };
++        // `select(...)` depois do upsert: a RLS pode nao devolver a linha.
++        return { select: () => ({ maybeSingle: () => h.upsertPromise }) };
++      },
++    }),
++  },
++}));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: h.user, session: null, profile: null, loading: false }),
++}));
++
++vi.mock('sonner', () => ({
++  toast: { error: (...args: unknown[]) => h.toastError(...args), success: vi.fn() },
++}));
++
++import {
++  useConnectionAlertPreferences,
++  shouldNotifyConnectionAlert,
++  CONNECTION_ALERT_DEFAULTS,
++} from '../useConnectionAlertPreferences';
++
++function wrapper({ children }: { children: ReactNode }) {
++  const client = new QueryClient({
++    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 }, mutations: { retry: false } },
++  });
++  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
++}
++
++const montar = () => renderHook(() => useConnectionAlertPreferences(), { wrapper });
++
++describe('useConnectionAlertPreferences — leitura', () => {
++  beforeEach(() => {
++    h.user = { id: 'user-1' };
++    h.row = null;
++    h.upsertArgs = null;
++    h.upsertPromise = Promise.resolve({ data: null, error: null });
++    h.toastError.mockReset();
++  });
++
++  it('sem linha no banco, tudo fica LIGADO (mesmo padrao das colunas)', async () => {
++    const { result } = montar();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.preferences).toEqual(CONNECTION_ALERT_DEFAULTS);
++  });
++
++  it('le a linha salva e sobrepoe o padrao campo a campo', async () => {
++    h.row = { push_enabled: false, email_enabled: true, alert_on_degraded: false, alert_on_disconnected: false };
++    const { result } = montar();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.preferences).toEqual({
++      push_enabled: false,
++      email_enabled: true,
++      alert_on_degraded: false,
++      alert_on_disconnected: false,
++    });
++  });
++
++  it('sem usuario autenticado nao consulta e nao grava', async () => {
++    h.user = null;
++    const { result } = montar();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.preferences).toEqual(CONNECTION_ALERT_DEFAULTS);
++    await expect(result.current.updatePreferenceAsync({ alert_on_disconnected: false })).rejects.toThrow(
++      /Sem usuário autenticado/,
++    );
++    expect(h.upsertArgs).toBeNull();
++  });
++});
++
++describe('useConnectionAlertPreferences — gravacao otimista com rollback', () => {
++  beforeEach(() => {
++    h.user = { id: 'user-1' };
++    // O servidor ja tem o aviso LIGADO: e a esse valor que o rollback deve voltar.
++    h.row = { push_enabled: true, email_enabled: true, alert_on_degraded: true, alert_on_disconnected: true };
++    h.upsertArgs = null;
++    h.upsertPromise = Promise.resolve({ data: null, error: null });
++    h.toastError.mockReset();
++  });
++
++  it('muda a preferencia NA HORA (antes do banco responder) e grava em onConflict=user_id', async () => {
++    let resolver!: (v: { data: unknown; error: unknown }) => void;
++    h.upsertPromise = new Promise((r) => { resolver = r; });
++
++    const { result } = montar();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.preferences.alert_on_disconnected).toBe(true);
++
++    act(() => {
++      result.current.updatePreference({ alert_on_disconnected: false });
++    });
++
++    // Ainda pendente: o otimista ja vale.
++    await waitFor(() => expect(result.current.preferences.alert_on_disconnected).toBe(false));
++
++    await act(async () => {
++      resolver({
++        data: { push_enabled: true, email_enabled: true, alert_on_degraded: true, alert_on_disconnected: false },
++        error: null,
++      });
++    });
++
++    expect(h.upsertArgs?.payload).toEqual({ user_id: 'user-1', alert_on_disconnected: false });
++    expect(h.upsertArgs?.opts).toEqual({ onConflict: 'user_id' });
++    await waitFor(() => expect(result.current.preferences.alert_on_disconnected).toBe(false));
++    expect(h.toastError).not.toHaveBeenCalled();
++  });
++
++  it('banco recusa: volta ao valor anterior e a falha NAO e engolida', async () => {
++    h.upsertPromise = Promise.resolve({ data: null, error: new Error('permission denied') });
++
++    const { result } = montar();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++
++    await act(async () => {
++      await expect(result.current.updatePreferenceAsync({ alert_on_disconnected: false })).rejects.toThrow(
++        /permission denied/,
++      );
++    });
++
++    expect(h.toastError).toHaveBeenCalledTimes(1);
++    await waitFor(() => expect(result.current.preferences.alert_on_disconnected).toBe(true));
++  });
++
++  it('upsert aceito mas SEM linha devolvida (RLS) e tratado como falha, nao como sucesso', async () => {
++    h.upsertPromise = Promise.resolve({ data: null, error: null });
++
++    const { result } = montar();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++
++    await act(async () => {
++      await expect(result.current.updatePreferenceAsync({ email_enabled: false })).rejects.toThrow(
++        /não foi gravada/,
++      );
++    });
++
++    expect(h.toastError).toHaveBeenCalledTimes(1);
++    await waitFor(() => expect(result.current.preferences.email_enabled).toBe(true));
++  });
++});
++
++describe('shouldNotifyConnectionAlert — o tipo e o interruptor mestre', () => {
++  it('degradada segue alert_on_degraded; desconectada segue alert_on_disconnected', () => {
++    expect(shouldNotifyConnectionAlert(CONNECTION_ALERT_DEFAULTS, 'degraded')).toBe(true);
++    expect(shouldNotifyConnectionAlert(CONNECTION_ALERT_DEFAULTS, 'disconnected')).toBe(true);
++    expect(
++      shouldNotifyConnectionAlert({ ...CONNECTION_ALERT_DEFAULTS, alert_on_degraded: false }, 'degraded'),
++    ).toBe(false);
++    expect(
++      shouldNotifyConnectionAlert({ ...CONNECTION_ALERT_DEFAULTS, alert_on_disconnected: false }, 'disconnected'),
++    ).toBe(false);
++    // canal desligado nao desliga o TIPO (o tipo decide SE avisa; o canal, POR ONDE)
++    expect(
++      shouldNotifyConnectionAlert({ ...CONNECTION_ALERT_DEFAULTS, push_enabled: false, email_enabled: false }, 'disconnected'),
++    ).toBe(true);
++  });
++});
+diff --git a/src/hooks/system/useConnectionAlertPreferences.ts b/src/hooks/system/useConnectionAlertPreferences.ts
+new file mode 100644
+index 0000000000..84d53c6886
+--- /dev/null
++++ b/src/hooks/system/useConnectionAlertPreferences.ts
+@@ -0,0 +1,122 @@
++import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
++import { supabase } from '@/integrations/supabase/client';
++import { useAuth } from '@/hooks/auth/useAuth';
++import { toast } from 'sonner';
++
++/**
++ * PD-38 (paridade V3): preferencias, POR USUARIO, de como e quando avisar sobre a
++ * saude da conexao de WhatsApp. A tabela `public.connection_alert_preferences`
++ * (migration 20261013044440) tem uma linha por usuario e nasce com tudo LIGADO.
++ *
++ * Os TIPOS (alert_on_degraded / alert_on_disconnected) sao o interruptor mestre do
++ * aviso: desligado, nao se avisa em canal nenhum. Os CANAIS (push_enabled =
++ * notificacao do navegador, email_enabled = e-mail) escolhem por ONDE o aviso sai —
++ * nao mudam o fato de ele existir. Por isso o banner de conexao caida
++ * (EvolutionDisconnectBanner, canal dentro do app) consulta o TIPO
++ * `alert_on_disconnected`; quem dispara o aviso no navegador ou por e-mail consulta os canais.
++ */
++export interface ConnectionAlertPreferences {
++  push_enabled: boolean;
++  email_enabled: boolean;
++  alert_on_degraded: boolean;
++  alert_on_disconnected: boolean;
++}
++
++/**
++ * Sem linha no banco, tudo nasce LIGADO — o mesmo padrao das colunas da migration.
++ * Tambem e o valor usado enquanto a leitura esta em voo, para o app nao esconder um
++ * aviso real por causa de uma resposta que ainda nao chegou.
++ */
++export const CONNECTION_ALERT_DEFAULTS: ConnectionAlertPreferences = {
++  push_enabled: true,
++  email_enabled: true,
++  alert_on_degraded: true,
++  alert_on_disconnected: true,
++};
++
++const PREFERENCE_COLUMNS = 'push_enabled, email_enabled, alert_on_degraded, alert_on_disconnected';
++
++/** Chave por usuario: a RLS so devolve a propria linha, mas isolar por usuario evita
++ *  que a troca de sessao reaproveite o cache de quem saiu. */
++export const connectionAlertPreferencesKey = (userId: string | null | undefined) =>
++  ['connection-alert-preferences', userId ?? 'anon'] as const;
++
++export type ConnectionAlertKind = 'degraded' | 'disconnected';
++
++/** Interruptor mestre do TIPO do aviso: desligado, nao se avisa em canal nenhum. */
++export function shouldNotifyConnectionAlert(
++  preferences: ConnectionAlertPreferences,
++  kind: ConnectionAlertKind,
++): boolean {
++  return kind === 'degraded' ? preferences.alert_on_degraded : preferences.alert_on_disconnected;
++}
++
++export function useConnectionAlertPreferences() {
++  const { user } = useAuth();
++  const queryClient = useQueryClient();
++  const userId = user?.id ?? null;
++  const queryKey = connectionAlertPreferencesKey(userId);
++
++  const { data: row, isLoading } = useQuery({
++    queryKey,
++    enabled: !!userId,
++    queryFn: async () => {
++      const { data, error } = await supabase
++        .from('connection_alert_preferences')
++        .select(PREFERENCE_COLUMNS)
++        .maybeSingle();
++      if (error) throw error;
++      return data ?? null;
++    },
++  });
++
++  const preferences: ConnectionAlertPreferences = { ...CONNECTION_ALERT_DEFAULTS, ...(row ?? {}) };
++
++  // Upsert otimista: o interruptor do usuario muda na hora; se o banco recusar, o
++  // cache volta ao valor anterior (rollback) e a falha e anunciada — nunca engolida.
++  const mutation = useMutation({
++    mutationFn: async (patch: Partial<ConnectionAlertPreferences>) => {
++      if (!userId) throw new Error('Sem usuário autenticado para salvar a preferência');
++      const { data, error } = await supabase
++        .from('connection_alert_preferences')
++        .upsert({ user_id: userId, ...patch }, { onConflict: 'user_id' })
++        .select(PREFERENCE_COLUMNS)
++        .maybeSingle();
++      if (error) throw error;
++      // A RLS pode aceitar o upsert e nao devolver linha nenhuma (por exemplo sem
++      // permissao de leitura): zero linhas NAO e sucesso.
++      if (!data) throw new Error('Preferência não foi gravada');
++      return data;
++    },
++    onMutate: async (patch) => {
++      // Cancela a leitura em voo para a resposta antiga nao sobrescrever o otimista.
++      await queryClient.cancelQueries({ queryKey });
++      const previous = queryClient.getQueryData(queryKey);
++      queryClient.setQueryData(queryKey, {
++        ...CONNECTION_ALERT_DEFAULTS,
++        ...((previous as ConnectionAlertPreferences | null) ?? {}),
++        ...patch,
++      });
++      return { previous };
++    },
++    onError: (_error, _patch, context) => {
++      queryClient.setQueryData(queryKey, context?.previous ?? null);
++      toast.error('Não foi possível salvar a preferência de alerta de conexão');
++    },
++    onSuccess: (saved) => {
++      queryClient.setQueryData(queryKey, saved);
++    },
++    onSettled: () => {
++      void queryClient.invalidateQueries({ queryKey });
++    },
++  });
++
++  return {
++    preferences,
++    isLoading,
++    isSaving: mutation.isPending,
++    updatePreference: mutation.mutate,
++    updatePreferenceAsync: mutation.mutateAsync,
++    shouldNotify: (kind: ConnectionAlertKind) => shouldNotifyConnectionAlert(preferences, kind),
++  };
++}
+diff --git a/src/integrations/supabase/types.ts b/src/integrations/supabase/types.ts
+index 6344a0e8a0..6f5b48c99f 100644
+--- a/src/integrations/supabase/types.ts
++++ b/src/integrations/supabase/types.ts
+@@ -1874,6 +1874,39 @@ export type Database = {
+           },
+         ]
+       }
++      connection_alert_preferences: {
++        Row: {
++          alert_on_degraded: boolean
++          alert_on_disconnected: boolean
++          created_at: string
++          email_enabled: boolean
++          id: string
++          push_enabled: boolean
++          updated_at: string
++          user_id: string
++        }
++        Insert: {
++          alert_on_degraded?: boolean
++          alert_on_disconnected?: boolean
++          created_at?: string
++          email_enabled?: boolean
++          id?: string
++          push_enabled?: boolean
++          updated_at?: string
++          user_id: string
++        }
++        Update: {
++          alert_on_degraded?: boolean
++          alert_on_disconnected?: boolean
++          created_at?: string
++          email_enabled?: boolean
++          id?: string
++          push_enabled?: boolean
++          updated_at?: string
++          user_id?: string
++        }
++        Relationships: []
++      }
+       connection_health_logs: {
+         Row: {
+           checked_at: string
+diff --git a/supabase/migrations/20261013044440_connection_alert_preferences.sql b/supabase/migrations/20261013044440_connection_alert_preferences.sql
+new file mode 100644
+index 0000000000..9e777c429a
+--- /dev/null
++++ b/supabase/migrations/20261013044440_connection_alert_preferences.sql
+@@ -0,0 +1,74 @@
++-- connection_alert_preferences
++-- Rollback: remove a tabela de preferencias de alerta de conexao (RLS, policies, grants e gatilho caem com ela).
++-- Rollback (SQL executavel, na ordem):
++--   DROP TRIGGER IF EXISTS set_connection_alert_preferences_updated_at ON public.connection_alert_preferences;
++--   DROP TABLE IF EXISTS public.connection_alert_preferences;
++--
++-- wave/connection-alert-preferences: preferencias, POR USUARIO, de como e quando
++-- avisar sobre a saude da conexao de WhatsApp do atendimento:
++--   * canais  -> push_enabled (notificacao no navegador) e email_enabled (e-mail);
++--   * tipos   -> alert_on_degraded (conexao degradada) e alert_on_disconnected (conexao caida);
++--   * padroes -> todos LIGADOS (true), para o usuario receber os avisos sem configurar nada.
++--
++-- Uma linha por usuario (UNIQUE em user_id): o hook do front faz upsert em
++-- onConflict=user_id. Leitura e escrita so da PROPRIA linha; DELETE nao e concedido
++-- (preferencia nao se apaga, se desliga). Toda a autorizacao vive na RLS, nao em
++-- funcao SECURITY DEFINER.
++--
++-- Tabela NOVA e aditiva: nada existente e alterado. Rollback acima e executavel.
++
++SET search_path = public;
++
++CREATE TABLE public.connection_alert_preferences (
++  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
++  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
++  push_enabled boolean NOT NULL DEFAULT true,
++  email_enabled boolean NOT NULL DEFAULT true,
++  alert_on_degraded boolean NOT NULL DEFAULT true,
++  alert_on_disconnected boolean NOT NULL DEFAULT true,
++  created_at timestamptz NOT NULL DEFAULT now(),
++  updated_at timestamptz NOT NULL DEFAULT now(),
++  CONSTRAINT connection_alert_preferences_user_id_key UNIQUE (user_id)
++);
++
++COMMENT ON TABLE public.connection_alert_preferences IS
++  'Preferencias por usuario de alerta de conexao (canais: navegador/e-mail; tipos: degradada/desconectada). Uma linha por usuario; RLS por linha; sem DELETE.';
++
++ALTER TABLE public.connection_alert_preferences ENABLE ROW LEVEL SECURITY;
++
++-- Leitura da propria linha.
++CREATE POLICY connection_alert_preferences_select_own
++  ON public.connection_alert_preferences
++  FOR SELECT
++  TO authenticated
++  USING (user_id = (SELECT auth.uid()));
++
++-- Insercao so da propria linha.
++CREATE POLICY connection_alert_preferences_insert_own
++  ON public.connection_alert_preferences
++  FOR INSERT
++  TO authenticated
++  WITH CHECK (user_id = (SELECT auth.uid()));
++
++-- Atualizacao so da propria linha (USING filtra o alvo, WITH CHECK impede trocar o dono).
++CREATE POLICY connection_alert_preferences_update_own
++  ON public.connection_alert_preferences
++  FOR UPDATE
++  TO authenticated
++  USING (user_id = (SELECT auth.uid()))
++  WITH CHECK (user_id = (SELECT auth.uid()));
++
++-- Sem policy de DELETE de proposito: preferencia se desliga, nunca se apaga.
++
++-- Grants explicitos: o padrao da Supabase concede ALL a anon/authenticated em tabela
++-- nova (licao E44), entao revoga tudo e devolve so o necessario.
++REVOKE ALL ON public.connection_alert_preferences FROM anon;
++REVOKE ALL ON public.connection_alert_preferences FROM authenticated;
++GRANT SELECT, INSERT, UPDATE ON public.connection_alert_preferences TO authenticated;
++GRANT ALL ON public.connection_alert_preferences TO service_role;
++
++-- updated_at automatico (reusa a funcao canonica do projeto).
++CREATE TRIGGER set_connection_alert_preferences_updated_at
++  BEFORE UPDATE ON public.connection_alert_preferences
++  FOR EACH ROW
++  EXECUTE FUNCTION public.update_updated_at_column();
+diff --git a/supabase/tests/connection_alert_preferences_rls.sql b/supabase/tests/connection_alert_preferences_rls.sql
+new file mode 100644
+index 0000000000..cd25018800
+--- /dev/null
++++ b/supabase/tests/connection_alert_preferences_rls.sql
+@@ -0,0 +1,291 @@
++-- ============================================================================
++-- connection_alert_preferences — RLS por linha (cartao t_e8b312e0)
++--
++-- O QUE PROVA (criterio de pronto do cartao):
++--   A) a leitura e a escrita de public.connection_alert_preferences sao da
++--      PROPRIA linha: o dono ve e muda as suas preferencias;
++--   B) um usuario NAO ve, NAO insere e NAO muda a linha de OUTRO usuario
++--      (RLS, nao a aplicacao);
++--   C) NAO existe DELETE: nem grant nem policy — preferencia se desliga, nao
++--      se apaga;
++--   D) anon nao le nem escreve (o padrao Supabase concede ALL a anon em tabela
++--      nova; aqui ele e revogado — licao E44);
++--   E) os padroes nascem LIGADOS (push/e-mail/degradada/desconectada = true);
++--   F) uma linha por usuario (UNIQUE em user_id) e updated_at automatico.
++--
++-- COMO A PROTECAO ENTRA NO TESTE (nada de copiar policy para dentro do arquivo):
++-- a superficie minima (roles, schema auth, auth.users, update_updated_at_column,
++-- e as DEFAULT PRIVILEGES que a Supabase instala) e AMBIENTE, criada a mao; a
++-- PROTECAO (tabela, RLS, policies, grants, gatilho) e aplicada VERBATIM do
++-- arquivo de migration real, via `\i`. Mesmo padrao de
++-- supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql e
++-- scripts/db-audit/dashboard-rls-authorization.test.sh.
++--
++-- ENFORCEMENT exercido como PAPEL REAL: as assercoes rodam com `SET LOCAL ROLE
++-- authenticated`/`anon` (roles sem BYPASSRLS, o caminho do PostgREST) + JWT
++-- sintetico em request.jwt.claims — nunca como postgres, que ignora RLS. O
++-- helper confere que current_user e de fato o papel pedido.
++--
++-- VIGENCIA: a tabela e NOVA neste cartao; nenhuma migration posterior a
++-- 20261013044440 a toca (nao ha outra). Se um dia houver, este `\i` fica
++-- desatualizado — a charada e repetir o padrao do dashboard-rls (varrer o
++-- diretorio por CREATE/ALTER/DROP do mesmo objeto).
++--
++-- COMO RODA (PostgreSQL 17 descartavel; o repo e montado somente-leitura):
++--   docker run --rm -d --name zapp-caeap-$$ -e POSTGRES_PASSWORD=test_only \
++--     -v "$PWD:/repo:ro" postgres:17-alpine
++--   docker exec -i zapp-caeap-$$ psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
++--     -v repo=/repo -v mig_dir=/repo/supabase/migrations \
++--     < supabase/tests/connection_alert_preferences_rls.sql
++--   docker rm -f zapp-caeap-$$
++--
++-- VERMELHO (o teste falha quando a protecao nao esta la): acrescente `-v sem_guarda=1`.
++--   Com sem_guarda a RLS e DESLIGADA dentro da transacao (as policies ficam
++--   inertes) e a isolacao entre usuarios cai — nada persiste porque o arquivo
++--   termina em ROLLBACK.
++--
++-- Tudo roda numa unica transacao que termina em ROLLBACK: idempotente, sem
++-- efeito colateral e reaplicavel.
++-- ============================================================================
++
++\set ON_ERROR_STOP on
++\if :{?mig_dir}
++\else
++  \set mig_dir supabase/migrations
++\endif
++
++BEGIN;
++
++-- ── Superficie minima (ambiente; o contrato vem da migration logo abaixo) ────
++CREATE ROLE anon NOLOGIN;
++CREATE ROLE authenticated NOLOGIN;
++CREATE ROLE service_role NOLOGIN BYPASSRLS;
++
++CREATE SCHEMA auth;
++CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
++  SELECT nullif(coalesce(
++    nullif(current_setting('request.jwt.claim.sub', true), ''),
++    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
++  ), '')::uuid $$;
++GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
++GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
++
++CREATE TABLE auth.users (id uuid PRIMARY KEY);
++
++-- Funcao canonica de updated_at (mesmo corpo de
++-- supabase/migrations/20251215024517_...:188) — e ambiente, nao contrato.
++CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
++LANGUAGE plpgsql SET search_path = public AS $$
++BEGIN
++  NEW.updated_at = now();
++  RETURN NEW;
++END $$;
++
++-- A Supabase instala DEFAULT PRIVILEGES que concedem ALL a anon, authenticated
++-- e service_role em toda tabela nova do schema public. Reproduzir isso aqui e o
++-- que faz o REVOKE da migration ser CARREGADO de verdade no T0.
++ALTER DEFAULT PRIVILEGES IN SCHEMA public
++  GRANT ALL ON TABLES TO anon, authenticated, service_role;
++
++-- ── A PROTECAO, verbatim da migration real ───────────────────────────────────
++\echo '── aplicando a migration REAL (tabela, RLS, policies, grants, gatilho) ──'
++\i :mig_dir/20261013044440_connection_alert_preferences.sql
++
++-- Fixtures: dois usuarios (A = dono, B = outro). Entram como postgres; as
++-- assercoes de comportamento rodam sob o papel REAL.
++INSERT INTO auth.users (id) VALUES
++  ('11111111-1111-1111-1111-11111111111a'),  -- A (dono)
++  ('22222222-2222-2222-2222-22222222222b');  -- B (outro)
++
++-- ── Modo vermelho: a protecao ausente (RLS desligada; policies inertes) ──────
++\if :{?sem_guarda}
++  ALTER TABLE public.connection_alert_preferences DISABLE ROW LEVEL SECURITY;
++  \echo '  [sem_guarda] RLS de connection_alert_preferences DESLIGADA (dentro da transacao)'
++\endif
++
++-- ── Helpers do proprio teste ────────────────────────────────────────────────
++CREATE FUNCTION pg_temp.espera(p_label text, p_atual text, p_esperado text) RETURNS void
++LANGUAGE plpgsql AS $h$
++BEGIN
++  IF p_atual IS DISTINCT FROM p_esperado THEN
++    RAISE EXCEPTION 'CAEAP FALHOU [%]: esperado %, obtido %', p_label, p_esperado, p_atual;
++  END IF;
++  RAISE NOTICE 'PASS [%] -> %', p_label, p_atual;
++END $h$;
++
++CREATE FUNCTION pg_temp.espera_erro(p_label text, p_atual text, p_sqlstate text) RETURNS void
++LANGUAGE plpgsql AS $h$
++BEGIN
++  IF p_atual IS NULL OR p_atual NOT LIKE 'ERRO ' || p_sqlstate || ' %' THEN
++    RAISE EXCEPTION 'CAEAP FALHOU [%]: esperava erro SQLSTATE %, veio: %', p_label, p_sqlstate, p_atual;
++  END IF;
++  RAISE NOTICE 'PASS [%] -> %', p_label, p_atual;
++END $h$;
++
++-- Roda p_sql sob o PAPEL REAL (SET LOCAL ROLE) com o JWT de p_uid.
++-- Devolve 'OK <linhas>' ou 'ERRO <sqlstate> <mensagem>'. O bloco EXCEPTION
++-- interno garante que uma operacao negada NAO aborta a transacao do teste.
++CREATE FUNCTION pg_temp.operacao(p_papel text, p_uid uuid, p_sql text) RETURNS text
++LANGUAGE plpgsql AS $h$
++DECLARE v_ret text; v_n bigint;
++BEGIN
++  PERFORM set_config('request.jwt.claims',
++    json_build_object('sub', p_uid, 'role', p_papel)::text, true);
++  EXECUTE format('SET LOCAL ROLE %I', p_papel);
++  IF current_user <> p_papel THEN
++    RAISE EXCEPTION 'CAEAP FALHOU: papel real nao aplicado (current_user=%)', current_user;
++  END IF;
++  BEGIN
++    EXECUTE p_sql;
++    GET DIAGNOSTICS v_n = ROW_COUNT;
++    v_ret := 'OK ' || v_n;
++  EXCEPTION WHEN OTHERS THEN
++    v_ret := 'ERRO ' || SQLSTATE || ' ' || SQLERRM;
++  END;
++  RESET ROLE;
++  RETURN v_ret;
++END $h$;
++
++-- Um unico valor, lido sob o PAPEL REAL.
++CREATE FUNCTION pg_temp.valor(p_papel text, p_uid uuid, p_sql text) RETURNS text
++LANGUAGE plpgsql AS $h$
++DECLARE v text;
++BEGIN
++  PERFORM set_config('request.jwt.claims',
++    json_build_object('sub', p_uid, 'role', p_papel)::text, true);
++  EXECUTE format('SET LOCAL ROLE %I', p_papel);
++  BEGIN
++    EXECUTE p_sql INTO v;
++  EXCEPTION WHEN OTHERS THEN
++    v := 'ERRO ' || SQLSTATE;
++  END;
++  RESET ROLE;
++  RETURN v;
++END $h$;
++
++\echo
++\echo '── T0: a barreira e a RLS + os grants da migration, nao o acaso ────────────'
++SELECT pg_temp.espera('T0a authenticated TEM SELECT/INSERT/UPDATE',
++  has_table_privilege('authenticated', 'public.connection_alert_preferences', 'SELECT,INSERT,UPDATE')::text, 'true');
++SELECT pg_temp.espera('T0b authenticated NAO tem DELETE (sem grant)',
++  has_table_privilege('authenticated', 'public.connection_alert_preferences', 'DELETE')::text, 'false');
++SELECT pg_temp.espera('T0c anon NAO tem nenhum privilegio (REVOKE venceu o default)',
++  has_table_privilege('anon', 'public.connection_alert_preferences', 'SELECT,INSERT,UPDATE,DELETE')::text, 'false');
++SELECT pg_temp.espera('T0d service_role tem ALL (BYPASSRLS, papel de servico)',
++  has_table_privilege('service_role', 'public.connection_alert_preferences', 'SELECT,INSERT,UPDATE,DELETE')::text, 'true');
++-- Auto-testes de aplicacao da protecao (pulados no modo vermelho).
++\if :{?sem_guarda}
++\else
++SELECT pg_temp.espera('T0e RLS ligada na tabela',
++  (SELECT relrowsecurity::text FROM pg_class WHERE oid = 'public.connection_alert_preferences'::regclass), 'true');
++SELECT pg_temp.espera('T0f exatamente 3 policies, TODAS para authenticated',
++  (SELECT (count(*) = 3 AND bool_and(roles = '{authenticated}'))::text
++     FROM pg_policies WHERE tablename = 'connection_alert_preferences'), 'true');
++SELECT pg_temp.espera('T0g nenhuma policy de DELETE',
++  (SELECT (count(*) = 0)::text FROM pg_policies
++     WHERE tablename = 'connection_alert_preferences' AND cmd = 'DELETE'), 'true');
++SELECT pg_temp.espera('T0h gatilho de updated_at instalado em BEFORE UPDATE',
++  (SELECT (pg_get_triggerdef(oid) LIKE '%BEFORE UPDATE%'
++           AND pg_get_triggerdef(oid) LIKE '%update_updated_at_column%')::text
++     FROM pg_trigger WHERE tgname = 'set_connection_alert_preferences_updated_at'), 'true');
++\endif
++
++\echo
++\echo '── BLOCO A: o DONO cuida da PROPRIA linha ─────────────────────────────────'
++-- T1 — INSERT so com user_id: padroes nascem LIGADOS.
++SELECT pg_temp.espera('T1 dono insere a propria linha (1 linha)',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$INSERT INTO public.connection_alert_preferences (user_id) VALUES ('11111111-1111-1111-1111-11111111111a')$sql$),
++  'OK 1');
++SELECT pg_temp.espera('T1b padroes ligados (push/email/degradada/desconectada = true)',
++  (SELECT (push_enabled AND email_enabled AND alert_on_degraded AND alert_on_disconnected)::text
++     FROM public.connection_alert_preferences WHERE user_id = '11111111-1111-1111-1111-11111111111a'), 'true');
++
++-- Fixture do OUTRO usuario (postgres; o comportamento dele vem depois).
++INSERT INTO public.connection_alert_preferences (user_id, push_enabled)
++  VALUES ('22222222-2222-2222-2222-22222222222b', false);
++
++-- T2 — o dono ve exatamente a propria linha; service_role (BYPASSRLS) ve as duas.
++SELECT pg_temp.espera('T2a dono enxerga so a propria linha (1)',
++  pg_temp.valor('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$SELECT count(*)::text FROM public.connection_alert_preferences$sql$), '1');
++SELECT pg_temp.espera('T2b o outro enxerga so a propria linha (1)',
++  pg_temp.valor('authenticated', '22222222-2222-2222-2222-22222222222b',
++    $sql$SELECT count(*)::text FROM public.connection_alert_preferences$sql$), '1');
++SELECT pg_temp.espera('T2c service_role enxerga as duas (BYPASSRLS)',
++  pg_temp.valor('service_role', null,
++    $sql$SELECT count(*)::text FROM public.connection_alert_preferences$sql$), '2');
++
++-- T3 — o dono NAO ve a linha do outro.
++SELECT pg_temp.espera('T3 dono nao enxerga a linha do outro (0)',
++  pg_temp.valor('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$SELECT count(*)::text FROM public.connection_alert_preferences WHERE user_id = '22222222-2222-2222-2222-22222222222b'$sql$),
++  '0');
++
++-- T4 — o dono atualiza a propria linha.
++SELECT pg_temp.espera('T4 dono atualiza a propria linha (1)',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$UPDATE public.connection_alert_preferences SET email_enabled = true WHERE user_id = '11111111-1111-1111-1111-11111111111a'$sql$),
++  'OK 1');
++
++-- T5 — o gatilho de updated_at SOBRESCREVE um valor forjado (prova que dispara).
++SELECT pg_temp.espera('T5 gatilho updated_at sobrescreve valor forjado',
++  pg_temp.valor('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$UPDATE public.connection_alert_preferences SET updated_at = '2000-01-01 00:00:00+00' WHERE user_id = '11111111-1111-1111-1111-11111111111a'; SELECT (updated_at <> '2000-01-01 00:00:00+00'::timestamptz)::text FROM public.connection_alert_preferences WHERE user_id = '11111111-1111-1111-1111-11111111111a'$sql$),
++  'true');
++
++\echo
++\echo '── BLOCO B: o dono NAO alcanca a linha do OUTRO ──────────────────────────'
++-- T6 — INSERT apontando para OUTRO usuario: WITH CHECK recusa.
++SELECT pg_temp.espera_erro('T6 INSERT para outro usuario e recusado (WITH CHECK)',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$INSERT INTO public.connection_alert_preferences (user_id) VALUES ('22222222-2222-2222-2222-22222222222b')$sql$),
++  '42501');
++SELECT pg_temp.espera('T6b a tentativa nao criou meia linha',
++  (SELECT count(*)::text FROM public.connection_alert_preferences WHERE user_id = '22222222-2222-2222-2222-22222222222b'), '1');
++
++-- T7 — UPDATE da linha do outro: USING falso -> 0 linhas, valor intacto.
++SELECT pg_temp.espera('T7 UPDATE da linha do outro -> 0 linhas',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$UPDATE public.connection_alert_preferences SET push_enabled = true WHERE user_id = '22222222-2222-2222-2222-22222222222b'$sql$),
++  'OK 0');
++SELECT pg_temp.espera('T7b a linha do outro segue intacta (push_enabled = false)',
++  (SELECT (NOT push_enabled)::text FROM public.connection_alert_preferences WHERE user_id = '22222222-2222-2222-2222-22222222222b'), 'true');
++
++-- T8 — UPDATE tentando TROCAR o dono da propria linha: WITH CHECK recusa.
++SELECT pg_temp.espera_erro('T8 trocar user_id da propria linha e recusado (WITH CHECK)',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$UPDATE public.connection_alert_preferences SET user_id = '22222222-2222-2222-2222-22222222222b' WHERE user_id = '11111111-1111-1111-1111-11111111111a'$sql$),
++  '42501');
++
++\echo
++\echo '── BLOCO C: sem DELETE, sem anon, uma linha por usuario ──────────────────'
++-- T9 — DELETE negado (sem grant nem policy).
++SELECT pg_temp.espera_erro('T9 DELETE da propria linha e negado',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$DELETE FROM public.connection_alert_preferences WHERE user_id = '11111111-1111-1111-1111-11111111111a'$sql$),
++  '42501');
++SELECT pg_temp.espera('T9b a linha continua la (nada apagou)',
++  (SELECT count(*)::text FROM public.connection_alert_preferences WHERE user_id = '11111111-1111-1111-1111-11111111111a'), '1');
++
++-- T10 — anon nao le nem escreve.
++SELECT pg_temp.espera_erro('T10 anon nao SELECT',
++  pg_temp.operacao('anon', null,
++    $sql$SELECT count(*) FROM public.connection_alert_preferences$sql$),
++  '42501');
++SELECT pg_temp.espera_erro('T10b anon nao INSERT',
++  pg_temp.operacao('anon', null,
++    $sql$INSERT INTO public.connection_alert_preferences (user_id) VALUES ('11111111-1111-1111-1111-11111111111a')$sql$),
++  '42501');
++
++-- T11 — uma linha por usuario (UNIQUE em user_id).
++SELECT pg_temp.espera_erro('T11 segunda linha do mesmo usuario e recusada (UNIQUE)',
++  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
++    $sql$INSERT INTO public.connection_alert_preferences (user_id) VALUES ('11111111-1111-1111-1111-11111111111a')$sql$),
++  '23505');
++
++ROLLBACK;
++
++\echo
++\echo 'CAEAP OK: leitura/escrita so da propria linha; outro usuario e anon'
++\echo '          negados; sem DELETE; padroes ligados; uma linha por usuario.'

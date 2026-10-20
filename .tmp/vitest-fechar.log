@@ -1,0 +1,71 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-conexao-prefs-261015185180e1
+
+stderr | src/components/alerts/__tests__/EvolutionDisconnectBanner.preferencia.test.tsx > EvolutionDisconnectBanner — preferência alert_on_disconnected (PD-38) > com o tipo desligado, a conexão caída NAO vira faixa
+An update to EvolutionDisconnectBanner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·············Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+··stderr | src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx > a11y: faixa de conexões desconectadas (landmark) > sem conexão desconectada a faixa não renderiza nada
+An update to EvolutionDisconnectBanner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+······stderr | src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx > EvolutionDisconnectBanner — reconexão distingue erro lógico de sucesso > erro lógico no corpo (data.error) exibe o aviso de erro e NUNCA o de sucesso
+An update to EvolutionDisconnectBanner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+····stderr | src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx > EvolutionDisconnectBanner — reconexão distingue erro lógico de sucesso > erro de transporte (error) exibe o aviso de erro e NUNCA o de sucesso
+An update to EvolutionDisconnectBanner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx > EvolutionDisconnectBanner — reconexão distingue erro lógico de sucesso > resposta sem erro lógico nem de transporte exibe o aviso de reconexão iniciada
+An update to EvolutionDisconnectBanner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+····
+
+ Test Files  6 passed (6)
+      Tests  30 passed (30)
+   Start at  19:25:59
+   Duration  11.50s (transform 1.61s, setup 4.07s, import 9.98s, tests 5.27s, environment 17.76s)
+
