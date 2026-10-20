@@ -1,0 +1,3 @@
+ANTES DE ENTREGAR — a migration supabase/migrations/20261012151545_authenticated_sem_papel_nao_le.sql não tem rollback aceitável (o revisor recusou 17 migrations por isto):
+   - falta o SQL EXECUTÁVEL do rollback, comentado, logo depois: '--   drop function if exists ...;', '--   alter table ... drop column ...;', e para função alterada o CORPO ANTERIOR inteiro ('--   create or replace function ...').
+Modelo: a migration 20261006141643_ai_jobs_efeito_externo_lease.sql (linhas 1-11). Corrija (commit novo) e feche de novo.

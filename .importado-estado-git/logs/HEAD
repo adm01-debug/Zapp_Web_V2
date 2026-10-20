@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 bff18177fdfe4102533fe688ed374c945f34689d Hermes Senior <hermes-senior@promobrindes.local> 1791817547 -0300	
+bff18177fdfe4102533fe688ed374c945f34689d bff18177fdfe4102533fe688ed374c945f34689d Hermes Senior <hermes-senior@promobrindes.local> 1791817548 -0300	reset: moving to HEAD
+bff18177fdfe4102533fe688ed374c945f34689d 5ed9fe1a2ffb77dc690ade68578ce0b01da8963d Hermes Senior <hermes-senior@promobrindes.local> 1791818688 -0300	commit: fix(db): authenticated sem papel deixa de ler 27 tabelas de config
+5ed9fe1a2ffb77dc690ade68578ce0b01da8963d 5b9ba69c7400fbe2051e2d84048abe9421d48bc8 Hermes Senior <hermes-senior@promobrindes.local> 1791818766 -0300	commit: chore(db): relato do gate authenticated sem papel
+5b9ba69c7400fbe2051e2d84048abe9421d48bc8 f034f10cc89767f20375a2549799398f2e286734 Hermes Senior <hermes-senior@promobrindes.local> 1791829463 -0300	commit: docs(db): rollback executavel do gate authenticated sem papel
+f034f10cc89767f20375a2549799398f2e286734 3f8532006c173d19fc64cf12d3112903f5ed8bdf Hermes Senior <hermes-senior@promobrindes.local> 1791829529 -0300	commit: chore(db): relato do gate authenticated sem papel (rollback executavel)
+3f8532006c173d19fc64cf12d3112903f5ed8bdf d40a1f1b835ae478694584f2b8747dd0badf4bab Hermes Senior <hermes-senior@promobrindes.local> 1791829641 -0300	commit: chore(db): relato do gate authenticated sem papel (numeros e escopo)
+d40a1f1b835ae478694584f2b8747dd0badf4bab 23f858eb66743486c82c3539b48b3a78dc1767f9 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792043269 -0300	commit: fix(seguranca): alinha rlsGroupAccess ao gate authenticated sem papel

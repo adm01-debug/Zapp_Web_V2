@@ -1,0 +1,6 @@
+fix(seguranca): alinha rlsGroupAccess ao gate authenticated sem papel
+
+O teste de whatsapp_groups exigia USING(true) para SELECT — o contrato
+vulneravel que a migration 20261012151545 remove. Passa a exigir gate de
+papel (user_has_any_app_role/is_admin_or_supervisor), espelhando o teste
+de whatsapp_connections. Nenhuma assercao afrouxada.

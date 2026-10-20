@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=authenticated-sem-papel-nao-le
+ID=2610121205b65e
+BRANCH=v2/authenticated-sem-papel-nao-le-2610121205b65e
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/authenticated-sem-papel-nao-le-2610121205b65e
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T12:05:48-03:00
+KANBAN=t_a3c004b7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/authenticated-sem-papel-nao-le-2610121205b65e/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610121205b65e
+APLICADA_LOCAL=20261012151545_authenticated_sem_papel_nao_le.sql sha=1d986d722a9a2cbc
+PRONTO_SHA=d40a1f1b835ae478694584f2b8747dd0badf4bab
