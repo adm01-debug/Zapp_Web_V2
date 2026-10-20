@@ -1,0 +1,3 @@
+33	0	src/integrations/supabase/types.ts
+182	0	supabase/migrations/20261013180000_audit_log_summary.sql
+322	0	supabase/tests/audit_log_summary_por_periodo.sql

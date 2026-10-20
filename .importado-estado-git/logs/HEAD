@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 453e6b69f9cabf1a293492139de5520a29f576fe Hermes Senior <hermes-senior@promobrindes.local> 1791913885 -0300	
+453e6b69f9cabf1a293492139de5520a29f576fe 453e6b69f9cabf1a293492139de5520a29f576fe Hermes Senior <hermes-senior@promobrindes.local> 1791913886 -0300	reset: moving to HEAD
+453e6b69f9cabf1a293492139de5520a29f576fe 401b5af840b6597c555ba34b456a7f3b61515336 Hermes Senior <hermes-senior@promobrindes.local> 1791915265 -0300	commit: feat(seguranca): RPCs admin-only de resumo e lista de audit_logs por periodo
+401b5af840b6597c555ba34b456a7f3b61515336 a24f4b8834e0046bec16b163989a645d8e59cefd Hermes Senior <hermes-senior@promobrindes.local> 1791917187 -0300	commit: docs(seguranca): relato do resumo de audit_logs por periodo
+a24f4b8834e0046bec16b163989a645d8e59cefd 80e4469843c9e64784363a48b759022d82c01ac3 Hermes Senior <hermes-senior@promobrindes.local> 1791917211 -0300	commit: docs(seguranca): nota do teste .sql ao juiz barato
+80e4469843c9e64784363a48b759022d82c01ac3 42b37d65dcdc087a023437002bae1b9186ea4052 Hermes Senior <hermes-senior@promobrindes.local> 1791917419 -0300	commit: refactor(seguranca): search_path na forma canonica e responde ao juiz no relato
+42b37d65dcdc087a023437002bae1b9186ea4052 0721fd550390c2d9faccf8057c798df88fed22e5 Hermes Senior <hermes-senior@promobrindes.local> 1791917471 -0300	commit: docs(seguranca): relato com contagem real de arquivos/testes e prova do search_path

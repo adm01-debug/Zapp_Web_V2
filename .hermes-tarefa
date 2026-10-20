@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=audit-log-summary-por-periodo
+ID=261013145182df
+BRANCH=v2/audit-log-summary-por-periodo-261013145182df
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-log-summary-por-periodo-261013145182df
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T14:51:26-03:00
+KANBAN=t_4d66a644
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-log-summary-por-periodo-261013145182df/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013145182df
+APLICADA_LOCAL=20261013180000_audit_log_summary.sql sha=c1f34e341210f9fc
+PRONTO_SHA=0721fd550390c2d9faccf8057c798df88fed22e5

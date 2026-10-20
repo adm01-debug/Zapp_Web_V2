@@ -1,0 +1,5 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Números ou lista de arquivos/testes do relato não batem com o diff (4 arquivos, 1 de teste). Corrija o relato para os números reais.
+  *. CONFERÊNCIA: supabase/migrations/20261013180000_audit_log_summary.sql: a função ? é SECURITY DEFINER sem `SET search_path` fixo (o revisor recusa). Use `SET search_path = public, pg_temp` (ou o necessário).
+FECHADO (modo V2, local): v2/audit-log-summary-por-periodo-261013145182df @ 0721fd550 — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/261013145182df.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.
