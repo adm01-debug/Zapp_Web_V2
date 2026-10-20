@@ -256,6 +256,9 @@ async function montarModulo(container: HTMLElement, publicadas: string[]) {
 beforeEach(() => {
   h.rows = linhas();
   marcarAreas();
+  // marcarAreas() instala a implementação; as chamadas de um teste não podem
+  // contaminar a contagem do seguinte (o contrato abaixo conta a instância única).
+  for (const spy of Object.values(h.areas)) spy.mockClear();
 });
 
 describe('ContactsView — chave contacts.v2 desligada', () => {
@@ -282,5 +285,53 @@ describe('ContactsView — chave contacts.v2 com áreas ligadas', () => {
 
     await montarModulo(container, ['cards']);
     expect(areasNaTela(container)).toEqual(TELA_ATUAL);
+  });
+});
+
+/**
+ * Contrato do plano de 50 etapas (docs/plans/PLANO_CONTATOS_CABECALHO_BOTAO_VERDE_50_ETAPAS_2026-09-30):
+ * o topo do módulo Contatos NAO tem cabeçalho visual — a tela começa pelos
+ * indicadores. O lote 880 (025d0258dc) reintroduziu um PageHeader e este bloco
+ * existe para que qualquer retorno do cabeçalho quebre a CI em vez de passar
+ * despercebido pelos snapshots.
+ *
+ * PageHeader renderiza um elemento <header>; nenhum outro bloco deste módulo
+ * (com as áreas trocadas por marcadores) produz um.
+ */
+describe('ContactsView — contrato do cabeçalho removido', () => {
+  it('não renderiza cabeçalho visual e mantém o título acessível', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+    await montarModulo(container, []);
+
+    expect(container.querySelector('header')).toBeNull();
+
+    const titulos = Array.from(container.querySelectorAll('h1'));
+    expect(titulos).toHaveLength(1);
+    expect(titulos[0].textContent).toBe('Contatos');
+    expect(titulos[0].className).toContain('sr-only');
+  });
+
+  it('os indicadores vêm antes de categorias e toolbar', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+    await montarModulo(container, []);
+
+    const areas = areasNaTela(container);
+    expect(areas[0]).toBe('area-dialogs');
+    expect(areas[1]).toBe('area-merge');
+    expect(areas.indexOf('area-stats')).toBeLessThan(areas.indexOf('area-tabs'));
+    expect(areas.indexOf('area-stats')).toBeLessThan(areas.indexOf('area-toolbar'));
+  });
+
+  it('mantém uma única instância dos diálogos com os callbacks do CRUD', async () => {
+    render(<ContactsView />, { wrapper: createWrapper() });
+
+    await waitFor(() => expect(h.areas.dialogs).toHaveBeenCalledTimes(1));
+    expect(h.areas.dialogs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isAddDialogOpen: false,
+        handleAddContact: expect.any(Function),
+        handleDeleteContact: expect.any(Function),
+      }),
+    );
   });
 });
