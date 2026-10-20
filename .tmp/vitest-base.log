@@ -1,0 +1,305 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alternancia-lista-grade-talkx-2610131455d696/.tmp/prova-base
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx > TalkXSegments · alternância lista/grade (X112) > abre em lista, vai para grade e volta — mesmo cartão nos dois modos
+TestingLibraryElementError: Unable to find an element by: [data-testid="segments-list"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-w-0 space-y-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mdata-talkx-query[39m=[32m"content"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"flex border ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm px-3 py-2 h-9 pl-8 pr-3 w-52 text-xs bg-input/40 border-border/70 rounded-lg"[39m
+                [33mplaceholder[39m=[32m"Buscar segmentos…"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden md:flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-autocomplete[39m=[32m"none"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Todas as origens"[39m
+                  [33mclass[39m=[32m"flex w-full items-center justify-between border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdir[39m=[32m"ltr"[39m
+                  [33mrole[39m=[32m"combobox"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mstyle[39m=[32m"pointer-events: none;"[39m
+                  [36m>[39m
+                    [0mTodos[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down h-4 w-4 opacity-50"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-autocomplete[39m=[32m"none"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Todos os status"[39m
+                  [33mclass[39m=[32m"flex w-full items-center justify-between border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdir[39m=[32m"ltr"[39m
+                  [33mrole[39m=[32m"combobox"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mstyle[39m=[32m"pointer-events: none;"[39m
+                  [36m>[39m
+                    [0mTodos[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down h-4 w-4 opacity-50"[39m
+                    [33mfill[39m=[32m"none"[39m
+                  ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx:73:19
+     71|
+     72|     // Modo padrão: lista (uma coluna), sem grade.
+     73|     expect(screen.getByTestId('segments-list')).toBeTruthy();
+       |                   ^
+     74|     expect(screen.queryByTestId('segments-grid')).toBeNull();
+     75|     expect(screen.getAllByTestId('segment-card')).toHaveLength(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx > TalkXSegments · alternância lista/grade (X112) > o cartão mantém o que a lista mostrava: origem, status, público e critério
+TestingLibraryElementError: Unable to find an element by: [data-testid="segments-view-grid"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-w-0 space-y-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mdata-talkx-query[39m=[32m"content"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-card border border-border/70 rounded-xl animate-pulse h-24"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"flex border ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm px-3 py-2 h-9 pl-8 pr-3 w-52 text-xs bg-input/40 border-border/70 rounded-lg"[39m
+                [33mplaceholder[39m=[32m"Buscar segmentos…"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"hidden md:flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-autocomplete[39m=[32m"none"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Todas as origens"[39m
+                  [33mclass[39m=[32m"flex w-full items-center justify-between border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdir[39m=[32m"ltr"[39m
+                  [33mrole[39m=[32m"combobox"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mstyle[39m=[32m"pointer-events: none;"[39m
+                  [36m>[39m
+                    [0mTodos[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down h-4 w-4 opacity-50"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-autocomplete[39m=[32m"none"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Todos os status"[39m
+                  [33mclass[39m=[32m"flex w-full items-center justify-between border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 h-9 text-xs bg-input/40 border-border/70 rounded-lg min-w-[120px]"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdir[39m=[32m"ltr"[39m
+                  [33mrole[39m=[32m"combobox"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mstyle[39m=[32m"pointer-events: none;"[39m
+                  [36m>[39m
+                    [0mTodos[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down h-4 w-4 opacity-50"[39m
+                    [33mfill[39m=[32m"none"[39m
+                  ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx:98:28
+     96|     await waitFor(() => expect(screen.getByText('VIP')).toBeTruthy());
+     97|
+     98|     fireEvent.click(screen.getByTestId('segments-view-grid'));
+       |                            ^
+     99|     const cartaoVip = screen.getByText('VIP').closest('[data-testid="s…
+    100|     expect(cartaoVip.textContent).toContain('CRM 360°');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  15:12:49
+   Duration  4.77s (transform 1.19s, setup 362ms, import 2.24s, tests 931ms, environment 983ms)
+

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alternancia-lista-grade-talkx
+ID=2610131455d696
+BRANCH=v2/alternancia-lista-grade-talkx-2610131455d696
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alternancia-lista-grade-talkx-2610131455d696
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T14:55:10-03:00
+KANBAN=t_f0f3cbc2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alternancia-lista-grade-talkx-2610131455d696/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610131455d696
+PRONTO_SHA=ff3a3042ad1a58faa253ded424c54dc4f48dcbd1

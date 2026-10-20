@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alternancia-lista-grade-talkx-2610131455d696
+
+··
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:12:39
+   Duration  6.06s (transform 1.89s, setup 421ms, import 3.10s, tests 1.13s, environment 1.16s)
+

@@ -1,0 +1,3 @@
+132	52	src/components/talkx/TalkXSegments.tsx
+108	0	src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx
+8	0	src/hooks/integrations/useTalkXSegments.ts
