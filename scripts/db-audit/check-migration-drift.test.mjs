@@ -83,6 +83,10 @@ function pinnedEvidence({
     reason,
     related_migration,
     justification: JUSTIFICATION,
+    // c41f5e5737: o contrato offline exige o alias sql-sha256 em toda excecao
+    // pinned-replay (mesmo valor de ledger_statements_sha256); a resubmissao do
+    // lote 880 cartoes perdeu esta linha e derrubou os testes de pinned-replay.
+    'sql-sha256': statementsHash(statements),
     ...overrides,
   };
 }

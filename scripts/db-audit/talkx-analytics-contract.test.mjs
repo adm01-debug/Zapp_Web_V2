@@ -94,8 +94,12 @@ test('Talk X não rotula tamanho de audiência como "Desempenho"', () => {
 });
 
 test('Talk X não rotula uso de template como "Mais convertidos"', () => {
-  assert.doesNotMatch(templates, /Mais convertidos/);
-  assert.match(templates, /Mais usados/);
+  // V08: o medidor de USO da biblioteca e o KpiCard "Mais usados" (label=).
+  // T04-039: o painel lateral "Mais convertidos" (RailCard title=) e ranking por
+  // taxa de resposta e tem guarda propria em __tests__/TalkXTemplatesRail.test.tsx.
+  // A guarda cobra o defeito original: rotular o medidor de uso como conversao.
+  assert.doesNotMatch(templates, /label="Mais convertidos"/);
+  assert.match(templates, /label="Mais usados"/);
 });
 
 // X185: o KPI "Conversão por segmento" passou a existir de fato — mas o número
