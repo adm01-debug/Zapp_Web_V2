@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=automation-suggest-reply-t-01f84976
+ID=261011222080d0
+BRANCH=v2/automation-suggest-reply-t-01f84976-261011222080d0
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automation-suggest-reply-t-01f84976-261011222080d0
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T22:20:56-03:00
+KANBAN=t_01f84976
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automation-suggest-reply-t-01f84976-261011222080d0/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-261011222080d0
+PRONTO_SHA=cba64cbea26c992b7e47eda3320187e53ca2e899
