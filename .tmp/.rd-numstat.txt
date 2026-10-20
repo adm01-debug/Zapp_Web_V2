@@ -1,0 +1,4 @@
+5	0	scripts/ci/check-test-inventory.mjs
+390	0	scripts/db-audit/agendadores-edge-e-purga-cron.test.sh
+24	0	scripts/db-audit/pg-cron-jobs-baseline.json
+552	0	supabase/migrations/20261013093000_agendadores_edge_e_purga_cron.sql

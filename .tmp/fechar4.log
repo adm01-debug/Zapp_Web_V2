@@ -1,0 +1,4 @@
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': scripts/ci/check-test-inventory.mjs. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.
+EXIT=3

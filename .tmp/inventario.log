@@ -1,0 +1,10 @@
+check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:
+  scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/ia-usage-outbox-duravel.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/talkx-conversion-defaults.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/team-chat-department-transfer-guards.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/team-chat-media-contract.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/team-direct-conversation-race.test.sh  (não encontrado em db-guard.yml)
+
+Total: 6 teste(s) órfão(s).
+Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.
