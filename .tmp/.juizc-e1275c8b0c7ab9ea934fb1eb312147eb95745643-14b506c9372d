@@ -1,0 +1,1 @@
+{"versao": "pronto-5", "estado": "ok", "avisos": [], "fatos": {"files_changed": 2, "test_files_changed": 1, "files": ["supabase/migrations/20261015211150_away_message_decision.sql", "supabase/tests/away_message_decision.sql"], "diff_truncated": true}}

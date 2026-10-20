@@ -1,0 +1,7 @@
+DROP POLICY
+DROP INDEX
+DROP TABLE
+NOTICE:  column "enabled" of relation "away_messages" does not exist, skipping
+DROP FUNCTION
+DROP FUNCTION
+ALTER TABLE

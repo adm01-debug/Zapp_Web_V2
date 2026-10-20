@@ -1,0 +1,16 @@
+ALTER TABLE
+CREATE TABLE
+CREATE INDEX
+ALTER TABLE
+REVOKE
+GRANT
+GRANT
+NOTICE:  policy "Admins e supervisores leem o log de ausencia" for relation "public.away_message_log" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+GRANT
+REVOKE
+GRANT

@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=away-message-decisao
+ID=261015180242c0
+BRANCH=v2/away-message-decisao-261015180242c0
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/away-message-decisao-261015180242c0
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T18:02:35-03:00
+KANBAN=t_8010d4a7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/away-message-decisao-261015180242c0/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-261015180242c0
+APLICADA_LOCAL=20261015211150_away_message_decision.sql sha=af9d1e7d399453e0
+PRONTO_SHA=e1275c8b0c7ab9ea934fb1eb312147eb95745643

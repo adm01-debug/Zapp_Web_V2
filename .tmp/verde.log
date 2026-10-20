@@ -1,0 +1,91 @@
+BEGIN
+INSERT 0 2
+INSERT 0 1
+INSERT 0 3
+INSERT 0 1
+INSERT 0 1
+INSERT 0 2
+INSERT 0 7
+INSERT 0 1
+T0: decisao, log com RLS e policy existem
+NOTICE:  T0 OK: funcoes, tabela, RLS e policy de leitura no lugar
+DO
+T1: fora do horario devolve o texto resolvido (caso 1)
+NOTICE:  T1 OK: texto devolvido com nome e horarios resolvidos, sem variavel pendente
+DO
+RESET
+T2: registro do envio zera a decisao por 24 h (caso 2)
+SET
+DO
+RESET
+T3a: is_enabled false NAO envia (caso 3 — interruptor que a tela ja grava)
+NOTICE:  T2 OK: 1 envio registrado; a segunda passada nao envia e nao duplica
+UPDATE 1
+NOTICE:  T3a OK: is_enabled false nao envia
+NOTICE:  T3b OK: enabled false nao envia e a coluna nasce desligada (NOT NULL DEFAULT false)
+DO
+UPDATE 1
+T3b: enabled false (o DEFAULT da trava nova) NAO envia
+UPDATE 1
+DO
+UPDATE 1
+T4: grupo NAO envia (caso 4) — por group_category e por whatsapp_groups
+NOTICE:  T4 OK: grupo nao envia (group_category e whatsapp_groups)
+DO
+T5: dentro do horario NAO envia (caso 5)
+DO
+T6: conexao sem mensagem configurada NAO envia
+DO
+T7: conversa atribuida a atendente NAO envia
+DO
+T8a: ACL — so service_role executa a decisao
+DO
+DELETE 1
+NOTICE:  T5 OK: dentro do horario nao envia
+NOTICE:  T6 OK: sem configuracao nao envia (desligada por padrao)
+NOTICE:  T7 OK: conversa atribuida nao envia
+NOTICE:  T8a OK: EXECUTE so para service_role; log sem escrita para authenticated
+NOTICE:  T8b OK: service_role decide e registra
+T8b: service_role executa a decisao e registra o envio
+SET
+DO
+RESET
+T8c: anon NAO executa a decisao nem le o log
+SET
+NOTICE:  T8c OK: anon negado na decisao (42501)
+NOTICE:  T8c OK: anon negado no log (42501)
+DO
+RESET
+T8d: agente (authenticated nao-admin) NAO executa e NAO ve o log
+                    set_config                    
+--------------------------------------------------
+ {"sub" : "cccccccc-0000-4000-8000-000000000002"}
+(1 row)
+
+SET
+NOTICE:  T8d OK: agente negado na decisao (42501)
+NOTICE:  T8d OK: agente nao ve o log (RLS)
+DO
+RESET
+T8e: admin de verdade LE o log
+                    set_config                    
+--------------------------------------------------
+ {"sub" : "cccccccc-0000-4000-8000-000000000001"}
+(1 row)
+
+NOTICE:  T8e OK: admin le o log (1)
+SET
+DO
+RESET
+T9: o bloco de rollback do cabecalho derruba os objetos
+DROP POLICY
+DROP INDEX
+DROP TABLE
+DROP FUNCTION
+DROP FUNCTION
+ALTER TABLE
+NOTICE:  T9 OK: rollback do cabecalho rodou e desfez tabela, funcoes e policy
+DO
+T9b PULADO: sem -v mig=<caminho visivel ao psql>; reaplique com zapp-db-local psql . <conjunto> < <migration> (exit 0)
+ROLLBACK
+SUITE VERDE: away_message_decision

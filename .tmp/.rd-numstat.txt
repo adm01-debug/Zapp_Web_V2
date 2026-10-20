@@ -1,0 +1,2 @@
+287	0	supabase/migrations/20261015211150_away_message_decision.sql
+563	0	supabase/tests/away_message_decision.sql
