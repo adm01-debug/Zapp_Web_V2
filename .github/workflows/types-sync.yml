@@ -381,8 +381,8 @@ jobs:
         # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
         # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
         # e nao abre issue — o problema some quando a migration entrar no banco.
-        # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
-        # exit 2 = so apply-pendente.
+        # GA19/W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
+        # exit 2 = erro de infra, exit 3 = so apply-pendente.
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
         env:
@@ -393,7 +393,7 @@ jobs:
           node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
           drift_exit=$?
           set -e
-          if [ "$drift_exit" -eq 2 ]; then
+          if [ "$drift_exit" -eq 3 ]; then
             echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
           else

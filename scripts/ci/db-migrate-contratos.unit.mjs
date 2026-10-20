@@ -335,3 +335,32 @@ test('E62: o parser recusa SQL sem ON_ERROR_STOP, shell sem SQL e continuacao de
   // Continuacao de linha do bash (barra + newline) tem de sumir, como no bash.
   assert.equal(desfazerAspasDuplasBash('linha1\\\nlinha2', 'sintetico'), 'linha1linha2');
 });
+
+test('GA18: -f escrito em comentario do contrato e ignorado (nao vira arquivo)', () => {
+  const texto =
+    '            20260101000000)\n' +
+    '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
+    '                SELECT 1 -- -f scripts/db-audit/evil.sql)\n' +
+    '              ")\n';
+  const [inv] = extrairInvocacoes(texto, '20260101000000', 'sintetico');
+  assert.equal(inv.arquivo, null, '-f em comentario nao pode virar arquivo');
+  assert.match(inv.sql, /-f scripts\/db-audit\/evil\.sql/, 'o texto do comentario permanece no SQL');
+});
+
+test('GA18: -f com traversal sai com 2 pelo executor (confinado ao repo)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'contratos-'));
+  try {
+    writeFileSync(
+      join(dir, '20990101000000.sql'),
+      '            *)\n' +
+        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At \\\n' +
+        '                -f ../evil.sql)\n',
+    );
+    const r = rodaExecutor('20990101000000', dir);
+    assert.equal(r.status, 2, 'traversal = exit 2');
+    assert.equal(r.stdout, '', 'stdout tem de ficar vazio');
+    assert.match(r.stderr, /::error::contrato com -f fora do repo/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -142,7 +142,7 @@ jobs:
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
         run: |
-          # W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
+          # GA19 (sobre W21/W22/W26): lote-pendente.mjs e a fonte unica da regra "apply pendente".
           # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
           # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
           # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 3).
@@ -152,7 +152,7 @@ jobs:
           node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
           rc=${PIPESTATUS[0]}
           set -e
-          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          if [ "$rc" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
             exit 0
           fi
