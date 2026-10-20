@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditar-edge-deploy-manifesto
+ID=2610130428c755
+BRANCH=v2/auditar-edge-deploy-manifesto-2610130428c755
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditar-edge-deploy-manifesto-2610130428c755
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T04:28:50-03:00
+KANBAN=t_fce935ee
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditar-edge-deploy-manifesto-2610130428c755/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130428c755
+PRONTO_SHA=77b5ad3f003ec07aa933fece06d240ba193d403e
