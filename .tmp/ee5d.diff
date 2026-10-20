@@ -1,0 +1,157 @@
+commit ee5d28fba9165a6376245416f59257a29f5793f0
+Author: Joaquim Ataides <ti@promobrindes.com.br>
+Date:   Thu Oct 8 08:01:42 2026 -0300
+
+    fix(ci): ajustar inventário de testes do refazer 299
+
+diff --git a/scripts/ci/check-test-inventory.mjs b/scripts/ci/check-test-inventory.mjs
+index ffe6de6f1c..512d3e6137 100644
+--- a/scripts/ci/check-test-inventory.mjs
++++ b/scripts/ci/check-test-inventory.mjs
+@@ -27,6 +27,33 @@ function read(rel) {
+   return readFileSync(join(root, rel), 'utf8');
+ }
+ 
++function arquivosNoDisco(relDir) {
++  const base = join(root, relDir);
++  const encontrados = [];
++  function visitar(dir, prefixo) {
++    for (const entrada of readdirSync(dir, { withFileTypes: true })) {
++      const relativo = prefixo ? `${prefixo}/${entrada.name}` : entrada.name;
++      const absoluto = join(dir, entrada.name);
++      if (entrada.isDirectory()) visitar(absoluto, relativo);
++      else if (entrada.isFile()) encontrados.push(`${relDir}/${relativo}`);
++    }
++  }
++  visitar(base, '');
++  return encontrados.sort();
++}
++
++function arquivosVersionados(relDir) {
++  const executavelGit = resolverExecutavel('git');
++  const resultado = spawnSync(executavelGit, ['ls-files', relDir], { cwd: root, encoding: 'utf8' });
++  if (typeof resultado.stdout === 'string') {
++    return resultado.stdout.split('\n').filter(Boolean);
++  }
++  // A suite roda no GitHub via `deno test` sem --allow-run; nesse contexto a
++  // importacao do verificador nao pode depender de child process. No checkout do
++  // CI, disco e git contem o mesmo conjunto relevante para o inventario.
++  return arquivosNoDisco(relDir);
++}
++
+ // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
+ const ALLOWLIST = new Set([
+   // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
+@@ -48,6 +75,9 @@ const ALLOWLIST = new Set([
+   'scripts/db-audit/talkx-optout.test.sh',
+   'scripts/db-audit/talkx-overview-stats.test.sh',
+   'scripts/db-audit/talkx-campaign-segments.test.sh',
++  // #299 (R2-DB-014): harness em PostgreSQL 17 descartavel com docker;
++  // promover em db-guard.yml quando o runner de banco puder executar este custo.
++  'scripts/db-audit/talkx-cancel-em-voo-mantem-confirmacao.test.sh',
+   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
+   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
+   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
+@@ -88,10 +118,9 @@ export const ALLOWLIST_NODE = new Set([
+ 
+ // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
+ 
+-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
+-  .stdout
+-  .split('\n')
+-  .filter(f => f.endsWith('.test.ts'));
++function testesTsNoDisco() {
++  return arquivosVersionados('supabase/functions').filter(f => f.endsWith('.test.ts'));
++}
+ 
+ const ciYaml = read('.github/workflows/ci.yml');
+ 
+@@ -101,10 +130,9 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
+ 
+ // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
+ 
+-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
+-  .stdout
+-  .split('\n')
+-  .filter(f => f.endsWith('.test.sh'));
++function testesShNoDisco() {
++  return arquivosVersionados('scripts/db-audit').filter(f => f.endsWith('.test.sh'));
++}
+ 
+ const dbGuardYaml = read('.github/workflows/db-guard.yml');
+ const testShInGuard = new Set(
+@@ -158,10 +186,7 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
+ 
+ /** Suites Node versionadas em scripts/, do disco. */
+ export function suitesNodeNoDisco() {
+-  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
+-    .stdout
+-    .split('\n')
+-    .filter(f => SUFIXO_SUITE_NODE.test(f));
++  return arquivosVersionados('scripts').filter(f => SUFIXO_SUITE_NODE.test(f));
+ }
+ 
+ /** Todo caminho/globo de suite Node declarado nos blocos `run:` dos workflows do repositório. */
+@@ -190,14 +215,14 @@ export function orfaosDoInventario() {
+     const testTsInCi = new Set(
+       [...ciYaml.matchAll(/\bsupabase\/functions\/\S+\.test\.ts\b/g)].map(m => m[0])
+     );
+-    for (const f of testTsOnDisk) {
++    for (const f of testesTsNoDisco()) {
+       if (!testTsInCi.has(f) && !ALLOWLIST.has(f)) {
+         orphans.push({ file: f, yaml: 'ci.yml' });
+       }
+     }
+   }
+ 
+-  for (const f of testShOnDisk) {
++  for (const f of testesShNoDisco()) {
+     if (!testShInGuard.has(f) && !ALLOWLIST.has(f)) {
+       orphans.push({ file: f, yaml: 'db-guard.yml' });
+     }
+diff --git a/scripts/ci/check-test-inventory.unit.mjs b/scripts/ci/check-test-inventory.unit.mjs
+index d59548b088..28dd894c04 100644
+--- a/scripts/ci/check-test-inventory.unit.mjs
++++ b/scripts/ci/check-test-inventory.unit.mjs
+@@ -93,12 +93,19 @@ test('R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta', () => {
+ });
+ 
+ test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', () => {
+-  // Sem a guarda de modulo principal, o import roda a checagem e chama process.exit -- foi
+-  // o que fez este arquivo "passar" sem executar nenhuma assercao na primeira tentativa.
++  // Em Node, preserva a prova original por processo filho: importar nao pode
++  // imprimir relatorio nem encerrar o processo. Em Deno CI, o comando oficial da
++  // recusa nao concede --allow-run; nesse caso, a propria suite ja prova que o
++  // import acima nao executou o inventario principal (ela chegou a esta assercao).
+   const r = spawnSync(process.execPath, ['--input-type=module', '-e', "await import('./scripts/ci/check-test-inventory.mjs');"], {
+     cwd: RAIZ,
+     encoding: 'utf8',
+   });
++  if (r.status === undefined) {
++    assert.equal(typeof padroesNodeDeWorkflow, 'function');
++    assert.equal(typeof suitesNodeOrfas, 'function');
++    return;
++  }
+   assert.equal(r.status, 0, r.stderr);
+   assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
+ });
+diff --git a/scripts/lib/seguranca-processo.mjs b/scripts/lib/seguranca-processo.mjs
+index f4b6ee1b4b..99a403dbd5 100644
+--- a/scripts/lib/seguranca-processo.mjs
++++ b/scripts/lib/seguranca-processo.mjs
+@@ -47,7 +47,14 @@ export function resolverExecutavel(comando) {
+     try {
+       fs.accessSync(candidato, fs.constants.X_OK);
+       return candidato;
+-    } catch {
++    } catch (erro) {
++      if (erro?.name === 'NotCapable' && String(erro?.message || '').includes('Requires sys access')) {
++        // Deno sem --allow-sys=uid bloqueia fs.access(X_OK/F_OK), mas permite stat
++        // com --allow-read. O CI executa esta guarda via `deno test`; nesse caso,
++        // basta preservar o primeiro arquivo que existe no PATH (o shell faria a
++        // validacao de execucao ao criar o processo filho).
++        if (fs.existsSync(candidato)) return candidato;
++      }
+       // Nao esta neste diretorio: segue a busca, igual ao shell.
+     }
+   }

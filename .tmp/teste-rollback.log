@@ -1,0 +1,28 @@
+NOTICE:  constraint "talkx_recipients_delivery_claim_state" of relation "talkx_recipients" does not exist, skipping
+NOTICE:  constraint "talkx_recipients_status_check" of relation "talkx_recipients" does not exist, skipping
+NOTICE:  column "outcome_unknown_count" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  column "external_id" of relation "talkx_recipients" already exists, skipping
+NOTICE:  column "external_id" of relation "talkx_recipients" already exists, skipping
+NOTICE:  constraint "talkx_recipients_external_id_bounded" of relation "talkx_recipients" does not exist, skipping
+NOTICE:  relation "idx_talkx_recipients_external_id" already exists, skipping
+NOTICE:  function public.transition_talkx_campaign(uuid,text,text) does not exist, skipping
+NOTICE:  column "paused_by" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  column "cancelled_by" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  column "cancelled_at" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  trigger "record_talkx_campaign_lifecycle_event" for relation "public.talkx_campaigns" does not exist, skipping
+PASS: migrations reais aplicadas até 20261003172707_talkx_lifecycle_events_delta.sql (estado ANTES da correção)
+PASS: RED (defeito): cancelar descarta o destinatário EM VOO -> 'cancelled|NULL' (status + token apagado)
+PASS: RED (defeito): record_talkx_recipient_sent falha -> confirmação do provedor DESCARTADA
+PASS: RED (defeito): quarentena falha com o MESMO token -> worker lança antes de enfileirar a reconciliação
+PASS: migration nova aplicada: 20261007000554_talkx_cancel_em_voo_mantem_confirmacao.sql
+PASS: ACL inalterada: EXECUTE só para service_role (authenticated/anon negados)
+PASS: GREEN: destinatário EM VOO preservado após o cancel -> 'sending|true|true' (sending + token + POST iniciado)
+PASS: GREEN: fila continua fechando para quem NÃO saiu para o provedor (pendente -> cancelled)
+PASS: GREEN: confirmação do provedor PERSISTIDA após o cancel -> 'sent|prov-rec-green|1' (status|external_id|sent_count)
+PASS: GREEN: desfecho INCERTO vira quarentena durável após o cancel -> 'outcome_unknown|true|1' (o worker segue para enqueueRecipientReconciliation)
+PASS: GREEN: falha explícita do provedor é registrada após o cancel -> 'failed|Erro ao enviar|1'
+PASS: GREEN: worker morto pós-POST é resolvido pelo sweeper (nenhum efeito incerto fica sem trilha) -> 'outcome_unknown|1'
+PASS: Talk X R2-DB-014 — cancelamento em voo preserva a confirmação do provedor e permite reconciliação
+PASS: ROLLBACK: o bloco `-- Rollback:` executa sem erro no PostgreSQL 17 descartavel
+PASS: ROLLBACK: a definicao voltou a versao anterior (sem a guarda de em-voo)
+PASS: ROLLBACK: o defeito ANTERIOR volta ('cancelled|NULL' + recibo recusado) — o rollback restaura o estado

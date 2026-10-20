@@ -1,0 +1,111 @@
+✔ ESTADO.md lista exatamente as edges que existem no repositório (1.249798ms)
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (1.597802ms)
+✔ edge marcada como órfã (grupo E) realmente não tem chamador no repositório (4346.023123ms)
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (6053.896114ms)
+✔ ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada (0.939093ms)
+✔ total de edges do cabeçalho do ESTADO.md bate com a tabela (0.293275ms)
+✔ FEATURE_REGISTRY.md lista exatamente as views do ViewRouter (0.792303ms)
+✔ FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada (0.431534ms)
+✔ FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais (10.282155ms)
+✔ TESTING_CONVENTION.md aponta só para caminhos que existem (0.686189ms)
+✔ TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI) (3.117401ms)
+✔ compilador ausente e falha operacional, nunca zero erros (probe missing_compiler_passes) (38.031961ms)
+✔ diagnostico global TS5083 (config ilegivel) falha, nao vira zero erros (62.616498ms)
+✔ config ausente TS5058 falha (56.420498ms)
+✔ configuracao invalida TS5023 (opcao desconhecida) falha (58.053164ms)
+✔ exit nao-zero sem nenhum diagnostico TypeScript reconhecivel falha (65.523421ms)
+✔ exit de CLI desconhecido (3) falha (56.124962ms)
+✔ projeto sem erros passa (exit 0, saida vazia) (56.719919ms)
+✔ conta erros TS7 e falha (exit 1) quando passa do baseline (67.567626ms)
+✔ erros TS7 iguais ao baseline passam (a ratchet segue comparando com a divida) (53.322783ms)
+✔ erro de tipo que NAO e TS7 nao infla a contagem nem mascara a guarda (62.680464ms)
+✔ adversario: erro TS7 em arquivo chamado error.ts continua sendo contado (58.56747ms)
+✔ adversario: linha de continuacao indentada com 'error TS' nao vira diagnostico global (59.781149ms)
+✖ o tsconfig.app.json do repositorio reprova 'any' implicito (TS7006) no compilador real (0.867293ms)
+✖ documento FLAG_CHANGES.md contem todos os usos de useCRMIntegrationEnabled (47.841046ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 21
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10528.153458
+
+✖ failing tests:
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:155:1
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (1.597802ms)
+  AssertionError [ERR_ASSERTION]: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:99 não cita `ai-kb-ingest`
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/docs-estado-registry-convention.unit.mjs:165:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:190:1
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (6053.896114ms)
+  AssertionError [ERR_ASSERTION]: grupo de `create-user` divergiu dos chamadores reais: {"A":[],"B":[],"C":[],"D":[]}
+  
+  'A' !== 'E'
+  
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/docs-estado-registry-convention.unit.mjs:193:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'A',
+    expected: 'E',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/implicit-any-ratchet.unit.mjs:268:1
+✖ o tsconfig.app.json do repositorio reprova 'any' implicito (TS7006) no compilador real (0.867293ms)
+  AssertionError [ERR_ASSERTION]: TypeScript local nao encontrado em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/node_modules/typescript/bin/tsc
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/implicit-any-ratchet.unit.mjs:269:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/verify-crm-integration-doc.unit.mjs:49:1
+✖ documento FLAG_CHANGES.md contem todos os usos de useCRMIntegrationEnabled (47.841046ms)
+  AssertionError [ERR_ASSERTION]: uso de useCRMIntegrationEnabled em src/components/inbox/contact-details/ContactIntelligencePanel.tsx nao encontrado como caminho completo src/... em linha de tabela no documento FLAG_CHANGES.md
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/verify-crm-integration-doc.unit.mjs:67:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

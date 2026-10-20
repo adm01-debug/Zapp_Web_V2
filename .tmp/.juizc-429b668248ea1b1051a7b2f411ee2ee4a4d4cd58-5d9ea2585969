@@ -1,0 +1,1 @@
+{"versao": "pronto-5", "estado": "ok", "avisos": [], "fatos": {"files_changed": 2, "test_files_changed": 1, "files": ["supabase/migrations/20261007000554_talkx_cancel_em_voo_mantem_confirmacao.sql", "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql"], "diff_truncated": true}}

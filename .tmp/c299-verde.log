@@ -1,0 +1,159 @@
+=== VERDE: aplicando a correção sob teste ===
+CREATE SCHEMA
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE ROLE
+CREATE ROLE
+CREATE ROLE
+GRANT
+GRANT
+GRANT
+CREATE SCHEMA
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+GRANT
+ALTER TABLE
+UPDATE 0
+psql:/repo/supabase/migrations/20260911130000_add_talkx_recipient_delivery_leases.sql:26: NOTICE:  constraint "talkx_recipients_delivery_claim_state" of relation "talkx_recipients" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+psql:/repo/supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql:6: NOTICE:  constraint "talkx_recipients_status_check" of relation "talkx_recipients" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE FUNCTION
+REVOKE
+GRANT
+psql:/repo/supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql:5: NOTICE:  column "outcome_unknown_count" of relation "talkx_campaigns" already exists, skipping
+ALTER TABLE
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+psql:/repo/supabase/migrations/20260911120000_talkx_e87_external_id_delivered.sql:6: NOTICE:  column "external_id" of relation "talkx_recipients" already exists, skipping
+ALTER TABLE
+CREATE INDEX
+CREATE FUNCTION
+GRANT
+psql:/repo/supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql:7: NOTICE:  column "external_id" of relation "talkx_recipients" already exists, skipping
+ALTER TABLE
+psql:/repo/supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql:10: NOTICE:  constraint "talkx_recipients_external_id_bounded" of relation "talkx_recipients" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+psql:/repo/supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql:18: NOTICE:  relation "idx_talkx_recipients_external_id" already exists, skipping
+CREATE INDEX
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+REVOKE
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/repo/supabase/migrations/20260930650000_talkx_v12_server_lifecycle_events.sql:27: NOTICE:  function public.transition_talkx_campaign(uuid,text,text) does not exist, skipping
+DROP FUNCTION
+CREATE FUNCTION
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+psql:/repo/supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:23: NOTICE:  column "paused_by" of relation "talkx_campaigns" already exists, skipping
+psql:/repo/supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:23: NOTICE:  column "cancelled_by" of relation "talkx_campaigns" already exists, skipping
+psql:/repo/supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:23: NOTICE:  column "cancelled_at" of relation "talkx_campaigns" already exists, skipping
+ALTER TABLE
+COMMENT
+COMMENT
+COMMENT
+CREATE FUNCTION
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+psql:/repo/supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:285: NOTICE:  trigger "record_talkx_campaign_lifecycle_event" for relation "public.talkx_campaigns" does not exist, skipping
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+DO
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMENT
+CREATE FUNCTION
+CREATE FUNCTION
+SET
+SET
+NOTICE:  T1 cancel aplica OK: cancelled
+NOTICE:  T1 em voo preservado (status|token|POST) OK: sending|true|true
+NOTICE:  T1 pendente sem POST continua fechando OK: cancelled
+NOTICE:  T1 confirmação do provedor gravada após o cancel OK: sent|prov-rec-green|1
+DO
+NOTICE:  T2 quarentena durável após cancel (status|erro|contador) OK: outcome_unknown|true|1
+DO
+NOTICE:  T3 falha explícita depois do cancel (status|erro|contador) OK: failed|Erro ao enviar|1
+DO
+RESET
+DO
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+DO
+DO
+SET
+SET
+NOTICE:  T4 em voo segue sending até o sweeper OK: sending
+NOTICE:  T4 sweeper varreu o em voo OK: 1
+NOTICE:  T4 sweeper resolveu o destino em voo (status|contador) OK: outcome_unknown|1
+DO
+RESET
+DO
+NOTICE:  T5 servico|authenticated|anon OK: true|false|false
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMENT
+SET
+SET
+NOTICE:  TR defeito volta: em voo descartado (status|token) OK: cancelled|NULL
+NOTICE:  TR OK: rollback restaura o defeito (recibo recusado: talkx_delivery_claim_conflict)
+DO
+RESET
+VERDE: Talk X R2-DB-014 — cancelamento em voo preserva a confirmação do provedor e permite reconciliação

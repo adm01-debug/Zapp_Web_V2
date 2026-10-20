@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792124067 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792124068 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 fb582bd17ab0e2f01bfc60e58065b5fdd2676123 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792146164 -0300	commit: fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)
+fb582bd17ab0e2f01bfc60e58065b5fdd2676123 880159e6fecdc44b2a97b41139c2fc3e908061fb Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792146863 -0300	commit (amend): fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)
+880159e6fecdc44b2a97b41139c2fc3e908061fb 429b668248ea1b1051a7b2f411ee2ee4a4d4cd58 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792147340 -0300	commit (amend): fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)

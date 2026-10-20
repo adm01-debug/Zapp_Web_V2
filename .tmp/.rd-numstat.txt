@@ -1,0 +1,2 @@
+303	0	supabase/migrations/20261007000554_talkx_cancel_em_voo_mantem_confirmacao.sql
+329	0	supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql

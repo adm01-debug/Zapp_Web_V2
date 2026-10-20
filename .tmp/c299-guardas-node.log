@@ -1,0 +1,1414 @@
+✔ Button size=icon sem aria-label falha (red fixture) (496.105213ms)
+✔ SelectTrigger sem nome acessivel falha (red fixture) (210.856464ms)
+✔ TabsTrigger com sr-only passa (green fixture) (1664.423606ms)
+✔ TabsTrigger sem acessible name falha (red fixture) (360.424222ms)
+✔ Button size=icon depois de onClick arrow sem nome falha (red fixture) (1022.529768ms)
+✔ Button size=icon com aria-label passa (green fixture) (359.715166ms)
+✔ Button size=icon com title passa (green fixture) (175.38219ms)
+✔ Button size=icon com sr-only passa (green fixture) (832.315975ms)
+✔ SelectTrigger com aria-label passa (green fixture) (396.531054ms)
+✔ TabsTrigger com aria-label passa (green fixture) (260.223973ms)
+✔ Button size=icon com aria-label depois de onClick arrow passa (green fixture) (189.845842ms)
+✔ Button size=icon com aria-label em expressao passa (green fixture) (65.654303ms)
+✔ Button size=icon com title em expressao passa (green fixture) (179.393244ms)
+✔ SelectTrigger com aria-labelledby em expressao passa (green fixture) (578.665748ms)
+✔ sem arquivos tsx/ts em src/ passa com zero violacoes (135.694825ms)
+✔ --update-baseline reescreve o baseline com a contagem atual (264.104813ms)
+✔ E79: agregar conta runs, cancelados, falhas e minutos por workflow (51.335719ms)
+✔ E79: a janela corta run velho — o KPI e dos ultimos N dias, nao de sempre (0.273582ms)
+✔ E79: duracao vem dos carimbos e nunca e negativa (0.126573ms)
+✔ E79: os 5 jobs mais lentos saem ordenados e limitados (0.962847ms)
+✔ E79: a tabela traz as colunas pedidas e o total (96.297053ms)
+✔ E79: o workflow semanal chama o KPI com as permissoes que ele precisa (1.197342ms)
+✔ #365: paginaTemMais continua enquanto a pagina esta cheia e dentro da janela (444.971889ms)
+✔ #365: coletarRuns busca a pagina seguinte em vez de parar em 100 (1.896743ms)
+✔ #365: coletarRuns nao pagina para fora da janela (1.518127ms)
+✔ #365: coletarJobs consulta os jobs de cada run e herda o nome do workflow (3.01916ms)
+✔ #365: coletarJobs pagina um run com mais de 100 jobs (0.712071ms)
+✔ #365: o corpo do KPI publica o ranking real dos jobs, nao um ranking vazio (0.388945ms)
+bun audit: 3 pacote(s) com advisory; 1 dependencias de producao consideradas.
+bun audit: 3 pacote(s) com advisory; 1 dependencias de producao consideradas.
+OK: nenhuma advisory >= high alcancavel por dependencia de producao.
+bun audit: 0 pacote(s) com advisory; 1 dependencias de producao consideradas.
+OK: nenhuma advisory >= high alcancavel por dependencia de producao.
+bun audit: 0 pacote(s) com advisory; 1 dependencias de producao consideradas.
+OK: nenhuma advisory >= high alcancavel por dependencia de producao.
+bun audit: 0 pacote(s) com advisory; 1 dependencias de producao consideradas.
+OK: nenhuma advisory >= high alcancavel por dependencia de producao.
+bun audit: 3 pacote(s) com advisory; 1 dependencias de producao consideradas.
+OK: nenhuma advisory >= high alcancavel por dependencia de producao.
+bun audit: 2 pacote(s) com advisory; 1 dependencias de producao consideradas.
+OK: nenhuma advisory >= high alcancavel por dependencia de producao.
+✔ parse agrupa pacote, cadeias e advisories (3.118115ms)
+✔ bloqueia so cadeias que comecam em dependencia de producao (0.921304ms)
+✔ main le --input e falha/passa conforme package.json (4.602648ms)
+✔ main falha fechado quando a saida nao e um relatorio e passa com 'No vulnerabilities found' (2.602585ms)
+✔ main falha fechado para erro operacional mesmo contendo a palavra vulnerability (1.814599ms)
+✔ main falha fechado para relatorio parcial ou com contagem inconsistente (2.275949ms)
+✔ main consome o status do coletor preservado pelo CI (2.631999ms)
+✔ main aceita o relatorio real do bun 1.4.0 quando as contagens fecham (1.529749ms)
+✔ main aceita relatorio completo com pacote error-ex (nao confunde cabecalho com erro operacional) (2.705967ms)
+
+FALHA: 1 pacote(s) com advisory >= high em dependencia de producao:
+  @remix-run/router <=1.23.1 [high]
+    via react-router-dom › react-router › @remix-run/router
+    - React Router allows XSS via open redirects - https://github.com/advisories/GHSA-2w69-qvjg-hvjx
+Atualize a dependencia (bun update <pacote>) ou registre a excecao com justificativa no PR.
+ERRO: erro operacional do coletor: error: failed to fetch https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+error: failed to fetch https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+ERRO: erro operacional do coletor: error: Could not retrieve the vulnerability database.
+error: Could not retrieve the vulnerability database.
+ERRO: erro operacional do coletor: error: POST https://127.0.0.1:1/-/npm/v1/security/advisories/bulk - ConnectionRefused
+bun audit v1.4.0 (34cbb9a40)
+
+error: POST https://127.0.0.1:1/-/npm/v1/security/advisories/bulk - ConnectionRefused
+ERRO: relatorio parcial — o resumo declara 3 vulnerabilidade(s), mas 0 advisory(s) foram lidos.
+ERRO: saida sem a linha de resumo do bun audit (relatorio parcial ou falha operacional)
+react-router-dom@6.0.0
+  high: XSS via open redirects - https://github.com/advisories/GHSA-1
+ERRO: resumo inconsistente: total 5, contagens [2, 1]
+react-router-dom@6.0.0
+  high: XSS via open redirects - https://github.com/advisories/GHSA-1
+
+5 vulnerabilities (2 high, 1 moderate)
+ERRO: status 139 do coletor nao e 0/1 (bun audit interrompido?)
+ERRO: status do coletor ilegivel: nao-numero
+ERRO: status do coletor ausente: status-ausente.txt
+✔ E91: o relatorio vai para a issue, alem do Job Summary (1.310717ms)
+✔ E91: o upsert e idempotente (procura a aberta antes de criar) (0.418782ms)
+✔ E91: PR parado e medido por updatedAt com corte de 7 dias (0.278357ms)
+✔ E91: o passo que publica recalcula o caminho do relatorio (0.322636ms)
+✔ E91: o ref simbolico `origin` nao entra na lista de branches (0.351951ms)
+✔ t_ff817d9f: a contagem de commits unicos nao engole falha do git cherry (0.383549ms)
+✔ t_ff817d9f: git cherry sem commits unicos mantem a branch como equivalente (395.972646ms)
+✔ t_ff817d9f: falha do git cherry derruba a auditoria em vez de classificar como equivalente (804.706366ms)
+Bundle inicial (gzip):
+      4.0 KB  /assets/index-abc.js
+      4.0 KB  /assets/vendor-core-abc.js
+  JS inicial:  8.0 KB (budget 50 KB, 2 chunks)
+  CSS inicial: 0.0 KB (budget - KB)
+  Maior chunk JS (inclui lazy): 8.0 KB gzip (budget - KB)
+  Assets totais: 20.5 KB gzip, sem maps (budget - KB)
+OK: bundle inicial dentro do budget.
+Bundle inicial (gzip):
+      4.0 KB  /assets/index-abc.js
+      4.0 KB  /assets/vendor-core-abc.js
+  JS inicial:  8.0 KB (budget 1 KB, 2 chunks)
+  CSS inicial: 0.0 KB (budget - KB)
+  Maior chunk JS (inclui lazy): 8.0 KB gzip (budget - KB)
+  Assets totais: 20.5 KB gzip, sem maps (budget - KB)
+✔ extrai somente script module, modulepreload e stylesheet (14.182151ms)
+✔ soma gzip dos chunks iniciais e compara com o budget (56.288081ms)
+✔ main falha com exit 1 acima do budget e 0 dentro dele (55.659815ms)
+✔ main retorna 2 sem dist (0.972781ms)
+✔ le as regras reais de chunking do vite.config.ts (0.320665ms)
+✔ framer-motion fica em grupo proprio, fora do vendor-ui do Radix (0.975113ms)
+✔ o grupo do runtime de animacao nao captura pacotes vizinhos por nome parecido (0.271584ms)
+✔ o gate versionado corta o bundle inicial nos 300 KB combinados (nao no teto antigo de 341) (0.404351ms)
+
+FALHA: budget de bundle estourado:
+  initial-js: 8.0 KB gzip > budget 1 KB
+Verifique imports estaticos de libs pesadas no grafo do entry (vite.config.ts codeSplitting).
+ERRO: /home/joaquim_ataides/.cache/hermes-tmp/bundle-budget-empty-uKwWzU/index.html nao existe. Rode o build antes.
+✔ CT-73 (fixture): fechar sem nova medicao real e violacao (197.881458ms)
+✔ CT-73 (fixture): fechar com nova medicao real < 30 KB posterior ao baseline passa (1.221789ms)
+✔ CT-73 (fixture): a medicao nova precisa ser < 30 KB, posterior ao baseline, e pode vir do PERF (38.768635ms)
+✔ CT-73: o plano real nao declara fechado sem nova medicao real (74.802636ms)
+✔ CT-73: o bloco preserva teto e baseline e, pendente, separa medicao de meta (3.650676ms)
+✔ CT-73: nenhuma mencao no plano declara fechamento indevido (3.016156ms)
+✔ CT-73: o PERF.md separa medicao historica concluida de meta cumprida (2.914405ms)
+✔ PERF.md preserva o critério literal da meta e o baseline medido (1.672244ms)
+✔ PERF.md declara que a última alteração (#1735) não foi medida (0.428358ms)
+✔ PERF.md recusa fechar o aceite por inspeção estática (0.29743ms)
+✔ PERF.md define a medição que vale como aprovada (critério e ambiente) (0.308855ms)
+✔ o plano não marca CT-74 como concluído (1.808766ms)
+✔ o plano registra a correção final e mantém o aceite como não cumprido (0.311825ms)
+OK: nenhum JWT service_role no bundle (1 arquivo(s) .js/.mjs/.cjs varrido(s)) e .env.production so com chave anon.
+ERRO: /home/joaquim_ataides/.cache/hermes-tmp/bundle-secrets-8S3OqJ/dist nao tem nenhum arquivo .js/.mjs/.cjs — a varredura nao leu nada e nao pode se declarar OK (fail-closed).
+ERRO: /home/joaquim_ataides/.cache/hermes-tmp/bundle-secrets-PqTSM8/dist nao tem nenhum arquivo .js/.mjs/.cjs — a varredura nao leu nada e nao pode se declarar OK (fail-closed).
+ERRO: Argumento desconhecido: --desconhecido
+✔ extrairTokens: acha o JWT entre aspas no meio do codigo minificado (3.567983ms)
+✔ extrairTokens: nao casa "eyJ" curto nem JWT colado a uma sequencia base64url maior (ancora) (0.348614ms)
+✔ decodificarPayload: decodifica so o payload (base64url -> JSON) (0.507957ms)
+✔ decodificarPayload: devolve null para texto que nao e JWT ou payload nao-JSON (0.568279ms)
+✔ varrer: reprova service_role no bundle e aponta o arquivo:linha (2.761028ms)
+✔ varrer: chave anon no bundle e liberada (o Vite injeta a publica por desenho) (2.201451ms)
+✔ varrer: no bundle so service_role reprova (demais roles ficam de fora do escopo do cartao) (11.455969ms)
+✔ varrer: percorre subdiretorios e reporta mais de uma violacao (1.912259ms)
+✔ varrer: ignora sourcemap e arquivo que nao e .js/.mjs/.cjs (4.31057ms)
+✔ varrer: bundle limpo nao tem violacao (1.964691ms)
+✔ listarArquivosVarridos: lista so .js/.mjs/.cjs e ordena (1.540469ms)
+✔ varrerEnv: reprova JWT com role=service_role no .env.production (1.393126ms)
+✔ varrerEnv: aceita a chave anon e ignora comentario/vazio (1.050034ms)
+✔ varrerEnv: reprova role que nao seja anon (aqui authenticated) (1.343148ms)
+✔ varrerEnv: JWT truncado do repositorio atual nao e um JWT valido e nao quebra (1.069659ms)
+✔ varrerEnv: arquivo ausente devolve lista vazia (0.603845ms)
+✔ avaliar: descreve a violacao sem imprimir o token (0.434231ms)
+✔ guarda: bundle e env limpos devolvem vazio (1.161853ms)
+✔ main: exit 1 quando ha chave secreta no bundle (1.309909ms)
+✔ main: exit 0 com bundle e env limpos (2.544935ms)
+✔ main: fail-closed quando dist nao existe (exit 2) (0.988432ms)
+✔ main: fail-closed quando dist existe mas nao tem .js/.mjs/.cjs (exit 2) (1.028787ms)
+✔ CLI: exit 1 com service_role no bundle, exit 0 sem ele, sem vazar o token (114.018593ms)
+✔ CLI: fail-closed quando dist nao existe (exit 2) (374.750393ms)
+✔ CLI: fail-closed quando dist existe mas nao tem js/mjs/cjs (exit 2) (362.165595ms)
+✔ CLI: argumento desconhecido sai != 0 (50.120685ms)
+✔ check-bundle-secrets: importar o modulo nao executa a guarda (919.406623ms)
+✔ container lento: espera crescente e conclui quando o servidor sobe (3436.819184ms)
+✔ esgotou: nomeia a causa real e preserva o exit code (3479.879924ms)
+✔ contrato quebrado: NAO repete (o backoff nao afrouxa o RLS) (31.266853ms)
+✔ limites vem do ambiente, nao de constante escondida (0.288345ms)
+✔ reprova: credencial + publicacao do report (3.908503ms)
+✔ aprova: credencial citada apenas em comentario (1.317583ms)
+✔ aprova: report publicado por workflow sem credencial (o caso do ci.yml) (0.458795ms)
+✔ aprova: workflow com credencial que nao publica nada (o caso do e2e-logado.yml) (0.209272ms)
+✔ comentario de prosa nao vira caminho nem credencial (0.592491ms)
+✔ aprova: report publicado DEPOIS de redigir as duas credenciais (0.516695ms)
+✔ reprova: redacao so do e-mail -- a senha digitada vaza igual (0.454013ms)
+✔ reprova: redacao existe mas o upload nao depende dela (0.3087ms)
+✔ o repositorio real esta em conformidade hoje (112.466215ms)
+OK: nenhuma exposicao de stack/mensagem interna em 172 arquivos de edge.
+OK: nenhuma exposicao de stack/mensagem interna em 2 arquivos de edge.
+OK: nenhuma exposicao de stack/mensagem interna em 1 arquivos de edge.
+✔ fonte correta com internalErrorResponse não gera achado (10.245095ms)
+✔ .message num 5xx é achado (o caso do alerta #13) (1.024851ms)
+✔ .stack na resposta HTTP é achado em qualquer status (0.410031ms)
+✔ JSON com .stack no corpo é achado (0.279836ms)
+✔ corpo 500 montado à mão com .message é achado (1.303529ms)
+✔ 4xx com mensagem ao cliente NÃO é achado (convenção do repo) (0.352336ms)
+✔ comentário que apenas DESCREVE o vazamento não é achado (0.354759ms)
+✔ conta a linha certa quando o achado está no meio do arquivo (0.339178ms)
+✔ resposta 500 montada à mão com .message ANTES do status é achado (searchbox-budget-alert) (6.008709ms)
+✔ resposta 500 montada à mão em VÁRIAS LINHAS é achada (webhook-diagnostic) (4.069378ms)
+✔ resposta 500 com template em volta do .message é achada (talkx-send) (3.336315ms)
+✔ resposta 500 com stack é achada mesmo montada à mão (0.37289ms)
+✔ jsonResponse com .message no corpo num 5xx é achado (o status é o SEGUNDO argumento) (1.108091ms)
+✔ jsonResponse com envelope documentado NÃO é achado (IA-026/IA-027: contrato, não catch) (0.561619ms)
+✔ jsonResponse com builder NÃO documentado carregando .message num 5xx é achado (1.089901ms)
+✔ jsonResponse com .message fora de 5xx NÃO é achado (2xx/4xx seguem liberados) (0.321641ms)
+✔ R2-INF-016: o conteúdo REAL de ai-conversation-pipeline.ts está limpo — e a regressão dele é acusada (29.419043ms)
+✔ resposta 500 montada à mão SEM detalhe interno não é achado (0.535389ms)
+✔ resposta 4xx montada à mão com .message não é achado (convenção do repo) (0.230739ms)
+FALHA: 2 exposicao(oes) de detalhe interno na resposta HTTP:
+  /home/joaquim_ataides/.cache/hermes-tmp/edge-exposure-r2inf016-2uv3M9/searchbox-budget-alert/index.ts:1 [.message em resposta 5xx] export const x = (err) => new Response(JSON.stringify({ ok: false, erro: err.message }), { status: 500 });
+  /home/joaquim_ataides/.cache/hermes-tmp/edge-exposure-r2inf016-2uv3M9/webhook-diagnostic/index.ts:2 [.message em resposta 5xx] return new Response(
+Use internalErrorResponse(err, req) de _shared/validation.ts nos catch de 5xx.
+FALHA: 1 exposicao(oes) de detalhe interno na resposta HTTP:
+  /home/joaquim_ataides/.cache/hermes-tmp/edge-exposure-Iyt7EX/create-user/index.ts:1 [.message em resposta 5xx] export const x = (err) => errorResponse(err.message, 500, req);
+Use internalErrorResponse(err, req) de _shared/validation.ts nos catch de 5xx.
+✔ R2-INF-016: o conteúdo REAL dos dois arquivos citados está limpo — e a regressão deles é acusada (14.976243ms)
+✔ a varredura real dos edges passa (a correção de 28/09 se mantém) (797.968596ms)
+✔ MUTAÇÃO: as duas formas reais (searchbox e webhook-diagnostic) reprovam a varredura (3.466542ms)
+✔ MUTAÇÃO: vazamento injetado num edge de verdade é detectado (e o diretório é respeitado) (4.625305ms)
+✔ reconhece pull_request em bloco e formato inline (4.81607ms)
+✔ rejeita secret privilegiado em qualquer trecho de workflow de PR (1.605967ms)
+✔ permite somente valores Supabase explicitamente publicos (0.479585ms)
+✔ rejeita acesso dinamico e ao contexto completo de secrets (9.849695ms)
+✔ ignora comentarios e workflows sem trigger de PR (0.356048ms)
+✔ hasPushTriggerUnrestricted: escalar on: push (0.680088ms)
+✔ hasPushTriggerUnrestricted: on: "push" e on: 'push' (scalar com aspas) — irrestrito (0.311099ms)
+✔ hasPushTriggerUnrestricted: push: &my-trigger (anchor YAML antes do valor vazio) — irrestrito (6.403369ms)
+✔ hasPushTriggerUnrestricted: array inline on: [push] (8.176534ms)
+✔ hasPushTriggerUnrestricted: push: sem branches (irrestrito) (0.406739ms)
+✔ hasPushTriggerUnrestricted: push: {} (objeto vazio inline) (5.575127ms)
+✔ hasPushTriggerUnrestricted: push: null e push: ~ (irrestrito) (0.470115ms)
+✔ hasPushTriggerUnrestricted: push: Null e push: NULL (irrestrito) (0.168582ms)
+✔ hasPushTriggerUnrestricted: push com mapeamento inline nao-vazio (irrestrito) (0.248056ms)
+✔ hasPushTriggerUnrestricted: push restrito a branches: [main] — seguro (0.198991ms)
+✔ hasPushTriggerUnrestricted: push restrito a branches: ["main"] — seguro (0.139677ms)
+✔ hasPushTriggerUnrestricted: push restrito a branches: ['main'] — seguro (0.103419ms)
+✔ hasPushTriggerUnrestricted: push restrito a branches-ignore (irrestrito) (0.072443ms)
+✔ hasPushTriggerUnrestricted: sem trigger push (0.078519ms)
+✔ hasPushTriggerUnrestricted: push com branches: [main] mas tambem com tags — irrestrito (0.076971ms)
+✔ hasPushTriggerUnrestricted: push com branches: ['**'] — irrestrito (E28) (0.083127ms)
+✔ hasPushTriggerUnrestricted: branches-ignore em lista de bloco (nao inline) — irrestrito (E28) (0.091711ms)
+✔ E28: o gatilho antigo do e2e-talkx.yml (push + branches-ignore: main) com secret privilegiado — violacao (0.331531ms)
+✔ findPushSecretLeaks: push irrestrito com secret — detecta (0.203893ms)
+✔ findPushSecretLeaks: push restrito a main com secret — nao detecta (19.193606ms)
+✔ findPushSecretLeaks: permite secrets publicos mesmo em push irrestrito (0.233446ms)
+✔ findPullRequestSecretLeaks: secrets: inherit com pull_request → violação (0.12247ms)
+✔ findPullRequestSecretLeaks: secrets: inherit sem trigger de PR → sem violação (0.110754ms)
+✔ findPushSecretLeaks: secrets: inherit com push irrestrito → violação (0.120763ms)
+✔ findPushSecretLeaks: secrets: inherit com push restrito a [main] → sem violação (0.138441ms)
+✔ findPushSecretLeaks: secrets inherit em forma quoted (aspas duplas/simples) → violação (0.168358ms)
+✔ findPushSecretLeaks: secrets inherit em forma YAML anchor (secrets: &all inherit) → violação (0.107737ms)
+✔ findPushSecretLeaks: secrets inherit em forma YAML anchor com hifen (secrets: &all-secrets inherit) → violação (0.131362ms)
+✔ findPushSecretLeaks: secrets com chave inherit em linha separada nao dispara falso positivo (0.133123ms)
+✔ scanWorkflowDirectory nao duplica violations quando workflow tem pull_request e push (0.163126ms)
+✔ repositorio atual nao vincula secrets privilegiados a workflows de PR ou push irrestrito (27.535838ms)
+✔ E87: hojeISO devolve data sem fuso do ambiente (16.148401ms)
+✔ E87: item valido e futuro passa (1.329405ms)
+✔ E87: prazo vencido FALHA -- e a razao de existir do verificador (0.275491ms)
+✔ E87: item no proprio dia ainda vale (vencido e o dia seguinte) (0.252765ms)
+✔ E87: sem motivo ou sem issue o item e recusado -- senao e skip disfarcado (1.82798ms)
+✔ E87: spec inexistente e prazo malformado tambem falham (0.563146ms)
+✔ E87: specsEmQuarentena devolve os caminhos, ordenados (0.464079ms)
+✔ E87: arquivo ausente nao derruba o CI -- vira aviso (2.75546ms)
+✔ E87: o repositorio real esta em conformidade hoje (6.74662ms)
+✔ E87: o modulo quarantine.js exporta a lista quarentena (5.922845ms)
+✔ Gate 3 bloqueia remocao de tabela ainda consumida (DROP TABLE public.playbooks) (497.611341ms)
+✔ Gate 3 bloqueia remocao de funcao ainda consumida (.rpc) (409.441941ms)
+✔ Gate 3 passa troca de assinatura do mesmo nome (DROP+CREATE / CREATE OR REPLACE) (732.186832ms)
+✔ Gate 3 nao bloqueia remocao sem call-site (76.583564ms)
+✔ Gate 3 decide pelo objeto, nao pelo tamanho da remocao (140.185978ms)
+✔ Gate 3 reclama de catalogo ausente ou invalido (exit 2, sem fail-open) (372.651005ms)
+✔ types-sync usa o Gate 3 de objetos e nao conta mais linhas (8.534338ms)
+✔ check-supabase-url-import-meta: varrer acha acesso direto em .ts (13.303779ms)
+✔ check-supabase-url-import-meta: varrer acha acesso direto em .tsx (11.120354ms)
+✔ check-supabase-url-import-meta: varrer acha acesso por colchete (2.953782ms)
+✔ check-supabase-url-import-meta: varrer acha destructuring (5.490113ms)
+✔ check-supabase-url-import-meta: varrer acha destructuring multilinha (9.485093ms)
+✔ check-supabase-url-import-meta: varrer nao acusa a variavel fora de import.meta.env (1.279857ms)
+✔ check-supabase-url-import-meta: varrer ignora .test.ts com violacao (9.658803ms)
+✔ check-supabase-url-import-meta: varrer ignora .spec.tsx com violacao (2.087481ms)
+✔ check-supabase-url-import-meta: varrer ignora arquivo dentro de __tests__/ com violacao (5.487312ms)
+✔ check-supabase-url-import-meta: varrer ignora src/config/supabase.ts mesmo com violacao (7.623805ms)
+✔ check-supabase-url-import-meta: varrer nao ignora x/src/config/supabase.ts aninhado (3.39383ms)
+✔ check-supabase-url-import-meta: avaliar formata violacoes legiveis (63.861639ms)
+✔ check-supabase-url-import-meta: avaliar devolve vazio para zero violacoes (0.981067ms)
+✔ check-supabase-url-import-meta: guarda do repositorio real nao tem violacoes (2437.55912ms)
+✔ check-supabase-url-import-meta: CLI sai != 0 com fixtura em src/ e 0 sem ela (902.682617ms)
+✔ check-supabase-url-import-meta: importar nao executa a guarda (265.856057ms)
+✔ fixture: árvore íntegra passa (44.017631ms)
+✔ fixture: predecessor na raiz do módulo é recusado (0.570829ms)
+✔ fixture: predecessor sem arquivo é recusado (0.469228ms)
+✔ fixture: documento arquivado fora do índice é recusado (0.236448ms)
+✔ fixture: documento novo na raiz do módulo é recusado (0.2077ms)
+✔ fixture: README sem o arquivo é recusado (0.20255ms)
+✔ fixture: citação de código inexistente é recusada (0.256263ms)
+✔ fixture: citação de código existente passa (0.20589ms)
+✔ fixture: artefato gerado (ignorado pelo git) não é código ausente (22.794057ms)
+✔ docs/talkx: predecessores arquivados e documentos correntes sem citação falsa (295.350937ms)
+✔ docs/talkx: o arquivo existe no disco e o .gitignore cobre o caminho gerado citado (0.719083ms)
+✔ título sem (X<NNN>) → verificador não se aplica (267.459503ms)
+✔ extrai o id da etapa do título (12.836001ms)
+✔ corpo sem ## Evidência → falha (14.34295ms)
+✔ etapa com DDL e ## Banco vazio → falha (7.407754ms)
+✔ etapa com DDL e ## Banco "sem DDL" → falha (14.160559ms)
+✔ etapa com tela e sem ## Print → falha (0.28039ms)
+✔ ## Fecha sem um dos IDs da etapa → falha (0.283788ms)
+✔ etapa com edge e ## Edge "sem edge" → falha (0.350386ms)
+✔ título (X999) com etapa inexistente → falha (0.43223ms)
+✔ PR de etapa completa → passa (5.648046ms)
+✔ secao() extrai o conteúdo sob o cabeçalho e ignora o seguinte (0.351128ms)
+✔ temTelaVisual distingue tela visual de motor/dados/— (0.340972ms)
+✔ R2-INF-013: padroesNodeDeWorkflow le os blocos run (dobrado, literal e de uma linha) (2.305709ms)
+✔ R2-INF-013: caminho citado fora de run (nome da etapa, comentario) nao cobre a suite (0.333427ms)
+✔ R2-INF-013: casaPadrao trata * como um nivel de diretorio e ** como qualquer nivel (0.427687ms)
+✔ R2-INF-013: suite Node fora dos blocos run vira orfa — e a allowlist a absolve (0.439331ms)
+✔ R2-INF-013: a arvore atual nao tem suite Node fora dos workflows nem da ALLOWLIST_NODE (57.129258ms)
+✔ R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta (0.317264ms)
+✔ R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes) (1168.480532ms)
+OK: 16 workflows usam somente Actions fixadas por SHA, repositórios autorizados, imagens com digest e as versões de toolchain de .github/toolchain.json.
+✔ aceita action remota fixada por SHA completo (4.087493ms)
+✔ aceita actions locais e imagens docker (0.446209ms)
+✔ rejeita tag, branch e SHA abreviado (28.495216ms)
+✔ aceita action em subdiretorio com aspas (0.31123ms)
+✔ rejeita uses vazio seguido por valor multilinha (0.360335ms)
+✔ rejeita escalares YAML folded e literal em uses (73.903695ms)
+✔ rejeita valor quoted quebrado e aceita chave uses entre aspas (20.152165ms)
+✔ aceita workflow cujas versões de toolchain batem com a fonte única (1.294386ms)
+✔ rejeita bun-version divergente da fonte única (0.334835ms)
+✔ rejeita node, deno e go divergentes da fonte única (0.409131ms)
+✔ rejeita SUPABASE_CLI_VERSION divergente da fonte única (0.25492ms)
+✔ aceita a expressão da fonte no passo supabase/setup-cli (0.309246ms)
+✔ rejeita version literal dentro do passo supabase/setup-cli (0.150077ms)
+✔ rejeita playwright@ fora da fonte única e aceita a versão da fonte (0.147706ms)
+✔ rejeita imagem do serviço postgres divergente da fonte única (5.345902ms)
+✔ recusa versão de toolchain que a fonte única não declara (0.4493ms)
+✔ não confunde o input migration_version do dispatch com versão de toolchain (0.148948ms)
+✔ fonte única sem uma das chaves falha indicando a versão que falta (6.356925ms)
+✔ fonte única ausente falha apontando .github/toolchain.json (1.142319ms)
+✔ os workflows reais do repositório batem com a fonte única (149.761243ms)
+✔ E72: `dist` so sai em workflow_dispatch (42.939788ms)
+✔ E72: `coverage-report` so na main (push), com 7 dias (0.706429ms)
+✔ E72: `playwright-report` so quando o E2E falha (0.461905ms)
+✔ E72: PR verde cria 0 artifacts (a verificacao escrita no plano) (1.386632ms)
+✔ fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado (5.059325ms)
+✔ fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado) (1.284068ms)
+✔ fixture: etapa que aguarda runtime marcada [x] e rejeitada, [~] passa (0.822229ms)
+✔ fixture: discrepancia sem linha na tabela de reconciliacao e rejeitada (0.649213ms)
+✔ fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitados (0.895021ms)
+✔ inventario: 16 YAML em .github/workflows e a fonte gerada em paridade (13.081552ms)
+✔ CLAUDE.md: contagem atual e fonte canonica (sem 14/17) (9.291026ms)
+✔ CLAUDE.md: politica unica de strict, coerente com o baseline (13.474249ms)
+✔ plano: cada checkbox bate com o estado reconciliado do P006 (8.614663ms)
+✔ plano: tabela de reconciliacao cobre as discrepancias e as etapas do TRA-009 (6.128618ms)
+✔ plano: nenhuma etapa superada pede reexecucao (4.332247ms)
+✔ plano: inventario atual e 16 YAML com fonte gerada (11.691298ms)
+✔ E62/E76: os numeros citados conferem com o repositorio (12.640946ms)
+✔ plano: tabela de reconciliacao sem celula cortada e sem cabecalho "## " duplicado (5.224895ms)
+✔ plano: E13 na tabela de 02/10 preserva evidencia medida do #1436 (2.427142ms)
+✔ plano: E11 marcada concluida explicita reconciliacao na nota de execucao (4.54242ms)
+✔ fixture: evidencia trocada entre linhas da tabela de abertura e rejeitada (1.66006ms)
+✔ plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas em 02/10 (6.145488ms)
+✔ #463: o job E2E obrigatorio do ci.yml coleta o modulo MAPA (chromium-mapa) (1.201688ms)
+✔ #463: chromium-mapa e deslogado -- por isso pode entrar no job de PR (0.416649ms)
+✔ #463: chromium-mapa cobre as 3 specs do mapa (0.343539ms)
+✔ #463: todo --project= do ci.yml existe de fato no playwright.config.ts (0.224598ms)
+✔ #463: nenhum project listado no ci.yml depende de login real (0.41353ms)
+✔ E88: o job E2E de PR (ci.yml) não roda firefox-auth/webkit-auth (0.197012ms)
+✔ E88: firefox-auth/webkit-auth seguem cobertos no e2e-logado.yml (0.947621ms)
+✔ E88: firefox-auth/webkit-auth continuam deslogados onde rodarem (0.314574ms)
+✔ E88: todo --project= do e2e-logado.yml existe de fato no playwright.config.ts (0.308391ms)
+✔ E78: o pull_request do CodeQL ignora docs, markdown e migrations (1.491545ms)
+✔ E78: o schedule NAO herda o filtro — a varredura semanal cobre o repositorio inteiro (0.330169ms)
+✔ E78: ignorar esses caminhos nao esconde nada que o CodeQL analise (0.864608ms)
+✔ aceita as mensagens do padrao do repositorio (12.431121ms)
+✔ aceita os 12 tipos do padrao e recusa qualquer outro (3.71078ms)
+✔ recusa cabecalho fora do formato (0.492556ms)
+✔ recusa assunto curto e assunto terminado em ponto final (0.260944ms)
+✔ recusa escopo em maiuscula (0.484283ms)
+✔ ignora as mensagens que o proprio git cria (3.736949ms)
+✔ usa a primeira linha util e ignora os comentarios do git (0.35656ms)
+✔ arquivo so com comentarios nao bloqueia (quem aborta o commit vazio e o git) (0.17836ms)
+✔ o hook real recusa a mensagem fora do padrao e aceita a mensagem do padrao (2315.54642ms)
+✔ SL-223 (fixture): documento completo não acusa seção faltante (3.012479ms)
+✔ SL-223 (fixture): documento sem a seção 35 é reprovado (0.487081ms)
+✔ SL-223 (fixture): documento sem uma Edge Function é reprovado (0.221767ms)
+✔ SL-223 (fixture): citação de arquivo que não existe é reprovada (0.538677ms)
+✔ COMPLETE_SYSTEM_FEATURES.md documenta as 14 seções (35..48) do relatório (0.491772ms)
+✔ COMPLETE_SYSTEM_FEATURES.md cita as 5 Edge Functions que faltavam (0.475525ms)
+✔ COMPLETE_SYSTEM_FEATURES.md não cita arquivo de código que não existe (0.734642ms)
+✔ E64: a confirmacao muda quando qualquer um dos tres componentes muda (2.631255ms)
+✔ E64 (F-11): editar o .sql entre o dry-run e o apply invalida a confirmacao (56.691883ms)
+✔ E64: componente fora de forma e erro de programacao, nao mismatch silencioso (1.555211ms)
+✔ E64: sha256DeTexto e a primitiva esperada (1.649064ms)
+✔ E64: o workflow compara o hash COMPOSTO, nao o runtime cru (pin do F-11) (0.411015ms)
+✔ CRM contract rejects foreign endpoints and credentials (1.57274ms)
+✔ CRM gateway minimizes message data and authenticates before external configuration (0.658525ms)
+✔ contact enrichment derives phones from RLS-visible canonical contacts (0.316132ms)
+✔ CRM rejects false-success responses before completing the queue (1.327515ms)
+✔ CRM contract bounds identity, batches and mutations (0.725611ms)
+✔ README do dashboard não aponta para arquivo de código/doc que não existe (2.861565ms)
+✔ README do dashboard não reabre o plano de 50 etapas que nunca existiu (0.450123ms)
+✔ ranking do README acompanha a RPC por período (#809) (7.386812ms)
+✔ relatórios agendados: README e migration dizem owner-only (E40) (0.603786ms)
+✔ audit_logs: README não afirma que o dashboard parou de lê-lo direto (20.527511ms)
+✔ DemandPrediction: README não cita o rótulo removido "Previsão IA" (0.981755ms)
+✔ o catálogo de produção carrega e não tem tabela duplicada (4726.207526ms)
+✔ a regra aceita um inventário coerente (lado positivo) (3.382045ms)
+✔ docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir (1136.627261ms)
+✔ documento vazio e documento sem a seção de tabelas são recusados (0.421555ms)
+✔ tabela do catálogo que falta no documento é acusada (0.364214ms)
+✔ tabela inventada (ou duplicada) é acusada (0.352657ms)
+✔ status que o repositório não sustenta é acusado nos dois sentidos (6.501447ms)
+✔ objeto citado só por ferramental é "parcial", não "ativo" (1.797509ms)
+✔ consumidor inexistente ou que não cita o objeto é acusado (2.257219ms)
+✔ arquivo espelho do schema não conta como consumidor de ninguém (2.355663ms)
+✔ objeto "ativo" que só lista ferramental é acusado (0.448188ms)
+✔ objeto citado sem listar consumidor, e corte "…" mentiroso, são acusados (0.387604ms)
+✔ propósito em branco é acusado (0.190655ms)
+✔ contagem de objetos que não bate com o catálogo é acusada (0.219176ms)
+✔ nome de objeto dentro de outro nome não conta como citação (0.226189ms)
+✔ E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco embutido (2.691566ms)
+✔ E62: cada contrato e o texto do braco de origem (equivalencia pelo sha do documento) (231.778731ms)
+✔ E62: o executor e FAIL-CLOSED — versao sem contrato nao vira "nada a verificar" (103.945005ms)
+✔ E62: o contrato da versao 20260830170000 existe e nao esta vazio (0.445539ms)
+✔ E66: teto do job e 45 min (0.853676ms)
+✔ E66: PSQL_CONNECT_RETRIES=2 existe uma unica vez, no preflight (0.450522ms)
+✔ R2-INF-003: o secret bruto aparece uma unica vez, so no passo que endurece o DSN (0.369815ms)
+✔ R2-INF-003: cadeia secret -> endurecer -> transporte entrega verify-full e CA pinada ao psql (43.624653ms)
+✔ R2-INF-003: o CLI do Supabase recebe o mesmo DSN endurecido via GITHUB_ENV (7.445001ms)
+✔ Edge contract CI pins its runtime and isolated frozen lock (6.063621ms)
+✔ Edge Functions usam o mesmo runtime pinado e o mesmo lock frozen da CI (1.678924ms)
+✔ full Edge deploy runs CRM secret preflight (1.308501ms)
+✔ fetch-link-preview deploy fails closed without a valid secure egress configuration (0.694877ms)
+✔ secure egress route accepts a Traefik prefix only on a path boundary (0.389432ms)
+✔ rollback deploy is pinned to a historical ancestor and attests deployed SHA (0.225658ms)
+✔ concurrency e por funcao: dispatch de uma funcao nao cancela o pendente de outra (0.501958ms)
+✔ escopo all e serializado contra deploys por funcao antes do Deploy (0.348273ms)
+✔ registro de deploy e unico por run (deploys paralelos no mesmo segundo) (31.282169ms)
+✔ timeout do job cobre a espera maxima do gate mais um deploy completo (4.485712ms)
+✔ R2-INF-002: o artifact so sobe se a sanitizacao do log terminar com sucesso (0.718116ms)
+✔ E55: o passo de atestacao tem teto proprio de 10 min (0.518526ms)
+✔ ledger declara legenda que diferencia [~], [x] e [ ] (6.973353ms)
+✔ resumo global de gates cobre os 7 gates com estado declarado (1.818299ms)
+✔ nenhum checkpoint [x] convive com prova parcial, placeholder ou timeout (6.224457ms)
+✔ enquanto algum gate global não estiver DEMONSTRADO, nenhum checkpoint fica [x] (0.687285ms)
+✔ CP12 (entrega) permanece [ ] enquanto PR/CI/merge não estiverem concluídos (0.300231ms)
+✔ ordem das abas (fixture): citação da ordem antiga sem marca de superação é violação (4.912249ms)
+✔ ordem das abas (fixture): ordem antiga declarada como superada, com a contratada junto, passa (1.367631ms)
+✔ ordem das abas (fixture): o painel direito tem ordem própria e não é cobrado (0.810028ms)
+✔ ordem das abas (fixture): código com outra ordem muda a exigência do doc (0.486508ms)
+✔ ordem das abas (fixture): o doc vazio falha fechado (0.395134ms)
+✔ ordem das abas (fixture): menção curta (menos de 4 abas) não vira citação de ordem (0.357346ms)
+✔ a ordem do componente é a mesma que o teste dele pina (âncora do doc) (5.02095ms)
+✔ docs de abas do SL-180 não citam a ordem antiga da barra do centro (12.679701ms)
+✔ subcabeçalho de "Próximas" (fixture): arbitrário sem o veto registrado e token divergente são violações (1.607047ms)
+✔ subcabeçalho de "Próximas" (fixture): arbitrário com o veto registrado e token do código passa (0.997266ms)
+✔ doc de Tarefas/Quadro cita a classe do subcabeçalho que o código usa (11.032281ms)
+✔ ESTADO.md lista exatamente as edges que existem no repositório (4.099641ms)
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (12.258974ms)
+✔ edge marcada como órfã (grupo E) realmente não tem chamador no repositório (12529.605451ms)
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (11721.846309ms)
+✔ ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada (1.157484ms)
+✔ total de edges do cabeçalho do ESTADO.md bate com a tabela (0.437204ms)
+✔ FEATURE_REGISTRY.md lista exatamente as views do ViewRouter (1.996124ms)
+✔ FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada (0.451759ms)
+✔ FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais (10.181212ms)
+✔ TESTING_CONVENTION.md aponta só para caminhos que existem (1.310796ms)
+✔ TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI) (3.107666ms)
+✔ E63: le a saida real do CLI (uma migration) (1.779171ms)
+✔ E63: duas versions anunciadas → recusa (o caso da etapa) (1.038632ms)
+✔ E63: alvo diferente do autorizado → recusa (0.481876ms)
+✔ E63: alvo exato → aceita (0.32753ms)
+✔ E63: saida inesperada nunca passa em silencio (0.790606ms)
+✔ E63: a forma de lista tambem e lida (0.348604ms)
+✔ E63: bundle autorizado exige ordem estrita e presenca do alvo (0.761327ms)
+✔ E63: o passo do workflow le a saida do dry-run (pin) (0.429778ms)
+teardown OK (rpc e2e_cleanup_conversation_closures, HTTP 200)
+teardown pulado: variavel(is) ausente(s): E2E_TEST_PASSWORD
+✔ autentica como o usuario de teste e chama a RPC com o JWT dele (3.832231ms)
+✔ a chave mestra do banco nao entra em nenhuma requisicao (1.361185ms)
+✔ credencial ausente pula o teardown sem falhar o run (0.341148ms)
+✔ login recusado derruba o teardown antes de tocar na RPC (0.660972ms)
+✔ RPC recusada derruba o teardown (0.283602ms)
+✔ e2e-logado.yml: o teardown de conversation_closures chama a RPC com o login do usuario de teste (0.654389ms)
+✔ N217: parseLcov soma LF/LH e o agregado pondera por linhas (3.205346ms)
+✔ N217: parseLcov casa o caminho completo e ignora basename repetido fora de _shared (1.490689ms)
+✔ N217: status de teste vermelho invalida a medição (nunca engole falha) (0.636624ms)
+✔ N217: a régua reprova abaixo de 50 e aprova no limite e acima (0.30443ms)
+✔ N217: só os 5 testes da régua entram na medição; *auth* novo precisa de classificação (0.719019ms)
+✔ N217: HELPERS cobre exatamente os *auth*.ts de _shared (0.572503ms)
+✔ N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers (6484.083939ms)
+✔ N217: docs bate com medição fresca e segunda execução é idêntica (2835.724711ms)
+✔ o registro da medição EN-088 existe e cobre as cinco dimensões (1.284748ms)
+✔ a página preserva o critério literal do aceite (sem N+1, antes/depois, orçamento) (0.21839ms)
+✔ a página registra os números medidos, não só a intenção (0.180317ms)
+✔ a página mantém a fixture canônica coerente (100 anexos na thread extrema) (0.193321ms)
+✔ a página aponta para o medidor executável e a mutação de validação (0.413075ms)
+✔ o medidor existe (a verificação comportamental é o Vitest, não esta guarda) (0.122971ms)
+✔ regressao de seguranca: /instance/all nunca devolve o token da instancia (6.305177ms)
+✔ /instance/all nao muta o objeto de entrada (0.322683ms)
+✔ /instance/all com data nao-array passa intacto (sem crash) (0.351044ms)
+✔ filtro de token e restrito a /instance/all — demais rotas inalteradas (3.498489ms)
+✔ circuit breaker: 4xx nao conta como falha e 5xx nao zera o contador (4.896809ms)
+✔ action status nao apaga o qr_code de um pareamento em curso (0.565288ms)
+✔ create-connection: resolveGoInstanceId/requireAdmin declarados antes do uso (TDZ) (0.206979ms)
+✔ bootstrap-instance-token e create-connection nunca logam ou ecoam o token (0.781772ms)
+✔ create-connection: compensacao e rollback nunca afirmam sucesso sem confirmar (0.33113ms)
+✔ create-connection: reserva o instance_id (INSERT) antes de tocar a GO — trava a corrida de nomes iguais (0.244904ms)
+✔ create-connection: compensa a GO ANTES de liberar a reserva (nunca depois) (1.625167ms)
+✔ create-connection: branch de createData?.error também compensa a GO antes do rollback (1.896114ms)
+✔ create-connection: mensagem de 23505 distingue instance_id de is_default (whatsapp_connections_one_default) (7.032459ms)
+✔ stripInstanceToken declarado em escopo de módulo, não dentro de create-connection (0.778688ms)
+✔ delete-instance: requer admin e limpa a linha em whatsapp_connections após sucesso (0.315336ms)
+✔ connect/status/disconnect: sempre retornam HTTP 200 (sem response.ok ? 200 : 400) (2.002097ms)
+✔ proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details' (3.097939ms)
+✔ rotas de historico sem equivalente na GO tem guarda de flavor (0.292769ms)
+✔ matriz de 2 funções falsas lista as tabelas certas (21.592971ms)
+✔ markdown cruza função x tabela nos dois sentidos (16.33499ms)
+▶ settings-guard: perimetro conforme o baseline
+  ✔ perimetro OK: nao acusa divergencia e sai 0 (79.799733ms)
+  ✔ strict=false e detectado como divergencia (a regressao que o guard existe para pegar) (107.906899ms)
+✔ settings-guard: perimetro conforme o baseline (190.085531ms)
+▶ settings-guard: ponto cego (E95)
+  ✔ 403 na branch protection vira NAO VERIFICAVEL, nao falha silenciosa (321.417866ms)
+  ✔ abre a issue tambem quando o problema e falta de escopo (116.271972ms)
+✔ settings-guard: ponto cego (E95) (438.105244ms)
+▶ settings-guard: log injection (jssecurity:S5145)
+  ✔ neutraliza quebras de linha vindas da API (214.415074ms)
+✔ settings-guard: log injection (jssecurity:S5145) (214.71398ms)
+✔ a allowlist do Gitleaks limita-se ao hash estrutural da FK Talk X (12.413826ms)
+✔ §2 propõe exatamente as 12 metas M1..M12, cada uma uma vez (2.288376ms)
+✔ M4 preserva o alvo proposto (>=95% factual em 200 casos) e a dependência IA-188 (2.046175ms)
+✔ M8 (latência) e M9 (custo) continuam A MEDIR, sem teto numérico inventado (0.700604ms)
+✔ §5 dá a cada meta uma prova rastreável (arquivo existente) ou nomeia a etapa que a mede (1.817095ms)
+✔ nenhuma meta é declarada cumprida sem medição datada (e a guarda pega quem tentar) (1.863775ms)
+✔ compilador ausente e falha operacional, nunca zero erros (probe missing_compiler_passes) (399.040723ms)
+✔ diagnostico global TS5083 (config ilegivel) falha, nao vira zero erros (462.910188ms)
+✔ config ausente TS5058 falha (374.20886ms)
+✔ configuracao invalida TS5023 (opcao desconhecida) falha (476.717463ms)
+✔ exit nao-zero sem nenhum diagnostico TypeScript reconhecivel falha (348.261564ms)
+✔ exit de CLI desconhecido (3) falha (1338.625798ms)
+✔ projeto sem erros passa (exit 0, saida vazia) (279.904309ms)
+✔ conta erros TS7 e falha (exit 1) quando passa do baseline (524.133745ms)
+✔ erros TS7 iguais ao baseline passam (a ratchet segue comparando com a divida) (346.796808ms)
+✔ erro de tipo que NAO e TS7 nao infla a contagem nem mascara a guarda (161.718827ms)
+✔ adversario: erro TS7 em arquivo chamado error.ts continua sendo contado (142.272371ms)
+✔ adversario: linha de continuacao indentada com 'error TS' nao vira diagnostico global (133.534378ms)
+✔ o tsconfig.app.json do repositorio reprova 'any' implicito (TS7006) no compilador real (1352.950011ms)
+✔ installer uses only the official Ubuntu source and fails closed (1.554203ms)
+✔ database workflows share the hardened PostgreSQL client installer (11.083021ms)
+✔ inline APT guard rejects command variants and intermediate options (0.513079ms)
+✔ E92: todo link de contato aponta para ESTE repositorio (469.4934ms)
+✔ E92: sem telefone placeholder no template de issue (5.956687ms)
+✔ E92: o template de PR nao pede teste em staging (24.141197ms)
+✔ E92: o template de PR cobra os passos pos-merge de banco e Edge (3.31546ms)
+✔ E92: o template de PR continua sendo markdown de checklist (3.787958ms)
+✔ #436: os nove subintervalos de energia somam apenas nos tres grupos inteiros ya[1..3] (5.412127ms)
+✔ #436: as doze posicoes de pico unico caem nos quatro grupos inteiros com o ordinal 1, 2 ou 3 (17.971904ms)
+✔ #436: o primeiro ataque do grupo prevalece sobre os seguintes (14.678718ms)
+✔ #436: o trecho provado e o que roda no caminho CBR mono/44100/128 (smoke da API real) (364.901676ms)
+✔ #436: no encoder real, o grupo com ordinal 2/3 acende e ya nao guarda chave fracionaria nem NaN (1238.590709ms)
+✔ ignora artefatos gerados de coverage no comando do ESLint (2.994345ms)
+✔ baseline e deterministico e aceita o mesmo relatorio (3.741193ms)
+✔ bloqueia troca de uma ocorrencia antiga por outra com a mesma contagem (1.877607ms)
+✔ bloqueia codigo diferente no mesmo local com a mesma regra e mensagem (1.45922ms)
+✔ aceita deslocamento de linha quando a ocorrencia e a ancora permanecem (2.046846ms)
+✔ stripVolatilePosition tira numero de linha e posicao do arquivo, sem tocar no resto (0.234684ms)
+✔ code frame com numeros de linha nao faz ocorrencia deslocada parecer nova (1.570327ms)
+✔ normalizacao do code frame nao engole divida nova (8.833668ms)
+✔ bloqueia substituicao por ancora identica em outra posicao sem contexto estavel (3.228002ms)
+✔ aceita remocao de arquivo como reducao de divida (1.319749ms)
+✔ reconhece renomeacao unica de arquivo sem alteracao (1.581498ms)
+✔ bloqueia renomeacao com edicao para exigir revisao explicita (1.201398ms)
+✔ nao permite mover divida para arquivo novo enquanto o arquivo antigo continua limpo (32.087426ms)
+✔ nao adivinha renomeacao quando hashes identicos sao ambiguos (7.11473ms)
+✔ mudanca de severidade e nova divida (1.615998ms)
+✔ mensagens com caminho absoluto sao normalizadas para a raiz (0.596421ms)
+✔ rejeita baseline gerado por comando incompatível (0.768789ms)
+✔ le fonte do disco quando o relatorio nao inclui source (2.08498ms)
+✔ CLI falha fechado quando o relatorio nao e JSON valido (1.252313ms)
+✔ CLI retorna falha quando uma nova divida aparece (14.220916ms)
+✔ eslintCommandArguments aceita alvos e silencia aviso de arquivo ignorado (5.811927ms)
+✖ stagedLintableFiles devolve so fontes staged que ainda existem (27.054857ms)
+✔ scopeBaseline mantem so os arquivos escaneados e os removidos no commit (5.936653ms)
+✖ stagedRemovedFiles lista remocoes e origens de renomeacao do commit (22.35276ms)
+✖ --staged ignora divida antiga fora do commit e acusa divida nova nos arquivos staged (60.7607ms)
+✖ --staged reconhece arquivo renomeado pelo hash em vez de contar divida nova (21.880867ms)
+✖ --staged sem arquivo lintavel no commit sai com sucesso sem rodar o ESLint (129.746708ms)
+✖ --staged nao combina com --update-baseline (83.373075ms)
+✔ avisa quando o baseline registra divida ja paga (12.511455ms)
+✔ nao avisa quando o baseline bate com a varredura (1.601024ms)
+✔ fixture: documento com raw + gzip + teto datado passa (24.746142ms)
+✔ fixture: sem a linha do maior chunk (o estado da lacuna) é recusado (1.286893ms)
+✔ fixture: seção ausente ou sem tabela de chunk é recusada (0.392443ms)
+✔ fixture: duas linhas preenchendo a coluna do teto, ou coluna do teto vazia, são recusadas (2.260438ms)
+✔ fixture: tabela de chunk sem a coluna raw (ou linha sem a célula) é recusada (0.575495ms)
+✔ fixture: nome que não é grupo de codeSplitting é recusado (1.264528ms)
+✔ fixture: raw menor que o gzip e KB que não confere com os bytes são recusados (0.830842ms)
+✔ fixture: gzip divergente da tabela de orçamento do próprio documento é recusado (0.67577ms)
+✔ fixture: teto divergente do performance-budget.json e gzip acima do teto são recusados (3.488391ms)
+✔ fixture: linha registrada como maior mas menor que outra da tabela é recusada (0.513895ms)
+✔ fixture: registro sem data, sem comando ou sem o número em bytes é recusado (0.411413ms)
+✔ fixture: chunk marcado como inicial (sem lazy) e carregador sem import() são recusados (0.39211ms)
+✔ âncoras: o grupo vendor-maps, o carregador e o teto existem no repositório (1.606388ms)
+✔ o documento registra o tamanho raw do maior chunk (item 99b) (1.00734ms)
+✔ E83: a ordem dos nomes nao muda o marcador -- o dedupe e pelo CONJUNTO (12.490498ms)
+✔ E83: conjunto diferente gera marcador diferente -- o alerta e repetido (0.527737ms)
+✔ E83: falha sem test-results nao colide com causa conhecida (0.66223ms)
+✔ E83: repetido nao conta duas vezes (0.279718ms)
+✔ E83: nomesDeTestResults pega so diretorios, ordenados (6.705454ms)
+✔ E83: o corpo da issue lista os testes e explica a falha sem test-results (5.833255ms)
+✔ E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam no JOB (1.02151ms)
+✔ evolution-media: nome do arquivo e deterministico (sem Date.now) (1.197038ms)
+✔ evolution-media: os dois uploads sao upsert (0.35347ms)
+✔ stickers: nome deterministico e upload com upsert (0.26346ms)
+✔ migrate-media-storage: idempotente (rodar de novo nao duplica) (0.272919ms)
+✔ regra do nome: mesma mensagem entregue 2x gera a mesma chave (0.326563ms)
+✔ scanCss: acusa meia-medida em font-size cru (6.410917ms)
+✔ scanCss: acusa font-family literal, ignora tokens.css (declara as variaveis) (1.653055ms)
+✔ scanTsxInline: acusa fontSize numerico mas nao identificador de tema (1.902319ms)
+✔ scanTsxInline: acusa fontFamily literal (1.002699ms)
+✔ scanTsxInline: acusa font-family literal em CSS embutido (5.01403ms)
+✔ parseLoadedWeights: le faixa variavel (wght@min..max) da URL do Google Fonts (2.163577ms)
+✔ parseLoadedWeights: le lista estatica (wght@a;b;c) da URL do Google Fonts (4.539832ms)
+✔ scanOrphanWeights: acusa peso fora da faixa carregada (reproduz o achado A1) (1.878494ms)
+✔ scanOrphanWeights: nao aceita peso intermediario ausente de lista estatica (LT-TYPE-03) (1.383933ms)
+✔ isWeightLoaded: eixo variavel cobre o intervalo, lista estatica so os exatos (0.319751ms)
+✔ scanOrphanWeights: faixa variavel cobrindo o peso pedido nao acusa nada (628.963287ms)
+✔ isNamedAbove16: token custom >16px sem excecao e violacao (prova o DoD da etapa 21) (0.293966ms)
+✔ isNamedAbove16: rampa modular e tokens <=16px nao contam (1.145662ms)
+✔ message delivery phase 1 remains additive and deployment-order safe (25.134227ms)
+✔ offline DB guard executes the PostgreSQL 17 behavioral harness (0.751624ms)
+✔ rich outbound enqueue keeps provider payload immutable and non-service callable (7.368501ms)
+✔ base and rich enqueue serialize the same idempotency key and use a live connection (0.572319ms)
+✔ delivery claim normalizes formatted contact phones inside the lease transaction (0.333856ms)
+✔ N-017: o db-guard.yml executa o runner de mutação do Multiplix num passo que pode falhar (6.002025ms)
+✔ N-017: workflow sem o passo de mutação é reprovado (caso NEGATIVO) (0.370832ms)
+✔ N-017: passo informativo (continue-on-error) é reprovado (caso NEGATIVO) (0.533733ms)
+✔ N-017: caminho do runner só em comentário não conta como passo (caso adversário) (0.214597ms)
+✔ S2871: sort() sem comparador NAO da ordem alfabetica para nomes com acento (16.167475ms)
+✔ S2871: nomes de spec em pt-BR precisam de comparador locale-aware (0.70974ms)
+✔ S2871: identificadores ASCII NAO podem mudar de ordem ao ganhar comparador (2.64015ms)
+✔ S2871: caminhos de arquivo precisam de ordem estavel entre ambientes (0.329881ms)
+✔ production parity requires live legs, and runtime metadata is archived (17.973253ms)
+✔ types-sync includes the grants baseline in generation, drift and PR paths (0.649028ms)
+✔ types-sync generates catalog/manifest/grants via psql without the connection string in argv (0.557312ms)
+✔ grants comparison logic lives in a standalone, unit-tested script (not just a regex-checked heredoc) (1.872178ms)
+✔ db-live-guard runs psql without the connection string in argv (same regression as types-sync) (24.095846ms)
+✔ db-migrate (production) runs psql without the connection string in argv (same regression as types-sync) (14.484602ms)
+✔ deployment brackets mutation with snapshots and stable post-collection (0.500318ms)
+✔ runtime SQL is exercised on disposable PostgreSQL in PRs (0.724162ms)
+✔ production migration has fail-closed preflight and postflight for notification atomicity (13.022251ms)
+✔ DB guard installs the pinned AST dependency before checking Realtime subscriptions (0.966202ms)
+✔ PR guard exercises libpq transport with real client authentication, not only SQL fixtures (0.664804ms)
+✔ plano se declara proposta com baseline divergente e não executável (1.865285ms)
+✔ decisão arquitetural distingue os projetos, o Auth e o escopo de dados atuais (0.412249ms)
+✔ inventário distingue contacts.tags das tabelas legadas já removidas (0.517564ms)
+✔ nenhuma PR externa aparece sem qualificação de repositório Singu_V2 (1.94283ms)
+✔ planos de 11/10 existem e o plano v2 de Tarefas preserva as 200 etapas (83.716582ms)
+✔ E81: a constante dos logados vale 2 em CI e 0 fora dele (1.254443ms)
+✔ E81: o retries global e 0 -- projeto deslogado nao repete (0.587393ms)
+✔ E81: todo projeto logado repete 2x em CI (0.337351ms)
+✔ E81: projeto deslogado nao declara retries nenhum (0.247896ms)
+✔ E81: a suite deslogada do ci.yml nao paga o custo do retry (0.787161ms)
+✔ E81: trace retain-on-failure e video off, sem on-first-retry (0.408135ms)
+✔ N-022: o pin do Playwright nos workflows é a versão do bun.lock (90.02752ms)
+✔ N-022: aponta o pin divergente e ignora o que não é pin do Playwright (0.913992ms)
+✔ N-022: lock sem a versão do Playwright falha (não passa vazio) (1.348594ms)
+✔ N-022: lock com playwright e @playwright/test divergentes falha (0.878468ms)
+✔ sucesso: nenhum segredo em argv, corpo do login por stdin, saida redigida e exit 0 (1139.586759ms)
+✔ falha de login: exit != 0, saida sem segredos e diretorio privado varrido (929.409843ms)
+▶ prova-orcamento-rate-limit: veredito medido (R2-INF-012)
+  ✔ só emite FIM_PROVA=aprovado quando login, chamadas e consumo foram medidos (694.999905ms)
+  ✔ manda o identificador do run nas chamadas verificadas e filtra a leitura por ele (1010.248509ms)
+  ✔ registros de OUTRA execução não satisfazem o critério de consumo do run (1104.199162ms)
+  ✔ conta apenas as linhas do run quando há execução concorrente na mesma janela (400.315126ms)
+  ✔ derruba o veredito quando uma chamada responde erro HTTP (240.411555ms)
+  ✔ derruba o veredito em falha de transporte (curl sem resposta) (242.860168ms)
+  ✔ vira inconclusivo — nunca aprovado — quando a leitura do consumo é negada (309.392895ms)
+  ✔ vira falha quando o consumo do run não aparece (leitura funcionou, faltou a linha) (438.495227ms)
+  ✔ vira inconclusivo quando ai_usage_logs responde HTTP 200 com corpo que não é array (406.701465ms)
+  ✔ preserva os marcadores de status no roteiro SQL sem substituição de comando (172.435658ms)
+  ✔ 429 é resultado válido (prova do limite) e não derruba o veredito (216.844495ms)
+  ✔ recusa rodar com identificador de run que não é UUID (nunca mediria o consumo) (343.253881ms)
+  ✔ recusa rodar sem a confirmação explícita de produção (15.644306ms)
+✔ prova-orcamento-rate-limit: veredito medido (R2-INF-012) (5603.681659ms)
+✔ desligado por padrao: falha de conexao nao e repetida e o exit code e preservado (585.577778ms)
+✔ PSQL_CONNECT_RETRIES=2 repete a falha de conexao e conclui quando o banco responde (903.742204ms)
+✔ erro de SQL (exit 1) nunca e repetido, mesmo com a variavel ligada (449.807082ms)
+✔ valor invalido em PSQL_CONNECT_RETRIES nao vira repeticao (1073.066932ms)
+✔ a mensagem de falha nao ecoa a conexao (a URI nunca vai para o log) (157.256247ms)
+✔ cada probe carrega source-pins.json com o baseline auditado e as fontes que executa (123.487898ms)
+✔ cada probe atesta HEAD e hashes antes de ler/importar e bloqueia a rede antes de carregar código (0.993334ms)
+✔ probe recusa checkout divergente e não publica relatório com baseline que não executou (2465.828434ms)
+✔ atestação de proveniência aceita fontes pinadas, recusa divergência e mede a rede (7.926062ms)
+✔ toda fonte catalogada com tarefas explícitas está adjudicada (873.905627ms)
+✔ fonte adjudicada deixa de ficar catalogada como documento de apoio (0.409388ms)
+✔ a adjudicação aponta para comparação existente e não fabrica tarefas novas (1.203979ms)
+✔ o número de cabeçalhos declarado casa com o texto da fonte (0.333815ms)
+✔ E82: redigirConteudo troca o valor e conta as ocorrencias (12.539741ms)
+✔ E82: valor curto demais nao vira redacao em massa (0.330843ms)
+✔ E82: o diretorio inteiro fica limpo e o que nao tinha o segredo nao muda (2.162321ms)
+✔ E82: binario nao e lido nem reescrito (17.890187ms)
+✔ E82: diretorio ausente nao derruba o CI (1.129361ms)
+✔ E82: o workflow mascara o log e redige o arquivo ANTES de subir o artifact (0.603445ms)
+✔ E82: dois segredos na mesma passada -- email e senha saem os dois (15.642181ms)
+✔ E82: lista de segredos ignora curto, vazio e repetido (0.263233ms)
+✔ o job existe e tem teto de tempo declarado (1.351365ms)
+✔ roda o script de verdade (nao uma copia inline) (0.38153ms)
+✔ so roda (as etapas caras) quando o PR toca uma migration (0.539562ms)
+✔ nao usa o docker-shim (ele FINJE o docker e nao aplica migration) (0.231576ms)
+✔ a imagem fixada por digest vive num lugar SO (o script), nao no job (6.631683ms)
+✔ log e TSV publicados mesmo no vermelho, com retencao declarada (0.397118ms)
+✔ checkout sem credencial persistida (0.240728ms)
+✔ Actions fixadas por SHA e de repositorio autorizado (check-workflow-pins) (5.552378ms)
+✔ fixture: sem a atualização, o documento é acusado de se apresentar como estado atual (3.14995ms)
+✔ fixture: com a atualização rotulada no início, nenhuma violação (1.855311ms)
+✔ fixture: atualização depois do placar não é "no início" (0.689504ms)
+✔ fixture: sem a data, a atualização não ancora o snapshot (0.440042ms)
+✔ fixture: faltando uma das sete referências, a regra recusa (0.595132ms)
+✔ fixture: listar as referências sem dizer que foram integradas não basta (1.987355ms)
+✔ fixture: sem LT-TYPE-01 não há base de reconciliação (0.435038ms)
+✔ fixture: trocar a negativa por uma afirmação de medição visual recusa (0.407269ms)
+✔ fixture: apagar o histórico datado é violação incondicional (1.325634ms)
+✔ revisão de fontes: o documento real separa o snapshot do estado reconciliado (311.695792ms)
+✔ INF-019.1 binário que não inicia (ENOENT) é INFRA, nunca mutante morto (3.924441ms)
+✔ INF-019.2 processo morto por sinal (OOM/kill) é INFRA, mesmo com resumo de falha (0.319416ms)
+✔ INF-019.3 suíte que sai 1 sem imprimir nenhum teste é INFRA (configuração/coleta) (0.333708ms)
+✔ INF-019.4 resumo verde + erro de infraestrutura (saída 1) é INCONCLUSIVO, não morto (0.173832ms)
+✔ INF-019.5 contagem de falha sem teste nomeado é INCONCLUSIVO (sem asserção rastreável) (1.05525ms)
+✔ INF-019.6 teste nomeado vermelho com contagem de falha é MORTO (asserção rastreável) (0.443999ms)
+✔ INF-019.7 rodada verde (saída 0, nada vermelho) é SOBREVIVENTE (3.464032ms)
+✔ INF-019.8 spawn real: processo que sai 1 sem rodar teste não vira mutante morto (355.012418ms)
+✔ INF-019.9 spawn real: binário inexistente não vira mutante morto (70.134112ms)
+✔ INF-019.10 spawn real: suíte verde é lida como SOBREVIVENTE (não como infra) (217.719528ms)
+✔ INF-019.11 baseline não verde invalida a medição (código 2) (0.951755ms)
+✔ INF-019.12 rodada INFRA/INCONCLUSIVA invalida a medição (código 2), nunca aprova (1.373679ms)
+✔ INF-019.13 sobrevivente NÃO declarado reprova a rodada (código 1) (1.266569ms)
+✔ INF-019.14 equivalente declarado não reprova, mas continua reportado (0.494255ms)
+✔ INF-019.15 controle com `esperado: sobrevivente` não reprova a rodada (0.178672ms)
+✔ INF-019.16 baseline verde + todos mortos é o único caminho para o código 0 (11.297167ms)
+✔ INF-019.17 controle que NÃO sobrevive não inventa sobrevivente nem reprova por isso (0.256771ms)
+✔ reconstruções históricas existem, têm 1280×900, menos de 400 KB e links Markdown (81.778197ms)
+✔ escapeRegExp protege todos os metacaracteres usados pelo seletor de link (0.822607ms)
+✔ estado cheio da SalesView difere do vazio e corresponde ao inventário (476.105931ms)
+✔ fixture: sem a atualização, o plano é acusado de se apresentar como estado vigente (3.802558ms)
+✔ fixture: com a atualização rotulada no início o plano passa (2.337572ms)
+✔ fixture: atualização depois do placar não é "no início" (14.144343ms)
+✔ fixture: o placar de cinco linhas de fase não fecha o aceite do S47 (2.323462ms)
+✔ fixture: linha de etapa sem marcador de estado é recusada (1.699086ms)
+✔ fixture: 404 sem rótulo histórico continua sendo defeito vigente (5.211376ms)
+✔ fixture: sem a data do retrato a atualização não ancora o snapshot (0.589081ms)
+✔ fixture: faltando uma fase integrada a atualização é incompleta (0.573087ms)
+✔ plano SalesView + Journey: o retrato de 02/10 está separado do estado reconciliado (55.946075ms)
+✔ plano real: cada forma do achado é recusada quando reintroduzida no próprio documento (24.561776ms)
+✔ security workflow uses a SHA-pinned fail-closed secret scanner (1.450326ms)
+✔ security workflow fetches history without exposing privileged PR secrets (1.865277ms)
+✔ security workflow preserves the dependency collector exit status (0.190369ms)
+✔ o runbook de SLOs fecha os invariantes de honestidade (I1–I6) (556.713123ms)
+✔ o runbook continua dizendo que o monitor externo NÃO existe (2.323407ms)
+✔ mutação no documento real: SLO de front de PENDENTE para REAL acusa I3 (136.53622ms)
+✔ mutação no documento real: view de latência de PENDENTE para REAL acusa I3 (110.095574ms)
+✔ mutação no documento real: caminho de workflow inválido acusa I2 (359.951047ms)
+✔ mutação no documento real: referência de arquivo quebrada acusa I5 (125.607961ms)
+✔ mutação no documento real: alvo de erro fora da linha da edge acusa I4 (128.029461ms)
+✔ mutação no documento real: alvo de latência fora da linha da edge acusa I4 (122.631089ms)
+✔ fixture: documento conforme passa nas seis regras (0.792232ms)
+✔ fixture I1: linha sem a coluna Fonte hoje é acusada (o defeito de 05/09) (1.575764ms)
+✔ fixture I3: monitor/uptime declarado REAL sem artefato de monitoramento é acusado (0.726597ms)
+✔ fixture I3: view de latência declarada PARCIAL sem existir em produção é acusada (0.490445ms)
+✔ fixture I3: com o artefato de monitoramento presente, o REAL passa (0.304907ms)
+✔ fixture I2: caminho citado que não existe é acusado (0.364706ms)
+✔ fixture I5: referência arquivo:linha além do fim é acusada (1.047067ms)
+✔ fixture I6: dizer que o cliente envia com src/ sem o header é acusado (0.631062ms)
+✔ fixture I6: dizer que o cliente não envia com src/ tendo o header é acusado (0.337864ms)
+✔ fixture I6: elo marcado como sim cita arquivo que não trata o header (0.312359ms)
+✔ fixture I4: SLO mínimo do webhook ausente é acusado (0.49862ms)
+✔ fixture I4: alvo espalhado em outras linhas da tabela é acusado (defeito da regra antiga) (0.470486ms)
+✔ fixture borda: documento vazio acusa I1, I4 e I6 (nada de silêncio verde) (0.202856ms)
+✔ fixture borda: célula Fonte hoje vazia é acusada por I1 (0.304646ms)
+✔ fixture borda: "nenhuma ocorrência" no elo do cliente conta como não envia (0.300523ms)
+✔ usage guard projects a migration created on the catalog snapshot day (209.527644ms)
+✔ usage guard ignora rollback comentado e mantem a funcao criada no corpo (368.270486ms)
+✔ usage guard ignora comentario de bloco com DROP TABLE (61.384374ms)
+✔ usage guard nao trata "--" dentro de string como comentario (150.38276ms)
+✔ usage guard ignora DDL dentro de corpo dollar-quoted (587.503766ms)
+✔ usage guard ignora comentario de bloco ANINHADO com DROP TABLE (102.255673ms)
+✔ usage guard preserva tokens quando comentario fica entre keywords sem espaco (89.166551ms)
+✔ usage guard nao engole SQL apos E-string com backslash-escape (fail-open) (85.352203ms)
+✔ usage guard nao trata texto de E-string com escape como DDL (falso positivo) (119.506842ms)
+✔ usage guard detecta DROP de tabela ja catalogada (uniao nao restaura) (266.730728ms)
+✔ usage guard detecta DROP com identificador entre aspas (public."t") (217.482677ms)
+✔ usage guard detecta DROP ROUTINE de funcao (84.039113ms)
+✔ usage guard mantem funcao recriada por DROP+CREATE na mesma migration (85.356368ms)
+✔ usage guard projeta e valida objeto de outro schema (supabase.schema) (143.520956ms)
+✔ usage guard ainda acusa alvo ausente em schema nao-public (70.417398ms)
+✔ usage guard honra SET standard_conforming_strings = off (backslash escapa em string normal) (54.769517ms)
+✔ usage guard reconhece dollar-quote com tag nao-ASCII e ASTRAL (1897.5319ms)
+✔ usage guard mantem funcao quando outra assinatura (overload) sobrevive (68.090887ms)
+✔ usage guard remove a funcao quando TODAS as assinaturas sao dropadas (64.146146ms)
+✔ usage guard honra todas as formas de SET/RESET de standard_conforming_strings que o PG aceita (2218.805673ms)
+✔ usage guard projeta VIEW (CREATE/DROP/MATERIALIZED) e RENAME TO (1862.337926ms)
+✔ usage guard compara assinatura na forma CANONICA do PG (alias, typmod, OUT) (1858.894203ms)
+✔ usage guard nao trata DROP IF EXISTS de assinatura inexistente como remocao (653.453405ms)
+✔ usage guard honra .schema() separado do .from()/.rpc() por comentario (1016.547863ms)
+✔ usage guard nao deixa passar alvo de outro schema escondido por comentario (267.922977ms)
+✔ relatório mantém orçamento, piloto, humano e observação como dimensões próprias (1.753869ms)
+✔ orçamento declara condições, amostra e métrica (2.074799ms)
+✔ p95 de leitura e claim permanece explicitamente ausente (0.285236ms)
+✔ piloto permanece explicitamente ausente com público, critério e resultado (0.205114ms)
+✔ homologação nominal permanece explicitamente ausente (0.494433ms)
+✔ observação permanece explicitamente ausente sem janela registrada (0.258314ms)
+✔ faixa 091–100 não volta a chamar registro de publicação de observabilidade medida (5.476943ms)
+✔ relatório mapeia cenário, teste, SHA e artefato no fechamento (12.453181ms)
+✔ todo cenário exigido tem linha própria no mapa (6.159528ms)
+✔ todo teste citado existe no disco e todo cenário mapeado tem SHA (1.16161ms)
+✔ ausência do E2E dedicado e dos artefatos visuais fica explícita, sem virar contagem de testes (13.233011ms)
+✔ a rodada Playwright autenticada aparece como evidência distinta do fluxo de fila/aceite (0.680944ms)
+✔ fechamento distingue publicação de revisão visual autenticada (1.634451ms)
+✔ fechamento não volta a declarar 50 de 50 nem etapa 049 concluída (0.28397ms)
+✔ X033: dois alertas abertos seguem pelo ramo verdadeiro e o Code agrega uma unica vez (13.250554ms)
+✔ X033: objeto de erro/resposta invalida nunca vira alerta (0.816306ms)
+✔ X033: resposta expandida mista conta so o contrato minimo, mesmo no ramo verdadeiro (5.204049ms)
+✔ X033: template segue inativo e sem $json.length (2.308089ms)
+✔ X033: grafo preservado — IF roteia verdadeiro para Montar resumo e falso para Nada a fazer (2.824535ms)
+✔ OPERACAO não diz que o talkx-scheduler controla o ciclo de vida das campanhas (1.180226ms)
+✔ OPERACAO descreve o talkx-link como GET (302) + POST (conversão), não como webhook (0.498906ms)
+✔ OPERACAO declara a cobertura real do e2e/talkx.spec.ts (17.16394ms)
+✔ OPERACAO não diz que o projeto chromium-e2e-core roda o talkx.spec.ts (0.881378ms)
+✔ OPERACAO não afirma que as fases F0–F1 estão concluídas (0.363803ms)
+✔ cabeçalho da OPERACAO acompanha a última versão do histórico (§9) (0.638436ms)
+✔ CHANGELOG cita a migration talkx_e93_settings pela versão que existe em supabase/migrations (0.365492ms)
+✔ ARQUITETURA e PARIDADE mantêm o aviso de que são parciais (reescrita completa = X197) (313.371769ms)
+✔ nao empurra direto na main (a main tem branch protection) (9.388339ms)
+✔ abre/atualiza o PR do placar pelo mesmo mecanismo do types-sync (0.678147ms)
+✔ destrava os checks do PR aberto com GITHUB_TOKEN (0.367619ms)
+✔ continua regenerando o placar pelo gerador oficial (0.287473ms)
+✔ placar do Talk X avisa no PR, não bloqueia (continue-on-error) (1.856522ms)
+✔ existe workflow de auto-regen no push da main (bot, sem loop) (96.615819ms)
+✔ Talk X editor updates only through the atomic snapshot RPC (1.350319ms)
+✔ Talk X update errors are localized without exposing database messages (0.448265ms)
+✔ Talk X usage counter is incremented atomically by trigger E86 (no front RPC/UPDATE) (0.31202ms)
+✔ roda todas as provas team-*.test.sh e sai 0 quando todas passam (110.980016ms)
+✔ sai 1 quando qualquer prova falha, nomeia a que falhou e roda as demais (37.825476ms)
+✔ sem nenhuma prova encontrada é falha (fail-closed), mesmo com nomes parecidos (9.495567ms)
+✔ o glob ancora em team-*.test.sh: diretório homônimo não é contado nem executado (55.374106ms)
+✔ usa o scripts/db-audit do próprio script, e TEAM_CHAT_GATES_DIR troca o diretório (494.746337ms)
+✔ fixture: registro vazio é acusado (11.610535ms)
+✔ fixture: registro completo e coerente com o código não tem violação (2.905699ms)
+✔ fixture: exceção obrigatória ausente do texto é acusada (5.064355ms)
+✔ fixture: citar o arquivo sem registrar o valor é acusado (1.99731ms)
+✔ fixture: exceção registrada cujo uso sumiu do código é acusada (registro fóssil) (0.446058ms)
+✔ fixture: exceção registrada apontando para arquivo que não existe é acusada (0.379948ms)
+✔ fixture: tabela de exceções vazia é acusada (0.27816ms)
+✔ registro real: as exceções obrigatórias continuam existindo no código (4.306739ms)
+✔ registro real: o arquivo existe, não está vazio e não viola a própria regra (3.10467ms)
+Uso:
+  node scripts/ci/typecheck-ratchet.mjs
+  node scripts/ci/typecheck-ratchet.mjs --update-baseline
+
+Opcoes de teste: --output <tsc.txt> --baseline <arquivo> --root <diretorio>
+ERRO no typecheck ratchet: ENOENT: no such file or directory, open '/nonexistent/tsc-output-that-does-not-exist.txt'
+✔ createBaseline extrai issues com arquivo/linha/codigo/mensagem normalizada (15.843477ms)
+✔ compareBaseline nao acusa nada novo quando a saida bate com o baseline (1.342409ms)
+✔ compareBaseline acusa erro novo introduzido (1.290065ms)
+✔ compareBaseline reconhece erro corrigido (removido) sem falhar (0.420985ms)
+✔ compareBaseline trata mudanca de linha no mesmo erro como nao-novo (multiset por file+code+message) (0.464168ms)
+✔ compareBaseline distingue duas ocorrencias iguais de uma so (multiset real) (0.856269ms)
+✔ compareBaseline detecta troca real (uma ocorrencia corrigida + outra identica nova) quando o contexto de codigo esta disponivel (9.129231ms)
+✔ compareBaseline nao acusa nada quando ocorrencias identicas permanecem intactas apesar de edicao nao relacionada no arquivo (1.919848ms)
+✔ createBaseline nao le arquivo fora do root (path com '..' no output do tsc) (1.68693ms)
+✔ main() com --help retorna 0 sem exigir baseline/relatorio (1.527771ms)
+✔ main() falha (2) quando o baseline informado nao existe (0.460208ms)
+✔ main() falha (2) e nao sobrescreve o baseline quando o tsc falha sem diagnostico parseavel (54.463906ms)
+✔ main() nao anuncia zero erros quando o tsc falha sem diagnostico parseavel (modo comparacao) (179.651042ms)
+✔ main() mantem exit 0 com saida vazia do compilador como typecheck limpo (206.521678ms)
+✔ main() processa exit 2 com diagnostico parseavel (entrada valida do ratchet) (158.193766ms)
+✔ main() acusa erro novo quando o tsc sai com exit 1 e ha diagnostico parseavel (502.132608ms)
+✔ E20: a issue nova nasce com o marcador de causa (369.207897ms)
+✔ E20: causa do alerta vem do gate que falhou (1.739278ms)
+✔ E20: mesma causa ha menos de 6h nao gera comentario novo (1.447008ms)
+✔ E20: mesma causa depois de 6h comenta de novo (0.617051ms)
+✔ E20: causa diferente comenta mesmo dentro de 6h (0.707548ms)
+✔ E20: issue aberta sem causa registrada comenta (124.368626ms)
+✔ E20: numa issue com 150 comentarios vale o ULTIMO, nao a primeira pagina (4.894031ms)
+✔ E20: o comentario de causa diferente tambem sai com o marcador (6.705414ms)
+✔ E20: o passo do workflow tem o marcador (guarda contra remocao) (1.897966ms)
+✔ E21: run de outra branch no mesmo SHA nao e aprovado (7.971495ms)
+✔ E21: a consulta de runs filtra por head_branch alem do head_sha (4.090032ms)
+✔ E21: o head_branch do filtro e o mesmo `branch:` do create-pull-request (1.154854ms)
+✖ documento FLAG_CHANGES.md contem todos os usos de useCRMIntegrationEnabled (57.151757ms)
+✔ ledger com statements NULL e recusado com motivo explicito (1.792871ms)
+✔ ledger sem linha para version+name e recusado (0.27385ms)
+✔ array vazio e recusado (array_length = 0) (0.217966ms)
+✔ quantidade diferente e recusada (0.193626ms)
+✔ conteudo diferente e recusado nomeando o statement (0.190472ms)
+✔ ledger igual ao arquivo passa e informa o total (0.200683ms)
+✔ o parser do registro e o mesmo usado na comparacao (arquivo real) (51.180512ms)
+✔ a consulta do ledger devolve null textual em vez de linha vazia (0.311326ms)
+✔ o passo do db-migrate exige NOT NULL e array_length antes de comparar (19.211526ms)
+✔ R2-INF-005: o heredoc do ledger e SQL valido, sem comentario de Bash (6.163768ms)
+✔ R2-INF-005: o comentario da consulta e SQL e a regressao para "#" e detectavel (1.991858ms)
+✔ fixture: critério declarando prova auditiva "à mão (E49)" é rejeitado (7.246231ms)
+✔ fixture: fechamento afirmando playback real é rejeitado (0.704163ms)
+✔ fixture: fechamento afirmando fixture de áudio criada é rejeitado (0.317318ms)
+✔ fixture: fechamento sem a distinção do run é rejeitado (11.286317ms)
+✔ fixture: evidência honesta (critério qualificado + fechamento com ressalva) passa limpa (1.362359ms)
+✔ VOL-05: a evidência do fechamento do volume permanece qualificada (6.053019ms)
+✔ VOL-05: o fechamento mantém a distinção do run (falha alheia ao resultado de volume) (0.933037ms)
+✔ VOL-05: a medição de <audio>.volume só existe dentro do caso test.fixme (1.062163ms)
+✔ VOL-05: o spec continua declarando o que NÃO prova e como reabilitar (12.089056ms)
+✔ o caso que o script antigo aprovava (sem overflow) agora reprova por faixa morta (3.058995ms)
+✔ detecta faixa morta: main.clientWidth - content.clientWidth > 1 (0.389447ms)
+✔ main ocupado (conteúdo preenche) passa (0.284968ms)
+✔ tolerância é exatamente 1px: diferença 1 passa, 2 reprova (0.295565ms)
+✔ overflow continua sendo detectado (regressão preservada) (0.285634ms)
+✔ main ausente não inventa faixa morta nem quebra (0.315654ms)
+✔ o script real mede 1920x1080 e expõe a medição do main (0.335665ms)
+✔ E98: nenhum checkout deixa credencial persistida no disco (3.938749ms)
+✔ E98: cancel-in-progress nunca cancela run de `main` (0.725431ms)
+✔ E98: instalação de dependência nunca roda scripts de terceiros (31.155367ms)
+✔ E98: o proxy pgbouncer nunca fica em continue-on-error (1.149611ms)
+✔ E98: o guarda vivo não dispara por mudança de Edge Function (0.660003ms)
+✔ E98: todo workflow que recebe DESTINO_URL endurece o TLS (0.595424ms)
+✔ E98: a lista de exceções não cresce em silêncio (0.330097ms)
+✔ E97: todo workflow com run: roda com -euo pipefail (10.387661ms)
+✔ E98: workflow disparado por pull_request não recebe segredo de banco (0.521018ms)
+✔ E68: browser do Playwright é cacheado e o download só roda em cache miss (1.931435ms)
+✔ E86: nenhum workflow sobe Supabase local (a suíte prova produção ou sessão falsa) (14.883543ms)
+✔ E86: quem roda a suíte logada declara a limpeza do que grava em produção (8.265583ms)
+✔ E67: todo job que roda bun install restaura o cache do Bun antes de instalar (16.174203ms)
+✔ E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralelo) (1.279565ms)
+✔ E69: o build continua atrás do lint E do test (19.187997ms)
+✔ E59: todo run: | do deploy-functions.yml abre com set estrito (2.486756ms)
+✔ E59: o passo Deploy mantem o pipefail explicito do F-02 (0.428715ms)
+✔ E59: o curl do catalogo tem teto de tempo (1.296207ms)
+::warning::Falha ao registrar o Deployment (deploy nao afetado): shaDeployado precisa ser um sha de 40 hex: recebido "undefined"
+✔ S7044: aceita https://api.github.com (4.435354ms)
+✔ S7044: RECUSA host do atacante (o caso do enunciado) (0.853206ms)
+✔ S7044: recusa host parecido com github.com mas que nao e (0.394977ms)
+✔ S7044: recusa http (sem TLS) mesmo no host correto, porque o token iria em claro (0.284489ms)
+✔ S7044: recusa caminho com travessia ou que nao comeca com / (0.507561ms)
+✔ S7044: ACEITA GitHub Enterprise derivado de GITHUB_SERVER_URL (0.149594ms)
+✔ S7044: o SCRIPT recusa GITHUB_API_URL=http://atacante.local antes de qualquer fetch (137.861157ms)
+✔ S7044: com o host legitimo, o destino montado e o do GitHub (0.285745ms)
+✔ E57: o plano cobre o escopo e marca o que ainda nao existe no ar (15.137303ms)
+✔ E57: os dois digests aparecem lado a lado e NAO sao comparados (0.636036ms)
+✔ E57: digest do plano e estavel (ordem de entrada e observed_at nao contam) (1.393418ms)
+✔ E57: o resumo nomeia o plano e traz o digest para o operador copiar (0.555699ms)
+✔ E57: o workflow tem dry_run, publica o plano antes do Deploy e nao escreve no ensaio (pin) (3.796205ms)
+✔ E60: o Deployment prende o sha DEPLOYADO, nao a branch (1.307459ms)
+✔ E60: `required_contexts: []` — sem isso o GitHub recusa o deployment de um ancestral antigo (0.91347ms)
+✔ E60: sha invalido e recusado (nao inventa ref) (2.19937ms)
+✔ E60: o status aponta para o deployment e nao cria um novo (0.33636ms)
+✔ E60: resumo cita ambiente, sha curto e run (0.437036ms)
+✔ E60: o workflow troca a tag por Deployment e mantem o best-effort (pin) (0.67286ms)
+✔ S5145: valor da API com quebra de linha NAO forja comando de workflow no log (353.307487ms)
+✔ S5145: valor da API com quebra de linha NAO cria variavel nova no GITHUB_OUTPUT (83.046196ms)
+✔ S5145: mensagem de erro da API com quebra de linha NAO forja ::error:: no warning (226.605215ms)
+✔ S5145: o fluxo legitimo continua escrevendo deployment_id normalmente (42.32338ms)
+✔ buildDeploymentManifest is deterministic and follows shared imports (84.749205ms)
+✔ serializeManifest keeps the orphan allowlist Prettier-compatible (0.9216ms)
+✔ buildDeploymentManifest rejects config for a missing function (10.986417ms)
+✔ buildDeploymentManifest accepts config for a legacy unmanaged function (13.57767ms)
+✔ buildDeploymentManifest rejects a function directory without index.ts (33.6323ms)
+✔ buildDeploymentAttestation accepts extra functions listed in legacy_unmanaged_functions (16.609729ms)
+✔ buildDeploymentAttestation rejects missing, extra, and JWT-drifted functions (9.960573ms)
+✔ buildDeploymentAttestation accepts known orphans via orphan_allowlist (9.714414ms)
+✔ buildDeploymentManifest without orphanAllowlist produces no orphan_allowlist field (4.725252ms)
+✔ manifesto commitado tolera as orfas reais: sicoob-bridge/-reply SEGUEM NO AR (2.824824ms)
+✔ S8707: recusa caminho relativo que escapa da base com .. (131.678923ms)
+✔ S8707: recusa caminho absoluto fora da base (318.204504ms)
+✔ S8707: caminho dentro da base continua sendo ACEITO (nao virar sempre-recusa) (64.437116ms)
+✔ S8707: recusa caminho que nao existe, sem criar arquivo (51.546757ms)
+✔ S8707: recusa travessia por symlink que aponta para fora da base (235.009496ms)
+✔ R2-INF-002: com a redacao OK, o diretorio publicavel tem o log redigido e as demais evidencias (245.314389ms)
+✔ R2-INF-002: falha do redator aborta e NADA do log bruto entra no diretorio publicavel (511.449006ms)
+✔ R2-INF-002: sobra do valor do segredo no log redigido bloqueia o artifact (fail-closed) (103.230587ms)
+✔ R2-INF-002: contornos — sem log e sem diretorio de evidencia nao quebram o passo (36.528552ms)
+✔ R2-INF-002: o shell REAL do passo (extraido do YAML) so publica o log redigido (243.632946ms)
+✔ E74: o valor do token sai do log, e a chave deixa de existir como tal (1.254698ms)
+✔ E74: valor curto demais nao e tratado como segredo (nao troca texto comum) (0.571443ms)
+✔ E74: o CLI e fail-closed quando o log nao existe (224.075761ms)
+✔ E74: supabase-sync retem 7 dias e o log do deploy e redigido antes de subir (1.272459ms)
+✔ E58: o escopo define exatamente os nomes que o deploy escreveria (16.922314ms)
+✔ E58: rollback NUNCA reescreve (nem com rotate_secrets ligado) (0.66506ms)
+✔ E58: deploy normal com os nomes presentes nao reescreve e diz isso no log (0.298967ms)
+✔ E58: nome ausente no projeto e divergencia medivel → reescreve e nomeia (0.28258ms)
+✔ E58: rotate_secrets=true reescreve por decisao do operador (0.221135ms)
+✔ E58: leitura do remoto falhando cai no comportamento anterior (reescrever), nunca em silencio (0.195895ms)
+✔ E58: extrai nomes das formas plausiveis e devolve null no que nao reconhece (0.658687ms)
+✔ E58: em ensaio (dry_run) a decisao e sempre MANTER, nas 3 condicoes de reescrita (1.110223ms)
+✔ E57: dry_run trava a escrita de secrets e a decisao continua registrando o ensaio (pin) (64.022626ms)
+✔ E57/E58: CLI falsa prova ZERO secrets set em dry_run, nas 3 condicoes (505.831722ms)
+✔ E57/E58: controle — sem ensaio as 4 escritas acontecem (a prova acima nao e vazia) (177.401256ms)
+✔ E58: o workflow declara o input e guarda as 4 escritas pela decisao (pin) (0.453284ms)
+✔ preflight empresarial do CRM e sintaticamente valido no shell do runner (4.887926ms)
+✔ escopo vem do titulo do run; titulo antigo sem escopo conta como all (2.963069ms)
+✔ funcoes diferentes nao se bloqueiam (1.54559ms)
+✔ all espera deploy por funcao que ja passou do gate, mesmo mais novo (0.347599ms)
+✔ deploy por funcao espera o all que ja passou do gate (0.165148ms)
+✔ empate no gate: o mais antigo segue, o mais novo espera (sem espera mutua) (0.284051ms)
+✔ ignora o proprio run (0.154706ms)
+✔ waitForTurn espera o all conflitante terminar e entao segue (5.45786ms)
+✔ waitForTurn falha alto quando o conflito passa do teto (12.572731ms)
+✔ gate ja visto passando nao e reconsultado (cota da API) (0.608651ms)
+✔ smokeFunction validates positive CORS, denied origin, and JWT gateway (34.046421ms)
+✔ smokeFunction never POSTs to a public webhook (0.57782ms)
+✔ smokeFunction proves the public-api kill switch with a negative credential (0.92459ms)
+✔ smokeFunction proves internal auth for the public cron gateway (0.669789ms)
+✔ smokeFunction fails closed when an endpoint returns wildcard CORS (0.290673ms)
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 4/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 5/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 6/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 7/3 amostras identicas
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 4/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 5/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 6/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 8/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 9/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 1/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 2/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 3/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 4/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 5/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 6/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 7/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 8/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 4/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 5/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 6/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 7/3 amostras identicas
+[edge-inventory] amostra 1/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 2/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 3/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 4/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 5/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 6/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 7/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 8/8: Selected deployment not yet observed: ai-auto-tag
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 4/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 5/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 6/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 7/3 amostras identicas
+[edge-inventory] amostra 1/18: falha transitoria (Error)
+[edge-inventory] amostra 2/18: falha transitoria (Error)
+[edge-inventory] amostra 3/18: falha transitoria (Error)
+[edge-inventory] amostra 4/18: falha transitoria (Error)
+[edge-inventory] amostra 5/18: falha transitoria (Error)
+[edge-inventory] amostra 6/18: falha transitoria (Error)
+[edge-inventory] amostra 7/18: falha transitoria (Error)
+[edge-inventory] amostra 8/18: falha transitoria (Error)
+[edge-inventory] amostra 9/18: falha transitoria (Error)
+[edge-inventory] amostra 10/18: falha transitoria (Error)
+[edge-inventory] amostra 11/18: falha transitoria (Error)
+[edge-inventory] amostra 12/18: falha transitoria (Error)
+[edge-inventory] amostra 13/18: falha transitoria (Error)
+[edge-inventory] amostra 14/18: falha transitoria (Error)
+[edge-inventory] amostra 15/18: falha transitoria (Error)
+[edge-inventory] amostra 16/18: falha transitoria (Error)
+[edge-inventory] amostra 17/18: falha transitoria (Error)
+[edge-inventory] amostra 18/18: falha transitoria (Error)
+[edge-inventory] amostra 1/18: falha transitoria (Error)
+[edge-inventory] amostra 2/18: falha transitoria (Error)
+[edge-inventory] amostra 3/18: falha transitoria (Error)
+[edge-inventory] amostra 4/18: falha transitoria (Error)
+[edge-inventory] amostra 5/18: falha transitoria (Error)
+[edge-inventory] amostra 6/18: falha transitoria (Error)
+[edge-inventory] amostra 7/18: falha transitoria (Error)
+[edge-inventory] amostra 8/18: falha transitoria (Error)
+[edge-inventory] amostra 9/18: falha transitoria (Error)
+[edge-inventory] amostra 10/18: falha transitoria (Error)
+[edge-inventory] amostra 11/18: falha transitoria (Error)
+[edge-inventory] amostra 12/18: falha transitoria (Error)
+[edge-inventory] amostra 13/18: falha transitoria (Error)
+[edge-inventory] amostra 14/18: falha transitoria (Error)
+[edge-inventory] amostra 15/18: falha transitoria (Error)
+[edge-inventory] amostra 16/18: falha transitoria (Error)
+[edge-inventory] amostra 17/18: falha transitoria (Error)
+[edge-inventory] amostra 18/18: falha transitoria (Error)
+[edge-inventory] amostra 1/18: Missing remote identity or timestamp
+[edge-inventory] amostra 2/18: Missing remote identity or timestamp
+[edge-inventory] amostra 3/18: Missing remote identity or timestamp
+[edge-inventory] amostra 4/18: Missing remote identity or timestamp
+[edge-inventory] amostra 5/18: Missing remote identity or timestamp
+[edge-inventory] amostra 6/18: Missing remote identity or timestamp
+[edge-inventory] amostra 7/18: Missing remote identity or timestamp
+[edge-inventory] amostra 8/18: Missing remote identity or timestamp
+[edge-inventory] amostra 9/18: Missing remote identity or timestamp
+[edge-inventory] amostra 10/18: Missing remote identity or timestamp
+[edge-inventory] amostra 11/18: Missing remote identity or timestamp
+[edge-inventory] amostra 12/18: Missing remote identity or timestamp
+[edge-inventory] amostra 13/18: Missing remote identity or timestamp
+[edge-inventory] amostra 14/18: Missing remote identity or timestamp
+[edge-inventory] amostra 15/18: Missing remote identity or timestamp
+[edge-inventory] amostra 16/18: Missing remote identity or timestamp
+[edge-inventory] amostra 17/18: Missing remote identity or timestamp
+[edge-inventory] amostra 18/18: Missing remote identity or timestamp
+[edge-inventory] amostra 1/18: Missing remote identity or timestamp
+[edge-inventory] amostra 2/18: Missing remote identity or timestamp
+[edge-inventory] amostra 3/18: Missing remote identity or timestamp
+[edge-inventory] amostra 4/18: Missing remote identity or timestamp
+[edge-inventory] amostra 5/18: Missing remote identity or timestamp
+[edge-inventory] amostra 6/18: Missing remote identity or timestamp
+[edge-inventory] amostra 7/18: Missing remote identity or timestamp
+[edge-inventory] amostra 8/18: Missing remote identity or timestamp
+[edge-inventory] amostra 9/18: Missing remote identity or timestamp
+[edge-inventory] amostra 10/18: Missing remote identity or timestamp
+[edge-inventory] amostra 11/18: Missing remote identity or timestamp
+[edge-inventory] amostra 12/18: Missing remote identity or timestamp
+[edge-inventory] amostra 13/18: Missing remote identity or timestamp
+[edge-inventory] amostra 14/18: Missing remote identity or timestamp
+[edge-inventory] amostra 15/18: Missing remote identity or timestamp
+[edge-inventory] amostra 16/18: Missing remote identity or timestamp
+[edge-inventory] amostra 17/18: Missing remote identity or timestamp
+[edge-inventory] amostra 18/18: Missing remote identity or timestamp
+[edge-inventory] amostra 1/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 2/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 3/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 4/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 5/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 6/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 7/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 8/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 9/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 10/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 11/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 12/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 13/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 14/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 15/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 16/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 17/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 18/18: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: falha transitoria (Error)
+[edge-inventory] amostra 4/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 4/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 5/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 6/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 7/3 amostras identicas
+[edge-inventory] amostra 1/18: inventario estavel 1/3 amostras identicas
+[edge-inventory] amostra 2/18: inventario estavel 2/3 amostras identicas
+[edge-inventory] amostra 3/18: inventario estavel 3/3 amostras identicas
+[edge-inventory] amostra 4/18: inventario estavel 4/3 amostras identicas
+[edge-inventory] amostra 5/18: inventario estavel 5/3 amostras identicas
+[edge-inventory] amostra 6/18: inventario estavel 6/3 amostras identicas
+[edge-inventory] amostra 7/18: inventario estavel 7/3 amostras identicas
+[edge-inventory] amostra 1/3: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 2/3: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+[edge-inventory] amostra 3/3: Remote function set mismatch; missing=[ai-auto-tag], extra=[]
+✔ requires a minimum observation window, consecutive samples and advanced versions (20.293583ms)
+✔ late bundle changes reset stable streak even without changed source (19.509911ms)
+✔ inventario identico ao baseline SEM prova de no-op do deploy nao atesta (R2-INF-017) (8.245931ms)
+✔ funcao sinalizada pelo deploy como "No change found" com digest estavel atesta sem bump de versao (17.949099ms)
+✔ sem sinalizacao do CLI, o digest remoto igual ao baseline NAO atesta e a exaustao nomeia a funcao (9.14733ms)
+✔ baseline sem versao (E08) atesta pelo id e registra o aceite explicito no artefato (7.418832ms)
+✔ contradicao: CLI reportou sem mudanca e o digest remoto mudou desde o baseline falha na primeira amostra com a causa real (4.428355ms)
+✔ knownUnchanged invalido e rejeitado antes de qualquer chamada de rede (1.515172ms)
+✔ rejects failed drift (26.716261ms)
+✔ rejects version drift (16.786642ms)
+✔ rejects timestamp drift (53.391134ms)
+✔ rejects identity drift (12.505593ms)
+✔ drift deterministico falha na primeira amostra com a causa real, sem gastar as 144 tentativas (5.365164ms)
+✔ funcao gerenciada ausente na lista remota continua transitoria (pode ser propagacao de deploy novo) (12.842188ms)
+✔ transient errors reset stability but never emit response contents (5.285024ms)
+✔ inventory row order does not produce false drift (6.737737ms)
+✔ partial deployment reports unrelated changes separately (6.316465ms)
+✔ wrong project rejected before any request (0.47265ms)
+✔ unknown scope and invalid polling configuration rejected (0.529873ms)
+✔ API failures omit response payload, transport error and authorization token (0.993995ms)
+✔ snapshot whitelists metadata and rejects duplicates (0.524215ms)
+✔ exaustao nomeia a funcao faltante em vez de so "did not stabilize" (16.329033ms)
+✔ nunca emite conteudo de resposta da API no log de progresso (1.384689ms)
+✔ E55: exaustao entrega lastReason com a ultima causa observada (7.01361ms)
+✔ X023: manifesto em paridade com o fonte → diverged: 0 (8.572921ms)
+✔ X023: digest divergente (fonte editado sem regenerar o manifesto) → diverged > 0 (0.512998ms)
+✔ X023: verify_jwt drift (config.toml virou a exceção) é sinalizado à parte (5.565349ms)
+✔ X023: função ausente do manifesto (commitado ou fresco) conta como divergência (0.302179ms)
+✔ X023: segredos — ausentes, todos presentes e leitura falhada (null) (0.403314ms)
+✔ X023: paridade remota — verify_jwt, ACTIVE e digest com forma válida (0.533615ms)
+✔ X023: a evidência resume diverged/missing e cita a query do Vault + job (0.391967ms)
+✔ X023: digest divergente → o CLI sai com código ≠ 0 (aceite) (262.767095ms)
+✔ TX02: paridade local ok, mas SEM remoto e SEM secrets medidos → NUNCA "preflight verde" (1.126308ms)
+✔ TX02: verde só quando remoto verificado E segredos medidos, ambos sem divergência (0.718381ms)
+✔ TX02: remoto medido mas segredos não medidos → ainda não é verde (0.479685ms)
+✔ TX02: CLI local-only (sem token e sem --secrets-file) não emite verde — saída ≠ 0 (103.64732ms)
+✔ 1. log real do deploy de uma funcao pulada: exatamente a funcao do run (6.175478ms)
+✔ 2. log real do deploy completo: so os slugs das linhas de saida, em ordem (0.784572ms)
+✔ 3. F-03: a linha embrulhada em ANSI continua sendo capturada (1.201227ms)
+✔ 4. o eco do proprio script nunca vira funcao sem mudanca (0.684492ms)
+✔ 5. slug fora da forma de nome de funcao e descartado (0.546897ms)
+✔ 6. linhas repetidas nao duplicam e  de barra de progresso e tolerado (6.192891ms)
+ℹ tests 945
+ℹ suites 4
+ℹ pass 936
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26212.089387
+
+✖ failing tests:
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:155:1
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (12.258974ms)
+  AssertionError [ERR_ASSERTION]: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:99 não cita `ai-kb-ingest`
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/docs-estado-registry-convention.unit.mjs:165:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:190:1
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (11721.846309ms)
+  AssertionError [ERR_ASSERTION]: grupo de `create-user` divergiu dos chamadores reais: {"A":[],"B":[],"C":[],"D":[]}
+  
+  'A' !== 'E'
+  
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/docs-estado-registry-convention.unit.mjs:193:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'A',
+    expected: 'E',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/lint-ratchet.unit.mjs:432:1
+✖ stagedLintableFiles devolve so fontes staged que ainda existem (27.054857ms)
+  AssertionError [ERR_ASSERTION]: HERMES-GUARD (git): git init é proibido nesta sessão
+  HERMES-GUARD: trabalho de projeto acontece só em workspace criado por hermes-tarefa-iniciar; nada de clones, remotes, repositórios novos ou reescrita de histórico.
+  
+  
+  3 !== 0
+  
+      at git (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:413:12)
+      at gitFixture (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:416:3)
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:433:34)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/lint-ratchet.unit.mjs:467:1
+✖ stagedRemovedFiles lista remocoes e origens de renomeacao do commit (22.35276ms)
+  AssertionError [ERR_ASSERTION]: HERMES-GUARD (git): git init é proibido nesta sessão
+  HERMES-GUARD: trabalho de projeto acontece só em workspace criado por hermes-tarefa-iniciar; nada de clones, remotes, repositórios novos ou reescrita de histórico.
+  
+  
+  3 !== 0
+  
+      at git (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:413:12)
+      at gitFixture (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:416:3)
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:468:34)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/lint-ratchet.unit.mjs:484:1
+✖ --staged ignora divida antiga fora do commit e acusa divida nova nos arquivos staged (60.7607ms)
+  AssertionError [ERR_ASSERTION]: HERMES-GUARD (git): git init é proibido nesta sessão
+  HERMES-GUARD: trabalho de projeto acontece só em workspace criado por hermes-tarefa-iniciar; nada de clones, remotes, repositórios novos ou reescrita de histórico.
+  
+  
+  3 !== 0
+  
+      at git (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:413:12)
+      at gitFixture (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:416:3)
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:486:34)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/lint-ratchet.unit.mjs:516:1
+✖ --staged reconhece arquivo renomeado pelo hash em vez de contar divida nova (21.880867ms)
+  AssertionError [ERR_ASSERTION]: HERMES-GUARD (git): git init é proibido nesta sessão
+  HERMES-GUARD: trabalho de projeto acontece só em workspace criado por hermes-tarefa-iniciar; nada de clones, remotes, repositórios novos ou reescrita de histórico.
+  
+  
+  3 !== 0
+  
+      at git (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:413:12)
+      at gitFixture (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:416:3)
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:518:34)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/lint-ratchet.unit.mjs:534:1
+✖ --staged sem arquivo lintavel no commit sai com sucesso sem rodar o ESLint (129.746708ms)
+  AssertionError [ERR_ASSERTION]: HERMES-GUARD (git): git init é proibido nesta sessão
+  HERMES-GUARD: trabalho de projeto acontece só em workspace criado por hermes-tarefa-iniciar; nada de clones, remotes, repositórios novos ou reescrita de histórico.
+  
+  
+  3 !== 0
+  
+      at git (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:413:12)
+      at gitFixture (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:416:3)
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:536:34)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/lint-ratchet.unit.mjs:546:1
+✖ --staged nao combina com --update-baseline (83.373075ms)
+  AssertionError [ERR_ASSERTION]: HERMES-GUARD (git): git init é proibido nesta sessão
+  HERMES-GUARD: trabalho de projeto acontece só em workspace criado por hermes-tarefa-iniciar; nada de clones, remotes, repositórios novos ou reescrita de histórico.
+  
+  
+  3 !== 0
+  
+      at git (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:413:12)
+      at gitFixture (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:416:3)
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/lint-ratchet.unit.mjs:548:29)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ci/verify-crm-integration-doc.unit.mjs:49:1
+✖ documento FLAG_CHANGES.md contem todos os usos de useCRMIntegrationEnabled (57.151757ms)
+  AssertionError [ERR_ASSERTION]: uso de useCRMIntegrationEnabled em src/components/inbox/contact-details/ContactIntelligencePanel.tsx nao encontrado como caminho completo src/... em linha de tabela no documento FLAG_CHANGES.md
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/scripts/ci/verify-crm-integration-doc.unit.mjs:67:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

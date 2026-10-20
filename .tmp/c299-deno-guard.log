@@ -1,0 +1,18 @@
+[0m[38;5;245m------- pre-test output -------[0m
+check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:
+  scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/ia-usage-outbox-duravel.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/talkx-conversion-defaults.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/team-chat-department-transfer-guards.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/team-chat-media-contract.test.sh  (não encontrado em db-guard.yml)
+  scripts/db-audit/team-direct-conversation-race.test.sh  (não encontrado em db-guard.yml)
+
+Total: 6 teste(s) órfão(s).
+Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.
+[0m[38;5;245m----- pre-test output end -----[0m
+
+[0m[31merror[0m ./scripts/ci/check-test-inventory.mjs called `Deno.exit(1)` from outside any test. The isolate was terminated; remaining test files will continue.
+
+[0m[31mFAILED[0m | 0 passed | 1 failed [0m[38;5;245m(0ms)[0m
+
+[0m[1m[31merror[0m: Test failed

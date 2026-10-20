@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=299-talk-x-cancelamento-em-voo-261016011
+ID=2610160114d52c
+BRANCH=v2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T01:14:28-03:00
+KANBAN=t_93955b3c
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-2610160114d52c
+PRONTO_SHA=429b668248ea1b1051a7b2f411ee2ee4a4d4cd58

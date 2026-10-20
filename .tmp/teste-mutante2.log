@@ -1,0 +1,19 @@
+NOTICE:  constraint "talkx_recipients_delivery_claim_state" of relation "talkx_recipients" does not exist, skipping
+NOTICE:  constraint "talkx_recipients_status_check" of relation "talkx_recipients" does not exist, skipping
+NOTICE:  column "outcome_unknown_count" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  column "external_id" of relation "talkx_recipients" already exists, skipping
+NOTICE:  column "external_id" of relation "talkx_recipients" already exists, skipping
+NOTICE:  constraint "talkx_recipients_external_id_bounded" of relation "talkx_recipients" does not exist, skipping
+NOTICE:  relation "idx_talkx_recipients_external_id" already exists, skipping
+NOTICE:  function public.transition_talkx_campaign(uuid,text,text) does not exist, skipping
+NOTICE:  column "paused_by" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  column "cancelled_by" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  column "cancelled_at" of relation "talkx_campaigns" already exists, skipping
+NOTICE:  trigger "record_talkx_campaign_lifecycle_event" for relation "public.talkx_campaigns" does not exist, skipping
+PASS: migrations reais aplicadas até 20261003172707_talkx_lifecycle_events_delta.sql (estado ANTES da correção)
+PASS: RED (defeito): cancelar descarta o destinatário EM VOO -> 'cancelled|NULL' (status + token apagado)
+PASS: RED (defeito): record_talkx_recipient_sent falha -> confirmação do provedor DESCARTADA
+PASS: RED (defeito): quarentena falha com o MESMO token -> worker lança antes de enfileirar a reconciliação
+ERROR:  syntax error at or near "END"
+LINE 96:   END CASE;
+           ^

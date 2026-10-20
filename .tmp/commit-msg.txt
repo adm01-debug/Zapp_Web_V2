@@ -1,0 +1,14 @@
+fix(sql): cancelamento em voo do Talk X preserva a confirmação do provedor (#299)
+
+O ramo 'cancel' de public.transition_talkx_campaign fechava TODOS os destinatários,
+inclusive o que já tinha POST em voo, e zerava delivery_claim_*: a confirmação do
+provedor não tinha mais onde pousar (talkx_delivery_claim_conflict) e o destinatário
+saía do alcance da reconciliação.
+
+O ramo passa a preservar quem está em voo (status 'sending' + lease + POST) e deixa o
+pendente sem POST fechando normalmente, para que recibo/quarentena/falha do provedor
+possam pousar e o sweeper resolva o efeito incerto.
+
+Prova: supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql — roda em PostgreSQL
+17 descartável (comando no cabeçalho do arquivo), VERDE com T1..T5 + rollback e
+VERMELHO (= falha em T1) quando a correção não é aplicada.
