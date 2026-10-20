@@ -1,0 +1,273 @@
+diff --git a/supabase/migrations/20261016001136_audio_memes_bucket_limits_admin_delete.sql b/supabase/migrations/20261016001136_audio_memes_bucket_limits_admin_delete.sql
+new file mode 100644
+index 0000000000..71ce511c9e
+--- /dev/null
++++ b/supabase/migrations/20261016001136_audio_memes_bucket_limits_admin_delete.sql
+@@ -0,0 +1,48 @@
++-- audio_memes_bucket_limits_admin_delete
++-- Rollback: remove a policy de DELETE dos admins e devolve o bucket audio-memes ao estado anterior (sem file_size_limit e sem allowed_mime_types, seguindo public = true); a policy do proprio dono ("Users can delete own audio memes") nao e tocada.
++-- Rollback (SQL executavel, na ordem):
++--   drop policy if exists "Admins can delete any audio meme" on storage.objects;
++--   update storage.buckets set file_size_limit = null, allowed_mime_types = null where id = 'audio-memes';
++--
++-- Fecha dois furos do bucket `audio-memes` (criado em 20260511233306_0e3f3b66):
++--
++-- 1) DELETE sem admin/supervisor. A policy "Users can delete own audio memes" so vale para
++--    `foldername(name)[1] = auth.uid()`. O admin que tenta apagar o meme de outro usuario e
++--    recusado pelo Storage e o app cai no toast "arquivo ficou orfao" (useAudioMemes.ts).
++--    Objeto antigo gravado na RAIZ do bucket (nome sem pasta) tambem fica inapagavel por
++--    qualquer um: `foldername` devolve array vazio e a comparacao com auth.uid() e falsa.
++-- 2) Limite so no navegador. O bucket e `public = true` e nunca teve `file_size_limit` nem
++--    `allowed_mime_types`: o teto de 5 MB e o filtro `audio/*` existiam apenas no cliente —
++--    qualquer token autenticado subia arquivo de qualquer tipo/tamanho por chamada direta ao
++--    Storage. O PK-26 (chat_media_buckets_limits.sql) cobre so whatsapp-media e audio-messages.
++--
++-- ADITIVA e idempotente: nao altera a policy existente, nao toca em dado, nao mexe em GRANT
++-- (policy nao e ACL) e mantem o bucket PUBLICO para leitura — a URL publica esta gravada em
++-- audio_memes.audio_url. A decisao de migrar para URL assinada e do dono (registrada no relato).
++
++-- 1) DELETE por admin/supervisor, em qualquer nome do bucket (inclusive na raiz).
++--    Policy permissiva: SOMA-SE a "Users can delete own audio memes", entao o dono continua
++--    apagando o proprio arquivo. anon nao entra (FOR DELETE TO authenticated).
++DROP POLICY IF EXISTS "Admins can delete any audio meme" ON storage.objects;
++CREATE POLICY "Admins can delete any audio meme" ON storage.objects
++  FOR DELETE TO authenticated
++  USING (
++    bucket_id = 'audio-memes'
++    AND public.is_admin_or_supervisor((SELECT auth.uid()))
++  );
++
++-- 2) Limite de tamanho e tipo passam a valer no servidor (a Storage API le estas colunas
++--    antes de gravar o objeto). Guarda: falhar alto se o bucket nao existir, em vez de
++--    aplicar uma migration que nao faz nada.
++DO $guarda$
++BEGIN
++  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'audio-memes') THEN
++    RAISE EXCEPTION 'bucket audio-memes ausente: aplique as migrations anteriores antes desta';
++  END IF;
++END
++$guarda$;
++
++UPDATE storage.buckets
++   SET file_size_limit   = 5242880,             -- 5 MB
++       allowed_mime_types = ARRAY['audio/*']    -- so audio (exclui executavel/imagem/video)
++ WHERE id = 'audio-memes';
+diff --git a/supabase/tests/audio_memes_bucket_admin_delete.sql b/supabase/tests/audio_memes_bucket_admin_delete.sql
+new file mode 100644
+index 0000000000..45f3cef57a
+--- /dev/null
++++ b/supabase/tests/audio_memes_bucket_admin_delete.sql
+@@ -0,0 +1,213 @@
++-- =====================================================================
++-- audio-memes: admin apaga qualquer meme + teto de 5 MB e allowlist audio/*
++-- Cartao: t_a65f9f8f (worker sql) — migration 20261016001136
++-- =====================================================================
++-- Roda no banco LOCAL da tarefa (Postgres de verdade, migrations REAIS,
++-- papeis anon/authenticated/service_role e auth.uid() vindo de
++-- request.jwt.claims). Fixtures e assercoes numa transacao que termina em
++-- ROLLBACK: zero efeito colateral, idempotente, roda quantas vezes quiser.
++-- Nenhuma assercao executa como postgres: cada uma faz SET LOCAL ROLE do
++-- papel real antes de tocar o objeto.
++--
++--   T1 admin apaga meme de OUTRO usuario .................. 1 linha  [vermelho antes]
++--   T2 admin apaga objeto LEGADO na raiz do bucket ........ 1 linha  [vermelho antes]
++--   T3 dono apaga o PROPRIO meme .......................... 1 linha  (nao regrediu)
++--   T4 agente comum NAO apaga meme de outro ............... 0 linhas
++--   T5 anon NAO apaga nada do bucket ...................... 0 linhas
++--   T6 leitura do bucket segue aberta ao authenticated .... >= 1 linha
++--   T7 bucket segue publico, com file_size_limit 5 MB e allowlist audio/*
++--   T8 admin NAO apaga em OUTRO bucket (policy escopada) .. 0 linhas
++--
++-- Uso: zapp-db-local psql . <nome-do-banco> < supabase/tests/audio_memes_bucket_admin_delete.sql
++-- (sai != 0 com "PROVA FALHOU" quando qualquer verificacao falha)
++\set ON_ERROR_STOP on
++
++BEGIN;
++
++-- O Storage marca a sessao antes de apagar (`storage.allow_delete_query = true`);
++-- sem isso o gatilho `protect_objects_delete` recusa QUALQUER DELETE direto em
++-- storage.objects. Esta prova reproduz o mesmo caminho do Storage (papel real +
++-- claims) e mantem o gatilho ligado: o que decide e a RLS, nao o gatilho.
++SELECT set_config('storage.allow_delete_query', 'true', true);
++
++-- ---------------------------------------------------------------- fixtures
++-- Inseridos como postgres (papel de servico da sessao); a prova em si roda
++-- como authenticated/anon. UUIDs e e-mails sinteticos (example.test).
++-- O gatilho on_auth_user_created cria as linhas de public.profiles.
++DO $fixture$
++BEGIN
++  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE user_id = '00000000-0000-4000-8000-000000000001') THEN
++    RAISE EXCEPTION 'fixture: identidade do admin semeado ausente; rode este arquivo no banco local da tarefa (zapp-db-local)';
++  END IF;
++END $fixture$;
++
++INSERT INTO auth.users (id, email, is_sso_user, is_anonymous) VALUES
++  ('11111111-1111-4111-8111-111111111111','agente.a@example.test',false,false),
++  ('22222222-2222-4222-8222-222222222222','agente.b@example.test',false,false);
++
++-- Objetos do bucket `audio-memes` (a pasta e o auth.uid() do dono, como o app grava):
++--   1) meme de B                  -> alvo do T1
++--   2) objeto LEGADO na RAIZ      -> alvo do T2 (nome sem pasta; foldername = {})
++--   3) meme do PROPRIO A          -> alvo do T3/T4 nao pode ser apagado por B
++--   4) objeto intocado            -> prova de leitura do T6
++INSERT INTO storage.objects (id, bucket_id, name, owner, created_at, updated_at) VALUES
++  ('0e000000-0000-4000-8000-000000000001','audio-memes','22222222-2222-4222-8222-222222222222/meme-do-b.mp3','22222222-2222-4222-8222-222222222222', now(), now()),
++  ('0e000000-0000-4000-8000-000000000002','audio-memes','legado-na-raiz.mp3','22222222-2222-4222-8222-222222222222', now(), now()),
++  ('0e000000-0000-4000-8000-000000000003','audio-memes','11111111-1111-4111-8111-111111111111/meu-meme.mp3','11111111-1111-4111-8111-111111111111', now(), now()),
++  ('0e000000-0000-4000-8000-000000000004','audio-memes','22222222-2222-4222-8222-222222222222/intocado.mp3','22222222-2222-4222-8222-222222222222', now(), now());
++
++-- Objeto de OUTRO bucket, para provar que a policy nova e escopada ao audio-memes (T8).
++INSERT INTO storage.objects (id, bucket_id, name, owner, created_at, updated_at) VALUES
++  ('0e000000-0000-4000-8000-000000000005','audio-messages','22222222-2222-4222-8222-222222222222/msg-do-b.mp3','22222222-2222-4222-8222-222222222222', now(), now());
++
++-- ---------------------------------------------------------------- assercoes
++DO $prova$
++DECLARE
++  v_falhas integer := 0;
++  v_n      integer;
++  v_bool   boolean;
++  v_txt    text;
++  v_mimes  text[];
++BEGIN
++  ------------------------------------------- T1 admin apaga meme de OUTRO usuario
++  -- [vermelho antes] sem a migration 20261016001136 o admin nao tem policy de DELETE
++  -- neste bucket: 0 linhas afetadas (era o bug relatado no toast 'arquivo ficou orfao').
++  BEGIN
++    SET LOCAL ROLE authenticated;
++    PERFORM set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
++    DELETE FROM storage.objects WHERE id = '0e000000-0000-4000-8000-000000000001';
++    GET DIAGNOSTICS v_n = ROW_COUNT;
++    RESET ROLE;
++    IF v_n <> 1 THEN RAISE EXCEPTION 'admin apagou % linha(s) do meme de outro usuario, esperado 1', v_n; END IF;
++    RAISE NOTICE 'T1 OK    admin apaga meme de OUTRO usuario (1 linha)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T1 FALHOU: %', SQLERRM;
++  END;
++
++  ---------------------------------------------- T2 admin apaga objeto LEGADO na raiz
++  -- [vermelho antes] na raiz do bucket foldername(name) = {} e a policy antiga
++  -- (`foldername[1] = auth.uid()`) fica falsa para QUALQUER usuario.
++  BEGIN
++    SET LOCAL ROLE authenticated;
++    PERFORM set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
++    DELETE FROM storage.objects WHERE id = '0e000000-0000-4000-8000-000000000002';
++    GET DIAGNOSTICS v_n = ROW_COUNT;
++    RESET ROLE;
++    IF v_n <> 1 THEN RAISE EXCEPTION 'admin apagou % linha(s) do objeto legado na raiz, esperado 1', v_n; END IF;
++    RAISE NOTICE 'T2 OK    admin apaga objeto LEGADO na raiz do bucket (1 linha)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T2 FALHOU: %', SQLERRM;
++  END;
++
++  ---------------------------------------------------- T3 dono apaga o PROPRIO meme
++  -- Regressao: a policy "Users can delete own audio memes" (pasta = auth.uid())
++  -- NAO foi tocada e continua valendo.
++  BEGIN
++    SET LOCAL ROLE authenticated;
++    PERFORM set_config('request.jwt.claims','{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
++    DELETE FROM storage.objects WHERE id = '0e000000-0000-4000-8000-000000000003';
++    GET DIAGNOSTICS v_n = ROW_COUNT;
++    RESET ROLE;
++    IF v_n <> 1 THEN RAISE EXCEPTION 'dono apagou % linha(s) do proprio meme, esperado 1', v_n; END IF;
++    RAISE NOTICE 'T3 OK    dono apaga o PROPRIO meme pela policy antiga (1 linha)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T3 FALHOU: %', SQLERRM;
++  END;
++
++  ------------------------------------------------- A4 agente comum x meme de outro
++  -- A policy nova e SO para admin/supervisor: o agente comum continua barrado.
++  BEGIN
++    SET LOCAL ROLE authenticated;
++    PERFORM set_config('request.jwt.claims','{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
++    DELETE FROM storage.objects WHERE id = '0e000000-0000-4000-8000-000000000004';
++    GET DIAGNOSTICS v_n = ROW_COUNT;
++    RESET ROLE;
++    IF v_n <> 0 THEN RAISE EXCEPTION 'agente comum apagou % linha(s) do meme de outro usuario', v_n; END IF;
++    RAISE NOTICE 'T4 OK    agente comum NAO apaga meme de outro usuario (0 linhas)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T4 FALHOU: %', SQLERRM;
++  END;
++
++  ----------------------------------------------------------- T5 anon nao apaga
++  -- anon nao tem policy de DELETE neste bucket (a nova e TO authenticated).
++  -- Falta de privilegio de tabela tambem conta como "nao apagou".
++  BEGIN
++    v_n := 0;
++    SET LOCAL ROLE anon;
++    BEGIN
++      DELETE FROM storage.objects WHERE id = '0e000000-0000-4000-8000-000000000004';
++      GET DIAGNOSTICS v_n = ROW_COUNT;
++    EXCEPTION WHEN insufficient_privilege THEN
++      v_n := 0;
++    END;
++    RESET ROLE;
++    IF v_n <> 0 THEN RAISE EXCEPTION 'anon apagou % linha(s) do bucket', v_n; END IF;
++    RAISE NOTICE 'T5 OK    anon NAO apaga nada do bucket (0 linhas)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T5 FALHOU: %', SQLERRM;
++  END;
++
++  ------------------------------------------------- T6 leitura segue aberta (authenticated)
++  BEGIN
++    SET LOCAL ROLE authenticated;
++    PERFORM set_config('request.jwt.claims','{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
++    SELECT count(*) INTO v_n FROM storage.objects
++     WHERE bucket_id = 'audio-memes' AND id = '0e000000-0000-4000-8000-000000000004';
++    RESET ROLE;
++    IF v_n <> 1 THEN RAISE EXCEPTION 'usuario autenticado enxergou % linha(s) do bucket, esperado 1', v_n; END IF;
++    RAISE NOTICE 'T6 OK    leitura do bucket segue aberta ao authenticated (1 linha)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T6 FALHOU: %', SQLERRM;
++  END;
++
++  ------------------------------------------ T7 bucket publico + teto 5 MB + allowlist audio/*
++  -- A Storage API le estas colunas ANTES de gravar: e o que passa a recusar
++  -- upload acima de 5 MB ou fora de audio/* por chamada direta ao Storage.
++  BEGIN
++    SELECT public, file_size_limit, allowed_mime_types
++      INTO v_bool, v_n, v_mimes
++      FROM storage.buckets WHERE id = 'audio-memes';
++    IF v_bool IS DISTINCT FROM true THEN
++      RAISE EXCEPTION 'bucket audio-memes deixou de ser publico (a URL publica esta em audio_memes.audio_url)';
++    END IF;
++    IF v_n IS DISTINCT FROM 5242880 THEN
++      RAISE EXCEPTION 'file_size_limit = %, esperado 5242880 (5 MB)', v_n;
++    END IF;
++    IF v_mimes IS DISTINCT FROM ARRAY['audio/*']::text[] THEN
++      RAISE EXCEPTION 'allowed_mime_types = %, esperado {audio/*}', coalesce(array_to_string(v_mimes, ','), 'NULL');
++    END IF;
++    RAISE NOTICE 'T7 OK    bucket publico, file_size_limit 5242880 e allowed_mime_types {audio/*}';
++  EXCEPTION WHEN OTHERS THEN
++    v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T7 FALHOU: %', SQLERRM;
++  END;
++
++  ------------------------------------------- T8 admin NAO apaga em OUTRO bucket
++  -- A policy nova e escopada a bucket_id = 'audio-memes'; o audio-messages
++  -- continua so com a policy do proprio dono.
++  BEGIN
++    SET LOCAL ROLE authenticated;
++    PERFORM set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
++    DELETE FROM storage.objects WHERE id = '0e000000-0000-4000-8000-000000000005';
++    GET DIAGNOSTICS v_n = ROW_COUNT;
++    RESET ROLE;
++    IF v_n <> 0 THEN RAISE EXCEPTION 'admin apagou % linha(s) de OUTRO bucket', v_n; END IF;
++    RAISE NOTICE 'T8 OK    admin NAO apaga em OUTRO bucket (0 linhas)';
++  EXCEPTION WHEN OTHERS THEN
++    RESET ROLE; v_falhas := v_falhas + 1;
++    RAISE NOTICE 'T8 FALHOU: %', SQLERRM;
++  END;
++
++  IF v_falhas > 0 THEN
++    RAISE EXCEPTION 'PROVA FALHOU: % de 8 verificacoes falharam', v_falhas;
++  END IF;
++  RAISE NOTICE 'PROVA OK: 8 de 8 verificacoes passaram';
++END $prova$;
++
++ROLLBACK;
