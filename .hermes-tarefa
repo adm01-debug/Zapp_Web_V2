@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=atalhos-inbox-escopo-15c578b9
+ID=26101523515a41
+BRANCH=v2/atalhos-inbox-escopo-15c578b9-26101523515a41
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-inbox-escopo-15c578b9-26101523515a41
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T23:51:29-03:00
+KANBAN=t_15c578b9
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-inbox-escopo-15c578b9-26101523515a41/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101523515a41
+PRONTO_SHA=4a4f542e385a8c4f280c42d066e07f011f99aa0a

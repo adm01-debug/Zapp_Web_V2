@@ -1,0 +1,355 @@
+diff --git a/src/components/inbox/ChatPanel.tsx b/src/components/inbox/ChatPanel.tsx
+index e1ea6560bf..5af2460eec 100644
+--- a/src/components/inbox/ChatPanel.tsx
++++ b/src/components/inbox/ChatPanel.tsx
+@@ -285,7 +285,15 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio,
+   );
+ 
+   useEffect(() => {
+-    const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); handleSetActiveTool('chatSearch'); } };
++    const h = (e: KeyboardEvent) => {
++      // `toLowerCase()`: o mesmo atalho vale com Caps Lock (e.key devolveria 'F').
++      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'f') return;
++      // Overlay aberto (diálogo/menu Radix) é dono do teclado: a busca do chat não
++      // pode abrir por baixo dele (mesmo guarda de `useKeyboardNavigation`).
++      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [role="menu"][data-state="open"]')) return;
++      e.preventDefault();
++      handleSetActiveTool('chatSearch');
++    };
+     window.addEventListener('keydown', h);
+     return () => window.removeEventListener('keydown', h);
+   }, [handleSetActiveTool]);
+diff --git a/src/components/inbox/RealtimeInboxView.tsx b/src/components/inbox/RealtimeInboxView.tsx
+index 835bc8838e..4f8e388e68 100644
+--- a/src/components/inbox/RealtimeInboxView.tsx
++++ b/src/components/inbox/RealtimeInboxView.tsx
+@@ -90,6 +90,25 @@ function focarQuickAdd(tentativas = 20): void {
+   if (tentativas > 0) window.requestAnimationFrame(() => focarQuickAdd(tentativas - 1));
+ }
+ 
++/**
++ * Diálogo ou menu flutuante aberto (padrão Radix usado no projeto).
++ * Enquanto houver overlay, quem é dono do teclado é o overlay — os atalhos do
++ * lote não podem agir por baixo dele (mesma checagem de `useKeyboardNavigation`).
++ */
++function overlayAberto(): boolean {
++  return !!document.querySelector(
++    '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [role="menu"][data-state="open"]',
++  );
++}
++
++/** Campo de edição de texto: o navegador é dono das teclas (Ctrl+A, Delete, r…). */
++function focoEmCampoDeTexto(): boolean {
++  const active = document.activeElement as HTMLElement | null;
++  if (!active) return false;
++  return active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable ||
++    active.getAttribute('contenteditable') === 'true';
++}
++
+ export function RealtimeInboxView() {
+   const isMobile = useIsMobile();
+   const inbox = useRealtimeInbox();
+@@ -187,13 +206,20 @@ export function RealtimeInboxView() {
+ 
+   useEffect(() => {
+     const handleKeyDown = (e: KeyboardEvent) => {
+-      const active = document.activeElement;
+-      const isInput = active?.tagName === 'INPUT' || active?.tagName === 'TEXTAREA' || active?.getAttribute('contenteditable') === 'true';
+-      if (isInput) return;
+-      if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); bulkActions.selectAll(); }
++      // Overlay aberto (diálogo/menu Radix): o teclado é dele.
++      if (overlayAberto()) return;
++      // Campo de texto: o navegador é dono (Ctrl+A seleciona o texto, Delete apaga…).
++      if (focoEmCampoDeTexto()) return;
++      const key = e.key.toLowerCase();
++      // Ctrl+A só seleciona o lote DENTRO do modo de seleção (iniciado pela lista);
++      // fora dele, Ctrl+A continua sendo a seleção de texto do navegador.
++      if ((e.ctrlKey || e.metaKey) && key === 'a') {
++        if (!bulkActions.selectionMode) return;
++        e.preventDefault(); bulkActions.selectAll(); return;
++      }
+       if ((e.key === 'Delete' || e.key === 'Backspace') && bulkActions.selectionMode && bulkActions.selectedIds.size > 0) { e.preventDefault(); bulkActions.bulkArchive(); }
+       if (e.key === 'Escape' && bulkActions.selectionMode) { e.preventDefault(); bulkActions.clearSelection(); }
+-      if (e.key === 'r' && bulkActions.selectionMode && bulkActions.selectedIds.size > 0 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); bulkActions.bulkMarkAsRead(); }
++      if (key === 'r' && bulkActions.selectionMode && bulkActions.selectedIds.size > 0 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); bulkActions.bulkMarkAsRead(); }
+     };
+     window.addEventListener('keydown', handleKeyDown);
+     return () => window.removeEventListener('keydown', handleKeyDown);
+diff --git a/src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx b/src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+index 499914c195..fed217da7a 100644
+--- a/src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
++++ b/src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+@@ -195,4 +195,35 @@ describe('ChatPanel — atalhos de busca do composer (R2-INB-017)', () => {
+ 
+     expect(await screen.findByPlaceholderText('Buscar na conversa...')).toBeInTheDocument();
+   });
++
++  // t_15c578b9 — o atalho compare por `e.key.toLowerCase()` (Caps Lock devolve 'F')
++  // e não age por baixo de um diálogo/menu Radix aberto.
++  it('Ctrl+F com Caps Lock (e.key "F") abre a busca da conversa', async () => {
++    renderPainel();
++
++    act(() => {
++      fireEvent.keyDown(document.body, { key: 'F', ctrlKey: true });
++    });
++
++    expect(await screen.findByPlaceholderText('Buscar na conversa...')).toBeInTheDocument();
++  });
++
++  it('com diálogo aberto o Ctrl+F não abre a busca da conversa', async () => {
++    renderPainel();
++
++    const dialog = document.createElement('div');
++    dialog.setAttribute('role', 'dialog');
++    dialog.setAttribute('data-state', 'open');
++    document.body.appendChild(dialog);
++
++    try {
++      act(() => {
++        fireEvent.keyDown(document.body, { key: 'f', ctrlKey: true });
++      });
++
++      expect(screen.queryByPlaceholderText('Buscar na conversa...')).not.toBeInTheDocument();
++    } finally {
++      dialog.remove();
++    }
++  });
+ });
+diff --git a/src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx b/src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx
+new file mode 100644
+index 0000000000..2600cd0657
+--- /dev/null
++++ b/src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx
+@@ -0,0 +1,232 @@
++/**
++ * Cartão t_15c578b9 — atalhos de teclado do Inbox só agem com escopo.
++ *
++ * Antes: o listener de `window` de `RealtimeInboxView` (bulk: Ctrl+A, Delete,
++ * Backspace, `r`, Escape) só ignorava INPUT/TEXTAREA/contenteditable. Assim,
++ * Ctrl+A com o foco em texto de LEITURA (mensagem, painel direito) virava
++ * "selecionar todas as conversas" e bloqueava a seleção de texto; e Delete/`r`
++ * agiam por baixo de um diálogo/menu Radix aberto.
++ *
++ * Prova pelo componente REAL (`RealtimeInboxView`), com o hook de dados e o filho
++ * pesado trocados por dublês de fronteira; o listener sob prova é o de produção.
++ * O campo de texto do critério 1 é o composer da conversa (aqui um `<textarea>`
++ * real, no lugar do componente pesado), porque o alvo é o handler da view.
++ */
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { render, screen, fireEvent, act } from '@testing-library/react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { TooltipProvider } from '@/components/ui/tooltip';
++import type { Conversation, Message } from '@/types/chat';
++
++const mocks = vi.hoisted(() => ({
++  inbox: {} as Record<string, unknown>,
++  bulk: {
++    selectAll: vi.fn(),
++    selectionMode: false,
++    selectedIds: new Set<string>(),
++    bulkArchive: vi.fn(),
++    clearSelection: vi.fn(),
++    bulkMarkAsRead: vi.fn(),
++  },
++}));
++
++vi.mock('@/hooks/inbox/useRealtimeInbox', () => ({ useRealtimeInbox: () => mocks.inbox }));
++vi.mock('@/hooks/inbox/useInboxBulkActions', () => ({ useInboxBulkActions: () => mocks.bulk }));
++
++// ---- dependências próprias da RealtimeInboxView (nenhuma delas é o alvo) ----
++vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
++vi.mock('@/hooks/ui/usePullToRefresh', () => ({ usePullToRefresh: () => ({}) }));
++vi.mock('@/hooks/ui/useGlobalSearchShortcut', () => ({ useGlobalSearchShortcut: vi.fn() }));
++vi.mock('@/hooks/inbox/useInboxFilters', () => ({
++  useInboxFilters: () => ({ filteredConversations: [], setMainTab: vi.fn(), setSubTab: vi.fn() }),
++}));
++vi.mock('@/hooks/chat/useConversationActions', () => ({
++  useConversationActions: () => ({
++    pinnedIds: new Set<string>(), snoozedIds: new Set<string>(), isFavorite: () => false,
++    favoriteContact: vi.fn(), unfavoriteContact: vi.fn(), archiveContact: vi.fn(),
++  }),
++}));
++vi.mock('@/hooks/chat/useConversationTabCounts', () => ({ useConversationTabCounts: () => ({ counts: {} }) }));
++vi.mock('@/hooks/crm/useContactCrm360', () => ({ useContactCrm360: () => ({ data: null }) }));
++vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({ useContactUnreadEmails: () => ({ count: 0, status: 'ok' }) }));
++vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
++vi.mock('@/features/talk-me/useTalkMeQueue', () => ({
++  useTalkMeQueue: () => ({ queuesError: false, selectedQueue: null, queuesLoading: false }),
++}));
++
++// ---- irmãos pesados / lazy ----
++vi.mock('@/components/mobile/MiniChatPiP', () => ({ MiniChatPiP: () => null }));
++vi.mock('../NewMessageIndicator', () => ({ NewMessageIndicator: () => null }));
++vi.mock('../InboxEmptyChat', () => ({ InboxEmptyChat: () => null }));
++vi.mock('../ConversationListSidebar', () => ({ ConversationListSidebar: () => null }));
++vi.mock('../chat/ConversationTabs', () => ({ ConversationTabs: () => null }));
++vi.mock('../chat/ConversationTabContent', () => ({
++  ConversationTabContent: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
++}));
++vi.mock('@/features/talk-me/TalkMeView', () => ({ TalkMeView: () => null }));
++vi.mock('../ContactDetails', () => ({ default: () => null }));
++vi.mock('../ContactDetailsResponsive', () => ({ default: () => null }));
++vi.mock('../GlobalSearch', () => ({ default: () => null }));
++vi.mock('../NewConversationModal', () => ({ default: () => null }));
++
++// O composer real (`ChatInputArea`) puxa muitos provedores que não são o alvo;
++// aqui ele é o campo de texto REAL do critério 1 (um `<textarea>` montado no DOM).
++vi.mock('../ChatPanel', () => ({
++  ChatPanel: () => <textarea aria-label="Digite sua mensagem" />,
++}));
++
++import { RealtimeInboxView } from '../RealtimeInboxView';
++
++const CONTACT_ID = 'contato-1';
++
++const conversation = {
++  id: CONTACT_ID,
++  contact: { id: CONTACT_ID, name: 'Maria Silva', phone: '+551****9999', avatar: '' },
++} as unknown as Conversation;
++
++const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++
++function renderInbox() {
++  return render(
++    <QueryClientProvider client={queryClient}>
++      <TooltipProvider>
++        <RealtimeInboxView />
++      </TooltipProvider>
++    </QueryClientProvider>,
++  );
++}
++
++function baseInbox(): Record<string, unknown> {
++  return {
++    cachedConversations: [],
++    loading: false,
++    error: null,
++    usingCache: false,
++    selectedContactId: CONTACT_ID,
++    setSelectedContactId: vi.fn(),
++    setSelectedContact: vi.fn(),
++    markAsRead: vi.fn(),
++    handleSelectConversation: vi.fn(),
++    pendingContactId: null,
++    setPendingContactId: vi.fn(),
++    conversationTab: 'chat',
++    setConversationTab: vi.fn(),
++    globalSearchOpen: false,
++    setGlobalSearchOpen: vi.fn(),
++    newMessageNotification: null,
++    dismissNotification: vi.fn(),
++    handleNotificationView: vi.fn(),
++    showNewConversation: false,
++    setShowNewConversation: vi.fn(),
++    showDetails: false,
++    setShowDetails: vi.fn(),
++    pipContact: null,
++    setPipContact: vi.fn(),
++    refetch: vi.fn(),
++    profile: { id: 'perfil-1' },
++    selectedMessagesLoading: false,
++    selectedMessagesError: null,
++    legacyConversation: conversation,
++    legacyMessages: [] as Message[],
++    handleSendMessage: vi.fn(),
++    handleSendAudio: vi.fn(),
++    hasOlderMessages: false,
++    loadingOlderMessages: false,
++    loadOlderMessages: vi.fn(),
++  };
++}
++
++let dialogAberto: HTMLElement | null = null;
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  mocks.inbox = baseInbox();
++  mocks.bulk.selectionMode = false;
++  mocks.bulk.selectedIds = new Set<string>();
++});
++
++afterEach(() => {
++  dialogAberto?.remove();
++  dialogAberto = null;
++});
++
++/** Overlay Radix aberto, como o de um diálogo/menu do projeto. */
++function abrirDialogo() {
++  dialogAberto = document.createElement('div');
++  dialogAberto.setAttribute('role', 'dialog');
++  dialogAberto.setAttribute('data-state', 'open');
++  document.body.appendChild(dialogAberto);
++}
++
++function tecla(
++  alvo: Element,
++  key: string,
++  opts: { ctrlKey?: boolean; metaKey?: boolean } = {},
++) {
++  act(() => {
++    fireEvent.keyDown(alvo, { key, ...opts });
++  });
++}
++
++const composer = () => screen.getByLabelText('Digite sua mensagem');
++
++describe('Inbox — escopo dos atalhos de teclado (t_15c578b9)', () => {
++  it('Ctrl+A fora de campo e fora do modo de seleção NÃO seleciona as conversas', () => {
++    renderInbox();
++
++    tecla(document.body, 'a', { ctrlKey: true });
++
++    // Antes da correção, qualquer Ctrl+A virava "selecionar todas".
++    expect(mocks.bulk.selectAll).not.toHaveBeenCalled();
++  });
++
++  it('critério 1: Ctrl+A num campo de texto não seleciona conversas (nem no modo de seleção)', () => {
++    mocks.bulk.selectionMode = true;
++    renderInbox();
++
++    composer().focus();
++    tecla(composer(), 'a', { ctrlKey: true });
++
++    expect(mocks.bulk.selectAll).not.toHaveBeenCalled();
++  });
++
++  it('critério 2: com diálogo aberto os atalhos não agem', () => {
++    mocks.bulk.selectionMode = true;
++    mocks.bulk.selectedIds = new Set([CONTACT_ID]);
++    renderInbox();
++    abrirDialogo();
++
++    tecla(document.body, 'a', { ctrlKey: true });
++    tecla(document.body, 'r');
++    tecla(document.body, 'Delete');
++    tecla(document.body, 'Escape');
++
++    expect(mocks.bulk.selectAll).not.toHaveBeenCalled();
++    expect(mocks.bulk.bulkMarkAsRead).not.toHaveBeenCalled();
++    expect(mocks.bulk.bulkArchive).not.toHaveBeenCalled();
++    expect(mocks.bulk.clearSelection).not.toHaveBeenCalled();
++  });
++
++  it('sem overlay e com seleção ativa os atalhos continuam agindo (as guardas não desligam tudo)', () => {
++    mocks.bulk.selectionMode = true;
++    mocks.bulk.selectedIds = new Set([CONTACT_ID]);
++    renderInbox();
++
++    tecla(document.body, 'a', { ctrlKey: true });
++    tecla(document.body, 'r');
++    tecla(document.body, 'Delete');
++
++    expect(mocks.bulk.selectAll).toHaveBeenCalledTimes(1);
++    expect(mocks.bulk.bulkMarkAsRead).toHaveBeenCalledTimes(1);
++    expect(mocks.bulk.bulkArchive).toHaveBeenCalledTimes(1);
++  });
++
++  it('Ctrl+A com Caps Lock segue a mesma regra (fora de campo, sem seleção, não age)', () => {
++    renderInbox();
++
++    // Caps Lock ligado: `e.key` chega 'A'.
++    tecla(document.body, 'A', { ctrlKey: true });
++
++    expect(mocks.bulk.selectAll).not.toHaveBeenCalled();
++  });
++});

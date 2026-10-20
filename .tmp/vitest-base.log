@@ -1,0 +1,408 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-inbox-escopo-15c578b9-26101523515a41/.tmp/prova-base
+
+stderr | src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx > Inbox — escopo dos atalhos de teclado (t_15c578b9) > Ctrl+A fora de campo e fora do modo de seleção NÃO seleciona as conversas
+A suspended resource finished loading inside a test, but the event was not wrapped in act(...).
+
+When testing, code that resolves suspended data should be wrapped into act(...):
+
+act(() => {
+  /* finish loading suspended data */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+A suspended resource finished loading inside a test, but the event was not wrapped in act(...).
+
+When testing, code that resolves suspended data should be wrapped into act(...):
+
+act(() => {
+  /* finish loading suspended data */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+x·x··Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+·Not implemented: Window's scrollTo() method
+····stderr | src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx > ChatPanel — atalhos de busca do composer (R2-INB-017) > com diálogo aberto o Ctrl+F não abre a busca da conversa
+An update to MentionAutocomplete inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx > ChatPanel — atalhos de busca do composer (R2-INB-017) > Ctrl+F com Caps Lock (e.key "F") abre a busca da conversa
+TestingLibraryElementError: Unable to find an element with the placeholder text of: Buscar na conversa...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mdata-testid[39m=[32m"aberturas-busca-global"[39m
+    [36m>[39m
+      [0m0[0m
+    [36m</span>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 min-w-0 overflow-hidden relative "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative isolate flex flex-col flex-1 h-full min-h-0 min-w-0 overflow-hidden bg-inbox-panel"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"hidden"[39m
+          [33mmultiple[39m=[32m""[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"file"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 px-4 pt-2 overflow-x-auto scrollbar-none"[39m
+          [33mdata-testid[39m=[32m"quick-action-chips"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-state[39m=[32m"closed"[39m
+            [33mdata-testid[39m=[32m"chip-quick-reply"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square-text w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11h10"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 15h6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 7h8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mResposta Rápida[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-testid[39m=[32m"chip-attach"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-paperclip w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAnexar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-testid[39m=[32m"chip-schedule"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-calendar-clock w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 14v2.2l1.6 1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 2v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 10h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 2v4"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"16"[39m
+                [33mcy[39m=[32m"16"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAgendar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-testid[39m=[32m"chip-transfer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-left-right w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33m...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mdata-testid[39m=[32m"aberturas-busca-global"[39m
+    [36m>[39m
+      [0m0[0m
+    [36m</span>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 min-w-0 overflow-hidden relative "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative isolate flex flex-col flex-1 h-full min-h-0 min-w-0 overflow-hidden bg-inbox-panel"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"hidden"[39m
+          [33mmultiple[39m=[32m""[39m
+          [33mtabindex[39m=[32m"-1"[39m
+          [33mtype[39m=[32m"file"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 px-4 pt-2 overflow-x-auto scrollbar-none"[39m
+          [33mdata-testid[39m=[32m"quick-action-chips"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-state[39m=[32m"closed"[39m
+            [33mdata-testid[39m=[32m"chip-quick-reply"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square-text w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11h10"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 15h6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 7h8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mResposta Rápida[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-testid[39m=[32m"chip-attach"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-paperclip w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAnexar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-testid[39m=[32m"chip-schedule"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-calendar-clock w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 14v2.2l1.6 1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 2v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 10h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 2v4"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"16"[39m
+                [33mcy[39m=[32m"16"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mAgendar[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"h-9 px-3 rounded-lg bg-muted/60 border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground gap-2 inline-flex items-center whitespace-nowrap shrink-0 transition-colors"[39m
+            [33mdata-testid[39m=[32m"chip-transfer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-left-right w-[15px] h-[15px]"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33m...
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx:208:25
+    206|     });
+    207|
+    208|     expect(await screen.findByPlaceholderText('Buscar na conversa...')…
+       |                         ^
+    209|   });
+    210|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx > ChatPanel — atalhos de busca do composer (R2-INB-017) > com diálogo aberto o Ctrl+F não abre a busca da conversa
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <input
+  class="flex w-full rounded-xl border ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm py-2 h-full text-sm border-none bg-transparent shadow-none focus-visible:ring-0 px-0 min-w-0"
+  placeholder="Buscar na conversa..."
+  value=""
+/> instead[39m
+ ❯ src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx:224:74
+    222|       });
+    223|
+    224|       expect(screen.queryByPlaceholderText('Buscar na conversa...')).n…
+       |                                                                          ^
+    225|     } finally {
+    226|       dialog.remove();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx > Inbox — escopo dos atalhos de teclado (t_15c578b9) > Ctrl+A fora de campo e fora do modo de seleção NÃO seleciona as conversas
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx:180:38
+    178|
+    179|     // Antes da correção, qualquer Ctrl+A virava "selecionar todas".
+    180|     expect(mocks.bulk.selectAll).not.toHaveBeenCalled();
+       |                                      ^
+    181|   });
+    182|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx > Inbox — escopo dos atalhos de teclado (t_15c578b9) > critério 2: com diálogo aberto os atalhos não agem
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx:204:38
+    202|     tecla(document.body, 'Escape');
+    203|
+    204|     expect(mocks.bulk.selectAll).not.toHaveBeenCalled();
+       |                                      ^
+    205|     expect(mocks.bulk.bulkMarkAsRead).not.toHaveBeenCalled();
+    206|     expect(mocks.bulk.bulkArchive).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 8 passed (12)
+   Start at  00:09:27
+   Duration  27.62s (transform 15.62s, setup 1.41s, import 20.63s, tests 8.16s, environment 3.20s)
+

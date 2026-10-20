@@ -1,0 +1,4 @@
+9	1	src/components/inbox/ChatPanel.tsx
+31	5	src/components/inbox/RealtimeInboxView.tsx
+31	0	src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+232	0	src/components/inbox/__tests__/RealtimeInboxView.atalhos-teclado.test.tsx
