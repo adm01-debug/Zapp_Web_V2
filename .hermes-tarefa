@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auto-reconnect-log
+ID=26101209546aae
+BRANCH=v2/auto-reconnect-log-26101209546aae
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auto-reconnect-log-26101209546aae
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T09:54:36-03:00
+KANBAN=t_a77a5aad
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auto-reconnect-log-26101209546aae/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-26101209546aae
+PRONTO_SHA=21ee8ea55a279068bf65494f62fa0ad228278c0d
