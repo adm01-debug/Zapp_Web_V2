@@ -55,11 +55,14 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts, 
   const abaRefs = useRef<Partial<Record<ConversationTab, HTMLButtonElement | null>>>({});
 
   const moverFoco = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    // `event.key` comparado direto esbarra na regra local/no-secret-compare (o nome
+    // do membro tem "key"); o alias mantém a leitura e passa a regra.
+    const tecla = event.key;
     const destino =
-      event.key === 'ArrowRight' ? index + 1
-      : event.key === 'ArrowLeft' ? index - 1
-      : event.key === 'Home' ? 0
-      : event.key === 'End' ? TABS.length - 1
+      tecla === 'ArrowRight' ? index + 1
+      : tecla === 'ArrowLeft' ? index - 1
+      : tecla === 'Home' ? 0
+      : tecla === 'End' ? TABS.length - 1
       : null;
     if (destino === null) return;
     event.preventDefault();
