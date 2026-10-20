@@ -1,0 +1,53 @@
+/**
+ * Regra pura da faixa "conexao instavel" (cartao "avisos globais de conexao
+ * degradada e de servidor fora do ar / restaurado").
+ *
+ * Fica FORA do modulo de componente de proposito: `react-refresh/only-export-
+ * components` (ratchet de lint, divida nova = 0) recusa arquivo `.tsx` que
+ * exporta componente E funcao/constante ao mesmo tempo.
+ */
+import type { ConnectionHealth, DisconnectEvent } from '@/hooks/connections/useConnectionsHealth';
+
+/** Janela em que uma queda recente deixa a conexao "instavel". */
+export const UNSTABLE_WINDOW_MS = 10 * 60 * 1000;
+/** Ritmo do relogio que faz a faixa expirar sozinha ao fim da janela. */
+export const UNSTABLE_TICK_MS = 60_000;
+
+export interface UnstableConnection {
+  id: string;
+  name: string;
+  droppedAt: number;
+}
+
+/**
+ * Conexoes que cairam DENTRO da janela e ja voltaram (`healthy`).
+ *
+ * Conexao que continua desconectada NAO entra: essa ja e mostrada pelo
+ * `EvolutionDisconnectBanner` (`status = 'disconnected'`), e "instavel" aqui
+ * quer dizer caiu e voltou.
+ *
+ * `history` vem do mais novo para o mais antigo, entao a primeira ocorrencia de
+ * cada conexao e a queda mais recente.
+ */
+export function selectUnstableConnections(
+  connections: ConnectionHealth[],
+  history: DisconnectEvent[],
+  now: number,
+  windowMs: number = UNSTABLE_WINDOW_MS,
+): UnstableConnection[] {
+  const healthy = new Set(
+    connections.filter((connection) => connection.healthy).map((connection) => connection.id),
+  );
+  const seen = new Set<string>();
+  const unstable: UnstableConnection[] = [];
+
+  for (const event of history) {
+    if (now - event.at > windowMs) continue;
+    if (!healthy.has(event.connectionId)) continue;
+    if (seen.has(event.connectionId)) continue;
+    seen.add(event.connectionId);
+    unstable.push({ id: event.connectionId, name: event.name, droppedAt: event.at });
+  }
+
+  return unstable;
+}

@@ -1,0 +1,31 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-globais-conexao-degradada-servido-2610122027cebe
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > marca down e recua 30s -> 60s -> 120s -> 240s (teto) enquanto falha
+[2026-10-13T00:06:43.384Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > marca down e recua 30s -> 60s -> 120s -> 240s (teto) enquanto falha
+[2026-10-13T00:07:13.384Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > marca down e recua 30s -> 60s -> 120s -> 240s (teto) enquanto falha
+[2026-10-13T00:08:13.384Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > marca down e recua 30s -> 60s -> 120s -> 240s (teto) enquanto falha
+[2026-10-13T00:10:13.384Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > marca down e recua 30s -> 60s -> 120s -> 240s (teto) enquanto falha
+[2026-10-13T00:14:13.384Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > marca down e recua 30s -> 60s -> 120s -> 240s (teto) enquanto falha
+[2026-10-13T00:18:13.384Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+stderr | src/hooks/system/__tests__/useBackendHealth.test.ts > useBackendHealth (monitor de servidor) > volta para a cadencia de 30s e avisa "Conexao restaurada" na recuperacao
+[2026-10-13T00:06:43.405Z] [WARN] [BackendHealth] [sid:993e4bbf] backend indisponivel fetch failed
+
+·····································
+
+ Test Files  4 passed (4)
+      Tests  37 passed (37)
+   Start at  21:06:41
+   Duration  3.52s (transform 1.62s, setup 2.30s, import 2.96s, tests 1.14s, environment 4.39s)
+

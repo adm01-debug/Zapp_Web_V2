@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=avisos-globais-conexao-degradada-servido
+ID=2610122027cebe
+BRANCH=v2/avisos-globais-conexao-degradada-servido-2610122027cebe
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-globais-conexao-degradada-servido-2610122027cebe
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T20:27:34-03:00
+KANBAN=t_34b7382a
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-globais-conexao-degradada-servido-2610122027cebe/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610122027cebe
+PRONTO_SHA=114a7efc902a8f4589e17745aa61b9e8c7ed4501

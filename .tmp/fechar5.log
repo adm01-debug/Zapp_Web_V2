@@ -1,0 +1,9 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/pages/Index.tsx, src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+OK      db_guard        0s
+FALHOU  tipos           0s  (ver /home/joaquim_ataides/.local/state/zapp-verify/93909488b0e4/tipos.log)
+tc-rapido: erro sem diagnóstico reconhecível
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro.
+VERIFY: VERMELHO em tipos (0s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-globais-conexao-degradada-servido-2610122027cebe/.tmp/verify-2610122027cebe.log)
