@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-chamada-foto-contato-2610151604cb55
+
+···
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:19:13
+   Duration  3.50s (transform 988ms, setup 483ms, import 1.30s, tests 299ms, environment 1.14s)
+

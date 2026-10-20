@@ -1,0 +1,3 @@
+26	3	src/components/calls/IncomingCallAlert.tsx
+143	0	src/components/calls/__tests__/IncomingCallAlert.foto.test.tsx
+68	0	src/hooks/calls/useFotoDoContato.ts

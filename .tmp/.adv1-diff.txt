@@ -1,0 +1,284 @@
+diff --git a/src/components/calls/IncomingCallAlert.tsx b/src/components/calls/IncomingCallAlert.tsx
+index 5064fc99a6..4e2be2443c 100644
+--- a/src/components/calls/IncomingCallAlert.tsx
++++ b/src/components/calls/IncomingCallAlert.tsx
+@@ -11,6 +11,7 @@ import { ROTULO_IGNORAR_WHATSAPP } from '@/lib/calls/WhatsAppCallAdapter';
+ import { deveTocar, proximoToque, type EstadoDeToque } from '@/lib/calls/toqueDaChamada';
+ import { useTerminoRemoto } from '@/hooks/calls/useTerminoRemoto';
+ import { useAcoesDoAlerta } from '@/hooks/calls/useAcoesDoAlerta';
++import { useFotoDoContato } from '@/hooks/calls/useFotoDoContato';
+ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+ import { useCallSession } from '@/providers/CallSessionProvider';
+ import { cn } from '@/lib/utils';
+@@ -71,6 +72,9 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
+   const { voip, whatsapp, rotuloLinhaWhatsApp } = useCallChannels();
+   // O provedor da sessão é a fonte única de "esta chamada acabou" (T28/R2-CALL-006).
+   const { session } = useCallSession();
++  // Foto do contato que está ligando (paridade com o alerta da V3): lida da
++  // tabela `contacts` sob a RLS do agente; sem foto (ou com erro), iniciais.
++  const fotoDoContato = useFotoDoContato(incomingCall?.contact_id);
+   // T28: quando o outro lado desliga, a linha em `calls` encerra a sessao e o alerta
+   // sai de cena sozinho (o listener para de entrega-la).
+   useTerminoRemoto(incomingCall?.callId);
+@@ -85,6 +89,14 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
+   const identidadeEmCena = incomingCall ? identidadeDaChamada(incomingCall) : null;
+   const showDialog = identidadeEmCena !== null && chamadaAtendida === identidadeEmCena;
+ 
++  /**
++   * Foto que não carrega não pode virar um quadrado vazio: a falha fica ancorada
++   * na identidade da chamada EM CENA, então a próxima ligação volta a tentar a
++   * foto dela. (Sem `setState` síncrono em efeito, que o lint do projeto reprova.)
++   */
++  const [fotoFalhouEm, setFotoFalhouEm] = useState<string | null>(null);
++  const mostrarFoto = fotoDoContato !== null && fotoFalhouEm !== identidadeEmCena;
++
+   /**
+    * R2-CALL-006 (#282): quem sabe que a chamada acabou é o PROVEDOR. Sem
+    * acompanhar o estado terminal dele, a notificação ficava na tela (e o toque,
+@@ -253,9 +265,20 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
+           {/* Contact info */}
+           <div className="p-4 flex items-center gap-3">
+             <Avatar className="h-12 w-12">
+-              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+-                {getInitials(incomingCall.contact_name)}
+-              </AvatarFallback>
++              {mostrarFoto ? (
++                <img
++                  src={fotoDoContato ?? undefined}
++                  // Decorativa: o nome do contato é lido no texto ao lado.
++                  alt=""
++                  data-testid="foto-do-contato"
++                  className="h-full w-full object-cover"
++                  onError={() => setFotoFalhouEm(identidadeEmCena)}
++                />
++              ) : (
++                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
++                  {getInitials(incomingCall.contact_name)}
++                </AvatarFallback>
++              )}
+             </Avatar>
+             <div className="flex-1 min-w-0">
+               <p className="font-semibold text-foreground truncate">
+diff --git a/src/components/calls/__tests__/IncomingCallAlert.foto.test.tsx b/src/components/calls/__tests__/IncomingCallAlert.foto.test.tsx
+new file mode 100644
+index 0000000000..413a48d5d7
+--- /dev/null
++++ b/src/components/calls/__tests__/IncomingCallAlert.foto.test.tsx
+@@ -0,0 +1,143 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen, fireEvent, waitFor } from '@testing-library/react';
++
++// Foto do contato no alerta de chamada recebida (paridade V3): com foto,
++// sem foto e foto que não carrega. O componente RENDERIZADO é o real
++// (`../IncomingCallAlert`); o que é dublado é a fronteira de dados (o listener
++// que entrega a notificação e o client do Supabase que devolve o contato).
++
++const { estado, mockDismissCall, mockFrom, contato } = vi.hoisted(() => ({
++  estado: { incomingCall: null as null | Record<string, unknown> },
++  mockDismissCall: vi.fn(),
++  mockFrom: vi.fn(),
++  contato: { data: null as { avatar_url: string | null } | null, error: null as { message: string } | null },
++}));
++
++vi.mock('framer-motion', () => ({
++  motion: {
++    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
++  },
++  AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
++}));
++
++vi.mock('../CallDialog', () => ({ CallDialog: () => null }));
++
++vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
++  useIncomingCallListener: () => ({
++    incomingCall: estado.incomingCall,
++    dismissCall: mockDismissCall,
++  }),
++}));
++
++vi.mock('@/providers/CallSessionProvider', () => ({
++  useCallSession: () => ({
++    accept: vi.fn(),
++    reject: vi.fn(),
++    session: { status: 'ringing_in', sessionId: 'k1', answeredAt: null },
++  }),
++}));
++
++vi.mock('@/hooks/calls/useCallChannels', () => ({
++  useCallChannels: () => ({
++    voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true },
++    whatsapp: { channel: 'whatsapp', canDial: false, canReceive: true, canRecord: false, canReject: false },
++  }),
++}));
++
++vi.mock('@/hooks/system/useNotificationSettings', () => ({
++  useNotificationSettings: () => ({
++    settings: { soundEnabled: false, soundVolume: 70 },
++    isQuietHours: () => false,
++  }),
++}));
++
++vi.mock('@/lib/logger', () => ({
++  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
++  log: { error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() },
++}));
++
++vi.mock('@/lib/calls/persistence', async (importOriginal) => {
++  const real = await importOriginal<typeof import('@/lib/calls/persistence')>();
++  return { ...real, upsertMyCall: vi.fn() };
++});
++
++vi.mock('@/components/catalog/useSendProduct', () => ({
++  openContactChat: vi.fn(),
++}));
++
++// O realtime do término remoto abre canal; o transporte é dublado (nenhum byte
++// sai para a rede) e `from` é o caminho da foto do contato.
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    from: (...args: unknown[]) => mockFrom(...args),
++    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
++    removeChannel: vi.fn(),
++  },
++}));
++
++import { IncomingCallAlert } from '../IncomingCallAlert';
++
++const CHAMADA = {
++  id: 'n1',
++  callId: 'k1',
++  contact_id: 'c1',
++  contact_name: 'Fulano de Tal',
++  contact_phone: '+55 11 99999-0000',
++  is_video: false,
++  whatsapp_connection_id: null,
++  started_at: '2026-09-30T00:00:00Z',
++};
++
++/** Resposta do banco para a leitura da foto (`contacts.avatar_url`). */
++function bancoRespondeAvatar(avatarUrl: string | null) {
++  contato.data = avatarUrl === null ? null : { avatar_url: avatarUrl };
++  contato.error = null;
++}
++
++describe('IncomingCallAlert — foto do contato que está ligando', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    estado.incomingCall = CHAMADA;
++    bancoRespondeAvatar(null);
++    mockFrom.mockReturnValue({
++      select: vi.fn().mockReturnValue({
++        eq: vi.fn().mockReturnValue({
++          maybeSingle: vi.fn(() => Promise.resolve({ data: contato.data, error: contato.error })),
++        }),
++      }),
++    });
++  });
++
++  it('mostra a foto quando o contato tem uma', async () => {
++    bancoRespondeAvatar('https://cdn.exemplo/foto-do-fulano.jpg');
++    render(<IncomingCallAlert />);
++
++    const foto = await screen.findByTestId('foto-do-contato');
++    expect(foto).toHaveAttribute('src', 'https://cdn.exemplo/foto-do-fulano.jpg');
++    // Decorativa: `alt` vazio, porque o nome já é lido ao lado.
++    expect(foto).toHaveAttribute('alt', '');
++    expect(screen.queryByText('FD')).toBeNull();
++    // A foto vem do contato da própria chamada, não de um terceiro.
++    expect(mockFrom).toHaveBeenCalledWith('contacts');
++  });
++
++  it('cai nas iniciais quando o contato não tem foto', async () => {
++    render(<IncomingCallAlert />);
++
++    expect(await screen.findByText('FD')).toBeTruthy();
++    expect(screen.queryByTestId('foto-do-contato')).toBeNull();
++  });
++
++  it('cai nas iniciais quando a foto não carrega (imagem quebrada)', async () => {
++    bancoRespondeAvatar('https://cdn.exemplo/foto-inexistente.jpg');
++    render(<IncomingCallAlert />);
++
++    const foto = await screen.findByTestId('foto-do-contato');
++    fireEvent.error(foto);
++
++    await waitFor(() => {
++      expect(screen.queryByTestId('foto-do-contato')).toBeNull();
++    });
++    expect(screen.getByText('FD')).toBeTruthy();
++  });
++});
+diff --git a/src/hooks/calls/useFotoDoContato.ts b/src/hooks/calls/useFotoDoContato.ts
+new file mode 100644
+index 0000000000..ad8fe51f46
+--- /dev/null
++++ b/src/hooks/calls/useFotoDoContato.ts
+@@ -0,0 +1,68 @@
++/**
++ * Foto do contato que está ligando, para o alerta de chamada recebida
++ * (`src/components/calls/IncomingCallAlert.tsx`).
++ *
++ * Paridade com a V3: lá o `useIncomingCallBroadcast` entrega
++ * `contact_avatar_url` junto da notificação e o alerta mostra a foto. A
++ * notificação da V2 (Edge `buildIncomingCallNotification`) carrega só
++ * `contact_id`/nome/telefone, então a foto é lida aqui, pelo MESMO caminho de
++ * contatos que o listener já usa (`contacts.avatar_url`, sob a RLS do agente —
++ * nenhuma foto de terceiro fora do que a RLS permite).
++ *
++ * Best-effort: sem `contact_id`, sem linha visível ou com erro de rede, a
++ * resposta é `null` e o alerta cai nas iniciais. Perder a foto é aceitável;
++ * derrubar o alerta da chamada, não.
++ *
++ * A foto resolvida fica ancorada no `id` do contato que a pediu: quando a
++ * chamada seguinte troca de contato, o valor antigo deixa de valer sozinho (sem
++ * `setState` sincrono no efeito, que o lint do projeto reprova).
++ */
++
++import { useEffect, useState } from 'react';
++import { supabase } from '@/integrations/supabase/client';
++import { getLogger } from '@/lib/logger';
++
++const log = getLogger('useFotoDoContato');
++
++export function useFotoDoContato(contactId: string | null | undefined): string | null {
++  const [resolvida, setResolvida] = useState<{ contactId: string; foto: string | null } | null>(null);
++
++  useEffect(() => {
++    if (!contactId) return;
++
++    let ativo = true;
++
++    void (async () => {
++      try {
++        const { data, error } = await supabase
++          .from('contacts')
++          .select('avatar_url')
++          .eq('id', contactId)
++          .maybeSingle();
++
++        if (!ativo) return;
++
++        if (error) {
++          log.warn('Não foi possível ler a foto do contato da chamada', { contactId });
++          setResolvida({ contactId, foto: null });
++          return;
++        }
++
++        setResolvida({ contactId, foto: (data as { avatar_url?: string | null } | null)?.avatar_url ?? null });
++      } catch (err) {
++        // Best-effort de verdade: cliente indisponível, RLS ou rede fora não
++        // podem virar erro solto — o alerta existe para tocar, não para buscar foto.
++        if (!ativo) return;
++        log.warn('Leitura da foto do contato falhou', { contactId, err });
++        setResolvida({ contactId, foto: null });
++      }
++    })();
++
++    return () => {
++      ativo = false;
++    };
++  }, [contactId]);
++
++  if (!contactId) return null;
++  return resolvida && resolvida.contactId === contactId ? resolvida.foto : null;
++}

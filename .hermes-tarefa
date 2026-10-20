@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alerta-chamada-foto-contato
+ID=2610151604cb55
+BRANCH=v2/alerta-chamada-foto-contato-2610151604cb55
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-chamada-foto-contato-2610151604cb55
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T16:04:21-03:00
+KANBAN=t_46051a47
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alerta-chamada-foto-contato-2610151604cb55/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610151604cb55
+PRONTO_SHA=05dcfc69edd4b30410478b40803eed9ab5fa8dd1
