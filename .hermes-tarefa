@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aplicar-messagedeleted-labeladded-labelr
+ID=2610170630a4d7
+BRANCH=v2/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-17T06:30:43-03:00
+KANBAN=t_f4041bd2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-17
+DB_LOCAL=v2-2610170630a4d7
+PRONTO_SHA=8863655c63086e113b6dc18cfb597f48741ade57
