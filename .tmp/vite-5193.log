@@ -1,0 +1,171 @@
+$ vite --host "127.0.0.1" --port "5193" --strictPort
+2:55:37 AM [vite] (client) Forced re-optimization of dependencies
+
+  VITE v8.3.1  ready in 1778 ms
+
+  ➜  Local:   http://127.0.0.1:5193/
+2:55:38 AM [vite] (client) [optimizer] scanning dependencies...
+2:55:44 AM [vite] (client) [optimizer] bundling dependencies...
+
+warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+
+warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+2:56:12 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:56:14 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:56:14 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:56:52 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:56:54 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:56:55 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:57:10 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:57:13 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:57:13 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:57:22 AM [vite] (client) [console.warn] [2026-10-13T05:57:22.626Z] [WARN] [HotRoutePrefetcher] [sid:9155804a] Falha ao pré-carregar a view "chatPanel"; a view carrega sob demanda. TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5193/src/components/inbox/ChatPanel.tsx
+2:57:27 AM [vite] (client) [console.warn] [2026-10-13T05:57:26.981Z] [WARN] [HotRoutePrefetcher] [sid:9155804a] Falha ao pré-carregar a view "inbox"; a view carrega sob demanda. TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5193/src/components/inbox/RealtimeInboxView.tsx
+2:57:59 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:58:04 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:58:04 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:58:14 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:58:20 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:58:21 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:58:39 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:58:48 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:59:04 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:59:06 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:59:07 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:59:21 AM [vite] (client) [console.error] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5193/src/components/calls/OutboundCallDialog.tsx
+
+The above error occurred in one of your React components.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+
+2:59:21 AM [vite] (client) [console.error] [2026-10-13T05:59:21.762Z] [ERROR] [App] [sid:77aa93ec] ErrorBoundary caught an error: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5193/src/components/calls/OutboundCallDialog.tsx {"componentStack":"\n    at Lazy (<anonymous>)\n    at Suspense (<anonymous>)\n    at DeferredProviders (<anonymous>)\n    at Suspense (<anonymous>)\n    at ErrorBoundary (http://127.0.0.1:5193/src/components/errors/ErrorBoundary.tsx:113:8)\n    at GlobalKeyboardProvider (http://127.0.0.1:5193/src/components/keyboard/GlobalKeyboardProvider.tsx:39:42)\n    at Router (http://127.0.0.1:5193/node_modules/.vite/deps/react-router-dom.js?v=2ba87b80:4838:29)\n    at BrowserRouter (http://127.0.0.1:5193/node_modules/.vite/deps/react-router-dom.js?v=2ba87b80:7287:26)\n    at AppContent (http://127.0.0.1:5193/src/App.tsx:131:2)\n    at CallSessionProvider (http://127.0.0.1:5193/src/providers/CallSessionProvider.tsx:213:39)\n    at QuarantineMonitorProvider (http://127.0.0.1:5193/src/providers/QuarantineMonitorProvider.tsx:97:45)\n    at Provider (http://127.0.0.1:5193/node_modules/.vite/deps/dist-Dic5YkbB.js?v=ab2050d7:46:12)\n    at TooltipProvider (http://127.0.0.1:5193/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=70e21230:31:10)\n    at AccessibleToastProvider (http://127.0.0.1:5193/src/components/ui/accessible-toast.tsx:65:43)\n    at HighContrastProvider (http://127.0.0.1:5193/src/components/theme/HighContrastToggle.tsx:32:40)\n    at AuthProvider (http://127.0.0.1:5193/src/hooks/auth/useAuth.tsx:13:32)\n    at QueryClientProvider (http://127.0.0.1:5193/node_modules/.vite/deps/@tanstack_react-query.js?v=5c5d4700:44:30)\n    at ErrorBoundary (http://127.0.0.1:5193/src/components/errors/ErrorBoundary.tsx:113:8)\n    at AppProviders (http://127.0.0.1:5193/src/providers/AppProviders.tsx:98:32)\n    at App (<anonymous>)\n    at ErrorBoundary (http://127.0.0.1:5193/src/components/errors/ErrorBoundary.tsx:113:8)\n    at AppErrorBoundary (http://127.0.0.1:5193/src/providers/AppProviders.tsx:83:36)"}
+2:59:21 AM [vite] (client) [console.warn] [2026-10-13T05:59:21.763Z] [WARN] [App] [sid:77aa93ec] ChunkLoadError sem recarga automatica disponivel (orcamento esgotado ou cooldown) -- mostrando a tela de nova versao
+2:59:21 AM [vite] (client) [console.error] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5193/src/pages/Index.tsx
+
+The above error occurred in the <ProtectedRoute> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+
+2:59:21 AM [vite] (client) [console.error] [2026-10-13T05:59:21.764Z] [ERROR] [App] [sid:77aa93ec] ErrorBoundary caught an error: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5193/src/pages/Index.tsx {"componentStack":"\n    at ProtectedRoute (http://127.0.0.1:5193/src/components/auth/ProtectedRoute.tsx:13:34)\n    at RenderedRoute (http://127.0.0.1:5193/node_modules/.vite/deps/react-router-dom.js?v=2ba87b80:4204:26)\n    at Routes (http://127.0.0.1:5193/node_modules/.vite/deps/react-router-dom.js?v=2ba87b80:4886:19)\n    at div (<anonymous>)\n    at RouteTransition (http://127.0.0.1:5193/src/components/transitions/RouteTransition.tsx:57:35)\n    at PageTransitionProvider (http://127.0.0.1:5193/src/components/transitions/PageTransitionProvider.tsx:8:42)\n    at Suspense (<anonymous>)\n    at ErrorBoundary (http://127.0.0.1:5193/src/components/errors/ErrorBoundary.tsx:113:8)\n    at RotaErrorBoundary (http://127.0.0.1:5193/src/routes/AppRoutes.tsx:117:30)\n    at AppRoutes (<anonymous>)\n    at GlobalKeyboardProvider (http://127.0.0.1:5193/src/components/keyboard/GlobalKeyboardProvider.tsx:39:42)\n    at Router (http://127.0.0.1:5193/node_modules/.vite/deps/react-router-dom.js?v=2ba87b80:4838:29)\n    at BrowserRouter (http://127.0.0.1:5193/node_modules/.vite/deps/react-router-dom.js?v=2ba87b80:7287:26)\n    at AppContent (http://127.0.0.1:5193/src/App.tsx:131:2)\n    at CallSessionProvider (http://127.0.0.1:5193/src/providers/CallSessionProvider.tsx:213:39)\n    at QuarantineMonitorProvider (http://127.0.0.1:5193/src/providers/QuarantineMonitorProvider.tsx:97:45)\n    at Provider (http://127.0.0.1:5193/node_modules/.vite/deps/dist-Dic5YkbB.js?v=ab2050d7:46:12)\n    at TooltipProvider (http://127.0.0.1:5193/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=70e21230:31:10)\n    at AccessibleToastProvider (http://127.0.0.1:5193/src/components/ui/accessible-toast.tsx:65:43)\n    at HighContrastProvider (http://127.0.0.1:5193/src/components/theme/HighContrastToggle.tsx:32:40)\n    at AuthProvider (http://127.0.0.1:5193/src/hooks/auth/useAuth.tsx:13:32)\n    at QueryClientProvider (http://127.0.0.1:5193/node_modules/.vite/deps/@tanstack_react-query.js?v=5c5d4700:44:30)\n    at ErrorBoundary (http://127.0.0.1:5193/src/components/errors/ErrorBoundary.tsx:113:8)\n    at AppProviders (http://127.0.0.1:5193/src/providers/AppProviders.tsx:98:32)\n    at App (<anonymous>)\n    at ErrorBoundary (http://127.0.0.1:5193/src/components/errors/ErrorBoundary.tsx:113:8)\n    at AppErrorBoundary (http://127.0.0.1:5193/src/providers/AppProviders.tsx:83:36)"}
+2:59:21 AM [vite] (client) [console.warn] [2026-10-13T05:59:21.764Z] [WARN] [App] [sid:77aa93ec] ChunkLoadError sem recarga automatica disponivel (orcamento esgotado ou cooldown) -- mostrando a tela de nova versao
+2:59:47 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:59:48 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:59:48 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:59:59 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+2:59:59 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+2:59:59 AM [vite] (client) [console.warn] [2026-10-13T05:59:59.876Z] [WARN] [App] [sid:b36438d7] [A11Y] 1 accessibility violation(s) detected
+2:59:59 AM [vite] (client) [console.warn] [2026-10-13T05:59:59.877Z] [WARN] [App] [sid:b36438d7] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+2:59:59 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:00:12 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:00:14 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:00:14 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:00:23 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:00:23 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:00:23 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:00:40 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:00:50 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:00:50 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:00:50 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:02 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:02 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:01:03 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:04 AM [vite] (client) [console.warn] [2026-10-13T06:01:04.691Z] [WARN] [App] [sid:8e449baa] [A11Y] 1 accessibility violation(s) detected
+3:01:04 AM [vite] (client) [console.warn] [2026-10-13T06:01:04.693Z] [WARN] [App] [sid:8e449baa] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+3:01:14 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:01:16 AM [vite] (client) [console.warn] [2026-10-13T06:01:16.232Z] [WARN] [App] [sid:3cb0ab7f] [A11Y] 2 accessibility violation(s) detected
+3:01:16 AM [vite] (client) [console.warn] [2026-10-13T06:01:16.233Z] [WARN] [App] [sid:3cb0ab7f] [A11Y] MODERATE: landmark-one-main — Ensure the document has a main landmark (1 element(s))
+3:01:16 AM [vite] (client) [console.warn] [2026-10-13T06:01:16.234Z] [WARN] [App] [sid:3cb0ab7f] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+3:01:16 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:16 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:27 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:01:28 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:28 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:35 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:35 AM [vite] (client) [console.error] [agent-presence] upsert falhou {"message":"blocked"}
+3:01:36 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:01:52 AM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+3:08:55 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:08:55 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:08:55 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:08:55 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:08:56 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:08:56 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:08:57 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:09:03 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:09:04 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:09:04 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:09:04 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:09:04 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:09:04 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:09:04 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:09:22 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:09:22 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:09:22 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:09:22 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:09:22 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:09:23 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:09:23 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:09:29 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:09:29 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:09:29 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:09:29 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:09:29 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:09:29 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:09:29 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:09:52 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:09:52 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:09:52 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:09:52 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:09:53 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:09:53 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:09:54 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:10:01 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:10:02 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:10:03 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:10:03 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:10:03 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:10:03 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:10:03 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:10:27 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:10:27 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:10:27 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:10:27 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:10:27 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:10:28 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:10:33 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:10:34 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:10:35 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:10:35 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:10:35 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:10:35 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:10:42 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:10:42 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:10:42 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:10:42 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:10:42 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:10:42 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:10:43 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:10:48 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:10:49 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:10:50 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:10:50 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:10:50 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:10:50 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:10:50 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:10:59 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:10:59 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:10:59 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:10:59 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:10:59 AM [vite] (client) page reload .tmp/prova-base/index.html
+3:10:59 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:10:59 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:11:04 AM [vite] changed tsconfig file detected: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp/prova-base/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+3:11:05 AM [vite] (client) page reload .tmp/prova-base/docs/talkx/references/INDEX.html
+3:11:05 AM [vite] (client) page reload .tmp/prova-base/docs/design/Multiplix_ZAPP_V2_Prototipo (1).html
+3:11:05 AM [vite] (client) page reload .tmp/prova-base/docs/design/ZAPP App v2.dc.html
+3:11:05 AM [vite] (client) page reload .tmp/prova-base/docs/design/ui-kit-preview.html
+3:11:05 AM [vite] (client) page reload .tmp/prova-base/docs/design/contatos-redesign-2026-10-12/design-estrutura.html
+3:11:05 AM [vite] (client) page reload .tmp/prova-base/index.html
+error: script "dev" exited with code 143

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-e2e-papeis-edge-reset
+ID=2610130138073f
+BRANCH=v2/admin-e2e-papeis-edge-reset-2610130138073f
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:38:18-03:00
+KANBAN=t_277eeaa4
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-e2e-papeis-edge-reset-2610130138073f/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130138073f
+PRONTO_SHA=4020f61519f0c28ec86a4b328055ce1f80b5d685

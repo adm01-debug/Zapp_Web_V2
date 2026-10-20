@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791866296 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791866298 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 418cda85a7b774d66e14512e450afab8871d159f Hermes Senior <hermes-senior@promobrindes.local> 1791866769 -0300	cherry-pick: feat(admin): RPCs admin_add_role e admin_remove_role com travas e auditoria
+418cda85a7b774d66e14512e450afab8871d159f 0b764774c9ebeac7e257254b97b7392794be5023 Hermes Senior <hermes-senior@promobrindes.local> 1791866769 -0300	cherry-pick: fix(admin): roles usa as RPCs admin_add_role/admin_remove_role e traduz as travas
+0b764774c9ebeac7e257254b97b7392794be5023 b6d0635000b0c02518b581634b2660a7d142b8e3 Hermes Senior <hermes-senior@promobrindes.local> 1791871575 -0300	commit: test(admin): e2e de papéis, desativação e forçar logout no painel admin
+b6d0635000b0c02518b581634b2660a7d142b8e3 45b4b481984d122412aa3e9fd3214f8ab2814f6a Hermes Senior <hermes-senior@promobrindes.local> 1791871716 -0300	commit: docs(admin): relato do e2e de papéis no painel admin
+45b4b481984d122412aa3e9fd3214f8ab2814f6a c7f8520643990ed268a737401128a145497b44b0 Hermes Senior <hermes-senior@promobrindes.local> 1791871786 -0300	commit: docs(admin): relato cita a faixa do cartão pai
+c7f8520643990ed268a737401128a145497b44b0 4020f61519f0c28ec86a4b328055ce1f80b5d685 Hermes Senior <hermes-senior@promobrindes.local> 1791871820 -0300	commit: docs(admin): relato justifica o playwright.config.ts
+4020f61519f0c28ec86a4b328055ce1f80b5d685 cf587181168487f7aafa945fffc57f8b7aa4d18d Hermes Senior <hermes-senior@promobrindes.local> 1792024530 -0300	commit: test(admin): refazer1 corrige relato da faixa do pai e comentario do timeout do e2e

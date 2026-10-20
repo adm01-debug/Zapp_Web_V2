@@ -1,0 +1,27 @@
+$ playwright test "--project=chromium-admin" "--workers=1" "--repeat-each=3" "--reporter=line"
+
+Running 21 tests using 1 worker
+
+[1/21] [chromium-admin] › e2e/admin-papeis.spec.ts:189:3 › Administração: papéis, desativação e forçar logout › trocar o papel de um usuário grava pela RPC admin_set_role e recarrega a lista
+[2/21] [chromium-admin] › e2e/admin-papeis.spec.ts:213:3 › Administração: papéis, desativação e forçar logout › desativar um usuário grava is_active=false no profile da LINHA
+[3/21] [chromium-admin] › e2e/admin-papeis.spec.ts:233:3 › Administração: papéis, desativação e forçar logout › forçar logout chama revoke-auth-sessions com escopo global e o usuário alvo
+[4/21] [chromium-admin] › e2e/admin-papeis.spec.ts:250:3 › Administração: papéis, desativação e forçar logout › supervisor é barrado na view Administração (portão da navegação)
+[5/21] [chromium-admin] › e2e/admin-papeis.spec.ts:264:3 › Administração: papéis, desativação e forçar logout › agente é barrado na view Administração (portão da navegação)
+[6/21] [chromium-admin] › e2e/admin-papeis.spec.ts:274:3 › Administração: papéis, desativação e forçar logout › supervisor é barrado em /admin/* (rota exige admin)
+[7/21] [chromium-admin] › e2e/admin-papeis.spec.ts:285:3 › Administração: papéis, desativação e forçar logout › admin atribui role pela tela /admin/roles usando a RPC admin_add_role
+[8/21] [chromium-admin] › e2e/admin-papeis.spec.ts:189:3 › Administração: papéis, desativação e forçar logout › trocar o papel de um usuário grava pela RPC admin_set_role e recarrega a lista
+[9/21] [chromium-admin] › e2e/admin-papeis.spec.ts:213:3 › Administração: papéis, desativação e forçar logout › desativar um usuário grava is_active=false no profile da LINHA
+[10/21] [chromium-admin] › e2e/admin-papeis.spec.ts:233:3 › Administração: papéis, desativação e forçar logout › forçar logout chama revoke-auth-sessions com escopo global e o usuário alvo
+[11/21] [chromium-admin] › e2e/admin-papeis.spec.ts:250:3 › Administração: papéis, desativação e forçar logout › supervisor é barrado na view Administração (portão da navegação)
+[12/21] [chromium-admin] › e2e/admin-papeis.spec.ts:264:3 › Administração: papéis, desativação e forçar logout › agente é barrado na view Administração (portão da navegação)
+[13/21] [chromium-admin] › e2e/admin-papeis.spec.ts:274:3 › Administração: papéis, desativação e forçar logout › supervisor é barrado em /admin/* (rota exige admin)
+[14/21] [chromium-admin] › e2e/admin-papeis.spec.ts:285:3 › Administração: papéis, desativação e forçar logout › admin atribui role pela tela /admin/roles usando a RPC admin_add_role
+[15/21] [chromium-admin] › e2e/admin-papeis.spec.ts:189:3 › Administração: papéis, desativação e forçar logout › trocar o papel de um usuário grava pela RPC admin_set_role e recarrega a lista
+[16/21] [chromium-admin] › e2e/admin-papeis.spec.ts:213:3 › Administração: papéis, desativação e forçar logout › desativar um usuário grava is_active=false no profile da LINHA
+[17/21] [chromium-admin] › e2e/admin-papeis.spec.ts:233:3 › Administração: papéis, desativação e forçar logout › forçar logout chama revoke-auth-sessions com escopo global e o usuário alvo
+[18/21] [chromium-admin] › e2e/admin-papeis.spec.ts:250:3 › Administração: papéis, desativação e forçar logout › supervisor é barrado na view Administração (portão da navegação)
+[19/21] [chromium-admin] › e2e/admin-papeis.spec.ts:264:3 › Administração: papéis, desativação e forçar logout › agente é barrado na view Administração (portão da navegação)
+[20/21] [chromium-admin] › e2e/admin-papeis.spec.ts:274:3 › Administração: papéis, desativação e forçar logout › supervisor é barrado em /admin/* (rota exige admin)
+[21/21] [chromium-admin] › e2e/admin-papeis.spec.ts:285:3 › Administração: papéis, desativação e forçar logout › admin atribui role pela tela /admin/roles usando a RPC admin_add_role
+  21 passed (6.0m)
+EXIT=0
