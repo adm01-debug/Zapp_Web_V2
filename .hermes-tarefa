@@ -1,0 +1,14 @@
+PROJETO=Zapp_Web_V2
+SLUG=arquivar-conversa-aba-arquivadas
+ID=26101216356cd1
+BRANCH=v2/arquivar-conversa-aba-arquivadas-26101216356cd1
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-conversa-aba-arquivadas-26101216356cd1
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T16:35:50-03:00
+KANBAN=t_02d47e19
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-conversa-aba-arquivadas-26101216356cd1/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-26101216356cd1
