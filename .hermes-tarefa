@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-dica-botao-acessibilidade-0819e1a9
+ID=2610121805fee4
+BRANCH=v2/a11y-dica-botao-acessibilidade-0819e1a9-2610121805fee4
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-dica-botao-acessibilidade-0819e1a9-2610121805fee4
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T18:05:58-03:00
+KANBAN=t_0819e1a9
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-dica-botao-acessibilidade-0819e1a9-2610121805fee4/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610121805fee4
+PRONTO_SHA=20bb37e10c09b8a0e189159988095c910aded33f
