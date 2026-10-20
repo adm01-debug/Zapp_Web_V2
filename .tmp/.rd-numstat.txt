@@ -1,0 +1,9 @@
+4	4	src/components/inbox/ContactDetails.tsx
+32	10	src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+35	16	src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+18	10	src/components/inbox/chat/useChatPanelHandlers.ts
+23	4	src/hooks/chat/__tests__/useConversationActions.test.ts
+15	4	src/hooks/chat/useConversationActions.ts
+39	33	src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+118	0	src/hooks/inbox/conversationArchive.ts
+10	18	src/hooks/inbox/useInboxBulkActions.ts

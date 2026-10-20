@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-semantica-unica-261015153820e6
+
+······························································
+
+ Test Files  4 passed (4)
+      Tests  62 passed (62)
+   Start at  16:21:26
+   Duration  10.05s (transform 7.92s, setup 3.05s, import 9.83s, tests 3.80s, environment 6.29s)
+

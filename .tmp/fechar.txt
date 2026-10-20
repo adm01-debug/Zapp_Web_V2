@@ -1,0 +1,9 @@
+On branch v2/arquivar-semantica-unica-261015153820e6
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/hooks/inbox/conversationArchive.ts. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+ANTES DE ENTREGAR — o portão do integrador vai RETER esta entrega para o revisor (custa um ciclo inteiro) por:
+   risco: p(Alto)=0.84; teste existente pulado/afrouxado; relato = concluiu_com_ressalva; Jev inseguro sobre o relato; relato sem evidência limpa de verificação
+Se é o relato: diga o que mudou, o comando rodado e a linha de resultado (ex.: 'Test Files 3 passed, Tests 27 passed'); sem ressalva, pendência ou 'parcial'.
+Se é o diff: corrija (commit novo). Depois feche de novo. Para seguir mesmo assim, rode este MESMO comando de novo e explique no relato.
+rc=3

@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792089509 -0300	
+e7d156b8a74c0b165e19c9549bba19377137b0fc e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792089510 -0300	reset: moving to HEAD
+e7d156b8a74c0b165e19c9549bba19377137b0fc e2b14415dabea521134eb2dc720b3fd5aa08fb53 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792091374 -0300	commit: fix(inbox): arquivar tem uma só semântica e o desfazer restaura o status anterior

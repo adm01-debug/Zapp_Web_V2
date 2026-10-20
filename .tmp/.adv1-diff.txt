@@ -1,0 +1,685 @@
+diff --git a/src/components/inbox/ContactDetails.tsx b/src/components/inbox/ContactDetails.tsx
+index d4b220bff2..8fad82edbc 100644
+--- a/src/components/inbox/ContactDetails.tsx
++++ b/src/components/inbox/ContactDetails.tsx
+@@ -65,10 +65,10 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
+   const quickActions = useContactQuickActions(contact);
+ 
+   // Bloquear grava via useContactQuickActions (bloqueio real na Evolution);
+-  // Arquivar delega ao archiveContact (semântica única: zera assigned_to e o
+-  // Desfazer restaura o valor anterior real — decisão do dono em 06/10,
+-  // cartão #241). VIP não existe mais: a função de tags de contato foi
+-  // removida (ordem de 12/10) e a coluna dedicada ainda não está na base.
++  // Arquivar delega ao archiveContact, que grava `conversation_status: 'archived'`
++  // pelo helper canônico (semântica única: NÃO mexe em assigned_to) e cujo
++  // Desfazer devolve o status anterior. VIP não existe mais: a função de tags de
++  // contato foi removida (ordem de 12/10) e a coluna dedicada ainda não está na base.
+   const handleQuickAction = (action: string) => {
+     switch (action) {
+       case 'edit': setEditDialogOpen(true); break;
+diff --git a/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx b/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+index 1b14f44010..72327f18b6 100644
+--- a/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
++++ b/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+@@ -10,7 +10,11 @@ const h = vi.hoisted(() => {
+     invokeError: null as { message: string } | null,
+   };
+   const eq = vi.fn(() => Promise.resolve({ error: state.error }));
+-  const update = vi.fn(() => ({ eq }));
++  // O helper canônico de arquivamento escreve com `.update(payload).in('id', ids).select('id')`.
++  const updateIn = vi.fn(() => ({
++    select: () => Promise.resolve({ data: [{ id: 'c1' }], error: state.error }),
++  }));
++  const update = vi.fn(() => ({ eq, in: updateIn }));
+   // select → eq → { maybeSingle | single | limit → maybeSingle }
+   // (useChatMediaSending resolveInstance + archiveContact leem o estado real)
+   let currentTable = '';
+@@ -19,7 +23,16 @@ const h = vi.hoisted(() => {
+     single: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
+     limit: () => terminal(),
+   });
+-  const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
++  const select = vi.fn(() => ({
++    eq: vi.fn(() => terminal()),
++    // Leitura do status atual (helper canônico): devolve a linha de contacts do estado.
++    in: vi.fn(() =>
++      Promise.resolve({
++        data: currentTable === 'contacts' && state.rows.contacts ? [state.rows.contacts] : [],
++        error: null,
++      }),
++    ),
++  }));
+   const from = vi.fn((table: string) => {
+     currentTable = table;
+     return { update, select };
+@@ -113,28 +126,37 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
+     h.state.error = null;
+     h.state.invokeError = null;
+     h.state.rows = {
+-      contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
++      contacts: { id: 'c1', assigned_to: 'agent-9', conversation_status: 'waiting', whatsapp_connection_id: 'conn-1' },
+       whatsapp_connections: { instance_id: 'inst-1' },
+     };
+   });
+ 
+-  it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
++  it('"Arquivar" grava o estado arquivada pelo helper canônico (sem tocar assigned_to); Desfazer restaura o status anterior', async () => {
+     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
+     openMais();
+     fireEvent.click(screen.getByText('Arquivar'));
+-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
+-    // A segunda implementação paralela está proibida: nunca escreve status.
++    await waitFor(() =>
++      expect(h.update).toHaveBeenCalledWith({
++        conversation_status: 'archived',
++        updated_at: expect.any(String),
++      }),
++    );
++    // Semântica única: NÃO zera o responsável (o antigo `assigned_to: null`
++    // devolvia a conversa à fila em vez de arquivar).
+     expect(h.update).not.toHaveBeenCalledWith(
+-      expect.objectContaining({ conversation_status: expect.anything() }),
++      expect.objectContaining({ assigned_to: expect.anything() }),
+     );
+ 
+     await clickUndo();
+-    // Restaura o assigned_to lido antes da escrita — não força 'open'.
++    // Restaura o status lido antes da escrita ('waiting'), não força 'open'.
+     await waitFor(() =>
+-      expect(h.update).toHaveBeenLastCalledWith({ assigned_to: 'agent-9' }),
++      expect(h.update).toHaveBeenLastCalledWith({
++        conversation_status: 'waiting',
++        updated_at: expect.any(String),
++      }),
+     );
+     expect(h.update).not.toHaveBeenCalledWith(
+-      expect.objectContaining({ conversation_status: expect.anything() }),
++      expect.objectContaining({ assigned_to: expect.anything() }),
+     );
+   });
+ 
+diff --git a/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx b/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+index 839c782b34..ea2b376acb 100644
+--- a/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
++++ b/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+@@ -13,7 +13,7 @@
+  *  5. Comandos de barra sem argumento (`/snooze`, `/priority`) terminavam em silêncio.
+  *  6. `/archive` gravava `assigned_to = null` (devolvia à fila) e dizia "Conversa Arquivada".
+  */
+-import { act, renderHook } from '@testing-library/react';
++import { act, renderHook, waitFor } from '@testing-library/react';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ import type { Message } from '@/types/chat';
+ 
+@@ -28,25 +28,39 @@ const db = vi.hoisted(() => ({
+     filter: { column: string; value: unknown };
+   }[],
+   messagesResult: { error: null as unknown, data: [{ id: 'msg-1' }] as unknown[] | null },
+-  contactsResult: { error: null as unknown },
++  contactsResult: { error: null as unknown, data: [{ id: 'contact-1' }] as unknown[] | null },
++  contactsSelectResult: {
++    error: null as unknown,
++    data: [{ id: 'contact-1', conversation_status: 'open' }] as unknown[] | null,
++  },
+ }));
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+-    from: (table: string) => ({
+-      update: (payload: Record<string, unknown>) => ({
+-        eq: (column: string, value: unknown) => {
+-          db.updates.push({ table, payload, filter: { column, value } });
+-          const result = table === 'contacts' ? db.contactsResult : db.messagesResult;
++    from: (table: string) => {
++      const depoisDoFiltro = (result: unknown) => ({
++        // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável".
++        select: () => Promise.resolve(result),
++        then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
++      });
++      return {
++        // Leitura do status atual (helper canônico de arquivamento).
++        select: (_columns: string) => ({
++          in: (_column: string, _value: unknown) =>
++            Promise.resolve(table === 'contacts' ? db.contactsSelectResult : { error: null, data: null }),
++        }),
++        update: (payload: Record<string, unknown>) => {
++          const registrar = (column: string, value: unknown) => {
++            db.updates.push({ table, payload, filter: { column, value } });
++            return table === 'contacts' ? db.contactsResult : db.messagesResult;
++          };
+           return {
+-            // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável"
+-            // porque o ramo /archive aguarda o retorno de `.eq(...)` direto.
+-            select: () => Promise.resolve(result),
+-            then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
++            eq: (column: string, value: unknown) => depoisDoFiltro(registrar(column, value)),
++            in: (column: string, value: unknown) => depoisDoFiltro(registrar(column, value)),
+           };
+         },
+-      }),
+-    }),
++      };
++    },
+   },
+ }));
+ 
+@@ -151,7 +165,7 @@ beforeEach(() => {
+   vi.clearAllMocks();
+   db.updates = [];
+   db.messagesResult = { error: null, data: [{ id: MESSAGE_ID }] };
+-  db.contactsResult = { error: null };
++  db.contactsResult = { error: null, data: [{ id: 'contact-1' }] };
+ });
+ 
+ afterEach(() => {
+@@ -284,17 +298,22 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
+     expect(informativos[0].variant).toBeUndefined();
+   });
+ 
+-  it('/archive grava o estado de FSM (conversation_status), não assigned_to', async () => {
++  it('/archive grava o estado de FSM (conversation_status), não assigned_to, e pelo helper canônico', async () => {
+     const utils = montar();
+ 
+     await act(async () => {
+       utils.result.current.handleSlashCommand({ id: 'archive', label: 'Arquivar', description: '' } as never);
+-      await Promise.resolve();
++    });
++
++    await waitFor(() => {
++      expect(db.updates.some((u) => u.table === 'contacts')).toBe(true);
+     });
+ 
+     const archive = db.updates.find((u) => u.table === 'contacts');
+     expect(archive?.payload).toMatchObject({ conversation_status: 'archived' });
+     expect(archive?.payload.assigned_to).toBeUndefined();
++    // Escrita agrupada por id (helper canônico), não `.eq` por contato.
++    expect(archive?.filter).toEqual({ column: 'id', value: ['contact-1'] });
+     expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(true);
+   });
+ });
+diff --git a/src/components/inbox/chat/useChatPanelHandlers.ts b/src/components/inbox/chat/useChatPanelHandlers.ts
+index 4a113cab79..60b7ea9c49 100644
+--- a/src/components/inbox/chat/useChatPanelHandlers.ts
++++ b/src/components/inbox/chat/useChatPanelHandlers.ts
+@@ -2,6 +2,10 @@ import { useState, useRef, useEffect, useCallback, type Dispatch, type SetStateA
+ import { log } from '@/lib/logger';
+ import { supabase } from '@/integrations/supabase/client';
+ import { undoToast } from '@/lib/undoToast';
++import {
++  archiveConversations,
++  restoreConversationStatuses,
++} from '@/hooks/inbox/conversationArchive';
+ import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
+ import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
+ import { SlashCommand } from '../SlashCommands';
+@@ -526,18 +530,22 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
+       case 'archive': {
+         void (async () => {
+-          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
+-          // o arquivamento em massa usa. `assigned_to = null` devolvia à fila e não arquivava,
+-          // então o aviso "Conversa Arquivada" era falso.
+-          const { error } = await supabase
+-            .from('contacts')
+-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
+-            .eq('id', contactId);
+-          if (error) {
++          // Semântica única (helper canônico): arquivar é o estado de FSM em
++          // `conversation_status` — o MESMO que a lista, o painel de detalhes e o
++          // lote usam. `assigned_to = null` devolvia à fila e não arquivava.
++          try {
++            const anteriores = await archiveConversations([contactId]);
++            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
++            undoToast({
++              message: 'Conversa arquivada',
++              icon: '📦',
++              onUndo: async () => {
++                await restoreConversationStatuses(anteriores);
++              },
++            });
++          } catch (error) {
+             log.error('Failed to archive contact:', error);
+             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+-          } else {
+-            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
+           }
+         })();
+         break;
+diff --git a/src/hooks/chat/__tests__/useConversationActions.test.ts b/src/hooks/chat/__tests__/useConversationActions.test.ts
+index f5c78aa471..eabaa8ff36 100644
+--- a/src/hooks/chat/__tests__/useConversationActions.test.ts
++++ b/src/hooks/chat/__tests__/useConversationActions.test.ts
+@@ -174,14 +174,18 @@ describe('useConversationActions', () => {
+   });
+ 
+   describe('archiveContact', () => {
+-    it('desatribui o contato e oferece desfazer que restaura o assigned_to original', async () => {
++    it('grava o estado arquivada (sem tocar assigned_to) e o desfazer restaura o status anterior', async () => {
++      contactsSelectResult = { data: [{ id: 'contact-1', conversation_status: 'waiting' }], error: null };
++      contactsUpdateResult = { data: [{ id: 'contact-1' }], error: null };
+       const { result } = await withProfileReady();
+ 
+       await act(async () => {
+         await result.current.archiveContact('contact-1');
+       });
+ 
+-      expect(contactsUpdateCalls).toEqual([{ assigned_to: null }]);
++      expect(contactsUpdateCalls).toEqual([
++        { conversation_status: 'archived', updated_at: expect.any(String) },
++      ]);
+       expect(undoToast).toHaveBeenCalledTimes(1);
+       const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+       expect(undoArgs.message).toBe('Conversa arquivada');
+@@ -190,13 +194,15 @@ describe('useConversationActions', () => {
+         await undoArgs.onUndo();
+       });
+ 
++      // O desfazer devolve o status LIDO antes (waiting), não o assigned_to.
+       expect(contactsUpdateCalls).toEqual([
+-        { assigned_to: null },
+-        { assigned_to: 'agent-original' },
++        { conversation_status: 'archived', updated_at: expect.any(String) },
++        { conversation_status: 'waiting', updated_at: expect.any(String) },
+       ]);
+     });
+ 
+     it('em erro no update, mostra toast de erro e não oferece desfazer', async () => {
++      contactsSelectResult = { data: [{ id: 'contact-1', conversation_status: 'open' }], error: null };
+       contactsUpdateResult = { error: { message: 'falhou' } };
+       const { result } = await withProfileReady();
+ 
+@@ -207,6 +213,19 @@ describe('useConversationActions', () => {
+       expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conversa');
+       expect(undoToast).not.toHaveBeenCalled();
+     });
++
++    it('update que afeta 0 linhas (RLS) é erro, não sucesso: nada de desfazer', async () => {
++      contactsSelectResult = { data: [{ id: 'contact-1', conversation_status: 'open' }], error: null };
++      contactsUpdateResult = { data: [], error: null };
++      const { result } = await withProfileReady();
++
++      await act(async () => {
++        await result.current.archiveContact('contact-1');
++      });
++
++      expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conversa');
++      expect(undoToast).not.toHaveBeenCalled();
++    });
+   });
+ 
+   describe('transferContact', () => {
+diff --git a/src/hooks/chat/useConversationActions.ts b/src/hooks/chat/useConversationActions.ts
+index 3c552524e6..de090395c3 100644
+--- a/src/hooks/chat/useConversationActions.ts
++++ b/src/hooks/chat/useConversationActions.ts
+@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
+ import { toast } from 'sonner';
+ import { undoToast } from '@/lib/undoToast';
+ import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
++import {
++  archiveConversations,
++  restoreConversationStatuses,
++  type ConversationStatus,
++} from '@/hooks/inbox/conversationArchive';
+ 
+ // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
+ const _favBus = new EventTarget();
+@@ -246,14 +251,20 @@ export function useConversationActions() {
+   }, [profileId]);
+ 
+   const archiveContact = useCallback(async (contactId: string) => {
+-    const { data: original } = await supabase.from('contacts').select('assigned_to').eq('id', contactId).single();
+-    const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+-    if (error) { toast.error('Erro ao arquivar conversa'); return; }
++    let anteriores: Map<string, ConversationStatus>;
++    try {
++      anteriores = await archiveConversations([contactId]);
++    } catch {
++      toast.error('Erro ao arquivar conversa');
++      return;
++    }
+     undoToast({
+       message: 'Conversa arquivada',
+       icon: '📦',
+       onUndo: async () => {
+-        await supabase.from('contacts').update({ assigned_to: original?.assigned_to ?? null }).eq('id', contactId);
++        // Desfazer devolve o conversation_status anterior (lido antes da
++        // escrita). `assigned_to` nunca é tocado por arquivar.
++        await restoreConversationStatuses(anteriores);
+       },
+     });
+   }, []);
+diff --git a/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts b/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+index e9a15be296..82b9dc6557 100644
+--- a/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
++++ b/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+@@ -11,8 +11,9 @@
+  * `sender='contact'` + contatos, não lidos e erro), transferência via RPC
+  * atômica `transfer_conversation` POR contato (agente/fila, nota ignorada,
+  * sucesso parcial e total que rejeitam mantendo a seleção, rejeição crua de
+- * rede), arquivamento desfazível (retrato da seleção, restauração por contato,
+- * erro, e o SELECT de RLS em `it.fails`), avatares em lote (contadores, resposta
++ * rede), arquivamento desfazível (retrato da seleção, uma escrita do estado
++ * `archived` sem `assigned_to`, desfazer agrupado por status anterior, erro, e o
++ * SELECT de status que agora falha fechado), avatares em lote (contadores, resposta
+  * sem números, erro `Error` e rejeição não-`Error`), e o `loading` durante a
+  * operação.
+  *
+@@ -452,16 +453,18 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
+ });
+ 
+ describe('useInboxBulkActions — bulkArchive', () => {
+-  it('lê o assigned_to dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato', async () => {
++  it('lê o status anterior, arquiva pelo estado (sem assigned_to) e o desfazer RESTAURA por valor anterior', async () => {
+     selectQueue.push({
+       data: [
+-        { id: 'c1', assigned_to: 'ag-1' },
+-        { id: 'c2', assigned_to: null },
++        { id: 'c1', conversation_status: 'waiting' },
++        { id: 'c2', conversation_status: 'open' },
++        { id: 'c3', conversation_status: 'open' },
+       ],
+       error: null,
+     });
++    updateQueue.push({ data: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }], error: null });
+     const { result, refetch } = renderInbox();
+-    selectIds(result, ['c1', 'c2']);
++    selectIds(result, ['c1', 'c2', 'c3']);
+ 
+     await act(async () => {
+       await result.current.bulkArchive();
+@@ -470,16 +473,18 @@ describe('useInboxBulkActions — bulkArchive', () => {
+     expect(recorded[0]).toMatchObject({
+       table: 'contacts',
+       op: 'select',
+-      columns: 'id, assigned_to',
+-      filters: { id: ['c1', 'c2'] },
++      columns: 'id, conversation_status',
++      filters: { id: ['c1', 'c2', 'c3'] },
+     });
+     expect(mocks.execute).toHaveBeenCalledTimes(1);
+-    expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
++    expect(lastUndo?.successMessage).toBe('3 contato(s) arquivado(s)');
+     expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
+-    expect(contactUpdates()[0]).toMatchObject({
+-      payload: { assigned_to: null },
+-      filters: { id: ['c1', 'c2'] },
+-    });
++    // UMA só escrita para arquivar tudo, e sem `assigned_to` (semântica única).
++    const arquivamentos = contactUpdates().slice(0, 1);
++    expect(arquivamentos).toHaveLength(1);
++    expect(arquivamentos[0].payload).toMatchObject({ conversation_status: 'archived' });
++    expect((arquivamentos[0].payload as { assigned_to?: unknown }).assigned_to).toBeUndefined();
++    expect(arquivamentos[0].filters).toEqual({ id: ['c1', 'c2', 'c3'] });
+     expect(result.current.selectedIds.size).toBe(0);
+     expect(refetch).toHaveBeenCalledTimes(1);
+ 
+@@ -487,10 +492,13 @@ describe('useInboxBulkActions — bulkArchive', () => {
+       await lastUndo?.undoAction();
+     });
+ 
++    // O desfazer agrupa por valor anterior: 'waiting' (c1) e 'open' (c2, c3) = UMA escrita por valor.
+     const restores = contactUpdates().slice(1);
+     expect(restores).toHaveLength(2);
+-    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: 'c1' } });
+-    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: 'c2' } });
++    expect(restores[0].payload).toMatchObject({ conversation_status: 'waiting' });
++    expect(restores[0].filters).toEqual({ id: ['c1'] });
++    expect(restores[1].payload).toMatchObject({ conversation_status: 'open' });
++    expect(restores[1].filters).toEqual({ id: ['c2', 'c3'] });
+     expect(refetch).toHaveBeenCalledTimes(2);
+   });
+ 
+@@ -506,7 +514,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
+   });
+ 
+   it('erro no UPDATE do arquivamento: avisa, não recarrega e mantém a seleção', async () => {
+-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
++    selectQueue.push({ data: [{ id: 'c1', conversation_status: 'open' }], error: null });
+     updateQueue.push({ error: { message: 'rls update' } });
+     const { result, refetch } = renderInbox();
+     selectIds(result, ['c1']);
+@@ -526,14 +534,15 @@ describe('useInboxBulkActions — bulkArchive', () => {
+     mocks.execute.mockImplementation(async (options: UndoOptions) => {
+       lastUndo = options;
+     });
+-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
++    selectQueue.push({ data: [{ id: 'c1', conversation_status: 'open' }], error: null });
++    updateQueue.push({ data: [{ id: 'c1' }], error: null });
+ 
+     const { result } = renderInbox();
+     selectIds(result, ['c1']);
+     await act(async () => {
+       await result.current.bulkArchive();
+     });
+-    expect(recorded[0].filters.id).toEqual(['c1']);
++    expect(recorded).toEqual([]);
+ 
+     // Durante a janela de 5 s o operador mexe na seleção — o alvo já está congelado.
+     act(() => result.current.toggleSelection('c2'));
+@@ -543,33 +552,30 @@ describe('useInboxBulkActions — bulkArchive', () => {
+       await lastUndo?.action();
+     });
+ 
++    expect(recorded[0]).toMatchObject({ op: 'select', filters: { id: ['c1'] } });
+     const archiveUpdate = contactUpdates().find(
+-      (call) => (call.payload as { assigned_to?: unknown })?.assigned_to === null,
++      (call) => (call.payload as { conversation_status?: unknown })?.conversation_status === 'archived',
+     );
+     expect(archiveUpdate?.filters.id).toEqual(['c1']);
+   });
+ 
+-  // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
+-  // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue
+-  // arquivando: o botão "Desfazer" aparece, anuncia "Arquivamento desfeito" e não
+-  // restaura nada. Se o SELECT lançar, `bulkLoading` fica preso em true.
+-  // Ver relato: useInboxBulkActions.ts:102-105, :120-130.
+-  it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {
++  // O SELECT dos status anteriores falha FECHADO: se o RLS/rede recusa a leitura,
++  // o arquivamento não acontece (nada de desfazer que não restaura nada) e a
++  // seleção continua de pé para o operador tentar de novo.
++  it('erro no SELECT dos status anteriores (RLS) falha fechado: não arquiva, avisa e mantém a seleção', async () => {
+     selectQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
+-    const { result } = renderInbox();
++    const { result, refetch } = renderInbox();
+     selectIds(result, ['c1']);
+ 
+     await act(async () => {
+       await result.current.bulkArchive();
+     });
+ 
+-    const antesDoDesfazer = contactUpdates().length;
+-    await act(async () => {
+-      await lastUndo?.undoAction();
+-    });
+-
+-    // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original).
+-    expect(contactUpdates().length).toBeGreaterThan(antesDoDesfazer);
++    expect(contactUpdates()).toEqual([]);
++    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
++    expect(refetch).not.toHaveBeenCalled();
++    expect(result.current.selectedIds.has('c1')).toBe(true);
++    expect(result.current.bulkLoading).toBe(false);
+   });
+ });
+ 
+diff --git a/src/hooks/inbox/conversationArchive.ts b/src/hooks/inbox/conversationArchive.ts
+new file mode 100644
+index 0000000000..cbb2af2740
+--- /dev/null
++++ b/src/hooks/inbox/conversationArchive.ts
+@@ -0,0 +1,118 @@
++/**
++ * Semântica ÚNICA de arquivar/desarquivar conversa.
++ *
++ * Arquivar = gravar `conversation_status = 'archived'` (+ `updated_at`) e NÃO
++ * mexer em `assigned_to`. Antes cada tela tinha a sua regra: o painel de
++ * detalhes e a lista zeravam `assigned_to`, o que devolvia a conversa à fila em
++ * vez de arquivar — e a aba Arquivadas lê `conversation_status === 'archived'`
++ * (`chipCounts.isArchived`), então a conversa nunca aparecia lá.
++ *
++ * O Desfazer devolve o status ANTERIOR de cada conversa (lido antes da
++ * escrita). Como o alvo do restore pode variar por contato, o restore agrupa os
++ * ids pelo valor anterior e faz UMA escrita por valor distinto — nunca uma
++ * escrita por contato.
++ *
++ * Todo mundo escuta `zapp:contact-status-changed` (`useRealtimeMessages`), o
++ * mesmo evento que o `CloseConversationDialog` já dispara: a lista aberta e as
++ * contagens dos chips são atualizadas sem refetch.
++ */
++import { supabase } from '@/integrations/supabase/client';
++
++export type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
++
++interface ContactStatusRow {
++  id: string;
++  conversation_status: string | null;
++}
++
++function announce(contactId: string, status: ConversationStatus): void {
++  if (typeof window === 'undefined') return;
++  window.dispatchEvent(
++    new CustomEvent('zapp:contact-status-changed', { detail: { contactId, status } }),
++  );
++}
++
++/** Status atual de cada contato pedido (id → status). */
++export async function readConversationStatuses(
++  contactIds: string[],
++): Promise<Map<string, ConversationStatus>> {
++  const statuses = new Map<string, ConversationStatus>();
++  if (contactIds.length === 0) return statuses;
++
++  const { data, error } = await supabase
++    .from('contacts')
++    .select('id, conversation_status')
++    .in('id', contactIds);
++  if (error) throw error;
++
++  for (const row of (data ?? []) as ContactStatusRow[]) {
++    statuses.set(row.id, (row.conversation_status ?? 'open') as ConversationStatus);
++  }
++  return statuses;
++}
++
++/**
++ * Arquiva as conversas de uma só vez (o estado alvo é o mesmo para todas) e
++ * devolve o status anterior de cada uma confirmada, para o Desfazer.
++ *
++ * Rejeita (não devolve sucesso mentiroso) quando o estado anterior de alguma
++ * selecionada não pôde ser lido — arquivar só parte daria um Desfazer que não
++ * devolve todas — e quando a escrita afeta zero linhas (o RLS filtra sem
++ * devolver erro; update sem linha afetada NÃO é sucesso).
++ */
++export async function archiveConversations(
++  contactIds: string[],
++): Promise<Map<string, ConversationStatus>> {
++  if (contactIds.length === 0) return new Map();
++
++  const anteriores = await readConversationStatuses(contactIds);
++  if (anteriores.size !== contactIds.length) {
++    throw new Error('Não foi possível ler o estado de todas as conversas selecionadas');
++  }
++
++  const { data, error } = await supabase
++    .from('contacts')
++    .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
++    .in('id', contactIds)
++    .select('id');
++  if (error) throw error;
++
++  const arquivadas = ((data ?? []) as { id: string }[]).map((row) => row.id);
++  if (arquivadas.length === 0) {
++    throw new Error('Nenhuma conversa foi arquivada');
++  }
++
++  const confirmadas = new Map<string, ConversationStatus>();
++  for (const id of arquivadas) {
++    const anterior = anteriores.get(id);
++    if (anterior) confirmadas.set(id, anterior);
++    announce(id, 'archived');
++  }
++  return confirmadas;
++}
++
++/**
++ * Restaura o status anterior de cada conversa: agrupa os ids pelo valor
++ * anterior e faz UMA escrita por valor distinto.
++ */
++export async function restoreConversationStatuses(
++  anteriores: Map<string, ConversationStatus>,
++): Promise<void> {
++  if (anteriores.size === 0) return;
++
++  const porStatus = new Map<ConversationStatus, string[]>();
++  for (const [id, status] of anteriores) {
++    const ids = porStatus.get(status) ?? [];
++    ids.push(id);
++    porStatus.set(status, ids);
++  }
++
++  for (const [status, ids] of porStatus) {
++    const { error } = await supabase
++      .from('contacts')
++      .update({ conversation_status: status, updated_at: new Date().toISOString() })
++      .in('id', ids);
++    if (error) throw error;
++    for (const id of ids) announce(id, status);
++  }
++}
+diff --git a/src/hooks/inbox/useInboxBulkActions.ts b/src/hooks/inbox/useInboxBulkActions.ts
+index a725c54e8a..8eeee037fe 100644
+--- a/src/hooks/inbox/useInboxBulkActions.ts
++++ b/src/hooks/inbox/useInboxBulkActions.ts
+@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
+ import { toast } from 'sonner';
+ import { useUndoableAction } from '@/hooks/system/useUndoableAction';
+ import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
++import {
++  archiveConversations,
++  restoreConversationStatuses,
++  type ConversationStatus,
++} from '@/hooks/inbox/conversationArchive';
+ 
+ interface UseInboxBulkActionsProps {
+   refetch: () => void;
+@@ -151,34 +156,21 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
+     if (selectedIds.size === 0) return;
+     setBulkLoading(true);
+     const contactIds = Array.from(selectedIds);
+-
+-    const { data: originalContacts } = await supabase
+-      .from('contacts')
+-      .select('id, assigned_to')
+-      .in('id', contactIds);
++    // Status anterior de cada conversa, preenchido pela ação: é o que o
++    // Desfazer restaura (uma escrita por valor anterior distinto).
++    let anteriores = new Map<string, ConversationStatus>();
+ 
+     try {
+       await executeUndoable({
+         successMessage: `${contactIds.length} contato(s) arquivado(s)`,
+         undoMessage: 'Arquivamento desfeito',
+         action: async () => {
+-          const { error } = await supabase
+-            .from('contacts')
+-            .update({ assigned_to: null })
+-            .in('id', contactIds);
+-          if (error) throw error;
++          anteriores = await archiveConversations(contactIds);
+           clearSelection();
+           refetch();
+         },
+         undoAction: async () => {
+-          if (originalContacts) {
+-            for (const contact of originalContacts) {
+-              await supabase
+-                .from('contacts')
+-                .update({ assigned_to: contact.assigned_to })
+-                .eq('id', contact.id);
+-            }
+-          }
++          await restoreConversationStatuses(anteriores);
+           refetch();
+         },
+         onCommit: () => {},

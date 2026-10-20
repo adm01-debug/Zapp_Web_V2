@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=arquivar-semantica-unica
+ID=261015153820e6
+BRANCH=v2/arquivar-semantica-unica-261015153820e6
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-semantica-unica-261015153820e6
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T15:38:30-03:00
+KANBAN=t_da168acd
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-semantica-unica-261015153820e6/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-261015153820e6
+PRONTO_SHA=e2b14415dabea521134eb2dc720b3fd5aa08fb53
