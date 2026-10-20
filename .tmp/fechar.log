@@ -1,0 +1,12 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Um teste que já existia foi removido, pulado ou afrouxado. Se o cartão mandou remover o código junto com o teste, diga isso no relato; senão, restaure o teste.
+  2. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/integrations/supabase/types.ts, supabase/migrations/20261013180000_audit_log_summary.sql, supabase/tests/audit_log_summary_por_periodo.sql. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+  *. CONFERÊNCIA: supabase/migrations/20261013180000_audit_log_summary.sql: a função ? é SECURITY DEFINER sem `SET search_path` fixo (o revisor recusa). Use `SET search_path = public, pg_temp` (ou o necessário).
+OK      db_guard        1s
+FALHOU  tipos          89s  (ver /home/joaquim_ataides/.local/state/zapp-verify/906c3cf958ff/tipos.log)
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 64s
+tc-rapido: erro sem diagnóstico reconhecível
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro.
+VERIFY: VERMELHO em tipos (90s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-log-aba-real-261013-261013161107e9/.tmp/verify-261013161107e9.log)

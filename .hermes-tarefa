@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audit-log-aba-real-261013
+ID=261013161107e9
+BRANCH=v2/audit-log-aba-real-261013-261013161107e9
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-log-aba-real-261013-261013161107e9
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T16:11:18-03:00
+KANBAN=t_2171f991
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-log-aba-real-261013-261013161107e9/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013161107e9
+PRONTO_SHA=ed23df39e9c58d3d2fd85b20ee61685d006411b8

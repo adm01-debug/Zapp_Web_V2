@@ -1,0 +1,6 @@
+279	79	src/components/security/AuditLogDashboard.tsx
+57	63	src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx
+162	231	src/components/security/__tests__/AuditLogDashboard.test.tsx
+33	0	src/integrations/supabase/types.ts
+182	0	supabase/migrations/20261013180000_audit_log_summary.sql
+322	0	supabase/tests/audit_log_summary_por_periodo.sql
