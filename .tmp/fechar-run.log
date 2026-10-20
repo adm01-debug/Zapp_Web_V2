@@ -1,0 +1,7 @@
+On branch v2/a11y-motionconfig-raiz-illustracoes-26101516349aad
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/components/ui/empty-state-illustration-art.tsx. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+FECHADO (modo V2, local): v2/a11y-motionconfig-raiz-illustracoes-26101516349aad @ 5259f6492 — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101516349aad.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.
+EXIT=0

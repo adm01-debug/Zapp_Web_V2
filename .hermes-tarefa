@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-motionconfig-raiz-illustracoes
+ID=26101516349aad
+BRANCH=v2/a11y-motionconfig-raiz-illustracoes-26101516349aad
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-illustracoes-26101516349aad
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T16:34:59-03:00
+KANBAN=t_a6049cc7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-illustracoes-26101516349aad/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101516349aad
+PRONTO_SHA=5259f649225ec131f1600c7243044e1e0d07da3e

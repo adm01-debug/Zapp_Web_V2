@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-illustracoes-26101516349aad
+
+···········
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  17:27:25
+   Duration  5.51s (transform 1.68s, setup 2.28s, import 1.97s, tests 811ms, environment 4.64s)
+
