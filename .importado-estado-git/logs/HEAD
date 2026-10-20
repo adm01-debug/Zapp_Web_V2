@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791885425 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791885426 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 5fcd14cdb7c57eaa0381f87c47bc75f0bf008c01 Hermes Senior <hermes-senior@promobrindes.local> 1791885499 -0300	cherry-pick: fix(auth): logout aguardado, erro de boot, papel ao vivo e storage seguro
+5fcd14cdb7c57eaa0381f87c47bc75f0bf008c01 e177fd0bf4e7e2039d21ab2d1569cfb6bb7a916c Hermes Senior <hermes-senior@promobrindes.local> 1791885505 -0300	cherry-pick: chore(auth): deixa o relato da tarefa fora do versionamento
+e177fd0bf4e7e2039d21ab2d1569cfb6bb7a916c fdfde4cc0aa63ab94094dfe530cd9b5e0d8e8c4c Hermes Senior <hermes-senior@promobrindes.local> 1791885505 -0300	cherry-pick: fix(auth): acessibilidade e estado de erro nas telas de login, recuperacao, MFA e boot

@@ -1,0 +1,8 @@
+ANTES DE ENTREGAR — um juiz adversarial conferiu seus 'Ponto k' contra o DIFF e não achou prova para:
+   * Ponto 1: O diff traz testes novos, mas nada mostra a prova vermelho→verde rodada contra a base nem a admissão de que ela não rodou. 
+   * Ponto 2: O diff mostra useAuth, useUserRole, client e safeStorage alterados, mas não há texto corrigindo a frase falsa sobre a lista de arquivos. 
+   * Ponto 3: Nenhuma captura claro/escuro de 360 a 1280 px aparece no diff, nem justificativa para a falta delas. 
+   * Ponto 4: No trecho visível não há explicação de onde veio a remoção de .tmp/relato.md, e o diff foi cortado. 
+   * Ponto 5: O diff não contém linha de resultado alinhada ao medido (10 arquivos, 37 testes) nem explicação de que 5/17 e 13/75 vêm de outros comandos.
+Corrija de verdade (commit novo) ou, se o ponto realmente não procede, rode este MESMO comando de novo sem mudar nada e diga no relato por quê.
+FECHAR_EXIT=3

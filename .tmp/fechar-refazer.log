@@ -1,0 +1,10 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/components/mfa/MFAEnroll.tsx, src/hooks/__tests__/useUserRole.test.tsx, src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx, src/hooks/auth/useAuth.tsx, src/hooks/system/__tests__/useUserRole.realtime.test.tsx, src/hooks/system/useUserRole.ts …. Reverta (achado fora do escopo vira comentário no cartão) ou explique 
+OK      db_guard        0s
+FALHOU  tipos         235s  (ver /home/joaquim_ataides/.local/state/zapp-verify/5a431e579c5a/tipos.log)
+/home/joaquim_ataides/arquitetura-v2/typecheck-rapido/tc-rapido.sh: line 21: 962274 Killed                  node node_modules/typescript/bin/tsc -p tsconfig.$p.json --noEmit --incremental --tsBuildInf
+tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: tsc -b falhou com exit null: 
+VERIFY: VERMELHO em tipos (235s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-refazer1-261013065760c9/.tmp/verify-261013065760c9.log)

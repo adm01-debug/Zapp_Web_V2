@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=acessibilidade-auth-boot-refazer1
+ID=261013065760c9
+BRANCH=v2/acessibilidade-auth-boot-refazer1-261013065760c9
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-refazer1-261013065760c9
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T06:57:06-03:00
+KANBAN=t_af333f67
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/acessibilidade-auth-boot-refazer1-261013065760c9/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013065760c9
+PRONTO_SHA=fdfde4cc0aa63ab94094dfe530cd9b5e0d8e8c4c
