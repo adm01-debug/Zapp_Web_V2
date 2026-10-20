@@ -1,0 +1,625 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
+
+stderr | tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts > (9) enqueueAiJob LANÇA em falha de infra — nunca falha aberto (IA-045) > erro de infra na RPC → enqueueAiJob REJEITA depois de tocar a infra
+[ai-jobs] enqueueAiJob falhou (rpc): [object Object]
+
+·································stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (2) falha aberta do contador compartilhado (IA-043) > erro de RPC → decisão aberta, com source "local" (nunca a fonte de verdade)
+{"level":"warn","source":"edge","msg":"[ai-guards] contador de rate limit compartilhado indisponivel; decisao veio do pre-filtro local (fail-open)","error":"ai_rate_limit_hit failed: conexao recusada"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (2) falha aberta do contador compartilhado (IA-043) > guard de IA com RPC indisponível → segue (null), NÃO 429
+{"level":"warn","source":"edge","msg":"[ai-guards] contador de rate limit compartilhado indisponivel; decisao veio do pre-filtro local (fail-open)","error":"ai_rate_limit_hit failed: timeout"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (6) orçamento degenerado desliga a reserva SEM chamar a RPC (IA-044) > `limitTokens <= 0` → allowed, id nulo e NENHUMA chamada à RPC
+[ai-budget] reserva ignorada: orcamento degenerado (sem chamada a RPC) {"functionName":"ai-contrato","idempotencyKey":"op-3","limitTokens":0,"estimatedTokens":100}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (6) orçamento degenerado desliga a reserva SEM chamar a RPC (IA-044) > `estimatedTokens <= 0` → mesma falha aberta, sem RPC
+[ai-budget] reserva ignorada: orcamento degenerado (sem chamada a RPC) {"functionName":"ai-contrato","idempotencyKey":"op-4","limitTokens":1000,"estimatedTokens":0}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (7) falha aberta do orçamento, com motivo distinguível (IA-044) > erro de infraestrutura → allowed, id nulo e reason "infrastructure_error"
+[ai-budget] falha aberta (infrastructure_error): db down {"functionName":"ai-contrato","idempotencyKey":"op-5","stage":"rpc_error"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (7) falha aberta do orçamento, com motivo distinguível (IA-044) > DECISÃO 0548-A — a RPC EXECUTOU e devolveu 0 linhas (`data: []`) → NEGADO (fechado)
+[ai-budget] ai_budget_reserve devolveu 0 linhas — NEGADO (fail-closed). {"functionName":"ai-contrato","idempotencyKey":"op-6","stage":"no_rows"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (7) falha aberta do orçamento, com motivo distinguível (IA-044) > DECISÃO 0548-B — resposta INUTILIZÁVEL (`data: null`) e erro de infra → ABERTO
+[ai-budget] falha aberta (infrastructure_error): boom {"functionName":"ai-contrato","idempotencyKey":"op-6b","stage":"rpc_error"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (7) falha aberta do orçamento, com motivo distinguível (IA-044) > DECISÃO 0548-B — resposta INUTILIZÁVEL (`data: null`) e erro de infra → ABERTO
+[ai-budget] falha aberta (infrastructure_error): ai_budget_reserve retornou corpo vazio/invalido. {"functionName":"ai-contrato","idempotencyKey":"op-6b","stage":"bad_shape"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (7) falha aberta do orçamento, com motivo distinguível (IA-044) > ambiente sem segredos → falha aberta com reason "missing_env", sem tocar o banco
+[ai-budget] falha aberta (missing_env): env ausente: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY {"functionName":"ai-contrato","idempotencyKey":"op-7","missing":"SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY"}
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (11) costura do orçamento no despacho: reserva → usar → liquidar/liberar (IA-044) > orçamento NEGADO → HTTP 429 com BUDGET_EXCEEDED e o provedor NÃO é chamado
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq(...).in is not a function
+
+···························stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (11) costura do orçamento no despacho: reserva → usar → liquidar/liberar (IA-044) > sucesso → `settleBudget` com a SOMA REAL (input+output medidos), nunca a estimativa
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq(...).in is not a function
+
+stderr | tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts > (11) costura do orçamento no despacho: reserva → usar → liquidar/liberar (IA-044) > falha do provedor (HTTP de erro) → `releaseBudget` antes do desfecho
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq(...).in is not a function
+
+···················stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > classify-emoji baixa no servidor e envia `data:image/...;base64,...` ao provedor de visão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > classify-emoji baixa no servidor e envia `data:image/...;base64,...` ao provedor de visão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > classify-emoji baixa no servidor e envia `data:image/...;base64,...` ao provedor de visão
+{"level":"info","fn":"classify-emoji","rid":"d9c9515c","ms":10,"msg":"completed 200","status":200,"durationMs":10,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+·stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão
+{"level":"info","fn":"classify-sticker","rid":"f7729092","ms":3,"msg":"completed 200","status":200,"durationMs":3,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor > o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão
+{"level":"info","fn":"classify-emoji","rid":"481d28ac","ms":3,"msg":"completed 200","status":200,"durationMs":3,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > SUCESSO pelo consumidor: grava o consumo com provider/modelo/purpose do servidor
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > SUCESSO pelo consumidor: grava o consumo com provider/modelo/purpose do servidor
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > SUCESSO pelo consumidor: grava o consumo com provider/modelo/purpose do servidor
+{"level":"info","fn":"classify-emoji","rid":"ea53b925","ms":3,"msg":"completed 200","status":200,"durationMs":3,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > ERRO HTTP 500 do provedor: consumo registrado como error
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > ERRO HTTP 500 do provedor: consumo registrado como error
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > baixa o áudio no servidor e envia `input_audio` em base64 ao provedor de áudio
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > baixa o áudio no servidor e envia `input_audio` em base64 ao provedor de áudio
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:e59326de","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > baixa o áudio no servidor e envia `input_audio` em base64 ao provedor de áudio
+{"level":"info","fn":"classify-audio-meme","rid":"33e2ee99","ms":8,"msg":"completed 200","status":200,"durationMs":8,"category":"risada","basis":"audio_content","audioBytes":12}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > o provedor de TEXTO padrão NUNCA recebe o pedido de áudio
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > o provedor de TEXTO padrão NUNCA recebe o pedido de áudio
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:e59326de","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > o provedor de TEXTO padrão NUNCA recebe o pedido de áudio
+{"level":"info","fn":"classify-audio-meme","rid":"9f3063d3","ms":3,"msg":"completed 200","status":200,"durationMs":3,"category":"risada","basis":"audio_content","audioBytes":12}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > ACEITE IA-131: mesmo nome com conteúdo diferente é distinguido (payloads distintos)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > ACEITE IA-131: mesmo nome com conteúdo diferente é distinguido (payloads distintos)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:e59326de","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > ACEITE IA-131: mesmo nome com conteúdo diferente é distinguido (payloads distintos)
+{"level":"info","fn":"classify-audio-meme","rid":"46c61912","ms":2,"msg":"completed 200","status":200,"durationMs":2,"category":"risada","basis":"audio_content","audioBytes":12}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > ACEITE IA-131: mesmo nome com conteúdo diferente é distinguido (payloads distintos)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > ACEITE IA-131: mesmo nome com conteúdo diferente é distinguido (payloads distintos)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:2ec916f1","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > ACEITE IA-131: mesmo nome com conteúdo diferente é distinguido (payloads distintos)
+{"level":"info","fn":"classify-audio-meme","rid":"d425a0b3","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"deboche","basis":"audio_content","audioBytes":12}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > o texto enviado junto ao som pede para OUVIR o conteúdo (não deriva do nome)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > o texto enviado junto ao som pede para OUVIR o conteúdo (não deriva do nome)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:e59326de","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (2) classificação pelo CONTEÚDO SONORO > o texto enviado junto ao som pede para OUVIR o conteúdo (não deriva do nome)
+{"level":"info","fn":"classify-audio-meme","rid":"a3970c5e","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"risada","basis":"audio_content","audioBytes":12}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (3) só metadados: a resposta declara que a classificação é limitada > sem `audio_url` classifica por metadados no provedor de texto e rotula `basis`
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (3) só metadados: a resposta declara que a classificação é limitada > sem `audio_url` classifica por metadados no provedor de texto e rotula `basis`
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:deepseek-v4-flash:5342bcc5","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (3) só metadados: a resposta declara que a classificação é limitada > sem `audio_url` classifica por metadados no provedor de texto e rotula `basis`
+{"level":"info","fn":"classify-audio-meme","rid":"af64a375","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"deboche","basis":"metadata","degraded":false}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (3) só metadados: a resposta declara que a classificação é limitada > o prompt do modo limitado DIZ que o som não foi recebido e que a classificação é só pelo nome
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (3) só metadados: a resposta declara que a classificação é limitada > o prompt do modo limitado DIZ que o som não foi recebido e que a classificação é só pelo nome
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:deepseek-v4-flash:5342bcc5","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (3) só metadados: a resposta declara que a classificação é limitada > o prompt do modo limitado DIZ que o som não foi recebido e que a classificação é só pelo nome
+{"level":"info","fn":"classify-audio-meme","rid":"5859fef3","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"deboche","basis":"metadata","degraded":false}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > Storage 404 → cai no modo por metadados, com `degraded` e `error_code`
+{"level":"error","fn":"classify-audio-meme","rid":"b18d4206","ms":0,"msg":"Falha ao preparar o audio; degradando para metadados com motivo registrado"}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > Storage 404 → cai no modo por metadados, com `degraded` e `error_code`
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > Storage 404 → cai no modo por metadados, com `degraded` e `error_code`
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:deepseek-v4-flash:214207c5","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > Storage 404 → cai no modo por metadados, com `degraded` e `error_code`
+{"level":"info","fn":"classify-audio-meme","rid":"b18d4206","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"deboche","basis":"metadata","degraded":true}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+{"level":"error","fn":"classify-audio-meme","rid":"5b4660f4","ms":0,"msg":"Falha ao preparar o audio; degradando para metadados com motivo registrado"}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:deepseek-v4-flash:edb03f17","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+{"level":"info","fn":"classify-audio-meme","rid":"5b4660f4","ms":2,"msg":"completed 200","status":200,"durationMs":2,"category":"outros","basis":"metadata","degraded":true}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+{"level":"error","fn":"classify-audio-meme","rid":"faa7b7b4","ms":1,"msg":"Falha ao preparar o audio; degradando para metadados com motivo registrado"}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:deepseek-v4-flash:8f506566","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > tipo não-áudio e formato não suportado degradam igual, com o código do motivo
+{"level":"info","fn":"classify-audio-meme","rid":"faa7b7b4","ms":3,"msg":"completed 200","status":200,"durationMs":3,"category":"outros","basis":"metadata","degraded":true}
+
+·········································stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > provedor de áudio indisponível NÃO vira categoria: `outros` com `basis: none`
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > provedor de áudio indisponível NÃO vira categoria: `outros` com `basis: none`
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:e59326de","stage":"exception"}
+
+······························································································stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > ERRO HTTP 500 do provedor: consumo registrado como error
+{"level":"error","fn":"classify-emoji","rid":"956dc675","ms":593,"msg":"API error 500","detail":"unknown"}
+
+·····stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > fetch que LANÇA: consumo registrado como error (a falha de rede também é auditada)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > fetch que LANÇA: consumo registrado como error (a falha de rede também é auditada)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > fetch que LANÇA: consumo registrado como error (a falha de rede também é auditada)
+{"level":"error","fn":"classify-emoji","rid":"996667bf","ms":2,"msg":"API error 502","detail":"unknown"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > despacho direto: sucesso E erro (500 e exceção) SEMPRE chamam logAiUsage
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > despacho direto: sucesso E erro (500 e exceção) SEMPRE chamam logAiUsage
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > despacho direto: sucesso E erro (500 e exceção) SEMPRE chamam logAiUsage
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > despacho direto: sucesso E erro (500 e exceção) SEMPRE chamam logAiUsage
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-resilience-prazos-retry.contract.test.ts > (4) ai-generate: prazo por capacidade com o chamador vencendo o padrão (IA-041) > sem timeoutMs, o despacho manda o prazo padrão da capacidade (30s para texto puro)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-resilience-prazos-retry.contract.test.ts > (4) ai-generate: prazo por capacidade com o chamador vencendo o padrão (IA-041) > sem timeoutMs, o despacho manda o prazo padrão da capacidade (30s para texto puro)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"contrato-ia-resilience","idempotencyKey":"contrato-ia-resilience:anon:gpt-4o:521a964a","stage":"exception"}
+
+··············stderr | tests/contracts/ai-resilience-prazos-retry.contract.test.ts > (4) ai-generate: prazo por capacidade com o chamador vencendo o padrão (IA-041) > um timeoutMs explícito do chamador vence o padrão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-resilience-prazos-retry.contract.test.ts > (4) ai-generate: prazo por capacidade com o chamador vencendo o padrão (IA-041) > um timeoutMs explícito do chamador vence o padrão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"contrato-ia-resilience","idempotencyKey":"contrato-ia-resilience:anon:gpt-4o:521a964a","stage":"exception"}
+
+·······stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > provedor de áudio indisponível NÃO vira categoria: `outros` com `basis: none`
+{"level":"error","fn":"classify-audio-meme","rid":"b20ebae9","ms":648,"msg":"API error 500","detail":"unknown"}
+
+·stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > sem provedor que declare áudio: nada é enviado ao provedor de áudio e a falha é rotulada
+{"level":"warn","fn":"classify-audio-meme","rid":"fc75b5d6","ms":1,"msg":"Nenhum provedor de audio disponivel; classificando por metadados"}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > sem provedor que declare áudio: nada é enviado ao provedor de áudio e a falha é rotulada
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > sem provedor que declare áudio: nada é enviado ao provedor de áudio e a falha é rotulada
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:deepseek-v4-flash:214207c5","stage":"exception"}
+
+stdout | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > sem provedor que declare áudio: nada é enviado ao provedor de áudio e a falha é rotulada
+{"level":"info","fn":"classify-audio-meme","rid":"fc75b5d6","ms":6,"msg":"completed 200","status":200,"durationMs":6,"category":"outros","basis":"metadata","degraded":true}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (4) falha técnica: registrada como degradação, não como conclusão > entrada vazia: `outros` sem afirmar nada sobre o som
+{"level":"warn","fn":"classify-audio-meme","rid":"0caa6abe","ms":1,"msg":"Empty input, defaulting to outros"}
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (5) controle: modalidade `audio_stt` resolve no provedor que a declara > despacho direto por áudio não cai no provedor padrão de texto
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ia131-audio-meme-conteudo.contract.test.ts > (5) controle: modalidade `audio_stt` resolve no provedor que a declara > despacho direto por áudio não cai no provedor padrão de texto
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-audio-meme","idempotencyKey":"classify-audio-meme:usuario-teste:google/gemini-3.8-flash:971bc1c7","stage":"exception"}
+
+······················································································································································································································································stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > despacho direto: sucesso E erro (500 e exceção) SEMPRE chamam logAiUsage
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção > despacho direto: sucesso E erro (500 e exceção) SEMPRE chamam logAiUsage
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:521a964a","stage":"exception"}
+
+··stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (3) erro HTTP do provedor de visão: degradação para `outros` (não estoura) > classify-emoji responde 200 {category: outros} quando o provedor de visão devolve 500
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (3) erro HTTP do provedor de visão: degradação para `outros` (não estoura) > classify-emoji responde 200 {category: outros} quando o provedor de visão devolve 500
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+·······stderr | tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts > (b) audience.save — validacao e gravacao > falha do store vira 502 NOMEADO, nunca 500
+{"event":"multiplix_dispatch","action":"audience.save","user_id":"user-1","correlation_id":"corr-1","code":"multiplix_audience_store_failed","ok":false}
+
+stderr | tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts > (b) audience.save — validacao e gravacao > falha ao gravar membros: 502 nomeado, compensa o publico gravado e nao ecoa o erro interno
+{"event":"multiplix_dispatch","action":"audience.save","user_id":"user-1","correlation_id":"corr-1","code":"duplicate key value violates unique constraint \"multiplix_audience_members_pkey\"","ok":false}
+
+stderr | tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts > (c/d) audience.apply — publico salvo, contagens e exclusao vencedora > aplicar static_list aplica a lista salva e a exclusao vence a inclusao (ate pos-resolve)
+{"event":"multiplix_dispatch","action":"audience.apply","user_id":"user-1","correlation_id":"corr-1","scope":["admin"],"count":null,"recipients":1,"signals":0,"duration_ms":0,"ok":true}
+
+stderr | tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts > (c/d) audience.apply — publico salvo, contagens e exclusao vencedora > diferencia eligible_count, dropped_out_of_filter e excluded_removed
+{"event":"multiplix_dispatch","action":"audience.apply","user_id":"user-1","correlation_id":"corr-1","scope":["admin"],"count":3,"recipients":1,"signals":0,"duration_ms":0,"ok":true}
+
+stderr | tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts > (c) audience.select — publico salvo por referencia > expande a referencia salva e mantem a exclusao vencendo
+{"event":"multiplix_dispatch","action":"audience.select","user_id":"user-1","correlation_id":"corr-1","scope":["admin"],"count":null,"recipients":1,"signals":0,"duration_ms":0,"ok":true}
+
+·······························stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (3) erro HTTP do provedor de visão: degradação para `outros` (não estoura) > classify-emoji responde 200 {category: outros} quando o provedor de visão devolve 500
+{"level":"error","fn":"classify-emoji","rid":"83d037f5","ms":700,"msg":"API error 500","detail":"unknown"}
+
+·stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (3) erro HTTP do provedor de visão: degradação para `outros` (não estoura) > classify-sticker também degrada para outros no erro HTTP (mesma rota de visão)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (3) erro HTTP do provedor de visão: degradação para `outros` (não estoura) > classify-sticker também degrada para outros no erro HTTP (mesma rota de visão)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+························stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) > sem `need`, resolve no provedor padrão mesmo com um provedor de visão ativo
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) > sem `need`, resolve no provedor padrão mesmo com um provedor de visão ativo
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-1:deepseek-v4-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) > `need.modality = "text"` também NÃO entra no caminho por modalidade
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — texto puro segue o caminho de hoje (padrão por finalidade) > `need.modality = "text"` também NÃO entra no caminho por modalidade
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-1:deepseek-v4-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — visão resolve no provedor que declara a modalidade > um candidato ativo declarando vision resolve NELE, mesmo sem is_default
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — visão resolve no provedor que declara a modalidade > um candidato ativo declarando vision resolve NELE, mesmo sem is_default
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-1:google/gemini-3.8-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — conteúdo multipart (imagem + texto) atravessa intacto > as partes da imagem chegam ao provedor como array, não como string
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — conteúdo multipart (imagem + texto) atravessa intacto > as partes da imagem chegam ao provedor como array, não como string
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-1:google/gemini-3.8-flash:242c83b6","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — purpose segue obrigatória e logAiUsage cobre os desfechos > a finalidade viaja no metadata do log (segue usada)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — purpose segue obrigatória e logAiUsage cobre os desfechos > a finalidade viaja no metadata do log (segue usada)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-1:google/gemini-3.8-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — purpose segue obrigatória e logAiUsage cobre os desfechos > logAiUsage é chamado no sucesso E nos desfechos de roteamento
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-modality.contract.test.ts > IA-033 — purpose segue obrigatória e logAiUsage cobre os desfechos > logAiUsage é chamado no sucesso E nos desfechos de roteamento
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-1:google/gemini-3.8-flash:521a964a","stage":"exception"}
+
+···············································stderr | tests/contracts/requireauth-network-policy.contract.test.ts > requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3) > retorna 503 quando a política não decide (RPC devolve erro)
+{"level":"error","source":"edge","status":503,"msg":"Service unavailable"}
+
+stderr | tests/contracts/requireauth-network-policy.contract.test.ts > requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3) > retorna 503 quando a CRIAÇÃO do client de política rejeita — nunca rejeita a Promise
+{"level":"error","source":"edge","status":503,"msg":"Service unavailable"}
+
+stderr | tests/contracts/requireauth-network-policy.contract.test.ts > requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3) > retorna 503 quando a criação do client de política lança exceção síncrona
+{"level":"error","source":"edge","status":503,"msg":"Service unavailable"}
+
+stderr | tests/contracts/requireauth-network-policy.contract.test.ts > requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3) > retorna 503 quando a CHAMADA da RPC rejeita (exceção, não só error resolvido)
+{"level":"error","source":"edge","status":503,"msg":"Service unavailable"}
+
+stderr | tests/contracts/requireauth-network-policy.contract.test.ts
+{"level":"warn","source":"edge","msg":"rate_limit_log_insert_failed","ip":"?","endpoint":"multiplix-dispatch","err":"Only URLs with a scheme in: file and data are supported by the default ESM loader. Received protocol 'https:'"}
+
+················stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (3) erro HTTP do provedor de visão: degradação para `outros` (não estoura) > classify-sticker também degrada para outros no erro HTTP (mesma rota de visão)
+{"level":"error","fn":"classify-sticker","rid":"8b85b0f2","ms":1014,"msg":"API error 500","detail":"unknown"}
+
+·stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (4) visão sem candidato: NO_PROVIDER e nada enviado ao provedor de texto > classify-emoji degrada para outros SEM chamar provedor (não vaza ao DeepSeek)
+{"level":"error","fn":"classify-emoji","rid":"da4916fb","ms":1,"msg":"API error 503","detail":"NO_PROVIDER"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (5) imagem acima do teto (4 MiB): 200 {outros} e registro do motivo > classify-emoji recusa a imagem grande e registra IMAGE_TOO_LARGE
+{"level":"error","fn":"classify-emoji","rid":"8dfb0a51","ms":17,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+··········stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (5) imagem acima do teto (4 MiB): 200 {outros} e registro do motivo > classify-sticker também recusa a imagem grande e registra o motivo
+{"level":"error","fn":"classify-sticker","rid":"77ab91ea","ms":11,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (6) falha do Storage (404/403): 200 {outros} e registro do motivo > Storage responde HTTP 404: degrada para outros e registra IMAGE_DOWNLOAD_FAILED
+{"level":"error","fn":"classify-sticker","rid":"af99730b","ms":1,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (6) falha do Storage (404/403): 200 {outros} e registro do motivo > Storage responde HTTP 403: degrada para outros e registra IMAGE_DOWNLOAD_FAILED
+{"level":"error","fn":"classify-sticker","rid":"8e8d5b61","ms":1,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (6) falha do Storage (404/403): 200 {outros} e registro do motivo > classify-emoji: mesma degradação registrada na falha do Storage
+{"level":"error","fn":"classify-emoji","rid":"cd002c47","ms":0,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (6) falha do Storage (404/403): 200 {outros} e registro do motivo > content-type não-imagem também degrada e registra IMAGE_TYPE_INVALID
+{"level":"error","fn":"classify-emoji","rid":"d4424e74","ms":0,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — sticker sem image_url (entrada vazia)
+{"level":"warn","fn":"classify-sticker","rid":"56335298","ms":0,"msg":"Empty input, defaulting to outros"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — emoji sem image_url e sem file_name (entrada vazia)
+{"level":"warn","fn":"classify-emoji","rid":"a7a1a5cd","ms":0,"msg":"Empty input, defaulting to outros"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — imagem grande demais (> 4 MiB)
+{"level":"error","fn":"classify-sticker","rid":"a8e1deed","ms":11,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — Storage responde 403
+{"level":"error","fn":"classify-emoji","rid":"a5c66fc4","ms":1,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor de visão responde HTTP 500
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor de visão responde HTTP 500
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+···························································································································································································································stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor de visão responde HTTP 500
+{"level":"error","fn":"classify-emoji","rid":"e154feca","ms":1117,"msg":"API error 500","detail":"unknown"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor LANÇA na rede
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor LANÇA na rede
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+·············stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor LANÇA na rede
+{"level":"error","fn":"classify-sticker","rid":"093644a7","ms":2,"msg":"API error 502","detail":"unknown"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — nenhum provedor declara visão (NO_PROVIDER)
+{"level":"error","fn":"classify-emoji","rid":"7f433a24","ms":1,"msg":"API error 503","detail":"NO_PROVIDER"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor devolve categoria fora da lista
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor devolve categoria fora da lista
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor devolve categoria fora da lista
+{"level":"warn","fn":"classify-emoji","rid":"a33a680b","ms":2,"msg":"Provedor respondeu categoria fora da lista: 'categoriainventada'"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde conteudo VAZIO - sticker
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde conteudo VAZIO - sticker
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde conteudo VAZIO - sticker
+{"level":"warn","fn":"classify-sticker","rid":"98fee010","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde conteudo VAZIO - emoji (so espacos)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde conteudo VAZIO - emoji (so espacos)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde conteudo VAZIO - emoji (so espacos)
+{"level":"warn","fn":"classify-emoji","rid":"0ae6c9a2","ms":0,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde choices vazio
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde choices vazio
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde choices vazio
+{"level":"warn","fn":"classify-sticker","rid":"a0b57ba9","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde sem choices
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde sem choices
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde sem choices
+{"level":"warn","fn":"classify-emoji","rid":"a3f75e94","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde item sem message.content
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde item sem message.content
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > registra uso/erro — provedor responde item sem message.content
+{"level":"warn","fn":"classify-sticker","rid":"ef3fabd6","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > o caminho de SUCESSO do mesmo consumidor registra consumo (controle)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > o caminho de SUCESSO do mesmo consumidor registra consumo (controle)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (7) central: NENHUM caminho que devolva `outros` termina sem registro de uso/erro > o caminho de SUCESSO do mesmo consumidor registra consumo (controle)
+{"level":"info","fn":"classify-emoji","rid":"c9df7b59","ms":2,"msg":"completed 200","status":200,"durationMs":2,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (8) controle: texto puro continua no provedor padrão (DeepSeek) > sem `need`, o despacho vai ao DeepSeek — visão NÃO é o caminho padrão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (8) controle: texto puro continua no provedor padrão (DeepSeek) > sem `need`, o despacho vai ao DeepSeek — visão NÃO é o caminho padrão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:deepseek-v4-flash:521a964a","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-emoji (usuário): GET do Storage usa anon key + JWT do chamador — NUNCA service role
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-emoji (usuário): GET do Storage usa anon key + JWT do chamador — NUNCA service role
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-emoji (usuário): GET do Storage usa anon key + JWT do chamador — NUNCA service role
+{"level":"info","fn":"classify-emoji","rid":"789a685c","ms":2,"msg":"completed 200","status":200,"durationMs":2,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-sticker (usuário): idem — anon key + JWT, nunca service role
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-sticker (usuário): idem — anon key + JWT, nunca service role
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-sticker (usuário): idem — anon key + JWT, nunca service role
+{"level":"info","fn":"classify-sticker","rid":"20a394e8","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-sticker (serviço, webhook): GET usa service role EXPLÍCITA — não fallback
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-sticker (serviço, webhook): GET usa service role EXPLÍCITA — não fallback
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:anon:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (9) identidade do download: usuário → anon key + JWT; serviço → service role explícita > classify-sticker (serviço, webhook): GET usa service role EXPLÍCITA — não fallback
+{"level":"info","fn":"classify-sticker","rid":"265e36e6","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"riso","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > entrada ausente → `unknown` (não é falha de provedor)
+{"level":"warn","fn":"classify-sticker","rid":"9ab930b1","ms":0,"msg":"Empty input, defaulting to outros"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > entrada ausente → `unknown` (não é falha de provedor)
+{"level":"warn","fn":"classify-emoji","rid":"a1ed3e02","ms":0,"msg":"Empty input, defaulting to outros"}
+
+································stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > imagem recusada na preparação → `input_error` com o código TIPADO do motivo
+{"level":"error","fn":"classify-sticker","rid":"4f2d2f65","ms":16,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > imagem recusada na preparação → `input_error` com o código TIPADO do motivo
+{"level":"error","fn":"classify-emoji","rid":"d76dafa4","ms":1,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > imagem recusada na preparação → `input_error` com o código TIPADO do motivo
+{"level":"error","fn":"classify-sticker","rid":"1c54c6b4","ms":0,"msg":"Falha ao preparar a imagem; degradando para 'outros' com motivo registrado"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+·····································································································································································································································stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+{"level":"error","fn":"classify-sticker","rid":"d34ed210","ms":958,"msg":"API error 500","detail":"unknown"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+{"level":"error","fn":"classify-emoji","rid":"9f56352f","ms":1,"msg":"API error 502","detail":"unknown"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)
+{"level":"error","fn":"classify-sticker","rid":"f6cca8f5","ms":0,"msg":"API error 503","detail":"NO_PROVIDER"}
+
+················stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta sem categoria da lista → `low_confidence` (não é o `outros` concluído)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta sem categoria da lista → `low_confidence` (não é o `outros` concluído)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta sem categoria da lista → `low_confidence` (não é o `outros` concluído)
+{"level":"warn","fn":"classify-emoji","rid":"37250ba2","ms":1,"msg":"Provedor respondeu categoria fora da lista: 'categoriainventada'"}
+
+··········stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+{"level":"warn","fn":"classify-sticker","rid":"3d03d5ec","ms":2,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+{"level":"warn","fn":"classify-emoji","rid":"2502687f","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+{"level":"warn","fn":"classify-sticker","rid":"171ec51a","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+{"level":"warn","fn":"classify-emoji","rid":"fcbbdfde","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)
+{"level":"warn","fn":"classify-sticker","rid":"ea496f55","ms":1,"msg":"Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)"}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > `outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > `outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-sticker","idempotencyKey":"classify-sticker:usuario-teste:google/gemini-3.8-flash:ff163b82","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > `outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle
+{"level":"info","fn":"classify-sticker","rid":"4d4021c0","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"outros","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > `outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > `outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > `outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle
+{"level":"info","fn":"classify-emoji","rid":"7f060ca9","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"outros","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+stdout | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão
+{"level":"info","fn":"classify-emoji","rid":"fd96708a","ms":1,"msg":"completed 200","status":200,"durationMs":1,"category":"outros","state":"ok","imageMime":"image/png","imageBytes":16}
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão
+[ai-circuit] falha aberta: leitura do ledger lançou: client.from(...).select(...).eq is not a function
+
+stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão
+[ai-budget] falha aberta (infrastructure_error): client.rpc is not a function {"functionName":"classify-emoji","idempotencyKey":"classify-emoji:usuario-teste:google/gemini-3.8-flash:ebe276f9","stage":"exception"}
+
+······························stderr | tests/contracts/e2e-reactions-cleanup-escopo.contract.test.ts > cleanupE2EReactions — escopo do DELETE (R2-INF-006) > não apaga nada quando o profile do caller não é resolvido
+[e2e-contact] cleanupE2EReactions: profile do usuario logado nao resolvido
+
+····················································································stderr | tests/contracts/ai-vision-classifiers-mock.contract.test.ts > (10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica > ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão
+{"level":"error","fn":"classify-emoji","rid":"06e4dbca","ms":1037,"msg":"API error 500","detail":"unknown"}
+
+·························································································································
+
+ Test Files  90 passed (90)
+      Tests  1381 passed (1381)
+   Start at  06:53:02
+   Duration  9.89s (transform 6.06s, setup 0ms, import 8.83s, tests 14.43s, environment 668ms)
+
