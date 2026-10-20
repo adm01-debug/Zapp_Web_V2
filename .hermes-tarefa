@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aplicar-at-time-zone-window-fixes
+ID=2610130856a5b5
+BRANCH=v2/aplicar-at-time-zone-window-fixes-2610130856a5b5
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-at-time-zone-window-fixes-2610130856a5b5
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T08:56:40-03:00
+KANBAN=t_59210b33
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-at-time-zone-window-fixes-2610130856a5b5/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130856a5b5
+PRONTO_SHA=fca67014858141b2b4ba788e4f0a7b11ac8f0639

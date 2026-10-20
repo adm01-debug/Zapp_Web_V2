@@ -1,0 +1,7 @@
+fix(talkx): refazer 1 N-102 fuso com teste versionado e baseline do espelho
+
+- secao N-102 em talkx-campaign-window-open.test.sh: criterio true->false,
+  dnd_hours sem holidays/sundays (NULL), bordas e rollback executado
+- known-violations.json: chave temporaria rpc:talkx_campaign_window_open
+  removida (alvo criado por esta entrega; guard volta a exit 0)
+- relato por ponto da recusa com saidas literais

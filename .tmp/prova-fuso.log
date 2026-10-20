@@ -1,0 +1,81 @@
+== subindo postgres descartavel (prova-fuso-n102-295745)
+== esqueleto pre-existente (o que a funcao le; nada da migracao sob teste)
+== aplicando migrations REAIS na ordem
+psql:<stdin>:37: NOTICE:  constraint "talkx_campaigns_schedule_timezone_valid" of relation "talkx_campaigns" does not exist, skipping
+psql:<stdin>:37: NOTICE:  constraint "talkx_campaigns_send_window_valid" of relation "talkx_campaigns" does not exist, skipping
+== campanhas de prova
+
+== VERMELHO: sem a correcao (esperado: casos 1-4 divergirem, controle ok)
+-- antes da correcao
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 02:30:00+00 -> true (esperado true)
+   ok   22222222-2222-2222-2222-222222222222 @ 2026-10-13 09:00:00+00 -> true (esperado true)
+   ok   33333333-3333-3333-3333-333333333333 @ 2026-10-13 11:30:00+00 -> true (esperado true)
+   ok   44444444-4444-4444-4444-444444444444 @ 2026-10-12 02:30:00+00 -> true (esperado true)
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 12:30:00+00 -> true (esperado true)
+-- antes da correcao: 5/5
+   -- ANTES: cruza a meia-noite local (SP)
+   $ psql -c "set role authenticated; select public.talkx_campaign_window_open('11111111-1111-1111-1111-111111111111'::uuid, timestamptz '2026-10-12 02:30:00+00') as janela_aberta;"
+    janela_aberta 
+   ---------------
+    t
+   (1 row)
+   
+   -- ANTES: dentro do DND local (SP)
+   $ psql -c "set role authenticated; select public.talkx_campaign_window_open('22222222-2222-2222-2222-222222222222'::uuid, timestamptz '2026-10-13 09:00:00+00') as janela_aberta;"
+    janela_aberta 
+   ---------------
+    t
+   (1 row)
+   
+== bordas antes da correcao
+   p_at NULL (campanha 1) -> true
+   campanha inexistente -> CONTEXT:  PL/pgSQL function talkx_campaign_window_open(uuid,timestamp with time zone) line 14 at RAISE
+
+== aplicando a correcao: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-at-time-zone-window-fixes-2610130856a5b5/supabase/migrations/20261013230015_talkx_n102_window_fixes.sql
+
+== VERDE: com a correcao (esperado: 5/5)
+-- depois da correcao
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 02:30:00+00 -> false (esperado false)
+   ok   22222222-2222-2222-2222-222222222222 @ 2026-10-13 09:00:00+00 -> false (esperado false)
+   ok   33333333-3333-3333-3333-333333333333 @ 2026-10-13 11:30:00+00 -> false (esperado false)
+   ok   44444444-4444-4444-4444-444444444444 @ 2026-10-12 02:30:00+00 -> false (esperado false)
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 12:30:00+00 -> true (esperado true)
+-- depois da correcao: 5/5
+   -- DEPOIS: cruza a meia-noite local (SP)
+   $ psql -c "set role authenticated; select public.talkx_campaign_window_open('11111111-1111-1111-1111-111111111111'::uuid, timestamptz '2026-10-12 02:30:00+00') as janela_aberta;"
+    janela_aberta 
+   ---------------
+    f
+   (1 row)
+   
+   -- DEPOIS: dentro do DND local (SP)
+   $ psql -c "set role authenticated; select public.talkx_campaign_window_open('22222222-2222-2222-2222-222222222222'::uuid, timestamptz '2026-10-13 09:00:00+00') as janela_aberta;"
+    janela_aberta 
+   ---------------
+    f
+   (1 row)
+   
+
+== ROLLBACK: executando as linhas '--   ' do cabecalho da migration
+-- depois do rollback (volta ao comportamento antigo)
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 02:30:00+00 -> true (esperado true)
+   ok   22222222-2222-2222-2222-222222222222 @ 2026-10-13 09:00:00+00 -> true (esperado true)
+   ok   33333333-3333-3333-3333-333333333333 @ 2026-10-13 11:30:00+00 -> true (esperado true)
+   ok   44444444-4444-4444-4444-444444444444 @ 2026-10-12 02:30:00+00 -> true (esperado true)
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 12:30:00+00 -> true (esperado true)
+-- depois do rollback (volta ao comportamento antigo): 5/5
+
+== reaplicando a correcao
+-- correcao reaplicada
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 02:30:00+00 -> false (esperado false)
+   ok   22222222-2222-2222-2222-222222222222 @ 2026-10-13 09:00:00+00 -> false (esperado false)
+   ok   33333333-3333-3333-3333-333333333333 @ 2026-10-13 11:30:00+00 -> false (esperado false)
+   ok   44444444-4444-4444-4444-444444444444 @ 2026-10-12 02:30:00+00 -> false (esperado false)
+   ok   11111111-1111-1111-1111-111111111111 @ 2026-10-12 12:30:00+00 -> true (esperado true)
+-- correcao reaplicada: 5/5
+
+== bordas (mesmo comportamento antes e depois da correcao)
+   p_at NULL (campanha 1) -> true
+   campanha inexistente -> CONTEXT:  PL/pgSQL function talkx_campaign_window_open(uuid,timestamp with time zone) line 16 at RAISE
+
+RESULTADO: OK (nenhuma divergencia)
