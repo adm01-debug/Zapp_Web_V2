@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditar-chunking-baseline
+ID=2610121008a5a1
+BRANCH=v2/auditar-chunking-baseline-2610121008a5a1
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditar-chunking-baseline-2610121008a5a1
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T10:08:30-03:00
+KANBAN=t_e56122a6
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditar-chunking-baseline-2610121008a5a1/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610121008a5a1
+PRONTO_SHA=2a8531147295cd8630f2ad162124909ba0873046
