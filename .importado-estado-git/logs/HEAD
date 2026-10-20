@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791863230 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791863231 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 1f992597f16918030fc815959826d63df900a2d7 Hermes Senior <hermes-senior@promobrindes.local> 1791865841 -0300	commit: fix(auth): logout aguardado, erro de boot, papel ao vivo e storage seguro
+1f992597f16918030fc815959826d63df900a2d7 95ee577df7e70a41571a1772a304e2bc93847cd6 Hermes Senior <hermes-senior@promobrindes.local> 1791866020 -0300	commit: chore(auth): deixa o relato da tarefa fora do versionamento
+95ee577df7e70a41571a1772a304e2bc93847cd6 1242965bee2c55790be654b8461de7c7c3636d42 Hermes Senior <hermes-senior@promobrindes.local> 1792023346 -0300	commit: fix(auth): storage remove valor antigo quando a escrita falha e cai na memoria

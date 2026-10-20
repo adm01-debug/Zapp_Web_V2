@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auth-logout-boot-realtime-storage
+ID=261013004779ac
+BRANCH=v2/auth-logout-boot-realtime-storage-261013004779ac
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-logout-boot-realtime-storage-261013004779ac
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T00:47:11-03:00
+KANBAN=t_466d669c
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-logout-boot-realtime-storage-261013004779ac/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013004779ac
+PRONTO_SHA=95ee577df7e70a41571a1772a304e2bc93847cd6

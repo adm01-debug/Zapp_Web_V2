@@ -1,0 +1,1 @@
+(saída do vitest completo, removida antes do fechar)
