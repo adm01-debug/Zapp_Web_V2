@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=ai-transcribe-audio-magic-bytes-retomar
+ID=261010161828c2
+BRANCH=v2/ai-transcribe-audio-magic-bytes-retomar-261010161828c2
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ai-transcribe-audio-magic-bytes-retomar-261010161828c2
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-10T16:18:48-03:00
+KANBAN=t_5bc23b97
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ai-transcribe-audio-magic-bytes-retomar-261010161828c2/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-10
+DB_LOCAL=v2-261010161828c2
+PRONTO_SHA=b36708bcbe14b8026fe86cea8f8e1f281b6d50ce

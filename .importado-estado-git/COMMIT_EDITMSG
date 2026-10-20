@@ -1,0 +1,1 @@
+fix(ai-transcribe-audio): teste de auth nao usa classe de escape que quebra o ratchet
