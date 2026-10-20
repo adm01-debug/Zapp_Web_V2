@@ -1,0 +1,60 @@
+✔ ESTADO.md lista exatamente as edges que existem no repositório (2.73641ms)
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (2.375971ms)
+✔ edge marcada como órfã (grupo E) realmente não tem chamador no repositório (5643.743253ms)
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (7584.748396ms)
+✔ ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada (1.404896ms)
+✔ total de edges do cabeçalho do ESTADO.md bate com a tabela (0.53324ms)
+✔ FEATURE_REGISTRY.md lista exatamente as views do ViewRouter (1.23932ms)
+✔ FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada (0.44909ms)
+✔ FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais (8.804539ms)
+✔ TESTING_CONVENTION.md aponta só para caminhos que existem (0.979868ms)
+✔ TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI) (2.740412ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 9
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13369.97909
+
+✖ failing tests:
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:155:1
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (2.375971ms)
+  AssertionError [ERR_ASSERTION]: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:99 não cita `ai-kb-ingest`
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-26101311-26101601216610/scripts/ci/docs-estado-registry-convention.unit.mjs:165:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:190:1
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (7584.748396ms)
+  AssertionError [ERR_ASSERTION]: grupo de `create-user` divergiu dos chamadores reais: {"A":[],"B":[],"C":[],"D":[]}
+  
+  'A' !== 'E'
+  
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-26101311-26101601216610/scripts/ci/docs-estado-registry-convention.unit.mjs:193:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'A',
+    expected: 'E',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

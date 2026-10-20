@@ -1,0 +1,36 @@
+diff --git a/ESTADO.md b/ESTADO.md
+index b63af75bac..0d0ebdfddb 100644
+--- a/ESTADO.md
++++ b/ESTADO.md
+@@ -23,7 +23,7 @@ Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
+ 
+ | Grupo | Significado |
+ |---|---|
+-| A | front (`invoke`/rota em `src/`) |
++| A | front (`invoke`/`invokeEdge`/rota em `src/`) |
+ | B | outra edge (`supabase/functions/`) |
+ | C | agendador `pg_cron`/`pg_net` (migration) |
+ | D | entrada externa (declarada em `supabase/config.toml`) |
+@@ -70,7 +70,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
+ | `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:147` · `src/components/inbox/chat/MessageBubble.tsx:325` · `supabase/functions/_shared/evolution-webhook-messages.ts:711` |
+ | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
+ | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:241` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+-| `create-user` | A | `src/components/admin/useAdminData.ts:256` |
++| `create-user` | A | `src/components/admin/useAdminData.ts:334` · `src/components/admin/useAdminData.ts:341` |
+ | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
+ | `csp-report` | D | `supabase/config.toml:58` |
+ | `detect-new-device` | A | `src/hooks/ui/useDeviceDetection.ts:112` |
+diff --git a/scripts/ci/docs-estado-registry-convention.unit.mjs b/scripts/ci/docs-estado-registry-convention.unit.mjs
+index ce0e0d8aa2..bc3f61912f 100644
+--- a/scripts/ci/docs-estado-registry-convention.unit.mjs
++++ b/scripts/ci/docs-estado-registry-convention.unit.mjs
+@@ -57,7 +57,8 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
+   .filter((n) => fs.existsSync(path.join(dirFuncoes, n, 'index.ts')))
+   .sort();
+ 
+-const invoca = (n) => new RegExp(`invoke\\(\\s*['"\`]${n}['"\`]`);
++const invoca = (n) => new RegExp(`invoke(Edge)?\\(\\s*['"\`]${n}['"\`]`);
++ // Camada padrão PE-43 (`invokeEdge` de `src/lib/supabaseHelpers`) também é chamador de front (grupo A).
+ const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
+ const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
+ 

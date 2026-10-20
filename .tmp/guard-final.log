@@ -1,0 +1,60 @@
+✔ ESTADO.md lista exatamente as edges que existem no repositório (1.966819ms)
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (2.337618ms)
+✔ edge marcada como órfã (grupo E) realmente não tem chamador no repositório (7666.858348ms)
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (26455.452207ms)
+✔ ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada (1.006995ms)
+✔ total de edges do cabeçalho do ESTADO.md bate com a tabela (0.349991ms)
+✔ FEATURE_REGISTRY.md lista exatamente as views do ViewRouter (0.733822ms)
+✔ FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada (0.290155ms)
+✔ FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais (6.437184ms)
+✔ TESTING_CONVENTION.md aponta só para caminhos que existem (0.867502ms)
+✔ TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI) (1.965304ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 9
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34336.227929
+
+✖ failing tests:
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:156:1
+✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge (2.337618ms)
+  AssertionError [ERR_ASSERTION]: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:99 não cita `ai-kb-ingest`
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-26101311-26101601216610/scripts/ci/docs-estado-registry-convention.unit.mjs:166:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/docs-estado-registry-convention.unit.mjs:191:1
+✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D (26455.452207ms)
+  AssertionError [ERR_ASSERTION]: grupo de `talkx-link` divergiu dos chamadores reais: {"A":["src/hooks/integrations/useTalkXLinks.ts:56"],"B":["supabase/functions/talkx-send/index.ts:455"],"C":[],"D":["supabase/config.toml:65"]}
+  
+  'B' !== 'A'
+  
+      at TestContext.<anonymous> (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-26101311-26101601216610/scripts/ci/docs-estado-registry-convention.unit.mjs:194:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'B',
+    expected: 'A',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

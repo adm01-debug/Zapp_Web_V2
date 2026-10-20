@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-26101311-26101601216610
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:29:01
+   Duration  1.27s (transform 119ms, setup 220ms, import 88ms, tests 58ms, environment 748ms)
+
