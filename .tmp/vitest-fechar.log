@@ -1,0 +1,118 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28
+
+·················stderr | src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > a busca não aparece nas abas em que não filtra nada
+Error: useNavigate() may be used only in the context of a <Router> component.
+    at invariant (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:207:11)
+    at useNavigateUnstable (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5995:3)
+    at useNavigate (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5992:46)
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/AdminCRMDashboard.tsx:253:20)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at updateSimpleMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10229:14)
+    at updateMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10162:13)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12607:18) {
+  [stack]: [Getter/Setter],
+  [message]: 'useNavigate() may be used only in the context of a <Router> component.'
+}
+
+The above error occurred in the <AdminCRMDashboard> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, SectionErrorBoundary.
+
+[2026-10-13T05:21:22.301Z] [ERROR] [App] [sid:2438a09d] [SectionError] CRM Admin: Error: useNavigate() may be used only in the context of a <Router> component.
+    at invariant (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:207:11)
+    at useNavigateUnstable (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5995:3)
+    at useNavigate (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5992:46)
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/AdminCRMDashboard.tsx:253:20)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at updateSimpleMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10229:14)
+    at updateMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10162:13)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12607:18) 
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/AdminCRMDashboard.tsx:548:56)
+    at SectionErrorBoundary (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/ui/section-error-boundary.tsx:22:1)
+    at div (<anonymous>)
+    at AdminView (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/AdminView.tsx:100:70)
+
+·············stderr | src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx > AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7) > CRM 360° lançando mostra o aviso no lugar da aba e mantém o painel
+Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) {
+  [stack]: [Getter/Setter],
+  [message]: 'falha do CRM'
+}
+
+The above error occurred in the <AdminCRMDashboard> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, SectionErrorBoundary.
+
+[2026-10-13T05:21:27.583Z] [ERROR] [App] [sid:f7e9fb7b] [SectionError] CRM Admin: Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) 
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:35:8)
+    at SectionErrorBoundary (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/ui/section-error-boundary.tsx:22:1)
+    at div (<anonymous>)
+    at AdminView (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/AdminView.tsx:100:70)
+
+···stderr | src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx > AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7) > com o CRM quebrado, o Playbooks (bloco independente) ainda renderiza
+Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) {
+  [stack]: [Getter/Setter],
+  [message]: 'falha do CRM'
+}
+
+The above error occurred in the <AdminCRMDashboard> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, SectionErrorBoundary.
+
+[2026-10-13T05:21:28.044Z] [ERROR] [App] [sid:f7e9fb7b] [SectionError] CRM Admin: Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) 
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:35:8)
+    at SectionErrorBoundary (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/ui/section-error-boundary.tsx:22:1)
+    at div (<anonymous>)
+    at AdminView (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/src/components/admin/AdminView.tsx:100:70)
+
+··
+
+ Test Files  7 passed (7)
+      Tests  35 passed (35)
+   Start at  02:21:12
+   Duration  15.60s (transform 4.79s, setup 3.60s, import 16.02s, tests 16.32s, environment 17.15s)
+

@@ -1,0 +1,11 @@
+10	1	src/components/admin/AdminAuditTable.tsx
+17	2	src/components/admin/AdminUsersTable.tsx
+92	10	src/components/admin/AdminView.tsx
+72	0	src/components/admin/__tests__/AdminUsersTable.roles.test.tsx
+6	2	src/components/admin/__tests__/AdminView.a11y.test.tsx
+215	0	src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx
+3	0	src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx
+4	0	src/components/admin/__tests__/AdminView.servicosGoogle.test.tsx
+225	0	src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts
+3	0	src/components/admin/__tests__/useAdminDataColumns.test.ts
+113	33	src/components/admin/useAdminData.ts

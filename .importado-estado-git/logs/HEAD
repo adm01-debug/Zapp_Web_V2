@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791866852 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791866853 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 f9aea66c6321e31728d8317035da6829b9cd955e Hermes Senior <hermes-senior@promobrindes.local> 1791867697 -0300	commit: feat(admin): estados completos, filtro de data e paginacao na auditoria
+f9aea66c6321e31728d8317035da6829b9cd955e 91571b06455b99cd545881b68d90397acbc15b54 Hermes Senior <hermes-senior@promobrindes.local> 1791867749 -0300	commit: chore(admin): relato do cartao t_672cd537
+91571b06455b99cd545881b68d90397acbc15b54 0fd9d38d4e7367cc1a05a4a751183733a6b95a02 Hermes Senior <hermes-senior@promobrindes.local> 1791868252 -0300	commit: fix(admin): lista special_agent e rotula o nivel de acesso como informativo
+0fd9d38d4e7367cc1a05a4a751183733a6b95a02 2b1ea870959f3f1b7eaa986b59f671ffd1393ecb Hermes Senior <hermes-senior@promobrindes.local> 1791868379 -0300	commit: chore(admin): relato do cartao t_672cd537 cita os testes ja existentes tocados
+2b1ea870959f3f1b7eaa986b59f671ffd1393ecb d90b8e63637ee6c2da7a9b08aaa7845d30a45d41 Hermes Senior <hermes-senior@promobrindes.local> 1791868488 -0300	commit: test(admin): prova do carregando sem acoplar ao nome da classe de animacao
+d90b8e63637ee6c2da7a9b08aaa7845d30a45d41 fb592c585cdfb548801fdc538e6bbb8528f6e4c0 Hermes Senior <hermes-senior@promobrindes.local> 1791868640 -0300	commit: test(admin): tela usa os exports reais do hook e relato responde ao juiz

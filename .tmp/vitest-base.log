@@ -1,0 +1,2535 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base
+
+·xxx··xx·xx·stderr | src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > a busca não aparece nas abas em que não filtra nada
+Error: useNavigate() may be used only in the context of a <Router> component.
+    at invariant (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:207:11)
+    at useNavigateUnstable (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5995:3)
+    at useNavigate (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5992:46)
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/AdminCRMDashboard.tsx:253:20)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at updateSimpleMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10229:14)
+    at updateMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10162:13)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12607:18) {
+  [stack]: [Getter/Setter],
+  [message]: 'useNavigate() may be used only in the context of a <Router> component.'
+}
+
+The above error occurred in the <AdminCRMDashboard> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, SectionErrorBoundary.
+
+[2026-10-13T05:21:49.077Z] [ERROR] [App] [sid:0b0a059a] [SectionError] CRM Admin: Error: useNavigate() may be used only in the context of a <Router> component.
+    at invariant (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:207:11)
+    at useNavigateUnstable (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5995:3)
+    at useNavigate (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-router/dist/development/chunk-OB3PAWPO.mjs:5992:46)
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/AdminCRMDashboard.tsx:253:20)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at updateSimpleMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10229:14)
+    at updateMemoComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10162:13)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12607:18) 
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/AdminCRMDashboard.tsx:548:56)
+    at SectionErrorBoundary (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/ui/section-error-boundary.tsx:22:1)
+    at div (<anonymous>)
+    at AdminView (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/AdminView.tsx:96:70)
+
+xxxx···xx···stderr | src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx > AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7) > CRM 360° lançando mostra o aviso no lugar da aba e mantém o painel
+Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) {
+  [stack]: [Getter/Setter],
+  [message]: 'falha do CRM'
+}
+
+The above error occurred in the <AdminCRMDashboard> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, SectionErrorBoundary.
+
+[2026-10-13T05:21:51.836Z] [ERROR] [App] [sid:738c3017] [SectionError] CRM Admin: Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) 
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:35:8)
+    at SectionErrorBoundary (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/ui/section-error-boundary.tsx:22:1)
+    at div (<anonymous>)
+    at AdminView (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/AdminView.tsx:96:70)
+
+stderr | src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx > AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7) > com o CRM quebrado, o Playbooks (bloco independente) ainda renderiza
+Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) {
+  [stack]: [Getter/Setter],
+  [message]: 'falha do CRM'
+}
+
+The above error occurred in the <AdminCRMDashboard> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, SectionErrorBoundary.
+
+[2026-10-13T05:21:52.181Z] [ERROR] [App] [sid:738c3017] [SectionError] CRM Admin: Error: falha do CRM
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:34:36)
+    at Object.react_stack_bottom_frame (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:28571:20)
+    at renderWithHooks (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:8030:22)
+    at updateFunctionComponent (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:10569:19)
+    at beginWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:12205:18)
+    at runWithFiberInDEV (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+    at performUnitOfWork (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22)
+    at workLoopSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:19004:41)
+    at renderRootSync (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18985:11)
+    at performWorkOnRoot (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/node_modules/react-dom/cjs/react-dom-client.development.js:18094:35) 
+    at AdminCRMDashboard (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx:35:8)
+    at SectionErrorBoundary (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/ui/section-error-boundary.tsx:22:1)
+    at div (<anonymous>)
+    at AdminView (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp/prova-base/src/components/admin/AdminView.tsx:96:70)
+
+··xxxxxxxx·
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/admin/__tests__/AdminUsersTable.roles.test.tsx > AdminUsersTable — role special_agent > o seletor de role do admin oferece Agente Especial
+TestingLibraryElementError: Unable to find an accessible element with the role "option" and name "Agente Especial"
+
+Here are the accessible roles:
+
+  listbox:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"[39m
+    [33mdata-align[39m=[32m"start"[39m
+    [33mdata-side[39m=[32m"bottom"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mid[39m=[32m"radix-_r_0_"[39m
+    [33mrole[39m=[32m"listbox"[39m
+    [33mstyle[39m=[32m"box-sizing: border-box; display: flex; flex-direction: column; outline: none; --radix-select-content-transform-origin: var(--radix-popper-transform-origin); --radix-select-content-available-width: var(--radix-popper-available-width); --radix-select-content-available-height: var(--radix-popper-available-height); --radix-select-trigger-width: var(--radix-popper-anchor-width); --radix-select-trigger-height: var(--radix-popper-anchor-height); animation: none; pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  presentation:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"p-1 h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"[39m
+    [33mdata-radix-select-viewport[39m=[32m""[39m
+    [33mrole[39m=[32m"presentation"[39m
+    [33mstyle[39m=[32m"position: relative; flex: 1 1 0%; overflow: hidden auto;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Admin":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_7_"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"unchecked"[39m
+    [33mrole[39m=[32m"option"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  Name "Supervisor":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_8_"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"unchecked"[39m
+    [33mrole[39m=[32m"option"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  Name "Atendente":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_9_"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"checked"[39m
+    [33mrole[39m=[32m"option"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rounded-2xl text-card-foreground transition-all duration-300 shadow-sm border border-secondary/20 bg-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [36m>[39m
+          [0mUsuários[0m
+        [36m</h2>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 pt-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative w-full overflow-auto"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"w-full caption-bottom text-sm"[39m
+          [36m>[39m
+            [36m<thead[39m
+              [33mclass[39m=[32m"[&_tr]:border-b"[39m
+            [36m>[39m
+              [36m<tr[39m
+                [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+              [36m>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mUsuário[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mCargo/Depto[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mRole[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mAcesso[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mStatus[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mAções[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody[39m
+              [33mclass[39m=[32m"[&_tr:last-child]:border-0"[39m
+            [36m>[39m
+              [36m<tr[39m
+                [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+              [36m>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-3"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"relative flex shrink-0 overflow-hidden rounded-full text-sm w-8 h-8"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex h-full w-full items-center justify-center rounded-full bg-muted font-medium"[39m
+                      [36m>[39m
+                        [0mA[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [36m<div>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"font-medium block"[39m
+                      [36m>[39m
+                        [0mAna Silva[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                      [36m>[39m
+                        [0mana@test.local[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m-[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-autocomplete[39m=[32m"none"[39m
+                    [33maria-controls[39m=[32m"radix-_r_0_"[39m
+                    [33maria-expanded[39m=[32m"true"[39m
+                    [33maria-label[39m=[32m"Alterar role de Ana Silva"[39m
+                    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-32"[39m
+                    [33mdata-radix-popper-align[39m=[32m"start"[39m
+                    [33mdata-radix-popper-side[39m=[32m"bottom"[39m
+                    [33mdata-state[39m=[32m"open"[39m
+                    [33mdir[39m=[32m"ltr"[39m
+                    [33mrole[39m=[32m"combobox"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mstyle[39m=[32m"pointer-events: none;"[39m
+                    [36m>[39m
+                      [0mAtendente[0m
+          ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminUsersTable.roles.test.tsx:54:19
+     52|     abrirSeletorDeRole();
+     53|
+     54|     expect(screen.getByRole('option', { name: 'Agente Especial' })).to…
+       |                   ^
+     55|   });
+     56|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminUsersTable.roles.test.tsx > AdminUsersTable — role special_agent > escolher Agente Especial entrega special_agent ao onRoleChange
+TestingLibraryElementError: Unable to find an accessible element with the role "option" and name "Agente Especial"
+
+Here are the accessible roles:
+
+  listbox:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"[39m
+    [33mdata-align[39m=[32m"start"[39m
+    [33mdata-side[39m=[32m"bottom"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mid[39m=[32m"radix-_r_a_"[39m
+    [33mrole[39m=[32m"listbox"[39m
+    [33mstyle[39m=[32m"box-sizing: border-box; display: flex; flex-direction: column; outline: none; --radix-select-content-transform-origin: var(--radix-popper-transform-origin); --radix-select-content-available-width: var(--radix-popper-available-width); --radix-select-content-available-height: var(--radix-popper-available-height); --radix-select-trigger-width: var(--radix-popper-anchor-width); --radix-select-trigger-height: var(--radix-popper-anchor-height); animation: none; pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  presentation:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"p-1 h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"[39m
+    [33mdata-radix-select-viewport[39m=[32m""[39m
+    [33mrole[39m=[32m"presentation"[39m
+    [33mstyle[39m=[32m"position: relative; flex: 1 1 0%; overflow: hidden auto;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Admin":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_h_"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"unchecked"[39m
+    [33mrole[39m=[32m"option"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  Name "Supervisor":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_i_"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"unchecked"[39m
+    [33mrole[39m=[32m"option"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  Name "Atendente":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_j_"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"[39m
+    [33mdata-radix-collection-item[39m=[32m""[39m
+    [33mdata-state[39m=[32m"checked"[39m
+    [33mrole[39m=[32m"option"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rounded-2xl text-card-foreground transition-all duration-300 shadow-sm border border-secondary/20 bg-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [36m>[39m
+          [0mUsuários[0m
+        [36m</h2>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 pt-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative w-full overflow-auto"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"w-full caption-bottom text-sm"[39m
+          [36m>[39m
+            [36m<thead[39m
+              [33mclass[39m=[32m"[&_tr]:border-b"[39m
+            [36m>[39m
+              [36m<tr[39m
+                [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+              [36m>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mUsuário[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mCargo/Depto[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mRole[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mAcesso[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mStatus[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mAções[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody[39m
+              [33mclass[39m=[32m"[&_tr:last-child]:border-0"[39m
+            [36m>[39m
+              [36m<tr[39m
+                [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+              [36m>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-3"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"relative flex shrink-0 overflow-hidden rounded-full text-sm w-8 h-8"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex h-full w-full items-center justify-center rounded-full bg-muted font-medium"[39m
+                      [36m>[39m
+                        [0mA[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [36m<div>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"font-medium block"[39m
+                      [36m>[39m
+                        [0mAna Silva[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                      [36m>[39m
+                        [0mana@test.local[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m-[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-autocomplete[39m=[32m"none"[39m
+                    [33maria-controls[39m=[32m"radix-_r_a_"[39m
+                    [33maria-expanded[39m=[32m"true"[39m
+                    [33maria-label[39m=[32m"Alterar role de Ana Silva"[39m
+                    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-32"[39m
+                    [33mdata-radix-popper-align[39m=[32m"start"[39m
+                    [33mdata-radix-popper-side[39m=[32m"bottom"[39m
+                    [33mdata-state[39m=[32m"open"[39m
+                    [33mdir[39m=[32m"ltr"[39m
+                    [33mrole[39m=[32m"combobox"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mstyle[39m=[32m"pointer-events: none;"[39m
+                    [36m>[39m
+                      [0mAtendente[0m
+          ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminUsersTable.roles.test.tsx:62:28
+     60|
+     61|     abrirSeletorDeRole();
+     62|     fireEvent.click(screen.getByRole('option', { name: 'Agente Especia…
+       |                            ^
+     63|
+     64|     expect(onRoleChange).toHaveBeenCalledWith('u1', 'special_agent');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminUsersTable.roles.test.tsx > AdminUsersTable — role special_agent > a coluna de nível de acesso se declara informativa
+TestingLibraryElementError: Unable to find an accessible element with the role "columnheader" and name "Acesso (informativo)"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Usuários":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  [36m<table[39m
+    [33mclass[39m=[32m"w-full caption-bottom text-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  [36m<thead[39m
+    [33mclass[39m=[32m"[&_tr]:border-b"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<tbody[39m
+    [33mclass[39m=[32m"[&_tr:last-child]:border-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  row:
+
+  Name "Usuário Cargo/Depto Role Acesso Status Ações":
+  [36m<tr[39m
+    [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+  [36m/>[39m
+
+  Name "A Ana Silvaana@test.local - Completo Ativo Ativar/desativar Ana Silva":
+  [36m<tr[39m
+    [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Usuário":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Cargo/Depto":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Role":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Acesso":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Status":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ações":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  cell:
+
+  Name "A Ana Silvaana@test.local":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "-":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Completo":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ativo":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ativar/desativar Ana Silva":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Alterar role de Ana Silva":
+  [36m<button[39m
+    [33maria-autocomplete[39m=[32m"none"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"Alterar role de Ana Silva"[39m
+    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-32"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mrole[39m=[32m"combobox"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Editar Ana Silva":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Editar Ana Silva"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8"[39m
+  [36m/>[39m
+
+  Name "Forçar logout":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Forçar logout"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-9 rounded-md px-3 text-destructive hover:text-destructive hover:bg-destructive/10"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  switch:
+
+  Name "Ativar/desativar Ana Silva":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"true"[39m
+    [33maria-label[39m=[32m"Ativar/desativar Ana Silva"[39m
+    [33mclass[39m=[32m"peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mdata-state[39m=[32m"checked"[39m
+    [33mrole[39m=[32m"switch"[39m
+    [33mtype[39m=[32m"button"[39m
+    [33mvalue[39m=[32m"on"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rounded-2xl text-card-foreground transition-all duration-300 shadow-sm border border-secondary/20 bg-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [36m>[39m
+          [0mUsuários[0m
+        [36m</h2>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 pt-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative w-full overflow-auto"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33mclass[39m=[32m"w-full caption-bottom text-sm"[39m
+          [36m>[39m
+            [36m<thead[39m
+              [33mclass[39m=[32m"[&_tr]:border-b"[39m
+            [36m>[39m
+              [36m<tr[39m
+                [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+              [36m>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mUsuário[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mCargo/Depto[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mRole[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mAcesso[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mStatus[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [0mAções[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody[39m
+              [33mclass[39m=[32m"[&_tr:last-child]:border-0"[39m
+            [36m>[39m
+              [36m<tr[39m
+                [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+              [36m>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center gap-3"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"relative flex shrink-0 overflow-hidden rounded-full text-sm w-8 h-8"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex h-full w-full items-center justify-center rounded-full bg-muted font-medium"[39m
+                      [36m>[39m
+                        [0mA[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [36m<div>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"font-medium block"[39m
+                      [36m>[39m
+                        [0mAna Silva[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                      [36m>[39m
+                        [0mana@test.local[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m-[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-autocomplete[39m=[32m"none"[39m
+                    [33maria-expanded[39m=[32m"false"[39m
+                    [33maria-label[39m=[32m"Alterar role de Ana Silva"[39m
+                    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-32"[39m
+                    [33mdata-state[39m=[32m"closed"[39m
+                    [33mdir[39m=[32m"ltr"[39m
+                    [33mrole[39m=[32m"combobox"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mstyle[39m=[32m"pointer-events: none;"[39m
+                    [36m>[39m
+                      [0mAtendente[0m
+                    [36m</span>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-chevron-down h-4 w-4 opacity-50"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminUsersTable.roles.test.tsx:70:19
+     68|     render(<AdminUsersTable users={[usuario('agent', { access_level: '…
+     69|
+     70|     expect(screen.getByRole('columnheader', { name: 'Acesso (informati…
+       |                   ^
+     71|   });
+     72| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.a11y.test.tsx > AdminView — acessibilidade dos seletores (N-063) > getByLabelText("Nível de acesso (informativo)") encontra o combobox do diálogo de edição
+TestingLibraryElementError: Unable to find a label with the text of: Nível de acesso (informativo)
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 5.226868228986859px; height: 5.226868228986859px; left: 12.919785943813622%; top: 73.7338398117572%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 5.7950087655335665px; height: 5.7950087655335665px; left: 2.4365433724597096%; top: 79.64391026180238%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 5.248518334701657px; height: 5.248518334701657px; left: 91.18235851638019%; top: 90.30856264289469%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.8766688322648406px; height: 3.8766688322648406px; left: 19.458045810461044%; top: 81.09135918784887%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.6194301014766097px; height: 3.6194301014766097px; left: 85.30428430531174%; top: 88.34748191293329%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.9482804806903005px; height: 2.9482804806903005px; left: 31.77766753360629%; top: 4.372485098429024%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.9443421252071857px; height: 3.9443421252071857px; left: 10.593070997856557%; top: 79.35381596907973%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 2.175186420790851px; height: 2.175186420790851px; left: 60.32067651394755%; top: 94.70195251051337%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.819273439235985px; height: 4.819273439235985px; left: 97.60113139636815%; top: 83.54465700685978%; f...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.a11y.test.tsx:77:19
+     75|   it('getByLabelText("Nível de acesso (informativo)") encontra o combo…
+     76|     abrirDialogoEdicao();
+     77|     expect(screen.getByLabelText('Nível de acesso (informativo)')).toB…
+       |                   ^
+     78|   });
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > erro de consulta vira estado na tela, com opção de tentar de novo
+TestingLibraryElementError: Unable to find an accessible element with the role "alert"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Administração":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-2xl font-bold text-foreground flex items-center gap-2"[39m
+  [36m/>[39m
+
+  Name "Usuários":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-muted-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Adicionar Usuário":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-primary hover:bg-primary/90"[39m
+  [36m/>[39m
+
+  Name "Atualizar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+  [36m/>[39m
+
+  Name "Usuários (0)":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-9 rounded-md px-3 bg-primary hover:bg-primary/90"[39m
+  [36m/>[39m
+
+  Name "Auditoria":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "CRM 360°":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Playbooks":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Copilot IA":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Treinamento":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Sala de Crise":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-10"[39m
+    [33mplaceholder[39m=[32m"Buscar usuários..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  [36m<table[39m
+    [33mclass[39m=[32m"w-full caption-bottom text-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  [36m<thead[39m
+    [33mclass[39m=[32m"[&_tr]:border-b"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<tbody[39m
+    [33mclass[39m=[32m"[&_tr:last-child]:border-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  row:
+
+  Name "Usuário Cargo/Depto Role Acesso Status Ações":
+  [36m<tr[39m
+    [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Usuário":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Cargo/Depto":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Role":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Acesso":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Status":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ações":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.227508183568716px; height: 4.227508183568716px; left: 17.584324744530022%; top: 46.22259526513517%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 5.865162813104689px; height: 5.865162813104689px; left: 90.80319181084633%; top: 63.39270323514938%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 5.445525070652366px; height: 5.445525070652366px; left: 83.28609794843942%; top: 20.11962393298745%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 3.7370258197188377px; height: 3.7370258197188377px; left: 79.97674252837896%; top: 20.6206250237301%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.573405974544585px; height: 4.573405974544585px; left: 94.74847035016865%; top: 93.04181563202292%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.8576095839962363px; height: 3.8576095839962363px; left: 87.90773206856102%; top: 65.75256497599185%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.870216798968613px; height: 2.870216798968613px; left: 76.32874478586018%; top: 79.76067282725126%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.945564010180533px; height: 3.945564010180533px; left: 49.362124991603196%; top: 74.74033671896905%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.287068639881909px; height: 3.287068639881909px; left: 82.67595660872757%; top: 51.554881781339645%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.268940634094179px; height: 4.268940634094179px; left: 8.927157800644636%; top: 32.50377010554075%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 5.370437023229897px; height: 5.370437023229897px; left: 57.30179564561...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:92:19
+     90|     render(<AdminView />);
+     91|
+     92|     expect(screen.getByRole('alert')).toHaveTextContent('Não foi possí…
+       |                   ^
+     93|     const antes = h.fetchData.mock.calls.length;
+     94|     fireEvent.click(screen.getByRole('button', { name: /Tentar novamen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > lista de usuários vazia tem texto próprio
+TestingLibraryElementError: Unable to find an element with the text: Nenhum usuário cadastrado.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 2.477419833652675px; height: 2.477419833652675px; left: 42.98541797325015%; top: 93.17432146053761%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.011311114765704px; height: 4.011311114765704px; left: 3.3283438766375184%; top: 43.58278918080032%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.627145318314433px; height: 2.627145318314433px; left: 99.73447921220213%; top: 63.18084343802184%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 2.60683511570096px; height: 2.60683511570096px; left: 97.44566529989243%; top: 15.396850113756955%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 5.585832363925874px; height: 5.585832363925874px; left: 23.090005782432854%; top: 7.674519275315106%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.134248705580831px; height: 5.134248705580831px; left: 4.312033671885729%; top: 35.17797675449401%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 2.223886650055647px; height: 2.223886650055647px; left: 45.53547964897007%; top: 34.46554548572749%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.326276806183159px; height: 4.326276806183159px; left: 61.4875495666638%; top: 81.42561418935657%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.338291026651859px; height: 4.338291026651859px; left: 56.353906355798244%; top: 96.06098509393632%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.663424658589065px; height: 4.663424658589065px; left: 71.28573786467314%; top: 61.20881976094097%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.8416695399209857px; height: 3.8416695399209857px; left: 9.440387017...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:111:19
+    109|   it('lista de usuários vazia tem texto próprio', () => {
+    110|     render(<AdminView />);
+    111|     expect(screen.getByText('Nenhum usuário cadastrado.')).toBeInTheDo…
+       |                   ^
+    112|   });
+    113|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > busca de usuário sem resultado explica que foi a busca
+TestingLibraryElementError: Unable to find an element with the text: Nenhum usuário encontrado para "zzz".. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.092488059774041px; height: 4.092488059774041px; left: 40.671965782530606%; top: 24.802990444004536%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 2.7697641225531697px; height: 2.7697641225531697px; left: 20.81313175149262%; top: 2.8731361031532288%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.9056695299223065px; height: 3.9056695299223065px; left: 61.18301968090236%; top: 84.83844310976565%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.499382040463388px; height: 4.499382040463388px; left: 93.99392085615546%; top: 46.82505514938384%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.489507802762091px; height: 3.489507802762091px; left: 91.36942157056183%; top: 35.879202210344374%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 3.719618839211762px; height: 3.719618839211762px; left: 78.05529257748276%; top: 99.8798260698095%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.9425481501966715px; height: 4.9425481501966715px; left: 20.649344311095774%; top: 95.58329163119197%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.565829690545797px; height: 4.565829690545797px; left: 29.866167856380343%; top: 46.316498797386885%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.329008024185896px; height: 4.329008024185896px; left: 75.3646268742159%; top: 47.0326341688633%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.807732648216188px; height: 4.807732648216188px; left: 15.848405403085053%; top: 36.29988175816834%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 3.201869299635291px; height: 3.201869299635291px; left: 80.93...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:118:19
+    116|     fireEvent.change(screen.getByPlaceholderText('Buscar usuários...')…
+    117|
+    118|     expect(screen.getByText('Nenhum usuário encontrado para "zzz".')).…
+       |                   ^
+    119|   });
+    120|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > auditoria vazia e auditoria filtrada por período têm textos diferentes
+TestingLibraryElementError: Unable to find an element with the text: Nenhum log de auditoria registrado.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 5.135464712046087px; height: 5.135464712046087px; left: 69.57498700357974%; top: 57.40886165294796%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.474799278192222px; height: 2.474799278192222px; left: 53.0949667096138%; top: 73.6137350089848%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.822240709327161px; height: 5.822240709327161px; left: 8.184567303396761%; top: 98.67518246173859%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 5.804486004635692px; height: 5.804486004635692px; left: 56.243947288021445%; top: 6.403845897875726%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 3.5778726246207952px; height: 3.5778726246207952px; left: 59.7698790486902%; top: 72.06163827795535%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.504984517581761px; height: 3.504984517581761px; left: 65.9868301358074%; top: 27.237785793840885%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.611962869763374px; height: 5.611962869763374px; left: 38.87502630241215%; top: 74.56247976515442%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 2.504168993793428px; height: 2.504168993793428px; left: 30.326300533488393%; top: 40.88763413019478%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.401961650699377px; height: 3.401961650699377px; left: 91.97018477134407%; top: 67.66871893778443%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.444094237871468px; height: 4.444094237871468px; left: 93.914910312742%; top: 98.41933161951602%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 2.093102617189288px; height: 2.093102617189288px; left: 56.2956476118415...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:123:19
+    121|   it('auditoria vazia e auditoria filtrada por período têm textos dife…
+    122|     abrirAuditoria();
+    123|     expect(screen.getByText('Nenhum log de auditoria registrado.')).to…
+       |                   ^
+    124|
+    125|     fireEvent.change(screen.getByLabelText('Data inicial'), { target: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > a busca não aparece nas abas em que não filtra nada
+AssertionError: expected <input …(3)></input> to be null
+
+- Expected:
+null
+
++ Received:
+<input
+  class="flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-10"
+  placeholder="Buscar logs..."
+  value=""
+/>
+
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:135:61
+    133|     fireEvent.click(screen.getByRole('button', { name: 'CRM 360°' }));
+    134|     expect(screen.queryByPlaceholderText('Buscar usuários...')).toBeNu…
+    135|     expect(screen.queryByPlaceholderText('Buscar logs...')).toBeNull();
+       |                                                             ^
+    136|   });
+    137|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > o período escolhido chega ao hook como filtro
+AssertionError: expected undefined to match object { page: 1, pageSize: 50 }
+
+- Expected:
+{
+  "page": 1,
+  "pageSize": 50,
+}
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:140:29
+    138|   it('o período escolhido chega ao hook como filtro', () => {
+    139|     abrirAuditoria();
+    140|     expect(h.estado.filtro).toMatchObject({ page: 1, pageSize: 50 });
+       |                             ^
+    141|     expect(h.estado.filtro?.from).toBeUndefined();
+    142|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > a paginação anda para frente e para trás e volta à página 1 ao trocar o período
+TestingLibraryElementError: Unable to find an element with the text: /137 registro\(s\) — página 1 de 3/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 2.5713321613147855px; height: 2.5713321613147855px; left: 61.916278884746134%; top: 51.23168877325952%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.2147637456655502px; height: 3.2147637456655502px; left: 32.04057044349611%; top: 57.18422643840313%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.824277939274907px; height: 3.824277939274907px; left: 11.358546675182879%; top: 73.03395639173687%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.477271498180926px; height: 4.477271498180926px; left: 62.81828803475946%; top: 33.51132369134575%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 2.010160901583731px; height: 2.010160901583731px; left: 90.44667747803032%; top: 89.673430332914%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.2289085211232305px; height: 2.2289085211232305px; left: 69.09521175548434%; top: 59.38232443295419%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.022531575523317px; height: 5.022531575523317px; left: 23.65508594084531%; top: 43.37778815533966%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.498942396603525px; height: 4.498942396603525px; left: 12.165111862123013%; top: 19.5330741815269%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.9475136967375875px; height: 4.9475136967375875px; left: 61.26269269734621%; top: 98.87305109295994%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.2928394079208374px; height: 2.2928394079208374px; left: 19.793119933456182%; top: 2.1153858397156%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.736092292703688px; height: 5.736092292703688px; l...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:157:19
+    155|     abrirAuditoria();
+    156|
+    157|     expect(screen.getByText(/137 registro\(s\) — página 1 de 3/)).toBe…
+       |                   ^
+    158|     expect(screen.getByRole('button', { name: /Anterior/i })).toBeDisa…
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > o campo de senha usa a régua da Edge e o medidor de força
+TestingLibraryElementError: Unable to find an element with the placeholder text of: Mínimo 8 caracteres
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 4.534221898764372px; height: 4.534221898764372px; left: 2.4650503415614367%; top: 54.174256906844676%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.832048152573407px; height: 4.832048152573407px; left: 26.47655764594674%; top: 65.56410165503621%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 3.9483321188017726px; height: 3.9483321188017726px; left: 70.28398127295077%; top: 8.417687797918916%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.496852069161832px; height: 4.496852069161832px; left: 59.539768542163074%; top: 2.044592727907002%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.032933209091425px; height: 3.032933209091425px; left: 53.55480855796486%; top: 92.47750602662563%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 5.250339443795383px; height: 5.250339443795383px; left: 94.70611710567027%; top: 62.792817945592105%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.639180578291416px; height: 4.639180578291416px; left: 76.66618532966822%; top: 57.138170092366636%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.479856299236417px; height: 4.479856299236417px; left: 27.086748485453427%; top: 17.696429206989706%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 2.4691583877429366px; height: 2.4691583877429366px; left: 33.47526432480663%; top: 98.36084160488099%; filter...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:177:26
+    175|     fireEvent.click(screen.getByRole('button', { name: /Adicionar Usuá…
+    176|
+    177|     const senha = screen.getByPlaceholderText('Mínimo 8 caracteres');
+       |                          ^
+    178|     expect(screen.queryByPlaceholderText('Mínimo 6 caracteres')).toBeN…
+    179|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯
+
+ FAIL  src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx > AdminView — estados das listas (usuários e auditoria) > o nível de acesso se apresenta como informativo, não como permissão
+TestingLibraryElementError: Unable to find an accessible element with the role "columnheader" and name "Acesso (informativo)"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Administração":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-2xl font-bold text-foreground flex items-center gap-2"[39m
+  [36m/>[39m
+
+  Name "Usuários":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-muted-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Adicionar Usuário":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-primary hover:bg-primary/90"[39m
+  [36m/>[39m
+
+  Name "Atualizar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+  [36m/>[39m
+
+  Name "Usuários (1)":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-9 rounded-md px-3 bg-primary hover:bg-primary/90"[39m
+  [36m/>[39m
+
+  Name "Auditoria":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "CRM 360°":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Playbooks":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Copilot IA":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Treinamento":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Sala de Crise":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-9 rounded-md px-3"[39m
+  [36m/>[39m
+
+  Name "Editar Ana Silva":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Editar Ana Silva"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8"[39m
+  [36m/>[39m
+
+  Name "Forçar logout":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Forçar logout"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-9 rounded-md px-3 text-destructive hover:text-destructive hover:bg-destructive/10"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-10"[39m
+    [33mplaceholder[39m=[32m"Buscar usuários..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  [36m<table[39m
+    [33mclass[39m=[32m"w-full caption-bottom text-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  [36m<thead[39m
+    [33mclass[39m=[32m"[&_tr]:border-b"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<tbody[39m
+    [33mclass[39m=[32m"[&_tr:last-child]:border-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  row:
+
+  Name "Usuário Cargo/Depto Role Acesso Status Ações":
+  [36m<tr[39m
+    [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+  [36m/>[39m
+
+  Name "A Ana Silvaana@test.local - Completo Ativo Ativar/desativar Ana Silva":
+  [36m<tr[39m
+    [33mclass[39m=[32m"border-b transition-colors duration-150 data-[state=selected]:bg-muted hover:bg-muted/40"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Usuário":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Cargo/Depto":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Role":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Acesso":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Status":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ações":
+  [36m<th[39m
+    [33mclass[39m=[32m"h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  cell:
+
+  Name "A Ana Silvaana@test.local":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "-":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Completo":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ativo":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  Name "Ativar/desativar Ana Silva":
+  [36m<td[39m
+    [33mclass[39m=[32m"p-4 align-middle [&:has([role=checkbox])]:pr-0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Alterar role de Ana Silva":
+  [36m<button[39m
+    [33maria-autocomplete[39m=[32m"none"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"Alterar role de Ana Silva"[39m
+    [33mclass[39m=[32m"flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-32"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdir[39m=[32m"ltr"[39m
+    [33mrole[39m=[32m"combobox"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  switch:
+
+  Name "Ativar/desativar Ana Silva":
+  [36m<button[39m
+    [33maria-checked[39m=[32m"true"[39m
+    [33maria-label[39m=[32m"Ativar/desativar Ana Silva"[39m
+    [33mclass[39m=[32m"peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"[39m
+    [33mdata-state[39m=[32m"checked"[39m
+    [33mrole[39m=[32m"switch"[39m
+    [33mtype[39m=[32m"button"[39m
+    [33mvalue[39m=[32m"on"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-6 relative bg-background w-full min-w-0"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute inset-x-0 top-0 h-64 overflow-hidden pointer-events-none z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-secondary/5 via-transparent to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-x-0 top-0 h-48"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(180deg, hsl(var(--secondary) / 0.15) 0%, hsl(var(--primary) / 0.1) 30%, transparent 100%); filter: blur(40px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-32 w-full"[39m
+          [33mstyle[39m=[32m"top: 10%; background: radial-gradient(ellipse 80% 50% at 20% 50%, hsl(var(--secondary) / 0.25), transparent); filter: blur(30px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-24 w-full"[39m
+          [33mstyle[39m=[32m"top: 5%; background: radial-gradient(ellipse 60% 40% at 70% 50%, hsl(var(--secondary) / 0.3), transparent); filter: blur(25px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-20 w-full"[39m
+          [33mstyle[39m=[32m"top: 15%; background: radial-gradient(ellipse 50% 30% at 50% 50%, hsl(var(--primary) / 0.2), transparent); filter: blur(20px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute h-16 w-1/2"[39m
+          [33mstyle[39m=[32m"top: 8%; left: 25%; background: radial-gradient(100% 50% at 50% 50%, rgba(51, 204, 204, 0.15), transparent); filter: blur(15px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 10%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 22%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 34%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 46%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 58%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 70%; top: 35%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 82%; top: 15%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute w-1 h-1 rounded-full bg-secondary/60"[39m
+          [33mstyle[39m=[32m"left: 94%; top: 25%; filter: blur(0.5px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute top-0 inset-x-0 h-px"[39m
+          [33mstyle[39m=[32m"background: linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / 0.5) 20%, hsl(var(--primary) / 0.4) 50%, hsl(var(--secondary) / 0.5) 80%, transparent 100%);"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 pointer-events-none overflow-hidden z-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.704129219055176px; height: 3.704129219055176px; left: 86.38837411999702%; top: 17.005542968399823%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 2.8684654412791133px; height: 2.8684654412791133px; left: 40.86431688629091%; top: 45.598014001734555%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.727244168519974px; height: 4.727244168519974px; left: 84.27994227968156%; top: 21.930293017067015%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 3.4707554997876287px; height: 3.4707554997876287px; left: 25.25680793914944%; top: 72.63666645158082%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.918775502592325px; height: 5.918775502592325px; left: 39.23743460327387%; top: 49.989357823506%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 4.383041239343584px; height: 4.383041239343584px; left: 96.73796081915498%; top: 46.85542369261384%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.062247200869024px; height: 4.062247200869024px; left: 73.76805900130421%; top: 88.92796579748392%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 3.812064666301012px; height: 3.812064666301012px; left: 14.756215130910277%; top: 14.15187083184719%; filter: blur(0px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-accent/30"[39m
+          [33mstyle[39m=[32m"width: 4.417728359811008px; height: 4.417728359811008px; left: 91.34798278100789%; top: 33.61035834532231%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-secondary/40"[39m
+          [33mstyle[39m=[32m"width: 5.270761967636645px; height: 5.270761967636645px; left: 33.50831267889589%; top: 31.678625871427357%; filter: blur(1px);"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute rounded-full bg-primary/30"[39m
+          [33mstyle[39m=[32m"width: 3.625782048329711px...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx:207:19
+    205|     render(<AdminView />);
+    206|
+    207|     expect(screen.getByRole('columnheader', { name: 'Acesso (informati…
+       |                   ^
+    208|
+    209|     fireEvent.click(screen.getByRole('button', { name: /Editar Ana Sil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > erro ao carregar profiles expõe estado de erro e avisa por toast
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:72:34
+     70|     });
+     71|
+     72|     expect(result.current.error).toBeTruthy();
+       |                                  ^
+     73|     expect(h.toastError).toHaveBeenCalledTimes(1);
+     74|     expect(result.current.users).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > erro ao carregar user_roles expõe estado de erro e avisa por toast
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:87:34
+     85|     });
+     86|
+     87|     expect(result.current.error).toBeTruthy();
+       |                                  ^
+     88|     expect(h.toastError).toHaveBeenCalledTimes(1);
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > erro na auditoria expõe estado de erro em vez de lista vazia
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:99:34
+     97|     });
+     98|
+     99|     expect(result.current.error).toBeTruthy();
+       |                                  ^
+    100|     expect(h.toastError).toHaveBeenCalledTimes(1);
+    101|     expect(result.current.auditLogs).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > sucesso não deixa estado de erro ligado
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:113:34
+    111|     });
+    112|
+    113|     expect(result.current.error).toBeNull();
+       |                                  ^
+    114|     expect(h.toastError).not.toHaveBeenCalled();
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — auditoria com filtro de data e paginação > aplica gte/lte com o dia inteiro no fuso local e range 1-based
+AssertionError: expected undefined to deeply equal [ 'created_at', …(1) ]
+
+- Expected:
+[
+  "created_at",
+  "2026-10-01T03:00:00.000Z",
+]
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:144:52
+    142|     });
+    143|
+    144|     expect(callsFor('audit_logs', 'gte')[0]?.args).toEqual([
+       |                                                    ^
+    145|       'created_at',
+    146|       '2026-10-01T03:00:00.000Z',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — auditoria com filtro de data e paginação > sem filtro usa a primeira página e não manda gte/lte
+AssertionError: expected undefined to deeply equal [ +0, NaN ]
+
+- Expected:
+[
+  0,
+  NaN,
+]
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:164:54
+    162|     });
+    163|
+    164|     expect(callsFor('audit_logs', 'range')[0]?.args).toEqual([0, AUDIT…
+       |                                                      ^
+    165|     expect(callsFor('audit_logs', 'gte')).toHaveLength(0);
+    166|     expect(callsFor('audit_logs', 'lte')).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — senha mínima alinhada à Edge create-user > expõe a régua de 8 caracteres da Edge
+AssertionError: expected undefined to be 8 // Object.is equality
+
+- Expected:
+8
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:182:33
+    180|
+    181|   it('expõe a régua de 8 caracteres da Edge', () => {
+    182|     expect(MIN_PASSWORD_LENGTH).toBe(8);
+       |                                 ^
+    183|   });
+    184|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/21]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — senha mínima alinhada à Edge create-user > recusa 7 caracteres antes de chamar a Edge
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "https://local.test/functions/v1/create-user",
+      Object {
+        "body": "{"name":"Ana","email":"ana@example.test","password":"1234567","role":"agent"}",
+        "headers": Object {
+          "Authorization": "Bearer tok",
+          "Content-Type": "application/json",
+        },
+        "method": "POST",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:201:26
+    199|
+    200|     expect(ok).toBe(false);
+    201|     expect(fetchSpy).not.toHaveBeenCalled();
+       |                          ^
+    202|     expect(h.toastError).toHaveBeenCalledWith(
+    203|       expect.stringContaining('8 caracteres'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/21]⎯
+
+
+ Test Files  4 failed | 3 passed (7)
+      Tests  21 failed | 14 passed (35)
+   Start at  02:21:33
+   Duration  20.04s (transform 8.73s, setup 5.05s, import 23.48s, tests 18.36s, environment 18.60s)
+

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-tabelas-estados
+ID=2610130147ca28
+BRANCH=v2/admin-tabelas-estados-2610130147ca28
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:47:33-03:00
+KANBAN=t_672cd537
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-tabelas-estados-2610130147ca28/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130147ca28
+PRONTO_SHA=fb592c585cdfb548801fdc538e6bbb8528f6e4c0
