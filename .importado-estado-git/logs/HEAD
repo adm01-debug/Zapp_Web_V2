@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 9e0b1c73de10edceada5911af300c921a012ba1b Hermes Senior <hermes-senior@promobrindes.local> 1791758009 -0300	
+9e0b1c73de10edceada5911af300c921a012ba1b 9e0b1c73de10edceada5911af300c921a012ba1b Hermes Senior <hermes-senior@promobrindes.local> 1791758010 -0300	reset: moving to HEAD
+9e0b1c73de10edceada5911af300c921a012ba1b 9e0b1c73de10edceada5911af300c921a012ba1b Hermes Senior <hermes-senior@promobrindes.local> 1791758036 -0300	reset: moving to HEAD
+9e0b1c73de10edceada5911af300c921a012ba1b 08fe04d04e1bb65e7c5f06233441babf7ae20fd5 Hermes Senior <hermes-senior@promobrindes.local> 1791759821 -0300	commit: fix(webhook): aplica outbox do inbound sem quebrar espelho do CI
+08fe04d04e1bb65e7c5f06233441babf7ae20fd5 853d93948ce22307c7d49781359c619ed04c450e Hermes Senior <hermes-senior@promobrindes.local> 1792015478 -0300	commit: test(webhook): alinha opt-out ao contrato outbox do inbound (refazer t_f0b938ea)

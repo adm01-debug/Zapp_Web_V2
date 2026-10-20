@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aplicar-base-original-outbox-inbound-69
+ID=261011193393d1
+BRANCH=v2/aplicar-base-original-outbox-inbound-69-261011193393d1
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-base-original-outbox-inbound-69-261011193393d1
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T19:33:30-03:00
+KANBAN=t_e3cf292c
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aplicar-base-original-outbox-inbound-69-261011193393d1/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-261011193393d1
+PRONTO_SHA=08fe04d04e1bb65e7c5f06233441babf7ae20fd5
