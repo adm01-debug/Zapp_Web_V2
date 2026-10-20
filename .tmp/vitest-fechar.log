@@ -1,0 +1,22 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6
+
+stderr | src/utils/__tests__/notificationSounds.test.ts > notificationSounds > playNotificationSound > não fica mudo quando o tipo de som vem fora do vocabulário
+[2026-10-16T17:36:51.498Z] [WARN] [App] [sid:251630b8] Tipo de som "quiet" fora do vocabulário — tocando o padrão.
+
+stderr | src/utils/__tests__/notificationSounds.test.ts > notificationSounds > previewSound — retorno que o painel de som lê > devolve false quando o navegador recusa (sem AudioContext utilizável)
+[2026-10-16T17:36:51.508Z] [WARN] [App] [sid:6132feb4] Could not play notification sound: TypeError: AudioContext is not a constructor
+    at getAudioContext (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/src/utils/notificationSounds.ts:17:37)
+    at playNotificationSound (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/src/utils/notificationSounds.ts:34:17)
+    at previewSound (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/src/utils/notificationSounds.ts:78:3)
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/src/utils/__tests__/notificationSounds.test.ts:145:16
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+··················
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  14:36:49
+   Duration  2.82s (transform 472ms, setup 532ms, import 651ms, tests 914ms, environment 1.88s)
+

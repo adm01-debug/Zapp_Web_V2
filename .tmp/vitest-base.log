@@ -1,0 +1,78 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/.tmp/prova-base
+
+stderr | src/utils/__tests__/notificationSounds.test.ts > notificationSounds > playNotificationSound > não fica mudo quando o tipo de som vem fora do vocabulário
+[2026-10-16T17:36:57.229Z] [WARN] [App] [sid:1cbf6285] Tipo de som "quiet" fora do vocabulário — tocando o padrão.
+
+stderr | src/utils/__tests__/notificationSounds.test.ts > notificationSounds > previewSound — retorno que o painel de som lê > devolve false quando o navegador recusa (sem AudioContext utilizável)
+[2026-10-16T17:36:57.239Z] [WARN] [App] [sid:43bad572] Could not play notification sound: TypeError: AudioContext is not a constructor
+    at getAudioContext (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/.tmp/prova-base/src/utils/notificationSounds.ts:17:37)
+    at playNotificationSound (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/.tmp/prova-base/src/utils/notificationSounds.ts:27:17)
+    at previewSound (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/.tmp/prova-base/src/utils/notificationSounds.ts:64:3)
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/.tmp/prova-base/src/utils/__tests__/notificationSounds.test.ts:145:16
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+··············xxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/utils/__tests__/notificationSounds.test.ts > notificationSounds > previewSound — retorno que o painel de som lê > devolve true quando o navegador deixou tocar
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/utils/__tests__/notificationSounds.test.ts:131:43
+    129|       vi.useFakeTimers();
+    130|       try {
+    131|         expect(previewSound('chime', 60)).toBe(true);
+       |                                           ^
+    132|         vi.runAllTimers();
+    133|         expect(criarOscilador).toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/utils/__tests__/notificationSounds.test.ts > notificationSounds > previewSound — retorno que o painel de som lê > devolve false quando o navegador recusa (sem AudioContext utilizável)
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ src/utils/__tests__/notificationSounds.test.ts:145:44
+    143|       try {
+    144|         const { previewSound: previewFresco } = await import('@/utils/…
+    145|         expect(previewFresco('chime', 60)).toBe(false);
+       |                                            ^
+    146|       } finally {
+    147|         vi.stubGlobal('AudioContext', FakeAudioContext);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/components/notifications/__tests__/NotificationSettingsPanel.recusa-navegador.test.tsx > NotificationSettingsPanel — aviso quando o navegador recusa tocar o som > recusa (false): avisa que o navegador não deixou tocar e não grava preferência
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ src/components/notifications/__tests__/NotificationSettingsPanel.recusa-navegador.test.tsx:90:30
+     88|
+     89|     expect(h.previewSound).toHaveBeenCalledWith('chime', 70);
+     90|     expect(vi.mocked(toast)).toHaveBeenCalledWith(
+       |                              ^
+     91|       expect.objectContaining({
+     92|         title: expect.stringContaining('não deixou tocar o som'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 15 passed (18)
+   Start at  14:36:55
+   Duration  3.28s (transform 464ms, setup 782ms, import 660ms, tests 958ms, environment 2.27s)
+

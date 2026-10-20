@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aviso-preview-sound-false-219641c9
+ID=26101614255aa6
+BRANCH=v2/aviso-preview-sound-false-219641c9-26101614255aa6
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T14:25:15-03:00
+KANBAN=t_219641c9
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-preview-sound-false-219641c9-26101614255aa6/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-26101614255aa6
+PRONTO_SHA=39b274040487e53963570e3c50b347ff4e2a4ea5
