@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 a95f261be568318a69a8b937b86027b7b0fda030 Hermes Senior <hermes-senior@promobrindes.local> 1791979108 -0300	
+a95f261be568318a69a8b937b86027b7b0fda030 a95f261be568318a69a8b937b86027b7b0fda030 Hermes Senior <hermes-senior@promobrindes.local> 1791979109 -0300	reset: moving to HEAD
+a95f261be568318a69a8b937b86027b7b0fda030 003ed16ca62b22c4a42341b1b164bcf66d2bee56 Hermes Senior <hermes-senior@promobrindes.local> 1791980110 -0300	commit: feat(edge): ledger, timeouts e tamanho antes de baixar no ai-transcribe-audio
+003ed16ca62b22c4a42341b1b164bcf66d2bee56 5dd127bb09c4db0230c819abde50f93dfe4a4f1a Hermes Senior <hermes-senior@promobrindes.local> 1792040249 -0300	commit: feat(edge): refazer G4 ai-transcribe-audio com erros do cliente em pt-BR
