@@ -35,20 +35,21 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 
 * Moram dentro da pasta da edge (`supabase/functions/<edge>/index.test.ts`) e importam o
   handler direto.
-* Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio.
-* Comando (CI, passo "Run executable Edge handler contracts"):
-  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')`.
-  O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`
-  roda antes, no mesmo job.
+* Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio. Comando local
+  (o mesmo que a régua de cobertura `scripts/ci/edge-coverage-authz.unit.mjs` usa):
+  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/**/*.test.ts`.
+* No CI, o deploy das edges (`.github/workflows/deploy-functions.yml`) roda antes de publicar:
+  `deno check supabase/functions/**/index.ts` (passo "Typecheck das edge functions"),
+  para não subir função com erro de tipo.
 
 ## 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`
 
 * Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
   (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).
-* Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`, mas a CI
-  também roda contratos `.test.mjs` de `scripts/db-audit/`.
-* Comando (CI, passo "Test CI and Edge deployment guards"):
-  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
+* Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`; os contratos
+  `.test.mjs` de `scripts/db-audit/` rodam no `.github/workflows/db-guard.yml`, não no `ci.yml`.
+* Comando (CI, passo "Run Node CI scripts tests"):
+  `node --test scripts/ci/*.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
 * Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
@@ -77,9 +78,9 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 | Fluxo no navegador | `e2e/<fluxo>.spec.ts` | Playwright |
 
 * Nome do arquivo diz o que ele é: `.test.ts`/`.spec.ts` = suíte de código;
-  `.unit.mjs` = guarda executável de CI. Em scripts, o passo da CI varre
-  `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/talkx/*.unit.mjs`
-  e os dois contratos `.test.mjs` de `scripts/db-audit/`.
+  `.unit.mjs` = guarda executável de CI. Depois do CI mínimo de 16/10/2026, o passo
+  `node:test` do `ci.yml` varre só `scripts/ci/*.unit.mjs`; `scripts/edge-deploy/*.unit.mjs`
+  roda no `.github/workflows/deploy-functions.yml` e `scripts/db-audit/*.test.mjs` no `.github/workflows/db-guard.yml`.
 * Teste que prova correção de defeito nasce **vermelho** e fica verde com a correção; teste
   que não falha sem a correção não prova nada.
 * Nada de produção: nenhuma camada acima aponta para banco, edge ou segredo de produção.
