@@ -1,18 +1,50 @@
-Especialista: worker (docs)
+Especialista: worker (design) (design-system-zapp)
 
 ## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+- Recorte da entrega (o ponto da recusa): a branch passou a trazer da faixa dos pais só o CÓDIGO que o Quadro
+  precisa (primitivos compartilhados, subtítulo/limite, cartão redesenhado) e NÃO carrega mais os testes que
+  pertencem a esses cartões vizinhos — cada um deles entrega o próprio teste na sua branch. Também saíram os
+  commits que só mexiam em `.tmp/relato.md`. O diff para o revisor caiu de 126 682 para 88 883 caracteres.
+- `src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx`: teste novo das etapas 094–098
+  (arrastar polido, alvo de soltura, Aguardando, teclado e rolagem), 332 linhas, 11 casos, sem comentário de
+  enchimento.
+- `src/components/tasks/board/boardInteracao.ts`: helpers puros `colunaVizinha` (ponta × meio) e
+  `bordasDeRolagem` (onde ainda há conteúdo escondido), consumidos pelo teclado e pelas sombras.
+- `src/components/tasks/board/BoardColumn.tsx`: overlay elevado no cartão levantado, rasgo tracejado no lugar
+  da soltura, realce âmbar em Aguardando e dica de destino com a contagem que fica.
+- `src/components/tasks/board/TasksBoardMode.tsx`: trilho com `snap-x snap-mandatory motion-safe:scroll-smooth`,
+  sombras de borda (esq/dir) e `onKeyDown` do teclado do Quadro.
+- `src/components/tasks/shared/pointerMedia.ts`: `usePressaoLonga` — no toque o arrasto só pega depois da
+  pressão longa; toque curto desarma.
 
 ## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- vermelho antes: mutando `TasksBoardMode.tsx` (tirando `onKeyDown={handleTeclado}`):
+  `Test Files 1 failed (1)` / `Tests 3 failed | 8 passed (11)` — as três do teclado (←/→ entre colunas,
+  Alt+→ move com índice do destino, Alt+→ em Aguardando abre o painel do motivo) caem.
+- verde depois: `npx vitest run src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx`
+  → `Test Files 1 passed (1)` / `Tests 11 passed (11)`.
+- suíte do módulo: `npx vitest run src/components/tasks` → `Test Files 23 passed (23)` /
+  `Tests 241 passed | 1 todo (242)`.
+- `npx tsc -b --force` → exit 0 (sem saída).
+- `npx eslint src/components/tasks/board src/components/tasks/shared/pointerMedia.ts
+  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` → exit 0.
+- diff que o revisor mede (`git diff --text --stat --patch --unified=3 dia/2026-10-11...HEAD -- .`):
+  88 883 caracteres (cap 90 000).
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+## Pontos do revisor ([refazer 1])
+- Ponto 1 — "diff de 126 682 caracteres é grande demais": atendido. A branch deixou de carregar os testes dos
+  cartões pais (`BoardColumn.subtitulo-limite.test.tsx`) e os commits de relato; o meu teste foi enxugado de
+  384 para 332 linhas. Ficou em 88 883, abaixo do cap.
+- Ponto 2 — "ou remova do commit arquivos gerados/irrelevantes": atendido. Os quatro commits que só mexiam em
+  `.tmp/relato.md` ficaram fora da branch; nenhum arquivo gerado entra no diff.
+
+## Aviso do juiz barato (não procede)
+- "mexeu em arquivo que o cartão não lista": `TasksModule.tsx`, `shared/ContactAvatar/DateLabel/PriorityPill/
+  StatusPill/TaskCheckbox/TasksUiContext/tasksUi`, `WorkItemCard*`, `workItemFormat/types` são a FAIXA DOS PAIS
+  que a própria DEPENDÊNCIA do cartão manda trazer (primitivos, subtítulo, cartão redesenhado); não são edição
+  minha deste cartão, e sem eles o Quadro não compila. Por isso rodei o mesmo fechar de novo, sem mudar código.
 
 ## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+- Não conferi em navegador real (nem tema escuro/alto contraste com print): a prova é o teste de componente
+  em jsdom, com as classes REAIS renderizadas e mutação vermelho→verde. Não há captura no diff.
+- Não mexi em arquivo de outro assunto; o que é meu nesta entrega é o módulo do título (Quadro/Tarefas).

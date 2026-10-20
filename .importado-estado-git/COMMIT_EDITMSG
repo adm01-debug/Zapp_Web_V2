@@ -1,0 +1,7 @@
+feat(tarefas): arrastar polido, alvo de soltura, Aguardando, teclado e rolagem do Quadro
+
+(cherry picked from commit d6e8b5514f369155702706427d7119ce9192e130)
+
+# Conflicts:
+#	src/components/tasks/board/BoardColumn.tsx
+#	src/components/tasks/board/TasksBoardMode.tsx

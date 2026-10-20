@@ -1,0 +1,1956 @@
+diff --git a/src/components/tasks/TasksModule.tsx b/src/components/tasks/TasksModule.tsx
+index 76aee632d..51aa22536 100644
+--- a/src/components/tasks/TasksModule.tsx
++++ b/src/components/tasks/TasksModule.tsx
+@@ -8,6 +8,9 @@ import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/w
+ import { countDoing } from '@/hooks/tasks/workItemMachine';
+ import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
+ import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
++// Etapa 069: o estado de UI (seleção/painel/modal/densidade) passa a viver no
++// contexto — as superfícies leem por `useTasksUi` em vez de reabrir este arquivo.
++import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
+ import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+ import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
+ import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
+@@ -232,6 +235,7 @@ export function TasksModule() {
+   }
+ 
+   return (
++    <TasksUiProvider>
+     <div data-testid="tasks-module" className="flex flex-col h-full gap-4">
+       {/* Etapa 78: região viva única do módulo — narra criar, concluir, mover e
+           desfazer sem roubar o foco de quem usa leitor de tela. */}
+@@ -368,5 +372,6 @@ export function TasksModule() {
+         focusField={focusField}
+       />
+     </div>
++    </TasksUiProvider>
+   );
+ }
+diff --git a/src/components/tasks/__tests__/TasksListMode.test.tsx b/src/components/tasks/__tests__/TasksListMode.test.tsx
+index 8494acba5..82f59b6c4 100644
+--- a/src/components/tasks/__tests__/TasksListMode.test.tsx
++++ b/src/components/tasks/__tests__/TasksListMode.test.tsx
+@@ -153,7 +153,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
+     const { onToggleDone, onOpen } = renderLista(buckets({ noDue: [alvo] }));
+ 
+     const card = screen.getByRole('article');
+-    fireEvent.click(within(card).getByRole('button', { name: 'Concluir tarefa' }));
++    fireEvent.click(within(card).getByRole('checkbox', { name: 'Concluir tarefa' }));
+ 
+     expect(onToggleDone).toHaveBeenCalledWith(alvo);
+     expect(onOpen).not.toHaveBeenCalled();
+@@ -165,7 +165,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
+ 
+     fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+     const card = screen.getByRole('article');
+-    fireEvent.click(within(card).getByRole('button', { name: 'Reabrir tarefa' }));
++    fireEvent.click(within(card).getByRole('checkbox', { name: 'Reabrir tarefa' }));
+ 
+     expect(onToggleDone).toHaveBeenCalledWith(feita);
+   });
+diff --git a/src/components/tasks/__tests__/WorkItemCard.test.tsx b/src/components/tasks/__tests__/WorkItemCard.test.tsx
+index dd52ac620..251f7a17a 100644
+--- a/src/components/tasks/__tests__/WorkItemCard.test.tsx
++++ b/src/components/tasks/__tests__/WorkItemCard.test.tsx
+@@ -12,12 +12,14 @@
+  */
+ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+ import { axe } from 'vitest-axe';
+-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
++import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
+ import type { HTMLAttributes } from 'react';
+ 
+ // Importa o harness ANTES do módulo sob teste (registra os `vi.mock`).
+ import { makeTaskRow } from '@/test/mocks/tarefas';
+ import { WorkItemCard } from '@/components/tasks/shared/WorkItemCard';
++import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
++import { useTasksUi } from '@/components/tasks/shared/tasksUi';
+ import type { WorkItem } from '@/hooks/tasks/workItem.types';
+ 
+ /** Item do domínio a partir da fixture do banco (mesmo shape), sem duplicar dados. */
+@@ -57,11 +59,11 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
+     const { rerender } = render(
+       <WorkItemCard item={item({ status: 'todo' })} mode="list" onToggleDone={onToggleDone} />
+     );
+-    expect(screen.getByRole('button', { name: 'Concluir tarefa' })).toBeTruthy();
++    expect(screen.getByRole('checkbox', { name: 'Concluir tarefa' })).toBeTruthy();
+ 
+     rerender(<WorkItemCard item={item({ status: 'done' })} mode="list" onToggleDone={onToggleDone} />);
+ 
+-    const reabrir = screen.getByRole('button', { name: 'Reabrir tarefa' });
++    const reabrir = screen.getByRole('checkbox', { name: 'Reabrir tarefa' });
+     expect(screen.getByText('Ligar para o cliente').className).toContain('line-through');
+     fireEvent.click(reabrir);
+     expect(onToggleDone).toHaveBeenCalledTimes(1);
+@@ -129,7 +131,7 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
+ 
+     // A tecla borbulha do checkbox até o article; a guarda de alvo impede que o card
+     // trate o Enter/`x` do filho como atalho do PRÓPRIO card.
+-    const checkbox = screen.getByRole('button', { name: 'Concluir tarefa' });
++    const checkbox = screen.getByRole('checkbox', { name: 'Concluir tarefa' });
+     fireEvent.keyDown(checkbox, { key: 'Enter' });
+     fireEvent.keyDown(checkbox, { key: 'x' });
+ 
+@@ -142,7 +144,7 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
+     const onToggleDone = vi.fn();
+     render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} onToggleDone={onToggleDone} />);
+ 
+-    fireEvent.click(screen.getByRole('button', { name: 'Concluir tarefa' }));
++    fireEvent.click(screen.getByRole('checkbox', { name: 'Concluir tarefa' }));
+     expect(onToggleDone).toHaveBeenCalledTimes(1);
+     expect(onOpen).not.toHaveBeenCalled();
+ 
+@@ -283,3 +285,121 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
+     expect(classes).toContain('[@media(hover:none)]:opacity-100');
+   });
+ });
++
++/**
++ * Etapas 084–090 (plano 200): o card redesenhado. Cada teste mede UMA etapa pelo
++ * DOM real do componente — o checkbox circular (D16), o "Urgente" junto ao
++ * título (085), a tag "Atrasada" (086), os rótulos Prazo/Lembrete e a descrição
++ * curta no card em Fazendo/selecionado (087/088), o chip de espera (089) e o
++ * estado selecionado (090). Os primitivos são do cartão T11 e a data vem do
++ * `workItemFormat.ts` (T04) — nada de reimplementar aqui.
++ */
++describe('etapas 084–090 — card redesenhado', () => {
++  it('084 — checkbox CIRCULAR nas três superfícies e título em até 2 linhas', () => {
++    (['list', 'board', 'agenda'] as const).forEach((mode) => {
++      const { unmount } = render(<WorkItemCard item={item()} mode={mode} onToggleDone={vi.fn()} />);
++
++      const check = screen.getByRole('checkbox', { name: 'Concluir tarefa' });
++      expect(check.getAttribute('data-testid')).toBe('task-checkbox');
++      expect(check.className).toContain('rounded-full');
++      // o quadrado antigo do card não pode voltar
++      expect(check.className).not.toContain('rounded-[4px]');
++
++      const titulo = screen.getByText('Ligar para o cliente');
++      expect(titulo.className).toContain(mode === 'agenda' ? 'truncate' : 'line-clamp-2');
++      unmount();
++    });
++  });
++
++  it('085 — Urgente fica junto ao título e a prioridade padrão desce para a linha de contexto', () => {
++    const { rerender } = render(<WorkItemCard item={item({ priority: 'urgent' })} mode="board" />);
++    const headerUrgente = screen.getByText('Ligar para o cliente').parentElement as HTMLElement;
++    const urgente = within(headerUrgente).getByTestId('priority-pill');
++    expect(urgente.getAttribute('data-priority')).toBe('urgent');
++    expect(urgente.textContent).toBe('Urgente');
++
++    rerender(<WorkItemCard item={item({ priority: 'high' })} mode="board" />);
++    const headerComum = screen.getByText('Ligar para o cliente').parentElement as HTMLElement;
++    expect(within(headerComum).queryByTestId('priority-pill')).toBeNull();
++    // existe, mas na linha de contexto (fora do header do título)
++    expect(screen.getByTestId('priority-pill').getAttribute('data-priority')).toBe('high');
++  });
++
++  it('086 — prazo vencido pinta o texto de destrutivo e acrescenta a tag "Atrasada"', () => {
++    const { rerender } = render(
++      <WorkItemCard item={item({ due_date: '2026-09-25T10:00:00.000Z' })} mode="board" />
++    );
++    expect(screen.getByTestId('date-label').className).toContain('--destructive-text');
++    expect(screen.getByTestId('overdue-tag').textContent).toContain('Atrasada');
++
++    rerender(<WorkItemCard item={item({ due_date: '2026-11-20T14:00:00.000Z' })} mode="board" />);
++    expect(screen.queryByTestId('overdue-tag')).toBeNull();
++  });
++
++  it('087 — no card em "Fazendo" o prazo e o lembrete ganham rótulos em duas colunas', () => {
++    const { rerender } = render(
++      <WorkItemCard item={item({ status: 'todo', due_date: '2026-11-20T14:00:00.000Z' })} mode="list" />
++    );
++    expect(screen.queryByText('Prazo')).toBeNull();
++    expect(screen.queryByText('Lembrete')).toBeNull();
++
++    rerender(
++      <WorkItemCard
++        item={item({ status: 'doing', due_date: '2026-11-20T14:00:00.000Z', remind_at: '2026-11-20T12:00:00.000Z' })}
++        mode="list"
++      />
++    );
++    expect(screen.getByText('Prazo')).toBeTruthy();
++    expect(screen.getByText('Lembrete')).toBeTruthy();
++  });
++
++  it('088 — a descrição curta (2 linhas) só aparece em "Fazendo"/selecionado', () => {
++    const desc = 'Cliente pediu retorno depois das 14h, com o orçamento revisado.';
++    const { rerender } = render(<WorkItemCard item={item({ status: 'todo', description: desc })} mode="board" />);
++    expect(screen.queryByText(desc)).toBeNull();
++
++    rerender(<WorkItemCard item={item({ status: 'doing', description: desc })} mode="board" />);
++    expect(screen.getByText(desc).className).toContain('line-clamp-2');
++  });
++
++  it('089 — em "Aguardando" o motivo vira chip âmbar, truncado e com tooltip', () => {
++    const motivo = 'Retorno da transportadora';
++    render(<WorkItemCard item={item({ status: 'waiting', waiting_reason: motivo })} mode="board" />);
++
++    const chip = screen.getByTestId('waiting-chip');
++    expect(chip.getAttribute('title')).toBe(motivo);
++    expect(chip.textContent).toContain(motivo);
++    expect(chip.className).toContain('--warning-text');
++    expect(chip.querySelector('.bg-warning')).toBeTruthy();
++  });
++
++  it('090 — card selecionado: borda primary, fundo primary/10, alça ⠿ e data-selected', () => {
++    const { rerender } = render(<WorkItemCard item={item()} mode="board" />);
++    expect(card().className).toContain('bg-card');
++    expect(card().getAttribute('data-selected')).toBeNull();
++
++    rerender(<WorkItemCard item={item()} mode="board" isSelected />);
++    expect(card().getAttribute('data-selected')).toBe('true');
++    expect(card().className).toContain('border-primary');
++    expect(card().className).toContain('bg-primary/10');
++    expect(card().textContent).toContain('⠿');
++  });
++
++  it('090 — a seleção do painel (TasksUiProvider.selectedId) também marca o card', () => {
++    function Abrir() {
++      const ui = useTasksUi();
++      return <button onClick={() => ui.openPanel('t1')}>abrir painel</button>;
++    }
++    render(
++      <TasksUiProvider>
++        <Abrir />
++        <WorkItemCard item={item({ id: 't1' })} mode="board" />
++      </TasksUiProvider>
++    );
++
++    expect(card().getAttribute('data-selected')).toBeNull();
++    fireEvent.click(screen.getByRole('button', { name: 'abrir painel' }));
++    expect(card().getAttribute('data-selected')).toBe('true');
++    expect(card().className).toContain('bg-primary/10');
++  });
++});
+diff --git a/src/components/tasks/__tests__/agendaGroups.test.tsx b/src/components/tasks/__tests__/agendaGroups.test.tsx
+index 927367217..a97a13f02 100644
+--- a/src/components/tasks/__tests__/agendaGroups.test.tsx
++++ b/src/components/tasks/__tests__/agendaGroups.test.tsx
+@@ -176,7 +176,7 @@ describe('TasksAgendaMode — etapa 55', () => {
+     expect(card.className).toContain('h-11');
+     expect(card.className).toContain('flex-row');
+     // checkbox presente na Agenda (na Lista ele já era; no Quadro não)
+-    expect(within(card).getByRole('button', { name: 'Concluir tarefa' })).toBeTruthy();
++    expect(within(card).getByRole('checkbox', { name: 'Concluir tarefa' })).toBeTruthy();
+     // nada de motivo de espera na linha
+     expect(screen.queryByText('cliente vai responder')).toBeNull();
+     // o kebab continua acessível (não fica escondido atrás do hover na Agenda)
+diff --git a/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx b/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+new file mode 100644
+index 000000000..27d537559
+--- /dev/null
++++ b/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+@@ -0,0 +1,332 @@
++import type { ReactNode } from 'react';
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
++
++import { makeTaskRow } from '@/test/mocks/tarefas';
++import { TasksBoardMode } from '@/components/tasks/board/TasksBoardMode';
++import { TooltipProvider } from '@/components/ui/tooltip';
++import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
++
++type CtxDnd = { onDragStart: (s: { source: { droppableId: string } }) => void; onDragEnd: (r: unknown) => void };
++
++const ctl = vi.hoisted(() => ({
++  ctx: null as CtxDnd | null,
++  /** droppableId com o arrasto por cima (o resto fica `isDraggingOver: false`). */
++  sobre: '',
++  /** draggableId levantado. */
++  levantado: '',
++  /** última resposta de `isDragDisabled` por cartão. */
++  bloqueado: {} as Record<string, boolean>,
++}));
++
++vi.mock('@hello-pangea/dnd', () => ({
++  DragDropContext: (props: { children: ReactNode } & CtxDnd) => {
++    ctl.ctx = props;
++    return props.children;
++  },
++  Droppable: ({ droppableId, children }: { droppableId: string; children: (p: unknown, s: unknown) => ReactNode }) =>
++    children(
++      { innerRef: () => undefined, droppableProps: {}, placeholder: null },
++      { isDraggingOver: ctl.sobre === droppableId },
++    ),
++  Draggable: ({ draggableId, isDragDisabled, children }: { draggableId: string; isDragDisabled?: boolean; children: (p: unknown, s: unknown) => ReactNode }) => {
++    ctl.bloqueado[draggableId] = Boolean(isDragDisabled);
++    return children(
++      { innerRef: () => undefined, draggableProps: {}, dragHandleProps: {} },
++      { isDragging: ctl.levantado === draggableId },
++    );
++  },
++}));
++
++const item = (over: Partial<WorkItem> = {}): WorkItem =>
++  makeTaskRow(over as Record<string, unknown>) as unknown as WorkItem;
++
++const VAZIO: Record<WorkItemStatus, WorkItem[]> = {
++  backlog: [], todo: [], doing: [], waiting: [], done: [], cancelled: [],
++};
++
++function renderQuadro(over: Partial<Parameters<typeof TasksBoardMode>[0]> = {}) {
++  const utils = render(
++    <TooltipProvider>
++      <TasksBoardMode
++        byStatus={VAZIO}
++        isLoading={false}
++        onMove={vi.fn()}
++        onReorder={vi.fn()}
++        onOpen={vi.fn()}
++        onDelete={vi.fn()}
++        onCreate={vi.fn().mockResolvedValue(undefined)}
++        {...over}
++      />
++    </TooltipProvider>,
++  );
++  return utils;
++}
++
++const coluna = (status: WorkItemStatus) =>
++  document.querySelector<HTMLElement>(`[data-board-column="${status}"]`);
++const cartao = (id: string) => document.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
++/** O trilho das colunas é o pai direto da primeira coluna (mesma âncora do teste de largura). */
++const trilho = () => coluna('backlog')?.parentElement ?? null;
++
++/** Mente sobre as media queries do ambiente (§ pointerMedia.ts) e devolve o desfazer. */
++function fingirMidia(matches: (consulta: string) => boolean) {
++  const original = window.matchMedia;
++  window.matchMedia = ((consulta: string) => ({
++    matches: matches(consulta),
++    media: consulta,
++    onchange: null,
++    addListener: () => {},
++    removeListener: () => {},
++    addEventListener: () => {},
++    removeEventListener: () => {},
++    dispatchEvent: () => false,
++  })) as unknown as typeof window.matchMedia;
++  return () => { window.matchMedia = original; };
++}
++
++/** Arrasta de dentro de `origem` (liga o `onDragStart` do contexto real). */
++function comecarArrasto(origem: WorkItemStatus) {
++  act(() => ctl.ctx?.onDragStart({ source: { droppableId: origem } }));
++}
++
++beforeEach(() => {
++  cleanup();
++  ctl.ctx = null;
++  ctl.sobre = '';
++  ctl.levantado = '';
++  ctl.bloqueado = {};
++});
++afterEach(() => { cleanup(); vi.useRealTimers(); });
++
++
++describe('etapa 094 — polimento do arrastar', () => {
++  it('o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado', () => {
++    renderQuadro({ byStatus: { ...VAZIO, backlog: [item({ id: 'b1', status: 'backlog' })], todo: [item({ id: 't1', status: 'todo' })] } });
++
++    expect(screen.queryByTestId('drag-overlay'), 'sem arrasto não existe overlay').toBeNull();
++
++    ctl.levantado = 'b1';
++    ctl.sobre = 'todo';
++    comecarArrasto('backlog');
++
++    const overlay = screen.getByTestId('drag-overlay');
++    expect(overlay.getAttribute('data-item-id'), 'o overlay é o envoltório do cartão, não o cartão').toBeNull();
++    expect(overlay.querySelector('[data-item-id="b1"]'), 'o cartão b1 está dentro do overlay').toBeTruthy();
++    expect(overlay.className).toContain('shadow-[var(--shadow-lg)]');
++
++    const emTodo = coluna('todo')!.querySelector<HTMLElement>('[data-testid="board-drop-placeholder"]');
++    expect(emTodo?.className).toContain('border-dashed');
++    const emBacklog = coluna('backlog')!.querySelector<HTMLElement>('[data-testid="board-drop-placeholder"]');
++    expect(emBacklog?.className ?? '').not.toContain('border-dashed');
++  });
++
++  it('no toque o arrasto só pega depois da pressão longa; toque curto desarma', () => {
++    const desfazer = fingirMidia(q => q.includes('pointer: coarse'));
++    vi.useFakeTimers();
++    try {
++      renderQuadro({ byStatus: { ...VAZIO, backlog: [item({ id: 'b1', status: 'backlog' })] } });
++
++      const corpo = cartao('b1')!;
++      const dica = () => coluna('backlog')!.querySelector<HTMLElement>('[data-testid="board-longpress-hint"]');
++      expect(ctl.bloqueado['b1'], 'no toque o arrasto nasce bloqueado').toBe(true);
++      expect(dica()?.textContent).toBe('Pressione e segure para arrastar');
++
++      fireEvent.pointerDown(corpo);
++      act(() => { vi.advanceTimersByTime(300); });
++      expect(ctl.bloqueado['b1']).toBe(false);
++      expect(dica()?.textContent).toBe('Arraste o cartão');
++
++      fireEvent.pointerUp(corpo);
++      expect(ctl.bloqueado['b1'], 'a pressão longa continua armada para o arrasto seguinte').toBe(false);
++
++      fireEvent.pointerDown(corpo);
++      fireEvent.pointerUp(corpo);
++      expect(ctl.bloqueado['b1']).toBe(true);
++    } finally {
++      desfazer();
++    }
++  });
++});
++
++
++describe('etapas 095/096 — alvo de soltura', () => {
++  it('a coluna de destino mostra a borda primary e a dica com a contagem que fica', () => {
++    renderQuadro({
++      byStatus: {
++        ...VAZIO,
++        backlog: [item({ id: 'b1', status: 'backlog' })],
++        doing: [item({ id: 'd1', status: 'doing' })],
++      },
++    });
++
++    expect(screen.queryByTestId('board-drop-target')).toBeNull();
++
++    ctl.sobre = 'doing';
++    comecarArrasto('backlog');
++
++    const dica = screen.getByTestId('board-drop-target');
++    expect(dica.closest('[data-board-column]')?.getAttribute('data-board-column')).toBe('doing');
++    expect(dica.textContent).toBe('Solte para mover para Fazendo (2 de 3)');
++
++    const corpo = coluna('doing')!.querySelector<HTMLElement>('[class*="ring-primary"]');
++    expect(corpo?.className).toContain('ring-inset');
++    expect(coluna('todo')!.querySelector('[data-testid="board-drop-target"]')).toBeNull();
++  });
++
++  it('a coluna Aguardando se realça em âmbar durante o arrasto (o painel do motivo é preservado)', () => {
++    renderQuadro({
++      byStatus: {
++        ...VAZIO,
++        backlog: [item({ id: 'b1', status: 'backlog' })],
++        waiting: [item({ id: 'w1', status: 'waiting' })],
++      },
++    });
++
++    expect(screen.queryByTestId('board-waiting-emphasis')).toBeNull();
++
++    comecarArrasto('backlog');
++
++    const realce = screen.getByTestId('board-waiting-emphasis');
++    expect(realce.getAttribute('data-board-column')).toBe('waiting');
++    expect(realce.className).toContain('ring-warning/60');
++    expect(document.querySelectorAll('[data-testid="board-waiting-emphasis"]')).toHaveLength(1);
++  });
++});
++
++
++describe('etapa 097 — teclado do Quadro', () => {
++  const doisNaCaixa = {
++    backlog: [item({ id: 'b1', status: 'backlog' }), item({ id: 'b2', status: 'backlog' })],
++    todo: [item({ id: 't1', status: 'todo' })],
++  } as Record<WorkItemStatus, WorkItem[]>;
++
++  it('←/→ andam entre colunas (pulando as vazias) e ↑/↓ entre os cartões', () => {
++    renderQuadro({ byStatus: { ...VAZIO, ...doisNaCaixa } });
++    const b1 = cartao('b1')!;
++    const b2 = cartao('b2')!;
++    b1.focus();
++
++    fireEvent.keyDown(b1, { key: 'ArrowDown' });
++    expect(document.activeElement, '↓ desce para o próximo cartão da coluna').toBe(b2);
++
++    fireEvent.keyDown(b2, { key: 'ArrowUp' });
++    expect(document.activeElement).toBe(b1);
++
++    fireEvent.keyDown(b1, { key: 'ArrowRight' });
++    expect(document.activeElement, '→ pula as colunas vazias até o primeiro cartão').toBe(cartao('t1'));
++
++    fireEvent.keyDown(cartao('t1')!, { key: 'ArrowLeft' });
++    expect(document.activeElement, '← volta indexado na coluna de destino').toBe(b1);
++
++    fireEvent.keyDown(b1, { key: 'ArrowLeft' });
++    expect(document.activeElement).toBe(b1);
++  });
++
++  it('Alt+→ move o cartão para a coluna seguinte, com o índice do destino', () => {
++    const onMove = vi.fn();
++    renderQuadro({ byStatus: { ...VAZIO, ...doisNaCaixa }, onMove });
++
++    const b1 = cartao('b1')!;
++    b1.focus();
++    fireEvent.keyDown(b1, { key: 'ArrowRight', altKey: true });
++
++    expect(onMove).toHaveBeenCalledTimes(1);
++    expect(onMove.mock.calls[0][0]).toMatchObject({ id: 'b1' });
++    expect(onMove.mock.calls[0][1]).toBe('todo');
++    expect(onMove.mock.calls[0][2]).toMatchObject({ index: 1 });
++  });
++
++  it('Alt+→ para Aguardando abre o painel do motivo em vez de escrever no banco', () => {
++    const onMove = vi.fn();
++    const onRequestWaitingReason = vi.fn();
++    renderQuadro({
++      byStatus: { ...VAZIO, doing: [item({ id: 'd1', status: 'doing' })] },
++      onMove,
++      onRequestWaitingReason,
++    });
++
++    const d1 = cartao('d1')!;
++    d1.focus();
++    fireEvent.keyDown(d1, { key: 'ArrowRight', altKey: true });
++
++    expect(onRequestWaitingReason).toHaveBeenCalledTimes(1);
++    expect(onRequestWaitingReason.mock.calls[0][0]).toMatchObject({ id: 'd1' });
++    expect(onMove, 'Aguardando sem motivo não escreve no banco').not.toHaveBeenCalled();
++  });
++
++  it('Alt+→ para Fazendo 3/3 é recusado pela trava do WIP', () => {
++    const onMove = vi.fn();
++    renderQuadro({
++      byStatus: {
++        ...VAZIO,
++        todo: [item({ id: 't1', status: 'todo' })],
++        doing: [item({ id: 'd1', status: 'doing' }), item({ id: 'd2', status: 'doing' }), item({ id: 'd3', status: 'doing' })],
++      },
++      onMove,
++    });
++
++    const t1 = cartao('t1')!;
++    t1.focus();
++    fireEvent.keyDown(t1, { key: 'ArrowRight', altKey: true });
++
++    expect(onMove, 'Fazendo 3/3 recusa o cartão que vem de fora').not.toHaveBeenCalled();
++  });
++
++  it('Enter continua abrindo o cartão e, com arrasto em curso, o teclado se retira', () => {
++    const onOpen = vi.fn();
++    renderQuadro({ byStatus: { ...VAZIO, ...doisNaCaixa }, onOpen });
++    const b1 = cartao('b1')!;
++    b1.focus();
++
++    fireEvent.keyDown(b1, { key: 'Enter' });
++    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'b1' }));
++
++    comecarArrasto('backlog');
++    const b2 = cartao('b2')!;
++    b1.focus();
++    fireEvent.keyDown(b1, { key: 'ArrowDown' });
++    expect(document.activeElement, 'durante o arrasto o teclado do Quadro não move o foco').toBe(b1);
++    expect(b2).toBeTruthy();
++  });
++});
++
++
++describe('etapa 098 — rolagem horizontal', () => {
++  it('o trilho rola com snap e encaixe animado, e a coluna rola por dentro', () => {
++    renderQuadro({ byStatus: { ...VAZIO, backlog: [item({ id: 'b1', status: 'backlog' })] } });
++
++    const t = trilho()!;
++    expect(t.className).toMatch(/(^|\s)overflow-x-auto(\s|$)/);
++    expect(t.className).toMatch(/(^|\s)snap-x(\s|$)/);
++    expect(t.className).toContain('motion-safe:scroll-smooth');
++
++    expect(coluna('backlog')!.querySelector('[class*="overflow-y-auto"]')).toBeTruthy();
++  });
++
++  it('as sombras das bordas aparecem só onde há coluna escondida', () => {
++    renderQuadro({ byStatus: { ...VAZIO, backlog: [item({ id: 'b1', status: 'backlog' })] } });
++
++    const t = trilho()!;
++    const medir = (scrollLeft: number) => {
++      Object.defineProperty(t, 'scrollLeft', { value: scrollLeft, writable: true, configurable: true });
++      Object.defineProperty(t, 'clientWidth', { value: 300, configurable: true });
++      Object.defineProperty(t, 'scrollWidth', { value: 900, configurable: true });
++      fireEvent.scroll(t);
++    };
++
++    expect(screen.queryByTestId('board-scroll-shadow-right')).toBeNull();
++
++    medir(0);
++    expect(screen.queryByTestId('board-scroll-shadow-left')).toBeNull();
++    expect(screen.getByTestId('board-scroll-shadow-right')).toBeTruthy();
++
++    medir(300);
++    expect(screen.getByTestId('board-scroll-shadow-left')).toBeTruthy();
++    expect(screen.getByTestId('board-scroll-shadow-right')).toBeTruthy();
++
++    medir(600);
++    expect(screen.getByTestId('board-scroll-shadow-left')).toBeTruthy();
++    expect(screen.queryByTestId('board-scroll-shadow-right')).toBeNull();
++  });
++});
+diff --git a/src/components/tasks/board/BoardColumn.tsx b/src/components/tasks/board/BoardColumn.tsx
+index 225e4e1dc..125a67724 100644
+--- a/src/components/tasks/board/BoardColumn.tsx
++++ b/src/components/tasks/board/BoardColumn.tsx
+@@ -11,6 +11,7 @@ import type { WorkItemInput }   from '@/hooks/tasks/useMyWorkItems';
+ import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+ import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
+ import type { WorkItemCardActions } from '../shared/cardActions';
++import { usePressaoLonga } from '../shared/pointerMedia';
+ 
+ interface Props extends WorkItemCardActions {
+   status: WorkItemStatus;
+@@ -21,6 +22,8 @@ interface Props extends WorkItemCardActions {
+   dragSourceStatus: WorkItemStatus | null;
+   /** Etapa 81: ponteiro grosso desliga o arrasto — quem move é o `MoveToMenu`. */
+   dragDisabled?: boolean;
++  /** Etapa 83: drop recusado por limite cheio dá um tranco curto na coluna de destino. */
++  shake?: boolean;
+   onOpen: (item: WorkItem) => void;
+   onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
+   onDelete: (item: WorkItem) => void;
+@@ -28,18 +31,36 @@ interface Props extends WorkItemCardActions {
+ }
+ 
+ export function BoardColumn({
+-  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, onOpen, onMoveTo, onDelete, onCreate,
++  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, shake = false, onOpen, onMoveTo, onDelete, onCreate,
+   onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+ }: Props) {
+   const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
+   const limit = WIP_LIMITS[status];
+   const hardFull  = limit.hard != null && doingCount >= limit.hard;
+   const softOver  = limit.soft != null && items.length > limit.soft;
++  // Etapa 082: o segmento visível nunca passa do teto — quem estourou o limite
++  // (dado real > hard) continua pintando a barra CHEIA, não uma barra maior.
++  const preenchidos = limit.hard != null ? Math.min(doingCount, limit.hard) : 0;
+   // Etapa 52 (B8): a coluna cheia continua aceitando o que veio dela mesma
+   // (reorganizar dentro de "Fazendo" com 3/3), e recusa o que vem de fora.
+   // Etapa 81: em ponteiro grosso o arrasto não existe — nada entra por drop.
+   const isDropDisabled = dragDisabled || (hardFull && dragSourceStatus !== status);
+ 
++  // Etapa 096: com um arrasto em curso, a coluna Aguardando se realça em âmbar —
++  // é o aviso de que soltar ali vai pedir o motivo antes de escrever no banco.
++  const realceEspera = !dragDisabled && dragSourceStatus != null && status === 'waiting';
++  // Etapa 095: a dica do alvo mostra a contagem do destino DEPOIS do drop (com o
++  // teto do limite duro, nunca "4 de 3").
++  const dicaSolta = limit.hard != null
++    ? `Solte para mover para ${col.label} (${Math.min(doingCount + 1, limit.hard)} de ${limit.hard})`
++    : `Solte para mover para ${col.label}`;
++
++  // Etapa 094: no toque o arrasto só pega depois de uma pressão longa (a lib de
++  // DnD respeita `isDragDisabled` na hora de levantar o cartão, então o swipe
++  // continua sendo rolagem até a coluna estar armada).
++  const pressao = usePressaoLonga();
++  const arrastoBloqueado = dragDisabled && !pressao.armado;
++
+   // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
+   // de 30 dias no rodapé "Ver mais antigas (30 dias)" (filtro local, sem query nova).
+   const [showOlderDone, setShowOlderDone] = useState(false);
+@@ -62,7 +83,15 @@ export function BoardColumn({
+     // (`max-width: 767px`); em larguras intermediárias, a condução é o próprio scroll.
+     <div
+       data-board-column={status}
+-      className="flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"
++      {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
++      className={[
++        'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
++        // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
++        // depende de animação); o tranco curto só existe sem movimento reduzido.
++        shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',
++        // Etapa 096: âmbar por dentro da borda, sem trocar a cor da coluna.
++        realceEspera ? 'ring-2 ring-inset ring-warning/60' : '',
++      ].join(' ')}
+     >
+       {/* cabeçalho sticky */}
+       <div className={[
+@@ -70,9 +99,11 @@ export function BoardColumn({
+         hardFull ? 'text-destructive' : softOver ? 'text-warning' : 'text-foreground',
+         hardFull ? 'ring-1 ring-destructive/40' : '',
+       ].join(' ')}>
+-        <span className="flex-1 min-w-0 truncate text-[13px] font-semibold">{col.label}</span>
++        <span className="min-w-0 shrink-0 truncate text-[13px] font-semibold">{col.label}</span>
++        {/* Etapa 080: o subtítulo curto fica à vista; a política longa continua no tooltip do ⓘ. */}
++        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{col.subtitle}</span>
+         {headerCount && (
+-          <span className={`text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
++          <span className={`shrink-0 text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
+             {headerCount}
+           </span>
+         )}
+@@ -88,6 +119,28 @@ export function BoardColumn({
+         </Tooltip>
+       </div>
+ 
++      {/* Etapa 082: barra de progresso segmentada do limite — azul (primária) até
++          encher, destrutiva quando cheia. Um segmento por vaga do limite duro. */}
++      {limit.hard != null && (
++        <div className="px-3 pt-2" data-testid={`col-limit-bar-${status}`}>
++          <div
++            className="flex gap-1"
++            role="progressbar"
++            aria-label={`Limite de ${col.label}`}
++            aria-valuemin={0}
++            aria-valuemax={limit.hard}
++            aria-valuenow={preenchidos}
++          >
++            {Array.from({ length: limit.hard }, (_, i) => (
++              <span
++                key={i}
++                className={`h-1.5 flex-1 rounded-full ${i < preenchidos ? (hardFull ? 'bg-destructive' : 'bg-primary') : 'bg-muted'}`}
++              />
++            ))}
++          </div>
++        </div>
++      )}
++
+       {/* QuickAdd na coluna Backlog */}
+       {status === 'backlog' && onCreate && (
+         <div className="px-2 pt-2">
+@@ -101,8 +154,31 @@ export function BoardColumn({
+           <div
+             ref={provided.innerRef}
+             {...provided.droppableProps}
+-            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
++            onPointerDown={pressao.aoPressionar}
++            onPointerUp={pressao.aoSoltar}
++            onPointerCancel={pressao.aoSoltar}
++            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5 ring-2 ring-inset ring-primary' : ''}`}
+           >
++            {/* Etapa 094: no toque a coluna precisa avisar que o arrasto pede
++                pressão longa — sem isso o gesto morre na rolagem. */}
++            {dragDisabled && (
++              <p
++                data-testid="board-longpress-hint"
++                className="px-1 pb-1 text-[11px] text-muted-foreground"
++              >
++                {pressao.armado ? 'Arraste o cartão' : 'Pressione e segure para arrastar'}
++              </p>
++            )}
++            {/* Etapa 095: alvo de soltura — a coluna em foco ganha a borda primary
++                (o ring) e a dica diz para onde e como a contagem fica. */}
++            {snapshot.isDraggingOver && (
++              <p
++                data-testid="board-drop-target"
++                className="rounded-lg border border-primary/40 bg-primary/10 px-2 py-1 text-[11px] font-medium text-foreground"
++              >
++                {dicaSolta}
++              </p>
++            )}
+             {isLoading && <BoardColumnSkeleton />}
+             {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
+                 coluna NÃO está vazia — antes ela mostrava "Coluna vazia" e o
+@@ -111,9 +187,16 @@ export function BoardColumn({
+               <TasksEmptyState variant="column" policy={col.policy} />
+             )}
+             {!isLoading && visibleItems.map((item, index) => (
+-              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={dragDisabled}>
++              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={arrastoBloqueado}>
+                 {(drag, snap) => (
+-                  <div ref={drag.innerRef} {...drag.draggableProps}>
++                  // Etapa 094: o cartao levantado ganha o overlay elevado
++                  // (`--shadow-lg`) — a sombra do card comum continua sendo a dele.
++                  <div
++                    ref={drag.innerRef}
++                    {...drag.draggableProps}
++                    {...(snap.isDragging ? { 'data-testid': 'drag-overlay' } : {})}
++                    className={snap.isDragging ? 'rounded-[14px] shadow-[var(--shadow-lg)]' : ''}
++                  >
+                     <WorkItemCard
+                       item={item}
+                       mode="board"
+@@ -145,10 +228,28 @@ export function BoardColumn({
+                 {showOlderDone ? 'Ver menos' : 'Ver mais antigas (30 dias)'}
+               </button>
+             )}
+-            {provided.placeholder}
++            {/* Etapa 094: o lugar da soltura vira um rasgo tracejado enquanto o
++                arrasto esta por cima. */}
++            <div
++              data-testid="board-drop-placeholder"
++              className={snapshot.isDraggingOver ? 'rounded-[14px] border-2 border-dashed border-primary/60 p-1' : ''}
++            >
++              {provided.placeholder}
++            </div>
+           </div>
+         )}
+       </Droppable>
++
++      {/* Etapa 082: rodapé do limite — a regra em palavras, não só o número. */}
++      {limit.hard != null && (
++        <div
++          data-testid={`col-limit-footer-${status}`}
++          className="flex items-center gap-1.5 border-t border-border/50 px-3 py-2 text-[11px] text-muted-foreground"
++        >
++          <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
++          <span>Seu limite é de {limit.hard} tarefas em execução.</span>
++        </div>
++      )}
+     </div>
+   );
+ }
+diff --git a/src/components/tasks/board/TasksBoardMode.tsx b/src/components/tasks/board/TasksBoardMode.tsx
+index 8accd500f..c1b4d801e 100644
+--- a/src/components/tasks/board/TasksBoardMode.tsx
++++ b/src/components/tasks/board/TasksBoardMode.tsx
+@@ -1,4 +1,4 @@
+-import { useCallback, useRef, useState } from 'react';
++import { useCallback, useEffect, useRef, useState } from 'react';
+ import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+ import { toast } from 'sonner';
+ import { ChevronLeft, ChevronRight } from 'lucide-react';
+@@ -6,7 +6,8 @@ import { BoardColumn }      from './BoardColumn';
+ import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+ import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
+ import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+-import { resolveDragEnd } from './resolveDragEnd';
++import { resolveDragEnd, type DragEndResolution } from './resolveDragEnd';
++import { BOARD_ORDER, colunaVizinha, resolverMoverPorTeclado, bordasDeRolagem } from './boardInteracao';
+ import { useNarrowViewport, usePointerCoarse } from '../shared/pointerMedia';
+ import type { WorkItemCardActions } from '../shared/cardActions';
+ 
+@@ -31,7 +32,8 @@ interface Props extends WorkItemCardActions {
+   onCreate: (input: WorkItemInput) => Promise<void>;
+ }
+ 
+-const BOARD_COLUMNS: WorkItemStatus[] = ['backlog','todo','doing','waiting','done'];
++// Etapa 094: as colunas do trilho na ordem — a mesma fonte do `boardInteracao`.
++const BOARD_COLUMNS: WorkItemStatus[] = BOARD_ORDER;
+ 
+ /** Rótulo da coluna na faixa de navegação (mesma fonte das colunas). */
+ function rotuloDaColuna(status: WorkItemStatus): string {
+@@ -47,17 +49,33 @@ export function TasksBoardMode({
+   // Etapa 52 (B8): guarda de onde o arrasto COMECOU — sem isso a coluna "Fazendo"
+   // cheia bloqueia ate a reorganizacao dela mesma.
+   const [dragSourceStatus, setDragSourceStatus] = useState<WorkItemStatus | null>(null);
++  // Etapa 83: coluna que levou o tranco do último drop recusado por limite cheio.
++  const [colunaTremendo, setColunaTremendo] = useState<WorkItemStatus | null>(null);
++  const tremorTimer = useRef<number | null>(null);
++  useEffect(() => () => {
++    if (tremorTimer.current !== null) window.clearTimeout(tremorTimer.current);
++  }, []);
++
++  /** Dá o tranco curto na coluna de destino e o desfaz sozinho (o drop não move nada). */
++  const tremerColuna = useCallback((alvo: WorkItemStatus) => {
++    setColunaTremendo(alvo);
++    if (tremorTimer.current !== null) window.clearTimeout(tremorTimer.current);
++    tremorTimer.current = window.setTimeout(() => setColunaTremendo(null), 600);
++  }, []);
+   // Etapa 81: no ponteiro grosso o arrasto sai de cena e o `MoveToMenu` do card
+   // assume; na tela estreita as setas e os dots conduzem a faixa de colunas.
+   const dragDesligado = usePointerCoarse();
+   const telaEstreita  = useNarrowViewport();
+   const trilhoRef     = useRef<HTMLDivElement>(null);
+   const [colunaVisivel, setColunaVisivel] = useState(0);
++  // Etapa 098: sombras das bordas — só onde ainda há conteúdo escondido.
++  const [bordas, setBordas] = useState({ esq: false, dir: false });
+ 
+   /** Qual coluna está encostada à esquerda da faixa (o snap alinha por ali). */
+   const aoRolar = useCallback(() => {
+     const trilho = trilhoRef.current;
+     if (!trilho) return;
++    setBordas(bordasDeRolagem(trilho));
+     const base = trilho.getBoundingClientRect().left;
+     let indice = 0;
+     let menorDistancia = Number.POSITIVE_INFINITY;
+@@ -86,9 +104,10 @@ export function TasksBoardMode({
+ 
+   // Etapa 87: a decisão do arrasto (portão do Aguardando + trava de WIP 3/3) saiu
+   // daqui para `resolveDragEnd` (função pura, em .ts); este handler só interpreta.
+-  const handleDragEnd = useCallback((result: DropResult) => {
+-    setDragSourceStatus(null);
+-    const decisao = resolveDragEnd(result, byStatus, doingCount, byStatusFull);
++  //
++  // Etapa 097: o teclado (Alt+←/→) passa pela MESMA decisão — `aplicarDecisao` é o
++  // único lugar que interpreta, então teclado e arrasto não podem divergir.
++  const aplicarDecisao = useCallback((decisao: DragEndResolution | null, alvoTranco?: WorkItemStatus) => {
+     if (!decisao) return;
+     switch (decisao.action) {
+       case 'reorder':
+@@ -100,15 +119,84 @@ export function TasksBoardMode({
+         onRequestWaitingReason?.(decisao.item);
+         return;
+       case 'blocked':
+-        if (decisao.reason === 'wip_full')
++        if (decisao.reason === 'wip_full') {
++          // Etapa 83: o card volta à origem (a lib cancela o drop) e a coluna de
++          // destino leva o tranco curto — a borda avisa mesmo sem animação.
+           toast.error('Fazendo está cheio (máx. 3). Conclua um item antes.');
++          if (alvoTranco) tremerColuna(alvoTranco);
++        }
+         return;
+       case 'move':
+         // etapa 15: leva o indice de destino para persistir a ordem das duas colunas
+         onMove(decisao.item, decisao.to, decisao.opts);
+         return;
+     }
+-  }, [byStatus, byStatusFull, doingCount, onMove, onRequestWaitingReason, onReorder]);
++  }, [onMove, onRequestWaitingReason, onReorder, tremerColuna]);
++
++  const handleDragEnd = useCallback((result: DropResult) => {
++    setDragSourceStatus(null);
++    aplicarDecisao(
++      resolveDragEnd(result, byStatus, doingCount, byStatusFull),
++      result.destination?.droppableId as WorkItemStatus | undefined,
++    );
++  }, [aplicarDecisao, byStatus, byStatusFull, doingCount]);
++
++  /**
++   * Etapa 097 — teclado do Quadro. Com o foco num cartão: ←/→ andam entre
++   * colunas (pulando as vazias), ↑/↓ andam entre os cartões da coluna,
++   * Alt+←/→ movem o cartão pela decisão de sempre e Enter é do próprio card
++   * (`WorkItemCard` já abre no Enter). Com um arrasto em curso quem conduz as
++   * setas é a própria lib de DnD, então aqui o handler se retira.
++   */
++  const handleTeclado = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
++    const trilho = trilhoRef.current;
++    if (!trilho || dragSourceStatus) return;
++    const foco = e.target as HTMLElement;
++    const cartao = foco.closest?.('[data-item-id]') as HTMLElement | null;
++    // só o próprio cartão conduz: seta dentro do kebab/checkbox é daquele controle
++    if (!cartao || cartao !== foco) return;
++    const status = cartao.closest('[data-board-column]')?.getAttribute('data-board-column') as WorkItemStatus | null;
++    if (!status) return;
++    const daColuna = (s: WorkItemStatus) =>
++      Array.from(trilho.querySelectorAll<HTMLElement>(`[data-board-column="${s}"] [data-item-id]`));
++    const cartoes = daColuna(status);
++    const indice = cartoes.indexOf(cartao);
++    const passo: -1 | 1 | 0 = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
++
++    if (passo !== 0 && e.altKey) {
++      const vizinha = colunaVizinha(status, passo);
++      if (!vizinha) return;
++      e.preventDefault();
++      const item = (byStatus[status] ?? []).find(it => it.id === cartao.getAttribute('data-item-id'));
++      if (!item) return;
++      aplicarDecisao(
++        resolverMoverPorTeclado(item, vizinha, byStatus, doingCount, byStatusFull),
++        vizinha,
++      );
++      return;
++    }
++
++    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
++      const destino = cartoes[indice + (e.key === 'ArrowDown' ? 1 : -1)];
++      if (!destino) return;
++      e.preventDefault();
++      destino.focus();
++      return;
++    }
++
++    if (passo !== 0) {
++      let s = colunaVizinha(status, passo);
++      while (s) {
++        const alvo = daColuna(s);
++        if (alvo.length) {
++          e.preventDefault();
++          alvo[Math.min(indice, alvo.length - 1)].focus();
++          return;
++        }
++        s = colunaVizinha(s, passo);
++      }
++    }
++  }, [aplicarDecisao, byStatus, byStatusFull, doingCount, dragSourceStatus]);
+ 
+   const ultimaColuna = BOARD_COLUMNS.length - 1;
+ 
+@@ -148,11 +236,30 @@ export function TasksBoardMode({
+           </div>
+         )}
+ 
+-        <div
+-          ref={trilhoRef}
+-          onScroll={aoRolar}
+-          className="flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"
+-        >
++        {/* Etapa 098: o trilho embrulhado pelas sombras de borda — elas marcam onde
++            ainda ha coluna escondida; `motion-safe:scroll-smooth` da o encaixe
++            animado do snap (etapa 094) e respeita quem pediu menos movimento. */}
++        <div className="relative flex-1 min-h-0 flex w-full min-w-0">
++          {bordas.esq && (
++            <div
++              data-testid="board-scroll-shadow-left"
++              aria-hidden="true"
++              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-background to-transparent"
++            />
++          )}
++          {bordas.dir && (
++            <div
++              data-testid="board-scroll-shadow-right"
++              aria-hidden="true"
++              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent"
++            />
++          )}
++          <div
++            ref={trilhoRef}
++            onScroll={aoRolar}
++            onKeyDown={handleTeclado}
++            className="flex w-full min-w-0 gap-3 h-full overflow-x-auto snap-x snap-mandatory motion-safe:scroll-smooth pb-4"
++          >
+           {BOARD_COLUMNS.map(status => (
+             <BoardColumn
+               key={status}
+@@ -162,6 +269,7 @@ export function TasksBoardMode({
+               doingCount={doingTotal}
+               dragSourceStatus={dragSourceStatus}
+               dragDisabled={dragDesligado}
++              shake={colunaTremendo === status}
+               onOpen={onOpen}
+               onMoveTo={(it, to) => (onMoveTo ?? onMove)(it, to)}
+               onDelete={onDelete}
+@@ -175,6 +283,7 @@ export function TasksBoardMode({
+               onOpenReminder={onOpenReminder}
+             />
+           ))}
++          </div>
+         </div>
+ 
+         {/* Etapa 81: 5 dots — indicador de página (só na tela estreita) */}
+diff --git a/src/components/tasks/board/boardInteracao.ts b/src/components/tasks/board/boardInteracao.ts
+new file mode 100644
+index 000000000..f627e386f
+--- /dev/null
++++ b/src/components/tasks/board/boardInteracao.ts
+@@ -0,0 +1,62 @@
++// Etapas 094–098 — o que o Quadro decide FORA do React: a ordem das colunas, a
++// vizinha de cada uma, o movimento por teclado (com as MESMAS travas do arrasto)
++// e as sombras de rolagem do trilho.
++//
++// Vive num `.ts` (e não no `.tsx` do componente) pela mesma razão do
++// `resolveDragEnd`: é regra testável sem montar React, e exportar função de
++// arquivo de componente reprova no `react-refresh/only-export-components`.
++
++import type { DropResult } from '@hello-pangea/dnd';
++import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
++import { resolveDragEnd, type DragEndResolution } from './resolveDragEnd';
++
++/** Ordem do trilho — a MESMA das cinco colunas desenhadas. */
++export const BOARD_ORDER: WorkItemStatus[] = ['backlog', 'todo', 'doing', 'waiting', 'done'];
++
++/** Coluna vizinha na direção pedida; `null` nas pontas do trilho. */
++export function colunaVizinha(atual: WorkItemStatus, passo: -1 | 1): WorkItemStatus | null {
++  const i = BOARD_ORDER.indexOf(atual);
++  if (i < 0) return null;
++  const j = i + passo;
++  return j >= 0 && j < BOARD_ORDER.length ? BOARD_ORDER[j] : null;
++}
++
++/**
++ * Etapa 097 — movimento por teclado (Alt+←/→) decidido pela MESMA função pura do
++ * arrasto (`resolveDragEnd`), para o teclado não ter trava própria: limite de
++ * "Fazendo" cheio continua recusando e "Aguardando" sem motivo continua abrindo
++ * o painel pedindo o motivo. O `DropResult` é montado aqui a partir do item e das
++ * colunas — a origem é a coluna real do item e o destino entra no fim da coluna
++ * alvo (o teclado não escolhe posição).
++ */
++export function resolverMoverPorTeclado(
++  item: WorkItem,
++  to: WorkItemStatus,
++  byStatus: Record<WorkItemStatus, WorkItem[]>,
++  doingCount?: number,
++  byStatusFull?: Record<WorkItemStatus, WorkItem[]>,
++): DragEndResolution | null {
++  const origem = item.status;
++  const sourceIndex = Math.max((byStatus[origem] ?? []).findIndex(i => i.id === item.id), 0);
++  const result = {
++    draggableId: item.id,
++    type: 'DEFAULT',
++    source: { droppableId: origem, index: sourceIndex },
++    destination: { droppableId: to, index: (byStatus[to] ?? []).length },
++    reason: 'DROP',
++    mode: 'FLUID',
++    combine: null,
++  } as unknown as DropResult;
++  return resolveDragEnd(result, byStatus, doingCount, byStatusFull);
++}
++
++/** Etapa 098 — sombra das bordas: só onde ainda há conteúdo escondido no trilho. */
++export function bordasDeRolagem(medida: {
++  scrollLeft: number;
++  clientWidth: number;
++  scrollWidth: number;
++}): { esq: boolean; dir: boolean } {
++  const esq = medida.scrollLeft > 1;
++  const dir = medida.scrollLeft + medida.clientWidth < medida.scrollWidth - 1;
++  return { esq, dir };
++}
+diff --git a/src/components/tasks/shared/ContactAvatar.tsx b/src/components/tasks/shared/ContactAvatar.tsx
+new file mode 100644
+index 000000000..e833d35a4
+--- /dev/null
++++ b/src/components/tasks/shared/ContactAvatar.tsx
+@@ -0,0 +1,57 @@
++import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
++
++const SIZES = {
++  sm: 'h-[18px] w-[18px] text-3xs',
++  md: 'h-6 w-6 text-2xs',
++  lg: 'h-10 w-10 text-xs',
++} as const;
++
++interface Props {
++  name?: string | null;
++  /** Foto do contato, quando o chamador tiver (`item.contact.avatar_url`). */
++  avatarUrl?: string | null;
++  /** `sm` (18px, igual ao card), `md` (24px) ou `lg` (40px, painel). */
++  size?: keyof typeof SIZES;
++  className?: string;
++}
++
++/**
++ * Etapa 069 — avatar do contato do módulo de Tarefas: FOTO quando existe,
++ * senão a inicial sobre a cor determinística de `getAvatarColor`.
++ *
++ * A imagem é decorativa (`alt=""`) e o nome acessível fica no contêiner
++ * (`role="img"` + `aria-label`), para o leitor de tela anunciar o contato uma
++ * vez só — e não "imagem, imagem".
++ */
++export function ContactAvatar({ name, avatarUrl, size = 'sm', className = '' }: Props) {
++  const nome = (name ?? '').trim();
++  const nomeAcessivel = nome || 'Contato';
++  const caixa = `${SIZES[size]} shrink-0 items-center justify-center rounded-full overflow-hidden`;
++
++  if (avatarUrl) {
++    return (
++      <span
++        role="img"
++        aria-label={nomeAcessivel}
++        title={nome || undefined}
++        data-testid="contact-avatar"
++        className={`inline-flex ${caixa} ${className}`}
++      >
++        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
++      </span>
++    );
++  }
++
++  const { bg, text } = getAvatarColor(nome || '?');
++  return (
++    <span
++      role="img"
++      aria-label={nomeAcessivel}
++      title={nome || undefined}
++      data-testid="contact-avatar"
++      className={`inline-flex ${caixa} font-bold ${bg} ${text} ${className}`}
++    >
++      {getInitials(nome || '?')}
++    </span>
++  );
++}
+diff --git a/src/components/tasks/shared/DateLabel.tsx b/src/components/tasks/shared/DateLabel.tsx
+new file mode 100644
+index 000000000..64937a95f
+--- /dev/null
++++ b/src/components/tasks/shared/DateLabel.tsx
+@@ -0,0 +1,66 @@
++import { Calendar } from 'lucide-react';
++import { formatWorkItemDate, type WorkItemDateFormat } from '@/hooks/tasks/workItemFormat';
++
++interface Props {
++  value: string | Date | null | undefined;
++  /** `datetime` = dia + hora; `day` = só o dia (as concluídas usam este). */
++  format?: WorkItemDateFormat;
++  /** "Agora" para as contas de Hoje/Ontem/Amanhã (testes passam uma data fixa). */
++  now?: Date;
++  /** Prazo já vencido: pinta com o par de TEXTO destrutivo. */
++  overdue?: boolean;
++  showIcon?: boolean;
++  /** O que mostrar quando não há data. */
++  emptyLabel?: string;
++  className?: string;
++}
++
++/**
++ * Etapa 069 (D21) — data do módulo de Tarefas, por UMA regra só.
++ *
++ * Não formata nada por conta própria: delega ao `workItemFormat.ts`, a regra
++ * única de datas (fuso local, "Hoje/Ontem/Amanhã", mês curto pt-BR). Assim a
++ * Lista, o Quadro, a Agenda, o painel e o modal nunca divergem do rótulo.
++ */
++export function DateLabel({
++  value,
++  format = 'datetime',
++  now,
++  overdue = false,
++  showIcon = true,
++  emptyLabel = 'Sem prazo',
++  className = '',
++}: Props) {
++  const texto = formatWorkItemDate(value, { now, format });
++  const icone = showIcon ? <Calendar className="h-3 w-3" aria-hidden /> : null;
++
++  if (texto === null) {
++    return (
++      <span
++        data-testid="date-label"
++        data-empty="true"
++        className={`inline-flex items-center gap-1 text-xs font-medium text-muted-foreground ${className}`}
++      >
++        {icone}
++        {emptyLabel}
++      </span>
++    );
++  }
++
++  const cor = overdue
++    ? 'text-[hsl(var(--destructive-text))]'
++    : texto.startsWith('Hoje')
++      ? 'text-[hsl(var(--warning-text))]'
++      : 'text-muted-foreground';
++
++  return (
++    <span
++      data-testid="date-label"
++      title={texto}
++      className={`inline-flex items-center gap-1 text-xs font-medium ${cor} ${className}`}
++    >
++      {icone}
++      {texto}
++    </span>
++  );
++}
+diff --git a/src/components/tasks/shared/PriorityPill.tsx b/src/components/tasks/shared/PriorityPill.tsx
+new file mode 100644
+index 000000000..bfc473105
+--- /dev/null
++++ b/src/components/tasks/shared/PriorityPill.tsx
+@@ -0,0 +1,47 @@
++import type { Priority } from '@/hooks/tasks/workItem.types';
++// Os rótulos vêm do `.ts` de labels — nunca do `PriorityChip.tsx` (exportar
++// constante de arquivo de componente conta dívida nova no react-refresh).
++import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
++
++/**
++ * Um par de cor por prioridade (D12). Os valores `high`/`urgent` usam os tokens
++ * de TEXTO (`--warning-text`/`--destructive-text`): a cor crua é de
++ * PREENCHIMENTO e como texto ficava em ~2:1. Mesma decisão do `PriorityChip`,
++ * agora num primitivo sem o `compact` obrigatório.
++ */
++const PRIORITY_STYLES: Record<Priority, string> = {
++  low:    'bg-muted/60 text-muted-foreground border-border/40',
++  medium: 'bg-primary/15 text-primary border-primary/30',
++  high:   'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
++  urgent: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
++};
++
++interface Props {
++  priority: Priority | null | undefined;
++  /** Só a inicial — para a linha da Agenda. O nome acessível continua completo. */
++  compact?: boolean;
++  className?: string;
++}
++
++/**
++ * Etapa 069 (D12) — pílula de prioridade do módulo de Tarefas.
++ *
++ * Prioridade nula ou fora do mapa cai no padrão do banco (`medium`) em vez de
++ * derrubar o card ou imprimir "undefined".
++ */
++export function PriorityPill({ priority, compact = false, className = '' }: Props) {
++  const p: Priority = priority != null && PRIORITY_LABELS[priority] ? priority : 'medium';
++  const texto = PRIORITY_LABELS[p];
++
++  return (
++    <span
++      data-testid="priority-pill"
++      data-priority={p}
++      title={`Prioridade: ${texto}`}
++      {...(compact ? { 'aria-label': texto } : {})}
++      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none ${PRIORITY_STYLES[p]} ${className}`}
++    >
++      {compact ? texto[0] : texto}
++    </span>
++  );
++}
+diff --git a/src/components/tasks/shared/StatusPill.tsx b/src/components/tasks/shared/StatusPill.tsx
+new file mode 100644
+index 000000000..69518e86c
+--- /dev/null
++++ b/src/components/tasks/shared/StatusPill.tsx
+@@ -0,0 +1,42 @@
++import { KANBAN_COLUMNS, type WorkItemStatus } from '@/hooks/tasks/workItem.types';
++
++/**
++ * Um par de cor por estado. "Fazendo" é azul CHEIO (é o foco do dia) e
++ * "Aguardando" usa o token de TEXTO do aviso — o valor cru é preenchimento e
++ * como texto não fecharia contraste. "Cancelada" sai riscada, para não competir
++ * visualmente com o que ainda está de pé.
++ */
++const STATUS_STYLES: Record<WorkItemStatus, string> = {
++  backlog:   'bg-muted/60 text-muted-foreground border-border/40',
++  todo:      'bg-primary/10 text-primary border-primary/30',
++  doing:     'bg-primary text-primary-foreground border-primary',
++  waiting:   'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
++  done:      'bg-success text-success-foreground border-success',
++  cancelled: 'bg-muted/40 text-muted-foreground border-border/40 line-through',
++};
++
++/** Rótulo do estado: o do quadro quando existe; "Cancelada" para o terminal. */
++function rotuloDoStatus(status: WorkItemStatus): string {
++  return KANBAN_COLUMNS.find((c) => c.status === status)?.label ?? 'Cancelada';
++}
++
++interface Props {
++  status: WorkItemStatus;
++  className?: string;
++}
++
++/** Etapa 069 — pílula de estado do módulo de Tarefas. */
++export function StatusPill({ status, className = '' }: Props) {
++  const estilo = STATUS_STYLES[status] ?? STATUS_STYLES.backlog;
++  const rotulo = rotuloDoStatus(status);
++
++  return (
++    <span
++      data-testid="status-pill"
++      data-status={status}
++      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold leading-none ${estilo} ${className}`}
++    >
++      {rotulo}
++    </span>
++  );
++}
+diff --git a/src/components/tasks/shared/TaskCheckbox.tsx b/src/components/tasks/shared/TaskCheckbox.tsx
+new file mode 100644
+index 000000000..05a7aa6d5
+--- /dev/null
++++ b/src/components/tasks/shared/TaskCheckbox.tsx
+@@ -0,0 +1,54 @@
++import { Check } from 'lucide-react';
++
++interface Props {
++  /** Estado da tarefa: marcado = concluída. */
++  done: boolean;
++  onToggle?: () => void;
++  disabled?: boolean;
++  /** Nome acessível. Padrão: "Concluir tarefa" / "Reabrir tarefa" (o mesmo que o card já usava). */
++  label?: string;
++  className?: string;
++}
++
++/**
++ * Etapa 069 (D16) — o checkbox CIRCULAR do módulo de Tarefas.
++ *
++ * As imagens de referência divergiam (quadrado arredondado numa, círculo na
++ * outra); vale o CÍRCULO, que casa com o resto do produto. Uma implementação
++ * só, para Lista, Quadro, Agenda, painel e modal — quem quiser o antigo
++ * `rounded-[4px]` do `WorkItemCard` deixa de ter motivo para recriá-lo.
++ *
++ * É um `<button>` nativo de propósito: Enter/Espaço, foco e o anel de foco
++ * visível vêm do navegador, sem `tabIndex`/`onKeyDown` à mão. O clique não
++ * sobe para o card (`stopPropagation`), então marcar não abre o painel.
++ */
++export function TaskCheckbox({ done, onToggle, disabled = false, label, className = '' }: Props) {
++  return (
++    <button
++      type="button"
++      role="checkbox"
++      aria-checked={done}
++      aria-label={label ?? (done ? 'Reabrir tarefa' : 'Concluir tarefa')}
++      data-testid="task-checkbox"
++      data-state={done ? 'checked' : 'unchecked'}
++      disabled={disabled}
++      onClick={(e) => {
++        e.stopPropagation();
++        if (disabled) return;
++        onToggle?.();
++      }}
++      className={[
++        'h-[18px] w-[18px] shrink-0 rounded-full border-2 flex items-center justify-center transition-colors',
++        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
++        disabled
++          ? 'cursor-not-allowed border-border/50 opacity-50'
++          : done
++            ? 'border-primary bg-primary hover:border-primary'
++            : 'border-border hover:border-primary',
++        className,
++      ].join(' ')}
++    >
++      {done && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} aria-hidden />}
++    </button>
++  );
++}
+diff --git a/src/components/tasks/shared/TasksUiContext.tsx b/src/components/tasks/shared/TasksUiContext.tsx
+new file mode 100644
+index 000000000..0cb7b61db
+--- /dev/null
++++ b/src/components/tasks/shared/TasksUiContext.tsx
+@@ -0,0 +1,42 @@
++import { useMemo, useState, type ReactNode } from 'react';
++import { TasksUiContext, type TasksDensity, type TasksUi } from './tasksUi';
++
++interface Props {
++  children: ReactNode;
++  /** Densidade inicial (testes e preferências passam "compact"). */
++  initialDensity?: TasksDensity;
++}
++
++/**
++ * Etapa 069 — provedor do estado de UI do módulo de Tarefas.
++ *
++ * Envolve a árvore do módulo (`TasksModule`) e é o único lugar que guarda
++ * seleção/painel/modal/densidade; as superfícies leem por `useTasksUi()`
++ * (`./tasksUi`). O contexto e os hooks ficam no `.ts` irmão de propósito:
++ * exportar contexto/hook de arquivo `.tsx` conta dívida NOVA no
++ * `react-refresh/only-export-components`, e o lint-ratchet recusa ocorrência
++ * nova (mesmo padrão de `workItemLabels.ts`, que saiu do `PriorityChip.tsx`
++ * pelo mesmo motivo).
++ */
++export function TasksUiProvider({ children, initialDensity = 'comfortable' }: Props) {
++  const [selectedId, setSelectedId] = useState<string | null>(null);
++  const [modalOpen, setModalOpen] = useState(false);
++  const [density, setDensity] = useState<TasksDensity>(initialDensity);
++
++  const value = useMemo<TasksUi>(
++    () => ({
++      selectedId,
++      openPanel: (id: string) => setSelectedId(id),
++      closePanel: () => setSelectedId(null),
++      panelOpen: selectedId !== null,
++      modalOpen,
++      openModal: () => setModalOpen(true),
++      closeModal: () => setModalOpen(false),
++      density,
++      setDensity,
++    }),
++    [selectedId, modalOpen, density],
++  );
++
++  return <TasksUiContext.Provider value={value}>{children}</TasksUiContext.Provider>;
++}
+diff --git a/src/components/tasks/shared/WorkItemCard.tsx b/src/components/tasks/shared/WorkItemCard.tsx
+index 0ac61918d..16946ecc2 100644
+--- a/src/components/tasks/shared/WorkItemCard.tsx
++++ b/src/components/tasks/shared/WorkItemCard.tsx
+@@ -1,5 +1,5 @@
+ import React from 'react';
+-import { MoreVertical, MessageSquare } from 'lucide-react';
++import { MoreVertical, MessageSquare, AlertCircle } from 'lucide-react';
+ import {
+   DropdownMenu,
+   DropdownMenuContent,
+@@ -11,12 +11,15 @@ import {
+   DropdownMenuTrigger,
+ } from '@/components/ui/dropdown-menu';
+ import { agingDays } from '@/hooks/tasks/workItemMachine';
++import { isOverdue } from '@/hooks/tasks/workItemAggregates';
+ import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+-import { PriorityChip }  from './PriorityChip';
+-import { DueChip }       from './DueChip';
+-import { RemindChip }    from './RemindChip';
+-import { ContactChip }   from './ContactChip';
+-import { AgingDot }      from './AgingDot';
++import { TaskCheckbox }   from './TaskCheckbox';
++import { useTasksUiOptional } from './tasksUi';
++import { PriorityPill }   from './PriorityPill';
++import { DateLabel }      from './DateLabel';
++import { RemindChip }     from './RemindChip';
++import { ContactChip }    from './ContactChip';
++import { AgingDot }       from './AgingDot';
+ import { MoveToMenu, MoveTargets } from '../board/MoveToMenu';
+ import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
+ 
+@@ -44,14 +47,25 @@ interface Props {
+   /** Contagem real de "Fazendo" — trava a opção cheia (etapa 29). */
+   doingCount?: number;
+   isDragging?: boolean;
++  /**
++   * Etapa 090: o card é o MESMO item aberto no painel de detalhes. Quem abre o
++   * painel (Quadro/módulo) passa `isSelected`; sem a prop, o card cai no
++   * `selectedId` do `TasksUiProvider` (`useTasksUiOptional`) — assim a seleção
++   * do painel sincroniza o card sem o chamador repetir o estado.
++   */
++  isSelected?: boolean;
+   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+ }
+ 
+ export const WorkItemCard = React.memo(function WorkItemCard({
+   item, mode, contactName, onOpen, onToggleDone, onComplete, onReopen, onMoveTo,
+   onRequestWaitingReason, onSnooze, onClearReminder, onOpenReminder, onDelete,
+-  onOpenContact, doingCount = 0, isDragging, dragHandleProps,
++  onOpenContact, doingCount = 0, isDragging, isSelected, dragHandleProps,
+ }: Props) {
++  // Etapa 090: seleção explícita (prop) ou vinda do painel de detalhes
++  // (`selectedId` do provider); fora do provider o hook opcional devolve null.
++  const ui = useTasksUiOptional();
++  const selecionado = isSelected ?? ui?.selectedId === item.id;
+   const aging = ['doing','waiting'].includes(item.status) ? agingDays(item) : 0;
+   const isDone = item.status === 'done' || item.status === 'cancelled';
+   // #425 / R2-MOD-057: o executor do alarme ignora done/cancelled — nesses
+@@ -61,6 +75,15 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+   const isAgenda = mode === 'agenda';
+   // Etapa 32: o contato vem do item quando o chamador não o monta.
+   const nomeContato = contactName ?? item.contact?.name ?? null;
++  // Etapa 085: "Urgente" vai em destaque junto ao título; as demais prioridades
++  // seguem na linha de contexto, abaixo.
++  const urgente = item.priority === 'urgent';
++  // Etapa 086: a tag "Atrasada" acompanha o prazo vencido (regra única de
++  // atraso — `isOverdue`, a mesma do badge e do `bucketByDue`).
++  const atrasada = !!item.due_date && !isDone && isOverdue(item.due_date);
++  // Etapas 087/088: no card em "Fazendo" (ou no card selecionado, etapa 090) o
++  // prazo e o lembrete ganham rótulos em duas colunas e a descrição curta aparece.
++  const detalhado = !isAgenda && (item.status === 'doing' || selecionado);
+ 
+   const handleKeyDown = (e: React.KeyboardEvent) => {
+     // Só atalhos do PRÓPRIO card: teclas disparadas por filhos (checkbox, kebab)
+@@ -73,23 +96,63 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+   };
+ 
+   // Peças montadas uma vez e usadas nos dois layouts (nada de copiar JSX).
+-  const checkbox = (mode === 'list' || isAgenda) ? (
+-    <button
+-      type="button"
+-      onClick={(e) => { e.stopPropagation(); onToggleDone?.(); }}
+-      className={`${isAgenda ? '' : 'mt-0.5'} h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors`}
+-      aria-label={isDone ? 'Reabrir tarefa' : 'Concluir tarefa'}
+-    >
+-      {isDone && <span className="block h-2.5 w-2.5 rounded-sm bg-primary" />}
+-    </button>
+-  ) : null;
++  // Etapa 084 (D16): checkbox CIRCULAR em todas as superfícies, pela mesma peça
++  // (`TaskCheckbox`) da Lista, do Quadro, da Agenda, do painel e do modal.
++  const checkbox = (
++    <TaskCheckbox
++      done={isDone}
++      onToggle={onToggleDone}
++      className={isAgenda ? 'shrink-0' : 'mt-0.5'}
++    />
++  );
+ 
++  // Etapas 084/085: título em até 2 linhas (a Agenda segue em linha única).
+   const titulo = (
+-    <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
++    <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug ${isAgenda ? 'truncate' : 'line-clamp-2'} ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+       {item.title}
+     </span>
+   );
+ 
++  // Etapas 086/087: prazo pela regra única de datas (`DateLabel` → workItemFormat)
++  // com a tag "Atrasada" ao lado quando vencido.
++  const prazo = item.due_date && !isDone ? (
++    <span className="inline-flex items-center gap-1.5 min-w-0">
++      <DateLabel value={item.due_date} overdue={atrasada} />
++      {atrasada && (
++        <span
++          data-testid="overdue-tag"
++          className="inline-flex items-center gap-0.5 text-2xs font-semibold text-[hsl(var(--destructive-text))]"
++        >
++          <AlertCircle className="h-3 w-3" aria-hidden />
++          Atrasada
++        </span>
++      )}
++    </span>
++  ) : null;
++
++  const lembrete = item.remind_at && lembreteElegivel ? (
++    <RemindChip
++      remindAt={item.remind_at}
++      notifiedAt={item.notified_at}
++      onSnooze={onSnooze}
++      onClearReminder={onClearReminder}
++      onOpenReminder={onOpenReminder}
++    />
++  ) : null;
++
++  // Etapa 089: em Aguardando, chip com ponto âmbar e o motivo curto, truncado
++  // com tooltip (a Agenda não mostra — etapa 56).
++  const espera = item.status === 'waiting' && item.waiting_reason ? (
++    <span
++      data-testid="waiting-chip"
++      title={item.waiting_reason}
++      className="inline-flex items-center gap-1.5 min-w-0 max-w-full rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 text-2xs font-medium text-[hsl(var(--warning-text))]"
++    >
++      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" aria-hidden />
++      <span className="truncate">{item.waiting_reason}</span>
++    </span>
++  ) : null;
++
+   const contexto = (
+     <>
+       {nomeContato && (
+@@ -99,16 +162,11 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+           onClick={onOpenContact}
+         />
+       )}
+-      {item.due_date && !isDone && <DueChip dueDate={item.due_date} />}
+-      {item.remind_at && lembreteElegivel && (
+-        <RemindChip
+-          remindAt={item.remind_at}
+-          notifiedAt={item.notified_at}
+-          onSnooze={onSnooze}
+-          onClearReminder={onClearReminder}
+-          onOpenReminder={onOpenReminder}
+-        />
+-      )}
++      {/* Etapa 085: a prioridade padrão (não urgente) fica na linha de contexto. */}
++      {!urgente && <PriorityPill priority={item.priority} />}
++      {/* Com os rótulos em duas colunas (087), o prazo e o lembrete saem daqui. */}
++      {!detalhado && prazo}
++      {!detalhado && lembrete}
+       {aging > 0 && <AgingDot days={aging} />}
+     </>
+   );
+@@ -194,6 +252,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+       data-testid="work-item-card"
+       data-mode={mode}
+       data-item-id={item.id}
++      {...(selecionado ? { 'data-selected': 'true' } : {})}
+       {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
+       role="article"
+       tabIndex={0}
+@@ -201,17 +260,21 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+       onKeyDown={handleKeyDown}
+       onClick={onOpen}
+       className={[
+-        'group relative border bg-card cursor-pointer',
++        'group relative border cursor-pointer',
+         isAgenda
+           ? 'flex flex-row h-11 items-center gap-2 rounded-xl px-3'
+           : 'flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px]',
++        // Etapa 090: card selecionado = borda primary + fundo primary/10.
++        selecionado ? 'bg-primary/10' : 'bg-card',
+         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+         'transition-[border-color,box-shadow,transform] duration-150',
+-        isDragging
+-          ? 'border-primary/60 shadow-[0_8px_24px_-8px_hsl(var(--primary)/.45)] rotate-[1deg] scale-[1.02]'
+-          : isDone
+-            ? 'border-border/40 opacity-60'
+-            : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
++        selecionado
++          ? 'border-primary'
++          : isDragging
++            ? 'border-primary/60 shadow-[0_8px_24px_-8px_hsl(var(--primary)/.45)] rotate-[1deg] scale-[1.02]'
++            : isDone
++              ? 'border-border/40 opacity-60'
++              : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
+       ].join(' ')}
+       {...roleDescription}
+     >
+@@ -221,18 +284,23 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+           {checkbox}
+           {titulo}
+           <div className="ml-auto flex shrink-0 items-center gap-1.5 min-w-0 overflow-hidden">
+-            <PriorityChip priority={item.priority} compact />
++            <PriorityPill priority={item.priority} compact />
+             {contexto}
+           </div>
+           {kebab}
+         </>
+       ) : (
+         <>
+-          {/* Header: checkbox (lista) ou title */}
++          {/* Header: checkbox · título (2 linhas) · Urgente · alça ⠿ · mover · kebab */}
+           <div className="flex items-start gap-2 min-w-0">
+             {checkbox}
+             {titulo}
+-            <PriorityChip priority={item.priority} compact />
++            {/* Etapa 085: Urgente em destaque junto ao título. */}
++            {urgente && <PriorityPill priority="urgent" className="mt-0.5" />}
++            {/* Etapa 090: alça de arrastar ⠿ (o arrasto real é o próprio card). */}
++            {mode === 'board' && (
++              <span aria-hidden className="mt-0.5 shrink-0 select-none text-xs leading-none text-muted-foreground/60">⠿</span>
++            )}
+             {/* Etapa 33/82: só existe sob ponteiro grosso; em desktop some. */}
+             <MoveToMenu
+               item={item}
+@@ -243,18 +311,31 @@ export const WorkItemCard = React.memo(function WorkItemCard({
+             {kebab}
+           </div>
+ 
+-          {/* Chips de contexto */}
++          {/* Chips de contexto (contato, prioridade, prazo, lembrete, dias) */}
+           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+             {contexto}
+           </div>
+ 
+-          {/* Motivo de espera (a Agenda não mostra — etapa 56) */}
+-          {item.status === 'waiting' && item.waiting_reason && (
+-            <p className="flex items-center gap-1 text-2xs text-[hsl(var(--warning-text))] border-t border-border/30 pt-1.5 mt-0.5">
+-              <span className="shrink-0">⏸</span>
+-              <span className="truncate">{item.waiting_reason}</span>
+-            </p>
++          {/* Etapas 087/088: no card em Fazendo/selecionado, Prazo e Lembrete em
++              duas colunas rotuladas, com a descrição curta abaixo. */}
++          {detalhado && (
++            <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2 mt-0.5 min-w-0">
++              <div className="min-w-0">
++                <span className="block text-2xs uppercase tracking-wide text-muted-foreground">Prazo</span>
++                {prazo ?? <span className="text-xs text-muted-foreground">Sem prazo</span>}
++              </div>
++              <div className="min-w-0">
++                <span className="block text-2xs uppercase tracking-wide text-muted-foreground">Lembrete</span>
++                {lembrete ?? <span className="text-xs text-muted-foreground">Sem lembrete</span>}
++              </div>
++            </div>
+           )}
++          {detalhado && item.description && (
++            <p className="text-2xs text-muted-foreground line-clamp-2 min-w-0">{item.description}</p>
++          )}
++
++          {/* Etapa 089: motivo de espera como chip (a Agenda não mostra — etapa 56) */}
++          {espera}
+ 
+           {/* Acoes rapidas (modo board, mobile) */}
+           {mode === 'board' && onOpenContact && nomeContato && (
+diff --git a/src/components/tasks/shared/pointerMedia.ts b/src/components/tasks/shared/pointerMedia.ts
+index 287e38c4e..be915a688 100644
+--- a/src/components/tasks/shared/pointerMedia.ts
++++ b/src/components/tasks/shared/pointerMedia.ts
+@@ -1,4 +1,4 @@
+-import { useCallback, useSyncExternalStore } from 'react';
++import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+ 
+ /**
+  * Etapa 81 — mobile: quadro, Sheet e card precisam da MESMA resposta sobre o
+@@ -39,3 +39,53 @@ export function usePointerCoarse(): boolean {
+ export function useNarrowViewport(): boolean {
+   return useMedia('(max-width: 767px)');
+ }
++
++/**
++ * Etapa 094 — no toque o arrasto não pode nascer de um swipe: a rolagem da tela
++ * é do usuário. Uma pressão longa (300 ms) "arma" a coluna; a partir daí os
++ * cartões aceitam arrasto até um toque curto desarmar de novo.
++ *
++ * No ponteiro fino (mouse) nada muda: `armado` já nasce `true` e o arrasto é o
++ * de sempre. É a MESMA `(pointer: coarse)` do `usePointerCoarse` que decide —
++ * sem segunda fonte sobre o ambiente.
++ */
++export function usePressaoLonga(ms = 300): {
++  armado: boolean;
++  aoPressionar: () => void;
++  aoSoltar: () => void;
++} {
++  const grosso = usePointerCoarse();
++  const [armou, setArmou] = useState(false);
++  const relogio = useRef<ReturnType<typeof setTimeout> | null>(null);
++  const armouAgora = useRef(false);
++
++  const cancelar = useCallback(() => {
++    if (relogio.current != null) {
++      clearTimeout(relogio.current);
++      relogio.current = null;
++    }
++  }, []);
++
++  // Nada pode ficar pendente depois que a coluna sai da tela.
++  useEffect(() => cancelar, [cancelar]);
++
++  const aoPressionar = useCallback(() => {
++    if (!grosso) return;
++    armouAgora.current = false;
++    cancelar();
++    relogio.current = setTimeout(() => {
++      armouAgora.current = true;
++      setArmou(true);
++    }, ms);
++  }, [grosso, cancelar, ms]);
++
++  const aoSoltar = useCallback(() => {
++    cancelar();
++    // Toque curto desarma; a pressão longa recém-feita continua armada para o
++    // arrasto seguinte (o toque que armou já foi recusado pela lib de DnD).
++    if (!armouAgora.current) setArmou(false);
++    armouAgora.current = false;
++  }, [cancelar]);
++
++  return { armado: !grosso || armou, aoPressionar, aoSoltar };
++}
+diff --git a/src/components/tasks/shared/tasksUi.ts b/src/components/tasks/shared/tasksUi.ts
+new file mode 100644
+index 000000000..2180dd147
+--- /dev/null
++++ b/src/components/tasks/shared/tasksUi.ts
+@@ -0,0 +1,40 @@
++import { createContext, useContext } from 'react';
++
++/** Densidade de exibição das superfícies do módulo (D2: Confortável / Compacta). */
++export type TasksDensity = 'comfortable' | 'compact';
++
++/**
++ * O estado de UI do módulo de Tarefas num lugar só: qual item está
++ * selecionado, se o painel (Sheet) está aberto, se o modal de criação está
++ * aberto e a densidade.
++ *
++ * Existe para Lista, Quadro, Agenda, painel e modal lerem o MESMO estado, sem
++ * cada nova superfície reabrir `TasksModule.tsx` para acrescentar mais uma
++ * `useState`. O provider (componente) mora em `TasksUiContext.tsx`.
++ */
++export interface TasksUi {
++  selectedId: string | null;
++  openPanel: (id: string) => void;
++  closePanel: () => void;
++  /** Derivado de `selectedId !== null` — painel aberto é painel com item. */
++  panelOpen: boolean;
++  modalOpen: boolean;
++  openModal: () => void;
++  closeModal: () => void;
++  density: TasksDensity;
++  setDensity: (density: TasksDensity) => void;
++}
++
++export const TasksUiContext = createContext<TasksUi | null>(null);
++
++/** Lê o estado de UI. Fora do provider, falha alto em vez de entregar `null`. */
++export function useTasksUi(): TasksUi {
++  const ctx = useContext(TasksUiContext);
++  if (!ctx) throw new Error('useTasksUi precisa de <TasksUiProvider> acima.');
++  return ctx;
++}
++
++/** Como `useTasksUi`, mas devolve `null` fora do provider (uso opcional). */
++export function useTasksUiOptional(): TasksUi | null {
++  return useContext(TasksUiContext);
++}
+diff --git a/src/hooks/tasks/useMyWorkItems.ts b/src/hooks/tasks/useMyWorkItems.ts
+index 6c6ebfe90..372cc9370 100644
+--- a/src/hooks/tasks/useMyWorkItems.ts
++++ b/src/hooks/tasks/useMyWorkItems.ts
+@@ -209,7 +209,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
+       const base = () => {
+         let q = supabase
+           .from('conversation_tasks')
+-          .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url)')
++          .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url,contact_type)')
+           .eq('created_by', profileId)   // RLS tambem filtra, mas explicito e mais rapido
+           // B13: done so dos ultimos 30 dias; cancelled tratado logo abaixo.
+           // `completed_at.is.null` cobre linhas `done` legadas sem carimbo de
+diff --git a/src/hooks/tasks/workItem.types.ts b/src/hooks/tasks/workItem.types.ts
+index 04bc5b0e4..4655e50a8 100644
+--- a/src/hooks/tasks/workItem.types.ts
++++ b/src/hooks/tasks/workItem.types.ts
+@@ -18,6 +18,8 @@ export interface WorkItemContact {
+   name: string | null;
+   phone: string | null;
+   avatar_url: string | null;
++  /** Tipo do contato (ex.: 'cliente'/'fornecedor'/'lead'); nullable na tabela. */
++  contact_type?: string | null;
+ }
+ 
+ export interface WorkItem {
+@@ -47,13 +49,15 @@ export const KANBAN_COLUMNS: Array<{
+   status: WorkItemStatus;
+   label: string;
+   shortLabel: string;
++  /** Etapa 080/081: subtítulo curto da coluna; a `policy` longa vira tooltip. */
++  subtitle: string;
+   policy: string;
+ }> = [
+-  { status: 'backlog', label: 'Caixa de entrada', shortLabel: 'Entrada',    policy: 'Tudo que você capturou e ainda não decidiu.' },
+-  { status: 'todo',    label: 'A fazer',           shortLabel: 'A fazer',   policy: 'Decidido: vai ser feito.' },
+-  { status: 'doing',   label: 'Fazendo',           shortLabel: 'Fazendo',   policy: 'O que está nas suas mãos agora. Três é o limite.' },
+-  { status: 'waiting', label: 'Aguardando',        shortLabel: 'Aguardando',policy: 'Parou por causa de alguém ou algo. Escreva o motivo.' },
+-  { status: 'done',    label: 'Concluído',         shortLabel: 'Concluído', policy: 'Feito. Fica 7 dias à vista.' },
++  { status: 'backlog', label: 'Caixa de entrada', shortLabel: 'Entrada',    subtitle: 'A organizar',                 policy: 'Tudo que você capturou e ainda não decidiu.' },
++  { status: 'todo',    label: 'A fazer',           shortLabel: 'A fazer',   subtitle: 'Próximas ações',              policy: 'Decidido: vai ser feito.' },
++  { status: 'doing',   label: 'Fazendo',           shortLabel: 'Fazendo',   subtitle: 'Conclua uma para iniciar outra', policy: 'O que está nas suas mãos agora. Três é o limite.' },
++  { status: 'waiting', label: 'Aguardando',        shortLabel: 'Aguardando',subtitle: 'Dependências externas',       policy: 'Parou por causa de alguém ou algo. Escreva o motivo.' },
++  { status: 'done',    label: 'Concluído',         shortLabel: 'Concluído', subtitle: 'Últimos 7 dias',              policy: 'Feito. Fica 7 dias à vista.' },
+ ];
+ 
+ export const WIP_LIMITS: Record<WorkItemStatus, { hard: number | null; soft: number | null }> = {
+diff --git a/src/hooks/tasks/workItemFormat.ts b/src/hooks/tasks/workItemFormat.ts
+new file mode 100644
+index 000000000..7e58997aa
+--- /dev/null
++++ b/src/hooks/tasks/workItemFormat.ts
+@@ -0,0 +1,113 @@
++/**
++ * Regra ÚNICA de datas do módulo de Tarefas (etapa 058 / D21).
++ *
++ * As imagens de referência usavam 4 formatos diferentes; aqui existe um só, no
++ * fuso LOCAL do navegador — a mesma decisão que `src/lib/localDay.ts` já toma
++ * para exibição e agrupamento:
++ *
++ *   com hora     → "Ontem, 17:00" · "Hoje, 14:00" · "Amanhã, 10:00" · "13 out., 15:00"
++ *   concluídas   → só o dia: "Hoje" · "Ontem" · "09 out."
++ *   painel/modal → "Hoje, 11/10" + a hora à parte (ver `formatWorkItemField`)
++ *
++ * Nunca o "Seg, 09/09, 14:20" da imagem 04 — nenhum formato daqui traz o dia da
++ * semana. Este módulo só LÊ e formata: não grava nem altera nada.
++ */
++import { localDayKey, parseDayKey } from '@/lib/localDay';
++
++/** Meses curtos em pt-BR, com o ponto — rótulo fixo, igual em qualquer plataforma. */
++export const MES_CURTO_PT_BR = [
++  'jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.',
++  'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.',
++] as const;
++
++/** `datetime` = dia + hora; `day` = só o dia (as concluídas usam este). */
++export type WorkItemDateFormat = 'datetime' | 'day';
++
++function toDate(value: string | Date | null | undefined): Date | null {
++  if (value === null || value === undefined) return null;
++  const d = typeof value === 'string' ? new Date(value) : value;
++  return Number.isNaN(d.getTime()) ? null : d;
++}
++
++function pad2(n: number): string {
++  return String(n).padStart(2, '0');
++}
++
++/**
++ * Diferença em DIAS DE CALENDÁRIO locais (`alvo` − `agora`). Negativo = passado.
++ *
++ * A conta passa por `localDayKey`/`parseDayKey` (dias ancorados na meia-noite
++ * local) em vez de subtrair milissegundos: assim a virada do dia manda, e não a
++ * distância em horas — que erra na mudança de horário de verão, quando o dia não
++ * tem 24 h.
++ */
++function diffEmDiasLocais(alvo: Date, agora: Date): number {
++  const a = parseDayKey(localDayKey(alvo));
++  const b = parseDayKey(localDayKey(agora));
++  if (!a || !b) return 0;
++  return Math.round((a.getTime() - b.getTime()) / 86_400_000);
++}
++
++/** Rótulo do dia: "Hoje" / "Ontem" / "Amanhã" / "09 out.". */
++export function formatWorkItemDay(
++  value: string | Date | null | undefined,
++  now: Date = new Date(),
++): string | null {
++  const d = toDate(value);
++  if (!d) return null;
++  const diff = diffEmDiasLocais(d, now);
++  if (diff === 0) return 'Hoje';
++  if (diff === -1) return 'Ontem';
++  if (diff === 1) return 'Amanhã';
++  return `${pad2(d.getDate())} ${MES_CURTO_PT_BR[d.getMonth()]}`;
++}
++
++/** Hora local "HH:mm". */
++export function formatWorkItemTime(value: string | Date | null | undefined): string | null {
++  const d = toDate(value);
++  if (!d) return null;
++  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
++}
++
++/**
++ * A regra com hora. `format: 'day'` devolve só o dia (o caso das concluídas).
++ *
++ * Devolve `null` para valor ausente ou inválido — quem chama decide o que
++ * mostrar (o rótulo "Sem prazo", por exemplo).
++ */
++export function formatWorkItemDate(
++  value: string | Date | null | undefined,
++  opts: { now?: Date; format?: WorkItemDateFormat } = {},
++): string | null {
++  const dia = formatWorkItemDay(value, opts.now);
++  if (dia === null) return null;
++  if ((opts.format ?? 'datetime') === 'day') return dia;
++  const hora = formatWorkItemTime(value);
++  return hora === null ? dia : `${dia}, ${hora}`;
++}
++
++/**
++ * Campo de data do painel/modal: "Hoje, 11/10" (dd/MM; o ano só aparece fora do
++ * ano corrente). A hora vai à parte — ver `formatWorkItemField`.
++ */
++export function formatWorkItemFieldDate(
++  value: string | Date | null | undefined,
++  now: Date = new Date(),
++): string | null {
++  const d = toDate(value);
++  if (!d) return null;
++  const ddmm = `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
++  const diff = diffEmDiasLocais(d, now);
++  if (diff === 0) return `Hoje, ${ddmm}`;
++  if (diff === -1) return `Ontem, ${ddmm}`;
++  if (diff === 1) return `Amanhã, ${ddmm}`;
++  return d.getFullYear() === now.getFullYear() ? ddmm : `${ddmm}/${d.getFullYear()}`;
++}
++
++/** Campo de data+hora do painel/modal: data "Hoje, 11/10" e hora à parte. */
++export function formatWorkItemField(
++  value: string | Date | null | undefined,
++  now: Date = new Date(),
++): { date: string | null; time: string | null } {
++  return { date: formatWorkItemFieldDate(value, now), time: formatWorkItemTime(value) };
++}

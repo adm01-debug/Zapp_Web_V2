@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=arrastar-polido-quadro-teclado-rolagem
+ID=2610112015f508
+BRANCH=v2/arrastar-polido-quadro-teclado-rolagem-2610112015f508
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-2610112015f508
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T20:15:58-03:00
+KANBAN=t_798f22ac
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-2610112015f508/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-2610112015f508
+PRONTO_SHA=41feded8dc7a2b39bc4827bb54e696bbec304b6d

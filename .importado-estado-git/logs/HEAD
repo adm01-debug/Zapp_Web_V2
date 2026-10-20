@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 9e0b1c73de10edceada5911af300c921a012ba1b Hermes Senior <hermes-senior@promobrindes.local> 1791760556 -0300	
+9e0b1c73de10edceada5911af300c921a012ba1b 9e0b1c73de10edceada5911af300c921a012ba1b Hermes Senior <hermes-senior@promobrindes.local> 1791760557 -0300	reset: moving to HEAD
+9e0b1c73de10edceada5911af300c921a012ba1b 9e0b1c73de10edceada5911af300c921a012ba1b Hermes Senior <hermes-senior@promobrindes.local> 1791760807 -0300	reset: moving to 9e0b1c73de10edceada5911af300c921a012ba1b
+9e0b1c73de10edceada5911af300c921a012ba1b ee6a8eb85c42e3cacf9000536486b978c542acf8 Hermes Senior <hermes-senior@promobrindes.local> 1791761135 -0300	cherry-pick: chore(tarefas): subtitulo curto em KANBAN_COLUMNS (dado da etapa 081 do pai t_15507eb6)
+ee6a8eb85c42e3cacf9000536486b978c542acf8 016dd3167dc57946a6a34372df0d85983eac03b1 Hermes Senior <hermes-senior@promobrindes.local> 1791761135 -0300	cherry-pick: feat(tarefas): subtitulo nas colunas, limite de Fazendo com barra e tranco
+016dd3167dc57946a6a34372df0d85983eac03b1 11f7107a63e672461c05ccc0c09de1803c7ace44 Hermes Senior <hermes-senior@promobrindes.local> 1791761135 -0300	cherry-pick: test(tarefas): tipa o mock de onMove do quadro (sem divida de tipo)
+11f7107a63e672461c05ccc0c09de1803c7ace44 9560ed4bebee65cdf13523fd3c10764628ee88ff Hermes Senior <hermes-senior@promobrindes.local> 1791761135 -0300	cherry-pick: chore(tarefas): traz a faixa dos pais — primitivos compartilhados, base do painel (t_2456ca64) e formatos (T04)
+9560ed4bebee65cdf13523fd3c10764628ee88ff cb5d452d6f02ea53ca667f91f0b705c07aca3eca Hermes Senior <hermes-senior@promobrindes.local> 1791761135 -0300	cherry-pick: feat(tarefas): redesenha o cartao do quadro (etapas 084 a 090)
+cb5d452d6f02ea53ca667f91f0b705c07aca3eca cb5d452d6f02ea53ca667f91f0b705c07aca3eca Hermes Senior <hermes-senior@promobrindes.local> 1791761189 -0300	reset: moving to cb5d452d6f02ea53ca667f91f0b705c07aca3eca
+cb5d452d6f02ea53ca667f91f0b705c07aca3eca cb5d452d6f02ea53ca667f91f0b705c07aca3eca Hermes Senior <hermes-senior@promobrindes.local> 1791761292 -0300	reset: moving to HEAD
+cb5d452d6f02ea53ca667f91f0b705c07aca3eca 41feded8dc7a2b39bc4827bb54e696bbec304b6d Hermes Senior <hermes-senior@promobrindes.local> 1791761801 -0300	commit (cherry-pick): feat(tarefas): arrastar polido, alvo de soltura, Aguardando, teclado e rolagem do Quadro
