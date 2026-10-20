@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-timers-skip-link
+ID=26101516500b8c
+BRANCH=v2/a11y-timers-skip-link-26101516500b8c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-timers-skip-link-26101516500b8c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T16:50:25-03:00
+KANBAN=t_1f2f0909
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-timers-skip-link-26101516500b8c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101516500b8c
+PRONTO_SHA=2278810addda7e865072e876a0590f81cf269315

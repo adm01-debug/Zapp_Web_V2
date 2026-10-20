@@ -1,0 +1,519 @@
+diff --git a/src/components/ui/__tests__/timers-unmount.test.tsx b/src/components/ui/__tests__/timers-unmount.test.tsx
+new file mode 100644
+index 0000000000..92b7053730
+--- /dev/null
++++ b/src/components/ui/__tests__/timers-unmount.test.tsx
+@@ -0,0 +1,263 @@
++/**
++ * UI-11 (2ª passada da auditoria do doc 13) — temporizadores dos primitivos de UI.
++ *
++ * Cada componente que agenda `setTimeout`/`setInterval` precisa LIMPAR o que estiver
++ * pendente quando sai da tela: um id vivo depois do unmount chama `setState` em
++ * componente desmontado (aviso do React) e, no caso do skip link, mantinha uma
++ * varredura por intervalo rodando a sessão inteira.
++ *
++ * A prova usa `vi.useFakeTimers()` + `vi.getTimerCount()`: agenda o temporizador
++ * pelo caminho real do componente, desmonta e exige contagem ZERO.
++ */
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { render, fireEvent, act, cleanup } from '@testing-library/react';
++import { screen } from '@testing-library/react';
++import { readFileSync } from 'node:fs';
++import { resolve } from 'node:path';
++import { SkipLinks } from '@/components/ui/skip-link';
++import { CommandPalette } from '@/components/ui/command-palette';
++import { RippleButton } from '@/components/ui/micro-interactions/buttons';
++import { ConnectionToast, useOfflineStatus } from '@/components/ui/offline-indicator';
++import { QuickPeek } from '@/components/ui/quick-peek';
++import * as React from 'react';
++import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
++import { Form, FormControl, FormField, FormItem, useFormField } from '@/components/ui/form';
++import { useForm } from 'react-hook-form';
++
++const FONTE_SKIP = readFileSync(resolve(process.cwd(), 'src/components/ui/skip-link.tsx'), 'utf8');
++const FONTE_PEEK = readFileSync(resolve(process.cwd(), 'src/components/ui/quick-peek.tsx'), 'utf8');
++const FONTE_FORM = readFileSync(resolve(process.cwd(), 'src/components/ui/form.tsx'), 'utf8');
++const FONTE_TOGGLE = readFileSync(resolve(process.cwd(), 'src/components/ui/toggle-group.tsx'), 'utf8');
++
++function alvo(id: string, tag = 'main') {
++  const el = document.createElement(tag);
++  el.id = id;
++  document.body.appendChild(el);
++  return el;
++}
++
++beforeEach(() => {
++  vi.useFakeTimers();
++});
++
++afterEach(() => {
++  cleanup();
++  document.body.innerHTML = '';
++  vi.useRealTimers();
++});
++
++describe('skip-link', () => {
++  it('não abre varredura por intervalo e limpa o aviso de Tab no unmount', () => {
++    alvo('main-content');
++    const { unmount } = render(<SkipLinks />);
++
++    // Sem `setInterval`: montar o skip link não deixa nenhum temporizador pendente.
++    expect(vi.getTimerCount()).toBe(0);
++
++    fireEvent.keyDown(window, { key: 'Tab' });
++    expect(vi.getTimerCount()).toBe(1); // prazo do aviso "Pressione Tab"
++
++    unmount();
++    expect(vi.getTimerCount()).toBe(0);
++  });
++
++  it('não renderiza <nav> vazio quando nenhum alvo existe na tela', () => {
++    const { container } = render(<SkipLinks />);
++
++    expect(container.querySelector('nav')).toBeNull();
++    expect(container.innerHTML).toBe('');
++  });
++
++  it('a detecção de alvo é por mutação do documento, não por intervalo', () => {
++    expect(FONTE_SKIP).not.toMatch(/setInterval/);
++    expect(FONTE_SKIP).toMatch(/new MutationObserver\(/);
++  });
++});
++
++describe('command-palette', () => {
++  it('limpa o ajuste adiado (reset) no unmount', () => {
++    const { unmount } = render(<CommandPalette open={false} onOpenChange={() => {}} />);
++    expect(vi.getTimerCount()).toBe(1); // estado da paleta fechada reagendado no próximo tick
++
++    unmount();
++    expect(vi.getTimerCount()).toBe(0);
++  });
++
++  it('o foco adiado não dispara depois do unmount', () => {
++    const erro = vi.spyOn(console, 'error').mockImplementation(() => {});
++    const { unmount } = render(<CommandPalette open onOpenChange={() => {}} />);
++    const antes = vi.getTimerCount();
++
++    unmount();
++    // O <Dialog> do Radix (dialog.tsx, fora do escopo deste cartão) agenda os próprios
++    // temporizadores; o NOSSO (foco adiado) é o que desaparece na desmontagem.
++    expect(vi.getTimerCount()).toBeLessThan(antes);
++
++    act(() => {
++      vi.advanceTimersByTime(1000);
++    });
++    expect(erro).not.toHaveBeenCalled();
++    erro.mockRestore();
++  });
++});
++
++describe('micro-interactions/buttons', () => {
++  it('limpa o temporizador da ripple no unmount, sem reclamar de componente desmontado', () => {
++    const erro = vi.spyOn(console, 'error').mockImplementation(() => {});
++    const { getByRole, unmount } = render(<RippleButton>Salvar</RippleButton>);
++
++    // O framer-motion (motion.button / useAnimation) já deixa 1 temporizador próprio logo
++    // na montagem — medido com o botão montado e sem clique. Ele isola o que é NOSSO: o
++    // clique agenda exatamente +1 (remoção da ripple) e a desmontagem volta à base.
++    const base = vi.getTimerCount();
++
++    fireEvent.click(getByRole('button', { name: 'Salvar' }));
++    expect(vi.getTimerCount()).toBe(base + 1); // remoção da ripple após `rippleDuration`
++
++    unmount();
++    expect(vi.getTimerCount()).toBe(base); // só o do framer sobra: o da ripple foi limpo
++
++    act(() => {
++      vi.advanceTimersByTime(2000);
++    });
++    expect(erro).not.toHaveBeenCalled();
++    erro.mockRestore();
++  });
++});
++
++// Sonda do hook dono do temporizador (useOfflineStatus). O <ConnectionToast> real traz o
++// `motion.div` do AnimatePresence, cujo temporizador do framer-motion polui a contagem de
++// `vi.getTimerCount()` e ainda exige frames de animação para sair da tela.
++function SondaOffline() {
++  const { wasOffline } = useOfflineStatus();
++  return <span>{wasOffline ? 'aviso ligado' : 'sem aviso'}</span>;
++}
++
++function disparaEvento(nome: 'offline' | 'online') {
++  act(() => {
++    window.dispatchEvent(new Event(nome));
++  });
++}
++
++describe('offline-indicator', () => {
++  it('o aviso "Conexão restaurada" aparece e se esconde sozinho depois de 3 s', () => {
++    const toast = render(<ConnectionToast />);
++    disparaEvento('offline');
++    disparaEvento('online');
++    expect(screen.getByText('Conexão restaurada')).toBeTruthy(); // o aviso aparece
++    toast.unmount();
++
++    const { getByText } = render(<SondaOffline />);
++    disparaEvento('offline');
++    disparaEvento('online');
++    expect(getByText('aviso ligado')).toBeTruthy();
++
++    act(() => {
++      vi.advanceTimersByTime(3000);
++    });
++    expect(getByText('sem aviso')).toBeTruthy(); // e se esconde sozinho
++  });
++
++  it('limpa o prazo de 3 s do aviso no unmount', () => {
++    const { getByText, unmount } = render(<SondaOffline />);
++    expect(vi.getTimerCount()).toBe(0);
++
++    disparaEvento('offline');
++    disparaEvento('online');
++    expect(getByText('aviso ligado')).toBeTruthy(); // o caminho do prazo realmente rodou
++    expect(vi.getTimerCount()).toBe(1);
++
++    unmount();
++    expect(vi.getTimerCount()).toBe(0);
++  });
++});
++
++describe('quick-peek', () => {
++  it('guarda o temporizador de hover em ref e limpa no unmount', () => {
++    const { container, unmount } = render(
++      <QuickPeek preview={<span>prévia</span>}>
++        <span>linha da lista</span>
++      </QuickPeek>
++    );
++
++    fireEvent.mouseEnter(container.firstChild as Element);
++    expect(vi.getTimerCount()).toBe(1); // espera de `delay` antes de abrir o balão
++
++    unmount();
++    expect(vi.getTimerCount()).toBe(0);
++
++    // O id não mora em estado: o hover não re-renderiza a linha.
++    expect(FONTE_PEEK).toMatch(/timerRef = useRef/);
++  });
++});
++
++describe('valores de contexto estáveis (useMemo)', () => {
++  it('ToggleGroup: re-render do grupo com as mesmas props não avisa os itens', () => {
++    let renders = 0;
++    const ItemMemo = React.memo(function ItemMemo() {
++      renders++;
++      return <ToggleGroupItem value="a">A</ToggleGroupItem>;
++    });
++
++    const { rerender } = render(
++      <ToggleGroup type="single">
++        <ItemMemo />
++      </ToggleGroup>
++    );
++    expect(renders).toBe(1);
++
++    rerender(
++      <ToggleGroup type="single">
++        <ItemMemo />
++      </ToggleGroup>
++    );
++    // Com `value={{ variant, size }}` recriado a cada render, o item era avisado de novo.
++    expect(renders).toBe(1);
++    expect(FONTE_TOGGLE).toMatch(/React\.useMemo\(\(\) => \(\{ variant, size \}\)/);
++  });
++
++  it('FormItem/FormField: re-render do formulário não avisa o campo', () => {
++    let renders = 0;
++    const CampoMemo = React.memo(function CampoMemo() {
++      renders++;
++      const { formItemId } = useFormField();
++      return (
++        <FormControl>
++          <input id={formItemId} />
++        </FormControl>
++      );
++    });
++
++    function Tela({ marca }: { marca: number }) {
++      const form = useForm({ defaultValues: { nome: '' } });
++      return (
++        <Form {...form}>
++          <form data-marca={marca}>
++            <FormField
++              control={form.control}
++              name="nome"
++              render={() => (
++                <FormItem>
++                  <CampoMemo />
++                </FormItem>
++              )}
++            />
++          </form>
++        </Form>
++      );
++    }
++
++    const { rerender } = render(<Tela marca={1} />);
++    // O Controller do react-hook-form monta o campo em duas passagens na entrada; o que
++    // interessa é o que acontece depois, com a tela já montada.
++    const aposMontagem = renders;
++    expect(aposMontagem).toBeGreaterThan(0);
++
++    rerender(<Tela marca={2} />);
++    // Sem `useMemo` em FormField/FormItem, os dois `value={{ ... }}` mudavam de identidade
++    // a cada render e avisavam o campo mesmo sem nada ter mudado.
++    expect(renders).toBe(aposMontagem);
++    expect(FONTE_FORM).toMatch(/React\.useMemo\(\(\) => \(\{ name: props\.name \}\), \[props\.name\]\)/);
++    expect(FONTE_FORM).toMatch(/React\.useMemo\(\(\) => \(\{ id \}\), \[id\]\)/);
++  });
++});
+diff --git a/src/components/ui/command-palette.tsx b/src/components/ui/command-palette.tsx
+index fe557b8b96..c5c32586ce 100644
+--- a/src/components/ui/command-palette.tsx
++++ b/src/components/ui/command-palette.tsx
+@@ -104,13 +104,16 @@ export function CommandPalette({
+     setQuery(v); setSelectedIndex(0); debouncedSearch(v);
+   };
+ 
+-  const executeCommand = (item: CommandItem) => {
++  // Sem `useCallback` o handler do teclado capturava a versão antiga de `executeCommand`
++  // (fechamento velho de `onNavigate`/`onOpenChange`) — era o aviso de
++  // `react-hooks/exhaustive-deps` no efeito abaixo.
++  const executeCommand = React.useCallback((item: CommandItem) => {
+     if (item.disabled) return;
+     if (item.action) item.action();
+     else if (item.href) window.location.href = item.href;
+     else if (item.id.startsWith('nav-')) onNavigate?.(item.id.replace('nav-', ''));
+     onOpenChange(false); setQuery('');
+-  };
++  }, [onNavigate, onOpenChange]);
+ 
+   React.useEffect(() => {
+     const h = (e: KeyboardEvent) => {
+@@ -121,11 +124,22 @@ export function CommandPalette({
+     };
+     window.addEventListener('keydown', h);
+     return () => window.removeEventListener('keydown', h);
+-  }, [open, allItems, selectedIndex]);
++  }, [open, allItems, selectedIndex, executeCommand]);
++
++  // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
++  // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
++  // sem isso a paleta aberta e fechada em sequência rápida (ou desmontada) deixava o `setTimeout`
++  // vivo, mexendo em estado de componente desmontado.
++  const resetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
++  const focusTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+ 
+   React.useEffect(() => {
+-    if (!open) { setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
+-    else setTimeout(() => inputRef.current?.focus(), 0);
++    if (!open) { resetTimerRef.current = setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
++    else focusTimerRef.current = setTimeout(() => inputRef.current?.focus(), 0);
++    return () => {
++      if (resetTimerRef.current) { clearTimeout(resetTimerRef.current); resetTimerRef.current = null; }
++      if (focusTimerRef.current) { clearTimeout(focusTimerRef.current); focusTimerRef.current = null; }
++    };
+   }, [open]);
+ 
+   const categoryIcons: Record<CommandCategory, React.ReactNode> = {
+diff --git a/src/components/ui/form.tsx b/src/components/ui/form.tsx
+index 439029fcff..92f477766a 100644
+--- a/src/components/ui/form.tsx
++++ b/src/components/ui/form.tsx
+@@ -23,8 +23,12 @@ const FormField = <
+ >({
+   ...props
+ }: ControllerProps<TFieldValues, TName>) => {
++  // Valor estável: sem `useMemo` o objeto do contexto era recriado a cada render,
++  // avisando todos os campos do formulário sem necessidade.
++  const fieldValue = React.useMemo(() => ({ name: props.name }), [props.name]);
++
+   return (
+-    <FormFieldContext.Provider value={{ name: props.name }}>
++    <FormFieldContext.Provider value={fieldValue}>
+       <Controller {...props} />
+     </FormFieldContext.Provider>
+   );
+@@ -62,9 +66,11 @@ const FormItemContext = React.createContext<FormItemContextValue>({} as FormItem
+ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+   ({ className, ...props }, ref) => {
+     const id = React.useId();
++    // Valor estável para os rótulos/controles do item (ver comentário em FormField).
++    const itemContextValue = React.useMemo(() => ({ id }), [id]);
+ 
+     return (
+-      <FormItemContext.Provider value={{ id }}>
++      <FormItemContext.Provider value={itemContextValue}>
+         <div ref={ref} className={cn("space-y-2", className)} {...props} />
+       </FormItemContext.Provider>
+     );
+diff --git a/src/components/ui/micro-interactions/buttons.tsx b/src/components/ui/micro-interactions/buttons.tsx
+index 3df4e49487..6781a78760 100644
+--- a/src/components/ui/micro-interactions/buttons.tsx
++++ b/src/components/ui/micro-interactions/buttons.tsx
+@@ -46,6 +46,17 @@ export function RippleButton({
+   const [isPressed, setIsPressed] = React.useState(false);
+   const buttonRef = React.useRef<HTMLButtonElement>(null);
+   const controls = useAnimation();
++  // Cada ripple agenda a própria remoção; sem limpar no unmount o temporizador
++  // sobrevivia ao botão e chamava `setRipples` em componente desmontado.
++  const rippleTimersRef = React.useRef<Array<ReturnType<typeof setTimeout>>>([]);
++
++  React.useEffect(
++    () => () => {
++      rippleTimersRef.current.forEach((t) => clearTimeout(t));
++      rippleTimersRef.current = [];
++    },
++    []
++  );
+ 
+   const rippleColor = rippleConfig.color || rippleVariants[variant];
+   const rippleDuration = rippleConfig.duration || 600;
+@@ -62,7 +73,7 @@ export function RippleButton({
+     const id = Date.now();
+     setRipples((prev) => [...prev, { x: e.clientX - rect.left, y: e.clientY - rect.top, id, size: rippleSize }]);
+     triggerHaptic();
+-    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), rippleDuration);
++    rippleTimersRef.current.push(setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), rippleDuration));
+     onClick?.(e);
+   };
+ 
+diff --git a/src/components/ui/offline-indicator.tsx b/src/components/ui/offline-indicator.tsx
+index 2807dd362a..04897d848f 100644
+--- a/src/components/ui/offline-indicator.tsx
++++ b/src/components/ui/offline-indicator.tsx
+@@ -1,4 +1,4 @@
+-import { useState, useEffect, useCallback } from 'react';
++import { useState, useEffect, useRef, useCallback } from 'react';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { Wifi, WifiOff, RefreshCw, AlertCircle } from 'lucide-react';
+ import { cn } from '@/lib/utils';
+@@ -83,12 +83,30 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
+ export function useOfflineStatus() {
+   const [isOnline, setIsOnline] = useState(navigator.onLine);
+   const [wasOffline, setWasOffline] = useState(false);
++  // O aviso "Conexão restaurada" se esconde sozinho depois de 3 s. O id vai para uma ref
++  // limpa no unmount: sem isso o temporizador do handler sobrevivia ao componente e
++  // chamava `setWasOffline` nele já desmontado.
++  const wasOfflineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
++
++  useEffect(
++    () => () => {
++      if (wasOfflineTimerRef.current) {
++        clearTimeout(wasOfflineTimerRef.current);
++        wasOfflineTimerRef.current = null;
++      }
++    },
++    []
++  );
+ 
+   useEffect(() => {
+     const handleOnline = () => {
+       if (!isOnline) {
+         setWasOffline(true);
+-        setTimeout(() => setWasOffline(false), 3000);
++        if (wasOfflineTimerRef.current) clearTimeout(wasOfflineTimerRef.current);
++        wasOfflineTimerRef.current = setTimeout(() => {
++          wasOfflineTimerRef.current = null;
++          setWasOffline(false);
++        }, 3000);
+       }
+       setIsOnline(true);
+     };
+diff --git a/src/components/ui/skip-link.tsx b/src/components/ui/skip-link.tsx
+index d5bb619f98..de730d6e5d 100644
+--- a/src/components/ui/skip-link.tsx
++++ b/src/components/ui/skip-link.tsx
+@@ -1,5 +1,5 @@
+ import { cn } from '@/lib/utils';
+-import { useState, useEffect, forwardRef } from 'react';
++import { useState, useEffect, useRef, forwardRef } from 'react';
+ import { ArrowRight, Navigation, Search, MessageSquare, LayoutDashboard } from 'lucide-react';
+ 
+ interface SkipLinkProps {
+@@ -61,22 +61,35 @@ export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function Sk
+ export function SkipLinks() {
+   const [showIndicator, setShowIndicator] = useState(false);
+   const [availableTargets, setAvailableTargets] = useState<Set<string>>(new Set());
++  const indicatorTimerRef = useRef<number | null>(null);
+ 
+   useEffect(() => {
+     const handleKeyDown = (e: KeyboardEvent) => {
+       if (e.key === 'Tab' && !e.shiftKey) {
+         setShowIndicator(true);
+-        setTimeout(() => setShowIndicator(false), 3000);
++        // Um Tab em cima do outro reinicia o prazo em vez de empilhar temporizadores.
++        if (indicatorTimerRef.current !== null) window.clearTimeout(indicatorTimerRef.current);
++        indicatorTimerRef.current = window.setTimeout(() => {
++          indicatorTimerRef.current = null;
++          setShowIndicator(false);
++        }, 3000);
+       }
+     };
+ 
+     window.addEventListener('keydown', handleKeyDown);
+-    return () => window.removeEventListener('keydown', handleKeyDown);
++    return () => {
++      window.removeEventListener('keydown', handleKeyDown);
++      if (indicatorTimerRef.current !== null) {
++        window.clearTimeout(indicatorTimerRef.current);
++        indicatorTimerRef.current = null;
++      }
++    };
+   }, []);
+ 
+   // Only render skip-links whose target actually exists in the DOM.
+-  // Targets vary per route (auth vs. dashboard), so we re-check on each route change
+-  // and on a small interval to catch async-mounted regions.
++  // Targets vary per route (auth vs. dashboard) and can be montados depois (regiões
++  // assíncronas), então a detecção é dirigida por mutação do documento — nada de
++  // varredura por intervalo a sessão inteira.
+   useEffect(() => {
+     const candidates = ['#main-content', '#main-navigation', '#inbox-section', '#search-input'];
+     const detect = () => {
+@@ -90,12 +103,16 @@ export function SkipLinks() {
+       });
+     };
+     detect();
+-    const t = window.setInterval(detect, 1500);
+-    return () => window.clearInterval(t);
++    const observer = new MutationObserver(detect);
++    observer.observe(document.body, { childList: true, subtree: true });
++    return () => observer.disconnect();
+   }, []);
+ 
+   const has = (id: string) => availableTargets.has(id);
+ 
++  // Sem alvo na tela não há atalho: não deixamos um <nav> vazio na árvore de acessibilidade.
++  if (availableTargets.size === 0) return null;
++
+   return (
+     <nav 
+       className="skip-links-container" 
+diff --git a/src/components/ui/toggle-group.tsx b/src/components/ui/toggle-group.tsx
+index 8deae16fe1..51da51a6b8 100644
+--- a/src/components/ui/toggle-group.tsx
++++ b/src/components/ui/toggle-group.tsx
+@@ -13,11 +13,17 @@ const ToggleGroupContext = React.createContext<VariantProps<typeof toggleVariant
+ const ToggleGroup = React.forwardRef<
+   React.ElementRef<typeof ToggleGroupPrimitive.Root>,
+   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> & VariantProps<typeof toggleVariants>
+->(({ className, variant, size, children, ...props }, ref) => (
+-  <ToggleGroupPrimitive.Root ref={ref} className={cn("flex items-center justify-center gap-1", className)} {...props}>
+-    <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
+-  </ToggleGroupPrimitive.Root>
+-));
++>(({ className, variant, size, children, ...props }, ref) => {
++  // Valor estável: sem `useMemo` cada render do grupo criava um objeto novo e
++  // re-renderizava todos os itens por mudança de contexto.
++  const contextValue = React.useMemo(() => ({ variant, size }), [variant, size]);
++
++  return (
++    <ToggleGroupPrimitive.Root ref={ref} className={cn("flex items-center justify-center gap-1", className)} {...props}>
++      <ToggleGroupContext.Provider value={contextValue}>{children}</ToggleGroupContext.Provider>
++    </ToggleGroupPrimitive.Root>
++  );
++});
+ 
+ ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
+ 

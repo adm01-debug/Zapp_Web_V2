@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792093823 -0300	
+e7d156b8a74c0b165e19c9549bba19377137b0fc e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792093825 -0300	reset: moving to HEAD
+e7d156b8a74c0b165e19c9549bba19377137b0fc 7085ef511db456957b13783ed6144cfa4a06910c Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792094742 -0300	commit: fix(a11y): limpa timers no unmount e evita nav vazio no skip link
+7085ef511db456957b13783ed6144cfa4a06910c 2278810addda7e865072e876a0590f81cf269315 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792096979 -0300	commit: fix(a11y): corrige dependencia do efeito de teclado da paleta

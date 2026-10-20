@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-timers-skip-link-26101516500b8c
+
+···········
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  17:48:20
+   Duration  5.13s (transform 1.71s, setup 614ms, import 2.20s, tests 678ms, environment 1.30s)
+

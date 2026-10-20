@@ -1,0 +1,363 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-timers-skip-link-26101516500b8c/.tmp/prova-base
+
+xxxxxx·x·xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > skip-link > não abre varredura por intervalo e limpa o aviso de Tab no unmount
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:55:32
+     53|
+     54|     // Sem `setInterval`: montar o skip link não deixa nenhum temporiz…
+     55|     expect(vi.getTimerCount()).toBe(0);
+       |                                ^
+     56|
+     57|     fireEvent.keyDown(window, { key: 'Tab' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > skip-link > não renderiza <nav> vazio quando nenhum alvo existe na tela
+AssertionError: expected <nav …(3)></nav> to be null
+
+- Expected:
+null
+
++ Received:
+<nav
+  aria-label="Links de navegação rápida"
+  class="skip-links-container"
+  role="navigation"
+/>
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:67:44
+     65|     const { container } = render(<SkipLinks />);
+     66|
+     67|     expect(container.querySelector('nav')).toBeNull();
+       |                                            ^
+     68|     expect(container.innerHTML).toBe('');
+     69|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > skip-link > a detecção de alvo é por mutação do documento, não por intervalo
+AssertionError: expected 'import { cn } from \'@/lib/utils\';\n…' not to match /setInterval/
+
+- Expected:
+/setInterval/
+
++ Received:
+"import { cn } from '@/lib/utils';
+import { useState, useEffect, forwardRef } from 'react';
+import { ArrowRight, Navigation, Search, MessageSquare, LayoutDashboard } from 'lucide-react';
+
+interface SkipLinkProps {
+  href: string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  className?: string;
+}
+
+export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function SkipLink({ 
+  href, 
+  children,
+  icon,
+  className 
+}, ref) {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      (target as HTMLElement).focus?.();
+    }
+  };
+
+  return (
+    <a
+      ref={ref}
+      href={href}
+      onClick={handleClick}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      className={cn(
+        'sr-only focus:not-sr-only',
+        'focus:fixed focus:top-4 focus:left-4 focus:z-[9999]',
+        'focus:flex focus:items-center focus:gap-2',
+        'focus:px-4 focus:py-3 focus:rounded-xl',
+        'focus:bg-primary focus:text-primary-foreground',
+        'focus:font-semibold focus:text-sm',
+        'focus:shadow-2xl focus:shadow-primary/30',
+        'focus:ring-4 focus:ring-primary/20 focus:ring-offset-2 focus:ring-offset-background',
+        'focus:outline-none',
+        'focus:animate-scale-in',
+        'transition-all duration-300 ease-out',
+        className
+      )}
+      aria-label={typeof children === 'string' ? children : undefined}
+      data-focused={isFocused ? 'true' : 'false'}
+    >
+      {icon && <span className=\"text-primary-foreground/80\">{icon}</span>}
+      <span>{children}</span>
+      <ArrowRight className=\"w-4 h-4 ml-1 animate-pulse\" />
+    </a>
+  );
+});
+
+// Enhanced skip links container with multiple navigation options
+export function SkipLinks() {
+  const [showIndicator, setShowIndicator] = useState(false);
+  const [availableTargets, setAvailableTargets] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && !e.shiftKey) {
+        setShowIndicator(true);
+        setTimeout(() => setShowIndicator(false), 3000);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Only render skip-links whose target actually exists in the DOM.
+  // Targets vary per route (auth vs. dashboard), so we re-check on each route change
+  // and on a small interval to catch async-mounted regions.
+  useEffect(() => {
+    const candidates = ['#main-content', '#main-navigation', '#inbox-section', '#search-input'];
+    const detect = () => {
+      const found = new Set<string>();
+      candidates.forEach((id) => {
+        if (document.querySelector(id)) found.add(id);
+      });
+      setAvailableTargets((prev) => {
+        if (prev.size === found.size && [...found].every((v) => prev.has(v))) return prev;
+        return found;
+      });
+    };
+    detect();
+    const t = window.setInterval(detect, 1500);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const has = (id: string) => availableTargets.has(id);
+
+  return (
+    <nav 
+      className=\"skip-links-container\" 
+      aria-label=\"Links de navegação rápida\"
+      role=\"navigation\"
+    >
+      {showIndicator && (
+        <div className=\"motion-safe:animate-slide-down fixed top-20 left-4 z-[9998] bg-muted/95 backdrop-blur-sm px-3 py-2 rounded-lg text-xs text-muted-foreground shadow-lg border border-border\">
+          Pressione <kbd className=\"px-1.5 py-0.5 bg-card rounded border border-border font-mono\">Tab</kbd> para navegar
+        </div>
+      )}
+
+      {has('#main-content') && (
+        <SkipLink href=\"#main-content\" icon={<LayoutDashboard className=\"w-4 h-4\" />}>
+          Pular para conteúdo principal
+        </SkipLink>
+      )}
+      {has('#main-navigation') && (
+        <SkipLink href=\"#main-navigation\" icon={<Navigation className=\"w-4 h-4\" />}>
+          Pular para navegação
+        </SkipLink>
+      )}
+      {has('#inbox-section') && (
+        <SkipLink href=\"#inbox-section\" icon={<MessageSquare className=\"w-4 h-4\" />}>
+          Pular para conversas
+        </SkipLink>
+      )}
+      {has('#search-input') && (
+        <SkipLink href=\"#search-input\" icon={<Search className=\"w-4 h-4\" />}>
+          Pular para busca
+        </SkipLink>
+      )}
+    </nav>
+  );
+}
+"
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:72:28
+     70|
+     71|   it('a detecção de alvo é por mutação do documento, não por intervalo…
+     72|     expect(FONTE_SKIP).not.toMatch(/setInterval/);
+       |                            ^
+     73|     expect(FONTE_SKIP).toMatch(/new MutationObserver\(/);
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > command-palette > limpa o ajuste adiado (reset) no unmount
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:83:32
+     81|
+     82|     unmount();
+     83|     expect(vi.getTimerCount()).toBe(0);
+       |                                ^
+     84|   });
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > command-palette > o foco adiado não dispara depois do unmount
+AssertionError: expected 4 to be less than 4
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:94:32
+     92|     // O <Dialog> do Radix (dialog.tsx, fora do escopo deste cartão) a…
+     93|     // temporizadores; o NOSSO (foco adiado) é o que desaparece na des…
+     94|     expect(vi.getTimerCount()).toBeLessThan(antes);
+       |                                ^
+     95|
+     96|     act(() => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > micro-interactions/buttons > limpa o temporizador da ripple no unmount, sem reclamar de componente desmontado
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:118:32
+    116|
+    117|     unmount();
+    118|     expect(vi.getTimerCount()).toBe(base); // só o do framer sobra: o …
+       |                                ^
+    119|
+    120|     act(() => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > offline-indicator > limpa o prazo de 3 s do aviso no unmount
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:171:32
+    169|
+    170|     unmount();
+    171|     expect(vi.getTimerCount()).toBe(0);
+       |                                ^
+    172|   });
+    173| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > valores de contexto estáveis (useMemo) > ToggleGroup: re-render do grupo com as mesmas props não avisa os itens
+AssertionError: expected 'import * as React from "react";\nimpo…' to match /React\.useMemo\(\(\) => \(\{ variant,…/
+
+- Expected:
+/React\.useMemo\(\(\) => \(\{ variant, size \}\)/
+
++ Received:
+"import * as React from \"react\";
+import * as ToggleGroupPrimitive from \"@radix-ui/react-toggle-group\";
+import { type VariantProps } from \"class-variance-authority\";
+
+import { cn } from \"@/lib/utils\";
+import { toggleVariants } from \"@/components/ui/toggle\";
+
+const ToggleGroupContext = React.createContext<VariantProps<typeof toggleVariants>>({
+  size: \"default\",
+  variant: \"default\",
+});
+
+const ToggleGroup = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> & VariantProps<typeof toggleVariants>
+>(({ className, variant, size, children, ...props }, ref) => (
+  <ToggleGroupPrimitive.Root ref={ref} className={cn(\"flex items-center justify-center gap-1\", className)} {...props}>
+    <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
+  </ToggleGroupPrimitive.Root>
+));
+
+ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
+
+const ToggleGroupItem = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> & VariantProps<typeof toggleVariants>
+>(({ className, children, variant, size, ...props }, ref) => {
+  const context = React.useContext(ToggleGroupContext);
+
+  return (
+    <ToggleGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        toggleVariants({
+          variant: context.variant || variant,
+          size: context.size || size,
+        }),
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </ToggleGroupPrimitive.Item>
+  );
+});
+
+ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName;
+
+export { ToggleGroup, ToggleGroupItem };
+"
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:216:26
+    214|     // Com `value={{ variant, size }}` recriado a cada render, o item …
+    215|     expect(renders).toBe(1);
+    216|     expect(FONTE_TOGGLE).toMatch(/React\.useMemo\(\(\) => \(\{ variant…
+       |                          ^
+    217|   });
+    218|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/components/ui/__tests__/timers-unmount.test.tsx > valores de contexto estáveis (useMemo) > FormItem/FormField: re-render do formulário não avisa o campo
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/components/ui/__tests__/timers-unmount.test.tsx:259:21
+    257|     // Sem `useMemo` em FormField/FormItem, os dois `value={{ ... }}` …
+    258|     // a cada render e avisavam o campo mesmo sem nada ter mudado.
+    259|     expect(renders).toBe(aposMontagem);
+       |                     ^
+    260|     expect(FONTE_FORM).toMatch(/React\.useMemo\(\(\) => \(\{ name: pro…
+    261|     expect(FONTE_FORM).toMatch(/React\.useMemo\(\(\) => \(\{ id \}\), …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)
+   Start at  17:48:30
+   Duration  5.00s (transform 1.38s, setup 451ms, import 1.67s, tests 793ms, environment 1.63s)
+

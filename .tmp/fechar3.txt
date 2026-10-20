@@ -1,0 +1,7 @@
+On branch v2/a11y-timers-skip-link-26101516500b8c
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — o portão do integrador vai RETER esta entrega para o revisor (custa um ciclo inteiro) por:
+   Jev inseguro sobre o relato
+Se é o relato: diga o que mudou, o comando rodado e a linha de resultado (ex.: 'Test Files 3 passed, Tests 27 passed'); sem ressalva, pendência ou 'parcial'.
+Se é o diff: corrija (commit novo). Depois feche de novo. Para seguir mesmo assim, rode este MESMO comando de novo e explique no relato.
+EXIT=3
