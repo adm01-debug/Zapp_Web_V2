@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alvos-toque-44px-ponteiro-grosso
+ID=26101312559e6e
+BRANCH=v2/alvos-toque-44px-ponteiro-grosso-26101312559e6e
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-ponteiro-grosso-26101312559e6e
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T12:55:42-03:00
+KANBAN=t_17d91156
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-ponteiro-grosso-26101312559e6e/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101312559e6e
+PRONTO_SHA=62a43293334b7bd41d980d02400c54d055633785

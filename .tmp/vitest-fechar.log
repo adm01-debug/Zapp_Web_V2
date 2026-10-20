@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-ponteiro-grosso-26101312559e6e
+
+······
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  14:02:36
+   Duration  2.68s (transform 324ms, setup 263ms, import 594ms, tests 665ms, environment 961ms)
+

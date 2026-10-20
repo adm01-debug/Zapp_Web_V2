@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 0a7f2079abcc3e252e3d881374ffda4b0cdddcd5 Hermes Senior <hermes-senior@promobrindes.local> 1791906940 -0300	
+0a7f2079abcc3e252e3d881374ffda4b0cdddcd5 0a7f2079abcc3e252e3d881374ffda4b0cdddcd5 Hermes Senior <hermes-senior@promobrindes.local> 1791906942 -0300	reset: moving to HEAD
+0a7f2079abcc3e252e3d881374ffda4b0cdddcd5 319b153216156c4e9eab96f066e96518c6af3ace Hermes Senior <hermes-senior@promobrindes.local> 1791910570 -0300	commit: fix(design-system): alvo de toque de 44px em ponteiro grosso (toque)
+319b153216156c4e9eab96f066e96518c6af3ace 87ddfe4cd0aaf3093029601de8b5fa0c27cfd34e Hermes Senior <hermes-senior@promobrindes.local> 1791910641 -0300	commit: docs(design-system): relato do alvo de toque 44px
+87ddfe4cd0aaf3093029601de8b5fa0c27cfd34e 1bacda5c3632df2c5f50c22495bc72f790953eed Hermes Senior <hermes-senior@promobrindes.local> 1791910699 -0300	commit: docs(design-system): justifica escopo do playwright.config.ts no relato
+1bacda5c3632df2c5f50c22495bc72f790953eed 62a43293334b7bd41d980d02400c54d055633785 Hermes Senior <hermes-senior@promobrindes.local> 1791910836 -0300	commit: docs(design-system): relato com contraste do X e mapa dos criterios

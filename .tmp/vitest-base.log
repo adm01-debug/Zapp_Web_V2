@@ -1,0 +1,93 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-ponteiro-grosso-26101312559e6e/.tmp/prova-base
+
+xxxxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — contrato da classe no primitivo > fechar do dialog e do sheet carregam alvo-toque-44
+Error: [2mexpect([22m[31melement[39m[2m).toHaveClass([22m[32m[32m"alvo-toque-44"[32m[39m[2m)[22m
+
+Expected the element to have class:
+[32m  alvo-toque-44[39m
+Received:
+[31m  absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none[39m
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:32:59
+     30|       </Dialog>,
+     31|     );
+     32|     expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(…
+       |                                                           ^
+     33|     cleanup();
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — contrato da classe no primitivo > checkbox e radio carregam alvo-toque-44
+Error: [2mexpect([22m[31melement[39m[2m).toHaveClass([22m[32m[32m"alvo-toque-44"[32m[39m[2m)[22m
+
+Expected the element to have class:
+[32m  alvo-toque-44[39m
+Received:
+[31m  peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50[39m
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:47:66
+     45|   it('checkbox e radio carregam alvo-toque-44', () => {
+     46|     render(<Checkbox aria-label="Selecionar" />);
+     47|     expect(screen.getByRole('checkbox', { name: 'Selecionar' })).toHav…
+       |                                                                  ^
+     48|
+     49|     render(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — contrato da classe no primitivo > button: só os tamanhos abaixo de 44px ganham a classe (lg/xl/icon-lg já medem 44px+)
+Error: [2mexpect([22m[31melement[39m[2m).toHaveClass([22m[32m[32m"alvo-toque-44"[32m[39m[2m)[22m
+
+Expected the element to have class:
+[32m  alvo-toque-44[39m
+Received:
+[31m  inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-primary text-primary-foreground shadow-sm hover:shadow-glow-primary-lg hover:bg-primary/90 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2[39m
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:64:69
+     62|         </Button>,
+     63|       );
+     64|       expect(screen.getByRole('button', { name: `botao ${size}` })).to…
+       |                                                                     ^
+     65|       unmount();
+     66|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — contrato da classe no primitivo > icon-button: sm e default ganham a classe; lg/xl já medem 48px+
+Error: [2mexpect([22m[31melement[39m[2m).toHaveClass([22m[32m[32m"alvo-toque-44"[32m[39m[2m)[22m
+
+Expected the element to have class:
+[32m  alvo-toque-44[39m
+Received:
+[31m  inline-flex items-center justify-center rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 relative overflow-hidden hover:bg-accent hover:text-accent-foreground h-8 w-8[39m
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:82:69
+     80|     for (const size of ['sm', 'default'] as const) {
+     81|       const { unmount } = render(<IconButton size={size} showTooltip={…
+     82|       expect(screen.getByRole('button', { name: `icone ${size}` })).to…
+       |                                                                     ^
+     83|       unmount();
+     84|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — a regra só existe em ponteiro grosso > a regra .alvo-toque-44 vive dentro de @media (pointer: coarse) e mede 44px
+AssertionError: a regra coarse sumiu de src/styles/utilities.css: expected null not to be null
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:99:75
+     97|   it('a regra .alvo-toque-44 vive dentro de @media (pointer: coarse) e…
+     98|     const bloco = css.match(/@media\s*\(pointer:\s*coarse\)\s*\{([\s\S…
+     99|     expect(bloco, 'a regra coarse sumiu de src/styles/utilities.css').…
+       |                                                                           ^
+    100|     const dentro = bloco![1];
+    101|     expect(dentro).toContain(`.${CLASSE}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  14:02:42
+   Duration  2.77s (transform 358ms, setup 334ms, import 744ms, tests 353ms, environment 1.08s)
+
