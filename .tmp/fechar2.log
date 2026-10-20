@@ -1,0 +1,6 @@
+On branch v2/a11y-hover-21-pontos-inbox-26101523574a83
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Algum teste novo não chama o código que você mudou (confere um literal, uma cópia feita à mão ou só um mock). Faça o teste exercitar o código real.
+FECHADO (modo V2, local): v2/a11y-hover-21-pontos-inbox-26101523574a83 @ 9f5ee3ce6 — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101523574a83.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.

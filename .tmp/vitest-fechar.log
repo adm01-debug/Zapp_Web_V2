@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-hover-21-pontos-inbox-26101523574a83
+
+·························
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  01:43:51
+   Duration  4.70s (transform 1.63s, setup 933ms, import 1.52s, tests 740ms, environment 1.25s)
+

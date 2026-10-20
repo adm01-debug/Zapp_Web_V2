@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-hover-21-pontos-inbox
+ID=26101523574a83
+BRANCH=v2/a11y-hover-21-pontos-inbox-26101523574a83
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-hover-21-pontos-inbox-26101523574a83
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T23:57:56-03:00
+KANBAN=t_156cb1ae
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-hover-21-pontos-inbox-26101523574a83/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101523574a83
+PRONTO_SHA=9f5ee3ce67b8e23d50ba73febcda9e2cebf7e185

@@ -1,0 +1,726 @@
+diff --git a/src/components/inbox/AISuggestions.tsx b/src/components/inbox/AISuggestions.tsx
+index 63c380f3f8..cc92d9d7a2 100644
+--- a/src/components/inbox/AISuggestions.tsx
++++ b/src/components/inbox/AISuggestions.tsx
+@@ -5,6 +5,7 @@ import { Sparkles, Loader2, Check, MessageCircle, HelpCircle, X } from 'lucide-r
+ import { Badge } from '@/components/ui/badge';
+ import { Button } from '@/components/ui/button';
+ import { supabase } from '@/integrations/supabase/client';
++import { HOVER_REVEAL } from './hoverActions';
+ import { useToast } from '@/hooks/ui/use-toast';
+ import { useAiRequestGeneration } from '@/lib/aiRequest/context';
+ 
+@@ -228,7 +229,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
+                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                           {getLabel(suggestion.type)}
+                         </span>
+-                        <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-xs text-primary">
++                        <span className={`ml-auto ${HOVER_REVEAL} transition-opacity text-xs text-primary`}>
+                           Usar ↵
+                         </span>
+                       </div>
+diff --git a/src/components/inbox/AudioMemePicker.tsx b/src/components/inbox/AudioMemePicker.tsx
+index 0ea22586ab..1cba95ca9a 100644
+--- a/src/components/inbox/AudioMemePicker.tsx
++++ b/src/components/inbox/AudioMemePicker.tsx
+@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
+ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { Music, Search, Plus, Star, Trash2, Loader2, Upload, X, Play, Pause, Volume2, Tag, Check, ChevronDown } from 'lucide-react';
+ import { useAudioMemes, formatDuration, type AudioMemeItem, type PendingUpload } from '@/hooks/communication/useAudioMemes';
+@@ -187,7 +188,7 @@ export function AudioMemePicker({ onSendAudio, disabled }: AudioMemePickerProps)
+                           {meme.use_count > 0 && <span className="text-3xs text-muted-foreground/50">{meme.use_count}x</span>}
+                         </div>
+                       </div>
+-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
++                      <div className={`flex items-center gap-0.5 ${HOVER_REVEAL_TAP} transition-opacity`}>
+                         <button onClick={(e) => toggleFavorite(e, meme)} className="p-1 rounded hover:bg-muted">
+                           <Star className={cn('w-3.5 h-3.5 transition-colors', meme.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} />
+                         </button>
+diff --git a/src/components/inbox/CustomEmojiPicker.tsx b/src/components/inbox/CustomEmojiPicker.tsx
+index adf2a81ebc..f82294e750 100644
+--- a/src/components/inbox/CustomEmojiPicker.tsx
++++ b/src/components/inbox/CustomEmojiPicker.tsx
+@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
+ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { SmilePlus, Search, Plus, Star, Trash2, Loader2, X, Tag, Check, ChevronDown, Smile } from 'lucide-react';
+ import { CATEGORY_LABELS, ALL_CATEGORIES, NATIVE_EMOJI_CATEGORIES } from './emojiConstants';
+@@ -191,7 +192,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
+                             className={cn('relative aspect-square rounded-lg overflow-hidden group', 'bg-muted/20 hover:bg-muted/50 transition-colors', 'border border-transparent hover:border-primary/30', 'cursor-pointer')}
+                             title={`${emoji.name} • ${CATEGORY_LABELS[emoji.category]?.label || emoji.category}`}>
+                             <img src={emoji.image_url} alt={emoji.name} className="w-full h-full object-contain p-1" loading="lazy" />
+-                            <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-between p-0.5">
++                            <div className={`absolute inset-0 bg-background/70 ${HOVER_REVEAL_TAP} transition-opacity flex flex-col items-center justify-between p-0.5`}>
+                               <div className="flex items-center justify-between w-full">
+                                 <button onClick={(e) => toggleFavorite(e, emoji)} className="p-0.5"><Star className={cn('w-3 h-3 transition-colors', emoji.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} /></button>
+                                 <button onClick={(e) => handleDelete(e, emoji)} className="p-0.5"><Trash2 className="w-3 h-3 text-destructive" /></button>
+diff --git a/src/components/inbox/GlobalSearch.tsx b/src/components/inbox/GlobalSearch.tsx
+index b9059b6be4..fa5a200b27 100644
+--- a/src/components/inbox/GlobalSearch.tsx
++++ b/src/components/inbox/GlobalSearch.tsx
+@@ -6,6 +6,7 @@ import {
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Badge } from '@/components/ui/badge';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { ScrollArea } from '@/components/ui/scroll-area';
+ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+ import { useGlobalSearchData, type SearchResult, type TagSuggestion } from './useGlobalSearchData';
+@@ -277,7 +278,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
+                   </div>
+                   <div className="flex items-center gap-2">
+                     {item.resultCount !== undefined && <span className="text-xs text-muted-foreground">{item.resultCount} resultados</span>}
+-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" aria-label="Remover do histórico" onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}>
++                    <Button variant="ghost" size="icon" className={`h-6 w-6 ${HOVER_REVEAL_TAP}`} aria-label="Remover do histórico" onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}>
+                       <X className="h-3 w-3" />
+                     </Button>
+                   </div>
+diff --git a/src/components/inbox/LinkPreview.tsx b/src/components/inbox/LinkPreview.tsx
+index 6a21cc7817..ba4fbfe271 100644
+--- a/src/components/inbox/LinkPreview.tsx
++++ b/src/components/inbox/LinkPreview.tsx
+@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { ExternalLink, Play, Globe, X } from 'lucide-react';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL, HOVER_REVEAL_TAP } from './hoverActions';
+ import {
+   isImageUrl, isVideoUrl, isYouTubeUrl, getYouTubeThumbnail,
+   getDomain, getFavicon, extractLinks, escapeHtml,
+@@ -42,7 +43,7 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
+ 
+   if (metadata.type === 'image' && metadata.image && !imageError) return (
+     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={cn("relative group rounded-xl overflow-hidden", className)}>
+-      {showRemove && <button onClick={onRemove} className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70"><X className="w-4 h-4" /></button>}
++      {showRemove && <button onClick={onRemove} className={`absolute top-2 right-2 z-10 p-1.5 rounded-full bg-background/50 text-primary-foreground ${HOVER_REVEAL_TAP} transition-opacity hover:bg-background/70`}><X className="w-4 h-4" /></button>}
+       <a href={url} target="_blank" rel="noopener noreferrer"><img src={metadata.image} alt={metadata.title || 'Image'} onError={() => setImageError(true)} className="max-w-full max-h-64 rounded-xl object-cover hover:scale-[1.02] transition-transform" /></a>
+     </motion.div>
+   );
+@@ -52,7 +53,7 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
+       className={cn("flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors group", className)}>
+       {metadata.favicon && !imageError ? <img src={metadata.favicon} alt="" className="w-4 h-4 rounded" onError={() => setImageError(true)} /> : <Globe className="w-4 h-4 text-muted-foreground" />}
+       <span className="text-sm font-medium truncate flex-1">{metadata.title || getDomain(url)}</span>
+-      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
++      <ExternalLink className={`w-3 h-3 ${HOVER_REVEAL} transition-opacity text-muted-foreground`} />
+     </motion.a>
+   );
+ 
+@@ -73,7 +74,7 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
+         {metadata.title && <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{metadata.title}</h4>}
+         {metadata.description && <p className="text-xs text-muted-foreground line-clamp-2">{metadata.description}</p>}
+       </div>
+-      {showRemove && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove?.(); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70"><X className="w-4 h-4" /></button>}
++      {showRemove && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove?.(); }} className={`absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground ${HOVER_REVEAL_TAP} transition-opacity hover:bg-background/70`}><X className="w-4 h-4" /></button>}
+     </motion.a>
+   );
+ }
+diff --git a/src/components/inbox/MediaPreview.tsx b/src/components/inbox/MediaPreview.tsx
+index 9ff454e799..8c35bbc1d8 100644
+--- a/src/components/inbox/MediaPreview.tsx
++++ b/src/components/inbox/MediaPreview.tsx
+@@ -7,6 +7,7 @@ import {
+ } from 'lucide-react';
+ import { Button } from '@/components/ui/button';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { getFileCategory, formatFileSize, getFileExtension, WHATSAPP_FILE_TYPES } from '@/utils/whatsappFileTypes';
+ import { VideoFullscreen } from './VideoFullscreen';
+ import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+@@ -194,7 +195,7 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
+                 </motion.div>
+               )}
+             </AnimatePresence>
+-            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
++            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className={`absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground ${HOVER_REVEAL_TAP} transition-opacity hover:bg-background/70`} aria-label="Tela cheia">
+               <Maximize className="w-3.5 h-3.5" />
+             </button>}
+           </motion.div>
+diff --git a/src/components/inbox/MessageContextActions.tsx b/src/components/inbox/MessageContextActions.tsx
+index d2bcf72a53..721b40e667 100644
+--- a/src/components/inbox/MessageContextActions.tsx
++++ b/src/components/inbox/MessageContextActions.tsx
+@@ -1,5 +1,6 @@
+ import { useCallback } from 'react';
+ import { getLogger } from '@/lib/logger';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ 
+ const log = getLogger('MessageContextActions');
+ import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+@@ -142,7 +143,7 @@ export function MessageContextActions({
+         <Button
+           variant="ghost"
+           size="icon"
+-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
++          className={`h-6 w-6 ${HOVER_REVEAL_TAP} transition-opacity`}
+         >
+           <MoreVertical className="w-3.5 h-3.5" />
+         </Button>
+diff --git a/src/components/inbox/MessageReactions.tsx b/src/components/inbox/MessageReactions.tsx
+index 46e7439fb4..4f59671c9e 100644
+--- a/src/components/inbox/MessageReactions.tsx
++++ b/src/components/inbox/MessageReactions.tsx
+@@ -1,6 +1,7 @@
+ import { useState } from 'react';
+ import { motion } from 'framer-motion';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL, HOVER_REVEAL_TAP } from './hoverActions';
+ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+ import { SmilePlus, X } from 'lucide-react';
+@@ -143,7 +144,7 @@ export function MessageReactions({
+               'hover:bg-muted/80 text-muted-foreground hover:text-foreground',
+               isReacting && 'opacity-50 cursor-not-allowed',
+               reactionsList.length === 0
+-                ? 'opacity-0 group-hover:opacity-100'
++                ? HOVER_REVEAL
+                 : 'opacity-60 hover:opacity-100'
+             )}
+           >
+@@ -246,7 +247,7 @@ export function QuickReactionBar({
+       data-pending={isReacting ? 'true' : 'false'}
+       aria-busy={isReacting}
+       className={cn(
+-        'absolute -top-9 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20',
++        `absolute -top-9 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-20`,
+         showPicker && 'opacity-100',
+         isSent ? 'right-0' : 'left-0'
+       )}
+diff --git a/src/components/inbox/MessageTemplates.tsx b/src/components/inbox/MessageTemplates.tsx
+index 933a8ccd58..8885e4fa3b 100644
+--- a/src/components/inbox/MessageTemplates.tsx
++++ b/src/components/inbox/MessageTemplates.tsx
+@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Textarea } from '@/components/ui/textarea';
+ import { Badge } from '@/components/ui/badge';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+ import { useMessageTemplates, type Template } from '@/hooks/chat/useMessageTemplates';
+ import { useAuth } from '@/hooks/auth/useAuth';
+@@ -116,7 +117,7 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
+                       <p className="text-sm text-muted-foreground line-clamp-2">{template.content}</p>
+                       <span className="text-3xs text-muted-foreground mt-1 block">Usado {template.use_count}x</span>
+                     </button>
+-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
++                    <div className={`flex gap-1 ${HOVER_REVEAL_TAP} transition-opacity`}>
+                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template: ${template.title}`} onClick={() => setEditingTemplate(template)}><Edit2 className="h-3 w-3" /></Button>
+                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" aria-label={`Excluir template: ${template.title}`} onClick={() => deleteTemplate(template.id)}><Trash2 className="h-3 w-3" /></Button>
+                     </div>
+diff --git a/src/components/inbox/QuickRepliesManager.tsx b/src/components/inbox/QuickRepliesManager.tsx
+index de12dcefc6..acb7cf0e0b 100644
+--- a/src/components/inbox/QuickRepliesManager.tsx
++++ b/src/components/inbox/QuickRepliesManager.tsx
+@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
+ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+ import { useQuickReplies, QuickReplyTemplate, CreateTemplateInput } from '@/hooks/chat/useQuickReplies';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { toast } from 'sonner';
+ import { QuickReplyCardList } from './quick-replies/QuickReplyCardList';
+ import { QuickReplyDialog } from './quick-replies/QuickReplyDialog';
+@@ -88,14 +89,21 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
+         <ScrollArea className="h-[200px]">
+           <div className="space-y-1">
+             {displayedTemplates.map((template) => (
+-              <motion.button key={template.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 text-left rounded-lg hover:bg-muted/50 transition-colors group">
+-                <div className="flex items-center justify-between">
+-                  <span className="font-medium text-sm truncate">{template.title}</span>
+-                  <Star className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", isFavorite(template.id) && "opacity-100 fill-yellow-400 text-warning")}
+-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(template.id); }} />
+-                </div>
+-                <p className="text-xs text-muted-foreground truncate">{template.content}</p>
+-              </motion.button>
++              <div key={template.id} className="flex items-center gap-1 rounded-lg hover:bg-muted/50 transition-colors group">
++                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="flex-1 min-w-0 p-2 text-left">
++                  <span className="block font-medium text-sm truncate">{template.title}</span>
++                  <p className="text-xs text-muted-foreground truncate">{template.content}</p>
++                </motion.button>
++                <button
++                  type="button"
++                  aria-label={`Favoritar resposta: ${template.title}`}
++                  aria-pressed={isFavorite(template.id)}
++                  onClick={() => toggleFavorite(template.id)}
++                  className={cn('shrink-0 mr-1 rounded-md flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', HOVER_REVEAL_TAP)}
++                >
++                  <Star className={cn('w-3.5 h-3.5 transition-colors', isFavorite(template.id) && 'fill-yellow-400 text-warning')} />
++                </button>
++              </div>
+             ))}
+           </div>
+         </ScrollArea>
+diff --git a/src/components/inbox/SlashCommands.tsx b/src/components/inbox/SlashCommands.tsx
+index b43e521edc..02fbba07a2 100644
+--- a/src/components/inbox/SlashCommands.tsx
++++ b/src/components/inbox/SlashCommands.tsx
+@@ -1,6 +1,7 @@
+ import { useState, useEffect, useRef, useMemo } from 'react';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL } from './hoverActions';
+ import { ArrowRight, Search } from 'lucide-react';
+ import { Badge } from '@/components/ui/badge';
+ import { ScrollArea } from '@/components/ui/scroll-area';
+@@ -125,7 +126,7 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }:
+                             </div>
+                             <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
+                           </div>
+-                          {cmd.shortcut && <kbd className="px-2 py-1 text-xs font-medium bg-muted rounded text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">⌘{cmd.shortcut}</kbd>}
++                          {cmd.shortcut && <kbd className={`px-2 py-1 text-xs font-medium bg-muted rounded text-muted-foreground ${HOVER_REVEAL} transition-opacity`}>⌘{cmd.shortcut}</kbd>}
+                           {cmd.subCommands && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
+                         </motion.button>
+                       );
+diff --git a/src/components/inbox/TemplatesWithVariables.tsx b/src/components/inbox/TemplatesWithVariables.tsx
+index dbfbdeef26..84e2ea5cbe 100644
+--- a/src/components/inbox/TemplatesWithVariables.tsx
++++ b/src/components/inbox/TemplatesWithVariables.tsx
+@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Badge } from '@/components/ui/badge';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ import { ScrollArea } from '@/components/ui/scroll-area';
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+ import { Plus, Edit2, Copy, Search, Folder, FileText } from 'lucide-react';
+@@ -98,9 +99,9 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
+                       </div>
+                       <div className="mt-1 text-xs text-muted-foreground line-clamp-2"><VariableHighlighter text={template.content} /></div>
+                     </div>
+-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
+-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
++                    <div className={`flex items-center gap-1 ${HOVER_REVEAL_TAP} transition-opacity`}>
++                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template: ${template.title}`} onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
++                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Usar template: ${template.title}`} onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
+                     </div>
+                   </div>
+                 </motion.div>
+diff --git a/src/components/inbox/TextToSpeechButton.tsx b/src/components/inbox/TextToSpeechButton.tsx
+index 38e816a6bb..a8f9b7b78c 100644
+--- a/src/components/inbox/TextToSpeechButton.tsx
++++ b/src/components/inbox/TextToSpeechButton.tsx
+@@ -2,6 +2,7 @@ import { Volume2, VolumeX, Loader2 } from 'lucide-react';
+ import { Button } from '@/components/ui/button';
+ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from './hoverActions';
+ 
+ interface TextToSpeechButtonProps {
+   messageId: string;
+@@ -57,7 +58,7 @@ export function TextToSpeechButton({
+           size="icon"
+           aria-label={label}
+           className={cn(
+-            "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
++            `h-6 w-6 ${HOVER_REVEAL_TAP} transition-opacity`,
+             (isThisPlaying || isThisLoading) && "opacity-100",
+             className
+           )}
+diff --git a/src/components/inbox/__tests__/hover-actions-a11y.test.tsx b/src/components/inbox/__tests__/hover-actions-a11y.test.tsx
+new file mode 100644
+index 0000000000..0338e72a53
+--- /dev/null
++++ b/src/components/inbox/__tests__/hover-actions-a11y.test.tsx
+@@ -0,0 +1,275 @@
++import { readFileSync } from 'node:fs';
++import { join, resolve } from 'node:path';
++import { describe, expect, it, vi } from 'vitest';
++import { fireEvent, render, screen, within } from '@testing-library/react';
++import type { ButtonHTMLAttributes, ReactNode } from 'react';
++import { axe } from 'vitest-axe';
++import { HOVER_REVEAL, HOVER_REVEAL_TAP } from '../hoverActions';
++import { MessageTemplates } from '../MessageTemplates';
++import { QuickRepliesManager } from '../QuickRepliesManager';
++
++/**
++ * U1 — as 21 ações do inbox que só apareciam no hover.
++ *
++ * O defeito: `opacity-0 group-hover:opacity-100` só acende a camada com ponteiro
++ * que tem hover. No celular (sem hover) a ação fica invisível para sempre e no
++ * teclado o Tab chega ao botão sem nada acender na tela.
++ *
++ * O teste guarda o contrato dos 21 pontos (todos passam pela constante de
++ * `hoverActions.ts`, nenhum repete a classe antiga) e prova na tela real, com o
++ * `MessageTemplates` montado, que a camada de ações traz o padrão e que os
++ * botões seguem no caminho do teclado com nome acessível.
++ */
++
++const PASTA = resolve(__dirname, '..');
++
++const CLASSE_ANTIGA = 'opacity-0 group-hover:opacity-100';
++
++/** O caminho do teclado e do ponteiro de toque, token a token. */
++const VIAS = [
++  'group-hover:opacity-100',
++  'group-focus-within:opacity-100',
++  'focus-visible:opacity-100',
++  '[@media(hover:none)]:opacity-100',
++];
++
++/**
++ * Os 21 pontos do U1, por arquivo: quantas camadas de hover cada um tem.
++ * Soma 21 — o mesmo número do levantamento do relatório de paridade.
++ */
++const PONTOS: Array<[string, number]> = [
++  ['AISuggestions.tsx', 1],
++  ['AudioMemePicker.tsx', 1],
++  ['CustomEmojiPicker.tsx', 1],
++  ['GlobalSearch.tsx', 1],
++  ['LinkPreview.tsx', 3],
++  ['MediaPreview.tsx', 1],
++  ['MessageContextActions.tsx', 1],
++  ['MessageReactions.tsx', 2],
++  ['MessageTemplates.tsx', 1],
++  ['QuickRepliesManager.tsx', 1],
++  ['SlashCommands.tsx', 1],
++  ['TemplatesWithVariables.tsx', 1],
++  ['TextToSpeechButton.tsx', 1],
++  ['chat/MessageHoverToolbar.tsx', 1],
++  ['quick-replies/QuickReplyCardList.tsx', 1],
++  ['tabs/NotesTab.tsx', 3],
++];
++
++function ler(arquivo: string): string {
++  return readFileSync(join(PASTA, arquivo), 'utf8');
++}
++
++describe('hoverActions — o padrão único', () => {
++  it('HOVER_REVEAL abre as quatro vias de visibilidade', () => {
++    for (const via of VIAS) {
++      expect(HOVER_REVEAL).toContain(via);
++    }
++  });
++
++  it('HOVER_REVEAL não mexe em tamanho: só revela', () => {
++    expect(HOVER_REVEAL).not.toMatch(/(^|\s)(min-)?[hw]-\d/);
++  });
++
++  it('HOVER_REVEAL_TAP soma os 40 px de toque e só sob (pointer: coarse)', () => {
++    expect(HOVER_REVEAL_TAP.startsWith(HOVER_REVEAL)).toBe(true);
++    expect(HOVER_REVEAL_TAP).toContain('[@media(pointer:coarse)]:min-h-10');
++    expect(HOVER_REVEAL_TAP).toContain('[@media(pointer:coarse)]:min-w-10');
++    // 40 px = 2,5rem: nenhum utilitário de medida solto (sem a media query).
++    expect(HOVER_REVEAL_TAP).not.toMatch(/(^|\s)min-[hw]-\d/);
++  });
++});
++
++describe('os 21 pontos do U1 passam pela constante', () => {
++  it.each(PONTOS)('%s usa hoverActions nas %i camada(s)', (arquivo, camadas) => {
++    // Sem a linha de import: o que sobra são os usos reais na tela.
++    const corpo = ler(arquivo).replace(/^import .*HOVER_REVEAL.*$/gm, '');
++
++    expect(corpo.match(/HOVER_REVEAL(_TAP)?/g) ?? []).toHaveLength(camadas);
++    expect(corpo).not.toContain(CLASSE_ANTIGA);
++  });
++
++  it('cobre os 21 pontos do levantamento, sem sobra', () => {
++    expect(PONTOS.reduce((soma, [, camadas]) => soma + camadas, 0)).toBe(21);
++  });
++});
++
++// ---------------------------------------------------------------------------
++// Prova na tela: o MessageTemplates real com os hooks mockados (mesmo arranjo
++// de `MessageTemplates.a11y-buttons.test.tsx`).
++// ---------------------------------------------------------------------------
++
++const templates = [
++  { id: 't1', title: 'Olá, tudo bem?', content: 'Olá, como posso ajudar?', shortcut: '/ola', category: 'saudacao', use_count: 5 },
++];
++
++vi.mock('@/hooks/chat/useMessageTemplates', () => ({
++  useMessageTemplates: vi.fn(() => ({
++    templates,
++    isLoading: false,
++    fetchTemplates: vi.fn(),
++    addTemplate: vi.fn(),
++    updateTemplate: vi.fn(),
++    deleteTemplate: vi.fn(),
++    incrementUseCount: vi.fn(),
++  })),
++}));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: vi.fn(() => ({ user: { id: 'u1', email: 'test@test.com' } })),
++}));
++
++vi.mock('framer-motion', () => ({
++  motion: {
++    div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
++    // O botão do framer-motion perde `whileHover`/`whileTap` (atributo que não
++    // existe no DOM); o que interessa aqui é o botão nativo por dentro.
++    button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
++  },
++  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
++}));
++
++vi.mock('@/components/ui/dialog', () => ({
++  Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),
++  DialogContent: ({ children }: { children: ReactNode }) => <section>{children}</section>,
++  DialogHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>,
++  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
++}));
++
++vi.mock('@/components/ui/button', () => ({
++  Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
++}));
++
++vi.mock('@/components/ui/badge', () => ({
++  Badge: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <span {...props}>{children}</span>,
++}));
++
++function abrirCamada() {
++  const view = render(<MessageTemplates onSelectTemplate={vi.fn()} />);
++  fireEvent.click(screen.getByRole('button', { name: 'Templates de mensagem' }));
++  const editar = screen.getByRole('button', { name: 'Editar template: Olá, tudo bem?' });
++  const camada = editar.parentElement as HTMLElement;
++  return { ...view, editar, camada };
++}
++
++describe('hoverActions — camada de ações do template na tela', () => {
++  it('a camada visível no hover leva o padrão inteiro (teclado e toque)', () => {
++    const { camada } = abrirCamada();
++    const utilitarios = camada.className.split(/\s+/);
++
++    for (const via of VIAS) {
++      expect(utilitarios).toContain(via);
++    }
++    expect(utilitarios).toContain('[@media(pointer:coarse)]:min-h-10');
++    expect(utilitarios).toContain('[@media(pointer:coarse)]:min-w-10');
++    expect(utilitarios).toContain('transition-opacity');
++    expect(utilitarios).not.toContain(CLASSE_ANTIGA);
++  });
++
++  it('os botões da camada seguem no caminho do teclado, com nome acessível', () => {
++    const { camada, editar } = abrirCamada();
++
++    // jsdom não move o foco com Tab; o que se prova aqui é o que o Tab precisa
++    // encontrar: botão nativo, fora de `tabindex="-1"`, sem `disabled`, que
++    // aceita foco — e a camada que acende por `focus-visible`/`focus-within`.
++    expect(editar.tagName).toBe('BUTTON');
++    expect(editar).not.toHaveAttribute('tabindex', '-1');
++    expect(editar).not.toBeDisabled();
++    editar.focus();
++    expect(editar).toHaveFocus();
++    expect(camada).toContainElement(document.activeElement as HTMLElement);
++
++    const botoes = within(camada).getAllByRole('button');
++    expect(botoes).toHaveLength(2);
++    expect(botoes.map((b) => b.getAttribute('aria-label'))).toEqual([
++      'Editar template: Olá, tudo bem?',
++      'Excluir template: Olá, tudo bem?',
++    ]);
++  });
++
++  it('axe não acha violação de nome de botão na camada', async () => {
++    const { container } = abrirCamada();
++    const resultados = await axe(container, { runOnly: { type: 'rule', values: ['button-name'] } });
++    expect(resultados).toHaveNoViolations();
++  });
++});
++
++// ---------------------------------------------------------------------------
++// Prova na tela: a estrela de favoritar da resposta rápida (compact) era um
++// `<svg>` com `onClick` — o Tab nunca chegava nela. Agora é botão de verdade.
++// ---------------------------------------------------------------------------
++
++const { TOGGLE_FAVORITE, RESPOSTA_RAPIDA } = vi.hoisted(() => ({
++  TOGGLE_FAVORITE: vi.fn(),
++  RESPOSTA_RAPIDA: [
++    {
++      id: 'qr-1',
++      title: 'Boas-vindas',
++      content: 'Olá! Como posso ajudar?',
++      shortcut: '/ola',
++      category: 'geral',
++      is_global: false,
++      use_count: 1,
++      user_id: 'u1',
++      created_at: '2026-10-01T10:00:00.000Z',
++      updated_at: '2026-10-01T10:00:00.000Z',
++    },
++  ],
++}));
++
++vi.mock('@/hooks/chat/useQuickReplies', () => ({
++  useQuickReplies: () => ({
++    templates: RESPOSTA_RAPIDA,
++    filteredTemplates: RESPOSTA_RAPIDA,
++    favoriteTemplates: [],
++    recentTemplates: [],
++    searchQuery: '',
++    setSearchQuery: vi.fn(),
++    isLoading: false,
++    createTemplate: vi.fn(),
++    updateTemplate: vi.fn(),
++    deleteTemplate: vi.fn(),
++    toggleFavorite: TOGGLE_FAVORITE,
++    isFavorite: () => false,
++    incrementUseCount: vi.fn(),
++    isCreating: false,
++    isUpdating: false,
++  }),
++}));
++
++vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }));
++
++const NOME_FAVORITAR = 'Favoritar resposta: Boas-vindas';
++
++describe('hoverActions — o favoritar da resposta rápida é alcançável', () => {
++  it('é um botão nativo com nome: aceita foco e alterna ao clique', () => {
++    render(<QuickRepliesManager compact onSelect={vi.fn()} />);
++    const favoritar = screen.getByRole('button', { name: NOME_FAVORITAR });
++
++    // O que o Tab precisa encontrar: botão nativo, fora de `tabindex="-1"`,
++    // habilitado, com nome acessível — e que responde ao clique.
++    expect(favoritar.tagName).toBe('BUTTON');
++    expect(favoritar).not.toHaveAttribute('tabindex', '-1');
++    expect(favoritar).not.toBeDisabled();
++    expect(favoritar).toHaveAttribute('aria-pressed', 'false');
++    favoritar.focus();
++    expect(favoritar).toHaveFocus();
++
++    fireEvent.click(favoritar);
++    expect(TOGGLE_FAVORITE).toHaveBeenCalledWith('qr-1');
++  });
++
++  it('leva o padrão inteiro e os 40 px de toque', () => {
++    render(<QuickRepliesManager compact onSelect={vi.fn()} />);
++    const utilitarios = screen
++      .getByRole('button', { name: NOME_FAVORITAR })
++      .className.split(/\s+/);
++
++    for (const via of VIAS) {
++      expect(utilitarios).toContain(via);
++    }
++    expect(utilitarios).toContain('[@media(pointer:coarse)]:min-h-10');
++    expect(utilitarios).toContain('[@media(pointer:coarse)]:min-w-10');
++    expect(utilitarios).not.toContain(CLASSE_ANTIGA);
++  });
++});
+diff --git a/src/components/inbox/chat/MessageHoverToolbar.tsx b/src/components/inbox/chat/MessageHoverToolbar.tsx
+index fb4f4cdc59..d30bc9e83d 100644
+--- a/src/components/inbox/chat/MessageHoverToolbar.tsx
++++ b/src/components/inbox/chat/MessageHoverToolbar.tsx
+@@ -1,5 +1,6 @@
+ import { useState, useCallback } from 'react';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from '../hoverActions';
+ import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil, History } from 'lucide-react';
+ import { Message } from '@/types/chat';
+ import { TextToSpeechButton } from '../TextToSpeechButton';
+@@ -111,7 +112,7 @@ export function MessageHoverToolbar({
+ 
+   return (
+     <div className={cn(
+-      "absolute top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
++      `absolute top-1/2 -translate-y-1/2 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-10`,
+       menuOpen && "opacity-100",
+       isSent ? "right-full mr-1.5" : "left-full ml-1.5"
+     )}>
+diff --git a/src/components/inbox/hoverActions.ts b/src/components/inbox/hoverActions.ts
+new file mode 100644
+index 0000000000..a5b1b0bb43
+--- /dev/null
++++ b/src/components/inbox/hoverActions.ts
+@@ -0,0 +1,35 @@
++/**
++ * U1 — padrão único das ações do inbox que só apareciam no hover.
++ *
++ * Antes: 21 pontos escreviam `opacity-0 group-hover:opacity-100`. O `group-hover`
++ * só dispara com ponteiro que tem hover: no celular/tablet (sem hover) a ação
++ * ficava invisível, e no teclado o Tab até chegava ao botão, mas o foco não
++ * acendia nada na tela (o usuário não via onde estava). Não havia `focus-within`
++ * nem um caminho para `(hover: none)`.
++ *
++ * O padrão (mesmas classes em todos os 21 pontos, agora numa constante só):
++ * - `opacity-0 group-hover:opacity-100` — o comportamento de antes, no mouse;
++ * - `group-focus-within:opacity-100` — o Tab entra no grupo e a camada aparece
++ *   (o botão passa a ser visível antes mesmo de receber o foco);
++ * - `focus-visible:opacity-100` — o próprio alvo se acende quando recebe o foco
++ *   por teclado;
++ * - `[@media(hover:none)]:opacity-100` — em dispositivo sem hover (toque) a
++ *   camada já nasce visível.
++ *
++ * `HOVER_REVEAL_TAP` acrescenta o alvo de toque mínimo de 40 px
++ * (`min-h-10`/`min-w-10` = 2,5rem) e SÓ sob `(pointer: coarse)` — o mesmo
++ * critério de `src/components/tasks/shared/pointerMedia.ts`: com mouse nada
++ * muda de tamanho. Onde o ponto é um contêiner de ações, o mínimo vale para a
++ * linha/barra (altura confortável de dedo); os botões internos dos grupos
++ * compactos seguem no tamanho pequeno de propósito, para não roubar o toque do
++ * vizinho (grade de 5 colunas do `CustomEmojiPicker`, fila de reações).
++ *
++ * Sem cor nova, sem sombra nova e sem animação nova: o `transition-opacity` que
++ * já existia em cada ponto continua sendo o do elemento.
++ */
++export const HOVER_REVEAL =
++  'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100';
++
++/** O padrão acima + alvo de toque de 40 px em ponteiro grosso. */
++export const HOVER_REVEAL_TAP =
++  `${HOVER_REVEAL} [@media(pointer:coarse)]:min-h-10 [@media(pointer:coarse)]:min-w-10`;
+diff --git a/src/components/inbox/quick-replies/QuickReplyCardList.tsx b/src/components/inbox/quick-replies/QuickReplyCardList.tsx
+index 7169bda549..492bde15f9 100644
+--- a/src/components/inbox/quick-replies/QuickReplyCardList.tsx
++++ b/src/components/inbox/quick-replies/QuickReplyCardList.tsx
+@@ -7,6 +7,7 @@ import {
+ } from 'lucide-react';
+ import { QuickReplyTemplate } from '@/hooks/chat/useQuickReplies';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from '../hoverActions';
+ 
+ interface QuickReplyCardListProps {
+   templates: QuickReplyTemplate[];
+@@ -88,7 +89,7 @@ export function QuickReplyCardList({
+                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(template.updated_at).toLocaleDateString('pt-BR')}</span>
+                         </div>
+                       </div>
+-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
++                      <div className={`flex items-center gap-1 ${HOVER_REVEAL_TAP} transition-opacity`}>
+                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onToggleFavorite(template.id); }}>
+                           <Star className={cn("w-4 h-4", isFavorite(template.id) && "fill-yellow-400 text-warning")} />
+                         </Button>
+diff --git a/src/components/inbox/tabs/NotesTab.tsx b/src/components/inbox/tabs/NotesTab.tsx
+index 11d8e9811d..62cf0adfff 100644
+--- a/src/components/inbox/tabs/NotesTab.tsx
++++ b/src/components/inbox/tabs/NotesTab.tsx
+@@ -7,6 +7,7 @@ import {
+ import { Textarea } from '@/components/ui/textarea';
+ import { Button } from '@/components/ui/button';
+ import { cn } from '@/lib/utils';
++import { HOVER_REVEAL_TAP } from '../hoverActions';
+ import { calendarDayKey, parseDayKey } from '@/lib/localDay';
+ import { useContactNotes, type ContactNote, type ContactNoteCategory } from '@/hooks/crm/useContactNotes';
+ import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
+@@ -120,7 +121,7 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
+                     {format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })} · Por: {note.author?.name ?? 'Você'}
+                   </p>
+                   {note.author_id === currentProfileId && (
+-                    <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">
++                    <button type="button" onClick={() => onDelete(note.id)} className={`${HOVER_REVEAL_TAP} text-destructive shrink-0`}>
+                       <Trash2 className="w-3.5 h-3.5" />
+                     </button>
+                   )}
+@@ -147,7 +148,7 @@ function ObjectionItem({ note, onDelete, canDelete }: { note: ContactNote; onDel
+       <div className="flex items-center justify-between mt-1.5">
+         <p className="text-xs text-muted-foreground">{format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })}</p>
+         {canDelete && (
+-          <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">
++          <button type="button" onClick={() => onDelete(note.id)} className={`${HOVER_REVEAL_TAP} text-destructive shrink-0`}>
+             <Trash2 className="w-3.5 h-3.5" />
+           </button>
+         )}
+@@ -177,7 +178,7 @@ function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNot
+             <p className="text-xs text-muted-foreground">{noteDueLabel(note.due_date)}</p>
+           ) : <span />}
+           {canDelete && (
+-            <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">
++            <button type="button" onClick={() => onDelete(note.id)} className={`${HOVER_REVEAL_TAP} text-destructive shrink-0`}>
+               <Trash2 className="w-3.5 h-3.5" />
+             </button>
+           )}
