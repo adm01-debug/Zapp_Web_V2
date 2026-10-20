@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-icon-buttons-scan-2610131335a70a
+
+···················
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  13:42:31
+   Duration  9.76s (transform 233ms, setup 389ms, import 495ms, tests 7.59s, environment 1.07s)
+

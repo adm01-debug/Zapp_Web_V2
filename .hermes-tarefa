@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-icon-buttons-scan
+ID=2610131335a70a
+BRANCH=v2/a11y-icon-buttons-scan-2610131335a70a
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-icon-buttons-scan-2610131335a70a
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T13:35:33-03:00
+KANBAN=t_9d25b0a2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-icon-buttons-scan-2610131335a70a/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610131335a70a
+PRONTO_SHA=c4ea2cbbb05d914850307614c8aa5d5aac113cbc
