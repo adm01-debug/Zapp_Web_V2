@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791863426 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791863427 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 94b81c2e50078cb818642e7a6bfe72e63d55e704 Hermes Senior <hermes-senior@promobrindes.local> 1791865155 -0300	commit: feat(admin): RPCs admin_add_role e admin_remove_role com travas e auditoria
+94b81c2e50078cb818642e7a6bfe72e63d55e704 7d9004a3e4b94b7fed6d6ddf016870c4e1cef814 Hermes Senior <hermes-senior@promobrindes.local> 1791865299 -0300	commit: chore(git): tira .tmp/relato.md do versionamento (ja constava no .gitignore)
+7d9004a3e4b94b7fed6d6ddf016870c4e1cef814 8e84d4c9ecb3acffc4094d76df6e7523f14f31ec Hermes Senior <hermes-senior@promobrindes.local> 1792023093 -0300	commit: fix(admin): refazer 1 das RPCs de papel — piso condicional, corrida e fixtures

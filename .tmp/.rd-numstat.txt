@@ -1,0 +1,3 @@
+20	0	src/integrations/supabase/types.ts
+129	0	supabase/migrations/20261013035338_admin_add_remove_role_rpc.sql
+288	0	supabase/tests/user_roles_add_remove_role.sql

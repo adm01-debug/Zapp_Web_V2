@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-add-remove-role
+ID=2610130050c2ce
+BRANCH=v2/admin-add-remove-role-2610130050c2ce
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-add-remove-role-2610130050c2ce
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T00:50:27-03:00
+KANBAN=t_911b61b1
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-add-remove-role-2610130050c2ce/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130050c2ce
+APLICADA_LOCAL=20261013035338_admin_add_remove_role_rpc.sql sha=27376272187a111d
+PRONTO_SHA=7d9004a3e4b94b7fed6d6ddf016870c4e1cef814
