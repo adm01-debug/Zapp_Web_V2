@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-rehacer-2610151731b57c
+
+···········
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  18:13:52
+   Duration  3.41s (transform 1.72s, setup 890ms, import 2.13s, tests 469ms, environment 3.27s)
+

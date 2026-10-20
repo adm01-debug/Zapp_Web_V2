@@ -1,0 +1,874 @@
+diff --git a/src/components/contacts/ContactsView.tsx b/src/components/contacts/ContactsView.tsx
+index 538a247690..294cc6780e 100644
+--- a/src/components/contacts/ContactsView.tsx
++++ b/src/components/contacts/ContactsView.tsx
+@@ -1,5 +1,4 @@
+ import { useMemo } from 'react';
+-import { MotionConfig } from 'framer-motion';
+ import { PageHeader } from '@/components/layout/PageHeader';
+ import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
+ import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
+@@ -119,7 +118,6 @@ export function ContactsView() {
+   const canMerge = canMergeContacts(adminAccess);
+ 
+   return (
+-    <MotionConfig reducedMotion="user">
+     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
+       <ScrollToTopButton
+         scrollRef={layoutScrollRef}
+@@ -273,6 +271,5 @@ export function ContactsView() {
+         canChangeTypeSelection={canChangeTypeSelection}
+       />
+     </div>
+-    </MotionConfig>
+   );
+ }
+diff --git a/src/components/ui/GenericEmptyState.tsx b/src/components/ui/GenericEmptyState.tsx
+index 0f0a4213d6..88b1f71faa 100644
+--- a/src/components/ui/GenericEmptyState.tsx
++++ b/src/components/ui/GenericEmptyState.tsx
+@@ -59,7 +59,7 @@ export function GenericEmptyState({
+         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+           <Icon className="w-8 h-8 text-primary" />
+         </div>
+-        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent animate-pulse" />
++        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent motion-safe:animate-pulse" />
+       </motion.div>
+ 
+       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+diff --git a/src/components/ui/__tests__/emptyStates.movimento.test.tsx b/src/components/ui/__tests__/emptyStates.movimento.test.tsx
+new file mode 100644
+index 0000000000..c709a629e3
+--- /dev/null
++++ b/src/components/ui/__tests__/emptyStates.movimento.test.tsx
+@@ -0,0 +1,122 @@
++/**
++ * A11Y — movimento reduzido nas ilustrações de estado vazio e no selo pulsante.
++ *
++ * Prova, com o componente REAL, que com `prefers-reduced-motion: reduce`
++ * nenhuma ilustração recebe `repeat: Infinity` (o portão devolve
++ * `{ initial: false }`, estado estático). O controle positivo (mesma árvore,
++ * sem reduzir) garante que o espião enxerga os loops — sem ele o teste poderia
++ * passar por não estar medindo nada.
++ *
++ * Só o `useReducedMotion` e o `motion` são espionados; o resto do framer-motion
++ * segue real (mesmo padrão de contactsMotion.test.ts).
++ */
++import { describe, expect, it, vi, beforeEach } from 'vitest';
++import { render } from '@testing-library/react';
++import { createElement, Fragment, type ComponentType, type ReactNode } from 'react';
++import { Inbox } from 'lucide-react';
++
++const reduzido = { value: true };
++const registrado: Array<{ tag: string; props: Record<string, unknown> }> = [];
++
++vi.mock('framer-motion', async (importOriginal) => {
++  const real = await importOriginal<typeof import('framer-motion')>();
++  const cache = new Map<string, ComponentType<Record<string, unknown>>>();
++  const motion = new Proxy(real.motion, {
++    get(target, tag: string) {
++      if (typeof tag !== 'string') return Reflect.get(target, tag);
++      if (!cache.has(tag)) {
++        const Base = (target as unknown as Record<string, ComponentType<Record<string, unknown>>>)[tag];
++        const Espiao = (props: Record<string, unknown>) => {
++          registrado.push({ tag, props });
++          return createElement(Base, props);
++        };
++        cache.set(tag, Espiao as ComponentType<Record<string, unknown>>);
++      }
++      return cache.get(tag);
++    },
++  });
++  return { ...real, motion, useReducedMotion: () => reduzido.value };
++});
++
++import { illustrations } from '@/components/ui/empty-state-illustrations';
++import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
++
++const loopsRegistrados = () =>
++  registrado.filter(({ props }) => {
++    const transition = props.transition as { repeat?: number } | undefined;
++    return transition?.repeat === Infinity;
++  });
++
++const renderIlustracoes = () =>
++  render(
++    <>
++      {Object.entries(illustrations).map(([nome, arte]) => (
++        <Fragment key={nome}>{arte as ReactNode}</Fragment>
++      ))}
++    </>,
++  );
++
++beforeEach(() => {
++  reduzido.value = true;
++  registrado.length = 0;
++});
++
++describe('ilustrações de estado vazio — movimento reduzido', () => {
++  it('1. com reduzir ligado, NENHUMA ilustração anima em loop', () => {
++    renderIlustracoes();
++
++    // 13 ilustrações, todas renderizadas de verdade.
++    expect(registrado.length).toBeGreaterThan(0);
++    expect(loopsRegistrados()).toEqual([]);
++    expect(
++      registrado.filter(({ props }) => props.transition !== undefined),
++    ).toEqual([]);
++  });
++
++  it('2. controle: sem reduzir, os loops existem (o espião mede de verdade)', () => {
++    reduzido.value = false;
++    registrado.length = 0;
++
++    renderIlustracoes();
++
++    expect(loopsRegistrados().length).toBeGreaterThan(0);
++  });
++
++  it('3. o portão cobre o caso que o MotionConfig da raiz não pega: pathLength infinito', () => {
++    // O gráfico de `dashboard` tem um loop de `pathLength` (não é transform,
++    // por isso `reducedMotion="user"` não o desliga sozinho).
++    reduzido.value = false;
++    registrado.length = 0;
++    renderIlustracoes();
++    const pathLengthComLoop = registrado.filter(
++      ({ props }) =>
++        (props.animate as { pathLength?: unknown } | undefined)?.pathLength !== undefined &&
++        (props.transition as { repeat?: number } | undefined)?.repeat === Infinity,
++    );
++    expect(pathLengthComLoop.length).toBeGreaterThan(0);
++
++    reduzido.value = true;
++    registrado.length = 0;
++    renderIlustracoes();
++    const pathLengthComLoopReduzido = registrado.filter(
++      ({ props }) => (props.animate as { pathLength?: unknown } | undefined)?.pathLength !== undefined,
++    );
++    expect(pathLengthComLoopReduzido).toEqual([]);
++  });
++});
++
++describe('selo pulsante do GenericEmptyState — movimento reduzido', () => {
++  it('4. o selo usa motion-safe:animate-pulse (não anima com reduzir ligado)', () => {
++    const { container } = render(
++      <GenericEmptyState icon={Inbox} title="Nada por aqui" description="Sem itens para mostrar" />,
++    );
++    const selo = container.querySelector('.bg-accent');
++
++    expect(selo).not.toBeNull();
++    expect(selo?.className).toContain('motion-safe:animate-pulse');
++    // Não pode sobrar classe de animação CRUA (a que ignora o reduzir movimento):
++    // nenhuma classe do selo pode começar com o prefixo sem `motion-safe:`.
++    const classes = (selo?.className ?? '').split(/\s+/);
++    expect(classes.filter((c) => /^animate-/.test(c))).toEqual([]);
++  });
++});
+diff --git a/src/components/ui/__tests__/motionEffects.movimento.test.tsx b/src/components/ui/__tests__/motionEffects.movimento.test.tsx
+new file mode 100644
+index 0000000000..047290b51d
+--- /dev/null
++++ b/src/components/ui/__tests__/motionEffects.movimento.test.tsx
+@@ -0,0 +1,139 @@
++/**
++ * AnimatedCounter e Typewriter — defeitos de movimento.
++ *
++ * 1) O contador guardava o valor anterior num objeto recriado a cada render
++ *    (`const prevRef = { current: 0 }`), então toda mudança de valor animava
++ *    de 0; agora o valor anterior vem de um `useRef` estável.
++ * 2) O Typewriter reiniciava o efeito a cada render (identidade de
++ *    `onComplete` nas deps) e ignorava o reduzir movimento.
++ *
++ * O framer-motion é substituído por um passe-plataforma determinístico: o
++ * teste mede a lógica do contador, não o runtime de animação.
++ */
++import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
++import { render, screen, act } from '@testing-library/react';
++import { createElement, type ReactNode } from 'react';
++
++const reduzido = { value: false };
++
++vi.mock('framer-motion', () => {
++  const propsDeMovimento = new Set([
++    'initial', 'animate', 'exit', 'transition', 'variants', 'whileHover',
++    'whileTap', 'whileFocus', 'layout', 'layoutId', 'drag', 'onAnimationComplete',
++  ]);
++  const cache = new Map<string, (props: Record<string, unknown>) => ReactNode>();
++  const motion = new Proxy({} as Record<string, unknown>, {
++    get(_target, tag: string) {
++      if (typeof tag !== 'string') return undefined;
++      if (!cache.has(tag)) {
++        cache.set(tag, (props: Record<string, unknown>) => {
++          const limpos: Record<string, unknown> = {};
++          for (const [chave, valor] of Object.entries(props)) {
++            if (!propsDeMovimento.has(chave)) limpos[chave] = valor;
++          }
++          return createElement(tag, limpos, props.children as ReactNode);
++        });
++      }
++      return cache.get(tag);
++    },
++  });
++  return { motion, AnimatePresence: ({ children }: { children: ReactNode }) => children, Variants: undefined, useReducedMotion: () => reduzido.value };
++});
++
++import { AnimatedCounter, Typewriter } from '@/components/ui/motion/effects';
++
++type Quadro = (ts: number) => void;
++let fila: Quadro[] = [];
++
++const quadros = (ts: number) => {
++  const atuais = fila;
++  fila = [];
++  act(() => {
++    atuais.forEach((cb) => cb(ts));
++  });
++};
++
++beforeEach(() => {
++  fila = [];
++  vi.stubGlobal('requestAnimationFrame', (cb: Quadro) => {
++    fila.push(cb);
++    return fila.length;
++  });
++  vi.stubGlobal('cancelAnimationFrame', () => {});
++  reduzido.value = false;
++});
++
++afterEach(() => {
++  vi.unstubAllGlobals();
++  vi.useRealTimers();
++});
++
++describe('AnimatedCounter', () => {
++  it('1. conta do ZERO até o valor na primeira montagem', () => {
++    render(<AnimatedCounter value={10} duration={1} />);
++    quadros(1000);
++    quadros(2000);
++
++    expect(screen.getByText('10')).toBeTruthy();
++  });
++
++  it('2. ao mudar o valor, anima do valor ANTERIOR (não reinicia do zero)', () => {
++    const { rerender } = render(<AnimatedCounter value={10} duration={1} />);
++    quadros(1000);
++    quadros(2000);
++    expect(screen.getByText('10')).toBeTruthy();
++
++    rerender(<AnimatedCounter value={20} duration={1} />);
++    quadros(3000);
++    quadros(3500);
++
++    // 10 + (20-10) * ease(0.5) = 10 + 10*0.875 = 18.75 -> 19.
++    // Com o bug antigo (start=0) daria 0 + 20*0.875 = 17.5 -> 18.
++    expect(screen.getByText('19')).toBeTruthy();
++  });
++
++  it('3. re-renderizar com o MESMO valor não reagenda animação', () => {
++    const { rerender } = render(<AnimatedCounter value={7} duration={1} />);
++    quadros(1000);
++    quadros(2000);
++    expect(screen.getByText('7')).toBeTruthy();
++
++    fila = [];
++    rerender(<AnimatedCounter value={7} duration={1} />);
++
++    expect(fila).toHaveLength(0);
++    expect(screen.getByText('7')).toBeTruthy();
++  });
++});
++
++describe('Typewriter', () => {
++  it('4. com movimento reduzido mostra o texto inteiro de uma vez e avisa o fim', () => {
++    reduzido.value = true;
++    const aoCompletar = vi.fn();
++
++    render(<Typewriter text="Pronto" speed={10} onComplete={aoCompletar} />);
++
++    expect(screen.getByText('Pronto')).toBeTruthy();
++    expect(aoCompletar).toHaveBeenCalledTimes(1);
++  });
++
++  it('5. trocar a identidade de onComplete NÃO reinicia a digitação', () => {
++    vi.useFakeTimers();
++    const { rerender } = render(<Typewriter text="abc" speed={10} onComplete={() => {}} />);
++
++    act(() => {
++      vi.advanceTimersByTime(30);
++    });
++    expect(screen.getByText('ab')).toBeTruthy();
++
++    // Callback novo a cada render (arrow inline) — no código antigo isso
++    // reiniciava o efeito e o texto voltava para "".
++    rerender(<Typewriter text="abc" speed={10} onComplete={() => {}} />);
++
++    act(() => {
++      vi.advanceTimersByTime(10);
++    });
++
++    expect(screen.getByText('abc')).toBeTruthy();
++  });
++});
+diff --git a/src/components/ui/empty-state-illustration-art.tsx b/src/components/ui/empty-state-illustration-art.tsx
+new file mode 100644
+index 0000000000..3792627492
+--- /dev/null
++++ b/src/components/ui/empty-state-illustration-art.tsx
+@@ -0,0 +1,224 @@
++import { motion, useReducedMotion, type MotionProps } from 'framer-motion';
++
++/**
++ * Artes SVG dos estados vazios (só componentes, seguindo a regra da casa
++ * `react-refresh/only-export-components`: o mapa `illustrations` fica em
++ * `empty-state-illustrations.tsx`).
++ *
++ * A11Y (movimento reduzido): cada ilustração passa suas animações pelo portão
++ * `useMotionGate()`. Com `prefers-reduced-motion: reduce` o portão devolve
++ * `{ initial: false }`, ou seja, o elemento fica no estado final e NENHUM loop
++ * (`repeat: Infinity`) roda. O `MotionConfig reducedMotion="user"` da raiz já
++ * cobre as animações de transform, mas não as de `pathLength` (ex.: dashboard)
++ * — por isso o portão explícito aqui.
++ */
++
++/**
++ * Portão único de movimento das ilustrações. Chame uma vez por componente e
++ * espalhe o retorno nos elementos `motion.*`.
++ */
++function useMotionGate(): (props: MotionProps) => MotionProps {
++  const reduzido = useReducedMotion();
++  return (props) => (reduzido ? { initial: false } : props);
++}
++
++export function IlustracaoInbox() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.g {...m({ animate: { y: [0, -8, 0] }, transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } })}>
++        <rect x="35" y="45" width="85" height="45" rx="12" className="fill-primary/20" />
++        <rect x="48" y="58" width="45" height="5" rx="2.5" className="fill-primary/40" />
++        <rect x="48" y="70" width="60" height="5" rx="2.5" className="fill-primary/30" />
++      </motion.g>
++      <motion.g {...m({ animate: { y: [0, -6, 0] }, transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 } })}>
++        <rect x="80" y="100" width="85" height="40" rx="12" className="fill-muted/60" />
++        <rect x="93" y="112" width="55" height="5" rx="2.5" className="fill-muted-foreground/30" />
++        <rect x="93" y="123" width="35" height="5" rx="2.5" className="fill-muted-foreground/20" />
++      </motion.g>
++      <motion.circle cx="28" cy="35" r="5" className="fill-primary/30" {...m({ animate: { scale: [1, 1.4, 1], opacity: [0.3, 0.7, 0.3] }, transition: { duration: 2, repeat: Infinity } })} />
++      <motion.circle cx="172" cy="55" r="4" className="fill-secondary/40" {...m({ animate: { scale: [1, 1.5, 1], opacity: [0.4, 0.8, 0.4] }, transition: { duration: 2.5, repeat: Infinity, delay: 0.3 } })} />
++      <motion.circle cx="155" cy="125" r="6" className="fill-primary/20" {...m({ animate: { scale: [1, 1.3, 1], opacity: [0.2, 0.6, 0.2] }, transition: { duration: 3, repeat: Infinity, delay: 0.6 } })} />
++      <motion.g {...m({ animate: { rotate: [0, 180, 360], scale: [1, 1.2, 1] }, transition: { duration: 4, repeat: Infinity } })} style={{ transformOrigin: '170px 35px' }}>
++        <polygon points="170,28 172,34 178,35 172,36 170,42 168,36 162,35 168,34" className="fill-primary/50" />
++      </motion.g>
++    </svg>
++  );
++}
++
++export function IlustracaoContacts() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.g {...m({ animate: { x: [0, 5, 0] }, transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } })}>
++        <rect x="28" y="38" width="144" height="38" rx="10" className="fill-muted/50" />
++        <circle cx="55" cy="57" r="14" className="fill-primary/30" />
++        <rect x="78" y="50" width="65" height="6" rx="3" className="fill-foreground/20" />
++        <rect x="78" y="62" width="45" height="5" rx="2.5" className="fill-muted-foreground/20" />
++      </motion.g>
++      <motion.g {...m({ animate: { x: [0, -5, 0] }, transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 } })}>
++        <rect x="28" y="86" width="144" height="38" rx="10" className="fill-muted/30" />
++        <circle cx="55" cy="105" r="14" className="fill-secondary/30" />
++        <rect x="78" y="98" width="55" height="6" rx="3" className="fill-foreground/15" />
++        <rect x="78" y="110" width="75" height="5" rx="2.5" className="fill-muted-foreground/15" />
++      </motion.g>
++      <motion.g {...m({ animate: { y: [0, -6, 0], rotate: [0, 12, 0] }, transition: { duration: 2, repeat: Infinity, ease: "easeInOut" } })} style={{ transformOrigin: '170px 32px' }}>
++        <circle cx="170" cy="32" r="16" className="fill-primary/20" />
++        <rect x="164" y="29" width="12" height="3" rx="1.5" className="fill-primary" />
++        <rect x="168.5" y="24" width="3" height="12" rx="1.5" className="fill-primary" />
++      </motion.g>
++    </svg>
++  );
++}
++
++export function IlustracaoDashboard() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.rect x="28" y="95" width="28" height="45" rx="5" className="fill-primary/30" {...m({ animate: { height: [45, 55, 45], y: [95, 85, 95] }, transition: { duration: 2, repeat: Infinity, ease: "easeInOut" } })} />
++      <motion.rect x="65" y="72" width="28" height="68" rx="5" className="fill-primary/45" {...m({ animate: { height: [68, 78, 68], y: [72, 62, 72] }, transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 } })} />
++      <motion.rect x="102" y="50" width="28" height="90" rx="5" className="fill-primary/55" {...m({ animate: { height: [90, 100, 90], y: [50, 40, 50] }, transition: { duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 } })} />
++      <motion.rect x="139" y="82" width="28" height="58" rx="5" className="fill-primary/38" {...m({ animate: { height: [58, 68, 58], y: [82, 72, 82] }, transition: { duration: 2.3, repeat: Infinity, ease: "easeInOut", delay: 0.9 } })} />
++      <motion.path d="M42 85 L80 62 L117 42 L155 58" className="stroke-secondary" strokeWidth="3" strokeLinecap="round" fill="none" {...m({ animate: { pathLength: [0.7, 1, 0.7] }, transition: { duration: 3, repeat: Infinity } })} />
++      <motion.g {...m({ animate: { scale: [1, 1.3, 1], rotate: [0, 180, 360] }, transition: { duration: 4, repeat: Infinity } })} style={{ transformOrigin: '172px 28px' }}>
++        <polygon points="172,18 175,26 182,28 175,30 172,38 169,30 162,28 169,26" className="fill-primary/60" />
++      </motion.g>
++    </svg>
++  );
++}
++
++export function IlustracaoCalls() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.g {...m({ animate: { rotate: [-8, 8, -8] }, transition: { duration: 0.4, repeat: Infinity, ease: "easeInOut" } })} style={{ transformOrigin: '100px 80px' }}>
++        <rect x="68" y="48" width="64" height="64" rx="16" className="fill-primary/20" />
++        <path d="M88 68 C88 68 94 74 100 80 C106 86 112 92 112 92" className="stroke-primary" strokeWidth="5" strokeLinecap="round" fill="none" />
++      </motion.g>
++      <motion.circle cx="100" cy="80" r="42" className="stroke-primary/30" strokeWidth="2" fill="none" {...m({ animate: { scale: [1, 1.4], opacity: [0.4, 0] }, transition: { duration: 1.5, repeat: Infinity } })} />
++      <motion.circle cx="100" cy="80" r="42" className="stroke-primary/20" strokeWidth="2" fill="none" {...m({ animate: { scale: [1, 1.6], opacity: [0.3, 0] }, transition: { duration: 1.5, repeat: Infinity, delay: 0.5 } })} />
++    </svg>
++  );
++}
++
++export function IlustracaoNotifications() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.g {...m({ animate: { rotate: [-12, 12, -12] }, transition: { duration: 0.5, repeat: Infinity, repeatDelay: 2 } })} style={{ transformOrigin: '100px 48px' }}>
++        <path d="M100 28 C78 28 68 50 68 72 L68 92 L56 104 L144 104 L132 92 L132 72 C132 50 122 28 100 28 Z" className="fill-primary/30" />
++        <ellipse cx="100" cy="114" rx="12" ry="6" className="fill-primary/40" />
++      </motion.g>
++      <motion.circle cx="128" cy="42" r="10" className="fill-destructive/60" {...m({ animate: { scale: [1, 1.25, 1] }, transition: { duration: 1, repeat: Infinity } })} />
++      <motion.text x="152" y="58" className="fill-muted-foreground/40 text-sm font-bold" {...m({ animate: { opacity: [0, 1, 0], x: [152, 164, 176] }, transition: { duration: 2, repeat: Infinity } })}>z</motion.text>
++      <motion.text x="164" y="42" className="fill-muted-foreground/30 text-base font-bold" {...m({ animate: { opacity: [0, 1, 0], x: [164, 176, 188] }, transition: { duration: 2, repeat: Infinity, delay: 0.5 } })}>z</motion.text>
++    </svg>
++  );
++}
++
++export function IlustracaoQueues() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      {[0, 1, 2].map((i) => (
++        <motion.g key={i}>
++          <motion.rect x="45" y={38 + i * 32} width="110" height="24" rx="6" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { x: -50, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.4, delay: i * 0.15 } })} />
++          <motion.rect x="52" y={44 + i * 32} width={65 - i * 18} height="12" rx="3" className="fill-primary/40" {...m({ initial: { scaleX: 0 }, animate: { scaleX: 1 }, transition: { duration: 0.5, delay: 0.3 + i * 0.15 } })} />
++        </motion.g>
++      ))}
++    </svg>
++  );
++}
++
++export function IlustracaoMessages() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.rect x="28" y="38" width="85" height="40" rx="10" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { x: -30, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.4 } })} />
++      <motion.rect x="88" y="88" width="85" height="40" rx="10" className="fill-primary/20 stroke-primary" strokeWidth="2" {...m({ initial: { x: 30, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.4, delay: 0.2 } })} />
++      <motion.g {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.3, delay: 0.5, type: 'spring' } })}>
++        <circle cx="48" cy="58" r="4" className="fill-muted-foreground/50" />
++        <circle cx="65" cy="58" r="4" className="fill-muted-foreground/50" />
++        <circle cx="82" cy="58" r="4" className="fill-muted-foreground/50" />
++      </motion.g>
++    </svg>
++  );
++}
++
++export function IlustracaoData() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.rect x="48" y="98" width="28" height="44" rx="5" className="fill-primary/30 stroke-primary" strokeWidth="2" style={{ originY: 1 }} {...m({ initial: { scaleY: 0 }, animate: { scaleY: 1 }, transition: { duration: 0.4, delay: 0.1 } })} />
++      <motion.rect x="85" y="68" width="28" height="74" rx="5" className="fill-secondary/30 stroke-secondary" strokeWidth="2" style={{ originY: 1 }} {...m({ initial: { scaleY: 0 }, animate: { scaleY: 1 }, transition: { duration: 0.4, delay: 0.2 } })} />
++      <motion.rect x="122" y="48" width="28" height="94" rx="5" className="fill-success/30 stroke-success" strokeWidth="2" style={{ originY: 1 }} {...m({ initial: { scaleY: 0 }, animate: { scaleY: 1 }, transition: { duration: 0.4, delay: 0.3 } })} />
++      <motion.path d="M38 38 L38 148 L168 148" className="stroke-border" strokeWidth="2" strokeLinecap="round" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.5 } })} />
++    </svg>
++  );
++}
++
++export function IlustracaoSearch() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.g {...m({ animate: { x: [0, 8, 0], y: [0, -4, 0] }, transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } })}>
++        <motion.circle cx="88" cy="68" r="38" className="fill-muted stroke-border" strokeWidth="4" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.4, type: 'spring' } })} />
++        <motion.line x1="116" y1="96" x2="148" y2="128" className="stroke-primary" strokeWidth="6" strokeLinecap="round" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.3, delay: 0.3 } })} />
++      </motion.g>
++      <motion.text x="38" y="48" className="fill-muted-foreground/30 text-2xl font-bold" {...m({ animate: { opacity: [0.3, 0.7, 0.3], y: [48, 42, 48] }, transition: { duration: 2, repeat: Infinity } })}>?</motion.text>
++      <motion.text x="152" y="88" className="fill-muted-foreground/20 text-xl font-bold" {...m({ animate: { opacity: [0.2, 0.6, 0.2], y: [88, 82, 88] }, transition: { duration: 2.5, repeat: Infinity, delay: 0.5 } })}>?</motion.text>
++    </svg>
++  );
++}
++
++export function IlustracaoTranscriptions() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.rect x="48" y="28" width="104" height="104" rx="10" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.4 } })} />
++      {[0, 1, 2, 3].map((i) => (
++        <motion.rect key={i} x="60" y={48 + i * 20} width={75 - i * 12} height="10" rx="3" className="fill-primary/30" {...m({ initial: { scaleX: 0 }, animate: { scaleX: 1 }, transition: { duration: 0.3, delay: 0.3 + i * 0.1 } })} />
++      ))}
++      <motion.circle cx="148" cy="42" r="22" className="fill-secondary/20 stroke-secondary" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.4, delay: 0.5, type: 'spring' } })} />
++      <motion.path d="M148 32 L148 52 M138 42 L158 42" className="stroke-secondary" strokeWidth="3" strokeLinecap="round" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.3, delay: 0.7 } })} />
++    </svg>
++  );
++}
++
++export function IlustracaoAgents() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.circle cx="100" cy="52" r="28" className="fill-primary/20 stroke-primary" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.4, type: 'spring' } })} />
++      <motion.path d="M52 132 C52 94 100 82 100 82 C100 82 148 94 148 132" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.5, delay: 0.3 } })} />
++      <motion.circle cx="132" cy="38" r="14" className="fill-success/30 stroke-success" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.3, delay: 0.5 } })} />
++      <motion.path d="M126 38 L130 42 L138 34" className="stroke-success" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.3, delay: 0.7 } })} />
++    </svg>
++  );
++}
++
++export function IlustracaoWallet() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.rect x="38" y="48" width="124" height="74" rx="10" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: 0.4 } })} />
++      <motion.rect x="118" y="68" width="54" height="34" rx="6" className="fill-primary/20 stroke-primary" strokeWidth="2" {...m({ initial: { x: 20, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.3, delay: 0.3 } })} />
++      <motion.circle cx="142" cy="85" r="10" className="fill-primary stroke-primary-foreground" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.3, delay: 0.5, type: 'spring' } })} />
++    </svg>
++  );
++}
++
++export function IlustracaoGeneric() {
++  const m = useMotionGate();
++  return (
++    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
++      <motion.g {...m({ animate: { y: [0, -5, 0] }, transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } })}>
++        <rect x="60" y="50" width="80" height="60" rx="8" className="fill-muted/30" />
++        <path d="M60 65 L100 85 L140 65" className="stroke-muted-foreground/20" strokeWidth="2" fill="none" />
++        <line x1="100" y1="85" x2="100" y2="110" className="stroke-muted-foreground/20" strokeWidth="2" />
++      </motion.g>
++      <motion.circle cx="50" cy="80" r="4" className="fill-primary/20" {...m({ animate: { y: [80, 70, 80], opacity: [0.2, 0.5, 0.2] }, transition: { duration: 2, repeat: Infinity } })} />
++      <motion.circle cx="150" cy="90" r="3" className="fill-secondary/30" {...m({ animate: { y: [90, 80, 90], opacity: [0.3, 0.6, 0.3] }, transition: { duration: 2.5, repeat: Infinity, delay: 0.5 } })} />
++    </svg>
++  );
++}
+diff --git a/src/components/ui/empty-state-illustrations.tsx b/src/components/ui/empty-state-illustrations.tsx
+index 5181b941a9..810bb10298 100644
+--- a/src/components/ui/empty-state-illustrations.tsx
++++ b/src/components/ui/empty-state-illustrations.tsx
+@@ -1,157 +1,40 @@
+-import { motion } from 'framer-motion';
++import {
++  IlustracaoInbox,
++  IlustracaoContacts,
++  IlustracaoDashboard,
++  IlustracaoCalls,
++  IlustracaoNotifications,
++  IlustracaoQueues,
++  IlustracaoMessages,
++  IlustracaoData,
++  IlustracaoSearch,
++  IlustracaoTranscriptions,
++  IlustracaoAgents,
++  IlustracaoWallet,
++  IlustracaoGeneric,
++} from './empty-state-illustration-art';
+ 
+ /**
+- * SVG illustrations for empty states.
+- * Extracted to reduce main component file size.
++ * Mapa das artes de estado vazio por contexto (`empty-state.tsx` e
++ * `empty-states.tsx` consomem por chave).
++ *
++ * As artes vivem em `empty-state-illustration-art.tsx` — só componentes — por
++ * causa da regra da casa `react-refresh/only-export-components`: um módulo que
++ * exporta este mapa não pode declarar componentes. Cada arte checa
++ * `useReducedMotion` e, com movimento reduzido, fica estática (sem loop).
+  */
+ export const illustrations: Record<string, React.ReactNode> = {
+-  inbox: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.g animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+-        <rect x="35" y="45" width="85" height="45" rx="12" className="fill-primary/20" />
+-        <rect x="48" y="58" width="45" height="5" rx="2.5" className="fill-primary/40" />
+-        <rect x="48" y="70" width="60" height="5" rx="2.5" className="fill-primary/30" />
+-      </motion.g>
+-      <motion.g animate={{ y: [0, -6, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
+-        <rect x="80" y="100" width="85" height="40" rx="12" className="fill-muted/60" />
+-        <rect x="93" y="112" width="55" height="5" rx="2.5" className="fill-muted-foreground/30" />
+-        <rect x="93" y="123" width="35" height="5" rx="2.5" className="fill-muted-foreground/20" />
+-      </motion.g>
+-      <motion.circle cx="28" cy="35" r="5" className="fill-primary/30" animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2, repeat: Infinity }} />
+-      <motion.circle cx="172" cy="55" r="4" className="fill-secondary/40" animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 2.5, repeat: Infinity, delay: 0.3 }} />
+-      <motion.circle cx="155" cy="125" r="6" className="fill-primary/20" animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.6, 0.2] }} transition={{ duration: 3, repeat: Infinity, delay: 0.6 }} />
+-      <motion.g animate={{ rotate: [0, 180, 360], scale: [1, 1.2, 1] }} transition={{ duration: 4, repeat: Infinity }} style={{ transformOrigin: '170px 35px' }}>
+-        <polygon points="170,28 172,34 178,35 172,36 170,42 168,36 162,35 168,34" className="fill-primary/50" />
+-      </motion.g>
+-    </svg>
+-  ),
+-  contacts: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.g animate={{ x: [0, 5, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+-        <rect x="28" y="38" width="144" height="38" rx="10" className="fill-muted/50" />
+-        <circle cx="55" cy="57" r="14" className="fill-primary/30" />
+-        <rect x="78" y="50" width="65" height="6" rx="3" className="fill-foreground/20" />
+-        <rect x="78" y="62" width="45" height="5" rx="2.5" className="fill-muted-foreground/20" />
+-      </motion.g>
+-      <motion.g animate={{ x: [0, -5, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
+-        <rect x="28" y="86" width="144" height="38" rx="10" className="fill-muted/30" />
+-        <circle cx="55" cy="105" r="14" className="fill-secondary/30" />
+-        <rect x="78" y="98" width="55" height="6" rx="3" className="fill-foreground/15" />
+-        <rect x="78" y="110" width="75" height="5" rx="2.5" className="fill-muted-foreground/15" />
+-      </motion.g>
+-      <motion.g animate={{ y: [0, -6, 0], rotate: [0, 12, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ transformOrigin: '170px 32px' }}>
+-        <circle cx="170" cy="32" r="16" className="fill-primary/20" />
+-        <rect x="164" y="29" width="12" height="3" rx="1.5" className="fill-primary" />
+-        <rect x="168.5" y="24" width="3" height="12" rx="1.5" className="fill-primary" />
+-      </motion.g>
+-    </svg>
+-  ),
+-  dashboard: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.rect x="28" y="95" width="28" height="45" rx="5" className="fill-primary/30" animate={{ height: [45, 55, 45], y: [95, 85, 95] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} />
+-      <motion.rect x="65" y="72" width="28" height="68" rx="5" className="fill-primary/45" animate={{ height: [68, 78, 68], y: [72, 62, 72] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} />
+-      <motion.rect x="102" y="50" width="28" height="90" rx="5" className="fill-primary/55" animate={{ height: [90, 100, 90], y: [50, 40, 50] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} />
+-      <motion.rect x="139" y="82" width="28" height="58" rx="5" className="fill-primary/38" animate={{ height: [58, 68, 58], y: [82, 72, 82] }} transition={{ duration: 2.3, repeat: Infinity, ease: "easeInOut", delay: 0.9 }} />
+-      <motion.path d="M42 85 L80 62 L117 42 L155 58" className="stroke-secondary" strokeWidth="3" strokeLinecap="round" fill="none" animate={{ pathLength: [0.7, 1, 0.7] }} transition={{ duration: 3, repeat: Infinity }} />
+-      <motion.g animate={{ scale: [1, 1.3, 1], rotate: [0, 180, 360] }} transition={{ duration: 4, repeat: Infinity }} style={{ transformOrigin: '172px 28px' }}>
+-        <polygon points="172,18 175,26 182,28 175,30 172,38 169,30 162,28 169,26" className="fill-primary/60" />
+-      </motion.g>
+-    </svg>
+-  ),
+-  calls: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.g animate={{ rotate: [-8, 8, -8] }} transition={{ duration: 0.4, repeat: Infinity, ease: "easeInOut" }} style={{ transformOrigin: '100px 80px' }}>
+-        <rect x="68" y="48" width="64" height="64" rx="16" className="fill-primary/20" />
+-        <path d="M88 68 C88 68 94 74 100 80 C106 86 112 92 112 92" className="stroke-primary" strokeWidth="5" strokeLinecap="round" fill="none" />
+-      </motion.g>
+-      <motion.circle cx="100" cy="80" r="42" className="stroke-primary/30" strokeWidth="2" fill="none" animate={{ scale: [1, 1.4], opacity: [0.4, 0] }} transition={{ duration: 1.5, repeat: Infinity }} />
+-      <motion.circle cx="100" cy="80" r="42" className="stroke-primary/20" strokeWidth="2" fill="none" animate={{ scale: [1, 1.6], opacity: [0.3, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }} />
+-    </svg>
+-  ),
+-  notifications: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.g animate={{ rotate: [-12, 12, -12] }} transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }} style={{ transformOrigin: '100px 48px' }}>
+-        <path d="M100 28 C78 28 68 50 68 72 L68 92 L56 104 L144 104 L132 92 L132 72 C132 50 122 28 100 28 Z" className="fill-primary/30" />
+-        <ellipse cx="100" cy="114" rx="12" ry="6" className="fill-primary/40" />
+-      </motion.g>
+-      <motion.circle cx="128" cy="42" r="10" className="fill-destructive/60" animate={{ scale: [1, 1.25, 1] }} transition={{ duration: 1, repeat: Infinity }} />
+-      <motion.text x="152" y="58" className="fill-muted-foreground/40 text-sm font-bold" animate={{ opacity: [0, 1, 0], x: [152, 164, 176] }} transition={{ duration: 2, repeat: Infinity }}>z</motion.text>
+-      <motion.text x="164" y="42" className="fill-muted-foreground/30 text-base font-bold" animate={{ opacity: [0, 1, 0], x: [164, 176, 188] }} transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}>z</motion.text>
+-    </svg>
+-  ),
+-  queues: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      {[0, 1, 2].map((i) => (
+-        <motion.g key={i}>
+-          <motion.rect x="45" y={38 + i * 32} width="110" height="24" rx="6" className="fill-muted stroke-border" strokeWidth="2" initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.4, delay: i * 0.15 }} />
+-          <motion.rect x="52" y={44 + i * 32} width={65 - i * 18} height="12" rx="3" className="fill-primary/40" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.5, delay: 0.3 + i * 0.15 }} />
+-        </motion.g>
+-      ))}
+-    </svg>
+-  ),
+-  messages: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.rect x="28" y="38" width="85" height="40" rx="10" className="fill-muted stroke-border" strokeWidth="2" initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.4 }} />
+-      <motion.rect x="88" y="88" width="85" height="40" rx="10" className="fill-primary/20 stroke-primary" strokeWidth="2" initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.4, delay: 0.2 }} />
+-      <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.3, delay: 0.5, type: 'spring' }}>
+-        <circle cx="48" cy="58" r="4" className="fill-muted-foreground/50" />
+-        <circle cx="65" cy="58" r="4" className="fill-muted-foreground/50" />
+-        <circle cx="82" cy="58" r="4" className="fill-muted-foreground/50" />
+-      </motion.g>
+-    </svg>
+-  ),
+-  data: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.rect x="48" y="98" width="28" height="44" rx="5" className="fill-primary/30 stroke-primary" strokeWidth="2" initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} style={{ originY: 1 }} transition={{ duration: 0.4, delay: 0.1 }} />
+-      <motion.rect x="85" y="68" width="28" height="74" rx="5" className="fill-secondary/30 stroke-secondary" strokeWidth="2" initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} style={{ originY: 1 }} transition={{ duration: 0.4, delay: 0.2 }} />
+-      <motion.rect x="122" y="48" width="28" height="94" rx="5" className="fill-success/30 stroke-success" strokeWidth="2" initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} style={{ originY: 1 }} transition={{ duration: 0.4, delay: 0.3 }} />
+-      <motion.path d="M38 38 L38 148 L168 148" className="stroke-border" strokeWidth="2" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
+-    </svg>
+-  ),
+-  search: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.g animate={{ x: [0, 8, 0], y: [0, -4, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+-        <motion.circle cx="88" cy="68" r="38" className="fill-muted stroke-border" strokeWidth="4" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.4, type: 'spring' }} />
+-        <motion.line x1="116" y1="96" x2="148" y2="128" className="stroke-primary" strokeWidth="6" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, delay: 0.3 }} />
+-      </motion.g>
+-      <motion.text x="38" y="48" className="fill-muted-foreground/30 text-2xl font-bold" animate={{ opacity: [0.3, 0.7, 0.3], y: [48, 42, 48] }} transition={{ duration: 2, repeat: Infinity }}>?</motion.text>
+-      <motion.text x="152" y="88" className="fill-muted-foreground/20 text-xl font-bold" animate={{ opacity: [0.2, 0.6, 0.2], y: [88, 82, 88] }} transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}>?</motion.text>
+-    </svg>
+-  ),
+-  transcriptions: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.rect x="48" y="28" width="104" height="104" rx="10" className="fill-muted stroke-border" strokeWidth="2" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.4 }} />
+-      {[0, 1, 2, 3].map((i) => (
+-        <motion.rect key={i} x="60" y={48 + i * 20} width={75 - i * 12} height="10" rx="3" className="fill-primary/30" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }} />
+-      ))}
+-      <motion.circle cx="148" cy="42" r="22" className="fill-secondary/20 stroke-secondary" strokeWidth="2" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.4, delay: 0.5, type: 'spring' }} />
+-      <motion.path d="M148 32 L148 52 M138 42 L158 42" className="stroke-secondary" strokeWidth="3" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, delay: 0.7 }} />
+-    </svg>
+-  ),
+-  agents: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.circle cx="100" cy="52" r="28" className="fill-primary/20 stroke-primary" strokeWidth="2" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.4, type: 'spring' }} />
+-      <motion.path d="M52 132 C52 94 100 82 100 82 C100 82 148 94 148 132" className="fill-muted stroke-border" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: 0.3 }} />
+-      <motion.circle cx="132" cy="38" r="14" className="fill-success/30 stroke-success" strokeWidth="2" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.3, delay: 0.5 }} />
+-      <motion.path d="M126 38 L130 42 L138 34" className="stroke-success" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, delay: 0.7 }} />
+-    </svg>
+-  ),
+-  wallet: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.rect x="38" y="48" width="124" height="74" rx="10" className="fill-muted stroke-border" strokeWidth="2" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }} />
+-      <motion.rect x="118" y="68" width="54" height="34" rx="6" className="fill-primary/20 stroke-primary" strokeWidth="2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.3, delay: 0.3 }} />
+-      <motion.circle cx="142" cy="85" r="10" className="fill-primary stroke-primary-foreground" strokeWidth="2" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.3, delay: 0.5, type: 'spring' }} />
+-    </svg>
+-  ),
+-  generic: (
+-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+-      <motion.g animate={{ y: [0, -5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+-        <rect x="60" y="50" width="80" height="60" rx="8" className="fill-muted/30" />
+-        <path d="M60 65 L100 85 L140 65" className="stroke-muted-foreground/20" strokeWidth="2" fill="none" />
+-        <line x1="100" y1="85" x2="100" y2="110" className="stroke-muted-foreground/20" strokeWidth="2" />
+-      </motion.g>
+-      <motion.circle cx="50" cy="80" r="4" className="fill-primary/20" animate={{ y: [80, 70, 80], opacity: [0.2, 0.5, 0.2] }} transition={{ duration: 2, repeat: Infinity }} />
+-      <motion.circle cx="150" cy="90" r="3" className="fill-secondary/30" animate={{ y: [90, 80, 90], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }} />
+-    </svg>
+-  ),
++  inbox: <IlustracaoInbox />,
++  contacts: <IlustracaoContacts />,
++  dashboard: <IlustracaoDashboard />,
++  calls: <IlustracaoCalls />,
++  notifications: <IlustracaoNotifications />,
++  queues: <IlustracaoQueues />,
++  messages: <IlustracaoMessages />,
++  data: <IlustracaoData />,
++  search: <IlustracaoSearch />,
++  transcriptions: <IlustracaoTranscriptions />,
++  agents: <IlustracaoAgents />,
++  wallet: <IlustracaoWallet />,
++  generic: <IlustracaoGeneric />,
+ };
+diff --git a/src/components/ui/motion/effects.tsx b/src/components/ui/motion/effects.tsx
+index 10923f3cbb..36a425195e 100644
+--- a/src/components/ui/motion/effects.tsx
++++ b/src/components/ui/motion/effects.tsx
+@@ -1,5 +1,5 @@
+-import { motion, AnimatePresence, Variants } from 'framer-motion';
+-import { ReactNode, useEffect, useState } from 'react';
++import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
++import { ReactNode, useEffect, useRef, useState } from 'react';
+ import { cn } from '@/lib/utils';
+ 
+ // Animated counter
+@@ -7,17 +7,20 @@ interface AnimatedCounterProps { value: number; duration?: number; className?: s
+ 
+ export function AnimatedCounter({ value, duration = 1, className }: AnimatedCounterProps) {
+   const [displayValue, setDisplayValue] = useState(0);
+-  const prevRef = { current: 0 };
++  // useRef (e nao um objeto novo a cada render): so assim a animacao sabe de
++  // onde veio e nao reinicia sempre do zero a cada mudanca de valor.
++  const prevRef = useRef(0);
+ 
+   useEffect(() => {
+-    let startTime: number;
+-    let frame: number;
++    let startTime: number | undefined;
++    let frame = 0;
+     const start = prevRef.current;
+     const diff = value - start;
+     if (diff === 0) return;
+ 
+     const animate = (ts: number) => {
+-      if (!startTime) startTime = ts;
++      // `undefined` e nao falsy: um ts 0 valido nao pode remarcar o inicio.
++      if (startTime === undefined) startTime = ts;
+       const progress = Math.min((ts - startTime) / (duration * 1000), 1);
+       const ease = 1 - Math.pow(1 - progress, 3);
+       setDisplayValue(Math.round(start + diff * ease));
+@@ -83,12 +86,26 @@ export function AnimatedListItem({ children, className, layoutId }: { children:
+ 
+ // Typewriter
+ export function Typewriter({ text, speed = 50, className, onComplete }: { text: string; speed?: number; className?: string; onComplete?: () => void }) {
+-  const [display, setDisplay] = useState('');
++  const reduzido = useReducedMotion();
++  const [digitado, setDigitado] = useState('');
++  // `onComplete` em ref: um callback inline do pai muda de identidade a cada
++  // render e, se ele ficasse nas deps, o efeito reiniciava e o texto voltava
++  // ao comeco no meio da digitacao.
++  const onCompleteRef = useRef(onComplete);
++  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
++
+   useEffect(() => {
++    // Com movimento reduzido nao ha o que digitar: o texto sai inteiro de uma
++    // vez (derivado abaixo, sem setState dentro do efeito) e so avisamos o fim.
++    if (reduzido) {
++      onCompleteRef.current?.();
++      return;
++    }
+     let i = 0;
+-    const iv = setInterval(() => { if (i <= text.length) { setDisplay(text.slice(0, i)); i++; } else { clearInterval(iv); onComplete?.(); } }, speed);
++    const iv = setInterval(() => { if (i <= text.length) { setDigitado(text.slice(0, i)); i++; } else { clearInterval(iv); onCompleteRef.current?.(); } }, speed);
+     return () => clearInterval(iv);
+-  }, [text, speed, onComplete]);
++  }, [text, speed, reduzido]);
+ 
+-  return <span className={className}>{display}{display.length < text.length && <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span>}</span>;
++  const display = reduzido ? text : digitado;
++  return <span className={className}>{display}{!reduzido && display.length < text.length && <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span>}</span>;
+ }
+diff --git a/src/providers/AppProviders.tsx b/src/providers/AppProviders.tsx
+index 3bed90292e..f910dd7e24 100644
+--- a/src/providers/AppProviders.tsx
++++ b/src/providers/AppProviders.tsx
+@@ -1,3 +1,4 @@
++import { MotionConfig } from "framer-motion";
+ import { QueryClientProvider } from "@tanstack/react-query";
+ import { queryClient } from "@/lib/queryClient";
+ import { AuthProvider } from "@/hooks/auth/useAuth";
+@@ -121,6 +122,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
+ 
+   return (
+     <ErrorBoundary resetKey={errorKey} onError={handleError} onReset={handleReset}>
++      {/*
++        A11Y: configura o framer-motion do app inteiro de uma vez so. Com
++        `reducedMotion="user"`, quem pede `prefers-reduced-motion: reduce` no
++        sistema deixa de receber animacao de transform/layout em TODOS os
++        consumidores de `motion.*` (antes cada tela ligava seu proprio
++        MotionConfig ou nenhum). O caso de `pathLength` das ilustracoes, que o
++        reducedMotion nao cobre, tem portao proprio em empty-state-illustration-art.
++      */}
++      <MotionConfig reducedMotion="user">
+       <QueryClientProvider client={queryClient}>
+         <AuthProvider>
+           <HighContrastProvider>
+@@ -138,6 +148,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
+           </HighContrastProvider>
+         </AuthProvider>
+       </QueryClientProvider>
++      </MotionConfig>
+     </ErrorBoundary>
+   );
+ }
+diff --git a/src/providers/__tests__/AppProviders.motionConfig.test.tsx b/src/providers/__tests__/AppProviders.motionConfig.test.tsx
+new file mode 100644
+index 0000000000..cdb9b497ff
+--- /dev/null
++++ b/src/providers/__tests__/AppProviders.motionConfig.test.tsx
+@@ -0,0 +1,29 @@
++/**
++ * A11Y — `MotionConfig reducedMotion="user"` num único lugar da raiz.
++ *
++ * Antes cada tela ligava (ou esquecia) o seu próprio MotionConfig; Contatos
++ * tinha um `<MotionConfig>` local. A configuração passa a valer para o app
++ * inteiro, então a raiz precisa ter exatamente UM e as telas não podem manter
++ * o delas.
++ */
++import { describe, expect, it } from 'vitest';
++import { readFileSync } from 'node:fs';
++import { resolve } from 'node:path';
++
++const ler = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf8');
++
++describe('movimento reduzido na raiz (A11Y)', () => {
++  it('1. AppProviders tem exatamente um MotionConfig reducedMotion="user"', () => {
++    const fonte = ler('../AppProviders.tsx');
++
++    expect(fonte.match(/<MotionConfig\s+reducedMotion="user">/g) ?? []).toHaveLength(1);
++    expect(fonte.match(/<\/MotionConfig>/g) ?? []).toHaveLength(1);
++    expect(fonte).toMatch(/import \{ MotionConfig \} from "framer-motion";/);
++  });
++
++  it('2. ContactsView largou o MotionConfig próprio (e o import)', () => {
++    const fonte = ler('../../components/contacts/ContactsView.tsx');
++
++    expect(fonte).not.toMatch(/MotionConfig/);
++  });
++});

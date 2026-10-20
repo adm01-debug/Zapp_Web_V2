@@ -1,0 +1,363 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "decision": "Recognize .unit.* and .integration.* test filenames as test/fixture classification, supported by test/assert imports in all58 affected files. No execution or semantic coverage promotion.",
+  "before": {
+    "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "typescript_version": "5.9.3",
+    "tracked_files": 4068,
+    "parsed_files": 2397,
+    "parse_error_files": 0,
+    "functions_with_bodies": 36853,
+    "non_test_functions": 17322,
+    "test_or_fixture_functions": 19531,
+    "files_with_functions": 2283,
+    "call_sites": 2824,
+    "functions_by_layer": {
+      "tests": 1780,
+      "configuration_or_other": 216,
+      "scripts": 1886,
+      "frontend": 30257,
+      "edge": 2714
+    },
+    "empty_catch_sites": 127,
+    "limitations": [
+      "A function body catalog is structural evidence, not semantic review or a count of distinct business features.",
+      "Anonymous callbacks and nested functions are counted individually; overloads without bodies are excluded.",
+      "Statement counters describe syntax only; nested function statements belong to their own record.",
+      "Calls are bounded lexical candidates, not proof of backend reachability or authorization.",
+      "No source module is imported or executed by this scanner."
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "scripts/ci/actions-kpi.unit.mjs",
+      "git_blob_sha": "93064231073b1f104f44c3fba893d01553bc90da",
+      "bodies": 9
+    },
+    {
+      "path": "scripts/ci/audit-prod.unit.mjs",
+      "git_blob_sha": "dddb46e4258b34841a99e02c72a5a012daab2482",
+      "bodies": 7
+    },
+    {
+      "path": "scripts/ci/branch-hygiene-workflow.unit.mjs",
+      "git_blob_sha": "2e402bc4e39f99a5e65e4a40bb5d06e534e8d2b0",
+      "bodies": 6
+    },
+    {
+      "path": "scripts/ci/bundle-budget.unit.mjs",
+      "git_blob_sha": "87c2f8607496127bd16f1c8a06b8d6c6f9644577",
+      "bodies": 9
+    },
+    {
+      "path": "scripts/ci/check-disposable-pg-backoff.unit.mjs",
+      "git_blob_sha": "a4d364b793797a97e25afa0877602253e5c17219",
+      "bodies": 5
+    },
+    {
+      "path": "scripts/ci/check-e2e-artifact-secrets.unit.mjs",
+      "git_blob_sha": "5b1a7a484690c36d1b83d2d67684bb2250eceb31",
+      "bodies": 10
+    },
+    {
+      "path": "scripts/ci/check-edge-error-exposure.unit.mjs",
+      "git_blob_sha": "7ea88cb9c1d1890bfcac2f8aaf430f383b738464",
+      "bodies": 10
+    },
+    {
+      "path": "scripts/ci/check-pr-workflow-secrets.unit.mjs",
+      "git_blob_sha": "d27f51f79ec0db5e349118f9c663c4d1ce9686c5",
+      "bodies": 36
+    },
+    {
+      "path": "scripts/ci/check-quarantine.unit.mjs",
+      "git_blob_sha": "75c67f2e5a447d328d0a7ed9ea0b92a87ea24721",
+      "bodies": 11
+    },
+    {
+      "path": "scripts/ci/check-talkx-pr-body.unit.mjs",
+      "git_blob_sha": "d78ea8cb397d1aa94048a528204f57dc563740ae",
+      "bodies": 21
+    },
+    {
+      "path": "scripts/ci/check-workflow-pins.unit.mjs",
+      "git_blob_sha": "257eb3e189ee1c4d6fce679b38d2ad8c5d2a9eb0",
+      "bodies": 11
+    },
+    {
+      "path": "scripts/ci/codeql-paths.unit.mjs",
+      "git_blob_sha": "befcc8b64b3070b173f94978468ff953da804484",
+      "bodies": 5
+    },
+    {
+      "path": "scripts/ci/confirm-hash.unit.mjs",
+      "git_blob_sha": "fd06ecd49b88ff65846ce16cb11355af231dd600",
+      "bodies": 9
+    },
+    {
+      "path": "scripts/ci/crm-integration-contract.unit.mjs",
+      "git_blob_sha": "3e39385ef12d18b71e8050a2c20797074997aeb8",
+      "bodies": 6
+    },
+    {
+      "path": "scripts/ci/db-migrate-contratos.unit.mjs",
+      "git_blob_sha": "6bd3f88a3d098a1dffbc1a291ab3ada0570b2b58",
+      "bodies": 12
+    },
+    {
+      "path": "scripts/ci/db-migrate-workflow.unit.mjs",
+      "git_blob_sha": "8082c4c980ce9ddd22f0ab5e86e54e8730d1b5ff",
+      "bodies": 2
+    },
+    {
+      "path": "scripts/ci/deno-reproducibility.unit.mjs",
+      "git_blob_sha": "896153df5679dcb57643b53689b32bc0a9568ca6",
+      "bodies": 2
+    },
+    {
+      "path": "scripts/ci/deploy-functions-workflow.unit.mjs",
+      "git_blob_sha": "c080478566198a070e59035b04ead47c084a8f7a",
+      "bodies": 9
+    },
+    {
+      "path": "scripts/ci/dry-run-plan.unit.mjs",
+      "git_blob_sha": "588dbb77fb7f163f6bc65eac7c12bd3ac0243406",
+      "bodies": 8
+    },
+    {
+      "path": "scripts/ci/evolution-api-proxy.unit.mjs",
+      "git_blob_sha": "1c94b77e886dcbda88a2368cb5253b39f8ac5775",
+      "bodies": 5
+    },
+    {
+      "path": "scripts/ci/evolution-edge-fixes.unit.mjs",
+      "git_blob_sha": "20c77a8c847a215d32c68eed4c79672950bce8db",
+      "bodies": 14
+    },
+    {
+      "path": "scripts/ci/github-settings-guard.unit.mjs",
+      "git_blob_sha": "b07b3626a1a7806a295eeefd08a05914eb762fa7",
+      "bodies": 13
+    },
+    {
+      "path": "scripts/ci/gitleaks-config.unit.mjs",
+      "git_blob_sha": "1711044dff7b96337108a3e423110dcfba93180b",
+      "bodies": 1
+    },
+    {
+      "path": "scripts/ci/install-postgresql-client.unit.mjs",
+      "git_blob_sha": "3869a2accc4351e0d051643253c9f5f7e8b4a607",
+      "bodies": 3
+    },
+    {
+      "path": "scripts/ci/issue-templates.unit.mjs",
+      "git_blob_sha": "0e05c75508ebac24745d2926f9127f50bdf3fb93",
+      "bodies": 6
+    },
+    {
+      "path": "scripts/ci/lint-ratchet.unit.mjs",
+      "git_blob_sha": "4eeff38ccf8f3f7296620ba1ab91446a2cf29706",
+      "bodies": 45
+    },
+    {
+      "path": "scripts/ci/marcador-specs.unit.mjs",
+      "git_blob_sha": "eac496d20af96e89b03f1bbb485b20418e3237db",
+      "bodies": 7
+    },
+    {
+      "path": "scripts/ci/media-dedupe.unit.mjs",
+      "git_blob_sha": "554e4e3f1a354e06263c3b4f655f787c8883ea8c",
+      "bodies": 7
+    },
+    {
+      "path": "scripts/ci/medir-tipografia.unit.mjs",
+      "git_blob_sha": "5e2cd605dab7d76e740d8a9da6f502e22e1e89a0",
+      "bodies": 19
+    },
+    {
+      "path": "scripts/ci/message-delivery-phase1-rollout.unit.mjs",
+      "git_blob_sha": "5ced4635f161d4148f8b110ebe2d01d6dfe6fdbe",
+      "bodies": 5
+    },
+    {
+      "path": "scripts/ci/ordenar.unit.mjs",
+      "git_blob_sha": "ae64f08bf2f4aa48098e7f7d5c9b8591d926167e",
+      "bodies": 8
+    },
+    {
+      "path": "scripts/ci/parity-hardening.unit.mjs",
+      "git_blob_sha": "9030fd193c46f6d305fff37a2abc7ae2c6ae050e",
+      "bodies": 14
+    },
+    {
+      "path": "scripts/ci/psql-safe.unit.mjs",
+      "git_blob_sha": "8b4f14fc4d1cac5daa600751f5d03fa2a9f8c655",
+      "bodies": 7
+    },
+    {
+      "path": "scripts/ci/redigir-relatorio.unit.mjs",
+      "git_blob_sha": "137a89d882f9e09abc8e43629a5194bf203ef064",
+      "bodies": 10
+    },
+    {
+      "path": "scripts/ci/security-workflow.unit.mjs",
+      "git_blob_sha": "9875d1b44e1aaecda5c84ce4da60931f755a999c",
+      "bodies": 2
+    },
+    {
+      "path": "scripts/ci/supabase-usage-guard-forward-projection.unit.mjs",
+      "git_blob_sha": "4b55a8e0fa55c0e058d437ef04272fb23b50986d",
+      "bodies": 26
+    },
+    {
+      "path": "scripts/ci/talkx-status-regen-workflow.unit.mjs",
+      "git_blob_sha": "8a04c26b47e7f7926e9ed4c7c3f0277ce876f72d",
+      "bodies": 4
+    },
+    {
+      "path": "scripts/ci/talkx-status-warn.unit.mjs",
+      "git_blob_sha": "d7d2debb48a648600058527c9394b0fcea99709b",
+      "bodies": 4
+    },
+    {
+      "path": "scripts/ci/talkx-template-history-caller.unit.mjs",
+      "git_blob_sha": "375d590960d966ef5fe0afde5c276a851363b7bc",
+      "bodies": 3
+    },
+    {
+      "path": "scripts/ci/typecheck-ratchet.unit.mjs",
+      "git_blob_sha": "7bccf77d3d99eca1f5bc744aa50a21ff8227e2e7",
+      "bodies": 13
+    },
+    {
+      "path": "scripts/ci/verify-ledger-statements.unit.mjs",
+      "git_blob_sha": "5746849c6db3a4b1ef5d45c25456b249fdc553f0",
+      "bodies": 9
+    },
+    {
+      "path": "scripts/ci/workflow-contracts.unit.mjs",
+      "git_blob_sha": "7c030e1bf9d04dd2fdb9aaf900dffc42f80a5b37",
+      "bodies": 13
+    },
+    {
+      "path": "scripts/ci/workflow-shell-strictness.unit.mjs",
+      "git_blob_sha": "f27c3b29ed42ba64887d1ecf893608e7cb83a233",
+      "bodies": 5
+    },
+    {
+      "path": "scripts/db-audit/psql-environment.integration.mjs",
+      "git_blob_sha": "936203a18c86457b1447bd7ebe305ecb04bf0aea",
+      "bodies": 14
+    },
+    {
+      "path": "scripts/edge-deploy/api-traversal.unit.mjs",
+      "git_blob_sha": "f46140215f5173fbb0fb3554bd857533d5d31f8a",
+      "bodies": 14
+    },
+    {
+      "path": "scripts/edge-deploy/deploy-plan.unit.mjs",
+      "git_blob_sha": "b2d1e8622db62b9b4c059919de381b5ef12f0eb9",
+      "bodies": 7
+    },
+    {
+      "path": "scripts/edge-deploy/deployment-record.unit.mjs",
+      "git_blob_sha": "883030d0dc71eb691e0bf5e322f4f3ba375dc5d5",
+      "bodies": 9
+    },
+    {
+      "path": "scripts/edge-deploy/manifest.unit.mjs",
+      "git_blob_sha": "aa5026d84447c4ff19cb24a515fc354bc174f96b",
+      "bodies": 31
+    },
+    {
+      "path": "scripts/edge-deploy/path-traversal.unit.mjs",
+      "git_blob_sha": "f1a41ddea82a014214f2847c12e966785c47f6d0",
+      "bodies": 6
+    },
+    {
+      "path": "scripts/edge-deploy/redigir-log.unit.mjs",
+      "git_blob_sha": "f118b0423677eb8fff5125229642ce6a73179760",
+      "bodies": 5
+    },
+    {
+      "path": "scripts/edge-deploy/secrets-scope.unit.mjs",
+      "git_blob_sha": "bf5c1c85456c47dc3300e1c3e67268aa9d0a62ef",
+      "bodies": 15
+    },
+    {
+      "path": "scripts/edge-deploy/serialize-scope.unit.mjs",
+      "git_blob_sha": "8a651067574d71bed3ff88cd9cfb167eb64af497",
+      "bodies": 24
+    },
+    {
+      "path": "scripts/edge-deploy/smoke-functions.unit.mjs",
+      "git_blob_sha": "1025bc92d784c459067bd08966427b7ff1a064e6",
+      "bodies": 11
+    },
+    {
+      "path": "scripts/edge-deploy/stable-inventory.unit.mjs",
+      "git_blob_sha": "831705a43263c8e3fce54dd270d121508a7d3f3e",
+      "bodies": 52
+    },
+    {
+      "path": "scripts/edge-deploy/talkx-preflight.unit.mjs",
+      "git_blob_sha": "72a40c3df3954dfe226b2414c07c1ec729a1f312",
+      "bodies": 21
+    },
+    {
+      "path": "scripts/edge-deploy/unchanged-from-log.unit.mjs",
+      "git_blob_sha": "4032b8648c02dfb479538e788b2c8df0dffa5421",
+      "bodies": 10
+    },
+    {
+      "path": "scripts/talkx/v4-status.unit.mjs",
+      "git_blob_sha": "fd0959f4f533d4ab78dc21c76684c2e49c6e303e",
+      "bodies": 15
+    },
+    {
+      "path": "scripts/team-chat-db-validate.unit.mjs",
+      "git_blob_sha": "a25be719e9d900975bc98ef6286b671bfbe62c55",
+      "bodies": 3
+    }
+  ],
+  "affected_bodies": 668,
+  "after": {
+    "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "typescript_version": "5.9.3",
+    "tracked_files": 4068,
+    "parsed_files": 2397,
+    "parse_error_files": 0,
+    "functions_with_bodies": 36853,
+    "non_test_functions": 16654,
+    "test_or_fixture_functions": 20199,
+    "files_with_functions": 2283,
+    "call_sites": 2824,
+    "functions_by_layer": {
+      "tests": 1780,
+      "configuration_or_other": 216,
+      "scripts": 1886,
+      "frontend": 30257,
+      "edge": 2714
+    },
+    "empty_catch_sites": 127,
+    "limitations": [
+      "A function body catalog is structural evidence, not semantic review or a count of distinct business features.",
+      "Anonymous callbacks and nested functions are counted individually; overloads without bodies are excluded.",
+      "Statement counters describe syntax only; nested function statements belong to their own record.",
+      "Calls are bounded lexical candidates, not proof of backend reachability or authorization.",
+      "No source module is imported or executed by this scanner."
+    ]
+  },
+  "additional_deno_suffix_adjudication": {
+    "path": "supabase/functions/ai-auto-tag/auth_test.ts",
+    "git_blob_sha": "8845684d6db07545d964e1c083063f316706a245",
+    "functions": 2,
+    "lines_reviewed": [
+      1,
+      44
+    ],
+    "evidence": "Deno.test blocks and assertEquals import; file documents its deno test invocation. Only previously non-test path matching _test suffix. No test executed; classification correction only.",
+    "classification": "TEST"
+  }
+}

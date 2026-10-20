@@ -1,0 +1,9 @@
+0	3	src/components/contacts/ContactsView.tsx
+1	1	src/components/ui/GenericEmptyState.tsx
+122	0	src/components/ui/__tests__/emptyStates.movimento.test.tsx
+139	0	src/components/ui/__tests__/motionEffects.movimento.test.tsx
+224	0	src/components/ui/empty-state-illustration-art.tsx
+35	152	src/components/ui/empty-state-illustrations.tsx
+27	10	src/components/ui/motion/effects.tsx
+11	0	src/providers/AppProviders.tsx
+29	0	src/providers/__tests__/AppProviders.motionConfig.test.tsx

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-motionconfig-raiz-rehacer
+ID=2610151731b57c
+BRANCH=v2/a11y-motionconfig-raiz-rehacer-2610151731b57c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-rehacer-2610151731b57c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T17:31:35-03:00
+KANBAN=t_7979b2e9
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-rehacer-2610151731b57c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610151731b57c
+PRONTO_SHA=f9701940fa6e8259a6711529570c7d790b5cc502

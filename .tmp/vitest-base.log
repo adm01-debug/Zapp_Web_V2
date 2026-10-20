@@ -1,0 +1,1493 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-motionconfig-raiz-rehacer-2610151731b57c/.tmp/prova-base
+
+xx·x·xxx·xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/providers/__tests__/AppProviders.motionConfig.test.tsx > movimento reduzido na raiz (A11Y) > 1. AppProviders tem exatamente um MotionConfig reducedMotion="user"
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/providers/__tests__/AppProviders.motionConfig.test.tsx:19:73
+     17|     const fonte = ler('../AppProviders.tsx');
+     18|
+     19|     expect(fonte.match(/<MotionConfig\s+reducedMotion="user">/g) ?? []…
+       |                                                                         ^
+     20|     expect(fonte.match(/<\/MotionConfig>/g) ?? []).toHaveLength(1);
+     21|     expect(fonte).toMatch(/import \{ MotionConfig \} from "framer-moti…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/providers/__tests__/AppProviders.motionConfig.test.tsx > movimento reduzido na raiz (A11Y) > 2. ContactsView largou o MotionConfig próprio (e o import)
+AssertionError: expected 'import { useMemo } from \'react\';\ni…' not to match /MotionConfig/
+
+- Expected:
+/MotionConfig/
+
++ Received:
+"import { useMemo } from 'react';
+import { MotionConfig } from 'framer-motion';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
+import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
+import { useContactsV2Flags, contactsV2AreasLigadas } from '@/hooks/contacts/useContactsV2Flags';
+import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
+import { ContactStatsCards } from './ContactStatsCards';
+import { ContactTypeTabs } from './ContactTypeTabs';
+import { ContactMergeDialog } from './ContactMergeDialog';
+import { ContactCompareDialog } from './ContactCompareDialog';
+import { ContactBulkTagDialog } from './ContactBulkTagDialog';
+import { ContactDialogs } from './ContactDialogs';
+import { ContactToolbar } from './ContactToolbar';
+import { ContactDetailPanel } from './ContactDetailPanel';
+import { ContactContentArea } from './ContactContentArea';
+import { ContactResultsSummary } from './ContactResultsSummary';
+import { ContactCRMDialog } from './ContactCRMDialog';
+import { useContactsViewState } from './useContactsViewState';
+import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
+export function ContactsView() {
+  const crmIntegrationEnabled = useCRMIntegrationEnabled();
+
+  /**
+   * CT-005 — chave `contacts.v2`, ponto ÚNICO de leitura no módulo Contatos.
+   *
+   * Cada área do módulo tem a sua sub-chave (`contacts.v2.toolbar`, `.cards`,
+   * `.detalhe`, `.empresa`, `.edicao`, `.protecao`) e a chave geral desliga todas
+   * de uma vez, sem versão nova do sistema (a infraestrutura de flags revalida a
+   * leitura sozinha). As telas v2 ainda não existem (chegam a partir de CT-006),
+   * então a leitura não troca nem tira nenhuma peça da tela: a experiência nova
+   * só entra quando a área v2 correspondente existir e o ramo dela for trocado
+   * aqui. Desligada, a tela é exatamente a atual.
+   *
+   * O elemento raiz publica quais áreas estão ligadas (`data-contacts-v2`, lista
+   * vazia = tela atual), para a liberação por partes ser conferida e revertida
+   * sem abrir o banco.
+   */
+  const contactsV2 = useContactsV2Flags();
+  const areasV2Ligadas = contactsV2AreasLigadas(contactsV2);
+
+  const {
+    crud, viewMode, setViewMode, gridColumns, setGridColumns,
+    isMergeOpen, setIsMergeOpen,
+    isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
+    isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
+    handleApplyPreset, handleToggleSelect, handleSelectAll,
+    handleContactClick,
+  } = useContactsViewState();
+
+  const {
+    contacts: filteredContacts, totalCount, loading, hasMore,
+    contactCountByType, uniqueCompanies, uniqueJobTitles, uniqueTags,
+    searchInput, debouncedSearch: search, handleSearchChange, clearSearch,
+    activeTab, setActiveTab, filterCompany, setFilterCompany,
+    filterJobTitle, setFilterJobTitle, filterTag, setFilterTag,
+    filterDateRange, setFilterDateRange, sortBy, setSortBy,
+    showLegacy, setShowLegacy,
+    activeFiltersCount, clearFilters, page, setPage, pageSize,
+    loadMore, loadPrevious, refetch,
+    profile, scrollContainerRef,
+    isSubmitting, deleteTarget, setDeleteTarget,
+    showSuccess, setShowSuccess,
+    isAddDialogOpen, setIsAddDialogOpen,
+    isEditDialogOpen, setIsEditDialogOpen,
+    editingContact, showFilters, setShowFilters,
+    isCRMSearchOpen, setIsCRMSearchOpen,
+    selectedIds, setSelectedIds,
+    newContact, openContactChat,
+    handleAddContact, handleEditContact, handleDeleteContact,
+    openEditDialog, handleCancelForm,
+    handleNewContactChange, handleEditContactChange,
+    invalidateContactAggregates,
+  } = crud;
+
+  const { isSupervisor } = useUserRole();
+  const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
+  const { lookup } = useExternalContact360Batch(crmContacts);
+  const getCRMData = (phone: string) => lookup(phone) ?? null;
+  const layoutScrollRef = useLayoutScroll();
+
+  /**
+   * `can_delete` chega do banco por contato (RPC `can_delete_contacts`). A seleção
+   * sobrevive à troca de página/filtro, então um contato selecionado pode não estar
+   * na lista carregada agora: nesse caso não há informação sobre ele e o botão NÃO
+   * deve ser bloqueado -- mesma semântica do item avulso (`undefined` = segue
+   * visível). Antes, o cálculo era feito sobre a página visível e desabilitava o
+   * botão com a mensagem errada (\"nenhum pode ser excluído\") só por paginar.
+   */
+  const canDeleteSelection = useMemo(
+    () => canDeleteSelectedContacts(selectedIds, filteredContacts),
+    [filteredContacts, selectedIds],
+  );
+
+  /**
+   * \"Alterar tipo em massa\" usa o mesmo predicado do banco que a exclusão
+   * (`can_edit_contact`: admin/supervisor OU responsável pelo contato) — o
+   * UPDATE de `contacts` é governado pela policy \"Users can update their
+   * assigned contacts\". Mesma semântica da exclusão em lote: um conhecido com
+   * permissão habilita; seleção sem informação não bloqueia.
+   */
+  const canChangeTypeSelection = useMemo(
+    () => canChangeSelectedContactsType(selectedIds, filteredContacts),
+    [filteredContacts, selectedIds],
+  );
+
+  /**
+   * Mesclar não tem permissão por contato: a RPC `merge_contacts_atomic` recusa
+   * com `42501` quem não é admin/supervisor (`is_admin_or_supervisor`), e o merge
+   * faz DELETE físico dos secundários. O dado vem do mesmo predicado do servidor
+   * (`useCRMAdminAccess`); `null` (consulta em andamento) não bloqueia — mesma
+   * semântica da série de exclusão.
+   */
+  const adminAccess = useCRMAdminAccess();
+  const canMerge = canMergeContacts(adminAccess);
+
+  return (
+    <MotionConfig reducedMotion=\"user\">
+    <div className=\"relative bg-background w-full min-w-0\" data-contacts-v2={areasV2Ligadas.join(' ')}>
+      <ScrollToTopButton
+        scrollRef={layoutScrollRef}
+        className=\"bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8\"
+      />
+
+
+      {/* ContactDialogs vive fora de qualquer condição de lista vazia/carregamento:
+          uma única instância preserva os quatro diálogos e o gatilho verde flutuante. */}
+      <ContactDialogs
+        isAddDialogOpen={isAddDialogOpen} setIsAddDialogOpen={setIsAddDialogOpen}
+        newContact={newContact} handleNewContactChange={handleNewContactChange}
+        handleAddContact={handleAddContact} handleCancelForm={handleCancelForm}
+        isSubmitting={isSubmitting}
+        isEditDialogOpen={isEditDialogOpen} setIsEditDialogOpen={setIsEditDialogOpen}
+        editingContact={editingContact} handleEditContactChange={handleEditContactChange}
+        handleEditContact={handleEditContact}
+        showSuccess={showSuccess} setShowSuccess={setShowSuccess}
+        deleteTarget={deleteTarget} setDeleteTarget={setDeleteTarget}
+        handleDeleteContact={handleDeleteContact}
+      />
+
+      <div className=\"space-y-4\">
+      <PageHeader
+        title=\"Contatos\"
+        breadcrumbs={[{ label: 'Gestão' }, { label: 'Contatos' }]}
+      />
+
+      {canMerge && (
+        <ContactMergeDialog
+          open={isMergeOpen} onOpenChange={setIsMergeOpen}
+          contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
+          onMergeComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
+        />
+      )}
+      <ContactCompareDialog
+        open={isCompareOpen} onOpenChange={setIsCompareOpen}
+        contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
+      />
+      <ContactBulkTagDialog
+        open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
+        contactIds={selectedIds} allTags={uniqueTags}
+        onComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
+        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
+      />
+
+      <ContactStatsCards
+        totalAll={contactCountByType['all'] ?? 0}
+        fornecedoresAll={contactCountByType['fornecedor'] ?? 0}
+        includeLegacy={showLegacy}
+      />
+
+      <ContactTypeTabs activeTab={activeTab} setActiveTab={setActiveTab} contactCountByType={contactCountByType} />
+
+      <ContactToolbar
+        searchInput={searchInput} onSearchChange={handleSearchChange}
+        sortBy={sortBy} setSortBy={setSortBy}
+        showLegacy={showLegacy} setShowLegacy={setShowLegacy}
+        showFilters={showFilters} setShowFilters={setShowFilters}
+        activeFiltersCount={activeFiltersCount} clearFilters={clearFilters}
+        activeTab={activeTab}
+        filterCompany={filterCompany} setFilterCompany={setFilterCompany}
+        filterJobTitle={filterJobTitle} setFilterJobTitle={setFilterJobTitle}
+        filterTag={filterTag} setFilterTag={setFilterTag}
+        filterDateRange={filterDateRange} setFilterDateRange={setFilterDateRange}
+        uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles} uniqueTags={uniqueTags}
+        onApplyPreset={handleApplyPreset}
+        groupByCompany={groupByCompany} setGroupByCompany={setGroupByCompany}
+        selectedIds={selectedIds}
+        onBulkTag={() => setIsBulkTagOpen(true)}
+        onCompare={() => setIsCompareOpen(true)}
+        canMerge={canMerge}
+        onMerge={() => setIsMergeOpen(true)}
+        viewMode={viewMode} setViewMode={setViewMode}
+        gridColumns={gridColumns} setGridColumns={setGridColumns}
+        totalCount={totalCount}
+        crmIntegrationEnabled={crmIntegrationEnabled}
+        onOpenCRM={() => setIsCRMSearchOpen(true)}
+      />
+      </div>
+
+      <div className=\"space-y-3 mt-3\">
+      {!loading && (
+        <ContactResultsSummary
+          totalCount={totalCount}
+          filteredCount={filteredContacts.length}
+          selectedCount={selectedIds.length}
+          activeFiltersCount={activeFiltersCount}
+          search={search}
+          onSelectAll={handleSelectAll}
+          allSelected={selectedIds.length === filteredContacts.length}
+          page={page}
+          pageSize={pageSize}
+          loadMore={loadMore}
+          loadPrevious={loadPrevious}
+          hasMore={hasMore}
+          loading={loading}
+        />
+      )}
+
+      <ContactContentArea
+        loading={loading}
+        contacts={filteredContacts}
+        viewMode={viewMode}
+        gridColumns={gridColumns}
+        groupByCompany={groupByCompany}
+        selectedIds={selectedIds}
+        search={search}
+        activeFiltersCount={activeFiltersCount}
+        onToggleSelect={handleToggleSelect}
+        onContactClick={handleContactClick}
+        onOpenChat={openContactChat}
+        onEdit={openEditDialog}
+        onDelete={setDeleteTarget}
+        onSelectIds={setSelectedIds}
+        onAddContact={() => setIsAddDialogOpen(true)}
+        onClearSearch={search ? clearSearch : undefined}
+        onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
+        getCRMData={getCRMData}
+        totalCount={totalCount}
+      />
+      </div>
+
+      {detailContact && (
+        <ContactDetailPanel
+          contact={detailContact}
+          onClose={() => setDetailContact(null)}
+          onOpenChat={openContactChat}
+          onEdit={openEditDialog}
+        />
+      )}
+
+      {crmIntegrationEnabled && (
+        <ContactCRMDialog
+          open={isCRMSearchOpen}
+          onOpenChange={setIsCRMSearchOpen}
+          onContactSelected={openContactChat}
+          onImported={invalidateContactAggregates}
+        />
+      )}
+
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClearSelection={() => setSelectedIds([])}
+        onActionComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
+        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
+        onCountersChanged={invalidateContactAggregates}
+        availableTags={uniqueTags}
+        canDeleteSelection={canDeleteSelection}
+        canChangeType={isSupervisor}
+        canChangeTypeSelection={canChangeTypeSelection}
+      />
+    </div>
+    </MotionConfig>
+  );
+}
+"
+
+ ❯ src/providers/__tests__/AppProviders.motionConfig.test.tsx:27:23
+     25|     const fonte = ler('../../components/contacts/ContactsView.tsx');
+     26|
+     27|     expect(fonte).not.toMatch(/MotionConfig/);
+       |                       ^
+     28|   });
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/components/ui/__tests__/emptyStates.movimento.test.tsx > ilustrações de estado vazio — movimento reduzido > 1. com reduzir ligado, NENHUMA ilustração anima em loop
+AssertionError: expected [ Array(28) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "props": {
++       "animate": {
++         "y": [
++           0,
++           -8,
++           0,
++         ],
++       },
++       "children": [
++         <rect
++           className="fill-primary/20"
++           height="45"
++           rx="12"
++           width="85"
++           x="35"
++           y="45"
++         />,
++         <rect
++           className="fill-primary/40"
++           height="5"
++           rx="2.5"
++           width="45"
++           x="48"
++           y="58"
++         />,
++         <rect
++           className="fill-primary/30"
++           height="5"
++           rx="2.5"
++           width="60"
++           x="48"
++           y="70"
++         />,
++       ],
++       "transition": {
++         "duration": 3,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "y": [
++           0,
++           -6,
++           0,
++         ],
++       },
++       "children": [
++         <rect
++           className="fill-muted/60"
++           height="40"
++           rx="12"
++           width="85"
++           x="80"
++           y="100"
++         />,
++         <rect
++           className="fill-muted-foreground/30"
++           height="5"
++           rx="2.5"
++           width="55"
++           x="93"
++           y="112"
++         />,
++         <rect
++           className="fill-muted-foreground/20"
++           height="5"
++           rx="2.5"
++           width="35"
++           x="93"
++           y="123"
++         />,
++       ],
++       "transition": {
++         "delay": 0.5,
++         "duration": 2.5,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.3,
++           0.7,
++           0.3,
++         ],
++         "scale": [
++           1,
++           1.4,
++           1,
++         ],
++       },
++       "className": "fill-primary/30",
++       "cx": "28",
++       "cy": "35",
++       "r": "5",
++       "transition": {
++         "duration": 2,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.4,
++           0.8,
++           0.4,
++         ],
++         "scale": [
++           1,
++           1.5,
++           1,
++         ],
++       },
++       "className": "fill-secondary/40",
++       "cx": "172",
++       "cy": "55",
++       "r": "4",
++       "transition": {
++         "delay": 0.3,
++         "duration": 2.5,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.2,
++           0.6,
++           0.2,
++         ],
++         "scale": [
++           1,
++           1.3,
++           1,
++         ],
++       },
++       "className": "fill-primary/20",
++       "cx": "155",
++       "cy": "125",
++       "r": "6",
++       "transition": {
++         "delay": 0.6,
++         "duration": 3,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "rotate": [
++           0,
++           180,
++           360,
++         ],
++         "scale": [
++           1,
++           1.2,
++           1,
++         ],
++       },
++       "children": <polygon
++         className="fill-primary/50"
++         points="170,28 172,34 178,35 172,36 170,42 168,36 162,35 168,34"
++       />,
++       "style": {
++         "transformOrigin": "170px 35px",
++       },
++       "transition": {
++         "duration": 4,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "x": [
++           0,
++           5,
++           0,
++         ],
++       },
++       "children": [
++         <rect
++           className="fill-muted/50"
++           height="38"
++           rx="10"
++           width="144"
++           x="28"
++           y="38"
++         />,
++         <circle
++           className="fill-primary/30"
++           cx="55"
++           cy="57"
++           r="14"
++         />,
++         <rect
++           className="fill-foreground/20"
++           height="6"
++           rx="3"
++           width="65"
++           x="78"
++           y="50"
++         />,
++         <rect
++           className="fill-muted-foreground/20"
++           height="5"
++           rx="2.5"
++           width="45"
++           x="78"
++           y="62"
++         />,
++       ],
++       "transition": {
++         "duration": 4,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "x": [
++           0,
++           -5,
++           0,
++         ],
++       },
++       "children": [
++         <rect
++           className="fill-muted/30"
++           height="38"
++           rx="10"
++           width="144"
++           x="28"
++           y="86"
++         />,
++         <circle
++           className="fill-secondary/30"
++           cx="55"
++           cy="105"
++           r="14"
++         />,
++         <rect
++           className="fill-foreground/15"
++           height="6"
++           rx="3"
++           width="55"
++           x="78"
++           y="98"
++         />,
++         <rect
++           className="fill-muted-foreground/15"
++           height="5"
++           rx="2.5"
++           width="75"
++           x="78"
++           y="110"
++         />,
++       ],
++       "transition": {
++         "delay": 0.5,
++         "duration": 3.5,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "rotate": [
++           0,
++           12,
++           0,
++         ],
++         "y": [
++           0,
++           -6,
++           0,
++         ],
++       },
++       "children": [
++         <circle
++           className="fill-primary/20"
++           cx="170"
++           cy="32"
++           r="16"
++         />,
++         <rect
++           className="fill-primary"
++           height="3"
++           rx="1.5"
++           width="12"
++           x="164"
++           y="29"
++         />,
++         <rect
++           className="fill-primary"
++           height="12"
++           rx="1.5"
++           width="3"
++           x="168.5"
++           y="24"
++         />,
++       ],
++       "style": {
++         "transformOrigin": "170px 32px",
++       },
++       "transition": {
++         "duration": 2,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "height": [
++           45,
++           55,
++           45,
++         ],
++         "y": [
++           95,
++           85,
++           95,
++         ],
++       },
++       "className": "fill-primary/30",
++       "height": "45",
++       "rx": "5",
++       "transition": {
++         "duration": 2,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++       "width": "28",
++       "x": "28",
++       "y": "95",
++     },
++     "tag": "rect",
++   },
++   {
++     "props": {
++       "animate": {
++         "height": [
++           68,
++           78,
++           68,
++         ],
++         "y": [
++           72,
++           62,
++           72,
++         ],
++       },
++       "className": "fill-primary/45",
++       "height": "68",
++       "rx": "5",
++       "transition": {
++         "delay": 0.3,
++         "duration": 2.5,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++       "width": "28",
++       "x": "65",
++       "y": "72",
++     },
++     "tag": "rect",
++   },
++   {
++     "props": {
++       "animate": {
++         "height": [
++           90,
++           100,
++           90,
++         ],
++         "y": [
++           50,
++           40,
++           50,
++         ],
++       },
++       "className": "fill-primary/55",
++       "height": "90",
++       "rx": "5",
++       "transition": {
++         "delay": 0.6,
++         "duration": 2,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++       "width": "28",
++       "x": "102",
++       "y": "50",
++     },
++     "tag": "rect",
++   },
++   {
++     "props": {
++       "animate": {
++         "height": [
++           58,
++           68,
++           58,
++         ],
++         "y": [
++           82,
++           72,
++           82,
++         ],
++       },
++       "className": "fill-primary/38",
++       "height": "58",
++       "rx": "5",
++       "transition": {
++         "delay": 0.9,
++         "duration": 2.3,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++       "width": "28",
++       "x": "139",
++       "y": "82",
++     },
++     "tag": "rect",
++   },
++   {
++     "props": {
++       "animate": {
++         "pathLength": [
++           0.7,
++           1,
++           0.7,
++         ],
++       },
++       "className": "stroke-secondary",
++       "d": "M42 85 L80 62 L117 42 L155 58",
++       "fill": "none",
++       "strokeLinecap": "round",
++       "strokeWidth": "3",
++       "transition": {
++         "duration": 3,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "path",
++   },
++   {
++     "props": {
++       "animate": {
++         "rotate": [
++           0,
++           180,
++           360,
++         ],
++         "scale": [
++           1,
++           1.3,
++           1,
++         ],
++       },
++       "children": <polygon
++         className="fill-primary/60"
++         points="172,18 175,26 182,28 175,30 172,38 169,30 162,28 169,26"
++       />,
++       "style": {
++         "transformOrigin": "172px 28px",
++       },
++       "transition": {
++         "duration": 4,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "rotate": [
++           -8,
++           8,
++           -8,
++         ],
++       },
++       "children": [
++         <rect
++           className="fill-primary/20"
++           height="64"
++           rx="16"
++           width="64"
++           x="68"
++           y="48"
++         />,
++         <path
++           className="stroke-primary"
++           d="M88 68 C88 68 94 74 100 80 C106 86 112 92 112 92"
++           fill="none"
++           strokeLinecap="round"
++           strokeWidth="5"
++         />,
++       ],
++       "style": {
++         "transformOrigin": "100px 80px",
++       },
++       "transition": {
++         "duration": 0.4,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.4,
++           0,
++         ],
++         "scale": [
++           1,
++           1.4,
++         ],
++       },
++       "className": "stroke-primary/30",
++       "cx": "100",
++       "cy": "80",
++       "fill": "none",
++       "r": "42",
++       "strokeWidth": "2",
++       "transition": {
++         "duration": 1.5,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.3,
++           0,
++         ],
++         "scale": [
++           1,
++           1.6,
++         ],
++       },
++       "className": "stroke-primary/20",
++       "cx": "100",
++       "cy": "80",
++       "fill": "none",
++       "r": "42",
++       "strokeWidth": "2",
++       "transition": {
++         "delay": 0.5,
++         "duration": 1.5,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "rotate": [
++           -12,
++           12,
++           -12,
++         ],
++       },
++       "children": [
++         <path
++           className="fill-primary/30"
++           d="M100 28 C78 28 68 50 68 72 L68 92 L56 104 L144 104 L132 92 L132 72 C132 50 122 28 100 28 Z"
++         />,
++         <ellipse
++           className="fill-primary/40"
++           cx="100"
++           cy="114"
++           rx="12"
++           ry="6"
++         />,
++       ],
++       "style": {
++         "transformOrigin": "100px 48px",
++       },
++       "transition": {
++         "duration": 0.5,
++         "repeat": Infinity,
++         "repeatDelay": 2,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "scale": [
++           1,
++           1.25,
++           1,
++         ],
++       },
++       "className": "fill-destructive/60",
++       "cx": "128",
++       "cy": "42",
++       "r": "10",
++       "transition": {
++         "duration": 1,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0,
++           1,
++           0,
++         ],
++         "x": [
++           152,
++           164,
++           176,
++         ],
++       },
++       "children": "z",
++       "className": "fill-muted-foreground/40 text-sm font-bold",
++       "transition": {
++         "duration": 2,
++         "repeat": Infinity,
++       },
++       "x": "152",
++       "y": "58",
++     },
++     "tag": "text",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0,
++           1,
++           0,
++         ],
++         "x": [
++           164,
++           176,
++           188,
++         ],
++       },
++       "children": "z",
++       "className": "fill-muted-foreground/30 text-base font-bold",
++       "transition": {
++         "delay": 0.5,
++         "duration": 2,
++         "repeat": Infinity,
++       },
++       "x": "164",
++       "y": "42",
++     },
++     "tag": "text",
++   },
++   {
++     "props": {
++       "animate": {
++         "x": [
++           0,
++           8,
++           0,
++         ],
++         "y": [
++           0,
++           -4,
++           0,
++         ],
++       },
++       "children": [
++         <Espiao
++           animate={
++             {
++               "scale": 1,
++             }
++           }
++           className="fill-muted stroke-border"
++           cx="88"
++           cy="68"
++           initial={
++             {
++               "scale": 0,
++             }
++           }
++           r="38"
++           strokeWidth="4"
++           transition={
++             {
++               "duration": 0.4,
++               "type": "spring",
++             }
++           }
++         />,
++         <Espiao
++           animate={
++             {
++               "pathLength": 1,
++             }
++           }
++           className="stroke-primary"
++           initial={
++             {
++               "pathLength": 0,
++             }
++           }
++           strokeLinecap="round"
++           strokeWidth="6"
++           transition={
++             {
++               "delay": 0.3,
++               "duration": 0.3,
++             }
++           }
++           x1="116"
++           x2="148"
++           y1="96"
++           y2="128"
++         />,
++       ],
++       "transition": {
++         "duration": 3,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.3,
++           0.7,
++           0.3,
++         ],
++         "y": [
++           48,
++           42,
++           48,
++         ],
++       },
++       "children": "?",
++       "className": "fill-muted-foreground/30 text-2xl font-bold",
++       "transition": {
++         "duration": 2,
++         "repeat": Infinity,
++       },
++       "x": "38",
++       "y": "48",
++     },
++     "tag": "text",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.2,
++           0.6,
++           0.2,
++         ],
++         "y": [
++           88,
++           82,
++           88,
++         ],
++       },
++       "children": "?",
++       "className": "fill-muted-foreground/20 text-xl font-bold",
++       "transition": {
++         "delay": 0.5,
++         "duration": 2.5,
++         "repeat": Infinity,
++       },
++       "x": "152",
++       "y": "88",
++     },
++     "tag": "text",
++   },
++   {
++     "props": {
++       "animate": {
++         "y": [
++           0,
++           -5,
++           0,
++         ],
++       },
++       "children": [
++         <rect
++           className="fill-muted/30"
++           height="60"
++           rx="8"
++           width="80"
++           x="60"
++           y="50"
++         />,
++         <path
++           className="stroke-muted-foreground/20"
++           d="M60 65 L100 85 L140 65"
++           fill="none"
++           strokeWidth="2"
++         />,
++         <line
++           className="stroke-muted-foreground/20"
++           strokeWidth="2"
++           x1="100"
++           x2="100"
++           y1="85"
++           y2="110"
++         />,
++       ],
++       "transition": {
++         "duration": 3,
++         "ease": "easeInOut",
++         "repeat": Infinity,
++       },
++     },
++     "tag": "g",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.2,
++           0.5,
++           0.2,
++         ],
++         "y": [
++           80,
++           70,
++           80,
++         ],
++       },
++       "className": "fill-primary/20",
++       "cx": "50",
++       "cy": "80",
++       "r": "4",
++       "transition": {
++         "duration": 2,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++   {
++     "props": {
++       "animate": {
++         "opacity": [
++           0.3,
++           0.6,
++           0.3,
++         ],
++         "y": [
++           90,
++           80,
++           90,
++         ],
++       },
++       "className": "fill-secondary/30",
++       "cx": "150",
++       "cy": "90",
++       "r": "3",
++       "transition": {
++         "delay": 0.5,
++         "duration": 2.5,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "circle",
++   },
++ ]
+
+ ❯ src/components/ui/__tests__/emptyStates.movimento.test.tsx:70:32
+     68|     // 13 ilustrações, todas renderizadas de verdade.
+     69|     expect(registrado.length).toBeGreaterThan(0);
+     70|     expect(loopsRegistrados()).toEqual([]);
+       |                                ^
+     71|     expect(
+     72|       registrado.filter(({ props }) => props.transition !== undefined),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/components/ui/__tests__/emptyStates.movimento.test.tsx > ilustrações de estado vazio — movimento reduzido > 3. o portão cobre o caso que o MotionConfig da raiz não pega: pathLength infinito
+AssertionError: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "props": {
++       "animate": {
++         "pathLength": [
++           0.7,
++           1,
++           0.7,
++         ],
++       },
++       "className": "stroke-secondary",
++       "d": "M42 85 L80 62 L117 42 L155 58",
++       "fill": "none",
++       "strokeLinecap": "round",
++       "strokeWidth": "3",
++       "transition": {
++         "duration": 3,
++         "repeat": Infinity,
++       },
++     },
++     "tag": "path",
++   },
++   {
++     "props": {
++       "animate": {
++         "pathLength": 1,
++       },
++       "className": "stroke-border",
++       "d": "M38 38 L38 148 L168 148",
++       "initial": {
++         "pathLength": 0,
++       },
++       "strokeLinecap": "round",
++       "strokeWidth": "2",
++       "transition": {
++         "duration": 0.5,
++       },
++     },
++     "tag": "path",
++   },
++   {
++     "props": {
++       "animate": {
++         "pathLength": 1,
++       },
++       "className": "stroke-primary",
++       "initial": {
++         "pathLength": 0,
++       },
++       "strokeLinecap": "round",
++       "strokeWidth": "6",
++       "transition": {
++         "delay": 0.3,
++         "duration": 0.3,
++       },
++       "x1": "116",
++       "x2": "148",
++       "y1": "96",
++       "y2": "128",
++     },
++     "tag": "line",
++   },
++   {
++     "props": {
++       "animate": {
++         "pathLength": 1,
++       },
++       "className": "stroke-secondary",
++       "d": "M148 32 L148 52 M138 42 L158 42",
++       "initial": {
++         "pathLength": 0,
++       },
++       "strokeLinecap": "round",
++       "strokeWidth": "3",
++       "transition": {
++         "delay": 0.7,
++         "duration": 0.3,
++       },
++     },
++     "tag": "path",
++   },
++   {
++     "props": {
++       "animate": {
++         "pathLength": 1,
++       },
++       "className": "fill-muted stroke-border",
++       "d": "M52 132 C52 94 100 82 100 82 C100 82 148 94 148 132",
++       "initial": {
++         "pathLength": 0,
++       },
++       "strokeWidth": "2",
++       "transition": {
++         "delay": 0.3,
++         "duration": 0.5,
++       },
++     },
++     "tag": "path",
++   },
++   {
++     "props": {
++       "animate": {
++         "pathLength": 1,
++       },
++       "className": "stroke-success",
++       "d": "M126 38 L130 42 L138 34",
++       "initial": {
++         "pathLength": 0,
++       },
++       "strokeLinecap": "round",
++       "strokeLinejoin": "round",
++       "strokeWidth": "3",
++       "transition": {
++         "delay": 0.7,
++         "duration": 0.3,
++       },
++     },
++     "tag": "path",
++   },
++ ]
+
+ ❯ src/components/ui/__tests__/emptyStates.movimento.test.tsx:104:39
+    102|       ({ props }) => (props.animate as { pathLength?: unknown } | unde…
+    103|     );
+    104|     expect(pathLengthComLoopReduzido).toEqual([]);
+       |                                       ^
+    105|   });
+    106| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/components/ui/__tests__/emptyStates.movimento.test.tsx > selo pulsante do GenericEmptyState — movimento reduzido > 4. o selo usa motion-safe:animate-pulse (não anima com reduzir ligado)
+AssertionError: expected 'absolute -top-1 -right-1 w-4 h-4 roun…' to contain 'motion-safe:animate-pulse'
+
+Expected: "motion-safe:animate-pulse"
+Received: "absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent animate-pulse"
+
+ ❯ src/components/ui/__tests__/emptyStates.movimento.test.tsx:116:29
+    114|
+    115|     expect(selo).not.toBeNull();
+    116|     expect(selo?.className).toContain('motion-safe:animate-pulse');
+       |                             ^
+    117|     // Não pode sobrar classe de animação CRUA (a que ignora o reduzir…
+    118|     // nenhuma classe do selo pode começar com o prefixo sem `motion-s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/components/ui/__tests__/motionEffects.movimento.test.tsx > AnimatedCounter > 2. ao mudar o valor, anima do valor ANTERIOR (não reinicia do zero)
+TestingLibraryElementError: Unable to find an element with the text: 19. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span>[39m
+      [0m18[0m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/motionEffects.movimento.test.tsx:92:19
+     90|     // 10 + (20-10) * ease(0.5) = 10 + 10*0.875 = 18.75 -> 19.
+     91|     // Com o bug antigo (start=0) daria 0 + 20*0.875 = 17.5 -> 18.
+     92|     expect(screen.getByText('19')).toBeTruthy();
+       |                   ^
+     93|   });
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/components/ui/__tests__/motionEffects.movimento.test.tsx > Typewriter > 4. com movimento reduzido mostra o texto inteiro de uma vez e avisa o fim
+TestingLibraryElementError: Unable to find an element with the text: Pronto. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span>[39m
+      [36m<span>[39m
+        [0m|[0m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/motionEffects.movimento.test.tsx:116:19
+    114|     render(<Typewriter text="Pronto" speed={10} onComplete={aoCompleta…
+    115|
+    116|     expect(screen.getByText('Pronto')).toBeTruthy();
+       |                   ^
+    117|     expect(aoCompletar).toHaveBeenCalledTimes(1);
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/components/ui/__tests__/motionEffects.movimento.test.tsx > Typewriter > 5. trocar a identidade de onComplete NÃO reinicia a digitação
+TestingLibraryElementError: Unable to find an element with the text: abc. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span>[39m
+      [36m<span>[39m
+        [0m|[0m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ui/__tests__/motionEffects.movimento.test.tsx:137:19
+    135|     });
+    136|
+    137|     expect(screen.getByText('abc')).toBeTruthy();
+       |                   ^
+    138|   });
+    139| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  8 failed | 3 passed (11)
+   Start at  18:13:59
+   Duration  3.83s (transform 2.61s, setup 3.28s, import 1.04s, tests 646ms, environment 3.37s)
+
