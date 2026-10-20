@@ -1,0 +1,62 @@
+commit 6e2382a7d4b7411bbd4a0fefcdfece366d52df4d
+Author:     Joaquim Ataides <ti@promobrindes.com.br>
+AuthorDate: Thu Oct 1 12:24:37 2026 -0300
+Commit:     Joaquim Ataides <ti@promobrindes.com.br>
+CommitDate: Thu Oct 1 12:24:37 2026 -0300
+
+    fix(ci): estabiliza checks estritos da main
+
+diff --git a/.github/workflows/auto-update-pr-branch.yml b/.github/workflows/auto-update-pr-branch.yml
+index 18c6bc9939..aebbac9043 100644
+--- a/.github/workflows/auto-update-pr-branch.yml
++++ b/.github/workflows/auto-update-pr-branch.yml
+@@ -6,15 +6,12 @@ name: Auto Update PR Branches
+ # alguem aprovar na aba Actions e o auto-merge nunca dispara (25/09/2026,
+ # PRs #725 e #754). O passo espelha o "Destravar os checks" do types-sync.
+ #
+-# E15 (auditoria de GitHub Actions, 2026-09-26): gatilho "push" desligado.
+-# Este job so tem efeito quando required_status_checks.strict=true (so ai um
+-# PR fica automaticamente BEHIND so por a main ter avancado); ao vivo hoje
+-# strict=false (ver CLAUDE.md, secao "Branch protection sem Contrato DB
+-# vivo"), entao o job rodava a cada push (~95/dia) e sempre concluia "nenhum
+-# PR esta behind" — 100% no-op. Reativar via workflow_dispatch se precisar
+-# atualizar um PR especifico agora, ou volte o gatilho "push" junto com
+-# strict=true.
++# Em 2026-10-01 o modo estrito voltou a ser a politica da main. O gatilho de
++# push mantem PRs com auto-merge atualizadas quando outro PR entra primeiro;
++# sem ele, a main movimentada gera um ciclo de BEHIND + CI repetido.
+ on:
++  push:
++    branches: [main]
+   workflow_dispatch: {}
+ 
+ concurrency:
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 3ad920de67..349ad1913f 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -164,6 +164,15 @@ Estado dos achados após re-auditoria de 2026-09-17:
+   merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
+   verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
+ 
++  **Correção de 2026-10-01:** `required_status_checks.strict` voltou a ser **`true`** como
++  política permanente. O repositório agora permite auto-merge e o workflow
++  `auto-update-pr-branch.yml` voltou a executar em cada push na `main`: PRs com auto-merge que
++  ficarem `BEHIND` são atualizadas e têm os checks obrigatórios reiniciados automaticamente. Isso
++  preserva os seis checks contra a base mais recente sem depender de rebases manuais. A fila de
++  merge nativa não foi adotada porque este repositório público pertence a uma conta pessoal; a
++  disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
++  com GitHub Enterprise Cloud para repositórios privados.
++
+ ## Auditoria de workflows (2026-09-25) — estado dos guardas
+ 
+ Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
+@@ -177,7 +186,7 @@ valer (confira antes de propor mudança de CI, para não refazer o que já exist
+ Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
+ `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
+ 
+-**Required checks da `main`** (6; `strict` está `false` ao vivo — ver correções em 25/09 e 27/09 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
++**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+ `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
+ `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
+ sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check

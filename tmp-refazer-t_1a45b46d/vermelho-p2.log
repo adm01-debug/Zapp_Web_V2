@@ -1,0 +1,53 @@
+== container: zapp-v2-followup-runtime-test-1438113 (imagem postgres:17-alpine) ==
+
+============ BLOCO A — estado ANTERIOR (defeito) ============
+[PASS] A.1 (DEFEITO) enroll_followup nao existe: nao ha fila de execucoes
+[PASS] A.2 (DEFEITO) due_followups nao existe: o runner nao tem o que consumir
+[PASS] A.3 (DEFEITO) admin grava status invalido: nao ha CHECK de vocabulario
+[PASS] A.4 a linha com status invalido ficou gravada
+[PASS] A.5 (DEFEITO) nao existe a coluna reason (motivo)
+
+============ BLOCO B — migration aplicada ============
+NOTICE:  constraint "followup_executions_status_check" of relation "followup_executions" does not exist, skipping
+NOTICE:  trigger "trg_followup_cancel_on_inbound" for relation "public.messages" does not exist, skipping
+[PASS] B.1 backfill: status legado pending -> pendente
+[PASS] B.2 backfill: valor legado preservado no motivo (rollback exato)
+[PASS] B.2b backfill: sent -> enviado com motivo
+[PASS] B.2c backfill: completed -> concluido com motivo
+[PASS] B.2d (bug conhecido) motivo fica o legado
+[PASS] B.2e atendente cancela a linha do backfill SEM motivo (usa o padrao)
+[PASS] B.2f (bug conhecido) motivo fica o legado
+[PASS] B.3 atendente do contato matricula o contato e recebe execution_id
+[PASS] B.4 execucao nasceu pendente, no 1o passo
+[PASS] B.5 proxima execucao = agora + delay do 1o passo (2h)
+[PASS] B.6 agente de outro contato nao matricula contato alheio
+[PASS] B.7 contato inexistente nao autoriza (sem vazar existencia)
+[PASS] B.8 sequencia inativa e recusada
+[PASS] B.9 sequencia inexistente devolve o MESMO erro (sem oraculo)
+[PASS] B.10 o atendente do contato ve a execucao
+[PASS] B.11 outro agente NAO ve a execucao
+[PASS] B.12 staff (admin) ve a execucao
+[PASS] B.13 anon NAO ve execucao nenhuma (RLS nega por padrao)
+[PASS] B.14 CHECK barra status fora do vocabulario
+[PASS] B.14b anon nao executa enroll_followup (ACL por assinatura)
+[PASS] B.15 authenticated NAO consome due_followups (ACL nega antes do gate)
+[PASS] B.16 due_followups ainda vazio (next_step_at no futuro)
+[PASS] B.17 service_role ve a execucao vencida
+[PASS] B.18 service_role consome a fila vencida
+[PASS] B.19 limite respeitado (limit 0 -> 1 linha, nunca 0)
+[PASS] B.20 outro agente nao conclui execucao alheia (mesmo erro de inexistente)
+[PASS] B.21 id inexistente devolve o MESMO erro
+[PASS] B.22 atendente conclui a execucao
+[PASS] B.23 status concluido e completed_at gravado
+[PASS] B.24 concluir de novo e recusado (nao esta aberta)
+[PASS] B.25 nao-autorizado nao cancela
+[PASS] B.26 atendente cancela com motivo
+[PASS] B.27 cancelado e motivo gravado
+[PASS] B.28 mensagem do AGENTE nao cancela o follow-up
+[PASS] B.29 resposta do CONTATO cancela o follow-up do contato
+[PASS] B.30 o follow-up de OUTRO contato segue pendente
+[PASS] B.31 EXECUTE de enroll/complete/cancel concedido a authenticated
+[PASS] B.32 due_followups negado a authenticated e concedido a service_role
+{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}
+{"ok": true, "current_step": 1, "execution_id": "c07e9a18-853e-4cf2-b354-43df7c136d52", "next_step_at": "2026-10-14T20:35:45.178525+00:00"}
+[FAIL] B.33 segunda matricula com execucao aberta e recusada: deveria falhar, mas passou

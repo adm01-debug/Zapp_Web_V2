@@ -1,0 +1,11 @@
+ M docs/multiplix/COMPONENTES.md
+M  e2e/multiplix.spec.ts
+D  src/components/multiplix/MultiplixComposerDialog.tsx
+M  src/components/multiplix/MultiplixView.tsx
+D  src/components/multiplix/__tests__/MultiplixComposerDialog.contagem.test.tsx
+A  src/components/multiplix/__tests__/MultiplixView.contagem.test.tsx
+M  src/components/multiplix/__tests__/MultiplixView.disparos-recentes.test.tsx
+M  src/components/multiplix/__tests__/MultiplixView.lista-virtualizada.test.tsx
+ M src/components/multiplix/__tests__/MultiplixView.selecao-composicao.test.tsx
+A  src/components/multiplix/__tests__/MultiplixView.tres-regioes.test.tsx
+ M tests/contracts/multiplix-docs.contract.test.ts

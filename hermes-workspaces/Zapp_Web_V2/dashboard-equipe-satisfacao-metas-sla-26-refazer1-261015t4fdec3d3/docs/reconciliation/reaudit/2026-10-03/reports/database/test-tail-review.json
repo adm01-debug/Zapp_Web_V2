@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "database",
+  "allocation_indices": [
+    27,
+    32
+  ],
+  "status": "COMPLETED_MANUAL_READING",
+  "files": [
+    {
+      "path": "scripts/db-audit/talkx-transition-postgrest.test.ts",
+      "line_start": 1,
+      "line_end": 130,
+      "git_blob_sha": "300878449e7a08688ba79d857aa9e3588945029e",
+      "source_sha256": "6556f82ed5d7308ada788d0be7dc9eb13a43151ebedecd25fcfcdccde9154050",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "database",
+      "review_status": "COMPLETED_MANUAL_READING",
+      "roster_index": 27,
+      "reviewer": "database",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          130
+        ]
+      ],
+      "tests_executed": false,
+      "assessment": "Leitura integral130linhas. Deno fetch para PostgREST real por env, sem mock local. Modo anterior exige HTTP300/PGRST203 e controle3args chega na função com ação inválida; modo posterior testa ciclo sequencial e lê estado persistido. Depende harness externo para isolar URL/JWT/schema/cache; este arquivo não impõe localhost e é teste com efeitos, por isso não executado. Recorte da ambiguidade histórica, não comprova versão atual nem cancel em POST concorrente."
+    },
+    {
+      "path": "scripts/db-audit/types-sync-psql-buffer.test.mjs",
+      "line_start": 1,
+      "line_end": 114,
+      "git_blob_sha": "2d1323a83e6a569051b5497a13c02ac0bf78c1f1",
+      "source_sha256": "c582af6711d4d90b62688de1535eba13ab709167163323672044dd798bdf6e03",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "database",
+      "review_status": "COMPLETED_MANUAL_READING",
+      "roster_index": 28,
+      "reviewer": "database",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          114
+        ]
+      ],
+      "tests_executed": false,
+      "assessment": "Leitura integral114linhas. Extrai heredoc real de types-sync, psql stub emite1,6MB e controle remove maxBuffer exigindo ENOBUFS; caso principal exige exit0. Assim é teste de integração de código do workflow com subprocesso fake, não réplica do helper. Escreve temporário no repo e saídas do heredoc se executado; não acionado nesta auditoria. Não prova grants/identidade real nem conteúdo do dump."
+    },
+    {
+      "path": "src/__tests__/rls-boundary.test.ts",
+      "line_start": 1,
+      "line_end": 281,
+      "git_blob_sha": "29f13c6cd3604a966c36206308000be318d23e6b",
+      "source_sha256": "256b6a7f4b59e065eacc916fdc2985a61e5357609553a20fe8f5d1878ba9b327",
+      "uncontained_bodies_at_allocation": 25,
+      "preferred_area": "database",
+      "review_status": "COMPLETED_MANUAL_READING",
+      "roster_index": 29,
+      "reviewer": "database",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          281
+        ]
+      ],
+      "tests_executed": false,
+      "assessment": "Leitura integral281linhas. Todos os SELECT/INSERT/UPDATE/DELETE/RPCs vêm de vi.mock; cada teste programa []/null/42501/false e verifica o mesmo retorno, sem importar política ou consumidor real de autorização. Comentários auth.uid=id e filtro por ownership da conexão não são a política vencedora; bloco ai_providers alterna anon vazio versus comlinha sem contexto distinto. Três todo não executam auditoria de banco; FORCE RLS não remove BYPASSRLS service. Limite concreto de prova da família GOV003/TC011, não novo defeito produto. Nada executado."
+    },
+    {
+      "path": "src/__tests__/smoke.test.ts",
+      "line_start": 1,
+      "line_end": 104,
+      "git_blob_sha": "f57a81ca82ce836a6a3aae6e05448658c23844b6",
+      "source_sha256": "40115841b102f235ce8953f32653b5fd0a59163a70db917d2ac7259cf9db2c9f",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "root",
+      "review_status": "COMPLETED_MANUAL_READING",
+      "roster_index": 30,
+      "reviewer": "database",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          104
+        ]
+      ],
+      "tests_executed": false,
+      "assessment": "Leitura integral104linhas. AuthService e messageSender reais com mocks serverLogin/Supabase verificam login via Edge/setSession, credenciais inválidas, logout e argumentos enqueue→invoke. Realtime smoke chama diretamente mock de canal e teardown, sem hook real/eventos nem subscribe handshake. Não comprova MFA/RLS/sessão remota/provedor; nenhum teste executado."
+    },
+    {
+      "path": "src/adapters/__tests__/evolutionAdapter.test.ts",
+      "line_start": 1,
+      "line_end": 67,
+      "git_blob_sha": "62587a28ad70754c97aee903808232aa1bf79c14",
+      "source_sha256": "aded3bce58cfee7ca8555321068ccee6b449e0af972539c1ce7d8243c293ee79",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "providers",
+      "review_status": "COMPLETED_MANUAL_READING",
+      "roster_index": 31,
+      "reviewer": "database",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "tests_executed": false,
+      "assessment": "Leitura integral67linhas. Importa adapter real; fixture Evolution fixa defaults locais da entrega e contato derivado deleted_at null. Assertions de shape úteis para compatibilidade de tipos, mas só um evento inbound sem mídia/identity real e não testa roteamento/conexões/webhook. Nada executado."
+    }
+  ],
+  "read_file_count": 5,
+  "read_line_count": 696,
+  "runtime_tested": false
+}

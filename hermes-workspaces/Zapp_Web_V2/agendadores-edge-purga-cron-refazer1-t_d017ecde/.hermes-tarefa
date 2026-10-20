@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=agendadores-edge-purga-cron
+ID=26101306098a75
+BRANCH=v2/agendadores-edge-purga-cron-26101306098a75
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agendadores-edge-purga-cron-26101306098a75
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T06:09:05-03:00
+KANBAN=t_c2f65e14
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agendadores-edge-purga-cron-26101306098a75/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101306098a75
+PRONTO_SHA=8bba945f8420c16bd038c6608c0670b037ddec5a

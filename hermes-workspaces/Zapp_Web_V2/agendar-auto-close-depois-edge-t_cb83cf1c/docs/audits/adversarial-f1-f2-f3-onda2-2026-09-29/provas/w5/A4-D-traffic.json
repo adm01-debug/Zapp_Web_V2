@@ -1,0 +1,1248 @@
+[
+  {
+    "ts": 1790712567946,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=*&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712567947,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=*&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712567965,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_roles?select=role&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712567965,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_roles?select=role&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[{\"id\":\"33333333-3333-4333-8333-333333333333\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"role\":\"supervisor\"}]"
+  },
+  {
+    "ts": 1790712567975,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/external-db-proxy",
+    "post": "{\"table\":\"media_quarantine\",\"select\":\"id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at\",\"filters\":[{\"column\":\"decision\",\"operator\":\"in\",\"value\":[\"pending\",\"deleted\"]}],\"order\":{\"column\":\"created_at\",\"ascending\":false},\"limit\":500}"
+  },
+  {
+    "ts": 1790712567975,
+    "kind": "response",
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/external-db-proxy",
+    "status": 200,
+    "body": "{\"ok\":true}"
+  },
+  {
+    "ts": 1790712568313,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712568313,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712568315,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712568315,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712568316,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=sound_enabled%2Csound_volume%2Cquiet_hours_enabled%2Cquiet_hours_start%2Cquiet_hours_end%2Cbrowser_notifications_enabled%2Csentiment_alert_enabled%2Csentiment_alert_threshold%2Csentiment_consecutive_count%2Ctranscription_notification_enabled%2Cmessage_sound_type%2Cmention_sound_type%2Csla_sound_type%2Cgoal_sound_type%2Ctranscription_sound_type&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568316,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=sound_enabled%2Csound_volume%2Cquiet_hours_enabled%2Cquiet_hours_start%2Cquiet_hours_end%2Cbrowser_notifications_enabled%2Csentiment_alert_enabled%2Csentiment_alert_threshold%2Csentiment_consecutive_count%2Ctranscription_notification_enabled%2Cmessage_sound_type%2Cmention_sound_type%2Csla_sound_type%2Cgoal_sound_type%2Ctranscription_sound_type&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568318,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=*&order=name.asc",
+    "post": null
+  },
+  {
+    "ts": 1790712568318,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=*&order=name.asc",
+    "status": 200,
+    "body": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712568319,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queues?select=id%2Cname%2Ccolor&is_active=eq.true",
+    "post": null
+  },
+  {
+    "ts": 1790712568319,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queues?select=id%2Cname%2Ccolor&is_active=eq.true",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568319,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queue_members?select=queue_id%2Cprofile_id&is_active=eq.true",
+    "post": null
+  },
+  {
+    "ts": 1790712568319,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queue_members?select=queue_id%2Cprofile_id&is_active=eq.true",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568320,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=assigned_to&assigned_to=not.is.null",
+    "post": null
+  },
+  {
+    "ts": 1790712568320,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=assigned_to&assigned_to=not.is.null",
+    "status": 200,
+    "body": "[{\"assigned_to\":\"11111111-1111-4111-8111-111111111111\"}]"
+  },
+  {
+    "ts": 1790712568320,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=tags&tags=not.is.null",
+    "post": null
+  },
+  {
+    "ts": 1790712568320,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=tags&tags=not.is.null",
+    "status": 200,
+    "body": "[{\"tags\":[]}]"
+  },
+  {
+    "ts": 1790712568323,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queues?select=*&order=priority.desc",
+    "post": null
+  },
+  {
+    "ts": 1790712568323,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queues?select=*&order=priority.desc",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568323,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queue_members?select=*%2Cprofile%3Aprofiles%28id%2Cname%2Cavatar_url%2Cis_active%29",
+    "post": null
+  },
+  {
+    "ts": 1790712568323,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queue_members?select=*%2Cprofile%3Aprofiles%28id%2Cname%2Cavatar_url%2Cis_active%29",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568324,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/feature_flags?select=key%2Cenabled%2Cdescription%2Cupdated_at&order=key.asc",
+    "post": null
+  },
+  {
+    "ts": 1790712568324,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/feature_flags?select=key%2Cenabled%2Cdescription%2Cupdated_at&order=key.asc",
+    "status": 200,
+    "body": "[{\"key\":\"mapa.searchbox-autocomplete\",\"enabled\":true,\"description\":null,\"updated_at\":\"2026-09-29T00:00:00.000Z\"},{\"key\":\"inbox.status-fsm\",\"enabled\":true,\"description\":null,\"updated_at\":\"2026-09-29T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712568324,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence?select=user_id%2Cstatus%2Cupdated_at",
+    "post": null
+  },
+  {
+    "ts": 1790712568324,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence?select=user_id%2Cstatus%2Cupdated_at",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568325,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568325,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712568325,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568325,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568326,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/log_audit_event",
+    "post": "{\"p_action\":\"login\",\"p_details\":{\"email\":\"e2e-mock@example.invalid\"},\"p_user_agent\":\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36\"}"
+  },
+  {
+    "ts": 1790712568327,
+    "kind": "response",
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/log_audit_event",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568328,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568328,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568328,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=*%2Cconversation_sla%28first_response_at%2Cfirst_message_at%2Cfirst_response_breached%29&order=updated_at.desc&limit=500",
+    "post": null
+  },
+  {
+    "ts": 1790712568329,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=*%2Cconversation_sla%28first_response_at%2Cfirst_message_at%2Cfirst_response_breached%29&order=updated_at.desc&limit=500",
+    "status": 200,
+    "body": "[{\"id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\",\"name\":\"W5 Contato Endereco\",\"phone\":\"551146375517\",\"email\":\"w5@example.invalid\",\"nickname\":\"W5\",\"surname\":\"Auditoria\",\"job_title\":\"Analista\",\"company\":\"Promo Brindes\",\"contact_type\":\"cliente\",\"avatar_url\":null,\"address\":\"Avenida Paulista\",\"address_number\":\"1578\",\"neighborhood\":\"Bela Vista\",\"city\":\"Sao Paulo\",\"state\":\"SP\",\"postal_code\":\"01310200\",\"latitude\":-23.561414,\"longitude\":-46.655881,\"assigned_to\":\"11111111-1111-4111-8111-111111111111\",\"queue_id\":null,\"conversation_status\":\"open\",\"tags\":[],\"notes\":null,\"created_at\":\"2026-09-01T00:00:00.000Z\",\"updated_at\":\"2026-09-01T00:00:00.000Z\",\"deleted_at\":null}]"
+  },
+  {
+    "ts": 1790712568362,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568362,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}"
+  },
+  {
+    "ts": 1790712568363,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568363,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568367,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence",
+    "post": "{\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"status\":\"online\",\"updated_at\":\"2026-09-29T20:09:28.360Z\"}"
+  },
+  {
+    "ts": 1790712568367,
+    "kind": "response",
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568368,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/goals_configurations?select=*&is_active=eq.true&or=%28profile_id.eq.11111111-1111-4111-8111-111111111111%2Cprofile_id.is.null%29",
+    "post": null
+  },
+  {
+    "ts": 1790712568368,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/goals_configurations?select=*&is_active=eq.true&or=%28profile_id.eq.11111111-1111-4111-8111-111111111111%2Cprofile_id.is.null%29",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568368,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=*&contact_id=not.is.null&order=created_at.desc&limit=1000",
+    "post": null
+  },
+  {
+    "ts": 1790712568368,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=*&contact_id=not.is.null&order=created_at.desc&limit=1000",
+    "status": 200,
+    "body": "[{\"id\":\"m0e2f5aa-0000-4000-8000-000000000001\",\"conversation_id\":\"c0e2f5aa-0000-4000-8000-000000000001\",\"contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\",\"content\":\"mensagem de fixture W5\",\"sender\":\"contact\",\"type\":\"text\",\"status\":\"delivered\",\"created_at\":\"2026-09-29T18:00:00.000Z\",\"updated_at\":\"2026-09-29T18:00:00.000Z\",\"whatsapp_connection_id\":null,\"media_url\":null,\"metadata\":null}]"
+  },
+  {
+    "ts": 1790712568376,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=id%2Cinstance_id%2Cphone_number%2Cstatus&status=eq.disconnected",
+    "post": null
+  },
+  {
+    "ts": 1790712568376,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=id%2Cinstance_id%2Cphone_number%2Cstatus&status=eq.disconnected",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568405,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712568405,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712568406,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id%2Cname%2Cavatar_url",
+    "post": null
+  },
+  {
+    "ts": 1790712568406,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id%2Cname%2Cavatar_url",
+    "status": 200,
+    "body": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712568406,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568406,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568407,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A28.395Z",
+    "post": null
+  },
+  {
+    "ts": 1790712568407,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A28.395Z",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712568433,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712568433,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569559,
+    "method": "PATCH",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&sender=eq.contact&is_read=eq.false",
+    "post": "{\"is_read\":true}"
+  },
+  {
+    "ts": 1790712569559,
+    "kind": "response",
+    "method": "PATCH",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&sender=eq.contact&is_read=eq.false",
+    "status": 200,
+    "body": "[{\"id\":\"m0e2f5aa-0000-4000-8000-000000000001\",\"conversation_id\":\"c0e2f5aa-0000-4000-8000-000000000001\",\"contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\",\"content\":\"mensagem de fixture W5\",\"sender\":\"contact\",\"type\":\"text\",\"status\":\"delivered\",\"created_at\":\"2026-09-29T18:00:00.000Z\",\"updated_at\":\"2026-09-29T18:00:00.000Z\",\"whatsapp_connection_id\":null,\"media_url\":null,\"metadata\":null}]"
+  },
+  {
+    "ts": 1790712569602,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=*&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc%2Cid.desc&offset=0&limit=1000",
+    "post": null
+  },
+  {
+    "ts": 1790712569602,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=*&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc%2Cid.desc&offset=0&limit=1000",
+    "status": 200,
+    "body": "[{\"id\":\"m0e2f5aa-0000-4000-8000-000000000001\",\"conversation_id\":\"c0e2f5aa-0000-4000-8000-000000000001\",\"contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\",\"content\":\"mensagem de fixture W5\",\"sender\":\"contact\",\"type\":\"text\",\"status\":\"delivered\",\"created_at\":\"2026-09-29T18:00:00.000Z\",\"updated_at\":\"2026-09-29T18:00:00.000Z\",\"whatsapp_connection_id\":null,\"media_url\":null,\"metadata\":null}]"
+  },
+  {
+    "ts": 1790712569604,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/get_conversation_tab_counts",
+    "post": "{\"p_contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\"}"
+  },
+  {
+    "ts": 1790712569604,
+    "kind": "response",
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/get_conversation_tab_counts",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569604,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contact_purchases?select=id%2Ctitle%2Camount%2Cpurchased_at%2Cstatus&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712569604,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contact_purchases?select=id%2Ctitle%2Camount%2Cpurchased_at%2Cstatus&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569604,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/sales_deals?select=id%2Ctitle%2Cvalue%2Cstatus%2Cstage_id%2Cexpected_close_date%2Cupdated_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712569604,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/sales_deals?select=id%2Ctitle%2Cvalue%2Cstatus%2Cstage_id%2Cexpected_close_date%2Cupdated_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569605,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/sales_pipeline_stages?select=id%2Cname%2Cposition%2Cis_active&order=position.asc",
+    "post": null
+  },
+  {
+    "ts": 1790712569605,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/sales_pipeline_stages?select=id%2Cname%2Cposition%2Cis_active&order=position.asc",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569605,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=tags&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712569605,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=tags&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[{\"tags\":[]}]"
+  },
+  {
+    "ts": 1790712569620,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_events?select=id%2Cevent_type%2Ccreated_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&event_type=in.%28transfer%2Cclose%2Creopen%29&order=created_at.desc&limit=20",
+    "post": null
+  },
+  {
+    "ts": 1790712569620,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_events?select=id%2Cevent_type%2Ccreated_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&event_type=in.%28transfer%2Cclose%2Creopen%29&order=created_at.desc&limit=20",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569969,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569969,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569970,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569970,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569971,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569971,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569971,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569971,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569971,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569971,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569974,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569975,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569975,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712569975,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712569975,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=created_at%2Csender&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790712569975,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=created_at%2Csender&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "status": 200,
+    "body": "[{\"id\":\"m0e2f5aa-0000-4000-8000-000000000001\",\"conversation_id\":\"c0e2f5aa-0000-4000-8000-000000000001\",\"contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\",\"content\":\"mensagem de fixture W5\",\"sender\":\"contact\",\"type\":\"text\",\"status\":\"delivered\",\"created_at\":\"2026-09-29T18:00:00.000Z\",\"updated_at\":\"2026-09-29T18:00:00.000Z\",\"whatsapp_connection_id\":null,\"media_url\":null,\"metadata\":null}]"
+  },
+  {
+    "ts": 1790712569976,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/get_team_profiles?select=id%2Cname%2Cemail%2Cavatar_url&limit=50",
+    "post": "{}"
+  },
+  {
+    "ts": 1790712569976,
+    "kind": "response",
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/get_team_profiles?select=id%2Cname%2Cemail%2Cavatar_url&limit=50",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569977,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/message_templates?select=*&or=%28user_id.eq.11111111-1111-4111-8111-111111111111%2Cis_global.eq.true%29&order=use_count.desc",
+    "post": null
+  },
+  {
+    "ts": 1790712569977,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/message_templates?select=*&or=%28user_id.eq.11111111-1111-4111-8111-111111111111%2Cis_global.eq.true%29&order=use_count.desc",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569981,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=*&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712569981,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=*&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569981,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/scheduled_messages?select=*&order=scheduled_at.asc&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712569981,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/scheduled_messages?select=*&order=scheduled_at.asc&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569982,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=whatsapp_connection_id&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712569982,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=whatsapp_connection_id&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[{}]"
+  },
+  {
+    "ts": 1790712569982,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=name%2Cwhatsapp_connection_id&phone=eq.551146375517",
+    "post": null
+  },
+  {
+    "ts": 1790712569982,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=name%2Cwhatsapp_connection_id&phone=eq.551146375517",
+    "status": 200,
+    "body": "[{\"name\":\"W5 Contato Endereco\"}]"
+  },
+  {
+    "ts": 1790712569982,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=company%2Cjob_title%2Cnickname%2Csurname%2Ccontact_type%2Cai_sentiment%2Cai_priority%2Cchannel_type&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712569983,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=company%2Cjob_title%2Cnickname%2Csurname%2Ccontact_type%2Cai_sentiment%2Cai_priority%2Cchannel_type&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "{\"company\":\"Promo Brindes\",\"job_title\":\"Analista\",\"nickname\":\"W5\",\"surname\":\"Auditoria\",\"contact_type\":\"cliente\"}"
+  },
+  {
+    "ts": 1790712569983,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/ai_conversation_tags?select=id%2Ctag_name%2Cconfidence%2Csource&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=confidence.desc",
+    "post": null
+  },
+  {
+    "ts": 1790712569983,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/ai_conversation_tags?select=id%2Ctag_name%2Cconfidence%2Csource&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=confidence.desc",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569984,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached%2Cresolution_breached%2Cfirst_response_at%2Cresolved_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790712569984,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached%2Cresolution_breached%2Cfirst_response_at%2Cresolved_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569984,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id%2Cname&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712569984,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id%2Cname&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712569987,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/message_reactions?select=*&message_id=eq.m0e2f5aa-0000-4000-8000-000000000001",
+    "post": null
+  },
+  {
+    "ts": 1790712569987,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/message_reactions?select=*&message_id=eq.m0e2f5aa-0000-4000-8000-000000000001",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569994,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=name%2Cjob_title&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712569994,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=name%2Cjob_title&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}]"
+  },
+  {
+    "ts": 1790712569997,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712569997,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}"
+  },
+  {
+    "ts": 1790712569998,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712569999,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712569999,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712569999,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}"
+  },
+  {
+    "ts": 1790712570004,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570004,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570005,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570005,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"name\":\"W5 Mock\",\"email\":\"e2e-mock@example.invalid\",\"avatar_url\":null,\"role\":\"supervisor\",\"status\":\"active\",\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\"}"
+  },
+  {
+    "ts": 1790712570008,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570008,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570008,
+    "method": "HEAD",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=id&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=eq.pending",
+    "post": null
+  },
+  {
+    "ts": 1790712570008,
+    "kind": "response",
+    "method": "HEAD",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=id&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=eq.pending",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570010,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=instance_id&status=eq.connected&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790712570010,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=instance_id&status=eq.connected&limit=1",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570010,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=id&status=eq.connected&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790712570010,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=id&status=eq.connected&limit=1",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570023,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712570023,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570053,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712570053,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712570054,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712570055,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712570055,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790712570055,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "status": 200,
+    "body": "{\"id\":\"11111111-1111-4111-8111-111111111111\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"e2e-mock@example.invalid\",\"email_confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"phone\":\"\",\"confirmed_at\":\"2026-01-01T00:00:00.000Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"name\":\"W5 Mock\"},\"identities\":[],\"created_at\":\"2026-01-01T00:00:00.000Z\",\"updated_at\":\"2026-01-01T00:00:00.000Z\",\"is_anonymous\":false}"
+  },
+  {
+    "ts": 1790712570056,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570056,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570057,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A30.043Z",
+    "post": null
+  },
+  {
+    "ts": 1790712570057,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A30.043Z",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570057,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570058,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570058,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A30.043Z",
+    "post": null
+  },
+  {
+    "ts": 1790712570058,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A30.043Z",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570059,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570059,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570064,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A30.043Z",
+    "post": null
+  },
+  {
+    "ts": 1790712570064,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T20%3A09%3A30.043Z",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570067,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_memory?select=pending_items%2Cpromises_made&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712570067,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_memory?select=pending_items%2Cpromises_made&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570069,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570070,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570070,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570070,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712570071,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790712570071,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712574640,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/get-mapbox-token",
+    "post": null
+  },
+  {
+    "ts": 1790712574640,
+    "kind": "response",
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/get-mapbox-token",
+    "status": 200,
+    "body": "{\"token\":\"pk.w5-fake-mapbox-token\"}"
+  },
+  {
+    "ts": 1790712577604,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=created_at%2Csender&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790712577605,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=created_at%2Csender&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "status": 200,
+    "body": "[{\"id\":\"m0e2f5aa-0000-4000-8000-000000000001\",\"conversation_id\":\"c0e2f5aa-0000-4000-8000-000000000001\",\"contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\",\"content\":\"mensagem de fixture W5\",\"sender\":\"contact\",\"type\":\"text\",\"status\":\"delivered\",\"created_at\":\"2026-09-29T18:00:00.000Z\",\"updated_at\":\"2026-09-29T18:00:00.000Z\",\"whatsapp_connection_id\":null,\"media_url\":null,\"metadata\":null}]"
+  },
+  {
+    "ts": 1790712577605,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=*%2Ccontact%3Acontacts%21conversation_tasks_contact_id_fkey%28id%2Cname%2Cphone%2Cavatar_url%29&created_by=eq.11111111-1111-4111-8111-111111111111&or=%28status.neq.done%2Ccompleted_at.gte.2026-08-30T20%3A09%3A37.601Z%29&order=position.asc%2Ccreated_at.desc&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=not.eq.cancelled",
+    "post": null
+  },
+  {
+    "ts": 1790712577605,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=*%2Ccontact%3Acontacts%21conversation_tasks_contact_id_fkey%28id%2Cname%2Cphone%2Cavatar_url%29&created_by=eq.11111111-1111-4111-8111-111111111111&or=%28status.neq.done%2Ccompleted_at.gte.2026-08-30T20%3A09%3A37.601Z%29&order=position.asc%2Ccreated_at.desc&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=not.eq.cancelled",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712577606,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=lead_score%2Crisk_score&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712577606,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=lead_score%2Crisk_score&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[{}]"
+  },
+  {
+    "ts": 1790712577608,
+    "method": "HEAD",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=id&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=eq.pending",
+    "post": null
+  },
+  {
+    "ts": 1790712577608,
+    "kind": "response",
+    "method": "HEAD",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=id&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=eq.pending",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712577611,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712577611,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  },
+  {
+    "ts": 1790712577614,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_memory?select=pending_items%2Cpromises_made&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790712577614,
+    "kind": "response",
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_memory?select=pending_items%2Cpromises_made&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "status": 200,
+    "body": "[]"
+  }
+]

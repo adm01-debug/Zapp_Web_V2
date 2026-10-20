@@ -1,0 +1,45 @@
+// Barrel export for hooks/system
+// Import from this file instead of individual modules:
+//   import { useDebounce, usePermissions, useGlobalSettings } from '@/hooks/system'
+export * from './useCRUD';
+export * from './useCurrentModule';
+export * from './useDebounce';
+export * from './useDiagnosticsData';
+export * from './useDownloadPermission';
+export * from './useDuplicate';
+export * from './useGeoBlocking';
+export * from './useGlobalSettings';
+export * from './useIdleCallback';
+export * from './useInfiniteScroll';
+export * from './useNavigationHistory';
+export * from './useNetworkStatus';
+export * from './useNotificationSettings';
+export * from './useNotifications';
+export * from './useOfflineCache';
+export * from './usePermissions';
+export * from './usePrefetch';
+export * from './usePushNotifications';
+export * from './useRateLimitLogs';
+// useResourcePrefetch exporta um hook 'usePrefetch' diferente do de ./usePrefetch (colisao de nome);
+// reexportamos so os utilitarios sem conflito, mantendo './usePrefetch' como o unico 'usePrefetch' do barrel.
+export {
+  useRoutePrefetch,
+  useImagePrefetch,
+  useIntersectionPrefetch,
+  useCriticalDataPrefetch,
+  clearPrefetchCache,
+  getPrefetchedData,
+} from './useResourcePrefetch';
+export * from './useSearch';
+export * from './useSearchHistory';
+export * from './useSecurityPushNotifications';
+export * from './useServiceWorker';
+export * from './useSkillBasedAssign';
+export * from './useSupabaseMutation';
+export * from './useUndoableAction';
+export * from './useUrlFilters';
+export * from './useUserRole';
+export * from './useFeatureFlag';
+export * from './useCRMIntegrationEnabled';
+export * from './useUserSettings';
+export * from './useVersions';

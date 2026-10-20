@@ -1,0 +1,37 @@
+[INFO] BLOCO A: agendadores
+[PASS] A1a. auto-close-conversations com cadencia de 10 min
+[PASS] A1b. send-scheduled-report com cadencia de 15 min
+[PASS] A1c. purge-cron-job-run-details diario
+[PASS] A1d. exatamente 6 jobs novos, do dono atual
+[PASS] A1e. nenhum DML direto em cron.job: nenhum job ficou sem dono
+NOTICE:  relation "scheduled_reports_due_idx" already exists, skipping
+[PASS] A2. reaplicar nao duplica job
+[PASS] A3a. job de Edge manda x-cron-secret do Vault (gmail_cron_secret)
+[PASS] A3b. nenhum job novo manda Bearer/anon key
+[PASS] A3c. todo job de Edge tem timeout > 0
+[PASS] A3d. a URL base nao fica literal no comando (vem de public.zapp_project_url())
+[PASS] A3e. public.zapp_project_url() resolve do Vault quando o GUC nao existe
+[PASS] A4. a migration nao faz DML direto em cron.job (so leitura + schedule/alter_job)
+[INFO] BLOCO B: claim_due_scheduled_reports
+[PASS] B1. sem service_role a RPC recusa
+[PASS] B2. reivindica SO os vencidos e ativos
+[PASS] B2b. nao reivindica inativo nem futuro
+[PASS] B3. segundo tick nao devolve o mesmo relatorio (nao duplica)
+[PASS] B3b. next_send_at avancou exatamente pela cadencia (daily +1d, weekly +7d)
+[PASS] B4a. anon nao executa a RPC
+[PASS] B4b. authenticated nao executa a RPC
+[PASS] B4c. service_role executa a RPC
+[INFO] BLOCO C: purge_cron_job_run_details
+[PASS] C1. purga(7) remove so o que passou de 7 dias
+[PASS] C1b. o log recente (2 dias) fica
+[PASS] C2. retencao fica presa no piso de 1 dia (0 -> 1 dia apaga o de 2 dias)
+[PASS] C2b. sem permissao o erro e explicito, nunca silencioso
+[PASS] C3. anon nao executa as funcoes de manutencao
+
+[INFO] BLOCO D: a linha -- Rollback: do arquivo e executavel
+[PASS] D1. o rollback desagenda os 6 jobs
+[PASS] D2. o rollback remove a RPC de reivindicacao
+[PASS] D3. o rollback remove o indice de vencimento
+[PASS] D4. o rollback remove as funcoes que a migration criou
+
+[OK] contrato dos agendadores Edge + purga do log do cron: TODAS as assercoes passaram.

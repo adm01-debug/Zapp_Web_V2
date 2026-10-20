@@ -1,0 +1,2 @@
+scripts/db-audit/talkx-crm-link-batch.test.sh
+supabase/migrations/20261003262707_talkx_crm_link_batch.sql

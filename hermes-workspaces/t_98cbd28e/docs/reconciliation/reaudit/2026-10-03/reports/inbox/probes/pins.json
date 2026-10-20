@@ -1,0 +1,26 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "files": {
+    "src/adapters/inboxAdapter.ts": "f1af7f3f6957dbad7090951c02f30420563c1565",
+    "src/components/inbox/ChatPanel.tsx": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+    "src/components/inbox/GlobalSearch.tsx": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+    "src/components/inbox/ScheduleMessageDialog.tsx": "c888205672230e8a41e6766d7878211edf6db7f9",
+    "src/components/inbox/TransferDialog.tsx": "bea5653b01d3051d32a0847be085fb0a008e790e",
+    "src/components/inbox/chat/MessageHoverToolbar.tsx": "8eb6d284602e804426c8b7d0d9f71e0581173f41",
+    "src/components/inbox/chat/useChatPanelHandlers.ts": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+    "src/components/inbox/media-gallery/mediaUtils.ts": "981dacf45c0ea7aacc83f8cf3c3a81298e83b099",
+    "src/components/inbox/useFileUploadLogic.ts": "af489a0f3136df5d5316ed2b2a409795ba457304",
+    "src/components/inbox/useGlobalSearchData.ts": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+    "src/hooks/chat/useMessageSignature.ts": "e968bbed653ad68b4c0ecf35fbfb0a53a374e30b",
+    "src/hooks/chat/useMessages.ts": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+    "src/hooks/communication/useAudioRecorder.ts": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+    "src/hooks/inbox/useInboxFilters.ts": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+    "src/hooks/realtime/realtimeUtils.ts": "91f68d605c8bbf3dc0769e098e57ab36fc7f45a7",
+    "src/hooks/system/useOfflineCache.ts": "c1984e76f25b69f5aab57a7da0d38a229b4184a6",
+    "src/lib/storage_object_upload.ts": "1945625b0d173202c91d559739e2c45ecf820c43",
+    "src/pages/ChatPopup.tsx": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+    "src/services/outbound-message.service.ts": "a328efc57530103d0e3fc0c2256420032db982ae",
+    "src/services/realtime.service.ts": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc"
+  }
+}

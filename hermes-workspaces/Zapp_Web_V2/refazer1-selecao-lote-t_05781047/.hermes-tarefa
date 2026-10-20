@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=inbox-selecao-lote-acompanha-filtro
+ID=26101312252db7
+BRANCH=v2/inbox-selecao-lote-acompanha-filtro-26101312252db7
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-selecao-lote-acompanha-filtro-26101312252db7
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T12:25:32-03:00
+KANBAN=t_971ad0d8
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-selecao-lote-acompanha-filtro-26101312252db7/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101312252db7
+PRONTO_SHA=ed2a4b64482263cba226fd3bf1abc198dda7fe9d

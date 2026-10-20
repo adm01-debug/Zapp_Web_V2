@@ -1,0 +1,36 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "code_origin": "third_party_vendored",
+  "counted_findings": [
+    "R2-MOD-073"
+  ],
+  "non_counted_limits": [
+    {
+      "id": "VENDOR-L01",
+      "area": "ReplayGain/VBR/tags/CRC",
+      "status": "DORMANT_REACHABILITY_UNPROVEN",
+      "note": "Corpos lidos; wrapper atual não ativa esses caminhos. Referências suspeitas não elevadas a novos achados."
+    },
+    {
+      "id": "VENDOR-L02",
+      "area": "WavHeader",
+      "status": "NO_PRODUCTION_CONSUMER_FOUND",
+      "note": "Leitura de DataView/chunks sem validação geral de tamanho; sem prova de uso pela aplicação."
+    },
+    {
+      "id": "VENDOR-L03",
+      "area": "Mp3Encoder return codes",
+      "status": "CURRENT_INPUT_FAILURE_NOT_REPRODUCED",
+      "note": "Wrapper não verifica retornos negativos; parâmetros fixos atuais emitiram bytes nos dois sinais curtos."
+    },
+    {
+      "id": "VENDOR-L04",
+      "area": "Coefficient/MP3 fidelity",
+      "status": "OUTSIDE_RUNTIME_VALIDATION",
+      "note": "Corpos, tabelas e consumidores lidos sem oracle numérico, decoder, áudio/performance ou fuzzing."
+    }
+  ],
+  "proofs": "proofs.json",
+  "coverage": "coverage.json",
+  "report": "report.md"
+}

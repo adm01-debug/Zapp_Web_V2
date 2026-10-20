@@ -1,0 +1,3 @@
+src/components/queues/__tests__/QueueCard.a11y.test.tsx
+src/components/queues/__tests__/QueueGoalsDialog.a11y.test.tsx
+src/components/ui/__tests__/dialogSheetFechar.a11y.test.tsx

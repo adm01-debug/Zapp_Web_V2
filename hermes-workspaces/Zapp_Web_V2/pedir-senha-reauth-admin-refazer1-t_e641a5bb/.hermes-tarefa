@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=pedir-senha-reauth-admin
+ID=26101301476497
+BRANCH=v2/pedir-senha-reauth-admin-26101301476497
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/pedir-senha-reauth-admin-26101301476497
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:47:38-03:00
+KANBAN=t_5e689954
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/pedir-senha-reauth-admin-26101301476497/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101301476497
+PRONTO_SHA=857eba1c94fd8dff19238f4384fdb36314caa279

@@ -1,0 +1,49 @@
+# ==========================================
+# ZAPP-WEB CODEOWNERS
+# ==========================================
+# Define responsáveis por revisão de código
+# Documentação: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ==========================================
+
+# ===================
+# DEFAULT OWNER
+# ===================
+# Todas as mudanças requerem aprovação do admin
+* @adm01-debug
+
+# ===================
+# ÁREAS CRÍTICAS
+# ===================
+
+# Supabase (Database, Edge Functions, Migrations)
+/supabase/ @adm01-debug
+
+# Segurança
+/src/components/security/ @adm01-debug
+/src/hooks/useSecurity* @adm01-debug
+/supabase/functions/webauthn/ @adm01-debug
+
+# Configuração e Build
+/*.json @adm01-debug
+/*.ts @adm01-debug
+/.github/ @adm01-debug
+
+# ===================
+# COMPONENTES
+# ===================
+
+# Inbox e Chat (core do sistema)
+/src/components/inbox/ @adm01-debug
+/src/components/chat/ @adm01-debug
+
+# Dashboard e Relatórios
+/src/components/dashboard/ @adm01-debug
+/src/components/reports/ @adm01-debug
+
+# ===================
+# DOCUMENTAÇÃO
+# ===================
+/docs/ @adm01-debug
+/README.md @adm01-debug
+/CONTRIBUTING.md @adm01-debug
+/SECURITY.md @adm01-debug

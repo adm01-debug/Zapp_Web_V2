@@ -1,0 +1,4 @@
+ M qa/tel/fixtures/telefonia.html
+ M qa/tel/func.mjs
+ M qa/tel/lib/coleta.mjs
+ M qa/tel/provas.unit.mjs

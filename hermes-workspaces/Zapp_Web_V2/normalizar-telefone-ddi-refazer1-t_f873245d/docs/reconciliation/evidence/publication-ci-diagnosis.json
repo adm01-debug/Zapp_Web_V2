@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "repository": "adm01-debug/Zapp_Web_V2",
+  "pull_request": 1869,
+  "publication_sha": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+  "product_baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "scope": "Post-publication diagnosis of documentation artifacts. Does not change product audit classifications.",
+  "checks": [
+    {
+      "id": 111317742507,
+      "name": "🏗️ Build",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T23:34:04Z",
+      "completed_at": "2026-10-03T23:34:04Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317742507"
+    },
+    {
+      "id": 111317742363,
+      "name": "🧪 Unit Tests",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T23:34:04Z",
+      "completed_at": "2026-10-03T23:34:04Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317742363"
+    },
+    {
+      "id": 111317742355,
+      "name": "🎭 E2E Tests (Playwright)",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T23:34:04Z",
+      "completed_at": "2026-10-03T23:34:04Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317742355"
+    },
+    {
+      "id": 111317742351,
+      "name": "🔒 Security Audit",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T23:34:04Z",
+      "completed_at": "2026-10-03T23:34:04Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317742351"
+    },
+    {
+      "id": 111317742196,
+      "name": "🧬 Mutação do mapa (não bloqueante)",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T23:34:04Z",
+      "completed_at": "2026-10-03T23:34:04Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317742196"
+    },
+    {
+      "id": 111317671013,
+      "name": "SonarCloud Code Analysis",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-10-03T23:32:18Z",
+      "completed_at": "2026-10-03T23:33:36Z",
+      "url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1869"
+    },
+    {
+      "id": 111317523714,
+      "name": "Vercel Preview Comments",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T23:32:41Z",
+      "completed_at": "2026-10-03T23:32:41Z",
+      "url": "https://vercel.com/github"
+    },
+    {
+      "id": 111317443947,
+      "name": "Contrato DB offline",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-10-03T23:32:14Z",
+      "completed_at": "2026-10-03T23:40:06Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088967/job/111317443947"
+    },
+    {
+      "id": 111317443032,
+      "name": "🔍 Lint & TypeCheck",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-10-03T23:32:13Z",
+      "completed_at": "2026-10-03T23:34:03Z",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317443032"
+    },
+    {
+      "id": 111317440823,
+      "name": "Vercel Agent Review",
+      "status": "completed",
+      "conclusion": "neutral",
+      "started_at": "2026-10-03T23:32:10Z",
+      "completed_at": "2026-10-03T23:32:10Z",
+      "url": "https://vercel.com/github"
+    },
+    {
+      "id": 111317432167,
+      "name": "Supabase Preview",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T23:32:06Z",
+      "completed_at": "2026-10-03T23:32:06Z",
+      "url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches"
+    }
+  ],
+  "lint": {
+    "job_id": 111317443032,
+    "run_id": 37162088653,
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088653/job/111317443032",
+    "baseline": 522,
+    "current": 527,
+    "new_issues": 5,
+    "source": "Exact third-party SDK reference accidentally included as an application TypeScript source",
+    "rules": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "prefer-const": 2
+    },
+    "evidence_lines": [
+      "2026-10-03T23:34:02.3656787Z Lint ratchet: baseline=522, atual=527, mantidas=522, removidas=0, novas=5",
+      "2026-10-03T23:34:02.3661816Z   docs/reconciliation/reproduce/cross-module/supabase-functions-client-2.117.2.ts:204:20 error @typescript-eslint/no-explicit-any - Unexpected any. Specify a different type.",
+      "2026-10-03T23:34:02.3664343Z   docs/reconciliation/reproduce/cross-module/supabase-functions-client-2.117.2.ts:214:11 error prefer-const - '_headers' is never reassigned. Use 'const' instead.",
+      "2026-10-03T23:34:02.3667147Z   docs/reconciliation/reproduce/cross-module/supabase-functions-client-2.117.2.ts:225:17 error @typescript-eslint/no-explicit-any - Unexpected any. Specify a different type.",
+      "2026-10-03T23:34:02.3669990Z   docs/reconciliation/reproduce/cross-module/supabase-functions-client-2.117.2.ts:308:11 error prefer-const - 'responseType' is never reassigned. Use 'const' instead.",
+      "2026-10-03T23:34:02.3671492Z   docs/reconciliation/reproduce/cross-module/supabase-functions-client-2.117.2.ts:312:17 error @typescript-eslint/no-explicit-any - Unexpected any. Specify a different type."
+    ],
+    "fix": {
+      "old_path": "reproduce/cross-module/supabase-functions-client-2.117.2.ts",
+      "new_path": "reproduce/cross-module/supabase-functions-client-2.117.2.ts.txt",
+      "sha256_unchanged": "383646bfc6327ff6274e7c15b3b3d73f50cbea5a2636ee95914197a759949246",
+      "changes_to_rules_or_baselines": false
+    }
+  },
+  "sonar": {
+    "check_id": 111317671013,
+    "annotation_count": 29,
+    "product_annotations": 0,
+    "sdk_annotations": 0,
+    "adjudication_file": "evidence/publication-sonar-triage.json",
+    "after_fix_status": "Requires observation of the later commit; not asserted from local validation."
+  },
+  "db_offline": {
+    "schema_version": 1,
+    "created_at": "2026-10-03T23:53:16.736957+00:00",
+    "repository": "adm01-debug/Zapp_Web_V2",
+    "pr": 1869,
+    "run_id": 37162088967,
+    "job_id": 111317443947,
+    "head_sha": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+    "actual_actions_checkout_sha": "5d1cbc9b792826f6d94720265cf580069b17dc0e",
+    "actual_actions_checkout_ref": "refs/remotes/pull/1869/merge",
+    "job_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088967/job/111317443947",
+    "run_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37162088967",
+    "job_started_at": "2026-10-03T23:32:14Z",
+    "job_completed_at": "2026-10-03T23:40:06Z",
+    "job_conclusion": "failure",
+    "failed_step": {
+      "number": 87,
+      "name": "Provar RLS de escrita em talkx_settings — admin persiste, agente não (V06)",
+      "started_at": "2026-10-03T23:37:20Z",
+      "completed_at": "2026-10-03T23:40:04Z",
+      "conclusion": "failure"
+    },
+    "classification": "DISPOSABLE_POSTGRES_BOOTSTRAP_OR_LOCAL_SOCKET_UNAVAILABLE",
+    "observed_cause": "No passo V06, psql falhou seis vezes ao conectar no socket /var/run/postgresql/.s.PGSQL.5432, sempre com No such file or directory. O wrapper identificou a assinatura de bootstrap e encerrou com exit2 após esgotar as tentativas.",
+    "observed_attempts": [
+      {
+        "line": 3881,
+        "timestamp": "2026-10-03T23:37:22.3708226Z",
+        "message": "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory"
+      },
+      {
+        "line": 3884,
+        "timestamp": "2026-10-03T23:37:28.8141752Z",
+        "message": "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory"
+      },
+      {
+        "line": 3887,
+        "timestamp": "2026-10-03T23:37:40.2536791Z",
+        "message": "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory"
+      },
+      {
+        "line": 3890,
+        "timestamp": "2026-10-03T23:38:01.6917034Z",
+        "message": "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory"
+      },
+      {
+        "line": 3893,
+        "timestamp": "2026-10-03T23:38:43.1370202Z",
+        "message": "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory"
+      },
+      {
+        "line": 3896,
+        "timestamp": "2026-10-03T23:40:04.5506927Z",
+        "message": "psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory"
+      }
+    ],
+    "retry_waits_seconds": [
+      5,
+      10,
+      20,
+      40,
+      80
+    ],
+    "exit_code": 2,
+    "step_context": {
+      "skip_docker_shim": "1",
+      "postgres_image": "postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+      "image_already_present": true,
+      "readiness_query": "SELECT 1",
+      "transport": "Unix socket inside disposable PostgreSQL container"
+    },
+    "interpretation": {
+      "rls_failure_demonstrated": false,
+      "rls_acceptance_completed": false,
+      "why": "A falha observada é de conexão ao servidor de teste. O log não apresenta uma asserção de política, grant, autorização ou resultado SQL divergente no V06. O wrapper preserva exit2 e registra explicitamente que o servidor descartável não estabilizou.",
+      "specific_underlying_daemon_cause": "Não determinada. O código do wrapper documenta uma janela possível entre o servidor temporário de initdb e o definitivo, mas o log desta tentativa não contém estado suficiente do container V06 para provar esse mecanismo específico.",
+      "cleanup_fatals": "As mensagens role root does not exist no dump do serviço PostgreSQL ao final do job não substituem a causa mostrada pelo passo V06; não foram tratadas como diagnóstico causal.",
+      "relationship_to_documentation": "Os223 arquivos publicados são somente docs/reconciliation; nenhum desses probes foi chamado pelo comando falho. Não há evidência no log que atribua esta falha a um defeito introduzido pelo pacote documental.",
+      "baseline_cause_reused": false,
+      "comparison_note": "A classe coincide com a falha histórica, mas a conclusão foi refeita a partir do log específico111317443947, sem depender da classificação antiga."
+    },
+    "other_steps": {
+      "conclusions": {
+        "success": 90,
+        "failure": 1,
+        "skipped": 4
+      },
+      "x027_step": {
+        "number": 74,
+        "name": "Provar recibos de leitura, atribuicao de resposta e tempo de resposta (X027)",
+        "conclusion": "success"
+      },
+      "after_failure_skipped": [
+        {
+          "number": 88,
+          "name": "Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado"
+        },
+        {
+          "number": 89,
+          "name": "Provar grants e revogação das vozes do Multiplix (F64)"
+        }
+      ]
+    },
+    "evidence": {
+      "log_sha256": "57bb2fe56bb003326bdeec48eb1fa644159eeccaf8194fec407d2a1e6aceee34",
+      "log_lines": 7209,
+      "failure_segment_line_start": 3864,
+      "failure_segment_line_end": 3903,
+      "checkout_log_lines": {
+        "line_start": 226,
+        "line_end": 227,
+        "content": "2026-10-03T23:32:30.6790049Z [command]/usr/bin/git log -1 --format=%H\n2026-10-03T23:32:30.6820969Z 5d1cbc9b792826f6d94720265cf580069b17dc0e"
+      },
+      "source_excerpts": [
+        {
+          "path": "scripts/db-audit/talkx-settings-rls.test.sh",
+          "source_commit": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+          "line_start": 27,
+          "line_end": 48,
+          "sha256": "6f1b3a91fe0741889444be599aaddf6aae021c50efc4ab30fe19d3985c4728b8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/scripts/db-audit/talkx-settings-rls.test.sh#L27-L48"
+        },
+        {
+          "path": "scripts/db-audit/retry-disposable-postgres-test.sh",
+          "source_commit": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+          "line_start": 4,
+          "line_end": 18,
+          "sha256": "95afd17de81bf138061376fabbc9bfc1c3bb8a2c19424eac29c051e1485402f6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/scripts/db-audit/retry-disposable-postgres-test.sh#L4-L18"
+        },
+        {
+          "path": "scripts/db-audit/retry-disposable-postgres-test.sh",
+          "source_commit": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+          "line_start": 111,
+          "line_end": 152,
+          "sha256": "95afd17de81bf138061376fabbc9bfc1c3bb8a2c19424eac29c051e1485402f6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/scripts/db-audit/retry-disposable-postgres-test.sh#L111-L152"
+        }
+      ],
+      "causal_log_excerpt": "2026-10-03T23:37:22.3708226Z psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:37:22.3721665Z WARN: PostgreSQL descartável não estabilizou; nova tentativa em 5s (1/6)\n2026-10-03T23:37:28.8141752Z psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:37:28.8155300Z WARN: PostgreSQL descartável não estabilizou; nova tentativa em 10s (2/6)\n2026-10-03T23:37:40.2536791Z psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:37:40.2549368Z WARN: PostgreSQL descartável não estabilizou; nova tentativa em 20s (3/6)\n2026-10-03T23:38:01.6917034Z psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:38:01.6930655Z WARN: PostgreSQL descartável não estabilizou; nova tentativa em 40s (4/6)\n2026-10-03T23:38:43.1370202Z psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:38:43.1383627Z WARN: PostgreSQL descartável não estabilizou; nova tentativa em 80s (5/6)\n2026-10-03T23:40:04.5506927Z psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:40:04.5521444Z ERRO: o PostgreSQL descartavel nao subiu em 6 tentativas.\n2026-10-03T23:40:04.5522808Z ERRO: assinatura de bootstrap casada: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed:\n2026-10-03T23:40:04.5524521Z ERRO: ultima linha do servidor: psql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: No such file or directory\n2026-10-03T23:40:04.5525463Z ERRO: isto NAO e falha do contrato de RLS -- o servidor descartavel nao ficou pronto.\n2026-10-03T23:40:04.5537540Z ##[error]Process completed with exit code 2."
+    },
+    "retrieval": {
+      "logs": "github_fetch_workflow_job_logs(repo_full_name, job_id)",
+      "steps": "github_fetch_workflow_job_steps(repo_full_name, job_id)",
+      "run_and_jobs": "Public GitHub GET API via github_fetch; run and all jobs recovered",
+      "mutations": 0,
+      "reruns": 0,
+      "product_executions": 0,
+      "live_database_queries": 0
+    },
+    "qualification": "O gate continua vermelho e V06 não recebe aceite. Classificar corretamente a falha não substitui uma execução futura bem-sucedida. Nenhuma correção, rerun ou mudança de estado externo foi feita por esta frente."
+  }
+}

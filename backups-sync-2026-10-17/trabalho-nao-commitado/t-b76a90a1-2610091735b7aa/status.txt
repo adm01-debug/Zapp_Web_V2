@@ -1,0 +1,2 @@
+AM src/App.reduzirMovimento.test.tsx
+ M src/App.tsx

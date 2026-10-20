@@ -1,0 +1,328 @@
+diff --git a/supabase/functions/_shared/ai-generate.ts b/supabase/functions/_shared/ai-generate.ts
+index ad8006432..0b70eec48 100644
+--- a/supabase/functions/_shared/ai-generate.ts
++++ b/supabase/functions/_shared/ai-generate.ts
+@@ -283,6 +283,18 @@ export interface GenerateParams {
+   /** `ai_usage_logs.function_name`. */
+   functionName: string;
+   userId?: string | null;
++  /**
++   * IA-051 — correlação da execução.
++   *
++   * `requestId` é o id opaco que o cliente manda no header
++   * `x-ai-request-id` (a identidade criada pelo IA-048 no clique); `jobId` e
++   * `attempt` vêm do worker, quando a execução nasce na fila. Todos
++   * opcionais de propósito: ausência vira NULL no log — nunca um id
++   * inventado no servidor, que não teria como ser correlacionado com nada.
++   */
++  requestId?: string | null;
++  jobId?: string | null;
++  attempt?: number | null;
+   /** Mensagens do CLIENTE (sem system). */
+   messages: unknown[];
+   /** Política do SERVIDOR (IA-037, composeMessages). */
+@@ -629,6 +641,12 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
+ 
+   const userId = params.userId ?? null;
+ 
++  // IA-051 — correlação. Aqui só repassamos: quem normaliza é o logger, que
++  // descarta qualquer coisa que não seja uuid (ver `normalizeCorrelationId`).
++  const requestId = params.requestId ?? null;
++  const jobId = params.jobId ?? null;
++  const attempt = params.attempt ?? null;
++
+   // --- (8) auditoria: SEMPRE, em todos os desfechos ---------------------------
+   const logUsage = (entry: {
+     model: string | null;
+@@ -643,6 +661,9 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
+     logAiUsage({
+       functionName,
+       userId,
++      requestId,
++      jobId,
++      attempt,
+       model: entry.model,
+       inputTokens: entry.inputTokens,
+       outputTokens: entry.outputTokens,
+diff --git a/supabase/functions/_shared/ai-usage.test.ts b/supabase/functions/_shared/ai-usage.test.ts
+index efc133702..09c0c1eae 100644
+--- a/supabase/functions/_shared/ai-usage.test.ts
++++ b/supabase/functions/_shared/ai-usage.test.ts
+@@ -16,6 +16,13 @@
+ //   (b) sem `waitUntil`, a promessa é AGUARDADA — só resolve DEPOIS do insert;
+ //   (c) o ponto de chamada do ai-proxy não volta a descartar com `void`.
+ //
++// IA-051 — correlação da execução (mesmo arquivo, bloco (d) em diante).
++// A etapa exige propagar requestId/jobId/attemptId "sem usar dado pessoal como
++// identificador de log". Como `ai_usage_logs.request_id` é `uuid`, a regra é
++// aplicada na entrada do logger: só uuid passa, o resto vira NULL. Os testes
++// abaixo provam (1) a regra na função pura, (2) que o insert leva a correlação,
++// e (3) que um e-mail/telefone entregue por engano NÃO chega ao banco.
++//
+ // O insert é observado pelo `globalThis.fetch` (o PostgREST do supabase-js), sem
+ // rede real: nenhuma credencial, nenhum banco.
+ //
+@@ -23,12 +30,17 @@
+ //   supabase/functions/_shared/ai-usage.test.ts
+ 
+ import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
+-import { logAiUsageDetached } from "./ai-usage.ts";
++import {
++  extractAiRequestId,
++  logAiUsageDetached,
++  normalizeAttempt,
++  normalizeCorrelationId,
++} from "./ai-usage.ts";
+ 
+ type EdgeRuntimeType = { waitUntil?: (promise: Promise<unknown>) => void };
+ const edgeGlobal = globalThis as { EdgeRuntime?: EdgeRuntimeType };
+ 
+-type Captura = { metodo: string; url: string };
++type Captura = { metodo: string; url: string; corpo: unknown };
+ 
+ /** Fixa as credenciais do Supabase (sem rede real) e devolve o restaurador. */
+ function stubEnv(): () => void {
+@@ -54,7 +66,13 @@ function stubFetch(portao?: Promise<void>): { capturas: Captura[]; restaurar: ()
+   const original = globalThis.fetch;
+   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+     const url = String(input);
+-    capturas.push({ metodo: init?.method ?? "GET", url });
++    let corpo: unknown = null;
++    try {
++      corpo = init?.body ? JSON.parse(String(init.body)) : null;
++    } catch {
++      corpo = init?.body ?? null;
++    }
++    capturas.push({ metodo: init?.method ?? "GET", url, corpo });
+     return (async () => {
+       if (portao && url.includes("/rest/v1/ai_usage_logs")) await portao;
+       return new Response("", { status: 201, headers: { "content-type": "application/json" } });
+@@ -77,6 +95,15 @@ const ENTRADA = {
+ const houveInsert = (capturas: Captura[]) =>
+   capturas.some((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_logs"));
+ 
++/** A linha que o PostgREST recebeu (o supabase-js manda objeto ou [objeto]). */
++const linhaEnviada = (capturas: Captura[]): Record<string, unknown> | null => {
++  const post = capturas.find((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_logs"));
++  if (!post || post.corpo === null) return null;
++  const corpo = post.corpo as Record<string, unknown> | Record<string, unknown>[];
++  const linha = Array.isArray(corpo) ? corpo[0] : corpo;
++  return (linha ?? null) as Record<string, unknown> | null;
++};
++
+ // ---------------------------------------------------------------------------
+ // (a) com waitUntil: a promessa vai para o waitUntil e o insert não se perde
+ // ---------------------------------------------------------------------------
+@@ -177,3 +204,122 @@ Deno.test("ai-proxy: os logs de consumo usam `await logAiUsageDetached` (nunca `
+     `os DOIS pontos de log de consumo têm de usar await logAiUsageDetached (encontrados ${usosDetached.length})`,
+   );
+ });
++
++// ---------------------------------------------------------------------------
++// (d) IA-051 — a regra do identificador: uuid ou nada
++// ---------------------------------------------------------------------------
++const UUID = "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c";
++
++Deno.test("IA-051 normalizeCorrelationId: aceita uuid (e canoniza em minúsculas)", () => {
++  assertEquals(normalizeCorrelationId(UUID), UUID);
++  assertEquals(
++    normalizeCorrelationId(UUID.toUpperCase()),
++    UUID,
++    "uuid em maiúsculas tem de ser aceito e canonizado — o mesmo id não pode virar dois na busca",
++  );
++  assertEquals(normalizeCorrelationId(`  ${UUID}  `), UUID, "espaço em volta não pode invalidar o id");
++});
++
++Deno.test("IA-051 normalizeCorrelationId: NENHUM dado pessoal passa como identificador de log", () => {
++  const proibidos: Array<[string, unknown]> = [
++    ["e-mail", "cliente@empresa.com.br"],
++    ["telefone", "5511999998888"],
++    ["telefone formatado", "+55 (11) 99999-8888"],
++    ["nome", "Maria Silva"],
++    ["id de contato com prefixo", "contact:9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c"],
++    ["uuid truncado", "9f4c1e2a-1b3d-4c5e-8a7b"],
++    ["objeto", { id: UUID }],
++    ["número", 12345],
++    ["vazio", ""],
++    ["nulo", null],
++    ["indefinido", undefined],
++  ];
++  for (const [rotulo, valor] of proibidos) {
++    assertEquals(
++      normalizeCorrelationId(valor),
++      null,
++      `${rotulo} não pode virar request_id: o campo é uuid opaco, nunca dado pessoal`,
++    );
++  }
++});
++
++Deno.test("IA-051 extractAiRequestId: lê o header do cliente e só aceita uuid", () => {
++  const comId = new Request("https://exemplo.test/funcao", {
++    headers: { "x-ai-request-id": UUID },
++  });
++  assertEquals(extractAiRequestId(comId), UUID);
++
++  const semId = new Request("https://exemplo.test/funcao");
++  assertEquals(extractAiRequestId(semId), null, "sem header não há correlação — e nada é inventado");
++
++  const comPii = new Request("https://exemplo.test/funcao", {
++    headers: { "x-ai-request-id": "cliente@empresa.com.br" },
++  });
++  assertEquals(
++    extractAiRequestId(comPii),
++    null,
++    "um e-mail no header não pode atravessar para o log",
++  );
++});
++
++Deno.test("IA-051 normalizeAttempt: inteiro pequeno sim, o resto não", () => {
++  assertEquals(normalizeAttempt(0), 0, "a primeira tentativa é 0 (ai_jobs.attempt_count começa em 0)");
++  assertEquals(normalizeAttempt(3), 3);
++  assertEquals(normalizeAttempt("4"), 4, "valor textual vindo de payload ainda é tentativa válida");
++  assertEquals(normalizeAttempt(1.5), null, "tentativa fracionária não existe");
++  assertEquals(normalizeAttempt(-1), null, "tentativa negativa não existe");
++  assertEquals(normalizeAttempt(40000), null, "acima do smallint não cabe na coluna");
++  assertEquals(normalizeAttempt(undefined), null);
++  assertEquals(normalizeAttempt(""), null);
++  assertEquals(normalizeAttempt(null), null);
++});
++
++// ---------------------------------------------------------------------------
++// (e) IA-051 — o insert leva a correlação, e PII entregue por engano NÃO vai
++// ---------------------------------------------------------------------------
++Deno.test("IA-051 logAiUsage: grava request_id/job_id/attempt na linha do log", async () => {
++  const restaurarEnv = stubEnv();
++  const { capturas, restaurar } = stubFetch();
++  const jobId = "0b1c2d3e-4f50-4a6b-8c9d-0e1f2a3b4c5d";
++
++  try {
++    await logAiUsageDetached({ ...ENTRADA, requestId: UUID, jobId, attempt: 2 });
++
++    const linha = linhaEnviada(capturas);
++    assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
++    assertEquals(linha!.request_id, UUID, "request_id não chegou ao log");
++    assertEquals(linha!.job_id, jobId, "job_id não chegou ao log");
++    assertEquals(linha!.attempt, 2, "attempt não chegou ao log");
++  } finally {
++    restaurar();
++    restaurarEnv();
++  }
++});
++
++Deno.test("IA-051 logAiUsage: PII entregue como identificador é gravada como NULL, não como dado pessoal", async () => {
++  const restaurarEnv = stubEnv();
++  const { capturas, restaurar } = stubFetch();
++
++  try {
++    await logAiUsageDetached({
++      ...ENTRADA,
++      requestId: "cliente@empresa.com.br",
++      jobId: "5511999998888",
++      attempt: 999999,
++    });
++
++    const linha = linhaEnviada(capturas);
++    assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
++    assertEquals(
++      linha!.request_id,
++      null,
++      "um e-mail virou request_id: dado pessoal dentro de um log de execução",
++    );
++    assertEquals(linha!.job_id, null, "um telefone virou job_id: dado pessoal dentro de um log");
++    assertEquals(linha!.attempt, null, "attempt fora do smallint devia virar NULL, não derrubar o insert");
++    assert(houveInsert(capturas), "o consumo tinha de continuar sendo registrado mesmo com id inválido");
++  } finally {
++    restaurar();
++    restaurarEnv();
++  }
++});
+diff --git a/supabase/functions/_shared/ai-usage.ts b/supabase/functions/_shared/ai-usage.ts
+index d9844e07f..5809d5a7f 100644
+--- a/supabase/functions/_shared/ai-usage.ts
++++ b/supabase/functions/_shared/ai-usage.ts
+@@ -15,6 +15,17 @@ interface AiUsageEntry {
+   status?: string;
+   errorMessage?: string | null;
+   metadata?: Record<string, unknown>;
++  /**
++   * IA-051 — correlação da execução. Ver `normalizeCorrelationId`: o campo é
++   * uuid ou nada. Aceitar string livre aqui abriria a porta para gravar e-mail,
++   * telefone ou id de contato dentro de um log — exatamente o que a etapa
++   * proíbe ("sem usar dado pessoal como identificador de log").
++   */
++  requestId?: string | null;
++  /** IA-051 — job da fila que originou a execução, quando veio do worker. */
++  jobId?: string | null;
++  /** IA-051 — tentativa do job (`ai_jobs.attempt_count`) no momento da chamada. */
++  attempt?: number | null;
+ }
+ 
+ /** Extract token counts from OpenAI-compatible response */
+@@ -31,6 +42,46 @@ export function extractTokenUsage(data: Record<string, unknown>): {
+   };
+ }
+ 
++/**
++ * IA-051 — normaliza um identificador de correlação.
++ *
++ * Regra única: só uuid v4/v1 canônico passa; qualquer outra coisa vira `null`.
++ * Isso é o enforcement de "sem dado pessoal como identificador de log": um
++ * e-mail (`fulano@x.com`), um telefone (`5511999998888`) ou o `contactId` da
++ * identidade do IA-048 não casam com o formato e são descartados — o campo
++ * nunca vira depósito de PII por descuido de um chamador futuro.
++ */
++export function normalizeCorrelationId(value: unknown): string | null {
++  if (typeof value !== "string") return null;
++  const trimmed = value.trim();
++  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
++    return null;
++  }
++  return trimmed.toLowerCase();
++}
++
++/**
++ * IA-051 — normaliza o número da tentativa.
++ *
++ * `ai_jobs.attempt_count` é um contador inteiro e pequeno; a coluna é
++ * `smallint`. Valores fora de faixa ou fracionários são descartados em vez de
++ * derrubar o insert do log (registrar consumo não pode falhar por metadado).
++ */
++export function normalizeAttempt(value: unknown): number | null {
++  if (value === null || value === undefined || value === "") return null;
++  const parsed = Number(value);
++  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 32767) return null;
++  return parsed;
++}
++
++/** IA-051 — header em que o cliente manda o id opaco da operação de IA. */
++export const AI_REQUEST_ID_HEADER = "x-ai-request-id";
++
++/** IA-051 — lê o id de correlação enviado pelo cliente (uuid ou nada). */
++export function extractAiRequestId(req: Request): string | null {
++  return normalizeCorrelationId(req.headers.get(AI_REQUEST_ID_HEADER));
++}
++
+ /** Extract user ID from Authorization header (JWT) */
+ export function extractUserIdFromRequest(req: Request): string | null {
+   try {
+@@ -81,7 +132,7 @@ declare const EdgeRuntime: { waitUntil?: (promise: Promise<unknown>) => void } |
+  * `logAiUsage` continua sendo AGUARDADA pelo chamador. Esta variante existe para
+  * os pontos em que a resposta ao usuário não pode esperar o insert (ex.: o
+  * `ai-proxy`). Em vez de descartar a promessa com `void` — o que transforma o
+- * consumo PAGO em registro perdido se a função encerrar antes do insert —
++ * consumo PAGO em registro perdido se a função encerrar antes do insert —,
+  * registramos a promessa em `EdgeRuntime.waitUntil` quando o runtime o oferece,
+  * para que a função só encerre após o insert concluir. Quando `waitUntil` NÃO
+  * existe (Deno local/teste), caímos no `await`, garantindo a gravação de forma
+@@ -120,6 +171,11 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
+       status: entry.status || 'success',
+       error_message: entry.errorMessage || null,
+       metadata: entry.metadata || null,
++      // IA-051 — correlação ponta a ponta. Passa pelo normalizador para que
++      // nenhum dado pessoal atravesse este caminho, mesmo por engano.
++      request_id: normalizeCorrelationId(entry.requestId),
++      job_id: normalizeCorrelationId(entry.jobId),
++      attempt: normalizeAttempt(entry.attempt),
+     });
+   } catch (e) {
+     // Never throw — logging failures must not break the main flow

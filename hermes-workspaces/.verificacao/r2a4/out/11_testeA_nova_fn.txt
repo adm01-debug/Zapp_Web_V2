@@ -1,0 +1,28 @@
+--- A1) criar funcao simples como postgres ---
+--- A2) proacl resultante ---
+ proname |  owner   | secdef |                                       proacl                                       
+---------+----------+--------+------------------------------------------------------------------------------------
+ nova_fn | postgres | f      | {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(1 row)
+
+--- A3) has_function_privilege ---
+      role      | pode_exec 
+----------------+-----------
+ anon           | t
+ authenticated  | t
+ service_role   | t
+ nobody(PUBLIC) | t
+(4 rows)
+
+--- A4) EXECUTAR como anon ---
+ anon_resultado 
+----------------
+              1
+(1 row)
+
+--- A5) EXECUTAR como nobody (PUBLIC) ---
+ public_resultado 
+------------------
+                1
+(1 row)
+

@@ -1,0 +1,78 @@
+{
+  "previous_commit": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "current_commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "old_tracked_count": 4065,
+  "current_tracked_count": 4068,
+  "changed": [
+    {
+      "path": "docs/talkx/v4/STATUS.md",
+      "previous_blob": "1bf2f692d501d7ccfa608c16071ff3214343838b",
+      "current_blob": "fc30374bae3ba094a7fd2016a65048f0a4d9f210",
+      "kind": "modified"
+    },
+    {
+      "path": "supabase/deployment-manifest.json",
+      "previous_blob": "c9fa65fbbb33a72acc825225ea37d30f77a55c22",
+      "current_blob": "45bbc4caba00b1cc284d66c9062fd9cc89e4d074",
+      "kind": "modified"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+      "previous_blob": "66602250849e10e88e3933eb3b3b67cf6d30c82e",
+      "current_blob": "003af675d225c7aaacf4efe435c52b18f1cc5664",
+      "kind": "modified"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts",
+      "previous_blob": null,
+      "current_blob": "72f67422dea8887d43bb6c1bb674f4aed2ef6465",
+      "kind": "added"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+      "previous_blob": null,
+      "current_blob": "6a98889637e41908e6d593d1e5f5f84f536df37c",
+      "kind": "added"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+      "previous_blob": null,
+      "current_blob": "03eb64fa69b8a54dda15e11bf7d7ab8404709c12",
+      "kind": "added"
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+      "previous_blob": "f675a99db16ea880a17094e4f67ece90a3ecb248",
+      "current_blob": "8dffb0359b8cf0c137b612b4c863840b34558930",
+      "kind": "modified"
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+      "previous_blob": "e907096133bfa5481aa7ad4bcade576bc0284227",
+      "current_blob": "f50d966cbffc0603eaff9283a634b1a5ffa6ee84",
+      "kind": "modified"
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-reply.ts",
+      "previous_blob": "44abe3387726bdb008c34d63ee7a470fa4842ff8",
+      "current_blob": "eea03dc5e41055c77bbaf1c4930eb90958097b33",
+      "kind": "modified"
+    },
+    {
+      "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+      "previous_blob": "9164ea22bd9d4347667a967d625983be12d3b4a7",
+      "current_blob": "2204a619ab1d269dc65b69500ab3af5e5c03665c",
+      "kind": "modified"
+    }
+  ],
+  "prior_findings_referencing_changed_paths": [
+    {
+      "id": "TX01",
+      "paths": [
+        "docs/talkx/v4/STATUS.md"
+      ],
+      "disposition": "REVALIDATE_AFFECTED_SUBCONTRACT_ONLY"
+    }
+  ],
+  "limitation": "Exact path string references only; indirect dependency effects require semantic review."
+}

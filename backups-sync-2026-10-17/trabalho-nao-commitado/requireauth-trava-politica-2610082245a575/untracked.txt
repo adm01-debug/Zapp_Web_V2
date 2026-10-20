@@ -1,0 +1,1 @@
+tests/contracts/requireauth-network-policy.contract.test.ts

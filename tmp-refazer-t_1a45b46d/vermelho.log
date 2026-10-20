@@ -1,0 +1,17 @@
+== container: zapp-v2-followup-runtime-test-1390631 (imagem postgres:17-alpine) ==
+
+============ BLOCO A — estado ANTERIOR (defeito) ============
+[PASS] A.1 (DEFEITO) enroll_followup nao existe: nao ha fila de execucoes
+[PASS] A.2 (DEFEITO) due_followups nao existe: o runner nao tem o que consumir
+[PASS] A.3 (DEFEITO) admin grava status invalido: nao ha CHECK de vocabulario
+[PASS] A.4 a linha com status invalido ficou gravada
+[PASS] A.5 (DEFEITO) nao existe a coluna reason (motivo)
+
+============ BLOCO B — migration aplicada ============
+NOTICE:  constraint "followup_executions_status_check" of relation "followup_executions" does not exist, skipping
+NOTICE:  trigger "trg_followup_cancel_on_inbound" for relation "public.messages" does not exist, skipping
+[PASS] B.1 backfill: status legado pending -> pendente
+[PASS] B.2 backfill: valor legado preservado no motivo (rollback exato)
+[PASS] B.2b backfill: sent -> enviado com motivo
+[PASS] B.2c backfill: completed -> concluido com motivo
+[FAIL] B.2d resposta do contato sobrescreve o motivo do backfill: esperado 'cancelado|resposta_do_contato', obtido 'cancelado|status_legado:pending'

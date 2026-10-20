@@ -1,0 +1,179 @@
+{
+  "geradoEm": "2026-09-26T00:43:38.137Z",
+  "commit": null,
+  "escala": {
+    "3xs": {
+      "fontSizePx": 10,
+      "lineHeightPx": 13,
+      "lineHeightDeclarado": "0.8125rem",
+      "usos": 590
+    },
+    "2xs": {
+      "fontSizePx": 11,
+      "lineHeightPx": 14,
+      "lineHeightDeclarado": "0.875rem",
+      "usos": 328
+    },
+    "xs": {
+      "fontSizePx": 12,
+      "lineHeightPx": 16,
+      "lineHeightDeclarado": "1rem",
+      "usos": 1701
+    },
+    "sm": {
+      "fontSizePx": 14,
+      "lineHeightPx": 20,
+      "lineHeightDeclarado": "1.25rem",
+      "usos": 1099
+    },
+    "base": {
+      "fontSizePx": 16,
+      "lineHeightPx": 24,
+      "lineHeightDeclarado": "1.5rem",
+      "usos": 140
+    },
+    "lg": {
+      "fontSizePx": 18,
+      "lineHeightPx": 28,
+      "lineHeightDeclarado": "1.75rem",
+      "usos": 187
+    },
+    "xl": {
+      "fontSizePx": 20,
+      "lineHeightPx": 28,
+      "lineHeightDeclarado": "1.75rem",
+      "usos": 73
+    },
+    "2xl": {
+      "fontSizePx": 24,
+      "lineHeightPx": 32,
+      "lineHeightDeclarado": "2rem",
+      "usos": 128
+    },
+    "3xl": {
+      "fontSizePx": 30,
+      "lineHeightPx": 36,
+      "lineHeightDeclarado": "2.25rem",
+      "usos": 18
+    },
+    "4xl": {
+      "fontSizePx": 36,
+      "lineHeightPx": 40,
+      "lineHeightDeclarado": "2.5rem",
+      "usos": 12
+    },
+    "5xl": {
+      "fontSizePx": 48,
+      "lineHeightPx": 48,
+      "lineHeightDeclarado": "1",
+      "usos": 3
+    },
+    "6xl": {
+      "fontSizePx": 60,
+      "lineHeightPx": 60,
+      "lineHeightDeclarado": "1",
+      "usos": 2
+    },
+    "7xl": {
+      "fontSizePx": 72,
+      "lineHeightPx": 72,
+      "lineHeightDeclarado": "1",
+      "usos": 0
+    },
+    "8xl": {
+      "fontSizePx": 96,
+      "lineHeightPx": 96,
+      "lineHeightDeclarado": "1",
+      "usos": 0
+    },
+    "9xl": {
+      "fontSizePx": 128,
+      "lineHeightPx": 128,
+      "lineHeightDeclarado": "1",
+      "usos": 0
+    }
+  },
+  "arbitrarios": {
+    "7": {
+      "fontSizePx": 7,
+      "lineHeightPx": 10.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 3,
+      "equivalenteNaEscala": null
+    },
+    "8": {
+      "fontSizePx": 8,
+      "lineHeightPx": 12,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 11,
+      "equivalenteNaEscala": null
+    },
+    "9": {
+      "fontSizePx": 9,
+      "lineHeightPx": 13.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 103,
+      "equivalenteNaEscala": null
+    },
+    "13": {
+      "fontSizePx": 13,
+      "lineHeightPx": 19.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 160,
+      "equivalenteNaEscala": null
+    },
+    "15": {
+      "fontSizePx": 15,
+      "lineHeightPx": 22.5,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 28,
+      "equivalenteNaEscala": null
+    },
+    "120": {
+      "fontSizePx": 120,
+      "lineHeightPx": 180,
+      "lineHeightOrigem": "herdado (preflight 1.5)",
+      "usos": 1,
+      "equivalenteNaEscala": null
+    }
+  },
+  "totais": {
+    "usosNomeados": 4281,
+    "usosArbitrarios": 306,
+    "arquivosAnalisados": 1454
+  },
+  "violacoes": {
+    "meiaMedida": 0,
+    "acima16px": 1,
+    "comEquivalenteExato": 0,
+    "cssMeiaMedida": 0,
+    "cssFontFamilyLiteral": 0,
+    "tsxFontSizeInline": 2,
+    "tsxFontFamilyLiteral": 0,
+    "pesoOrfao": 0
+  },
+  "detalheViolacoes": {
+    "halfStep": [],
+    "above16": [
+      {
+        "where": "src/pages/NotFound.tsx:27",
+        "px": 120
+      }
+    ],
+    "hasExactEquivalent": [],
+    "cssMeiaMedida": [],
+    "cssFontFamilyLiteral": [],
+    "tsxFontSizeInline": [
+      {
+        "where": "src/components/catalog/catalogShared.tsx:74",
+        "px": 10
+      },
+      {
+        "where": "src/pages/AdminTelemetriaPage.tsx:108",
+        "px": 7
+      }
+    ],
+    "tsxFontFamilyLiteral": [],
+    "pesoOrfao": []
+  }
+}

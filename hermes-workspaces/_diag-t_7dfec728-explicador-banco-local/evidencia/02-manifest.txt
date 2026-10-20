@@ -1,0 +1,9 @@
+topo do arquivo: {     "rls": {         "calls": "215c2d4
+secoes: ['rls', 'types', 'views', 'columns', 'indexes', 'defaults', 'policies', 'triggers', 'functions', 'constraints', 'type_grants', 'generated_at', 'column_grants', 'schema_grants', 'default_grants', 'format_version', 'routine_grants', 'relation_grants', 'database_identity', 'how_to_regenerate']
+rls              166 chaves | do ai_usage_outbox: nenhuma
+indexes          619 chaves | do ai_usage_outbox: nenhuma
+constraints      647 chaves | do ai_usage_outbox: nenhuma
+defaults         886 chaves | do ai_usage_outbox: nenhuma
+policies         448 chaves | do ai_usage_outbox: nenhuma
+relation_grants  4931 chaves | do ai_usage_outbox: nenhuma
+default_grants   90 chaves | do ai_usage_outbox: nenhuma

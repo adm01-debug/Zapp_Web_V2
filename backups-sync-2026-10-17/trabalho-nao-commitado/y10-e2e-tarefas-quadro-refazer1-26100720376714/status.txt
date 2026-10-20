@@ -1,0 +1,1 @@
+ M e2e/tarefas-quadro.spec.ts

@@ -1,0 +1,21 @@
+Especialista: iris
+
+## O que mudou e por quê
+- src/components/inbox/ConversationListSidebar.tsx: a lista ganhou rodapé de paginação no fim (PD-74, cartão t_a533b441). Ele lê `inbox.hasMore` / `inbox.loadingMore` / `inbox.loadMore` (mesmos nomes que `useRealtimeMessages` já expõe) e mostra: botão real "Carregar mais conversas" (foco por teclado, `aria-busy` enquanto carrega, chama `inbox.loadMore` no clique), esqueleto SÓ da página que está chegando (a lista já renderizada permanece — nada de trocar a lista por esqueletos), região viva `role=status` anunciando "Carregando mais conversas…" para leitor de tela, e o indicador "Você chegou ao fim da lista." quando não há mais páginas.
+- Tokens/componentes existentes, nada novo: `Button` (variante `outline`, `size="sm"` de src/components/ui/button.tsx), `Skeleton` (`bg-muted`, import já existente no arquivo), `RefreshCw` (lucide) e as classes `text-muted-foreground` / `sr-only`. Sem cor fixa, sem `bg-white`/`bg-black`, sem token inventado.
+- Estado da paginação ausente é tratado de propósito: sem `loadMore` como função (fonte externa ou hook ainda sem repasse), o rodapé não aparece e NADA de "fim da lista" é afirmado.
+
+## Prova
+- vermelho antes (teste escrito e rodado ANTES da mudança na tela): `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.paginacao.test.tsx` -> `Test Files 1 failed (1); Tests 3 failed | 2 passed (5)` (faltavam botão, anúncio, esqueleto e fim de lista).
+- verde depois: `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.paginacao.test.tsx src/components/inbox/__tests__/ConversationListSidebar.test.tsx src/components/inbox/__tests__/ConversationListSidebar.topo.test.tsx` -> `Test Files 3 passed (3); Tests 18 passed (18)` (regressão das duas suítes que já existiam na sidebar, sem afrouxar nenhum teste).
+- lint do arquivo e do teste: `npx eslint <os dois arquivos>` -> `RC=0` (sem saída).
+- A prova renderiza o componente REAL (`ConversationListSidebar`), com inbox/inboxFilters reais de fixture; o clique é disparado no botão e verifica `loadMore` chamado 1 vez (não é mock do componente).
+- Estados conferidos por teste: esqueleto inicial (não afeta o rodapé), "carregando mais" (botão desabilitado + `aria-busy` + esqueleto da página nova + anúncio), fim da lista, lista vazia (rodapé ausente) e paginação ausente (rodapé ausente).
+
+## Arquivos no diff que NÃO são deste cartão (dependência herdada)
+- O workspace não tinha o trabalho do cartão pai t_0a032dd9 (hugo), então trouxe a faixa inteira por `git cherry-pick` de `dia/2026-10-13..29fc95650`. Por isso o diff contra a branch do dia inclui arquivos que EU não toquei: src/services/realtime.service.ts, src/hooks/chat/useRealtimeMessages.ts, src/hooks/realtime/realtimeUtils.ts, src/hooks/__tests__/useRealtimeMessages.test.tsx, src/hooks/chat/__tests__/useRealtimeMessages.paginacao.test.tsx, src/hooks/chat/__tests__/useRealtimeMessages.primeiraCarga.test.tsx (pai direto), src/services/__tests__/realtime.service.inbox-janela-global.test.ts, src/services/__tests__/realtime.service.inbox-paginacao.test.ts, src/hooks/inbox/useRealtimeInbox.ts e src/components/inbox/ConversationListSidebar.tsx (edição de 1 linha do pai). O MEU diff, nos dois commits deste cartão, é exatamente: src/components/inbox/ConversationListSidebar.tsx (rodapé de paginação) e src/components/inbox/__tests__/ConversationListSidebar.paginacao.test.tsx (teste novo).
+
+## O que NÃO fiz e por quê
+- `src/hooks/inbox/useRealtimeInbox.ts` (repasse de `hasMore`/`loadingMore`/`loadMore` até a sidebar): é src/hooks/** (área de hooks), fora de ARQUIVOS QUE PODE TOCAR deste cartão. Registrado em kanban_comment e com dono: cartão t_daa1e9b7. Até ele entrar, a UI fica pronta mas o rodapé permanece oculto (tratado acima).
+- Captura de tela não versionada: a mudança é estrutural (botão/esqueleto/estado) e jsdom não prova CSS (skill design-system-zapp, que diz ainda que o revisor não vê imagem). A prova é o teste de comportamento acima.
+- O caminho citado no cartão (`src/components/inbox/conversation-list/ConversationListSidebar.tsx`) não existe; editei o arquivo real `src/components/inbox/ConversationListSidebar.tsx`, sem criar pasta nova.

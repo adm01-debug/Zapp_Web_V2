@@ -1,0 +1,135 @@
+-- 20260903225000_sla_first_response_v2
+-- Correcoes P1 da auditoria de 5 agentes (run h439328):
+-- 1) base do cronometro passa a ser a primeira mensagem do cliente AINDA SEM
+--    resposta (nao mais a primeira mensagem do historico inteiro, que fazia
+--    33% dos contatos nascerem "violados" falsamente);
+-- 2) registro passa a ocorrer por TRIGGER quando a mensagem do atendente
+--    chega a status='sent' — cobre TODOS os 11 caminhos de envio (midia,
+--    produto, enquete, public-api, webhook FROM_ME/celular, popup);
+-- 3) corrida de concorrencia fechada com advisory lock + indice unico parcial
+--    (uma linha "aberta" por contato) + ON CONFLICT;
+-- 4) first_response_at usa o created_at exato da mensagem (sem drift de now()).
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_conversation_sla_open_per_contact
+  ON public.conversation_sla (contact_id)
+  WHERE first_response_at IS NULL;
+
+-- Nucleo interno: sem checagem de auth (so e chamado pelo trigger e pela RPC
+-- publica, que faz a checagem IDOR antes).
+CREATE OR REPLACE FUNCTION public.register_first_response_internal(
+  p_contact_id uuid,
+  p_responded_at timestamptz,
+  p_before_created_at timestamptz DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_first_message_at timestamptz;
+BEGIN
+  -- serializa por contato (fecha corrida de UPDATE concorrente)
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_contact_id::text, 42));
+
+  -- base: primeira mensagem do cliente ainda sem resposta do atendente,
+  -- considerando apenas mensagens anteriores a resposta sendo registrada
+  SELECT min(m.created_at)
+  INTO v_first_message_at
+  FROM public.messages m
+  WHERE m.contact_id = p_contact_id
+    AND m.sender = 'contact'
+    AND m.created_at <= p_responded_at
+    AND m.created_at > coalesce(
+      (SELECT max(r.created_at)
+       FROM public.messages r
+       WHERE r.contact_id = p_contact_id
+         AND r.sender = 'agent'
+         AND r.created_at < coalesce(p_before_created_at, p_responded_at)),
+      timestamptz '-infinity'
+    );
+
+  -- sem mensagem do cliente pendente: nada a registrar
+  IF v_first_message_at IS NULL THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
+  VALUES (
+    p_contact_id,
+    v_first_message_at,
+    p_responded_at,
+    p_responded_at > v_first_message_at + interval '5 minutes'
+  )
+  ON CONFLICT (contact_id) WHERE first_response_at IS NULL
+  DO UPDATE SET first_response_at = EXCLUDED.first_response_at,
+                first_response_breached = EXCLUDED.first_response_breached;
+END;
+$$;
+
+-- RPC publica (client): mantem o harden IDOR (predicado do contacts_select)
+-- e delega ao nucleo interno com now().
+CREATE OR REPLACE FUNCTION public.mark_first_response(p_contact_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- autorizacao: mesmo predicado do contacts_select_policy (RLS nao se aplica
+  -- dentro de SECURITY DEFINER, entao a checagem e explicita aqui)
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.contacts c
+    WHERE c.id = p_contact_id
+      AND (
+        public.is_admin_or_supervisor(auth.uid())
+        OR c.assigned_to IN (SELECT public.get_visible_agent_ids(auth.uid()))
+        OR EXISTS (
+          SELECT 1 FROM public.queue_members qm
+          WHERE qm.queue_id = c.queue_id
+            AND qm.profile_id = public.get_profile_id_for_user(auth.uid())
+            AND qm.is_active = true
+        )
+      )
+  ) THEN
+    RAISE EXCEPTION 'nao autorizado para o contato %', p_contact_id
+      USING ERRCODE = '42501';
+  END IF;
+
+  PERFORM public.register_first_response_internal(p_contact_id, now());
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.mark_first_response(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.mark_first_response(uuid) TO authenticated;
+-- interna: nenhum grant a roles de cliente (so postgres/trigger)
+REVOKE ALL ON FUNCTION public.register_first_response_internal(uuid, timestamptz, timestamptz) FROM PUBLIC, anon, authenticated;
+
+-- Trigger: registra a 1a resposta quando a mensagem do atendente efetivamente
+-- sai (status sent) — cobre todos os caminhos de envio, inclusive webhook FROM_ME
+-- (atendente respondeu no celular) e public-api.
+CREATE OR REPLACE FUNCTION public.messages_sla_first_response_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM public.register_first_response_internal(
+    NEW.contact_id,
+    NEW.created_at,
+    NEW.created_at
+  );
+  RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_messages_sla_first_response ON public.messages;
+CREATE TRIGGER trg_messages_sla_first_response
+  AFTER INSERT OR UPDATE OF status ON public.messages
+  FOR EACH ROW
+  WHEN (NEW.contact_id IS NOT NULL
+        AND NEW.sender = 'agent'
+        AND NEW.status = 'sent')
+  EXECUTE FUNCTION public.messages_sla_first_response_trigger();

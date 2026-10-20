@@ -1,0 +1,16 @@
+[
+  {
+    "roster_index": 62,
+    "adjudication": [
+      "Importa ai-routing real para resolver provedor/modelo, mensagens e filtros, com cenários de ausência/ambiguidade/inativo/finalidade, ordem das linhas, allowlists e listas de segurança pinadas independentemente. O restante lê ai-proxy/ai-providers com regex de fronteira e status.",
+      "Os controles puros observam o módulo produtivo; regras de modelo como default gpt-4o para google_gemini são a expectativa codificada, sem comprovar compatibilidade externa. Manter política no índice zero não demonstra obediência do modelo. A guarda deliberadamente impossível dentro da interseção allowlist/reservadas é uma falha intencional de sanidade, não tautologia que passe."
+    ]
+  },
+  {
+    "roster_index": 63,
+    "adjudication": [
+      "Carrega handlers reais de classify-emoji/sticker via Deno.serve capturado, toInlineImage e generateWithRouting reais; simula identidade, banco, fetch duplo de imagem/provedor e logAiUsage. Verifica data URL e multipart, destino/modelo de visão versus texto, falhas de imagem/HTTP/rede, categoria outros e chamadas de auditoria nos cenários enumerados.",
+      "O encadeamento entre consumidores reais é um controle positivo forte dentro do harness. Auth foi substituída, logAiUsage é spy e Storage/provedor são dublês: não comprova autorização, linha persistida em ai_usage_logs, imagem decodificada nem entrega externa; a cobertura de cenários enumerados não equivale a todos os caminhos possíveis."
+    ]
+  }
+]

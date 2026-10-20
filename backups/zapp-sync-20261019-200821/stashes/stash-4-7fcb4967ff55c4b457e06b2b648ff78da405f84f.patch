@@ -1,0 +1,27 @@
+commit 7fcb4967ff55c4b457e06b2b648ff78da405f84f
+Merge: 2f310f0ba2 732ffcae0e
+Author:     Joaquim <joaquim@promobrindes.com.br>
+AuthorDate: Fri Oct 9 23:53:21 2026 -0300
+Commit:     Joaquim <joaquim@promobrindes.com.br>
+CommitDate: Fri Oct 9 23:53:21 2026 -0300
+
+    WIP on v2/n154-chaves-integracao-nome-olho-2610092334fc0a: 2f310f0ba fix(integration-keys): add aria-label and aria-pressed to eye toggle button
+
+diff --git a/src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx b/src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+index 0d1134a5dd..154b85d502 100644
+--- a/src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
++++ b/src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+@@ -95,10 +95,10 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
+ 
+   it('axe não aponta violações no botão olho', async () => {
+     const { container } = render(<IntegrationKeysSection />);
+-    await screen.findByRole('button', { name: /Mostrar chave ElevenLabs API Key/i });
+-    const results = await axe(container, {
+-      rules: { 'heading-order': { enabled: false }, label: { enabled: false } },
++    const botaoOlho = await screen.findByRole('button', {
++      name: /Mostrar chave ElevenLabs API Key/i,
+     });
++    const results = await axe(botaoOlho);
+     expect(results).toHaveNoViolations();
+   });
+ });

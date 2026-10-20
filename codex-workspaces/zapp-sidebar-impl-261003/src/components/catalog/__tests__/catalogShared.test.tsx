@@ -1,0 +1,667 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard, AdvancedFilterChips, countAdvancedFilters, DEFAULT_ADVANCED_FILTERS, matchesAnySelected, TagMultiSelectChips, countLabel, CatalogErrorState, useRateLimitCooldown, PhonePreview, type AdvancedFilters } from '../catalogShared';
+import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
+import { Layers } from 'lucide-react';
+
+// CT-59 — useRateLimitCooldown dispara toast do sonner no 429.
+const toastError = vi.hoisted(() => vi.fn());
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
+}));
+
+describe('catalogShared', () => {
+  it('formatPrice formata em BRL pt-BR', () => {
+    expect(formatPrice(63.78)).toBe('R$\u00a063,78');
+  });
+
+  it('formatPrice arredonda para 2 casas', () => {
+    expect(formatPrice(3.999)).toBe('R$\u00a04,00');
+  });
+
+  it('formatStock adiciona sufixo "un."', () => {
+    expect(formatStock(1573)).toBe('1573 un.');
+    expect(formatStock(0)).toBe('0 un.');
+  });
+});
+
+describe('resolveProductBadge', () => {
+  it('prioriza esgotado sobre qualquer outra flag', () => {
+    expect(resolveProductBadge({ is_stockout: true, is_bestseller: true, is_new: true, is_featured: true })).toBe('out');
+  });
+  it('mais vendido tem prioridade sobre novidade e destaque', () => {
+    expect(resolveProductBadge({ is_stockout: false, is_bestseller: true, is_new: true, is_featured: true })).toBe('bestseller');
+  });
+  it('novidade tem prioridade sobre destaque', () => {
+    expect(resolveProductBadge({ is_stockout: false, is_bestseller: false, is_new: true, is_featured: true })).toBe('new');
+  });
+  it('destaque quando só ele está ativo', () => {
+    expect(resolveProductBadge({ is_stockout: false, is_bestseller: false, is_new: false, is_featured: true })).toBe('featured');
+  });
+  it('em estoque quando nenhuma flag está ativa (ou ausente, como antes da E21)', () => {
+    expect(resolveProductBadge({ is_stockout: false, is_bestseller: false, is_new: false, is_featured: false })).toBe('instock');
+    expect(resolveProductBadge({ is_stockout: false })).toBe('instock');
+  });
+});
+
+describe('ColorChips', () => {
+  it('5 cores com max=3 renderiza 3 chips + "+2"', () => {
+    render(<ColorChips colors={['Bambu', 'Preto', 'Branco', 'Verde', 'Azul']} max={3} />);
+    expect(screen.getByText('Bambu')).toBeInTheDocument();
+    expect(screen.getByText('Preto')).toBeInTheDocument();
+    expect(screen.getByText('Branco')).toBeInTheDocument();
+    expect(screen.getByText('+2')).toBeInTheDocument();
+    expect(screen.queryByText('Verde')).not.toBeInTheDocument();
+  });
+
+  it('aceita objetos com color_name (E21 color_swatches)', () => {
+    render(<ColorChips colors={[{ color_name: 'Bambu' }, { name: 'Preto' }]} />);
+    expect(screen.getByText('Bambu')).toBeInTheDocument();
+    expect(screen.getByText('Preto')).toBeInTheDocument();
+  });
+
+  it('lista vazia não renderiza nada', () => {
+    const { container } = render(<ColorChips colors={[]} />);
+    expect(container.firstChild).toBeNull();
+  });
+});
+
+describe('ColorSwatch', () => {
+  it('com hex, renderiza uma bolinha colorida com aria-label', () => {
+    render(<ColorSwatch hex="#c9a06a" name="Bambu" />);
+    expect(screen.getByRole('img', { name: 'Cor Bambu' })).toBeInTheDocument();
+  });
+
+  it('sem hex, cai para chip de texto', () => {
+    render(<ColorSwatch hex={null} name="Padrão" />);
+    expect(screen.getByText('Padrão')).toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+});
+
+describe('PriceTag', () => {
+  it('mostra só o preço quando não há sugerido', () => {
+    render(<PriceTag value={63.78} />);
+    expect(screen.getByText('R$ 63,78')).toBeInTheDocument();
+  });
+
+  it('mostra o sugerido riscado quando diferente do preço', () => {
+    render(<PriceTag value={63.78} suggested={43.67} />);
+    expect(screen.getByText('R$ 63,78')).toBeInTheDocument();
+    expect(screen.getByText('R$ 43,67')).toBeInTheDocument();
+  });
+
+  it('não duplica quando sugerido é igual ao preço', () => {
+    render(<PriceTag value={63.78} suggested={63.78} />);
+    expect(screen.getAllByText('R$ 63,78')).toHaveLength(1);
+  });
+});
+
+describe('StockPill', () => {
+  it('em estoque: mostra a contagem', () => {
+    render(<StockPill qty={1573} />);
+    expect(screen.getByText('1573 em estoque')).toBeInTheDocument();
+  });
+  it('qty=0: mostra Esgotado mesmo sem a flag stockout', () => {
+    render(<StockPill qty={0} />);
+    expect(screen.getByText('Esgotado')).toBeInTheDocument();
+  });
+  it('stockout=true: mostra Esgotado mesmo com qty>0 (dado inconsistente do PromoGifts)', () => {
+    render(<StockPill qty={5} stockout />);
+    expect(screen.getByText('Esgotado')).toBeInTheDocument();
+  });
+});
+
+describe('LowStockPill', () => {
+  it('qty=5 (entre 1 e 10): renderiza', () => {
+    render(<LowStockPill qty={5} />);
+    expect(screen.getByText('5 un.')).toBeInTheDocument();
+  });
+  it('qty=0: não renderiza', () => {
+    const { container } = render(<LowStockPill qty={0} />);
+    expect(container.firstChild).toBeNull();
+  });
+  it('qty=11 (acima do threshold padrão): não renderiza', () => {
+    const { container } = render(<LowStockPill qty={11} />);
+    expect(container.firstChild).toBeNull();
+  });
+  it('threshold customizado', () => {
+    render(<LowStockPill qty={15} threshold={20} />);
+    expect(screen.getByText('15 un.')).toBeInTheDocument();
+  });
+});
+
+describe('ProductThumb', () => {
+  it('sem src nem fallback, renderiza o ícone genérico direto (sem <img>)', () => {
+    const { container } = render(<ProductThumb src={null} alt="Produto sem foto" />);
+    expect(document.querySelector('img')).toBeNull();
+    expect(container.querySelector('svg')).not.toBeNull();
+  });
+
+  it('com src, renderiza <img> com o src', () => {
+    render(<ProductThumb src="https://example.com/a.jpg" alt="Açucareiro" />);
+    const img = screen.getByAltText('Açucareiro') as HTMLImageElement;
+    expect(img.src).toBe('https://example.com/a.jpg');
+  });
+
+  it('erro no src cai para fallbackSrc; erro no fallback cai para o ícone', () => {
+    render(<ProductThumb src="https://example.com/quebrada.jpg" fallbackSrc="https://example.com/fallback.jpg" alt="Produto" />);
+    const img = screen.getByAltText('Produto') as HTMLImageElement;
+    fireEvent.error(img);
+    expect((screen.getByAltText('Produto') as HTMLImageElement).src).toBe('https://example.com/fallback.jpg');
+    fireEvent.error(screen.getByAltText('Produto'));
+    expect(document.querySelector('img')).toBeNull();
+  });
+
+  it('URL do Cloudflare Images gera srcSet com as 5 larguras reais', () => {
+    render(<ProductThumb src="https://imagedelivery.net/vKMs9Ow8bA_enuhLXZ2HAw/sm-po-13153-main/public" alt="Açucareiro" />);
+    const img = screen.getByAltText('Açucareiro') as HTMLImageElement;
+    expect(img.srcset).toContain('thumbnail 150w');
+    expect(img.srcset).toContain('large 1200w');
+    expect(img.srcset).not.toContain('public');
+  });
+
+  it('URL fora do Cloudflare Images não gera srcSet', () => {
+    render(<ProductThumb src="https://example.com/foto.jpg" alt="Produto externo" />);
+    const img = screen.getByAltText('Produto externo') as HTMLImageElement;
+    expect(img.srcset).toBe('');
+  });
+});
+
+describe('FavoriteButton', () => {
+  it('inativo: aria-pressed=false e chama onToggle ao clicar', () => {
+    const onToggle = vi.fn();
+    render(<FavoriteButton active={false} onToggle={onToggle} />);
+    const btn = screen.getByRole('button', { name: 'Adicionar aos favoritos' });
+    expect(btn).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(btn);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('ativo: aria-pressed=true e label de remover', () => {
+    render(<FavoriteButton active onToggle={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Remover dos favoritos' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('busy: desabilita o botão e não chama onToggle', () => {
+    const onToggle = vi.fn();
+    render(<FavoriteButton active={false} onToggle={onToggle} busy />);
+    const btn = screen.getByRole('button');
+    expect(btn).toBeDisabled();
+    fireEvent.click(btn);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it('clique não propaga para o elemento pai (card clicável)', () => {
+    const onParentClick = vi.fn();
+    const onToggle = vi.fn();
+    render(
+      <div onClick={onParentClick}>
+        <FavoriteButton active={false} onToggle={onToggle} />
+      </div>
+    );
+    fireEvent.click(screen.getByRole('button'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    expect(onParentClick).not.toHaveBeenCalled();
+  });
+});
+
+const mockStats = (overrides: Partial<CatalogStats> = {}): CatalogStats => ({
+  total: 7576, in_stock: 6040, featured: 2147, new_30d: 252, bestseller: 596,
+  kits: 978, low_stock: 308, categories_root: 27, suppliers_active: 4,
+  last_sync_at: '2026-09-05T15:40:00Z', last_update_at: '2026-09-12T10:20:00Z',
+  by_month: [],
+  ...overrides,
+});
+
+describe('CatalogKpiStrip', () => {
+  // CT-74: este caso mudou DE PROPOSITO. O strip sem dados passou a reservar o
+  // espaço (esqueleto) porque devolver `null` fazia a faixa nascer depois do
+  // primeiro paint e empurrar a grade — 0,2211 dos 0,2455 de CLS medidos no
+  // Lighthouse de produção em 02/10.
+  it('sem stats (undefined), reserva o espaço com o esqueleto (não some)', () => {
+    const { container } = render(<CatalogKpiStrip stats={undefined} />);
+
+    expect(container.querySelector('[data-testid="catalog-kpi-strip-placeholder"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="catalog-kpi-strip"]')).toBeNull();
+  });
+
+  it('com stats completo, renderiza os 6 KPIs', () => {
+    render(<CatalogKpiStrip stats={mockStats()} />);
+    expect(screen.getByText('Produtos no total')).toBeInTheDocument();
+    expect(screen.getByText('7.576')).toBeInTheDocument();
+    expect(screen.getByText('Em estoque')).toBeInTheDocument();
+    expect(screen.getByText('Categorias')).toBeInTheDocument();
+    expect(screen.getByText('Fornecedores')).toBeInTheDocument();
+  });
+
+  it('loading=true, mostra 6 skeletons em vez dos KPIs', () => {
+    const { container } = render(<CatalogKpiStrip stats={mockStats()} loading />);
+    expect(screen.queryByText('Produtos no total')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(6);
+  });
+
+  it('clique num KPI chama onSelect com a chave certa', () => {
+    const onSelect = vi.fn();
+    render(<CatalogKpiStrip stats={mockStats()} onSelect={onSelect} />);
+    fireEvent.click(screen.getByText('Em destaque').closest('button')!);
+    expect(onSelect).toHaveBeenCalledWith('featured');
+  });
+
+  it('sem onSelect, os cards não são clicáveis (botão desabilitado)', () => {
+    render(<CatalogKpiStrip stats={mockStats()} />);
+    expect(screen.getByText('Produtos no total').closest('button')).toBeDisabled();
+  });
+});
+
+describe('CategoryChips', () => {
+  const cats = [
+    { id: 'c1', name: 'Agro', products_count: 50 },
+    { id: 'c2', name: 'Chapéus', products_count: 200 },
+    { id: 'c3', name: 'Canetas', products_count: 500 },
+    { id: 'c4', name: 'Garrafas', products_count: 150 },
+    { id: 'c5', name: 'Mochilas', products_count: 90 },
+    { id: 'c6', name: 'Camisetas', products_count: 300 },
+    { id: 'c7', name: 'Squeezes', products_count: 120 },
+    { id: 'c8', name: 'Chaveiros', products_count: 400 },
+    { id: 'c9', name: 'Ecobags', products_count: 60 },
+  ];
+
+  it('sempre mostra o chip "Todos"', () => {
+    render(<CategoryChips categories={[]} activeId={null} onChange={vi.fn()} />);
+    expect(screen.getByText('Todos')).toBeInTheDocument();
+  });
+
+  it('9 categorias com max=7: mostra as 7 mais populosas + chip "Mais"', () => {
+    render(<CategoryChips categories={cats} activeId={null} onChange={vi.fn()} max={7} />);
+    expect(screen.getByText('Canetas')).toBeInTheDocument(); // 500, a maior
+    expect(screen.getByText('Chaveiros')).toBeInTheDocument(); // 400
+    expect(screen.queryByText('Agro')).not.toBeInTheDocument(); // 50, a menor, fora do top 7
+    expect(screen.getByText('Mais')).toBeInTheDocument();
+  });
+
+  it('clicar num chip chama onChange com o id', () => {
+    const onChange = vi.fn();
+    render(<CategoryChips categories={cats} activeId={null} onChange={onChange} />);
+    fireEvent.click(screen.getByText('Canetas'));
+    expect(onChange).toHaveBeenCalledWith('c3');
+  });
+
+  it('clicar em "Todos" chama onChange(null)', () => {
+    const onChange = vi.fn();
+    render(<CategoryChips categories={cats} activeId="c3" onChange={onChange} />);
+    fireEvent.click(screen.getByText('Todos'));
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('sem categoria nenhuma exceder max, não mostra o chip "Mais"', () => {
+    render(<CategoryChips categories={cats.slice(0, 3)} activeId={null} onChange={vi.fn()} max={7} />);
+    expect(screen.queryByText('Mais')).not.toBeInTheDocument();
+  });
+
+  it('E34: categoria com icon (nome real do lucide) renderiza o svg do icone', async () => {
+    const withIcon = [{ id: 'c1', name: 'Agro', products_count: 50, icon: 'shopping-bag' }];
+    render(<CategoryChips categories={withIcon} activeId={null} onChange={vi.fn()} />);
+    const chip = screen.getByText('Agro').closest('button');
+    await waitFor(() => expect(chip?.querySelector('svg')).toBeInTheDocument());
+  });
+
+  it('E34: categoria com icon desconhecido nao quebra, so nao mostra svg', async () => {
+    const badIcon = [{ id: 'c1', name: 'Agro', products_count: 50, icon: 'nome-que-nao-existe-no-lucide' }];
+    render(<CategoryChips categories={badIcon} activeId={null} onChange={vi.fn()} />);
+    expect(screen.getByText('Agro')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    const chip = screen.getByText('Agro').closest('button');
+    expect(chip?.querySelector('svg')).not.toBeInTheDocument();
+  });
+
+  it('E34: categoria sem icon nao renderiza svg nenhum', () => {
+    render(<CategoryChips categories={[{ id: 'c1', name: 'Agro', products_count: 50 }]} activeId={null} onChange={vi.fn()} />);
+    const chip = screen.getByText('Agro').closest('button');
+    expect(chip?.querySelector('svg')).not.toBeInTheDocument();
+  });
+});
+
+describe('CatalogFilterBar', () => {
+  const baseProps = {
+    search: '', onSearch: vi.fn(),
+    categories: [{ id: 'c1', name: 'Canetas' }],
+    categoryId: 'all', onCategoryChange: vi.fn(),
+    suppliers: [{ id: 's1', name: 'Spot' }],
+    supplierId: 'all', onSupplierChange: vi.fn(),
+    onlyInStock: false, onOnlyInStockChange: vi.fn(),
+    view: 'grid' as const, onViewChange: vi.fn(),
+  };
+
+  it('renderiza a busca com o placeholder do catálogo', () => {
+    render(<CatalogFilterBar {...baseProps} />);
+    expect(screen.getByPlaceholderText('Buscar por nome, SKU ou marca…')).toBeInTheDocument();
+  });
+
+  it('switch "Em estoque" chama onOnlyInStockChange', () => {
+    const onOnlyInStockChange = vi.fn();
+    render(<CatalogFilterBar {...baseProps} onOnlyInStockChange={onOnlyInStockChange} />);
+    fireEvent.click(screen.getByRole('switch'));
+    expect(onOnlyInStockChange).toHaveBeenCalledWith(true);
+  });
+
+  it('sem onAdvancedFilters, o botão "Filtros avançados" não aparece', () => {
+    render(<CatalogFilterBar {...baseProps} />);
+    expect(screen.queryByText('Filtros avançados')).not.toBeInTheDocument();
+  });
+
+  it('com onAdvancedFilters, o botão aparece e mostra o contador', () => {
+    const onAdvancedFilters = vi.fn();
+    render(<CatalogFilterBar {...baseProps} onAdvancedFilters={onAdvancedFilters} advancedFiltersCount={3} />);
+    const btn = screen.getByText('Filtros avançados').closest('button')!;
+    expect(screen.getByText('3')).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onAdvancedFilters).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('MetaTile', () => {
+  it('renderiza label e valor', () => {
+    render(<MetaTile icon={Layers} label="Qtd. mínima" value="50 unidades" />);
+    expect(screen.getByText('Qtd. mínima')).toBeInTheDocument();
+    expect(screen.getByText('50 unidades')).toBeInTheDocument();
+  });
+});
+
+describe('SectionCard', () => {
+  it('renderiza o título e o conteúdo', () => {
+    render(<SectionCard title="Descrição"><p>Texto do produto</p></SectionCard>);
+    expect(screen.getByText('Descrição')).toBeInTheDocument();
+    expect(screen.getByText('Texto do produto')).toBeInTheDocument();
+  });
+});
+
+describe('countAdvancedFilters (E36)', () => {
+  it('filtros zerados conta 0', () => {
+    expect(countAdvancedFilters(DEFAULT_ADVANCED_FILTERS)).toBe(0);
+  });
+
+  it('soma isBestseller + priceMin + priceMax + cores + materiais', () => {
+    expect(countAdvancedFilters({
+      isBestseller: true, priceMin: '10', priceMax: '50',
+      colors: ['Azul', 'Preto'], materials: ['Metal'],
+    })).toBe(6);
+  });
+
+  it('cada cor/material selecionado conta individualmente, não como 1 grupo', () => {
+    expect(countAdvancedFilters({
+      isBestseller: false, priceMin: '', priceMax: '',
+      colors: ['Azul', 'Preto', 'Branco'], materials: [],
+    })).toBe(3);
+  });
+});
+
+describe('AdvancedFilterChips (E36 — cor/material)', () => {
+  const base: AdvancedFilters = { ...DEFAULT_ADVANCED_FILTERS };
+
+  it('sem filtros ativos, não renderiza nada', () => {
+    const { container } = render(<AdvancedFilterChips filters={base} onChange={vi.fn()} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('um chip por cor e por material selecionados, com o rótulo certo', () => {
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, colors: ['Azul', 'Preto'], materials: ['Metal'] }}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Cor: Azul')).toBeInTheDocument();
+    expect(screen.getByText('Cor: Preto')).toBeInTheDocument();
+    expect(screen.getByText('Material: Metal')).toBeInTheDocument();
+  });
+
+  it('CT-22: o chip de "Mais pedidos" (isBestseller) continua renderizando e removendo o filtro', () => {
+    // A opção de ORDENAR por mais pedidos e o switch de destaque foram
+    // removidos (o PromoGifts ainda não expõe order_count). O chip segue
+    // existindo DE PROPÓSITO, para o usuário conseguir LIMPAR um filtro
+    // antigo persistido — este teste garante que ele não foi removido junto.
+    const onChange = vi.fn();
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, isBestseller: true }}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Mais pedidos'));
+    expect(onChange).toHaveBeenCalledWith({ ...base, isBestseller: false });
+  });
+
+  it('remover o chip de uma cor tira só ela, preservando as demais cores e outros filtros', () => {
+    const onChange = vi.fn();
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, isBestseller: true, colors: ['Azul', 'Preto'], materials: ['Metal'] }}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Cor: Azul'));
+    expect(onChange).toHaveBeenCalledWith({
+      ...base, isBestseller: true, colors: ['Preto'], materials: ['Metal'],
+    });
+  });
+
+  it('remover o chip de um material tira só ele, preservando as cores', () => {
+    const onChange = vi.fn();
+    render(
+      <AdvancedFilterChips
+        filters={{ ...base, colors: ['Azul'], materials: ['Metal', 'Plástico'] }}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Material: Metal'));
+    expect(onChange).toHaveBeenCalledWith({
+      ...base, colors: ['Azul'], materials: ['Plástico'],
+    });
+  });
+});
+
+describe('matchesAnySelected (E36)', () => {
+  it('seleção vazia sempre casa — filtro inativo não exclui produto nenhum', () => {
+    expect(matchesAnySelected(['Azul'], [])).toBe(true);
+    expect(matchesAnySelected(null, [])).toBe(true);
+    expect(matchesAnySelected(undefined, [])).toBe(true);
+  });
+
+  it('casa com string simples — formato majoritário de products.colors/materials', () => {
+    expect(matchesAnySelected(['Azul', 'Preto'], ['Azul'])).toBe(true);
+    expect(matchesAnySelected(['Verde'], ['Azul'])).toBe(false);
+  });
+
+  it('casa com objeto {nome} — formato minoritário, mesma dualidade do filtro server-side', () => {
+    expect(matchesAnySelected([{ nome: 'Azul' }], ['Azul'])).toBe(true);
+    expect(matchesAnySelected([{ nome: 'Verde' }], ['Azul'])).toBe(false);
+  });
+
+  it('mistura string e {nome} no mesmo array', () => {
+    expect(matchesAnySelected(['Preto', { nome: 'Azul' }], ['Azul'])).toBe(true);
+  });
+
+  it('é OR entre os selecionados: casa se tiver pelo menos um', () => {
+    expect(matchesAnySelected(['Verde'], ['Azul', 'Verde'])).toBe(true);
+  });
+
+  it('comparação por label é case-insensitive', () => {
+    expect(matchesAnySelected(['azul'], ['Azul'])).toBe(true);
+    expect(matchesAnySelected(['AZUL'], ['azul'])).toBe(true);
+  });
+
+  it('raw que não é array (null, string solta, número) não casa com seleção não-vazia', () => {
+    expect(matchesAnySelected(null, ['Azul'])).toBe(false);
+    expect(matchesAnySelected(undefined, ['Azul'])).toBe(false);
+    expect(matchesAnySelected('Azul', ['Azul'])).toBe(false);
+  });
+
+  it('elemento em formato desconhecido (número, objeto sem nome) é ignorado silenciosamente', () => {
+    expect(matchesAnySelected([42, { cor: 'Azul' }], ['Azul'])).toBe(false);
+  });
+});
+
+describe('TagMultiSelectChips (E36)', () => {
+  it('sem opções, não renderiza nada', () => {
+    const { container } = render(<TagMultiSelectChips options={[]} selected={[]} onChange={vi.fn()} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renderiza um chip por opção; selecionados vêm com aria-pressed=true', () => {
+    render(
+      <TagMultiSelectChips
+        options={[{ label: 'Azul', count: 40 }, { label: 'Preto', count: 12 }]}
+        selected={['Azul']}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Azul' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Preto' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('clicar numa opção não selecionada adiciona ela à seleção', () => {
+    const onChange = vi.fn();
+    render(
+      <TagMultiSelectChips
+        options={[{ label: 'Azul', count: 40 }, { label: 'Preto', count: 12 }]}
+        selected={['Azul']}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Preto' }));
+    expect(onChange).toHaveBeenCalledWith(['Azul', 'Preto']);
+  });
+
+  it('clicar numa opção já selecionada remove ela (toggle)', () => {
+    const onChange = vi.fn();
+    render(
+      <TagMultiSelectChips
+        options={[{ label: 'Azul', count: 40 }]}
+        selected={['Azul']}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Azul' }));
+    expect(onChange).toHaveBeenCalledWith([]);
+  });
+});
+
+describe('catalogShared — CT-59/CT-60', () => {
+  beforeEach(() => {
+    toastError.mockReset();
+  });
+
+  describe('countLabel', () => {
+    it('mostra a contagem entre parênteses quando existe', () => {
+      expect(countLabel('Brindes', 42)).toBe('Brindes (42)');
+      expect(countLabel('Canecas', 1234)).toBe('Canecas (1.234)');
+      expect(countLabel('Vazia', 0)).toBe('Vazia (0)');
+    });
+
+    it('sem contagem na fonte, não inventa número', () => {
+      expect(countLabel('Spot', null)).toBe('Spot');
+      expect(countLabel('Spot', undefined)).toBe('Spot');
+    });
+  });
+
+  describe('useRateLimitCooldown', () => {
+    it('dispara o toast no 429 e libera os botões só depois de 10 s', () => {
+      vi.useFakeTimers();
+      try {
+        const { result, rerender } = renderHook(
+          ({ rateLimited }: { rateLimited: boolean }) => useRateLimitCooldown(rateLimited),
+          { initialProps: { rateLimited: false } },
+        );
+        expect(result.current).toBe(false);
+
+        rerender({ rateLimited: true });
+        act(() => { vi.advanceTimersByTime(0); });
+        expect(result.current).toBe(true);
+        expect(toastError).toHaveBeenCalledWith('Muitas requisições, aguarde 1 min');
+
+        act(() => { vi.advanceTimersByTime(9_000); });
+        expect(result.current).toBe(true);
+
+        act(() => { vi.advanceTimersByTime(1_000); });
+        expect(result.current).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('sem 429 não dispara toast nem bloqueia', () => {
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useRateLimitCooldown(false));
+        act(() => { vi.advanceTimersByTime(1_000); });
+        expect(result.current).toBe(false);
+        expect(toastError).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('CatalogErrorState', () => {
+    it('CATALOG_UPSTREAM_ERROR usa TalkXDataUnavailableState e chama onRetry', () => {
+      const onRetry = vi.fn();
+      render(<CatalogErrorState code="CATALOG_UPSTREAM_ERROR" onRetry={onRetry} />);
+      expect(screen.getByText('Dados indisponíveis')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+      expect(onRetry).toHaveBeenCalled();
+    });
+
+    it('cooldown do 429 desabilita o "Tentar de novo"', () => {
+      render(<CatalogErrorState code="CATALOG_RATE_LIMITED" message="Too many requests" retryDisabled onRetry={vi.fn()} />);
+      expect(screen.getByText('Too many requests')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeDisabled();
+    });
+
+    it('códigos de configuração/credencial mostram o código ao admin', () => {
+      render(<CatalogErrorState code="CATALOG_NOT_CONFIGURED" />);
+      expect(screen.getByText('CATALOG_NOT_CONFIGURED')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('PhonePreview (CT-37)', () => {
+  it('renderiza a moldura .catalog-phone com cabeçalho, bolha e a mensagem', () => {
+    const { container } = render(
+      <PhonePreview message="Oi! Olha esse produto" images={[{ url: 'https://x/a.jpg', label: 'Azul' }]} />
+    );
+
+    const phone = container.querySelector('.catalog-phone');
+    expect(phone).not.toBeNull();
+    expect(phone!.querySelector('.catalog-phone__header')).toHaveTextContent('Cliente');
+    expect(phone!.querySelector('.catalog-phone__bubble')).toHaveTextContent('Oi! Olha esse produto');
+    expect(screen.getByAltText('Prévia')).toHaveAttribute('src', 'https://x/a.jpg');
+  });
+
+  it('usa o título recebido e mostra o contador "1/N" com mais de uma foto', () => {
+    const { container } = render(
+      <PhonePreview
+        title="Tomaz"
+        message="oi"
+        images={[{ url: 'https://x/a.jpg', label: 'A' }, { url: 'https://x/b.jpg', label: 'B' }]}
+      />
+    );
+
+    expect(container.querySelector('.catalog-phone__header')).toHaveTextContent('Tomaz');
+    expect(screen.getByText('1/2')).toBeInTheDocument();
+  });
+
+  it('sem fotos, mantém a bolha com o texto e não renderiza imagem', () => {
+    const { container } = render(<PhonePreview message="só texto" images={[]} />);
+
+    expect(container.querySelector('.catalog-phone__bubble')).toHaveTextContent('só texto');
+    expect(screen.queryByAltText('Prévia')).not.toBeInTheDocument();
+  });
+
+  it('catalogShared.tsx não contém cor hexadecimal literal (aceite CT-37)', () => {
+    const fonte = readFileSync(path.resolve(__dirname, '..', 'catalogShared.tsx'), 'utf8');
+    expect(fonte.match(/#[0-9a-fA-F]{6}\b/g)).toBeNull();
+  });
+});

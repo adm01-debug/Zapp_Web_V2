@@ -1,0 +1,2 @@
+diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.inbound_message_effects_pkey; constraints|relation:inbound_message_effects.inbound_message_effects_pkey (+8)
+rc=1

@@ -1,0 +1,3 @@
+ M docs/ia/README.md
+?? docs/ia/IA-141-a-IA-150-experiencia-uso-acessibilidade.md
+?? tests/contracts/sl216-bloco15-estado.contract.test.ts

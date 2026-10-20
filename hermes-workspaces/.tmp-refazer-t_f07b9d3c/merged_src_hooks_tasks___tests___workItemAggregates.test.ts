@@ -1,0 +1,713 @@
+import { describe, it, expect } from 'vitest';
+import { startOfDay } from 'date-fns';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime, agendaDayCounts, agendaDayAriaLabel, daySubtitle, memoizedApplyFilters, memoizedBucketByDue, memoizedBucketByStatus, memoizedKpis } from '../workItemAggregates';
+import { localDayKey } from '@/lib/localDay';
+import { DEFAULT_FILTERS } from '../workItemFilters';
+import type { WorkItem } from '../workItem.types';
+
+const now = new Date('2026-10-03T12:00:00Z');
+
+function makeItem(overrides: Partial<WorkItem>): WorkItem {
+  return {
+    id: Math.random().toString(36).slice(2),
+    title: 'Test',
+    description: null,
+    status: 'todo',
+    priority: 'medium',
+    due_date: null,
+    remind_at: null,
+    notified_at: null,
+    waiting_reason: null,
+    position: 0,
+    started_at: null,
+    status_changed_at: now.toISOString(),
+    completed_at: null,
+    contact_id: null,
+    created_by: 'p1',
+    assigned_to: 'p1',
+    created_at: now.toISOString(),
+    updated_at: now.toISOString(),
+    ...overrides,
+  };
+}
+
+/**
+ * Fase F (auditoria adversarial de 30/09): as correções que a suíte não pegava.
+ * Cada caso aqui FALHA no código anterior — são testemunhas dos bugs, não enfeite.
+ */
+describe('Fase F — correções da auditoria', () => {
+  it('a busca ignora acento e caixa: "cafe" acha "Café"', () => {
+    const itens = [
+      makeItem({ id: 'ac', title: 'Café com o cliente' }),
+      makeItem({ id: 'ag', title: 'Água' }),
+    ];
+
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'cafe' }).map(i => i.id)).toEqual(['ac']);
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'CAFÉ' }).map(i => i.id)).toEqual(['ac']);
+    expect(applyFilters(itens, { ...DEFAULT_FILTERS, q: 'agua' }).map(i => i.id)).toEqual(['ag']);
+  });
+
+  it('lista nula não derruba o recorte (guarda `items ?? []`)', () => {
+    expect(applyFilters(undefined as unknown as WorkItem[], DEFAULT_FILTERS)).toEqual([]);
+  });
+
+  it('concluída SEM carimbo entra nos 7 dias da Lista (mesma regra do Quadro)', () => {
+    const b = bucketByDue([makeItem({ id: 'x', status: 'done', completed_at: null })]);
+
+    expect(b.done7d.map(i => i.id)).toEqual(['x']);
+    expect(b.doneOlder).toEqual([]);
+  });
+
+  describe('F2 — Agenda e QuickAdd', () => {
+    it('temHora: fim do dia (23:59) e meia-noite são DIA INTEIRO; 09:30 tem hora', () => {
+      // É a convenção que o próprio app grava nos chips "Hoje/Amanhã" e no
+      // QuickAdd da Agenda — sem tratá-la, "Sem hora" ficava inalcançável.
+      expect(temHora(null)).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 23, 59, 0, 0).toISOString())).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 0, 0, 0, 0).toISOString())).toBe(false);
+      expect(temHora(new Date(2026, 9, 3, 9, 30, 0, 0).toISOString())).toBe(true);
+      expect(temHora(new Date(2026, 9, 3, 23, 30, 0, 0).toISOString())).toBe(true);
+    });
+
+    it('"Sem hora" recebe o prazo de dia inteiro e "Prazos" sai em ordem de `due_date`', () => {
+      const dia = (h: number, m: number) => new Date(2026, 9, 3, h, m).toISOString();
+      const grupos = groupAgendaDay({
+        reminders: [],
+        dueTasks: [
+          makeItem({ id: 'tarde',  due_date: dia(15, 0) }),
+          makeItem({ id: 'cedo',   due_date: dia(9, 0) }),
+          makeItem({ id: 'semHora', due_date: dia(23, 59) }),
+        ],
+      });
+
+      expect(grupos.semHora.map(i => i.id)).toEqual(['semHora']);
+      expect(grupos.prazos.map(i => i.id)).toEqual(['cedo', 'tarde']);
+    });
+  });
+});
+
+describe('applyFilters (etapas 45/46 — os filtros valem nos três modos)', () => {
+  const base: WorkItem[] = [
+    makeItem({ id: 'a', title: 'Ligar para a Ana', priority: 'urgent' }),
+    makeItem({ id: 'b', title: 'Enviar orçamento', priority: 'low', remind_at: '2026-10-04T09:00:00Z' }),
+    makeItem({ id: 'c', title: 'Ligar de novo', priority: 'high', contact: { id: 'c1', name: 'Ana', phone: null, avatar_url: null } }),
+    makeItem({ id: 'd', title: 'Já feita', status: 'done', completed_at: '2026-10-02T10:00:00Z' }),
+  ];
+  const ids = (items: WorkItem[]) => items.map(i => i.id);
+
+  it('sem filtro nenhum devolve tudo, inclusive as concluídas', () => {
+    expect(ids(applyFilters(base, DEFAULT_FILTERS))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('a busca casa o título sem diferenciar maiúsculas e ignora espaços das pontas', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: '  LIGAR ' }))).toEqual(['a', 'c']);
+  });
+
+  it('prioridade recorta pela prioridade exata', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, prio: 'urgent' }))).toEqual(['a']);
+  });
+
+  it('contato recorta pelo id do contato da tarefa', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, contact: 'c1' }))).toEqual(['c']);
+  });
+
+  it('"com alarme" só deixa o que tem lembrete marcado', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, alarm: true }))).toEqual(['b']);
+  });
+
+  it('esconder as concluídas tira as `done` dos três modos', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, done: false }))).toEqual(['a', 'b', 'c']);
+  });
+
+  it('os filtros somam (E, não OU)', () => {
+    expect(ids(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high' }))).toEqual(['c']);
+    expect(applyFilters(base, { ...DEFAULT_FILTERS, q: 'ligar', prio: 'high', done: false })).toHaveLength(1);
+  });
+});
+
+describe('etapa 55 — Agenda: pontos do dia e os 3 grupos', () => {
+  it('temHora separa prazo com hora de prazo de dia inteiro', () => {
+    expect(temHora(null)).toBe(false);
+    expect(temHora(new Date(2026, 9, 3, 0, 0).toISOString())).toBe(false);
+    expect(temHora(new Date(2026, 9, 3, 14, 30).toISOString())).toBe(true);
+  });
+
+  it('dots: prazo, alarme e atrasada — no máximo 3', () => {
+    const vazio = { reminders: [], dueTasks: [] };
+    expect(agendaDayDots(vazio, 0)).toEqual([]);
+    expect(agendaDayDots({ reminders: [makeItem({}), ], dueTasks: [makeItem({})] }, 0))
+      .toEqual(['bg-primary', 'bg-warning']);
+    expect(agendaDayDots({ reminders: [makeItem({})], dueTasks: [makeItem({})] }, 2))
+      .toEqual(['bg-primary', 'bg-warning', 'bg-destructive']);
+  });
+
+  it('o item com prazo E alarme no mesmo dia entra nos dois grupos (DoD)', () => {
+    const dois = makeItem({
+      id: 'dois',
+      remind_at: new Date(2026, 9, 3, 9, 0).toISOString(),
+      due_date:  new Date(2026, 9, 3, 18, 0).toISOString(),
+    });
+    const soAlarme = makeItem({ id: 'alarme', remind_at: new Date(2026, 9, 3, 8, 0).toISOString() });
+    const diaInteiro = makeItem({ id: 'dia', due_date: new Date(2026, 9, 3, 0, 0).toISOString() });
+    const comHora = makeItem({ id: 'hora', due_date: new Date(2026, 9, 3, 15, 0).toISOString() });
+
+    const g = groupAgendaDay({ reminders: [soAlarme, dois], dueTasks: [dois, diaInteiro, comHora] });
+
+    expect(g.alarmes.map(i => i.id)).toEqual(['alarme', 'dois']);   // ordenado por remind_at
+    expect(g.prazos.map(i => i.id)).toEqual(['hora', 'dois']);      // dia inteiro sai daqui
+    expect(g.semHora.map(i => i.id)).toEqual(['dia']);
+    expect(g.alarmes.map(i => i.id)).toContain('dois');                       // o mesmo objeto nos dois
+  });
+});
+
+describe('bucketByDue', () => {
+  it('classifica atrasada corretamente', () => {
+    const item = makeItem({ due_date: '2026-10-01T10:00:00Z' }); // 2 dias atrás
+    const b = bucketByDue([item], now);
+    expect(b.overdue).toHaveLength(1);
+    expect(b.today).toHaveLength(0);
+  });
+
+  it('classifica hoje', () => {
+    // R2-MOD-058: "hoje" no módulo é o prazo de DIA INTEIRO (23:59 locais, a
+    // convenção dos chips "Hoje/Amanhã") — prazo com hora já passada é atraso.
+    const item = makeItem({ due_date: new Date(2026, 9, 3, 23, 59).toISOString() });
+    const b = bucketByDue([item], now);
+    expect(b.today).toHaveLength(1);
+  });
+
+  it('classifica amanhã', () => {
+    const item = makeItem({ due_date: '2026-10-04T08:00:00Z' });
+    const b = bucketByDue([item], now);
+    expect(b.tomorrow).toHaveLength(1);
+  });
+
+  it('classifica sem prazo', () => {
+    const item = makeItem({ due_date: null });
+    const b = bucketByDue([item], now);
+    expect(b.noDue).toHaveLength(1);
+  });
+
+  it('done7d inclui concluída na semana', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-09-29T10:00:00Z' });
+    const b = bucketByDue([item], now);
+    expect(b.done7d).toHaveLength(1);
+  });
+
+  it('done7d exclui concluída > 7 dias', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-09-24T10:00:00Z' });
+    const b = bucketByDue([item], now);
+    expect(b.done7d).toHaveLength(0);
+  });
+
+  it('doneOlder inclui concluída entre 8 e 30 dias', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-09-20T10:00:00Z' }); // 13 dias atrás
+    const b = bucketByDue([item], now);
+    expect(b.doneOlder).toHaveLength(1);
+    expect(b.done7d).toHaveLength(0);
+  });
+
+  it('doneOlder exclui concluída dentro dos 7 dias (fica em done7d)', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-10-02T10:00:00Z' }); // 1 dia
+    const b = bucketByDue([item], now);
+    expect(b.doneOlder).toHaveLength(0);
+    expect(b.done7d).toHaveLength(1);
+  });
+
+  it('doneOlder exclui concluída com mais de 30 dias', () => {
+    const item = makeItem({ status: 'done', completed_at: '2026-08-20T10:00:00Z' }); // 44 dias
+    const b = bucketByDue([item], now);
+    expect(b.doneOlder).toHaveLength(0);
+    expect(b.done7d).toHaveLength(0);
+  });
+
+  it('exclui done de active buckets', () => {
+    const item = makeItem({ status: 'done', due_date: '2026-10-01T10:00:00Z', completed_at: now.toISOString() });
+    const b = bucketByDue([item], now);
+    expect(b.overdue).toHaveLength(0);
+  });
+});
+
+describe('bucketByStatus', () => {
+  it('distribui por status', () => {
+    const items = [
+      makeItem({ status: 'doing' }),
+      makeItem({ status: 'doing' }),
+      makeItem({ status: 'todo' }),
+    ];
+    const b = bucketByStatus(items);
+    expect(b.doing).toHaveLength(2);
+    expect(b.todo).toHaveLength(1);
+    expect(b.backlog).toHaveLength(0);
+  });
+
+  it('ordena por position depois priority', () => {
+    const items = [
+      makeItem({ status: 'todo', position: 2, priority: 'low' }),
+      makeItem({ status: 'todo', position: 0, priority: 'high' }),
+      makeItem({ status: 'todo', position: 1, priority: 'medium' }),
+    ];
+    const b = bucketByStatus(items);
+    expect(b.todo[0].position).toBe(0);
+    expect(b.todo[1].position).toBe(1);
+    expect(b.todo[2].position).toBe(2);
+  });
+});
+
+describe('kpis', () => {
+  it('conta overdue, dueToday, doingCount, done7d', () => {
+    const items = [
+      makeItem({ status: 'doing' }),
+      makeItem({ due_date: '2026-10-01T10:00:00Z' }), // overdue
+      makeItem({ due_date: new Date(2026, 9, 3, 23, 59).toISOString() }), // hoje (dia inteiro)
+      makeItem({ status: 'done', completed_at: '2026-09-29T10:00:00Z' }),
+    ];
+    const k = kpis(items, now);
+    expect(k.overdue).toBe(1);
+    expect(k.dueToday).toBe(1);
+    expect(k.doingCount).toBe(1);
+    expect(k.done7d).toBe(1);
+  });
+
+  it('avgCycleTimeDays null sem dados', () => {
+    const k = kpis([], now);
+    expect(k.avgCycleTimeDays).toBeNull();
+  });
+});
+
+describe('dueLabel', () => {
+  it('retorna Atrasada para data passada', () => {
+    const { overdue } = dueLabel('2026-10-01T10:00:00Z', now);
+    expect(overdue).toBe(true);
+  });
+  it('retorna Hoje para hoje', () => {
+    // R2-MOD-058: prazo de dia inteiro (23:59 locais) é "Hoje" o dia todo; o
+    // prazo com hora que já passou sai "Atrasada" (ver o bloco da regra única).
+    const { label } = dueLabel(new Date(2026, 9, 3, 23, 59).toISOString(), now);
+    expect(label).toBe('Hoje');
+  });
+  it('retorna Amanhã para amanhã', () => {
+    const { label } = dueLabel('2026-10-04T08:00:00Z', now);
+    expect(label).toMatch(/amanh/i);
+  });
+});
+
+describe('weekBuckets', () => {
+  it('distribui por dia de remind_at e due_date', () => {
+    // Datas construidas em hora LOCAL: o mesmo caso passa em UTC e em UTC-3.
+    const start = new Date(2026, 9, 6);            // segunda 06/10 as 00:00 locais
+    const items = [
+      makeItem({ remind_at: new Date(2026, 9, 6, 9, 0).toISOString() }),
+      makeItem({ due_date: new Date(2026, 9, 7, 0, 0).toISOString() }),
+    ];
+    const wb = weekBuckets(items, start);
+    expect(wb[0].reminders).toHaveLength(1); // seg
+    expect(wb[1].dueTasks).toHaveLength(1);  // ter
+  });
+
+  it('a tarefa das 23:59 locais fica no dia LOCAL, o mesmo que a Lista chama de "Hoje"', () => {
+    const due   = new Date(2026, 9, 1, 23, 59);   // 01/10 as 23:59 locais
+    const wb    = weekBuckets([makeItem({ due_date: due.toISOString() })], startOfDay(due));
+    expect(wb[0].dueTasks).toHaveLength(1);
+    expect(wb[1].dueTasks).toHaveLength(0);
+
+    // ...e a Lista concorda: o mesmo instante e "Hoje", nao "amanha".
+    const b = bucketByDue([makeItem({ due_date: due.toISOString() })], due);
+    expect(b.today).toHaveLength(1);
+    expect(b.tomorrow).toHaveLength(0);
+  });
+
+  it('o lembrete das 23:59 locais fica no dia LOCAL, nao no seguinte', () => {
+    const rem = new Date(2026, 9, 1, 23, 59);
+    const wb  = weekBuckets([makeItem({ remind_at: rem.toISOString() })], startOfDay(rem));
+    expect(wb[0].reminders).toHaveLength(1);
+    expect(wb[1].reminders).toHaveLength(0);
+  });
+
+  it('a meia-noite local abre o proprio dia (nao fecha o anterior)', () => {
+    const wb = weekBuckets(
+      [makeItem({ due_date: new Date(2026, 9, 2, 0, 0).toISOString() })],
+      new Date(2026, 9, 1)
+    );
+    expect(wb[0].dueTasks).toHaveLength(0); // 01/10 fica vazio
+    expect(wb[1].dueTasks).toHaveLength(1); // 02/10 recebe
+  });
+
+  it('data invalida e ignorada, nao derruba a Agenda', () => {
+    const wb = weekBuckets([makeItem({ due_date: 'nao-e-data' })], new Date(2026, 9, 1));
+    expect(wb.every(w => w.dueTasks.length === 0)).toBe(true);
+  });
+});
+
+describe('etapa 49 — "Próximas" agrupada por dia', () => {
+  // `now` = sábado 03/10/2026 (12h: o mesmo dia em UTC ou em UTC-3).
+  it('rotula o dia: Hoje, Amanhã, o dia da semana (dentro de 7 dias) e "Semana que vem" (> 7 dias)', () => {
+    expect(dayGroupLabel('2026-10-03T12:00:00Z', now)).toBe('Hoje');
+    expect(dayGroupLabel('2026-10-04T12:00:00Z', now)).toBe('Amanhã');
+    expect(dayGroupLabel('2026-10-05T12:00:00Z', now)).toBe('Seg 05/10');
+    expect(dayGroupLabel('2026-10-10T12:00:00Z', now)).toBe('Sáb 10/10'); // hoje + 7
+    expect(dayGroupLabel('2026-10-11T12:00:00Z', now)).toBe('Semana que vem'); // hoje + 8
+  });
+
+  it('agrupa por dia na ordem prazo → prioridade', () => {
+    const grupos = groupUpcomingByDay([
+      makeItem({ id: 'z', due_date: '2026-10-12T09:00:00Z', priority: 'urgent' }),
+      makeItem({ id: 'b', due_date: '2026-10-05T15:00:00Z', priority: 'low' }),
+      makeItem({ id: 'a', due_date: '2026-10-05T09:00:00Z', priority: 'urgent' }),
+    ], now);
+
+    expect(grupos.map(g => g.label)).toEqual(['Seg 05/10', 'Semana que vem']);
+    expect(grupos[0].items.map(i => i.id)).toEqual(['a', 'b']); // mesmo dia: prazo mais cedo primeiro
+    expect(grupos[1].items.map(i => i.id)).toEqual(['z']);
+  });
+
+  it('desempata o mesmo horário por prioridade', () => {
+    const grupos = groupUpcomingByDay([
+      makeItem({ id: 'low', due_date: '2026-10-05T09:00:00Z', priority: 'low' }),
+      makeItem({ id: 'urg', due_date: '2026-10-05T09:00:00Z', priority: 'urgent' }),
+    ], now);
+
+    expect(grupos[0].items.map(i => i.id)).toEqual(['urg', 'low']);
+  });
+});
+
+describe('etapa 51 — splitDoneByRecency (coluna Concluído do Quadro)', () => {
+  const done = (id: string, completed_at: string | null) =>
+    makeItem({ id, status: 'done', completed_at });
+
+  it('recent = só os 7 dias, na ordem completed_at desc', () => {
+    const { recent, older } = splitDoneByRecency([
+      done('antigaDaSemana', '2026-09-28T10:00:00Z'), // 5 dias
+      done('ontem',          '2026-10-02T10:00:00Z'), // 1 dia
+      done('duasSemanas',    '2026-09-20T10:00:00Z'), // 13 dias
+      done('mesPassado',     '2026-08-20T10:00:00Z'), // 44 dias
+    ], now);
+
+    expect(recent.map(i => i.id)).toEqual(['ontem', 'antigaDaSemana']);
+    expect(older.map(i => i.id)).toEqual(['duasSemanas']);
+  });
+
+  it('older vai do mais recente ao mais antigo e para no teto de 30 dias', () => {
+    const { older } = splitDoneByRecency([
+      done('a', '2026-09-10T10:00:00Z'), // 23 dias
+      done('b', '2026-09-25T10:00:00Z'), // 8 dias
+      done('c', '2026-08-01T10:00:00Z'), // 63 dias — fora da janela da query
+    ], now);
+
+    expect(older.map(i => i.id)).toEqual(['b', 'a']);
+  });
+
+  it('concluída sem carimbo fica na janela recente (tarefa não se esconde por falta de dado)', () => {
+    const { recent, older } = splitDoneByRecency([done('semCarimbo', null)], now);
+
+    expect(recent.map(i => i.id)).toEqual(['semCarimbo']);
+    expect(older).toHaveLength(0);
+  });
+
+  it('ignora o que não está concluído', () => {
+    const { recent, older } = splitDoneByRecency([makeItem({ id: 'aberta', status: 'todo' })], now);
+
+    expect(recent).toHaveLength(0);
+    expect(older).toHaveLength(0);
+  });
+});
+
+/**
+ * R2-MOD-058 — o achado: o badge (menu) comparava o prazo com o INSTANTE e o
+ * módulo (KPI, seções, chip) só com o INÍCIO DO DIA, então a mesma tarefa com
+ * prazo "hoje às 9h", às 15h, acendia o menu e sumia do "Atrasadas" da lista.
+ * A regra única (`isOverdue`) separa os dois tipos de prazo que o app grava:
+ * com hora (vence no instante) e de dia inteiro 23:59/00:00 (vence no fim do dia
+ * local). Estes casos FALHAM no código anterior — o primeiro porque o módulo
+ * tratava o prazo das 9h como "Hoje", o segundo porque o badge contava o das
+ * 23:59 como atraso.
+ */
+describe('R2-MOD-058 — regra única de prazo vencido (badge, KPI, grupos e chip)', () => {
+  // O relógio do aceite: 15h no fuso LOCAL (o mesmo dia em qualquer máquina,
+  // porque as datas abaixo são construídas em hora local).
+  const quinzeHoras = new Date(2026, 9, 3, 15, 0, 0, 0);
+  const iso = (d: Date) => d.toISOString();
+
+  const hojeAsNove    = makeItem({ id: 'nove',  due_date: iso(new Date(2026, 9, 3, 9, 0)) });
+  const hojeFimDoDia  = makeItem({ id: 'fim',   due_date: iso(new Date(2026, 9, 3, 23, 59)) });
+  const hojeMeiaNoite = makeItem({ id: 'meia',  due_date: iso(new Date(2026, 9, 3, 0, 0)) });
+  const ontemFimDoDia = makeItem({ id: 'ontem', due_date: iso(new Date(2026, 9, 2, 23, 59)) });
+  const hojeAs1530    = makeItem({ id: 'depois', due_date: iso(new Date(2026, 9, 3, 15, 30)) });
+
+  it('prazo de hoje às 9h, às 15h, é ATRASADO no badge, no KPI, no grupo e no chip', () => {
+    expect(isOverdue(hojeAsNove.due_date, quinzeHoras)).toBe(true);
+
+    const b = bucketByDue([hojeAsNove], quinzeHoras);
+    expect(b.overdue.map(i => i.id)).toEqual(['nove']);
+    expect(b.today).toEqual([]);
+
+    const k = kpis([hojeAsNove], quinzeHoras);
+    expect(k.overdue).toBe(1);
+    expect(k.dueToday).toBe(0);
+
+    const chip = dueLabel(hojeAsNove.due_date!, quinzeHoras);
+    expect(chip.overdue).toBe(true);
+    expect(chip.label).toMatch(/^Atrasada/);
+
+    expect(dayGroupLabel(hojeAsNove.due_date!, quinzeHoras)).toBe('Atrasada');
+  });
+
+  it('prazo de dia inteiro (23:59 e 00:00 de hoje) continua "Hoje" — não é atraso', () => {
+    expect(isOverdue(hojeFimDoDia.due_date, quinzeHoras)).toBe(false);
+    expect(isOverdue(hojeMeiaNoite.due_date, quinzeHoras)).toBe(false);
+
+    const b = bucketByDue([hojeFimDoDia, hojeMeiaNoite], quinzeHoras);
+    expect(b.today.map(i => i.id)).toEqual(['fim', 'meia']);
+    expect(b.overdue).toEqual([]);
+
+    const k = kpis([hojeFimDoDia], quinzeHoras);
+    expect(k.overdue).toBe(0);
+    expect(k.dueToday).toBe(1);
+
+    expect(dueLabel(hojeFimDoDia.due_date!, quinzeHoras)).toMatchObject({ label: 'Hoje', overdue: false });
+    expect(dayGroupLabel(hojeFimDoDia.due_date!, quinzeHoras)).toBe('Hoje');
+  });
+
+  it('o mesmo horário de fim do dia, um dia atrás, é atraso em todos os canais', () => {
+    expect(isOverdue(ontemFimDoDia.due_date, quinzeHoras)).toBe(true);
+    expect(bucketByDue([ontemFimDoDia], quinzeHoras).overdue.map(i => i.id)).toEqual(['ontem']);
+    expect(kpis([ontemFimDoDia], quinzeHoras).overdue).toBe(1);
+    expect(dueLabel(ontemFimDoDia.due_date!, quinzeHoras).overdue).toBe(true);
+  });
+
+  it('prazo de hoje ainda por vir (15:30 com o relógio às 15:00) não é atraso', () => {
+    expect(isOverdue(hojeAs1530.due_date, quinzeHoras)).toBe(false);
+    expect(bucketByDue([hojeAs1530], quinzeHoras).today.map(i => i.id)).toEqual(['depois']);
+  });
+
+  it('o dia é o LOCAL: às 23:30 locais o prazo das 23:59 ainda é de hoje, e o das 00:00 de amanhã abre o dia seguinte', () => {
+    // 23:30 locais do dia 3 (em UTC-3 já é dia 4 em UTC) — a comparação não pode
+    // usar o dia UTC, senão o prazo das 23:59 locais viraria "atrasado".
+    const vinte3eMeia = new Date(2026, 9, 3, 23, 30, 0, 0);
+    const hojeAs23     = makeItem({ id: 'h23', due_date: iso(new Date(2026, 9, 3, 23, 0)) });
+    const amanhaAs00   = makeItem({ id: 'a00', due_date: iso(new Date(2026, 9, 4, 0, 0)) });
+
+    expect(isOverdue(hojeFimDoDia.due_date, vinte3eMeia)).toBe(false);
+    expect(isOverdue(amanhaAs00.due_date, vinte3eMeia)).toBe(false);
+    // Com hora marcada, o relógio manda: as 23:00 de hoje já passaram.
+    expect(isOverdue(hojeAs23.due_date, vinte3eMeia)).toBe(true);
+
+    const b = bucketByDue([hojeFimDoDia, amanhaAs00, hojeAs23], vinte3eMeia);
+    expect(b.overdue.map(i => i.id)).toEqual(['h23']);
+    expect(b.today.map(i => i.id)).toEqual(['fim']);
+    expect(b.tomorrow.map(i => i.id)).toEqual(['a00']);
+
+    // Virada do dia: 00:30 do dia 4 — o prazo das 23:59 do dia 3 venceu.
+    const meiaHoraDepois = new Date(2026, 9, 4, 0, 30, 0, 0);
+    const virou = bucketByDue([hojeFimDoDia, amanhaAs00], meiaHoraDepois);
+    expect(virou.overdue.map(i => i.id)).toEqual(['fim']);
+    expect(virou.today.map(i => i.id)).toEqual(['a00']);
+  });
+});
+
+/**
+ * Etapa 21 / D13 — o tempo médio que a tela rotula "Da criação à conclusão" tem
+ * de medir `created_at` → `completed_at` (não o tempo de ciclo). Estes casos
+ * FALHAM na regra antiga: a primeira concluída nasceu 7 dias antes de terminar
+ * e só passou por "Fazendo" no último dia — o ciclo dá 1 e o lead time dá 4.
+ */
+describe('etapa 21 (D13) — tempo médio da criação à conclusão', () => {
+  const feita = (
+    id: string,
+    created_at: string,
+    completed_at: string,
+    started_at: string | null = null,
+  ) => makeItem({ id, status: 'done', created_at, completed_at, started_at });
+
+  it('kpis mede (completed_at − created_at) e mantém o tempo de ciclo para quem já lê', () => {
+    const itens = [
+      feita('longa', '2026-09-25T12:00:00Z', '2026-10-02T12:00:00Z', '2026-10-01T12:00:00Z'),
+      feita('curta', '2026-10-01T12:00:00Z', '2026-10-02T12:00:00Z'), // nasceu já sem passar por Fazendo
+    ];
+
+    const k = kpis(itens, now);
+
+    expect(k.done7d).toBe(2);
+    expect(k.avgLeadTimeDays).toBe(4);   // (7 + 1) / 2 dias
+    expect(k.avgCycleTimeDays).toBe(1);  // só a 'longa' tem ciclo — o campo antigo segue vivo
+  });
+
+  it('concluída sem carimbo não entra em nenhum dos dois tempos médios', () => {
+    const k = kpis(
+      [makeItem({ id: 'semCarimbo', status: 'done', created_at: '2026-09-01T12:00:00Z', completed_at: null })],
+      now,
+    );
+
+    expect(k.done7d).toBe(1);            // continua na janela recente (não se esconde)
+    expect(k.avgLeadTimeDays).toBeNull(); // mas não há intervalo a medir
+    expect(k.avgCycleTimeDays).toBeNull();
+  });
+
+  it('concluída fora dos 7 dias não puxa a média', () => {
+    const k = kpis([feita('antiga', '2026-08-01T12:00:00Z', '2026-09-01T12:00:00Z')], now);
+
+    expect(k.avgLeadTimeDays).toBeNull();
+  });
+
+  it('formata em pt-BR: uma casa decimal com vírgula, singular em 1 dia e "—" sem dados', () => {
+    expect(formatLeadTime(1.4)).toBe('1,4 dias');
+    expect(formatLeadTime(1)).toBe('1 dia');
+    expect(formatLeadTime(0.96)).toBe('1 dia');   // arredonda para 1,0 → singular
+    expect(formatLeadTime(2)).toBe('2 dias');
+    expect(formatLeadTime(0.25)).toBe('0,3 dias');
+    expect(formatLeadTime(null)).toBe('—');
+    expect(formatLeadTime(undefined)).toBe('—');
+  });
+});
+
+/** Etapa 52 — o subtítulo de data dos grupos ("Domingo, 11 de outubro"). */
+describe('etapa 52 — subtítulo de data pt-BR dos grupos', () => {
+  it('daySubtitle devolve o dia por extenso em hora LOCAL', () => {
+    expect(daySubtitle(new Date(2026, 9, 11, 12, 0))).toBe('Domingo, 11 de outubro');
+    expect(daySubtitle(new Date(2026, 9, 12, 0, 0))).toBe('Segunda-feira, 12 de outubro');
+  });
+
+  it('data inválida não derruba a tela: devolve string vazia', () => {
+    expect(daySubtitle('nao-e-data')).toBe('');
+  });
+
+  it('groupUpcomingByDay leva subtitle e dateKey de cada dia', () => {
+    const grupos = groupUpcomingByDay([
+      makeItem({ id: 'a', due_date: '2026-10-05T09:00:00Z' }),
+      makeItem({ id: 'b', due_date: '2026-10-12T09:00:00Z' }),
+    ], now);
+
+    expect(grupos.map(g => g.label)).toEqual(['Seg 05/10', 'Semana que vem']);
+    expect(grupos[0].subtitle).toBe('Segunda-feira, 5 de outubro');
+    expect(grupos[1].subtitle).toBe('Segunda-feira, 12 de outubro');
+    expect(grupos[0].dateKey).toBe(localDayKey('2026-10-05T09:00:00Z'));
+    expect(grupos[1].dateKey).toBe(localDayKey('2026-10-12T09:00:00Z'));
+  });
+});
+
+/**
+ * Etapas 112 e 117 — a faixa desenha até 3 pontos, mas o `aria-label` e o resumo
+ * do dia ("N tarefas com prazo · M lembretes") precisam das contagens reais, por
+ * tipo. A tarefa com prazo E alarme conta UMA vez no total (aparece nas duas
+ * seções, como manda a etapa 117).
+ */
+describe('etapas 112/117 — contagens por tipo no dia da Agenda', () => {
+  const hora = (h: number, m = 0) => new Date(2026, 9, 3, h, m).toISOString();
+
+  it('agendaDayCounts conta prazos, lembretes, sem hora e não repete quem é os dois', () => {
+    const dois       = makeItem({ id: 'dois', remind_at: hora(9), due_date: hora(18) });
+    const soPrazo    = makeItem({ id: 'prazo', due_date: hora(15) });
+    const diaInteiro = makeItem({ id: 'dia', due_date: new Date(2026, 9, 3, 0, 0).toISOString() });
+    const soAlarme   = makeItem({ id: 'alarme', remind_at: hora(8) });
+
+    const c = agendaDayCounts({ reminders: [soAlarme, dois], dueTasks: [dois, soPrazo, diaInteiro] }, 2);
+
+    expect(c).toEqual({ prazos: 3, lembretes: 2, atrasadas: 2, semHora: 1, total: 4 });
+  });
+
+  it('o aria-label usa a contagem real, não o número de pontos (máx. 3)', () => {
+    const prazos    = Array.from({ length: 5 }, (_, i) => makeItem({ id: `p${i}`, due_date: hora(9 + i) }));
+    const lembretes = Array.from({ length: 3 }, (_, i) => makeItem({ id: `l${i}`, remind_at: hora(8 + i) }));
+    const dia = { reminders: lembretes, dueTasks: prazos };
+
+    expect(agendaDayDots(dia, 1)).toHaveLength(3);          // a faixa desenha no máximo 3 pontos
+    expect(agendaDayCounts(dia, 1).prazos).toBe(5);         // mas o texto diz o número certo
+    expect(agendaDayAriaLabel(dia, 1)).toBe('1 atrasada, 3 lembretes, 5 prazos');
+  });
+
+  it('aria-label no singular e no dia vazio', () => {
+    expect(agendaDayAriaLabel({
+      reminders: [makeItem({ id: 'l', remind_at: hora(8) })],
+      dueTasks:  [makeItem({ id: 'p', due_date: hora(9) })],
+    })).toBe('1 lembrete, 1 prazo');
+
+    expect(agendaDayAriaLabel({ reminders: [], dueTasks: [] })).toBe('Nenhum compromisso');
+  });
+});
+
+/** Etapa 126 — a Agenda só usa os itens já carregados (B13) e cobre 7 dias. */
+describe('etapa 126 — Agenda só com os dados carregados, 7 dias a partir de hoje', () => {
+  it('a faixa tem sempre 7 dias (hoje + 6) e ignora o que cai fora da janela', () => {
+    const dentro = makeItem({ id: 'd6', due_date: new Date(2026, 9, 9, 9, 0).toISOString() });  // hoje + 6
+    const fora   = makeItem({ id: 'd7', due_date: new Date(2026, 9, 10, 9, 0).toISOString() }); // hoje + 7
+
+    const wb = weekBuckets([dentro, fora], startOfDay(new Date(2026, 9, 3, 12, 0)));
+
+    expect(wb).toHaveLength(7);
+    expect(wb[6].dueTasks.map(i => i.id)).toEqual(['d6']);
+    expect(wb.flatMap(w => w.dueTasks).map(i => i.id)).toEqual(['d6']); // 'fora' não aparece em nenhum dia
+  });
+
+  it('borda da virada do dia: 23:59 é do dia; depois da meia-noite a faixa recomeça', () => {
+    const fimDoDia  = makeItem({ id: 'fim',  due_date: new Date(2026, 9, 3, 23, 59).toISOString() });
+    const meiaNoite = makeItem({ id: 'meia', due_date: new Date(2026, 9, 4, 0, 0).toISOString() });
+
+    const antes = weekBuckets([fimDoDia, meiaNoite], startOfDay(new Date(2026, 9, 3, 23, 59)));
+    expect(antes[0].dueTasks.map(i => i.id)).toEqual(['fim']);
+    expect(antes[1].dueTasks.map(i => i.id)).toEqual(['meia']);
+
+    // Virou o dia: a faixa recomeça em hoje (04/10) e o prazo de ontem sai da agenda.
+    const depois = weekBuckets([fimDoDia, meiaNoite], startOfDay(new Date(2026, 9, 4, 0, 30)));
+    expect(depois[0].dueTasks.map(i => i.id)).toEqual(['meia']);
+    expect(depois.flatMap(w => w.dueTasks).map(i => i.id)).toEqual(['meia']);
+  });
+});
+
+/**
+ * Etapa 185 — a tela chama os selectors a cada render; sem memo, cada chamada
+ * devolvia arrays/objetos NOVOS e invalidava o `useMemo` dos filhos. Aqui ficam
+ * as testemunhas: a mesma entrada devolve a MESMA referência e a segunda
+ * chamada NÃO relê os itens.
+ */
+describe('etapa 185 — memoização dos selectors (referências estáveis)', () => {
+  it('mesma lista devolve a MESMA referência para o recorte, os baldes e os KPIs', () => {
+    const lista = [makeItem({ id: 'a', status: 'todo' }), makeItem({ id: 'b', status: 'doing' })];
+
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(memoizedApplyFilters(lista, DEFAULT_FILTERS));
+    expect(memoizedBucketByDue(lista)).toBe(memoizedBucketByDue(lista));
+    expect(memoizedBucketByStatus(lista)).toBe(memoizedBucketByStatus(lista));
+    expect(memoizedKpis(lista)).toBe(memoizedKpis(lista));
+  });
+
+  it('a segunda chamada com a MESMA lista não relê os itens (não recalcula)', () => {
+    let leituras = 0;
+    const espiao = new Proxy(makeItem({ id: 'a', status: 'todo' }) as WorkItem, {
+      get(alvo, prop, recv) { leituras += 1; return Reflect.get(alvo, prop, recv); },
+    });
+    const lista = [espiao];
+
+    memoizedBucketByDue(lista);
+    const aposPrimeira = leituras;
+    expect(aposPrimeira).toBeGreaterThan(0);   // o 1º cálculo leu de fato os itens
+
+    memoizedBucketByDue(lista);
+    expect(leituras).toBe(aposPrimeira);       // o 2º veio do cache: zero leitura
+  });
+
+  it('lista nova recalcula e devolve referência nova (o cache não devolve constante)', () => {
+    const a = [makeItem({ id: 'a' })];
+    const b = [makeItem({ id: 'a' })];
+
+    expect(memoizedKpis(a)).not.toBe(memoizedKpis(b));
+  });
+
+  it('trocar o filtro troca o recorte (a chave inclui os filtros)', () => {
+    const lista = [makeItem({ id: 'a', priority: 'high' }), makeItem({ id: 'b', priority: 'low' })];
+
+    const semFiltro = memoizedApplyFilters(lista, DEFAULT_FILTERS);
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(semFiltro); // hit com os mesmos filtros
+
+    const comPrio = memoizedApplyFilters(lista, { ...DEFAULT_FILTERS, prio: 'high' });
+    expect(comPrio).not.toBe(semFiltro);
+    expect(comPrio.map(i => i.id)).toEqual(['a']);
+  });
+
+  it('o valor memoizado é idêntico ao do selector puro', () => {
+    const lista = [makeItem({ id: 'a', status: 'done', completed_at: now.toISOString() })];
+
+    expect(memoizedBucketByDue(lista)).toEqual(bucketByDue(lista));
+    expect(memoizedBucketByStatus(lista)).toEqual(bucketByStatus(lista));
+    expect(memoizedKpis(lista)).toEqual(kpis(lista));
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toEqual(applyFilters(lista, DEFAULT_FILTERS));
+  });
+});

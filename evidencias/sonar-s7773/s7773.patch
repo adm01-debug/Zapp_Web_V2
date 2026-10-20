@@ -1,0 +1,1940 @@
+diff --git a/scripts/db-audit/multiplix-audience-parity.mjs b/scripts/db-audit/multiplix-audience-parity.mjs
+index 79265d8cc..685c5420b 100644
+--- a/scripts/db-audit/multiplix-audience-parity.mjs
++++ b/scripts/db-audit/multiplix-audience-parity.mjs
+@@ -215,7 +215,7 @@ async function rodarSqlDireto(ref, token, sql) {
+   const texto = await res.text();
+   if (!res.ok) throw new Error(`Management API HTTP ${res.status}: ${texto.slice(0, 300)}`);
+   const linhas = JSON.parse(texto);
+-  const valor = Number(Array.isArray(linhas) ? linhas[0]?.n : NaN);
++  const valor = Number(Array.isArray(linhas) ? linhas[0]?.n : Number.NaN);
+   if (!Number.isFinite(valor)) throw new Error(`SQL direto nao devolveu 'n' numerico`);
+   return valor;
+ }
+diff --git a/scripts/qa/medir-tipografia.cjs b/scripts/qa/medir-tipografia.cjs
+index f028a4602..3cdf14cd3 100755
+--- a/scripts/qa/medir-tipografia.cjs
++++ b/scripts/qa/medir-tipografia.cjs
+@@ -77,9 +77,9 @@ function parseScale() {
+ 
+ const toPx = (v) => {
+   if (!v) return null;
+-  if (v.endsWith('rem')) return parseFloat(v) * 16;
+-  if (v.endsWith('px')) return parseFloat(v);
+-  const n = parseFloat(v);
++  if (v.endsWith('rem')) return Number.parseFloat(v) * 16;
++  if (v.endsWith('px')) return Number.parseFloat(v);
++  const n = Number.parseFloat(v);
+   return Number.isNaN(n) ? null : n; // unitless ratio, resolvido depois
+ };
+ 
+@@ -115,7 +115,7 @@ function scanCss(stylesDir = STYLES) {
+     let m;
+     fontSizeRe.lastIndex = 0;
+     while ((m = fontSizeRe.exec(txt))) {
+-      const px = parseFloat(m[1]);
++      const px = Number.parseFloat(m[1]);
+       if (!Number.isInteger(px)) {
+         const line = txt.slice(0, m.index).split('\n').length;
+         halfStep.push({ where: `${rel}:${line}`, px });
+@@ -268,7 +268,7 @@ function main() {
+     }
+     arbRe.lastIndex = 0;
+     while ((m = arbRe.exec(txt))) {
+-      const raw = parseFloat(m[1]);
++      const raw = Number.parseFloat(m[1]);
+       const px = m[2] === 'px' ? raw : raw * 16; // rem/em: 1 unidade = 16px (raiz do documento)
+       usage.arbitrary[px] = (usage.arbitrary[px] || 0) + 1;
+       (byFile[rel] ||= { named: 0, arbitrary: 0 }).arbitrary++;
+@@ -288,7 +288,7 @@ function main() {
+     const lhRaw = v.lineHeight;
+     // line-height sem unidade e razao: resolve multiplicando pelo font-size
+     const unitless = !/rem|px|em|%/.test(lhRaw);
+-    const lhPx = unitless ? +(fsPx * parseFloat(lhRaw)).toFixed(2) : toPx(lhRaw);
++    const lhPx = unitless ? +(fsPx * Number.parseFloat(lhRaw)).toFixed(2) : toPx(lhRaw);
+     resolved[k] = { fontSizePx: fsPx, lineHeightPx: lhPx, lineHeightDeclarado: lhRaw, usos: usage.named[k] || 0 };
+   }
+   const arbitraryResolved = {};
+diff --git a/src/components/admin/AdminView.tsx b/src/components/admin/AdminView.tsx
+index 3044ef139..3e7e78463 100644
+--- a/src/components/admin/AdminView.tsx
++++ b/src/components/admin/AdminView.tsx
+@@ -161,7 +161,7 @@ export function AdminView() {
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2"><Label htmlFor="edit_tel">Telefone</Label><Input id="edit_tel" value={editingUser.phone || ''} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} /></div>
+-                <div className="space-y-2"><Label htmlFor="edit_maxchats">Limite de Chats</Label><Input id="edit_maxchats" type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: parseInt(e.target.value) })} /></div>
++                <div className="space-y-2"><Label htmlFor="edit_maxchats">Limite de Chats</Label><Input id="edit_maxchats" type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: Number.parseInt(e.target.value) })} /></div>
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+diff --git a/src/components/auth/PasswordStrengthMeter.tsx b/src/components/auth/PasswordStrengthMeter.tsx
+index 84760b586..7b4b33691 100644
+--- a/src/components/auth/PasswordStrengthMeter.tsx
++++ b/src/components/auth/PasswordStrengthMeter.tsx
+@@ -108,7 +108,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
+           const [hashSuffix, count] = line.split(':');
+           if (hashSuffix.trim() === suffix) {
+             setIsBreached(true);
+-            setBreachCount(parseInt(count.trim(), 10));
++            setBreachCount(Number.parseInt(count.trim(), 10));
+             return;
+           }
+         }
+diff --git a/src/components/catalog/ExternalProductManagement.tsx b/src/components/catalog/ExternalProductManagement.tsx
+index ec1184bcb..897687e5c 100644
+--- a/src/components/catalog/ExternalProductManagement.tsx
++++ b/src/components/catalog/ExternalProductManagement.tsx
+@@ -104,7 +104,7 @@ type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
+ 
+ function readPageParam(): number {
+   try {
+-    const p = parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
++    const p = Number.parseInt(new URLSearchParams(window.location.search).get('page') ?? '1', 10);
+     return isNaN(p) || p < 1 ? 0 : p - 1;
+   } catch { return 0; }
+ }
+@@ -308,7 +308,7 @@ export const ExternalProductManagement: React.FC = () => {
+   );
+   const [page, setPageState] = useState(() => readPageParam());
+   const [pageSize, setPageSizeState] = useState<PageSizeOption>(() => {
+-    const stored = parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
++    const stored = Number.parseInt(sessionStorage.getItem('catalog.page_size') ?? '24', 10);
+     return (PAGE_SIZE_OPTIONS as readonly number[]).includes(stored) ? stored as PageSizeOption : 24;
+   });
+ 
+@@ -487,8 +487,8 @@ export const ExternalProductManagement: React.FC = () => {
+     params.order_by = effectiveOrder;
+     params.ascending = ascending;
+     if (advFilters.isBestseller) params.is_bestseller = true;
+-    if (advFilters.priceMin) params.price_min = parseFloat(advFilters.priceMin);
+-    if (advFilters.priceMax) params.price_max = parseFloat(advFilters.priceMax);
++    if (advFilters.priceMin) params.price_min = Number.parseFloat(advFilters.priceMin);
++    if (advFilters.priceMax) params.price_max = Number.parseFloat(advFilters.priceMax);
+     // E36-2 — o edge aceita 1 valor ou array (OR entre si); manda a
+     // seleção completa direto, servidor filtra e pagina certo com 2+.
+     if (advFilters.colors.length > 0) params.color = advFilters.colors;
+diff --git a/src/components/contacts/ContactMergeDialog.tsx b/src/components/contacts/ContactMergeDialog.tsx
+index 9bcb20d64..879ff2247 100644
+--- a/src/components/contacts/ContactMergeDialog.tsx
++++ b/src/components/contacts/ContactMergeDialog.tsx
+@@ -84,7 +84,7 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
+             return (
+               <div key={field.key} className="space-y-1">
+                 <p className="text-xs font-medium text-muted-foreground">{field.label}</p>
+-                <RadioGroup value={String(selections[field.key])} onValueChange={v => setSelections(s => ({ ...s, [field.key]: parseInt(v) }))} className="flex flex-col gap-1">
++                <RadioGroup value={String(selections[field.key])} onValueChange={v => setSelections(s => ({ ...s, [field.key]: Number.parseInt(v) }))} className="flex flex-col gap-1">
+                   {values.map(v => (
+                     <Label key={v.index} htmlFor={`${field.key}-${v.index}`}
+                       className={cn('flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors',
+diff --git a/src/components/dashboard/GoalsConfigDialog.tsx b/src/components/dashboard/GoalsConfigDialog.tsx
+index ea9842db9..629fc8b94 100644
+--- a/src/components/dashboard/GoalsConfigDialog.tsx
++++ b/src/components/dashboard/GoalsConfigDialog.tsx
+@@ -234,7 +234,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
+                           type="number"
+                           min={0}
+                           value={goal.daily_target}
+-                          onChange={(e) => handleGoalChange(goal.goal_type, 'daily_target', parseInt(e.target.value) || 0)}
++                          onChange={(e) => handleGoalChange(goal.goal_type, 'daily_target', Number.parseInt(e.target.value) || 0)}
+                           disabled={!goal.is_active}
+                         />
+                       </div>
+@@ -247,7 +247,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
+                           type="number"
+                           min={0}
+                           value={goal.weekly_target}
+-                          onChange={(e) => handleGoalChange(goal.goal_type, 'weekly_target', parseInt(e.target.value) || 0)}
++                          onChange={(e) => handleGoalChange(goal.goal_type, 'weekly_target', Number.parseInt(e.target.value) || 0)}
+                           disabled={!goal.is_active}
+                         />
+                       </div>
+@@ -260,7 +260,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
+                           type="number"
+                           min={0}
+                           value={goal.monthly_target}
+-                          onChange={(e) => handleGoalChange(goal.goal_type, 'monthly_target', parseInt(e.target.value) || 0)}
++                          onChange={(e) => handleGoalChange(goal.goal_type, 'monthly_target', Number.parseInt(e.target.value) || 0)}
+                           disabled={!goal.is_active}
+                         />
+                       </div>
+diff --git a/src/components/dashboard/SatisfactionMetrics.tsx b/src/components/dashboard/SatisfactionMetrics.tsx
+index d5101b27a..80dcca05e 100644
+--- a/src/components/dashboard/SatisfactionMetrics.tsx
++++ b/src/components/dashboard/SatisfactionMetrics.tsx
+@@ -129,7 +129,7 @@ export function SatisfactionMetrics() {
+               right={(
+                 <div className="flex items-center gap-2">
+                   <CardSelect value={chartMode} onValueChange={setChartMode} options={[{ value: 'both', label: 'CSAT e NPS' }, { value: 'csat', label: 'Somente CSAT' }]} testid="sat-chart-mode" />
+-                  <CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
++                  <CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(Number.parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
+                 </div>
+               )}
+             />
+@@ -230,7 +230,7 @@ export function SatisfactionMetrics() {
+                 <EmptyBlock icon={User} title="Sem dados para exibir" sub="Ainda não há avaliações de satisfação para os agentes neste período." />
+               ) : (
+                 <div className="w-full p-3 space-y-2.5">
+-                  {breakdown.byAgent.slice(0, parseInt(topN)).map((a, i) => (
++                  {breakdown.byAgent.slice(0, Number.parseInt(topN)).map((a, i) => (
+                     <div key={a.agentId} className="flex items-center justify-between gap-2 text-[13px]">
+                       <div className="flex items-center gap-2.5 min-w-0">
+                         <span className="text-2xs font-bold text-muted-foreground w-3">{i + 1}.</span>
+diff --git a/src/components/dashboard/SentimentTrendChart.tsx b/src/components/dashboard/SentimentTrendChart.tsx
+index 4e37957cf..d97b9092f 100644
+--- a/src/components/dashboard/SentimentTrendChart.tsx
++++ b/src/components/dashboard/SentimentTrendChart.tsx
+@@ -31,8 +31,8 @@ function sentimentLabel(score: number): { label: string; tone: 'success' | 'warn
+ 
+ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
+   const [days, setDays] = useState<'7' | '14' | '30'>('14');
+-  const data = useRealSentimentData(parseInt(days));
+-  const { data: recent } = useRecentSentimentAlerts(parseInt(days));
++  const data = useRealSentimentData(Number.parseInt(days));
++  const { data: recent } = useRecentSentimentAlerts(Number.parseInt(days));
+ 
+   const stats = useMemo(() => {
+     if (!data || data.length === 0) return null;
+diff --git a/src/components/dashboard/overview/DashboardKpiCard.tsx b/src/components/dashboard/overview/DashboardKpiCard.tsx
+index 4117cda5f..e41da0001 100644
+--- a/src/components/dashboard/overview/DashboardKpiCard.tsx
++++ b/src/components/dashboard/overview/DashboardKpiCard.tsx
+@@ -11,7 +11,7 @@ interface CountUpProps {
+ }
+ 
+ function CountUp({ value }: CountUpProps) {
+-  const numeric = /^-?\d+$/.test(value) ? parseInt(value, 10) : null;
++  const numeric = /^-?\d+$/.test(value) ? Number.parseInt(value, 10) : null;
+   const reducedMotion = useReducedMotion();
+   const motionValue = useMotionValue(0);
+   const [animatedDisplay, setAnimatedDisplay] = useState('0');
+diff --git a/src/components/dashboard/overview/SentimentTrendCard.tsx b/src/components/dashboard/overview/SentimentTrendCard.tsx
+index a68c82889..7350a4b49 100644
+--- a/src/components/dashboard/overview/SentimentTrendCard.tsx
++++ b/src/components/dashboard/overview/SentimentTrendCard.tsx
+@@ -13,7 +13,7 @@ const LEGEND = [
+ 
+ export function SentimentTrendCard() {
+   const [period, setPeriod] = useState<'7' | '14' | '30'>('14');
+-  const data = useRealSentimentData(parseInt(period, 10));
++  const data = useRealSentimentData(Number.parseInt(period, 10));
+ 
+   return (
+     <DashboardCard testid="sentiment-card" className="min-h-[173px]">
+diff --git a/src/components/dashboard/overview/VolumeChart.tsx b/src/components/dashboard/overview/VolumeChart.tsx
+index f1b1c6788..e072c9396 100644
+--- a/src/components/dashboard/overview/VolumeChart.tsx
++++ b/src/components/dashboard/overview/VolumeChart.tsx
+@@ -57,7 +57,7 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
+     }
+     const predictedByHour = new Map<number, number>();
+     (demand.data ?? []).filter((p) => p.isPrediction).forEach((p) => {
+-      const hour = parseInt(p.time.split(':')[0], 10);
++      const hour = Number.parseInt(p.time.split(':')[0], 10);
+       if (!Number.isNaN(hour)) predictedByHour.set(hour, p.predicted);
+     });
+     return volumeQuery.data.todayByHour.map((count, h) => ({
+diff --git a/src/components/dashboard/useSentimentData.ts b/src/components/dashboard/useSentimentData.ts
+index c78efcc6b..182f4051a 100644
+--- a/src/components/dashboard/useSentimentData.ts
++++ b/src/components/dashboard/useSentimentData.ts
+@@ -64,7 +64,7 @@ export function useSentimentData(period: string) {
+ 
+   const fetchData = useCallback(async () => {
+     setLoading(true);
+-    const daysAgo = parseInt(period);
++    const daysAgo = Number.parseInt(period);
+     const startDate = appDayStart(daysAgo).toISOString();
+ 
+     try {
+@@ -141,7 +141,7 @@ export function useSentimentData(period: string) {
+   }, [analyses, alerts]);
+ 
+   const dailyData = useMemo(() => {
+-    const days = parseInt(period);
++    const days = Number.parseInt(period);
+     const data: { date: string; positive: number; neutral: number; negative: number; avgScore: number | null }[] = [];
+ 
+     for (let i = days - 1; i >= 0; i--) {
+@@ -163,7 +163,7 @@ export function useSentimentData(period: string) {
+   }, [analyses, period]);
+ 
+   const agentData = useMemo((): AgentSentimentData[] => {
+-    const days = parseInt(period);
++    const days = Number.parseInt(period);
+     const halfPeriod = Math.floor(days / 2);
+ 
+     return agents.map(agent => {
+diff --git a/src/components/inbox/ContactPurchasesPanel.tsx b/src/components/inbox/ContactPurchasesPanel.tsx
+index 76799d3c0..bacf38120 100644
+--- a/src/components/inbox/ContactPurchasesPanel.tsx
++++ b/src/components/inbox/ContactPurchasesPanel.tsx
+@@ -39,7 +39,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
+     const { error } = await supabase.from('contact_purchases').insert({
+       contact_id: contactId,
+       title: title.trim(),
+-      amount: amount ? parseFloat(amount) : null,
++      amount: amount ? Number.parseFloat(amount) : null,
+       purchase_type: type,
+       created_by: profileId,
+     });
+diff --git a/src/components/inbox/contact-details/StoryViewer.tsx b/src/components/inbox/contact-details/StoryViewer.tsx
+index 61d237dc5..4efa68798 100644
+--- a/src/components/inbox/contact-details/StoryViewer.tsx
++++ b/src/components/inbox/contact-details/StoryViewer.tsx
+@@ -42,7 +42,7 @@ const toDataUrl = (base64?: string | null, mimetype?: string | null) => {
+ const getStatusTime = (msg: WhatsAppStatusMessage) => {
+   const ts = msg.messageTimestamp;
+   if (!ts) return null;
+-  const date = new Date(typeof ts === 'string' ? parseInt(ts, 10) * 1000 : ts * 1000);
++  const date = new Date(typeof ts === 'string' ? Number.parseInt(ts, 10) * 1000 : ts * 1000);
+   return formatRelativeTime(date);
+ };
+ 
+diff --git a/src/components/inbox/contact-details/WhatsAppStatusSection.tsx b/src/components/inbox/contact-details/WhatsAppStatusSection.tsx
+index 9e619f093..e1091b2e9 100644
+--- a/src/components/inbox/contact-details/WhatsAppStatusSection.tsx
++++ b/src/components/inbox/contact-details/WhatsAppStatusSection.tsx
+@@ -31,7 +31,7 @@ const getStatusLabel = (msg: WhatsAppStatusMessage) => {
+ const getStatusTime = (msg: WhatsAppStatusMessage) => {
+   const ts = msg.messageTimestamp;
+   if (!ts) return null;
+-  const date = new Date(typeof ts === 'string' ? parseInt(ts, 10) * 1000 : ts * 1000);
++  const date = new Date(typeof ts === 'string' ? Number.parseInt(ts, 10) * 1000 : ts * 1000);
+   return formatRelativeTime(date);
+ };
+ 
+diff --git a/src/components/inbox/tabs/FileCard.tsx b/src/components/inbox/tabs/FileCard.tsx
+index b6f7bc7d3..c0d521700 100644
+--- a/src/components/inbox/tabs/FileCard.tsx
++++ b/src/components/inbox/tabs/FileCard.tsx
+@@ -23,15 +23,12 @@ interface FileCardProps {
+ 
+ export function FileCard({ item, contactName, selected, onSelect, onPreview, onForward, onDeleted }: FileCardProps) {
+   const [hasError, setHasError] = useState(false);
+-  // Etapa 10: a consulta já assina em lote, um request por bucket. O hook individual
+-  // continua como fallback para item sem URL assinada (objeto público ou lote que falhou).
+-  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
+-  const displayUrl = item.signedUrl ?? resolvedUrl;
++  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.url);
+   const size = formatSize(item.size);
+ 
+   const copyLink = async () => {
+     try {
+-      await navigator.clipboard.writeText(displayUrl || item.url);
++      await navigator.clipboard.writeText(resolvedUrl || item.url);
+       toast.success('Link copiado');
+     } catch {
+       toast.error('Não foi possível copiar o link');
+@@ -54,8 +51,8 @@ export function FileCard({ item, contactName, selected, onSelect, onPreview, onF
+       onClick={onSelect}
+     >
+       <div className="aspect-[16/10] bg-muted relative">
+-        {item.type === 'image' && !hasError && displayUrl ? (
+-          <img src={displayUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
++        {item.type === 'image' && !hasError && resolvedUrl ? (
++          <img src={resolvedUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
+         ) : item.type === 'video' ? (
+           <div className="w-full h-full flex items-center justify-center bg-muted">
+             <span className="w-10 h-10 rounded-full bg-background/60 flex items-center justify-center"><Play className="w-5 h-5" /></span>
+diff --git a/src/components/inbox/tabs/FileDetailPanel.tsx b/src/components/inbox/tabs/FileDetailPanel.tsx
+index 9db84b2bc..d62e7ce2a 100644
+--- a/src/components/inbox/tabs/FileDetailPanel.tsx
++++ b/src/components/inbox/tabs/FileDetailPanel.tsx
+@@ -19,15 +19,12 @@ interface FileDetailPanelProps {
+ 
+ export function FileDetailPanel({ item, contactName, onClose, onForward, onDeleted }: FileDetailPanelProps) {
+   const [hasError, setHasError] = useState(false);
+-  // Etapa 10: a consulta já assina em lote, um request por bucket. O hook individual
+-  // continua como fallback para item sem URL assinada (objeto público ou lote que falhou).
+-  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
+-  const displayUrl = item.signedUrl ?? resolvedUrl;
++  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.url);
+   const size = formatSize(item.size);
+ 
+   const copyLink = async () => {
+     try {
+-      await navigator.clipboard.writeText(displayUrl || item.url);
++      await navigator.clipboard.writeText(resolvedUrl || item.url);
+       toast.success('Link copiado');
+     } catch {
+       toast.error('Não foi possível copiar o link');
+@@ -51,8 +48,8 @@ export function FileDetailPanel({ item, contactName, onClose, onForward, onDelet
+       </div>
+ 
+       <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+-        {item.type === 'image' && !hasError && displayUrl ? (
+-          <img src={displayUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
++        {item.type === 'image' && !hasError && resolvedUrl ? (
++          <img src={resolvedUrl} alt={item.filename} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
+         ) : item.type === 'video' || item.type === 'audio' ? (
+           <Play className="w-8 h-8 text-muted-foreground" />
+         ) : item.type === 'document' ? (
+diff --git a/src/components/inbox/tabs/__tests__/FilesTab.test.tsx b/src/components/inbox/tabs/__tests__/FilesTab.test.tsx
+index 4bc2fda37..0a95a24a7 100644
+--- a/src/components/inbox/tabs/__tests__/FilesTab.test.tsx
++++ b/src/components/inbox/tabs/__tests__/FilesTab.test.tsx
+@@ -16,8 +16,8 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
+ }));
+ 
+ const ITEMS: ContactMediaItem[] = [
+-  { id: 'm1', url: 'https://x/a.jpg', type: 'image', filename: 'foto-praia.jpg', displayName: 'foto-praia.jpg', extension: 'jpg', senderLabel: null, created_at: '2026-01-10T10:00:00.000Z', caption: null, mimetype: 'image/jpeg', size: 1024, meta: null, sender: 'contact' },
+-  { id: 'm2', url: 'https://x/b.pdf', type: 'document', filename: 'contrato.pdf', displayName: 'contrato.pdf', extension: 'pdf', senderLabel: 'Atendente', created_at: '2026-01-11T10:00:00.000Z', caption: null, mimetype: 'application/pdf', size: 2048, meta: null, sender: 'agent' },
++  { id: 'm1', url: 'https://x/a.jpg', type: 'image', filename: 'foto-praia.jpg', created_at: '2026-01-10T10:00:00.000Z', caption: null, mimetype: 'image/jpeg', size: 1024, meta: null, sender: 'contact' },
++  { id: 'm2', url: 'https://x/b.pdf', type: 'document', filename: 'contrato.pdf', created_at: '2026-01-11T10:00:00.000Z', caption: null, mimetype: 'application/pdf', size: 2048, meta: null, sender: 'agent' },
+ ];
+ 
+ function renderTab(items: ContactMediaItem[] = ITEMS) {
+diff --git a/src/components/payments/PaymentLinksView.tsx b/src/components/payments/PaymentLinksView.tsx
+index e0e310ed6..c594641ad 100644
+--- a/src/components/payments/PaymentLinksView.tsx
++++ b/src/components/payments/PaymentLinksView.tsx
+@@ -30,7 +30,7 @@ export function PaymentLinksView() {
+ 
+   const handleCreateLink = async () => {
+     if (!formTitle.trim() || !formAmount) return;
+-    const amount = parseFloat(formAmount);
++    const amount = Number.parseFloat(formAmount);
+     if (isNaN(amount) || amount <= 0) return;
+ 
+     // Generate a simple payment URL (in production would integrate with Stripe/payment provider)
+diff --git a/src/components/performance/PerformanceMonitor.tsx b/src/components/performance/PerformanceMonitor.tsx
+index 74dfa370b..1e04cc0e9 100644
+--- a/src/components/performance/PerformanceMonitor.tsx
++++ b/src/components/performance/PerformanceMonitor.tsx
+@@ -62,8 +62,8 @@ export function PerformanceMonitor() {
+ 
+     const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('cache_') || k.startsWith('tanstack'));
+     setCacheStats({
+-      hits: parseInt(localStorage.getItem('cache_hits') || '0'),
+-      misses: parseInt(localStorage.getItem('cache_misses') || '0'),
++      hits: Number.parseInt(localStorage.getItem('cache_hits') || '0'),
++      misses: Number.parseInt(localStorage.getItem('cache_misses') || '0'),
+       size: cacheKeys.length,
+     });
+ 
+@@ -93,7 +93,7 @@ export function PerformanceMonitor() {
+ 
+   // Load DB history on mount and when period changes
+   useEffect(() => {
+-    loadHistory(parseInt(period));
++    loadHistory(Number.parseInt(period));
+   }, [loadHistory, period]);
+ 
+   const overallScore = Math.round((metrics.filter(m => m.status === 'good').length / Math.max(metrics.length, 1)) * 100);
+diff --git a/src/components/queues/QueueGoalsDialog.tsx b/src/components/queues/QueueGoalsDialog.tsx
+index 0c4bfab36..f82d9ee4c 100644
+--- a/src/components/queues/QueueGoalsDialog.tsx
++++ b/src/components/queues/QueueGoalsDialog.tsx
+@@ -113,7 +113,7 @@ export function QueueGoalsDialog({
+                 onChange={(e) =>
+                   setFormData((prev) => ({
+                     ...prev,
+-                    max_waiting_contacts: parseInt(e.target.value) || 0,
++                    max_waiting_contacts: Number.parseInt(e.target.value) || 0,
+                   }))
+                 }
+                 className="w-20 bg-muted/20 border-border/30"
+@@ -147,7 +147,7 @@ export function QueueGoalsDialog({
+                 onChange={(e) =>
+                   setFormData((prev) => ({
+                     ...prev,
+-                    max_avg_wait_minutes: parseInt(e.target.value) || 0,
++                    max_avg_wait_minutes: Number.parseInt(e.target.value) || 0,
+                   }))
+                 }
+                 className="w-20 bg-muted/20 border-border/30"
+@@ -181,7 +181,7 @@ export function QueueGoalsDialog({
+                 onChange={(e) =>
+                   setFormData((prev) => ({
+                     ...prev,
+-                    min_assignment_rate: parseInt(e.target.value) || 0,
++                    min_assignment_rate: Number.parseInt(e.target.value) || 0,
+                   }))
+                 }
+                 className="w-20 bg-muted/20 border-border/30"
+@@ -215,7 +215,7 @@ export function QueueGoalsDialog({
+                 onChange={(e) =>
+                   setFormData((prev) => ({
+                     ...prev,
+-                    max_messages_pending: parseInt(e.target.value) || 0,
++                    max_messages_pending: Number.parseInt(e.target.value) || 0,
+                   }))
+                 }
+                 className="w-20 bg-muted/20 border-border/30"
+diff --git a/src/components/queues/SLADashboard.tsx b/src/components/queues/SLADashboard.tsx
+index 944d0820a..7fb860354 100644
+--- a/src/components/queues/SLADashboard.tsx
++++ b/src/components/queues/SLADashboard.tsx
+@@ -39,7 +39,7 @@ export const SLADashboard = () => {
+     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+     if (e.key >= '1' && e.key <= '4') {
+       e.preventDefault();
+-      setPeriod(periodKeys[parseInt(e.key) - 1]);
++      setPeriod(periodKeys[Number.parseInt(e.key) - 1]);
+     }
+     if (e.key === 'h' || e.key === 'H') {
+       e.preventDefault();
+diff --git a/src/components/reports/AbandonmentRate.tsx b/src/components/reports/AbandonmentRate.tsx
+index cd8eb009f..27dd9ee8f 100644
+--- a/src/components/reports/AbandonmentRate.tsx
++++ b/src/components/reports/AbandonmentRate.tsx
+@@ -14,7 +14,7 @@ export function AbandonmentRate() {
+   const loadData = useCallback(async () => {
+     setLoading(true);
+     const since = new Date();
+-    since.setDate(since.getDate() - parseInt(period));
++    since.setDate(since.getDate() - Number.parseInt(period));
+ 
+     // Get contacts that sent messages in the period
+     const { data: contactMessages } = await supabase
+diff --git a/src/components/reports/ConversationHeatmap.tsx b/src/components/reports/ConversationHeatmap.tsx
+index 88c4d865f..454ec67a1 100644
+--- a/src/components/reports/ConversationHeatmap.tsx
++++ b/src/components/reports/ConversationHeatmap.tsx
+@@ -44,7 +44,7 @@ export function ConversationHeatmap() {
+   const loadData = useCallback(async () => {
+     setLoading(true);
+     const since = new Date();
+-    since.setDate(since.getDate() - parseInt(period));
++    since.setDate(since.getDate() - Number.parseInt(period));
+ 
+     const { data: messages } = await supabase
+       .from('messages')
+diff --git a/src/components/reports/DemandForecast.tsx b/src/components/reports/DemandForecast.tsx
+index 93c926cd0..fbe3b5692 100644
+--- a/src/components/reports/DemandForecast.tsx
++++ b/src/components/reports/DemandForecast.tsx
+@@ -64,7 +64,7 @@ export function DemandForecast() {
+ 
+     // Peak hours
+     const peaks = Object.entries(hourBuckets)
+-      .map(([h, counts]) => ({ hour: parseInt(h), avg: Math.round(counts.length / 28) }))
++      .map(([h, counts]) => ({ hour: Number.parseInt(h), avg: Math.round(counts.length / 28) }))
+       .sort((a, b) => b.avg - a.avg);
+     setPeakHours(peaks);
+ 
+diff --git a/src/components/reports/useReportsData.ts b/src/components/reports/useReportsData.ts
+index 1aecca3f0..0ca5ffff6 100644
+--- a/src/components/reports/useReportsData.ts
++++ b/src/components/reports/useReportsData.ts
+@@ -26,7 +26,7 @@ export function useReportsData() {
+   // `in_last_days`: com o fuso do navegador o mesmo período recortava janelas diferentes para
+   // pessoas em fusos diferentes e não batia com os números contados no banco.
+   const dateRange = useMemo(() => {
+-    const days = parseInt(period);
++    const days = Number.parseInt(period);
+     return {
+       from: appDayStart(days),
+       to: appDayEnd(0),
+@@ -34,7 +34,7 @@ export function useReportsData() {
+   }, [period]);
+ 
+   const previousDateRange = useMemo(() => {
+-    const days = parseInt(period);
++    const days = Number.parseInt(period);
+     return {
+       from: appDayStart(days * 2),
+       to: appDayEnd(days + 1),
+@@ -204,9 +204,9 @@ export function useReportsData() {
+     };
+     return {
+       totalMessages, sentMessages, receivedMessages, totalContacts, activeAgents,
+-      avgMessagesPerDay: Math.round(totalMessages / parseInt(period)),
++      avgMessagesPerDay: Math.round(totalMessages / Number.parseInt(period)),
+       prevTotalMessages, prevSentMessages, prevReceivedMessages, prevTotalContacts, prevActiveAgents,
+-      prevAvgMessagesPerDay: Math.round(prevTotalMessages / parseInt(period)),
++      prevAvgMessagesPerDay: Math.round(prevTotalMessages / Number.parseInt(period)),
+       messagesTrend: calculateTrend(totalMessages, prevTotalMessages),
+       sentTrend: calculateTrend(sentMessages, prevSentMessages),
+       contactsTrend: calculateTrend(totalContacts, prevTotalContacts),
+diff --git a/src/components/security/BlockedIPDialogs.tsx b/src/components/security/BlockedIPDialogs.tsx
+index 4f829a1dc..3bc5df251 100644
+--- a/src/components/security/BlockedIPDialogs.tsx
++++ b/src/components/security/BlockedIPDialogs.tsx
+@@ -31,7 +31,7 @@ export function BlockIPDialog({ open, onClose, onSuccess }: BlockIPDialogProps)
+     if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(newIP)) { toast.error('Formato de IP inválido'); return; }
+ 
+     setUpdating(true);
+-    const expiresAt = isPermanent ? null : new Date(Date.now() + parseInt(duration) * 60 * 1000).toISOString();
++    const expiresAt = isPermanent ? null : new Date(Date.now() + Number.parseInt(duration) * 60 * 1000).toISOString();
+     const { error } = await supabase.from('blocked_ips').insert({ ip_address: newIP, reason, is_permanent: isPermanent, expires_at: expiresAt, blocked_by: user?.id });
+ 
+     if (error) { toast.error(error.code === '23505' ? 'Este IP já está bloqueado' : 'Erro ao bloquear IP'); }
+diff --git a/src/components/security/RateLimitConfigPanel.tsx b/src/components/security/RateLimitConfigPanel.tsx
+index 4bc7f6aa4..d53001898 100644
+--- a/src/components/security/RateLimitConfigPanel.tsx
++++ b/src/components/security/RateLimitConfigPanel.tsx
+@@ -201,7 +201,7 @@ export function RateLimitConfigPanel() {
+                   <Input
+                     type="number"
+                     value={rule.max_requests}
+-                    onChange={(e) => updateRule(rule.id, { max_requests: parseInt(e.target.value) || 1 })}
++                    onChange={(e) => updateRule(rule.id, { max_requests: Number.parseInt(e.target.value) || 1 })}
+                     className="h-8 text-xs"
+                   />
+                 </div>
+@@ -210,7 +210,7 @@ export function RateLimitConfigPanel() {
+                   <Input
+                     type="number"
+                     value={rule.window_seconds}
+-                    onChange={(e) => updateRule(rule.id, { window_seconds: parseInt(e.target.value) || 60 })}
++                    onChange={(e) => updateRule(rule.id, { window_seconds: Number.parseInt(e.target.value) || 60 })}
+                     className="h-8 text-xs"
+                   />
+                 </div>
+diff --git a/src/components/settings/AutoCloseSettings.tsx b/src/components/settings/AutoCloseSettings.tsx
+index 526ce851a..e783846ba 100644
+--- a/src/components/settings/AutoCloseSettings.tsx
++++ b/src/components/settings/AutoCloseSettings.tsx
+@@ -71,7 +71,7 @@ export function AutoCloseSettings() {
+             min={1}
+             max={168}
+             value={hours}
+-            onChange={(e) => setHours(parseInt(e.target.value) || 24)}
++            onChange={(e) => setHours(Number.parseInt(e.target.value) || 24)}
+             disabled={!enabled}
+           />
+           <p className="text-xs text-muted-foreground">
+diff --git a/src/components/settings/AutomationSettings.tsx b/src/components/settings/AutomationSettings.tsx
+index 56107979c..33cb5f89a 100644
+--- a/src/components/settings/AutomationSettings.tsx
++++ b/src/components/settings/AutomationSettings.tsx
+@@ -60,7 +60,7 @@ export function AutomationSettings({ settings, updateSettings }: AutomationSetti
+             <Input
+               type="number"
+               value={settings.inactivity_timeout}
+-              onChange={(e) => updateSettings({ inactivity_timeout: parseInt(e.target.value) || 0 })}
++              onChange={(e) => updateSettings({ inactivity_timeout: Number.parseInt(e.target.value) || 0 })}
+               min={0} max={1440}
+             />
+           </div>
+diff --git a/src/components/settings/sla/SLARuleFormDialog.tsx b/src/components/settings/sla/SLARuleFormDialog.tsx
+index 83548df88..b30584000 100644
+--- a/src/components/settings/sla/SLARuleFormDialog.tsx
++++ b/src/components/settings/sla/SLARuleFormDialog.tsx
+@@ -235,7 +235,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
+               id="sla-priority"
+               type="number" min={0} max={100}
+               value={form.priority}
+-              onChange={e => setForm(f => ({ ...f, priority: parseInt(e.target.value) || 0 }))}
++              onChange={e => setForm(f => ({ ...f, priority: Number.parseInt(e.target.value) || 0 }))}
+               className="mt-1"
+             />
+           </div>
+diff --git a/src/components/talkx/TalkXTemplateEditor.tsx b/src/components/talkx/TalkXTemplateEditor.tsx
+index 1a2cc559f..1b2377f61 100644
+--- a/src/components/talkx/TalkXTemplateEditor.tsx
++++ b/src/components/talkx/TalkXTemplateEditor.tsx
+@@ -429,8 +429,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }:
+                   <div className="flex items-center justify-between">
+                     <span className="text-2xs font-bold text-primary flex items-center gap-1">
+                       Variante {v.label} {'·'} <input type="number" min={1} max={100} value={v.weight}
+-                        onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, parseInt(e.target.value)||1))} : x))}
+-                        onBlur={async (e) => { const w = Math.max(1, Math.min(100, parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }}
++                        onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))}
++                        onBlur={async (e) => { const w = Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }}
+                         className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%
+                     </span>
+                     <button type="button"
+@@ -483,7 +483,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }:
+               {variants.map((v) => (
+                 <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
+                   <div className="flex items-center justify-between">
+-                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, parseInt(e.target.value)||1))} : x))} onBlur={async (e) => { const w = Math.max(1, Math.min(100, parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
++                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={async (e) => { const w = Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
+                     <button type="button" onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
+                   </div>
+                   <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+diff --git a/src/components/theme/HighContrastToggle.tsx b/src/components/theme/HighContrastToggle.tsx
+index 64a00e3da..4f24ad4ca 100644
+--- a/src/components/theme/HighContrastToggle.tsx
++++ b/src/components/theme/HighContrastToggle.tsx
+@@ -32,7 +32,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
+     localStorage.getItem('highContrast') === 'true'
+   );
+   const [contrastLevel, setContrastLevel] = useState(() =>
+-    parseInt(localStorage.getItem('contrastLevel') || '100')
++    Number.parseInt(localStorage.getItem('contrastLevel') || '100')
+   );
+   const [reducedMotion, setReducedMotion] = useState(() =>
+     localStorage.getItem('reducedMotion') === 'true'
+diff --git a/src/components/voice/usePhaseColors.ts b/src/components/voice/usePhaseColors.ts
+index 578d29f08..bf260a613 100644
+--- a/src/components/voice/usePhaseColors.ts
++++ b/src/components/voice/usePhaseColors.ts
+@@ -21,7 +21,7 @@ export function usePhaseColors(phase: VoiceAgentPhase): PhaseColors {
+     const readHue = () => {
+       const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+       const match = raw.match(/^(\d+)/);
+-      if (match) setThemeHue(parseInt(match[1], 10));
++      if (match) setThemeHue(Number.parseInt(match[1], 10));
+     };
+     readHue();
+     const observer = new MutationObserver(readHue);
+diff --git a/src/components/wallet/ClientWalletView.tsx b/src/components/wallet/ClientWalletView.tsx
+index 3b659c26e..2111dcec3 100644
+--- a/src/components/wallet/ClientWalletView.tsx
++++ b/src/components/wallet/ClientWalletView.tsx
+@@ -61,7 +61,7 @@ export function ClientWalletView() {
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Prioridade</Label>
+-                  <Input type="number" placeholder="0" value={w.newRule.priority} onChange={(e) => w.setNewRule({ ...w.newRule, priority: parseInt(e.target.value) || 0 })} />
++                  <Input type="number" placeholder="0" value={w.newRule.priority} onChange={(e) => w.setNewRule({ ...w.newRule, priority: Number.parseInt(e.target.value) || 0 })} />
+                   <p className="text-xs text-muted-foreground">Maior prioridade = processada primeiro</p>
+                 </div>
+                 <div className="flex justify-end gap-2 pt-4">
+diff --git a/src/hooks/chat/__tests__/useContactMedia.test.tsx b/src/hooks/chat/__tests__/useContactMedia.test.tsx
+index 221ae48b9..b1613fb34 100644
+--- a/src/hooks/chat/__tests__/useContactMedia.test.tsx
++++ b/src/hooks/chat/__tests__/useContactMedia.test.tsx
+@@ -3,28 +3,13 @@ import { renderHook, waitFor } from '@testing-library/react';
+ import React from 'react';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ 
+-const { mockFrom, createSignedUrls } = vi.hoisted(() => ({
+-  mockFrom: vi.fn(),
+-  createSignedUrls: vi.fn(),
+-}));
++const mockFrom = vi.fn();
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+-  supabase: {
+-    from: (...args: unknown[]) => mockFrom(...args),
+-    storage: { from: () => ({ createSignedUrls }) },
+-  },
++  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
+ }));
+ 
+-vi.mock('@/config/supabase', () => ({ SUPABASE_URL: 'https://test.supabase.co' }));
+-
+-import {
+-  AGENT_SENDER_LABEL,
+-  displayNameOf,
+-  extensionOf,
+-  isTechnicalFilename,
+-  shortDateTime,
+-  useContactMedia,
+-} from '@/hooks/chat/useContactMedia';
++import { useContactMedia } from '@/hooks/chat/useContactMedia';
+ 
+ function createWrapper() {
+   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+@@ -33,48 +18,29 @@ function createWrapper() {
+   );
+ }
+ 
+-const PRIVATE_IMAGE = 'https://test.supabase.co/storage/v1/object/public/whatsapp-media/image/3EB0E6947FC0A0ECAED14D_1790283276022.jpg';
+-const PRIVATE_AUDIO = 'https://test.supabase.co/storage/v1/object/public/audio-messages/audio/ptt-1.ogg';
+-
+ const rows = [
+   { id: '1', media_url: 'https://x/a.jpg', message_type: 'image', media_type: 'image/jpeg', media_mimetype: 'image/jpeg', media_filename: 'a.jpg', media_size: 1000, media_meta: null, caption: null, content: null, sender: 'contact', ptt: false, created_at: '2026-01-01T10:00:00Z' },
+   { id: '2', media_url: 'https://x/b.mp4', message_type: 'video', media_type: 'video/mp4', media_mimetype: 'video/mp4', media_filename: 'b.mp4', media_size: 2000, media_meta: { duration: 12 }, caption: null, content: null, sender: 'agent', ptt: false, created_at: '2026-01-01T11:00:00Z' },
+-  { id: '3', media_url: PRIVATE_AUDIO, message_type: 'ptt', media_type: null, media_mimetype: null, media_filename: null, media_size: null, media_meta: null, caption: null, content: null, sender: 'contact', ptt: true, created_at: '2026-01-01T12:00:00Z' },
+-  { id: '4', media_url: 'https://x/d.pdf', message_type: 'document', media_type: 'application/pdf', media_mimetype: 'application/pdf', media_filename: 'contrato.pdf', media_size: 500, media_meta: null, caption: 'contrato', content: null, sender: 'agent', ptt: false, created_at: '2026-01-01T13:00:00Z' },
++  { id: '3', media_url: 'https://x/c.ogg', message_type: 'ptt', media_type: null, media_mimetype: null, media_filename: null, media_size: null, media_meta: null, caption: null, content: null, sender: 'contact', ptt: true, created_at: '2026-01-01T12:00:00Z' },
++  { id: '4', media_url: 'https://x/d.pdf', message_type: 'document', media_type: 'application/pdf', media_mimetype: 'application/pdf', media_filename: 'd.pdf', media_size: 500, media_meta: null, caption: 'contrato', content: null, sender: 'agent', ptt: false, created_at: '2026-01-01T13:00:00Z' },
+   // registro legado sem media_type/media_mimetype: cai no fallback por extensao
+-  { id: '5', media_url: PRIVATE_IMAGE, message_type: 'image', media_type: null, media_mimetype: null, media_filename: null, media_size: null, media_meta: null, caption: null, content: 'legenda antiga', sender: 'contact', ptt: false, created_at: '2026-01-01T09:00:00Z' },
++  { id: '5', media_url: 'https://x/e.png', message_type: 'image', media_type: null, media_mimetype: null, media_filename: null, media_size: null, media_meta: null, caption: null, content: 'legenda antiga', sender: 'contact', ptt: false, created_at: '2026-01-01T09:00:00Z' },
+ ];
+ 
+-const orMock = vi.fn();
+-
+-beforeEach(() => {
+-  vi.clearAllMocks();
+-  createSignedUrls.mockImplementation((paths: string[]) =>
+-    Promise.resolve({
+-      data: paths.map((path) => ({ path, signedUrl: `https://signed.test/${path}`, error: null })),
+-      error: null,
+-    }),
+-  );
+-  mockFrom.mockImplementation(() => ({
+-    select: vi.fn().mockReturnValue({
+-      eq: vi.fn().mockReturnValue({
+-        not: vi.fn().mockReturnValue({
+-          or: orMock.mockReturnValue({
++describe('useContactMedia', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    mockFrom.mockImplementation(() => ({
++      select: vi.fn().mockReturnValue({
++        eq: vi.fn().mockReturnValue({
++          not: vi.fn().mockReturnValue({
+             order: vi.fn().mockReturnValue({
+               limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+             }),
+           }),
+         }),
+       }),
+-    }),
+-  }));
+-});
+-
+-describe('useContactMedia', () => {
+-  it('pede ao banco o filtro de apagadas (G3), contando NULL como nao apagada', async () => {
+-    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+-    expect(orMock).toHaveBeenCalledWith('is_deleted.is.null,is_deleted.eq.false');
++    }));
+   });
+ 
+   it('classifica por media_type/media_mimetype e cai no fallback por extensao para registros legados', async () => {
+@@ -101,71 +67,10 @@ describe('useContactMedia', () => {
+     expect(item5?.caption).toBe('legenda antiga');
+   });
+ 
+-  it('assina em lote: um request por bucket, nao um por arquivo (etapa 10)', async () => {
+-    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+-
+-    expect(createSignedUrls).toHaveBeenCalledTimes(2); // whatsapp-media + audio-messages
+-    const buckets = createSignedUrls.mock.calls.map((call) => call[0] as string[]);
+-    expect(buckets.flat().length).toBeGreaterThanOrEqual(2);
+-
+-    const byId = Object.fromEntries(result.current.data!.items.map((i) => [i.id, i]));
+-    expect(byId['5'].signedUrl).toContain('image/3EB0E6947FC0A0ECAED14D_1790283276022.jpg');
+-    expect(byId['3'].signedUrl).toContain('audio/ptt-1.ogg');
+-    expect(typeof byId['5'].expiresAt).toBe('number');
+-    // objeto que nao e de bucket privado nao ganha URL assinada (o componente resolve sozinho)
+-    expect(byId['1'].signedUrl).toBeUndefined();
+-  });
+-
+-  it('createSignedUrls falhando nao derruba a consulta: item fica sem signedUrl', async () => {
+-    createSignedUrls.mockImplementation(() => Promise.reject(new Error('storage fora')));
+-    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+-    expect(result.current.data!.items.every((i) => i.signedUrl === undefined)).toBe(true);
+-  });
+-
+   it('nao busca quando contactId e nulo', async () => {
+     const { result } = renderHook(() => useContactMedia(null), { wrapper: createWrapper() });
+     expect(result.current.isLoading).toBe(false);
+     expect(result.current.data).toBeUndefined();
+     expect(mockFrom).not.toHaveBeenCalled();
+   });
+-
+-  it('rotula o atendente sem dizer "Voce" (G15) e deixa o contato para a UI nomear', async () => {
+-    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+-    const byId = Object.fromEntries(result.current.data!.items.map((i) => [i.id, i]));
+-    expect(byId['2'].senderLabel).toBe(AGENT_SENDER_LABEL);
+-    expect(byId['1'].senderLabel).toBeNull();
+-  });
+-});
+-
+-describe('classificador de nome (etapa 09)', () => {
+-  it('nome tecnico do WhatsApp vira "<Tipo> · dd/MM HH:mm"', () => {
+-    expect(isTechnicalFilename('3EB0E6947FC0A0ECAED14D_1790283276022.jpg', 'jpg')).toBe(true);
+-    const nome = displayNameOf('3EB0E6947FC0A0ECAED14D_1790283276022.jpg', 'image', '2026-09-24T20:54:00Z', PRIVATE_IMAGE);
+-    expect(nome).toMatch(/^Imagem · \d{2}\/\d{2} \d{2}:\d{2}$/);
+-  });
+-
+-  it('nome humano e preservado', () => {
+-    expect(isTechnicalFilename('contrato.pdf', 'pdf')).toBe(false);
+-    expect(displayNameOf('contrato.pdf', 'document', '2026-09-24T20:54:00Z', 'https://x/contrato.pdf')).toBe('contrato.pdf');
+-    expect(displayNameOf('IMG-20231012-WA0001.jpg', 'image', null, 'https://x/IMG-20231012-WA0001.jpg')).toBe('IMG-20231012-WA0001.jpg');
+-  });
+-
+-  it('sem nome nenhum, cai no rotulo de tipo + data (nunca vazio)', () => {
+-    expect(displayNameOf(null, 'audio', '2026-09-24T17:54:00Z', 'https://x/abc.ogg')).toMatch(/^Áudio · \d{2}\/\d{2} \d{2}:\d{2}$/);
+-    expect(displayNameOf(null, 'video', null, 'https://x/abc.mp4')).toBe('Vídeo');
+-  });
+-
+-  it('extrai a extensao do nome ou do path', () => {
+-    expect(extensionOf('contrato.PDF', 'https://x/y')).toBe('pdf');
+-    expect(extensionOf(null, 'https://test.supabase.co/storage/v1/object/public/whatsapp-media/image/foto.JPG?x=1')).toBe('jpg');
+-    expect(extensionOf(null, 'https://x/sem-extensao')).toBeNull();
+-  });
+-
+-  it('data invalida nao vira "Invalid Date"', () => {
+-    expect(shortDateTime('nao-e-data')).toBe('');
+-    expect(shortDateTime(null)).toBe('');
+-  });
+ });
+diff --git a/src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx b/src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx
+deleted file mode 100644
+index 513f33d12..000000000
+--- a/src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx
++++ /dev/null
+@@ -1,140 +0,0 @@
+-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+-import { act, renderHook } from '@testing-library/react';
+-import { createRef } from 'react';
+-import {
+-  CARD_GAP,
+-  MIN_CARD_WIDTH,
+-  columnsCapacity,
+-  effectiveColumns,
+-  useFilesContainerColumns,
+-} from '@/hooks/chat/useFilesContainerColumns';
+-import type { FilesColumns } from '@/hooks/chat/useFilesViewState';
+-
+-/** Contêiner falso: medimos o que o rect devolve, sem layout real de navegador. */
+-function containerOf(width: number): HTMLDivElement {
+-  const element = document.createElement('div');
+-  element.getBoundingClientRect = () => ({ width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });
+-  document.body.appendChild(element);
+-  return element;
+-}
+-
+-const observers: (() => void)[] = [];
+-
+-class ResizeObserverStub {
+-  constructor(private callback: () => void) {}
+-  observe() { observers.push(this.callback); }
+-  unobserve() {}
+-  disconnect() {}
+-  trigger() { this.callback(); }
+-}
+-
+-beforeEach(() => {
+-  observers.length = 0;
+-  vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+-  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { cb(0); return 0; });
+-  vi.stubGlobal('cancelAnimationFrame', () => {});
+-});
+-
+-afterEach(() => {
+-  vi.unstubAllGlobals();
+-  document.body.innerHTML = '';
+-});
+-
+-describe('columnsCapacity', () => {
+-  it('usa (largura + gap) / (cartao + gap), com piso em 1', () => {
+-    expect(columnsCapacity(959)).toBe(5);
+-    expect(columnsCapacity(683)).toBe(3);
+-    expect(columnsCapacity(1474)).toBe(8);
+-    expect(columnsCapacity(0)).toBe(1);
+-    expect(columnsCapacity(-10)).toBe(1);
+-    expect(columnsCapacity(Number.NaN)).toBe(1);
+-    // fronteira: 3 cartoes cabem exatamente
+-    const exato = MIN_CARD_WIDTH * 3 + CARD_GAP * 2;
+-    expect(columnsCapacity(exato)).toBe(3);
+-    expect(columnsCapacity(exato - 1)).toBe(2);
+-  });
+-});
+-
+-describe('effectiveColumns', () => {
+-  it('tabela do plano: larguras 683/959/1151/1282/1474 com preferencia 8 devolvem 3/5/6/6/8', () => {
+-    const larguras = [683, 959, 1151, 1282, 1474];
+-    const esperado = [3, 5, 6, 6, 8];
+-    larguras.forEach((largura, i) => {
+-      expect(effectiveColumns(columnsCapacity(largura), 8)).toBe(esperado[i]);
+-    });
+-  });
+-
+-  it('capacidade 7 nao vira 7: a maior opcao valida e 6', () => {
+-    expect(columnsCapacity(1282)).toBe(7);
+-    expect(effectiveColumns(7, 8)).toBe(6);
+-  });
+-
+-  it('preferencia menor que a capacidade manda: 4 colunas em 1474 px continua 4', () => {
+-    expect(effectiveColumns(columnsCapacity(1474), 4)).toBe(4);
+-  });
+-
+-  it('abaixo de 3 colunas de capacidade, usa a propria capacidade (adaptacao automatica)', () => {
+-    expect(effectiveColumns(2, 8)).toBe(2);
+-    expect(effectiveColumns(1, 4)).toBe(1);
+-  });
+-});
+-
+-describe('useFilesContainerColumns', () => {
+-  it('mede o contêiner e devolve effective/capacity/available', () => {
+-    const ref = createRef<HTMLDivElement>();
+-    const element = containerOf(959);
+-    (ref as { current: HTMLDivElement | null }).current = element;
+-
+-    const { result } = renderHook(() => useFilesContainerColumns(ref, 4));
+-    expect(result.current.capacity).toBe(5);
+-    expect(result.current.effective).toBe(4); // preferencia 4 manda
+-    expect(result.current.available).toEqual([
+-      { n: 3, fits: true },
+-      { n: 4, fits: true },
+-      { n: 5, fits: true },
+-      { n: 6, fits: false },
+-      { n: 8, fits: false },
+-    ]);
+-  });
+-
+-  it('nao altera a preferencia: ela e entrada, nao saida', () => {
+-    const ref = createRef<HTMLDivElement>();
+-    const element = containerOf(1200);
+-    (ref as { current: HTMLDivElement | null }).current = element;
+-
+-    const { result, rerender } = renderHook(({ preferred }) => useFilesContainerColumns(ref, preferred), {
+-      initialProps: { preferred: 8 as FilesColumns },
+-    });
+-    expect(result.current.capacity).toBe(6);
+-    expect(result.current.effective).toBe(6); // limitado pela capacidade, nao muda o preferido
+-
+-    rerender({ preferred: 3 });
+-    expect(result.current.effective).toBe(3);
+-  });
+-
+-  it('antes da primeira medida respeita a preferencia e nao desabilita opcao nenhuma', () => {
+-    const ref = createRef<HTMLDivElement>(); // sem elemento: nada a medir
+-    const { result } = renderHook(() => useFilesContainerColumns(ref, 6));
+-    expect(result.current.capacity).toBeNull();
+-    expect(result.current.effective).toBe(6);
+-    expect(result.current.available.every((option) => option.fits)).toBe(true);
+-  });
+-
+-  it('reage a redimensionamento do contêiner', () => {
+-    const ref = createRef<HTMLDivElement>();
+-    const element = containerOf(683);
+-    (ref as { current: HTMLDivElement | null }).current = element;
+-
+-    const { result } = renderHook(() => useFilesContainerColumns(ref, 8));
+-    expect(result.current.effective).toBe(3);
+-
+-    element.getBoundingClientRect = () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });
+-    act(() => {
+-      document.body.dispatchEvent(new Event('noop'));
+-      observers.forEach((notify) => notify());
+-    });
+-
+-    expect(result.current.capacity).toBe(8);
+-    expect(result.current.effective).toBe(8);
+-  });
+-});
+diff --git a/src/hooks/chat/__tests__/useFilesSelection.test.tsx b/src/hooks/chat/__tests__/useFilesSelection.test.tsx
+deleted file mode 100644
+index fd499037c..000000000
+--- a/src/hooks/chat/__tests__/useFilesSelection.test.tsx
++++ /dev/null
+@@ -1,94 +0,0 @@
+-import { describe, it, expect, beforeEach } from 'vitest';
+-import { act, renderHook } from '@testing-library/react';
+-import { useFilesSelection } from '@/hooks/chat/useFilesSelection';
+-
+-beforeEach(() => {
+-  localStorage.clear();
+-});
+-
+-describe('useFilesSelection', () => {
+-  it('alterna por ID, entra e sai do modo selecao', () => {
+-    const { result } = renderHook(({ ids }) => useFilesSelection(ids, 'c1'), {
+-      initialProps: { ids: ['a', 'b', 'c'] },
+-    });
+-
+-    expect(result.current.selectionMode).toBe(false);
+-    act(() => result.current.enter());
+-    expect(result.current.selectionMode).toBe(true);
+-
+-    act(() => result.current.toggle('b'));
+-    expect(result.current.selectedCount).toBe(1);
+-    expect(result.current.selectedIds.has('b')).toBe(true);
+-
+-    act(() => result.current.toggle('b'));
+-    expect(result.current.selectedCount).toBe(0);
+-
+-    act(() => result.current.toggle('a'));
+-    act(() => result.current.exit());
+-    expect(result.current.selectionMode).toBe(false);
+-    expect(result.current.selectedCount).toBe(0);
+-  });
+-
+-  it('selecionar tudo pega so o recorte visivel; trocar de filtro preserva a selecao', () => {
+-    const { result, rerender } = renderHook(({ ids }) => useFilesSelection(ids, 'c1'), {
+-      initialProps: { ids: Array.from({ length: 56 }, (_, i) => `item-${i}`) },
+-    });
+-
+-    act(() => result.current.enter());
+-    const videos = ['item-3', 'item-7'];
+-    rerender({ ids: videos });
+-    act(() => result.current.selectAllVisible());
+-    expect(result.current.selectedCount).toBe(2);
+-
+-    // volta para "Todos": a selecao dos 2 continua, agora dentro do recorte
+-    const todos = Array.from({ length: 56 }, (_, i) => `item-${i}`);
+-    rerender({ ids: todos });
+-    expect(result.current.selectedCount).toBe(2);
+-    expect(result.current.selectedOutsideFilter).toEqual([]);
+-
+-    // seleciona tudo de novo: 56
+-    act(() => result.current.selectAllVisible());
+-    expect(result.current.selectedCount).toBe(56);
+-
+-    // filtro "Videos": 54 fora do recorte, contagem explicita
+-    rerender({ ids: videos });
+-    expect(result.current.selectedCount).toBe(56);
+-    expect(result.current.selectedOutsideFilter).toHaveLength(54);
+-  });
+-
+-  it('trocar de contato zera a selecao e sai do modo selecao', () => {
+-    const { result, rerender } = renderHook(({ contactId }) => useFilesSelection(['a', 'b'], contactId), {
+-      initialProps: { contactId: 'c1' },
+-    });
+-    act(() => result.current.enter());
+-    act(() => result.current.toggle('a'));
+-    expect(result.current.selectedCount).toBe(1);
+-
+-    rerender({ contactId: 'c2' });
+-    expect(result.current.selectedCount).toBe(0);
+-    expect(result.current.selectionMode).toBe(false);
+-  });
+-
+-  it('nao zera quando outra coisa rerenderiza (acao que falhou mantem a selecao)', () => {
+-    const { result, rerender } = renderHook(({ ids }) => useFilesSelection(ids, 'c1'), {
+-      initialProps: { ids: ['a', 'b'] },
+-    });
+-    act(() => result.current.enter());
+-    act(() => result.current.toggle('a'));
+-
+-    // rerender com nova identidade de array (o filtro reordenou, a acao falhou, etc.)
+-    rerender({ ids: ['b', 'a'] });
+-    expect(result.current.selectedCount).toBe(1);
+-    expect(result.current.selectedIds.has('a')).toBe(true);
+-  });
+-
+-  it('nunca persiste ID em storage', () => {
+-    const { result } = renderHook(() => useFilesSelection(['a'], 'c1'));
+-    act(() => result.current.enter());
+-    act(() => result.current.toggle('a'));
+-
+-    const dump = Object.keys(localStorage).map((key) => `${key}=${localStorage.getItem(key)}`).join('|');
+-    expect(dump).not.toContain('item-');
+-    expect(localStorage.length).toBe(0);
+-  });
+-});
+diff --git a/src/hooks/chat/__tests__/useFilesViewState.test.tsx b/src/hooks/chat/__tests__/useFilesViewState.test.tsx
+deleted file mode 100644
+index 25f9333d6..000000000
+--- a/src/hooks/chat/__tests__/useFilesViewState.test.tsx
++++ /dev/null
+@@ -1,163 +0,0 @@
+-import { describe, it, expect, vi, beforeEach } from 'vitest';
+-import { act, renderHook } from '@testing-library/react';
+-import {
+-  DEFAULT_FILES_VIEW_PREFS,
+-  DEFAULT_FILES_VIEW_SESSION,
+-  clearFilesViewSessionCache,
+-  filesViewStorageKey,
+-  useFilesViewState,
+-} from '@/hooks/chat/useFilesViewState';
+-
+-let authCallback: ((event: string) => void) | null = null;
+-const unsubscribe = vi.fn();
+-
+-vi.mock('@/integrations/supabase/client', () => ({
+-  supabase: {
+-    auth: {
+-      onAuthStateChange: (cb: (event: string) => void) => {
+-        authCallback = cb;
+-        return { data: { subscription: { unsubscribe } } };
+-      },
+-    },
+-  },
+-}));
+-
+-const USER = 'user-1';
+-const OTHER_USER = 'user-2';
+-const CONTACT = 'contact-1';
+-
+-beforeEach(() => {
+-  localStorage.clear();
+-  clearFilesViewSessionCache();
+-  authCallback = null;
+-  vi.clearAllMocks();
+-});
+-
+-describe('useFilesViewState — preferencias (localStorage)', () => {
+-  it('storage ausente: comeca no default decidido em D3 (grid, 4 colunas)', () => {
+-    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(result.current.viewMode).toBe('grid');
+-    expect(result.current.columns).toBe(4);
+-    expect(result.current.sort).toBe('recent');
+-    expect(result.current.typeFilter).toBe('all');
+-    expect(result.current.search).toBe('');
+-  });
+-
+-  it('storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default', () => {
+-    localStorage.setItem(filesViewStorageKey(USER), '{nao-e-json');
+-    const quebrado = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(quebrado.result.current.viewMode).toBe(DEFAULT_FILES_VIEW_PREFS.viewMode);
+-    expect(quebrado.result.current.columns).toBe(DEFAULT_FILES_VIEW_PREFS.columns);
+-
+-    localStorage.setItem(filesViewStorageKey(USER), JSON.stringify({ v: 99, viewMode: 'table', columns: 6 }));
+-    const versaoErrada = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(versaoErrada.result.current.viewMode).toBe('grid');
+-    expect(versaoErrada.result.current.columns).toBe(4);
+-
+-    // versao certa, valores fora do dominio: cada campo e sanitizado por conta propria
+-    localStorage.setItem(filesViewStorageKey(USER), JSON.stringify({ v: 1, viewMode: 'carrossel', columns: 7 }));
+-    const foraDoDominio = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(foraDoDominio.result.current.viewMode).toBe('grid');
+-    expect(foraDoDominio.result.current.columns).toBe(4);
+-  });
+-
+-  it('sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode', () => {
+-    localStorage.setItem(filesViewStorageKey(USER), JSON.stringify({ v: 1, viewMode: 'table', columns: 12 }));
+-    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(result.current.viewMode).toBe('table');
+-    expect(result.current.columns).toBe(4);
+-  });
+-
+-  it('persiste viewMode e columns, sem tocar nas chaves do catalogo do Promo Gifts', () => {
+-    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+-    const getItem = vi.spyOn(Storage.prototype, 'getItem');
+-    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+-
+-    act(() => result.current.setViewMode('list'));
+-    act(() => result.current.setColumns(6));
+-
+-    expect(JSON.parse(localStorage.getItem(filesViewStorageKey(USER))!)).toEqual({
+-      v: 1,
+-      viewMode: 'list',
+-      columns: 6,
+-    });
+-
+-    const touchedKeys = [...setItem.mock.calls, ...getItem.mock.calls].map((call) => String(call[0]));
+-    expect(touchedKeys.some((key) => /product-grid-columns|catalog-view-mode/.test(key))).toBe(false);
+-    setItem.mockRestore();
+-    getItem.mockRestore();
+-  });
+-
+-  it('filtro, busca e ordenacao NAO vao para o storage (recorte e de sessao)', () => {
+-    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+-    act(() => result.current.setTypeFilter('video'));
+-    act(() => result.current.setSearch('x'));
+-    act(() => result.current.setSort('biggest'));
+-
+-    const stored = localStorage.getItem(filesViewStorageKey(USER));
+-    if (stored) {
+-      expect(stored).not.toContain('video');
+-      expect(stored).not.toContain('biggest');
+-      expect(JSON.parse(stored)).toEqual({ v: 1, viewMode: 'grid', columns: 4 });
+-    }
+-    // e o estado em memoria responde
+-    expect(result.current.typeFilter).toBe('video');
+-    expect(result.current.search).toBe('x');
+-    expect(result.current.sort).toBe('biggest');
+-  });
+-});
+-
+-describe('useFilesViewState — sessao (memoria por <userId>:<contactId>)', () => {
+-  it('remontar com o mesmo contato restaura filtro e busca; com outro contato comeca limpo', () => {
+-    const primeiro = renderHook(() => useFilesViewState(USER, CONTACT));
+-    act(() => primeiro.result.current.setTypeFilter('video'));
+-    act(() => primeiro.result.current.setSearch('x'));
+-    act(() => primeiro.result.current.setSort('alpha'));
+-    primeiro.unmount();
+-
+-    const remontado = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(remontado.result.current.typeFilter).toBe('video');
+-    expect(remontado.result.current.search).toBe('x');
+-    expect(remontado.result.current.sort).toBe('alpha');
+-
+-    const outroContato = renderHook(() => useFilesViewState(USER, 'contact-2'));
+-    expect(outroContato.result.current.typeFilter).toBe(DEFAULT_FILES_VIEW_SESSION.typeFilter);
+-    expect(outroContato.result.current.search).toBe('');
+-  });
+-
+-  it('trocar de usuario no mesmo navegador e mesmo contato comeca limpo (preferencia nao vaza)', () => {
+-    localStorage.setItem(filesViewStorageKey(USER), JSON.stringify({ v: 1, viewMode: 'table', columns: 8 }));
+-    const primeiro = renderHook(() => useFilesViewState(USER, CONTACT));
+-    act(() => primeiro.result.current.setSearch('segredo-do-user-1'));
+-
+-    const segundo = renderHook(() => useFilesViewState(OTHER_USER, CONTACT));
+-    expect(segundo.result.current.search).toBe('');
+-    expect(segundo.result.current.viewMode).toBe('grid');
+-    expect(segundo.result.current.columns).toBe(4);
+-  });
+-
+-  it('SIGNED_OUT esvazia o cache de sessao', () => {
+-    const primeiro = renderHook(() => useFilesViewState(USER, CONTACT));
+-    act(() => primeiro.result.current.setSearch('x'));
+-    primeiro.unmount();
+-
+-    expect(authCallback).not.toBeNull();
+-    act(() => authCallback!('SIGNED_OUT'));
+-
+-    const depoisDoLogout = renderHook(() => useFilesViewState(USER, CONTACT));
+-    expect(depoisDoLogout.result.current.search).toBe('');
+-  });
+-
+-  it('trocar de contato com o hook montado volta ao default (nao herda o recorte anterior)', () => {
+-    const { result, rerender } = renderHook(
+-      ({ contactId }) => useFilesViewState(USER, contactId),
+-      { initialProps: { contactId: CONTACT } },
+-    );
+-    act(() => result.current.setTypeFilter('document'));
+-    act(() => result.current.setSearch('contrato'));
+-
+-    rerender({ contactId: 'contact-9' });
+-    expect(result.current.typeFilter).toBe('all');
+-    expect(result.current.search).toBe('');
+-  });
+-});
+diff --git a/src/hooks/chat/useContactMedia.ts b/src/hooks/chat/useContactMedia.ts
+index 415a57406..973ac2759 100644
+--- a/src/hooks/chat/useContactMedia.ts
++++ b/src/hooks/chat/useContactMedia.ts
+@@ -1,35 +1,20 @@
+ import { useQuery } from '@tanstack/react-query';
+ import { supabase } from '@/integrations/supabase/client';
+-import { SUPABASE_URL } from '@/config/supabase';
+ import { getMediaType, getFilename } from '@/components/inbox/media-gallery/mediaUtils';
+-import { parseSupabaseStorageObjectUrl, PRIVATE_MEDIA_BUCKETS } from '@/lib/storage_object_reference';
+ 
+ export type ContactMediaKind = 'image' | 'video' | 'audio' | 'document';
+ 
+-/** `senderLabel` do atendente. Nunca "Você": a consulta nao traz o autor da mensagem. */
+-export const AGENT_SENDER_LABEL = 'Atendente';
+-
+ export interface ContactMediaItem {
+   id: string;
+   url: string;
+   type: ContactMediaKind;
+   filename: string;
+-  /** Nome legivel: o `media_filename` quando e nome humano, senao "<Tipo> · dd/MM HH:mm". */
+-  displayName: string;
+-  /** Extensao em minusculas (do `media_filename` ou do path), sem ponto. */
+-  extension: string | null;
+-  /** Rotulo do remetente quando ele e o atendente; `null` = contato (a UI usa o nome dele). */
+-  senderLabel: string | null;
+   created_at: string;
+   caption: string | null;
+   mimetype: string | null;
+   size: number | null;
+   meta: Record<string, unknown> | null;
+   sender: string | null;
+-  /** URL assinada em lote (etapa 10) - so para objeto de bucket privado. */
+-  signedUrl?: string;
+-  /** Epoch (ms) em que `signedUrl` expira; ausente quando a URL e publica/legivel. */
+-  expiresAt?: number;
+ }
+ 
+ export interface ContactMediaCounts {
+@@ -42,62 +27,6 @@ export interface ContactMediaCounts {
+ 
+ export const contactMediaKey = (contactId: string | null | undefined) => ['media-gallery', contactId] as const;
+ 
+-const SIGNED_URL_TTL_SECONDS = 3600;
+-const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
+-const TYPE_LABEL: Record<ContactMediaKind, string> = {
+-  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento',
+-};
+-
+-/** Nome tecnico do WhatsApp: hex/underscore sem nenhuma palavra (ex.: 3EB0E6947FC0A0ECAED14D_1790283276022). */
+-const TECHNICAL_FILENAME = /^[0-9a-fA-F_-]{14,}$/;
+-
+-function pad(value: number): string {
+-  return String(value).padStart(2, '0');
+-}
+-
+-/** "dd/MM HH:mm" no fuso local. */
+-export function shortDateTime(iso: string | null): string {
+-  if (!iso) return '';
+-  const date = new Date(iso);
+-  if (Number.isNaN(date.getTime())) return '';
+-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+-}
+-
+-export function extensionOf(filename: string | null, url: string): string | null {
+-  let source = filename?.trim() || '';
+-  if (!source) {
+-    try {
+-      const clean = decodeURIComponent(url.split(/[?#]/, 1)[0]);
+-      source = clean.split('/').pop() ?? '';
+-    } catch {
+-      return null;
+-    }
+-  }
+-  const match = /\.([a-z0-9]{1,8})$/i.exec(source);
+-  return match ? match[1].toLowerCase() : null;
+-}
+-
+-export function isTechnicalFilename(filename: string, extension: string | null): boolean {
+-  const base = extension && filename.toLowerCase().endsWith(`.${extension}`)
+-    ? filename.slice(0, -(extension.length + 1))
+-    : filename;
+-  return TECHNICAL_FILENAME.test(base.trim());
+-}
+-
+-/** Nome humano se houver; senao "<Tipo> · dd/MM HH:mm" - nunca um hash na cara do operador. */
+-export function displayNameOf(
+-  filename: string | null,
+-  type: ContactMediaKind,
+-  createdAt: string | null,
+-  url: string,
+-): string {
+-  const extension = extensionOf(filename, url);
+-  const trimmed = filename?.trim();
+-  if (trimmed && !isTechnicalFilename(trimmed, extension)) return trimmed;
+-  const stamp = shortDateTime(createdAt);
+-  return stamp ? `${TYPE_LABEL[type]} · ${stamp}` : TYPE_LABEL[type];
+-}
+-
+ /** Classifica pelo media_type/media_mimetype reais (mais confiável); cai para
+  * a heurística por extensão/message_type só em registros antigos sem esses campos. */
+ function classify(
+@@ -115,44 +44,6 @@ function classify(
+   return getMediaType(url, messageType);
+ }
+ 
+-/** Assina em lote, um request por bucket (etapa 10): 56 `createSignedUrl` viram 1-2 chamadas. */
+-async function signInBatch(
+-  items: ContactMediaItem[],
+-): Promise<Map<string, { signedUrl: string; expiresAt: number }>> {
+-  const byBucket = new Map<string, { id: string; path: string }[]>();
+-  for (const item of items) {
+-    const reference = parseSupabaseStorageObjectUrl(item.url, PRIVATE_MEDIA_BUCKETS, STORAGE_ORIGINS);
+-    if (!reference) continue;
+-    const list = byBucket.get(reference.bucket) ?? [];
+-    list.push({ id: item.id, path: reference.path });
+-    byBucket.set(reference.bucket, list);
+-  }
+-
+-  const result = new Map<string, { signedUrl: string; expiresAt: number }>();
+-  const expiresAt = Date.now() + SIGNED_URL_TTL_SECONDS * 1000;
+-
+-  await Promise.all(
+-    Array.from(byBucket.entries()).map(async ([bucket, entries]) => {
+-      try {
+-        const { data, error } = await supabase.storage
+-          .from(bucket)
+-          .createSignedUrls(entries.map((entry) => entry.path), SIGNED_URL_TTL_SECONDS);
+-        if (error) return; // item fica sem signedUrl; o consumidor cai no refresh individual
+-        const byPath = new Map(entries.map((entry) => [entry.path, entry.id]));
+-        for (const signed of data ?? []) {
+-          const id = byPath.get(signed.path ?? '');
+-          if (id && signed.signedUrl) result.set(id, { signedUrl: signed.signedUrl, expiresAt });
+-        }
+-      } catch {
+-        // Assinatura em lote e otimizacao: falhar aqui nao pode esconder a galeria.
+-        // Os itens afetados ficam sem `signedUrl` e o consumidor resolve um a um.
+-      }
+-    }),
+-  );
+-
+-  return result;
+-}
+-
+ export function useContactMedia(contactId: string | null | undefined) {
+   return useQuery({
+     queryKey: contactMediaKey(contactId),
+@@ -162,45 +53,25 @@ export function useContactMedia(contactId: string | null | undefined) {
+         .select('id, media_url, message_type, media_type, media_mimetype, media_filename, media_size, media_meta, caption, content, sender, ptt, created_at')
+         .eq('contact_id', contactId as string)
+         .not('media_url', 'is', null)
+-        // G3: apagada nao volta para a galeria. `is_deleted` e boolean NULL no catalogo,
+-        // entao NULL conta como nao apagada - `.eq(false)` esconderia mensagens antigas.
+-        .or('is_deleted.is.null,is_deleted.eq.false')
+         .order('created_at', { ascending: false })
+         .limit(200);
+       if (error) throw error;
+ 
+       const items: ContactMediaItem[] = (data || [])
+         .filter((m) => m.media_url)
+-        .map((m) => {
+-          const url = m.media_url as string;
+-          const type = classify(m.media_type, m.media_mimetype, m.message_type, url, m.ptt);
+-          const filename = m.media_filename || getFilename(url);
+-          return {
+-            id: m.id,
+-            url,
+-            type,
+-            filename,
+-            displayName: displayNameOf(m.media_filename ?? null, type, m.created_at, url),
+-            extension: extensionOf(m.media_filename ?? null, url),
+-            senderLabel: m.sender === 'agent' ? AGENT_SENDER_LABEL : null,
+-            created_at: m.created_at,
+-            // useFileUploadLogic grava a legenda em 'content', nao em 'caption'
+-            caption: m.caption ?? m.content ?? null,
+-            mimetype: m.media_mimetype ?? null,
+-            size: m.media_size ?? null,
+-            meta: (m.media_meta as Record<string, unknown> | null) ?? null,
+-            sender: m.sender ?? null,
+-          };
+-        });
+-
+-      const signed = await signInBatch(items);
+-      for (const item of items) {
+-        const found = signed.get(item.id);
+-        if (found) {
+-          item.signedUrl = found.signedUrl;
+-          item.expiresAt = found.expiresAt;
+-        }
+-      }
++        .map((m) => ({
++          id: m.id,
++          url: m.media_url as string,
++          type: classify(m.media_type, m.media_mimetype, m.message_type, m.media_url as string, m.ptt),
++          filename: m.media_filename || getFilename(m.media_url as string),
++          created_at: m.created_at,
++          // useFileUploadLogic grava a legenda em 'content', nao em 'caption'
++          caption: m.caption ?? m.content ?? null,
++          mimetype: m.media_mimetype ?? null,
++          size: m.media_size ?? null,
++          meta: (m.media_meta as Record<string, unknown> | null) ?? null,
++          sender: m.sender ?? null,
++        }));
+ 
+       const counts: ContactMediaCounts = {
+         all: items.length,
+diff --git a/src/hooks/chat/useFilesContainerColumns.ts b/src/hooks/chat/useFilesContainerColumns.ts
+deleted file mode 100644
+index abf72551a..000000000
+--- a/src/hooks/chat/useFilesContainerColumns.ts
++++ /dev/null
+@@ -1,82 +0,0 @@
+-import { useEffect, useState, type RefObject } from 'react';
+-import { FILES_COLUMNS, type FilesColumns } from '@/hooks/chat/useFilesViewState';
+-
+-/**
+- * Capacidade de colunas do Grid medida pelo CONTENINER (etapa 07).
+- *
+- * `window.innerWidth` nao serve aqui: o painel central do inbox encolhe quando a sidebar
+- * ou os detalhes do contato abrem, e o que importa e o espaco real do grid. O
+- * `ResizeObserver` observa o proprio elemento e o rAF evita recalculo por pixel arrastado.
+- */
+-
+-export const MIN_CARD_WIDTH = 168;
+-export const CARD_GAP = 12;
+-
+-export interface ColumnOption {
+-  n: FilesColumns;
+-  fits: boolean;
+-}
+-
+-/** Quantos cartoes de 168 px cabem, com 12 px de espaco entre eles. Nunca menos de 1. */
+-export function columnsCapacity(width: number): number {
+-  if (!Number.isFinite(width) || width <= 0) return 1;
+-  return Math.max(1, Math.floor((width + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP)));
+-}
+-
+-/**
+- * Maior opcao de [3,4,5,6,8] que caiba em `min(preferred, capacity)`. Capacidade 7 com
+- * preferencia 8 devolve 6 (7 nao e opcao). Abaixo de 3 colunas devolve a propria
+- * capacidade (1 ou 2), que e a adaptacao automatica em painel estreito.
+- */
+-export function effectiveColumns(capacity: number, preferred: FilesColumns): number {
+-  const ceiling = Math.min(preferred, capacity);
+-  const options = FILES_COLUMNS.filter((n) => n <= ceiling);
+-  if (options.length > 0) return options[options.length - 1];
+-  return capacity;
+-}
+-
+-export interface FilesContainerColumns {
+-  /** Colunas a renderizar. Enquanto nao ha medida, respeita a preferencia do operador. */
+-  effective: number;
+-  /** Capacidade medida do contêiner; `null` antes da primeira medicao. */
+-  capacity: number | null;
+-  /** As 5 opcoes do seletor, com `fits` para desabilitar (nunca esconder). */
+-  available: ColumnOption[];
+-}
+-
+-export function useFilesContainerColumns(
+-  ref: RefObject<HTMLElement | null>,
+-  preferred: FilesColumns,
+-): FilesContainerColumns {
+-  const [width, setWidth] = useState<number | null>(null);
+-
+-  useEffect(() => {
+-    const element = ref.current;
+-    if (!element) return;
+-    let frame = 0;
+-
+-    const measure = () => {
+-      frame = 0;
+-      setWidth(element.getBoundingClientRect().width);
+-    };
+-    const observer = new ResizeObserver(() => {
+-      if (!frame) frame = requestAnimationFrame(measure);
+-    });
+-
+-    observer.observe(element);
+-    measure();
+-
+-    return () => {
+-      if (frame) cancelAnimationFrame(frame);
+-      observer.disconnect();
+-    };
+-  }, [ref]);
+-
+-  const capacity = width === null ? null : columnsCapacity(width);
+-
+-  return {
+-    effective: capacity === null ? preferred : effectiveColumns(capacity, preferred),
+-    capacity,
+-    available: FILES_COLUMNS.map((n) => ({ n, fits: capacity === null ? true : n <= capacity })),
+-  };
+-}
+diff --git a/src/hooks/chat/useFilesSelection.ts b/src/hooks/chat/useFilesSelection.ts
+deleted file mode 100644
+index ec5c01b05..000000000
+--- a/src/hooks/chat/useFilesSelection.ts
++++ /dev/null
+@@ -1,75 +0,0 @@
+-import { useCallback, useMemo, useState } from 'react';
+-
+-/**
+- * Selecao da aba Arquivos (etapa 08), por ID estavel - nunca por indice.
+- *
+- * Ciclo de vida (etapa 34): sobrevive a troca de modo, ordenacao e rolagem; zera ao
+- * trocar de contato (ou desmontar a aba) e ao cancelar; NAO zera quando uma acao falha,
+- * porque o operador precisa tentar de novo com a mesma selecao. Nunca vai para storage.
+- */
+-
+-export interface FilesSelection {
+-  selectionMode: boolean;
+-  selectedIds: Set<string>;
+-  selectedCount: number;
+-  /** Selecionados que nao estao no recorte visivel agora (barra contextual). */
+-  selectedOutsideFilter: string[];
+-  enter: () => void;
+-  exit: () => void;
+-  toggle: (id: string) => void;
+-  selectAllVisible: () => void;
+-  clear: () => void;
+-}
+-
+-export function useFilesSelection(
+-  visibleIds: readonly string[],
+-  contactId: string | null | undefined,
+-): FilesSelection {
+-  const [selectionMode, setSelectionMode] = useState(false);
+-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+-  const [currentContact, setCurrentContact] = useState<string>(() => contactId ?? '');
+-
+-  // Troca de contato: comeca limpo. Reset durante o render (estado derivado de props),
+-  // sem efeito em cascata e sem depender de remontagem.
+-  const contactKey = contactId ?? '';
+-  if (currentContact !== contactKey) {
+-    setCurrentContact(contactKey);
+-    setSelectedIds(new Set());
+-    setSelectionMode(false);
+-  }
+-
+-  const visibleIdSet = useMemo(() => new Set(visibleIds), [visibleIds]);
+-
+-  const enter = useCallback(() => setSelectionMode(true), []);
+-  const exit = useCallback(() => {
+-    setSelectionMode(false);
+-    setSelectedIds(new Set());
+-  }, []);
+-  const clear = useCallback(() => setSelectedIds(new Set()), []);
+-  const toggle = useCallback((id: string) => {
+-    setSelectedIds((previous) => {
+-      const next = new Set(previous);
+-      if (next.has(id)) next.delete(id);
+-      else next.add(id);
+-      return next;
+-    });
+-  }, []);
+-  const selectAllVisible = useCallback(() => setSelectedIds(new Set(visibleIds)), [visibleIds]);
+-
+-  const selectedOutsideFilter = useMemo(
+-    () => Array.from(selectedIds).filter((id) => !visibleIdSet.has(id)),
+-    [selectedIds, visibleIdSet],
+-  );
+-
+-  return {
+-    selectionMode,
+-    selectedIds,
+-    selectedCount: selectedIds.size,
+-    selectedOutsideFilter,
+-    enter,
+-    exit,
+-    toggle,
+-    selectAllVisible,
+-    clear,
+-  };
+-}
+diff --git a/src/hooks/chat/useFilesViewState.ts b/src/hooks/chat/useFilesViewState.ts
+deleted file mode 100644
+index 0cc10e753..000000000
+--- a/src/hooks/chat/useFilesViewState.ts
++++ /dev/null
+@@ -1,188 +0,0 @@
+-import { useCallback, useEffect, useState } from 'react';
+-import { supabase } from '@/integrations/supabase/client';
+-import { safeGetJSON, safeSetJSON } from '@/lib/safeStorage';
+-import type { ContactMediaKind } from '@/hooks/chat/useContactMedia';
+-
+-/**
+- * Estado de visualizacao da aba Arquivos (etapa 06 do plano de 50 etapas).
+- *
+- * Duas camadas com ciclos de vida diferentes, de proposito:
+- * - `viewMode`/`columns` sao preferencia do operador -> `localStorage`, com sufixo do
+- *   usuario (convencao da casa: `zapp.<area>.<pref>`), sanitizada na leitura.
+- * - `sort`/`typeFilter`/`search` sao contexto da conversa -> memoria da sessao, num `Map`
+- *   por `<userId>:<contactId>`, para sair ao Chat e voltar a Arquivos sem perder o recorte.
+- *   Recarregar a pagina zera; trocar de contato ou de usuario comeca limpo.
+- *
+- * A selecao (etapa 08) nunca entra aqui: nao e recorte de tela, e escolha do operador.
+- */
+-
+-export type FilesViewMode = 'grid' | 'list' | 'table';
+-export type FilesSort = 'recent' | 'old' | 'biggest' | 'alpha';
+-export type FilesTypeFilter = 'all' | ContactMediaKind;
+-
+-export const FILES_COLUMNS = [3, 4, 5, 6, 8] as const;
+-export type FilesColumns = (typeof FILES_COLUMNS)[number];
+-
+-export const VIEW_MODES: readonly FilesViewMode[] = ['grid', 'list', 'table'];
+-export const FILES_SORTS: readonly FilesSort[] = ['recent', 'old', 'biggest', 'alpha'];
+-
+-/** D3 (01/10): 4 colunas e o default por caber com todas as laterais abertas. */
+-export const DEFAULT_FILES_VIEW_PREFS: FilesViewPrefs = { viewMode: 'grid', columns: 4 };
+-
+-const PREFS_VERSION = 1;
+-
+-export interface FilesViewPrefs {
+-  viewMode: FilesViewMode;
+-  columns: FilesColumns;
+-}
+-
+-export interface FilesViewSession {
+-  sort: FilesSort;
+-  typeFilter: FilesTypeFilter;
+-  search: string;
+-}
+-
+-export const DEFAULT_FILES_VIEW_SESSION: FilesViewSession = {
+-  sort: 'recent',
+-  typeFilter: 'all',
+-  search: '',
+-};
+-
+-export function filesViewStorageKey(userId: string): string {
+-  return `zapp.inbox.files.view:${userId}`;
+-}
+-
+-export function filesViewSessionKey(userId: string, contactId: string): string {
+-  return `${userId}:${contactId}`;
+-}
+-
+-function isViewMode(value: unknown): value is FilesViewMode {
+-  return typeof value === 'string' && (VIEW_MODES as readonly string[]).includes(value);
+-}
+-
+-function isColumns(value: unknown): value is FilesColumns {
+-  return typeof value === 'number' && (FILES_COLUMNS as readonly number[]).includes(value);
+-}
+-
+-/**
+- * Leitura defensiva: valor fora do dominio, versao desconhecida ou JSON quebrado caem
+- * no default. Nunca lanca - a indisponibilidade do storage nao pode quebrar a aba.
+- */
+-export function parseFilesViewPrefs(raw: unknown): FilesViewPrefs {
+-  if (!raw || typeof raw !== 'object') return DEFAULT_FILES_VIEW_PREFS;
+-  const candidate = raw as { v?: unknown; viewMode?: unknown; columns?: unknown };
+-  if (candidate.v !== PREFS_VERSION) return DEFAULT_FILES_VIEW_PREFS;
+-  return {
+-    viewMode: isViewMode(candidate.viewMode) ? candidate.viewMode : DEFAULT_FILES_VIEW_PREFS.viewMode,
+-    columns: isColumns(candidate.columns) ? candidate.columns : DEFAULT_FILES_VIEW_PREFS.columns,
+-  };
+-}
+-
+-function readPrefs(userId: string | null | undefined): FilesViewPrefs {
+-  if (!userId) return DEFAULT_FILES_VIEW_PREFS;
+-  return parseFilesViewPrefs(safeGetJSON<unknown>(filesViewStorageKey(userId), null));
+-}
+-
+-function writePrefs(userId: string | null | undefined, prefs: FilesViewPrefs): void {
+-  if (!userId) return;
+-  safeSetJSON(filesViewStorageKey(userId), { v: PREFS_VERSION, ...prefs });
+-}
+-
+-const sessionCache = new Map<string, FilesViewSession>();
+-
+-/** Esvaziado no `SIGNED_OUT`: o logout limpa React Query e caches offline, mas nao enxerga este Map. */
+-export function clearFilesViewSessionCache(): void {
+-  sessionCache.clear();
+-}
+-
+-export function readFilesViewSession(key: string | null): FilesViewSession {
+-  if (!key) return DEFAULT_FILES_VIEW_SESSION;
+-  return sessionCache.get(key) ?? DEFAULT_FILES_VIEW_SESSION;
+-}
+-
+-export function writeFilesViewSession(key: string | null, session: FilesViewSession): void {
+-  if (!key) return;
+-  sessionCache.set(key, session);
+-}
+-
+-interface FilesViewState {
+-  viewMode: FilesViewMode;
+-  columns: FilesColumns;
+-  sort: FilesSort;
+-  typeFilter: FilesTypeFilter;
+-  search: string;
+-  setViewMode: (mode: FilesViewMode) => void;
+-  setColumns: (columns: FilesColumns) => void;
+-  setSort: (sort: FilesSort) => void;
+-  setTypeFilter: (filter: FilesTypeFilter) => void;
+-  setSearch: (search: string) => void;
+-}
+-
+-interface InternalState {
+-  key: string;
+-  prefs: FilesViewPrefs;
+-  session: FilesViewSession;
+-}
+-
+-function initialState(userId: string | null | undefined, contactId: string | null | undefined): InternalState {
+-  const key = userId && contactId ? filesViewSessionKey(userId, contactId) : '';
+-  return {
+-    key: `${key}|${userId ?? ''}`,
+-    prefs: readPrefs(userId),
+-    session: readFilesViewSession(key || null),
+-  };
+-}
+-
+-export function useFilesViewState(
+-  userId: string | null | undefined,
+-  contactId: string | null | undefined,
+-): FilesViewState {
+-  const [state, setState] = useState<InternalState>(() => initialState(userId, contactId));
+-  const sessionKey = userId && contactId ? filesViewSessionKey(userId, contactId) : null;
+-
+-  // Reset durante o render (padrao do React para "estado derivado de props"): trocar de
+-  // contato ou de usuario recomeca do default, sem efeito em cascata.
+-  const expectedKey = `${sessionKey ?? ''}|${userId ?? ''}`;
+-  if (state.key !== expectedKey) {
+-    setState(initialState(userId, contactId));
+-  }
+-
+-  useEffect(() => {
+-    writeFilesViewSession(sessionKey, state.session);
+-  }, [sessionKey, state.session]);
+-
+-  useEffect(() => {
+-    const { data } = supabase.auth.onAuthStateChange((event) => {
+-      if (event === 'SIGNED_OUT') clearFilesViewSessionCache();
+-    });
+-    return () => data.subscription.unsubscribe();
+-  }, []);
+-
+-  const mergePrefs = useCallback(
+-    (patch: Partial<FilesViewPrefs>) => {
+-      setState((current) => {
+-        const prefs = { ...current.prefs, ...patch };
+-        writePrefs(userId, prefs);
+-        return { ...current, prefs };
+-      });
+-    },
+-    [userId],
+-  );
+-
+-  const mergeSession = useCallback((patch: Partial<FilesViewSession>) => {
+-    setState((current) => ({ ...current, session: { ...current.session, ...patch } }));
+-  }, []);
+-
+-  return {
+-    viewMode: state.prefs.viewMode,
+-    columns: state.prefs.columns,
+-    sort: state.session.sort,
+-    typeFilter: state.session.typeFilter,
+-    search: state.session.search,
+-    setViewMode: useCallback((mode: FilesViewMode) => mergePrefs({ viewMode: mode }), [mergePrefs]),
+-    setColumns: useCallback((columns: FilesColumns) => mergePrefs({ columns }), [mergePrefs]),
+-    setSort: useCallback((sort: FilesSort) => mergeSession({ sort }), [mergeSession]),
+-    setTypeFilter: useCallback((typeFilter: FilesTypeFilter) => mergeSession({ typeFilter }), [mergeSession]),
+-    setSearch: useCallback((search: string) => mergeSession({ search }), [mergeSession]),
+-  };
+-}
+diff --git a/src/hooks/team-chat/useTeamUnreadCount.ts b/src/hooks/team-chat/useTeamUnreadCount.ts
+index c5b41cf1a..dce41ee50 100644
+--- a/src/hooks/team-chat/useTeamUnreadCount.ts
++++ b/src/hooks/team-chat/useTeamUnreadCount.ts
+@@ -5,7 +5,7 @@ const storageKey = (cid: string) => `team-chat-unread-${cid}`;
+ 
+ export function useTeamUnreadCount(conversationId: string) {
+   const [unread, setUnread] = useState<number>(() => {
+-    try { return parseInt(localStorage.getItem(storageKey(conversationId)) ?? '0', 10) || 0; } catch { return 0; }
++    try { return Number.parseInt(localStorage.getItem(storageKey(conversationId)) ?? '0', 10) || 0; } catch { return 0; }
+   });
+ 
+   const markRead = useCallback(() => {
+diff --git a/src/lib/emailHtml.ts b/src/lib/emailHtml.ts
+index 9c1c5c6e5..5cb7df784 100644
+--- a/src/lib/emailHtml.ts
++++ b/src/lib/emailHtml.ts
+@@ -48,7 +48,7 @@ function cssUnescape(s: string): string {
+     // continuação de linha: backslash + newline/CRLF/form-feed desaparece (CSS spec)
+     .replace(/\\(\r\n|\r|\n|\f|\u2028|\u2029)/g, '')
+     .replace(/\\([0-9a-fA-F]{1,6})(\r\n|[ \t\r\n\f])?/g, (_m, hex: string) => {
+-      const cp = parseInt(hex, 16);
++      const cp = Number.parseInt(hex, 16);
+       try { return cp > 0x10ffff || cp < 0 ? '' : String.fromCodePoint(cp); } catch { return ''; }
+     })
+     .replace(/\\(.)/g, '$1');
+diff --git a/src/lib/mediaVolumeStore.ts b/src/lib/mediaVolumeStore.ts
+index d7d1d8527..d4b77ab5b 100644
+--- a/src/lib/mediaVolumeStore.ts
++++ b/src/lib/mediaVolumeStore.ts
+@@ -44,7 +44,7 @@ let storageListenerAttached = false;
+ /** Saneamento de leitura (E02/E03): inteiro fora de 0–100, `NaN`, `null` ou lixo → default. */
+ export function sanitizeStoredVolume(raw: string | number | null | undefined): number {
+   if (raw === null || raw === undefined) return DEFAULT_MEDIA_VOLUME_STATE.volume;
+-  const parsed = typeof raw === 'number' ? raw : Number(String(raw).trim() || NaN);
++  const parsed = typeof raw === 'number' ? raw : Number(String(raw).trim() || Number.NaN);
+   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
+     return DEFAULT_MEDIA_VOLUME_STATE.volume;
+   }
+diff --git a/supabase/functions/_shared/messaging/personalize.ts b/supabase/functions/_shared/messaging/personalize.ts
+index e9c8ea50a..1f67c01bb 100644
+--- a/supabase/functions/_shared/messaging/personalize.ts
++++ b/supabase/functions/_shared/messaging/personalize.ts
+@@ -57,7 +57,7 @@ export type MultiplixCompanyContact = { name?: string | null };
+ 
+ export function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
+   const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
+-  const h = parseInt(hour, 10);
++  const h = Number.parseInt(hour, 10);
+   if (h >= 5 && h < 12) return "Bom dia";
+   if (h >= 12 && h < 18) return "Boa tarde";
+   return "Boa noite";
+diff --git a/supabase/functions/gmail-sync/index.ts b/supabase/functions/gmail-sync/index.ts
+index ea9373f0c..bcac53ac4 100644
+--- a/supabase/functions/gmail-sync/index.ts
++++ b/supabase/functions/gmail-sync/index.ts
+@@ -175,7 +175,7 @@ serve(async (req) => {
+         const watchData = await response.json();
+         await supabase.from("gmail_accounts").update({
+           history_id: watchData.historyId,
+-          watch_expiration: new Date(parseInt(watchData.expiration)).toISOString(),
++          watch_expiration: new Date(Number.parseInt(watchData.expiration)).toISOString(),
+         }).eq("id", account.id);
+         log.done(200);
+         return jsonResponse({ success: true, ...watchData }, 200, req);
+diff --git a/supabase/functions/gmail-webhook/index.ts b/supabase/functions/gmail-webhook/index.ts
+index 5e41fb2fc..4744bbc0b 100644
+--- a/supabase/functions/gmail-webhook/index.ts
++++ b/supabase/functions/gmail-webhook/index.ts
+@@ -227,7 +227,7 @@ serve(async (req) => {
+           snippet: msg.snippet,
+           label_ids: msg.labelIds || [],
+           is_unread: (msg.labelIds || []).includes("UNREAD"),
+-          last_message_at: new Date(parseInt(msg.internalDate)).toISOString(),
++          last_message_at: new Date(Number.parseInt(msg.internalDate)).toISOString(),
+         }, { onConflict: "gmail_account_id,gmail_thread_id" }).select().single();
+ 
+         // Upsert email message
+@@ -249,7 +249,7 @@ serve(async (req) => {
+           has_attachments: (msg.payload.parts || []).some((p: any) => p.filename && p.body?.attachmentId),
+           in_reply_to: getHeader(headers, "In-Reply-To") || null,
+           references_header: getHeader(headers, "References") || null,
+-          internal_date: new Date(parseInt(msg.internalDate)).toISOString(),
++          internal_date: new Date(Number.parseInt(msg.internalDate)).toISOString(),
+           direction: isOutbound ? "outbound" : "inbound",
+         }, { onConflict: "gmail_account_id,gmail_message_id" });
+ 
+diff --git a/supabase/functions/whatsapp-webhook/index.ts b/supabase/functions/whatsapp-webhook/index.ts
+index a96cb24f6..2e315df6c 100644
+--- a/supabase/functions/whatsapp-webhook/index.ts
++++ b/supabase/functions/whatsapp-webhook/index.ts
+@@ -109,7 +109,7 @@ serve(async (req) => {
+                 .from('messages')
+                 .update({
+                   status: status.status,
+-                  status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
++                  status_updated_at: new Date(Number.parseInt(status.timestamp) * 1000).toISOString(),
+                 })
+                 .eq('external_id', status.id);
+ 

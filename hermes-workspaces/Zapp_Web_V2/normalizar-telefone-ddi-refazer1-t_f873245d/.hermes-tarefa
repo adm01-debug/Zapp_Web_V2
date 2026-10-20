@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=normalizar-telefone-ddi
+ID=2610130213e4d6
+BRANCH=v2/normalizar-telefone-ddi-2610130213e4d6
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/normalizar-telefone-ddi-2610130213e4d6
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T02:14:01-03:00
+KANBAN=t_567fa759
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/normalizar-telefone-ddi-2610130213e4d6/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130213e4d6
+APLICADA_LOCAL=20261013051843_normalize_contact_phone_ddi.sql sha=581f833703509b3d
+PRONTO_SHA=2b575fbcb7ef1376f80990c7b2b6fa1e447a5bfd

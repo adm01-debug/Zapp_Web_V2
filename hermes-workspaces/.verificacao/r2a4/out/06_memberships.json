@@ -1,0 +1,132 @@
+{
+ "ms": 36,
+ "rows": [
+  {
+   "grp": "anon",
+   "member": "authenticator",
+   "admin_option": false
+  },
+  {
+   "grp": "authenticated",
+   "member": "authenticator",
+   "admin_option": false
+  },
+  {
+   "grp": "service_role",
+   "member": "authenticator",
+   "admin_option": false
+  },
+  {
+   "grp": "postgres",
+   "member": "cli_login_postgres",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_read_all_settings",
+   "member": "pg_monitor",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_read_all_stats",
+   "member": "pg_monitor",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_stat_scan_tables",
+   "member": "pg_monitor",
+   "admin_option": false
+  },
+  {
+   "grp": "anon",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "authenticated",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "authenticator",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "pg_create_subscription",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "pg_monitor",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "pg_read_all_data",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "pg_signal_backend",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "service_role",
+   "member": "postgres",
+   "admin_option": true
+  },
+  {
+   "grp": "supabase_privileged_role",
+   "member": "postgres",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_monitor",
+   "member": "supabase_etl_admin",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_read_all_data",
+   "member": "supabase_etl_admin",
+   "admin_option": false
+  },
+  {
+   "grp": "supabase_privileged_role",
+   "member": "supabase_etl_admin",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_monitor",
+   "member": "supabase_read_only_user",
+   "admin_option": false
+  },
+  {
+   "grp": "pg_read_all_data",
+   "member": "supabase_read_only_user",
+   "admin_option": false
+  },
+  {
+   "grp": "anon",
+   "member": "supabase_realtime_admin",
+   "admin_option": false
+  },
+  {
+   "grp": "authenticated",
+   "member": "supabase_realtime_admin",
+   "admin_option": false
+  },
+  {
+   "grp": "service_role",
+   "member": "supabase_realtime_admin",
+   "admin_option": false
+  },
+  {
+   "grp": "authenticator",
+   "member": "supabase_storage_admin",
+   "admin_option": false
+  }
+ ],
+ "row_count": 25,
+ "truncated": false
+}

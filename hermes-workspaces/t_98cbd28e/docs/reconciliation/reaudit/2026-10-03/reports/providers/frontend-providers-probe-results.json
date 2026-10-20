@@ -1,0 +1,73 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "additional_frontend_pins": [
+    {
+      "path": "src/hooks/inbox/useConnectionsManager.ts",
+      "git_blob_sha": "47ad828850f7ea67215f082b586f67bd2aa4bbc8"
+    },
+    {
+      "path": "src/hooks/groups/actions.ts",
+      "git_blob_sha": "0e9370360b53e363aa4f49d424d5fdfd5eee2820"
+    }
+  ],
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Complete unchanged TS hook bodies after import wiring/type erasure; React hook state updates, lifecycle, timers and service calls are in-memory boundaries. No DOM rendering or browser session. All evaluated frontend source and all local backend sources were pinned before evaluation.",
+  "source_hashes": {
+    "src/hooks/inbox/useConnectionsManager.ts": "8a4d3d0105d5585a12bba5e69760317b44fbd772c0d32820978c986108071a9f",
+    "src/hooks/groups/actions.ts": "b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e"
+  },
+  "results": [
+    {
+      "id": "P29",
+      "afterQrFromA": {
+        "open": true,
+        "connectionId": "conn-b",
+        "connectionName": "B",
+        "qrCode": "fixture-QR-A",
+        "status": "pending"
+      },
+      "afterConnectedFromA": {
+        "open": true,
+        "connectionId": "conn-b",
+        "connectionName": "B",
+        "qrCode": null,
+        "status": "connected"
+      },
+      "outstandingIntervalsAfterClose": 1,
+      "outcome": "A late QR is displayed under B identity; a late A status marks B connected and loses the reference needed to clear B polling. Hooks/callbacks are real; React effects and API are explicit fixtures."
+    },
+    {
+      "id": "P30",
+      "invokeCalls": 2,
+      "toastResults": [
+        {
+          "kind": "success",
+          "text": "Mensagem enviada para 1 grupo(s)!"
+        },
+        {
+          "kind": "success",
+          "text": "0 grupo(s) sincronizados!"
+        }
+      ],
+      "selectionCleared": true,
+      "outcome": "Complete group actions turn provider error envelopes into broadcast success and sync success; the provider/database are never contacted."
+    }
+  ]
+}

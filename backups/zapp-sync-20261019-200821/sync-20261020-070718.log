@@ -1,0 +1,41 @@
+
+== 1/6 Conferências antes de mexer (só leitura) ==
+  OK  backup íntegro (sha256 de todos os arquivos, inclusive este script)
+  OK  bundle com os 8775 commits locais não publicados verificado pelo git
+  OK  git merge liberado neste terminal (teste sem efeito, antes de qualquer mudança)
+  OK  os 3 itens sujos são idênticos ao backup, byte a byte
+  OK  commit órfão e os 10 stashes exportados em /home/joaquim_ataides/backups/zapp-sync-20261019-200821
+
+== 2/6 Preservação extra (só cria; não apaga nada) ==
+  OK  commit órfão protegido em refs/backup/sync-20261019/orfao-6e2382a7d4 (o gc não pode mais apagá-lo)
+  OK  fotografia salva: 5821 refs, 10 stashes, 3304 worktrees
+
+== 3/6 Buscar o GitHub e provar que é avanço simples (fast-forward) ==
+  OK  origin/main = d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (confirmado direto no GitHub)
+  OK  integracao-agentes e main estão contidas em origin/main: nenhum commit local fica para trás
+  OK  nenhum arquivo novo do GitHub colide com arquivo local (inclusive ignorados)
+
+== 4/6 Limpar os restos locais (todos já salvos no backup) e avançar as 2 branches ==
+  OK  status limpo (o bun.lock local com react-i18next 17.0.21 está guardado em /home/joaquim_ataides/backups/zapp-sync-20261019-200821/worktree/bun.lock)
+  OK  REBASE_HEAD residual removido (cópia em /home/joaquim_ataides/backups/zapp-sync-20261019-200821/REBASE_HEAD.bak e na ref refs/backup/sync-20261019/orfao-6e2382a7d4)
+  OK  integracao-agentes -> d7af7a671ca2bd7005b75b0aa54c0f0c4672befc
+  OK  main -> d7af7a671ca2bd7005b75b0aa54c0f0c4672befc
+
+== 5/6 Validação final, arquivo por arquivo, byte a byte ==
+  OK  as 2 branches = origin/main = GitHub
+  OK  git status limpo; git diff contra origin/main vazio (disco e index)
+  OK  index idêntico à árvore do GitHub: 7540 entradas (modo + hash + caminho)
+  OK  disco idêntico ao GitHub byte a byte: 7540 arquivos, 178770767 bytes, modos 7354×100644 186×100755 — 0 divergências
+Edge manifest OK: 84 functions, 168 source files, sha256=bb4b038b5d756cf92a8fadadfdbdb03f824dd5c9f484ba1f4ebd78f1d5950aec
+  OK  manifesto de deploy confere com o código das Edge Functions (sha256 de cada arquivo)
+  OK  as outras 5704 refs (branches, stash, checkpoints) estão intactas
+  OK  os 10 stashes estão intactos
+  OK  commit órfão 6e2382a7d4b7411bbd4a0fefcdfece366d52df4d preservado (ref refs/backup/sync-20261019/orfao-6e2382a7d4)
+  OK  as 3785 pontas de branch do backup continuam no repositório
+
+== 6/6 Resultado ==
+  SINCRONIZADO: integracao-agentes e main = d7af7a671ca2bd7005b75b0aa54c0f0c4672befc
+  Último commit: 2026-10-19 14:54 · chore: regenerar manifesto de deploy das edge functions
+  Trabalho local preservado em: /home/joaquim_ataides/backups/zapp-sync-20261019-200821
+  Log completo: /home/joaquim_ataides/backups/zapp-sync-20261019-200821/sync-20261020-070718.log
+  Grafo do Graphify sendo reconstruído em segundo plano (graphify-out/.post-merge.log)

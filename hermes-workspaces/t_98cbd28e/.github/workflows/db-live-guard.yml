@@ -1,0 +1,630 @@
+# docs:
+#   gatilho: push na main, agendado e dispatch sobre main
+#   prova: o contrato do banco de PRODUCAO (drift, paridade, runtime config)
+#   falha: issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio
+#   avisa: issue de guardas vivos
+# ==================================================================
+# ZAPP-WEB · Guardas VIVOs do banco oficial
+# ==================================================================
+# SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele
+# executa scripts do repositorio com DESTINO_URL apenas depois de chegarem a
+# main, no agendamento da default branch ou em dispatch feito sobre main.
+# A protecao da branch main continua sendo parte obrigatoria do perimetro.
+# ==================================================================
+
+name: DB Live Guard
+
+on:
+  push:
+    branches: [main]
+    # E13: antes disparava em QUALQUER push na main. E41: `supabase/**` foi
+    # refinado para excluir `supabase/functions/**` — merge apenas de edge
+    # nao deve abrir conexao com o banco (o guarda nao verifica funcoes).
+    # schedule e workflow_dispatch continuam sem filtro (cobrem drift indireto).
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/config.toml'
+      - 'supabase/schema-*.json'
+      - 'supabase/deployment-manifest.json' # rastrea funcoes deployadas; relevante ao contrato DB
+      - 'scripts/db-audit/**'
+      - 'src/integrations/supabase/types.ts'
+      - '.github/workflows/db-live-guard.yml'
+  schedule:
+    # Diario as 06:13 UTC (03:13 em Curitiba), nao mais so segunda (E14): DDL
+    # fora do fluxo podia passar quase 7 dias sem deteccao entre um domingo e
+    # a proxima segunda. Fora do minuto 0 (fila do GitHub) e depois do
+    # types-sync (05:49), que gera os artefatos que este guarda compara.
+    - cron: '13 6 * * *'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-live-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
+  # E42: false para que o run agendado nunca seja cancelado por um push
+  # concorrente. GitHub mantem apenas 1 pendente por grupo — um push durante
+  # o schedule enfileira, nao cancela.
+  cancel-in-progress: false
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+
+jobs:
+  live-contract:
+    name: Contrato DB vivo
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # issues: write para abrir/comentar o alerta em falha e fechar apos
+    # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
+    permissions:
+      contents: read
+      issues: write
+    # Este guarda roda sozinho (push na main, agendado) e abre issue quando falha.
+    # Um timeout de conexao do pooler do Supabase virava alerta de "contrato
+    # quebrado" que nao era verdade (run 36135041890 morreu em "timeout expired"
+    # antes de qualquer consulta). O retry so cobre falha de transporte, isto e,
+    # o comando nem chegou ao servidor: erro de SQL, de autenticacao e drift
+    # continuam falhando de primeira. Desligado por padrao no helper, ligado aqui
+    # porque nenhum passo deste job escreve no banco.
+    env:
+      PSQL_CONNECT_RETRIES: "2"
+      PSQL_CONNECT_RETRY_DELAY_MS: "3000"
+      # O retry mora SO no transporte (withPsqlEnvironment), que cobre todos os
+      # passos deste job -- ledger, catalogo, manifesto, paridade tripla e
+      # runtime config. check-migration-drift.mjs tem um retry proprio (#704)
+      # que cobre so o ledger; deixar os dois ligados multiplica as tentativas
+      # (3 x 3 = 9 execucoes de psql, ~47s de espera acumulada) em vez de somar.
+      LEDGER_RETRY_DELAYS_MS: ""
+    steps:
+      - name: ✋ Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: bash scripts/ci/install-postgresql-client.sh
+
+      - name: Instalar pgbouncer (proxy local para credencial do gen types)
+        run: bash scripts/ci/install-pgbouncer.sh
+
+      - name: Exigir credencial do banco oficial
+        id: credencial
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL" ]; then
+            echo "::error::DESTINO_URL ausente; os guardas vivos nao podem ser executados."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          const destinoSeguro = tls.connectionString;
+          console.log(`::add-mask::${destinoSeguro}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
+          NODE
+
+      # A partir daqui, cada verificacao roda com continue-on-error (E58): um
+      # drift de migration nao pode mais esconder catalogo, manifesto, types.ts,
+      # ACLs e paridade tripla sem serem verificados — foi o que aconteceu em
+      # 2026-09-24..26 (achado da auditoria de GitHub Actions, docs/audits/
+      # PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md). O veredito final e
+      # consolidado no passo "Consolidar veredito do contrato vivo".
+      # E43: saida de cada passo e capturada em /tmp/step-<id>.log via tee
+      # (set -o pipefail preserva o exit code do comando) para incluir as
+      # primeiras 20 linhas no Job Summary, no comentario de alerta e no
+      # artifact db-live-evidence-*.
+
+      - name: Comparar migrations com schema_migrations
+        id: migrations
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/check-migration-drift.mjs 2>&1 | tee /tmp/step-migrations.log
+
+      - name: Verificar ACL e contrato de mcp_exec
+        id: acl-mcp-exec
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-mcp-exec-acl.sql 2>&1 | tee /tmp/step-acl-mcp-exec.log
+
+      - name: Verificar ACL da dead-letter queue de webhooks
+        id: acl-webhook
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-webhook-failures-acl.sql 2>&1 | tee /tmp/step-acl-webhook.log
+
+      # V01 (plano Talk X V3): a view public.talkx_campaign_metrics precisa
+      # rodar com security_invoker. CREATE OR REPLACE VIEW zera reloptions, e
+      # foi assim que 20260922130000 desfez o fix de 20260916170000 e passou a
+      # expor metrica de campanha de outros agentes a qualquer autenticado.
+      - name: Verificar security_invoker da view de metricas Talk X
+        id: acl-talkx-metrics
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-talkx-view-invoker.sql 2>&1 | tee /tmp/step-acl-talkx-metrics.log
+
+      # E85: os tres fixtures de E2E vivem em PRODUCAO, porque a suite logada roda contra
+      # producao (nao ha staging). Se um deles sumir -- DELETE de limpeza, reset de
+      # ambiente, migration -- o sintoma nao e "fixture sumiu": e um spec logado falhando
+      # com erro que parece bug de aplicacao (dropdown vazio, contato sem conversa). O
+      # check cobra a presenca dos tres e as duas exigencias da conexao (status connected
+      # e instance_id preenchido, que e o que useCampaignEditor filtra).
+      # NAO e um .test.sh de proposito: esse caminho nao existe neste workflow, e teste
+      # que ninguem executa da sensacao de cobertura sem cobrir nada.
+      - name: Fixtures de E2E em producao (E85)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-e2e-fixtures.sql 2>&1 | tee /tmp/step-e2e-fixtures.log
+
+      # V02 (plano Talk X V3): transition_talkx_campaign precisa continuar com
+      # UMA assinatura — a de 3 args com p_pause_reason DEFAULT. Com dois
+      # overloads vivos o PostgREST responde HTTP 300 PGRST203 para a chamada
+      # de 2 args que o talkx-send usa em start/pause/cancel. O mesmo guard
+      # cobra 'scheduled' no CHECK de talkx_campaigns.status, que o front grava
+      # ao agendar.
+      - name: Verificar contrato de transicao de campanha do Talk X
+        id: contract-talkx-transition
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
+
+      - name: Regenerar catalogo e comparar com o commitado
+        id: catalog
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          (
+            set -e
+            umask 077
+            node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+              -f scripts/db-audit/catalog.sql > /tmp/fresh-catalog.json
+            test -s /tmp/fresh-catalog.json
+            node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
+          ) 2>&1 | tee /tmp/step-catalog.log
+
+      - name: Regenerar manifesto e comparar com o commitado
+        id: manifest
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          (
+            set -e
+            umask 077
+            node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+              -f scripts/db-audit/manifest.sql > /tmp/fresh-manifest.json
+            test -s /tmp/fresh-manifest.json
+            node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
+          ) 2>&1 | tee /tmp/step-manifest.log
+
+      # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
+      # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
+      - name: ghcr.io login (previne rate-limit no gen-types)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin || true
+        continue-on-error: true
+
+      # A CLI 2.116.0 ainda referencia a imagem no ECR publico. Esse registry
+      # aplica uma cota anonima compartilhada entre runners e pode falhar com
+      # `toomanyrequests` mesmo depois do login no GHCR. Baixar a mesma imagem
+      # pelo GHCR autenticado e retaga-la faz o CLI reutilizar o cache local.
+      - name: Pre-pull postgres-meta via ghcr.io (evita rate-limit do ECR public)
+        continue-on-error: true
+        run: |
+          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0"
+          ECR_IMG="public.ecr.aws/supabase/postgres-meta:v0.98.0"
+          if docker pull "$GHCR_IMG" 2>&1; then
+            docker tag "$GHCR_IMG" "$ECR_IMG"
+            echo "Pre-pull concluido: $ECR_IMG em cache local."
+          else
+            echo "::warning::Pre-pull de $GHCR_IMG falhou; CLI tentara ECR diretamente."
+          fi
+
+      - name: Verificar frescor do types.ts
+        id: types
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          (
+            set -e
+            umask 077
+            bash scripts/db-audit/gen-types.sh /tmp/types.fresh.ts
+            test -s /tmp/types.fresh.ts
+            grep -v '^// ' /tmp/types.fresh.ts > /tmp/types.fresh.stripped
+            grep -v '^// ' src/integrations/supabase/types.ts > /tmp/types.repo.stripped
+            if ! diff -q /tmp/types.fresh.stripped /tmp/types.repo.stripped > /dev/null 2>&1; then
+              echo "::error::types.ts desatualizado. Execute o types-sync para abrir o PR de sincronizacao."
+              diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30 || true
+              exit 1
+            fi
+            echo "OK: types.ts em sincronia com o banco."
+          ) 2>&1 | tee /tmp/step-types.log
+
+      # E10 (plano 2026-09-20): consolida count+md5 arquivos↔ledger, manifesto
+      # de edges × diretorios e frescor do grants-baseline num unico gate.
+      # Complementa (nao substitui) os passos acima — ver §1.9 do CLAUDE.md.
+      - name: Paridade tripla (migrations, edges, grants)
+        id: triple-parity
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/check-triple-parity.mjs --require-live 2>&1 | tee /tmp/step-triple-parity.log
+
+      - name: Auditar configuracao runtime sem dados de clientes
+        id: runtime-config
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
+
+      # Une os 10 vereditos individuais (continue-on-error acima) num unico
+      # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
+      # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
+      # para o dedupe do alerta abaixo (E05/E06/E43/E44).
+      - name: Consolidar veredito do contrato vivo
+        id: veredito
+        if: always() && steps.credencial.outcome == 'success'
+        env:
+          O_MIGRATIONS: ${{ steps.migrations.outcome }}
+          O_ACL_MCP_EXEC: ${{ steps.acl-mcp-exec.outcome }}
+          O_ACL_WEBHOOK: ${{ steps.acl-webhook.outcome }}
+          O_ACL_TALKX_METRICS: ${{ steps.acl-talkx-metrics.outcome }}
+          O_CONTRACT_TALKX_TRANSITION: ${{ steps.contract-talkx-transition.outcome }}
+          O_CATALOG: ${{ steps.catalog.outcome }}
+          O_MANIFEST: ${{ steps.manifest.outcome }}
+          O_TYPES: ${{ steps.types.outcome }}
+          O_TRIPLE_PARITY: ${{ steps.triple-parity.outcome }}
+          O_RUNTIME_CONFIG: ${{ steps.runtime-config.outcome }}
+        run: |
+          set -uo pipefail
+          declare -A OUTCOMES=(
+            ["Comparar migrations com schema_migrations"]="$O_MIGRATIONS"
+            ["Verificar ACL e contrato de mcp_exec"]="$O_ACL_MCP_EXEC"
+            ["Verificar ACL da dead-letter queue de webhooks"]="$O_ACL_WEBHOOK"
+            ["Verificar security_invoker da view de metricas Talk X"]="$O_ACL_TALKX_METRICS"
+            ["Verificar contrato de transicao de campanha do Talk X"]="$O_CONTRACT_TALKX_TRANSITION"
+            ["Regenerar catalogo e comparar com o commitado"]="$O_CATALOG"
+            ["Regenerar manifesto e comparar com o commitado"]="$O_MANIFEST"
+            ["Verificar frescor do types.ts"]="$O_TYPES"
+            ["Paridade tripla (migrations, edges, grants)"]="$O_TRIPLE_PARITY"
+            ["Auditar configuracao runtime sem dados de clientes"]="$O_RUNTIME_CONFIG"
+          )
+          FALHAS=()
+          {
+            echo "## Contrato DB vivo — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "| Passo | Resultado |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for nome in "${!OUTCOMES[@]}"; do
+            resultado="${OUTCOMES[$nome]}"
+            if [ "$resultado" = "success" ]; then
+              echo "| $nome | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $nome | ❌ ($resultado) |" >> "$GITHUB_STEP_SUMMARY"
+              FALHAS+=("$nome")
+            fi
+          done
+          if [ "${#FALHAS[@]}" -gt 0 ]; then
+            # E43: Anexar ao Job Summary as primeiras 20 linhas de cada passo que falhou.
+            declare -A STEP_LOGS=(
+              ["Comparar migrations com schema_migrations"]="/tmp/step-migrations.log"
+              ["Verificar ACL e contrato de mcp_exec"]="/tmp/step-acl-mcp-exec.log"
+              ["Verificar ACL da dead-letter queue de webhooks"]="/tmp/step-acl-webhook.log"
+              ["Verificar security_invoker da view de metricas Talk X"]="/tmp/step-acl-talkx-metrics.log"
+              ["Verificar contrato de transicao de campanha do Talk X"]="/tmp/step-contract-talkx-transition.log"
+              ["Regenerar catalogo e comparar com o commitado"]="/tmp/step-catalog.log"
+              ["Regenerar manifesto e comparar com o commitado"]="/tmp/step-manifest.log"
+              ["Verificar frescor do types.ts"]="/tmp/step-types.log"
+              ["Paridade tripla (migrations, edges, grants)"]="/tmp/step-triple-parity.log"
+              ["Auditar configuracao runtime sem dados de clientes"]="/tmp/step-runtime-config.log"
+            )
+            {
+              echo ""
+              echo "### Saída (primeiras 20 linhas por passo)"
+            } >> "$GITHUB_STEP_SUMMARY"
+            for falha in "${FALHAS[@]}"; do
+              log_file="${STEP_LOGS[$falha]:-}"
+              if [ -n "$log_file" ] && [ -f "$log_file" ]; then
+                {
+                  echo ""
+                  echo "#### \`$falha\`"
+                  echo '```'
+                  head -20 "$log_file" | sed -E \
+                    -e 's|postgres(ql)?://[^@[:space:]]+@[^[:space:]]+|postgres://***@***|g' \
+                    -e 's|password=[^[:space:]&]+|password=***|g'
+                  echo '```'
+                } >> "$GITHUB_STEP_SUMMARY"
+              fi
+            done
+            # E44: CAUSA = sha256 do passo mais à esquerda na ordem canônica
+            # migrations > catálogo > manifesto > types > grants > paridade.
+            # Hash estável do passo raiz, não do conjunto inteiro — falhas
+            # repetidas do mesmo passo raiz são suprimidas pelo dedupe.
+            declare -a CANONICAL_ROOT=(
+              "Comparar migrations com schema_migrations"
+              "Regenerar catalogo e comparar com o commitado"
+              "Regenerar manifesto e comparar com o commitado"
+              "Verificar frescor do types.ts"
+              "Verificar ACL e contrato de mcp_exec"
+              "Verificar ACL da dead-letter queue de webhooks"
+              "Verificar security_invoker da view de metricas Talk X"
+              "Verificar contrato de transicao de campanha do Talk X"
+              "Auditar configuracao runtime sem dados de clientes"
+              "Paridade tripla (migrations, edges, grants)"
+            )
+            ROOT_PASSO=""
+            for canonical_step in "${CANONICAL_ROOT[@]}"; do
+              for falha in "${FALHAS[@]}"; do
+                if [ "$canonical_step" = "$falha" ]; then
+                  ROOT_PASSO="$canonical_step"
+                  break 2
+                fi
+              done
+            done
+            [ -z "$ROOT_PASSO" ] && ROOT_PASSO="${FALHAS[0]}"
+            CAUSA=$(printf '%s' "$ROOT_PASSO" | sha256sum | cut -d' ' -f1)
+            # Conjunto completo (para deteccao de crescimento no dedupe — E44).
+            FALHAS_LISTA=$(printf '%s\n' "${FALHAS[@]}" | sort | tr '\n' ',' | sed 's/,$//')
+            echo "causa=$CAUSA" >> "$GITHUB_OUTPUT"
+            echo "falhas_lista=$FALHAS_LISTA" >> "$GITHUB_OUTPUT"
+            {
+              echo "passos<<EOF_PASSOS_DB_LIVE_GUARD"
+              printf -- '- %s\n' "${FALHAS[@]}"
+              echo "EOF_PASSOS_DB_LIVE_GUARD"
+            } >> "$GITHUB_OUTPUT"
+            echo "::error::Contrato vivo quebrado em: ${FALHAS[*]}"
+            exit 1
+          fi
+          echo "causa=" >> "$GITHUB_OUTPUT"
+          echo "falhas_lista=" >> "$GITHUB_OUTPUT"
+          echo "OK: todos os passos do contrato vivo passaram."
+
+      # Sem isto a quebra do contrato vivo e silenciosa: o workflow nao roda em
+      # PR (por design), logo ninguem ve o vermelho a nao ser abrindo Actions.
+      # Dedupe por causa (E05/E06): so comenta de novo se a assinatura dos
+      # passos que falharam mudou, ou se o ultimo comentario tem mais de 6h.
+      # E44: causa = sha256(passo mais à esquerda na ordem canônica); comenta
+      # novamente se o conjunto de passos que falharam cresce (novo passo).
+      - name: Abrir ou atualizar alerta de contrato vivo
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          CAUSA: ${{ steps.veredito.outputs.causa }}
+          PASSOS: ${{ steps.veredito.outputs.passos }}
+          FALHAS_LISTA: ${{ steps.veredito.outputs.falhas_lista }}
+        with:
+          script: |  # NOSONAR(S2068): falso positivo — o único `password=` deste bloco é o PADRÃO DE REDAÇÃO de logs (linha 453: `.replace(/password=[^\s&"']+/gi, 'password=***')`), que existe justamente para APAGAR credencial dos snippets. Não há senha nem credencial hardcoded neste script.
+            const fs = require('fs');
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const causa = process.env.CAUSA || 'credencial-ou-erro-antes-do-veredito';
+            const passos = process.env.PASSOS || '(passo exato nao determinado — ver log do job)';
+            const falhasLista = process.env.FALHAS_LISTA || '';
+            const currentFalhas = new Set(falhasLista.split(',').filter(Boolean));
+            const marker = `<!-- causa:${causa} -->`;
+            // E43: incluir primeiras 20 linhas de cada passo que falhou.
+            const STEP_LOG_MAP = {
+              'Comparar migrations com schema_migrations': '/tmp/step-migrations.log',
+              'Verificar ACL e contrato de mcp_exec': '/tmp/step-acl-mcp-exec.log',
+              'Verificar ACL da dead-letter queue de webhooks': '/tmp/step-acl-webhook.log',
+              'Verificar security_invoker da view de metricas Talk X': '/tmp/step-acl-talkx-metrics.log',
+              'Verificar contrato de transicao de campanha do Talk X': '/tmp/step-contract-talkx-transition.log',
+              'Regenerar catalogo e comparar com o commitado': '/tmp/step-catalog.log',
+              'Regenerar manifesto e comparar com o commitado': '/tmp/step-manifest.log',
+              'Verificar frescor do types.ts': '/tmp/step-types.log',
+              'Paridade tripla (migrations, edges, grants)': '/tmp/step-triple-parity.log',
+              'Auditar configuracao runtime sem dados de clientes': '/tmp/step-runtime-config.log',
+            };
+            const failedSteps = passos.split('\n').filter(s => s.startsWith('- ')).map(s => s.slice(2));
+            const redact = t => t
+              .replace(/postgres(?:ql)?:\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
+              .replace(/password=[^\s&"']+/gi, 'password=***');
+            let logSection = '';
+            for (const step of failedSteps) {
+              const logFile = STEP_LOG_MAP[step];
+              if (logFile) {
+                try {
+                  const content = fs.readFileSync(logFile, 'utf8');
+                  const snippet = redact(content.split('\n').slice(0, 20).join('\n'));
+                  logSection += `\n**${step}:**\n\`\`\`\n${snippet}\n\`\`\`\n`;
+                } catch {}
+              }
+            }
+            const body = [
+              marker,
+              `<!-- falhas:${[...currentFalhas].sort().join(',')} -->`,
+              '**Commit da main:** `' + context.sha + '`',
+              '**Run:** ' + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                + '/actions/runs/' + context.runId,
+              '',
+              '**Passos que falharam:**',
+              passos,
+              ...(logSection ? ['', '**Saída (primeiras 20 linhas):**', logSection] : []),
+              '',
+              'Ver o log do run para o detalhe de cada passo. Procedimento em docs/MIGRATIONS.md.',
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            const existing = issues.find((issue) => issue.title === title);
+            if (existing) {
+              // listComments é paginado (max 100/pagina); a issue #724 ja passou
+              // de 150 comentarios, entao pegar so a 1a pagina nunca chega no
+              // comentario mais recente (achado do Codex na PR #918). Com
+              // per_page:1, a pagina "last" do header Link E' o indice do
+              // ultimo comentario — 2 chamadas, sem paginar tudo.
+              const primeira = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 1,
+              });
+              const linkHeader = primeira.headers?.link || '';
+              const ultimaPaginaMatch = linkHeader.match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+              const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 1,
+                page: ultimaPagina,
+              });
+              const last = comments[0];
+              const lastCausaMatch = last?.body?.match(/<!-- causa:([0-9a-f]*|credencial-ou-erro-antes-do-veredito) -->/);
+              const lastCausa = lastCausaMatch ? lastCausaMatch[1] : null;
+              // E44: extrair conjunto de falhas do ultimo comentario para
+              // detectar crescimento. Comenta de novo se set cresceu (novo
+              // passo falhou), mesmo que a causa raiz seja identica.
+              const lastFalhasMatch = last?.body?.match(/<!-- falhas:([^\n]*) -->/);
+              const lastFalhas = new Set(lastFalhasMatch ? lastFalhasMatch[1].split(',').filter(Boolean) : []);
+              const grew = [...currentFalhas].some(f => !lastFalhas.has(f));
+              const seisHorasMs = 6 * 60 * 60 * 1000;
+              const idadeUltimoMs = last ? Date.now() - new Date(last.created_at).getTime() : Infinity;
+              // F-03 (auditoria 2026-09-27): a excecao 'migrationsFalhou' foi
+              // removida. E44: suprime apenas se mesma causa raiz + conjunto
+              // nao cresceu + menos de 6h — evita as 21 duplicatas da issue
+              // #1013. Falhas realmente distintas geram causa ou conjunto
+              // diferente e passam pelo filtro.
+              if (lastCausa === causa && !grew && idadeUltimoMs < seisHorasMs) {
+                core.info(`Dedupe: mesma causa raiz (${causa}), conjunto nao cresceu, menos de 6h; suprimindo.`);
+                return;
+              }
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              return;
+            }
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'db-live-guard',
+                color: 'b60205',
+                description: 'Contrato vivo do banco oficial quebrado',
+              });
+            } catch (error) {
+              if (error.status !== 422) throw error;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['db-live-guard'],
+              body,
+            });
+
+      # Fecha o alerta quando o guarda volta a ficar verde: sem isto, um
+      # alerta gerado por falha transitoria (ou ja corrigida) fica aberto pra
+      # sempre porque ninguem fecha manualmente um issue automatico.
+      - name: Fechar alerta de contrato vivo apos recuperacao
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[db-live-guard] Contrato vivo do banco quebrado';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'db-live-guard',
+            });
+            for (const issue of issues.filter((item) => item.title === title)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Guarda vivo passou de novo em `' + context.sha + '` ('
+                  + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
+                  + '/actions/runs/' + context.runId + '). Fechando automaticamente.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
+
+      - name: Publicar evidencias estruturais
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: db-live-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            /tmp/fresh-catalog.json
+            /tmp/fresh-manifest.json
+            /tmp/runtime-config.json
+            /tmp/step-migrations.log
+            /tmp/step-acl-mcp-exec.log
+            /tmp/step-acl-webhook.log
+            /tmp/step-acl-talkx-metrics.log
+            /tmp/step-contract-talkx-transition.log
+            /tmp/step-catalog.log
+            /tmp/step-manifest.log
+            /tmp/step-types.log
+            /tmp/step-triple-parity.log
+            /tmp/step-runtime-config.log
+          if-no-files-found: ignore
+          retention-days: 3

@@ -1,0 +1,277 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
+const h = vi.hoisted(() => ({
+  realtime: { config: null as unknown },
+  fetchMessages: vi.fn(),
+  fetchMessagesBefore: vi.fn(),
+}));
+
+vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({
+  useSupabaseRealtime: (config: unknown) => { h.realtime.config = config; },
+}));
+
+vi.mock('@/services/chat.service', () => ({
+  ChatService: { fetchMessages: h.fetchMessages, fetchMessagesBefore: h.fetchMessagesBefore },
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { channel: vi.fn(), removeChannel: vi.fn(), from: vi.fn(), rpc: vi.fn() },
+}));
+
+import { useMessages } from '@/hooks/chat/useMessages';
+import { contactMediaKey } from '@/hooks/chat/useContactMedia';
+import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
+import type { MessageRow } from '@/types/chat';
+
+const CONTACT = 'contact-1';
+
+function row(overrides: Partial<MessageRow> = {}): MessageRow {
+  return {
+    id: 'msg-1',
+    contact_id: CONTACT,
+    content: '',
+    sender: 'contact',
+    created_at: '2026-01-01T10:00:00Z',
+    message_type: 'image',
+    media_url: null,
+    ...overrides,
+  } as MessageRow;
+}
+
+function config() {
+  return h.realtime.config as {
+    onInsert: (payload: unknown) => void;
+    onUpdate: (payload: unknown) => void;
+    onDelete: (payload: unknown) => void;
+  };
+}
+
+function onInsert(payloadRow: MessageRow) {
+  config().onInsert({
+    eventType: 'INSERT',
+    new: payloadRow,
+    old: {},
+    schema: 'public',
+    table: 'messages',
+    commit_timestamp: '2026-01-01T10:00:00Z',
+    errors: null,
+  } as unknown as RealtimePostgresChangesPayload<MessageRow>);
+}
+
+function onUpdate(oldRow: MessageRow, newRow: MessageRow) {
+  config().onUpdate({
+    eventType: 'UPDATE',
+    new: newRow,
+    old: oldRow,
+    schema: 'public',
+    table: 'messages',
+    commit_timestamp: '2026-01-01T10:00:00Z',
+    errors: null,
+  } as unknown as RealtimePostgresChangesPayload<MessageRow>);
+}
+
+function onDelete(oldRow: MessageRow) {
+  config().onDelete({
+    eventType: 'DELETE',
+    new: {},
+    old: oldRow,
+    schema: 'public',
+    table: 'messages',
+    commit_timestamp: '2026-01-01T10:00:00Z',
+    errors: null,
+  } as unknown as RealtimePostgresChangesPayload<MessageRow>);
+}
+
+function render() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const invalidateSpy = vi.spyOn(qc, 'invalidateQueries');
+  const view = renderHook(() => useMessages({ contactId: CONTACT }), {
+    wrapper: ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    ),
+  });
+  return { ...view, invalidateSpy };
+}
+
+async function renderReady() {
+  const view = render();
+  await waitFor(() => expect(h.realtime.config).not.toBeNull());
+  await waitFor(() => expect(h.fetchMessages).toHaveBeenCalled());
+  return view;
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  h.realtime.config = null;
+  h.fetchMessages.mockResolvedValue({ data: [], error: null });
+  h.fetchMessagesBefore.mockResolvedValue({ data: [], error: null });
+});
+
+describe('useMessages — atualização ao vivo da aba Arquivos (etapa 45)', () => {
+  it('evento realtime COM media_url invalida a galeria, o badge da aba e os chips', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onInsert(row({ media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    // etapa 42: os chips contam por tipo; sem invalidar, chip e badge divergem
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('evento sem media_url NAO invalida nenhuma query', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onInsert(row({ media_url: null, message_type: 'chat' })); });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('mensagem de outro contato nao invalida nada', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onInsert(row({ contact_id: 'outro-contato', media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+});
+
+// #144 / OTH-002: a exclusão remota (UPDATE is_deleted / DELETE) não pode deixar chips e badge
+// com o número antigo. Antes, só o INSERT invalidava; UPDATE e DELETE ficavam de fora.
+describe('useMessages — exclusão remota atualiza os agregados (OTH-002)', () => {
+  it('UPDATE que apaga mídia (is_deleted = true) invalida galeria, badge e chips', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        row({ media_url: 'https://x/a.jpg', is_deleted: false } as Partial<MessageRow>),
+        row({ media_url: 'https://x/a.jpg', is_deleted: true } as Partial<MessageRow>),
+      );
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+  });
+
+  it('UPDATE sem mídia NAO invalida os agregados da aba Arquivos', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        row({ media_url: null, message_type: 'chat', content: 'oi' }),
+        row({ media_url: null, message_type: 'chat', content: 'oi, tudo bem?' }),
+      );
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  // #144/OTH-002 (recusa): um UPDATE que só muda status/ack de uma mensagem COM mídia NÃO altera
+  // o universo contado. Antes o handler invalidava só por `old || new` ter mídia, gerando refetch
+  // em rajada a cada ack; agora compara os DOIS lados de `is_deleted`/`media_url`.
+  it('UPDATE só de status/ack numa mensagem COM mídia NAO invalida os agregados', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        row({ media_url: 'https://x/a.jpg', is_deleted: false, status: 'sent' }),
+        row({ media_url: 'https://x/a.jpg', is_deleted: false, status: 'read' }),
+      );
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  // Fallback sem REPLICA IDENTITY FULL: `old` traz só a PK (sem as colunas), então não há como
+  // comparar — invalida conservadoramente quando a linha nova tem mídia, para não perder o agregado.
+  it('UPDATE sem as colunas em old (sem REPLICA IDENTITY FULL) invalida se a linha nova tem mídia', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        { id: 'msg-1' } as MessageRow,
+        row({ media_url: 'https://x/a.jpg', is_deleted: false }),
+      );
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+  });
+
+  it('DELETE remoto de mídia invalida galeria, badge e chips', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete(row({ media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+  });
+
+  it('DELETE remoto sem mídia NAO invalida os agregados da aba Arquivos', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete(row({ media_url: null, message_type: 'chat' })); });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  // SL-104: com `REPLICA IDENTITY DEFAULT` o evento de DELETE carrega SO a PK — `payload.old` vem
+  // sem `contact_id` e sem `media_url`. Antes o handler comparava `old.contact_id === contactId`,
+  // entao a mensagem apagada nunca saia da conversa aberta (falha silenciosa de UI).
+  it('DELETE com apenas a PK (REPLICA IDENTITY DEFAULT) remove a mensagem da conversa aberta', async () => {
+    h.fetchMessages.mockResolvedValueOnce({
+      data: [row({ id: 'msg-1' }), row({ id: 'msg-2', created_at: '2026-01-01T10:01:00Z' })],
+      error: null,
+    });
+    const view = await renderReady();
+    await waitFor(() => expect(view.result.current.messages.map((m) => m.id)).toEqual(['msg-1', 'msg-2']));
+
+    act(() => { onDelete({ id: 'msg-2' } as MessageRow); });
+
+    expect(view.result.current.messages.map((m) => m.id)).toEqual(['msg-1']);
+  });
+
+  // Mesmo fallback do UPDATE acima: sem as colunas em `old` nao ha como saber se a linha apagada
+  // tinha midia — invalida por seguranca, para o badge/chip nao ficarem contando midia apagada.
+  it('DELETE sem as colunas em old (REPLICA IDENTITY DEFAULT) invalida os agregados por segurança', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete({ id: 'msg-1' } as MessageRow); });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledTimes(3);
+  });
+
+  // A checagem de conversa segue valendo quando o `old` traz as colunas (hoje REPLICA IDENTITY
+  // FULL): DELETE de outro contato nao mexe nos agregados desta conversa.
+  it('DELETE de outro contato com as colunas em old continua ignorado', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete(row({ contact_id: 'outro-contato', media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  // Sem `id` nao ha o que remover nem como decidir a conversa: o handler sai sem tocar em nada.
+  it('DELETE sem id no old nao remove mensagem e nao invalida os agregados', async () => {
+    h.fetchMessages.mockResolvedValueOnce({ data: [row({ id: 'msg-1' })], error: null });
+    const { result, invalidateSpy } = await renderReady();
+    await waitFor(() => expect(result.current.messages.map((m) => m.id)).toEqual(['msg-1']));
+
+    act(() => { onDelete({} as MessageRow); });
+
+    expect(result.current.messages.map((m) => m.id)).toEqual(['msg-1']);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+});

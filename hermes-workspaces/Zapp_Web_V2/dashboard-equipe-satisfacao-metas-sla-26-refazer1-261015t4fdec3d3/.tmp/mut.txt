@@ -1,0 +1,478 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac
+
+ ❯ src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx (7 tests | 1 failed) 450ms
+     × calcula promotores, neutros, detratores, NPS e média (média de 7.5 arredonda para 1 casa) 73ms
+ ❯ src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx (12 tests | 2 failed) 731ms
+     × o cursor vai entre aspas: o timestamptz com ":" e "+" não é lido como separador de filtro 63ms
+     × o cursor avança pela última linha de cada página (nunca pela primeira) 60ms
+ ❯ src/components/dashboard/__tests__/SLAMetricsDashboard.kpis.test.tsx (8 tests | 1 failed | 2 todo) 677ms
+     × mostra a taxa arredondada, no prazo, violações e total, e repassa os agentes 129ms
+ ❯ src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx (8 tests | 2 failed | 1 todo) 1773ms
+     × ordena por conversas resolvidas e escreve "—" no SLA de quem não casou por profile_id 163ms
+     × destaque do dia usa o líder do ranking e o SLA dele 93ms
+ ❯ src/components/dashboard/__tests__/SatisfactionMetrics.estados.test.tsx (10 tests | 1 failed) 2671ms
+     × falha na leitura mostra o aviso e o botão que refaz a consulta 540ms
+ ❯ src/components/dashboard/__tests__/GoalsDashboard.metas.test.tsx (6 tests | 1 failed | 1 todo) 5863ms
+     × classifica cada meta na faixa certa e resume o painel 5288ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx > AgentPerformancePanel — equipe com dados > ordena por conversas resolvidas e escreve "—" no SLA de quem não casou por profile_id
+Error: [2mexpect([22m[31melement[39m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  75%[39m
+Received:
+[31m  —[39m
+ ❯ src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx:140:55
+    138|     const linhas = within(screen.getByTestId('team-ranking-card')).get…
+    139|     // coluna SLA (índice 5): Ana casa pelo profile_id, Bia não tem le…
+    140|     expect(within(linhas[0]).getAllByRole('cell')[5]).toHaveTextConten…
+       |                                                       ^
+    141|     expect(within(linhas[1]).getAllByRole('cell')[5]).toHaveTextConten…
+    142|     const tabela = screen.getByTestId('team-ranking-card');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx > AgentPerformancePanel — equipe com dados > destaque do dia usa o líder do ranking e o SLA dele
+Error: [2mexpect([22m[31melement[39m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  75%[39m
+Received:
+[31m  —SLA[39m
+ ❯ src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx:153:61
+    151|     expect(within(destaque).getByText('Ana')).toBeInTheDocument();
+    152|     expect(within(destaque).getByText('Resolvidas').parentElement).toH…
+    153|     expect(within(destaque).getByText('SLA').parentElement).toHaveText…
+       |                                                             ^
+    154|     expect(within(destaque).getByText('Satisfação').parentElement).toH…
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/components/dashboard/__tests__/GoalsDashboard.metas.test.tsx > GoalsDashboard — metas com dado > classifica cada meta na faixa certa e resume o painel
+AssertionError: expected '0' to be '1' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-2 xl:grid-cols-4 gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative rounded-2xl bg-card border border-border/70 p-5 flex flex-col gap-3 min-h-[132px]"[39m
+            [33mdata-testid[39m=[32m"kpi-card"[39m
+            [33mstyle[39m=[32m"opacity: 1;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex gap-4 items-start"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-dash-tile-blue"[39m
+                [33mdata-testid[39m=[32m"kpi-tile"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-trophy w-[26px] h-[26px] text-white"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 9h1.5a1 1 0 0 0 0-5H18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 22h16"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 9H4.5a1 1 0 0 1 0-5H6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 flex-1"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 text-sm font-medium text-foreground-secondary"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"truncate"[39m
+                  [36m>[39m
+                    [0mProgresso Geral[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-4xl font-bold tabular-nums text-foreground leading-none mt-1 tracking-[-0.02em]"[39m
+                  [33mdata-testid[39m=[32m"kpi-value"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0m65%[0m
+                  [36m</span>[39m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"mt-1.5"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"mt-1"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"w-full rounded-full bg-muted/50 overflow-hidden"[39m
+                  [33mstyle[39m=[32m"height: 6px;"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-full rounded-full transition-[width] duration-500 bg-primary"[39m
+                    [33mstyle[39m=[32m"width: 65%;"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground mt-2"[39m
+                [36m>[39m
+                  [0m2[0m
+                  [0m de [0m
+                  [0m3[0m
+                  [0m metas em andamento[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative rounded-2xl bg-card border border-border/70 p-5 flex flex-col gap-3 min-h-[132px]"[39m
+            [33mdata-testid[39m=[32m"kpi-card"[39m
+            [33mstyle[39m=[32m"opacity: 1;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex gap-4 items-start"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-dash-tile-green"[39m
+                [33mdata-testid[39m=[32m"kpi-tile"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-check w-[26px] h-[26px] text-white"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 flex-1"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 text-sm font-medium text-foreground-secondary"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"truncate"[39m
+                  [36m>[39m
+                    [0mMetas Concluídas[0m
+               ...
+
+Expected: "1"
+Received: "0"
+
+ ❯ src/components/dashboard/__tests__/GoalsDashboard.metas.test.tsx:120:40
+    118|     await waitFor(() => expect(kpi(1)).toBe('1'));
+    119|     await waitFor(() => expect(kpi(2)).toBe('1'));
+    120|     await waitFor(() => expect(kpi(3)).toBe('1'));
+       |                                        ^
+    121|     expect(screen.getByText('2 de 3 metas em andamento')).toBeInTheDoc…
+    122|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/components/dashboard/__tests__/SLAMetricsDashboard.kpis.test.tsx > SLAMetricsDashboard — dados do período > mostra a taxa arredondada, no prazo, violações e total, e repassa os agentes
+Error: [2mexpect([22m[31melement[39m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  83%[39m
+Received:
+[31m  84%[39m
+ ❯ src/components/dashboard/__tests__/SLAMetricsDashboard.kpis.test.tsx:103:76
+    101|     render(<SLAMetricsDashboard />);
+    102|
+    103|     expect(within(cartaoDoKpi('Taxa Geral SLA')).getByTestId('kpi-valu…
+       |                                                                            ^
+    104|     await waitFor(() =>
+    105|       expect(within(cartaoDoKpi('No Prazo')).getByTestId('kpi-value'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/components/dashboard/__tests__/SatisfactionMetrics.estados.test.tsx > SatisfactionMetrics — erro e carregando > falha na leitura mostra o aviso e o botão que refaz a consulta
+TestingLibraryElementError: Unable to find an element with the text: Erro ao carregar dados de satisfação. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid grid-cols-2 xl:grid-cols-4 gap-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative rounded-2xl bg-card border border-border/70 p-5 flex flex-col gap-3 min-h-[132px]"[39m
+          [33mdata-testid[39m=[32m"kpi-card"[39m
+          [33mstyle[39m=[32m"opacity: 0;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-4 items-start"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-dash-tile-green"[39m
+              [33mdata-testid[39m=[32m"kpi-tile"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-message-circle w-[26px] h-[26px] text-white"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-1.5 text-sm font-medium text-foreground-secondary"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"truncate"[39m
+                [36m>[39m
+                  [0mCSAT[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-4xl font-bold tabular-nums leading-none mt-1 tracking-[-0.02em] text-muted-foreground"[39m
+                [33mdata-testid[39m=[32m"kpi-value"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m—[0m
+                [36m</span>[39m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"mt-1.5"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-[13px] font-semibold text-muted-foreground"[39m
+                [36m>[39m
+                  [0msem período anterior[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"self-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col items-center gap-1 w-[100px] text-muted-foreground/70"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-trending-up w-6 h-6"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M16 7h6v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 7-8.5 8.5-5-5L2 17"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-2xs text-center leading-tight"[39m
+                [36m>[39m
+                  [0mSem avaliações no período[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative rounded-2xl bg-card border border-border/70 p-5 flex flex-col gap-3 min-h-[132px]"[39m
+          [33mdata-testid[39m=[32m"kpi-card"[39m
+          [33mstyle[39m=[32m"opacity: 0;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-4 items-start"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-dash-tile-blue"[39m
+              [33mdata-testid[39m=[32m"kpi-tile"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users w-[26px] h-[26px] text-white"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-1.5 text-sm font-medium text-foreground-secondary"[39m
+              [36m>[39m
+                [36m<span...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/dashboard/__tests__/SatisfactionMetrics.estados.test.tsx:111:19
+    109|     render(<SatisfactionMetrics />);
+    110|
+    111|     expect(screen.getByText('Erro ao carregar dados de satisfação')).t…
+       |                   ^
+    112|     expect(screen.queryByTestId('sat-evolution-card')).not.toBeInTheDo…
+    113|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx > useNPSSurveys — leitura > calcula promotores, neutros, detratores, NPS e média (média de 7.5 arredonda para 1 casa)
+AssertionError: expected { totalResponses: 6, …(5) } to deeply equal { totalResponses: 6, …(5) }
+
+- Expected
++ Received
+
+  {
+    "avgScore": 7.5,
+    "detractors": 2,
+-   "npsScore": 0,
++   "npsScore": 17,
+    "passives": 2,
+-   "promoters": 2,
++   "promoters": 3,
+    "totalResponses": 6,
+  }
+
+ ❯ src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx:160:36
+    158|     await carregado(result);
+    159|
+    160|     expect(result.current.metrics).toEqual({
+       |                                    ^
+    161|       totalResponses: 6,
+    162|       promoters: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx > useSatisfactionBreakdown — paginação keyset > o cursor vai entre aspas: o timestamptz com ":" e "+" não é lido como separador de filtro
+AssertionError: expected 'created_at.gt."2026-10-13T12:00:00+00…' to be 'created_at.gt."2026-10-13T12:00:00+00…' // Object.is equality
+
+Expected: "created_at.gt."2026-10-13T12:00:00+00:00",and(created_at.eq."2026-10-13T12:00:00+00:00",id.gt.s1)"
+Received: "created_at.gt."2026-10-13T12:00:00+00:00",and(created_at.eq."2026-10-13T12:00:00+00:00",id.gte.s1)"
+
+ ❯ src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx:142:51
+    140|     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    141|
+    142|     expect(filtro(consultasCsat()[1], 'or')?.[1]).toBe(
+       |                                                   ^
+    143|       'created_at.gt."2026-10-13T12:00:00+00:00",and(created_at.eq."20…
+    144|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx > useSatisfactionBreakdown — paginação keyset > o cursor avança pela última linha de cada página (nunca pela primeira)
+AssertionError: expected 'created_at.gt."2026-10-13T11:00:00+00…' to contain 'id.gt.s2'
+
+Expected: "id.gt.s2"
+Received: "created_at.gt."2026-10-13T11:00:00+00:00",and(created_at.eq."2026-10-13T11:00:00+00:00",id.gte.s2)"
+
+ ❯ src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx:159:48
+    157|     const csat = consultasCsat();
+    158|     expect(csat).toHaveLength(3);
+    159|     expect(String(filtro(csat[1], 'or')?.[1])).toContain('id.gt.s2');
+       |                                                ^
+    160|     expect(String(filtro(csat[2], 'or')?.[1])).toContain('id.gt.s3');
+    161|     expect(result.current.data?.totalResponses).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  6 failed (6)
+      Tests  8 failed | 39 passed | 4 todo (51)
+   Start at  15:51:18
+   Duration  10.25s (transform 1.17s, setup 1.62s, import 3.97s, tests 12.16s, environment 5.45s)
+

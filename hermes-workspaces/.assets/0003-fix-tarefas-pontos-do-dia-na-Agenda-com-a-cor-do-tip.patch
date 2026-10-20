@@ -1,0 +1,62 @@
+From bdfe5fe0059b760f47676c4db75780c4ca233ba3 Mon Sep 17 00:00:00 2001
+From: Hermes Senior <hermes-senior@promobrindes.local>
+Date: Mon, 12 Oct 2026 17:39:44 -0300
+Subject: [PATCH 3/4] fix(tarefas): pontos do dia na Agenda com a cor do tipo
+ (azul lembrete, ambar prazo)
+
+agendaDayDots trocava lembrete e prazo; agora segue a legenda da etapa 111.
+
+Card: t_5b4373b0
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ src/hooks/tasks/__tests__/workItemAggregates.test.ts | 5 ++++-
+ src/hooks/tasks/workItemAggregates.ts                | 9 +++++----
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/src/hooks/tasks/__tests__/workItemAggregates.test.ts b/src/hooks/tasks/__tests__/workItemAggregates.test.ts
+index ebff285309..8b40fe358a 100644
+--- a/src/hooks/tasks/__tests__/workItemAggregates.test.ts
++++ b/src/hooks/tasks/__tests__/workItemAggregates.test.ts
+@@ -132,9 +132,12 @@ describe('etapa 55 — Agenda: pontos do dia e os 3 grupos', () => {
+     expect(temHora(new Date(2026, 9, 3, 14, 30).toISOString())).toBe(true);
+   });
+ 
+-  it('dots: prazo, alarme e atrasada — no máximo 3', () => {
++  it('dots: azul = lembrete, âmbar = prazo, vermelho = atrasada (cada cor com o seu significado)', () => {
+     const vazio = { reminders: [], dueTasks: [] };
+     expect(agendaDayDots(vazio, 0)).toEqual([]);
++    expect(agendaDayDots({ reminders: [makeItem({})], dueTasks: [] }, 0)).toEqual(['bg-primary']);
++    expect(agendaDayDots({ reminders: [], dueTasks: [makeItem({})] }, 0)).toEqual(['bg-warning']);
++    expect(agendaDayDots(vazio, 1)).toEqual(['bg-destructive']);
+     expect(agendaDayDots({ reminders: [makeItem({}), ], dueTasks: [makeItem({})] }, 0))
+       .toEqual(['bg-primary', 'bg-warning']);
+     expect(agendaDayDots({ reminders: [makeItem({})], dueTasks: [makeItem({})] }, 2))
+diff --git a/src/hooks/tasks/workItemAggregates.ts b/src/hooks/tasks/workItemAggregates.ts
+index f99c57125e..47cb166191 100644
+--- a/src/hooks/tasks/workItemAggregates.ts
++++ b/src/hooks/tasks/workItemAggregates.ts
+@@ -162,16 +162,17 @@ export function temHora(iso: string | null): boolean {
+ }
+ 
+ /**
+- * Até 3 pontos do dia na faixa da Agenda (etapa 55), na ordem do plano:
+- * prazo (`primary`), alarme (`warning`) e atrasada (`destructive`).
++ * Até 3 pontos do dia na faixa da Agenda (etapas 55 e 111), um por TIPO, na
++ * ordem da legenda: lembrete (`primary`, azul), prazo (`warning`, âmbar) e
++ * atrasada (`destructive`, vermelho).
+  */
+ export function agendaDayDots(
+   day: { reminders: WorkItem[]; dueTasks: WorkItem[] },
+   atrasadas: number,
+ ): string[] {
+   const dots: string[] = [];
+-  if (day.dueTasks.length > 0) dots.push('bg-primary');
+-  if (day.reminders.length > 0) dots.push('bg-warning');
++  if (day.reminders.length > 0) dots.push('bg-primary');
++  if (day.dueTasks.length > 0) dots.push('bg-warning');
+   if (atrasadas > 0) dots.push('bg-destructive');
+   return dots.slice(0, 3);
+ }
+-- 
+2.43.0
+

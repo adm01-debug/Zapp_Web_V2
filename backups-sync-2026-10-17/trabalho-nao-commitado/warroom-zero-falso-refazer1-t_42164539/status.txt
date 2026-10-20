@@ -1,0 +1,2 @@
+ M src/components/dashboard/WarRoomDashboard.tsx
+ M src/components/dashboard/__tests__/WarRoomEstados.test.tsx

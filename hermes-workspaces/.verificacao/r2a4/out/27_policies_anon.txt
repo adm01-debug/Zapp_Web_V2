@@ -1,0 +1,13 @@
+{
+ "ms": 71,
+ "rows": [
+  {
+   "cmd": "ALL",
+   "roles": "{anon}",
+   "tablename": "webauthn_challenges",
+   "policyname": "Block anon access to webauthn challenges"
+  }
+ ],
+ "row_count": 1,
+ "truncated": false
+}

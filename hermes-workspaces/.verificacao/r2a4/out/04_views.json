@@ -1,0 +1,63 @@
+{
+ "ms": 16,
+ "rows": [
+  {
+   "oid": "20799",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "channel_connections_safe"
+  },
+  {
+   "oid": "21520",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "gmail_accounts_safe"
+  },
+  {
+   "oid": "21535",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "password_reset_requests_safe"
+  },
+  {
+   "oid": "20367",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "profiles_public"
+  },
+  {
+   "oid": "59785",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "talkx_campaign_metrics"
+  },
+  {
+   "oid": "20795",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "whatsapp_connections_agent"
+  },
+  {
+   "oid": "20383",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "whatsapp_connections_public"
+  },
+  {
+   "oid": "21494",
+   "opts": "{security_invoker=true}",
+   "owner": "postgres",
+   "relkind": "v",
+   "relname": "whatsapp_connections_safe"
+  }
+ ],
+ "row_count": 8,
+ "truncated": false
+}

@@ -1,0 +1,399 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-03",
+  "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "authority": "reconciliation evidence; not an execution authorization",
+  "dimensions": [
+    "implementation",
+    "testing",
+    "runtime",
+    "documentation",
+    "acceptance"
+  ],
+  "modules": [
+    {
+      "id": "telefonia",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "advanced",
+      "testing": "advanced",
+      "runtime": "partial",
+      "documentation": "stale_vs_git",
+      "acceptance": "partial",
+      "evidence": [
+        "#1181",
+        "#1193",
+        "#1285",
+        "#1328",
+        "#1384",
+        "#1431",
+        "#1440",
+        "#1449",
+        "#1476",
+        "#1488",
+        "#1494",
+        "#1585",
+        "#1703",
+        "#1830",
+        "#1851",
+        "#1858",
+        "#1864"
+      ],
+      "notes": [
+        "old 72/100 is stale",
+        "T11 implemented but runtime acceptance pending"
+      ]
+    },
+    {
+      "id": "tarefas",
+      "classification": "HUMAN_ACCEPTANCE",
+      "implementation": "complete_or_near",
+      "testing": "advanced",
+      "runtime": "advanced",
+      "documentation": "currentish",
+      "acceptance": "pending_2_items",
+      "evidence": [
+        "PLANO_TAREFAS_FINALIZACAO_100_ETAPAS",
+        "TAREFAS_QUADRO_STATUS"
+      ],
+      "notes": [
+        "98/100 documentary",
+        "separate residue debt from completion"
+      ]
+    },
+    {
+      "id": "contatos",
+      "classification": "HUMAN_ACCEPTANCE",
+      "implementation": "complete_or_near",
+      "testing": "advanced",
+      "runtime": "advanced",
+      "documentation": "currentish",
+      "acceptance": "pending_governed_item",
+      "evidence": [
+        "FECHAMENTO_PLANO_CONTATOS_2026-10-02"
+      ],
+      "notes": [
+        "99/100",
+        "remaining protected CLAUDE.md/governance item"
+      ]
+    },
+    {
+      "id": "talkx",
+      "classification": "ACTIVE_WORK",
+      "implementation": "partial",
+      "testing": "partial",
+      "runtime": "partial",
+      "documentation": "generated_status_but_drifting",
+      "acceptance": "partial",
+      "evidence": [
+        "#1451",
+        "#1456",
+        "#1515",
+        "#1522",
+        "#1524",
+        "#1535",
+        "#1540",
+        "#1545",
+        "#1548",
+        "#1561",
+        "#1568",
+        "#1632",
+        "#1674",
+        "#1710",
+        "#1792",
+        "#1831",
+        "#1850",
+        "#1860",
+        "#1866",
+        "#1867",
+        "#1868"
+      ],
+      "notes": [
+        "V4 is authority",
+        "STATUS observed 35/200 but regen PR #1713 open"
+      ]
+    },
+    {
+      "id": "multiplix",
+      "classification": "ACTIVE_BACKLOG",
+      "implementation": "partial",
+      "testing": "partial",
+      "runtime": "partial",
+      "documentation": "advanced",
+      "acceptance": "partial",
+      "evidence": [
+        "#1525",
+        "#1645",
+        "#1679",
+        "#1692",
+        "#1717",
+        "#1728",
+        "#1738",
+        "#1747",
+        "#1811",
+        "#1857"
+      ],
+      "notes": [
+        "finalization plan observed 61/100",
+        "39 open mix code/runtime/external/pilot/observation"
+      ]
+    },
+    {
+      "id": "catalogo",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "advanced",
+      "testing": "advanced",
+      "runtime": "partial",
+      "documentation": "stale_vs_git",
+      "acceptance": "partial",
+      "evidence": [
+        "#1178",
+        "#1426",
+        "#1467",
+        "#1500",
+        "#1534",
+        "#1581",
+        "#1697",
+        "#1735",
+        "#1802",
+        "#1822",
+        "#1835"
+      ],
+      "notes": [
+        "CT94 historical block likely resolved",
+        "validated failures must remain distinct from not implemented"
+      ]
+    },
+    {
+      "id": "ia",
+      "classification": "ACTIVE_BACKLOG",
+      "implementation": "partial",
+      "testing": "partial",
+      "runtime": "partial",
+      "documentation": "stale_after_IA050",
+      "acceptance": "partial",
+      "evidence": [
+        "IA001-049 docs",
+        "#1683",
+        "#1709",
+        "#1742",
+        "#1756",
+        "#1764",
+        "#1771",
+        "#1789",
+        "#1796",
+        "#1824",
+        "#1833",
+        "#1839"
+      ],
+      "notes": [
+        "IA050 explicitly not implemented",
+        "IA051-057 need revalidation",
+        "IA058 design-only candidate",
+        "IA059-200 unknown"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "advanced",
+      "testing": "advanced",
+      "runtime": "partial",
+      "documentation": "contains_known_drift",
+      "acceptance": "partial",
+      "evidence": [
+        "#580",
+        "#618",
+        "#700",
+        "#708",
+        "#740",
+        "#750",
+        "#764",
+        "#765",
+        "#767",
+        "#781",
+        "#809",
+        "#1696"
+      ],
+      "notes": [
+        "README debts conflict with #781/#809",
+        "E53 product decision not simple backlog"
+      ]
+    },
+    {
+      "id": "team_chat",
+      "classification": "HIGH_RISK_BACKLOG",
+      "implementation": "partial_unknown",
+      "testing": "partial",
+      "runtime": "risk",
+      "documentation": "historically_inconsistent",
+      "acceptance": "low",
+      "evidence": [
+        "AUDITORIA_TEAM_CHAT_ESTADO_REAL_2026-09-29",
+        "PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS",
+        "#1309",
+        "#1313",
+        "#1314"
+      ],
+      "notes": [
+        "final plan says 0/100 but later fixes exist",
+        "confident-babbage branch is evidence quarantine",
+        "open issues 1265-1267 likely stale after fixes"
+      ]
+    },
+    {
+      "id": "mapa",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "advanced",
+      "testing": "advanced",
+      "runtime": "partial",
+      "documentation": "updated_with_evidence",
+      "acceptance": "partial",
+      "evidence": [
+        "PLANO_FINALIZACAO_100_ETAPAS_2026-09-29",
+        "#1182",
+        "#1195"
+      ],
+      "notes": [
+        "original audit 33 done/17 partial/8 defects/1 data loss",
+        "later phases delivered"
+      ]
+    },
+    {
+      "id": "email_navy",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "advanced",
+      "testing": "advanced",
+      "runtime": "validated_partial",
+      "documentation": "plan_body_historical",
+      "acceptance": "partial",
+      "evidence": [
+        "#1712",
+        "#1751",
+        "#1755",
+        "#1762",
+        "#1763",
+        "#1793",
+        "#1846",
+        "#1855"
+      ],
+      "notes": [
+        "original plan says unexecuted but header and Git prove later implementation"
+      ]
+    },
+    {
+      "id": "arquivos_chat",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "advanced",
+      "testing": "partial",
+      "runtime": "partial",
+      "documentation": "plan_stale_vs_git",
+      "acceptance": "partial",
+      "evidence": [
+        "#1731",
+        "#1750",
+        "#1772",
+        "#1780",
+        "#1845",
+        "#1865"
+      ],
+      "notes": [
+        "50-step plan initially pending but multiple phases merged"
+      ]
+    },
+    {
+      "id": "github_actions",
+      "classification": "ACTIVE_REGRESSION",
+      "implementation": "partial",
+      "testing": "partial",
+      "runtime": "failing_guards",
+      "documentation": "stale_and_self_correcting",
+      "acceptance": "partial",
+      "evidence": [
+        "PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01",
+        "#1610",
+        "#1439",
+        "#1430",
+        "#1206",
+        "#1862",
+        "#1854",
+        "#1454"
+      ],
+      "notes": [
+        "39/100 raw checkbox not reliable",
+        "many steps superseded/done later"
+      ]
+    },
+    {
+      "id": "database",
+      "classification": "ACTIVE_REGRESSION",
+      "implementation": "n/a",
+      "testing": "guards_present",
+      "runtime": "guard_failure",
+      "documentation": "extensive",
+      "acceptance": "blocked",
+      "evidence": [
+        "801 migration SQL",
+        "183 db-audit files",
+        "61 contract files",
+        "#1862",
+        "#1863",
+        "#1454"
+      ],
+      "notes": [
+        "do not clean migrations",
+        "_superseded historical required"
+      ]
+    },
+    {
+      "id": "tags_removal",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "unknown",
+      "testing": "unknown",
+      "runtime": "unknown",
+      "documentation": "plan_exists",
+      "acceptance": "unknown",
+      "evidence": [
+        "PLANO_REMOCAO_ETIQUETAS_100_ETAPAS_2026-09-27"
+      ],
+      "notes": [
+        "removal program not simple dead code",
+        "ai_conversation_tags explicitly out of scope"
+      ]
+    },
+    {
+      "id": "media_volume",
+      "classification": "NEEDS_REVALIDATION",
+      "implementation": "partial",
+      "testing": "partial",
+      "runtime": "hardware_blockers",
+      "documentation": "contains_later_evidence",
+      "acceptance": "partial",
+      "evidence": [
+        "PLANO_VOLUME_MIDIA_50_ETAPAS_2026-09-27"
+      ],
+      "notes": [
+        "some items require real device/hardware",
+        "do not route all to coder"
+      ]
+    }
+  ],
+  "global": {
+    "open_prs": 12,
+    "open_issues": 14,
+    "remote_branches": 58,
+    "code_files": 4065,
+    "src_files": 1952,
+    "migration_sql": 801,
+    "db_audit_files": 183,
+    "contract_files": 61,
+    "deprecated_src_files": 10,
+    "ts_expect_error_files": 1
+  },
+  "next_gates": [
+    "close/revalidate active regressions",
+    "task-level extraction for active modules",
+    "Graphify consumer proof for residue candidates",
+    "safe cleanup only after evidence",
+    "execution routing only from reconciled ledger"
+  ]
+}

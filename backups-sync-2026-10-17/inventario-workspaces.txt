@@ -1,0 +1,7 @@
+# Inventario de workspaces - gerado 2026-10-17T07:42:55-03:00
+RISCO | /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-espelho-ci-26101418239f52/ | main | 3ddb52fd04 | sujos=10 | fora_do_remoto=0
+RISCO | /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/retomar-automation-suggest-reply-t-e494c228/ | main | 088a52382d | sujos=1853 | fora_do_remoto=0
+RISCO | /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t_682cc676_v2/ | HEAD | b44540e35 | sujos=119 | fora_do_remoto=0
+RISCO | /home/joaquim_ataides/hermes-workspaces/_teste-a2/ws1/ | main | d7ab723 | sujos=0 | fora_do_remoto=1
+# repos de tarefa: 6 | com trabalho a preservar: 4
+PRONTO: 6 repos, 4 em risco

@@ -1,0 +1,65 @@
+{
+  "BASELINE": {
+    "exit": 0,
+    "test_files": "13 passed (13)",
+    "tests": "141 passed (141)",
+    "red_files": [],
+    "red_test_names": []
+  },
+  "M1_canMerge_always_true": {
+    "exit": 1,
+    "test_files": "1 failed | 12 passed (13)",
+    "tests": "2 failed | 139 passed (141)",
+    "red_files": [
+      "src/components/contacts/__tests__/ContactMergePermission.test.tsx"
+    ],
+    "red_test_names": [
+      "esconde só quando o servidor diz que não pode (false)",
+      "não oferece Mesclar quando is_admin_or_supervisor responde false (mas mantém Comparar)"
+    ],
+    "file": "src/components/contacts/contactPermissions.ts",
+    "should_be_covered_by": "ContactMergePermission.test.tsx: describe('canMergeContacts') + 'nao oferece Mesclar quando responde false'",
+    "verdict": "MORTA"
+  },
+  "M2_delete_item_gate_always_true": {
+    "exit": 1,
+    "test_files": "1 failed | 12 passed (13)",
+    "tests": "1 failed | 140 passed (141)",
+    "red_files": [
+      "src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx"
+    ],
+    "red_test_names": [
+      "não oferece Excluir quando can_delete é false (mas mantém Editar)"
+    ],
+    "file": "src/components/contacts/ContactsTable.tsx",
+    "should_be_covered_by": "ContactDeleteEntryPoints.test.tsx: 'nao oferece Excluir quando can_delete e false' (ContactsTable)",
+    "verdict": "MORTA"
+  },
+  "M3_merge_dialog_gate_inverted": {
+    "exit": 0,
+    "test_files": "13 passed (13)",
+    "tests": "141 passed (141)",
+    "red_files": [],
+    "red_test_names": [],
+    "file": "src/components/contacts/ContactsView.tsx",
+    "should_be_covered_by": "(nenhum teste cobre ContactsView / montagem do ContactMergeDialog)",
+    "verdict": "SOBREVIVENTE"
+  },
+  "M4_canDeleteSelected_always_true": {
+    "exit": 1,
+    "test_files": "1 failed | 12 passed (13)",
+    "tests": "4 failed | 137 passed (141)",
+    "red_files": [
+      "src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx"
+    ],
+    "red_test_names": [
+      "sem seleção não decide nada (undefined = comportamento anterior)",
+      "selecionado que não está na lista carregada NÃO bloqueia (undefined) — bug do paginar",
+      "bloqueia só quando todo selecionado conhecido está sem permissão",
+      "ignora o que está fora da seleção"
+    ],
+    "file": "src/components/contacts/contactPermissions.ts",
+    "should_be_covered_by": "ContactDeleteEntryPoints.test.tsx: describe('canDeleteSelectedContacts')",
+    "verdict": "MORTA"
+  }
+}

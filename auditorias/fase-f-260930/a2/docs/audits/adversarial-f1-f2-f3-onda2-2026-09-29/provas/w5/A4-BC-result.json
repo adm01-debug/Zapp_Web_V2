@@ -1,0 +1,87 @@
+{
+  "flagSimulada": "mapa.searchbox-autocomplete = false (resposta da RPC de flags mockada no navegador)",
+  "A4C": {
+    "ramoDoPicker": {
+      "listbox": 0,
+      "roleOption": 0,
+      "listaLegadaVisivel": false,
+      "itensLegado": 0,
+      "legadoBlockHtml": null,
+      "spinnerNoBotaoBuscar": false,
+      "buscaDesabilitadaDuranteRequest": false,
+      "toasts": [],
+      "botaoBuscarPresente": true,
+      "dialogTextoSemQuebras": "Compartilhar Localização | Envie sua localização ou escolha um ponto no mapa | Minha Localização | Escolher no Mapa | Buscar | Não foi possível carregar o mapa. | Tentar novamente | Cancelar | Enviar Localização | Close"
+    },
+    "suggestsNoPickerComFlagOff": 0,
+    "buscaEmVoo": {
+      "listbox": 0,
+      "roleOption": 0,
+      "listaLegadaVisivel": false,
+      "itensLegado": 0,
+      "legadoBlockHtml": null,
+      "spinnerNoBotaoBuscar": true,
+      "buscaDesabilitadaDuranteRequest": true,
+      "toasts": [],
+      "botaoBuscarPresente": false,
+      "dialogTextoSemQuebras": "Compartilhar Localização | Envie sua localização ou escolha um ponto no mapa | Minha Localização | Escolher no Mapa | Não foi possível carregar o mapa. | Tentar novamente | Cancelar | Enviar Localização | Close"
+    },
+    "aposFalha": {
+      "listbox": 0,
+      "roleOption": 0,
+      "listaLegadaVisivel": false,
+      "itensLegado": 0,
+      "legadoBlockHtml": null,
+      "spinnerNoBotaoBuscar": false,
+      "buscaDesabilitadaDuranteRequest": false,
+      "toasts": [
+        "Falha na buscaNão foi possível consultar o endereço. Tente novamente."
+      ],
+      "botaoBuscarPresente": true,
+      "dialogTextoSemQuebras": "Compartilhar Localização | Envie sua localização ou escolha um ponto no mapa | Minha Localização | Escolher no Mapa | Buscar | Não foi possível carregar o mapa. | Tentar novamente | Cancelar | Enviar Localização | Close"
+    },
+    "antesDaBusca": {
+      "listbox": 0,
+      "roleOption": 0,
+      "listaLegadaVisivel": false,
+      "itensLegado": 0,
+      "legadoBlockHtml": null,
+      "spinnerNoBotaoBuscar": false,
+      "buscaDesabilitadaDuranteRequest": false,
+      "toasts": [],
+      "botaoBuscarPresente": true,
+      "dialogTextoSemQuebras": "Compartilhar Localização | Envie sua localização ou escolha um ponto no mapa | Minha Localização | Escolher no Mapa | Buscar | Não foi possível carregar o mapa. | Tentar novamente | Cancelar | Enviar Localização | Close"
+    },
+    "listaLegadaSucesso": {
+      "nItens": 0,
+      "primeiroHtml": null,
+      "listbox": 0,
+      "roleOption": 0,
+      "listaLegadaVisivel": true,
+      "itensLegado": 2,
+      "legadoBlockHtml": "<div class=\"mt-2 rounded-lg border border-border divide-y divide-border overflow-hidden\"><p class=\"px-3 py-2 text-xs text-muted-foreground bg-muted/50\">Escolha o endereço certo:</p><button type=\"button\" class=\"w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors\"><p class=\"text-sm font-medium truncate\">Avenida Pau — Sao Paulo</p><p class=\"text-xs text-muted-foreground truncate\">Avenida Pau, Bela Vista, Sao Paulo - SP</p></button><button type=\"button\" class=\"w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors\"><p class=\"text-sm font-medium truncate\">Avenida Pau — Santos</p>",
+      "spinnerNoBotaoBuscar": false,
+      "buscaDesabilitadaDuranteRequest": false,
+      "toasts": [],
+      "botaoBuscarPresente": true,
+      "dialogTextoSemQuebras": "Compartilhar Localização | Envie sua localização ou escolha um ponto no mapa | Minha Localização | Escolher no Mapa | Buscar | Escolha o endereço certo: | Avenida Pau — Sao Paulo | Avenida Pau, Bela Vista, Sao Paulo - SP | Avenida Pau — Santos | Avenida Pau, Centro, Santos - SP | O mapa demorou demais para carregar. | Tentar novamente | Cancelar | Enviar Localização | Close"
+    }
+  },
+  "A4B": {
+    "suggestRequestsAntesDoCadastro": 0,
+    "suggestRequestsDepoisDoCadastro": 1,
+    "deltaSuggest": 1,
+    "formState": {
+      "listbox": true,
+      "opcoes": 3,
+      "conteudo": "Avenida Paulista | Avenida Paulista, Bela Vista, Sao Paulo - SP · 420 m | Rua Paulista | Rua Paulista, Centro, Santos - SP · 420 m | Praca Paulista | Praca Paulista, Bela Vista, Sao Paulo - SP · 420 m",
+      "combobox": 4
+    },
+    "urlsSuggest": [
+      "https://api.mapbox.com/search/searchbox/v1/suggest?q=Avenida%20Pau&session_token=ac2405cd-3125-4c73-bd0d-dc943c459a1e&access_token=pk.w5-fake-mapbox-token&language=pt&country=br&limit=5&types=address%2Cstreet%2Cplace"
+    ],
+    "sessionTokens": [
+      "ac2405cd-3125-4c73-bd0d-dc943c459a1e"
+    ]
+  }
+}

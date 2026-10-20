@@ -1,0 +1,3 @@
+ M src/components/talkx/TalkXView.tsx
+ M src/components/talkx/__tests__/TalkXView.monitor.test.tsx
+ M src/components/talkx/tracking/TalkXMonitorHeader.tsx

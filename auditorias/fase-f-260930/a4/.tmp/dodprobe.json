@@ -1,0 +1,4 @@
+{
+ "rc": 0,
+ "tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  44 passed (44)\n   Start at  19:37:29\n   Duration  941ms (transform 85ms, setup 67ms, import 228ms, tests 28ms, environment 509ms)\n\n"
+}

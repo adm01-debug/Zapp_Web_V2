@@ -1,0 +1,865 @@
+From ed7450ae5eb79112410fcef137e06943d904f449 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <joaquim@ataides>
+Date: Sat, 10 Oct 2026 04:28:15 -0300
+Subject: [PATCH 2/5] feat(talkx): segments route integration (X111)
+
+Cherry-pick d9f3cd207 into t-19af7819 branch.
+
+- TalkXSegments.tsx: route integration with parseTalkXSegmentsRoute,
+  pushTalkXSegmentsRoute, replaceTalkXSegmentsRoute; skeleton loading;
+  breadcrumb navigation; draft/routedDraft state architecture.
+- talkxSegmentsRoute.ts: route contract for screen 03 segments
+  (?view=talkx&tab=segments&segment=<id>&mode=edit|new).
+- Tests: TalkXSegments.route.test.tsx and talkxSegmentsRoute.test.ts.
+---
+ src/components/talkx/TalkXSegments.tsx        | 366 ++++++++++++++++--
+ .../__tests__/TalkXSegments.builder.test.tsx  |   7 +-
+ .../TalkXSegments.detailFresh.test.tsx        |   5 +
+ .../__tests__/TalkXSegments.route.test.tsx    | 199 ++++++++++
+ .../__tests__/talkxSegmentsRoute.test.ts      |  62 +++
+ .../talkx/segments/talkxSegmentsRoute.ts      |  94 +++++
+ 6 files changed, 689 insertions(+), 44 deletions(-)
+ create mode 100644 src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+ create mode 100644 src/components/talkx/__tests__/talkxSegmentsRoute.test.ts
+ create mode 100644 src/components/talkx/segments/talkxSegmentsRoute.ts
+
+diff --git a/src/components/talkx/TalkXSegments.tsx b/src/components/talkx/TalkXSegments.tsx
+index 6e743deb4..8e1c989cd 100644
+--- a/src/components/talkx/TalkXSegments.tsx
++++ b/src/components/talkx/TalkXSegments.tsx
+@@ -1,40 +1,91 @@
+-import { useState, useMemo } from 'react';
++import React, { useCallback, useEffect, useMemo, useState } from 'react';
+ import {
+-  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
++  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Copy, Shield,
++  Check, RefreshCw, ChevronDown, ChevronUp, Database, Search, Sliders,
+ } from 'lucide-react';
+ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
++import { Input } from '@/components/ui/input';
++import { Label } from '@/components/ui/label';
++import { Textarea } from '@/components/ui/textarea';
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
++import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
++import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+ 
+-import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
++import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+ import { cn } from '@/lib/utils';
+-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
+-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay } from './talkxShared';
++import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
++import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
+ import { TalkXQueryBoundary } from './kit/states';
+-import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
+-import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
+-import { validateSegmentRules } from './segments/segmentValidation';
++import { parseTalkXSegmentsRoute, pushTalkXSegmentsRoute, replaceTalkXSegmentsRoute, type TalkXSegmentsRoute } from './segments/talkxSegmentsRoute';
+ import { toast } from 'sonner';
+ 
+ interface Props {
+   onUseCampaign: (segmentId: string) => void;
+ }
+ 
+-type ViewMode = 'list' | 'edit';
+-
+-/** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
+-interface EditingSeed extends SegmentBuilderContent { id: string | null }
++/** Cópia em edição no construtor; `segmentId` nulo = segmento novo. */
++type BuilderDraft = { segmentId: string | null; name: string; description: string; rules: SegmentRules };
+ 
+ export function TalkXSegments({ onUseCampaign }: Props) {
+-  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment } = useTalkXSegments();
++  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates } = useTalkXSegments();
+   const [search, setSearch] = useState('');
+   const [filterOrigin, setFilterOrigin] = useState('all');
+   const [filterStatus, setFilterStatus] = useState('all');
+   const [page, setPage] = useState(1);
+   const [pageSize, setPageSize] = useState(8);
+   const [selected, setSelected] = useState<TalkXSegment | null>(null);
+-  const [mode, setMode] = useState<ViewMode>('list');
+   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
+-  const [editing, setEditing] = useState<EditingSeed | null>(null);
+   const [saving, setSaving] = useState(false);
++  // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
++  // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
++  // `route` é o que o endereço pede; `draft` é a cópia que o usuário está editando na tela.
++  const [route, setRoute] = useState<TalkXSegmentsRoute | null>(
++    () => parseTalkXSegmentsRoute(window.location.search).route,
++  );
++  const [draft, setDraft] = useState<BuilderDraft | null>(null);
++
++  const routedSegment = useMemo(
++    () => (route?.segmentId ? segments.find((s) => s.id === route.segmentId) ?? null : null),
++    [route, segments],
++  );
++
++  // O que o endereço pede para o construtor. Enquanto o segmento do endereço não
++  // chegou da consulta não há cópia para abrir (a tela mostra o esqueleto abaixo).
++  const routedDraft = useMemo<BuilderDraft | null>(() => {
++    if (!route) return null;
++    if (route.mode === 'new') return { segmentId: null, name: '', description: '', rules: emptyRules() };
++    return routedSegment
++      ? { segmentId: routedSegment.id, name: routedSegment.name, description: routedSegment.description ?? '', rules: routedSegment.rules }
++      : null;
++  }, [route, routedSegment]);
++
++  // A cópia local ganha do endereço: é ela que tem o que o usuário acabou de digitar.
++  const activeDraft = draft ?? routedDraft;
++
++  const syncFromBrowserHistory = useCallback(() => {
++    const routed = parseTalkXSegmentsRoute(window.location.search);
++    if (routed.needsNormalization) replaceTalkXSegmentsRoute(routed.route);
++    // O histórico é a fonte de verdade do que está aberto; a cópia da tela anterior
++    // não sobrevive à navegação.
++    setDraft(null);
++    setRoute(routed.route);
++  }, []);
++
++  useEffect(() => {
++    const initial = parseTalkXSegmentsRoute(window.location.search);
++    if (initial.needsNormalization) replaceTalkXSegmentsRoute(initial.route);
++    window.addEventListener('popstate', syncFromBrowserHistory);
++    return () => window.removeEventListener('popstate', syncFromBrowserHistory);
++  }, [syncFromBrowserHistory]);
++
++  // Id que a lista não devolve (apagado, de outra conta ou digitado à mão): a tela
++  // cai na biblioteca e o endereço perde o parâmetro, sem criar entrada no histórico.
++  useEffect(() => {
++    if (!route?.segmentId || isLoading || routedSegment) return;
++    replaceTalkXSegmentsRoute(null);
++    window.dispatchEvent(new PopStateEvent('popstate'));
++    if (!isError) toast.error('Segmento não encontrado ou sem acesso.');
++  }, [isError, isLoading, route, routedSegment]);
+ 
+   const filtered = useMemo(() => {
+     let r = segments;
+@@ -54,37 +105,57 @@ export function TalkXSegments({ onUseCampaign }: Props) {
+     bars: barsByDay(segments.map((s) => s.created_at)),
+   }), [segments]);
+ 
+-  /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
+-  const existingNames = useMemo(
+-    () => segments.filter((s) => s.id !== editing?.id).map((s) => s.name),
+-    [segments, editing?.id],
+-  );
+-
+-  const openNew = () => { setSelected(null); setEditing({ id: null, name: '', description: '', rules: emptyRules() }); setMode('edit'); };
+-  const openEdit = (s: TalkXSegment) => { setEditing({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }); setSelected(s); setMode('edit'); };
+-  const closeBuilder = () => { setMode('list'); setEditing(null); };
++  const openBuilder = (target: BuilderDraft, nextRoute: TalkXSegmentsRoute) => {
++    setDraft(target);
++    setRoute(nextRoute);
++    pushTalkXSegmentsRoute(nextRoute);
++  };
++  const openNew = () => {
++    setSelected(null);
++    openBuilder({ segmentId: null, name: '', description: '', rules: emptyRules() }, { segmentId: null, mode: 'new' });
++  };
++  const openEdit = (s: TalkXSegment) => {
++    setSelected(s);
++    openBuilder({ segmentId: s.id, name: s.name, description: s.description ?? '', rules: s.rules }, { segmentId: s.id, mode: 'edit' });
++  };
++  // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.
++  const closeBuilder = () => {
++    setDraft(null);
++    setRoute(null);
++    replaceTalkXSegmentsRoute(null);
++  };
++  // O primeiro toque do usuário materializa a cópia que o endereço pediu: o que estava
++  // em tela vira rascunho local antes de receber a alteração.
++  const patchDraft = (patch: Partial<BuilderDraft>) => {
++    setDraft((current) => {
++      const base = current ?? routedDraft;
++      if (!base) return current;
++      return { ...base, ...patch };
++    });
++  };
+ 
+-  const save = async (draft: SegmentBuilderContent) => {
+-    if (saving) return;
+-    if (!draft.name.trim()) return;
++  const save = async () => {
++    if (saving || !activeDraft) return;
++    const target = activeDraft;
++    if (!target.name.trim()) return;
+     // Uma condição em branco não pode ir para o banco: recusa com o número exato
+     // do que falta em vez de deixar o botão sem efeito e sem aviso.
+-    const rulesError = validateSegmentRules(draft.rules);
+-    if (rulesError) {
+-      toast.error(rulesError);
++    const { incompleteCount } = splitRules(target.rules);
++    if (incompleteCount > 0) {
++      toast.error(`Complete ou remova ${incompleteCount} condição(ões) antes de publicar.`);
+       return;
+     }
+     setSaving(true);
+     try {
+-      const count = await countAudience(draft.rules);
+-      if (editing?.id) {
++      const count = await countAudience(target.rules);
++      if (target.segmentId) {
+         // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
+         // evita mostrar — e reabrir no construtor — a cópia que estava em tela
+         // antes de salvar.
+-        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
++        const saved = await updateSegment.mutateAsync({ id: target.segmentId, name: target.name, description: target.description || null, rules: target.rules, estimated_count: count });
+         setSelected(saved);
+       } else {
+-        await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
++        await createSegment.mutateAsync({ name: target.name, description: target.description || null, rules: target.rules, estimated_count: count });
+       }
+       closeBuilder();
+     } catch (e) {
+@@ -95,15 +166,36 @@ export function TalkXSegments({ onUseCampaign }: Props) {
+ 
+   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
+ 
+-  if (mode === 'edit' && editing) {
+-    return <TalkXSegmentBuilder
+-      initial={editing}
+-      isNew={!editing.id}
+-      saving={saving}
+-      existingNames={existingNames}
+-      onSave={(draft) => void save(draft)}
+-      onCancel={closeBuilder}
+-    />;
++  if (activeDraft) {
++    return (
++      <div className="w-full min-w-0 space-y-4">
++        {/* X111 — trilha da tela 03, no mesmo desenho do wizard: o construtor é uma tela interna do módulo. */}
++        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
++          <span>Talk X</span>
++          <span className="text-border">›</span>
++          <span>Campanhas</span>
++          <span className="text-border">›</span>
++          <span className="text-foreground font-medium">Segmentos</span>
++        </nav>
++        <SegmentBuilder
++          name={activeDraft.name} setName={(v) => patchDraft({ name: v })}
++          desc={activeDraft.description} setDesc={(v) => patchDraft({ description: v })}
++          rules={activeDraft.rules} setRules={(r) => patchDraft({ rules: r })}
++          onSave={save} onCancel={closeBuilder} saving={saving} isNew={!activeDraft.segmentId}
++        />
++      </div>
++    );
++  }
++
++  if (route?.segmentId) {
++    // O endereço pede um segmento que a consulta ainda não devolveu: esqueleto no
++    // lugar da biblioteca, para o F5 do link direto não piscar a lista primeiro.
++    return (
++      <div className="min-h-full w-full min-w-0" role="status" aria-live="polite" aria-busy={isLoading} data-talkx-query="loading">
++        <span className="sr-only">Carregando conteúdo…</span>
++        <TalkXSkeletonRows rows={4} />
++      </div>
++    );
+   }
+ 
+   return (
+@@ -256,3 +348,191 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
+     </RailCard>
+   );
+ }
++
++/* ------------------------------------------------------------------ */
++/* Builder de segmento                                                */
++/* ------------------------------------------------------------------ */
++
++function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave, onCancel, saving, isNew }: {
++  name: string; setName: (v: string) => void; desc: string; setDesc: (v: string) => void;
++  rules: SegmentRules; setRules: (r: SegmentRules) => void;
++  onSave: () => void; onCancel: () => void; saving: boolean; isNew: boolean;
++}) {
++  const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
++  // Condições em branco ficam fora da estimativa; a tela precisa dizer quantas
++  // antes de o usuário tentar publicar. O valor do hook cobre o mesmo cálculo,
++  // a derivação local mostra o aviso imediatamente (antes do fetch resolver).
++  const incompleteCount = est?.incompleteCount ?? splitRules(rules).incompleteCount;
++  // id do grupo ativo para o catálogo (last by default, atualizado a cada interação de grupo)
++  const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
++  const [dragOverGroupId, setDragOverGroupId] = React.useState<string | null>(null);
++  const [draggingField, setDraggingField] = React.useState<string | null>(null);
++  const resolveGroupId = () => {
++    if (activeGroupId && rules.groups.some((g) => g.id === activeGroupId)) return activeGroupId;
++    return rules.groups[rules.groups.length - 1]?.id ?? null;
++  };
++
++  const addGroup = (match: 'and' | 'or') => {
++    const id = crypto.randomUUID();
++    setRules({ groups: [...rules.groups, { id, match, rules: [] }] });
++    setActiveGroupId(id);
++  };
++  const removeGroup = (gid: string) => {
++    setRules({ groups: rules.groups.filter((g) => g.id !== gid) });
++    if (activeGroupId === gid) setActiveGroupId(null);
++  };
++  const addRule = (gid: string, preset?: SegmentRule) => {
++    setActiveGroupId(gid);
++    setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: [...g.rules, preset ?? newRule()] }) });
++  };
++  const addFieldToGroup = (f: typeof RULE_FIELDS[number]) => {
++    const gid = resolveGroupId();
++    if (!gid) return;
++    const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp;
++    addRule(gid, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' });
++  };
++  const removeRule = (gid: string, rid: string) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.filter((r) => r.id !== rid) }) });
++  const updateRule = (gid: string, rid: string, patch: Partial<SegmentRule>) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.map((r) => r.id !== rid ? r : { ...r, ...patch }) }) });
++
++  return (
++    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
++      <div className="min-w-0 space-y-4">
++        {/* Header */}
++        <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
++          <button type="button" onClick={onCancel} aria-label="Cancelar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
++          <IconTile icon={Bookmark} color="violet" size={48} />
++          <div className="min-w-0 flex-1">
++            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do segmento…" className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
++            <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Adicione uma descrição para este segmento…" className="text-[13px] border-0 bg-transparent p-0 h-auto mt-0.5 focus-visible:ring-0 text-foreground-secondary placeholder:text-muted-foreground/40" />
++          </div>
++          <div className="flex items-center gap-2 shrink-0">
++            <GhostButton onClick={onCancel}>Cancelar</GhostButton>
++            <PrimaryButton icon={saving ? RefreshCw : Check} onClick={onSave} disabled={saving || !name.trim()}>{isNew ? 'Publicar segmento' : 'Salvar'}</PrimaryButton>
++          </div>
++        </div>
++
++        {/* Construtor de regras */}
++        <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
++          <div className="flex items-center justify-between mb-4">
++            <div><p className="text-[15px] font-bold text-foreground">Regras do segmento</p><p className="text-xs text-foreground-secondary">Defina os filtros e condições para o seu segmento</p></div>
++            <div className="flex items-center gap-2">
++              <button type="button" onClick={() => setRules(emptyRules())} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Limpar tudo</button>
++            </div>
++          </div>
++          <div className="space-y-4">
++            {rules.groups.map((g, gi) => (
++              <div
++                key={g.id}
++                className={cn('rounded-xl border overflow-hidden transition-colors', dragOverGroupId === g.id ? 'border-primary/60 bg-primary/10' : 'border-border/60 bg-input/20')}
++                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOverGroupId(g.id); }}
++                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverGroupId(null); }}
++                onDrop={(e) => { e.preventDefault(); const fieldVal = e.dataTransfer.getData('text/plain'); const f = RULE_FIELDS.find((x) => x.value === fieldVal); if (f) { setActiveGroupId(g.id); const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp; addRule(g.id, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' }); } setDragOverGroupId(null); setDraggingField(null); }}
++              >
++                <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
++                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E','O','G'][Math.min(gi,2)]}</span>
++                  <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
++                  <Select value={g.match} onValueChange={(v) => setRules({ groups: rules.groups.map((x) => x.id !== g.id ? x : { ...x, match: v as 'and' | 'or' }) })}>
++                    <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
++                    <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
++                  </Select>
++                  {rules.groups.length > 1 && <button type="button" onClick={() => removeGroup(g.id)} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
++                </div>
++                <div className="p-4 space-y-2.5">
++                  {g.rules.map((r) => <RuleRow key={r.id} rule={r} onChange={(p) => updateRule(g.id, r.id, p)} onRemove={() => removeRule(g.id, r.id)} />)}
++                  {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
++                  <button type="button" onClick={() => addRule(g.id)} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
++                </div>
++              </div>
++            ))}
++          </div>
++          <div className="flex items-center gap-2 mt-4">
++            <button type="button" onClick={() => addGroup('and')} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-primary-glow text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
++            <button type="button" onClick={() => addGroup('or')} className="h-9 px-4 rounded-xl border border-border/70 bg-input/30 text-foreground-secondary text-xs font-medium hover:bg-muted/50 flex items-center gap-1.5">◎ Adicionar grupo (OR)</button>
++          </div>
++        </section>
++
++      </div>
++
++      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
++      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
++        <p className="text-[13px] font-bold text-foreground">Filtros</p>
++        <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
++        {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
++          <div key={cat}>
++            <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
++            <div className="flex flex-col gap-1">
++              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
++                <button
++                  key={f.value}
++                  type="button"
++                  draggable
++                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
++                  onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
++                  onClick={() => addFieldToGroup(f)}
++                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
++                >
++                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
++                </button>
++              ))}
++            </div>
++          </div>
++        ))}
++      </aside>
++
++      {/* Resumo do segmento */}
++      <div className="space-y-4 min-w-0">
++        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-2xs font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
++          <p className="text-2xs text-foreground-secondary">Audiência estimada</p>
++          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
++          <p className="text-xs text-foreground-secondary">contatos</p>
++          {incompleteCount > 0 && (
++            <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
++          )}
++          {est?.sample && est.sample.length > 0 && (
++            <div className="mt-3">
++              <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos (5)</p>
++              {est.sample.map((c) => (
++                <div key={c.id} className="flex items-center gap-2 py-1">
++                  <InitialsAvatar name={c.name || '?'} size={28} />
++                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.phone}</p></div>
++                </div>
++              ))}
++            </div>
++          )}
++        </RailCard>
++      </div>
++    </div>
++  );
++}
++
++function RuleRow({ rule, onChange, onRemove }: { rule: SegmentRule; onChange: (p: Partial<SegmentRule>) => void; onRemove: () => void }) {
++  const fieldDef = RULE_FIELDS.find((f) => f.value === rule.field);
++  const ops = RULE_OPS[fieldDef?.kind ?? 'text'] ?? RULE_OPS.text;
++  const needsValue = !['is_set', 'is_empty'].includes(rule.op);
++  // Condição ainda em branco não entra na estimativa: a borda de aviso mostra
++  // qual linha precisa ser completada (ou removida) antes de publicar.
++  const incomplete = !isRuleComplete(rule);
++  return (
++    <div className={cn('flex items-center gap-2 flex-wrap rounded-lg', incomplete && 'border border-dash-amber p-2')}>
++      <Select value={rule.field} onValueChange={(v) => onChange({ field: v as never, op: (RULE_OPS[RULE_FIELDS.find((f) => f.value === v)?.kind ?? 'text']?.[0]?.value ?? 'eq') as never, value: '' })}>
++        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
++        <SelectContent>{RULE_FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
++      </Select>
++      <Select value={rule.op} onValueChange={(v) => onChange({ op: v as never })}>
++        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
++        <SelectContent>{ops.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
++      </Select>
++      {needsValue && (
++        fieldDef?.options ? (
++          <Select value={rule.value} onValueChange={(v) => onChange({ value: v })}>
++            <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[130px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
++            <SelectContent>{fieldDef.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
++          </Select>
++        ) : (
++          <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder={fieldDef?.kind === 'number' ? '0' : fieldDef?.kind === 'date' ? '30 (dias)' : 'Valor…'} className="h-9 bg-input/40 border-border/70 text-xs w-[130px]" />
++        )
++      )}
++      <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>
++    </div>
++  );
++}
+diff --git a/src/components/talkx/__tests__/TalkXSegments.builder.test.tsx b/src/components/talkx/__tests__/TalkXSegments.builder.test.tsx
+index fde1c29c6..4d0feed75 100644
+--- a/src/components/talkx/__tests__/TalkXSegments.builder.test.tsx
++++ b/src/components/talkx/__tests__/TalkXSegments.builder.test.tsx
+@@ -1,4 +1,4 @@
+-import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+ import React from 'react';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+@@ -103,6 +103,11 @@ describe('TalkXSegments · construtor com condição incompleta (X008)', () => {
+     vi.mocked(toast.error).mockClear();
+   });
+ 
++  // X111: o construtor aberto vive no endereço; cada teste começa na biblioteca.
++  afterEach(() => {
++    window.history.replaceState(null, '', '/');
++  });
++
+   it('adicionar condição vazia mantém a contagem anterior', async () => {
+     renderView();
+     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+diff --git a/src/components/talkx/__tests__/TalkXSegments.detailFresh.test.tsx b/src/components/talkx/__tests__/TalkXSegments.detailFresh.test.tsx
+index 54eea2c8a..5a1681f70 100644
+--- a/src/components/talkx/__tests__/TalkXSegments.detailFresh.test.tsx
++++ b/src/components/talkx/__tests__/TalkXSegments.detailFresh.test.tsx
+@@ -131,6 +131,11 @@ describe('TalkXSegments · detalhe do segmento depois de salvar (#408)', () => {
+     f.update.mockReset();
+   });
+ 
++  // X111: o construtor aberto vive no endereço; cada teste começa na biblioteca.
++  afterEach(() => {
++    window.history.replaceState(null, '', '/');
++  });
++
+   it('o detalhe passa a mostrar a cópia salva, não a que estava em tela', async () => {
+     const nome = await abrirEditorPeloDetalhe();
+     expect(nome.value).toBe('Segmento antigo');
+diff --git a/src/components/talkx/__tests__/TalkXSegments.route.test.tsx b/src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+new file mode 100644
+index 000000000..5321bc292
+--- /dev/null
++++ b/src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+@@ -0,0 +1,199 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
++import React from 'react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++
++// X111 — o construtor da tela 03 vive no endereço
++// (`?view=talkx&tab=segments&segment=<id>&mode=edit|new`): o link direto abre o
++// segmento, o F5 mantém a tela, voltar/avançar do navegador fecham e reabrem o
++// construtor, e parâmetro inválido devolve a biblioteca. O TalkXSegments REAL
++// entra (motor de regras real, via importOriginal); só a lista/CRUD e o toast
++// viram spies.
++
++const f = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn() }));
++const state = vi.hoisted(() => ({ segments: [] as unknown[] }));
++
++vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ profile: { id: 'user-1', full_name: 'QA' }, user: { id: 'user-1' }, session: null, loading: false }),
++}));
++
++// countAudience/resolveAudience falam com a RPC talkx_resolve_audience (modo count/page).
++vi.mock('@/integrations/supabase/client', () => {
++  const chain: Record<string, unknown> = {};
++  chain.select = () => chain;
++  chain.not = () => chain;
++  chain.or = () => chain;
++  chain.order = () => chain;
++  chain.limit = () => chain;
++  chain.eq = () => chain;
++  chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve);
++  return {
++    supabase: {
++      from: () => chain,
++      rpc: (_name: string, args?: { p_mode?: string }) => Promise.resolve({
++        data: args?.p_mode === 'page'
++          ? { mode: 'page', rows: [], has_more: false, next_after: null }
++          : { mode: 'count', matched: 42, eligible: 42, suppressed: 0, invalid_phone: 0, legacy_or_deleted: 0 },
++        error: null,
++      }),
++    },
++  };
++});
++
++vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
++  const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXSegments')>();
++  return {
++    ...actual,
++    useTalkXSegments: () => ({
++      segments: state.segments,
++      isLoading: false,
++      isError: false,
++      error: null,
++      refetch: vi.fn(),
++      createSegment: { mutateAsync: f.create },
++      updateSegment: { mutateAsync: f.update },
++      deleteSegment: { mutate: vi.fn() },
++      refreshEstimates: { mutate: vi.fn() },
++    }),
++  };
++});
++
++import { toast } from 'sonner';
++import { TalkXSegments } from '@/components/talkx/TalkXSegments';
++import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
++
++const segmento: TalkXSegment = {
++  id: 'seg-1',
++  name: 'Segmento antigo',
++  description: 'descrição antiga',
++  origin: 'custom',
++  status: 'active',
++  is_favorite: false,
++  rules: { groups: [{ id: 'g1', match: 'and', rules: [{ id: 'r1', field: 'tags', op: 'contains', value: 'VIP' }] }] },
++  estimated_count: 10,
++  last_used_at: null,
++  created_by: null,
++  created_at: '2026-10-01T10:00:00.000Z',
++  updated_at: '2026-10-01T10:00:00.000Z',
++};
++
++function renderView() {
++  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++  return render(
++    <QueryClientProvider client={queryClient}>
++      <TalkXSegments onUseCampaign={() => {}} />
++    </QueryClientProvider>,
++  );
++}
++
++const params = () => new URLSearchParams(window.location.search);
++
++describe('TalkXSegments · construtor pela URL (X111)', () => {
++  beforeEach(() => {
++    state.segments = [segmento];
++    f.create.mockReset();
++    f.update.mockReset();
++    vi.mocked(toast.error).mockClear();
++  });
++
++  afterEach(() => {
++    window.history.replaceState(null, '', '/');
++  });
++
++  it('abre no construtor do segmento do endereço, com a trilha da tela 03 (link direto e F5)', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=segments&segment=seg-1&mode=edit');
++    renderView();
++
++    const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
++    expect(nome.value).toBe('Segmento antigo');
++    // A regra real do segmento, não uma lista vazia: o link direto carrega a cópia do banco.
++    expect(screen.getByDisplayValue('VIP')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
++
++    const trilha = screen.getByRole('navigation', { name: 'Trilha de navegação' });
++    expect(trilha).toHaveTextContent('Talk X');
++    expect(trilha).toHaveTextContent('Campanhas');
++    expect(trilha).toHaveTextContent('Segmentos');
++
++    // F5 preserva o endereço que abriu a tela (nada foi normalizado para a biblioteca).
++    expect(params().get('segment')).toBe('seg-1');
++    expect(params().get('mode')).toBe('edit');
++  });
++
++  it('abrir pelo rail grava o segmento no endereço', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=segments');
++    renderView();
++
++    fireEvent.click(await screen.findByText('Segmento antigo'));
++    fireEvent.click(await screen.findByRole('button', { name: 'Editar segmento' }));
++
++    await screen.findByPlaceholderText('Nome do segmento…');
++    expect(params().get('segment')).toBe('seg-1');
++    expect(params().get('mode')).toBe('edit');
++  });
++
++  it('voltar do navegador fecha o construtor e avançar reabre', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=segments');
++    renderView();
++
++    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
++    await screen.findByPlaceholderText('Nome do segmento…');
++    expect(params().get('mode')).toBe('new');
++
++    await act(async () => {
++      window.history.replaceState(null, '', '/?view=talkx&tab=segments');
++      window.dispatchEvent(new PopStateEvent('popstate'));
++    });
++    await waitFor(() => expect(screen.getByRole('button', { name: 'Novo segmento' })).toBeInTheDocument());
++    expect(screen.queryByPlaceholderText('Nome do segmento…')).toBeNull();
++    expect(params().has('mode')).toBe(false);
++
++    await act(async () => {
++      window.history.replaceState(null, '', '/?view=talkx&tab=segments&mode=new');
++      window.dispatchEvent(new PopStateEvent('popstate'));
++    });
++    await waitFor(() => expect(screen.getByPlaceholderText('Nome do segmento…')).toBeInTheDocument());
++    expect(screen.queryByRole('button', { name: 'Novo segmento' })).toBeNull();
++  });
++
++  it('parâmetro inválido cai na biblioteca e limpa o endereço', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=segments&segment=seg-1&mode=duplicar');
++    renderView();
++
++    expect(await screen.findByRole('button', { name: 'Novo segmento' })).toBeInTheDocument();
++    expect(screen.queryByPlaceholderText('Nome do segmento…')).toBeNull();
++    await waitFor(() => {
++      expect(params().has('mode')).toBe(false);
++      expect(params().has('segment')).toBe(false);
++      expect(params().get('tab')).toBe('segments');
++    });
++  });
++
++  it('publicar devolve a tela e o endereço para a biblioteca', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=segments&segment=seg-1&mode=edit');
++    renderView();
++
++    const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
++    fireEvent.change(nome, { target: { value: 'Segmento renomeado' } });
++    f.update.mockResolvedValue({ ...segmento, name: 'Segmento renomeado' });
++    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
++
++    await waitFor(() => expect(screen.getByRole('button', { name: 'Novo segmento' })).toBeInTheDocument());
++    expect(screen.queryByPlaceholderText('Nome do segmento…')).toBeNull();
++    expect(params().has('segment')).toBe(false);
++    expect(params().has('mode')).toBe(false);
++    expect(params().get('tab')).toBe('segments');
++  });
++
++  it('id que a lista não devolve volta para a biblioteca com aviso', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=segments&segment=nao-existe&mode=edit');
++    renderView();
++
++    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/Segmento não encontrado/)));
++    expect(screen.getByRole('button', { name: 'Novo segmento' })).toBeInTheDocument();
++    expect(screen.queryByPlaceholderText('Nome do segmento…')).toBeNull();
++    await waitFor(() => expect(params().has('segment')).toBe(false));
++  });
++});
+diff --git a/src/components/talkx/__tests__/talkxSegmentsRoute.test.ts b/src/components/talkx/__tests__/talkxSegmentsRoute.test.ts
+new file mode 100644
+index 000000000..9d93cf0dc
+--- /dev/null
++++ b/src/components/talkx/__tests__/talkxSegmentsRoute.test.ts
+@@ -0,0 +1,62 @@
++import { describe, expect, it } from 'vitest';
++import { formatTalkXSegmentsRoute, parseTalkXSegmentsRoute } from '@/components/talkx/segments/talkxSegmentsRoute';
++
++/**
++ * X111 — contrato do endereço da tela de segmentos (tela 03): ler e escrever o
++ * segmento aberto, voltar/avançar do navegador e parâmetro inválido caindo na
++ * biblioteca.
++ */
++describe('Talk X segments route contract (X111)', () => {
++  it('round-trips the open segment while preserving unrelated query and hash state', () => {
++    const source = new URL('https://zapp.example/?view=talkx&sub=previa&filter=mine#main');
++    const path = formatTalkXSegmentsRoute(source, { segmentId: 'seg_1', mode: 'edit' });
++
++    expect(path).toBe('/?view=talkx&sub=previa&filter=mine&tab=segments&segment=seg_1&mode=edit#main');
++    expect(parseTalkXSegmentsRoute(new URL(path, source).search)).toEqual({
++      route: { segmentId: 'seg_1', mode: 'edit' },
++      needsNormalization: false,
++    });
++  });
++
++  it('completes a segment address without an explicit mode as edit', () => {
++    expect(parseTalkXSegmentsRoute('?view=talkx&tab=segments&segment=seg_1')).toEqual({
++      route: { segmentId: 'seg_1', mode: 'edit' },
++      needsNormalization: true,
++    });
++  });
++
++  it('opens the empty builder for mode=new and writes it back', () => {
++    expect(parseTalkXSegmentsRoute('?view=talkx&tab=segments&mode=new')).toEqual({
++      route: { segmentId: null, mode: 'new' },
++      needsNormalization: false,
++    });
++    const source = new URL('https://zapp.example/?view=talkx&tab=segments&segment=seg_1&mode=edit');
++    expect(formatTalkXSegmentsRoute(source, { segmentId: null, mode: 'new' }))
++      .toBe('/?view=talkx&tab=segments&mode=new');
++  });
++
++  it('falls back to the library for every invalid parameter', () => {
++    for (const search of [
++      '?view=talkx&tab=segments&segment=seg_1&mode=duplicar',
++      '?view=talkx&tab=segments&mode=edit',
++      '?view=talkx&tab=segments&mode=new&segment=seg_1',
++      '?view=talkx&tab=segments&segment=not/a/segment&mode=edit',
++      '?view=inbox&tab=segments&segment=seg_1&mode=edit',
++      '?view=talkx&tab=overview&segment=seg_1&mode=edit',
++      '?view=talkx&tab=segments&segment=one&segment=two&mode=edit',
++      '?view=talkx&tab=segments&segment=seg_1&mode=edit&mode=new',
++    ]) {
++      expect(parseTalkXSegmentsRoute(search)).toEqual({ route: null, needsNormalization: true });
++    }
++  });
++
++  it('keeps the library as the untouched default state', () => {
++    expect(parseTalkXSegmentsRoute('?view=talkx&tab=segments')).toEqual({ route: null, needsNormalization: false });
++    expect(parseTalkXSegmentsRoute('')).toEqual({ route: null, needsNormalization: false });
++  });
++
++  it('cleans the segment state without deleting the segment tab', () => {
++    const source = new URL('https://zapp.example/?view=talkx&tab=segments&segment=seg_1&mode=edit&sub=previa');
++    expect(formatTalkXSegmentsRoute(source, null)).toBe('/?view=talkx&tab=segments&sub=previa');
++  });
++});
+diff --git a/src/components/talkx/segments/talkxSegmentsRoute.ts b/src/components/talkx/segments/talkxSegmentsRoute.ts
+new file mode 100644
+index 000000000..8c1b46793
+--- /dev/null
++++ b/src/components/talkx/segments/talkxSegmentsRoute.ts
+@@ -0,0 +1,94 @@
++// Rota da tela de segmentos do Talk X (tela 03), no mesmo padrão de
++// `talkxWizardRoute.ts`: o endereço diz qual segmento está aberto no construtor —
++// `?view=talkx&tab=segments&segment=<id>&mode=edit|new`. Quem formata parte do
++// endereço atual e mexe só nos seus próprios parâmetros (`view`, `tab`, `segment`,
++// `mode`), para não derrubar o que as outras trilhas do módulo escrevem ali
++// (sub do módulo, wizard/step de uma campanha).
++
++export type TalkXSegmentsRoute = {
++  /** Segmento aberto no construtor; `null` = segmento novo, ainda sem id. */
++  segmentId: string | null;
++  mode: 'edit' | 'new';
++};
++
++export type ParsedTalkXSegmentsRoute = {
++  route: TalkXSegmentsRoute | null;
++  /** O chamador deve reescrever o endereço sem criar entrada no histórico. */
++  needsNormalization: boolean;
++};
++
++const SEGMENT_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
++
++function readSingle(params: URLSearchParams, name: string): string | null | undefined {
++  const values = params.getAll(name);
++  if (values.length === 0) return undefined;
++  return values.length === 1 ? values[0] : null;
++}
++
++/**
++ * Lê só a parte de segmentos do query string. `route: null` é a biblioteca — o
++ * estado normal da tela — enquanto `needsNormalization` diz que o endereço
++ * pediu algo inválido (ou incompleto) e precisa ser reescrito.
++ */
++export function parseTalkXSegmentsRoute(search: string): ParsedTalkXSegmentsRoute {
++  const params = new URLSearchParams(search);
++  const view = readSingle(params, 'view');
++  const tab = readSingle(params, 'tab');
++  const rawSegment = readSingle(params, 'segment');
++  const rawMode = readSingle(params, 'mode');
++
++  // Sem nenhum dos dois parâmetros ninguém pediu construtor: a biblioteca é a tela.
++  if (rawSegment === undefined && rawMode === undefined) {
++    return { route: null, needsNormalization: false };
++  }
++
++  // Parâmetro duplicado é endereço ambíguo, e um `segment` fora da tela de
++  // segmentos não pode abrir construtor nenhum: cai na biblioteca.
++  if (view !== 'talkx' || tab !== 'segments' || rawSegment === null || rawMode === null) {
++    return { route: null, needsNormalization: true };
++  }
++
++  if (rawMode === 'new') {
++    // `mode=new` abre o construtor VAZIO; um segmento junto seria contraditório.
++    if (rawSegment !== undefined) return { route: null, needsNormalization: true };
++    return { route: { segmentId: null, mode: 'new' }, needsNormalization: false };
++  }
++
++  // `mode` só pode ser edit ou new; ausente com um segmento na URL, o endereço
++  // está incompleto e é completado como edit (mesma ideia do passo do wizard).
++  if (rawMode !== undefined && rawMode !== 'edit') {
++    return { route: null, needsNormalization: true };
++  }
++
++  // `mode=edit` sem id (ou com id que não tem cara de id) não tem o que abrir.
++  if (rawSegment === undefined || rawSegment === '' || !SEGMENT_ID.test(rawSegment)) {
++    return { route: null, needsNormalization: true };
++  }
++
++  // `segment=<id>` sozinho abre o construtor do segmento; o endereço canônico
++  // carrega o `mode=edit` explícito, por isso pede reescrita.
++  return { route: { segmentId: rawSegment, mode: 'edit' }, needsNormalization: rawMode === undefined };
++}
++
++export function formatTalkXSegmentsRoute(current: URL, route: TalkXSegmentsRoute | null): string {
++  const url = new URL(current.href);
++  if (route) {
++    url.searchParams.set('view', 'talkx');
++    url.searchParams.set('tab', 'segments');
++    if (route.segmentId) url.searchParams.set('segment', route.segmentId);
++    else url.searchParams.delete('segment');
++    url.searchParams.set('mode', route.mode);
++  } else {
++    url.searchParams.delete('segment');
++    url.searchParams.delete('mode');
++  }
++  return `${url.pathname}${url.search}${url.hash}`;
++}
++
++export function replaceTalkXSegmentsRoute(route: TalkXSegmentsRoute | null): void {
++  window.history.replaceState(null, '', formatTalkXSegmentsRoute(new URL(window.location.href), route));
++}
++
++export function pushTalkXSegmentsRoute(route: TalkXSegmentsRoute | null): void {
++  window.history.pushState(null, '', formatTalkXSegmentsRoute(new URL(window.location.href), route));
++}
+-- 
+2.43.0
+

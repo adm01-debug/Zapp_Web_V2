@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=gamification-revoke-client-rpcs
+ID=2610122032d9d5
+BRANCH=v2/gamification-revoke-client-rpcs-2610122032d9d5
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/gamification-revoke-client-rpcs-refazer1-t_aae41066
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T20:32:29-03:00
+KANBAN=t_aae41066
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/gamification-revoke-client-rpcs-refazer1-t_aae41066/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-gamirefazer1
+APLICADA_LOCAL=20261012233536_gamification_revoke_client_rpcs.sql sha=ffafc36a2866cdc3
+PRONTO_SHA=0eba2d9cd0148265d68fbc29b7c068e6351bb430

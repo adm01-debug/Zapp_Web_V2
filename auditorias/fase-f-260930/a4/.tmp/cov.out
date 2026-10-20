@@ -1,0 +1,51 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4
+      Coverage enabled with v8
+
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+
+ Test Files  5 passed (5)
+      Tests  100 passed (100)
+   Start at  19:34:57
+   Duration  9.62s (transform 3.43s, setup 1.06s, import 8.09s, tests 8.17s, environment 5.90s)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   61.09 |    60.84 |   55.93 |   64.53 |                   
+ components/tasks  |      65 |    48.93 |   53.84 |   69.81 |                   
+  ...mptyState.tsx |      80 |     62.5 |     100 |      80 | 30                
+  TasksModule.tsx  |   63.63 |    46.15 |      50 |   68.75 | ...01,105,109-113 
+ ...s/tasks/agenda |   89.47 |     92.1 |      75 |    87.5 |                   
+  ...gendaMode.tsx |   89.47 |     92.1 |      75 |    87.5 | 59-62             
+ ...ts/tasks/board |   67.92 |    81.53 |   70.58 |   70.21 |                   
+  BoardColumn.tsx  |   84.21 |    93.61 |      70 |   82.35 | 105-107           
+  ...BoardMode.tsx |   58.82 |       50 |   71.42 |   63.33 | 43-47,53-57,78    
+ ...nts/tasks/list |   83.87 |    81.25 |   73.33 |   81.48 |                   
+  ...sListMode.tsx |   83.87 |    81.25 |   73.33 |   81.48 | 69-72,156         
+ ...s/tasks/shared |   68.61 |    82.31 |   61.36 |    78.3 |                   
+  AgingDot.tsx     |      80 |    16.66 |     100 |      75 | 5                 
+  ContactChip.tsx  |       0 |      100 |       0 |       0 | 7-11              
+  ModeSwitcher.tsx |     100 |    83.33 |     100 |     100 | 37                
+  QuickAdd.tsx     |   66.03 |    76.47 |      50 |   76.92 | ...45-46,49-50,96 
+  RemindChip.tsx   |     100 |    66.66 |     100 |     100 | 7-12              
+  ...FilterBar.tsx |   68.42 |    92.85 |   66.66 |   69.23 | 38,62,89,96       
+  ...sKpiStrip.tsx |     100 |    66.66 |     100 |     100 | 53,68             
+  WorkItemCard.tsx |   55.17 |    88.13 |      40 |   71.42 | ...-83,93-103,174 
+ hooks/tasks       |   54.52 |    45.29 |   48.09 |   56.65 |                   
+  ...yWorkItems.ts |   19.06 |     8.42 |   12.16 |   22.33 | ...86-497,515-571 
+  ...sksFilters.ts |   94.33 |    72.72 |     100 |     100 | 49,66-79,88       
+  ...Aggregates.ts |   97.29 |    89.56 |   94.59 |   97.43 | 63,174,181        
+  ...temFilters.ts |     100 |       92 |     100 |     100 | 44                
+  ...temMachine.ts |   36.36 |    30.95 |      80 |   35.48 | ...32,40,46,58-83 
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 61.09% ( 512/838 )
+Branches     : 60.84% ( 449/738 )
+Functions    : 55.93% ( 132/236 )
+Lines        : 64.53% ( 433/671 )
+================================================================================

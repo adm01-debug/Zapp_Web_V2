@@ -1,0 +1,7 @@
+commit 762a98b359f12f0422d6f95b05c60bc75806fc6e
+Author:     Hermes Senior <hermes-senior@promobrindes.local>
+AuthorDate: Sun Oct 11 12:02:14 2026 -0300
+Commit:     Hermes Senior <hermes-senior@promobrindes.local>
+CommitDate: Sun Oct 11 12:02:14 2026 -0300
+
+    untracked files on v2/contagem-chips-countbychip-2610111154b7aa: df5d7885e refactor(hooks): contadores dos chips pelas mesmas regras da lista (countByChip)

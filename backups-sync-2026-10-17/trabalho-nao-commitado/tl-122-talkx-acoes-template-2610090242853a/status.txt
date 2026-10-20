@@ -1,0 +1,6 @@
+ M src/components/talkx/TalkXTemplateEditor.tsx
+ M src/components/talkx/TalkXTemplateStatusControl.tsx
+ M src/components/talkx/TalkXTemplateTestDialog.tsx
+ M src/components/talkx/TalkXTemplates.tsx
+ M src/components/talkx/__tests__/TalkXTemplateActions.test.tsx
+ M src/hooks/integrations/useTalkXTemplateActions.ts

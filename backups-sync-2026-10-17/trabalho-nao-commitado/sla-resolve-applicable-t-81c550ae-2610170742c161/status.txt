@@ -1,0 +1,4 @@
+M  scripts/db-audit/sla-resolve-applicable-contract.test.mjs
+AD supabase/migrations/20261015030056_sla_register_resolvedor_canonico.sql
+?? scripts/db-audit/sla-granular-contract.test.mjs
+?? supabase/migrations/20261005151753_sla_first_response_granular.sql

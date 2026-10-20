@@ -1,0 +1,49 @@
+{
+ "ms": 24,
+ "rows": [
+  {
+   "rolname": "anon",
+   "rolsuper": false,
+   "rolinherit": true,
+   "rolcanlogin": false,
+   "rolbypassrls": false
+  },
+  {
+   "rolname": "authenticated",
+   "rolsuper": false,
+   "rolinherit": true,
+   "rolcanlogin": false,
+   "rolbypassrls": false
+  },
+  {
+   "rolname": "pg_database_owner",
+   "rolsuper": false,
+   "rolinherit": true,
+   "rolcanlogin": false,
+   "rolbypassrls": false
+  },
+  {
+   "rolname": "postgres",
+   "rolsuper": false,
+   "rolinherit": true,
+   "rolcanlogin": true,
+   "rolbypassrls": true
+  },
+  {
+   "rolname": "service_role",
+   "rolsuper": false,
+   "rolinherit": true,
+   "rolcanlogin": false,
+   "rolbypassrls": true
+  },
+  {
+   "rolname": "supabase_admin",
+   "rolsuper": true,
+   "rolinherit": true,
+   "rolcanlogin": true,
+   "rolbypassrls": true
+  }
+ ],
+ "row_count": 6,
+ "truncated": false
+}

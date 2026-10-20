@@ -1,0 +1,13 @@
+{
+  "_nota": "Fixture sintetica e anonimizada (T25). Nao ha webhook_events com chamada gravada no banco canonico; nenhum dado de cliente real entra aqui. Forma fiel ao envelope do Evolution: event=call, instance, data.",
+  "event": "call",
+  "instance": "instancia-anonimizada-01",
+  "data": {
+    "id": "EV-CALL-OFFER-0001",
+    "from": "5511900000001@s.whatsapp.net",
+    "status": "offer",
+    "isVideo": false,
+    "fromMe": false,
+    "date": "2026-10-02T14:00:00.000Z"
+  }
+}

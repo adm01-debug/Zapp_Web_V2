@@ -1,0 +1,4 @@
+ M supabase/functions/auto-close-conversations/index.test.ts
+ M supabase/functions/auto-close-conversations/index.ts
+ D supabase/migrations/20261014183000_agendar_auto_close.sql
+ D supabase/tests/agendar_auto_close_conversations.sql

@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a1
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B0 sanity: jsdom esta servindo um http(s) valido
+A1-B0 {"href":"http://localhost:3000/","origin":"http://localhost:3000"}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B1 as filtragens ficam na barra de enderecos mas o react-router nunca as ve
+A1-B1 {"mount":{"barra":"?q=liga","routerSearch":"?q=liga","useSearchParamsQ":"liga"},"apos":{"barra":"?q=liga&prio=high","routerSearch":"?q=liga","useSearchParamsQ":"liga","useSearchParamsPrio":null},"final":{"barra":"?q=liga&prio=high","routerSearch":"?q=liga","useSearchParams":{"q":"liga"}}}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B2 parametro escrito na barra por outro modulo e perdido na proxima mudanca de filtro
+A1-B2 {"comPrio":"?view=tasks&prio=high","barraComTask":"?view=tasks&prio=high&task=abc123","depoisDoToggle":"?view=tasks&prio=high&alarm=1","taskSobreviveu":null}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B3 navegacao do router para ?view=board (o que useSearchParams geraria) destroi os filtros
+A1-B3 {"comFiltro":{"id":1,"filters":{"q":"liga","prio":"all","contact":null,"alarm":false,"done":true},"texto":"liga","urlBarra":"?q=liga"},"visaoDoApp":{},"final":{"id":2,"filters":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"texto":"","urlBarra":"?view=board"},"barra":"?view=board"}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B4 navegar para a MESMA search: a URL e reescrita pelo efeito?
+A1-B4 {"antes":"?prio=high","depois":"","routerSearch":"","estado":{"id":3,"filters":{"q":"","prio":"high","contact":null,"alarm":false,"done":true},"texto":"","urlBarra":""}}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B5 nenhuma mudanca de filtro empilha historico nem dispara popstate
+A1-B5 {"hist0":3,"hist1":3,"pops":0,"barra":"?view=tasks","url":"http://localhost:3000/?view=tasks"}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B6 deep-link depois de montar + filtro digitado antes: quem sobrevive
+A1-B6 {"digitado":{"id":4,"filters":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"texto":"ligacao","urlBarra":""},"reidratado":{"id":5,"filters":{"q":"cafe","prio":"all","contact":null,"alarm":false,"done":false},"texto":"cafe","urlBarra":"?q=cafe&done=0"},"final":{"id":6,"filters":{"q":"cafe","prio":"all","contact":null,"alarm":false,"done":false},"texto":"cafe","urlBarra":"?q=cafe&done=0"}}
+
+stdout | .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B7 back depois de filtrar (replaceState nao deixa rastro do filtro)
+A1-B7 {"comFiltro":{"barra":"?view=tasks&prio=high","router":"?view=tasks"},"aposBack":{"href":"http://localhost:3000/?view=tasks&prio=high","router":"?view=tasks","filtros":{"q":"","prio":"high","contact":null,"alarm":false,"done":true}}}
+
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B0 sanity: jsdom esta servindo um http(s) valido 12ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B1 as filtragens ficam na barra de enderecos mas o react-router nunca as ve 28ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B2 parametro escrito na barra por outro modulo e perdido na proxima mudanca de filtro 6ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B3 navegacao do router para ?view=board (o que useSearchParams geraria) destroi os filtros 8ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B4 navegar para a MESMA search: a URL e reescrita pelo efeito? 8ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B5 nenhuma mudanca de filtro empilha historico nem dispara popstate 6ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B6 deep-link depois de montar + filtro digitado antes: quem sobrevive 4ms
+ ✓ .tmp/a1-hook-browser.test.tsx > A1 — BrowserRouter (producao) > B7 back depois de filtrar (replaceState nao deixa rastro do filtro) 7ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  19:24:41
+   Duration  1.32s (transform 85ms, setup 91ms, import 168ms, tests 82ms, environment 785ms)
+

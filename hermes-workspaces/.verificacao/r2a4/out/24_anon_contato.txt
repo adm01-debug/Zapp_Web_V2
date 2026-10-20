@@ -1,0 +1,131 @@
+{
+ "ms": 168,
+ "rows": [
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "ai_conversation_tags"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "away_messages"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "campaign_contacts"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "chatbot_executions"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "chatbot_flows"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "contact_custom_fields"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "contact_identity_map"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "contact_purchases"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "conversation_closures"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "conversation_events"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "conversation_memory"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "conversation_sla"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "conversation_snoozes"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "conversation_tasks"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "email_messages"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "favorite_contacts"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "message_reactions"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "message_templates"
+  },
+  {
+   "privs": "SELECT",
+   "table_name": "messages"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "pinned_conversations"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "scheduled_messages"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "sicoob_contact_mapping"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_connection_queues"
+  },
+  {
+   "privs": "SELECT",
+   "table_name": "whatsapp_connections"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_connections_agent"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_connections_public"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_connections_safe"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_flows"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_groups"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whatsapp_templates"
+  },
+  {
+   "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE",
+   "table_name": "whisper_messages"
+  }
+ ],
+ "row_count": 31,
+ "truncated": false
+}

@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "two_missing_source_adjudications": true,
+  "task_headings": 10,
+  "new_tasks_added_to_original_ledger": 0,
+  "tasks": [
+    {
+      "id": "CRM360-T1",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+        "line_start": 46,
+        "line_end": 58,
+        "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L46-L58",
+        "purpose": ""
+      },
+      "status": "CURRENT_CONSUMER_PRESENT_REQUIRES_SUCCESSOR_ADJUDICATION",
+      "adjudication": "Panel ativo dentro de Mais detalhes, protegido pelo gate CRM; a localização histórica mudou.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "line_start": 94,
+          "line_end": 104,
+          "git_blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/contact-details/ContactAccordionSections.tsx#L94-L104",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "CRM360-T2",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+        "line_start": 60,
+        "line_end": 72,
+        "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L60-L72",
+        "purpose": ""
+      },
+      "status": "CURRENT_CONSUMER_PRESENT_REQUIRES_SUCCESSOR_ADJUDICATION",
+      "adjudication": "Busca CRM integrada à tela de Contatos via ContactCRMDialog; planos posteriores divergem sobre o botão, sem dez tarefas novas presumidas.",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactsView.tsx",
+          "line_start": 170,
+          "line_end": 180,
+          "git_blob_sha": "805de473b266d4bb067c7bd9875eefeaa612f4dc",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/contacts/ContactsView.tsx#L170-L180",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "CRM360-T3",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+        "line_start": 74,
+        "line_end": 82,
+        "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L74-L82",
+        "purpose": ""
+      },
+      "status": "PARTIAL_OR_CHANGED_SCOPE",
+      "adjudication": "GlobalSearch consulta CRM com gate de supervisor, deduplica telefone e só inclui vínculos locais; debounce300ms. CommandPalette ativo busca módulos. Reconciliar a intenção antiga de busca/importação.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 189,
+          "line_end": 218,
+          "git_blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/useGlobalSearchData.ts#L189-L218",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 241,
+          "line_end": 247,
+          "git_blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/useGlobalSearchData.ts#L241-L247",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/CommandPalette.tsx",
+          "line_start": 1,
+          "line_end": 139,
+          "git_blob_sha": "9613392a96b98f04ac70227d9fa6d3707848ec6c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/CommandPalette.tsx#L1-L139",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "CRM360-T4",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+        "line_start": 84,
+        "line_end": 96,
+        "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L84-L96",
+        "purpose": ""
+      },
+      "status": "IMPLEMENTED_IN_SUPERSEDED_COMPONENT",
+      "adjudication": "ChatHeader antigo contém CrmBadges, mas ChatPanel usa ChatPanelHeader. A presença do componente legado não certifica o header ativo.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/ChatHeader.tsx",
+          "line_start": 43,
+          "line_end": 55,
+          "git_blob_sha": "96590c017f85b3fc4d9ec6455d13ab221126b7f0",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/chat/ChatHeader.tsx#L43-L55",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/chat/ChatHeader.tsx",
+          "line_start": 127,
+          "line_end": 129,
+          "git_blob_sha": "96590c017f85b3fc4d9ec6455d13ab221126b7f0",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/chat/ChatHeader.tsx#L127-L129",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "line_start": 244,
+          "line_end": 251,
+          "git_blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/ChatPanel.tsx#L244-L251",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "CRM360-T5",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+        "line_start": 98,
+        "line_end": 108,
+        "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L98-L108",
+        "purpose": ""
+      },
+      "status": "PARTIAL_OR_CHANGED_SCOPE",
+      "adjudication": "Header atual tem logo/nome/VIP; vendedor não aparece nesse header, podendo estar na ficha. Necessita sucessão explícita, não reaplicação cega do prompt.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+          "line_start": 140,
+          "line_end": 205,
+          "git_blob_sha": "e150d4976513971845879922d8746687e2fbc6c9",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/contact-details/ContactHeaderSection.tsx#L140-L205",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "CRM360-T6",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+        "line_start": 110,
+        "line_end": 120,
+        "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L110-L120",
+        "purpose": ""
+      },
+      "status": "PARTIAL_OR_CHANGED_SCOPE",
+      "adjudication": "Lista ativa mostra empresa do contato local; não há consulta CRM por linha nesse ponto. Badge CRM específico do prompt não está presente no trecho.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+          "line_start": 458,
+          "line_end": 467,
+          "git_blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/VirtualizedRealtimeList.tsx#L458-L467",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "INTEL-T1",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+        "line_start": 27,
+        "line_end": 36,
+        "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md#L27-L36",
+        "purpose": ""
+      },
+      "status": "CURRENT_CONSUMER_PRESENT_REQUIRES_SUCCESSOR_ADJUDICATION",
+      "adjudication": "Painel ativo possui gatilhos limitados a4, rapport condicional, fallback de horários, cores churn e DISC. QA visual e contrato de dados externos não foram executados.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
+          "line_start": 99,
+          "line_end": 251,
+          "git_blob_sha": "6dd3770e798201ec6d03ca246c97168cb3b07d96",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/contact-details/ContactIntelligencePanel.tsx#L99-L251",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "line_start": 100,
+          "line_end": 104,
+          "git_blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/contact-details/ContactAccordionSections.tsx#L100-L104",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "INTEL-T2",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+        "line_start": 38,
+        "line_end": 45,
+        "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md#L38-L45",
+        "purpose": ""
+      },
+      "status": "IMPLEMENTED_IN_SUPERSEDED_COMPONENT",
+      "adjudication": "Brain, largura320, borda de risco e motion existem no ChatHeader legado; o header ativo é outro.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/ChatHeader.tsx",
+          "line_start": 70,
+          "line_end": 99,
+          "git_blob_sha": "96590c017f85b3fc4d9ec6455d13ab221126b7f0",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/chat/ChatHeader.tsx#L70-L99",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "line_start": 244,
+          "line_end": 251,
+          "git_blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/ChatPanel.tsx#L244-L251",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "INTEL-T3",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+        "line_start": 47,
+        "line_end": 53,
+        "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md#L47-L53",
+        "purpose": ""
+      },
+      "status": "PARTIAL_OR_CHANGED_SCOPE",
+      "adjudication": "CRMSyncButton legado não tem consumidor ativo localizado. O sucessor CrmSyncMenuItem envia contato estável, mas não mostra badge persistente de último sync ou modo Sem CRM.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/CRMAutoSync.tsx",
+          "line_start": 98,
+          "line_end": 151,
+          "git_blob_sha": "07e15fc49f203d4f9e4026a9daa949574b6156d0",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/CRMAutoSync.tsx#L98-L151",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+          "line_start": 30,
+          "line_end": 58,
+          "git_blob_sha": "851aa7e03c6010ebbdd240bfdc5c52ddba94f55d",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/contact-details/ContactActionButtons.tsx#L30-L58",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    },
+    {
+      "id": "INTEL-T4",
+      "source": {
+        "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+        "line_start": 55,
+        "line_end": 61,
+        "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+        "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md#L55-L61",
+        "purpose": ""
+      },
+      "status": "PARTIAL_OR_CHANGED_SCOPE",
+      "adjudication": "Lista ativa usa ai_sentiment canônico PT-BR; header legado usa briefing.sentiment. O detector do CRMAutoSync não é uma prova de atualização em tempo real de ambos.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+          "line_start": 439,
+          "line_end": 454,
+          "git_blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/VirtualizedRealtimeList.tsx#L439-L454",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/CRMAutoSync.tsx",
+          "line_start": 66,
+          "line_end": 90,
+          "git_blob_sha": "07e15fc49f203d4f9e4026a9daa949574b6156d0",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/CRMAutoSync.tsx#L66-L90",
+          "purpose": ""
+        }
+      ],
+      "new_implementation_authorized": false,
+      "counts_as_new_backlog_task": false
+    }
+  ]
+}

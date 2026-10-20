@@ -1,0 +1,7 @@
+commit 28c67f04947eacede09cfeb193c3fe2101fc8795
+Author:     Audit Agent <audit@local>
+AuthorDate: Sun Oct 18 11:41:00 2026 -0300
+Commit:     Audit Agent <audit@local>
+CommitDate: Sun Oct 18 11:41:00 2026 -0300
+
+    untracked files on (no branch): d85d6db447 setup cenario 2b: arquivo decoy para provar colisao do parser de rename

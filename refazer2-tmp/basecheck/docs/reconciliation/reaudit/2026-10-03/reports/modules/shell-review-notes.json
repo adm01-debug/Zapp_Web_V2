@@ -1,0 +1,67 @@
+{
+  "0": {
+    "positive": "Harness PG17 com migration real fixa, estado anterior/semente reconstruídos, negações com erro esperado e contagens persistidas, controles de agente próprio/admin/service e revalidação de SELECT.",
+    "limits": "Não executado. Predicados de visibilidade são reconstruídos no fixture; get_visible_agent_ids só retorna perfil próprio. Não aplica cadeia inteira nem testa fila com membership; gravação de serviço não chama Edge. Imagem por tag, cleanup por nome com PID e sem rótulo de ownership.",
+    "runner": "set -Eeuo pipefail, ON_ERROR_STOP; expect_error exige status não zero e mensagem; readiness em duas consultas e trap remove container/temporário."
+  },
+  "1": {
+    "positive": "Migration real aplicada após reprodução do estado anterior. Verifica recusa por escopo, ausência de mensagem após recusa, conexão sem fila/atribuída e send_messages; total final quatro mensagens.",
+    "limits": "Não executado. Visibilidade de contato é stub SELECT true. Controle B3 usa contato já atribuído à mesma conexão, logo não isola membership; ADM também pertence à fila e usa contato atribuído, portanto B4 não isola override de admin. Não prova fallback concorrente ou matriz completa atual.",
+    "runner": "set -Eeuo pipefail, ON_ERROR_STOP; helpers exigem erro/valor, container PID e temporário removidos por trap."
+  },
+  "2": {
+    "positive": "Aplica migration fornecida, verifica nove valores de schedule, preserva três jobs por minuto, reaplicação e rollback textual completos, além de mensagem para job ausente.",
+    "limits": "Não executado. cron.job/alter_job são simulados em PG; não instala pg_cron. TMPDIR não é inicializado no script, e linha 91 com set -u depende de ambiente; arquivo jobs-medir.txt é fixo e não removido. A contagem de nove schedules não mapeia job a schedule, ESPERADO fica sem uso. Etapa C só confere retorno do helper, não redução numérica entre antes/depois.",
+    "runner": "set -euo pipefail e FALHAS final; Docker por PID com remoção antecipada; trap só container. Args exigem caminho de migration, tag de imagem alterável."
+  },
+  "3": {
+    "positive": "Aplica migration real de retirada de token, preserva outra configuração, exige constraint validada, nega reinserção e reaplica para idempotência.",
+    "limits": "Não executado. Tabela mínima isolada e acesso como postgres; verifica migration/constraint, não kill switch HTTP ou cadeia completa. Imagem por tag e cleanup pelo nome PID.",
+    "runner": "set -Eeuo pipefail, ON_ERROR_STOP, espera readiness, falha de reinserção exige status e constraint específicos, trap remove container."
+  },
+  "4": {
+    "positive": "Aplica migration duas vezes e verifica ACLs/RLS/trigger attachments, sessão authenticator com JWTs coerentes/incoerentes, recusa a perfil inativo e permissões de fila, autoatribuição, admin, serviço e auditoria append-only.",
+    "limits": "Não executado. Schema parcial e policy contacts_authenticated_all tornam testes específicos dos guards/ACL, não prova completa da RLS real. Helpers de perfil/admin reconstruídos. has_table_privilege com lista SELECT,INSERT em A6 aceita algum dos privilégios, mas B14 exerce INSERT e outros checks cobrem parte do restante.",
+    "runner": "set -Eeuo pipefail, ON_ERROR_STOP, helpers de erro/valor, três readiness consecutivos, tmp_dir sob prefixo verificado e trap do container PID."
+  },
+  "5": {
+    "positive": "X026 é localizada por marcador e aplicada ao fixture; mede skipped_count/status, incremento único, conteúdo do duplicado, exclusão, ator do checklist e restrição de eventos; reaplica policy.",
+    "limits": "Não executado. Admin é stub true, trigger de use_count é copiado no fixture, não importado. Guards de contagem definem JWT mas permanecem como postgres (307–325), portanto não provam ACL de authenticated. Alguns asserts usam substring de número único (298/463) em saída permissiva; contagens exatas posteriores são controles mais fortes. Não compõe migrations posteriores.",
+    "runner": "set -euo pipefail e setup ON_ERROR_STOP=1; psql_raw/script usam ON_ERROR_STOP=0 e ||true, exigindo cuidado com assertions textuais. Container aleatório por tag e trap; fallback de migration local explicitado."
+  },
+  "6": {
+    "positive": "Harness modela applier SECURITY DEFINER com owner não superuser, guard/history, backfill, ponteiro vivo, duas edições, FK e bloqueio de SET NULL. Cria cinco mutações em cópias, exige mudança textual e morte pelo motivo esperado.",
+    "limits": "Não executado. Fixture omite set_talkx_template_updated_at/trigger de timestamp vigente; por isso não reproduz T≠S de R2-DB-013. Owner da tabela e helpers são reconstruídos, RLS completa ausente. Guard_n396 só conta presença, não tgenabled, embora o fixture o crie ativo. Não atesta produção pela simulação.",
+    "runner": "set -Eeuo pipefail; aplicação strict via função; psql_test permissivo tem saídas verificadas. Casos em containers separados; array de nomes registrados após docker run; temporários mktemp sob prefixo e cleanup validado."
+  },
+  "7": {
+    "positive": "Aplica seis migrations reais e exerce claims, recusa authenticated, tokens obsoletos, ACK duplicado, recibo repetido, recuperação antes/depois do dispatch, supressão tardia e conclusão/quarentena com contadores exatos.",
+    "limits": "Não executado. Operações de workers são sequenciais, não corridas concorrentes reais. Schema mínimo e auth.role simplificado; só cadeia de setembro indicada, não todas as redefinições atuais. Provider POST não é chamado.",
+    "runner": "set -euo pipefail, ON_ERROR_STOP; readiness com duas consultas e até três reinícios apenas no setup. Erros esperados via texto específico; cleanup por nome PID com EXIT e remoção antecipada."
+  },
+  "8": {
+    "positive": "Aplica/reaplica V09d, conecta trigger e verifica não dono recusado, dono/admin autorizados com GUC e RPC do dono preservada com valores persistidos.",
+    "limits": "Não executado. Perfil usa coluna role do fixture e helper próprio; não aplica X014/políticas/trigger final, logo autorização histórica de dono agente não prova estado atual. GUC é setado de propósito para isolar guard; RLS completa fora do escopo.",
+    "runner": "set -Eeuo pipefail, ON_ERROR_STOP, recusa exige mensagem; setup e sucesso estritos, cleanup container random/PID."
+  },
+  "9": {
+    "positive": "Migration real de snapshot; compara conteúdo/mídia/variante, confirma retry imutável e nega authenticated, mídia sem tipo e token diferente.",
+    "limits": "Não executado. Schema mínimo e chamadas sequenciais; não verifica worker, variante escolhida no cliente, expiração de lease nem cadeia posterior.",
+    "runner": "set -euo pipefail e ON_ERROR_STOP; retry somente bootstrap, duas consultas readiness, erros específicos e cleanup por nome PID."
+  },
+  "10": {
+    "positive": "Migration X014 aplicada duas vezes; nega agente nas três RPCs, permite admin/supervisor, verifica revisões, ACL e agendamento via trigger com RLS desligada depois religada, além de status persistido.",
+    "limits": "Não executado. Helpers de visibilidade/timezone e schema são mínimos. Blacklist/clicks e parte das policies são confirmados por expressão textual no catálogo, não por operações adversariais. Não aplica redefinições posteriores nem testa cada privilégio operativo.",
+    "runner": "set -euo pipefail e ON_ERROR_STOP; erros exigem status não zero e mensagem, readiness em duas consultas com retry do container e trap EXIT."
+  },
+  "11": {
+    "positive": "Aplica V09/V09c/V09e e reaplica fix; offsets inválidos devem produzir mensagem normalizada, offset válido persiste 10h e atualização seguinte usa revisão 2.",
+    "limits": "Não executado. rpc permissivo captura mensagem; não ativa VERBOSITY verbose nem captura SQLSTATE 22023 diretamente. Não cria trigger de mutabilidade no fixture e não aplica gates posteriores; escopo é conversão de valores histórica, não autorização atual.",
+    "runner": "set -Eeuo pipefail, setup/controle positivo ON_ERROR_STOP; erros esperados verificam texto e ausência do erro cru. Container random/PID e trap."
+  },
+  "12": {
+    "positive": "Reproduz ambiguidade de vínculo/cursor e recursão da policy em etapas distintas, aplica migration real e testa valores, ordem/limite/join, não membro, sem JWT, isolamento e contrato de retorno.",
+    "limits": "Não executado. Schema/predicados anteriores reconstruídos; mensagens têm timestamps distintos, não testa empate de keyset, cursor alheio/inexistente ou redefinições posteriores. Não representa três RPCs diferentes: o foco é get_team_messages_page e policy de membros.",
+    "runner": "set -Eeuo pipefail e ON_ERROR_STOP; erros com status e mensagem esperados, contagens exatas como usuário; mktemp e trap removem fixture/container PID."
+  }
+}

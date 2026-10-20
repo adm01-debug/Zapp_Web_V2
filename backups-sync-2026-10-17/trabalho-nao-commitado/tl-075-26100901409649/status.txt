@@ -1,0 +1,2 @@
+?? src/components/talkx/TalkXCampaignPaused.tsx
+?? src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx

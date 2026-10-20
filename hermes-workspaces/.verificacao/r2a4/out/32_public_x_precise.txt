@@ -1,0 +1,17 @@
+{
+ "ms": 5,
+ "rows": [
+  {
+   "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "args": "p_value text",
+   "proname": "ai_is_canonical_churn_risk"
+  },
+  {
+   "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "args": "p_value text",
+   "proname": "ai_is_canonical_urgency"
+  }
+ ],
+ "row_count": 2,
+ "truncated": false
+}

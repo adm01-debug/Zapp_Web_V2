@@ -1,0 +1,3 @@
+M  src/pages/ChatPopup.tsx
+A  supabase/migrations/20261006114108_r2_db_022_provenance_trigger.sql
+A  supabase/tests/r2_db_022_provenance_trigger.sql

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=dashboard-equipe-satisfacao-metas-sla-26
+ID=2610131523c5ac
+BRANCH=v2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T15:24:03-03:00
+KANBAN=t_a242b42f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610131523c5ac
+PRONTO_SHA=d3efa52d012677469d7847b25a9b8d624df7483b

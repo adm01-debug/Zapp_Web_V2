@@ -1,0 +1,19 @@
+-- V01 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 (achado P0-1 da auditoria).
+--
+-- A view public.talkx_campaign_metrics precisa rodar com os privilegios do
+-- CHAMADOR. Sem security_invoker ela executa como dona (postgres, que tem
+-- rolbypassrls) e ignora a RLS de public.talkx_campaigns ("Users can view own
+-- campaigns"): qualquer usuario autenticado passa a ler metrica e nome de
+-- campanha de outros agentes.
+--
+-- Regressao real: 20260922130000 recriou a view com CREATE OR REPLACE VIEW
+-- para expor campaign_name/id a useTalkXInsights; CREATE OR REPLACE VIEW zera
+-- reloptions e desfez o fix de 20260916170000 (a opcao nunca voltou). O
+-- security_invoker=on gravado pelo Postgres depende da grafia do DDL: com
+-- 'true' o catalogo guarda security_invoker=true.
+--
+-- Idempotente: reaplicar a mesma opcao numa view que ja a possui e no-op.
+-- Alterar reloptions nao invalida grants, viewdef nem consumidores: o front
+-- (useTalkXInsights) continua lendo a view para as campanhas do proprio
+-- usuario, porque a RLS passa a ser aplicada em vez de ignorada.
+ALTER VIEW public.talkx_campaign_metrics SET (security_invoker = true);

@@ -1,0 +1,119 @@
+import { Message, Conversation, ConversationContact, MessageRow } from '@/types/chat';
+import { RealtimeMessage, ConversationWithMessages, ConversationContact as RealtimeContact } from '@/hooks/chat/useRealtimeMessages';
+import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
+
+function parseLocation(content: string): Message['location'] | undefined {
+  try {
+    const value = JSON.parse(content) as Record<string, unknown>;
+    if (typeof value.latitude !== 'number' || !Number.isFinite(value.latitude) || value.latitude < -90 || value.latitude > 90 ||
+        typeof value.longitude !== 'number' || !Number.isFinite(value.longitude) || value.longitude < -180 || value.longitude > 180) {
+      return undefined;
+    }
+    return {
+      latitude: value.latitude,
+      longitude: value.longitude,
+      ...(typeof value.name === 'string' ? { name: value.name } : {}),
+      ...(typeof value.address === 'string' ? { address: value.address } : {}),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+export function mapMessageRowToMessage(row: MessageRow): Message {
+  return {
+    ...row,
+    id: row.id,
+    content: row.content,
+    sender: (row.sender as 'agent' | 'contact'),
+    timestamp: new Date(row.created_at),
+    type: row.message_type as Message['type'],
+    mediaUrl: row.media_url || undefined,
+    isEdited: !!(row as { is_edited?: boolean }).is_edited,
+    is_deleted: row.is_deleted ?? false,
+    external_id: row.external_id || undefined,
+    ...(row.message_type === 'location' ? { location: parseLocation(row.content) } : {}),
+  };
+}
+
+export function mapRealtimeContactToContact(rc: RealtimeContact): ConversationContact {
+  return {
+    ...rc,
+    avatar: rc.avatar_url || undefined,
+    createdAt: new Date(rc.created_at),
+    tags: rc.tags || [],
+    conversation_status: rc.conversation_status as ConversationContact['conversation_status'],
+  };
+}
+
+export function mapRealtimeMessageToMessage(rm: RealtimeMessage, conversationId?: string): Message {
+  return {
+    ...rm,
+    id: rm.id,
+    conversationId: conversationId || rm.contact_id || '',
+    content: rm.content,
+    type: rm.message_type as Message['type'],
+    sender: rm.sender as Message['sender'],
+    timestamp: new Date(rm.created_at),
+    status: (rm.status as Message['status'] | null) || (rm.is_read ? 'read' : 'delivered'),
+    mediaUrl: rm.media_url || undefined,
+    transcription: rm.transcription || null,
+    transcriptionStatus: (rm.transcription_status as Message['transcriptionStatus']) || null,
+    is_deleted: rm.is_deleted ?? false,
+    external_id: rm.external_id || undefined,
+    created_at: rm.created_at,
+    ...(rm.message_type === 'location' ? { location: parseLocation(rm.content) } : {}),
+  };
+}
+
+export function mapRealtimeConversationToConversation(rc: ConversationWithMessages): Conversation {
+  // SLA de 1a resposta: prioridade para o canônico do banco (conversation_sla),
+  // que existe mesmo quando a janela de mensagens veio vazia; fallback no
+  // derivado da primeira mensagem do atendente efetivamente enviada.
+  const slaRows = (rc.contact as RealtimeContact & {
+    conversation_sla?: Array<{ first_response_at: string | null }> | null;
+  }).conversation_sla;
+  // canonico: se existe linha ABERTA (sem resposta), a pendencia esta viva e
+  // firstResponseAt DEVE ser null (cronometro conta). So usamos a linha
+  // respondida mais recente quando NAO ha linha aberta no banco.
+  const slaOpen = slaRows?.find(r => r.first_response_at == null) ?? null;
+  const slaAnswered = slaOpen
+    ? null
+    : [...(slaRows ?? [])]
+        .filter(r => r.first_response_at != null)
+        .sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? ''))
+        .pop() ?? null;
+
+  const firstAgentMessage = rc.messages
+    .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
+
+  const operationalPriority = normalizeOperationalPriority(
+    (rc.contact as { ai_priority?: string | null }).ai_priority,
+  ).value;
+  const priority: Conversation['priority'] =
+    operationalPriority === 'high' || operationalPriority === 'urgent'
+      ? 'high'
+      : operationalPriority === 'low'
+        ? 'low'
+        : 'medium';
+
+  return {
+    id: rc.contact.id,
+    contact: mapRealtimeContactToContact(rc.contact),
+    lastMessage: rc.lastMessage ? mapRealtimeMessageToMessage(rc.lastMessage, rc.contact.id) : undefined,
+    unreadCount: rc.unreadCount,
+    status: 'open',
+    priority,
+    tags: rc.contact.tags || [],
+    createdAt: new Date(rc.contact.created_at),
+    updatedAt: new Date(rc.contact.updated_at),
+    firstResponseAt: slaOpen
+      ? null // pendencia viva registrada no banco: cronometro continua
+      : slaAnswered?.first_response_at
+        ? new Date(slaAnswered.first_response_at)
+        : firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
+    assignedTo: rc.contact.assigned_to ? { id: rc.contact.assigned_to, name: 'Atendente' } : null,
+    sentiment: rc.contact.ai_sentiment,
+  };
+}

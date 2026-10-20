@@ -1,0 +1,77 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/.verificacao/r2a5/repo
+
+ ❯ src/components/contacts/__tests__/ContactMergePermission.test.tsx (7 tests | 2 failed) 931ms
+     × esconde só quando o servidor diz que não pode (false) 21ms
+     × não oferece Mesclar quando is_admin_or_supervisor responde false (mas mantém Comparar) 473ms
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  2 failed | 139 passed (141)
+   Start at  19:25:37
+   Duration  7.25s (transform 10.51s, setup 1.11s, import 19.61s, tests 13.37s, environment 12.57s)
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/contacts/__tests__/ContactMergePermission.test.tsx > canMergeContacts > esconde só quando o servidor diz que não pode (false)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/contacts/__tests__/ContactMergePermission.test.tsx:72:37
+     70| describe('canMergeContacts', () => {
+     71|   it('esconde só quando o servidor diz que não pode (false)', () => {
+     72|     expect(canMergeContacts(false)).toBe(false);
+       |                                     ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactMergePermission.test.tsx > ContactToolbar · botão Mesclar > não oferece Mesclar quando is_admin_or_supervisor responde false (mas mantém Comparar)
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <button
+  class="inline-flex items-center justify-center whitespace-nowrap font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm px-4 py-2 h-11 rounded-xl text-sm gap-2 shrink-0 border-primary/30 text-primary"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-merge w-[18px] h-[18px]"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="m8 6 4-4 4 4"
+    />
+    <path
+      d="M12 2v10.3a4 4 0 0 1-1.172 2.872L4 22"
+    />
+    <path
+      d="m20 22-5-5"
+    />
+  </svg>
+  Mesclar
+</button> instead[39m
+ ❯ src/components/contacts/__tests__/ContactMergePermission.test.tsx:89:47
+     87|     render(<ContactToolbar {...toolbarProps(false)} />);
+     88|
+     89|     expect(screen.queryByText('Mesclar')).not.toBeInTheDocument();
+       |                                               ^
+     90|     expect(screen.getByText('Comparar')).toBeInTheDocument();
+     91|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+error: "vitest" exited with code 1

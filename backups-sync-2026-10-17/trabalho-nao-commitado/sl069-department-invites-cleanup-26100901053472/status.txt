@@ -1,0 +1,4 @@
+ M scripts/ci/check-test-inventory.mjs
+ A scripts/db-audit/sl069-set-profile-department.test.sh
+ M src/integrations/supabase/types.ts
+ A supabase/migrations/20261009034323_sl069_department_invites_cleanup.sql

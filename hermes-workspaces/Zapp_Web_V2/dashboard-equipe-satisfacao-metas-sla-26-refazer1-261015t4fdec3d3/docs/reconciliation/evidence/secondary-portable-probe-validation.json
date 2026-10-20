@@ -1,0 +1,13 @@
+{
+  "skins_same_outcomes": true,
+  "volume_same_outcomes": true,
+  "scripts_support_RECONCILIATION_REPO": true,
+  "scripts_support_RECONCILIATION_OUTPUT": true,
+  "network_requests": 0,
+  "production_changes": false,
+  "summary": {
+    "checks": 307,
+    "requirements_passed": 304,
+    "requirements_failed": 3
+  }
+}

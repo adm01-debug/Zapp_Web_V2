@@ -1,0 +1,12 @@
+{
+  "read_config_from": {"claude": false},
+  "permissions": {
+    "deny": ["Exec(git push)", "Exec(/usr/bin/git push)", "Exec(gh)", "Exec(supabase)", "Exec(npx supabase)",
+             "Exec(bunx supabase)", "Exec(git remote)", "Exec(git config)", "Exec(sudo)", "Exec(env -u)",
+             "Write(.env*)", "Read(**/.env*)", "Write(.devin/**)", "Write(.hermes-tarefa)", "Write(.husky/**)",
+             "Read(~/.config/**)", "Read(~/.secrets/**)", "Read(/workspace/.secrets/**)", "Read(~/.ssh/**)",
+             "Read(~/.claude/**)", "Read(~/.codex/**)", "Read(~/.local/share/devin/**)", "Exec(cat ~/.config)",
+             "Write(~/arquitetura-v2/**)", "Write(~/hermes-workspaces/.v2-fila/**)", "Write(~/.local/**)", "Write(~/.cache/v2-*)",
+             "Exec(printenv)", "Exec(env)"]
+  }
+}

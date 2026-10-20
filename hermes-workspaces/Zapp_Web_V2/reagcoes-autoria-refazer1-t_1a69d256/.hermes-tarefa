@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=reagcoes-autoria
+ID=261013021892a8
+BRANCH=v2/reagcoes-autoria-261013021892a8
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/reagcoes-autoria-261013021892a8
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T02:18:22-03:00
+KANBAN=t_8d53f9bd
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/reagcoes-autoria-261013021892a8/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013021892a8
+APLICADA_LOCAL=20261013210000_message_reactions_autoria.sql sha=13e32ee895a20865
+PRONTO_SHA=9a5ed42b17f00b145d7216271d9b187464f80b6d

@@ -1,0 +1,89 @@
+estados com copia+.hermes-tarefa: 44
+linhas comparadas: 18873
+vereditos iguais: 18793
+mudaram de veredito: 80
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_anomaly_configs.ai_anomaly_configs_pkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_anomaly_incidents.ai_anomaly_incidents_pkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_capability_blocks.ai_capability_blocks_incident_id_fkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_capability_blocks.ai_capability_blocks_pkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_anomaly_configs.ai_anomaly_configs_pkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_anomaly_incidents.ai_anomaly_incidents_pkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_capability_blocks.ai_capability_blocks_pkey
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=rls :: rls|ai_anomaly_configs
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=rls :: rls|ai_anomaly_incidents
+  MUDOU [v2-26100514586c2a] FALHOU -> EXPLICADA classe=rls :: rls|ai_capability_blocks
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_usage_outbox.ai_usage_outbox_pkey
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_usage_outbox.ai_usage_outbox_pkey
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=?? :: policies|ai_usage_outbox."Service role can manage AI usage outbox"
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|DELETE|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|INSERT|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|MAINTAIN|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|REFERENCES|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|SELECT|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|TRIGGER|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|TRUNCATE|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|UPDATE|grantor=postgres
+  MUDOU [v2-2610051517b70e] FALHOU -> EXPLICADA classe=rls :: rls|ai_usage_outbox
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:inbound_message_effects.inbound_message_effects_effect_check
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:inbound_message_effects.inbound_message_effects_pkey
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|inbound_message_effects.inbound_message_effects_pkey
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|DELETE|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|INSERT|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|MAINTAIN|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|REFERENCES|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|SELECT|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|TRIGGER|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|TRUNCATE|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.inbound_message_effects|postgres|UPDATE|grantor=postgres
+  MUDOU [v2-2610051941f36a] FALHOU -> EXPLICADA classe=rls :: rls|inbound_message_effects
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_anomaly_configs.ai_anomaly_configs_pkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_anomaly_incidents.ai_anomaly_incidents_pkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_capability_blocks.ai_capability_blocks_incident_id_fkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_capability_blocks.ai_capability_blocks_pkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_anomaly_configs.ai_anomaly_configs_pkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_anomaly_incidents.ai_anomaly_incidents_pkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_capability_blocks.ai_capability_blocks_pkey
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=rls :: rls|ai_anomaly_configs
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=rls :: rls|ai_anomaly_incidents
+  MUDOU [v2-26100520004a8c] FALHOU -> EXPLICADA classe=rls :: rls|ai_capability_blocks
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:ai_usage_outbox.ai_usage_outbox_pkey
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|ai_usage_outbox.ai_usage_outbox_pkey
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=?? :: policies|ai_usage_outbox."Service role can manage AI usage outbox"
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|DELETE|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|INSERT|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|MAINTAIN|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|REFERENCES|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|SELECT|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|TRIGGER|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|TRUNCATE|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.ai_usage_outbox|postgres|UPDATE|grantor=postgres
+  MUDOU [v2-261005201329a5] FALHOU -> EXPLICADA classe=rls :: rls|ai_usage_outbox
+  MUDOU [v2-26100609368dca] FALHOU -> EXPLICADA classe=rls :: rls|inbound_message_effects
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:agent_invitations.agent_invitations_created_by_fkey
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:agent_invitations.agent_invitations_pkey
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=nome-gerado :: constraints|relation:agent_invitations.agent_invitations_used_by_fkey
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=nome-gerado :: indexes|agent_invitations.agent_invitations_pkey
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|DELETE|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|INSERT|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|MAINTAIN|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|REFERENCES|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|SELECT|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|TRIGGER|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|TRUNCATE|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.agent_invitations|postgres|UPDATE|grantor=postgres
+  MUDOU [v2-2610061737a4d1] FALHOU -> EXPLICADA classe=rls :: rls|agent_invitations
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|DELETE|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|INSERT|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|MAINTAIN|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|REFERENCES|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|SELECT|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|TRIGGER|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|TRUNCATE|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=acl-padrao :: relation_grants|r:public.reply_attribution_events|postgres|UPDATE|grantor=postgres
+  MUDOU [v2-2610061930b2f6] FALHOU -> EXPLICADA classe=rls :: rls|reply_attribution_events
+  MUDOU [v2-2610070326c47c] FALHOU -> EXPLICADA classe=rls :: rls|talkx_storage_purge_queue
+mudaram FORA das 3 classes: 2
+  FORA: ('v2-2610051517b70e', 'policies|ai_usage_outbox."Service role can manage AI usage outbox"', 'FALHOU', 'EXPLICADA', '??')
+  FORA: ('v2-261005201329a5', 'policies|ai_usage_outbox."Service role can manage AI usage outbox"', 'FALHOU', 'EXPLICADA', '??')
+explicada ANTES e FALHOU DEPOIS: 0
+rc=0

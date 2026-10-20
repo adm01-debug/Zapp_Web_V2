@@ -1,0 +1,9 @@
+DROP INDEX IF EXISTS public.idx_audit_logs_action;
+DROP INDEX IF EXISTS public.idx_audit_logs_user_id;
+DROP INDEX IF EXISTS public.idx_email_messages_account;
+DROP INDEX IF EXISTS public.idx_email_messages_thread;
+DROP INDEX IF EXISTS public.idx_email_threads_account;
+DROP INDEX IF EXISTS public.idx_login_attempts_email;
+DROP INDEX IF EXISTS public.idx_message_reactions_message;
+DROP INDEX IF EXISTS public.idx_messages_contact_id;
+DROP INDEX IF EXISTS public.idx_team_members_conversation;

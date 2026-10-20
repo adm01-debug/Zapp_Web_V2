@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/lib/calls/adapters/CallEngine.ts",
+      "git_blob_sha": "ac73ac3bb7bd719ab22757ba08a6ef0c0752f68e",
+      "sha256": "9a2294dfb22f85503e20d70b23b4c5dd96bd9325b0bd10084ab19b74aec4e7d7"
+    }
+  ],
+  "script_sha256": "50976b3cb5116f3fe012abcd2983527ed0f848a3a5f44fa05c7f88780ec221dc",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "CALL-P01",
+      "status": "PASS",
+      "title": "Late Terminated from timed-out session A finishes new session B",
+      "observed": {
+        "sequence": [
+          "A starts",
+          "A local watchdog",
+          "idle",
+          "B starts",
+          "old A Terminated"
+        ],
+        "finished_call_ids": [
+          "call-1",
+          "call-2"
+        ],
+        "current_status": "ended",
+        "provider_hangups_at_watchdog": 0
+      },
+      "limits": "Fake provider event after local timeout; proves missing session fence in the exact engine, not real SIP/provider timing."
+    },
+    {
+      "id": "CALL-P02",
+      "status": "PASS",
+      "title": "Late Established from A marks B as answered",
+      "observed": {
+        "answered_call_ids": [
+          "call-2"
+        ],
+        "current_status": "active"
+      },
+      "limits": "Same stale-session precondition; a second event variant of CALL-P01, not another independent defect."
+    },
+    {
+      "id": "CALL-P03",
+      "status": "PASS",
+      "title": "Deferred call creation adds post-termination wait to talk seconds",
+      "observed": {
+        "answered_at_ms": 1000,
+        "terminated_at_ms": 11000,
+        "initial_persistence_resolved_at_ms": 21000,
+        "actual_interval_seconds": 10,
+        "reported_talk_seconds": 20
+      },
+      "limits": "Synthetic clock and delayed initial create promise. Database latency was not measured."
+    }
+  ],
+  "method": "Exact whole CallEngine class transpiled; deterministic fake adapter, sink, Date and timers. No network, SIP registration, media or database.",
+  "network_calls": 0,
+  "product_writes": 0
+}

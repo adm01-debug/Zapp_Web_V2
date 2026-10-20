@@ -1,0 +1,3 @@
+scripts/db-audit/.hermes-tmp.rWXRjc
+scripts/db-audit/talkx-save-template-rpc.test.sh
+supabase/migrations/20261010000000_talkx_template_save_with_note.sql

@@ -1,0 +1,79 @@
+== container: zapp-v2-followup-runtime-test-1962209 (imagem postgres:17-alpine) ==
+
+============ BLOCO A — estado ANTERIOR (defeito) ============
+[PASS] A.1 (DEFEITO) enroll_followup nao existe: nao ha fila de execucoes
+[PASS] A.2 (DEFEITO) due_followups nao existe: o runner nao tem o que consumir
+[PASS] A.3 (DEFEITO) admin grava status invalido: nao ha CHECK de vocabulario
+[PASS] A.4 a linha com status invalido ficou gravada
+[PASS] A.5 (DEFEITO) nao existe a coluna reason (motivo)
+
+============ BLOCO B — migration aplicada ============
+NOTICE:  constraint "followup_executions_status_check" of relation "followup_executions" does not exist, skipping
+NOTICE:  trigger "trg_followup_cancel_on_inbound" for relation "public.messages" does not exist, skipping
+[PASS] B.1 backfill: status legado pending -> pendente
+[PASS] B.2 backfill: valor legado preservado no motivo (rollback exato)
+[PASS] B.2b backfill: sent -> enviado com motivo
+[PASS] B.2c backfill: completed -> concluido com motivo
+[PASS] B.2d resposta do contato sobrescreve o motivo do backfill
+[PASS] B.2e atendente cancela a linha do backfill SEM motivo (usa o padrao)
+[PASS] B.2f cancelamento sem motivo grava o padrao por cima do backfill
+[PASS] B.3 atendente do contato matricula o contato e recebe execution_id
+[PASS] B.4 execucao nasceu pendente, no 1o passo
+[PASS] B.5 proxima execucao = agora + delay do 1o passo (2h)
+[PASS] B.6 agente de outro contato nao matricula contato alheio
+[PASS] B.7 contato inexistente nao autoriza (sem vazar existencia)
+[PASS] B.8 sequencia inativa e recusada
+[PASS] B.9 sequencia inexistente devolve o MESMO erro (sem oraculo)
+[PASS] B.10 o atendente do contato ve a execucao
+[PASS] B.11 outro agente NAO ve a execucao
+[PASS] B.12 staff (admin) ve a execucao
+[PASS] B.13 anon NAO ve execucao nenhuma (RLS nega por padrao)
+[PASS] B.14 CHECK barra status fora do vocabulario
+[PASS] B.14b anon nao executa enroll_followup (ACL por assinatura)
+[PASS] B.15 authenticated NAO consome due_followups (ACL nega antes do gate)
+[PASS] B.16 due_followups ainda vazio (next_step_at no futuro)
+[PASS] B.17 service_role ve a execucao vencida
+[PASS] B.18 service_role consome a fila vencida
+[PASS] B.19 limite respeitado (limit 0 -> 1 linha, nunca 0)
+[PASS] B.20 outro agente nao conclui execucao alheia (mesmo erro de inexistente)
+[PASS] B.21 id inexistente devolve o MESMO erro
+[PASS] B.22 atendente conclui a execucao
+[PASS] B.23 status concluido e completed_at gravado
+[PASS] B.24 concluir de novo e recusado (nao esta aberta)
+[PASS] B.25 nao-autorizado nao cancela
+[PASS] B.26 atendente cancela com motivo
+[PASS] B.27 cancelado e motivo gravado
+[PASS] B.28 mensagem do AGENTE nao cancela o follow-up
+[PASS] B.29 resposta do CONTATO cancela o follow-up do contato
+[PASS] B.30 o follow-up de OUTRO contato segue pendente
+[PASS] B.31 EXECUTE de enroll/complete/cancel concedido a authenticated
+[PASS] B.32 due_followups negado a authenticated e concedido a service_role
+[PASS] B.33 segunda matricula com execucao aberta e recusada
+[PASS] B.34a atendente conclui a execucao aberta
+[PASS] B.34b matricula nova depois de concluir e aceita
+[PASS] B.35a atendente cancela a execucao aberta
+[PASS] B.35b matricula nova depois de cancelar e aceita
+[PASS] B.35c atendente conclui a ultima para fechar o ciclo
+[PASS] B.35d staff (admin) matricula contato de outro atendente
+[PASS] B.35e staff cancela para fechar o ciclo
+[PASS] B.36 indice unico parcial da matricula aberta existe
+[PASS] B.36b indice do runner (pendente por next_step_at) existe
+[PASS] B.37b banco recusa a segunda matricula aberta (indice unico parcial)
+
+============ BLOCO C — o Rollback da migration EXECUTA ============
+[PASS] C.1 as 4 RPCs sumiram no rollback
+[PASS] C.2 a coluna reason sumiu
+[PASS] C.3 o CHECK de status sumiu
+[PASS] C.4 o gatilho sumiu
+[PASS] C.5 o default voltou para pending
+[PASS] C.6 a policy antiga de SELECT voltou a existir
+[PASS] C.7 linha cancelada apos o backfill (contato) continua cancelada
+[PASS] C.8 linha cancelada apos o backfill (RPC) continua cancelada
+[PASS] C.9 linha intocada do backfill volta ao status legado
+[PASS] C.10 o indice unico parcial caiu no rollback
+[PASS] C.10b o indice do runner caiu no rollback
+
+PASS: followup-runtime — fila de execucoes (enroll/complete/cancel/due) com autorizacao
+por visibilidade de contato, RLS de SELECT conferida por papel real, vocabulario de status
+com CHECK, backfill do legado, matricula 1:1 com execucao aberta, motivo novo sempre por
+cima do antigo e Rollback condicional executado (cancelada continua cancelada).

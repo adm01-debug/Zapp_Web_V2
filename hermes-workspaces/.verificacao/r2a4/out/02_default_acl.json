@@ -1,0 +1,169 @@
+{
+ "ms": 6,
+ "rows": [
+  {
+   "acl": "{postgres=rwU/supabase_auth_admin,dashboard_user=rwU/supabase_auth_admin}",
+   "schema": "auth",
+   "grantor": "supabase_auth_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/supabase_auth_admin,dashboard_user=X/supabase_auth_admin}",
+   "schema": "auth",
+   "grantor": "supabase_auth_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/supabase_auth_admin,dashboard_user=arwdDxtm/supabase_auth_admin}",
+   "schema": "auth",
+   "grantor": "supabase_auth_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=r*w*U*/supabase_admin}",
+   "schema": "cron",
+   "grantor": "supabase_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X*/supabase_admin}",
+   "schema": "cron",
+   "grantor": "supabase_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=a*r*w*d*D*x*t*m*/supabase_admin}",
+   "schema": "cron",
+   "grantor": "supabase_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=r*w*U*/supabase_admin}",
+   "schema": "extensions",
+   "grantor": "supabase_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X*/supabase_admin}",
+   "schema": "extensions",
+   "grantor": "supabase_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=a*r*w*d*D*x*t*m*/supabase_admin}",
+   "schema": "extensions",
+   "grantor": "supabase_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}",
+   "schema": "graphql",
+   "grantor": "supabase_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}",
+   "schema": "graphql",
+   "grantor": "supabase_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}",
+   "schema": "graphql",
+   "grantor": "supabase_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}",
+   "schema": "graphql_public",
+   "grantor": "supabase_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}",
+   "schema": "graphql_public",
+   "grantor": "supabase_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}",
+   "schema": "graphql_public",
+   "grantor": "supabase_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=rwU/postgres,authenticated=rwU/postgres,service_role=rwU/postgres}",
+   "schema": "public",
+   "grantor": "postgres",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "schema": "public",
+   "grantor": "postgres",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "schema": "public",
+   "grantor": "postgres",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}",
+   "schema": "public",
+   "grantor": "supabase_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}",
+   "schema": "public",
+   "grantor": "supabase_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}",
+   "schema": "public",
+   "grantor": "supabase_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=rwU/supabase_admin,dashboard_user=rwU/supabase_admin}",
+   "schema": "realtime",
+   "grantor": "supabase_admin",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/supabase_admin,dashboard_user=X/supabase_admin}",
+   "schema": "realtime",
+   "grantor": "supabase_admin",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=a*r*wdDxtm/supabase_admin,dashboard_user=arwdDxtm/supabase_admin}",
+   "schema": "realtime",
+   "grantor": "supabase_admin",
+   "objtype": "r"
+  },
+  {
+   "acl": "{postgres=rwU/postgres,anon=rwU/postgres,authenticated=rwU/postgres,service_role=rwU/postgres}",
+   "schema": "storage",
+   "grantor": "postgres",
+   "objtype": "S"
+  },
+  {
+   "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "schema": "storage",
+   "grantor": "postgres",
+   "objtype": "f"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "schema": "storage",
+   "grantor": "postgres",
+   "objtype": "r"
+  }
+ ],
+ "row_count": 27,
+ "truncated": false
+}

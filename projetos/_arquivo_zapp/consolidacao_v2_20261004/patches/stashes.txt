@@ -1,0 +1,2 @@
+stash@{0} 4eeb072b38a07d1b33e304b346974e943b26eb10 WIP on hermes/ia-bloco-06-observabilidade-custos-e-neg-261002140502ff: 5d9838d64 fix(db): versiona a migration de correlacao da IA-051 ja aplicada no banco
+stash@{1} 698922653bc6f2d31c0c2f9bca081f2cdd975104 On hermes/catalogo-bloco-bc-26100112165778: bc-final (backup: hermes-validacao/catalogo-bloco-bc/bc-final.patch)

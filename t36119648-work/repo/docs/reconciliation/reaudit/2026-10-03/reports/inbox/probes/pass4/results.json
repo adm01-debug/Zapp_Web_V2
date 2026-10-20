@@ -1,0 +1,195 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity": {
+    "head_verified": true,
+    "source_blobs_verified": 11,
+    "pins_sha256": "b5b3119ac3693cb5d681a8fcae3f4c6c701a9168930608fb843c427de3aeeff9",
+    "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "runner_sha256": "591eca575b7d42047ffd0a1cc295fa6fc6ad2fc6954a70b35a7d7aaaeb3686c6"
+  },
+  "engine": "v24.19.0",
+  "no_network": true,
+  "method": "Quarta passagem: biblioteca de mídia e seletor de stickers, TypeScript e trechos TSX reais com fronteiras locais; sem serviços/DOM.",
+  "source_blob_hashes": {
+    "src/components/inbox/stickers/StickerTypes.ts": "307265529f63b2a467b7e5d7521e478a3cc6246e",
+    "src/components/inbox/chat/MessageBubble.tsx": "c18dd32e97ebbea0e252914a81481ee0c14d7147",
+    "src/hooks/sticker-picker/useStickerPicker.ts": "3aa36f78b1fbf537623ca556a25bb38de12e3c72",
+    "src/components/settings/media-library/useMediaLibrary.ts": "9665b58a6d449dbac5a665f71daa6e1285a0bea0",
+    "src/components/settings/media-library/useMediaUpload.ts": "6f0c0a01a34ad1b563655720d30c743955399e40",
+    "src/components/settings/media-library/AIGenerateDialog.tsx": "b5c329adff3cae5b1a3f31ff2b4fc48f9164c4f5",
+    "src/components/inbox/StickerPicker.tsx": "6d5b60c026f2ee289cc7b08d588264b352783766",
+    "src/components/settings/media-library/StatsCards.tsx": "829865403d565869ac5194bee0e4604f625c7368",
+    "src/lib/storage_object_reference.ts": "7edf9e17f861b96f90f2d346132b1e1557a0f97c",
+    "src/hooks/storage/useResolvedStorageUrl.ts": "fa8a58242a22ce01eecb47bd3e6736d859e98c3f",
+    "src/components/inbox/stickers/StickerGrid.tsx": "1a07645b3eae11d7fa4c7038bf1418a0c41d86a3"
+  },
+  "results": [
+    {
+      "id": "sticker_delete_dangles_message_reference",
+      "description": "Excluir a entrada remove o arquivo compartilhado, mas a mensagem conserva sua URL",
+      "observed": {
+        "messageStillReferencesOriginal": true,
+        "originalObjectExists": false,
+        "removedObjects": [
+          {
+            "kind": "remove",
+            "bucket": "whatsapp-media",
+            "paths": [
+              "contact/original.webp"
+            ]
+          }
+        ],
+        "libraryRows": 0
+      },
+      "limitations": "INSERT exato do handler de salvar e hook de exclusão reais; banco/Storage simulados com escritas autorizadas. Não reconstrói o endpoint de mídia/RLS nem afirma que toda tentativa de salvar do balão passe suas policies. A precondição é a existência da entrada compartilhada e permissão de remover o objeto."
+    },
+    {
+      "id": "media_import_insert_failure_keeps_objects",
+      "description": "Falha no INSERT conserva objetos do upload em massa e do áudio gerado; retry cria outro",
+      "observed": {
+        "bulk": {
+          "objectsAfterFailureAndRetry": 2,
+          "rowsAfterRetry": 1,
+          "removeCalls": 0,
+          "toasts": [
+            [
+              "success",
+              "0/1 arquivos importados com classificação IA"
+            ],
+            [
+              "success",
+              "1/1 arquivos importados com classificação IA"
+            ]
+          ]
+        },
+        "generated": {
+          "objects": 1,
+          "rows": 0,
+          "removeCalls": 0
+        }
+      },
+      "limitations": "Hook de upload e callback real de salvar IA; conversão/fetch/banco/Storage simulados. O contador 0/1 do primeiro upload é honesto sobre quantidade importada; a falha comprovada é objeto órfão sem tratamento/reuso no retry."
+    },
+    {
+      "id": "sticker_mutations_ignore_errors",
+      "description": "Favorito/categoria/exclusão de sticker seguem otimistas e anunciam sucesso após error",
+      "observed": {
+        "optimisticFavorite": true,
+        "optimisticCategory": "amor",
+        "visibleItems": 0,
+        "persistedItems": 1,
+        "toasts": [
+          [
+            "success",
+            "⭐ Adicionada aos favoritos"
+          ],
+          [
+            "success",
+            "Categoria: \"Amor\""
+          ],
+          [
+            "success",
+            "Figurinha removida"
+          ]
+        ]
+      },
+      "limitations": "Extensão de R2-INB-042; corpo real de useStickerPicker e fronteiras simuladas. Não cria novo ID para o mesmo padrão de resultado ignorado."
+    },
+    {
+      "id": "sticker_close_leaves_upload",
+      "description": "Fechamento do StickerPicker apaga pendingUpload sem remover o arquivo",
+      "observed": {
+        "pendingCleared": true,
+        "objectsRemaining": 1,
+        "storageRemoveCalls": 0
+      },
+      "limitations": "Extensão de R2-INB-043. Upload/callbacks reais e ligação onOpenChange conferida literalmente; sem DOM. Não duplica o mesmo contrato já encontrado no picker de áudio."
+    },
+    {
+      "id": "media_catalog_fixed_windows",
+      "description": "Item 1001 não pode ser encontrado; favoritos e totais refletem apenas mil linhas",
+      "observed": {
+        "databaseItems": 1001,
+        "libraryItems": 1000,
+        "librarySearchResults": 0,
+        "stickerItems": 1000,
+        "stickerSearchResults": 0,
+        "stats": {
+          "total": 1000,
+          "favorites": 0
+        },
+        "queries": [
+          {
+            "kind": "select",
+            "table": "stickers",
+            "limit": 1000,
+            "orderBy": "created_at"
+          },
+          {
+            "kind": "select",
+            "table": "stickers",
+            "limit": 1000,
+            "orderBy": "use_count"
+          }
+        ]
+      },
+      "limitations": "Dois hooks e derivação real dos StatsCards; PostgREST modelado obedecendo order/limit. Não mede cardinalidade produtiva; ausência de paginação é conferida nos consumidores integrais."
+    },
+    {
+      "id": "private_sticker_grid_skips_resolution",
+      "description": "Grid usa locator privado cru que o resolvedor canônico reconhece e assina",
+      "observed": {
+        "storedLocator": "https://fixture.invalid/storage/v1/object/public/whatsapp-media/contact/sticker.webp",
+        "gridSource": "https://fixture.invalid/storage/v1/object/public/whatsapp-media/contact/sticker.webp",
+        "canonicalResolvedUrl": "https://fixture.invalid/storage/v1/object/sign/whatsapp-media/contact/sticker.webp?token=fixture",
+        "signCalls": [
+          {
+            "bucket": "whatsapp-media",
+            "path": "contact/sticker.webp"
+          }
+        ]
+      },
+      "limitations": "Resolvedor/parser reais, assinatura simulada e TSX do grid conferido. Estado privado vem do DDL citado no relatório. Não foi feito HTTP de imagem; não atribui erro de entrega outbound, cujo backend pode assinar a referência."
+    },
+    {
+      "id": "library_storage_delete_failure_accepted",
+      "description": "Exclusão simples e em lote concluem a linha mesmo quando Storage devolve error",
+      "observed": {
+        "observations": [
+          {
+            "bulk": false,
+            "rows": 0,
+            "objects": 1,
+            "toast": [
+              "success",
+              "Item excluído"
+            ]
+          },
+          {
+            "bulk": true,
+            "rows": 0,
+            "objects": 1,
+            "toast": [
+              "success",
+              "1 itens excluídos"
+            ]
+          }
+        ]
+      },
+      "limitations": "Extensão de R2-INB-042: helper/handlers reais com erro Storage resolvido. Diferente de alegar que o administrador ignora também error do DELETE da linha: esse erro é tratado."
+    },
+    {
+      "id": "library_reclassify_errors_not_counted",
+      "description": "Erro da função de classificação recebe toast success sem contagem de erro e limpa seleção",
+      "observed": {
+        "functionErrorReturned": true,
+        "toast": [
+          "success",
+          "0/1 itens reclassificados com IA"
+        ],
+        "selectionAfterFailure": 0
+      },
+      "limitations": "Hook real com invoke retornando {data:null,error}; não é rejeição lançada, que o catch conta corretamente. Não afirma que houve 1/1 atualizações; o contador exibe zero, mas não distingue falha de categoria já correta."
+    }
+  ]
+}

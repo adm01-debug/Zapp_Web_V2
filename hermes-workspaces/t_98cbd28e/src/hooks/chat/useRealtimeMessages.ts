@@ -1,0 +1,268 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { getLogger } from '@/lib/logger';
+import { MessageRow } from '@/types/chat';
+import { ContactRow } from '@/types/contact';
+import { RealtimeService } from '@/services/realtime.service';
+import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
+import { sendMessageToContact } from '../realtime/messageSender';
+import {
+  normalizeMessage, buildConversation,
+} from '../realtime/realtimeUtils';
+import { useRealtimeNotifications } from '../realtime/useRealtimeNotifications';
+import { useMessageUpdateBatcher } from '../realtime/useMessageUpdateBatcher';
+
+const log = getLogger('RealtimeMessages');
+
+export interface NewMessageNotification {
+  id: string;
+  contactId: string;
+  contactName: string;
+  contactAvatar: string | null;
+  message: string;
+  timestamp: Date;
+}
+
+export type RealtimeMessage = MessageRow;
+export type ConversationContact = ContactRow;
+
+export interface ConversationWithMessages {
+  contact: ConversationContact;
+  messages: RealtimeMessage[];
+  unreadCount: number;
+  lastMessage: RealtimeMessage | null;
+}
+
+export function useRealtimeMessages() {
+  const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const conversationsRef = useRef<ConversationWithMessages[]>([]);
+  const mountedRef = useRef(true);
+  const fetchGenerationRef = useRef(0);
+  const liveRevisionRef = useRef(0);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      fetchGenerationRef.current += 1;
+    };
+  }, []);
+
+  const {
+    newMessageNotification, notifyAboutIncomingMessage,
+    dismissNotification, setSelectedContact, setSoundEnabled,
+  } = useRealtimeNotifications();
+
+  const commitConversations = useCallback(
+    (updater: ConversationWithMessages[] | ((prev: ConversationWithMessages[]) => ConversationWithMessages[])) => {
+      setConversations((prev) => {
+        const next = typeof updater === 'function'
+          ? (updater as (prev: ConversationWithMessages[]) => ConversationWithMessages[])(prev)
+          : updater;
+        conversationsRef.current = next;
+        return next;
+      });
+    },
+    []
+  );
+
+  const hydrateConversationForMessage = useCallback(
+    async (message: RealtimeMessage) => {
+      if (!message.contact_id) return;
+      try {
+        const [contact] = await RealtimeService.fetchContactsByIds([message.contact_id]);
+        if (!contact) { log.warn('Incoming message received for unknown contact', { contactId: message.contact_id }); return; }
+        if (!mountedRef.current) return;
+        liveRevisionRef.current += 1;
+        commitConversations((prev) => {
+          const idx = prev.findIndex((c) => c.contact.id === contact.id);
+          if (idx >= 0) {
+            const existing = prev[idx];
+            if (existing.messages.some((m) => m.id === message.id)) return prev;
+            const updated = [...prev];
+            updated.splice(idx, 1);
+            updated.unshift(buildConversation(contact, [...existing.messages, message]));
+            return updated;
+          }
+          return [buildConversation(contact, [message]), ...prev];
+        });
+        notifyAboutIncomingMessage(contact, message);
+      } catch (err) { log.error('Error hydrating conversation for incoming message:', err); }
+    },
+    [commitConversations, notifyAboutIncomingMessage]
+  );
+
+  const { handleMessageUpdate: handleBatchedMessageUpdate } = useMessageUpdateBatcher(
+    conversationsRef,
+    commitConversations,
+    hydrateConversationForMessage,
+  );
+  const handleMessageUpdate = useCallback((payload: RealtimePostgresChangesPayload<RealtimeMessage>) => {
+    liveRevisionRef.current += 1;
+    handleBatchedMessageUpdate(payload);
+  }, [handleBatchedMessageUpdate]);
+
+  const handleNewMessage = useCallback(
+    (payload: RealtimePostgresChangesPayload<RealtimeMessage>) => {
+      const newMessage = normalizeMessage(payload.new as RealtimeMessage);
+      if (!newMessage.contact_id) return;
+
+      liveRevisionRef.current += 1;
+      const existingConversation = conversationsRef.current.find((c) => c.contact.id === newMessage.contact_id);
+      if (!existingConversation) { void hydrateConversationForMessage(newMessage); return; }
+
+      commitConversations((prev) => {
+        const idx = prev.findIndex((c) => c.contact.id === newMessage.contact_id);
+        if (idx < 0) return prev;
+        const conv = prev[idx];
+        if (conv.messages.some((m) => m.id === newMessage.id)) return prev;
+        const updated = [...prev];
+        updated.splice(idx, 1);
+        updated.unshift(buildConversation(conv.contact, [...conv.messages, newMessage]));
+        return updated;
+      });
+
+      notifyAboutIncomingMessage(existingConversation.contact, newMessage);
+    },
+    [commitConversations, hydrateConversationForMessage, notifyAboutIncomingMessage]
+  );
+
+  // Sem isso, editar apelido/cargo/empresa etc. (EditContactDialog) so
+  // aparece na lista apos reload — o contato em memoria so era atualizado
+  // via hidratacao de mensagem nova, nunca por UPDATE direto na tabela.
+  // Postgres manda a linha completa no payload de UPDATE (nao e merge
+  // parcial), entao substituir c.contact inteiro e seguro.
+  const handleContactUpdate = useCallback(
+    (payload: RealtimePostgresChangesPayload<ConversationContact>) => {
+      const updatedContact = payload.new as ConversationContact;
+      if (!updatedContact?.id) return;
+      // Sem isso, um fetchConversations em voo (disparado por handleSendMessage,
+      // por exemplo) sobrescrevia esse UPDATE ao resolver: fetchConversations só
+      // preserva eventos ao vivo quando liveRevisionRef mudou durante o request
+      // (linha ~166), e este handler nunca incrementava a revision — apelido/
+      // cargo/empresa editados voltavam ao valor antigo na lista até o próximo
+      // evento realtime.
+      liveRevisionRef.current += 1;
+      commitConversations((prev) => {
+        const idx = prev.findIndex((c) => c.contact.id === updatedContact.id);
+        if (idx < 0) return prev;
+        const updated = [...prev];
+        // Merge, não substitui: o payload de UPDATE do Realtime só traz colunas
+        // de contacts, nunca o embed conversation_sla (join feito em
+        // fetchInitialConversations/fetchContactsByIds). Substituir o objeto
+        // inteiro apagava o SLA em memória a cada UPDATE — o badge passava a
+        // contar desde created_at do contato em vez do atendimento aberto.
+        updated[idx] = { ...updated[idx], contact: { ...updated[idx].contact, ...updatedContact } };
+        return updated;
+      });
+    },
+    [commitConversations]
+  );
+
+  const fetchConversations = useCallback(async () => {
+    const generation = ++fetchGenerationRef.current;
+    const startingLiveRevision = liveRevisionRef.current;
+    try {
+      setLoading(true);
+      setError(null);
+      const builtConversations = await RealtimeService.fetchInitialConversations();
+      if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
+      if (liveRevisionRef.current === startingLiveRevision) {
+        commitConversations(builtConversations);
+      } else {
+        // Preserve events received while the snapshot request was in flight.
+        commitConversations((current) => {
+          const liveByContact = new Map(current.map((conversation) => [conversation.contact.id, conversation]));
+          const merged = builtConversations.map((snapshot) => {
+            const live = liveByContact.get(snapshot.contact.id);
+            if (!live) return snapshot;
+            liveByContact.delete(snapshot.contact.id);
+            const messages = new Map(snapshot.messages.map((message) => [message.id, message]));
+            for (const message of live.messages) messages.set(message.id, message);
+            return buildConversation(live.contact, [...messages.values()]);
+          });
+          return [...liveByContact.values(), ...merged];
+        });
+      }
+    } catch (err) {
+      if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
+      const errorMessage = err instanceof Error ? err.message : 'Falha ao carregar conversas';
+      log.error('Error fetching conversations:', err);
+      setError(errorMessage);
+      void import('sonner').then(({ toast }) => {
+        toast.error('Erro de conexão', {
+          description: 'Não foi possível carregar suas conversas. Verifique sua conexão.'
+        });
+      });
+    } finally {
+      if (mountedRef.current && generation === fetchGenerationRef.current) setLoading(false);
+    }
+  }, [commitConversations]);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchConversations);
+  }, [fetchConversations]);
+
+  useSupabaseRealtime<RealtimeMessage>({
+    channelName: 'global-messages-realtime',
+    table: 'messages',
+    onInsert: handleNewMessage,
+    onUpdate: handleMessageUpdate,
+    enabled: true
+  });
+
+  useSupabaseRealtime<ConversationContact>({
+    channelName: 'global-contacts-realtime',
+    table: 'contacts',
+    onUpdate: handleContactUpdate,
+    enabled: true
+  });
+
+  // Ouve atualizações de conversation_status disparadas por CloseConversationDialog
+  // e aplica patch otimista no array in-memory sem precisar de refetch.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { contactId, status } = (e as CustomEvent<{ contactId: string; status: string }>).detail;
+      const typedStatus = status as ConversationContact['conversation_status'];
+      commitConversations((prev): ConversationWithMessages[] =>
+        prev.map((c): ConversationWithMessages =>
+          c.contact.id === contactId
+            ? { ...c, contact: { ...c.contact, conversation_status: typedStatus } }
+            : c
+        )
+      );
+    };
+    window.addEventListener('zapp:contact-status-changed', handler);
+    return () => window.removeEventListener('zapp:contact-status-changed', handler);
+  }, [commitConversations]);
+
+  const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string, replyToId?: string | null) => {
+    return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload, replyToId);
+  };
+
+  const markAsRead = async (contactId: string) => {
+    const conv = conversationsRef.current.find(c => c.contact.id === contactId);
+    if (conv && conv.unreadCount === 0) return;
+
+    try {
+      await RealtimeService.markMessagesAsRead(contactId);
+      commitConversations((prev) =>
+        prev.map((c) => c.contact.id === contactId
+          ? buildConversation(c.contact, c.messages.map((m) => ({ ...m, is_read: true })))
+          : c
+        )
+      );
+    } catch (err) {
+      log.error('Error in markAsRead hook:', err);
+    }
+  };
+
+  return {
+    conversations, loading, error, sendMessage, markAsRead,
+    refetch: fetchConversations, newMessageNotification,
+    dismissNotification, setSelectedContact, setSoundEnabled,
+  };
+}

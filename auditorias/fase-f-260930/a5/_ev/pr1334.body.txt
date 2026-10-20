@@ -1,0 +1,103 @@
+## Descrição
+
+Fecha os achados de severidade ALTA/MÉDIA da auditoria adversarial da FASE E que sobraram do F1
+(PR #1325). Causa raiz primeiro: o `QuickAdd` zerava o prazo no envio (o 2º create seguido no
+mesmo dia nascia sem `due_date` e sumia da Agenda), o `key={selectedDay}` do pai remontava o campo
+e descartava o rascunho, `temHora` tratava 23:59 como "com hora" embora o app grave 23:59 em todo
+prazo de dia inteiro (deixando o grupo "Sem hora" inalcançável), "Prazos" saía na ordem bruta da
+query, o botão de "Atrasadas" não declarava a região que controla e o `PriorityChip` imprimia
+"undefined" com prioridade nula.
+
+Relatório da auditoria: `~/auditorias/fase-e-260930/RELATORIO-CONSOLIDADO.md`.
+
+## Tipo de Mudança
+
+- [x] 🐛 Bug fix (correção de bug)
+- [x] ✅ Testes
+- [ ] ✨ Nova feature (funcionalidade nova)
+- [ ] 💥 Breaking change (mudança que quebra compatibilidade)
+- [ ] 📚 Documentação
+- [ ] 🎨 Estilo/UI
+- [ ] ♻️ Refatoração
+- [ ] ⚡ Performance
+- [ ] 🔧 DevOps/CI
+- [ ] 🔒 Segurança
+
+## Plano
+
+- Plano do Claude: não há plano novo — são os achados da auditoria adversarial da FASE E, executados como **FASE F2** (o F1 foi o PR #1325).
+- Passos executados:
+  - 4 arquivos corrigidos, cada um com teste que **falha** antes;
+  - 5 testes novos + 2 atualizados (afirmavam o comportamento corrigido);
+  - 7 mutações cirúrgicas — **7/7 mortas**, árvore restaurada entre cada;
+  - gates completos + registro no ledger (CP-E, bloco da FASE F2 e correção da decisão da etapa 57).
+- Divergências do plano: o plano das 100 etapas não prevê a FASE F; nenhuma etapa do plano foi alterada.
+
+## Banco de dados
+
+Teste fora de produção: não se aplica (nenhuma mudança de schema ou de dado).
+
+nenhuma mudança
+
+## Rollback
+
+não se aplica
+
+## Testes Realizados
+
+- [x] typecheck: `bun run typecheck` → exit 0
+- [x] lint: `node scripts/ci/lint-ratchet.mjs` → baseline=971, atual=948, novas=0 · `node scripts/qa/medir-tipografia.cjs --check` → aprovado
+- [x] build: `bun run build` → built in 5.74s
+- [x] testes unitários: `bunx vitest run` → 345 arquivos, **4554 passed**, 40 todo, 0 erro não tratado
+- [x] db:guard / contrato de migrations: não se aplica (sem DDL)
+- [x] prova red-first / mutation do teste novo: 5 casos novos + 2 atualizados e **7/7 mutações mortas**
+
+## Checklist
+
+- [x] Código segue o padrão do projeto (AGENTS.md / CLAUDE.md lidos)
+- [x] Self-review realizado no diff completo (`git diff origin/main...HEAD`)
+- [x] Sem console.log ou debug code
+- [x] Sem secrets/credenciais hardcoded
+- [x] Tipos TypeScript corretos
+- [x] RLS policies consideradas (se DB) — não se aplica
+- [x] Documentação atualizada (ledger da FASE F2)
+- [x] Hooks de pre-commit/pre-push passaram sem `--no-verify`
+
+## Achados fora do escopo (NÃO corrigidos)
+
+- `src/hooks/tasks/workItemLabels.ts` — `PRIORITY_LABELS.medium` é `'Media'` (sem acento) enquanto o resto da UI escreve "Média"; é texto visível, mas o ajuste mexe em vários testes/etiquetas e merece PR próprio.
+- `TasksAgendaMode` (AUD55-05) — a faixa de 7 dias não se atualiza sozinha na virada da meia-noite com a aba aberta.
+- `TasksAgendaMode` (AUD55-06) — ponto `destructive` no dia 0 quando há atrasadas antigas.
+- `src/components/layout/PageHeader.tsx` — `<li>` dentro de `<li>` (warning de validação em toda tela).
+- `Crm360Tab.tsx:120/167/245` — dois botões que levam à mesma rota.
+
+## Notas para Reviewer
+
+- **Mudança de comportamento declarada:** `23:59` (e `00:00`) passam a ser **dia inteiro**. É a única leitura que torna o grupo "Sem hora" da etapa 55 alcançável, porque toda tarefa criada pela interface grava 23:59. Efeito visível: tarefas com prazo de fim de dia aparecem em "Sem hora" em vez de "Prazos". A alternativa (gravar meia-noite) foi descartada por deixar dois padrões convivendo no banco.
+- **`key={selectedDay}` removido**: o prazo do dia é reaplicado por **ajuste durante o render** dentro do `QuickAdd` (o padrão do React quando "o dado de fora mudou"), não por `useEffect` de sincronização — o `lint-ratchet` conta efeito de sincronização como dívida nova.
+- Dois testes existentes foram **atualizados de propósito**: o da etapa 57 esperava o rascunho descartado (o bug) e o da etapa 55 esperava a ordem bruta da query.
+- **Prova em produção do F1 (#1325), para registro:** 371 chunks varridos sem falha — `Contato indisponível` em `TasksModule-*.js`, o normalizador de acento (`0300`) em `useMyWorkItems-*.js` e "Nenhuma tarefa com esse filtro" no chunk de Tarefas.
+- Etapas 54 e 58 seguem dependendo de sessão logada (login de QA no cofre do Hermes).
+
+
+<!-- This is an auto-generated description by cubic. -->
+---
+## Summary by cubic
+Corrige seis achados ALTA/MÉDIA da auditoria adversarial da FASE E que sobraram do F1, todos no fluxo QuickAdd/Agenda.
+
+**Bug fixes**
+- Envio e Esc voltam ao prazo padrão do campo — antes o 2º create seguido no mesmo dia nascia sem `due_date` e sumia da Agenda.
+- Trocar de dia reaplica o prazo por dentro do campo em vez de remontar (`key={selectedDay}` removido) — o rascunho digitado sobrevive à troca.
+- `temHora` passou a ler 23:59 e 00:00 como dia inteiro — como toda tarefa criada pela interface grava 23:59, o grupo "Sem hora" deixa de ser inalcançável.
+- "Prazos" ordena por `due_date`, o botão "Atrasadas" declarou a região que controla por `aria-controls` e o `PriorityChip` com prioridade nula/desconhecida cai em `medium`.
+
+**Testes**
+- 5 testes novos e 2 atualizados (afirmavam o comportamento antigo); 7 mutações cirúrgicas, 7/7 mortas.
+
+<sup>Written for commit 923fbb95200471e55b65ee91c1ea912b029411e2. Summary will update on new commits.</sup>
+
+<a href="https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1334?utm_source=github" target="_blank" rel="noopener noreferrer" data-no-image-dialog="true"><picture><source media="(prefers-color-scheme: dark)" srcset="https://www.cubic.dev/buttons/review-in-cubic-dark.svg"><source media="(prefers-color-scheme: light)" srcset="https://www.cubic.dev/buttons/review-in-cubic-light.svg"><img alt="Review in cubic" src="https://www.cubic.dev/buttons/review-in-cubic-dark.svg"></picture></a>
+
+<!-- End of auto-generated description by cubic. -->
+
+

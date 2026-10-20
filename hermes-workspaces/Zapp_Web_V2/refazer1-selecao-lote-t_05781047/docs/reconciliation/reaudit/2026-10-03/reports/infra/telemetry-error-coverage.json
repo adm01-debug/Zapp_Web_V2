@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "area": "infra_telemetry_error",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "state": "COMPLETED",
+  "primary_files": 7,
+  "primary_lines": 685,
+  "primary_full_file_read": 7,
+  "primary_remaining": 0,
+  "counts": {
+    "total": 16,
+    "targeted": 4,
+    "semantic": 12
+  },
+  "inventory": [
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+      "bytes": 6742,
+      "lines": 158,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          95,
+          154
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Trechos de apoio da extensão INF-019 revisada integralmente pelo root: baseline, rodar e mutações com finally/SHA. Nonzero indiscriminado continua inadequado para provar assertion alvo; não se executou o script."
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/main.go",
+      "sha256": "20b898693e73a0c1ca5cb7011f8436210f7e29996f538502f95eec27bd5eec4f",
+      "bytes": 10704,
+      "lines": 355,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          355
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Releitura integral para explicitar a faixa antes implícita: HMAC corpo/timestamp/nonce, retenção até expiração da aceitação, mutex/capacidade, limites de body/time/redirect, validação de todas respostas DNS e dial de IP validado preservando SNI/Host. Erros externos genéricos. Nenhum Go/servidor/rede iniciado."
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/main_test.go",
+      "sha256": "8494c049f41ff10c869ccab0984721519eab96092dc7eddc18773e01e1fe9bcb",
+      "bytes": 6640,
+      "lines": 182,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          182
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Releitura integral de assertions: IP/URL privados, autenticação/replay com clock à frente, pin de dial/SNI/Host e rejeição de DNS privado antes do dial. TLS insecure é fixture do httptest; teste inicia serviço local se executado, mas não foi executado nesta auditoria."
+    },
+    {
+      "path": "src/App.tsx",
+      "sha256": "3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220",
+      "bytes": 5554,
+      "lines": 154,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          45
+        ],
+        [
+          118,
+          150
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Apoio dirigido: contrato e montagem de overlays opcionais com fallback null, AppRoutes irmão fora do boundary. Nenhum handler global foi executado."
+    },
+    {
+      "path": "src/components/admin/telemetry/TelemetryCharts.tsx",
+      "sha256": "6561043abc39c17c03d793980510a03d92f7b30e0e07357fe08c603da1db9358",
+      "bytes": 6839,
+      "lines": 187,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          187
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Leitura integral de apoio: buckets floor por duração, severidade/contagem/média/máximo e ranking. Usa somente rows filtrado; 500 mais recentes limitam série. Sem chamada ou mutação, sem nova medição fictícia."
+    },
+    {
+      "path": "src/components/errors/ErrorBoundary.tsx",
+      "sha256": "fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca",
+      "bytes": 9219,
+      "lines": 254,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          254
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Leitura integral: recuperação de chunks exige storage legível e gravável, flag evita loop; retry/home/reload limpam flag com catch. Detalhes DEV condicionados, render fallback truthy é INF-041. Export ErrorFallback não teve consumidor produtivo localizado além de reexport; sem alegação de exposição desse export."
+    },
+    {
+      "path": "src/lib/queryClient.ts",
+      "sha256": "5036c273782cf6aca3d756b2ac74710edbd0b5d8fe177a0991e5fdc2a390fac5",
+      "bytes": 1301,
+      "lines": 33,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Leitura integral de apoio: singleton, retries de queries e networkMode online; mutations sem retry. Não configura throwOnError global nem converte toda query em suspense."
+    },
+    {
+      "path": "src/pages/AdminTelemetriaPage.tsx",
+      "sha256": "a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d",
+      "bytes": 7421,
+      "lines": 151,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          151
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Leitura integral: queryKey inclui filtros, query limitada a 500 mais recentes com erro lançado; apresentação ignora isError (INF-040). Cleanup verifica SDK error. Calendário custom e polling lidos; truncamento e ausência de datas explícitos como limites, não novo defeito automático."
+    },
+    {
+      "path": "src/pages/ViewRouter.tsx",
+      "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+      "bytes": 10236,
+      "lines": 258,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          75,
+          90
+        ],
+        [
+          125,
+          152
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Apoio dirigido: mapeamento ativo telemetry e gate de acesso antes de ViewComponent. Erro de useQuery não é automaticamente exceção de render."
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryStatsCards.tsx",
+      "sha256": "fb0467566d2e293f48a0c20084de3a5970d66e1f980a9fd40a2e6033f288ea1e",
+      "bytes": 2112,
+      "lines": 60,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Leitura integral: quatro cards recebem agregados; não buscam dados. Rótulos e zero/média seguem o pai, sustentando efeito de INF-040 sem ID separado."
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryTable.tsx",
+      "sha256": "351510648414af0ce45528db1ed08ec743d02894d50e0899083481b885eab0b4",
+      "bytes": 4194,
+      "lines": 88,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Leitura integral: loading, sucesso vazio e linhas; vazio afirma bom desempenho sem receber erro do pai (INF-040). Colunas/limiares/labels de data e severidade inspecionados."
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryTopOffenders.tsx",
+      "sha256": "5c3bd94943b88f1a41d1f70c80b9886c39bdc295c6ef3bd93baee0d1954dc9fa",
+      "bytes": 1571,
+      "lines": 44,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Leitura integral: oculta vazio e exibe até oito grupos recebidos, count/max/média; divisor só ocorre em grupo com linha. Contrato é alertas dos registros carregados, sem query adicional."
+    },
+    {
+      "path": "src/pages/admin-telemetria/__tests__/telemetryUtils.periodo.test.ts",
+      "sha256": "0928374eb90d7506b53ab24eb8db21246a21b04fe5cb3a454ad977cce06a8690",
+      "bytes": 3540,
+      "lines": 77,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Asserções/fixtures integrais lidas, sem executar: importa helper real; data fixa e Intl São Paulo testam meia-noite, sete dias calendário e horas corridas. Não prova a apresentação de erro da página."
+    },
+    {
+      "path": "src/pages/admin-telemetria/telemetryTypes.ts",
+      "sha256": "e5eeadc26833cc9f0480a7dd1d6db05f78e754e62c16b2090176a974f2126f06",
+      "bytes": 503,
+      "lines": 18,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          18
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Tipos integrais de linha, severidade e período; schema estático não valida dados remotos por si só."
+    },
+    {
+      "path": "src/pages/admin-telemetria/telemetryUtils.tsx",
+      "sha256": "566b087d0f34ae9afad23181d16ea044d7c120f56f2f1b569a9b43e7f2eb8188",
+      "bytes": 3151,
+      "lines": 70,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "review_level": "semantic",
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "telemetry_error_delegated",
+      "review_basis": "Leitura integral: formatos, badges e agrupamento top oito por frequência; dias de calendário em São Paulo são decisão explícita para 7d, horas corridas preservadas para 1h/6h/24h."
+    },
+    {
+      "path": "src/services/navigation.service.ts",
+      "sha256": "8e128c5cc1aa208f96570c68295d6e4836ca1febed4d7d1e603f648d4c294d48",
+      "bytes": 9809,
+      "lines": 206,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "reviewed_ranges": [
+        [
+          142,
+          155
+        ]
+      ],
+      "review_level": "targeted",
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "telemetry_error_support",
+      "review_basis": "Apoio dirigido: item telemetry com ADMIN_ONLY; não se presume acesso universal."
+    }
+  ],
+  "remaining_gaps": [
+    "Nenhum browser, SDK real, banco, TLS, Go runtime ou serviço iniciado.",
+    "Probes usam fonte real e fronteiras inertes; não substituem React/TanStack nem a execução de seus ciclos.",
+    "O limite de 500 registros representa uma amostra recente, não certifica métricas de todo o banco; não foi promovido a um novo mecanismo sem promessa mais específica.",
+    "A leitura integral dos sete arquivos fecha apenas o lote delegado; o roster final de testes permanece em andamento."
+  ],
+  "harness_history": [
+    "Primeira execução interrompida por guarda do harness: import.meta.env.DEV aparece também em comentário, tornando a contagem textual 2. A substituição foi restringida à expressão JSX exata; os dois casos passaram depois. Nenhuma falha do harness virou achado."
+  ]
+}

@@ -1,0 +1,22 @@
+commit ea8235426a4e25cfdf1ee5c43edbc1bbbd6533fd
+Merge: d85d6db447 1afbf0b268 28c67f0494
+Author:     Audit Agent <audit@local>
+AuthorDate: Sun Oct 18 11:41:00 2026 -0300
+Commit:     Audit Agent <audit@local>
+CommitDate: Sun Oct 18 11:41:00 2026 -0300
+
+    WIP on (no branch): d85d6db447 setup cenario 2b: arquivo decoy para provar colisao do parser de rename
+
+diff --git a/D00src/_audit_tmp/renameDst.ts b/D00src/_audit_tmp/renameDst_renamed.ts
+similarity index 100%
+rename from D00src/_audit_tmp/renameDst.ts
+rename to D00src/_audit_tmp/renameDst_renamed.ts
+diff --git a/src/_audit_tmp/renameDst.ts b/src/_audit_tmp/renameDst.ts
+index eb9d8a35c9..cfe070be00 100644
+--- a/src/_audit_tmp/renameDst.ts
++++ b/src/_audit_tmp/renameDst.ts
+@@ -1,3 +1,4 @@
+ export function auditRenameHelper(x: number): number {
+   return x + 1;
+ }
++// modificado de verdade pelo cartao

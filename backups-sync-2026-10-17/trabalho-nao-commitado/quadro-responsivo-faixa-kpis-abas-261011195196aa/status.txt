@@ -1,0 +1,3 @@
+A  src/components/tasks/__tests__/quadroAbasResponsivo.test.tsx
+UU src/components/tasks/board/BoardColumn.tsx
+UU src/components/tasks/board/TasksBoardMode.tsx

@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-selecao-lote-acompanha-filtro-26101312252db7
+
+································
+
+ Test Files  1 passed (1)
+      Tests  31 passed | 1 expected fail (32)
+   Start at  12:41:19
+   Duration  2.91s (transform 252ms, setup 604ms, import 188ms, tests 135ms, environment 1.75s)
+

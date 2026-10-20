@@ -1,0 +1,8 @@
+commit 0a9b556c68735eb7459b93d3023edc3b28dc225f
+Merge: 753bd275a5 19721b214a
+Author:     Joaquim <joaquim@promobrindes.com.br>
+AuthorDate: Fri Oct 9 22:20:52 2026 -0300
+Commit:     Joaquim <joaquim@promobrindes.com.br>
+CommitDate: Fri Oct 9 22:20:52 2026 -0300
+
+    WIP on v2/n-175-conexoes-colunas-whatsapp-261009200210a4: 753bd275a fix(n-175): remove connectionsCount error handling, keep select('id') swap only

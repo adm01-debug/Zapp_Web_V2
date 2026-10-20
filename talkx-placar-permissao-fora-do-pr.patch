@@ -1,0 +1,162 @@
+From c7154e51c47dd79d9faad9c776de4cbf9d92db2b Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Fri, 2 Oct 2026 19:04:05 -0300
+Subject: [PATCH] fix(ci): da pull-requests: write ao job do placar (o PR do
+ bot nao abria)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+O workflow `talkx-status-regen.yml` foi corrigido no #1698 para entregar o placar por PR
+(em vez de empurrar na main protegida), mas o job nunca criou PR nenhum: em todo push da
+main em que o placar defasa, o passo "Abrir ou atualizar PR do placar" morre com
+
+  ##[error]Resource not accessible by integration -
+  https://docs.github.com/rest/pulls/pulls#create-a-pull-request
+
+Causa: o job declara `contents: write` e `actions: write`, e o default de workflow
+permissions do repo e `read`; sem `pull-requests: write` o GITHUB_TOKEN nao tem poder de
+criar PR. Medido no run 37068185925 (main, commit cba0a6dc3) — o workflow seguia vermelho
+em 100% dos pushes da main em que o placar defasa.
+
+Correcao: uma linha — `pull-requests: write` no job, com o comentario do porque.
+
+Verificacao: teste vermelho-antes novo em `scripts/ci/talkx-status-warn.unit.mjs`
+(falha contra o workflow da main: "precisa de pull-requests: write para abrir/atualizar o
+PR"; passa com a correcao: 3/3) · actionlint 1.7.12 exit 0 · prettier OK ·
+check-workflow-pins OK · typecheck 0 · lint-ratchet novas=0.
+---
+ .github/workflows/talkx-status-regen.yml      |  9 +++-
+ docs/talkx/v4/STATUS.md                       |  4 +-
+ .../ci/talkx-status-regen-workflow.unit.mjs   |  9 ++++
+ scripts/ci/talkx-status-warn.unit.mjs         | 41 +++++++++++++++++--
+ 4 files changed, 57 insertions(+), 6 deletions(-)
+
+diff --git a/.github/workflows/talkx-status-regen.yml b/.github/workflows/talkx-status-regen.yml
+index 247c72e2f..673cf1d25 100644
+--- a/.github/workflows/talkx-status-regen.yml
++++ b/.github/workflows/talkx-status-regen.yml
+@@ -33,6 +33,13 @@ jobs:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: write
++      # Necessario para o passo "Abrir ou atualizar PR do placar": o default de
++      # workflow permissions do repo e `read`, entao sem esta permissao o
++      # POST /repos/{owner}/{repo}/pulls devolve
++      #   `Resource not accessible by integration`
++      # (medido no run 37068185925) e o job fica vermelho em todo push da main em
++      # que o placar defasar.
++      pull-requests: write
+       # Necessario para o passo "Destravar os checks do PR do placar" aprovar os
+       # runs que nascem em action_required por terem sido disparados pelo
+       # GITHUB_TOKEN. Sem isto o PR fica parado esperando aprovacao manual.
+@@ -55,7 +62,7 @@ jobs:
+         id: pull-request
+         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+         env:
+-          HUSKY: '0'  # Evita que o hook pre-push do Husky bloqueie o push interno da action
++          HUSKY: '0' # Evita que o hook pre-push do Husky bloqueie o push interno da action
+         with:
+           token: ${{ github.token }}
+           base: main
+diff --git a/docs/talkx/v4/STATUS.md b/docs/talkx/v4/STATUS.md
+index dee6be917..49c6b49c9 100644
+--- a/docs/talkx/v4/STATUS.md
++++ b/docs/talkx/v4/STATUS.md
+@@ -5,7 +5,7 @@
+ 
+ ## Etapas concluídas
+ 
+-**22 de 200** concluídas.
++**23 de 200** concluídas.
+ 
+ | Fase | Concluídas | Total |
+ |---|---|---|
+@@ -15,7 +15,7 @@
+ | 3 · Integridade, observabilidade e ensaio real | 1 | 12 |
+ | 4 · Dados comerciais e vínculo com o CRM | 0 | 6 |
+ | 5 · Kit, estados, modais e navegação | 1 | 15 |
+-| 6 · Capacidades novas do motor e agregações | 1 | 20 |
++| 6 · Capacidades novas do motor e agregações | 2 | 20 |
+ | 7 · Visão geral | 0 | 6 |
+ | 8 · Templates | 0 | 16 |
+ | 9 · Segmentos | 0 | 19 |
+diff --git a/scripts/ci/talkx-status-regen-workflow.unit.mjs b/scripts/ci/talkx-status-regen-workflow.unit.mjs
+index bbfaffb40..8a04c26b4 100644
+--- a/scripts/ci/talkx-status-regen-workflow.unit.mjs
++++ b/scripts/ci/talkx-status-regen-workflow.unit.mjs
+@@ -51,6 +51,15 @@ test('abre/atualiza o PR do placar pelo mesmo mecanismo do types-sync', () => {
+ });
+ 
+ test('destrava os checks do PR aberto com GITHUB_TOKEN', () => {
++  // Gap encontrado em producao depois do primeiro merge (run 37068185925): o
++  // job tinha contents+actions:write mas NAO pull-requests:write, e o
++  // create-pull-request falhou com "Resource not accessible by integration".
++  // O push do branch passava — so a criacao do PR quebrava.
++  assert.match(
++    workflow,
++    /pull-requests:\s*write/u,
++    'sem pull-requests: write o GITHUB_TOKEN nao cria o PR (Resource not accessible by integration)',
++  );
+   assert.match(workflow, /actions:\s*write/u, 'precisa de actions:write para aprovar os runs');
+   assert.match(workflow, /uses:\s*actions\/github-script@[a-f0-9]{40}/u);
+   assert.match(workflow, /approveWorkflowRun/u);
+diff --git a/scripts/ci/talkx-status-warn.unit.mjs b/scripts/ci/talkx-status-warn.unit.mjs
+index d7d2debb4..fd79cbd23 100644
+--- a/scripts/ci/talkx-status-warn.unit.mjs
++++ b/scripts/ci/talkx-status-warn.unit.mjs
+@@ -42,9 +42,21 @@ function blocoStep(texto, marcador) {
+ test('placar do Talk X avisa no PR, não bloqueia (continue-on-error)', () => {
+   const ci = read('.github/workflows/ci.yml');
+   const bloco = blocoStep(ci, 'placar freshness');
+-  assert.match(bloco, /continue-on-error:\s*true/, 'o step do placar deve ter continue-on-error: true (aviso, não bloqueia)');
+-  assert.match(bloco, /if:\s*github\.event_name\s*==\s*['"]pull_request['"]/, 'o check deve rodar só em PR');
+-  assert.match(bloco, /node scripts\/talkx\/v4-status\.mjs\s+--check/, 'o check continua rodando o v4-status.mjs --check');
++  assert.match(
++    bloco,
++    /continue-on-error:\s*true/,
++    'o step do placar deve ter continue-on-error: true (aviso, não bloqueia)'
++  );
++  assert.match(
++    bloco,
++    /if:\s*github\.event_name\s*==\s*['"]pull_request['"]/,
++    'o check deve rodar só em PR'
++  );
++  assert.match(
++    bloco,
++    /node scripts\/talkx\/v4-status\.mjs\s+--check/,
++    'o check continua rodando o v4-status.mjs --check'
++  );
+ });
+ 
+ test('existe workflow de auto-regen no push da main (bot, sem loop)', () => {
+@@ -60,3 +72,26 @@ test('existe workflow de auto-regen no push da main (bot, sem loop)', () => {
+   assert.match(wf, /branch:\s*automation\/talkx-status/, 'branch do PR do placar');
+   assert.doesNotMatch(wf, /^\s*git push\s*$/m, 'não pode empurrar direto na main');
+ });
++
++test('regen declara pull-requests: write (sem isso o POST /pulls não tem permissão)', () => {
++  const wf = read('.github/workflows/talkx-status-regen.yml');
++
++  // Medido no run 37068185925 (main, já com o #1698): o passo "Abrir ou atualizar PR
++  // do placar" falhou com
++  //   ##[error]Resource not accessible by integration - .../pulls#create-a-pull-request
++  // O job declarava `contents: write` e `actions: write`, mas não `pull-requests`; o
++  // default de workflow permissions do repo é `read`, então o GITHUB_TOKEN não podia
++  // criar PR — e o job ficava vermelho em todo push da main em que o placar defasava.
++  const job = wf.slice(wf.indexOf('\n  regen:'));
++  assert.match(
++    job,
++    /contents:\s*write/,
++    'precisa de contents: write para publicar o branch de automação'
++  );
++  assert.match(
++    job,
++    /pull-requests:\s*write/,
++    'precisa de pull-requests: write para abrir/atualizar o PR'
++  );
++  assert.match(job, /actions:\s*write/, 'precisa de actions: write para destravar os checks do PR');
++});
+-- 
+2.43.0
+

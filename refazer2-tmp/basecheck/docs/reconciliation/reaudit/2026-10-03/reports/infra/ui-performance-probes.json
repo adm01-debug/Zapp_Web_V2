@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "probe_source_sha256": "b72569543e1462617ab8addf40925dbc46ad8db3060dfed86b1b4d999fd18835",
+  "pins_sha256": "9e6d1041ad85e8c34bc417712563130436d65456119ffaa3cca4c20edd98a7ed",
+  "case_count": 4,
+  "finding_ids": [
+    "R2-INF-032",
+    "R2-INF-033",
+    "R2-INF-034",
+    "R2-INF-035"
+  ],
+  "cases": [
+    {
+      "id": "INF-UI-P01",
+      "finding": "R2-INF-032",
+      "executed": "actual debounce module + async search/group callbacks",
+      "observed": {
+        "query": "vermelho",
+        "after_B": [
+          {
+            "id": "catalog-B",
+            "title": "Produto vermelho",
+            "category": "search",
+            "href": "/?view=catalog&product=B&send=1"
+          }
+        ],
+        "after_late_A": [
+          {
+            "title": "Resultados",
+            "items": [
+              {
+                "id": "catalog-A",
+                "title": "Produto azul",
+                "category": "search",
+                "href": "/?view=catalog&product=A&send=1"
+              }
+            ]
+          }
+        ]
+      },
+      "control": "Pending timers coalesce; already-started async requests do not cancel or fence each other.",
+      "limitation": "Synthetic successful result envelopes. No catalog Edge invocation, React renderer, browser navigation or message send."
+    },
+    {
+      "id": "INF-UI-P02",
+      "finding": "R2-INF-033",
+      "executed": "entire default data module + actual filtering and executeCommand",
+      "observed": [
+        {
+          "id": "action-new-chat",
+          "visible": true,
+          "performed_action_or_navigation": false,
+          "closed": true
+        },
+        {
+          "id": "action-quick-reply",
+          "visible": true,
+          "performed_action_or_navigation": false,
+          "closed": true
+        },
+        {
+          "id": "action-keyboard",
+          "visible": true,
+          "performed_action_or_navigation": false,
+          "closed": true
+        }
+      ],
+      "controls": {
+        "navigation_dispatch": true,
+        "explicit_action_dispatch": true,
+        "disabled_no_effect": true
+      },
+      "limitation": "Host wiring is separately read in full; fake navigation records calls without opening any page."
+    },
+    {
+      "id": "INF-UI-P03",
+      "finding": "R2-INF-034",
+      "executed": "actual grouping/allItems and scoped keyboard callback",
+      "observed": {
+        "visible_quick_items": [
+          "nav-inbox",
+          "nav-dashboard",
+          "nav-contacts",
+          "nav-agents",
+          "nav-queues"
+        ],
+        "keyboard_items": 0,
+        "selected_index_after_down": 0,
+        "executions": [],
+        "prevented": [
+          "ArrowDown"
+        ]
+      },
+      "control": {
+        "queried_item_enter_executes": "nav-inbox"
+      },
+      "limitation": "No DOM/default button activation simulated. Claim is specifically arrow/Enter handler from the focused search input with empty query; Tab/click remain separate working paths."
+    },
+    {
+      "id": "INF-UI-P04",
+      "finding": "R2-INF-035",
+      "executed": "entire Progress wrapper with inert React element capture",
+      "observed": {
+        "input_value": 25,
+        "root_has_value": false,
+        "indicator_transform": "translateX(-75%)",
+        "complete_root_has_value": false
+      },
+      "controls": {
+        "max_forwarded": 100,
+        "aria_label_forwarded": "Envio sintético"
+      },
+      "reference": "https://www.radix-ui.com/primitives/docs/components/progress",
+      "limitation": "Does not import locked Radix1.1.16, render DOM or test assistive technology. Proves missing Root.value, not an observed screen-reader announcement. Adjacent textual percentages remain available in inspected consumers."
+    }
+  ],
+  "controls": {
+    "source_and_compiler_pins_before_import": true,
+    "production_imports": 0,
+    "product_network_calls": 0,
+    "database_calls": 0,
+    "product_mutations": 0,
+    "source_writes": 0,
+    "react_dom_render": false,
+    "compiler_scope": "transpileModule only, not typecheck/build/suite success",
+    "no_hidden_error_handler_success": true
+  },
+  "limitations": "Four bounded evidence cases, not four additional findings. Synthetic boundary values only; only this audit output file is written."
+}

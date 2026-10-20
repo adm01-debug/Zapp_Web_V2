@@ -1,0 +1,2363 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "method": "Corpos DO de migrations ativas. Leitura integral manual é marcada individualmente; nenhuma expansão SQL foi executada.",
+  "coverage_counts": {
+    "semantic": 107
+  },
+  "do_blocks": [
+    {
+      "identity": "DO-001",
+      "source": {
+        "path": "supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql",
+        "start_line": 10,
+        "end_line": 18,
+        "file_sha256": "899903359afaea642b7d2ddc9b1a0e2a4d1b2dd6ba8ec16a71603bb5ec69b96c",
+        "statement_sha256": "709ec89d928d1acbe1ec7cfa2fdc8ec6fc4b16f04732394fcf9168f77c9dc0aa",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: enumera todas as policies de public.whatsapp_groups e as remove com identificador quoted. Explica sobras antigas da projeção lexical; não executado.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-002",
+      "source": {
+        "path": "supabase/migrations/20260321194716_2488d2c2-fbc8-4226-9eb0-274d3f2bd2d6.sql",
+        "start_line": 20,
+        "end_line": 30,
+        "file_sha256": "a678cd9341930101f24cce2ab7d54859fcef75bf05d01d8a388a65c82bf52f7a",
+        "statement_sha256": "7a2cd6d3a0433ce99b18ad00752d51ae0e3a810151ef731c4aba341817ccbc2d",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: apenas se profiles_public for tabela comum ativa RLS e SELECT autenticado true; não altera uma view de mesmo nome. Esta condição não define a policy de sicoob_contact_mapping.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-003",
+      "source": {
+        "path": "supabase/migrations/20260321194716_2488d2c2-fbc8-4226-9eb0-274d3f2bd2d6.sql",
+        "start_line": 36,
+        "end_line": 45,
+        "file_sha256": "a678cd9341930101f24cce2ab7d54859fcef75bf05d01d8a388a65c82bf52f7a",
+        "statement_sha256": "3f99996af7fed3955c004556db3fb4840f0457e13ef30e792c29ce37e6d5cd7c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: cria SELECT admin/supervisor em sicoob_contact_mapping somente se for tabela comum. Fonte correta da identidade presente no snapshot, sem inferir rollout a partir do IF.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-004",
+      "source": {
+        "path": "supabase/migrations/20260401000946_e0e926a2-340d-4664-b821-4c4aecec5957.sql",
+        "start_line": 26,
+        "end_line": 41,
+        "file_sha256": "3e19fcf2e9301d3fee1d228a29fd3861880d54df8dec5449bc7e321235a80727",
+        "statement_sha256": "66a8dc43484be22f9ff967fadad41e0f1312feffe475b4d939833484384b485d",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: remove dois nomes conhecidos de SELECT telemetry, procura outro qual=true e apenas nesse ramo cria SELECT próprio/admin. O comentário promete remover todas as SELECT, mas o ramo não o faz; conferir composição final ao revisar query_telemetry.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-005",
+      "source": {
+        "path": "supabase/migrations/20260404155608_f5e48cdb-4e4f-46b3-830d-828d1b7c835d.sql",
+        "start_line": 17,
+        "end_line": 26,
+        "file_sha256": "062875fa60dd424dd1db06b0e4837c9bee63b21e63fc668ba2683d348023c608",
+        "statement_sha256": "dfab3d808bfe58f167a3d0fd32ced0dbdc672f330d745b23d7f76e3ce01a7850",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: remove condicionalmente o INSERT direto nomeado em login_attempts. O teste de existência omite schema; não se presume schema homônimo no ambiente.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-006",
+      "source": {
+        "path": "supabase/migrations/20260404155608_f5e48cdb-4e4f-46b3-830d-828d1b7c835d.sql",
+        "start_line": 36,
+        "end_line": 49,
+        "file_sha256": "062875fa60dd424dd1db06b0e4837c9bee63b21e63fc668ba2683d348023c608",
+        "statement_sha256": "546bba9cd15e6cfba055a495647ecedd5d9ed52840b17ada4077afb15e7c2985",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: cria SELECT login_attempts somente para authenticated admin/supervisor se nome ausente. Predicado admin é explícito, sem alegar ampla leitura apenas por TO authenticated.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-007",
+      "source": {
+        "path": "supabase/migrations/20260404171314_81a99d4f-4af1-4afe-85f9-3612088d4df6.sql",
+        "start_line": 15,
+        "end_line": 23,
+        "file_sha256": "2974a1b05c789fcd6dcd27f1636d0abb533846a5824cc35b760465c3d3b51aa6",
+        "statement_sha256": "0ba7e1d021d3e7481c97aacfaa37ef176656739276809644dd6ce9f816a6a939",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: criação condicional de INSERT blocked_ips; WITH CHECK admin/supervisor.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-008",
+      "source": {
+        "path": "supabase/migrations/20260404171314_81a99d4f-4af1-4afe-85f9-3612088d4df6.sql",
+        "start_line": 25,
+        "end_line": 33,
+        "file_sha256": "2974a1b05c789fcd6dcd27f1636d0abb533846a5824cc35b760465c3d3b51aa6",
+        "statement_sha256": "3224a7d0db60fb86cc3eaa33babd9abca0e331b187c30a2da2984f56a88ae683",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: criação condicional de UPDATE blocked_ips; USING admin/supervisor também rege WITH CHECK omitido na semântica PG.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-009",
+      "source": {
+        "path": "supabase/migrations/20260404171314_81a99d4f-4af1-4afe-85f9-3612088d4df6.sql",
+        "start_line": 35,
+        "end_line": 43,
+        "file_sha256": "2974a1b05c789fcd6dcd27f1636d0abb533846a5824cc35b760465c3d3b51aa6",
+        "statement_sha256": "bcc3a3ec33ff9e73cc93424a141b095091b161d9ea895e5a99d98fe0317fe008",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: criação condicional de DELETE blocked_ips; exige admin/supervisor.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-010",
+      "source": {
+        "path": "supabase/migrations/20260404173121_4b2eef2d-af92-41cb-9953-af62eb6fe3d6.sql",
+        "start_line": 17,
+        "end_line": 21,
+        "file_sha256": "fe35bf07850e6997b118fb27a8acedb982a42333ccff831c05c3bc770587d83d",
+        "statement_sha256": "718de5e01e28e6146ccae66efd16034ced75b06e823967bf3afc377719eab50e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: DROP da antiga policy Anyone can create contacts, com exceção genérica ignorada. A autorização atual depende das políticas posteriores; não tratar esse cleanup isolado como garantia de sucesso.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-011",
+      "source": {
+        "path": "supabase/migrations/20260410103218_175cc6d5-faba-481c-9738-4358d41766bd.sql",
+        "start_line": 7,
+        "end_line": 17,
+        "file_sha256": "8f830d8b91bacaf7182ce6ac3cb46994882435505c379bce5dc60493c5d9a524",
+        "statement_sha256": "251b94b26ac3c127b392cfd6e2180c36f1617308bc78b7ed4701c8bda6e0b3bb",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: remove policies SELECT encontradas por nome de tabela talkx_blacklist, com alvo fixo public. Não remove ALL; composição final será conferida. Sem expansão real.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-012",
+      "source": {
+        "path": "supabase/migrations/20260410103359_37e1053f-70b0-4432-97c1-97c9c0c9eb8f.sql",
+        "start_line": 3,
+        "end_line": 6,
+        "file_sha256": "efe4db94978ae3cde3ea0c98781a7ad43e789d6330e6f5a2d95cf92e8bf75931",
+        "statement_sha256": "0a650408bda58e51b90a4dacc9bb17bc059912bf0455372338d720ab255a2582",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: agrega DROP SELECT de campaigns e executa string. SQL dinâmico depende de pelo menos uma policy encontrada; nenhum erro de replay foi provocado. Policies finais posteriores substituem esse estado.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-013",
+      "source": {
+        "path": "supabase/migrations/20260410103359_37e1053f-70b0-4432-97c1-97c9c0c9eb8f.sql",
+        "start_line": 16,
+        "end_line": 19,
+        "file_sha256": "efe4db94978ae3cde3ea0c98781a7ad43e789d6330e6f5a2d95cf92e8bf75931",
+        "statement_sha256": "17d42b8bdd4e64994e7ad558719e9d69da043b0313e1c738d0d0e825d92a2df3",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: agrega DROP SELECT de sla_rules; identificadores quoted, mas lista e ausência de policy são condições de catálogo não executadas.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-014",
+      "source": {
+        "path": "supabase/migrations/20260410103359_37e1053f-70b0-4432-97c1-97c9c0c9eb8f.sql",
+        "start_line": 26,
+        "end_line": 29,
+        "file_sha256": "efe4db94978ae3cde3ea0c98781a7ad43e789d6330e6f5a2d95cf92e8bf75931",
+        "statement_sha256": "c4e0fe7e11983a8a08616e0412d3ccb1733da53c0e2d69bee14a32fe0563d569",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: agrega DROP SELECT de geo_blocking_settings. Não remove ALL; autorização final exige compor as políticas remanescentes.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-015",
+      "source": {
+        "path": "supabase/migrations/20260410103359_37e1053f-70b0-4432-97c1-97c9c0c9eb8f.sql",
+        "start_line": 36,
+        "end_line": 39,
+        "file_sha256": "efe4db94978ae3cde3ea0c98781a7ad43e789d6330e6f5a2d95cf92e8bf75931",
+        "statement_sha256": "ec7e5ec88e5b460612128d0ba474db7badc678f0833289d017c4acb60db3dd41",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: agrega DROP SELECT de client_wallet_rules; explica policy histórica que permanece no inventário lexical. Nenhum acesso real inferido de corpo substituído.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-016",
+      "source": {
+        "path": "supabase/migrations/20260410103359_37e1053f-70b0-4432-97c1-97c9c0c9eb8f.sql",
+        "start_line": 46,
+        "end_line": 49,
+        "file_sha256": "efe4db94978ae3cde3ea0c98781a7ad43e789d6330e6f5a2d95cf92e8bf75931",
+        "statement_sha256": "1901a48175cd3558ac1afbc1e09e067cc926c7071535efe377b5cf4a24e5d709",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: agrega DROP SELECT de automations. Não equivale a executar ou validar o replay; futuras CREATEs determinam o acesso final.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-017",
+      "source": {
+        "path": "supabase/migrations/20260410103359_37e1053f-70b0-4432-97c1-97c9c0c9eb8f.sql",
+        "start_line": 56,
+        "end_line": 59,
+        "file_sha256": "efe4db94978ae3cde3ea0c98781a7ad43e789d6330e6f5a2d95cf92e8bf75931",
+        "statement_sha256": "cff748fbd1b652049f52924fbed462035c194c15cc1d9dc37a95fa0b2d70a14c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: agrega DROP SELECT de queue_members. Policies ALL não estão nesse filtro; composição final revisada separadamente.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-018",
+      "source": {
+        "path": "supabase/migrations/20260411155752_d0db48a0-a6bd-49cc-b03d-4ecc779d5d2f.sql",
+        "start_line": 9,
+        "end_line": 21,
+        "file_sha256": "83eeb47bb92f3fe230d1d0b8f75e19aeaebac36c42f176a0fd8816d8c0564c95",
+        "statement_sha256": "17f16008805e8e92852782df90ca854f8ff608b8a9cabf087661ae088b83c9e4",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: cria condicionalmente SELECT contacts para has_role(admin), não supervisor. Migrações de autorização posteriores prevalecem; não usar esse estado antigo como autorização final.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-019",
+      "source": {
+        "path": "supabase/migrations/20260412171141_a898bf78-7cc5-4363-9792-57e277ab08e4.sql",
+        "start_line": 15,
+        "end_line": 25,
+        "file_sha256": "1cf7fd3e2d062f0f64ea7df6d8cc301f54348aadaceebc97e29fdc175d04f198",
+        "statement_sha256": "8a5352059ab38ebb97dca9b70603124f20b5065013bfc42463b0f856c0f171e4",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: remove SELECT Anyone can read messages somente no schema public; não modifica policies de realtime.messages. Acesso à publicação e às tabelas são superfícies distintas.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-020",
+      "source": {
+        "path": "supabase/migrations/20260627193738_ac09a3c9-c5d4-448d-ab39-5e5687665480.sql",
+        "start_line": 5,
+        "end_line": 25,
+        "file_sha256": "ed2feb203a1528f020f02d9dd62bf868375e2decde391345ed6d2c7d1823eb1c",
+        "statement_sha256": "2ad24952750ee32af4e603a6e8eba5a3826c86455c5261118c7deb003c23c916",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: varre SECURITY DEFINER executáveis por anon fora de uma lista de pre-auth e revoga grant de anon. Isoladamente não remove privilégio herdado de PUBLIC; DO seguinte trata PUBLIC.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-021",
+      "source": {
+        "path": "supabase/migrations/20260627193809_6114cc1d-f680-4331-9dee-91d60410079e.sql",
+        "start_line": 5,
+        "end_line": 27,
+        "file_sha256": "4b6daa0f84280c4e4982f0d1a8c2e6520ccdf58b9c6993f50ec526263f65fbda",
+        "statement_sha256": "f3b54b2f03f17c7110c865189e937b7a050fe4fe384bda2bfe4886432e921df8",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: para SECURITY DEFINER fora da lista pre-auth, revoga PUBLIC/anon e concede authenticated/service_role. Esse sweep não prova segurança de cada corpo nem alcança funções criadas depois; ACLs vencedoras foram cruzadas individualmente na fase de funções.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-022",
+      "source": {
+        "path": "supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql",
+        "start_line": 8,
+        "end_line": 15,
+        "file_sha256": "56c5d8f0ec2b36dec8c8d8107be94ed77d49201bff413e70f267eac2929d545d",
+        "statement_sha256": "17e28e491776e4bc677759a311871cd9300bc7207fcdc900a9b598fdb52128c3",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: adiciona queues à publicação supabase_realtime; captura somente duplicate_object. Publicação não dispensa RLS SELECT no consumo normal.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-023",
+      "source": {
+        "path": "supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql",
+        "start_line": 17,
+        "end_line": 24,
+        "file_sha256": "56c5d8f0ec2b36dec8c8d8107be94ed77d49201bff413e70f267eac2929d545d",
+        "statement_sha256": "6a2b98f613c77628f171b4db2568abe66f3d2bdda791ad56abf0b4f3c14f9992",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: adiciona queue_members à publicação e tolera duplicate_object; sem modificação de policies ou grants.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-024",
+      "source": {
+        "path": "supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql",
+        "start_line": 26,
+        "end_line": 33,
+        "file_sha256": "56c5d8f0ec2b36dec8c8d8107be94ed77d49201bff413e70f267eac2929d545d",
+        "statement_sha256": "22285514c0e844941225d26c459c91377782a60e64053099cd4d954aba1bf9b4",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-01",
+        "note": "Lido integralmente: adiciona messages à publicação e tolera duplicata. Não cria policy global de leitura nem configura acesso a canais privados.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-025",
+      "source": {
+        "path": "supabase/migrations/20260827000100_security_revoke_mcp_exec_from_authenticated.sql",
+        "start_line": 13,
+        "end_line": 20,
+        "file_sha256": "48e72819b5c5b9810520971d1ea4f20b5e83596c59d2dce1054cc6e96202381b",
+        "statement_sha256": "6bec0b9a200dbf1c5ee6c5e3db3cdbfbea00e292fb45dbe80b69d87baad3c4e0",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: revoga mcp_exec(text,integer) de authenticated, anon e PUBLIC; tolera somente assinatura inexistente.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-026",
+      "source": {
+        "path": "supabase/migrations/20260827000100_security_revoke_mcp_exec_from_authenticated.sql",
+        "start_line": 22,
+        "end_line": 29,
+        "file_sha256": "48e72819b5c5b9810520971d1ea4f20b5e83596c59d2dce1054cc6e96202381b",
+        "statement_sha256": "3864a8cb12d39b8ab7ca98a9f6a6524e63ff9d695524e4a527d0cc2f7d6dc8cd",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: mesma revogação para mcp_exec_many(text[],integer). Não invoca executor SQL.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-027",
+      "source": {
+        "path": "supabase/migrations/20260827000100_security_revoke_mcp_exec_from_authenticated.sql",
+        "start_line": 31,
+        "end_line": 38,
+        "file_sha256": "48e72819b5c5b9810520971d1ea4f20b5e83596c59d2dce1054cc6e96202381b",
+        "statement_sha256": "069c98758e386142848242737101d50fcbb925687d8b0a65e40f0729f28464bb",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: concede mcp_exec somente a service_role/postgres se existir. Contexto ACL restrita, não aprovação para usar o RPC.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-028",
+      "source": {
+        "path": "supabase/migrations/20260827000100_security_revoke_mcp_exec_from_authenticated.sql",
+        "start_line": 40,
+        "end_line": 47,
+        "file_sha256": "48e72819b5c5b9810520971d1ea4f20b5e83596c59d2dce1054cc6e96202381b",
+        "statement_sha256": "25b20b95f44d9e0532868d05b349b564bb39f446789001e533c07b77864037c9",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: concede mcp_exec_many somente a service_role/postgres se existir. Nenhuma expansão ou consulta executada.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-029",
+      "source": {
+        "path": "supabase/migrations/20260827120100_schema_hygiene_views_policy_comments.sql",
+        "start_line": 21,
+        "end_line": 38,
+        "file_sha256": "d76b80dfdc36d7f03258f3eb66f2f1587bfc05c0c148be8fa4949d84a1b1567d",
+        "statement_sha256": "28d70cb5c6251c877e4917801f42cf6a4edad7c5f99e77519ca33f8de2db8e53",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: adiciona comentários sobre funções ditas órfãs em agosto por nome. Comentários não revogam ACL nem provam ausência de consumidores na revisão atual; referências posteriores foram examinadas na fase de funções.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-030",
+      "source": {
+        "path": "supabase/migrations/20260827120100_schema_hygiene_views_policy_comments.sql",
+        "start_line": 51,
+        "end_line": 59,
+        "file_sha256": "d76b80dfdc36d7f03258f3eb66f2f1587bfc05c0c148be8fa4949d84a1b1567d",
+        "statement_sha256": "db8b623591d1d3f02797c3919d6b539bd3bf9de4f5224bb24950da9f27bcea43",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: comenta mcp_exec como infraestrutura privilegiada e tolera inexistência; não faz mutação de privilégios.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-031",
+      "source": {
+        "path": "supabase/migrations/20260827120100_schema_hygiene_views_policy_comments.sql",
+        "start_line": 61,
+        "end_line": 69,
+        "file_sha256": "d76b80dfdc36d7f03258f3eb66f2f1587bfc05c0c148be8fa4949d84a1b1567d",
+        "statement_sha256": "725286726733859f955ac5188fc8c42f78daf6ebfb89fac779bf92172a026059",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: comenta mcp_exec_many, sem execução nem mudanças de corpo ou ACL.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-032",
+      "source": {
+        "path": "supabase/migrations/20260827210000_gmail_crypto_vault.sql",
+        "start_line": 16,
+        "end_line": 25,
+        "file_sha256": "7002b8cb3f5fe213aa2dea60d940f9147b0ec05364559badf19a75ac857cd727",
+        "statement_sha256": "0234834cdeb537a91412c053777cee268cab278ced143b3505155c1835c5a073",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: se chave Gmail simbólica não existe, gera 32 bytes aleatórios e cria segredo no Vault. Apenas código foi lido; não houve leitura de valor, criação de segredo ou logging. Sem geração determinística de chave nesse corpo.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-033",
+      "source": {
+        "path": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql",
+        "start_line": 11,
+        "end_line": 16,
+        "file_sha256": "4632a35128732d52acc14245ce1edff6d6caebb945d261917b6ec3785d65c3f2",
+        "statement_sha256": "8a81df9b6879509a61d0d82290895338ae563bb958a37c0c4f019e54810d3807",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: remove SELECT contact_notes anterior por nome antes de nova CREATE externa ao bloco. Guard de existência não compara schema; estado final tem substituição posterior explícita.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-034",
+      "source": {
+        "path": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql",
+        "start_line": 29,
+        "end_line": 34,
+        "file_sha256": "4632a35128732d52acc14245ce1edff6d6caebb945d261917b6ec3785d65c3f2",
+        "statement_sha256": "0e047a941d1db73b375d9ef7e058e66febcfc719ca8885386ac913e2a7b558c3",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: remove SELECT conversation_events anterior; histórico posterior renomeia outra policy vencedora. Evitada conclusão pelo nome antigo isoladamente.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-035",
+      "source": {
+        "path": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql",
+        "start_line": 46,
+        "end_line": 51,
+        "file_sha256": "4632a35128732d52acc14245ce1edff6d6caebb945d261917b6ec3785d65c3f2",
+        "statement_sha256": "e79ecf11894c32e37fdef052d09977beca0dea44819d4d2e6a15b573c053a90d",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: remove SELECT conversation_sla anterior para substituição logo após. Não altera INSERT/UPDATE nem escopo de políticas ALL.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-036",
+      "source": {
+        "path": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql",
+        "start_line": 63,
+        "end_line": 68,
+        "file_sha256": "4632a35128732d52acc14245ce1edff6d6caebb945d261917b6ec3785d65c3f2",
+        "statement_sha256": "2f732d93fa455b373c6ebcc25e1599e293b68def465ca443c2ff11279cc82134",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: remove SELECT message_reactions anterior. Demais policies permissivas podem se somar; serão lidas na composição por tabela.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-037",
+      "source": {
+        "path": "supabase/migrations/20260830161547_fix_prevent_privilege_escalation_allow_internal_sync.sql",
+        "start_line": 79,
+        "end_line": 99,
+        "file_sha256": "6fe70f0ff474d6892693a18d28b8956b453319bbf38556ade03763f46ec2ad5c",
+        "statement_sha256": "7030ede139b952d98421e75438fc795ea00e8459a5898be3c4ddfd59bf1b48ca",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: valida existência por nome e SECURITY DEFINER de dois helpers de perfil. Isso não valida lógica, owner, search_path ou autorização. Nenhum resultado desse RAISE NOTICE foi tratado como teste executado.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-038",
+      "source": {
+        "path": "supabase/migrations/20260831120000_harden_webhook_failures_acl.sql",
+        "start_line": 22,
+        "end_line": 69,
+        "file_sha256": "54eef77843c7f3dae76c05482cc99c17c081e2068b53c09e0450222580d8c93b",
+        "statement_sha256": "07b70518f9d9a016474d835a2389f191c2ddb13af28a1271d1698b2316682a42",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: enumera ACLs explícitas de colunas webhook_failures, aceita somente quatro privilégios de coluna e revoga com CASCADE; PUBLIC tratado como OID0, nomes quoted. Objetivo cobre grants de coluna que um REVOKE de tabela isolado não elimina.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-039",
+      "source": {
+        "path": "supabase/migrations/20260902000700_fix_search_contacts_order_tiebreaker.sql",
+        "start_line": 6,
+        "end_line": 9,
+        "file_sha256": "2f8e35056034bf4914da6d05e4e4de9f6dfa2d4c719b0118d544c9a6ca2019c7",
+        "statement_sha256": "574bfa6cc3ffd1e213176b8a73e3fea47598004aeddc5f032d3d48b200339f3f",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: somente NOTICE no-op por migração substituída; nenhuma definição search_contacts foi tratada como vinda desse bloco.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-040",
+      "source": {
+        "path": "supabase/migrations/20260902120001_add_department_id_columns.sql",
+        "start_line": 4,
+        "end_line": 41,
+        "file_sha256": "ee311c2470aa319aeb0c7992c2dc76e0ee505ac14471249579d07592378c704d",
+        "statement_sha256": "8cf0fa38cfd8913cfd2341ffea967fcc5f0a3f3a8bbe7f3f54a84f7f0fa951f3",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: cria FKs department_id de profiles/team_conversations se não houver FK por relação e attnums correspondentes. Reconhece equivalência por colunas, não só nome; sem backfill implícito nem validação de população executada.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-041",
+      "source": {
+        "path": "supabase/migrations/20260903200000_revoke_anon_record_failed_login.sql",
+        "start_line": 17,
+        "end_line": 20,
+        "file_sha256": "7da8dc6622bfe9d5c86bc12a96f5b9b79ba8aaea54fdeb2c1a2d8fadd49151a0",
+        "statement_sha256": "1d0cd75ddf36d12bbf466680a01fcf51dc883a541d18c1fd0a08236902577d77",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: NOTICE de revogação revertida, explicitamente no-op no replay. A ACL vencedora precisa vir das migrações seguintes.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-042",
+      "source": {
+        "path": "supabase/migrations/20260906000001_e31_contacts_is_lid_legacy.sql",
+        "start_line": 25,
+        "end_line": 47,
+        "file_sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
+        "statement_sha256": "b86b9d528dbf60aadc989885d6342d7b2d0801d21b8d4a676787fcac77d0706e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-02",
+        "note": "Lido integralmente: verifica contagem de LIDs marcada entre400–700 e soma de flags. Um replay vazio encontra0 e falha; gate acoplado à população histórica enviado à revisão infra para evitar ID duplicado. Nenhum dado contado de verdade.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-043",
+      "source": {
+        "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+        "start_line": 136,
+        "end_line": 152,
+        "file_sha256": "c4a75d458a47d4ddb037b7b13772887e7fc3efde91be7e96fd4a12926995d295",
+        "statement_sha256": "b132eef76868105bef45be92950fb4c1f8da783d48549c52f6833f0733222a71",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: remove todas as policies de public.contact_notes antes das quatro novas políticas. As permissões antigas de admin/autores não se somam à definição vencedora; fonte que explica extras lexicais obsoletos.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-044",
+      "source": {
+        "path": "supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql",
+        "start_line": 11,
+        "end_line": 51,
+        "file_sha256": "22e863f6e4e43510f1601633f68767297414b55a208c3e8a86db9816e938a05f",
+        "statement_sha256": "8120e1f0dbe2187b70059b8e5eea75ebe1c0ea5fbb11482259721d3a6bec30c4",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: preflight rejeita templates com campos centrais nulos, tamanhos, status, URL/tipo de mídia e variáveis inválidos/duplicados. Não normaliza silenciosamente dados incompatíveis; nenhuma linha real foi inspecionada.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-045",
+      "source": {
+        "path": "supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql",
+        "start_line": 56,
+        "end_line": 111,
+        "file_sha256": "22e863f6e4e43510f1601633f68767297414b55a208c3e8a86db9816e938a05f",
+        "statement_sha256": "35bdabe5a97c3db37e938a033b2ea0c5ccec8a8ca3eb6830e3228edca9567027",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: preflight de variantes e adição condicional de CHECKs de conteúdo e mídia NOT VALID. A existência é por nome da constraint; fases posteriores validam. Leitura não equivale a aprovação dos dados legados.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-046",
+      "source": {
+        "path": "supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql",
+        "start_line": 260,
+        "end_line": 276,
+        "file_sha256": "22e863f6e4e43510f1601633f68767297414b55a208c3e8a86db9816e938a05f",
+        "statement_sha256": "e7dc24393e07a43dd49c9c0f5d2da059d09c24ffacde9659fa434d92850e82c1",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: preflight impede histórico com nulls em template_id/version_number/name/content/category. Não inventa conteúdo histórico para reparar nulos.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-047",
+      "source": {
+        "path": "supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql",
+        "start_line": 295,
+        "end_line": 369,
+        "file_sha256": "22e863f6e4e43510f1601633f68767297414b55a208c3e8a86db9816e938a05f",
+        "statement_sha256": "123ca85debee927abb3006e62674f76d1c089249cc26cc89f376016c024f2d22",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: garante PK, FKs, UNIQUE de versão e CHECKs por nomes. O saved_by_fkey inicialmente só confere nome, mas DO seguinte de20260909230000 reconcilia alvo/colunas/ação de exclusão; não reabrir esse drift como atual.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-048",
+      "source": {
+        "path": "supabase/migrations/20260909230000_canonicalize_talkx_history_saved_by_fk.sql",
+        "start_line": 4,
+        "end_line": 63,
+        "file_sha256": "029f5eb51ae2564cb6aacc2ac10f5355018877d3b90d5995e6b6cd1d11ccbb02",
+        "statement_sha256": "71ba813760e98dd28c02351ff16bda6241b0508cbe26c27722fd0e2a4fb7e6fa",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: lê attnums, rejeita colunas ausentes, remove FK saved_by com alvo/colunas/delete action divergente, recria profiles(id) ON DELETE SET NULL e valida. Correção explícita do problema de nome-only anterior.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-049",
+      "source": {
+        "path": "supabase/migrations/20260910090000_talkx_blacklist_v2.sql",
+        "start_line": 4,
+        "end_line": 15,
+        "file_sha256": "6eff907034475042fd8fddbf3dbfab8c1fbc6528f489525fc99cee7831398339",
+        "statement_sha256": "a0ce9a94e08f32d6ab546a1a9636cb8a36faacf2e25ddda3a18fd76f18f08887",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: cria enum talkx_blacklist_reason com seis razões se typname ausente. Consulta omite namespace, mas nenhum homônimo conflitante foi demonstrado; sem claim de falha real por hipótese.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-050",
+      "source": {
+        "path": "supabase/migrations/20260912140000_harden_talkx_runtime_acl_and_validate_constraints.sql",
+        "start_line": 28,
+        "end_line": 79,
+        "file_sha256": "1791ede4e001eb2c0a55812264e65be9d0657b2105cc91954334df87a0ed422d",
+        "statement_sha256": "da285b83789bd7c9762cf7f1c4a7aafa912641d0388428c0cd28ab3b61038cf1",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: preflight de external_id, mídia, timezone, janela e revision; não executado. A expressão de mídia com NOT pode produzir NULL em pares incompletos, portanto o bloco não é prova geral de ausência de mídia parcial. Consumidores/guards de runtime foram separados na revisão de funções.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-051",
+      "source": {
+        "path": "supabase/migrations/20260926800000_calls_telefonia_v2.sql",
+        "start_line": 97,
+        "end_line": 106,
+        "file_sha256": "f7d1204cabcc9ed87b2a56048a68ca89be1ea1cef9dc719246175b0fb79e8dc0",
+        "statement_sha256": "de7eb5f55383f3952506646cec0f455ca2db2933d2e7b4b8a4609a55705a37fd",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-03",
+        "note": "Lido integralmente: adiciona calls ao Realtime só se publicação existe e tabela ainda não consta. Sem exposição por si só, nem CREATE de policy SELECT.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-052",
+      "source": {
+        "path": "supabase/migrations/20260927320000_multiplix_cron_scheduler.sql",
+        "start_line": 9,
+        "end_line": 18,
+        "file_sha256": "83604baa652cff8803a9995d92d9bfcd2abf0ee6ca668dc9f186a3551be005a2",
+        "statement_sha256": "af3d3c742ccb87373a0a0cc1e7dd9d42bbd23c550e5e0f1e378a656ef9adae49",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: cria segredo legado Multiplix se ausente usando concatenação de md5(random()). Não houve leitura de segredo. A escolha não é gerador criptográfico explícito como Gmail; rotação/uso final é condicional e não foi promovido a exploração por mera presença do nome.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-053",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 1,
+        "end_line": 1,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "936193250edbbc316d8de096de582fe1b4f54162eadff3d9794aa4762a363ba7",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de bump_conversation_updated_at, tolerando assinatura ausente. Trigger não deve ser chamado como RPC comum.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-054",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 2,
+        "end_line": 2,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "01f755274d3bdb719ecaf201990c75292b1803bea7dcee8b8a0a16388acea744",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga grant direto anon da mesma bump_conversation_updated_at; complementa bloco anterior.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-055",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 3,
+        "end_line": 3,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "47cea0cc4954c02933c79b5414e1f0fafc429e0683a5c3ac3dd2b9897e45de7f",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de enforce_conversation_status_transition; ACL cliente restante depende de grants posteriores.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-056",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 4,
+        "end_line": 4,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "98fb9da333345d6f534b3754ac0d23d165169105a0c4736ce02c29fc7384ea96",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de prevent_contact_assignee_hijack, sem desativar trigger.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-057",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 5,
+        "end_line": 5,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "b2e3f5d39bfad4137623745fb6a2fd58a857c94832744c23471daaece5533dcd",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de prevent_contact_queue_hijack, sem alterar regras de fila.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-058",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 6,
+        "end_line": 6,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "5492ec4f29292df167fb206162c58229f704c999ea92b4174ed860b28064a7f1",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de prevent_conversation_task_field_forgery; execução automática do trigger continua.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-059",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 7,
+        "end_line": 7,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "748f6ea95c79b07def21ecb4a9b82810e6ecf42bce108bc77da33781a02fe2b9",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de seed_default_goals_for_profile; bloco não altera metas.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-060",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 8,
+        "end_line": 8,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "43ed5f82e2490da28df9e3f0e6899cc3eb18954b2974ffe82f8c2b622ef73fec",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de set_scheduled_report_config_owner; não torna seus campos cliente-editáveis.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-061",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 9,
+        "end_line": 9,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "6731ce2dae646e810708ee563fd01250c45b654beee756fd6584aa6ae39080cd",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de trg_talkx_increment_replied_count; não muda contrato da atribuição de resposta.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-062",
+      "source": {
+        "path": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql",
+        "start_line": 10,
+        "end_line": 10,
+        "file_sha256": "50807bad99f0ea60e99646fc70025db700513b94b4e00aa9737b3107a098dc57",
+        "statement_sha256": "e8a81215bad3c407b45b3147188f5f8bbd7be138404912bba1f2bd1d600d37d0",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga PUBLIC de trg_talkx_increment_template_use_count; não remove seu efeito por trigger.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-063",
+      "source": {
+        "path": "supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+        "start_line": 56,
+        "end_line": 62,
+        "file_sha256": "716cc33e62472c88c59fe052a5e8cde56153cafd038f435fca5996f4a1144307",
+        "statement_sha256": "72184c61f2fdf7adeb248de1a68b6f74b66ab3f8a99ffdc6c461bc5caffd4512",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: DROP INDEX CONCURRENTLY dinâmico dentro de DO se idx_audit_logs_user_created existe. Restrição transacional/execução em função é candidato de replay encaminhado à infra; a migração posterior de DROP normal não modifica este corpo histórico.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-064",
+      "source": {
+        "path": "supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+        "start_line": 64,
+        "end_line": 70,
+        "file_sha256": "716cc33e62472c88c59fe052a5e8cde56153cafd038f435fca5996f4a1144307",
+        "statement_sha256": "b36cfd86b8fdb74094ed70459cd7e58d04fecb38a38a01c53d7b021d3cc6102c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: mesma tentativa de DROP INDEX CONCURRENTLY em DO para idx_conversation_events_from_queue_id, condicionada à existência. Encaminhado junto à infra, sem executar SQL.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-065",
+      "source": {
+        "path": "supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+        "start_line": 72,
+        "end_line": 78,
+        "file_sha256": "716cc33e62472c88c59fe052a5e8cde56153cafd038f435fca5996f4a1144307",
+        "statement_sha256": "5bdb555ff22a81cfb8a7fee9ff8916898ae76f114f7ff9b0173a8df31dbe0657",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: mesma tentativa CONCURRENTLY em DO para idx_conversation_events_to_queue_id. Não se confunde aplicação histórica de catálogo com capacidade de replay.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-066",
+      "source": {
+        "path": "supabase/migrations/20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+        "start_line": 35,
+        "end_line": 40,
+        "file_sha256": "6782cdc3cf848f47495e1fb479b25b50484ee2f8205b1f2f5d1a1584f549b5e6",
+        "statement_sha256": "45b36b38f3e8275fe88fc80285d666086c7f1ed59459c8248dbafcaa9e7d2438",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: DROP INDEX normal condicional de idx_audit_logs_user_created, compatível com transação. Corrige operação subsequente, mas não edita DO anterior.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-067",
+      "source": {
+        "path": "supabase/migrations/20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+        "start_line": 42,
+        "end_line": 47,
+        "file_sha256": "6782cdc3cf848f47495e1fb479b25b50484ee2f8205b1f2f5d1a1584f549b5e6",
+        "statement_sha256": "cb2e27c63af82ccc4838d33aa066e9a9dede2f35a4f4ecb712ec9cfa471e98b3",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: DROP normal condicional de índice from_queue_id; sem efeito em dados ou RLS.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-068",
+      "source": {
+        "path": "supabase/migrations/20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+        "start_line": 49,
+        "end_line": 54,
+        "file_sha256": "6782cdc3cf848f47495e1fb479b25b50484ee2f8205b1f2f5d1a1584f549b5e6",
+        "statement_sha256": "16817242ffc6b77c2772b9acbb5cb148fd48cfec63436d5f9099d4d0d125f5fb",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: DROP normal condicional de índice to_queue_id; não é garantia de que migração anterior passaria.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-069",
+      "source": {
+        "path": "supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql",
+        "start_line": 195,
+        "end_line": 204,
+        "file_sha256": "7c0fcaf9b6b6cfbf8335efd825647614c8d6b59cfbe8dcbbf35de6cf4a564587",
+        "statement_sha256": "19447e9a8af452da0ccece646e9e10b68786603dac770a4e0666d0b1c7ee2b16",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: adiciona conversation_tasks à publicação se não encontra nome da tabela. Não testa schema no catálogo, mas alvo public é explícito; sem hipótese de homônimo tratada como incidente.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-070",
+      "source": {
+        "path": "supabase/migrations/20260929240000_team_chat_e34_drift_mirror_metadata_realtime.sql",
+        "start_line": 10,
+        "end_line": 10,
+        "file_sha256": "16d196ab843fff58f55b7cbc4eb0da689ff18536a22e37fb6c939d4bbb84c0bf",
+        "statement_sha256": "cc7d7244c3a0ed8ff50c2537cc101e367ce793a11bd6e8503cf1029c2d5645b7",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente, inclusive todos os sub-blocos da linha: adiciona team_messages, team_conversations, team_conversation_members e team_message_receipts à publicação, cada um tolerando duplicate_object. Nenhuma policy de canal privado é criada.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-071",
+      "source": {
+        "path": "supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql",
+        "start_line": 145,
+        "end_line": 154,
+        "file_sha256": "0114642acff10bedbe286158145739fbfbfbc7cee621511a3873221051872a1b",
+        "statement_sha256": "0a5aa9c95fb1a4f69e82092634b714424209e2f267f6ebcd2b06b621f581b3a6",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: cria URL simbólica de multiplix-send no Vault se ausente; URL corresponde ao projeto ZAPP definido nas instruções locais. Não lê nem imprime valor do segredo.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-072",
+      "source": {
+        "path": "supabase/migrations/20260930113613_revoke_anon_default_privileges_and_gamification_rpcs.sql",
+        "start_line": 28,
+        "end_line": 55,
+        "file_sha256": "681d0fdb6aa9aadcfed6448d8d836fe543af460d8a239a8492fe076c611acfa1",
+        "statement_sha256": "315430b56a3a77d4e68c44f223dfba396ac20ec57c779e140e07f6e568f28055",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: enumera família de funções de conversa/gamificação/triggers e revoga anon/PUBLIC; concede authenticated/service apenas a não-triggers. Grant de EXECUTE não substitui guard no corpo e não remove conflito de gamificação DB-009.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-073",
+      "source": {
+        "path": "supabase/migrations/20260930130000_revoke_public_ai_analysis_functions.sql",
+        "start_line": 22,
+        "end_line": 43,
+        "file_sha256": "09a8bf610067e1cd118359cb50faa71ad1ebb15dff21aed441297597de20ec11",
+        "statement_sha256": "07c92917e9d50d61779c4519a864986fa25f6833ea5d6f92b2c128534c8978d2",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: revoga anon/PUBLIC em cinco nomes IA e concede authenticated/service aos não-triggers. Revogação posterior de família IA também foi inventariada; funções novas exigem checagem de identidade própria.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-074",
+      "source": {
+        "path": "supabase/migrations/20260930142000_scope_public_policies_to_authenticated.sql",
+        "start_line": 16,
+        "end_line": 38,
+        "file_sha256": "69f40f0a629533b244bda7e8395325a0ed47baf6762d721dda7a16cc113f54ad",
+        "statement_sha256": "5c5fbeae8790c9d1b7a5ab6808a09e00fa243977592b6459854084d2422f41a1",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: altera TO authenticated somente policies de cinco tabelas públicas com polroles exatamente PUBLIC. Preserva USING/CHECK e não é sweep de todo schema. Anexado como contexto às políticas afetadas.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-075",
+      "source": {
+        "path": "supabase/migrations/20260930170000_contacts_deleted_at_audit.sql",
+        "start_line": 203,
+        "end_line": 219,
+        "file_sha256": "5af22feccb6ee4024141234c6ba9c2cfefc82dcda0df9c02051bcb409ba32d8d",
+        "statement_sha256": "5fc7c2db7b26d21a724bb3e231b3f595d0e93cca4f4a619db5a68a1541f2eb90",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-04",
+        "note": "Lido integralmente: guard de drift de contact_deletion_audit exige nomes de nove colunas, não valida tipos, constraints, owner ou RLS. Nenhum resultado de runtime reivindicado.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-076",
+      "source": {
+        "path": "supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql",
+        "start_line": 35,
+        "end_line": 51,
+        "file_sha256": "109102c5a8a6364257a39f255a4ef5e8211a0e32119281a2d39ea4a87dc2b437",
+        "statement_sha256": "3474a6c61ed400c71807a75982536aa395d2b99d07ca1d3bc738ffd2d9968e36",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: cria dois segredos dedicados de health-check/avatar com gen_random_bytes(32) somente se ausentes. Apenas nomes simbólicos e código foram lidos; nenhuma configuração externa foi verificada.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-077",
+      "source": {
+        "path": "supabase/migrations/20260930490000_ai_block03_pr1_revoke_public_family.sql",
+        "start_line": 82,
+        "end_line": 116,
+        "file_sha256": "8fdc09320fe0e55bf3c2c8e868aecca2027b6a518c1a6584e9d8f784cae90eae",
+        "statement_sha256": "c1ef6a41c99706b7556c6f3b1879558ac5bcb348033f02151bb8551696124b8e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: antes do sweep PUBLIC, aborta se uma função de negócio perderia único caminho para API sem grant explícito authenticated/service_role. Exclui extensão e enforce_bucket. Não valida o corpo dessas funções nem novas identidades futuras.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-078",
+      "source": {
+        "path": "supabase/migrations/20260930490000_ai_block03_pr1_revoke_public_family.sql",
+        "start_line": 124,
+        "end_line": 151,
+        "file_sha256": "8fdc09320fe0e55bf3c2c8e868aecca2027b6a518c1a6584e9d8f784cae90eae",
+        "statement_sha256": "935ec3b94148e5f2b0af0058e83857d0b2d163e5282daeddfec733f85f03b731",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: varre funções públicas fora de extensões/enforce_bucket e revoga EXECUTE de PUBLIC usando regprocedure. Ato histórico não altera defaults do criador nem bloqueia PUBLIC em sobrecarga criada depois, como DB-001.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-079",
+      "source": {
+        "path": "supabase/migrations/20260930490000_ai_block03_pr1_revoke_public_family.sql",
+        "start_line": 160,
+        "end_line": 196,
+        "file_sha256": "8fdc09320fe0e55bf3c2c8e868aecca2027b6a518c1a6584e9d8f784cae90eae",
+        "statement_sha256": "f059cdc03bc16dda64e3ec1bf5bded09c535bf5b04985f9f0b8515c1f56f1e75",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: normaliza família IA, revoga anon, concede helpers de CHECK a authenticated/service e escrita ao service. Este bloco não revoga authenticated do ramo de escrita por si; a revogação anterior e o gate service no corpo devem ser considerados em conjunto.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-080",
+      "source": {
+        "path": "supabase/migrations/20260930490000_ai_block03_pr1_revoke_public_family.sql",
+        "start_line": 201,
+        "end_line": 251,
+        "file_sha256": "8fdc09320fe0e55bf3c2c8e868aecca2027b6a518c1a6584e9d8f784cae90eae",
+        "statement_sha256": "89176b653e8c47248bb04f92daf25f0cda2a7d7149effcb41007d94fd91a0437",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: asserção falha por PUBLIC restante em funções de negócio; extensões/anon fora da família geram NOTICE somente. Não converter esses avisos em garantia de zero privilégio anon.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-081",
+      "source": {
+        "path": "supabase/migrations/20261001191230_revoke_execute_internal_trigger_functions.sql",
+        "start_line": 59,
+        "end_line": 75,
+        "file_sha256": "8978783ddbe5063670cc79758afca03b46ade074dcf45159b4274edc3b95790f",
+        "statement_sha256": "6ef9eac38269acb709986d9dcfded3c3349f758caf1c03a1038ae5f916019a0c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: revoga EXECUTE dos quatro roles de API em todos os triggers de public. Não remove vínculo do trigger nem impede seu disparo automático; não classificar presença de trigger em ACL anterior como RPC ordinário.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-082",
+      "source": {
+        "path": "supabase/migrations/20261001191230_revoke_execute_internal_trigger_functions.sql",
+        "start_line": 90,
+        "end_line": 108,
+        "file_sha256": "8978783ddbe5063670cc79758afca03b46ade074dcf45159b4274edc3b95790f",
+        "statement_sha256": "dea9344b83832c668f922feeb569b769a2cc52d1de4c83dd74b78421921d9788",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: asserção de zero EXECUTE de API em funções trigger, baseada em ACL expandida. Checagem histórica não alcança criação posterior; não foi executada nesta auditoria.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-083",
+      "source": {
+        "path": "supabase/migrations/20261001201230_f30_multiplix_enums_modelo_v2.sql",
+        "start_line": 55,
+        "end_line": 60,
+        "file_sha256": "46c919e652538c9ef95565ceb5845970f3da7dccc00eb7d5b68785b882bd1a1b",
+        "statement_sha256": "181e035f86852c520b2a328a822756ec2b9e79d29af0ec688815b0630aaf8bab",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: remove duas tabelas Multiplix da publicação antes da conversão de tipos; sem guard de existência. Requer publicação/membership presentes naquele ponto da cadeia, com reintrodução posterior a conferir no arquivo; não é política de dados.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-084",
+      "source": {
+        "path": "supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql",
+        "start_line": 453,
+        "end_line": 462,
+        "file_sha256": "340fc3ba61dd17c2d2362cad78cc1b4c402ee53d1c933b8ecba90863717215bb",
+        "statement_sha256": "3a00b256dfc3ab80c6840954d57990c5876622d7f3796b7b55b06c3ecb8d889e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: gera segredo TalkX por md5(random()) se ausente. Mesma ressalva criptográfica do legado Multiplix; nada foi consultado no Vault nem testada predição ou credencial.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-085",
+      "source": {
+        "path": "supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql",
+        "start_line": 499,
+        "end_line": 518,
+        "file_sha256": "340fc3ba61dd17c2d2362cad78cc1b4c402ee53d1c933b8ecba90863717215bb",
+        "statement_sha256": "f6cde9bc39faae4f0f990774a8934fb1567f5e532e5e0ff7c81b0551dedcd0e0",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: verifica existência de cinco assinaturas TalkX via to_regprocedure. Não valida owners, grants, resultados ou comportamento de lease.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-086",
+      "source": {
+        "path": "supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql",
+        "start_line": 95,
+        "end_line": 102,
+        "file_sha256": "35cc50a8db431853f08dd8c7949e5ba52a7da66ed91897a1136a33fc804e2913",
+        "statement_sha256": "5734d4018c2752264abd8f4666f411a25acd5486861f83fbd0c13f90c9de229c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-05",
+        "note": "Lido integralmente: concede temporariamente CREATE no schema public a service_role somente se faltante e registra marcador de sessão. A restauração seguinte e a função temporária pertencem ao mesmo mecanismo; não afirmar grant permanente sem ler o bloco final.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-087",
+      "source": {
+        "path": "supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql",
+        "start_line": 115,
+        "end_line": 121,
+        "file_sha256": "35cc50a8db431853f08dd8c7949e5ba52a7da66ed91897a1136a33fc804e2913",
+        "statement_sha256": "bbd1060540120d04cdb9b7a8ff1085c488c93a92710ecb5132106590cc7fb7fd",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: revoga CREATE de service_role somente se o próprio backfill o concedeu segundo marcador. Correção do backfill temporário tem restauração explícita; não registrar grant permanente por ler só DO anterior.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-088",
+      "source": {
+        "path": "supabase/migrations/20261001391230_talkx_engine_tick.sql",
+        "start_line": 55,
+        "end_line": 68,
+        "file_sha256": "4c964586f814ead2877675319d3eafb3dd5a9ed655032b27d946565920ddfa3b",
+        "statement_sha256": "44c0767d66163723ad58b9bbfc58266f438bbf35a55c690c8a2337ddb5a0e4c7",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: semeia URL TalkX no Vault se disponível/ausente e transforma qualquer erro em WARNING. Existência da função não comprova que essa configuração foi gravada; nada foi lido do Vault.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-089",
+      "source": {
+        "path": "supabase/migrations/20261001391230_talkx_engine_tick.sql",
+        "start_line": 308,
+        "end_line": 325,
+        "file_sha256": "4c964586f814ead2877675319d3eafb3dd5a9ed655032b27d946565920ddfa3b",
+        "statement_sha256": "196946dccd3403c6e1980a0e60ab27d92041c68f8cf29ea243740dfce4c97082",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: altera comando de job TalkX existente, se cron.job existe, e ignora falha como WARNING. Não cria job ausente, não valida entrega HTTP nem comprova agendamento atual.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-090",
+      "source": {
+        "path": "supabase/migrations/20261001391230_talkx_engine_tick.sql",
+        "start_line": 329,
+        "end_line": 347,
+        "file_sha256": "4c964586f814ead2877675319d3eafb3dd5a9ed655032b27d946565920ddfa3b",
+        "statement_sha256": "5327ad383da138172201ee7321b310b1151d7037cb4c9d3db0b0fa7f635e4007",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: exige quatro assinaturas do engine por to_regprocedure. Não verifica job, URL, segredo ou execução; as configurações condicionais dos DO anteriores permanecem limite.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-091",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 469,
+        "end_line": 479,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "8d4fd2bc88c5d7619232c25dbab09c46b4b58ebb9d26275cb8f86e1ed17e9f1e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: semeia segredo AI-jobs usando md5(random()) e captura qualquer erro como WARNING. Nenhum valor acessado; existência de rotina não prova seed nem qualidade criptográfica de credencial em uso.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-092",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 579,
+        "end_line": 589,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "a43dc3b7c52ce421fd90906651428010b45916a0901c1d07f90deb89a9eeb995",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: cria job AI-jobs somente se cron.job existe e nome ausente; captura erro como WARNING. Sem confirmação da cadência/execução real.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-093",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 593,
+        "end_line": 613,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "d21149bc1adf16d707a824a57a9b13e6309195c3430fb603eed32cd4dd2e7abd",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: verifica sete nomes de funções AI-jobs no schema public, não assinaturas, ACL, job ou resultados. Não substituir validação de consumidor por esse guard estrutural.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-094",
+      "source": {
+        "path": "supabase/migrations/20261002381230_talkx_role_gates.sql",
+        "start_line": 829,
+        "end_line": 865,
+        "file_sha256": "5b9a0d9e97cba2d3f2cfa5339b18da85f004bc3238e3c5e47e96fd6ab2e06f9c",
+        "statement_sha256": "19752773b954b6f19c1d1068239bc5a5ad5ff07e96f7d7726ac946fda54f502d",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: verifica quatro assinaturas e três nomes de policies de TalkX. A existência por nome não garante conteúdo da policy; os corpos serão ligados individualmente no roster.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-095",
+      "source": {
+        "path": "supabase/migrations/20261002391230_talkx_audience_rpc.sql",
+        "start_line": 462,
+        "end_line": 478,
+        "file_sha256": "78689f588bdf7654ae49ed9c3d1cceeace10e81423c3787df2aa7e7ef5e26df1",
+        "statement_sha256": "828150b08d7a772574fd04673c83443c30700a5b6e5e5a6d995524823a0c3a5e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: verifica duas assinaturas de audiência por to_regprocedure. Não executa audiência nem valida scope/retorno.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-096",
+      "source": {
+        "path": "supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql",
+        "start_line": 72,
+        "end_line": 93,
+        "file_sha256": "fe76b1d4a79df71da37682cbec46cfc84176fe44c921323ba5231d1f7d29a6e5",
+        "statement_sha256": "e488a4ef6f5a1e36b1338d5c73473cf69b536afe16657ce8f101369a04e90e3e",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: verifica três nomes de índices de idempotência em pg_indexes. Não valida unicidade, predicado, colunas ou equivalência da chave; esses detalhes dependem do DDL que os cria.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-097",
+      "source": {
+        "path": "supabase/migrations/20261002421230_talkx_audience_snapshot.sql",
+        "start_line": 625,
+        "end_line": 657,
+        "file_sha256": "c37c5dbc81396b615fb7322d5e36dd7b944d954b6c1bd1780dad73972250d85c",
+        "statement_sha256": "19a8cb3ac93d632a1e4ff34e1058c88cb437fb0c8d790417df63dc2e152dd01c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: verifica três assinaturas e duas colunas de campaign. Asserção não prova tipo das colunas, conteúdo de snapshots nem atomicidade; revisão de funções e consumidor é separada.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-098",
+      "source": {
+        "path": "supabase/migrations/20261002511230_cron_ai_jobs_tick_fora_do_minuto_zero.sql",
+        "start_line": 24,
+        "end_line": 40,
+        "file_sha256": "9357865f882bb87f3217339ac7b530e75238514e551050a6e40681c0f034d5ce",
+        "statement_sha256": "558b915e53a1dce645ed439373ba741616bf3e1ba0a634ec7a62eb9ae07de5da",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-06",
+        "note": "Lido integralmente: remove job de mesmo nome se existente e agenda1–59 por hora, omitindo minuto0. Operação é idempotente por nome e comando fixo; pressupõe extensão cron disponível e não é teste executado.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-099",
+      "source": {
+        "path": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql",
+        "start_line": 293,
+        "end_line": 320,
+        "file_sha256": "eb658b3cff811fedd50bd6f23f6765b5041abc7f0bff61832752cdaa5cb72908",
+        "statement_sha256": "19f247ebff3df7b8ccfdb3c3cc9cd75bf6315fae3ed16c8ad43f378a1fc7c83c",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: exige assinaturas de opt-out/normalização/supressão, tabela/view e ausência da antiga sobrecarga de seis parâmetros. A checagem evita ambiguidade de resolução, sem executar supressão real.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-100",
+      "source": {
+        "path": "supabase/migrations/20261002621230_f55_claimable_items_por_bloco.sql",
+        "start_line": 161,
+        "end_line": 176,
+        "file_sha256": "887d3fb8135658cf68c022534be92af85c182cf0a9e757e66099c3c9d2c1b604",
+        "statement_sha256": "0c40d9cabd9661a76e0a3031e1140514c436194da2e47245b212166606f88724",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: espera duas funções por proname, sem resolver assinatura; dois overloads de uma e zero de outra passariam a contagem, embora esse desvio não exista no inventário atual. Não contar asserção por quantidade como revisão semântica.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-101",
+      "source": {
+        "path": "supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql",
+        "start_line": 285,
+        "end_line": 306,
+        "file_sha256": "a1ba51f5203bb0e2187c0963480d26985e34dab815fd68c792b85d4c177f5eea",
+        "statement_sha256": "e29e4357c63c8734020871709fe4919a1a9d136b71d0302caea0f4e4a6958cd1",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: exige assinatura nova de overview e helper de scope, e ausência da antiga de dois argumentos. Confirma intenção de substituir overload; nenhum consumidor frontend foi localizado para overview_stats.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-102",
+      "source": {
+        "path": "supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql",
+        "start_line": 291,
+        "end_line": 308,
+        "file_sha256": "66cd25b7697b0360181c4e4971409d15655fb72697821f6756357dac114967d5",
+        "statement_sha256": "155b542e9511fb1b8b756e0144ea71c8395beea3d57e53892dcb0e370978de44",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: exige três assinaturas de lifecycle após substituições; não valida atomicidade, cancelamento em voo nem conteúdo de eventos. DB-014 tem prova própria do interleaving.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-103",
+      "source": {
+        "path": "supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql",
+        "start_line": 69,
+        "end_line": 77,
+        "file_sha256": "6034d56414585c7822cd4d7de9a88028dc25a888007ef3466bfbb127f3132c05",
+        "statement_sha256": "a392fb6f9b36f039a1c61fb1838193e9bd8f0b02d803882161c4c50d95a74f4d",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: revoga quatro roles e remove increment_talkx_template_use caso a assinatura exista. Efeito condicional foi lido, não expandido/executado; a ausência é também guardada no fim da migração.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-104",
+      "source": {
+        "path": "supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql",
+        "start_line": 642,
+        "end_line": 682,
+        "file_sha256": "6034d56414585c7822cd4d7de9a88028dc25a888007ef3466bfbb127f3132c05",
+        "statement_sha256": "641c3a973858ccd44f720ed2a330d6e194888efd4b20b3493fefc81ca70cec1b",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: verifica seis assinaturas, coluna skipped_count, nome da policy de evento e ausência do incremento antigo. Não testa o comportamento de checklist, retries ou fencing.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-105",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 491,
+        "end_line": 506,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "4779526eb5a07da25a3d7c61695132bf055e1d5dbcfcb5f7315043222023a36f",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: cria publicação se ausente e retira talkx_recipients condicionalmente para ajuste/republicação. Não publica automaticamente todas as tabelas e não dispensa policy de leitura.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-106",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 515,
+        "end_line": 528,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "98b2db8c928f9b297be7f1e126f89a43632d1da8323360053ef0d6d1e4747f71",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: procura índice por fragmentos de indexdef e cria índice parcial não-único de resposta se não encontrado. Ajuda seletor, mas não deduplica reply_message_id; DB-002 permanece. Heurística não prova equivalência completa de índices.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    },
+    {
+      "identity": "DO-107",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 533,
+        "end_line": 574,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "52c47b73ebd8922ecc8efd2fc51adceae959a5778836348789cbb62bf3d11523",
+        "operation": "DO",
+        "kind": "dynamic_do"
+      },
+      "coverage_level": "semantic",
+      "manual_review": {
+        "review_batch": "access-07",
+        "note": "Lido integralmente: verifica cinco assinaturas, read_count e presença de read_at na publicação de recipients. Distingue metadado de coluna publicado de execução de subscription/receipt; nenhuma expansão nem evento real.",
+        "body_read_in_full": true,
+        "dynamic_expansion_executed": false
+      },
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false,
+      "runtime_tested": false
+    }
+  ]
+}

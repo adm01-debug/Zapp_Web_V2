@@ -1,0 +1,1666 @@
+{
+ "ms": 34,
+ "rows": [
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "accept_department_invite"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "add_agent_xp"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "add_wa_tag_if_not_exists"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "admin_set_role"
+  },
+  {
+   "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "ai_is_canonical_churn_risk"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "ai_is_canonical_priority"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "ai_is_canonical_sentiment"
+  },
+  {
+   "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "ai_is_canonical_urgency"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "ai_text_array"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "apply_zapp_cron_secrets_l5"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "audit_contact_address_change"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "audit_contact_deletion_change"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "audit_role_changes"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "audit_role_permissions_changes"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "auto_assign_contact"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "auto_assign_to_queue_agent"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "bump_conversation_updated_at"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "calculate_level"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "can_delete_contacts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "can_edit_contact"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "can_edit_contact"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "claim_crm_sync_outbox"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "claim_crm_sync_outbox_by_id"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "claim_multiplix_recipient"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "claim_outbound_message"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "claim_talkx_recipient"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "cleanup_crm_sync_outbox"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "cleanup_expired_challenges"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "cleanup_link_preview_cache"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "clear_login_attempts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "clear_qr_on_connect"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "close_conversation_atomic"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "complete_crm_sync_outbox"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "complete_multiplix_dispatch_if_drained"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "complete_multiplix_recipient"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "complete_outbound_message"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "complete_talkx_campaign_if_drained"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "complete_talkx_recipient"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "consume_rate_limit"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "contacts_count_by_type"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "conversation_closure_day"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "conversation_task_set_assignee"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "conversation_task_state_trigger"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "count_searchbox_sessions_this_month"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "create_department_invite"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "current_profile_id"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "dashboard_contact_counts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "dashboard_hourly_volume"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "dashboard_kpi"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "dashboard_leaderboard"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "dashboard_sentiment_alerts"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "decrypt_gmail_token"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "delete_contact"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "delete_contacts"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "department_audit_logs_fill_profile_name"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "effective_role"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "encrypt_gmail_token"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "enforce_conversation_status_transition"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "enforce_multiplix_dispatch_mutability"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "enforce_multiplix_recipient_mutability"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "enforce_talkx_campaign_mutability"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "enforce_talkx_recipient_snapshot_mutability"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "enqueue_crm_sync_from_closure"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "enqueue_outbound_message"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "enqueue_rich_outbound_message"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "ensure_single_default_ai_provider"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "ensure_single_default_filter"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "expire_stale_agent_presence"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "fail_crm_sync_outbox"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "fail_outbound_message"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "find_or_create_direct_conversation"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "fn_list_audio_meme_categories"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "fn_list_audio_memes_for_user"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "fn_send_audio_meme"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "fn_toggle_user_meme_favorite"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_avatars_refresh_cron_secret"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_channel_credentials"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_channel_credentials_safe"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_connection_health_check_cron_secret"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_connection_instance"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_connection_qr_code"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_conversation_tab_counts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_crm_sync_health"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_department_whatsapp_api_key"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_department_whatsapp_credentials"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_gmail_tokens"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_identity_matrix"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_instance_token"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_last_message_dates"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_multiplix_cron_secret"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_own_gmail_accounts"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_own_lockout_status"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_profile_id_for_user"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_profile_role_for_check"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_team_conversation_previews"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_team_inbox"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_team_messages_page"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_team_profiles"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_team_unread_counts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "get_visible_agent_ids"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "grant_agent_achievement"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "guard_contact_note_identity"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "guard_conversation_closure_request_id"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "guard_conversation_event_closure_id"
+  },
+  {
+   "acl": "{postgres=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "guard_message_delivery_internal_fields"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "guard_talkx_template_update"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "guard_talkx_template_version_immutable"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "handle_conversation_closure_gamification"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "handle_message_gamification"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "handle_new_user"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "handle_new_user_role"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "has_role"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "increment_agent_messages"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "increment_agent_resolutions"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "increment_talkx_template_use"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "ingest_inbound_message"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "init_agent_stats"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_account_locked"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_admin"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_admin_or_supervisor"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_contact_visible_to_user"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_country_allowed"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_country_blocked"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_ip_blocked"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_ip_whitelisted"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_privileged_contact_caller"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_team_conversation_member"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "is_valid_talkx_schedule_timezone"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "is_within_business_hours"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "leave_team_group"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "log_assignment_change"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "log_audit_event"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "mark_first_response"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "mark_multiplix_recipient_dispatch_started"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "mark_talkx_recipient_dispatch_started"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "mark_team_conversation_read"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "mcp_exec"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "mcp_exec_many"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "merge_contacts_atomic"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "messages_sla_first_response_trigger"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "multiplix_connection_daily_usage"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "multiplix_create_draft"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "multiplix_dispatch_window_is_open"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "my_calls_kpi"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "normalize_contact_phone"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "notify_due_reminders"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "notify_due_tasks"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "persist_conversation_analysis"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "persist_multiplix_recipient_message_snapshot"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "persist_sentiment_alert"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "persist_talkx_recipient_message_snapshot"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "phone_variants"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "prevent_contact_assignee_hijack"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "prevent_contact_queue_hijack"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "prevent_conversation_task_field_forgery"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "prevent_profile_privilege_escalation"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "rate_limit_reset_requests"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "reassign_absent_agents"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "reassign_overloaded_agents"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_failed_login"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_incoming_call_event"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_multiplix_recipient_delivered"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_multiplix_recipient_sent"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_talkx_link_click"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_talkx_recipient_delivered"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "record_talkx_recipient_sent"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "redact_crm_sync_on_contact_delete"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "register_first_response_internal"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "release_multiplix_recipient_claim"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "release_talkx_recipient_claim"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "remove_team_member"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "remove_wa_label_from_all_contacts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "remove_wa_tag_by_prefix"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "rename_wa_label_on_all_contacts"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "replace_ai_conversation_tags"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "replace_talkx_draft_recipients"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "require_contact_edit_permission"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "require_contact_global_admin"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "reschedule_multiplix_recipient"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "reschedule_talkx_recipient"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "sanitize_reset_request"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "save_talkx_campaign_draft"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "search_contacts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "search_knowledge_base"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "search_my_calls"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "search_team_messages"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "seed_default_goals_for_profile"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_call_agent_notes"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_conversation_status"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_department_whatsapp_config"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_instance_token"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_scheduled_report_config_owner"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "set_talkx_template_updated_at"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_team_member_pref"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "set_team_member_role"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "skill_based_assign"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "store_gmail_tokens"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "sweep_multiplix_stuck_recipients"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "sync_contact_status_on_closure"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "sync_profile_role_from_user_roles"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "sync_thread_last_sender"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talk_me_claim"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talk_me_eligible_waiting_contacts"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talk_me_list_queues"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talk_me_list_waiting"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talkx_benchmarks"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "talkx_campaign_report"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talkx_increment_delivered"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "talkx_overview_stats"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talkx_recipient_is_suppressed"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "talkx_segment_tags"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "talkx_suppress_contact"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "team_message_receipts_update_guard"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "team_messages_edit_guard"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "team_messages_validate_reply_to"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "team_reactions_dedup_guard"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "team_receipts_fill_conversation_id"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "team_receipts_no_own_sender"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "toggle_team_reaction"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "transfer_team_conversation_department"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "transition_multiplix_dispatch"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "transition_talkx_campaign"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "trg_talkx_increment_replied_count"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "trg_talkx_increment_template_use_count"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "trigger_pending_multiplix_dispatches"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "update_agent_level"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "update_agent_streak"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "update_device_last_seen"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "update_global_settings_updated_at"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "update_own_profile"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "update_talkx_campaign_limits"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "update_talkx_template_with_snapshot"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "update_updated_at_column"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "upsert_crm_contact_link_guarded"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "upsert_my_call"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": true,
+   "prokind": "f",
+   "proname": "user_has_permission"
+  },
+  {
+   "acl": "{postgres=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "secdef": false,
+   "prokind": "f",
+   "proname": "validate_talkx_template_input"
+  }
+ ],
+ "row_count": 237,
+ "truncated": false
+}

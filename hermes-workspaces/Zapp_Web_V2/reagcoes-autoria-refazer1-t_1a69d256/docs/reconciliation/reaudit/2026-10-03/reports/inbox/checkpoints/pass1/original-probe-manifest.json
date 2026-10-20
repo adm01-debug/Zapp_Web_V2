@@ -1,0 +1,35 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": [
+    {
+      "path": "probes/run.mjs",
+      "bytes": 29784,
+      "sha256": "556dca06ac9038e9c67f4540348dfd01652c3ba8e8acae35747b70b8f37e006b"
+    },
+    {
+      "path": "probes/pins.json",
+      "bytes": 1977,
+      "sha256": "2486b6a14ac20a7b7e0b98fea1bcf046b439f85554a7b347ff004e1abf76101d"
+    },
+    {
+      "path": "probes/results.json",
+      "bytes": 11853,
+      "sha256": "6f3e429937781d65f1d3912d6a6f0fe4db69c0867606bcf48443444f6c18286a"
+    },
+    {
+      "path": "probes/README.md",
+      "bytes": 3441,
+      "sha256": "29300f2658526ffc92a4c173bd16327d9124cb565829e75454fcbc60d8735ae4"
+    },
+    {
+      "path": "probes/verify-provenance.py",
+      "bytes": 2098,
+      "sha256": "27e68555a9153804fa55ee31b4eb4f6d658ccdc9414c825f0e564f1d4395c85c"
+    },
+    {
+      "path": "probes/provenance-checks.json",
+      "bytes": 428,
+      "sha256": "1c3060a61513a9d91381284d2e13bdc9c125ee218454fb23c3f7c36187b5f4fb"
+    }
+  ]
+}

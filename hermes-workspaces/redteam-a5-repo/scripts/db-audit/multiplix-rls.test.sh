@@ -1,0 +1,430 @@
+#!/usr/bin/env bash
+# F20 do Bloco A (docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md).
+#
+# Prova, em PostgreSQL 17 descartavel, o contrato de acesso e de fila do modulo
+# Multiplix: grants/RLS/FORCE (F01/F02), policies (F03/F04), guarda de
+# mutabilidade (F05), criacao transacional idempotente com teto (F08), fila
+# (F11b/F12/F13/F14) e scheduler (F10/F17).
+#
+# Diferente dos harnesses irmãos, este NAO recria as tabelas do modulo a mao:
+# aplica as 10 migrations ja existentes em main na ordem de version, cria o
+# pre-estado que o Supabase teria naquele ponto (grants default para
+# anon/authenticated) e so entao aplica as migrations desta tarefa. Assim o teste
+# cobre tambem a divergencia de replay documentada em F04 (a 20260927210000
+# recria policies sem TO authenticated; a 20260927130001 as tinha criado com).
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+migrations_dir="$repo_root/supabase/migrations"
+postgres_image="${MULTIPLIX_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+container_name="multiplix-rls-test-$$"
+test_password="multiplix_rls_test_only"
+
+cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
+psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
+
+migration() {
+  local file="$migrations_dir/$1"
+  [ -f "$file" ] || fail "migration ausente: $1"
+  printf '  · %s\n' "$1" >&2
+  psql_test < "$file" >/dev/null
+}
+
+start_postgres() {
+  for attempt in 1 2 3; do
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    if ! docker run -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null; then
+      printf 'WARN: PostgreSQL container failed to start (attempt %s/3)\n' "$attempt" >&2
+      continue
+    fi
+    for _ in $(seq 1 15); do
+      if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+        sleep 1
+        if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+          return 0
+        fi
+      fi
+      sleep 1
+    done
+    printf 'WARN: PostgreSQL bootstrap was not stable (attempt %s/3)\n' "$attempt" >&2
+    docker logs "$container_name" >&2 || true
+  done
+  return 1
+}
+
+start_postgres || fail 'PostgreSQL de teste não iniciou'
+
+# ── infraestrutura que o Supabase fornece (auth, vault, cron, pg_net) ──────────
+psql_test >/dev/null <<'SQL'
+CREATE SCHEMA auth;
+CREATE SCHEMA vault;
+CREATE SCHEMA net;
+CREATE SCHEMA cron;
+
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+  )::text
+$$;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+  )::uuid
+$$;
+
+CREATE ROLE anon;
+CREATE ROLE authenticated;
+CREATE ROLE service_role;
+-- No Supabase o service_role tem BYPASSRLS: e assim que a edge (service key)
+-- escreve direto nas tabelas do modulo sem policy para ele.
+ALTER ROLE service_role BYPASSRLS;
+
+-- Em producao o schema auth e legivel pelos roles da API (as policies chamam
+-- auth.uid()); sem isso o harness falharia com "permission denied for schema auth"
+-- em vez de exercitar a regra que o teste quer provar.
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+
+CREATE TYPE public.app_role AS ENUM ('admin', 'supervisor', 'agent', 'special_agent');
+CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid NOT NULL);
+CREATE TABLE public.user_roles (user_id uuid NOT NULL, role public.app_role NOT NULL);
+CREATE TABLE public.permissions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text UNIQUE NOT NULL, description text, category text, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.role_permissions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), role public.app_role NOT NULL, permission_id uuid NOT NULL REFERENCES public.permissions(id), created_at timestamptz NOT NULL DEFAULT now());
+
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role IN ('admin', 'supervisor'))
+$$;
+CREATE FUNCTION public.user_has_permission(_user_id uuid, _permission_name text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    JOIN public.role_permissions rp ON rp.role = ur.role
+    JOIN public.permissions p ON p.id = rp.permission_id
+    WHERE ur.user_id = _user_id AND p.name = _permission_name
+  )
+$$;
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN NEW.updated_at = statement_timestamp(); RETURN NEW; END
+$$;
+
+CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL, description text, updated_at timestamptz NOT NULL DEFAULT now());
+INSERT INTO public.talkx_settings (key, value) VALUES
+  ('daily_limit_per_connection', '500'::jsonb),
+  ('business_hours', '{"tz":"America/Sao_Paulo","start":"08:00","end":"18:00","days":[1,2,3,4,5]}'::jsonb);
+CREATE TABLE public.talkx_campaigns (id uuid PRIMARY KEY, whatsapp_connection_id uuid);
+CREATE TABLE public.talkx_recipients (id uuid PRIMARY KEY, campaign_id uuid NOT NULL, sent_at timestamptz);
+
+CREATE TABLE vault.secrets (name text PRIMARY KEY);
+CREATE TABLE vault.decrypted_secrets (name text PRIMARY KEY, decrypted_secret text);
+CREATE FUNCTION vault.create_secret(secret text, name text) RETURNS void LANGUAGE sql AS $$
+  INSERT INTO vault.secrets (name) VALUES (name) ON CONFLICT DO NOTHING;
+  INSERT INTO vault.decrypted_secrets (name, decrypted_secret) VALUES (name, secret) ON CONFLICT DO NOTHING;
+$$;
+INSERT INTO vault.decrypted_secrets (name, decrypted_secret) VALUES
+  ('zapp_anon_key', 'anon-key-de-teste');
+CREATE TABLE cron.jobs (jobname text PRIMARY KEY, schedule text, command text);
+CREATE FUNCTION cron.schedule(jobname text, schedule text, command text) RETURNS bigint LANGUAGE sql AS $$
+  INSERT INTO cron.jobs (jobname, schedule, command) VALUES (jobname, schedule, command)
+  ON CONFLICT (jobname) DO UPDATE SET schedule = excluded.schedule, command = excluded.command
+  RETURNING 1::bigint;
+$$;
+CREATE TABLE net.requests (id bigserial PRIMARY KEY, url text, body jsonb, headers jsonb);
+CREATE FUNCTION net.http_post(url text, body jsonb DEFAULT '{}'::jsonb, headers jsonb DEFAULT '{}'::jsonb, timeout_milliseconds integer DEFAULT 5000)
+  RETURNS bigint LANGUAGE sql AS $$
+  INSERT INTO net.requests (url, body, headers) VALUES (url, body, headers) RETURNING id;
+$$;
+
+-- A publication realtime existe vazia; a 20260926230000 adiciona as tabelas.
+CREATE PUBLICATION supabase_realtime;
+
+-- Atores: A = admin dono; B = supervisor nao-dono; C = operador sem papel de staff.
+INSERT INTO public.profiles (id, user_id) VALUES
+  ('10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-00000000000a'),
+  ('10000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-00000000000b'),
+  ('10000000-0000-0000-0000-00000000000c', '20000000-0000-0000-0000-00000000000c');
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('20000000-0000-0000-0000-00000000000a', 'admin'),
+  ('20000000-0000-0000-0000-00000000000b', 'supervisor'),
+  ('20000000-0000-0000-0000-00000000000c', 'agent');
+GRANT ALL ON public.profiles, public.user_roles, public.role_permissions, public.permissions TO authenticated;
+SQL
+
+# ── as 10 migrations do modulo ja em main, na ordem de version ─────────────────
+migration "20260926150000_seed_multiplix_audience_permissions.sql"
+migration "20260926161000_multiplix_dispatches_schema.sql"
+migration "20260926180000_multiplix_send_engine.sql"
+migration "20260926230000_multiplix_realtime_publication.sql"
+migration "20260926430000_multiplix_delivery_receipts.sql"
+migration "20260927130001_multiplix_rls_fix_public_to_authenticated.sql"
+migration "20260927210000_multiplix_rls_hardening_realtime_pii.sql"
+migration "20260927280000_multiplix_blocks_table.sql"
+migration "20260927320000_multiplix_cron_scheduler.sql"
+migration "20260927600000_fix_multiplix_dispatch_start_sending.sql"
+
+# ── pre-estado Supabase no ponto em que esta tarefa entra ──────────────────────
+psql_test >/dev/null <<'SQL'
+-- Default privilege do Supabase: anon e authenticated nascem com TUDO nas tabelas
+-- novas do schema public, inclusive TRUNCATE/REFERENCES/TRIGGER (achado 1).
+GRANT ALL ON public.multiplix_dispatches, public.multiplix_recipients, public.multiplix_blocks TO anon;
+GRANT ALL ON public.multiplix_dispatches, public.multiplix_recipients, public.multiplix_blocks TO authenticated;
+-- service_role tambem nasce com ALL no Supabase (o worker escreve por ai) e a
+-- migration de hardening nao revoga nada dele.
+GRANT ALL ON public.multiplix_dispatches, public.multiplix_recipients, public.multiplix_blocks TO service_role;
+GRANT ALL ON public.talkx_settings, public.talkx_campaigns, public.talkx_recipients TO service_role;
+GRANT SELECT ON public.talkx_settings, public.talkx_campaigns, public.talkx_recipients TO authenticated;
+
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id) VALUES
+  ('30000000-0000-0000-0000-000000000001', 'Disparo do A', 'Oi {{empresa}}', 'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
+  ('30000000-0000-0000-0000-000000000002', 'Rascunho do A', 'Oi {{empresa}}', 'draft', '10000000-0000-0000-0000-00000000000a', 0, NULL),
+  ('30000000-0000-0000-0000-000000000003', 'Rascunho do B', 'Oi {{empresa}}', 'draft', '10000000-0000-0000-0000-00000000000b', 0, NULL);
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, company_name_snapshot, destino_e164, status) VALUES
+  ('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'Empresa 1', '+5511990000001', 'pending');
+INSERT INTO public.multiplix_blocks (dispatch_id, block_order, block_type, template_text) VALUES
+  ('30000000-0000-0000-0000-000000000002', 0, 'text', 'bloco do A'),
+  ('30000000-0000-0000-0000-000000000003', 0, 'text', 'bloco do B');
+SQL
+
+# ── as migrations DESTA tarefa, na ordem de version ────────────────────────────
+migration "20260929570000_multiplix_hardening_grants_rls_blocks.sql"
+migration "20260929580000_multiplix_policies_consolidation.sql"
+migration "20260929590000_multiplix_mutability_guard.sql"
+migration "20260929600000_multiplix_send_engine_fixes.sql"
+migration "20260929610000_multiplix_cron_window_and_limits.sql"
+migration "20260929620000_multiplix_realtime_column_scope.sql"
+migration "20260929630000_multiplix_create_draft.sql"
+migration "20260929640000_multiplix_dispatch_manage_all_permission.sql"
+
+# A revogacao da escrita direta em multiplix_recipients (F08, segunda metade) so
+# existe depois que a edge que cria o disparo esta DEPLOYADA — ela entra no PR de
+# edge/front, nao no de DDL. O bloco abaixo acompanha o que estiver no repo: sem
+# o arquivo, o teste cobra o estado ANTERIOR (INSERT/UPDATE ainda concedidos);
+# com o arquivo, cobra anon/authenticated sem o caminho de escrita.
+REVOKE_MIGRATION="$(ls "$migrations_dir"/*_multiplix_revoke_recipient_writes.sql 2>/dev/null | head -1 || true)"
+if [ -n "$REVOKE_MIGRATION" ]; then
+  migration "$(basename "$REVOKE_MIGRATION")"
+  RECIPIENT_WRITES_REVOKED=true
+else
+  RECIPIENT_WRITES_REVOKED=false
+fi
+
+admin_a="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-00000000000a';"
+supervisor_b="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-00000000000b';"
+agent_c="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-00000000000c';"
+service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"
+anon_session="SET ROLE anon; SET request.jwt.claim.role='anon';"
+
+# ── F01/F02: anon fora, sem TRUNCATE, FORCE RLS ligado ─────────────────────────
+[[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_schema='public' AND table_name LIKE 'multiplix%' AND grantee='anon'")" == '0' ]] \
+  || fail 'anon ainda tem grant em tabela do Multiplix (F01)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_schema='public' AND table_name LIKE 'multiplix%' AND grantee='authenticated' AND privilege_type IN ('TRUNCATE','REFERENCES','TRIGGER')")" == '0' ]] \
+  || fail 'authenticated ainda tem TRUNCATE/REFERENCES/TRIGGER (F01)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('multiplix_dispatches','multiplix_recipients','multiplix_blocks') AND c.relforcerowsecurity")" == '3' ]] \
+  || fail 'FORCE ROW LEVEL SECURITY ausente nas tres tabelas (F02)'
+anon_truncate="$(psql_test -v VERBOSITY=verbose -c "$anon_session TRUNCATE public.multiplix_recipients;" 2>&1 || true)"
+[[ "$anon_truncate" == *permission*denied* ]] || fail 'anon truncou a fila do Multiplix'
+anon_read="$(psql_test -Atqc "$anon_session SELECT count(*) FROM public.multiplix_dispatches;" 2>&1 || true)"
+[[ "$anon_read" == *permission*denied* || "$anon_read" == '0' ]] || fail 'anon leu dispatches'
+
+# ── F03: blocos exigem staff e rascunho ────────────────────────────────────────
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_policies WHERE tablename='multiplix_blocks' AND 'public' = ANY(roles)")" == '0' ]] \
+  || fail 'policy de multiplix_blocks ainda TO public (F03)'
+[[ "$(psql_test -Atqc "$agent_c SELECT count(*) FROM public.multiplix_blocks;")" == '0' ]] || fail 'agent (nao-staff) viu blocos'
+[[ "$(psql_test -Atqc "$supervisor_b SELECT count(*) FROM public.multiplix_blocks;")" == '2' ]] \
+  || fail 'supervisor (staff) deveria ler os blocos de todos os disparos'
+agent_insert_blocks="$(psql_test -Atqc "$agent_c INSERT INTO public.multiplix_blocks (dispatch_id, block_order, block_type, template_text) VALUES ('30000000-0000-0000-0000-000000000003', 5, 'text', 'invasao') RETURNING 1;" 2>&1 || true)"
+[[ "$agent_insert_blocks" != '1' ]] || fail 'agent inseriu bloco em rascunho alheio'
+
+# ── F04: replay limpo nao termina com policy TO public ─────────────────────────
+# (9 nascem TO authenticated; 7 sobrevivem quando a revogacao de F08 ja existe.)
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_policies WHERE tablename LIKE 'multiplix%' AND 'public' = ANY(roles)")" == '0' ]] \
+  || fail 'replay limpo terminou com policy TO public (F04)'
+EXPECTED_POLICIES=9
+if [ "$RECIPIENT_WRITES_REVOKED" = true ]; then EXPECTED_POLICIES=7; fi
+[[ "$(psql_test -Atqc "SELECT count(*) FROM pg_policies WHERE tablename IN ('multiplix_dispatches','multiplix_recipients') AND 'authenticated' = ANY(roles)")" == "$EXPECTED_POLICIES" ]] \
+  || fail "replay limpo nao terminou com $EXPECTED_POLICIES policies TO authenticated (F04/F08)"
+if [ "$RECIPIENT_WRITES_REVOKED" = true ]; then
+  [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_name='multiplix_recipients' AND grantee='authenticated' AND privilege_type IN ('INSERT','UPDATE')")" == '0' ]] \
+    || fail 'authenticated ainda tem INSERT/UPDATE em multiplix_recipients depois da revogacao (F08)'
+  [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_name='multiplix_recipients' AND grantee='authenticated' AND privilege_type IN ('SELECT','DELETE')")" == '2' ]] \
+    || fail 'a revogacao tirou SELECT/DELETE legitimos de multiplix_recipients (F08)'
+else
+  [[ "$(psql_test -Atqc "SELECT count(*) FROM information_schema.role_table_grants WHERE table_name='multiplix_recipients' AND grantee='authenticated' AND privilege_type IN ('INSERT','UPDATE')")" == '2' ]] \
+    || fail 'REVOKE de F08 aplicado sem a migration de revogacao (o PR de DDL nao pode tirar a escrita direta)'
+fi
+
+# ── F15: realtime sem PII ──────────────────────────────────────────────────────
+# attnames NULL = tabela publicada com TODAS as colunas.
+pub_disp="$(psql_test -Atqc "SELECT coalesce(array_to_string(attnames, ','), 'TODAS') FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='multiplix_dispatches'")"
+pub_recip="$(psql_test -Atqc "SELECT coalesce(array_to_string(attnames, ','), 'TODAS') FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='multiplix_recipients'")"
+[[ "$pub_disp" != 'TODAS' ]] || fail 'realtime publica TODAS as colunas de multiplix_dispatches (F15)'
+[[ "$pub_recip" != 'TODAS' ]] || fail 'realtime publica TODAS as colunas de multiplix_recipients (F15)'
+[[ "$pub_disp" != *message_template* && "$pub_disp" != *audience_filters* ]] \
+  || fail 'realtime ainda publica message_template/audience_filters (F15)'
+[[ "$pub_recip" != *destino_e164* && "$pub_recip" != *personalized_message* && "$pub_recip" != *delivery_claim_token* ]] \
+  || fail 'realtime ainda publica PII de multiplix_recipients (F15)'
+# Contrapeso: o recorte nao pode ter ficado largo demais e derrubado o monitor.
+for col in id status sent_count failed_count delivered_count updated_at; do
+  [[ "$pub_disp" == *"$col"* ]] || fail "realtime deixou de publicar $col em multiplix_dispatches (F15)"
+done
+for col in id status; do
+  [[ "$pub_recip" == *"$col"* ]] || fail "realtime deixou de publicar $col em multiplix_recipients (F15)"
+done
+
+# ── F05: guarda de mutabilidade ────────────────────────────────────────────────
+staff_status_update="$(psql_test -v VERBOSITY=verbose -c "$admin_a UPDATE public.multiplix_dispatches SET status='sending' WHERE id='30000000-0000-0000-0000-000000000002';" 2>&1 || true)"
+[[ "$staff_status_update" == *multiplix_dispatch_transition_denied* ]] || fail 'staff conseguiu forcar status por UPDATE direto (F05)'
+staff_template_update="$(psql_test -v VERBOSITY=verbose -c "$admin_a UPDATE public.multiplix_dispatches SET message_template='outro' WHERE id='30000000-0000-0000-0000-000000000001';" 2>&1 || true)"
+[[ "$staff_template_update" == *multiplix_dispatch_content_locked* || "$staff_template_update" == *multiplix_dispatch_transition_denied* ]] \
+  || fail 'staff editou template de disparo em envio (F05)'
+staff_counter_update="$(psql_test -v VERBOSITY=verbose -c "$admin_a UPDATE public.multiplix_dispatches SET sent_count=99 WHERE id='30000000-0000-0000-0000-000000000002';" 2>&1 || true)"
+[[ "$staff_counter_update" == *multiplix_delivery_state_managed_by_worker* ]] || fail 'staff escreveu contador do worker (F05)'
+staff_recipient_update="$(psql_test -v VERBOSITY=verbose -c "$admin_a UPDATE public.multiplix_recipients SET status='pending' WHERE id='40000000-0000-0000-0000-000000000001';" 2>&1 || true)"
+[[ "$staff_recipient_update" == *permission*denied* || "$staff_recipient_update" == *multiplix_recipient_update_denied* ]] \
+  || fail 'staff reescreveu destinatario em envio (F05/F08)'
+staff_recipient_insert="$(psql_test -v VERBOSITY=verbose -c "$admin_a INSERT INTO public.multiplix_recipients (dispatch_id, company_id, destino_e164, status) VALUES ('30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000009', '+5511990000009', 'pending');" 2>&1 || true)"
+[[ "$staff_recipient_insert" == *permission*denied* || "$staff_recipient_insert" == *multiplix_recipient_insert_requires_draft* ]] \
+  || fail 'staff inseriu destinatario em disparo fora de rascunho'
+draft_update="$(psql_test -Atqc "$admin_a UPDATE public.multiplix_dispatches SET name='Rascunho renomeado' WHERE id='30000000-0000-0000-0000-000000000002' RETURNING name;")"
+[[ "$draft_update" == 'Rascunho renomeado' ]] || fail 'staff perdeu a escrita legitima no proprio rascunho'
+
+# ── F08: criacao transacional, idempotente, com teto ───────────────────────────
+created="$(psql_test -Atqc "$service_session SELECT dispatch_id || ':' || recipient_count || ':' || created FROM public.multiplix_create_draft('Disparo novo', 'Oi {{empresa}}', '[
+  {\"company_id\":\"50000000-0000-0000-0000-000000000011\",\"company_name\":\"Empresa 11\",\"destino_e164\":\"+5511990000011\",\"destino_origem\":\"contato_whatsapp\",\"elegibilidade\":\"apto\"},
+  {\"company_id\":\"50000000-0000-0000-0000-000000000012\",\"company_name\":\"Empresa 12\",\"destino_e164\":null,\"destino_origem\":\"sem_destino\",\"elegibilidade\":\"destino_invalido\"},
+  {\"company_id\":\"50000000-0000-0000-0000-000000000013\",\"company_name\":\"Empresa 13\",\"destino_e164\":\"+5511990000013\",\"destino_origem\":\"contato_whatsapp\",\"elegibilidade\":\"apto\"}
+]'::jsonb, '90000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-00000000000a');")"
+[[ "$created" == *':2:true' ]] || fail "create_draft nao criou os 2 destinatarios aptos: $created"
+new_dispatch="${created%%:*}"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_recipients WHERE dispatch_id='$new_dispatch'")" == '2' ]] \
+  || fail 'destinatario marcado como nao-apto entrou na fila'
+[[ "$(psql_test -Atqc "SELECT total_recipients FROM public.multiplix_dispatches WHERE id='$new_dispatch'")" == '2' ]] \
+  || fail 'total_recipients divergiu dos destinatarios inseridos'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_recipients WHERE dispatch_id='$new_dispatch' AND destino_e164 IS NULL")" == '0' ]] \
+  || fail 'linha sem destino entrou na fila'
+
+again="$(psql_test -Atqc "$service_session SELECT dispatch_id || ':' || created FROM public.multiplix_create_draft('Disparo novo', 'Oi {{empresa}}', '[{\"company_id\":\"50000000-0000-0000-0000-000000000011\",\"destino_e164\":\"+5511990000011\",\"elegibilidade\":\"apto\"}]'::jsonb, '90000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-00000000000a');")"
+[[ "$again" == "$new_dispatch:false" ]] || fail "create_draft nao foi idempotente: $again"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_dispatches WHERE client_request_id='90000000-0000-0000-0000-000000000001'")" == '1' ]] \
+  || fail 'dois POSTs iguais criaram dois disparos'
+over_limit="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT public.multiplix_create_draft('Acima do teto', 'Oi', jsonb_agg(jsonb_build_object('company_id', gen_random_uuid()::text, 'elegibilidade', 'apto')), '90000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-00000000000a') FROM generate_series(1,201);" 2>&1 || true)"
+[[ "$over_limit" == *multiplix_over_recipient_limit* ]] || fail 'teto de 200 destinatarios nao foi aplicado (F17)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_dispatches WHERE client_request_id='90000000-0000-0000-0000-000000000002'")" == '0' ]] \
+  || fail 'disparo acima do teto foi criado parcialmente'
+no_eligible="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT public.multiplix_create_draft('Sem aptos', 'Oi', '[{\"company_id\":\"50000000-0000-0000-0000-000000000014\",\"elegibilidade\":\"fora_do_escopo\"}]'::jsonb, '90000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-00000000000a');" 2>&1 || true)"
+[[ "$no_eligible" == *multiplix_draft_no_eligible_recipients* ]] || fail 'disparo sem destinatario apto foi aceito'
+staff_create="$(psql_test -v VERBOSITY=verbose -c "$admin_a SELECT public.multiplix_create_draft('Pelo navegador', 'Oi', '[]'::jsonb, '90000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-00000000000a');" 2>&1 || true)"
+[[ "$staff_create" == *permission*denied* || "$staff_create" == *service_role_required* ]] \
+  || fail 'staff chamou a RPC de criacao sem a service key'
+
+# ── F11b/F12/F13/F14: fila ────────────────────────────────────────────────────
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, retry_after, created_at)
+VALUES
+  ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', '+5511990000002', 'pending', statement_timestamp() + interval '10 minutes', statement_timestamp() + interval '1 second'),
+  ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000003', '+5511990000003', 'pending', NULL, statement_timestamp() + interval '2 seconds'),
+  ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000004', '+5511990000004', 'pending', NULL, statement_timestamp() + interval '3 seconds');
+SQL
+[[ "$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_multiplix_recipient('30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002','worker-a',90);")" == '0' ]] \
+  || fail 'claim pegou item em backoff (F12)'
+# Controle positivo: o MESMO item, com o backoff vencido, e reivindicavel. Sem
+# isto a assercao acima passaria por qualquer outro motivo (dispatch fora de
+# 'sending', id errado) sem provar nada sobre o retry_after.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+UPDATE public.multiplix_recipients
+   SET retry_after = statement_timestamp() - interval '1 second'
+ WHERE id = '40000000-0000-0000-0000-000000000002';
+SQL
+[[ -n "$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_recipient('30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002','worker-a',90);")" ]] \
+  || fail 'item com backoff vencido segue inelegivel: a recusa anterior nao provava o retry_after (F12)'
+claim_token="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_recipient('30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000003','worker-b',90);")"
+[[ -n "$claim_token" ]] || fail 'claim nao pegou item pendente elegivel'
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_recipient_dispatch_started('40000000-0000-0000-0000-000000000003','$claim_token'::uuid);
+UPDATE public.multiplix_recipients
+   SET delivery_claim_expires_at = statement_timestamp() - interval '1 second'
+ WHERE id = '40000000-0000-0000-0000-000000000003';
+SQL
+[[ "$(psql_test -Atqc "$service_session SELECT public.sweep_multiplix_stuck_recipients(500);")" == '1' ]] \
+  || fail 'sweeper nao fechou o item preso (F11b)'
+[[ "$(psql_test -Atqc "SELECT status || ':' || (delivery_claim_token IS NULL)::text FROM public.multiplix_recipients WHERE id='40000000-0000-0000-0000-000000000003'")" == 'outcome_unknown:true' ]] \
+  || fail 'item preso nao virou outcome_unknown'
+[[ "$(psql_test -Atqc "SELECT outcome_unknown_count FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000001'")" == '1' ]] \
+  || fail 'sweeper nao contabilizou o item no disparo'
+[[ "$(psql_test -Atqc "$service_session SELECT count(*) FROM public.claim_multiplix_recipient('30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000003','worker-c',90);")" == '0' ]] \
+  || fail 'item com POST feito voltou para a fila (risco de reenvio)'
+
+[[ "$(psql_test -Atqc "$service_session SELECT current_status FROM public.transition_multiplix_dispatch('30000000-0000-0000-0000-000000000001','cancel');")" == 'cancelled' ]] \
+  || fail 'cancel nao transicionou o disparo'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_recipients WHERE dispatch_id='30000000-0000-0000-0000-000000000001' AND status IN ('pending','sending')")" == '0' ]] \
+  || fail 'cancel deixou destinatario pendente na fila (F14)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_recipients WHERE id='40000000-0000-0000-0000-000000000003'")" == 'outcome_unknown' ]] \
+  || fail 'cancel mexeu em item que ja tinha ido ao provedor'
+
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients)
+VALUES ('30000000-0000-0000-0000-000000000010', 'Parcial', 'Oi', 'sending', '10000000-0000-0000-0000-00000000000a', 2);
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status, sent_at)
+VALUES
+  ('40000000-0000-0000-0000-000000000010', '30000000-0000-0000-0000-000000000010', '50000000-0000-0000-0000-000000000010', 'sent', statement_timestamp()),
+  ('40000000-0000-0000-0000-000000000011', '30000000-0000-0000-0000-000000000010', '50000000-0000-0000-0000-000000000011', 'failed', NULL);
+UPDATE public.multiplix_dispatches SET sent_count=1, failed_count=1 WHERE id='30000000-0000-0000-0000-000000000010';
+SQL
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('30000000-0000-0000-0000-000000000010');")" == 't' ]] \
+  || fail 'disparo drenado nao foi encerrado'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000010'")" == 'completed_with_failures' ]] \
+  || fail 'disparo com falha foi marcado como sucesso (F13)'
+
+# ── F10/F17: scheduler promove agendado, retoma janela e limita por conexao ────
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, scheduled_at, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000020', 'Agendado', 'Oi', 'scheduled', '10000000-0000-0000-0000-00000000000a', 1, statement_timestamp() - interval '1 minute', '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status)
+VALUES ('40000000-0000-0000-0000-000000000020', '30000000-0000-0000-0000-000000000020', '50000000-0000-0000-0000-000000000020', 'pending');
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, pause_reason, send_window_start, send_window_end)
+VALUES
+  ('30000000-0000-0000-0000-000000000021', 'Janela aberta', 'Oi', 'paused', '10000000-0000-0000-0000-00000000000a', 1, 'outside_window', NULL, NULL),
+  ('30000000-0000-0000-0000-000000000022', 'Janela fechada', 'Oi', 'paused', '10000000-0000-0000-0000-00000000000a', 1, 'outside_window', '00:00', '00:00');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, status)
+VALUES
+  ('40000000-0000-0000-0000-000000000021', '30000000-0000-0000-0000-000000000021', '50000000-0000-0000-0000-000000000021', 'pending'),
+  ('40000000-0000-0000-0000-000000000022', '30000000-0000-0000-0000-000000000022', '50000000-0000-0000-0000-000000000022', 'pending');
+SQL
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+SELECT public.trigger_pending_multiplix_dispatches();
+SQL
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000020'")" == 'sending' ]] \
+  || fail 'disparo agendado nao foi promovido pelo cron (F10a)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000021'")" == 'sending' ]] \
+  || fail 'disparo pausado por janela nao retomou com a janela aberta (F10b)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='30000000-0000-0000-0000-000000000022'")" == 'paused' ]] \
+  || fail 'disparo retomou com a janela fechada'
+[[ "$(psql_test -Atqc "SELECT count(DISTINCT url) FROM net.requests")" == '1' ]] \
+  || fail 'cron nao chamou a edge pela URL do vault (F17)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM net.requests r WHERE r.url IS DISTINCT FROM (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='multiplix_send_url')")" == '0' ]] \
+  || fail 'cron nao usou a rota do vault (URL literal no SQL)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM (SELECT d.whatsapp_connection_id FROM net.requests r JOIN public.multiplix_dispatches d ON d.id = (r.body->>'dispatchId')::uuid WHERE d.whatsapp_connection_id IS NOT NULL GROUP BY d.whatsapp_connection_id HAVING count(*) > 1) dup")" == '0' ]] \
+  || fail 'cron disparou mais de um dispatch por conexao no mesmo tick (F17)'
+usage="$(psql_test -Atqc "$service_session WITH uso AS (SELECT public.multiplix_connection_daily_usage('70000000-0000-0000-0000-000000000001') AS j) SELECT (j ->> 'limit') || ':' || (j ->> 'sent') || ':' || (j ->> 'remaining') FROM uso;")"
+[[ "$usage" == '500:0:500' ]] || fail "leitura de consumo diario divergiu: $usage"
+[[ "$(psql_test -Atqc "SELECT public.multiplix_dispatch_window_is_open('30000000-0000-0000-0000-000000000021')")" == 't' ]] \
+  || fail 'helper de janela nao abriu com send_window nulo'
+[[ "$(psql_test -Atqc "SELECT public.multiplix_dispatch_window_is_open('30000000-0000-0000-0000-000000000022')")" == 'f' ]] \
+  || fail 'helper de janela abriu com start = end'
+
+# ── F06: permissao nova criada e atribuida a admin ────────────────────────────
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.permissions WHERE name='multiplix.dispatch.manage_all'")" == '1' ]] \
+  || fail 'permissao multiplix.dispatch.manage_all nao foi criada'
+[[ "$(psql_test -Atqc "SELECT public.user_has_permission('20000000-0000-0000-0000-00000000000a','multiplix.dispatch.manage_all')")" == 't' ]] \
+  || fail 'admin nao recebeu multiplix.dispatch.manage_all'
+[[ "$(psql_test -Atqc "SELECT public.user_has_permission('20000000-0000-0000-0000-00000000000b','multiplix.dispatch.manage_all')")" == 'f' ]] \
+  || fail 'supervisor recebeu poder sobre disparo alheio'
+
+printf 'PASS: Multiplix hardening — anon sem acesso, FORCE RLS, policies TO authenticated no replay limpo, guarda de mutabilidade, criacao transacional idempotente com teto, fila (retry_after/sweeper/cancel/parcial) e scheduler por janela e por conexao\n'

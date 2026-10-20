@@ -1,0 +1,5 @@
+ M .tmp/relato.md
+ M src/components/auth/ReauthDialog.tsx
+ M src/components/auth/__tests__/ReauthGuard.test.tsx
+ M src/pages/admin/RolesPage.tsx
+ M src/pages/admin/__tests__/RolesPage.reauth.test.tsx

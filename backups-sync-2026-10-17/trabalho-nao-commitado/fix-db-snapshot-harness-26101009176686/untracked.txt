@@ -1,0 +1,2 @@
+scripts/db-audit/talkx-template-second-update-snapshot.test.sh
+supabase/migrations/20261010120002_fix_guard_talkx_template_update_snapshot.sql

@@ -1,0 +1,2 @@
+ M .tmp/relato.md
+ M src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx

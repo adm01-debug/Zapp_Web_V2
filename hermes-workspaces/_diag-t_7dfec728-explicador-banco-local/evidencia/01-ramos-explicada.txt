@@ -1,0 +1,19 @@
+$ grep -n -E "def explicada|if tipo|return False|return .default privileges" ~/.local/bin/zapp-verify
+124:def cita(x):
+129:def explicada(l):
+133:    if tipo == 'functions':
+135:    if tipo in ('columns', 'indexes', 'constraints', 'defaults', 'policies', 'triggers'):
+137:            return False
+142:    if tipo in ('relation_grants', 'routine_grants', 'schema_grants'):
+146:        if tipo == 'routine_grants' and len(partes) > 1:
+148:        return False
+149:    if tipo == 'default_grants':
+150:        return 'default privileges' in texto
+151:    return False
+182:    if not RETRATO or '|' not in l: return False
+186:        if cita(n): return False             # migration pendente mexe no objeto: a diferença é do cartão
+189:    if not nomes or not APLICADAS: return False
+191:        if not nao_palavra(n): return False
+
+$ sha256sum ~/.local/bin/zapp-verify
+aa5301f7f6e6aa66e5a0a88c9511c2583c7756fed489522677ccf3fb14175508  /home/joaquim_ataides/.local/bin/zapp-verify

@@ -1,0 +1,74 @@
+--- a/src/integrations/supabase/types.ts
++++ b/src/integrations/supabase/types.ts
+@@ -3926,6 +3926,7 @@
+           current_step: number | null
+           id: string
+           next_step_at: string | null
++          reason: string | null
+           sequence_id: string
+           started_at: string | null
+           status: string
+@@ -3937,6 +3938,7 @@
+           current_step?: number | null
+           id?: string
+           next_step_at?: string | null
++          reason?: string | null
+           sequence_id: string
+           started_at?: string | null
+           status?: string
+@@ -3948,6 +3950,7 @@
+           current_step?: number | null
+           id?: string
+           next_step_at?: string | null
++          reason?: string | null
+           sequence_id?: string
+           started_at?: string | null
+           status?: string
+@@ -10485,6 +10488,10 @@
+         Args: { p_id: string; p_reason: string }
+         Returns: boolean
+       }
++      cancel_followup: {
++        Args: { p_execution_id: string; p_reason?: string }
++        Returns: undefined
++      }
+       catalog_rate_limit_hit: {
+         Args: {
+           p_action: string
+@@ -10719,6 +10726,10 @@
+         }
+         Returns: undefined
+       }
++      complete_followup: {
++        Args: { p_execution_id: string }
++        Returns: undefined
++      }
+       complete_multiplix_dispatch_if_drained: {
+         Args: { p_dispatch_id: string }
+         Returns: boolean
+@@ -10963,11 +10974,25 @@
+           isSetofReturn: false
+         }
+       }
++      due_followups: {
++        Args: { p_limit?: number }
++        Returns: {
++          contact_id: string
++          current_step: number
++          execution_id: string
++          next_step_at: string
++          sequence_id: string
++        }[]
++      }
+       effective_role: {
+         Args: { _user_id: string }
+         Returns: Database["public"]["Enums"]["app_role"]
+       }
+       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
++      enroll_followup: {
++        Args: { p_contact_id: string; p_sequence_id: string }
++        Returns: Json
++      }
+       enqueue_ai_job: {
+         Args: {
+           p_available_at?: string

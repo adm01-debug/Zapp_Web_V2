@@ -1,0 +1,20 @@
+$ grep -c -E "_pkey|_fkey|_check|primary key|references" nas migrations pendentes reais
+--- fixture-real/supabase/migrations/20261005183057_ia_timeout_001_event_id_outbox.sql
+38:  id uuid not null default gen_random_uuid() primary key,
+61:create policy "Service role can manage AI usage outbox"
+--- fixture-real/supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql
+15:  id          uuid        primary key default gen_random_uuid(),
+16:  user_id     uuid        not null references auth.users (id) on delete cascade,
+35:revoke all on table public.gmail_oauth_states from public, anon, authenticated;
+36:grant all on table public.gmail_oauth_states to service_role;
+73:revoke all on function public.consume_gmail_oauth_state(uuid, text) from public, anon, authenticated;
+74:grant execute on function public.consume_gmail_oauth_state(uuid, text) to service_role;
+--- fixture-real/supabase/migrations/20261005190058_ia_timeout_001_outbox_acl.sql
+2:-- Rollback: grant all on public.ai_usage_outbox to anon; grant all on public.ai_usage_outbox to authenticated;
+10:--   GRANT é a trava de TABELA. Aqui as duas ficam explícitas: o papel anônimo e
+11:--   o autenticado perdem o GRANT (não chegam nem a avaliar a RLS) e o
+12:--   service_role recebe o GRANT explícito, que é o caminho legítimo (edge
+20:revoke all on public.ai_usage_outbox from public;
+21:revoke all on public.ai_usage_outbox from anon;
+22:revoke all on public.ai_usage_outbox from authenticated;
+23:grant all on public.ai_usage_outbox to service_role;

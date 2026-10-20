@@ -1,0 +1,43 @@
+From 400c9392185dc43db35dddf4dc08c8c94d1e8a70 Mon Sep 17 00:00:00 2001
+From: Hermes Senior <hermes-senior@promobrindes.local>
+Date: Sun, 11 Oct 2026 18:21:04 -0300
+Subject: [PATCH 2/4] test(tarefas): seleciona o cartao do dia pela posicao na
+ faixa
+
+---
+ src/components/tasks/__tests__/TasksAgendaMode.test.tsx | 5 ++---
+ src/components/tasks/__tests__/agendaGroups.test.tsx    | 2 +-
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/src/components/tasks/__tests__/TasksAgendaMode.test.tsx b/src/components/tasks/__tests__/TasksAgendaMode.test.tsx
+index e56a5ce02f..f37a4d6ae0 100644
+--- a/src/components/tasks/__tests__/TasksAgendaMode.test.tsx
++++ b/src/components/tasks/__tests__/TasksAgendaMode.test.tsx
+@@ -105,9 +105,8 @@ function renderAgenda(
+ const rotuloCurto = (iso: string): string =>
+   new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+ 
+-/** Botão da faixa do dia AGORA + offset, pelo rótulo acessível "… N de outubro …". */
+-const botaoDoDia = (offset: number) =>
+-  screen.getByRole('button', { name: new RegExp(`${numeroDoDia(offset)} de `, 'i') });
++/** Cartão da faixa do dia AGORA + offset, pela posição na faixa (offsets 0…6). */
++const botaoDoDia = (offset: number) => screen.getAllByTestId('agenda-day')[offset];
+ 
+ describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
+   beforeEach(() => {
+diff --git a/src/components/tasks/__tests__/agendaGroups.test.tsx b/src/components/tasks/__tests__/agendaGroups.test.tsx
+index ee01baf701..492722779a 100644
+--- a/src/components/tasks/__tests__/agendaGroups.test.tsx
++++ b/src/components/tasks/__tests__/agendaGroups.test.tsx
+@@ -89,7 +89,7 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
+     fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Rascunho' } });
+ 
+     const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${amanha.getDate()} de`, 'i') }));
++    fireEvent.click(screen.getAllByTestId('agenda-day')[1]);
+ 
+     const campo = screen.getByTestId('quick-add-input');
+     // Antes (etapa 57) o `key={selectedDay}` do pai remontava o campo e o texto
+-- 
+2.43.0
+

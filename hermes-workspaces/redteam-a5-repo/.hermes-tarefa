@@ -1,0 +1,10 @@
+PROJETO=Zapp_Web_V2
+SLUG=som-alertas-volume-mute
+ID=26093011426c05
+BRANCH=hermes/som-alertas-volume-mute-26093011426c05
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/som-alertas-volume-mute-26093011426c05
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-09-30T11:42:54-03:00
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/som-alertas-volume-mute-26093011426c05/.tmp

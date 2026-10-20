@@ -1,0 +1,8 @@
+103	54	src/components/dashboard/WarRoomDashboard.tsx
+150	0	src/components/dashboard/__tests__/WarRoomEstados.test.tsx
+21	5	src/components/dashboard/war-room/WarRoomAgentCard.tsx
+131	69	src/hooks/business/__tests__/useWarRoomData.test.tsx
+106	109	src/hooks/business/useWarRoomData.ts
+8	0	src/integrations/supabase/types.ts
+232	0	supabase/migrations/20261012225242_warroom_rpcs_agentes_filas.sql
+258	0	supabase/tests/warroom_rpcs.sql

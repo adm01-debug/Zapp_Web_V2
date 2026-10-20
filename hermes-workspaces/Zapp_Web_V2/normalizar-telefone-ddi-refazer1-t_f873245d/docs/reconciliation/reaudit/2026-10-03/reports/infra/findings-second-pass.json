@@ -1,0 +1,419 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "findings": [
+    {
+      "id": "R2-INF-017",
+      "title": "Atestação de Edge aceita inventário anterior sem prova de no-op do deploy",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "Se versão e digest remoto continuam iguais ao baseline, stable-inventory aceita a função selecionada mesmo com knownUnchanged vazio. Três amostras iguais e o tempo mínimo de 60 segundos bastam. A igualdade entre duas observações remotas não demonstra que o deploy selecionado já apareceu: um inventário ainda não atualizado satisfaz o mesmo ramo. O workflow já captura stdout e stderr e fornece a lista de no-ops, mas ela não é necessária para esse aceite.",
+      "consumer_chain": [
+        "Deploy CLI bem-sucedido → log combinado",
+        "unchanged-from-log → lista vazia",
+        "collect-remote → stable-inventory",
+        "Inventário pré-deploy repetido → artifact com versões antigas atribuídas ao run"
+      ],
+      "preconditions": [
+        "Há baseline de versão e digest para funções selecionadas.",
+        "O inventário da Management API ainda mostra a versão anterior por pelo menos o período mínimo, sem sinal de no-op correspondente do CLI."
+      ],
+      "effect": "A rotina pode encerrar a observação antes de aparecer a versão realmente implantada e associar os inputs do run às versões anteriores. O probe sintético aceitou 73 versões antigas aos 60 segundos, com a atualização programada para 70 segundos; não mediu latência nem deploy real.",
+      "evidence": [
+        {
+          "path": "scripts/edge-deploy/stable-inventory.mjs",
+          "line_start": 101,
+          "line_end": 158,
+          "sha256": "8e4a354414e096a64ef0ebfd45deae6182f40131c1967dda7893bbad3606968d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Aceite por digest prévio sem exigir knownUnchanged, seguido de atestação estável"
+        },
+        {
+          "path": ".github/workflows/deploy-functions.yml",
+          "line_start": 362,
+          "line_end": 426,
+          "sha256": "e863384f47250579a99fe17e880a533b0811ed2683497680f1ecde1b01e36686",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consumidor captura stderr, extrai no-ops e chama coletor após deploy"
+        },
+        {
+          "path": "scripts/edge-deploy/stable-inventory.unit.mjs",
+          "line_start": 30,
+          "line_end": 62,
+          "sha256": "78d82719c0412b8fe35d75c4c3d080efee793f7129e9a991d2aeefc7df0bdb1a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Suite ratifica aceite sem bump; não exige observação de mudança atrasada"
+        }
+      ],
+      "acceptance": [
+        "Exigir incremento de versão/identificador de deploy, ou prova explícita de no-op do comando correspondente aliada ao baseline estável.",
+        "Inventário anterior retido por mais de 60 segundos não deve ser atribuído ao deploy que mudou a função.",
+        "No-op legítimo com sinal correlacionado continua concluindo de forma limitada; baseline sem versão deve produzir estado de evidência explícito."
+      ],
+      "probe_ids": [
+        "stale_remote_metadata_attested"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo adicional não descrito nos 104 achados anteriores; novo não significa regressão posterior ao baseline antigo.",
+      "affected_tasks": [
+        {
+          "plan_record_id": "P006",
+          "task_id": "E06",
+          "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E06",
+          "previous_status": "NEEDS_REVALIDATION",
+          "previous_assessment": "Adendo registra 3 ai-* success e mudança real testada; esta frente não redisparou deploy. Preservar runs e attestation como evidência histórica.",
+          "affected_subcontract": "A medição histórica permanece, mas a lógica de atribuição admite metadata obsoleta; manter revalidação do contrato de atestação.",
+          "proposed_status": "NEEDS_REVALIDATION",
+          "baseline_task_file": "tasks/P006.json",
+          "baseline_task_sha256": "73a9dc031cd39db4ea5692ede73c19ea5932e303b26f2bdba252be184b967d47"
+        }
+      ],
+      "limitations": [
+        "Sem execução de workflow, deploy, SQL, login, E2E real ou rede de produto nesta segunda passagem.",
+        "O artifact já declara source_to_bundle_equivalence_proven=false. O achado não atribui a ele uma promessa de equivalência binária.",
+        "E55 (timeout/lastReason) e E56 (extrator de log/ANSI) conservam DONE_VERIFIED em seus escopos específicos."
+      ],
+      "proof_type": "STATIC_AND_SYNTHETIC_OFFLINE"
+    },
+    {
+      "id": "R2-INF-018",
+      "title": "KPI semanal limita runs a 100 e publica ranking de jobs sem consultá-los",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "principal faz uma única consulta /actions/runs?per_page=100 e agrega apenas essa página como uma janela de sete dias. A tabela de jobs lentos é construída por maisLentos([]), independentemente da API: nenhum job é consultado. As funções de ranking existem, mas o consumidor real lhes passa sempre uma lista vazia antes de publicar summary e issue.",
+      "consumer_chain": [
+        "branch-hygiene-audit semanal → actions-kpi.mjs",
+        "Uma página de runs → agregar janela",
+        "maisLentos([]) → tabela vazia",
+        "Summary e issue KPI"
+      ],
+      "preconditions": [
+        "Mais de 100 runs caem na janela para que os totais sejam truncados.",
+        "Para a lacuna do ranking, basta executar o script: o array de jobs é sempre vazio."
+      ],
+      "effect": "Volumes e taxas semanais podem representar só a página mais recente, e a afirmação de que não há jobs registrados não é resultado de uma consulta. A publicação parece completa sem marcar esses limites.",
+      "evidence": [
+        {
+          "path": "scripts/ci/actions-kpi.mjs",
+          "line_start": 49,
+          "line_end": 85,
+          "sha256": "1aac9444d42a3df2c09bc8b7915e351823f6738373d0f70e076d69e836b68909",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Agregação/ranking de jobs disponível, mas requer dados"
+        },
+        {
+          "path": "scripts/ci/actions-kpi.mjs",
+          "line_start": 126,
+          "line_end": 141,
+          "sha256": "1aac9444d42a3df2c09bc8b7915e351823f6738373d0f70e076d69e836b68909",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Página única, array vazio e publicação"
+        },
+        {
+          "path": ".github/workflows/branch-hygiene-audit.yml",
+          "line_start": 40,
+          "line_end": 64,
+          "sha256": "c98b2eefd284812e6cc7f5d322bcc3a2d436de7f2cad4bb6e0af5dc38f5e636c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Invocação do coletor semanal"
+        }
+      ],
+      "acceptance": [
+        "Paginar runs até o limite temporal e explicitar qualquer truncamento ou falha parcial.",
+        "Consultar jobs dos runs relevantes para o ranking, ou mostrar que a métrica não foi coletada.",
+        "Uma fixture com mais de 100 runs e um job lento deve aparecer integralmente na janela e no ranking; falha de API não vira zero."
+      ],
+      "probe_ids": [],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo adicional não descrito nos 104 achados anteriores; novo não significa regressão posterior ao baseline antigo.",
+      "affected_tasks": [
+        {
+          "plan_record_id": "P006",
+          "task_id": "E79",
+          "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E79",
+          "previous_status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+          "previous_assessment": "KPI e publicação semanal existem; suíte actions-kpi passou. Histórico completo da semana não foi recolhido nesta auditoria.",
+          "affected_subcontract": "Coleta completa de runs e jobs não está implementada no consumidor, além da observação histórica ainda pendente.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P006.json",
+          "baseline_task_sha256": "73a9dc031cd39db4ea5692ede73c19ea5932e303b26f2bdba252be184b967d47"
+        }
+      ],
+      "limitations": [
+        "Sem execução de workflow, deploy, SQL, login, E2E real ou rede de produto nesta segunda passagem."
+      ],
+      "proof_type": "STATIC_CODE_PATH"
+    },
+    {
+      "id": "R2-INF-019",
+      "title": "Runner de mutação conta falha de infraestrutura como mutante morto",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "runSuite retorna res.status e o chamador considera morto tudo que for diferente de zero, incluindo status null quando o binário não inicia. Não há execução verde do baseline nem exigência de assertion executada/falhada; nomes dos testes e resumo são informativos. O runner ainda termina com zero quando há sobreviventes, salvo erro de restauração. As alterações são feitas nos arquivos reais do worktree e depois restauradas; a pasta temporária guarda backups.",
+      "consumer_chain": [
+        "Execução manual run-mapa → sed -i no arquivo real",
+        "spawnSync de Vitest → status de processo",
+        "r.code !== 0 → MORTO",
+        "Contagem impressa e restauração → saída sem gate de qualidade"
+      ],
+      "preconditions": [
+        "A mutação textual é aplicada e o Vitest não inicia, falha por configuração ou por causa não ligada ao assert que deveria detectar a mutação.",
+        "O consumidor interpreta a contagem MORTO ou exit code como comprovação da qualidade dos testes."
+      ],
+      "effect": "É possível reportar mutações detectadas sem executar teste algum. Sobrevivência também não determina o status de saída, de modo que a ferramenta não funciona como gate de qualidade sem interpretação adicional. Não foi executada nem se atribuiu invalidez automática ao resultado histórico de 5/6.",
+      "evidence": [
+        {
+          "path": "scripts/mutation/run-mapa.mjs",
+          "line_start": 125,
+          "line_end": 142,
+          "sha256": "9dc269f60e24e74a05bcc776d6565605817fd4b5fe7b599ac7b18c35ac1bf14e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Resultado do processo sem baseline ou mínimo de testes"
+        },
+        {
+          "path": "scripts/mutation/run-mapa.mjs",
+          "line_start": 145,
+          "line_end": 203,
+          "sha256": "9dc269f60e24e74a05bcc776d6565605817fd4b5fe7b599ac7b18c35ac1bf14e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Muta arquivos reais e classifica qualquer não zero como kill"
+        },
+        {
+          "path": "scripts/mutation/run-mapa.mjs",
+          "line_start": 205,
+          "line_end": 229,
+          "sha256": "9dc269f60e24e74a05bcc776d6565605817fd4b5fe7b599ac7b18c35ac1bf14e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Contagens e único exitCode explícito associado à restauração"
+        },
+        {
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "line_start": 99,
+          "line_end": 109,
+          "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "alvo não usado; classificação apenas por returncode"
+        },
+        {
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "line_start": 112,
+          "line_end": 125,
+          "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controle positivo: baseline verde antes de qualquer mutação"
+        },
+        {
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "line_start": 127,
+          "line_end": 149,
+          "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Alvo literal, finally e SHA preservados; resultado classificado PEGA pelo booleano permissivo"
+        }
+      ],
+      "acceptance": [
+        "Exigir baseline verde e distinguir erro de infraestrutura, mutante detectado, sobrevivente e execução inconclusiva.",
+        "Contar detecção apenas quando o teste relevante executou e falhou por uma assertion rastreável.",
+        "Declarar política para sobreviventes/equivalentes e refletir a conclusão no status; executar mutações em cópia isolada com cleanup seguro.",
+        "No runner histórico de volume, preservar baseline/literal/finally/SHA e exigir prova da assertion alvo; erro de compilação/runner deve ser inconclusivo, não PEGA."
+      ],
+      "probe_ids": [],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo adicional não descrito nos 104 achados anteriores; novo não significa regressão posterior ao baseline antigo.",
+      "affected_tasks": [
+        {
+          "plan_record_id": "P037",
+          "task_id": "E69",
+          "canonical_id": "docs--mapa--plano_finalizacao_100_etapas_2026-09-29::E69",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Runner e mutações existem; o resultado histórico detectou 5 de 6, com o sobrevivente descrito como equivalente. Falta comprovar a equivalência de maneira rastreável; não transformar esse resultado em 6 de 6.",
+          "affected_subcontract": "Preservar PARTIAL e evidência histórica 5/6; acrescentar falta de classificação de erro de infraestrutura e baseline verde.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P037.json",
+          "baseline_task_sha256": "dda81c8f8c1569d3b017f04e51efe7e327e610088c99bcd135170c00cfc6d432"
+        }
+      ],
+      "limitations": [
+        "Sem execução de workflow, deploy, SQL, login, E2E real ou rede de produto nesta segunda passagem."
+      ],
+      "proof_type": "STATIC_CODE_PATH",
+      "extensions": [
+        {
+          "classification": "extensão",
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "description": "Extensão histórica: mut-plano-volume.py recebe alvo em rodar, mas não o usa. Qualquer returncode não zero na execução do mutante satisfaz esperado_verde=False e vira PEGA, inclusive erro do runner ou compilação sem assertion relevante executada. Diferentemente do runner original do mapa, este script exige baseline verde, confere alvo literal, restaura bytes em finally e compara SHA. Esses controles são preservados; não se atribui falha a uma execução histórica não observada.",
+          "reviewed_by": "root whole file 1–158; infra source ranges 95–154",
+          "preconditions": [
+            "Execução manual no ambiente/caminho histórico previsto; baseline termina verde.",
+            "Durante um mutante o processo termina não zero por infraestrutura/compilação ou outro teste, sem a assertion alvo provar a mudança."
+          ],
+          "effect": "Esse mutante pode ser contado como PEGA sem evidência da detecção pelo contrato pretendido.",
+          "preserved_controls": [
+            "baseline verde obrigatório",
+            "substituição exige alvo literal",
+            "restauração em finally",
+            "comparação SHA depois da restauração"
+          ],
+          "limitation": "Revisão de fonte; script não executado, sem rejeitar automaticamente evidência histórica. Não conta um novo achado."
+        }
+      ]
+    },
+    {
+      "id": "R2-INF-020",
+      "title": "Prova dos classificadores pode aprovar consumo sem comprovar seus registros",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "Após duas classificações, uma resposta HTTP não OK de ai_usage_logs só produz aviso, sem incrementar falhas; a saída final pode ser PROVA OK. Quando a consulta funciona, considera as últimas 20 linhas de cinco minutos e filtra somente nome de função: duas linhas de qualquer um dos classificadores, algum sucesso e algum modelo Gemini satisfazem o teste, sem correlação com as duas requisições realizadas.",
+      "consumer_chain": [
+        "QA manual autenticado → classify-sticker e classify-emoji",
+        "REST ai_usage_logs por janela → erro apenas avisado ou linhas não correlacionadas",
+        "falhas === 0 → PROVA OK e exit 0"
+      ],
+      "preconditions": [
+        "As verificações das duas respostas de classificação passam.",
+        "A consulta de consumo falha, ou há linhas anteriores de classificadores que satisfazem as condições sem pertencer às invocações da prova."
+      ],
+      "effect": "O artefato pode declarar sucesso sem demonstrar que ambas as chamadas pagas foram registradas e pelo provedor afirmado. A instrução de conferência manual não está refletida no status final; a evidência deveria ser inconclusiva até a correlação.",
+      "evidence": [
+        {
+          "path": "scripts/qa/prova-visao-classificadores.mjs",
+          "line_start": 1,
+          "line_end": 37,
+          "sha256": "020ad6591a073f7cb8ccbc99b95c984bf5b4d87744c37625f4e3ce575d83bf36",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Contrato da prova e condição anunciada de sucesso"
+        },
+        {
+          "path": "scripts/qa/prova-visao-classificadores.mjs",
+          "line_start": 160,
+          "line_end": 190,
+          "sha256": "020ad6591a073f7cb8ccbc99b95c984bf5b4d87744c37625f4e3ce575d83bf36",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Chamadas, consulta sem correlação, aviso sem falha e saída final"
+        }
+      ],
+      "acceptance": [
+        "Usar IDs retornados/correlação das duas chamadas e exigir um registro de consumo válido para cada uma.",
+        "Sem permissão para consultar o consumo, produzir status inconclusivo/falha de verificação, sem PROVA OK.",
+        "Dados anteriores, duas linhas de uma só função e erros de REST não devem aprovar a prova."
+      ],
+      "probe_ids": [],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo adicional não descrito nos 104 achados anteriores; novo não significa regressão posterior ao baseline antigo.",
+      "affected_tasks": [],
+      "limitations": [
+        "Sem execução de workflow, deploy, SQL, login, E2E real ou rede de produto nesta segunda passagem.",
+        "Revisão de fronteira confirmada com a área Providers; este é um defeito do harness, não uma nova alegação de erro de contabilização dentro das Edge Functions."
+      ],
+      "proof_type": "STATIC_CODE_PATH"
+    },
+    {
+      "id": "R2-INF-021",
+      "title": "Falha dos fixtures E2E é omitida do veredito e do alerta do DB Live Guard",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "O passo E85 executa check-e2e-fixtures.sql com continue-on-error:true e não tem id. O consolidado lê apenas os dez outcomes nomeados dos outros checks; não inclui fixtures. Se os demais passam, imprime que todos passaram. A abertura de issue depende de failure() e a recuperação depende de success(), permitindo fechar um alerta anterior apesar da falha de fixtures. O arquivo step-e2e-fixtures.log também não integra o upload de evidências.",
+      "consumer_chain": [
+        "DB Live Guard com credencial válida → SQL E85",
+        "Fixture ausente → psql ON_ERROR_STOP encerra com falha",
+        "continue-on-error neutraliza conclusão do passo",
+        "Dez outros outcomes OK → veredito verde e fechamento de alerta"
+      ],
+      "preconditions": [
+        "O check E85 falha por ausência de tabela/fixture, status da conexão ou falha de consulta.",
+        "As demais verificações e os passos do workflow terminam com sucesso."
+      ],
+      "effect": "O guard dito fail-closed para fixtures pode terminar verde sem emitir alerta e sem incluir a evidência desse check no artifact. A falha continua visível no log do passo; não se afirma desaparecimento completo dos logs.",
+      "evidence": [
+        {
+          "path": ".github/workflows/db-live-guard.yml",
+          "line_start": 192,
+          "line_end": 205,
+          "sha256": "3a264e1c3b517515140f0e3ab6276e3a8787e0292035d51bd64790440531307e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Passo E85 tolera erro sem id"
+        },
+        {
+          "path": ".github/workflows/db-live-guard.yml",
+          "line_start": 316,
+          "line_end": 347,
+          "sha256": "3a264e1c3b517515140f0e3ab6276e3a8787e0292035d51bd64790440531307e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Outcomes consolidados excluem E85"
+        },
+        {
+          "path": ".github/workflows/db-live-guard.yml",
+          "line_start": 435,
+          "line_end": 451,
+          "sha256": "3a264e1c3b517515140f0e3ab6276e3a8787e0292035d51bd64790440531307e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Veredito positivo e alerta condicionado a failure"
+        },
+        {
+          "path": ".github/workflows/db-live-guard.yml",
+          "line_start": 578,
+          "line_end": 630,
+          "sha256": "3a264e1c3b517515140f0e3ab6276e3a8787e0292035d51bd64790440531307e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Recuperação automática e lista de artifacts sem fixtures"
+        },
+        {
+          "path": "scripts/db-audit/check-e2e-fixtures.sql",
+          "line_start": 100,
+          "line_end": 110,
+          "sha256": "e995eb9871c179f260440a0017fb5df304e7332737bef41f0319de0696cb83ea",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "SQL falha de verdade; problema está na integração do workflow"
+        }
+      ],
+      "acceptance": [
+        "Dar id ao check e incluir seu outcome no consolidado, no conjunto de falhas e no mapa de logs.",
+        "Falha isolada de fixture deve impedir sucesso/fechamento de alerta e produzir causa identificável.",
+        "Incluir evidência de fixtures no artifact e testar o cenário de apenas E85 falhar, sem rodar contra produção."
+      ],
+      "probe_ids": [],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo adicional não descrito nos 104 achados anteriores; novo não significa regressão posterior ao baseline antigo.",
+      "affected_tasks": [
+        {
+          "plan_record_id": "P006",
+          "task_id": "E85",
+          "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E85",
+          "previous_status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+          "previous_assessment": "Documento é e2e/README.md e verificação é SQL via psql-safe no guarda vivo; check também cobra conexão connected e instance_id. Não criar documentação duplicada nem .test.sh não executado.",
+          "affected_subcontract": "SQL de presença existe e falha; resta propagar a falha no workflow, alerta e evidência.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P006.json",
+          "baseline_task_sha256": "73a9dc031cd39db4ea5692ede73c19ea5932e303b26f2bdba252be184b967d47"
+        }
+      ],
+      "limitations": [
+        "Sem execução de workflow, deploy, SQL, login, E2E real ou rede de produto nesta segunda passagem."
+      ],
+      "proof_type": "STATIC_CODE_PATH"
+    }
+  ]
+}

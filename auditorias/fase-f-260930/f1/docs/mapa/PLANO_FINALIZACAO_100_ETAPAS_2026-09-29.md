@@ -1,0 +1,626 @@
+# Mapas / Search Box — Plano de finalização em 100 etapas
+
+**Repo:** `adm01-debug/Zapp_Web_V2` · **Criado:** 2026-09-29 · **Origem:** `docs/mapa/AUDITORIA_PLANO_50_ETAPAS_2026-09-29.md` (33 DONE / 17 PARCIAL / 8 defeitos críticos / 1 perda de dados)
+**Sucede:** `docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md` (mantido como histórico; seus checkboxes não devem mais ser usados como estado).
+
+Referências curtas usadas abaixo: `H` = `src/components/inbox/location-picker/useAddressAutocomplete.ts` · `HT` = `.../__tests__/useAddressAutocomplete.test.tsx` · `LP` = `src/components/inbox/LocationPicker.tsx` · `LPT` = `src/components/inbox/__tests__/LocationPicker.test.tsx` · `ULP` = `.../location-picker/useLocationPicker.ts` · `GEO` = `src/lib/mapboxGeocode.ts` · `SES` = `src/lib/mapboxSession.ts` · `CG` = `src/lib/mapboxCostGuard.ts` · `CF` = `src/components/contacts/ContactForm.tsx` · `CRUD` = `src/components/contacts/useContactsCRUD.ts` · `CRM` = `src/components/contacts/ContactRegionMap.tsx`.
+
+## Regras (valem para as 100 etapas)
+
+1. **Diff mínimo, causa raiz.** Nada de reescrever o hook; cada etapa toca só o que ela nomeia.
+2. **Gate por etapa:** `npx tsc --noEmit -p tsconfig.app.json` = 0 · `npx eslint <arquivos tocados>` = 0 · `npx vitest run <suíte da etapa>` verde. Etapa que cria bug novo em teste existente não fecha.
+3. **Uma fase = uma PR** (branch `claude/<tipo>-mapa-f<N>-<AAMMDD-HHMM>`); commits `fix(mapa): F<N>.E<nn> <título>` ou `feat(mapa): …`. Antes de abrir, listar PRs abertas tocando os mesmos arquivos (regra 3 do fluxo Git).
+4. **DDL** só em arquivo → PR → merge → apply, com `register-migration.mjs` (CLAUDE.md §1 regras 6–7). Versão via `reserve_migration_version`.
+5. **Teste que prova o bug antes do fix.** Toda etapa de correção começa com um teste vermelho que reproduz o defeito (o sintoma da auditoria), depois o fix deixa verde.
+6. **Nenhum número inventado.** Custo, sessões e bundle vêm de `audit_logs`, do `performance-budget.json`/CI ou da Mapbox.
+7. **Flag primeiro.** Nada de comportamento novo sem estar atrás de `mapa.searchbox-autocomplete` (ou da flag nova da F4).
+8. **Checkbox só fecha com evidência** (`file:line`, número de PR, query). A auditoria de 29/09 existe porque isso não foi seguido.
+
+---
+
+# FASE 1 — Parar a perda de dados no cadastro de contato (E01–E10)
+
+> Defeito C1. Prioridade máxima: hoje qualquer edição de contato apaga endereço e coordenada.
+
+### E01 · Teste vermelho: editar contato sem tocar no endereço preserva o endereço
+**Arquivos:** `src/components/contacts/__tests__/useContactsCRUD.test.tsx` (novo ou existente)
+1. Montar `useContactsCRUD` com um contato que tem `address/city/latitude` preenchidos.
+2. `openEditDialog(contato)` → mudar só `name` → `handleEditContact()`.
+3. Asserção: o payload do `update` **contém** `address`, `city`, `latitude` originais (hoje vai `null` → vermelho).
+**Checklist:** [ ] teste reproduz C1 · [ ] vermelho em `main`
+
+### E02 · `search_contacts` devolve os 6 campos de endereço
+**Arquivos:** `supabase/migrations/<versão>_search_contacts_returns_address.sql`
+1. `DROP FUNCTION` + `CREATE FUNCTION` (mudar `RETURNS TABLE` exige DROP — ver PRs #859/#862) adicionando `address, address_number, neighborhood, city, state, postal_code` ao `SELECT` e ao retorno, **na ordem após `longitude`** para não quebrar quem lê por posição.
+2. Restaurar ACL explicitamente: `REVOKE ALL FROM PUBLIC; GRANT EXECUTE TO authenticated, service_role` (o DROP zera grants e reabre `PUBLIC`).
+3. Mesmo filtro de RLS de antes (`is_admin_or_supervisor` / `assigned_to` / `queue_members`) — só colunas novas.
+4. Versão via `SELECT supabase_migrations.reserve_migration_version('mapa-f1', 'search_contacts address cols')`.
+**Checklist:** [ ] arquivo · [ ] ACL restaurado no mesmo statement · [ ] versão reservada
+
+### E03 · Tipos e catálogo acompanham a RPC
+**Arquivos:** `src/integrations/supabase/types.ts`, `supabase/schema-catalog.json`, `supabase/schema-manifest.json`
+1. Não editar à mão: após merge + apply, disparar `types-sync` e mergear o PR gerado (com `force_gate3` só se Gate 3 reclamar de remoções).
+2. `Contact` em `ContactDialogs.tsx` já tem os campos opcionais — conferir que o tipo do `Returns` de `search_contacts` passa a ter os 6 novos.
+**Checklist:** [ ] types-sync mergeado · [ ] `Returns` tem 6 colunas novas
+
+### E04 · Guarda no cliente: edição só grava campo que veio carregado
+**Arquivos:** `CRUD`
+1. Em `handleEditContact`, montar o payload só com as chaves presentes em `editingContact` (`'address' in editingContact ? … : undefined`), para que um objeto sem endereço **não** escreva `null`.
+2. Manter o comportamento de "apagar de propósito": string vazia digitada pelo operador continua virando `null`.
+3. Isso protege contra qualquer outra lista que ainda não devolva endereço (mapa, busca global, CRM).
+**Checklist:** [ ] E01 verde · [ ] apagar de propósito continua funcionando (teste)
+
+### E05 · Edição carrega o contato completo pelo `id`
+**Arquivos:** `CRUD`, `src/services/contact.service.ts`
+1. `openEditDialog` chama `ContactService.getById(id)` (já existe em `:40`, `select('*')`) e só abre o diálogo com a linha completa; enquanto carrega, `isSubmitting`/skeleton no form.
+2. Fallback: se o `getById` falhar (RLS), abre com a linha da lista + aviso "endereço não carregado" e **não** grava endereço (E04).
+3. Teste: `getById` mockado → form abre com `address` preenchido.
+**Checklist:** [ ] 1 fetch por abertura · [ ] fallback sem perda · [ ] teste
+
+### E06 · Trigger de auditoria de endereço em `contacts`
+**Arquivos:** migration nova
+1. Trigger `AFTER UPDATE OF address, city, latitude, longitude, postal_code` que grava em `audit_logs` (`action='contact_address_changed'`, `details` = `{contact_id, cleared: bool}`) — só quando o valor **muda**.
+2. Sem PII no `details` além do `contact_id` (já é o padrão de `audit_logs`).
+3. Serve para detectar regressão de C1 (query em E96).
+**Checklist:** [ ] trigger só em mudança · [ ] sem endereço no log · [ ] registrado no ledger
+
+### E07 · Verificação em produção de que nada foi perdido de forma recuperável
+**Arquivos:** nenhum (consulta)
+1. `select count(*) from contacts where address is not null` antes e depois do deploy da F1.
+2. Não há backup lógico de linha anterior no repo; registrar no doc que os endereços digitados entre 26/09 e o deploy da F1 **não são recuperáveis** (0 hoje — a perda é de dado que nunca chegou a persistir por muito tempo).
+**Checklist:** [ ] números no doc · [ ] limitação escrita sem maquiagem
+
+### E08 · Teste de regressão de ponta a ponta (unitário) do ciclo add → edit
+**Arquivos:** `useContactsCRUD.test.tsx`
+1. Adicionar contato com endereço via autocomplete (mock `retrievePlace` com `components`) → salvar → abrir edição (mock `getById` devolvendo o que foi salvo) → mudar `company` → salvar → payload mantém endereço + lat/lng.
+**Checklist:** [ ] 1 teste cobrindo o ciclo inteiro
+
+### E09 · Mapa de contatos volta a ter dado para mostrar
+**Arquivos:** nenhum (validação)
+1. Depois da F1 em produção: cadastrar 1 contato de teste com endereço real (Av. Paulista 1000), editar o nome, conferir no banco que `latitude/longitude` continuam; abrir "Mapa de Contatos" e ver o pino verde.
+2. Remover o contato de teste ao final.
+**Checklist:** [ ] pino verde visto · [ ] contato de teste removido
+
+### E10 · PR da Fase 1
+1. Título: `fix(contatos): editar contato não apaga mais endereço/coordenada (C1)`.
+2. Corpo: causa raiz (RPC sem colunas + update incondicional), os dois guardas (E02 + E04), ordem de deploy (migration aditiva pode ir antes do front — CLAUDE.md §1 regra 6, exceção).
+3. Deixar aberta para o Joaquim (DDL em produção).
+**Checklist:** [ ] PR aberta · [ ] CI verde · [ ] DDL destacada
+
+---
+
+# FASE 2 — Reabilitar o fallback `/forward` e implementar a cascata E08 (E11–E22)
+
+> Defeitos C2 e C3. Sem isto, `/suggest` fora do ar = busca fora do ar.
+
+### E11 · Teste vermelho: Enter sem destaque dispara `searchLocation` com o termo digitado
+**Arquivos:** `LPT`
+1. Flag on, digitar "avenida paulista 1000" (via `autocomplete.setQuery` mockado), lista sem destaque, `Enter`.
+2. Asserção: `searchLocation` chamado **e** `searchQuery` = termo (hoje vazio → vermelho).
+**Checklist:** [ ] teste reproduz C2
+
+### E12 · `searchLocation(query?)` aceita o termo por parâmetro
+**Arquivos:** `ULP`
+1. `searchLocation(explicitQuery?: string)`; usa `explicitQuery ?? searchQuery`.
+2. `LP:175` passa `autocomplete.query`.
+3. Não mexer no caminho da flag off (input antigo continua usando `searchQuery`).
+**Checklist:** [ ] E11 verde · [ ] testes antigos de `ULP` verdes
+
+### E13 · Hook expõe `retrySuggest()` real
+**Arquivos:** `H`
+1. Ação `RETRY` no reducer que incrementa `attempt`; `attempt` entra nas deps do effect de busca (`H:163`).
+2. `retrySuggest()` ignora debounce (dispara na hora) e respeita backoff/guarda de custo (se bloqueado, dispara o estado de E27, não "Nada encontrado").
+3. Teste: erro de rede → `retrySuggest()` → `suggestPlaces` chamado 2ª vez (hoje 1 → vermelho antes do fix).
+**Checklist:** [ ] `attempt` nas deps · [ ] teste
+
+### E14 · Botões "Tentar novamente" usam `retrySuggest`
+**Arquivos:** `LP:195`, `CF:324`
+1. Trocar `setQuery(query)` por `retrySuggest()` nos dois lugares.
+**Checklist:** [ ] 2 lugares · [ ] `LPT` cobre o clique
+
+### E15 · Cascata parte 1: `/suggest` falha por rede/timeout/http → `/forward`
+**Arquivos:** `H`
+1. Em `SUGGEST_ERROR` com `kind ∈ {network, timeout, http}`: chamar `searchPlaces(query, token, {proximity, signal})` (o `/forward` da #737) e, se vier resultado, mostrar como sugestões com `kind` mapeado e **coordenada já presente** (`GeoSuggestion.coords?`).
+2. `429` e `cost_guard` **não** caem no `/forward` (é limite, não falha de rota) — vão para o estado de E27.
+3. Sugestão vinda do `/forward` não chama `/retrieve` no `select()` (já tem coordenada) — poupa a sessão.
+**Checklist:** [ ] 3 causas → forward · [ ] 429 não · [ ] select sem retrieve quando já tem coords
+
+### E16 · Cascata parte 2: `/retrieve` `null` → `searchPlaces(nome da sugestão)`
+**Arquivos:** `H:186-190`
+1. Antes de `RETRIEVE_ERROR`, tentar `searchPlaces(suggestion.name + ' ' + suggestion.address)`; se achar com `relevance ≥ 0,8`, devolver como `place`.
+2. Só depois disso → `RETRIEVE_ERROR` com a **causa real** (E18).
+**Checklist:** [ ] fallback no retrieve · [ ] teste
+
+### E17 · Telemetria só na dupla falha
+**Arquivos:** `H`, `src/lib/mapboxToken.ts` (`reportMapboxFailure`)
+1. `reportMapboxFailure(kind, 'suggest')` **somente** quando `/suggest` e `/forward` falharam; idem `'retrieve'`.
+2. Nunca incluir o termo (E39).
+3. Teste: falha só do `/suggest` com `/forward` ok → 0 chamadas; ambos falham → 1.
+**Checklist:** [ ] 0 ruído · [ ] sem termo · [ ] teste
+
+### E18 · `retrievePlace` devolve a causa
+**Arquivos:** `GEO:337-358`
+1. Retorno `{ ok: true, place } | { ok: false, kind: GeoFailureKind | 'not_found' }` (assinatura nova `retrievePlaceResult`; `retrievePlace` antiga vira wrapper que devolve `place | null` para não quebrar callers).
+2. Hook usa a nova e mapeia `kind` para a UI (E24).
+**Checklist:** [ ] causa propagada · [ ] wrapper mantém compatibilidade · [ ] teste
+
+### E19 · Cache não guarda lista vazia vinda de falha parcial
+**Arquivos:** `GEO:327`
+1. Cachear `[]` só quando a resposta veio `200` com `suggestions: []` de verdade; nunca após fallback.
+2. Teste: `/suggest` 200 vazio → cacheado; `/forward` vazio → não.
+**Checklist:** [ ] regra · [ ] teste
+
+### E20 · Testes de cascata na camada e no hook
+**Arquivos:** `GEO` tests, `HT`
+1. `mapboxGeocode.test.ts`: caso 4 do E10 antigo passa a **provar** o `/forward` (hoje só afirma a causa).
+2. `HT`: rede → forward → sugestões com coords; retrieve null → forward → place; ambos falham → erro com causa + `reportMapboxFailure` 1×.
+**Checklist:** [ ] ≥ 4 casos novos · [ ] verde
+
+### E21 · Mutação da Fase 2 com artefato no repo
+**Arquivos:** `scripts/mutation/mapa-f2.md` (novo, curto)
+1. Três mutações: remover a chamada a `searchPlaces` em `SUGGEST_ERROR`; remover `attempt` das deps; passar `undefined` no `searchLocation(...)` do Enter. Cada uma → nome do teste que falha.
+2. Registrar comando e saída (5 linhas cada), restaurar.
+**Checklist:** [ ] arquivo no repo (não só na PR)
+
+### E22 · PR da Fase 2
+1. Título: `fix(mapa): fallback /forward e cascata suggest→forward→v5 (C2, C3, C4)`.
+2. Corpo: Apêndice C do plano antigo agora **verdadeiro**; contagem de requests por cenário (medida nos testes).
+**Checklist:** [ ] PR · [ ] CI verde
+
+---
+
+# FASE 3 — Estados de erro, vazio e retry verdadeiros (E23–E34)
+
+> Defeitos C4–C6, C8, M1, M2, M5, M6, M11.
+
+### E23 · Estado explícito `idle | typing | loading | ok | empty | error | paused`
+**Arquivos:** `H`
+1. Reducer ganha `status` derivado; `empty` só depois de `SUGGEST_OK` com `[]`; `paused` para backoff 429 e guarda de custo; `typing` durante o debounce.
+2. `LP`/`CF` renderizam por `status`, não por `suggestions.length === 0`.
+**Checklist:** [ ] status no hook · [ ] UI não infere mais por length
+
+### E24 · Erro por causa
+**Arquivos:** `LP`, `CF`
+1. Mapa `kind → texto`: `network` "Sem conexão", `timeout` "A busca demorou demais", `http` "Erro no serviço de mapas", `rate_limited` "Limite de buscas atingido — aguarde 1 min", `cost_guard` "Sugestões pausadas este mês (busca por Enter continua)", `not_found` "Endereço não encontrado".
+2. Texto em um único módulo `src/components/inbox/location-picker/searchErrors.ts` usado pelos dois consumidores.
+**Checklist:** [ ] 6 causas · [ ] 1 fonte de texto
+
+### E25 · "Nada encontrado" só quando é verdade
+**Arquivos:** `LP:198`, `CF`
+1. Render de `empty` exige `status === 'empty'` (E23). Durante `typing`/`loading` → skeleton; `paused` → E27.
+2. Teste: digitar 3 letras e nada aparecer nos 300 ms; após `SUGGEST_OK []` aparece.
+**Checklist:** [ ] regra 3 do E18 antigo cumprida · [ ] teste
+
+### E26 · Falha do `/retrieve` visível
+**Arquivos:** `LP:92-94`, `H`
+1. `handleSelectSuggestion`: só fecha a lista **depois** de `place` válido; em falha, lista continua aberta e o item mostra a causa inline (`status` do item).
+2. Toast único via `feedback.error` com a causa (sem termo).
+**Checklist:** [ ] lista não fecha em falha · [ ] toast · [ ] teste em `LPT`
+
+### E27 · Estado `paused` (429 / custo) com aviso único
+**Arquivos:** `H`, `LP`, `CF`
+1. Durante `rateLimitedUntil` ou `!isSearchBudgetOk()`: uma linha fixa no lugar da lista ("Sugestões pausadas por 60 s" com contagem regressiva / "Sugestões pausadas este mês"), sem "Nada encontrado".
+2. `SET_QUERY` **não** zera `error` enquanto `paused` (corrige o "1 aviso" do E38 antigo).
+3. Enter continua funcionando (F2) — o operador nunca fica sem busca.
+**Checklist:** [ ] aviso único · [ ] countdown · [ ] Enter ativo
+
+### E28 · Apagar para < 3 caracteres limpa a lista e aborta a consulta
+**Arquivos:** `H:80-81,155-157`
+1. `SET_QUERY` com `length < 3` → `suggestions: []`, `status: 'idle'`, `abort()` do controller em voo.
+2. Teste: "rua" → lista; backspace até "ru" → lista vazia e `abort` chamado.
+**Checklist:** [ ] M1 fechado · [ ] teste
+
+### E29 · Clique no mapa / GPS limpam o termo mesmo com lista fechada
+**Arquivos:** `LP:72-79`
+1. Ao receber `selectedLocation` de origem `click`/`gps`, chamar `autocomplete.clear()` incondicionalmente (e não só se a lista estava aberta).
+2. Teste: escolher sugestão → clicar no mapa → input vazio.
+**Checklist:** [ ] M2 fechado · [ ] teste
+
+### E30 · Lista fecha em `Tab`/`blur` por teclado
+**Arquivos:** `LP:82-89`
+1. `onBlur` do input com `relatedTarget` fora do `listbox` → fechar. Clique dentro da lista continua funcionando (`pointerdown` já trata).
+**Checklist:** [ ] Tab fecha · [ ] clique na lista não fecha · [ ] teste
+
+### E31 · Destaque do trecho também no endereço
+**Arquivos:** `LP:221-227`
+1. `<HighlightedText>` na segunda linha; manter `<mark>` (já acessível) mas com `font-semibold` para cumprir "negrito".
+**Checklist:** [ ] 2 linhas com destaque
+
+### E32 · `ContactForm` usa exatamente os mesmos estados/erros
+**Arquivos:** `CF`
+1. Extrair a lista de sugestões para `src/components/inbox/location-picker/SuggestionList.tsx` (props: `status`, `suggestions`, `highlightedIndex`, `onSelect`, `onRetry`, `listboxId`) e usar nos dois consumidores — hoje há duas cópias divergindo.
+2. Diff pequeno: só mover JSX; nenhum estilo novo.
+**Checklist:** [ ] 1 componente, 2 usos · [ ] testes dos dois consumidores verdes
+
+### E33 · Testes de UI com hook **real** (não mockado)
+**Arquivos:** `src/components/inbox/__tests__/LocationPicker.integration.test.tsx` (novo)
+1. Mockar só `mapboxGeocode` (fetch) e `mapboxToken`; hook e reducer reais.
+2. Casos: digitar → skeleton → lista; erro rede → causa + retry funciona; 429 → paused; retrieve falha → lista aberta + toast; Enter sem destaque → `/forward`.
+3. É este arquivo que teria pego C2, C4, C5, C6.
+**Checklist:** [ ] ≥ 5 casos · [ ] hook real
+
+### E34 · PR da Fase 3
+1. Título: `fix(mapa): estados de erro/vazio/pausa verdadeiros no combobox (C4–C8, M1, M2)`.
+2. Prints desktop e 360 px no corpo (obrigatório — E28 antigo ficou sem).
+**Checklist:** [ ] PR · [ ] prints · [ ] CI verde
+
+---
+
+# FASE 4 — Cadastro de contato: flag, proximity e integridade (E35–E44)
+
+> Defeitos C7, M9; fecha a Fase 6 antiga de verdade.
+
+### E35 · Flag própria para o cadastro
+**Arquivos:** migration `feature_flags` (aditiva), `CF`
+1. `insert into feature_flags (key, enabled, description) values ('mapa.searchbox-contact-form', true, 'Autocomplete de endereço no cadastro de contato')` — `true` porque já está ligado em produção (não regredir).
+2. `CF:91` → `enabled: !!mapboxToken && useFeatureFlag('mapa.searchbox-contact-form', false)`.
+3. Documentar as duas chaves em `ARQUITETURA_BUSCA.md`.
+**Checklist:** [ ] flag · [ ] consumo · [ ] doc
+
+### E36 · Token só quando o autocomplete está ligado
+**Arquivos:** `CF:83-87`
+1. `getMapboxToken()` só se a flag estiver on (evita 1 invoke da edge por abertura de form com flag off).
+**Checklist:** [ ] sem invoke com flag off · [ ] teste
+
+### E37 · `proximity` no cadastro
+**Arquivos:** `CF`
+1. Prioridade: coordenada já salva do contato (edição) → cidade/UF já digitadas (geocodificar 1× com `/forward`, cacheado por sessão) → São Paulo (`DEFAULT_PROXIMITY`).
+2. Teste: editar contato com lat/lng → `suggestPlaces` recebe `proximity` igual.
+**Checklist:** [ ] 3 fontes · [ ] teste
+
+### E38 · `types` do cadastro inclui POI opcional
+**Arquivos:** `CF:20`
+1. Manter `address,street,place` como padrão; adicionar um toggle discreto "Buscar por nome da empresa" que troca para `poi,address,street,place` (E47 antigo mostrou que `XBZ BRINDES` só resolve com POI).
+2. Toggle não persiste; volta ao padrão a cada abertura.
+**Checklist:** [ ] toggle · [ ] teste com `types`
+
+### E39 · Preencher os 5 campos com `context` completo
+**Arquivos:** `GEO:175-183`, `CF:108-118`
+1. Conferir o parse de `context.postcode/place/region/locality/neighborhood/street/address_number` contra 3 respostas reais do `/retrieve` (Paulista 1000, um endereço sem número, um bairro só).
+2. UF sempre como sigla de 2 letras (Mapbox devolve nome/`region_code` — usar `region_code`).
+**Checklist:** [ ] 3 shapes reais nos testes · [ ] UF em sigla
+
+### E40 · Edição preserva endereço mesmo quando o operador não usa o autocomplete
+**Arquivos:** `CRUD`, `CF`
+1. Reforço da F1: campo de endereço editado à mão **não** zera `latitude/longitude` sozinho; mostra badge "coordenada pode estar desatualizada" e um botão "Recalcular" (1 `/forward`).
+**Checklist:** [ ] badge · [ ] recalcular · [ ] teste
+
+### E41 · Importação CSV e sync de CRM não apagam endereço
+**Arquivos:** `src/components/contacts/*` (import), `supabase/functions/crm-integration/index.ts`, `bitrix-api`
+1. Grep de todo `from('contacts').update/upsert` fora do CRUD e garantir que nenhum manda `address: null` incondicional (mesma classe de bug do C1).
+2. Registrar no doc a lista conferida, com `file:line`.
+**Checklist:** [ ] lista no doc · [ ] 0 writers incondicionais
+
+### E42 · Mapa de contatos: legenda + contagem
+**Arquivos:** `CRM:211-222`, `ContactMapView.tsx`
+1. Legenda mostra a contagem "N com endereço confirmado · M aproximados pelo DDD".
+2. Contato só com cidade (sem lat/lng) vira ponto na sede da cidade (já existe `contactRegionGeo.ts`) — verificar que a prioridade é lat/lng > cidade > DDD.
+**Checklist:** [ ] contagem · [ ] 3 níveis de precisão · [ ] teste
+
+### E43 · Testes da Fase 4
+1. `ContactFormEndereco.test.tsx`: flag off → sem hook; proximity; toggle POI; UF sigla.
+2. `ContactRegionMap.test.tsx`: contagem na legenda.
+**Checklist:** [ ] ≥ 6 casos · [ ] verde
+
+### E44 · PR da Fase 4
+1. Título: `feat(contatos): cadastro com flag própria, proximity e busca por empresa (C7, M9)`.
+2. DDL (flag) destacada; deixar aberta para o Joaquim.
+**Checklist:** [ ] PR · [ ] CI verde
+
+---
+
+# FASE 5 — Sessão, custo e telemetria corretas (E45–E56)
+
+> Defeitos M3, M4, M5, M10; fecha E35–E38 antigas de verdade.
+
+### E45 · Sessão só nasce no primeiro request real
+**Arquivos:** `H:140-142`, `GEO:308-310`
+1. `getSearchSession()` passa a ser chamado **dentro** de `suggestPlaces` no caminho sem cache (ou o hook consulta o cache antes de abrir sessão).
+2. Teste: mesmo termo 2× → 1 sessão; termo em cache com sessão expirada → 0 sessões novas.
+**Checklist:** [ ] M3 fechado · [ ] teste
+
+### E46 · `noteSuggestCall` sem sessão = erro de programação, não sessão fantasma
+**Arquivos:** `SES:51-58`
+1. Se não há sessão ativa, lançar em dev (`import.meta.env.DEV`) e no-op em prod com `console.warn` — nunca criar sessão com `source='picker'` fixo.
+**Checklist:** [ ] M10 fechado · [ ] teste
+
+### E47 · Guarda de custo: transição por **mês**, não por aba
+**Arquivos:** `CG:79-98`, migration
+1. Evento `searchbox_cost_guard` só se não existe outro no mês corrente — verificar via a própria RPC (`count_searchbox_cost_guard_this_month`, nova, `SECURITY DEFINER`, grant só `authenticated`) antes de `logAudit`.
+2. Alternativa mais barata: `localStorage['searchbox_cost_guard_month']` = `YYYY-MM` — aceitar se o Joaquim preferir evitar DDL; registrar a decisão.
+**Checklist:** [ ] 1 evento/mês · [ ] decisão registrada
+
+### E48 · Limite configurável em runtime
+**Arquivos:** `CG:79`, `feature_flags` ou `system_settings`
+1. Ler `MONTHLY_SESSION_LIMIT` de uma linha de configuração (tabela existente de settings, se houver; senão `feature_flags.description` **não** — criar `app_settings(key, value)` só se não existir nada equivalente; verificar antes).
+2. Fallback para 450 se a leitura falhar.
+**Checklist:** [ ] sem redeploy para mudar o teto · [ ] fallback
+
+### E49 · Aviso antecipado a 80 % do teto
+**Arquivos:** `CG`
+1. A 400 sessões (80 %) gravar 1 evento `searchbox_budget_warning` por mês (mesma regra do E47).
+2. Sem UI; é para o painel (E52).
+**Checklist:** [ ] evento · [ ] 1×/mês
+
+### E50 · Telemetria de sucesso (não só de sessão)
+**Arquivos:** `H`, `ULP`
+1. Evento `searchbox_selected` (1× por `/retrieve` bem-sucedido, `details: {source, kind}`) e `location_sent` (1× por envio de localização pelo agente, `details: {origin: 'suggest'|'forward'|'click'|'gps'}`).
+2. Sem termo, sem coordenada no log.
+3. É o que permite responder "o recurso é usado?" — hoje só sabemos que sessões abrem.
+**Checklist:** [ ] 2 eventos · [ ] sem PII · [ ] teste
+
+### E51 · `retrieve` com causa alimenta telemetria
+1. Com E18, `reportMapboxFailure('retrieve', kind)` na dupla falha; `not_found` **não** é falha de rota, não reporta.
+**Checklist:** [ ] regra · [ ] teste
+
+### E52 · Painel de uso passa a ser uma view
+**Arquivos:** migration `create view searchbox_usage_daily`
+1. View sobre `audit_logs` com sessões/dia, seleções/dia, envios/dia, origem — só leitura, grant `authenticated`.
+2. `USO_SEARCHBOX.md` passa a apontar para a view (as 4 queries continuam como referência).
+**Checklist:** [ ] view · [ ] doc
+
+### E53 · Card no dashboard admin (opcional, só se já existe painel de KPIs)
+1. Se `docs/dashboard/README.md` tiver slot para KPI de sistema, adicionar "Sessões Search Box no mês / 500"; senão, registrar como não feito com o motivo.
+**Checklist:** [ ] card ou motivo escrito
+
+### E54 · Tratamento de 429 do `/retrieve` e do `/forward`
+**Arquivos:** `H`, `GEO`
+1. Backoff de 60 s também para 429 vindo do `/retrieve`/`/forward` (hoje só `/suggest`).
+**Checklist:** [ ] 3 endpoints · [ ] teste
+
+### E55 · Testes da Fase 5
+1. `mapboxCostGuard.test.ts`: 1 evento/mês, warning 80 %, teto vindo de config.
+2. `mapboxSession.test.ts`: sessão só no request real; `noteSuggestCall` sem sessão.
+**Checklist:** [ ] ≥ 6 casos novos · [ ] verde
+
+### E56 · PR da Fase 5
+1. Título: `fix(mapa): telemetria de uso real e guarda de custo por mês (M3, M4, M10)`.
+2. DDL (view + RPC) destacada; deixar aberta.
+**Checklist:** [ ] PR · [ ] CI verde
+
+---
+
+# FASE 6 — Acessibilidade e mobile (E57–E66)
+
+> Defeitos M7, M8, M13; fecha E21/E25 antigas.
+
+### E57 · `aria-live` para contagem e estados
+**Arquivos:** `SuggestionList.tsx` (E32)
+1. `<div role="status" aria-live="polite" class="sr-only">` com "N sugestões", "Buscando…", "Nenhum resultado", "Sugestões pausadas".
+2. Sem repetir a cada tecla: só quando `status` ou `length` mudam.
+**Checklist:** [ ] anúncio · [ ] sem spam · [ ] teste com `getByRole('status')`
+
+### E58 · Foco e `aria-activedescendant` auditados com axe
+**Arquivos:** `LPT`, `ContactFormEndereco.test.tsx`
+1. `vitest-axe` (ou `jest-axe`) rodando sobre o combobox aberto com 3 sugestões: 0 violações.
+**Checklist:** [ ] axe 0 · [ ] nos 2 consumidores
+
+### E59 · Lista ocupa a largura do diálogo em < 640 px
+**Arquivos:** `SuggestionList.tsx`
+1. `sm:` breakpoints: em telas pequenas, `position: fixed` ancorado ao diálogo, `max-h-[40vh]`.
+**Checklist:** [ ] 360 px sem overflow horizontal
+
+### E60 · Teclado virtual não esconde a lista
+1. Usar `visualViewport` para recalcular `max-height` quando o teclado abre (listener com cleanup).
+2. Teste manual em Android/iOS documentado com print (E65).
+**Checklist:** [ ] listener · [ ] print
+
+### E61 · Alvo de toque ≥ 44 px em todos os itens e no rodapé
+1. Conferir `min-h-11` em item, botão "Tentar novamente" e link "Powered by Mapbox".
+**Checklist:** [ ] 3 alvos
+
+### E62 · Contraste no tema claro/escuro/alto contraste
+1. Lista usa só `--popover`, `--border`, `--muted`, `--inbox-panel-bg` (lição de UI de 25/09 no CLAUDE.md); medir contraste do texto secundário e do `<mark>` nos 3 temas (≥ 4,5:1).
+**Checklist:** [ ] 3 temas medidos · [ ] números no doc
+
+### E63 · Redução de movimento
+1. Skeleton e countdown respeitam `prefers-reduced-motion`.
+**Checklist:** [ ] `motion-reduce:`
+
+### E64 · Leitor de tela anuncia a seleção
+1. Após `select()`, `aria-live` diz "Endereço escolhido: <nome>".
+**Checklist:** [ ] anúncio · [ ] teste
+
+### E65 · Prints obrigatórios
+1. Desktop (1280), 360 px, teclado virtual aberto, tema escuro — 4 prints em `docs/mapa/prints/` (PNG ≤ 200 KB cada).
+**Checklist:** [ ] 4 prints no repo
+
+### E66 · PR da Fase 6
+1. Título: `fix(mapa): a11y do combobox (aria-live, blur, axe) e mobile 360px (M7, M8)`.
+**Checklist:** [ ] PR · [ ] prints · [ ] CI verde
+
+---
+
+# FASE 7 — Testes de integração, mutação e E2E (E67–E82)
+
+> Defeitos P2, P3, P4. É a fase que impede a auditoria de 29/09 de se repetir.
+
+### E67 · Suíte de integração hook + UI (consolidar E33)
+1. `LocationPicker.integration.test.tsx` e `ContactFormEndereco.integration.test.tsx` com o hook real; só `fetch` mockado com shapes reais do Apêndice A.
+**Checklist:** [ ] 2 arquivos · [ ] ≥ 10 casos
+
+### E68 · Fixture de respostas reais da Mapbox
+**Arquivos:** `src/lib/__fixtures__/mapbox/*.json`
+1. Gravar 1× (com o token de produção, via edge) as respostas de `/suggest` para "xbz", "avenida paulista 1000", "asdkjh"; `/retrieve` de 1 id; `/forward` de 1 termo; 1 resposta 429.
+2. Sem token no arquivo. Testes passam a ler daqui.
+**Checklist:** [ ] 6 fixtures · [ ] 0 segredos (grep `access_token`)
+
+### E69 · Script de mutação reproduzível
+**Arquivos:** `scripts/mutation/run-mapa.mjs` (novo, ~60 linhas)
+1. Aplica N mutações por `sed` em cópia temporária (as 3 de E21 + 3 da Fase 3: remover `abort()`, remover `status==='empty'`, remover `retrySuggest`), roda a suíte, restaura, imprime tabela mutação → teste que falhou.
+2. `npm run mutation:mapa`.
+**Checklist:** [ ] 6 mutações · [ ] todas detectadas · [ ] script no repo
+
+### E70 · Mutação no CI (não bloqueante)
+**Arquivos:** `.github/workflows/ci.yml`
+1. Job `mutation-mapa` `continue-on-error: true`, roda só quando `src/lib/mapbox*` ou `location-picker/**` mudam (`paths` filter).
+2. Não vira required check (não travar merges).
+**Checklist:** [ ] job · [ ] não required
+
+### E71 · E2E: picker de localização (flag on)
+**Arquivos:** `e2e/location-picker.spec.ts` (novo), `e2e/README.md`
+1. Login com o usuário E2E existente, abrir conversa do contato fixo `04dff4dc-…` ("[E2E] Contato de teste"), abrir "Compartilhar localização", digitar "avenida paulista 1000", esperar `role=listbox`, `ArrowDown`+`Enter`, conferir card de confirmação com "Paulista".
+2. **Não enviar** a mensagem (não gerar WhatsApp real): fechar o diálogo.
+3. Rede da Mapbox **interceptada** (`page.route('**/searchbox/v1/**')`) com as fixtures de E68 — zero sessão real, zero custo, determinístico.
+**Checklist:** [ ] spec · [ ] rota interceptada · [ ] verde em `chromium-authenticated`
+
+### E72 · E2E: fallback quando `/suggest` falha
+1. Mesma spec, `page.route` devolvendo 500 no `/suggest` e 200 no `/forward`: lista mostra resultado do forward; Enter funciona.
+**Checklist:** [ ] caso
+
+### E73 · E2E: cadastro de contato com endereço e edição sem perda
+**Arquivos:** `e2e/contact-address.spec.ts` (novo)
+1. Criar contato `[E2E] Endereço <timestamp>` com autocomplete (rota interceptada), salvar, reabrir edição, mudar só o nome, salvar, conferir via UI que o endereço continua; apagar o contato ao final (`afterEach`).
+2. É o E2E que teria pego C1.
+**Checklist:** [ ] spec · [ ] limpeza garantida
+
+### E74 · E2E: mapa de contatos com pino verde
+1. Com o contato de E73 ainda existente, abrir "Mapa de Contatos", esperar a legenda "endereço confirmado", contar ≥ 1 pino verde (`data-testid`).
+**Checklist:** [ ] `data-testid` adicionados · [ ] caso
+
+### E75 · E2E entra no `e2e-logado.yml`
+**Arquivos:** `.github/workflows/e2e-logado.yml`
+1. Adicionar as 2 specs à lista habilitada (mesmo padrão de `conversation.spec.ts`/`messaging.spec.ts`).
+**Checklist:** [ ] workflow · [ ] verde no primeiro run
+
+### E76 · Teste de contrato da RPC `search_contacts`
+**Arquivos:** `scripts/db-audit/` (SQL de teste) ou `supabase/tests/`
+1. Query que falha se `search_contacts` deixar de devolver `latitude, longitude, address, city, state, postal_code` — roda no `db-live-guard` (adicionar ao contrato runtime, não criar workflow novo — CLAUDE.md §1 regra 9).
+**Checklist:** [ ] contrato · [ ] no `db-live-guard`
+
+### E77 · Teste de contrato dos grants das RPCs do módulo
+1. `count_searchbox_sessions_this_month`, `search_contacts`, `count_searchbox_cost_guard_this_month` (E47): sem `anon`/`PUBLIC` — assert no `grants-baseline.json` já existente.
+**Checklist:** [ ] baseline atualizado
+
+### E78 · Bundle: número no repo
+**Arquivos:** `docs/mapa/ARQUITETURA_BUSCA.md`
+1. `npm run build` antes/depois da F3+F6; registrar tamanho do chunk `LocationPicker-*.js` e do `ContactForm` (raw/gzip) e o orçamento (`performance-budget.json`).
+2. Se passar do orçamento, `SuggestionList` vira `React.lazy`.
+**Checklist:** [ ] números no doc · [ ] dentro do orçamento
+
+### E79 · Cobertura mínima do módulo
+1. `vitest --coverage` restrito a `src/lib/mapbox*`, `location-picker/**`, `ContactForm.tsx`: linhas ≥ 85 %, branches ≥ 75 %; registrar no doc.
+**Checklist:** [ ] números · [ ] sem exclusões novas
+
+### E80 · Teste de carga leve do debounce (sanidade de custo)
+1. Simular 200 teclas em 5 s com fake timers → ≤ 17 requests (1 a cada 300 ms) e 1 sessão.
+**Checklist:** [ ] teste
+
+### E81 · Teste de que a flag off não chama a Mapbox
+1. Integração: flag off → `fetch` da Mapbox nunca chamado ao digitar; `get-mapbox-token` não invocado no `ContactForm` (E36).
+**Checklist:** [ ] 2 casos
+
+### E82 · PR da Fase 7
+1. Título: `test(mapa): integração com hook real, mutação reproduzível e E2E do picker/cadastro/mapa`.
+**Checklist:** [ ] PR · [ ] CI verde · [ ] `e2e-logado` verde
+
+---
+
+# FASE 8 — Documentação, rollout, observabilidade e fechamento (E83–E100)
+
+### E83 · Plano antigo recebe carimbo de "histórico"
+**Arquivos:** `PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md`
+1. Nota de 3 linhas no topo apontando para a auditoria e para este plano; **não** reescrever os checkboxes (histórico é histórico).
+**Checklist:** [ ] nota
+
+### E84 · `ARQUITETURA_BUSCA.md` reflete a cascata real
+1. Atualizar diagrama com `/forward` alcançável, estado `paused`, 2 flags, eventos novos (E50), view (E52).
+**Checklist:** [ ] doc
+
+### E85 · `USO_SEARCHBOX.md` com view + números atuais
+1. Trocar as queries manuais pela view (mantendo as originais em apêndice); atualizar a tabela "primeiro mês" com o fechamento real de set/2026.
+**Checklist:** [ ] doc
+
+### E86 · Docs in-app
+**Arquivos:** `src/components/docs/featuresSectionsData.ts`
+1. Entradas: "Autocomplete de endereço (Inbox e Contatos)" e "Mapa de contatos com endereço confirmado".
+**Checklist:** [ ] 2 entradas
+
+### E87 · POP de atendimento
+**Arquivos:** `docs/POP-ATENDIMENTO-BASICO.md`
+1. Parágrafo "Como enviar uma localização" e "Como cadastrar endereço de entrega" (linguagem de operador, 5 linhas cada).
+**Checklist:** [ ] 2 parágrafos
+
+### E88 · Runbook de incidente do módulo
+**Arquivos:** `docs/runbooks/mapa-searchbox.md` (novo)
+1. Sintomas → causa → ação: "lista não aparece" (flag/token/429), "custo subindo" (teto/guard), "endereço sumiu" (C1 — query do E96), "pino não aparece no mapa" (RPC sem lat/lng).
+2. Comando de reversão (`UPDATE feature_flags …`) para as 2 flags.
+**Checklist:** [ ] 4 cenários · [ ] reversão escrita
+
+### E89 · Teste real de reversão da flag
+1. Em horário de baixo uso: desligar `mapa.searchbox-autocomplete` por 10 min, confirmar no navegador que o picker volta ao input+Buscar e que `searchLocation` funciona (F2), religar. Registrar horário e resultado.
+**Checklist:** [ ] executado · [ ] registrado (nunca foi feito)
+
+### E90 · Restrição de URL do token público da Mapbox
+1. No painel da Mapbox, restringir o token servido por `get-mapbox-token` aos domínios de produção/preview da Vercel. Não é do repo — registrar como tarefa do Joaquim com o link da página de tokens e conferir depois com uma chamada de fora do domínio (deve dar 403).
+**Checklist:** [ ] restrito · [ ] 403 confirmado
+
+### E91 · Alerta de custo por e-mail/WhatsApp
+1. Workflow N8N (ou cron do Supabase, se já existir padrão no repo) que lê a view de E52 1×/dia e avisa se `sessoes_mes ≥ 400`. Registrar id do workflow no doc.
+**Checklist:** [ ] alerta · [ ] id no doc
+
+### E92 · `db-live-guard` cobre o módulo
+1. Confirmar que os contratos de E76/E77 rodam no guard vivo e que o `grants-baseline.json` inclui as RPCs novas.
+**Checklist:** [ ] 8 guards verdes com os contratos novos
+
+### E93 · Rollout gradual do cadastro (flag E35)
+1. Se a tabela `feature_flags` suportar escopo por usuário/fila, ligar primeiro para 2 operadores; senão, manter ligado para todos e acompanhar 48 h **reais** pela view.
+**Checklist:** [ ] 48 h decorridas · [ ] números no doc
+
+### E94 · Confirmação visual do envio de localização (E49 antigo, agora de verdade)
+1. Com F2/F3 em produção, um operador real (ou o Joaquim) envia 1 localização para um número de teste da empresa; conferir `location_sent` (E50) e o balão no WhatsApp; print no doc.
+**Checklist:** [ ] `location_sent` ≥ 1 · [ ] print
+
+### E95 · Termos reais de novo, agora no picker (não só no cadastro)
+1. Repetir a tabela do E47 antigo no **picker do Inbox** com POI habilitado: `XBZ BRINDES` tem que resolver para São Paulo (era o pedido original do Joaquim).
+**Checklist:** [ ] tabela · [ ] XBZ em SP
+
+### E96 · Query de detecção de regressão do C1
+**Arquivos:** `USO_SEARCHBOX.md`
+1. `select count(*) from audit_logs where action='contact_address_changed' and (details->>'cleared')::bool and created_at > now() - interval '7 days'` — esperado 0 fora de apagamento intencional.
+**Checklist:** [ ] query no doc · [ ] rodada 1× após F1
+
+### E97 · Limpeza de fixtures/contatos de teste
+1. Garantir que os E2E deixam 0 contatos `[E2E] Endereço *` no banco (query de verificação).
+**Checklist:** [ ] 0 sobras
+
+### E98 · Auditoria adversarial final (5 frentes)
+1. Perda de dado em qualquer writer de `contacts`; sessão fantasma; estado enganoso; a11y; custo — cada frente com 1 teste novo ou "sem achado" justificado.
+**Checklist:** [ ] 5 frentes · [ ] achados com teste
+
+### E99 · Fechamento do custo do 1º mês completo
+1. Apêndice B do plano antigo + `USO_SEARCHBOX.md`: sessões, seleções, envios, custo (US$) de set/2026 fechado e out/2026 parcial.
+**Checklist:** [ ] números medidos
+
+### E100 · Relatório de encerramento
+**Arquivos:** `docs/mapa/ENCERRAMENTO_2026-XX-XX.md`
+1. Tabela E01–E100 com status e evidência; lista do que ficou fora com motivo; PRs mergeadas; estado das flags; próximos passos (se houver).
+2. Este plano só fecha com **0 PARCIAL sem motivo escrito**.
+**Checklist:** [ ] relatório · [ ] 0 parcial sem motivo
+
+---
+
+## Ordem de execução sugerida
+
+| Bloco | Fases | Por quê primeiro |
+|---|---|---|
+| 1 | F1 | Perda de dados em produção hoje |
+| 2 | F2 → F3 | Busca sem fallback + estados enganosos (o operador está vendo isso agora) |
+| 3 | F4 → F5 | Flag do cadastro (custo majoritário) e telemetria que responde "é usado?" |
+| 4 | F7 | Impede regressão silenciosa antes de mexer em UX fina |
+| 5 | F6 → F8 | A11y/mobile e fechamento com evidência |
+
+## Apêndice — mapa defeito → etapa
+
+| Defeito (auditoria) | Etapas |
+|---|---|
+| C1 | E01–E10, E40, E41, E73, E96 |
+| C2 | E11, E12, E33, E71 |
+| C3 | E15–E20, E72 |
+| C4 | E13, E14 |
+| C5 | E26 |
+| C6 | E23, E25, E27 |
+| C7 | E35, E36, E81 |
+| C8 | E24 |
+| M1 | E28 · M2 | E29 · M3 | E45 · M4 | E47, E48 · M5 | E18 · M6 | E19 · M7 | E30, E57, E58 · M8 | E59–E61, E65 · M9 | E37 · M10 | E46 · M11 | E27 · M12 | E36, E81 · M13 | E31 · M14 | aceito (sem etapa) |
+| P1 | E83 · P2 | E21, E69, E70 · P3 | E33, E67 · P4 | E71–E75 · P5 | E65, E89, E94 · P6 | E100 · P7 | E78 · P8 | E86 · P9 | E52, E85 · P10 | E90 |

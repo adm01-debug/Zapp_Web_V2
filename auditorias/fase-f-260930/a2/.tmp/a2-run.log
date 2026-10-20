@@ -1,0 +1,737 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a2
+
+stderr | .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-10 Lista: subtitulo real convive com KPI filtrado zerado
+In HTML, <li> cannot be a descendant of <li>.
+This will cause a hydration error.
+
+  ...
+    <QueryClientProvider client={{}}>
+      <TasksModule defaultMode="list">
+        <div data-testid="tasks-module" className="flex flex-...">
+          <PageHeader variant="plain" title="Tarefas" subtitle="0 abertas ..." breadcrumbs={[...]}>
+            <header className="flex flex-...">
+              <div className="flex items...">
+                <Breadcrumb>
+                  <nav ref={null} aria-label="breadcrumb">
+                    <BreadcrumbList>
+                      <ol ref={null} className="flex flex-...">
+                        <BreadcrumbItem>
+                        <BreadcrumbItem>
+>                         <li ref={null} className="inline-flex items-center gap-1.5">
+                            <BreadcrumbSeparator>
+>                             <li role="presentation" aria-hidden="true" className={"[&>svg]:size-3.5"}>
+                            ...
+              ...
+          ...
+
+<li> cannot contain a nested <li>.
+See this log for the ancestor stack trace.
+
+stdout | .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-10 Lista: subtitulo real convive com KPI filtrado zerado
+[A2-10] subtitulo="6 abertas · 3 para hoje" | KPI Atrasadas=0 KPI Para hoje=0 KPI Fazendo=3/3 KPI Concluidas7d=0 | corpo da Lista="Nenhuma tarefa com esse filtro"
+
+stdout | .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-11 Quadro: coluna Fazendo com 1 card e cabecalho 3/3
+[A2-11] subtitulo="0 abertas · 0 para hoje" KPI Fazendo=0/3 | coluna Fazendo cards=0 | texto do cabecalho da coluna="Fazendo0/3" | header className="flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "
+
+ ✓ .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-10 Lista: subtitulo real convive com KPI filtrado zerado 218ms
+ × .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-11 Quadro: coluna Fazendo com 1 card e cabecalho 3/3 91ms
+   → expected +0 to be 1 // Object.is equality
+stdout | .tmp/a2-render.test.tsx > A2 - estados vazios > A2-20 Lista vazia SEM filtro: qual acao o vazio oferece?
+[A2-20] vazio sem filtro | botoes na tela=["Todos os contatos","Lista","Quadro","Agenda"] | tem botao "Nova tarefa"? false | corpo="InícioTarefasTarefas0 abertas · 0 para hojeAtrasadas0Para hoje0Fazendo0/3Concluídas (7d)0Tempo médio—Todas as prioridadesTodos os contatosCom alarmeMostrar concluídasListaQuadroAgendaNada por aquiAdicione a primeira tarefa acima.Atalho: N"
+
+ × .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-12 Quadro: aviso amarelo (soft) da coluna A fazer usa contagem FILTRADA 1050ms
+   → expected 1 to be greater than 1
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col h-full gap-4"[39m
+        [33mdata-testid[39m=[32m"tasks-module"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 px-0 pt-0 pb-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-3 flex-wrap sm:h-14"[39m
+          [36m>[39m
+            [36m<nav[39m
+              [33maria-label[39m=[32m"breadcrumb"[39m
+            [36m>[39m
+              [36m<ol[39m
+                [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+                [36m>[39m
+                  [36m<a[39m
+                    [33mclass[39m=[32m"flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"[39m
+                    [33mhref[39m=[32m"/"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-house w-3.5 h-3.5"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mInício[0m
+                    [36m</span>[39m
+                  [36m</a>[39m
+                [36m</li>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+                [36m>[39m
+                  [36m<li[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"[&>svg]:size-3.5"[39m
+                    [33mrole[39m=[32m"presentation"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</li>[39m
+                  [36m<span[39m
+                    [33maria-current[39m=[32m"page"[39m
+                    [33maria-disabled[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"font-semibold text-foreground"[39m
+                    [33mrole[39m=[32m"link"[39m
+                  [36m>[39m
+                    [0mTarefas[0m
+                  [36m</span>[39m
+                [36m</li>[39m
+              [36m</ol>[39m
+            [36m</nav>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-center justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 min-w-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0"[39m
+              [36m>[39m
+                [36m<h1[39m
+                  [33mclass[39m=[32m"text-[38px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate"[39m
+                [36m>[39m
+                  [0mTarefas[0m
+                [36m</h1>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-lg text-muted-foreground mt-2 truncate"[39m
+                [36m>[39m
+                  [0m41 abertas · 0 para hoje[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"[39m
+          [33mdata-testid[39m=[32m"tasks-kpi-strip"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-[88px] rounded-[14px] border border-border/70 bg-card px-3 flex items-center gap-3"[39m
+            [33mdata-testid[39m=[32m"kpi-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-kpi-yellow"[39m
+              [33mdata-testid[39m=[32m"kpi-tile"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert h-5 w-5 text-kpi-yellow-fg"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+       ...
+ ✓ .tmp/a2-render.test.tsx > A2 - estados vazios > A2-20 Lista vazia SEM filtro: qual acao o vazio oferece? 71ms
+stdout | .tmp/a2-render.test.tsx > A2 - estados vazios > A2-21 Lista vazia COM filtro: oferece Limpar filtros
+[A2-21] vazio com filtro | texto="Nenhuma tarefa com esse filtro" + botao "Limpar filtros"
+
+stdout | .tmp/a2-render.test.tsx > A2 - estados vazios > A2-22 Quadro sem item nenhum: contagem exata de Coluna vazia
+[A2-22] "Coluna vazia" x5 | labels presentes=["Caixa de entrada","A fazer","Fazendo","Aguardando"]
+
+ ✓ .tmp/a2-render.test.tsx > A2 - estados vazios > A2-21 Lista vazia COM filtro: oferece Limpar filtros 48ms
+ ✓ .tmp/a2-render.test.tsx > A2 - estados vazios > A2-22 Quadro sem item nenhum: contagem exata de Coluna vazia 64ms
+stdout | .tmp/a2-render.test.tsx > A2 - concluidas antigas no Quadro > A2-31 concluida de 44 dias: o que a Lista mostra
+[A2-31] Lista com 1 done de 44 dias | subtitulo="0 abertas · 0 para hoje" | corpo="InícioTarefasTarefas0 abertas · 0 para hojeAtrasadas0Para hoje0Fazendo0/3Concluídas (7d)0Tempo médio—Todas as prioridadesTodos os contatosCom alarmeMostrar concluídasListaQuadroAgenda"
+
+stdout | .tmp/a2-render.test.tsx > A2 - concluida sem carimbo na tela > A2-40 done sem completed_at: entra na secao Concluidas (7 dias) e no KPI; some com done=0
+[A2-40] KPI Concluidas(7d)=1 | "Sem carimbo" visivel com a secao recolhida? false
+
+stdout | .tmp/a2-render.test.tsx > A2 - concluida sem carimbo na tela > A2-40 done sem completed_at: entra na secao Concluidas (7 dias) e no KPI; some com done=0
+[A2-40] card renderizado="Sem carimboM" | aria-label="Sem carimbo, done"
+
+stdout | .tmp/a2-render.test.tsx > A2 - concluida sem carimbo na tela > A2-40 done sem completed_at: entra na secao Concluidas (7 dias) e no KPI; some com done=0
+[A2-40] com done=0 | "Sem carimbo" na tela? false | corpo="InícioTarefasTarefas1 aberta · 0 para hojeAtrasadas0Para hoje0Fazendo0/3Concluídas (7d)0Tempo médio—Todas as prioridadesTodos os contatosCom alarmeMostrar concluídasLimparListaQuadroAgendaSem prazo1AbertaM"
+
+ × .tmp/a2-render.test.tsx > A2 - concluidas antigas no Quadro > A2-30 coluna Concluido so com itens de 8-30 dias: rodape sim, Coluna vazia nao, clique revela 55ms
+   → Unable to find an element with the text: Concluído. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col h-full gap-4"[39m
+      [33mdata-testid[39m=[32m"tasks-module"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 px-0 pt-0 pb-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-between gap-3 flex-wrap sm:h-14"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"breadcrumb"[39m
+          [36m>[39m
+            [36m<ol[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+              [36m>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"[39m
+                  [33mhref[39m=[32m"/"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-house w-3.5 h-3.5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span>[39m
+                    [0mInício[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"[&>svg]:size-3.5"[39m
+                  [33mrole[39m=[32m"presentation"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</li>[39m
+                [36m<span[39m
+                  [33maria-current[39m=[32m"page"[39m
+                  [33maria-disabled[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"font-semibold text-foreground"[39m
+                  [33mrole[39m=[32m"link"[39m
+                [36m>[39m
+                  [0mTarefas[0m
+                [36m</span>[39m
+              [36m</li>[39m
+            [36m</ol>[39m
+          [36m</nav>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-center justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3 min-w-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-[38px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate"[39m
+              [36m>[39m
+                [0mTarefas[0m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-muted-foreground mt-2 truncate"[39m
+              [36m>[39m
+                [0m0 abertas · 0 para hoje[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"[39m
+        [33mdata-testid[39m=[32m"tasks-kpi-strip"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"h-[88px] rounded-[14px] border border-border/70 bg-card px-3 flex items-center gap-3"[39m
+          [33mdata-testid[39m=[32m"kpi-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-kpi-yellow"[39m
+            [33mdata-testid[39m=[32m"kpi-tile"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert h-5 w-5 text-kpi-yellow-fg"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [3...
+ ✓ .tmp/a2-render.test.tsx > A2 - concluidas antigas no Quadro > A2-31 concluida de 44 dias: o que a Lista mostra 27ms
+stdout | .tmp/a2-render.test.tsx > A2 - filtersActive ?? (searchQuery !== "") > A2-50 compat: searchQuery sozinho ainda mostra o vazio de FILTRO
+[A2-50] searchQuery="zzz" sem filtersActive -> "Nenhuma tarefa com esse filtro"
+
+stdout | .tmp/a2-render.test.tsx > A2 - filtersActive ?? (searchQuery !== "") > A2-51 filtersActive=false vence o searchQuery
+[A2-51] searchQuery="zzz" + filtersActive=false -> vazio de filtro? false | vazio de tudo? true | texto="Nada por aquiAdicione a primeira tarefa acima.Atalho: N"
+
+ ✓ .tmp/a2-render.test.tsx > A2 - concluida sem carimbo na tela > A2-40 done sem completed_at: entra na secao Concluidas (7 dias) e no KPI; some com done=0 74ms
+ ✓ .tmp/a2-render.test.tsx > A2 - filtersActive ?? (searchQuery !== "") > A2-50 compat: searchQuery sozinho ainda mostra o vazio de FILTRO 2ms
+ ✓ .tmp/a2-render.test.tsx > A2 - filtersActive ?? (searchQuery !== "") > A2-51 filtersActive=false vence o searchQuery 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-11 Quadro: coluna Fazendo com 1 card e cabecalho 3/3
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ .tmp/a2-render.test.tsx:93:19
+     91|       + ' | coluna Fazendo cards=' + cards + ' | texto do cabecalho da…
+     92|       + '" | header className="' + (col.firstElementChild as HTMLEleme…
+     93|     expect(cards).toBe(1);
+       |                   ^
+     94|     expect(cabecalho).toContain('3/3');
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  .tmp/a2-render.test.tsx > A2 - contagens reais x filtradas na MESMA tela > A2-12 Quadro: aviso amarelo (soft) da coluna A fazer usa contagem FILTRADA
+AssertionError: expected 1 to be greater than 1
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col h-full gap-4"[39m
+        [33mdata-testid[39m=[32m"tasks-module"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 px-0 pt-0 pb-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-3 flex-wrap sm:h-14"[39m
+          [36m>[39m
+            [36m<nav[39m
+              [33maria-label[39m=[32m"breadcrumb"[39m
+            [36m>[39m
+              [36m<ol[39m
+                [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+                [36m>[39m
+                  [36m<a[39m
+                    [33mclass[39m=[32m"flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"[39m
+                    [33mhref[39m=[32m"/"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-house w-3.5 h-3.5"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mInício[0m
+                    [36m</span>[39m
+                  [36m</a>[39m
+                [36m</li>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+                [36m>[39m
+                  [36m<li[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"[&>svg]:size-3.5"[39m
+                    [33mrole[39m=[32m"presentation"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</li>[39m
+                  [36m<span[39m
+                    [33maria-current[39m=[32m"page"[39m
+                    [33maria-disabled[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"font-semibold text-foreground"[39m
+                    [33mrole[39m=[32m"link"[39m
+                  [36m>[39m
+                    [0mTarefas[0m
+                  [36m</span>[39m
+                [36m</li>[39m
+              [36m</ol>[39m
+            [36m</nav>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-center justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 min-w-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0"[39m
+              [36m>[39m
+                [36m<h1[39m
+                  [33mclass[39m=[32m"text-[38px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate"[39m
+                [36m>[39m
+                  [0mTarefas[0m
+                [36m</h1>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-lg text-muted-foreground mt-2 truncate"[39m
+                [36m>[39m
+                  [0m41 abertas · 0 para hoje[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"[39m
+          [33mdata-testid[39m=[32m"tasks-kpi-strip"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-[88px] rounded-[14px] border border-border/70 bg-card px-3 flex items-center gap-3"[39m
+            [33mdata-testid[39m=[32m"kpi-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-kpi-yellow"[39m
+              [33mdata-testid[39m=[32m"kpi-tile"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert h-5 w-5 text-kpi-yellow-fg"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+       ...
+ ❯ .tmp/a2-render.test.tsx:104:71
+    102|     ], error: null });
+    103|     renderModule({ defaultMode: 'board' });
+    104|     await waitFor(() => expect(screen.getAllByText('A fazer').length).…
+       |                                                                       ^
+    105|     const col = colunaComLabel('A fazer');
+    106|     const header = col.firstElementChild as HTMLElement;
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  .tmp/a2-render.test.tsx > A2 - concluidas antigas no Quadro > A2-30 coluna Concluido so com itens de 8-30 dias: rodape sim, Coluna vazia nao, clique revela
+TestingLibraryElementError: Unable to find an element with the text: Concluído. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col h-full gap-4"[39m
+      [33mdata-testid[39m=[32m"tasks-module"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 px-0 pt-0 pb-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-between gap-3 flex-wrap sm:h-14"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"breadcrumb"[39m
+          [36m>[39m
+            [36m<ol[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+              [36m>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"[39m
+                  [33mhref[39m=[32m"/"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-house w-3.5 h-3.5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span>[39m
+                    [0mInício[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"[&>svg]:size-3.5"[39m
+                  [33mrole[39m=[32m"presentation"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</li>[39m
+                [36m<span[39m
+                  [33maria-current[39m=[32m"page"[39m
+                  [33maria-disabled[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"font-semibold text-foreground"[39m
+                  [33mrole[39m=[32m"link"[39m
+                [36m>[39m
+                  [0mTarefas[0m
+                [36m</span>[39m
+              [36m</li>[39m
+            [36m</ol>[39m
+          [36m</nav>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-center justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3 min-w-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-[38px] font-extrabold tracking-[-0.02em] leading-none text-foreground truncate"[39m
+              [36m>[39m
+                [0mTarefas[0m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-muted-foreground mt-2 truncate"[39m
+              [36m>[39m
+                [0m0 abertas · 0 para hoje[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"[39m
+        [33mdata-testid[39m=[32m"tasks-kpi-strip"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"h-[88px] rounded-[14px] border border-border/70 bg-card px-3 flex items-center gap-3"[39m
+          [33mdata-testid[39m=[32m"kpi-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-kpi-yellow"[39m
+            [33mdata-testid[39m=[32m"kpi-tile"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert h-5 w-5 text-kpi-yellow-fg"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [3...
+ ❯ Object.getElementError ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ colunaComLabel .tmp/a2-render.test.tsx:41:27
+     39| }
+     40| function colunaComLabel(label: string): HTMLElement {
+     41|   for (const el of screen.getAllByText(label)) {
+       |                           ^
+     42|     let n: HTMLElement | null = el as HTMLElement;
+     43|     while (n && !String(n.className ?? '').includes('min-w-[232px]')) …
+ ❯ .tmp/a2-render.test.tsx:161:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)
+   Start at  19:42:35
+   Duration  3.05s (transform 375ms, setup 60ms, import 763ms, tests 1.70s, environment 426ms)
+

@@ -1,0 +1,2 @@
+ M supabase/tests/incoming_call_destinatarios_evento_sem_responsavel.sql
+?? supabase/migrations/20261015015830_refazer1_incoming_call_presenca_duplicate.sql

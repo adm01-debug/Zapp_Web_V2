@@ -1,0 +1,237 @@
+From 04495111e301d5ef530ad63248db4568d83ba908 Mon Sep 17 00:00:00 2001
+From: Hermes Senior <hermes-senior@promobrindes.local>
+Date: Wed, 14 Oct 2026 09:29:43 -0300
+Subject: [PATCH] test(a11y): padrao de teste de teclado com user-event
+ (ADR-009) e exemplo no AccessibleList
+
+---
+ bun.lock                                      |  3 +
+ .../ADR-009-testes-de-teclado-user-event.md   | 77 +++++++++++++++++
+ docs/adr/README.md                            |  1 +
+ package.json                                  |  1 +
+ .../__tests__/AccessibleListTeclado.test.tsx  | 84 +++++++++++++++++++
+ 5 files changed, 166 insertions(+)
+ create mode 100644 docs/adr/ADR-009-testes-de-teclado-user-event.md
+ create mode 100644 src/components/a11y/__tests__/AccessibleListTeclado.test.tsx
+
+diff --git a/bun.lock b/bun.lock
+index ab9cffbd4d..0b183d896e 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -82,6 +82,7 @@
+         "@testing-library/dom": "^10.4.2",
+         "@testing-library/jest-dom": "^6.9.1",
+         "@testing-library/react": "^16.3.3",
++        "@testing-library/user-event": "^14.6.8",
+         "@types/dompurify": "^3.2.0",
+         "@types/node": "^25.9.8",
+         "@types/react": "^19.3.0",
+@@ -548,6 +549,8 @@
+ 
+     "@testing-library/react": ["@testing-library/react@16.3.3", "", { "dependencies": { "@babel/runtime": "^7.12.5" }, "peerDependencies": { "@testing-library/dom": "^10.0.0", "@types/react": "^18.0.0 || ^19.0.0", "@types/react-dom": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-Uo193NgQbPMz6lrrhtRQQFcMC6Re/ELLFbbuVL30WDlZxlpZf9/lMHTAVxPRLw1q1iu9OJmR1c2BLiENRstdBg=="],
+ 
++    "@testing-library/user-event": ["@testing-library/user-event@14.6.8", "", { "peerDependencies": { "@testing-library/dom": ">=7.21.4" } }, "sha512-vgSSqnANMnkcYR/vUNDbwS7aM3OErRLNUG8vCVVlj4oc6cKffUrccX7UAS5AmJQQNZTSibi9z5GvvRZ0aYgUCQ=="],
++
+     "@tiptap/core": ["@tiptap/core@3.31.4", "", { "peerDependencies": { "@tiptap/pm": "3.31.4" } }, "sha512-cIVUQYBycighzsk6GbmCef8ZiEDVxoT5EuAe4xg2q9dNkDqCXVqI4YGr9aavCQEiAS4uHiRwqvcsPqJHipFDfg=="],
+ 
+     "@tiptap/extension-blockquote": ["@tiptap/extension-blockquote@3.31.4", "", { "peerDependencies": { "@tiptap/core": "3.31.4", "@tiptap/pm": "3.31.4" } }, "sha512-FHnbvCIW0eDKgUUFjmvEB0ax9YUBW7/Unm+38qpuQROvU872yRqhnDtycKT9IKk46jNdjM4A4fAGUbge10CrAA=="],
+diff --git a/docs/adr/ADR-009-testes-de-teclado-user-event.md b/docs/adr/ADR-009-testes-de-teclado-user-event.md
+new file mode 100644
+index 0000000000..59d3a02d54
+--- /dev/null
++++ b/docs/adr/ADR-009-testes-de-teclado-user-event.md
+@@ -0,0 +1,77 @@
++# ADR-009 — Testes de teclado com `@testing-library/user-event`
++
++- **Status:** Accepted
++- **Data:** 2026-10-14
++- **Decisores:** worker (testes) — pedido do revisor no cartão pai `t_ac614b56` (correção de teclado no inbox)
++
++## Contexto
++
++Os testes de teclado da suíte (`vitest` + `jsdom`) eram escritos com
++`fireEvent.keyDown(elemento, { key: 'Enter' })`. O `fireEvent` apenas **despacha** o
++evento: ele não move o foco e não aciona o elemento. O jsdom, por sua vez, não
++implementa a navegação por `Tab` nem o clique implícito de `Enter`/`Space`.
++
++O resultado é o defeito que o revisor recusa todo dia ("teste que não prova"): o
++teste de teclado passa **mesmo com o alvo quebrado**, porque quem "anda" pela tela
++é o próprio teste (`.focus()` na mão) e não o código de produção. Um teste de
++teclado que não prova o foco real não distingue "a tecla foi tratada" de "eu
++chamei o handler direto".
++
++Faltava também uma decisão registrada: usar `@testing-library/user-event` ou
++escrever um helper interno sobre `fireEvent`? Como não havia padrão escrito, cada
++cartão resolvia de um jeito.
++
++## Decisão
++
++**`@testing-library/user-event` entra como `devDependency` (14.6.8) e é o
++instrumento obrigatório de todo teste cujo objeto é teclado que depende de foco ou
++de ativação do elemento.**
++
++Regras do padrão:
++
++1. Teclado-objeto de teste é a interação **do usuário com o navegador**: `Tab`
++   (`user.tab()`), `Enter`, `Space`, setas, `Home`/`End` e clique implícito. Esse
++   teclado se escreve com `const user = userEvent.setup()` + `await user.tab()` /
++   `await user.keyboard('{ArrowDown}{Enter}')`.
++2. `fireEvent.keyDown` fica restrito a teste de handler puro (o alvo é a função
++   `onKeyDown` isolada, sem foco e sem ativação) e o teste precisa dizer isso em
++   comentário — não é o caminho para testar navegação por teclado da tela.
++3. O teste de teclado **afirma o foco** (`expect(alvo).toHaveFocus()`) e o efeito
++   da ativação (`onSelect`/`onClick` com o item que estava focado), que é
++   exatamente o que o `fireEvent` não entrega.
++4. Testes de teclado de tela real seguem o exemplo vivo
++   [`src/components/a11y/__tests__/AccessibleListTeclado.test.tsx`](../../src/components/a11y/__tests__/AccessibleListTeclado.test.tsx)
++   (roving tabindex do `AccessibleList`/`useRovingTabindex`).
++5. Com `vi.useFakeTimers()` o `user-event` exige
++   `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })`; sem isso o
++   `await user.*` trava. Prefira o relógio real no teste de teclado.
++
++Alternativa rejeitada: helper interno sobre `fireEvent` que chama `.focus()` antes
++de despachar a tecla. Seria reimplementar (pior) o que o `user-event` já faz, e o
++`.focus()` manual dentro do teste continua escondendo se o código de produção
++move o foco — que é justamente o comportamento sob prova.
++
++## Consequências
++
++Positivas:
++
++- O teste de teclado falha quando o código de produção deixa de mover o foco ou de
++  tratar a tecla. Provado por mutação em `useRovingTabindex`
++  (`if (false) focusItem(newIndex)`) → os 4 casos do exemplo ficaram **vermelhos**;
++  produção restaurada → **verdes**.
++- Um padrão único escrito, com exemplo executável, para os cartões de acessibilidade.
++
++Negativas / custos:
++
++- `package.json` + `bun.lock` ganham uma dependência de teste; `bun install
++  --frozen-lockfile` (o passo do CI/`zapp-verify`) foi conferido verde com ela.
++- `user-event` é mais lento que `fireEvent` (envolve o ciclo de eventos) e exige
++  `await` em cada interação.
++- Interage com relógio falso (regra 5 acima).
++
++## Referências
++
++- Cartões: `t_ac614b56` (teclado do inbox, origem do pedido), `t_dbe86111` (esta decisão).
++- Código: `src/components/a11y/a11yComponents.tsx` (`AccessibleList`),
++  `src/components/a11y/a11yHooks.tsx` (`useRovingTabindex`).
++- Exemplo: `src/components/a11y/__tests__/AccessibleListTeclado.test.tsx`.
+diff --git a/docs/adr/README.md b/docs/adr/README.md
+index 77efed31be..4161939fe7 100644
+--- a/docs/adr/README.md
++++ b/docs/adr/README.md
+@@ -25,6 +25,7 @@ An ADR is a short document (typically 1-3 pages) that records:
+ | 007 | [ADR-007-multiplix-ponte-singu-canal-e-aptidao.md](./ADR-007-multiplix-ponte-singu-canal-e-aptidao.md) | Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa | Accepted | 2026-09-26 |
+ | 007 | [ADR-007-multiplix-ponte-singu.md](./ADR-007-multiplix-ponte-singu.md) | Multiplix: ponte de acesso ao Singu e decisões de Fase 0 | Superseded | 2026-09-26 |
+ | 008 | [ADR-008-motor-de-chamadas-whatsapp.md](./ADR-008-motor-de-chamadas-whatsapp.md) | Motor de chamadas de voz pelo WhatsApp (API oficial × meowcaller × Wavoip × só eventos) | Proposed | 2026-10-10 |
++| 009 | [ADR-009-testes-de-teclado-user-event.md](./ADR-009-testes-de-teclado-user-event.md) | Testes de teclado com `@testing-library/user-event` | Accepted | 2026-10-14 |
+ 
+ ## Guidelines
+ 
+diff --git a/package.json b/package.json
+index 08e2c0291f..4c70fc75d8 100644
+--- a/package.json
++++ b/package.json
+@@ -107,6 +107,7 @@
+     "@testing-library/dom": "^10.4.2",
+     "@testing-library/jest-dom": "^6.9.1",
+     "@testing-library/react": "^16.3.3",
++    "@testing-library/user-event": "^14.6.8",
+     "@types/dompurify": "^3.2.0",
+     "@types/node": "^25.9.8",
+     "@types/react": "^19.3.0",
+diff --git a/src/components/a11y/__tests__/AccessibleListTeclado.test.tsx b/src/components/a11y/__tests__/AccessibleListTeclado.test.tsx
+new file mode 100644
+index 0000000000..dfab136c6b
+--- /dev/null
++++ b/src/components/a11y/__tests__/AccessibleListTeclado.test.tsx
+@@ -0,0 +1,84 @@
++// PADRÃO DE TESTE DE TECLADO — ADR-009 (docs/adr/ADR-009-testes-de-teclado-user-event.md)
++//
++// Teclado que o jsdom NÃO simula (Tab movendo o foco, Enter/Space clicando o
++// elemento focado, setas num roving tabindex) se escreve com
++// `@testing-library/user-event` (via `userEvent.setup()`), NUNCA com
++// `fireEvent.keyDown` — o `fireEvent` entrega o evento mas não move o foco nem
++// aciona o elemento, então um teste de teclado escrito assim passa mesmo com o
++// alvo quebrado (é o "teste que não prova" que o revisor recusa).
++//
++// Este arquivo é o exemplo vivo do padrão: exercita o `AccessibleList` real
++// (`src/components/a11y/a11yComponents.tsx` + `useRovingTabindex`), que só
++// responde a teclado.
++import { describe, expect, it, vi } from 'vitest';
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { AccessibleList } from '@/components/a11y/a11yComponents';
++
++function renderLista(onSelect = vi.fn()) {
++  render(
++    <AccessibleList
++      items={['Alpha', 'Beta', 'Gama']}
++      label="Filtros salvos"
++      renderItem={(item) => <span>{item}</span>}
++      onSelect={onSelect}
++    />,
++  );
++  return { onSelect, options: screen.getAllByRole('option') };
++}
++
++describe('AccessibleList — teclado com user-event (padrão ADR-009)', () => {
++  it('Tab entra na lista e as setas movem o foco entre os itens', async () => {
++    const user = userEvent.setup();
++    const { options } = renderLista();
++
++    // Roving tabindex: só o item focado é tabulável
++    expect(options[0]).toHaveAttribute('tabindex', '0');
++    expect(options[1]).toHaveAttribute('tabindex', '-1');
++
++    await user.tab();
++
++    // Sem user-event o jsdom não move o foco com Tab: este é o teclado-objeto do teste
++    expect(options[0]).toHaveFocus();
++
++    await user.keyboard('{ArrowDown}');
++    expect(options[1]).toHaveFocus();
++    expect(options[0]).toHaveAttribute('tabindex', '-1');
++    expect(options[1]).toHaveAttribute('tabindex', '0');
++  });
++
++  it('Home e End saltam para o primeiro e o último item', async () => {
++    const user = userEvent.setup();
++    const { options } = renderLista();
++
++    await user.tab();
++    await user.keyboard('{End}');
++    expect(options[2]).toHaveFocus();
++
++    await user.keyboard('{Home}');
++    expect(options[0]).toHaveFocus();
++  });
++
++  it('a seta para cima no primeiro item dá a volta para o último', async () => {
++    const user = userEvent.setup();
++    const { options } = renderLista();
++
++    await user.tab();
++    await user.keyboard('{ArrowUp}');
++    expect(options[2]).toHaveFocus();
++  });
++
++  it('Enter e Space selecionam o item que está com o foco', async () => {
++    const user = userEvent.setup();
++    const { onSelect, options } = renderLista();
++
++    await user.tab();
++    await user.keyboard('{ArrowDown}{Enter}');
++    expect(onSelect).toHaveBeenCalledWith('Beta', 1);
++
++    onSelect.mockClear();
++    await user.keyboard('{ArrowDown} ');
++    expect(onSelect).toHaveBeenCalledWith('Gama', 2);
++    expect(options[2]).toHaveFocus();
++  });
++});
+-- 
+2.43.0
+

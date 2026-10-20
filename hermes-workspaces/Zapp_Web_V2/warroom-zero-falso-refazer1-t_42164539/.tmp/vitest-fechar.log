@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/warroom-estados-zero-falso-261013002023ce
+
+················
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  00:39:06
+   Duration  6.07s (transform 1.34s, setup 1.70s, import 2.37s, tests 1.71s, environment 3.27s)
+

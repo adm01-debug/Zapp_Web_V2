@@ -1,0 +1,13 @@
+{
+  "_nota": "Fixture sintetica e anonimizada (T25). Chamada de WhatsApp atendida: status=accept deve mapear para calls.status='answered'.",
+  "event": "call",
+  "instance": "instancia-anonimizada-01",
+  "data": {
+    "id": "EV-CALL-ACCEPT-0002",
+    "from": "5511900000001@s.whatsapp.net",
+    "status": "accept",
+    "isVideo": false,
+    "fromMe": false,
+    "date": "2026-10-02T14:00:20.000Z"
+  }
+}

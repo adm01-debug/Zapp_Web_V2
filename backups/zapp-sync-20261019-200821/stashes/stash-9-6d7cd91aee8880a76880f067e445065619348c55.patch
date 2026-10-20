@@ -1,0 +1,581 @@
+commit 6d7cd91aee8880a76880f067e445065619348c55
+Merge: abafc1875e dca7063ac6
+Author:     Joaquim Ataides <ti@promobrindes.com.br>
+AuthorDate: Fri Oct 9 10:10:14 2026 -0300
+Commit:     Joaquim Ataides <ti@promobrindes.com.br>
+CommitDate: Fri Oct 9 10:10:14 2026 -0300
+
+    On v2/r04-cartao-arquivo-mockup-2610090951b10b: worktree r04 (t_30e8e544): stash de OUTRO agente restaurado pelo pop acidental de 09/10 10:08 (team-chat SL-069 F76/F77/F79)
+
+diff --git a/src/components/team-chat/TeamChatPanel.tsx b/src/components/team-chat/TeamChatPanel.tsx
+index 6a74294306..e2a6d81c67 100644
+--- a/src/components/team-chat/TeamChatPanel.tsx
++++ b/src/components/team-chat/TeamChatPanel.tsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useMemo, useRef } from 'react';
++import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+ import { TeamConversation } from '@/hooks/chat/useTeamChat';
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+@@ -12,9 +12,79 @@ import { TeamChatHeader } from './TeamChatHeader';
+ import { TeamChatInputArea } from './TeamChatInputArea';
+ import { TeamMessageItem } from './TeamMessageItem';
+ import { useTeamChatPanel } from './useTeamChatPanel';
++import { useAcceptDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
+ 
+ /* eslint-disable react-hooks/refs, react-hooks/immutability */
+ 
++/**
++ * F79 — motivos tipados da RPC `accept_department_invite` (a RPC responde
++ * `ok: false` com o motivo, que o hook converte em mensagem de erro).
++ */
++const JOIN_ERROR_MESSAGES: Record<string, string> = {
++  invalid_or_expired_code: 'Código inválido ou expirado.',
++  invite_exhausted: 'Este convite já atingiu o limite de usos.',
++  not_authenticated: 'Sessão expirada. Entre novamente para usar o código.',
++};
++
++function joinErrorMessage(error: unknown): string {
++  const message = error instanceof Error ? error.message : '';
++  return JOIN_ERROR_MESSAGES[message] ?? 'Não foi possível validar o código. Tente novamente.';
++}
++
++/**
++ * F79 — entrada por código para quem está fora do departamento. A submissão passa
++ * pela função do hook `useAcceptDepartmentInvite` (RPC `accept_department_invite`),
++ * que move o perfil e invalida o cache; a tela não escreve em `profiles`.
++ *
++ * Este bloco é um componente próprio de propósito: o hook lê o cache do
++ * react-query, e o painel também é montado onde não há provider (o teste de wiring
++ * do Panel renderiza um canal comum, sem provider e sem convite).
++ */
++function DepartmentJoinByCode() {
++  const acceptInvite = useAcceptDepartmentInvite();
++  const [code, setCode] = useState('');
++
++  const handleSubmit = (e: FormEvent) => {
++    e.preventDefault();
++    const trimmed = code.trim();
++    if (!trimmed) return;
++    acceptInvite.mutate(trimmed);
++  };
++
++  if (acceptInvite.isSuccess) {
++    return (
++      <p role="status" className="text-sm font-medium text-foreground">
++        Código aceito. Você entrou no departamento.
++      </p>
++    );
++  }
++
++  return (
++    <div className="flex flex-col items-center gap-2 w-full max-w-xs">
++      <form className="flex w-full items-center gap-2" onSubmit={handleSubmit}>
++        <Input
++          value={code}
++          onChange={e => setCode(e.target.value)}
++          placeholder="Ex.: AB12CD34"
++          aria-label="Código do convite"
++          name="invite-code"
++          autoComplete="off"
++          spellCheck={false}
++          className="h-9 font-mono uppercase tracking-widest"
++          disabled={acceptInvite.isPending}
++        />
++        <Button type="submit" size="sm" className="shrink-0" disabled={acceptInvite.isPending || code.trim().length === 0}>
++          {acceptInvite.isPending && <Loader2 className="w-3.5 h-3.5 mr-1.5 motion-safe:animate-spin" aria-hidden />}
++          Entrar
++        </Button>
++      </form>
++      {acceptInvite.isError && (
++        <p role="alert" className="text-xs text-destructive">{joinErrorMessage(acceptInvite.error)}</p>
++      )}
++    </div>
++  );
++}
++
+ interface Props { conversation: TeamConversation; onBack: () => void; onToggleDetails?: () => void; showDetails?: boolean; }
+ 
+ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetails }: Props) {
+@@ -24,6 +94,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
+   const convAny = conversation as unknown as Record<string, unknown>;
+   const isDeptChannel = !!(convAny.department_id);
+   const profileDeptId = (s.profile as Record<string, unknown>)?.department_id as string | null | undefined;
++  // E68/F79: o canal de departamento é fechado para quem está fora, mas o
++  // caminho de entrada é o código do convite — quem não é membro vê o fluxo
++  // "Entrar via código" abaixo, não só o aviso.
+   const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
+ 
+   // E73: render performance monitoring (dev only)
+@@ -88,9 +161,10 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
+           <div className="text-center">
+             <h3 className="text-base font-semibold text-foreground">Conteúdo Protegido</h3>
+             <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+-              Este canal é exclusivo para membros do departamento. Solicite um convite ao administrador.
++              Este canal é exclusivo para membros do departamento. Informe o código do convite para entrar.
+             </p>
+           </div>
++          <DepartmentJoinByCode />
+         </div>
+       </div>
+     );
+diff --git a/src/components/team-chat/__tests__/TeamChatPanel.test.tsx b/src/components/team-chat/__tests__/TeamChatPanel.test.tsx
+new file mode 100644
+index 0000000000..90e7faf3b6
+--- /dev/null
++++ b/src/components/team-chat/__tests__/TeamChatPanel.test.tsx
+@@ -0,0 +1,138 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/react';
++import { TeamChatPanel } from '../TeamChatPanel';
++import type { TeamConversation } from '@/hooks/chat/useTeamChat';
++
++/**
++ * F79 — canal de departamento para quem está FORA do departamento: a tela
++ * mostrava só o aviso "Conteúdo Protegido" e não havia caminho de entrada; o
++ * convite por código (RPC `accept_department_invite`, via
++ * `useAcceptDepartmentInvite`) era inalcançável pela interface.
++ *
++ * O teste renderiza o Panel REAL e mocka o módulo de hooks que ele importa
++ * ('@/hooks/team-chat/useDepartmentManagement') — mesmo caminho do import de
++ * produção — para provar que a submissão passa pela função do hook.
++ */
++const h = vi.hoisted(() => {
++  const acceptMutate = vi.fn();
++
++  const panel = {
++    profile: { id: 'user-1', department_id: 'dep-outro' },
++    messages: [],
++    filteredMessages: [],
++    isLoading: false,
++    isMuted: false,
++    isFetchingOlder: false,
++    hasOlderMessages: false,
++    fetchOlderMessages: vi.fn(),
++    showScrollDown: false,
++    text: '', setText: vi.fn(), replyTo: null, setReplyTo: vi.fn(),
++    editingId: null, editText: '', setEditText: vi.fn(),
++    showSearch: false, setShowSearch: vi.fn(), searchQuery: '', setSearchQuery: vi.fn(),
++    showAddMembers: false, setShowAddMembers: vi.fn(),
++    isRecordingAudio: false, setIsRecordingAudio: vi.fn(),
++    scrollRef: { current: null },
++    searchInputRef: { current: null },
++    isNearBottomRef: { current: true },
++    checkNearBottom: vi.fn(), scrollToBottom: vi.fn(),
++    handleSend: vi.fn(), handleDelete: vi.fn(), handleStartEdit: vi.fn(),
++    handleSaveEdit: vi.fn(), handleCancelEdit: vi.fn(), handleCopyMessage: vi.fn(),
++    handleAudioSend: vi.fn(), handleFileSent: vi.fn(), handleSendSticker: vi.fn(),
++    handleSendAudioMeme: vi.fn(), handleSendCustomEmoji: vi.fn(),
++    sendMutation: { isPending: false },
++    muteMutation: { mutate: vi.fn() },
++    tts: {
++      speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false,
++      currentMessageId: null, voiceId: 'v1', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
++    },
++    reactions: { aggregate: () => [], toggle: vi.fn() },
++  };
++
++  const accept = {
++    mutate: acceptMutate,
++    isPending: false,
++    isSuccess: false,
++    isError: false,
++    error: null as unknown,
++  };
++
++  return { acceptMutate, panel, accept };
++});
++
++vi.mock('../useTeamChatPanel', () => ({
++  useTeamChatPanel: () => h.panel,
++}));
++
++vi.mock('../TeamChatHeader', () => ({ TeamChatHeader: () => <div data-testid="header" /> }));
++vi.mock('../TeamChatInputArea', () => ({ TeamChatInputArea: () => <div data-testid="input-area" /> }));
++vi.mock('../AddMembersDialog', () => ({ AddMembersDialog: () => null }));
++
++vi.mock('@/hooks/team-chat/useDepartmentManagement', () => ({
++  useAcceptDepartmentInvite: () => h.accept,
++}));
++
++const departmentConversation = {
++  id: 'conv-dep',
++  type: 'department',
++  department_id: 'dep-1',
++} as unknown as TeamConversation;
++
++function renderPanel() {
++  return render(<TeamChatPanel conversation={departmentConversation} onBack={() => {}} />);
++}
++
++describe('TeamChatPanel — entrada por código no departamento (F79)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    h.accept.isPending = false;
++    h.accept.isSuccess = false;
++    h.accept.isError = false;
++    h.accept.error = null;
++    h.panel.profile = { id: 'user-1', department_id: 'dep-outro' };
++  });
++
++  it('oferece a entrada por código para quem está fora do departamento, com o conteúdo bloqueado', () => {
++    renderPanel();
++    expect(screen.getByText('Conteúdo Protegido')).toBeInTheDocument();
++    expect(screen.getByLabelText('Código do convite')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: /Entrar/ })).toBeInTheDocument();
++    // O conteúdo continua fechado para quem não é membro.
++    expect(screen.queryByRole('log')).toBeNull();
++  });
++
++  it('submete o código do convite pela função do hook do departamento', () => {
++    renderPanel();
++    fireEvent.change(screen.getByLabelText('Código do convite'), { target: { value: ' AB12CD34 ' } });
++    fireEvent.click(screen.getByRole('button', { name: /Entrar/ }));
++    expect(h.acceptMutate).toHaveBeenCalledTimes(1);
++    expect(h.acceptMutate).toHaveBeenCalledWith('AB12CD34');
++  });
++
++  it('não submete código vazio', () => {
++    renderPanel();
++    fireEvent.change(screen.getByLabelText('Código do convite'), { target: { value: '   ' } });
++    fireEvent.click(screen.getByRole('button', { name: /Entrar/ }));
++    expect(h.acceptMutate).not.toHaveBeenCalled();
++  });
++
++  it('mostra o motivo tipado quando a RPC recusa o código', () => {
++    h.accept.isError = true;
++    h.accept.error = new Error('invite_exhausted');
++    renderPanel();
++    expect(screen.getByRole('alert')).toHaveTextContent('Este convite já atingiu o limite de usos.');
++  });
++
++  it('mostra a confirmação depois de o código ser aceito', () => {
++    h.accept.isSuccess = true;
++    renderPanel();
++    expect(screen.getByRole('status')).toHaveTextContent('Código aceito. Você entrou no departamento.');
++    expect(screen.queryByLabelText('Código do convite')).toBeNull();
++  });
++
++  it('não pede código para quem já é do departamento (não regride o canal liberado)', () => {
++    h.panel.profile = { id: 'user-1', department_id: 'dep-1' };
++    renderPanel();
++    expect(screen.queryByLabelText('Código do convite')).toBeNull();
++    expect(screen.getByRole('log')).toBeInTheDocument();
++  });
++});
+diff --git a/src/components/team-chat/department-management/DepartmentInvitesView.tsx b/src/components/team-chat/department-management/DepartmentInvitesView.tsx
+index b4728e96f0..599591828d 100644
+--- a/src/components/team-chat/department-management/DepartmentInvitesView.tsx
++++ b/src/components/team-chat/department-management/DepartmentInvitesView.tsx
+@@ -13,7 +13,7 @@ interface Props {
+ 
+ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }: Props) {
+   const [copiedId, setCopiedId] = useState<string | null>(null);
+-  const { data: invites = [], isLoading } = useDepartmentInvites(departmentId);
++  const { data: invites = [], isLoading, isError } = useDepartmentInvites(departmentId);
+   const createMutation = useCreateDepartmentInvite(departmentId);
+   const deleteMutation = useDeleteDepartmentInvite(departmentId);
+ 
+@@ -27,6 +27,18 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
+     return <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>;
+   }
+ 
++  // Leitura que falhou não é "nenhum convite": sem isto o erro de RLS/RPC
++  // aparecia como lista vazia e o admin concluía que o convite sumiu.
++  if (isError) {
++    return (
++      <div className="p-6 text-center">
++        <p role="alert" className="text-sm text-destructive">
++          Não foi possível carregar os convites deste departamento.
++        </p>
++      </div>
++    );
++  }
++
+   return (
+     <div className="p-4 space-y-4">
+       {isAdmin && (
+@@ -58,6 +70,13 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
+                 <p className="text-xs text-muted-foreground">
+                   Expira {format(new Date(invite.expires_at), "dd 'de' MMM", { locale: ptBR })}
+                 </p>
++                {/* F76: `department_invitations` controla uso e limite (`use_count`/`max_uses`);
++                    sem isso o convite esgotado parecia disponível. */}
++                {typeof invite.use_count === 'number' && typeof invite.max_uses === 'number' && (
++                  <p className="text-xs text-muted-foreground">
++                    {invite.use_count} de {invite.max_uses} {invite.max_uses === 1 ? 'uso' : 'usos'}
++                  </p>
++                )}
+               </div>
+               <Button
+                 size="icon"
+diff --git a/src/components/team-chat/department-management/DepartmentWhatsAppView.tsx b/src/components/team-chat/department-management/DepartmentWhatsAppView.tsx
+index e4d3101a02..238157898a 100644
+--- a/src/components/team-chat/department-management/DepartmentWhatsAppView.tsx
++++ b/src/components/team-chat/department-management/DepartmentWhatsAppView.tsx
+@@ -22,18 +22,20 @@ const MODE_CARDS: { mode: Mode; label: string; description: string }[] = [
+ 
+ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin }: Props) {
+   const [mode, setMode] = useState<Mode>('none');
+-  const [evolutionUrl, setEvolutionUrl] = useState('');
++  const [instanceId, setInstanceId] = useState('');
+   const [evolutionApiKey, setEvolutionApiKey] = useState('');
+   const [officialToken, setOfficialToken] = useState('');
+ 
+-  const { data: credentials } = useDepartmentWhatsAppCredentials(departmentId);
++  const { data: credentials, isError } = useDepartmentWhatsAppCredentials(departmentId);
+   const saveMutation = useSaveDepartmentWhatsApp(departmentId);
+ 
+   useEffect(() => {
+     if (!credentials) return;
+     // eslint-disable-next-line react-hooks/set-state-in-effect
+     setMode(credentials.mode);
+-    setEvolutionUrl(credentials.evolution_url ?? '');
++    // Contrato atual (`get_department_whatsapp_config`): o que o banco guarda é
++    // `departments.whatsapp_instance_id` — não existe coluna de URL.
++    setInstanceId(credentials.instance_id ?? '');
+     // NEVER prefill API keys or tokens — blank = keep existing
+   }, [credentials]);
+ 
+@@ -41,14 +43,25 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin
+     saveMutation.mutate({
+       mode,
+       config: {
+-        evolution_url: evolutionUrl || undefined,
+-        evolution_api_key: evolutionApiKey || undefined,
+-        official_token: officialToken || undefined,
++        instance_id: instanceId.trim() || undefined,
++        api_key: (mode === 'official' ? officialToken : evolutionApiKey).trim() || undefined,
+       },
+       actorName: currentUserName,
+     });
+   };
+ 
++  // Falha na leitura da config não pode virar formulário em "Nenhum": salvar
++  // assim desligaria a integração que já existe no departamento.
++  if (isError) {
++    return (
++      <div className="p-4">
++        <p role="alert" className="text-sm text-destructive">
++          Não foi possível carregar a configuração de WhatsApp deste departamento.
++        </p>
++      </div>
++    );
++  }
++
+   return (
+     <div className="p-4 space-y-5">
+       <div>
+@@ -80,12 +93,12 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin
+       {mode === 'evolution' && (
+         <div className="space-y-3">
+           <div className="space-y-1.5">
+-            <Label htmlFor="evo-url">URL da Evolution API</Label>
++            <Label htmlFor="evo-instance">Instance ID da Evolution API</Label>
+             <Input
+-              id="evo-url"
+-              placeholder="https://evolution.exemplo.com"
+-              value={evolutionUrl}
+-              onChange={e => setEvolutionUrl(e.target.value)}
++              id="evo-instance"
++              placeholder="ex.: zapp-departamento"
++              value={instanceId}
++              onChange={e => setInstanceId(e.target.value)}
+               disabled={!isAdmin}
+             />
+           </div>
+diff --git a/src/components/team-chat/department-management/__tests__/DepartmentInvitesView.test.tsx b/src/components/team-chat/department-management/__tests__/DepartmentInvitesView.test.tsx
+new file mode 100644
+index 0000000000..d674abaf2d
+--- /dev/null
++++ b/src/components/team-chat/department-management/__tests__/DepartmentInvitesView.test.tsx
+@@ -0,0 +1,97 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/react';
++import { DepartmentInvitesView } from '../DepartmentInvitesView';
++
++/**
++ * F76 — o convite vive em `department_invitations` (contrato atual do hook) e
++ * carrega uso e limite (`use_count`/`max_uses`). A tela só mostrava código e
++ * validade: um convite de uso único já consumido aparecia como disponível.
++ *
++ * Renderiza o componente REAL e mocka o módulo de hooks no caminho exato que ele
++ * importa, para provar que leitura/criação/revogação passam pelo contrato novo.
++ */
++const h = vi.hoisted(() => ({
++  createMutate: vi.fn(),
++  deleteMutate: vi.fn(),
++  loading: false,
++  error: false,
++  invites: [
++    {
++      id: 'inv-1',
++      department_id: 'dep-1',
++      code: 'AB12CD34',
++      created_by: 'user-1',
++      expires_at: '2026-10-20T12:00:00.000Z',
++      created_at: '2026-10-08T12:00:00.000Z',
++      status: 'pending',
++      use_count: 1,
++      max_uses: 3,
++    },
++  ],
++}));
++
++vi.mock('@/hooks/team-chat/useDepartmentManagement', () => ({
++  useDepartmentInvites: () => ({ data: h.invites, isLoading: h.loading, isError: h.error }),
++  useCreateDepartmentInvite: () => ({ mutate: h.createMutate, isPending: false }),
++  useDeleteDepartmentInvite: () => ({ mutate: h.deleteMutate, isPending: false }),
++}));
++
++describe('DepartmentInvitesView — convites do contrato atual (F76)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    h.loading = false;
++    h.error = false;
++    h.invites = [
++      {
++        id: 'inv-1',
++        department_id: 'dep-1',
++        code: 'AB12CD34',
++        created_by: 'user-1',
++        expires_at: '2026-10-20T12:00:00.000Z',
++        created_at: '2026-10-08T12:00:00.000Z',
++        status: 'pending',
++        use_count: 1,
++        max_uses: 3,
++      },
++    ];
++  });
++
++  it('mostra uso e limite do convite', () => {
++    render(<DepartmentInvitesView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    expect(screen.getByText('AB12CD34')).toBeInTheDocument();
++    expect(screen.getByText('1 de 3 usos')).toBeInTheDocument();
++  });
++
++  it('usa o singular quando o convite é de uso único', () => {
++    h.invites[0].use_count = 0;
++    h.invites[0].max_uses = 1;
++    render(<DepartmentInvitesView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    expect(screen.getByText('0 de 1 uso')).toBeInTheDocument();
++  });
++
++  it('gera convite pela função do hook do contrato atual', () => {
++    render(<DepartmentInvitesView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    fireEvent.click(screen.getByRole('button', { name: /Gerar código/ }));
++    expect(h.createMutate).toHaveBeenCalledWith('Ana');
++  });
++
++  it('revoga o convite pela função do hook (admin)', () => {
++    render(<DepartmentInvitesView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    fireEvent.click(screen.getByRole('button', { name: 'Excluir convite' }));
++    expect(h.deleteMutate).toHaveBeenCalledWith({ inviteId: 'inv-1', actorName: 'Ana' });
++  });
++
++  it('esconde as ações de admin para quem não é admin', () => {
++    render(<DepartmentInvitesView departmentId="dep-1" currentUserName="Ana" isAdmin={false} />);
++    expect(screen.queryByRole('button', { name: /Gerar código/ })).toBeNull();
++    expect(screen.queryByRole('button', { name: 'Excluir convite' })).toBeNull();
++  });
++
++  it('erro de leitura aparece como erro, não como "nenhum convite"', () => {
++    h.error = true;
++    h.invites = [];
++    render(<DepartmentInvitesView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar os convites deste departamento.');
++    expect(screen.queryByText('Nenhum convite ativo')).toBeNull();
++  });
++});
+diff --git a/src/components/team-chat/department-management/__tests__/DepartmentWhatsAppView.test.tsx b/src/components/team-chat/department-management/__tests__/DepartmentWhatsAppView.test.tsx
+new file mode 100644
+index 0000000000..c623cc0b1e
+--- /dev/null
++++ b/src/components/team-chat/department-management/__tests__/DepartmentWhatsAppView.test.tsx
+@@ -0,0 +1,86 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/react';
++import { DepartmentWhatsAppView } from '../DepartmentWhatsAppView';
++
++/**
++ * F77 — a config de WhatsApp do departamento é lida por
++ * `get_department_whatsapp_config` e gravada por `set_department_whatsapp_config`
++ * (contrato atual do hook): o formulário guarda `instance_id` + `api_key`, e não
++ * a coluna/URL que não existe no banco.
++ *
++ * Renderiza o componente REAL e mocka o módulo de hooks no caminho exato que ele
++ * importa, para provar leitura e escrita pelo contrato novo.
++ */
++type Credentials = {
++  mode: 'none' | 'evolution' | 'official';
++  instance_id: string | null;
++  has_api_key: boolean;
++  evolution_url: string | null;
++};
++
++const h = vi.hoisted(() => ({
++  saveMutate: vi.fn(),
++  error: false,
++  credentials: undefined as Credentials | undefined,
++}));
++
++vi.mock('@/hooks/team-chat/useDepartmentManagement', () => ({
++  useDepartmentWhatsAppCredentials: () => ({ data: h.credentials, isError: h.error }),
++  useSaveDepartmentWhatsApp: () => ({ mutate: h.saveMutate, isPending: false }),
++}));
++
++describe('DepartmentWhatsAppView — config no contrato atual (F77)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    h.error = false;
++    h.credentials = {
++      mode: 'evolution',
++      instance_id: 'inst-9',
++      has_api_key: true,
++      evolution_url: 'inst-9',
++    };
++  });
++
++  it('lê o instance_id devolvido pelo contrato atual', () => {
++    render(<DepartmentWhatsAppView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    expect(screen.getByLabelText('Instance ID da Evolution API')).toHaveValue('inst-9');
++  });
++
++  it('salva instance_id e api_key, sem os nomes legados', () => {
++    render(<DepartmentWhatsAppView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    fireEvent.change(screen.getByLabelText('Instance ID da Evolution API'), { target: { value: 'inst-99' } });
++    fireEvent.change(screen.getByLabelText(/API Key/), { target: { value: 'chave-nova' } });
++    fireEvent.click(screen.getByRole('button', { name: /Salvar/ }));
++
++    expect(h.saveMutate).toHaveBeenCalledTimes(1);
++    const payload = h.saveMutate.mock.calls[0][0];
++    expect(payload).toMatchObject({
++      mode: 'evolution',
++      config: { instance_id: 'inst-99', api_key: 'chave-nova' },
++      actorName: 'Ana',
++    });
++    expect(payload.config).not.toHaveProperty('evolution_url');
++    expect(payload.config).not.toHaveProperty('evolution_api_key');
++    expect(payload.config).not.toHaveProperty('official_token');
++  });
++
++  it('não reenvia chave em branco (mantém a atual no banco)', () => {
++    render(<DepartmentWhatsAppView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    fireEvent.click(screen.getByRole('button', { name: /Salvar/ }));
++    const payload = h.saveMutate.mock.calls[0][0];
++    expect(payload.config.api_key).toBeUndefined();
++  });
++
++  it('não oferece salvar para quem não é admin', () => {
++    render(<DepartmentWhatsAppView departmentId="dep-1" currentUserName="Ana" isAdmin={false} />);
++    expect(screen.queryByRole('button', { name: /Salvar/ })).toBeNull();
++  });
++
++  it('erro na leitura da config não vira formulário em "Nenhum"', () => {
++    h.error = true;
++    h.credentials = undefined;
++    render(<DepartmentWhatsAppView departmentId="dep-1" currentUserName="Ana" isAdmin />);
++    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar a configuração de WhatsApp deste departamento.');
++    expect(screen.queryByRole('button', { name: /Salvar/ })).toBeNull();
++  });
++});

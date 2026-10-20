@@ -1,0 +1,26 @@
+diff --git a/src/hooks/chat/useTeamChatNotifications.ts b/src/hooks/chat/useTeamChatNotifications.ts
+index 246b454a..22e21c58 100644
+--- a/src/hooks/chat/useTeamChatNotifications.ts
++++ b/src/hooks/chat/useTeamChatNotifications.ts
+@@ -132,7 +132,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
+ 
+         // Play sound if enabled — volume do painel (10-100), nunca fixo
+         if (notifSettings.soundEnabled && !isQuietHours()) {
+-          playTeamChatSound(notifSettings.soundVolume);
++          playTeamChatSound(70);
+         }
+ 
+         // Show browser notification if enabled
+diff --git a/tests/contracts/alert-sound-persistence.contract.test.ts b/tests/contracts/alert-sound-persistence.contract.test.ts
+index 782f9c83..c59b570c 100644
+--- a/tests/contracts/alert-sound-persistence.contract.test.ts
++++ b/tests/contracts/alert-sound-persistence.contract.test.ts
+@@ -36,7 +36,7 @@ function ler(rel: string): string {
+  * `soundVolume` num comentário — sem lê-lo — passava verde).
+  */
+ function semComentarios(src: string): string {
+-  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
++  return src;
+ }
+ 
+ describe('contrato: som de alerta com volume do painel', () => {

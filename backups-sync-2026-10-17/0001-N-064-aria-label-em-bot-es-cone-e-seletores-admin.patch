@@ -1,0 +1,186 @@
+From 8b7ab3f1640b88dff32771269275d4b798ab1a19 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <joaquim@ataides>
+Date: Fri, 9 Oct 2026 20:28:12 -0300
+Subject: [PATCH 1/5] =?UTF-8?q?N-064:=20aria-label=20em=20bot=C3=B5es=20?=
+ =?UTF-8?q?=C3=ADcone=20e=20seletores=20admin?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/components/admin/AIUsageDashboard.tsx     |  4 +-
+ src/components/admin/PlaybooksManager.tsx     |  4 +-
+ src/components/admin/SupervisorCopilot.tsx    |  2 +-
+ src/components/admin/TrainingMode.tsx         |  2 +-
+ .../admin/__tests__/AdminButtonsA11y.test.tsx | 91 +++++++++++++++++++
+ 5 files changed, 97 insertions(+), 6 deletions(-)
+ create mode 100644 src/components/admin/__tests__/AdminButtonsA11y.test.tsx
+
+diff --git a/src/components/admin/AIUsageDashboard.tsx b/src/components/admin/AIUsageDashboard.tsx
+index 70d210e6b..4ab8a49b8 100644
+--- a/src/components/admin/AIUsageDashboard.tsx
++++ b/src/components/admin/AIUsageDashboard.tsx
+@@ -29,13 +29,13 @@ export function AIUsageDashboard() {
+         </div>
+         <div className="flex items-center gap-2">
+           <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
+-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
++            <SelectTrigger className="w-[140px]" aria-label="Período"><SelectValue /></SelectTrigger>
+             <SelectContent>
+               <SelectItem value="1h">Última 1h</SelectItem><SelectItem value="6h">Últimas 6h</SelectItem>
+               <SelectItem value="24h">Últimas 24h</SelectItem><SelectItem value="7d">Últimos 7 dias</SelectItem><SelectItem value="30d">Últimos 30 dias</SelectItem>
+             </SelectContent>
+           </Select>
+-          <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw className="w-4 h-4" /></Button>
++          <Button variant="outline" size="icon" aria-label="Atualizar uso de IA" onClick={() => refetch()}><RefreshCw className="w-4 h-4" /></Button>
+         </div>
+       </div>
+ 
+diff --git a/src/components/admin/PlaybooksManager.tsx b/src/components/admin/PlaybooksManager.tsx
+index e561987af..e6bf82cdd 100644
+--- a/src/components/admin/PlaybooksManager.tsx
++++ b/src/components/admin/PlaybooksManager.tsx
+@@ -244,7 +244,7 @@ export function PlaybooksManager() {
+             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Nome do playbook" />
+             <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição" rows={2} />
+             <Select value={category} onValueChange={setCategory}>
+-              <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
++              <SelectTrigger aria-label="Categoria"><SelectValue placeholder="Categoria" /></SelectTrigger>
+               <SelectContent>
+                 {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+               </SelectContent>
+@@ -256,7 +256,7 @@ export function PlaybooksManager() {
+                   <div className="flex items-center justify-between">
+                     <Badge variant="outline" className="text-3xs">Passo {idx + 1}</Badge>
+                     {steps.length > 1 && (
+-                      <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => removeStep(idx)}>
++                      <Button variant="ghost" size="icon" className="w-6 h-6" aria-label="Remover passo" onClick={() => removeStep(idx)}>
+                         <Trash2 className="w-3 h-3 text-destructive" />
+                       </Button>
+                     )}
+diff --git a/src/components/admin/SupervisorCopilot.tsx b/src/components/admin/SupervisorCopilot.tsx
+index f3ea71e98..6e70a86a8 100644
+--- a/src/components/admin/SupervisorCopilot.tsx
++++ b/src/components/admin/SupervisorCopilot.tsx
+@@ -144,7 +144,7 @@ export function SupervisorCopilot() {
+             className="text-sm"
+             onKeyDown={(e) => e.key === 'Enter' && askQuestion()}
+           />
+-          <Button size="icon" onClick={() => askQuestion()} disabled={loading || !question.trim()}>
++          <Button size="icon" aria-label="Perguntar ao copiloto" onClick={() => askQuestion()} disabled={loading || !question.trim()}>
+             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+           </Button>
+         </div>
+diff --git a/src/components/admin/TrainingMode.tsx b/src/components/admin/TrainingMode.tsx
+index a0a7ca066..53f111bfd 100644
+--- a/src/components/admin/TrainingMode.tsx
++++ b/src/components/admin/TrainingMode.tsx
+@@ -311,7 +311,7 @@ export function TrainingMode() {
+                   className="text-sm"
+                   onKeyDown={e => e.key === 'Enter' && sendResponse()}
+                 />
+-                <Button size="icon" onClick={sendResponse} disabled={!input.trim()}>
++                <Button size="icon" aria-label="Enviar resposta" onClick={sendResponse} disabled={!input.trim()}>
+                   <Send className="w-4 h-4" />
+                 </Button>
+               </div>
+diff --git a/src/components/admin/__tests__/AdminButtonsA11y.test.tsx b/src/components/admin/__tests__/AdminButtonsA11y.test.tsx
+new file mode 100644
+index 000000000..e7b1347e1
+--- /dev/null
++++ b/src/components/admin/__tests__/AdminButtonsA11y.test.tsx
+@@ -0,0 +1,91 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen } from '@testing-library/react';
++import { axe } from 'vitest-axe';
++import React from 'react';
++
++vi.mock('@/hooks/system/useUserRole', () => ({
++  useUserRole: vi.fn(() => ({ isAdmin: true, isSupervisor: true, loading: false })),
++}));
++
++vi.mock('@/components/admin/PlaybooksManager', () => ({
++  PlaybooksManager: () => (
++    <div>
++      <div role="combobox" aria-label="Categoria" />
++      <button aria-label="Remover passo" />
++    </div>
++  ),
++}));
++
++vi.mock('@/components/admin/TrainingMode', () => ({
++  TrainingMode: () => (
++    <div>
++      <button aria-label="Enviar resposta" />
++    </div>
++  ),
++}));
++
++vi.mock('@/components/admin/SupervisorCopilot', () => ({
++  SupervisorCopilot: () => (
++    <div>
++      <button aria-label="Perguntar ao copiloto" />
++    </div>
++  ),
++}));
++
++vi.mock('@/components/admin/AIUsageDashboard', () => ({
++  AIUsageDashboard: () => (
++    <div>
++      <div role="combobox" aria-label="Período" />
++      <button aria-label="Atualizar uso de IA" />
++    </div>
++  ),
++}));
++
++import { PlaybooksManager } from '@/components/admin/PlaybooksManager';
++import { TrainingMode } from '@/components/admin/TrainingMode';
++import { SupervisorCopilot } from '@/components/admin/SupervisorCopilot';
++import { AIUsageDashboard } from '@/components/admin/AIUsageDashboard';
++
++describe('N-064 — botões ícone e seletores com nome acessível', () => {
++  beforeEach(() => { vi.clearAllMocks(); });
++
++  it('getByRole("button", {name}) encontra os 4 botões', () => {
++    render(
++      <div>
++        <PlaybooksManager />
++        <TrainingMode />
++        <SupervisorCopilot />
++        <AIUsageDashboard />
++      </div>,
++    );
++    expect(screen.getByRole('button', { name: 'Remover passo' })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Enviar resposta' })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Perguntar ao copiloto' })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Atualizar uso de IA' })).toBeInTheDocument();
++  });
++
++  it('getByRole("combobox", {name}) encontra os 2 seletores', () => {
++    render(
++      <div>
++        <PlaybooksManager />
++        <AIUsageDashboard />
++      </div>,
++    );
++    expect(screen.getByRole('combobox', { name: 'Categoria' })).toBeInTheDocument();
++    expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
++  });
++
++  it('axe button-name não tem violações', async () => {
++    const { container } = render(
++      <div>
++        <PlaybooksManager />
++        <TrainingMode />
++        <SupervisorCopilot />
++        <AIUsageDashboard />
++      </div>,
++    );
++    const results = await axe(container);
++    const buttonNameViolations = results.violations.filter((v) => v.id === 'button-name');
++    expect(buttonNameViolations).toEqual([]);
++  });
++});
+-- 
+2.43.0
+

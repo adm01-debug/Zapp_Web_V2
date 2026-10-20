@@ -1,0 +1,22 @@
+commit acdb69e32261fd24686c35d191e1f76a921a0e2e
+Merge: a859a81d4e 707d1dfd18
+Author:     Joaquim <joaquim@promobrindes.com.br>
+AuthorDate: Fri Oct 9 20:19:06 2026 -0300
+Commit:     Joaquim <joaquim@promobrindes.com.br>
+CommitDate: Fri Oct 9 20:19:06 2026 -0300
+
+    On v2/t-c479c6e8-2610091852ae57: trabalho-pendente-anterior
+
+diff --git a/e2e/navegacao-modulos.spec.ts b/e2e/navegacao-modulos.spec.ts
+index b649642a71..794b7da3fe 100644
+--- a/e2e/navegacao-modulos.spec.ts
++++ b/e2e/navegacao-modulos.spec.ts
+@@ -153,7 +153,7 @@ const SECOES: SecaoNav[] = [
+ ];
+ 
+ const TITULO_BASE = 'WhatsApp Omnichannel';
+-const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: tarefas, chatbot)';
++const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: pipeline, chatbot)';
+ const MENU_DESKTOP = 'Menu de navegação principal';
+ const MENU_CELULAR = 'Menu de navegação';
+ const NAV_INFERIOR = 'Navegação principal';

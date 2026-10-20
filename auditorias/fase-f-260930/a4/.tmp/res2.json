@@ -1,0 +1,106 @@
+[
+ {
+  "id": "M09-prioritychip-desconhecido",
+  "desc": "PriorityChip so checa null, nao se a chave existe no mapa",
+  "file": "src/components/tasks/shared/PriorityChip.tsx",
+  "test": "src/components/tasks/__tests__/taskComponents.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "F2 (auditoria): PriorityChip com prioridade nula/desconhecida cai no padrão e não imprime \"undefined\""
+  ],
+  "raw_tail": "m\"Prioridade: undefined\"\u001b[39m\n    \u001b[36m/>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m\n ❯ Object.getElementError ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/config.js:37:19\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:76:38\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:52:17\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:95:19\n ❯ src/components/tasks/__tests__/taskComponents.test.tsx:336:19\n    334|\n    335|     render(<PriorityChip priority={'turbo' as unknown as 'medium'} />);\n    336|     expect(screen.getByTitle('Prioridade: Media')).toBeTruthy();\n       |                   ^\n    337|     expect(screen.queryByTitle(/undefined/)).toBeNull();\n    338|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 19 passed (20)\n   Start at  19:30:58\n   Duration  2.89s (transform 439ms, setup 71ms, import 1.02s, tests 969ms, environment 525ms)\n\n"
+ },
+ {
+  "id": "M10-rotulo-contato",
+  "desc": "rotuloContato reverte para `contato?.name ?? 'Todos os contatos'`",
+  "file": "src/components/tasks/shared/TasksFilterBar.tsx",
+  "test": "src/components/tasks/__tests__/taskComponents.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "Fase F (auditoria): contato sem nome aparece como \"Sem nome\" e id fora da lista como \"Contato indisponível\""
+  ],
+  "raw_tail": "od\nNot implemented: Window's scrollTo() method\nNot implemented: Window's scrollTo() method\n ❯ src/components/tasks/__tests__/taskComponents.test.tsx (20 tests | 1 failed) 1033ms\n     × Fase F (auditoria): contato sem nome aparece como \"Sem nome\" e id fora da lista como \"Contato indisponível\" 54ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > Fase F (auditoria): contato sem nome aparece como \"Sem nome\" e id fora da lista como \"Contato indisponível\"\nAssertionError: expected '' to be 'Sem nome' // Object.is equality\n\n- Expected\n+ Received\n\n- Sem nome\n\n ❯ src/components/tasks/__tests__/taskComponents.test.tsx:314:58\n    312|     );\n    313|     // Antes: o gatilho ficava em BRANCO ('' não casa com o `??`).\n    314|     expect(screen.getByLabelText('Contato').textContent).toBe('Sem nom…\n       |                                                          ^\n    315|\n    316|     rerender(\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 19 passed (20)\n   Start at  19:31:01\n   Duration  2.60s (transform 409ms, setup 60ms, import 857ms, tests 1.03s, environment 539ms)\n\n"
+ },
+ {
+  "id": "M11-coluna-vazia",
+  "desc": "BoardColumn volta a dizer 'Coluna vazia' com concluidas 8-30d no rodape",
+  "file": "src/components/tasks/board/BoardColumn.tsx",
+  "test": "src/components/tasks/__tests__/taskComponents.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO diz \"Coluna vazia\""
+  ],
+  "raw_tail": "mented: Window's scrollTo() method\n ❯ src/components/tasks/__tests__/taskComponents.test.tsx (20 tests | 1 failed) 1004ms\n     × Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO diz \"Coluna vazia\" 25ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO diz \"Coluna vazia\"\nAssertionError: expected [ <p …(1)></p>, <p …(1)></p>, …(3) ] to have a length of 4 but got 5\n\n- Expected\n+ Received\n\n- 4\n+ 5\n\n ❯ src/components/tasks/__tests__/taskComponents.test.tsx:288:49\n    286|     // oferecia \"Ver mais antigas (30 dias)\" ao mesmo tempo — contradi…\n    287|     expect(screen.getByText('Ver mais antigas (30 dias)')).toBeTruthy(…\n    288|     expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);\n       |                                                 ^\n    289|   });\n    290|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 19 passed (20)\n   Start at  19:31:05\n   Duration  2.82s (transform 479ms, setup 83ms, import 1.02s, tests 1.00s, environment 583ms)\n\n"
+ },
+ {
+  "id": "M12-lista-vazia-filtro",
+  "desc": "TasksListMode volta a decidir o vazio SO pela busca (ignora filtersActive)",
+  "file": "src/components/tasks/list/TasksListMode.tsx",
+  "test": "src/components/tasks/__tests__/TasksModule.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "Fase F: a Lista esvaziada por um filtro QUE NÃO É A BUSCA oferece \"Limpar filtros\""
+  ],
+  "raw_tail": "\u001b[33md\u001b[39m=\u001b[32m\"M12 9v4\"\u001b[39m\n              \u001b[36m/>\u001b[39m\n              \u001b[36m<path\u001b[39m\n                \u001b[33md\u001b[39m=\u001b[32m\"M12 17h.01\"\u001b[39m\n              \u001b[36m/>\u001b[39m\n            \u001b[36m</svg>\u001b[39m\n          \u001b[36m</div>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<p\u001b[39m\n              \u001b[33...\n ❯ waitForWrapper ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/wait-for.js:163:27\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:86:33\n ❯ src/components/tasks/__tests__/TasksModule.test.tsx:131:25\n    129|     renderModule({ defaultMode: 'list' });\n    130|\n    131|     expect(await screen.findByText('Nenhuma tarefa com esse filtro')).…\n       |                         ^\n    132|     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toB…\n    133|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 17 passed (18)\n   Start at  19:31:08\n   Duration  4.02s (transform 438ms, setup 66ms, import 930ms, tests 2.27s, environment 505ms)\n\n"
+ },
+ {
+  "id": "M13-cabecalho-real",
+  "desc": "openCount do cabecalho volta a usar a lista FILTRADA",
+  "file": "src/components/tasks/TasksModule.tsx",
+  "test": "src/components/tasks/__tests__/TasksModule.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "Fase F: o cabeçalho conta a lista REAL, não o recorte do filtro"
+  ],
+  "raw_tail": "[32m\"M12 9v4\"\u001b[39m\n              \u001b[36m/>\u001b[39m\n              \u001b[36m<path\u001b[39m\n                \u001b[33md\u001b[39m=\u001b[32m\"M12 17h.01\"\u001b[39m\n              \u001b[36m/>\u001b[39m\n            \u001b[36m</svg>\u001b[39m\n          \u001b[36m</div>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<p\u001b[39m\n              \u001b[3...\n ❯ waitForWrapper ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/wait-for.js:163:27\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:86:33\n ❯ src/components/tasks/__tests__/TasksModule.test.tsx:140:26\n    138|\n    139|     // O recorte zera a tela, mas \"1 aberta\" (a tarefa real) segue no …\n    140|     expect((await screen.findAllByText(/1 aberta/)).length).toBeGreate…\n       |                          ^\n    141|     expect(screen.queryByText(/0 abertas/)).toBeNull();\n    142|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 17 passed (18)\n   Start at  19:31:12\n   Duration  3.50s (transform 403ms, setup 55ms, import 790ms, tests 2.18s, environment 385ms)\n\n"
+ },
+ {
+  "id": "M14-quickadd-2o-create",
+  "desc": "QuickAdd reseta o prazo para null apos o create (reverte F2)",
+  "file": "src/components/tasks/shared/QuickAdd.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "F2 (auditoria): o 2º create seguido nasce COM prazo (antes vinha sem prazo e sumia da Agenda)"
+  ],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx (11 tests | 1 failed) 399ms\n     × F2 (auditoria): o 2º create seguido nasce COM prazo (antes vinha sem prazo e sumia da Agenda) 19ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado) > F2 (auditoria): o 2º create seguido nasce COM prazo (antes vinha sem prazo e sumia da Agenda)\nAssertionError: expected null not to be null\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:107:33\n    105|     const segunda = onCreate.mock.calls[1][0];\n    106|     expect(segunda.title).toBe('Segunda');\n    107|     expect(segunda.dueDate).not.toBeNull();\n       |                                 ^\n    108|     const prazo = new Date(segunda.dueDate);\n    109|     expect(prazo.getDate()).toBe(new Date().getDate());\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n   Start at  19:31:16\n   Duration  1.58s (transform 230ms, setup 58ms, import 604ms, tests 399ms, environment 426ms)\n\n"
+ },
+ {
+  "id": "M15-quickadd-dia-aplicado",
+  "desc": "QuickAdd sem a reaplicacao do dia (ramo diaAplicado removido)",
+  "file": "src/components/tasks/shared/QuickAdd.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "F2 (auditoria): ao trocar de dia o rascunho SOBREVIVE e o prazo passa a ser o do dia novo"
+  ],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx (11 tests | 1 failed) 457ms\n     × F2 (auditoria): ao trocar de dia o rascunho SOBREVIVE e o prazo passa a ser o do dia novo 130ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado) > F2 (auditoria): ao trocar de dia o rascunho SOBREVIVE e o prazo passa a ser o do dia novo\nAssertionError: expected 30 to be 1 // Object.is equality\n\n- Expected\n+ Received\n\n- 1\n+ 30\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:91:67\n     89|\n     90|     await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));\n     91|     expect(new Date(onCreate.mock.calls[0][0].dueDate).getDate()).toBe…\n       |                                                                   ^\n     92|   });\n     93|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n   Start at  19:31:19\n   Duration  1.91s (transform 294ms, setup 91ms, import 669ms, tests 457ms, environment 577ms)\n\n"
+ },
+ {
+  "id": "M16-aria-controls-ausente",
+  "desc": "remove aria-controls do botao Atrasadas",
+  "file": "src/components/tasks/agenda/TasksAgendaMode.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "F2 (auditoria): o botão \"Atrasadas\" aponta para a região que controla (`aria-controls`)"
+  ],
+  "raw_tail": "joaquim_ataides/auditorias/fase-f-260930/a4\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx (11 tests | 1 failed) 510ms\n     × F2 (auditoria): o botão \"Atrasadas\" aponta para a região que controla (`aria-controls`) 57ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado) > F2 (auditoria): o botão \"Atrasadas\" aponta para a região que controla (`aria-controls`)\nAssertionError: expected null to be 'agenda-atrasadas' // Object.is equality\n\n- Expected:\n\"agenda-atrasadas\"\n\n+ Received:\nnull\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:118:49\n    116|\n    117|     const botao = screen.getByRole('button', { name: /atrasada/i });\n    118|     expect(botao.getAttribute('aria-controls')).toBe('agenda-atrasadas…\n       |                                                 ^\n    119|     expect(document.getElementById('agenda-atrasadas')).toBeTruthy();\n    120|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n   Start at  19:31:21\n   Duration  2.09s (transform 233ms, setup 86ms, import 644ms, tests 510ms, environment 703ms)\n\n"
+ }
+]

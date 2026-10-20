@@ -1,0 +1,1 @@
+var e=new Map,t=2e3;function n(n,r=12e4,i=Date.now()){for(let[t,n]of e)n<=i&&e.delete(t);let a=e.get(n);return a!==void 0&&a>i||e.size>=t?!1:(e.set(n,i+Math.max(0,r)),!0)}export{n as t};

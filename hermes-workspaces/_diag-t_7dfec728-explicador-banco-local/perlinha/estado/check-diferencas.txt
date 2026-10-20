@@ -1,0 +1,1 @@
+relation_grants|r:public.talkx_storage_purge_queue|service_role|UPDATE|grantor=postgres

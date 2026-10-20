@@ -1,0 +1,154 @@
+commit 8cb091ace6c781559d16fe89bd6f3fe9df51056a
+Author: Hermes Senior <hermes-senior@promobrindes.local>
+Date:   Sun Oct 11 15:32:26 2026 -0300
+
+    fix(auth): polimento de reset de senha, SSO e instalacao PWA
+
+diff --git a/src/pages/Install.tsx b/src/pages/Install.tsx
+index 14e3abc2b0..f6196d2895 100644
+--- a/src/pages/Install.tsx
++++ b/src/pages/Install.tsx
+@@ -30,10 +30,15 @@ const Install = () => {
+       setDeferredPrompt(e as BeforeInstallPromptEvent);
+     };
+ 
++    const installedHandler = () => setIsInstalled(true);
++
+     window.addEventListener("beforeinstallprompt", handler);
+-    window.addEventListener("appinstalled", () => setIsInstalled(true));
++    window.addEventListener("appinstalled", installedHandler);
+ 
+-    return () => window.removeEventListener("beforeinstallprompt", handler);
++    return () => {
++      window.removeEventListener("beforeinstallprompt", handler);
++      window.removeEventListener("appinstalled", installedHandler);
++    };
+   }, []);
+ 
+   const handleInstall = async () => {
+diff --git a/src/pages/ResetPassword.tsx b/src/pages/ResetPassword.tsx
+index e753267c38..c68c13fede 100644
+--- a/src/pages/ResetPassword.tsx
++++ b/src/pages/ResetPassword.tsx
+@@ -27,6 +27,9 @@ export default function ResetPassword() {
+   const [success, setSuccess] = useState(false);
+   const [error, setError] = useState('');
+   const [hasSession, setHasSession] = useState(false);
++  // Contagem visível até o redirecionamento; o usuário pode cancelá-la.
++  const [countdown, setCountdown] = useState(5);
++  const [redirectCancelled, setRedirectCancelled] = useState(false);
+ 
+   useEffect(() => {
+     // Check if user came from password reset email
+@@ -46,6 +49,18 @@ export default function ResetPassword() {
+     return () => subscription.unsubscribe();
+   }, []);
+ 
++  // Após o sucesso, redireciona com contagem regressiva visível. O usuário pode
++  // cancelar ("Ficar nesta página") — nesse caso o efeito para e nada navega.
++  useEffect(() => {
++    if (!success || redirectCancelled) return;
++    if (countdown <= 0) {
++      navigate('/auth');
++      return;
++    }
++    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
++    return () => clearTimeout(timer);
++  }, [success, redirectCancelled, countdown, navigate]);
++
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setError('');
+@@ -72,10 +87,6 @@ export default function ResetPassword() {
+ 
+       setSuccess(true);
+       toast.success('Senha alterada com sucesso!');
+-      
+-      setTimeout(() => {
+-        navigate('/auth');
+-      }, 3000);
+     } catch (err: unknown) {
+       setError(err instanceof Error ? err.message : 'Erro ao alterar senha');
+       toast.error('Erro ao alterar senha');
+@@ -122,9 +133,29 @@ export default function ResetPassword() {
+                 <CheckCircle className="w-8 h-8 text-success dark:text-success" />
+               </motion.div>
+               <CardTitle>Senha Alterada!</CardTitle>
+-              <CardDescription>
+-                Sua senha foi alterada com sucesso. Redirecionando para login...
+-              </CardDescription>
++              {redirectCancelled ? (
++                <>
++                  <CardDescription>
++                    Sua senha foi alterada com sucesso. Redirecionamento cancelado.
++                  </CardDescription>
++                  <div className="pt-4">
++                    <Button className="w-full" onClick={() => navigate('/auth')}>
++                      Ir para o login
++                    </Button>
++                  </div>
++                </>
++              ) : (
++                <>
++                  <CardDescription>
++                    Sua senha foi alterada com sucesso. Redirecionando para login em {countdown}s...
++                  </CardDescription>
++                  <div className="pt-4">
++                    <Button variant="outline" className="w-full" onClick={() => setRedirectCancelled(true)}>
++                      Ficar nesta página
++                    </Button>
++                  </div>
++                </>
++              )}
+             </CardHeader>
+           </Card>
+         </motion.div>
+diff --git a/src/pages/SSOCallback.tsx b/src/pages/SSOCallback.tsx
+index 0bda53e476..f56f37faff 100644
+--- a/src/pages/SSOCallback.tsx
++++ b/src/pages/SSOCallback.tsx
+@@ -9,19 +9,31 @@ import { toast } from 'sonner';
+ 
+ type CallbackStatus = 'loading' | 'success' | 'error';
+ 
++const MAX_ERROR_LENGTH = 200;
++const GENERIC_ERROR = 'Ocorreu um erro durante a autenticação';
++
+ // PKCE flow returns error params in the query string, not the hash fragment
+ function getUrlError(): string | null {
+   const p = new URLSearchParams(window.location.search);
+   return p.get('error_description') || p.get('error');
+ }
+ 
++// A mensagem vem da URL (quem monta o link controla o texto): corta no tamanho
++// máximo, remove caracteres de marcação e cai num texto genérico quando sobra vazio.
++function sanitizeAuthError(raw: string | null | undefined): string {
++  if (!raw) return GENERIC_ERROR;
++  const text = raw.slice(0, MAX_ERROR_LENGTH).replace(/[<>"'&`]/g, '').trim();
++  return text || GENERIC_ERROR;
++}
++
+ export default function SSOCallback() {
+   const navigate = useNavigate();
+-  const urlError = getUrlError();
+-  const [status, setStatus] = useState<CallbackStatus>(urlError ? 'error' : 'loading');
+-  const [errorMessage, setErrorMessage] = useState(urlError ?? '');
++  const rawUrlError = getUrlError();
++  const initialError = rawUrlError ? sanitizeAuthError(rawUrlError) : null;
++  const [status, setStatus] = useState<CallbackStatus>(initialError ? 'error' : 'loading');
++  const [errorMessage, setErrorMessage] = useState(initialError ?? '');
+   // ref tracks live status to avoid stale closure in the timeout callback
+-  const statusRef = useRef<CallbackStatus>(urlError ? 'error' : 'loading');
++  const statusRef = useRef<CallbackStatus>(initialError ? 'error' : 'loading');
+ 
+   useEffect(() => {
+     // If Google returned an error in the redirect URL, show it and stop
+@@ -50,7 +62,7 @@ export default function SSOCallback() {
+       if (error) {
+         statusRef.current = 'error';
+         setStatus('error');
+-        setErrorMessage(error.message);
++        setErrorMessage(sanitizeAuthError(error.message));
+         toast.error('Erro no login SSO');
+         return;
+       }

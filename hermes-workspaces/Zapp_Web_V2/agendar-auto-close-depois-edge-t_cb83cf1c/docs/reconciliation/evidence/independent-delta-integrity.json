@@ -1,0 +1,6 @@
+{
+  "source_files_checked": 9,
+  "errors": [],
+  "cutoff": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+  "method": "Recompute SHA256, byte length and Git blob hash of preserved cutoff sources against API-derived expected hashes; no additional remote request."
+}

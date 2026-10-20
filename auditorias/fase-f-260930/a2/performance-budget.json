@@ -1,0 +1,48 @@
+{
+  "budgets": {
+    "initial-js": {
+      "maxKB": 340,
+      "description": "Max initial JS bundle (excluding lazy chunks)"
+    },
+    "initial-css": {
+      "maxKB": 80,
+      "description": "Max initial CSS bundle"
+    },
+    "largest-chunk": {
+      "maxKB": 550,
+      "description": "Ratchet baseline: largest JavaScript chunk (including lazy chunks), gzip-compressed; reduce after splitting vendor-heavy route chunks"
+    },
+    "total-assets": {
+      "maxKB": 4100,
+      "description": "Ratchet baseline: all deployable assets gzip-compressed, excluding source maps; reduce after removing unused lazy features. +100KB em 2026-09-25 para o tile lossless do padrão de brindes do chat (public/patterns, ~35KB gzip, estático e cacheável — não afeta o bundle inicial de JS)"
+    }
+  },
+  "web-vitals": {
+    "LCP": {
+      "target": 2500,
+      "unit": "ms",
+      "rating": "good"
+    },
+    "FID": {
+      "target": 100,
+      "unit": "ms",
+      "rating": "good"
+    },
+    "INP": {
+      "target": 200,
+      "unit": "ms",
+      "rating": "good"
+    },
+    "CLS": {
+      "target": 0.1,
+      "unit": "score",
+      "rating": "good"
+    },
+    "TTFB": {
+      "target": 800,
+      "unit": "ms",
+      "rating": "good"
+    }
+  },
+  "notes": "Run 'npx vite-bundle-visualizer' to audit. Check Web Vitals via src/lib/web-vitals.ts"
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "issue": 1265,
+    "issue_state_in_snapshot": "OPEN",
+    "merged_fix_pr": 1309,
+    "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+    "evidence": [
+      {
+        "path": "supabase/migrations/20260930260000_team_reaction_membership_guard.sql",
+        "line_start": 28,
+        "line_end": 73,
+        "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "excerpt": "DROP POLICY IF EXISTS reactions_insert ON public.team_message_reactions;\n\nCREATE OR REPLACE FUNCTION public.toggle_team_reaction(p_message_id uuid, p_emoji text)\nRETURNS jsonb\nLANGUAGE plpgsql\nSECURITY DEFINER\nSET search_path TO 'public'\nAS $function$\nDECLARE\n  v_profile_id uuid := public.current_profile_id();\n  v_exists     boolean;\n  v_conversation_id uuid;\nBEGIN\n  IF v_profile_id IS NULL THEN RAISE EXCEPTION 'not_authenticated'; END IF;\n\n  -- #1265: a função é SECURITY DEFINER, então a RLS não a protege — o vínculo é checado aqui.\n  -- A conversa sai da PRÓPRIA mensagem (não de parâmetro), então não há como mentir sobre o time.\n  SELECT tm.conversation_id INTO v_conversation_id\n    FROM public.team_messages tm\n    JOIN public.team_conversation_members tcm\n      ON tcm.conversation_id = tm.conversation_id\n   WHERE tm.id = p_message_id\n     AND tcm.profile_id = v_profile_id;\n\n  IF v_conversation_id IS NULL THEN\n    RAISE EXCEPTION 'not_member';\n  END IF;\n\n  SELECT EXISTS(\n    SELECT 1 FROM public.team_message_reactions\n     WHERE message_id = p_message_id AND profile_id = v_profile_id AND emoji = p_emoji\n  ) INTO v_exists;\n\n  IF v_exists THEN\n    DELETE FROM public.team_message_reactions\n     WHERE message_id = p_message_id AND profile_id = v_profile_id AND emoji = p_emoji;\n    RETURN jsonb_build_object('action', 'removed', 'emoji', p_emoji);\n  ELSE\n    -- `conversation_id` é NOT NULL e sem default, e `team_message_reactions` (ao contrário de\n    -- `team_message_receipts`) não tem trigger que o preencha: sem esta coluna o caminho 'added'\n    -- da RPC sempre estourava (nu … [excerpt truncated; source retained]"
+      },
+      {
+        "path": "scripts/db-audit/team-reaction-membership.test.sh",
+        "line_start": 294,
+        "line_end": 334,
+        "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "excerpt": "  \"$ATILA\" \"SELECT (public.toggle_team_reaction('$MSG_OUTRO', 'alerta'))->>'action';\"\n\necho\necho '── Aplicando a migration ─────────────────────────────────────────────────────────'\npsql_file \"$migration\"\npsql_file \"$tmp_dir/seed.sql\"\n\necho\necho '── BLOCO B: comportamento DEPOIS da migration ────────────────────────────────────'\n\nexpect_error_as 'B1 (#1265) INSERT direto cross-team agora e barrado pela RLS' \\\n  'row-level security policy' \"$ATILA\" \\\n  \"INSERT INTO public.team_message_reactions (message_id, profile_id, emoji, conversation_id) VALUES ('$MSG_OUTRO', '$PERFIL_ATILA', 'alerta', '$CONV_OUTRO');\"\n\nexpect_error_as 'B2 (#1265) a RPC cross-team agora barra por vinculo' \\\n  'not_member' \"$ATILA\" \\\n  \"SELECT public.toggle_team_reaction('$MSG_OUTRO', 'alerta');\"\n\nexpect_value 'B3 nada foi gravado na conversa invadida' '0' \\\n  \"SELECT count(*) FROM public.team_message_reactions WHERE conversation_id='$CONV_OUTRO';\"\n\nexpect_ok_as 'B4 caminho legitimo preservado: membro reage na conversa do proprio time' \\\n  \"$ATILA\" \"INSERT INTO public.team_message_reactions (message_id, profile_id, emoji, conversation_id) VALUES ('$MSG_MEU', '$PERFIL_ATILA', 'joinha', '$CONV_MEU');\"\n\nexpect_value_as 'B5 e ele mesmo le a propria reacao' '1' \\\n  \"$ATILA\" \"SELECT count(*) FROM public.team_message_reactions WHERE message_id='$MSG_MEU';\"\n\nexpect_value_as 'B6 a RPC do caminho legitimo funciona (acao=added)' 'added' \\\n  \"$ATILA\" \"SELECT (public.toggle_team_reaction('$MSG_MEU', 'festa'))->>'action';\"\n\nexpect_value 'B7 a linha da RPC nasce com o conversation_id da MENSAGEM (coluna NOT NULL era o  … [excerpt truncated; source retained]"
+      }
+    ],
+    "scope": "Direct INSERT policy and latent RPC were corrected in source; Panel reaction UI remains incomplete.",
+    "historical_runtime_evidence_paths": [
+      "docs/audits/onda3-260930/VEREDICTO-CONSOLIDADO.md",
+      "docs/audits/onda3-260930/a2-mut/RELATORIO.md"
+    ],
+    "current_runtime_verified": false,
+    "notes": [
+      "Existing SQL harness negative controls intentionally produce ERROR lines; these are not evidence that the contract is failing.",
+      "No issue/PR state was changed."
+    ]
+  },
+  {
+    "issue": 1266,
+    "issue_state_in_snapshot": "OPEN",
+    "merged_fix_pr": 1313,
+    "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+    "evidence": [
+      {
+        "path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+        "line_start": 39,
+        "line_end": 87,
+        "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "excerpt": "-- Sem BEGIN/COMMIT: o gateway aplica a migration numa única transação.\n\nCREATE OR REPLACE FUNCTION public.get_team_messages_page(p_conversation_id uuid, p_before_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 50)\n RETURNS TABLE(id uuid, conversation_id uuid, sender_id uuid, content text, message_type text, reply_to_id uuid, media_url text, media_type text, media_bucket text, media_path text, is_edited boolean, created_at timestamp with time zone, updated_at timestamp with time zone, sender_name text, sender_avatar text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_profile_id uuid := public.current_profile_id();\n  v_before_at  timestamptz;\nBEGIN\n  IF v_profile_id IS NULL THEN RAISE EXCEPTION 'not_authenticated'; END IF;\n\n  -- #1266: alias `tcm` — sem ele, `conversation_id` colide com a coluna de saída homônima (42702).\n  IF NOT EXISTS (\n    SELECT 1 FROM public.team_conversation_members tcm\n     WHERE tcm.conversation_id = p_conversation_id AND tcm.profile_id = v_profile_id\n  ) THEN\n    RAISE EXCEPTION 'not_member';\n  END IF;\n\n  IF p_before_id IS NOT NULL THEN\n    -- #1266: alias `tm` — `created_at` e `id` também são colunas de saída (42702).\n    SELECT tm.created_at INTO v_before_at\n      FROM public.team_messages tm WHERE tm.id = p_before_id;\n  END IF;\n\n  RETURN QUERY\n  SELECT\n    m.id, m.conversation_id, m.sender_id, m.content, m.message_type,\n    m.reply_to_id, m.media_url, m.media_type, m.media_bucket, m.media_path,\n    m.is_edited, m.created_at, m.updated_at,\n    p.name, p.avatar_url\n  FROM public.team_messages m\n  LE … [excerpt truncated; source retained]"
+      },
+      {
+        "path": "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+        "line_start": 285,
+        "line_end": 331,
+        "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "excerpt": "echo '── Aplicando a migration ─────────────────────────────────────────────────────────'\npsql_file \"$migration\"\npsql_file \"$tmp_dir/seed.sql\"\n\necho\necho '── BLOCO B: comportamento DEPOIS da migration ────────────────────────────────────'\n\nexpect_value_as 'B1 (#1266) get_team_messages_page responde (sem 42702)' '3' \\\n  \"$ATILA\" \"SELECT count(*) FROM public.get_team_messages_page('$CONV_A'::uuid, NULL, 50);\"\n\nexpect_value_as 'B2 (#1266) paginacao por cursor funciona (sem 42702; 2 anteriores a mais nova)' '2' \\\n  \"$ATILA\" \"SELECT count(*) FROM public.get_team_messages_page('$CONV_A'::uuid, '$MSG_NOVA'::uuid, 50);\"\n\nexpect_value_as 'B3 ordem preservada: mais nova primeiro' 'msg 3 (mais nova)' \\\n  \"$ATILA\" \"SELECT content FROM public.get_team_messages_page('$CONV_A'::uuid, NULL, 1);\"\n\nexpect_value_as 'B4 LIMIT respeitado' '2' \\\n  \"$ATILA\" \"SELECT count(*) FROM public.get_team_messages_page('$CONV_A'::uuid, NULL, 2);\"\n\nexpect_value_as 'B5 contrato inalterado: o JOIN traz sender_name (2 mensagens do Atila)' '2' \\\n  \"$ATILA\" \"SELECT count(*) FROM public.get_team_messages_page('$CONV_A'::uuid, NULL, 50) WHERE sender_name = 'Atila';\"\n\nexpect_error_as 'B6 guarda de autorizacao preservada: nao-membro recebe not_member' \\\n  'not_member' \"$ATILA\" \\\n  \"SELECT count(*) FROM public.get_team_messages_page('$CONV_B'::uuid, NULL, 50);\"\n\nexpect_error_as 'B7 guarda preservada: sem JWT recebe not_authenticated' \\\n  'not_authenticated' '{\"role\":\"authenticated\"}' \\\n  \"SELECT count(*) FROM public.get_team_messages_page('$CONV_A'::uuid, NULL, 50);\"\n\nexpect_value_as 'B8 (#1266) tcm_select_own respond … [excerpt truncated; source retained]"
+      }
+    ],
+    "scope": "RPC ambiguity was latent; tcm SELECT policy was already reachable by active hooks. Source fix preserves the old cursor contract.",
+    "historical_runtime_evidence_paths": [
+      "docs/audits/onda3-260930/VEREDICTO-CONSOLIDADO.md",
+      "docs/audits/onda3-260930/a2-mut/RELATORIO.md"
+    ],
+    "current_runtime_verified": false,
+    "notes": [
+      "Existing SQL harness negative controls intentionally produce ERROR lines; these are not evidence that the contract is failing.",
+      "No issue/PR state was changed."
+    ]
+  }
+]

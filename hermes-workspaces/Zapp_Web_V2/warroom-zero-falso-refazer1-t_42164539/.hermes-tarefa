@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=warroom-estados-zero-falso
+ID=261013002023ce
+BRANCH=v2/warroom-estados-zero-falso-261013002023ce
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/warroom-estados-zero-falso-261013002023ce
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T00:20:05-03:00
+KANBAN=t_19cec878
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/warroom-estados-zero-falso-261013002023ce/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013002023ce
+PRONTO_SHA=9023d3cf72a8873710bc659762a3983c1e01a977

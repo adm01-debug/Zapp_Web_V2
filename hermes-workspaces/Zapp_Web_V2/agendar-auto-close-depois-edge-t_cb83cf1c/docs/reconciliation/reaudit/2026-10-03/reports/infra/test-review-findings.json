@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "area": "infra_test_review",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "findings": [
+    {
+      "id": "R2-INF-042",
+      "title": "Gate E98 de contraste descarta violações serious da regra que promete proteger",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "area_extension": "finite_test_review",
+      "description": "O spec executa axe com color-contrast e button-name, mas sua única asserção considera impact=critical. A regra color-contrast tem impacto serious no axe4.13; uma violação dessa regra é descartada pelo filtro e não torna o teste vermelho, contrariando o contrato documentado nas linhas29–31.",
+      "consumer_chain": [
+        "Workflow e2e-logado executa chromium-authenticated",
+        "Configuração inclui specs e2e; quarantine está vazia",
+        "Spec de contatos chama axe com duas regras",
+        "Filtro critical remove color-contrast serious antes da asserção"
+      ],
+      "preconditions": [
+        "Execução desse spec chega à medição axe em tela de contatos.",
+        "Axe retorna uma violação color-contrast com impacto serious, como definido pela regra."
+      ],
+      "effect": "Este gate pode permanecer verde diante de regressão de contraste que ele próprio prometia detectar. Não se afirma que exista regressão de contraste atualmente nem que os demais gates ignorem serious.",
+      "evidence": [
+        {
+          "path": "e2e/a11y-contraste.spec.ts",
+          "line_start": 8,
+          "line_end": 19,
+          "sha256": "b2a88dedd1d94a1f5461bc3bd238f639cbc27d1b95e167ab23b23ef193bbe597",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Medição axe e preservação de impact"
+        },
+        {
+          "path": "e2e/a11y-contraste.spec.ts",
+          "line_start": 23,
+          "line_end": 33,
+          "sha256": "b2a88dedd1d94a1f5461bc3bd238f639cbc27d1b95e167ab23b23ef193bbe597",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Regras, promessa do gate e filtro critical"
+        },
+        {
+          "path": "playwright.config.ts",
+          "line_start": 89,
+          "line_end": 101,
+          "sha256": "3203e5e9f8bc5d897c6362ac0fa2d203dec7138c39b8d5459d2bb95932d383ac",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Projeto autenticado inclui o spec"
+        },
+        {
+          "path": "e2e/quarantine.json",
+          "line_start": 10,
+          "line_end": 12,
+          "sha256": "691dd8e5661de42d14c8b2684710099fa2320c386a6b423b8e4bb9d452b42eb9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Quarentena vazia no snapshot"
+        },
+        {
+          "path": ".github/workflows/e2e-logado.yml",
+          "line_start": 114,
+          "line_end": 119,
+          "sha256": "0d5a6471c8a0f358b770efab986c8a1418bba4ee1f806e9f76d82294cbb64e3f",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Job executa o projeto autenticado"
+        },
+        {
+          "path": "e2e/inbox-contraste.spec.ts",
+          "line_start": 52,
+          "line_end": 59,
+          "sha256": "0786685fd85e75225d7cbd08b18229227e83e73aba48a4e3713d8fea7a54d13f",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controle positivo: outro gate exige todas as violações vazias"
+        }
+      ],
+      "acceptance": [
+        "Asserir as violações das regras explicitamente selecionadas, incluindo serious de color-contrast, ou declarar uma política de severidade que preserve essa regra.",
+        "Adicionar caso controlado que insira uma violação color-contrast e prove a falha desse gate; preservar decisões de skin explicitamente autorizadas.",
+        "Manter separados o resultado atual do produto e o poder de detecção do teste."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [],
+      "related_previous_findings": [],
+      "novelty_basis": "OTH010 cobre CT94; TC011 cobre tautologias Team Chat; VOL03/SK04 preservam decisões de cor aceitas. Nenhum cobre o filtro critical deste spec. Gates Inbox/email não compartilham esse filtro.",
+      "proof_type": "STATIC_SOURCE_AND_PRIMARY_RULE_DOCUMENTATION",
+      "external_references": [
+        {
+          "url": "https://dequeuniversity.com/rules/axe/4.13/color-contrast",
+          "retrieved_on": "2026-10-04",
+          "source_kind": "primary_documentation",
+          "supports": "Regra color-contrast classificada como User Impact: Serious."
+        }
+      ],
+      "limitations": [
+        "Nenhum browser, axe, Playwright ou suíte foi executado.",
+        "A elegibilidade versionada do projeto/job não prova execução ou resultado de CI remoto.",
+        "Nenhum limiar de4.4 autorizado foi tratado como relaxamento indevido."
+      ]
+    },
+    {
+      "id": "R2-INF-043",
+      "title": "Fixture para dispensar onboarding procura nome acessível removido e deixa o modal ativo",
+      "severity": "P2",
+      "classification": "novo",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "area_extension": "finite_test_review",
+      "description": "dispensarOnboarding procura dialog de nome Boas-vindas. WelcomeModal usa aria-labelledby para o título Bem-vindo…; o próprio spec de onboarding documenta a troca e usa /bem-vindo/i. A fixture captura o timeout e retorna quando o locator antigo tem count=0, sem dispensar o modal real.",
+      "consumer_chain": [
+        "gotoContacts navega à tela de contatos",
+        "Fixture dispensarOnboarding espera nome antigo",
+        "Timeout é absorvido e count=0 retorna",
+        "Modal real continua como overlay fixed fullscreen z9999",
+        "Passos seguintes tentam interagir com tela sob o overlay"
+      ],
+      "preconditions": [
+        "WelcomeModal é efetivamente aberto para a sessão e não foi dispensado por outro caminho.",
+        "Um consumidor chama dispensarOnboarding antes de interagir com conteúdo coberto."
+      ],
+      "effect": "A preparação termina sem cumprir a dispensa; interações seguintes podem bloquear por interceptação do overlay. Não se afirma falha universal: usuários já concluídos e sessões falsas que desabilitam onboarding não chegam a esse cenário.",
+      "evidence": [
+        {
+          "path": "e2e/fixtures/onboarding.ts",
+          "line_start": 25,
+          "line_end": 47,
+          "sha256": "f663c2dfcc3dc0e2e95c801f1b91f4316ba9e5ff98b43c4c78d4eedfeff9babb",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Locator incompatível, erros absorvidos e retorno count0"
+        },
+        {
+          "path": "src/components/onboarding/WelcomeModal.tsx",
+          "line_start": 30,
+          "line_end": 47,
+          "sha256": "b4b1d9fa2fb5a4ff1a7e736595eb9414f614b567df89632120ba95a1f8a5ef9c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Overlay e nome por aria-labelledby"
+        },
+        {
+          "path": "src/components/onboarding/WelcomeModal.tsx",
+          "line_start": 87,
+          "line_end": 92,
+          "sha256": "b4b1d9fa2fb5a4ff1a7e736595eb9414f614b567df89632120ba95a1f8a5ef9c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Título Bem-vindo define o nome acessível"
+        },
+        {
+          "path": "e2e/fixtures/contacts-page.ts",
+          "line_start": 12,
+          "line_end": 23,
+          "sha256": "2f96cd31f4d88d5fd04caa6ebed74e653dbe1c6dc7612f514b9357d5e3004b74",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consumidor ativo da fixture"
+        },
+        {
+          "path": "e2e/onboarding-tour.spec.ts",
+          "line_start": 85,
+          "line_end": 101,
+          "sha256": "96e55a8e68dc28bdc34258c62e57b30b8cddc635bfe85553821812b3f60e21e7",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Spec reconhece explicitamente mudança do nome"
+        },
+        {
+          "path": "e2e/onboarding-tour.spec.ts",
+          "line_start": 119,
+          "line_end": 124,
+          "sha256": "96e55a8e68dc28bdc34258c62e57b30b8cddc635bfe85553821812b3f60e21e7",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Teste do onboarding chama gotoContacts antes de verificar modal"
+        }
+      ],
+      "acceptance": [
+        "Atualizar a fixture para o contrato acessível atual e diferenciar modal legitimamente ausente de modal presente que falhou ao fechar.",
+        "Verificar caminho com modal aberto: a fixture só conclui após remoção do overlay ou comunica falha.",
+        "Permitir que os testes do próprio onboarding naveguem sem dispensá-lo automaticamente; gotoContacts é compartilhado e corrigir o helper não deve apagar o cenário que se deseja testar."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [],
+      "related_previous_findings": [
+        "R2-INF-038",
+        "R2-INF-039"
+      ],
+      "novelty_basis": "Fixture E2E desatualizada é mecanismo diferente dos alvos ausentes do tour e da gestão de foco de modais; não encontrada entre104 achados antigos nem achados atuais.",
+      "proof_type": "STATIC_CONSUMER_AND_ACCESSIBLE_NAME_CONTRACT",
+      "limitations": [
+        "Nenhum navegador ou implementação de accessible-name foi executado; vínculo aria-labelledby/título é explícito.",
+        "Não se inferiu que todas as sessões mostram o modal nem que todos os jobs atuais falham.",
+        "A anotação histórica de falha da fixture não foi tratada como reprodução atual."
+      ]
+    }
+  ],
+  "shared_family_observations": [
+    {
+      "family": "TC-011",
+      "classification": "extensão proposta ao proprietário root, sem novo ID INF",
+      "path": "tests/contracts/contraste-balao-midia.contract.test.ts",
+      "reviewed_ranges": [
+        [
+          1,
+          144
+        ]
+      ],
+      "evidence": [
+        {
+          "path": "tests/contracts/contraste-balao-midia.contract.test.ts",
+          "line_start": 48,
+          "line_end": 90,
+          "sha256": "956e95f0a002d08fe2a7b497e960fa483fdc7ff8e725012464334f90e230b21f",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "indexOf sem fronteira esquerda mistura .high-contrast com .dark.high-contrast"
+        },
+        {
+          "path": "src/styles/accessibility.css",
+          "line_start": 4,
+          "line_end": 48,
+          "sha256": "ab0c400cb831f529da67e359a0b7c7dd61b45cd78eab905206d09c09fd863c67",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Bloco claro e bloco escuro têm primary/foreground/background diferentes"
+        }
+      ],
+      "effect": "ESTADOS alto-contraste recebe por último tokens escuros, portanto não testa separadamente a paleta clara que seu rótulo anuncia.",
+      "controls": [
+        "Outras asserções verificam classes reais de AudioMessagePlayer/slider.",
+        "contraste-aa-componentes usa parser de seletor exato; não se estende o defeito a esse teste.",
+        "Limiar4.4 é decisão autorizada e permanece fora do achado."
+      ],
+      "execution": "NOT_EXECUTED"
+    }
+  ],
+  "previous_findings_compared": 104,
+  "product_suites_executed": 0,
+  "new_probe_cases": 0
+}

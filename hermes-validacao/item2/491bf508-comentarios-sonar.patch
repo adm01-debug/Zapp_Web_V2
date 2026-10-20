@@ -1,0 +1,140 @@
+From 491bf5083887b0ed8180ba97423f3b983be6608c Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Wed, 30 Sep 2026 14:47:09 -0300
+Subject: [PATCH] refactor(l5): comentario curto nas edges (o Sonar conta
+ comentario na duplicacao)
+
+O gate seguia em 5.4% com o bloco apontando para as duas edges. Medindo o que o Sonar
+comparava: o bloco de ~31 linhas era formado sobretudo pelos COMENTARIOS longos e quase
+iguais que eu tinha deixado nos dois arquivos -- o Sonar conta comentario na duplicacao.
+A regra do guard, o motivo e o fail-closed ja estao documentados por inteiro em
+_shared/cron-secret-auth.ts; nas edges fica uma linha curta. Sobram apenas runs de <=6
+linhas identicas (assinatura, boot e a chamada do guard), abaixo do limiar de 100 tokens
+do CPD.
+
+Verificacao: deno check com a config do CI limpo nos 4 arquivos; suite Deno 12 passed /
+0 failed; eslint limpo; manifesto OK.
+---
+ supabase/deployment-manifest.json                 | 14 +++++++-------
+ supabase/functions/batch-fetch-avatars/index.ts   | 15 ++-------------
+ .../functions/connection-health-check/index.ts    | 13 ++-----------
+ 3 files changed, 11 insertions(+), 31 deletions(-)
+
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 7af8dca6..9063043c 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -273,8 +273,8 @@
+     },
+     {
+       "path": "supabase/functions/batch-fetch-avatars/index.ts",
+-      "bytes": 7120,
+-      "sha256": "d1695f0698b4a2ce1a4c4402d959b00f1342dd64e0e04b10d4d7a8b0949821a0"
++      "bytes": 6280,
++      "sha256": "5af6d2bba51c96f2c9f23ea234c227268c3b5364cf596c5b39025d0edf0d15d4"
+     },
+     {
+       "path": "supabase/functions/bitrix-api/index.ts",
+@@ -308,8 +308,8 @@
+     },
+     {
+       "path": "supabase/functions/connection-health-check/index.ts",
+-      "bytes": 9937,
+-      "sha256": "9f3bca264bd7759cf745eacb8bb59c68bd098ebbb76abcb2b6c12a39737fa0a6"
++      "bytes": 9275,
++      "sha256": "23adebeffb49932c426e8b4f32a07bd8d5456f957280dab4b8432d65d6935a52"
+     },
+     {
+       "path": "supabase/functions/create-user/index.ts",
+@@ -727,7 +727,7 @@
+       "name": "batch-fetch-avatars",
+       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "7b4c7b5f696485b6be4c496945f6e24900787a91ff4b8360135e4719cfba6178",
++      "source_sha256": "fe28069b0ae492b20caa9cc430d082c4559a08ff0a06b7c2b292e25b7ff1b0c4",
+       "source_files": [
+         "supabase/functions/_shared/cron-secret-auth.ts",
+         "supabase/functions/_shared/edge-boot.ts",
+@@ -824,7 +824,7 @@
+       "name": "connection-health-check",
+       "entrypoint": "supabase/functions/connection-health-check/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "fc13cdc5b99b30afa03e306f61b202615d90dcdaf14ce5441ef4974e463546d7",
++      "source_sha256": "dbdc1a18b001b17dd7daf65cef80f2e2e9d464ac54900d7ddbfae5f67277b78f",
+       "source_files": [
+         "supabase/functions/_shared/cron-secret-auth.ts",
+         "supabase/functions/_shared/edge-boot.ts",
+@@ -1427,5 +1427,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "9adbcd073647e6e0b05310ebc67c29b5ebd8da8a06f75b235aa419e4a3bd6651"
++  "manifest_sha256": "3207b8d194678a74115d64be2c89faaeb25765d2a7bd6974d9d430ce432404e7"
+ }
+diff --git a/supabase/functions/batch-fetch-avatars/index.ts b/supabase/functions/batch-fetch-avatars/index.ts
+index 1dc7f48c..0aee2749 100644
+--- a/supabase/functions/batch-fetch-avatars/index.ts
++++ b/supabase/functions/batch-fetch-avatars/index.ts
+@@ -10,10 +10,8 @@ export async function handleBatchFetchAvatars(
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   _injected?: EdgeInjected<any>,
+ ): Promise<Response> {
+-  // O `??` do boot e PREGUICOSO de proposito: com `_injected.supabase` (testes) o
+-  // requireEnv('SUPABASE_URL') nem roda. O generico de bootEdge e a anotacao
+-  // `as SupabaseClient` — sem ela o receiver `any` faria o TS perder a inferencia dos
+-  // callbacks das queries abaixo (TS7006 em contacts.map/connections.map/batch.map).
++  // Regra, motivo e fail-closed do guard: _shared/cron-secret-auth.ts. O literal da RPC
++  // fica aqui de proposito (o guard de catalogo valida o nome do alvo contra o schema).
+   const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+     fnName: 'batch-fetch-avatars',
+     injected: _injected,
+@@ -22,15 +20,6 @@ export async function handleBatchFetchAvatars(
+   if (cors) return cors;
+ 
+   try {
+-
+-    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+-    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+-    // aceitava como "um JWT valido". O caminho de Bearer e o consumidor legitimo do front
+-    // (useNewConversation e useInboxBulkActions chamam via functions.invoke com o JWT da
+-    // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
+-    // o literal da RPC fica AQUI de proposito, para o guard de catalogo
+-    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+     const authorized = await isAuthorizedCronOrUser(req, supabase, {
+       serviceKey,
+       readVaultSecret: async () => {
+diff --git a/supabase/functions/connection-health-check/index.ts b/supabase/functions/connection-health-check/index.ts
+index d69603c5..a75d62e2 100644
+--- a/supabase/functions/connection-health-check/index.ts
++++ b/supabase/functions/connection-health-check/index.ts
+@@ -11,9 +11,8 @@ export async function handleConnectionHealthCheck(
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   _injected?: EdgeInjected<any>,
+ ): Promise<Response> {
+-  // O `??` do boot e PREGUICOSO de proposito: os testes injetam o client e rodam sem
+-  // SUPABASE_URL. A anotacao `as SupabaseClient` fica no generico do bootEdge — sem ela
+-  // o receiver `any` faz o TS perder a inferencia dos callbacks do client no corpo.
++  // Regra, motivo e fail-closed do guard: _shared/cron-secret-auth.ts. O literal da RPC
++  // fica aqui de proposito (o guard de catalogo valida o nome do alvo contra o schema).
+   const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+     fnName: 'connection-health-check',
+     injected: _injected,
+@@ -22,14 +21,6 @@ export async function handleConnectionHealthCheck(
+   if (cors) return cors;
+ 
+   try {
+-
+-    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+-    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+-    // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
+-    // O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo); o
+-    // literal da RPC fica AQUI de proposito, para o guard de catalogo
+-    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+     const authorized = await isAuthorizedCronOrUser(req, supabase, {
+       serviceKey,
+       readVaultSecret: async () => {
+-- 
+2.43.0
+

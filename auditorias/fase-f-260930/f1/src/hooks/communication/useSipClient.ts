@@ -1,0 +1,119 @@
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { getLogger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useSipConnection } from '../sip/useSipConnection';
+import { upsertMyCall, novoCallId, desfechoDaChamada } from '@/lib/calls/persistence';
+import type { UpsertMyCallInput } from '@/lib/calls/persistence';
+import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
+import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
+import { CallEngine } from '@/lib/calls/adapters/CallEngine';
+import type { CallEngineSink, EngineStatus } from '@/lib/calls/adapters/CallEngine';
+import type { AdapterDirection } from '@/lib/calls/adapters/CallAdapter';
+
+export type { SipStatus } from '../sip/useSipConnection';
+export type CallStatus = EngineStatus;
+export type CallDirection = AdapterDirection;
+
+const log = getLogger('SipClient');
+// Removidos no T15 (provisionamento por Edge): por ora são o default do servidor.
+const SIP_SERVER = 'ip.b24-9441-1552764901.bitrixphone.com';
+const SIP_USER = 'phone1';
+const SIP_WS_PORT = 8089;
+
+/**
+ * T09: estado espelhado do motor, cronômetro, toast e conexão. T11: o banco é
+ * gravado por `upsert_my_call` (mesmo id nas 3 gravações) — `useCalls` sai.
+ */
+export function useSipClient() {
+  const [callStatus, setCallStatus] = useState<CallStatus>('idle');
+  const [callDuration, setCallDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentNumber, setCurrentNumber] = useState('');
+  const [callDirection, setCallDirection] = useState<CallDirection | null>(null);
+  // T11: a linha no banco (= `sessionId` da máquina) e a direção fora do estado
+  // (o sink é memoizado: `directionRef` evita closure velha).
+  const [currentCallId, setCurrentCallId] = useState<string | null>(null);
+  const directionRef = useRef<CallDirection | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopTimer = useCallback(() => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }, []);
+  const startTimer = useCallback(() => { setCallDuration(0); timerRef.current = setInterval(() => setCallDuration(p => p + 1), 1000); }, []);
+  // T14: correspondência só por E.164 completo (nunca por sufixo de 8 dígitos).
+  const findContactByPhone = useCallback(async (phone: string): Promise<string | null> => {
+    const variants = phoneQueryVariants(phone);
+    if (variants.length === 0) return null;
+    try {
+      const { data } = await supabase.from('contacts').select('id, phone')
+        .or(variants.map(v => `phone.eq.${v}`).join(',')).limit(5);
+      return pickUniquePhoneMatch(data ?? [], phone);
+    } catch {
+      return null;
+    }
+  }, []);
+  const sink: CallEngineSink = useMemo(() => {
+    const persistir = async (input: UpsertMyCallInput) => {
+      const { ok, error } = await upsertMyCall(input);
+      // Falha de banco nunca é silenciosa: log com o id da chamada + toast.
+      if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toast.error('Não foi possível salvar a ligação'); }
+    };
+    return {
+      onStatus: setCallStatus,
+      onSession: (direction, number) => { directionRef.current = direction; setCallDirection(direction); setCurrentNumber(number); },
+      onEstablished: startTimer,
+      onTerminated: stopTimer,
+      onMuted: setIsMuted,
+      onError: (message) => toast.error(message),
+      create: async (params) => {
+        const id = novoCallId(params.sessionId);
+        setCurrentCallId(id);
+        const contactId = await findContactByPhone(params.contactPhone);
+        await persistir({ id, direction: params.direction, status: 'ringing', channel: 'voip', peerNumber: params.contactPhone, contactId, providerCallId: params.providerCallId });
+        return id;
+      },
+      onAnswered: (callId) => {
+        void persistir({ id: callId, direction: directionRef.current ?? 'outbound', status: 'answered', answeredAt: new Date().toISOString() });
+      },
+      onFinished: (callId, talkSeconds) => {
+        const direction = directionRef.current ?? 'outbound';
+        setCurrentCallId(null); // a próxima discagem não reaproveita a linha anterior
+        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction) });
+      },
+    };
+  }, [startTimer, stopTimer, findContactByPhone]);
+
+  // Lazy init (não `useRef`): o motor é criado uma vez e nunca lido em render.
+  const [engine] = useState(() => new CallEngine(new SipCallAdapter(log)));
+  useEffect(() => { engine.bind(sink); }, [engine, sink]);
+  const handleInvitation = useCallback((invitation: Parameters<CallEngine['handleInvitation']>[0]) => engine.handleInvitation(invitation), [engine]);
+  const { sipStatus, uaRef, connect, disconnect } = useSipConnection(handleInvitation);
+
+  // O `sessionId` vem do provider: é o id da linha e o mesmo do evento `DIAL`.
+  const makeCall = useCallback((number: string, sessionId?: string) => engine.makeCall(number, uaRef.current, sipStatus === 'registered', sessionId), [engine, sipStatus, uaRef]);
+  const hangUp = useCallback(() => engine.hangUp(), [engine]);
+  const toggleMute = useCallback(() => engine.toggleMute(), [engine]);
+  const sendDTMF = useCallback((digit: string) => engine.sendDTMF(digit), [engine]);
+  const acceptIncomingCall = useCallback(async () => { await engine.accept(); }, [engine]);
+  const rejectIncomingCall = useCallback(async () => { await engine.reject(); }, [engine]);
+
+  const connectWithStoredCredentials = useCallback(async () => {
+    const { data, error } = await supabase.functions.invoke('get-sip-password');
+    const password = data?.password;
+    if (error || !password) {
+      // FunctionsHttpError.context pode ser Response (status) ou corpo já
+      // parseado (code), dependendo da versão do supabase-js.
+      const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
+      const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : true;
+      toast.error(isMissingSecret ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.' : 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.');
+      return;
+    }
+    await connect({ server: SIP_SERVER, user: SIP_USER, password, wsPort: SIP_WS_PORT });
+  }, [connect]);
+
+  useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
+
+  return {
+    sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
+    connect, connectWithStoredCredentials, disconnect, makeCall, hangUp, toggleMute, sendDTMF,
+    acceptIncomingCall, rejectIncomingCall,
+  };
+}

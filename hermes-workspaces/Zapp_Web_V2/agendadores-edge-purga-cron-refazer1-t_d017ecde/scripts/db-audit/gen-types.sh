@@ -1,0 +1,207 @@
+#!/bin/sh
+# gen-types.sh [--local] [output_path]
+# Gera types TypeScript a partir do schema do banco.
+#
+# Modo padrao: introspecta o banco DESTINO (producao) via --db-url.
+#   Requer: DESTINO_URL no ambiente
+#           Formato: postgresql://... (porta 5432 ou 6543 session-mode — nao pooler transaction)
+#   Uso local: DESTINO_URL="postgresql://..." bash scripts/db-audit/gen-types.sh
+#   Uso em CI: chamado por db-live-guard.yml (guarda de drift do banco oficial)
+#              e por types-sync.yml (sincronizacao automatica de types/catalogo/
+#              manifesto) — os dois usam este mesmo modo padrao, via o proxy
+#              pgbouncer descrito abaixo.
+#
+# Modo --local: introspecta um Postgres LOCAL (supabase db start), que aplica
+#   automaticamente as migrations de supabase/migrations num volume novo.
+#   Reflete so o que esta commitado em supabase/migrations; nao detecta
+#   drift nao commitado no banco de producao.
+#   Uso local: supabase db start && bash scripts/db-audit/gen-types.sh --local
+#   Uso em CI: nenhum workflow atual usa --local (nao ha step "supabase db
+#              start" em nenhum workflow); e reservado para uso manual em
+#              dev.
+#
+# Binario: supabase CLI 2.116.0 (CI: supabase/setup-cli@v3 version: 2.116.0)
+#
+# POSIX sh (sem bashisms) — compativel com dash e bash
+#
+# NAO usa withPsqlEnvironment/PGPASSFILE (diferente de check-migration-drift.mjs,
+# register-migration.mjs etc): a CLI 2.116.0 (rewrite TS/Effect) roda
+# `gen types typescript --db-url` subindo um container Docker
+# (ghcr.io/supabase/postgres-meta), e entrega a --db-url a esse container em
+# texto puro (confirmado empiricamente — nao e in-process nem evita Docker).
+# Por isso a credencial real de producao nao pode ir direto nela: ver o bloco
+# "Proxy local" abaixo.
+#
+# Sobre o `--network-id host` no comando abaixo: ele torna explicita a rede do
+# container em vez de depender da rede que a CLI gera a cada execucao
+# (documentado como "use the specified docker network instead of a generated
+# one"). IMPORTANTE — ele NAO e correcao do "Error: timeout exceeded when
+# trying to connect", e um comentario anterior aqui afirmava isso e estava
+# errado (o PR #1637 foi mergeado com essa justificativa incorreta).
+# O que os runs mostram:
+#   - o timeout e INTERMITENTE: 2 de 14 runs do db-live-guard na main em
+#     02/10/2026 (bed17931, 73d808b8); os outros 12 conectaram, inclusive 7
+#     ANTES do #1637 existir;
+#   - nos runs que falham, o log traz os clientes do postgres-meta JA
+#     instanciados ("Failed to end the connection on error: { this:
+#     PostgresMetaRelationships { query: [AsyncFunction: query] }, end:
+#     undefined }") — se o container nao alcancasse o loopback do runner, o erro
+#     seria a montante e esses objetos nao existiriam;
+#   - logo o que trava e a QUERY atraves do pgbouncer ate o banco de producao
+#     (verify-full), apos ~16-21s; os runs que passam terminam em 4-8s.
+# A flag fica porque e inofensiva e remove uma dependencia implicita da rede
+# gerada; a causa do timeout segue em investigacao (nao e infra do container).
+#
+# --local nao tem esse problema: nao usa credencial nenhuma, so o Postgres do
+# Docker subido por `supabase db start`.
+set -e
+
+MODE=db-url
+if [ "${1:-}" = "--local" ]; then
+  MODE=local
+  shift
+fi
+
+OUTPUT="${1:-/tmp/types.generated.ts}"
+TMP="$(mktemp /tmp/types.XXXXXX.ts)"
+trap 'rm -f "$TMP" "${TMP}.normalized"' EXIT HUP INT TERM
+
+# Retry com backoff em volta do `supabase gen types`.
+#
+# Motivo (medido em 02/10/2026): o banco de producao passa por rajadas
+# transitorias de saturacao (varios `canceling statement due to statement
+# timeout` no mesmo minuto, queries de ~11s, `Connection reset by peer`).
+# Nessas janelas o handshake do pgbouncer ate o banco nao completa dentro do
+# timeout do cliente postgres-meta e a CLI morre com "Error: timeout exceeded
+# when trying to connect", com tudo saudavel. Prova: os 2 runs do db-live-guard
+# que falharam caem exatamente nos minutos com statement timeout registrado
+# (14:57 -> 1; 15:35 -> 4), enquanto o run que passou caiu em minuto limpo.
+# Um gate de conformidade nao pode ficar vermelho por saturacao de terceiros:
+# a tentativa extra custa segundos e evita o falso vermelho.
+retry_gen_types() {
+  _tentativa=1
+  _max=3
+  while [ "$_tentativa" -le "$_max" ]; do
+    if supabase gen types typescript "$@" > "$TMP"; then
+      return 0
+    fi
+    if [ "$_tentativa" -eq "$_max" ]; then
+      break
+    fi
+    _espera=$((_tentativa * ${GEN_TYPES_RETRY_DELAY_S:-10}))
+    echo "Aviso: 'supabase gen types' falhou na tentativa ${_tentativa}/${_max}; nova tentativa em ${_espera}s (banco possivelmente saturado)." >&2
+    sleep "$_espera"
+    _tentativa=$((_tentativa + 1))
+  done
+  echo "Erro: 'supabase gen types' falhou em ${_max} tentativas." >&2
+  return 1
+}
+
+if [ "$MODE" = local ]; then
+  supabase gen types typescript \
+    --local \
+    --schema public \
+    > "$TMP"
+else
+  if [ -z "$DESTINO_URL" ]; then
+    echo "Erro: DESTINO_URL nao definida no ambiente." >&2
+    exit 1
+  fi
+
+  # Proxy local: `--db-url` vai para um container Docker fora do nosso
+  # controle (ver comentario acima), entao a credencial real de producao
+  # ficaria em texto puro no argv/ambiente desse processo, visivel via
+  # /proc a qualquer processo irmao no mesmo job (ex.: dependencia
+  # comprometida por `bun install` mais adiante no workflow). Se pgbouncer
+  # estiver disponivel, sobe um proxy so-loopback (127.0.0.1) cuja config
+  # (com a credencial real) fica num arquivo 0600 dentro de um diretorio
+  # 0700; o `--db-url` passado ao supabase CLI usa credencial descartavel
+  # que nao aponta pra producao. server_tls_sslmode=verify-full com a CA
+  # Supabase pinada no trecho pgbouncer->producao preserva a mesma postura
+  # de TLS ja usada pelos outros scripts. Validado empiricamente (CLI
+  # 2.116.0 + Docker): o container gerado alcanca 127.0.0.1 do runner.
+  # Sem pgbouncer (ex.: uso manual local), cai no comportamento anterior.
+  if command -v pgbouncer >/dev/null 2>&1; then
+    PROXY_DIR="$(mktemp -d /tmp/pg-proxy.XXXXXX)"
+    chmod 700 "$PROXY_DIR"
+    trap 'rm -f "$TMP" "${TMP}.normalized"; kill "${PROXY_PID:-}" 2>/dev/null || true; rm -rf "$PROXY_DIR"' EXIT HUP INT TERM
+
+    PROXY_PORT="$(node scripts/db-audit/local-pg-proxy.mjs "$PROXY_DIR")"
+
+    # Saida redirecionada para dentro do PROXY_DIR (removido pela trap acima):
+    # sem isso, o pgbouncer roda em foreground e duplica cada linha de LOG no
+    # stdout/stderr herdado do job, que o GitHub Actions captura
+    # PERMANENTEMENTE no log do run (repo publico) — incluindo usuario real
+    # de producao (ex.: postgres.<project-ref>) e IP real do banco, que o
+    # `::add-mask::` do workflow nao cobre por serem apenas fragmentos da
+    # DESTINO_URL secreta, nao a string inteira. Isso derrubava a mesma
+    # opacidade que database-identity.mjs foi desenhado pra garantir.
+    pgbouncer "$PROXY_DIR/pgbouncer.ini" >"$PROXY_DIR/pgbouncer.stdout.log" 2>&1 &
+    PROXY_PID=$!
+
+    # sslmode=disable explicito: o passo anterior ("Exigir credencial do
+    # banco oficial") grava PGSSLMODE=verify-full no $GITHUB_ENV, que
+    # persiste pra todos os steps seguintes do job. Essa variavel e para a
+    # perna producao (DESTINO_URL); o pgbouncer local so fala TLS na perna
+    # de saida dele mesmo pra producao (server_tls_sslmode=verify-full em
+    # local-pg-proxy.mjs) — o lado que escuta em 127.0.0.1 (auth_type=trust)
+    # nao tem TLS. Sem sslmode=disable aqui, tanto o pg_isready quanto o
+    # supabase CLI herdam PGSSLMODE=verify-full do ambiente do job e tentam
+    # TLS contra um endpoint loopback que nao fala TLS — falha sempre.
+    # A perna cliente do proxy (loopback) usa auth_type=trust: a senha NAO e
+    # validada (userlist.txt registra "unused"). O valor aqui e' descartavel,
+    # nunca aponta para producao, e vem do ambiente (ZAPP_PG_PROXY_PASSWORD)
+    # para nao deixar credencial literal no codigo. Sem a variavel cai no
+    # proprio usuario do proxy, que o trust ignora -- o script segue rodando
+    # tanto no CI quanto no uso manual local.
+    PROXY_USER=proxy
+    PROXY_PASSWORD="${ZAPP_PG_PROXY_PASSWORD:-$PROXY_USER}"
+    PROXY_URL="postgresql://${PROXY_USER}:${PROXY_PASSWORD}@127.0.0.1:${PROXY_PORT}/proxydb?sslmode=disable"
+
+    i=0
+    while [ "$i" -lt 50 ]; do
+      if pg_isready -d "$PROXY_URL" >/dev/null 2>&1; then
+        break
+      fi
+      i=$((i + 1))
+      sleep 0.2
+    done
+    if [ "$i" -ge 50 ]; then
+      echo "Erro: proxy local (pgbouncer) nao subiu a tempo." >&2
+      exit 1
+    fi
+
+    retry_gen_types \
+      --db-url "$PROXY_URL" \
+      --network-id host \
+      --schema public
+  else
+    if [ "${CI:-}" = "true" ]; then
+      echo "Erro: pgbouncer ausente em ambiente CI; a credencial DESTINO_URL nao pode ir direto no --db-url. Instale pgbouncer." >&2
+      exit 1
+    fi
+    echo "Aviso: pgbouncer ausente; DESTINO_URL vai direto no --db-url (visivel via ps/proc a processos deste job). Instale pgbouncer para blindar a credencial." >&2
+    retry_gen_types \
+      --db-url "$DESTINO_URL" \
+      --schema public
+  fi
+fi
+
+# A CLI pode emitir mais de uma quebra de linha no EOF. Normalize apenas as
+# linhas vazias finais para que o artefato seja deterministico e passe em
+# `git diff --check`, preservando linhas vazias internas.
+awk '
+  NF {
+    while (blank_lines > 0) {
+      print ""
+      blank_lines--
+    }
+    print
+    next
+  }
+  { blank_lines++ }
+' "$TMP" > "${TMP}.normalized"
+
+mv "${TMP}.normalized" "$OUTPUT"
+BYTES="$(wc -c < "$OUTPUT")"
+echo "types gerado: ${OUTPUT} (${BYTES} bytes)"

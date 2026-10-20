@@ -1,0 +1,37 @@
+--- a/integrador/integrar.sh
++++ b/integrador/integrar.sh
+@@ -509,12 +509,32 @@
+   NOMEBD=""; [ -n "$MIGS" ] && NOMEBD="v2-integrador"
+   ARV="$($GIT -C "$INT" rev-parse "$NOVO^{tree}")"; PREVER=0
+   [ -z "$MIGS" ] && [ -f "$ARVORES" ] && grep -qx "$ARV" "$ARVORES" && PREVER=1
++  # 07/10 (t_59eb0a93): ROTA DE ACEITE. O `zapp-verify` já aceita `--aceitar <arq>` (linhas 13-15) e repassa ao
++  # `zapp-db-local check`, que compara a estrutura do conjunto com o retrato da produção: toda diferença listada no
++  # arquivo deixa de reprovar. A lista é POR CARTÃO ($DIRLOG/aceitar/<id>.txt), montada a partir do estado real daquele
++  # cartão, e só é usada quando (a) o cartão traz migration e (b) nenhuma migration pendente está em falhas.tsv — o
++  # `--aceitar` pula a conferência de `falhas.tsv` que o caminho estrito faz, então ela é refeita aqui antes. Sem o
++  # arquivo, o portão é exatamente o de antes: nenhum cartão que não tenha lista própria muda de comportamento.
++  ACE_OPT=()
++  if [ -n "$NOMEBD" ] && [ -f "$DIRLOG/aceitar/$ID.txt" ]; then
++    OK_ACE=1
++    if [ -f "$FAL" ]; then
++      FALHAS_MIG="$(cut -f1 "$FAL")"
++      for m in $MIGS; do echo "$FALHAS_MIG" | grep -qxF "$(basename "$m")" && OK_ACE=0; done
++    else OK_ACE=0; fi
++    if [ "$OK_ACE" = 1 ]; then
++      ACE_OPT=(--aceitar "$DIRLOG/aceitar/$ID.txt")
++      log "$ID: portão final COM lista de aceite ($DIRLOG/aceitar/$ID.txt, $(grep -cvE '^[[:space:]]*(#|$)' "$DIRLOG/aceitar/$ID.txt" 2>/dev/null) diferença(s) esperada(s))"
++    else
++      log "$ID: lista de aceite presente, mas migration pendente em falhas.tsv (ou estado indisponível): sigo na regra estrita"
++    fi
++  fi
+   if [ $PREVER = 1 ]; then VRC=0    # mesma árvore que o lote verificou: não repete
+-  else timeout 1200 zapp-verify full "$INT" $NOMEBD >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?; fi
++  else timeout 1200 zapp-verify full "$INT" $NOMEBD "${ACE_OPT[@]}" >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?; fi
+   if [ $VRC != 0 ] && [ -n "$NOMEBD" ]; then
+     # com banco no portão, falha de LEITURA da produção (zapp-db-ler: rede/sessão) vira vermelho por regra estrita do
+     # zapp-verify — uma segunda tentativa separa oscilação de rede de defeito do cartão
+-    sleep 20; timeout 1200 zapp-verify full "$INT" $NOMEBD >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?
++    sleep 20; timeout 1200 zapp-verify full "$INT" $NOMEBD "${ACE_OPT[@]}" >"$DIRLOG/.ultima-verificacao.log" 2>&1 9>&-; VRC=$?
+   fi
+   if [ $VRC != 0 ] && [ $PREVER = 0 ] && reteste_isolado "$DIRLOG/.ultima-verificacao.log" "$BASE_SHA"; then
+     log "$ID: os testes que falharam passaram quando rodados sozinhos (instáveis sob carga); verificação aceita"; VRC=0

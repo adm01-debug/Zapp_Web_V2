@@ -1,0 +1,11 @@
+BEGIN;
+drop policy if exists "message_reactions_insert_policy" on public.message_reactions;
+drop policy if exists "message_reactions_update_policy" on public.message_reactions;
+drop policy if exists "message_reactions_delete_policy" on public.message_reactions;
+create policy "message_reactions_insert_policy" on public.message_reactions for insert to authenticated with check (exists (select 1 from public.messages m join public.contacts c on c.id = m.contact_id where m.id = message_id and (public.is_admin_or_supervisor(auth.uid()) or c.assigned_to = public.get_profile_id_for_user(auth.uid()) or c.assigned_to is null)));
+create policy "message_reactions_update_policy" on public.message_reactions for update to authenticated using (exists (select 1 from public.messages m join public.contacts c on c.id = m.contact_id where m.id = message_id and (public.is_admin_or_supervisor(auth.uid()) or c.assigned_to = public.get_profile_id_for_user(auth.uid()) or c.assigned_to is null)));
+create policy "message_reactions_delete_policy" on public.message_reactions for delete to authenticated using (exists (select 1 from public.messages m join public.contacts c on c.id = m.contact_id where m.id = message_id and (public.is_admin_or_supervisor(auth.uid()) or c.assigned_to = public.get_profile_id_for_user(auth.uid()) or c.assigned_to is null)));
+create policy "Users can insert reactions for assigned contacts" on public.message_reactions for insert to authenticated with check (contact_id in (select c.id from public.contacts c where c.assigned_to in (select p.id from public.profiles p where p.user_id = auth.uid())) or public.is_admin_or_supervisor(auth.uid()));
+create policy "Users can delete their own reactions" on public.message_reactions for delete to authenticated using (user_id in (select id from public.profiles where user_id = auth.uid()));
+select count(*) as write_policies_apos_rollback from pg_policies where schemaname='public' and tablename='message_reactions' and cmd in ('INSERT','UPDATE','DELETE');
+ROLLBACK;

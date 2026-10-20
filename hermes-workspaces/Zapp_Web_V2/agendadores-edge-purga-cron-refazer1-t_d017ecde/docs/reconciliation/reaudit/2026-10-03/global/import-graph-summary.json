@@ -1,0 +1,19 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "parsed_modules": 2397,
+  "local_references": 7463,
+  "resolved": 7463,
+  "unresolved": 0,
+  "frontend_modules": 1375,
+  "frontend_modules_potentially_reachable": 1188,
+  "frontend_modules_without_incoming_runtime_reference": 108,
+  "roots": [
+    "src/main.tsx"
+  ],
+  "limitations": [
+    "An import/re-export graph is not a symbol call graph: a re-export can be unused, and a reachable module can contain dormant functions.",
+    "Literal local imports, exports, require and dynamic import are indexed. Computed imports, framework conventions, HTML/script entrypoints and remote modules need separate inspection.",
+    "Only src/main.tsx, src/main.ts and src/index.tsx are frontend roots; edge/server/script entrypoints must not be classified as dead because they are outside those roots.",
+    "Unresolved local references are candidates (including bundler query strings/assets), not automatically build errors."
+  ]
+}

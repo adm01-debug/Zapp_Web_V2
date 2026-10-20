@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_pins": "second-pass-probe-pins.json",
+  "probe_id": "stale_remote_metadata_attested",
+  "finding_id": "R2-INF-017",
+  "status": "confirmed",
+  "fixture": "All remote metadata retains pre-deploy version 7 until 70 seconds; CLI unchanged list is empty.",
+  "observed": {
+    "accepted_at_ms": 60000,
+    "synthetic_inventory_calls": 7,
+    "attested_remote_versions": [
+      7
+    ],
+    "known_unchanged_count": 0,
+    "selected_count": 73,
+    "accepted_without_version_bump_count": 73,
+    "new_version_scheduled_at_ms": 70000,
+    "source_to_bundle_equivalence_proven": false
+  },
+  "limits": "Synthetic metadata tests the reviewed collector, not a deployment or observed live latency. The artifact already disclaims binary equivalence; the defect is premature attribution of selected deployment versions.",
+  "blocked_network_attempts": 0,
+  "product_network_requests": 0,
+  "production_writes": 0
+}

@@ -1,0 +1,188 @@
+import { callCRMIntegration } from '@/lib/crmIntegration';
+import { queryExternalProxy } from '@/lib/externalProxy';
+import { log } from '@/lib/logger';
+import type { ContactSidebarData } from '@/types/contactSidebar';
+import type { ExternalDBFilter } from '@/types/externalDB';
+import type { EvolutionMessage } from '@/types/evolutionExternal';
+
+interface ContactSearchItem {
+  company_name?: string | null;
+  cargo?: string | null;
+}
+
+interface ContactSearchResponse {
+  results?: ContactSearchItem[];
+}
+ 
+ export class ExternalCRMService {
+   static async getContact360Batch(contacts: Array<{ id: string; phone: string }>) {
+     const contactIds = [...new Set(contacts.map((contact) => contact.id).filter(Boolean))];
+     if (contactIds.length === 0) return new Map();
+ 
+     const chunks: string[][] = [];
+     for (let index = 0; index < contactIds.length; index += 100) {
+       chunks.push(contactIds.slice(index, index + 100));
+     }
+     const map = new Map<string, unknown>();
+     let nextChunk = 0;
+     let successfulChunks = 0;
+     const worker = async () => {
+       while (nextChunk < chunks.length) {
+         const chunk = chunks[nextChunk++];
+         try {
+           const { data } = await callCRMIntegration<Record<string, unknown>>('contactLookupBatch', { contactIds: chunk });
+           successfulChunks += 1;
+       if (data && typeof data === 'object') {
+         for (const [phone, info] of Object.entries(data)) {
+           map.set(phone, info);
+           const clean = phone.replace(/[^0-9]/g, '');
+           if (clean !== phone) map.set(clean, info);
+           if (!phone.startsWith('55') && clean.length <= 11) map.set('55' + clean, info);
+         }
+       }
+         } catch (error) {
+           log.error('[ExternalCRMService] CRM batch chunk failed:', error);
+         }
+       }
+     };
+     await Promise.all(Array.from({ length: Math.min(3, chunks.length) }, () => worker()));
+     if (successfulChunks === 0) throw new Error('Todos os lotes de enriquecimento CRM falharam');
+     return map;
+   }
+ 
+   static async queryExternal<T = unknown>(params: {
+     table: string;
+     select?: string;
+     filters?: ExternalDBFilter[];
+     order?: { column: string; ascending?: boolean };
+     limit?: number;
+     offset?: number;
+     countMode?: 'exact' | 'planned' | 'estimated';
+   }) {
+     const response = await callCRMIntegration<T[]>('select', params);
+     return {
+       data: response.data || [],
+       meta: response.meta || { record_count: 0, duration_ms: 0, severity: 'ok' as const },
+     };
+   }
+ 
+   static async callRPC<T = unknown>(rpc: string, params?: Record<string, unknown>) {
+     const response = await callCRMIntegration<T | T[]>('rpc', { rpc, params: params || {} });
+     const data = response.data;
+     return {
+       data: Array.isArray(data) ? data as T[] : [data as T],
+       meta: response.meta || { record_count: Array.isArray(data) ? data.length : 1, duration_ms: 0, severity: 'ok' as const },
+     };
+   }
+ 
+   static async fetchEvolutionMessages(limit = 500) {
+     const result = await queryExternalProxy<EvolutionMessage>({
+       table: 'evolution_messages',
+       select: '*',
+       order: { column: 'created_at', ascending: false },
+       limit,
+     });
+     return result.data;
+   }
+ 
+   static async fetchEvolutionMessagesByJid(remoteJid: string, limit = 1000) {
+     const result = await queryExternalProxy<EvolutionMessage>({
+       table: 'evolution_messages',
+       select: '*',
+       filters: [{ column: 'remote_jid', operator: 'eq', value: remoteJid }],
+       order: { column: 'created_at', ascending: true },
+       limit,
+     });
+     return result.data;
+   }
+ 
+   static async getContact360(contactId: string) {
+     try {
+       const { data } = await callCRMIntegration<unknown>('contactLookup', { contactId, lookup: '360' });
+       return data;
+     } catch (error) {
+       log.error('[ExternalCRMService] Error fetching contact 360:', error);
+       return null;
+     }
+   }
+
+   static async getContactSidebar(contactId: string): Promise<ContactSidebarData | null> {
+     const { data } = await callCRMIntegration<ContactSidebarData>('contactLookup', { contactId, lookup: 'sidebar' });
+     return data;
+   }
+ 
+   static async fetchUniqueCompanies(maxPages = 5, pageSize = 200) {
+     const allNames: string[] = [];
+     let page = 0;
+ 
+     while (page < maxPages) {
+       let data: ContactSearchResponse;
+       try {
+         ({ data } = await callCRMIntegration<ContactSearchResponse>('rpc', {
+           rpc: 'search_contacts_advanced',
+           params: {
+             p_search: null, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
+             p_estado: null, p_cliente_ativado: true, p_ja_comprou: null,
+             p_sort_by: 'name', p_page: page, p_page_size: pageSize,
+           },
+         }));
+       } catch (error) {
+         log.error('[ExternalCRMService] Error fetching companies:', error);
+         break;
+       }
+ 
+       const results = data?.results || [];
+       if (results.length === 0) break;
+ 
+       results.forEach((r) => {
+         const name = String(r.company_name || '').trim();
+         if (name) allNames.push(name);
+       });
+ 
+       if (results.length < pageSize) break;
+       page++;
+     }
+ 
+     return [...new Set(allNames)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+   }
+ 
+   static async fetchUniqueRoles() {
+     const allCargos: string[] = [];
+ 
+     let salesRoles: Array<{ role: string | null }> = [];
+     try {
+       const response = await callCRMIntegration<Array<{ role: string | null }>>('select', {
+         table: 'salespeople', select: 'role', limit: 500,
+       });
+       salesRoles = response.data || [];
+     } catch (error) {
+       log.error('[ExternalCRMService] Error fetching sales roles:', error);
+     }
+     if (salesRoles) {
+       salesRoles.forEach((r) => {
+         const v = String(r.role || '').trim();
+         if (v) allCargos.push(v);
+       });
+     }
+ 
+     let searchData: ContactSearchResponse | null = null;
+     try {
+       const response = await callCRMIntegration<ContactSearchResponse>('rpc', {
+         rpc: 'search_contacts_advanced',
+         params: { p_cliente_ativado: true, p_page: 0, p_page_size: 200 },
+       });
+       searchData = response.data;
+     } catch (error) {
+       log.error('[ExternalCRMService] Error fetching role facets:', error);
+     }
+     if (searchData) {
+       const results = searchData.results || [];
+       results.forEach((r) => {
+         const v = String(r.cargo || '').trim();
+         if (v) allCargos.push(v);
+       });
+     }
+ 
+     return [...new Set(allCargos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+   }
+ }

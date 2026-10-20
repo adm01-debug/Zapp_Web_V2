@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "sources": [
+    {
+      "path": "src/hooks/system/useDiagnosticsData.ts",
+      "sha256": "c665f66b86eb8a1116c77e34150d25fa0554a82e75684dc9c7ed867d4b46628a"
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+      "sha256": "2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee"
+    },
+    {
+      "path": "src/components/monitoring/hooks/types.ts",
+      "sha256": "4564f84805039c7199daca72211a4f91425e6e169bfa2a2f5f3ec941864286c9"
+    },
+    {
+      "path": "src/components/performance/PerformanceMonitor.tsx",
+      "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1"
+    },
+    {
+      "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
+      "sha256": "53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0"
+    },
+    {
+      "path": "src/lib/web-vitals.ts",
+      "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d"
+    },
+    {
+      "path": "performance-budget.json",
+      "sha256": "0a04d79668ca77ae8f7d522b91d526bc9375c84006801037d24effcc3802e9d5"
+    }
+  ],
+  "compiler": {
+    "path": "/workspace/scratch/8b95153002da/audit/tools/ast/node_modules/typescript/lib/typescript.js",
+    "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+  },
+  "scope": "Pins checked before compiler import; VM receives only explicit fakes, never product services."
+}

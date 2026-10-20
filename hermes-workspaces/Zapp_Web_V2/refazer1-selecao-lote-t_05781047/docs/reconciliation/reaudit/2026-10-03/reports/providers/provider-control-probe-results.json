@@ -1,0 +1,103 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Direct imports of unchanged application modules with only external serve/client stubs; synthetic auth boundary. P14 executes exact extracted statement against a lazy thenable.",
+  "source_hashes": {
+    "supabase/functions/evolution-api/index.ts": "227d16c9e5431bfc0bae0cf833e1d0b0fcce5e822f98ffbc25be7f27865e0cdd",
+    "supabase/functions/_shared/evolution-api-proxy.ts": "a5c696eeebe4107ac547ce292da2b577620573e691aacdd2a08b3de3b3075816",
+    "supabase/functions/_shared/evolution-go-routes.ts": "8da3c5c3c387949f5dc1143a1f1ca70412b9d4ff1d200754f09c0930f52f954d",
+    "supabase/functions/multiplix-send/index.ts": "c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc",
+    "supabase/functions/talkx-send/process-recipient.ts": "a4b5db6fc4eec0ae64e6e88f0516eddbcffb185c2e6accddf9a4ee2c5149e558"
+  },
+  "results": [
+    {
+      "id": "P11",
+      "authChecks": 1,
+      "permissionChecks": 0,
+      "transport": [
+        {
+          "url": "https://provider.invalid/instance/connect",
+          "method": "POST",
+          "body": {
+            "webhookUrl": "https://recipient.invalid/webhook",
+            "subscribe": [
+              "ALL"
+            ],
+            "immediate": true
+          }
+        }
+      ],
+      "outcome": "authenticated regular caller reaches provider webhook mutation without role/action/connection check"
+    },
+    {
+      "id": "P12",
+      "transport": [
+        {
+          "url": "https://provider.invalid/user/privacy",
+          "method": "GET",
+          "body": null
+        },
+        {
+          "url": "https://provider.invalid/user/privacy",
+          "method": "POST",
+          "body": {
+            "readReceipts": "all",
+            "profile": "contacts",
+            "status": "all",
+            "online": "all",
+            "lastSeen": "all",
+            "groupAdd": "all",
+            "callAdd": "all"
+          }
+        }
+      ],
+      "outcome": "failed privacy GET defaults all six unspecified settings to all"
+    },
+    {
+      "id": "P13",
+      "mode": "v2",
+      "transport": [
+        {
+          "url": "https://provider.invalid/instance/status",
+          "method": "GET",
+          "body": null
+        }
+      ],
+      "outcome": "status still uses GO route without instance suffix in v2 mode"
+    },
+    {
+      "id": "P14",
+      "buildersCreated": 1,
+      "queriesConsumed": 0,
+      "exact_statement": {
+        "path": "supabase/functions/multiplix-send/index.ts",
+        "line_start": 520,
+        "line_end": 526
+      },
+      "outcome": "heartbeat discards lazy RPC builder; no execution occurs"
+    },
+    {
+      "id": "P15",
+      "first": "A",
+      "reordered": "B",
+      "outcome": "variant assignment changes with row order despite identical recipient, IDs and weights"
+    }
+  ]
+}

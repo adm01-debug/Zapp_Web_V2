@@ -1,0 +1,3 @@
+M  .github/workflows/db-guard.yml
+A  scripts/db-audit/talkx-retry-reabertura-consentimento.test.sh
+AM supabase/migrations/20261006202040_talkx_retry_reabertura_consentimento.sql

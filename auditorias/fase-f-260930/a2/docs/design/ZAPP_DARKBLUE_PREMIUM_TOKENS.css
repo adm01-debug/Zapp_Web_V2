@@ -1,0 +1,68 @@
+/**
+ * ZAPP WEB V2 — DARKBLUE PREMIUM TOKENS
+ * Canonical visual reference v1.0
+ */
+:root {
+  --zapp-blue: #1677ff;
+  --zapp-blue-hover: #2c86ff;
+  --zapp-blue-active: #0d5ed7;
+  --zapp-blue-soft: rgb(22 119 255 / 0.12);
+  --zapp-blue-border: rgb(22 119 255 / 0.48);
+  --zapp-success: #21d19f;
+  --zapp-warning: #f6b73c;
+  --zapp-danger: #ff5d6c;
+  --zapp-info: #45b8ff;
+  --zapp-ai: #8b5cf6;
+  --zapp-font-sans: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --zapp-font-display: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+  --zapp-radius-xs: 4px;
+  --zapp-radius-sm: 6px;
+  --zapp-radius-md: 8px;
+  --zapp-radius-lg: 10px;
+  --zapp-radius-xl: 12px;
+  --zapp-radius-2xl: 16px;
+  --zapp-radius-full: 9999px;
+  --zapp-sidebar-w: 220px;
+  --zapp-sidebar-collapsed-w: 64px;
+  --zapp-topbar-h: 52px;
+}
+
+.dark {
+  --zapp-bg-0: #060c14;
+  --zapp-bg-1: #08111c;
+  --zapp-bg-2: #0a1522;
+  --zapp-surface-1: #0d1927;
+  --zapp-surface-2: #122235;
+  --zapp-surface-3: #182c42;
+  --zapp-elevated: #0b1623;
+  --zapp-text: #f5f8fc;
+  --zapp-text-secondary: #c0cbd8;
+  --zapp-text-muted: #8291a5;
+  --zapp-text-disabled: #566578;
+  --zapp-border: rgb(134 165 200 / 0.16);
+  --zapp-border-hover: rgb(134 165 200 / 0.28);
+  --zapp-divider: rgb(134 165 200 / 0.10);
+}
+
+/* Semantic token adapter */
+.zapp-darkblue-scope {
+  --background: 216 54% 5%;
+  --foreground: 216 33% 97%;
+  --card: 215 50% 10%;
+  --card-foreground: 216 33% 97%;
+  --popover: 214 52% 9%;
+  --popover-foreground: 216 33% 97%;
+  --primary: 213 100% 54%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 214 49% 14%;
+  --muted-foreground: 215 16% 59%;
+  --accent: 214 49% 14%;
+  --accent-foreground: 216 33% 97%;
+  --border: 213 26% 25%;
+  --input: 214 42% 13%;
+  --ring: 213 100% 54%;
+  --success: 161 70% 47%;
+  --warning: 40 91% 60%;
+  --destructive: 354 100% 68%;
+  --info: 199 100% 64%;
+}

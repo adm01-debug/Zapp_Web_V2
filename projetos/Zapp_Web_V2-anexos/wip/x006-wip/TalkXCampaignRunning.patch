@@ -1,0 +1,67 @@
+diff --git a/src/components/talkx/TalkXCampaignRunning.tsx b/src/components/talkx/TalkXCampaignRunning.tsx
+index a13158f0c..37944b596 100644
+--- a/src/components/talkx/TalkXCampaignRunning.tsx
++++ b/src/components/talkx/TalkXCampaignRunning.tsx
+@@ -15,6 +15,7 @@ import {
+ import { toast } from 'sonner';
+ import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+ import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime } from './talkxShared';
++import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
+ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
+ import { fromTable } from '@/lib/supabaseHelpers';
+ import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+@@ -487,6 +488,13 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId
+   const [lSaving, setLSaving] = useState(false);
+   const [resuming, setResuming] = useState(false);
+ 
++  // X006: o select de velocidade mostra "Personalizado" quando o intervalo
++  // digitado à mão difere do intervalo do perfil escolhido (o perfil é mantido).
++  const intervaloCustomizado = useMemo(() => {
++    const [pMin, pMax] = intervalForProfile(lSpeed);
++    return lIntMin !== msToSeconds(pMin) || lIntMax !== msToSeconds(pMax);
++  }, [lSpeed, lIntMin, lIntMax]);
++
+   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
+   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
+   // Auto-navegar de volta quando a campanha sair de sending/paused
+@@ -538,8 +546,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId
+   const handleOpenLimits = useCallback(() => {
+     if (!campaign) return;
+     setLSpeed(campaign.speed_profile ?? 'moderate');
+-    setLIntMin(campaign.send_interval_min);
+-    setLIntMax(campaign.send_interval_max);
++    setLIntMin(msToSeconds(campaign.send_interval_min));
++    setLIntMax(msToSeconds(campaign.send_interval_max));
+     setLWinStart(campaign.send_window_start?.slice(0, 5) ?? '');
+     setLWinEnd(campaign.send_window_end?.slice(0, 5) ?? '');
+     setLBizHours(campaign.business_hours_only ?? false);
+@@ -548,8 +556,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId
+ 
+   const handleSaveLimits = useCallback(async () => {
+     if (!campaign) return;
+-    if (!Number.isFinite(lIntMin) || lIntMin < 1 || !Number.isFinite(lIntMax) || lIntMax < 1) {
+-      toast.error('Intervalos devem ser números inteiros positivos (mínimo: 1s).');
++    if (!isValidIntervalSeconds(lIntMin) || !isValidIntervalSeconds(lIntMax)) {
++      toast.error(`Intervalos devem ser inteiros entre ${LIMITS_MIN_S}s e ${LIMITS_MAX_S}s.`);
+       return;
+     }
+     setLSaving(true);
+@@ -559,15 +567,15 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId
+         expectedRevision: campaign.revision ?? null,
+         limits: {
+           speed_profile: lSpeed,
+-          send_interval_min: lIntMin,
+-          send_interval_max: Math.max(lIntMin, lIntMax),
++          send_interval_min: secondsToMs(lIntMin),
++          send_interval_max: secondsToMs(Math.max(lIntMin, lIntMax)),
+           send_window_start: lWinStart ? `${lWinStart}:00` : null,
+           send_window_end: lWinEnd ? `${lWinEnd}:00` : null,
+           business_hours_only: lBizHours,
+         },
+       });
+       setLimitsOpen(false);
+-      toast.success('Limites atualizados. Aplicados no próximo lote de envios.');
++      toast.success('Limites atualizados. Vale a partir do próximo envio.');
+     } catch (e) {
+       const msg = e instanceof Error ? e.message : '';
+       toast.error(msg.includes('stale_revision')

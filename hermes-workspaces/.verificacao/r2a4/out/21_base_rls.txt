@@ -1,0 +1,55 @@
+{
+ "ms": 1,
+ "rows": [
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "rls": true,
+   "frls": false,
+   "owner": "postgres",
+   "relkind": "r",
+   "relname": "channel_connections"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "rls": true,
+   "frls": false,
+   "owner": "postgres",
+   "relkind": "r",
+   "relname": "gmail_accounts"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "rls": true,
+   "frls": false,
+   "owner": "postgres",
+   "relkind": "r",
+   "relname": "password_reset_requests"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "rls": true,
+   "frls": false,
+   "owner": "postgres",
+   "relkind": "r",
+   "relname": "profiles"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "rls": true,
+   "frls": false,
+   "owner": "postgres",
+   "relkind": "r",
+   "relname": "talkx_campaigns"
+  },
+  {
+   "acl": "{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+   "rls": true,
+   "frls": false,
+   "owner": "postgres",
+   "relkind": "r",
+   "relname": "whatsapp_connections"
+  }
+ ],
+ "row_count": 6,
+ "truncated": false
+}

@@ -1,0 +1,24 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a1
+
+stdout | .tmp/a1-trace.test.tsx > A1 — trace de history > P5) quem escreve o que, em que ordem
+A1-P5
+replaceState -> /a1fasef
+replaceState -> undefined
+--- setPrio(high) ---
+replaceState -> /a1fasef?prio=high
+barra=?prio=high router= prio=high
+--- navigate("/a1fasef") ---
+pushState    -> /a1fasef
+barra= router= prio=high
+--- toggleAlarm() ---
+replaceState -> /a1fasef?prio=high&alarm=1
+barra=?prio=high&alarm=1 router=
+
+ ✓ .tmp/a1-trace.test.tsx > A1 — trace de history > P5) quem escreve o que, em que ordem 146ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:28:38
+   Duration  1.14s (transform 85ms, setup 59ms, import 160ms, tests 149ms, environment 507ms)
+

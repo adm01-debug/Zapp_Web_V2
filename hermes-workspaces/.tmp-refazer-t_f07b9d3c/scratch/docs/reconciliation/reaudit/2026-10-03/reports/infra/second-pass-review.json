@@ -1,0 +1,2844 @@
+{
+  "schema_version": 1,
+  "area": "infra",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "mode": "read_only_source_review",
+  "note": "Faixas indicam leitura efetiva de fonte; não são cobertura de execução. Arquivos de produção não foram executados. A ausência de achado neste lote não certifica ausência de defeitos.",
+  "files": [
+    {
+      "path": ".env.example",
+      "assessment": "Nomes de variáveis enumerados nas linhas declaradas; valores intencionalmente não lidos/exibidos. O contrato diferencia VITE_* publicável e serviços; não certifica presença/valor em runtime.",
+      "effect_contract": "Declarações de ambiente, inventário por nome apenas.",
+      "consumers": [
+        "Vite",
+        "manual ambiente"
+      ],
+      "batch": "F-configs-env-names",
+      "sha256": "69dff99f515aebefd141d44430271764ad49690f1d14b360da9e72fdf40bcafc",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          10,
+          10
+        ],
+        [
+          11,
+          11
+        ],
+        [
+          14,
+          14
+        ],
+        [
+          24,
+          24
+        ],
+        [
+          26,
+          26
+        ],
+        [
+          28,
+          28
+        ],
+        [
+          30,
+          30
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          38,
+          38
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          45,
+          45
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          47,
+          47
+        ],
+        [
+          53,
+          53
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          59,
+          59
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          61,
+          61
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          67,
+          67
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          73,
+          73
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          75,
+          75
+        ]
+      ],
+      "lines": 88,
+      "review_level": "targeted",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          10,
+          10
+        ],
+        [
+          11,
+          11
+        ],
+        [
+          14,
+          14
+        ],
+        [
+          24,
+          24
+        ],
+        [
+          26,
+          26
+        ],
+        [
+          28,
+          28
+        ],
+        [
+          30,
+          30
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          38,
+          38
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          45,
+          45
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          47,
+          47
+        ],
+        [
+          53,
+          53
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          59,
+          59
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          61,
+          61
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          67,
+          67
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          73,
+          73
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          75,
+          75
+        ]
+      ]
+    },
+    {
+      "path": ".env.production",
+      "assessment": "Nomes de variáveis enumerados nas linhas declaradas; valores intencionalmente não lidos/exibidos. O contrato diferencia VITE_* publicável e serviços; não certifica presença/valor em runtime.",
+      "effect_contract": "Declarações de ambiente, inventário por nome apenas.",
+      "consumers": [
+        "Vite",
+        "manual ambiente"
+      ],
+      "batch": "F-configs-env-names",
+      "sha256": "9a9afc4e5ab72d82c73f27069ce26be3be926a331a3eee0c3c8a318aa11bf344",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          7,
+          7
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          21,
+          21
+        ],
+        [
+          22,
+          22
+        ],
+        [
+          25,
+          25
+        ]
+      ],
+      "lines": 25,
+      "review_level": "targeted",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          7,
+          7
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          21,
+          21
+        ],
+        [
+          22,
+          22
+        ],
+        [
+          25,
+          25
+        ]
+      ]
+    },
+    {
+      "path": ".github/CODEOWNERS",
+      "assessment": "Responsável global e regras específicas apontam ao mesmo owner; exigir aprovação depende de branch protection, não do comentário no arquivo.",
+      "effect_contract": "Metadados de revisão GitHub.",
+      "consumers": [
+        "GitHub CODEOWNERS"
+      ],
+      "batch": "F-configs",
+      "sha256": "98ac125ba08479ff62db05cb7758e4fe1c0391630036a86a5c469011febb87d5",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "lines": 49,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          49
+        ]
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "assessment": "Campos obrigatórios descrição/reprodução/esperado/atual/navegador/dispositivo/severidade; labels e título estáticos. Não executa conteúdo enviado.",
+      "effect_contract": "Template declarativo de issue.",
+      "consumers": [
+        "GitHub Issues"
+      ],
+      "batch": "F-configs",
+      "sha256": "db84b30c8c36bccf7f1de9e64b40f8d51be5fc40eb494e6e312cc1d0dba4c547",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          102
+        ]
+      ],
+      "lines": 102,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          102
+        ]
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "assessment": "Permite issues livres e link fixo para docs; sem execução de input.",
+      "effect_contract": "Template do formulário.",
+      "consumers": [
+        "GitHub Issues"
+      ],
+      "batch": "F-configs",
+      "sha256": "5c6c0431c75a6a842ceeba5f2203cddb0ed57c511801de2b4fedc944b31e5163",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "lines": 5,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          5
+        ]
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "assessment": "Campos e labels estáticos; imagens/contexto opcionais. Sem fluxo de credencial ou execução.",
+      "effect_contract": "Template declarativo de issue.",
+      "consumers": [
+        "GitHub Issues"
+      ],
+      "batch": "F-configs",
+      "sha256": "7c6f1dde5f2f9291da7de1b0aa311b2b32e66e388c47d93aef43e2e818359a28",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "lines": 77,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          77
+        ]
+      ]
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "assessment": "Três ecosystems: Bun, Actions e Go; schedule semanal, groups de minor/patch e Actions; majors/alias zod3 ignorados no Bun. Sem configuração Docker. Não prova estado de PRs ou atualizações instaladas.",
+      "effect_contract": "Automação externa abre PRs de dependência.",
+      "consumers": [
+        "Dependabot"
+      ],
+      "batch": "F-configs",
+      "sha256": "773bba46ec048040327bb92f35f5202423bbe3ff9d36d21060815769268a2624",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          101
+        ]
+      ],
+      "lines": 101,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          101
+        ]
+      ]
+    },
+    {
+      "path": ".github/workflows/db-guard.yml",
+      "assessment": "Leitura integral: PR/push/merge_group sem secret de produção, PostgreSQL descartável pinado, shim e exceções SKIP_DOCKER_SHIM explicitadas por incompatibilidade. Migrations imutáveis têm exceções declaradas de stub/ledger-only; lista de testes avaliada como cadeia de invocação, sem inferir execução/cobertura interna de cada teste. Bloco Multiplix vivo explicitamente pula sem credenciais no CI.",
+      "effect_contract": "Escreve bases descartáveis, filesystem e containers; instalação de dependências/rede pública. Nenhum DESTINO_URL secret; execução local não realizada.",
+      "consumers": [
+        "PRs",
+        "push main",
+        "merge_group",
+        "dispatch"
+      ],
+      "finding_ids": [],
+      "batch": "G_workflows",
+      "sha256": "1fa7a5422f70db628d81722cba2dbcd4853afe238a0614caf4b65d92716ed137",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          746
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          746
+        ]
+      ],
+      "lines": 746,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": ".github/workflows/db-live-guard.yml",
+      "assessment": "Leitura integral dos triggers, credencial endurecida, dez outcomes, consolidação, dedupe/abertura/fechamento de issues e upload. As dez verificações nomeadas propagam falha; o 11º check de fixtures tem continue-on-error sem id/outcome incluído no veredito, podendo falhar sem alerta R2-INF-021.",
+      "effect_contract": "SELECT remoto via psql e geração local; Docker/apt externos; POST/PATCH de issues/comentários/labels e upload, portanto workflow não é somente leitura global.",
+      "consumers": [
+        "push main",
+        "schedule diário",
+        "dispatch main"
+      ],
+      "finding_ids": [
+        "R2-INF-021"
+      ],
+      "batch": "G_workflows",
+      "sha256": "3a264e1c3b517515140f0e3ab6276e3a8787e0292035d51bd64790440531307e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          630
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          630
+        ]
+      ],
+      "lines": 630,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": ".github/workflows/db-migrate.yml",
+      "assessment": "Leitura integral em lotes: main + environment de DDL, preflight de conjunto pendente, 12 contratos específicos, hash de confirmação, dry-run CLI, aplicação e verificações de ledger/ACL. Confirma bloqueios R2-INF-003/004/005; os demais checks posteriores são latentes atrás do contrato inicial inválido. Hash não prova estado remoto não observado.",
+      "effect_contract": "Mutações reais com apply=true: db push, ledger indireto; consultas remotas e logs também no dry-run. Não executado.",
+      "consumers": [
+        "workflow_dispatch de db-migrate"
+      ],
+      "finding_ids": [
+        "R2-INF-003",
+        "R2-INF-004",
+        "R2-INF-005"
+      ],
+      "batch": "G_workflows",
+      "sha256": "79cfd806819412dc1d0a83312a1cd2b2b944070078365c16f194aee8d19a41e5",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          1515
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          1515
+        ]
+      ],
+      "lines": 1515,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": ".github/workflows/types-sync.yml",
+      "assessment": "Leitura integral: consultas main com TLS herdado, candidatos validados antes de copiar, gates com outputs e falha final explícita, PR condicionado aos três gates. Confirma ratchet R2-INF-008 e limitação já antiga TRA-008 de contar linhas em Gate 3. Aprovação de runs do PR é best-effort e limitada ao head gerado; ausência de run não comprova que checks executaram.",
+      "effect_contract": "Consulta banco e escreve arquivos, artifact, branch/PR, issues/comentários/labels e aprovação de workflow run. Nenhuma dessas operações foi executada nesta revisão.",
+      "consumers": [
+        "push main",
+        "schedule semanal",
+        "workflow_dispatch main"
+      ],
+      "finding_ids": [
+        "R2-INF-008",
+        "TRA-008"
+      ],
+      "batch": "G_workflows",
+      "sha256": "0884c62bb924531d58ba603a8adde54183c1b0e5bea5d2a8d9894bfef15e2565",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          555
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          555
+        ]
+      ],
+      "lines": 555,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": ".gitleaks.toml",
+      "assessment": "Uma exceção regex estrita para hash MD5 de FK no manifest; não libera diretório inteiro ou token genérico.",
+      "effect_contract": "Configuração de scanner.",
+      "consumers": [
+        "gitleaks CI"
+      ],
+      "batch": "F-configs",
+      "sha256": "fde581a563279c4469c4068caa08a6944420d58b09c72d4c51f0a01ab3a8724e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "lines": 8,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          8
+        ]
+      ]
+    },
+    {
+      "path": ".sonarcloud.properties",
+      "assessment": "Exclui manifest de toda análise; quatro gerados e migrations da CPD. Comentário distingue alcance. Estado remoto do Sonar não observado nesta passada.",
+      "effect_contract": "Config scanner externo.",
+      "consumers": [
+        "SonarCloud"
+      ],
+      "batch": "F-configs",
+      "sha256": "89f8b3bb1ec5718125205273bcab0f2a18c303b64469c03beb479b4741936117",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "lines": 45,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          45
+        ]
+      ]
+    },
+    {
+      "path": "components.json",
+      "assessment": "Aliases/UI generator para Tailwind e src/index.css; sem comando/script ou credencial.",
+      "effect_contract": "Config shadcn declarativa.",
+      "consumers": [
+        "shadcn CLI"
+      ],
+      "batch": "F-configs",
+      "sha256": "9820835141c54e5b5dfbb68b3c3790db73c9ebfb967884ae3fccd058d698a1a6",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "lines": 20,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          20
+        ]
+      ]
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/go.mod",
+      "assessment": "Módulo Go1.24 sem dependências externas declaradas; Docker/main/proxy foram semânticos no lote anterior.",
+      "effect_contract": "Contrato do compilador Go.",
+      "consumers": [
+        "CI Go test",
+        "Dockerfile proxy"
+      ],
+      "batch": "F-configs",
+      "sha256": "5a657b09b3be37d2d966b5b0039ea286e9a74fd1c9aaa5974d74530a369bec69",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          3
+        ]
+      ],
+      "lines": 3,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          3
+        ]
+      ]
+    },
+    {
+      "path": "performance-budget.json",
+      "assessment": "Quatro limites de assets e alvos Web Vitals declarados; descrições explicam ratchets. Config não é medição de runtime; consumidores de build/vitals revisados antes.",
+      "effect_contract": "Dados de budget consumidos em build e frontend.",
+      "consumers": [
+        "check-bundle-budget.mjs",
+        "src/lib/web-vitals.ts"
+      ],
+      "batch": "F-configs",
+      "sha256": "0a04d79668ca77ae8f7d522b91d526bc9375c84006801037d24effcc3802e9d5",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "lines": 53,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          53
+        ]
+      ]
+    },
+    {
+      "path": "scripts/catalog/validate-plan.mjs",
+      "assessment": "Revisão confirma OTH-011: parser de checklist contabiliza só não marcados; topologia/quantidades não são execução de etapas. Path é validado pelo helper comum.",
+      "effect_contract": "Leitura do plano e output; sem rede/escrita.",
+      "consumers": [
+        "package catalog plan validation"
+      ],
+      "finding_ids": [
+        "OTH-011"
+      ],
+      "batch": "B-ci",
+      "sha256": "f77263a229447935a341dea6b4a90d940fdba23efd654e4d94242676730f8676",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "lines": 39,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          39
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/actions-kpi.mjs",
+      "assessment": "Fluxo completo confirma só primeira página de 100 runs e maisLentos([]) constante; relatório publica janela de sete dias e ausência de jobs apesar de nunca buscá-los. Novo R2-INF-018.",
+      "effect_contract": "GET de runs/issues; PATCH/POST de issue; append summary.",
+      "consumers": [
+        "branch-hygiene-audit.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-018"
+      ],
+      "batch": "B-ci",
+      "sha256": "1aac9444d42a3df2c09bc8b7915e351823f6738373d0f70e076d69e836b68909",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          149
+        ]
+      ],
+      "lines": 149,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          149
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/allowed-actions.json",
+      "assessment": "Allowlist finita de actions+flag github-owned; pins efetivos são conferidos por guard/workflows. Nenhum token.",
+      "effect_contract": "Dados consumidos pelo guard de Actions.",
+      "consumers": [
+        "CI policy guard"
+      ],
+      "batch": "F-configs",
+      "sha256": "0b55d4819e02beeb3446154c66a42ecf7ea165f5c46ace692861ab0874b67ae3",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "lines": 16,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          16
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/check-e2e-artifact-secrets.mjs",
+      "assessment": "Guarda lê YAML por regex: verifica caminhos simples, nome do redator, nomes de variáveis e expressão de outcome antes de permitir upload. Não resolve AST/YAML, multiline path nem vínculo do id ao passo redator; workflows atuais possuem condição explícita. Essas limitações não foram elevadas a achado sem consumidor atual divergente.",
+      "effect_contract": "Leitura .github/workflows; saída/exit1 para violações.",
+      "consumers": [
+        "CI"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "e17683251874b71636f7a0daff42930ce62876965c4ccc420dc5a48c0f917d4e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          161
+        ]
+      ],
+      "lines": 161,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          161
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/check-talkx-pr-body.mjs",
+      "assessment": "Só título com XNNN ativa o gate; exige seções e texto, sem alegar executar banco/deploy. Comparação de títulos e IDs feita como substring. Corpo chega em env e não é executado.",
+      "effect_contract": "Leitura etapas.json e PR_TITLE/PR_BODY; sem rede/escrita.",
+      "consumers": [
+        "CI"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "8222e7685c282bee49cd39785f347fb65742964f11a475c3235ca08fb37b545d",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          122
+        ]
+      ],
+      "lines": 122,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          122
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/deno.json",
+      "assessment": "Lockfile frozen e nodeModulesDir none; não confere por si permissões de comandos Deno.",
+      "effect_contract": "Config de resolução de testes Edge.",
+      "consumers": [
+        "CI Deno test"
+      ],
+      "batch": "F-configs",
+      "sha256": "eca3984001a907fb17773aa60e4ce77efb2033c255e3f5462963f3b87b894113",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          7
+        ]
+      ],
+      "lines": 7,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          7
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/github-settings-guard.mjs",
+      "assessment": "Revisa quatro grupos de settings; 403/404 viram não verificável e issue com status1. Restaura strict/auto_merge por PATCH; fecha/atualiza/abre issue. Não é read-only e não foi executado. Falha de criação de label é tolerada, mas issue/API principal falham.",
+      "effect_contract": "GET/PATCH/POST GitHub e comunicações; token no header.",
+      "consumers": [
+        "settings-guard.yml"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "61354201a83d6b009c28bcd0aa6eb28683957580a56f599630f7d573bcc83f78",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          321
+        ]
+      ],
+      "lines": 321,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          321
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/install-pgbouncer.sh",
+      "assessment": "Instala pacote via apt do Ubuntu; set -Eeuo pipefail, retries3, verificação final de binário. Presença prévia evita instalação mas não exige versão específica; não foi inferida versão remota.",
+      "effect_contract": "sudo apt-get update/install; mutação do runner e rede de pacote.",
+      "consumers": [
+        "types-sync.yml",
+        "db-live-guard.yml"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "329bb1ef1467f443c11f62d5f8e8e0847bd59e93e653b49c620ca355019c1536",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "lines": 36,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          36
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/install-postgresql-client.sh",
+      "assessment": "Mesmo fluxo fail-fast de apt e verificação final; usa pacote distro e retorna versão existente sem pin semântico.",
+      "effect_contract": "sudo apt-get update/install; mutação do runner e rede de pacote.",
+      "consumers": [
+        "DB workflows"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "247643ca4df3d7b9633fb2f68401ee5f6ff5e5ce776a3c87e1b02c9bea2ed1f5",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "lines": 36,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          36
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/marcador-specs.mjs",
+      "assessment": "Dedupe por nomes de diretórios ordenados e sha truncado; sem resultados vira marcador sem-diretorios e aviso, não suite aprovada. Quantidade reflete diretórios, não invoca runner.",
+      "effect_contract": "Leitura de test-results e construção de texto de issue.",
+      "consumers": [
+        "e2e-logado.yml"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "8cced57d48f77162e39884dbc0f21f8538f1709afe9be5b85a7c4c985f7bb294",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "lines": 70,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          70
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/redigir-relatorio.mjs",
+      "assessment": "Redação literal de strings em arquivos considerados textuais; pula extensões binárias, leituras falhadas e segredos ausentes/curtos. Não decodifica representações escapadas/comprimidas. Revisão adicional do consumidor HTML pendente; escopo delimitado em vez de certificar limpeza universal.",
+      "effect_contract": "Sobrescreve arquivos do report local; não executado.",
+      "consumers": [
+        "e2e-logado.yml"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "8a0d73efbaa3aea4a6db7e7a28a7da427c3b93671bca158f97c9f5923f4b6cdd",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          136
+        ]
+      ],
+      "lines": 136,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          136
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ci/render-workflow-docs.mjs",
+      "assessment": "Exige quatro metacampos e igualdade textual com README no --check; geração padrão grava docs. Conteúdo deriva de comentários e não verifica semântica das promessas contra jobs.",
+      "effect_contract": "Leituras locais; escrita docs/ci/README.md sem --check.",
+      "consumers": [
+        "CI",
+        "CLI docs"
+      ],
+      "finding_ids": [],
+      "batch": "B-ci",
+      "sha256": "2386822a08d2cd3aced88310837517d480e16bb2e73762c4618cef979e7afb52",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          143
+        ]
+      ],
+      "lines": 143,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          143
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/catalog.sql",
+      "assessment": "Leitura integral do exportador de relações/colunas/assinaturas/triggers/CHECK. SELECT estrutural sem dados de clientes; nomes de RPC não substituem contratos de argumentos e semântica. Ordem de colunas segue attnum explicitamente.",
+      "effect_contract": "SELECT catálogo; geração de arquivo fica no consumidor.",
+      "consumers": [
+        "types-sync",
+        "db-live-guard",
+        "supabase-usage-guard (snapshot)"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "fddb0901fb031a7b9349ecb9ff85f141dcb5f32e24ed462045427477d5cbe970",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "lines": 87,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/check-catalog-fresh.mjs",
+      "assessment": "Distingue drift do commit e erros no fresco/identidade; valida versão/source/regenerador e seis seções com duplicatas. Não compara bytes e não atualiza snapshot.",
+      "effect_contract": "Leitura dois JSON e identidade; sem rede/escrita.",
+      "consumers": [
+        "db-live-guard.yml",
+        "types-sync.yml"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "7451af1ec96a69e25832d38587c4666aedfee75f7eeda73bbff0f040cfd48ba9",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          176
+        ]
+      ],
+      "lines": 176,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          176
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-e2e-fixtures.sql",
+      "assessment": "Leitura integral. Ausência de tabela ou fixture produz RAISE EXCEPTION e ON_ERROR_STOP. Confere ids fixos, status connected e instance_id não nulo; não comprova interação UI nem a execução do teste. Falha desse SQL perde-se na consolidação do workflow R2-INF-021.",
+      "effect_contract": "SELECT de presença, sem escrever fixtures; DO de erro sem DML.",
+      "consumers": [
+        "db-live-guard.yml E85"
+      ],
+      "finding_ids": [
+        "R2-INF-021"
+      ],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "e995eb9871c179f260440a0017fb5df304e7332737bef41f0319de0696cb83ea",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          110
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          110
+        ]
+      ],
+      "lines": 110,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/check-grants-fresh.mjs",
+      "assessment": "Valida arrays únicos/ordenados e duas contagens; compara todo ACL exceto três metadados. Escopo de snapshot agrega grants de authenticated/service_role por count, não por identidade, e é complementado pelo manifesto estrutural.",
+      "effect_contract": "Leitura dois JSON; status 0/1/2; sem mutação.",
+      "consumers": [
+        "types-sync.yml",
+        "db-live-guard.yml"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "7419130b368ba90df93f5080b16eb333d3cc9f0731546899545ffa4d49e6308a",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          102
+        ]
+      ],
+      "lines": 102,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          102
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-manifest-fresh.mjs",
+      "assessment": "Fonte completa: fresco exige formato e identidade/destino; ausência/invalidade do commit vira drift1, fresco inseguro vira2; diffs não geram escrita.",
+      "effect_contract": "Leituras arquivos/identidade; sem rede/escrita.",
+      "consumers": [
+        "types-sync.yml",
+        "db-live-guard.yml"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "11a23b330bb942ec9cebc226296a3047841025eb8cf304c903df60ffb3e2482a",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          114
+        ]
+      ],
+      "lines": 114,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          114
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-mcp-exec-acl.sql",
+      "assessment": "Leitura integral de assinaturas, corpos MD5 permitidos, atributos, ACL direto/efetivo e alcance transitivo a service_role; topologia esperada e aresta CLI tolerada explícitas. Nunca chama mcp_exec; DO só aborta divergência. Superusers excluídos por perímetro explícito, não ocultos.",
+      "effect_contract": "SELECT recursivo de catálogo e DO de exceção.",
+      "consumers": [
+        "db-live-guard",
+        "check-mcp-exec-acl.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "bd96e65098a9fdbe420dcba2a734af37064a7fec5025e4cce2c8d75ec06ef02b",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          381
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          381
+        ]
+      ],
+      "lines": 381,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/check-migration-drift.mjs",
+      "assessment": "843 linhas integralmente revisadas: nomes únicos, três kinds de exceção e pins, referências, normalização lexical, ledger JSON, comparação e status. Retry só cerca SELECT do ledger; sem URL relata comparação pulada. Legacy sem statements produz warning explícito, distinto do total de conteúdo verificado.",
+      "effect_contract": "Consulta SELECT com psql/pgpass; leitura local; sem mutação de banco.",
+      "consumers": [
+        "db-live-guard.yml",
+        "db-migrate.yml",
+        "types-sync.yml",
+        "db-guard.yml"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "76162db73bdf0fa407d98a49a7ce9523156bd85e097851bd9a7f0c7c73a14da6",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          843
+        ]
+      ],
+      "lines": 843,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          843
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-realtime-subscriptions.mjs",
+      "assessment": "AST percorre src, literals/const, wrappers e aliases limitados; spreads/configs dinâmicas viram unresolved, com exceção explícita do wrapper central. Valida tabelas de baseline; não prova publicação remota ou RLS. Binding é por nome no arquivo, não resolução completa de tipos/escopos.",
+      "effect_contract": "Leituras locais e status1 se unresolved/absent.",
+      "consumers": [
+        "CI"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "f39fd74a7386faf8375369776201203aa0884a166da7b973532b2175f3c6c2a8",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          242
+        ]
+      ],
+      "lines": 242,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          242
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-runtime-config.mjs",
+      "assessment": "Consulta SQL com identidade/TLS, read stdout, valida seis seções. Autovacuum e Realtime são verificados; cron/storage apenas counts e backups não verificados ficam explicitamente PARTIAL. Evidência wx/0600.",
+      "effect_contract": "Consulta banco via psql e gravação local de evidência.",
+      "consumers": [
+        "db-live-guard.yml",
+        "check-realtime-subscriptions.mjs"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "52fe9e98d0e3e2bce5fdce8fbe2d0c760945422a26bafee4bbb0d2c7ab6f6a98",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          116
+        ]
+      ],
+      "lines": 116,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          116
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-talkx-transition-contract.sql",
+      "assessment": "Leitura integral: cobra assinatura única de quatro argumentos, dois defaults, nomes de entrada/saída e termos do CHECK de status. proargtypes é selecionado mas não validado; teste é estrutural e não chamada PostgREST. Asserção negativa gera exceção.",
+      "effect_contract": "SELECT pg_catalog e DO apenas para abortar.",
+      "consumers": [
+        "db-live-guard.yml",
+        "talkx-transition-overload-postgrest.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "fe69aff60278ec2e233df066199c039f972b768fdc422eec11f06165eb13e114",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "lines": 94,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/check-talkx-view-invoker.sql",
+      "assessment": "Leitura integral: exige view única, security_invoker em quatro grafias verdadeiras e SELECT de authenticated; ausente retorna false. Não exercita RLS de campanhas com dois usuários, escopo estrutural explícito.",
+      "effect_contract": "SELECT pg_catalog e DO apenas para abortar.",
+      "consumers": [
+        "db-live-guard.yml",
+        "talkx-metrics-view-invoker.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "0cbad788baea6676774d50aca13781f9f04ddc48fc31d431954fe36c22def8c4",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "lines": 71,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/check-triple-parity.mjs",
+      "assessment": "Três pernas: conjunto de versões, diretórios Edge, ACL snapshot; não é hash do conteúdo de migration nem equivalente ao deploy. --require-live bloqueia skips; sem URL rotula PARCIAL. Erros psql sanitizados.",
+      "effect_contract": "SELECTs banco e leituras de arquivos; sem escrita remota.",
+      "consumers": [
+        "db-live-guard.yml",
+        "CI"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "1233551d871135a4bd22a337b3b638128e8c5828b6be4cb01c960e4b1e33d362",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          182
+        ]
+      ],
+      "lines": 182,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          182
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/check-webhook-failures-acl.sql",
+      "assessment": "Leitura integral: policy exata service_role, owner/RLS, grants efetivos e explícitos, grant option e ACL por coluna. Sem DML; inexistência ou divergência falha via exceção.",
+      "effect_contract": "SELECT de ACL e DO sem escrita.",
+      "consumers": [
+        "db-live-guard.yml",
+        "db-migrate.yml",
+        "check-webhook-failures-acl.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "d5edb4857732763b12d0a0730342684e69b8ff24afb881c89d3dfa5f5c4f403c",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          141
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          141
+        ]
+      ],
+      "lines": 141,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/contracts/20260831120000.sql",
+      "assessment": "Wrapper Bash completo em arquivo .sql; SQL interno agrega ACL de webhook_failures, não aplica DDL. Leitura integral confirma que run-runtime-contract passa o wrapper inteiro como SQL (R2-INF-004); não houve execução.",
+      "effect_contract": "Corpo pretendido de SELECT, mas artefato de linguagem incorreta para o runner.",
+      "consumers": [
+        "run-runtime-contract.mjs",
+        "db-migrate.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-004"
+      ],
+      "batch": "J_remaining_contracts",
+      "sha256": "a5117dc228270e0ea581fd21badcb98825722cb6fc1ee066d9997d9364ae0d8e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "lines": 47,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/contracts/20260831150000.sql",
+      "assessment": "Wrapper Bash em .sql; SQL interno conta URLs temporárias persistidas em quatro tabelas, sem exportar URLs. Leitura integral confirma que run-runtime-contract passa o wrapper inteiro como SQL (R2-INF-004); não houve execução.",
+      "effect_contract": "Corpo pretendido de SELECT, mas artefato de linguagem incorreta para o runner.",
+      "consumers": [
+        "run-runtime-contract.mjs",
+        "db-migrate.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-004"
+      ],
+      "batch": "J_remaining_contracts",
+      "sha256": "a91d94283d098e81ba7d9548fddc23f43f4a1b166eaaa38c325e81f6d78ed695",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "lines": 26,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/contracts/20260908220000.sql",
+      "assessment": "Wrapper Bash em .sql; SQL interno coleta colunas de lease, nomes de assinaturas e constraints da outbox CRM. Leitura integral confirma que run-runtime-contract passa o wrapper inteiro como SQL (R2-INF-004); não houve execução.",
+      "effect_contract": "Corpo pretendido de SELECT, mas artefato de linguagem incorreta para o runner.",
+      "consumers": [
+        "run-runtime-contract.mjs",
+        "db-migrate.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-004"
+      ],
+      "batch": "J_remaining_contracts",
+      "sha256": "75f92bc4bffc17c702cff110f798f403c92cf695f447f83ab34325a3f4d78d68",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "lines": 34,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/contracts/20260909120000.sql",
+      "assessment": "Wrapper Bash em .sql; SQL interno coleta três funções, cinco constraints e estado de feature flag CRM. Leitura integral confirma que run-runtime-contract passa o wrapper inteiro como SQL (R2-INF-004); não houve execução.",
+      "effect_contract": "Corpo pretendido de SELECT, mas artefato de linguagem incorreta para o runner.",
+      "consumers": [
+        "run-runtime-contract.mjs",
+        "db-migrate.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-004"
+      ],
+      "batch": "J_remaining_contracts",
+      "sha256": "cbc13075f7f54214504885228cbb2024bdb534ca696fee03bb2bbba948ddecde",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "lines": 51,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/contracts/20260909180000.sql",
+      "assessment": "Wrapper Bash em .sql; SQL interno conta chave api_token e constraint validada, sem ler valor do token. Leitura integral confirma que run-runtime-contract passa o wrapper inteiro como SQL (R2-INF-004); não houve execução.",
+      "effect_contract": "Corpo pretendido de SELECT, mas artefato de linguagem incorreta para o runner.",
+      "consumers": [
+        "run-runtime-contract.mjs",
+        "db-migrate.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-004"
+      ],
+      "batch": "J_remaining_contracts",
+      "sha256": "e4f0e72fc3143cf4863f3a425eb6288707a34684142ebaa9eb4580756a335a81",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "lines": 31,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/database-identity.json",
+      "assessment": "Identidade esperada versionada por hash do project ref, DB postgres/schema public/PG17. Valor é contrato, não leitura remota.",
+      "effect_contract": "Config de identidade.",
+      "consumers": [
+        "database-identity.mjs"
+      ],
+      "batch": "F-configs",
+      "sha256": "8f07c163ed1559dc1e2c33aa8aacc5bd0df0555743452b31e886cee11488884b",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "lines": 8,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          8
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/diff.mjs",
+      "assessment": "Compara manifestos v2 com identidade informativa, conforme contrato; não afirma banco canônico. Erros de entrada=2, divergência=1.",
+      "effect_contract": "Leitura arquivos e relatório stdout.",
+      "consumers": [
+        "CLI auditoria DB"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "fca992c6a58148e6faf15f06b857a87542b6525ab37605faca70ea2e2e74ea71",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "lines": 52,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          52
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/export-targeted-ledger-evidence.mjs",
+      "assessment": "Valida 1–20 versões, escopo exato/duplicatas e arrays de statements; impõe read-only+timeout no psql. Envelope AES-GCM/RSA-OAEP, arquivo temporário wx/0600 e rename; logs só contagem. Import já cria diretório privado quando output não definido.",
+      "effect_contract": "SELECT alvo e escrita cifrada de evidência local; usa chave pública e DSN.",
+      "consumers": [
+        "db-live-guard.yml diagnostics"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "7eb89b8de61e0310f6a40dd4395844e668114799a51e22ce8081fcdef7c8c0e8",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          198
+        ]
+      ],
+      "lines": 198,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          198
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/gen-types.sh",
+      "assessment": "Credencial CI vai via proxy loopback com arquivos restritos/trap; fora CI fallback expõe DSN no argv com aviso explícito. Tentativas limitadas e falha propagada; saída temporária normalizada e mv. Sem prova própria de validade do types gerado (gates consumidores cobrem parte).",
+      "effect_contract": "Sobe pgbouncer/Docker via CLI, consulta DB, grava types; não executado.",
+      "consumers": [
+        "db-live-guard.yml",
+        "types-sync.yml"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "1491d656e5b20c08c15edc94892f0414d085b12462f161b36b710494649d18f3",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          207
+        ]
+      ],
+      "lines": 207,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          207
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/grants-baseline.sql",
+      "assessment": "Leitura integral: identidade de funções anônimas e tabelas anon SELECT, contagens agregadas para authenticated/service_role. Não representa diferença por assinatura destas duas roles; manifesto completo complementa esse limite.",
+      "effect_contract": "SELECT de privilégios efetivos, sem valores de negócio.",
+      "consumers": [
+        "types-sync",
+        "check-triple-parity",
+        "check-grants-fresh"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "d2aa0f3ef50b9615773a69043c76b2d66e2fccedc4b74d2e442812bd591acb2c",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "lines": 39,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/inbox-contact-authorization-runtime.sql",
+      "assessment": "SELECT estrutural de quatro assinaturas e hash de funções/policies/trigger, privilégios e padrões de vinculação ao caller. Funções não são executadas; o veredito está no workflow. Não confundir presença de hash com demonstração funcional da autorização.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "db-migrate.yml",
+        "inbox-contact-authorization.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "e4a75d2d45a3aae0e83fbc8a8b28bcde6bf97d12bf4bde54f8942dd967f40d54",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "lines": 129,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/known-violations.json",
+      "assessment": "Uma exceção de acoplamento para department_whatsapp_configs; reconhece o débito existente Team Chat.",
+      "effect_contract": "Allowlist ratchet.",
+      "consumers": [
+        "supabase-usage-guard.mjs"
+      ],
+      "batch": "F-configs",
+      "sha256": "3c349037ad2a2d1849714c7c57a3e1c6c0018352822d3f75798cbc15ef8f7553",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          12
+        ]
+      ],
+      "lines": 12,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          12
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/manifest-lib.mjs",
+      "assessment": "Valida formato v2 e 16 seções de hashes MD5; compara por chave/hash. database_identity aqui exige só objeto; consumidores fresh fazem validação de identidade adicional. Não reclassificado como falha isolada.",
+      "effect_contract": "Funções puras e console de diffs de nomes.",
+      "consumers": [
+        "check-manifest-fresh.mjs",
+        "diff.mjs"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "3ef66bf0e987bd60a3039f34e9e3f7ee5e9594e24371f03fd899483e97032016",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          98
+        ]
+      ],
+      "lines": 98,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          98
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/manifest.sql",
+      "assessment": "Leitura integral das 16 seções e seus campos: hashes de definições/grants de catálogo public; não é dump de dados. Identidades lógicas e MD5 de definições permitem diff, não prova de replay nem inventário de outras schemas. Normaliza prefixo extensions em índice; membership global só coberto por guard MCP específico.",
+      "effect_contract": "Uma instrução SELECT de catálogos, escrita de snapshot só pelo consumidor.",
+      "consumers": [
+        "types-sync",
+        "db-live-guard",
+        "manifest-lib.mjs"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "efd529f78e974c22fe4888219582c3acd5979a7b9cb27738bdc53ca8f41e38ad",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          383
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          383
+        ]
+      ],
+      "lines": 383,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/message-delivery-phase1-runtime.sql",
+      "assessment": "SELECT estrutural de colunas, constraints/triggers, funções por assinatura, colisões de nomes, grants diretos/efetivos e hashes; sem chamar enqueue/close. Duas assinaturas enqueue simultâneas levam subselect escalar a falhar, não a escolher silenciosamente. Validade física dos índices não é checada neste SQL, manifesto geral inclui esse atributo.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "db-migrate.yml",
+        "message-delivery-phase1-behavior.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "32d5f0160a2a629bea333d0c3b61c7fb847cc6d6466bb87d98791275f30aa6a6",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          334
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          334
+        ]
+      ],
+      "lines": 334,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/multiplix-audience-parity.mjs",
+      "assessment": "Onze comparações RPC/SQL com scope admin, sem provar autorização. Timeout/retry limitado, faltas de credenciais rotulam PULADO/0. Número vazio vira0 por Number e casos não exigem n>0; coleta não é somente offline, lê token local e chama serviço externo se presente.",
+      "effect_contract": "POST RPC de contagem e Management SELECT externo; sem DML próprio.",
+      "consumers": [
+        "Manual F23",
+        "db-guard workflow skip"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "6fc378675fcd19b94ff10ad1dda33722bee5c36e9dc58fc0347a114b1cd63a88",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          300
+        ]
+      ],
+      "lines": 300,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          300
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/multiplix-send-mutation.py",
+      "assessment": "Runner exige baseline verde e diferencia morte por resumo de testes de erro de compilação. Edita WORKER original por write; restauração é só caminho normal, sem try/finally ou isolamento — interrupção/exceção pode deixar mutante. Não executado; risco de restauração registrado sem contar como nova vulnerabilidade de produto.",
+      "effect_contract": "Muta fonte local e executa Deno --allow-env; sem --allow-net.",
+      "consumers": [
+        "Manual mutação Multiplix"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "37773ea64d7e4b7fa330008930de2941dc4cb7a10df44a4365b506e12cdf7437",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "lines": 145,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          145
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/notification-delivery-atomicity-runtime.sql",
+      "assessment": "SELECT estrutural de duas assinaturas históricas, corpo hash, grants e tabela/índice. function_name_count inclui overload adicional mas os grants são agregados apenas nas assinaturas esperadas; consumidor exige ambos os counts. Não chama notificação nem prova atomicidade por exercício.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "db-migrate.yml",
+        "notification-delivery-atomicity.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "7e432724ee5d1e18bea1b22cac11260380b6dd3722658a950b2f85b4e185af62",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          115
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          115
+        ]
+      ],
+      "lines": 115,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "assessment": "Parser aceita lista/range/passo para hora/minuto, mas mês/dia são fixados em 9/2 e dow é ignorado. Saída é diagnóstico desse recorte histórico, não calendário ou medição dinâmica; falha em arquivo/slots vazio.",
+      "effect_contract": "Leitura texto local, stdout; sem DB/rede.",
+      "consumers": [
+        "QA de cron histórica"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "ea39a45f0c3b2fb502968b555835179456785a355cd5e26d48484c39658c4524",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "lines": 85,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          85
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/psql-environment.integration.mjs",
+      "assessment": "Teste de integração de fato cria PostgreSQL Docker network=none, fixtures e queries com pgpass; limpa container em finally. Usa imagem móvel postgres:17-alpine e deixa fixtures não secretas. Não foi executado nesta auditoria.",
+      "effect_contract": "Docker local, criação/INSERT/DELETE de fixtures e filesystem temp.",
+      "consumers": [
+        "Teste opt-in de transporte DB"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "7bca60421e81dd682f12f9c338636963c04e3b02314738ef16b9d363c585fba1",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "lines": 127,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          127
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/reconcile-schema-migrations-20260924203300.sql",
+      "assessment": "Leitura integral. INSERT condicional no ledger de uma versão fixa; contém textos DDL como payload, não executa esses DDL. Não revalida runtime/identidade e não é transacionalmente idempotente sob concorrência; documento informa aprovação específica/histórica e não há chamada em workflow/scripts executáveis. Não é probe read-only nem ação pendente inferível do comentário.",
+      "effect_contract": "INSERT real em schema_migrations se ausente; nunca executado.",
+      "consumers": [
+        "RECONCILE-20260924203300-NOTES.md; sem chamada automatizada localizada"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "5ee0a66fa760910a09ca1f5026e3246d4e613656e19803f4a353f440087831c9",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          120
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          120
+        ]
+      ],
+      "lines": 120,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/register-migration.mjs",
+      "assessment": "Revisão integral: dry-run imprime SQL; --apply sem URL também cai em dry-run explicitamente. Antes de INSERT exige URL canônica/TLS, max e colisão por nome; RETURNING verificado. Splitter não é lexer compartilhado (aspas duplas, escape E e bloco comentário fora de dollar quote não cobertos); ausência de caso corrente confirmado não gerou achado novo.",
+      "effect_contract": "SELECTs e INSERT de ledger com --apply; default imprime SQL de fonte.",
+      "consumers": [
+        "Manual de migrations",
+        "verify-ledger-statements.mjs"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "a4123c05163530b8f78b47c43cdcc2c43a4a0abc2edc6cc926226220a844ee81",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          340
+        ]
+      ],
+      "lines": 340,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          340
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/runtime-config.sql",
+      "assessment": "Leitura integral: BEGIN READ ONLY com timeouts, identidade, autovacuum, publicação, contagens de cron/storage e quatro limitações de ledger. Não lê comandos/segredos de cron nem objetos storage; os limites COUNTS_ONLY do consumidor são intencionais.",
+      "effect_contract": "SELECT agregado em transação read only e ROLLBACK.",
+      "consumers": [
+        "check-runtime-config.mjs",
+        "db-live-guard"
+      ],
+      "finding_ids": [],
+      "batch": "H_sql_exporters_and_guards",
+      "sha256": "4b1e34174678516e7bdff81ce100215590641b06176931a6b036d3dc168ed770",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "lines": 50,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/sql-lexer.mjs",
+      "assessment": "Scanner integral: nested comments, strings/identificadores, dollar-quotes e estado parcial de standard_conforming_strings. Canonicalização é lexical; não executa SQL, não resolve DO/EXECUTE e não é parser transacional geral. Nenhum achado de produção novo foi atribuído só a sintaxe hipotética.",
+      "effect_contract": "Funções puras; compartilha tokens e stripping.",
+      "consumers": [
+        "check-migration-drift.mjs",
+        "supabase-usage-guard.mjs"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "13eec18bee99e002d5145d6886ec69ce746922d7f2113d16710bed03e2ad7bb7",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          264
+        ]
+      ],
+      "lines": 264,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          264
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/supabase-usage-guard.mjs",
+      "assessment": "Varredura regex de .from/.rpc literal e projeção forward-only de DDL após data do catálogo. Entende schemas, overloads, DROP/CREATE/RENAME em formas finitas; DO e SQL dinâmico opacos, assinaturas RPC e colunas não são provadas. Ratchet exige remover exceções obsoletas.",
+      "effect_contract": "Leituras fonte/catalog/baseline; sem rede ou escrita; main executa no import.",
+      "consumers": [
+        "CI",
+        "db-guard.yml"
+      ],
+      "batch": "C-db-guards",
+      "sha256": "c4ffd9d278c9d7ee9010571a66a1d708dcfbad1ad3e76579d723499d0fd8156f",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          346
+        ]
+      ],
+      "lines": 346,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          346
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/talkx-blacklist-policy-runtime.sql",
+      "assessment": "SELECT estrutural da policy nomeada; procura expressão de admin nas cláusulas USING/CHECK, sem exercer dois papéis. Só inclui policy alvo; manifesto completo complementa cobertura de outras policies.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "db-migrate.yml",
+        "talkx-blacklist-policy-forward-only.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "2956d313ec0ab04ac2f1f21995609104f23aaadcab9ec5ab2ace727204317565",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "lines": 41,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/talkx-recovery-runtime.sql",
+      "assessment": "SELECT estrutural do rollout histórico: 15 assinaturas/ACL, dois triggers, sete constraints, três índices e hashes agregados. Contrato explicitamente data-free, não chama worker nem autoriza recorte diferente de migrations.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "db-migrate.yml"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "b1548f658186a2ed33c6c2996a96a6f86d4fca0d1d479a768772e2ff5c333330",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          175
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          175
+        ]
+      ],
+      "lines": 175,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/talkx-template-history-runtime.sql",
+      "assessment": "SELECT de assinaturas, RLS/grants, FK/constraints/triggers, hash das funções e contagens de conteúdo inválido de templates/variantes. Retorna só contagens e metadados, não mensagens dos templates. Várias policies são avaliadas por substrings, não por simulação da autorização; consumidor verifica campos explicitamente.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "db-migrate.yml",
+        "talkx-template-history-behavior.test.sh"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "251f01a010e54bb49b018b637e1818b5d5ab5bbf7938065844897576d1dbc1ae",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          410
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          410
+        ]
+      ],
+      "lines": 410,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/db-audit/telefonia-snapshot.mjs",
+      "assessment": "Valida duas chaves de saída e identidade/TLS antes de psql; JSON válido é escrito nos caminhos fixos de docs. SQL e binário podem vir de env para teste; não há autorização para executar isso aqui.",
+      "effect_contract": "SELECT via arquivo SQL e sobrescrita de snapshot local.",
+      "consumers": [
+        "Manual Telefonia T04/T93"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "7c22a1333d1adfdd4043b43e896bde3b3182220f86c3db7d5a91499bf7384fe9",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          124
+        ]
+      ],
+      "lines": 124,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          124
+        ]
+      ]
+    },
+    {
+      "path": "scripts/db-audit/telefonia-snapshot.sql",
+      "assessment": "SELECT de schema/ACL/corpos de cinco nomes de funções e contagens de calls por status/direção/canal. Não devolve linhas de clientes; exporta definições completas e agregados. Contagens variam no tempo, generated_at também; não é comparação de DDL pura. Não houve extração remota.",
+      "effect_contract": "Consulta SQL; não executada durante a reauditoria.",
+      "consumers": [
+        "telefonia-snapshot.mjs"
+      ],
+      "finding_ids": [],
+      "batch": "I_sql_runtime",
+      "sha256": "cc35474c3b6feabbed49f46d1b7843b65e6f120085aa4acbcb0b9d04694a0d78",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "lines": 94,
+      "review_level": "semantic",
+      "executed": false
+    },
+    {
+      "path": "scripts/edge-deploy/collect-remote.mjs",
+      "assessment": "Argumentos, SHA/run/projeto e digest são validados. Consulta Management API por helper com allowlist de campos e timeout. Cria evidência com wx/0600 somente após sucesso; falha define exitCode=1.",
+      "effect_contract": "GET remoto e arquivo local restrito; importa coletor permissivo descrito em R2-INF-017.",
+      "consumers": [
+        "deploy-functions.yml"
+      ],
+      "finding_ids": [
+        "R2-INF-017"
+      ],
+      "batch": "A-edge",
+      "sha256": "23b34f58507471ee5ec8bee92c8720c185d68f5b5426436090da7bb71140eac1",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "lines": 48,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          48
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/deployment-record.mjs",
+      "assessment": "Payload prende ref ao SHA de 40 hex, não à branch; required_contexts=[] e estado success são explícitos. Validação de parâmetros restante depende do workflow.",
+      "effect_contract": "Funções puras; payloads para POST no registrador.",
+      "consumers": [
+        "register-deployment.mjs"
+      ],
+      "finding_ids": [],
+      "batch": "A-edge",
+      "sha256": "65a5490f7299537e3bc60e56463a21b27eb319613ced196ba771d414c3d4ca90",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "lines": 63,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          63
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/generate-manifest.mjs",
+      "assessment": "Regenera manifesto por padrão; --check compara serialização exata e falha se stale. Allowlist vem do manifesto anterior; erro de JSON elimina allowlist e força diferença. Saída é controlada por CLI, não entrada remota.",
+      "effect_contract": "Escreve manifesto local por padrão; --check somente leitura.",
+      "consumers": [
+        "deploy-functions.yml",
+        "CI"
+      ],
+      "finding_ids": [],
+      "batch": "A-edge",
+      "sha256": "e53fb531c158779e1e91367231887667ea8fb60aa2b5cfb2e08c17b4febda05d",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "lines": 66,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          66
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/legacy-functions.json",
+      "assessment": "Lista vazia: nenhum bypass legado ativo por este arquivo.",
+      "effect_contract": "Allowlist de funções legadas.",
+      "consumers": [
+        "generate-manifest.mjs"
+      ],
+      "batch": "F-configs",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "lines": 1,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/manifest-lib.mjs",
+      "assessment": "Manifesto e atestação: resolve imports relativos sob functions/, recusa symlinks de arquivos, hash de conteúdo/config, compara conjunto/JWT/estado remoto. Digest de bundle não é comparado ao hash de fonte e o consumidor explicita essa limitação. Imports dinâmicos não literais/remotos estão fora da closure medida.",
+      "effect_contract": "Leituras de fonte; construção de objetos; sem rede ou escrita no módulo.",
+      "consumers": [
+        "generate-manifest.mjs",
+        "collect-remote.mjs",
+        "verify-remote.mjs"
+      ],
+      "finding_ids": [],
+      "batch": "A-edge",
+      "sha256": "713598c1aad1e33019a8dd08dc79857e09d7f68ec8dddecedc7b05dbb36d94a1",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          358
+        ]
+      ],
+      "lines": 358,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          358
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/register-deployment.mjs",
+      "assessment": "POSTs de Deployment/status após deploy; allowlist https/API ou host Enterprise. Falha é warning best-effort por decisão explícita, não atestado de publicação. Importar o módulo executa o bloco de POST; não importado/rodado nesta passagem.",
+      "effect_contract": "Duas mutações GitHub e append GITHUB_OUTPUT; usa token, não o imprime deliberadamente.",
+      "consumers": [
+        "deploy-functions.yml"
+      ],
+      "finding_ids": [],
+      "batch": "A-edge",
+      "sha256": "d289cedb4c3773cf5807c5d1060faa0c4b35b707148a3f9fa530876a2b21d942",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          96
+        ]
+      ],
+      "lines": 96,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          96
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/stable-inventory.mjs",
+      "assessment": "Fluxo completo de estabilização revisto: identidade, versão, digest, séries consecutivas, prazo, permanência e erro. Encontrado aceite de digest remoto anterior sem sinal CLI, que permite atestar antes da propagação de um deploy novo.",
+      "effect_contract": "GET autenticado fixo; só metadados permitidos; sem mutação remota.",
+      "consumers": [
+        "collect-remote.mjs",
+        "talkx-preflight.mjs"
+      ],
+      "finding_ids": [
+        "R2-INF-017"
+      ],
+      "batch": "A-edge",
+      "sha256": "8e4a354414e096a64ef0ebfd45deae6182f40131c1967dda7893bbad3606968d",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          183
+        ]
+      ],
+      "lines": 183,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          183
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/stable-inventory.unit.mjs",
+      "assessment": "Leitura completa dos cenários; testes 30–62 ratificam o aceite de baseline sem sinal CLI. Testes de metadados/permanência existem, mas não distinguem propagação atrasada de no-op. Não reexecutados.",
+      "effect_contract": "Fixtures e relógio/fetch injetados; módulo real de fonte.",
+      "consumers": [
+        "CI node --test"
+      ],
+      "finding_ids": [
+        "R2-INF-017"
+      ],
+      "batch": "A-edge",
+      "sha256": "78d82719c0412b8fe35d75c4c3d080efee793f7129e9a991d2aeefc7df0bdb1a",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          194
+        ]
+      ],
+      "lines": 194,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          194
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/talkx-preflight.mjs",
+      "assessment": "Paridade local de cinco funções, remoto opcional, nomes de secrets opcionais, saída de evidência. Confirmado TX02 já existente: ausentes desconhecidos/null ainda permitem preflight verde. Não recontado.",
+      "effect_contract": "GET Management opcional; mkdir/writeFile local; QUERY_VAULT_E_JOB é texto de instrução, não executada pelo script.",
+      "consumers": [
+        "TalkX operação/X023"
+      ],
+      "finding_ids": [
+        "TX02"
+      ],
+      "batch": "A-edge",
+      "sha256": "bc035d7372a2ebacf02d23d0be6111af4b13bf2b7fdcecacd865e5d12ca6cc11",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          248
+        ]
+      ],
+      "lines": 248,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          248
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/unchanged-from-log.mjs",
+      "assessment": "Extrator remove ANSI, exige frase no início e slug válido, deduplica. Lê log e escreve lista quando CLI invocada. Workflow captura stdout e stderr antes de usá-lo; a fragilidade fica no consumidor da lista.",
+      "effect_contract": "Leitura de log e escrita JSON local.",
+      "consumers": [
+        "deploy-functions.yml"
+      ],
+      "finding_ids": [],
+      "batch": "A-edge",
+      "sha256": "3e6045000a4dafd67faf65b73b1e8801b2a3274ca74cc527c79698278a5651a6",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "lines": 63,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          63
+        ]
+      ]
+    },
+    {
+      "path": "scripts/edge-deploy/verify-remote.mjs",
+      "assessment": "Validação offline de manifesto+inventário e gravação JSON; não consulta remoto nem atesta estabilização. Argumentos obrigatórios são conferidos; falha propaga status 1.",
+      "effect_contract": "Leituras de dois arquivos e escrita de evidência local.",
+      "consumers": [
+        "CLI de verificação remota documentada"
+      ],
+      "finding_ids": [],
+      "batch": "A-edge",
+      "sha256": "47cb113cbd65a3f59f05539d6783c1c706bc8d81d98b7cbc7a4549497980f616",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "lines": 47,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          47
+        ]
+      ]
+    },
+    {
+      "path": "scripts/mutation/run-mapa.mjs",
+      "assessment": "Sem baseline e killed por qualquer status não zero (inclui null/ENOENT); survivors não afetam exit. Afirma cópia temporária mas sed altera origem real, restaurada de backup em finally; vulnerabilidade de qualidade R2-INF-019.",
+      "effect_contract": "rm de backup fixo; sed de fonte real; execução Vitest; restaura byte a byte no fluxo normal/finally.",
+      "consumers": [
+        "package mutation:mapa",
+        "P037 E69"
+      ],
+      "finding_ids": [
+        "R2-INF-019"
+      ],
+      "batch": "D-db-tools-qa",
+      "sha256": "9dc269f60e24e74a05bcc776d6565605817fd4b5fe7b599ac7b18c35ac1bf14e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          233
+        ]
+      ],
+      "lines": 233,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          233
+        ]
+      ]
+    },
+    {
+      "path": "scripts/qa/contraste-combobox.mjs",
+      "assessment": "Leitura de tokens/theme overrides e cálculo dos três pares × quatro combinações de tema; alpha hardcoded pelo contrato. --check aplica threshold; não renderiza componente nem valida todos os backgrounds/cascade.",
+      "effect_contract": "Leituras e matemática; sem escrita/rede.",
+      "consumers": [
+        "QA Mapa E62"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "c4ef48275c4d40882ce50a5c8e1c815f8f3aef3db27ffce19040e6833dea30c1",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "lines": 111,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          111
+        ]
+      ]
+    },
+    {
+      "path": "scripts/qa/contraste-contatos.mjs",
+      "assessment": "Leitura pares fixos e recipes de badge; parsing falha se recipe ausente. Mede blends esperados sobre card e tema, não DOM ou visibilidade. --check falha threshold; default é relatório.",
+      "effect_contract": "Leituras e cálculo de contraste; sem escrita/rede.",
+      "consumers": [
+        "QA Contatos",
+        "contraste-combobox.mjs"
+      ],
+      "finding_ids": [],
+      "batch": "D-db-tools-qa",
+      "sha256": "7c312b433f3063b54c3d916047e7a1e8007b392e286fe82c3633be8245c0f59f",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          134
+        ]
+      ],
+      "lines": 134,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          134
+        ]
+      ]
+    },
+    {
+      "path": "scripts/qa/medir-tipografia.cjs",
+      "assessment": "403 linhas: regex da escala/classes/CSS, pesos/fontes e ratchet de oito contagens. Medida estática assume raiz16px e line-height herdado1.5; em é tratado como rem e fontes ausentes viram lista de órfãos vazia. Não mede cascade/DOM e includes de teste/prosa contam; veredito limitado ao ratchet declarado.",
+      "effect_contract": "Leituras fonte/tokens; --json grava relatório local; --check compara budget.",
+      "consumers": [
+        "QA tipografia",
+        "CI"
+      ],
+      "finding_ids": [],
+      "batch": "E-qa-ui",
+      "sha256": "f05c79c6452c33be826a112d4611e73e5cecf589cd21e5e4cdd6b34c381e187d",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          403
+        ]
+      ],
+      "lines": 403,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          403
+        ]
+      ]
+    },
+    {
+      "path": "scripts/qa/prova-visao-classificadores.mjs",
+      "assessment": "Login real e chamadas pagas de dois classificadores; consumo opcional apesar do cabeçalho exigir registro das duas chamadas. HTTP recusado na leitura de consumo só avisa e permite PROVA OK; registros nos5min não são correlacionados. Candidato R2-INF-020 enviado à área Providers para dedupe.",
+      "effect_contract": "Autentica, chama IA/Edge de produto e lê logs; não executado.",
+      "consumers": [
+        "Manual IA-033"
+      ],
+      "finding_ids": [
+        "R2-INF-020"
+      ],
+      "batch": "E-qa-ui",
+      "sha256": "020ad6591a073f7cb8ccbc99b95c984bf5b4d87744c37625f4e3ce575d83bf36",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          190
+        ]
+      ],
+      "lines": 190,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          190
+        ]
+      ]
+    },
+    {
+      "path": "scripts/talkx/lado-a-lado.mjs",
+      "assessment": "Gera página visual de referências/capturas existentes; ausência de screenshot é rotulada tela não existe sem validar runtime. Não classifica paridade visual nem atualidade dos PNGs. Caminhos locais controlados pelo operador; texto não é HTML-escaped, mas nenhuma entrada pública foi demonstrada.",
+      "effect_contract": "mkdir/copy/write locais; sem browser ou rede.",
+      "consumers": [
+        "TalkX régua visual"
+      ],
+      "finding_ids": [],
+      "batch": "E-qa-ui",
+      "sha256": "450c019cb0963083ff48d438fb6b95d2a95ac0b09df53a636a8c1cc3f9bdfaf3",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          108
+        ]
+      ],
+      "lines": 108,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          108
+        ]
+      ]
+    },
+    {
+      "path": "scripts/talkx/v4-status.mjs",
+      "assessment": "Placar baseado em commits com escopo talkx e IDs e estado Hoje=OK; todos os citantes exigidos. Não prova teste/runtime/aceite por etapa, por definição; --check compara Markdown e usa ref selecionável/default origin/main. Nenhuma reescrita de ledger executada.",
+      "effect_contract": "git log local; escreve STATUS sem --check.",
+      "consumers": [
+        "CI TalkX status",
+        "governança P027"
+      ],
+      "finding_ids": [],
+      "batch": "E-qa-ui",
+      "sha256": "c4e5050bae8b1a354edd389992b67801a92b8c6b5bbbb0671fc1fcdbd75b4587",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          264
+        ]
+      ],
+      "lines": 264,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          264
+        ]
+      ]
+    },
+    {
+      "path": "scripts/team-chat-db-validate.mjs",
+      "assessment": "Confirmados contratos legados e aceite RPC por qualquer HTTP diferente de404 (TC-012). Usa service_role e POST RPC; não prova RLS ou ausência de mutação por nome VALIDATE_DRY_RUN. Não recontado.",
+      "effect_contract": "GET tabelas e POST RPC de produto; não executado.",
+      "consumers": [
+        "Manual Team Chat E97–E99"
+      ],
+      "finding_ids": [
+        "TC-012"
+      ],
+      "batch": "E-qa-ui",
+      "sha256": "836537a29b91ad5c181c28cbb0b5a1d0a0b757a2b428885a14ad2bf406bd57aa",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          118
+        ]
+      ],
+      "lines": 118,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          118
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ui-audit/layout-guard.mjs",
+      "assessment": "Arquivos vêm de lazyViews; full-screen/standalone excluídos. Parser não resolve reexports/cascade e regex h-full casa min-h-full (LT-LAYOUT-02 anterior). Leitura falhada pula; não é prova de largura renderizada.",
+      "effect_contract": "Leituras source; saída de guard.",
+      "consumers": [
+        "QA layout"
+      ],
+      "finding_ids": [
+        "LT-LAYOUT-02"
+      ],
+      "batch": "E-qa-ui",
+      "sha256": "c8e3e6e3947ae53ae2b5a629b36239e1c1a80e5a80819744ade359bb9ea785f4",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          139
+        ]
+      ],
+      "lines": 139,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          139
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ui-audit/root-className.mjs",
+      "assessment": "Extrai último export e return com2espaços; recebe só classes literais/primeiro cn. Fragmento gera raiz vazia auditada; heurística não atravessa componentes/reexports nem resolve classe dinâmica.",
+      "effect_contract": "Função textual pura.",
+      "consumers": [
+        "layout-guard.mjs"
+      ],
+      "finding_ids": [
+        "LT-LAYOUT-02"
+      ],
+      "batch": "E-qa-ui",
+      "sha256": "2e9185cc364a87dceddcf7331a2469d159a5e135582ac1202567b5dc496fad34",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "lines": 74,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          74
+        ]
+      ]
+    },
+    {
+      "path": "scripts/ui-audit/width-regression.mjs",
+      "assessment": "Navega9hashes com sessão existente, bloqueia/auth e mede scrollWidth numa viewport1280×800. Apenas espera fixa após networkidle, sem assertiva da view correta nem dado carregado; mede overflow horizontal do estado alcançado.",
+      "effect_contract": "Inicia browser/navega com sessão e chama recursos do app; não executado.",
+      "consumers": [
+        "Ferramenta QA local"
+      ],
+      "finding_ids": [],
+      "batch": "E-qa-ui",
+      "sha256": "01bb7c2fa248affaf9caf45eccfe5abab8f19fa2262eefd6839f953b97ab15df",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "line_ranges": [
+        [
+          1,
+          134
+        ]
+      ],
+      "lines": 134,
+      "review_level": "semantic",
+      "executed": false,
+      "reviewed_ranges": [
+        [
+          1,
+          134
+        ]
+      ]
+    }
+  ],
+  "counts": {
+    "total": 93,
+    "targeted": 2,
+    "semantic": 91
+  }
+}

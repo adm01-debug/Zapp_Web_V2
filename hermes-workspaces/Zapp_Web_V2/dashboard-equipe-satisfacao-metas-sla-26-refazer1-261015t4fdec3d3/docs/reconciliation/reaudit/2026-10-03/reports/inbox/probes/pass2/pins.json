@@ -1,0 +1,18 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "files": {
+    "src/components/inbox/MediaPreview.tsx": "6c4d6e70322b59ce25752a552f19fa5d4197a8b8",
+    "src/components/inbox/ImagePreview.tsx": "76de00c8dede81c06fa8ff859c2f2cef06dc7a4c",
+    "src/hooks/system/useDownloadPermission.ts": "0c1c6a36db0f658dedad8376aed764addc961134",
+    "src/hooks/reactions/useReactionMutations.ts": "68ea31a3ddeb91ad12c44b7b43787e6121d28379",
+    "src/hooks/storage/useResolvedStorageUrl.ts": "fa8a58242a22ce01eecb47bd3e6736d859e98c3f",
+    "src/lib/storage_object_reference.ts": "7edf9e17f861b96f90f2d346132b1e1557a0f97c",
+    "src/hooks/chat/useConversationHistoryTimeline.ts": "4d790869c2237aa1ee99d482f95405a3a064c161",
+    "src/lib/localDay.ts": "6bb3e363d6004707db4be23e5c24c0b1cd9f5343",
+    "src/hooks/tasks/workItemMachine.ts": "266de050ae37b87f7a1b63a0698d87dd6314d2e7",
+    "src/components/inbox/location-picker/useLocationPicker.ts": "33b12ea9d573a36442e404ea8220f494d38036a3",
+    "src/components/inbox/location-picker/useAddressAutocomplete.ts": "71a4e7d5928b2cf7a9b3038cf99309975a946183",
+    "src/components/inbox/LocationPicker.tsx": "17cf9e4cf47cd28618d98a6ba6b586c488459ab8"
+  }
+}

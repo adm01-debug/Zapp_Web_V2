@@ -1,0 +1,1 @@
+relation_grants|r:public.t137805b5_pend|authenticated|SELECT|grantor=postgres

@@ -1,0 +1,15 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Critério de pronto ainda não demonstrado: "Cada componente citado tem teste de carregando/erro/vazio". Mostre no diff/teste ou diga no relato o que falta.
+  2. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/hooks/business/__tests__/useDemandPrediction.previsao.test.tsx, src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx, src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+OK      db_guard        0s
+FALHOU  tipos         130s  (ver /home/joaquim_ataides/.local/state/zapp-verify/b286b9b775d1/tipos.log)
+Typecheck ratchet: baseline=0, atual=4, removidas=0, novas=4
+FALHA: novos erros de tipo detectados:
+  src/hooks/business/__tests__/useDemandPrediction.previsao.test.tsx(27,13) error TS2339 - Property 'select' does not exist on type '{ table: string; op: string; filtros: unknown[][]; }'.
+  src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx(70,13) error TS2339 - Property 'payload' does not exist on type '{ table: string; op: string; filtros: unknown[][]; single: boolean; }'.
+  src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx(49,13) error TS2339 - Property 'select' does not exist on type '{ table: string; op: string; filtros: unknown[][]; single: boolean; }'.
+  src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx(195,18) error TS2322 - Type 'null' is not assignable to type 'unknown[]'.
+Corrija os novos erros. Atualize o baseline somente quando a nova divida tiver aprovacao explicita.
+VERIFY: VERMELHO em tipos (130s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac/.tmp/verify-2610131523c5ac.log)
+EXIT=1

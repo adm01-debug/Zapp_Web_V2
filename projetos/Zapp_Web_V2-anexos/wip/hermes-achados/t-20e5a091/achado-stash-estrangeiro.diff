@@ -1,0 +1,132 @@
+diff --git a/src/components/queues/QueueCard.tsx b/src/components/queues/QueueCard.tsx
+index b8a91692e..0c4f31d25 100644
+--- a/src/components/queues/QueueCard.tsx
++++ b/src/components/queues/QueueCard.tsx
+@@ -13,10 +13,11 @@ interface QueueCardProps {
+   onAddMember: (queue: QueueWithMembers) => void;
+   onRemoveMember: (queueId: string, profileId: string) => void;
+   onSetGoals: (queue: QueueWithMembers) => void;
++  onEdit: (queue: QueueWithMembers) => void;
+   onDelete: (queue: QueueWithMembers) => void;
+ }
+ 
+-export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSetGoals, onDelete }: QueueCardProps) {
++export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSetGoals, onEdit, onDelete }: QueueCardProps) {
+   const navigate = useNavigate();
+   const activeMembers = queue.members.filter(m => m.is_active && m.profile?.is_active);
+ 
+@@ -35,7 +36,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
+             </div>
+           </div>
+           <DropdownMenu>
+-            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted/30"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
++            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted/30" aria-label={`Ações da fila ${queue.name}`}><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+             <DropdownMenuContent align="end" className="bg-card border-border/30">
+               <DropdownMenuItem className="hover:bg-primary/10" onClick={() => navigate(`/queue/${queue.id}`)}><Eye className="w-4 h-4 mr-2" />Ver Detalhes</DropdownMenuItem>
+               <DropdownMenuItem className="hover:bg-primary/10" onClick={() => onSetGoals(queue)}>
+@@ -43,7 +44,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
+                 {alertCount > 0 && <Badge variant="destructive" className="ml-auto text-xs px-1.5">{alertCount}</Badge>}
+               </DropdownMenuItem>
+               <DropdownMenuSeparator />
+-              <DropdownMenuItem className="hover:bg-primary/10"><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
++              <DropdownMenuItem className="hover:bg-primary/10" onClick={() => onEdit(queue)}><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
+               <DropdownMenuItem className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(queue)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+             </DropdownMenuContent>
+           </DropdownMenu>
+diff --git a/src/components/queues/QueuesView.tsx b/src/components/queues/QueuesView.tsx
+index d6a0d70af..7ce1f6c1d 100644
+--- a/src/components/queues/QueuesView.tsx
++++ b/src/components/queues/QueuesView.tsx
+@@ -11,6 +11,7 @@ import { Plus, Clock, BarChart3, AlertTriangle } from 'lucide-react';
+ import { useQueues, QueueWithMembers } from '@/hooks/business/useQueues';
+ import { useQueueGoals, QueueAlert } from '@/hooks/business/useQueueGoals';
+ import { CreateQueueDialog } from './CreateQueueDialog';
++import { EditQueueDialog } from './EditQueueDialog';
+ import { AddMemberDialog } from './AddMemberDialog';
+ import { QueueGoalsDialog } from './QueueGoalsDialog';
+ import { QueueAlertsDisplay } from './QueueAlertsDisplay';
+@@ -18,9 +19,10 @@ import { QueueCard } from './QueueCard';
+ 
+ export function QueuesView() {
+   const navigate = useNavigate();
+-  const { queues, loading, createQueue, deleteQueue, addMember, removeMember } = useQueues();
++  const { queues, loading, createQueue, updateQueue, deleteQueue, addMember, removeMember } = useQueues();
+   const { goals } = useQueueGoals();
+   const [createDialogOpen, setCreateDialogOpen] = useState(false);
++  const [editDialogOpen, setEditDialogOpen] = useState(false);
+   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
+   const [selectedQueue, setSelectedQueue] = useState<QueueWithMembers | null>(null);
+@@ -85,6 +87,7 @@ export function QueuesView() {
+             onAddMember={(q) => { setSelectedQueue(q); setAddMemberDialogOpen(true); }}
+             onRemoveMember={(queueId, profileId) => removeMember(queueId, profileId)}
+             onSetGoals={(q) => { setSelectedQueue(q); setGoalsDialogOpen(true); }}
++            onEdit={(q) => { setSelectedQueue(q); setEditDialogOpen(true); }}
+             onDelete={(q) => { setQueueToDelete(q); setDeleteDialogOpen(true); }}
+           />
+         ))}
+@@ -97,6 +100,7 @@ export function QueuesView() {
+       </div>
+ 
+       <CreateQueueDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onSubmit={createQueue} />
++      {selectedQueue && <EditQueueDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} queue={selectedQueue} onSubmit={(id, updates) => updateQueue(id, updates)} />}
+       {selectedQueue && <AddMemberDialog open={addMemberDialogOpen} onOpenChange={setAddMemberDialogOpen} queueId={selectedQueue.id} existingMemberIds={selectedQueue.members.map(m => m.profile_id)} onAddMember={(profileId) => addMember(selectedQueue.id, profileId)} />}
+       {selectedQueue && <QueueGoalsDialog open={goalsDialogOpen} onOpenChange={setGoalsDialogOpen} queueId={selectedQueue.id} queueName={selectedQueue.name} queueColor={selectedQueue.color} />}
+       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+diff --git a/src/pages/QueueDetails.tsx b/src/pages/QueueDetails.tsx
+index 724074ac4..7d2b1018c 100644
+--- a/src/pages/QueueDetails.tsx
++++ b/src/pages/QueueDetails.tsx
+@@ -14,6 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton';
+ import { ScrollArea } from '@/components/ui/scroll-area';
+ import { Users, AlertCircle, Settings } from 'lucide-react';
+ import { QueueCharts } from '@/components/queues/QueueCharts';
++import { EditQueueDialog, type QueueUpdates } from '@/components/queues/EditQueueDialog';
++import { QueueService } from '@/services/queue.service';
++import { toast } from 'sonner';
+ import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
+ import { fetchQueueMetrics, type QueueMetrics } from './queue-details/queueMetrics';
+ import { QueueContactsTable } from './queue-details/QueueContactsTable';
+@@ -31,6 +34,7 @@ export default function QueueDetails() {
+   const [contacts, setContacts] = useState<QueueContact[]>([]);
+   const [metrics, setMetrics] = useState<QueueMetrics | null>(null);
+   const [loading, setLoading] = useState(true);
++  const [editDialogOpen, setEditDialogOpen] = useState(false);
+ 
+   useEffect(() => { if (!authLoading && !user) navigate('/auth'); }, [user, authLoading, navigate]);
+ 
+@@ -76,6 +80,19 @@ export default function QueueDetails() {
+     }
+   }, [id, user, fetchQueueData]);
+ 
++  // R2-QUE-006: o botão "Configurar" anunciava a edição da fila sem executá-la.
++  // A gravação usa o mesmo caminho de escrita (QueueService.updateQueue) do hook
++  // useQueues e só anuncia sucesso depois que a escrita é confirmada.
++  const handleUpdateQueue = async (queueId: string, updates: QueueUpdates) => {
++    const { error } = await QueueService.updateQueue(queueId, updates);
++    if (error) {
++      toast.error('Não foi possível atualizar a fila.');
++      throw error;
++    }
++    toast.success('Fila atualizada com sucesso.');
++    await fetchQueueData();
++  };
++
+   if (authLoading || loading) {
+     return (
+       <div className="min-h-screen bg-background p-6 space-y-6"><AuroraBorealis /><FloatingParticles />
+@@ -99,7 +116,13 @@ export default function QueueDetails() {
+       <AuroraBorealis /><FloatingParticles />
+       <PageHeader title={queue.name} subtitle={queue.description || undefined} showBack onBack={() => navigate('/')}
+         breadcrumbs={[{ label: 'Filas', onClick: () => navigate('/'), href: '/' }, { label: queue.name }]}
+-        actions={<Button variant="outline" size="sm" className="gap-2"><Settings className="w-4 h-4" />Configurar</Button>}
++        actions={<Button variant="outline" size="sm" className="gap-2" onClick={() => setEditDialogOpen(true)}><Settings className="w-4 h-4" />Configurar</Button>}
++      />
++      <EditQueueDialog
++        open={editDialogOpen}
++        onOpenChange={setEditDialogOpen}
++        queue={queue}
++        onSubmit={handleUpdateQueue}
+       />
+       <div className="p-6 space-y-6">
+         {metrics && <QueueMetricsCards metrics={metrics} />}

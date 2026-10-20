@@ -1,0 +1,1 @@
+routine_grants|f:t137805b5_fn(p_id uuid)|authenticated|EXECUTE|grantor=postgres

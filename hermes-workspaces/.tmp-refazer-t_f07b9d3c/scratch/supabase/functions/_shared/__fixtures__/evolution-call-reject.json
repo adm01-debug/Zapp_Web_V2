@@ -1,0 +1,13 @@
+{
+  "_nota": "Fixture sintetica e anonimizada (T25). Chamada recusada/perdida: status=reject deve mapear para calls.status='missed'.",
+  "event": "call",
+  "instance": "instancia-anonimizada-01",
+  "data": {
+    "id": "EV-CALL-REJECT-0003",
+    "from": "5511900000001@s.whatsapp.net",
+    "status": "reject",
+    "isVideo": false,
+    "fromMe": false,
+    "date": "2026-10-02T14:00:30.000Z"
+  }
+}

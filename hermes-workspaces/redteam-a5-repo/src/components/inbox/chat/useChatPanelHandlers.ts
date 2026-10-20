@@ -1,0 +1,235 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { log } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
+import { undoToast } from '@/lib/undoToast';
+import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
+import { SlashCommand } from '../SlashCommands';
+import { toast } from '@/hooks/ui/use-toast';
+import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { useConversationActions } from '@/hooks/chat/useConversationActions';
+
+interface UseChatPanelHandlersOptions {
+  conversationId: string;
+  contactId: string;
+  contactPhone: string;
+  instanceName?: string;
+  onSendMessage: (content: string) => Promise<void> | void;
+  editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<unknown>;
+  applySignature: (text: string) => string;
+  handleTypingStart: () => void;
+  handleTypingStop: () => void;
+  openDialog: (key: string) => void;
+  closeDialog: (key: string) => void;
+  handleSetActiveTool: (tool: 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null) => void;
+}
+
+function useLatest<T>(value: T) {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref;
+}
+
+export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+  const {
+    contactPhone, instanceName, onSendMessage, contactId,
+    editMessageApi, applySignature, handleTypingStart, handleTypingStop,
+    openDialog, closeDialog, handleSetActiveTool,
+  } = opts;
+
+  const [inputValue, setInputValue] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ações reais (favoritar, adiar) para os comandos de barra — mesmo hook usado em
+  // RealtimeInboxView/ContactHeaderSection; múltiplas instâncias ficam em sync via _favBus.
+  const { isFavorite, favoriteContact, unfavoriteContact, snoozeConversation } = useConversationActions();
+
+  // ── Refs for stable callbacks (avoid re-renders on every keystroke) ──
+  const inputValueRef = useLatest(inputValue);
+  const isSendingRef = useLatest(isSending);
+  const editingMessageRef = useLatest(editingMessage);
+  const replyToMessageRef = useLatest(replyToMessage);
+  const forwardMessageRef = useLatest(forwardMessage);
+
+  const EDIT_WINDOW_MINUTES = 15;
+
+  const handleEditStart = useCallback((message: Message) => {
+    const minutesAgo = (Date.now() - message.timestamp.getTime()) / 60000;
+    if (minutesAgo > EDIT_WINDOW_MINUTES) {
+      toast({ title: 'Tempo expirado', description: `Você só pode editar mensagens nos primeiros ${EDIT_WINDOW_MINUTES} minutos.`, variant: 'destructive' });
+      return;
+    }
+    setEditingMessage(message);
+    setInputValue(message.content);
+    inputRef.current?.focus();
+  }, []);
+
+  const handleCancelEdit = useCallback(() => { setEditingMessage(null); setInputValue(''); }, []);
+
+  // handleSend now reads from refs → deps are stable → no re-render cascade
+  const handleSend = useCallback(async () => {
+    const currentInput = inputValueRef.current;
+    if (!currentInput.trim() || isSendingRef.current) return;
+
+    const currentEditing = editingMessageRef.current;
+    if (currentEditing) {
+      const externalId = currentEditing.external_id;
+      const contactJid = contactPhone ? `${contactPhone}@s.whatsapp.net` : '';
+      setIsSending(true);
+      try {
+        if (instanceName && externalId && contactJid) {
+          await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
+        }
+        await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        toast({ title: '✏️ Mensagem editada', description: 'A mensagem foi atualizada com sucesso.' });
+      } catch (err) {
+        log.error('Failed to edit message:', err);
+        toast({ title: 'Erro ao editar', description: 'Não foi possível editar a mensagem.', variant: 'destructive' });
+      } finally { setIsSending(false); }
+      setEditingMessage(null); setInputValue('');
+      return;
+    }
+
+    const messageContent = applySignature(currentInput.trim());
+    const wasReply = replyToMessageRef.current;
+    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
+    if (wasReply) log.debug('Sending reply to:', wasReply.id);
+
+    try {
+      await onSendMessage(messageContent);
+      undoToast({
+        message: 'Mensagem enviada', icon: '📨', delay: 3000,
+        onUndo: () => {
+          setInputValue(messageContent);
+          if (wasReply) setReplyToMessage(wasReply);
+          toast({ title: '↩️ Mensagem restaurada', description: 'O texto foi restaurado no campo de entrada.' });
+        },
+      });
+    } catch (err) {
+      log.error('Failed to send message:', err);
+      setInputValue(messageContent);
+      toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
+    } finally { setIsSending(false); }
+  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef]);
+
+  const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
+  const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
+  const handleForwardMessage = useCallback((message: Message) => { setForwardMessage(message); openDialog('forwardDialog'); }, [openDialog]);
+  const handleForwardToTargets = useCallback((targetIds: string[], targetType: 'contact' | 'group') => { log.debug('Forwarding to:', { targetIds, targetType, message: forwardMessageRef.current }); }, [forwardMessageRef]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    if (value.startsWith('/')) { openDialog('slashCommands'); closeDialog('quickReplies'); } else { closeDialog('slashCommands'); }
+    if (value.length > 0) handleTypingStart(); else handleTypingStop();
+  }, [openDialog, closeDialog, handleTypingStart, handleTypingStop]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, slashCommandsOpen: boolean) => {
+    if (slashCommandsOpen && (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) return;
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); openDialog('globalSearch'); }
+    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSetActiveTool('chatSearch'); }
+    if (e.key === 'Escape' && slashCommandsOpen) closeDialog('slashCommands');
+  }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
+
+  const handleSlashCommand = useCallback((command: SlashCommand, subCommand?: string) => {
+    closeDialog('slashCommands'); setInputValue('');
+    switch (command.id) {
+      case 'transfer': openDialog('transferDialog'); break;
+      // Mesma dialog do header ("Encerrar Conversa" → close_conversation_atomic), igual ao /transfer.
+      case 'resolve': openDialog('closeDialog'); break;
+      case 'template': toast({ title: '📝 Templates', description: 'Use o botão de templates no input para selecionar.' }); break;
+      case 'note': toast({ title: '📝 Nota Privada', description: 'Funcionalidade de notas será aberta.' }); break;
+      case 'tag': toast({ title: subCommand === 'add' ? '🏷️ Adicionar Tag' : '🏷️ Remover Tag', description: subCommand === 'add' ? 'Selecione uma tag para adicionar.' : 'Selecione uma tag para remover.' }); break;
+      case 'priority': {
+        if (!subCommand) break;
+        const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
+        void (async () => {
+          const { error } = await supabase.from('contacts').update({ ai_priority: subCommand }).eq('id', contactId);
+          if (error) {
+            log.error('Failed to set priority:', error);
+            toast({ title: 'Erro ao definir prioridade', description: 'Não foi possível atualizar a prioridade.', variant: 'destructive' });
+          } else {
+            toast({ title: '⚡ Prioridade Definida', description: `Prioridade definida como ${labels[subCommand] || subCommand}.` });
+          }
+        })();
+        break;
+      }
+      case 'assign': openDialog('transferDialog'); break;
+      // useConversationActions.snoozeConversation já grava em conversation_snoozes e mostra o toast.
+      case 'snooze': if (subCommand) snoozeConversation(contactId, subCommand); break;
+      // useConversationActions já grava em favorite_contacts e mostra o toast.
+      case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
+      case 'archive': {
+        void (async () => {
+          const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+          if (error) {
+            log.error('Failed to archive contact:', error);
+            toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+          } else {
+            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
+          }
+        })();
+        break;
+      }
+      case 'remind': toast({ title: '🔔 Lembrete Criado', description: 'Um lembrete foi criado para esta conversa.' }); break;
+      // Reaproveita o popover de respostas rápidas já ligado a dialogs.quickReplies em ChatPanel.
+      case 'quick': openDialog('quickReplies'); break;
+      case 'summary': handleSetActiveTool('aiAssistant'); break;
+      case 'produto': openDialog('catalogDirect'); break;
+      default: toast({ title: `Comando: ${command.label}`, description: command.description }); break;
+    }
+  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation]);
+
+  const handleSendInteractiveMessage = useCallback((interactive: InteractiveMessage) => {
+    toast({ title: 'Mensagem interativa enviada!', description: `Mensagem com ${interactive.buttons?.length || 0} botões enviada.` });
+  }, []);
+
+  const handleInteractiveButtonClick = useCallback((button: InteractiveButton) => {
+    toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
+  }, []);
+
+  const handleSendLocation = useCallback(async (location: LocationMessage) => {
+    try {
+      await sendOutboundMessage({
+        contactId,
+        content: JSON.stringify({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          ...(location.name ? { name: location.name } : {}),
+          ...(location.address ? { address: location.address } : {}),
+        }),
+        messageType: 'location',
+      });
+      toast({ title: 'Localização enviada!', description: location.name || 'Localização compartilhada' });
+    } catch (error) {
+      log.error('Failed to send location:', error);
+      toast({ title: 'Erro ao enviar localização', description: 'Tente novamente.', variant: 'destructive' });
+      throw error;
+    }
+  }, [contactId]);
+
+  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<void>) => {
+    if (onSendAudio) {
+      try { await onSendAudio(audioBlob); } catch (err) { log.error('Error sending audio:', err); toast({ title: 'Erro ao enviar áudio', description: 'Tente novamente.', variant: 'destructive' }); }
+    } else { toast({ title: 'Erro', description: 'Envio de áudio não configurado.', variant: 'destructive' }); }
+    setIsRecordingAudio(false);
+  }, []);
+
+  return {
+    inputValue, setInputValue, isSending, isRecordingAudio, setIsRecordingAudio,
+    replyToMessage, setReplyToMessage, forwardMessage, editingMessage,
+    inputRef,
+    handleEditStart, handleCancelEdit, handleSend,
+    handleReplyToMessage, handleCopyMessage, handleForwardMessage, handleForwardToTargets,
+    handleInputChange, handleKeyDown, handleSlashCommand,
+    handleSendInteractiveMessage, handleInteractiveButtonClick,
+    handleSendLocation, handleAudioSend,
+  };
+}

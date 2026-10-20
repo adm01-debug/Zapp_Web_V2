@@ -1,0 +1,521 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { groupVariantsByColor } from './sendProductUtils';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Send, ChevronDown, Package, Copy, Download, Palette, Check,
+  Pencil, User, Link2, History,
+} from 'lucide-react';
+import { ExternalProduct, useExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+import { toast } from '@/hooks/ui/use-toast';
+import { cn } from '@/lib/utils';
+import {
+  type MessageTemplate, type SendMode, buildMessage, collectAllImages,
+} from './sendProductUtils';
+import { useContactSearch, useSendToContact } from './useSendProduct';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { ContactSelectionStep } from './ContactSelectionStep';
+
+interface SendProductDialogProps {
+  product: ExternalProduct;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirmSend?: (text: string, images: string[]) => void;
+  initialVariantColor?: string;
+}
+
+const TEMPLATE_LABELS: Record<MessageTemplate, string> = {
+  formal: 'Formal',
+  informal: 'Informal',
+  promo: 'Promoção',
+};
+
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_IMAGES = 10;
+const DRAFT_DEBOUNCE_MS = 500;
+
+/** E77 — rascunho de mensagem personalizada não enviada, por produto. */
+interface SendDraft {
+  template: MessageTemplate;
+  customMessage: string;
+  sendMode: SendMode;
+  selectedColorGroup: string | null;
+  savedAt: number;
+}
+
+const draftKey = (productId: string) => `catalog.sendDraft.${productId}`;
+
+const readDraft = (productId: string): SendDraft | null => {
+  try {
+    const raw = sessionStorage.getItem(draftKey(productId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Audit 24/09 — JSON.parse só protege contra sintaxe inválida; um
+    // objeto sintaticamente válido mas com shape errado (campo adulterado
+    // ou de uma versão antiga do SendDraft) passava direto como
+    // `as SendDraft` e quebrava o componente ao restaurar (CRÍTICO 2).
+    if (
+      !parsed || typeof parsed !== 'object' ||
+      typeof parsed.template !== 'string' ||
+      typeof parsed.customMessage !== 'string' ||
+      typeof parsed.sendMode !== 'string' ||
+      (parsed.selectedColorGroup !== null && typeof parsed.selectedColorGroup !== 'string')
+    ) {
+      return null;
+    }
+    return parsed as SendDraft;
+  } catch { return null; }
+};
+
+/** Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74). */
+const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label: string }[] }> = ({ message, images }) => {
+  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const firstImage = images[0];
+  return (
+    <div className="space-y-2">
+      <span className="text-sm text-muted-foreground">Pré-visualização</span>
+      <div className="rounded-lg overflow-hidden border border-border/50">
+        <div className="flex items-center gap-2 bg-[#075E54] text-white px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <User className="w-4 h-4" />
+          </div>
+          <span className="text-sm font-medium">Cliente</span>
+        </div>
+        <div className="bg-[#e5ddd5] p-3 space-y-2">
+          {firstImage && (
+            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
+              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
+              {images.length > 1 && (
+                <span className="absolute bottom-1 right-1 text-3xs leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
+                  1/{images.length}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="bg-[#dcf8c6] rounded-lg px-3 py-2 max-w-[85%] ml-auto">
+            <p className="text-sm whitespace-pre-line text-black">{message}</p>
+            <div className="flex items-center justify-end gap-0.5 mt-1">
+              <span className="text-3xs text-black/50 mr-1">{time}</span>
+              <Check className="w-3 h-3 text-blue-500" />
+              <Check className="w-3 h-3 text-blue-500 -ml-2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const SendProductDialog: React.FC<SendProductDialogProps> = ({
+  product, open, onOpenChange, onConfirmSend, initialVariantColor,
+}) => {
+  const needsFullProduct = !product.variants || product.variants.length === 0;
+  const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
+    enabled: open && needsFullProduct,
+  });
+  const fullProduct: ExternalProduct = fetchedProduct ?? product;
+  const [template, setTemplate] = useState<MessageTemplate>('informal');
+  const [isEditing, setIsEditing] = useState(false);
+  const [customMessage, setCustomMessage] = useState('');
+  const [sendMode, setSendMode] = useState<SendMode>('product');
+  const [selectedColorGroup, setSelectedColorGroup] = useState<string | null>(null);
+  const [step, setStep] = useState<'configure' | 'selectContact'>('configure');
+
+  // E77 — rascunho de mensagem personalizada em sessionStorage.
+  const [hasDraft, setHasDraft] = useState(() => readDraft(product.id) !== null);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const hasPendingEdit = isEditing && customMessage.trim().length > 0;
+
+  useEffect(() => {
+    if (!hasPendingEdit) return;
+    const t = setTimeout(() => {
+      const draft: SendDraft = { template, customMessage, sendMode, selectedColorGroup, savedAt: Date.now() };
+      try { sessionStorage.setItem(draftKey(product.id), JSON.stringify(draft)); } catch { /* ignore */ }
+    }, DRAFT_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [hasPendingEdit, template, customMessage, sendMode, selectedColorGroup, product.id]);
+
+  const handleRestoreDraft = () => {
+    const draft = readDraft(product.id);
+    if (!draft) { setHasDraft(false); return; }
+    setTemplate(draft.template);
+    setCustomMessage(draft.customMessage);
+    setSendMode(draft.sendMode);
+    setSelectedColorGroup(draft.selectedColorGroup);
+    setIsEditing(true);
+    setHasDraft(false);
+  };
+
+  const handleDiscardDraft = () => {
+    try { sessionStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
+    setHasDraft(false);
+  };
+
+  const {
+    contactSearch, setContactSearch,
+    contactResults, searchingContacts,
+    selectedContact, setSelectedContact,
+    resetContactSelection,
+  } = useContactSearch(step);
+
+  const { profile } = useAuth();
+  const { isSending, sendProductToContact } = useSendToContact(() => {
+    try { sessionStorage.removeItem(draftKey(product.id)); } catch { /* ignore */ }
+    onOpenChange(false);
+    setStep('configure');
+    resetContactSelection();
+  });
+
+  const variantGroups = useMemo(
+    () => groupVariantsByColor(fullProduct.variants || []),
+    [fullProduct.variants]
+  );
+
+  // E78 — deep link com variante: aplica initialVariantColor só na primeira
+  // vez que o grupo correspondente aparece em variantGroups, sem sobrescrever
+  // uma troca manual do usuário depois disso. Ajuste de estado durante o
+  // render (sem efeito, sem ref-durante-render), mesmo padrão já usado abaixo
+  // para visibleImagesKey.
+  const [appliedInitialVariant, setAppliedInitialVariant] = useState(false);
+  if (!appliedInitialVariant && initialVariantColor) {
+    const initialMatch = variantGroups.find((g: { colorName: string }) => g.colorName === initialVariantColor);
+    if (initialMatch) {
+      setAppliedInitialVariant(true);
+      setSendMode('variant');
+      setSelectedColorGroup(initialMatch.colorName);
+    }
+  }
+
+  const activeGroup = selectedColorGroup
+    ? variantGroups.find((g: { colorName: string }) => g.colorName === selectedColorGroup) || null
+    : null;
+
+  const allImages = useMemo(() => collectAllImages(fullProduct), [fullProduct]);
+  const visibleImages = useMemo(() => {
+    if (sendMode === 'variant' && activeGroup) {
+      const imgs: { url: string; label: string }[] = [];
+      if (fullProduct.primary_image_url) imgs.push({ url: fullProduct.primary_image_url, label: 'Principal' });
+      activeGroup.images.forEach((url: string) => {
+        if (!imgs.some((i) => i.url === url)) imgs.push({ url, label: activeGroup.colorName });
+      });
+      return imgs;
+    }
+    return allImages;
+  }, [sendMode, activeGroup, allImages, fullProduct.primary_image_url]);
+
+  // Reseta a selecao de fotos sempre que o conjunto de imagens visiveis
+  // muda (produto carregado, troca de modo produto/variante ou de cor) -
+  // sem efeito e sem ref (o linter deste repo bane ref-durante-render):
+  // duas useState comparadas no proprio corpo do render, no padrao
+  // documentado em https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
+  const visibleImagesKey = visibleImages.map((i) => i.url).join('|');
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(visibleImages.map((i) => i.url)));
+  const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(visibleImagesKey);
+  if (prevVisibleImagesKey !== visibleImagesKey) {
+    setPrevVisibleImagesKey(visibleImagesKey);
+    setSelectedImages(new Set(visibleImages.map((i) => i.url)));
+  }
+
+  const message = isEditing ? customMessage : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null);
+  const messageTooLong = message.length > MAX_MESSAGE_LENGTH;
+  const selectedImagesList = useMemo(
+    () => visibleImages.filter((i) => selectedImages.has(i.url)),
+    [visibleImages, selectedImages]
+  );
+
+  const toggleImage = (url: string) => {
+    if (selectedImages.has(url)) {
+      setSelectedImages((prev) => { const next = new Set(prev); next.delete(url); return next; });
+      return;
+    }
+    if (selectedImages.size >= MAX_IMAGES) {
+      toast({ title: 'Limite de 10 fotos por envio', description: 'Desmarque alguma foto para adicionar outra.', variant: 'destructive' });
+      return;
+    }
+    setSelectedImages((prev) => { const next = new Set(prev); next.add(url); return next; });
+  };
+
+  const handleEditMessage = () => { if (!isEditing) setCustomMessage(message); setIsEditing(!isEditing); };
+
+  const handleCopyDescription = async () => {
+    try { await navigator.clipboard.writeText(message); toast({ title: '✅ Copiado!' }); } catch { toast({ title: 'Erro ao copiar', variant: 'destructive' }); }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      // Audit 24/09 (E78) — sem &send=1 este link nunca abria o dialog de
+      // envio sozinho, era só um link de listagem inerte (CRÍTICO 1 do
+      // audit de ExternalProductManagement.tsx: E78 sem gatilho real).
+      const variantParam = sendMode === 'variant' && activeGroup ? `&variant=${encodeURIComponent(activeGroup.colorName)}` : '';
+      const url = `${window.location.origin}${window.location.pathname}?view=catalog&product=${fullProduct.id}&send=1${variantParam}`;
+      await navigator.clipboard.writeText(url);
+      toast({ title: '✅ Link copiado!' });
+    } catch { toast({ title: 'Erro ao copiar link', variant: 'destructive' }); }
+  };
+
+  const handleDownloadImages = () => {
+    const urls = Array.from(selectedImages);
+    if (urls.length === 0) { toast({ title: 'Nenhuma foto selecionada', variant: 'destructive' }); return; }
+    urls.forEach((url, i) => {
+      const a = document.createElement('a'); a.href = url; a.download = `${fullProduct.name.replace(/\s+/g, '_')}_${i + 1}.jpg`;
+      a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+    toast({ title: `📥 Download iniciado`, description: `${urls.length} foto(s)` });
+  };
+
+  const handleSend = () => {
+    const imgs = Array.from(selectedImages);
+    if (onConfirmSend) { onConfirmSend(message, imgs); onOpenChange(false); }
+    else { setStep('selectContact'); resetContactSelection(); }
+  };
+
+  const closeDialog = () => {
+    onOpenChange(false);
+    setStep('configure');
+    resetContactSelection();
+  };
+
+  const requestClose = () => {
+    if (hasPendingEdit) { setConfirmCloseOpen(true); return; }
+    closeDialog();
+  };
+
+  const handleConfirmDiscardClose = () => {
+    setConfirmCloseOpen(false);
+    closeDialog();
+  };
+
+  const handleContentKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && step === 'configure' && !messageTooLong) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleSendToContact = async () => {
+    if (!selectedContact) { toast({ title: 'Selecione um contato', variant: 'destructive' }); return; }
+    await sendProductToContact(
+      selectedContact,
+      message,
+      Array.from(selectedImages),
+      {
+        id: fullProduct.id,
+        name: fullProduct.name,
+        sku: fullProduct.sku,
+        variantLabel: sendMode === 'variant' && activeGroup ? activeGroup.colorName : undefined,
+        template,
+      },
+      profile?.id,
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { requestClose(); return; } onOpenChange(v); }}>
+      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0" onKeyDown={handleContentKeyDown}>
+        {step === 'configure' && (
+          <>
+            <DialogHeader className="p-5 pb-3">
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Send className="w-5 h-5 text-primary" />
+                {sendMode === 'variant' && activeGroup ? `Enviar ${activeGroup.colorName}` : 'Enviar Produto'}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {sendMode === 'variant' ? 'Enviando variação específica do produto' : 'Selecione fotos, modelo de mensagem e envie'}
+              </p>
+            </DialogHeader>
+
+            <ScrollArea className="max-h-[60vh]">
+              <div className="px-5 pb-5 space-y-4">
+                {hasDraft && (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <History className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="text-xs text-foreground">Você tem um rascunho não enviado para este produto.</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleDiscardDraft}>Descartar</Button>
+                      <Button variant="default" size="sm" className="h-7 text-xs" onClick={handleRestoreDraft}>Restaurar rascunho</Button>
+                    </div>
+                  </div>
+                )}
+
+                {variantGroups.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Button variant={sendMode === 'product' ? 'default' : 'outline'} size="sm" className="text-xs h-8 gap-1.5" onClick={() => { setSendMode('product'); setSelectedColorGroup(null); setIsEditing(false); }}>
+                        <Package className="w-3.5 h-3.5" />Produto Completo
+                      </Button>
+                      <Button variant={sendMode === 'variant' ? 'default' : 'outline'} size="sm" className="text-xs h-8 gap-1.5" onClick={() => { setSendMode('variant'); if (!selectedColorGroup && variantGroups.length > 0) setSelectedColorGroup(variantGroups[0].colorName); setIsEditing(false); }}>
+                        <Palette className="w-3.5 h-3.5" />Variação Específica
+                      </Button>
+                    </div>
+
+                    {sendMode === 'variant' && (
+                      <div className="space-y-2">
+                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Selecione a variação</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {variantGroups.map((group: { colorName: string; images: string[]; colorHex?: string | null; variants: { stock_quantity: number }[] }) => {
+                            const isSelected = selectedColorGroup === group.colorName;
+                            const groupStock = group.variants.reduce((s, v) => s + v.stock_quantity, 0);
+                            return (
+                              <button key={group.colorName} onClick={() => { setSelectedColorGroup(group.colorName); setIsEditing(false); }}
+                                className={cn('flex items-center gap-3 p-2.5 rounded-lg border-2 transition-all text-left', isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border/50 hover:border-border')}>
+                                {group.images[0] ? <img src={group.images[0]} alt={group.colorName} className="w-10 h-10 rounded-md object-cover flex-shrink-0" loading="lazy" />
+                                  : group.colorHex ? <div className="w-10 h-10 rounded-md border flex-shrink-0" style={{ backgroundColor: group.colorHex }} />
+                                    : <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center flex-shrink-0"><Palette className="w-4 h-4 text-muted-foreground" /></div>}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    {group.colorHex && <div className="w-3 h-3 rounded-full border border-border/50 flex-shrink-0" style={{ backgroundColor: group.colorHex }} />}
+                                    <span className="font-medium text-sm truncate">{group.colorName}</span>
+                                  </div>
+                                  <span className="text-2xs text-muted-foreground">{group.images.length} foto{group.images.length !== 1 ? 's' : ''} · {groupStock} un.</span>
+                                </div>
+                                {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {loadingVariants && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />Carregando variantes...
+                  </div>
+                )}
+
+                <Separator />
+
+                {visibleImages.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{selectedImages.size} de {visibleImages.length} fotos selecionadas</span>
+                      <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => selectedImages.size === visibleImages.length ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
+                        {selectedImages.size === visibleImages.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                      </Button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {visibleImages.map((img) => (
+                        <button key={img.url} onClick={() => toggleImage(img.url)} className={cn('relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all', selectedImages.has(img.url) ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 opacity-60 hover:opacity-100')}>
+                          <img src={img.url} alt={img.label} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                          {selectedImages.has(img.url) && <div className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check className="w-3 h-3 text-primary-foreground" /></div>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Modelo de mensagem</span>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleEditMessage}>
+                      <Pencil className="w-3 h-3" />{isEditing ? 'Usar modelo' : 'Editar'}
+                    </Button>
+                  </div>
+                  {!isEditing && (
+                    <div className="flex gap-2">
+                      {(Object.keys(TEMPLATE_LABELS) as MessageTemplate[]).map((t) => (
+                        <Button key={t} variant={template === t ? 'default' : 'outline'} size="sm" className="text-xs h-7" onClick={() => { setTemplate(t); setIsEditing(false); }}>
+                          {TEMPLATE_LABELS[t]}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg bg-muted/50 border border-border/50 p-4">
+                  {isEditing ? (
+                    <Textarea value={customMessage} onChange={(e) => setCustomMessage(e.target.value)} className="min-h-[150px] bg-transparent border-0 p-0 focus-visible:ring-0 resize-none text-sm" placeholder="Escreva sua mensagem personalizada..." />
+                  ) : (
+                    <p className="text-sm whitespace-pre-line leading-relaxed">{message}</p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={cn('text-xs', messageTooLong ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+                    {message.length}/{MAX_MESSAGE_LENGTH}
+                  </span>
+                </div>
+                {messageTooLong && (
+                  <p className="text-xs text-destructive">Mensagem muito longa: reduza para até {MAX_MESSAGE_LENGTH} caracteres para enviar.</p>
+                )}
+
+                <Separator />
+
+                <WhatsAppPreview message={message} images={selectedImagesList} />
+              </div>
+            </ScrollArea>
+
+            <div className="p-4 border-t flex items-center gap-2">
+              <Button variant="outline" className="flex-1" onClick={requestClose}>Cancelar</Button>
+              <div className="flex flex-1">
+                <Button className="flex-1 rounded-r-none gap-2" onClick={handleSend} disabled={messageTooLong}><User className="w-4 h-4" />Selecionar Contato</Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={handleCopyDescription}><Copy className="w-4 h-4 mr-2" />Copiar Descrição</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDownloadImages}><Download className="w-4 h-4 mr-2" />Download ({selectedImages.size} fotos)</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopyLink}><Link2 className="w-4 h-4 mr-2" />Copiar link do produto</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 'selectContact' && (
+          <ContactSelectionStep
+            productName={fullProduct.name}
+            productImageUrl={fullProduct.primary_image_url ?? undefined}
+            selectedImagesCount={selectedImages.size}
+            template={template}
+            variantLabel={sendMode === 'variant' && activeGroup ? activeGroup.colorName : undefined}
+            templateLabels={TEMPLATE_LABELS}
+            contactSearch={contactSearch}
+            onContactSearchChange={setContactSearch}
+            contactResults={contactResults}
+            searchingContacts={searchingContacts}
+            selectedContact={selectedContact}
+            onSelectContact={setSelectedContact}
+            isSending={isSending}
+            onBack={() => setStep('configure')}
+            onSend={handleSendToContact}
+          />
+        )}
+      </DialogContent>
+
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar alterações não enviadas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem uma mensagem personalizada que ainda não foi enviada. Fechar agora vai descartá-la.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDiscardClose}>Fechar mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Dialog>
+  );
+};

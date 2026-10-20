@@ -1,0 +1,16 @@
+ M e2e/email-navy-visual/01-lista.png
+ M e2e/email-navy-visual/02-conversa.png
+ M e2e/email-navy-visual/03-compositor.png
+ M e2e/email-navy-visual/04-sidebar-expandida.png
+ M e2e/email-navy-visual/05-tema-claro.png
+ M e2e/email-navy-visual/06-tema-escuro.png
+ M e2e/email-navy-visual/desktop-1280x720.png
+ M e2e/email-navy-visual/desktop-1366x768.png
+ M e2e/email-navy-visual/desktop-1440x900.png
+ M e2e/email-navy-visual/desktop-1672x941.png
+ M e2e/email-navy-visual/desktop-1920x1080.png
+ M e2e/email-navy-visual/mobile-320x800.png
+ M e2e/email-navy-visual/mobile-360x800.png
+ M e2e/email-navy-visual/mobile-390x844.png
+ M e2e/email-navy-visual/tablet-1024x768.png
+ M e2e/email-navy-visual/tablet-768x1024.png

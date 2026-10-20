@@ -1,0 +1,3 @@
+COMANDO: NOVAS="$(cat nova_mig.txt)" W="$PWD/fixture-real" ST="$PWD/fixture-real/estado" python3 "$PWD/fixture-real/explicador_extraido.py"
+diferença não explicada por migration pendente: rls|ai_usage_outbox; rls|gmail_oauth_states; indexes|ai_usage_outbox.ai_usage_outbox_pkey (+25)
+rc=1

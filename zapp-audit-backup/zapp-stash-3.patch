@@ -1,0 +1,287 @@
+diff --git a/bun.lock b/bun.lock
+index fee566bc..78aed842 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -38,6 +38,7 @@
+         "@radix-ui/react-toggle-group": "^1.1.10",
+         "@radix-ui/react-tooltip": "^1.2.7",
+         "@radix-ui/react-visually-hidden": "^1.2.4",
++        "@sentry/react": "^10.73.0",
+         "@supabase/supabase-js": "^2.87.1",
+         "@tanstack/react-query": "^5.83.0",
+         "@tanstack/react-virtual": "^3.13.13",
+@@ -664,6 +665,22 @@
+ 
+     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.59.0", "", { "os": "win32", "cpu": "x64" }, "sha512-2HRCml6OztYXyJXAvdDXPKcawukWY2GpR5/nxKp4iBgiO3wcoEGkAaqctIbZcNB6KlUQBIqt8VYkNSj2397EfA=="],
+ 
++    "@sentry/browser": ["@sentry/browser@10.73.0", "", { "dependencies": { "@sentry/browser-utils": "10.73.0", "@sentry/conventions": "^0.16.0", "@sentry/core": "10.73.0", "@sentry/feedback": "10.73.0", "@sentry/replay": "10.73.0", "@sentry/replay-canvas": "10.73.0" } }, "sha512-HqTe1S5RrWLufhX2LaFP3yNoMxfNDroh120bq1zdGHZfFDBMJQ0CDXxHO+L4UJfQ5dWdCCzWbXIAiZuWGa/DFQ=="],
++
++    "@sentry/browser-utils": ["@sentry/browser-utils@10.73.0", "", { "dependencies": { "@sentry/conventions": "^0.16.0", "@sentry/core": "10.73.0" } }, "sha512-qQygxJZ+RV779+iL1+lrJ4f4sZLgbgW0/JWPNp0YlcEAE62yCsdKbqoTEjB/EugdS4mSjBMX0chZC6rblu2Ycw=="],
++
++    "@sentry/conventions": ["@sentry/conventions@0.16.0", "", {}, "sha512-fO9PLmHdVURcSPUpWCItWAtgKiMwGdJHbovoSEyLplX5sxs2ugvI4CBPTrkkgqhObnZOD0CnWBKDzSVQYBKEyQ=="],
++
++    "@sentry/core": ["@sentry/core@10.73.0", "", { "dependencies": { "@sentry/conventions": "^0.16.0" } }, "sha512-FLO1UgH19RyasVpofu612WCOgb2nEH0dZy+R72d7p65XU9i0wxlMKm3+sgfwKmiSJp1Qhilaaxs4Jg6BbiM5HA=="],
++
++    "@sentry/feedback": ["@sentry/feedback@10.73.0", "", { "dependencies": { "@sentry/core": "10.73.0" } }, "sha512-D6nSngX+e46Mae2/oh2bxBvxNK1z2NERbuMAhB5sx9x4xMBWIyGnYYTECehvEqV9+AqGAgxxhOZoYIG3AmRwww=="],
++
++    "@sentry/react": ["@sentry/react@10.73.0", "", { "dependencies": { "@sentry/browser": "10.73.0", "@sentry/conventions": "^0.16.0", "@sentry/core": "10.73.0" }, "peerDependencies": { "react": "^16.14.0 || 17.x || 18.x || 19.x" } }, "sha512-wJrzS98ddPvhGS/MKNHZyE8X7ecd4KwKdz7fHino2qkqBBrF4cxWr+q/uLTIk5PYWMkeJ4oKMjHAjOqmzGR4tg=="],
++
++    "@sentry/replay": ["@sentry/replay@10.73.0", "", { "dependencies": { "@sentry/browser-utils": "10.73.0", "@sentry/core": "10.73.0" } }, "sha512-nN2wjN/Y0J5BOJV5hqRHUEBfxwUsipp1PKjcDHh6Fpxnrtfldu3Y99E8cQInseo5heFdzEvrOHBBrqWZXOHVKQ=="],
++
++    "@sentry/replay-canvas": ["@sentry/replay-canvas@10.73.0", "", { "dependencies": { "@sentry/core": "10.73.0", "@sentry/replay": "10.73.0" } }, "sha512-sxa2lKkHPfF/j5xFpW7gocthWXRqyoHz8KCPy6yGc8plT477nl57iGSKhQDYsx1Ny10TLjs7YkIuPP1GY/Ax2Q=="],
++
+     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
+ 
+     "@standard-schema/utils": ["@standard-schema/utils@0.3.0", "", {}, "sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g=="],
+diff --git a/package.json b/package.json
+index f2ddc046..10f92b13 100644
+--- a/package.json
++++ b/package.json
+@@ -50,6 +50,7 @@
+     "@radix-ui/react-toggle-group": "^1.1.10",
+     "@radix-ui/react-tooltip": "^1.2.7",
+     "@radix-ui/react-visually-hidden": "^1.2.4",
++    "@sentry/react": "^10.73.0",
+     "@supabase/supabase-js": "^2.87.1",
+     "@tanstack/react-query": "^5.83.0",
+     "@tanstack/react-virtual": "^3.13.13",
+diff --git a/scripts/db-audit/migration-evidence.json b/scripts/db-audit/migration-evidence.json
+index 78c7c69c..7917f6a9 100644
+--- a/scripts/db-audit/migration-evidence.json
++++ b/scripts/db-audit/migration-evidence.json
+@@ -27,6 +27,19 @@
+       "related_migration": null,
+       "justification": "O ledger preserva o endpoint literal anterior; o replay usa o endpoint oficial atual, com os dois conteúdos fixados por hashes independentes."
+     },
++    {
++      "version": "20260628110559",
++      "filename": "20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql",
++      "file_sha256": "56c5d8f0ec2b36dec8c8d8107be94ed77d49201bff413e70f267eac2929d545d",
++      "file_sql_sha256": "827daadac1390de5c06ed6fcf21d5ec29303caef252935ff847da72a6ddbfb30",
++      "ledger_name": "51d49930-e6c0-4491-ad50-f3c8fff72537",
++      "ledger_statements_sha256": "b20a4ef5d5d30c85ab434b76092746ec9053a4cf11fcf6e02cbcfc63dd080871",
++      "ledger_sql_sha256": "e435a177ad6aad4f1633730492115b98821fbe3c1d1ba08bc54495597f96d34d",
++      "kind": "ledger-divergence/pinned-replay",
++      "reason": "safer-replay",
++      "related_migration": null,
++      "justification": "Um replay do zero pode alcançar esta migration com queues/queue_members/messages já adicionadas à publicação supabase_realtime pelas migrations 20251220130243 e 20251215163158; o arquivo versionado envolve cada ALTER PUBLICATION ADD TABLE em um bloco DO idempotente (WHEN duplicate_object) sem alterar o resultado final, enquanto o ledger preserva o DDL original sem o guard."
++    },
+     {
+       "version": "20260827120000",
+       "filename": "20260827120000_fk_indexes_backfill.sql",
+diff --git a/src/main.tsx b/src/main.tsx
+index 2d4bda4f..20ea66e1 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -1,8 +1,9 @@
+ import React from "react";
+ import ReactDOM from "react-dom/client";
++import * as Sentry from "@sentry/react";
+ import App from "./App.tsx";
+ import "./index.css";
+-import "./i18n"; // Initialize i18n 
++import "./i18n"; // Initialize i18n
+ import { getLogger } from "./lib/logger";
+ import { initWebVitals } from "./lib/web-vitals";
+ import { ErrorBoundary } from "./components/ErrorBoundary";
+@@ -35,6 +36,19 @@ if (!rootElement) {
+ 
+ (window as Window & { __ZAPP_MARK_APP_MOUNTED__?: () => void }).__ZAPP_MARK_APP_MOUNTED__?.();
+ 
++// No-op unless VITE_SENTRY_DSN is set (e.g. local dev without a Sentry
++// account configured yet). Safe to leave unset — nothing below depends on it.
++const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
++if (sentryDsn) {
++  Sentry.init({
++    dsn: sentryDsn,
++    environment: import.meta.env.MODE,
++    tracesSampleRate: 0.1,
++    integrations: [Sentry.browserTracingIntegration()],
++  });
++  log.info('[Sentry] initialized', { environment: import.meta.env.MODE });
++}
++
+ // ErrorBoundary wraps the entire app so any unhandled render error
+ // shows a friendly UI instead of a blank screen.
+ ReactDOM.createRoot(rootElement).render(
+diff --git a/supabase/functions/_shared/evolution-webhook-messages.ts b/supabase/functions/_shared/evolution-webhook-messages.ts
+index 69e992dd..c475fce4 100644
+--- a/supabase/functions/_shared/evolution-webhook-messages.ts
++++ b/supabase/functions/_shared/evolution-webhook-messages.ts
+@@ -67,8 +67,16 @@ export async function handleOutgoingWhatsAppMessage(
+   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
+ ) {
+   const externalId = key.id;
++
++  const connection = await getConnectionByInstance(supabase, instance);
++  if (!connection) return;
++
++  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
++  // real (ux_messages_dedup). key.id do WhatsApp so eh garantidamente unico
++  // por chat/dispositivo, nao globalmente -- sem o escopo, uma colisao entre
++  // duas conexoes diferentes faria este pre-check achar a linha errada.
+   const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+-    .select('id').eq('external_id', externalId)
++    .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
+     .order('created_at', { ascending: false }).limit(1).maybeSingle();
+   if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
+   if (existingMessage) return;
+@@ -81,9 +89,6 @@ export async function handleOutgoingWhatsAppMessage(
+     return;
+   }
+ 
+-  const connection = await getConnectionByInstance(supabase, instance);
+-  if (!connection) return;
+-
+   const contact = await getContactByPhone(supabase, phone, connection.id);
+   if (!contact) return;
+ 
+@@ -204,8 +209,11 @@ export async function handleIncomingMessage(
+   const messageCreatedAt = (data.messageTimestamp as number)
+     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
+ 
++  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
++  // real (ux_messages_dedup) -- ver comentario equivalente em
++  // handleOutgoingWhatsAppMessage.
+   const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+-    .select('id, status, content').eq('external_id', key.id)
++    .select('id, status, content').eq('whatsapp_connection_id', connection.id).eq('sender', 'contact').eq('external_id', key.id)
+     .order('created_at', { ascending: false }).limit(1).maybeSingle();
+   if (dupCheckErr) { console.warn('[INCOMING] maybeSingle concurrent dups:', dupCheckErr.code, key.id); }
+ 
+diff --git a/supabase/functions/_shared/evolution-webhook-msg-handlers.ts b/supabase/functions/_shared/evolution-webhook-msg-handlers.ts
+index 108599fb..b29b7a79 100644
+--- a/supabase/functions/_shared/evolution-webhook-msg-handlers.ts
++++ b/supabase/functions/_shared/evolution-webhook-msg-handlers.ts
+@@ -7,6 +7,10 @@ import {
+ 
+ // deno-lint-ignore no-explicit-any
+ export async function handleSendMessage(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
++  // Hoisted: mesmo instance em toda a chamada, evita refetch por entry e
++  // permite escopar o dup-check abaixo por whatsapp_connection_id.
++  const connection = await getConnectionByInstance(supabase, instance);
++
+   for (const entry of toEventRecords(data, ['messages'])) {
+     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
+     const key = keySource as { remoteJid?: string; fromMe?: boolean; id?: string } | null;
+@@ -16,9 +20,14 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
+     let updatedMessageId: string | null = null;
+     const now = new Date().toISOString();
+ 
+-    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
+-    const { data: existingMessage } = await supabase.from('messages')
+-      .select('id, status').eq('external_id', externalId)
++    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
++    // Escopado por whatsapp_connection_id para bater com o indice unico real
++    // (ux_messages_dedup) -- sem isso, uma colisao de external_id entre duas
++    // conexoes diferentes faria este pre-check achar a linha errada.
++    let dupCheckQuery = supabase.from('messages')
++      .select('id, status').eq('external_id', externalId);
++    if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
++    const { data: existingMessage } = await dupCheckQuery
+       .order('created_at', { ascending: false }).limit(1).maybeSingle();
+ 
+     if (existingMessage?.id) {
+@@ -32,7 +41,6 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
+ 
+     if (!updatedMessageId) {
+       const phone = normalizePhone(resolveEventJid(key, entry, baseData) ?? undefined);
+-      const connection = await getConnectionByInstance(supabase, instance);
+ 
+       if (connection?.id && phone) {
+         const contact = await getContactByPhone(supabase, phone, connection.id);
+@@ -83,9 +91,13 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
+ 
+     if (newStatus && key?.id) {
+       const now = new Date().toISOString();
+-      // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
+-      const { data: currentMessage } = await supabase.from('messages')
+-        .select('id, status').eq('external_id', key.id)
++      // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
++      // Escopado por whatsapp_connection_id (sem filtro de sender -- esta
++      // funcao trata receipts tanto de mensagens enviadas quanto recebidas).
++      let currentMessageQuery = supabase.from('messages')
++        .select('id, status').eq('external_id', key.id);
++      if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
++      const { data: currentMessage } = await currentMessageQuery
+         .order('created_at', { ascending: false }).limit(1).maybeSingle();
+ 
+       if (currentMessage?.id) {
+@@ -141,9 +153,14 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
+     if (!key?.id) continue;
+ 
+     const now = new Date().toISOString();
+-    const { data: updatedMessages } = await supabase.from('messages')
++    // Escopado por whatsapp_connection_id para bater com o indice unico real
++    // (ux_messages_dedup) e evitar marcar como deletada a mensagem errada em
++    // caso de colisao de external_id entre conexoes diferentes.
++    let deleteUpdateQuery = supabase.from('messages')
+       .update({ is_deleted: true, status: 'deleted', status_updated_at: now })
+-      .eq('external_id', key.id).select('id');
++      .eq('external_id', key.id);
++    if (connection?.id) deleteUpdateQuery = deleteUpdateQuery.eq('whatsapp_connection_id', connection.id);
++    const { data: updatedMessages } = await deleteUpdateQuery.select('id');
+ 
+     if (!updatedMessages?.length) {
+       let contactId: string | null = null;
+@@ -185,9 +202,12 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
+     const bestJid = resolveEventJid(key, entry);
+     if (!key?.id || !bestJid || bestJid.endsWith('@g.us')) { skipped++; continue; }
+ 
+-    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
++    // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
++    // Escopado por whatsapp_connection_id para bater com o indice unico real
++    // (ux_messages_dedup); connection ja garantido non-null pelo early return acima.
+     const { data: existing } = await supabase.from('messages').select('id')
+-      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
++      .eq('whatsapp_connection_id', connection.id).eq('external_id', key.id)
++      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+     if (existing) { skipped++; continue; }
+ 
+     const phone = normalizePhone(bestJid);
+diff --git a/supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql b/supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql
+index a4d7edc5..ffbcd26a 100644
+--- a/supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql
++++ b/supabase/migrations/20260628110559_51d49930-e6c0-4491-ad50-f3c8fff72537.sql
+@@ -1,6 +1,37 @@
+-ALTER PUBLICATION supabase_realtime ADD TABLE public.queues;
+-ALTER PUBLICATION supabase_realtime ADD TABLE public.queue_members;
+-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
++-- Guard idempotente: ALTER PUBLICATION ... ADD TABLE nao suporta IF NOT EXISTS.
++-- Um replay do zero (disaster recovery) pode alcancar esta migration com as
++-- tabelas ja adicionadas a publicacao por migrations anteriores no mesmo
++-- replay (20251220130243, 20251215163158); sem o guard, a segunda tentativa
++-- falha com SQLSTATE 42710 (duplicate_object). Ver
++-- scripts/db-audit/migration-evidence.json (pinned-replay, reason=safer-replay)
++-- para a divergencia registrada entre este arquivo e o ledger original.
++DO $$
++BEGIN
++  ALTER PUBLICATION supabase_realtime ADD TABLE public.queues;
++EXCEPTION
++  WHEN duplicate_object THEN
++    NULL;
++END
++$$;
++
++DO $$
++BEGIN
++  ALTER PUBLICATION supabase_realtime ADD TABLE public.queue_members;
++EXCEPTION
++  WHEN duplicate_object THEN
++    NULL;
++END
++$$;
++
++DO $$
++BEGIN
++  ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
++EXCEPTION
++  WHEN duplicate_object THEN
++    NULL;
++END
++$$;
++
+ ALTER TABLE public.queues REPLICA IDENTITY FULL;
+ ALTER TABLE public.queue_members REPLICA IDENTITY FULL;
+ ALTER TABLE public.messages REPLICA IDENTITY FULL;
+\ No newline at end of file

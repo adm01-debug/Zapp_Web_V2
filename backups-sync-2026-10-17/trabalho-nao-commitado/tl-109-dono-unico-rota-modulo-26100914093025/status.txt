@@ -1,0 +1,2 @@
+MM src/components/talkx/TalkXView.tsx
+M  src/components/talkx/__tests__/TalkXView.route.test.tsx

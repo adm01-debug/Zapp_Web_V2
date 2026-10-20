@@ -1,0 +1,34 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-carregar-mais-lista-conversas-2610160736b862
+
+ ❯ src/components/inbox/__tests__/RealtimeContactUpdateE2E.test.tsx (3 tests | 1 failed) 634ms
+     × ignora UPDATE sem contato (new vazio) sem crash e sem mudar a lista 81ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:40:39
+   Duration  3.62s (transform 590ms, setup 345ms, import 1.23s, tests 634ms, environment 1.13s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/RealtimeContactUpdateE2E.test.tsx > Integração ponta-a-ponta: useRealtimeMessages + VirtualizedRealtimeList > ignora UPDATE sem contato (new vazio) sem crash e sem mudar a lista
+TypeError: Cannot read properties of null (reading 'id')
+ ❯ Object.onUpdate src/hooks/chat/useRealtimeMessages.ts:141:27
+    139|     (payload: RealtimePostgresChangesPayload<ConversationContact>) => {
+    140|       const updatedContact = payload.new as ConversationContact;
+    141|       if (!updatedContact.id) return; // MUTANTE M-guard
+       |                           ^
+    142|       // Sem isso, um fetchConversations em voo (disparado por handleS…
+    143|       // por exemplo) sobrescrevia esse UPDATE ao resolver: fetchConve…
+ ❯ src/hooks/realtime/useSupabaseRealtime.ts:237:50
+ ❯ Object.zapp:global-contacts-realtime:public:contacts:* src/hooks/realtime/useSupabaseRealtime.ts:142:59
+ ❯ emitRealtimeEvent src/components/inbox/__tests__/RealtimeContactUpdateE2E.test.tsx:65:27
+ ❯ src/components/inbox/__tests__/RealtimeContactUpdateE2E.test.tsx:337:7
+ ❯ ../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/components/inbox/__tests__/RealtimeContactUpdateE2E.test.tsx:336:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

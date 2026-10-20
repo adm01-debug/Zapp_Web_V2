@@ -1,0 +1,19 @@
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "Chat | WhatsApp Omnichannel",
+  "bodyText": "Pular para conteúdo principal\nPular para navegação\nPular para o conteúdo\nZ\nWM\nZen\nConversas\n1 conversas\nFiltros\nTodas\n1\nNão lidas\n1\nEm atendimento\n1\nAguardando\n0\nResolvidas\n0\n\nSem conversas\n\nNovas conversas aparecerão aqui.\n\nSelecione uma conversa\n\nEscolha uma conversa na lista ao lado para visualizar e responder mensagens\n\n↑\n↓\nnavegar\nEnter\nabrir\n⌘K\nbuscar\nBem-vindo, W5! 🎉\n\nEstamos felizes em ter você aqui! Quer fazer um tour rápido para conhecer todas as funcionalidades da plataforma?\n\n💬\nChat em tempo real\n📊\nDashboard de metas\n🔔\nAlertas inteligentes\nPular tour\nIniciar Tour Guiado\n\nVocê pode acessar o tour novamente nas configurações\n\nNavegou para Chat",
+  "hasMainNav": true,
+  "buttons": [
+    "Z",
+    "WM",
+    "Zen",
+    "Filtros",
+    "Todas1",
+    "Não lidas1",
+    "Em atendimento1",
+    "Aguardando0",
+    "Resolvidas0",
+    "Pular tour",
+    "Iniciar Tour Guiado"
+  ]
+}

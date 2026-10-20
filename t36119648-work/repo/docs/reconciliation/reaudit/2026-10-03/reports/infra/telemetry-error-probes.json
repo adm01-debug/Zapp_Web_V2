@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "probe_source_sha256": "dc05bf1106a6daa107c49c94cc6fe4439795f9e097a39f6d07b83a83d0ac9a4c",
+  "pins_sha256": "31a3ba77dc72d4d79b97f1eb44b8ee69d6b679d76dfef98565c87d4eda1c1c93",
+  "case_count": 2,
+  "finding_ids": [
+    "R2-INF-040",
+    "R2-INF-041"
+  ],
+  "cases": [
+    {
+      "id": "INF-TE-P01",
+      "finding": "R2-INF-040",
+      "executed": "actual queryFn with fake SDK failure; full page/helper/table source with documented query error state supplied at hook boundary",
+      "observed": {
+        "query_error_propagates": true,
+        "table_rows": 0,
+        "cards_errors": 0,
+        "average": "0ms",
+        "claims_healthy": true
+      },
+      "controls": {
+        "loading_does_not_claim_healthy": true,
+        "query_success_empty_returns_array": true
+      },
+      "limitations": "TanStack/React are not imported; retries and render lifecycle are not simulated. The error-state shape follows the primary Query documentation; this is not a browser observation."
+    },
+    {
+      "id": "INF-TE-P02",
+      "finding": "R2-INF-041",
+      "executed": "actual ErrorBoundary.render body with DEV=false and inert JSX capture",
+      "observed": {
+        "explicit_null_returns": "div",
+        "role": "alert",
+        "full_viewport_min_height": true
+      },
+      "controls": {
+        "explicit_truthy_fallback_preserved": true,
+        "no_error_returns_children": true
+      },
+      "limitations": "Does not run componentDidCatch, any reload, telemetry reporter or React lifecycle. AppRoutes remaining mounted is source evidence, not a router runtime test."
+    }
+  ],
+  "controls": {
+    "source_and_compiler_pins_before_import": true,
+    "production_imports": 0,
+    "product_network_calls": 0,
+    "browser_or_at_test": false,
+    "source_writes": 0
+  },
+  "limitation": "Two cases for two findings. Only audit JSON output is written; no suite/build/typecheck success implied."
+}

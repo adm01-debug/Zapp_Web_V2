@@ -1,0 +1,13 @@
+ M src/hooks/team-chat/README.md
+M  src/hooks/team-chat/__tests__/rls-contract.test.ts
+M  src/hooks/team-chat/__tests__/useTeamChatMutations.mute.test.ts
+A  src/hooks/team-chat/__tests__/useTeamConversations.inbox.test.tsx
+ M src/hooks/team-chat/__tests__/useTeamConversations.test.tsx
+ M src/hooks/team-chat/__tests__/useTeamMessageReactions.test.tsx
+A  src/hooks/team-chat/__tests__/useTeamMessageReactions.toggle-rpc.test.tsx
+M  src/hooks/team-chat/__tests__/useTeamMessages.read-state.test.tsx
+M  src/hooks/team-chat/__tests__/useTeamMessages.test.tsx
+M  src/hooks/team-chat/useTeamChatMutations.ts
+M  src/hooks/team-chat/useTeamConversations.ts
+M  src/hooks/team-chat/useTeamMessageReactions.ts
+M  src/hooks/team-chat/useTeamMessages.ts

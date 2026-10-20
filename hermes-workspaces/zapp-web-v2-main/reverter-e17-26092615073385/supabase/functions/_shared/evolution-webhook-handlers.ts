@@ -1,0 +1,371 @@
+// Event handlers: connection, contacts, presence, chats, labels, calls, startup
+// Message-specific handlers moved to evolution-webhook-msg-handlers.ts
+
+import {
+  isRecord, normalizePhone, toEventRecords,
+  getConnectionByInstance, getContactByPhone, persistProfilePicture,
+  invalidateConnectionCache,
+} from "./evolution-helpers.ts";
+import {
+  normalizeEvolutionCallVideo,
+  normalizeEvolutionCallStatus,
+  shouldNotifyIncomingCall,
+} from "./notification-events.ts";
+
+// Re-export message handlers for backward compatibility
+export {
+  handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
+  handleMessagesSet, handleMessagesEdited,
+} from "./evolution-webhook-msg-handlers.ts";
+
+// deno-lint-ignore no-explicit-any
+export async function handleConnectionUpdate(supabase: any, instance: string, baseData: Record<string, unknown>) {
+  const rawState = baseData.status as string;
+  const incoming = rawState === 'open' ? 'connected' :
+    rawState === 'close' ? 'disconnected' :
+    rawState === 'connecting' ? 'connecting' : 'qr_pending';
+
+  const { data: prevConn } = await supabase.from('whatsapp_connections')
+    .select('status, phone_number').eq('instance_id', instance).single();
+
+  // 'connecting' e transitorio: gravar por cima de 'connected' faz o proximo
+  // 'close' comparar com 'connecting' e o alerta critico de queda nao dispara
+  // (connection-health-check tambem pula estados transitorios).
+  const status = incoming === 'connecting' && prevConn?.status === 'connected'
+    ? 'connected' : incoming;
+
+  // Evolution GO envia jid/pushName no Connected — aproveita para preencher
+  // o número quando ainda não temos (paridade com o que o v2 preenchia).
+  const connectedPhone = status === 'connected' && typeof baseData.jid === 'string'
+    ? normalizePhone(baseData.jid) : null;
+  await supabase.from('whatsapp_connections')
+    .update({
+      status, qr_code: null, updated_at: new Date().toISOString(),
+      ...(connectedPhone && !prevConn?.phone_number ? { phone_number: connectedPhone } : {}),
+    })
+    .eq('instance_id', instance);
+
+  // Invalidate cache so next message processing fetches fresh connection data.
+  // This is the correct invalidation point: after every status change.
+  invalidateConnectionCache(instance);
+
+  console.log(`Connection ${instance} status: ${status}`);
+
+  if (status === 'disconnected' && prevConn?.status === 'connected') {
+    const phone = prevConn.phone_number ? ` (${prevConn.phone_number})` : '';
+    await supabase.from('warroom_alerts').insert({
+      alert_type: 'critical',
+      title: `🔴 Conexão ${instance} desconectou`,
+      message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
+      source: 'evolution-webhook',
+    });
+  }
+
+  if (status === 'connected' && prevConn?.status !== 'connected') {
+    await supabase.from('warroom_alerts').insert({
+      alert_type: 'info',
+      title: `🟢 Conexão ${instance} restaurada`,
+      message: `A instância ${instance} reconectou com sucesso ao WhatsApp.`,
+      source: 'evolution-webhook',
+    });
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleContactsUpsert(supabase: any, instance: string, data: unknown) {
+  const contacts = Array.isArray(data) ? data : [data];
+  for (const contact of contacts) {
+    const contactData = contact as Record<string, unknown>;
+    const jid = (contactData.id || contactData.remoteJid) as string;
+    if (!jid) continue;
+
+    if (jid.endsWith('@lid')) continue; // @lid JIDs have no real phone number
+    const phone = jid.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    const pushName = contactData.pushName as string || contactData.name as string;
+    const profilePicUrl = contactData.profilePictureUrl as string || contactData.imgUrl as string;
+    const connection = await getConnectionByInstance(supabase, instance);
+
+    if (connection && pushName) {
+      let permanentAvatarUrl: string | null = null;
+      if (typeof profilePicUrl === 'string' && profilePicUrl) {
+        // Comparacao por hostname para nao cair em bypass de path
+        // (e.g. evil.com/pps.whatsapp.net/...). URL invalida e descartada: o
+        // catch antes devolvia '' e o else gravava o valor malformado.
+        try {
+          const picHost = new URL(profilePicUrl).hostname.toLowerCase();
+          permanentAvatarUrl = picHost === 'pps.whatsapp.net'
+            ? await persistProfilePicture(supabase, phone, profilePicUrl)
+            : profilePicUrl;
+        } catch {
+          permanentAvatarUrl = null;
+        }
+      }
+
+      const existing = await getContactByPhone(supabase, phone, connection.id);
+      if (existing) {
+        const updateData: Record<string, unknown> = { name: pushName, updated_at: new Date().toISOString() };
+        if (permanentAvatarUrl) updateData.avatar_url = permanentAvatarUrl;
+        await supabase.from('contacts').update(updateData).eq('id', existing.id);
+      } else {
+        const { error: insertErr } = await supabase.from('contacts').insert({
+          phone, name: pushName, avatar_url: permanentAvatarUrl || null, whatsapp_connection_id: connection.id,
+        });
+        if (insertErr && insertErr.code === '23505') {
+          await supabase.from('contacts').update({
+            name: pushName, avatar_url: permanentAvatarUrl || null,
+            whatsapp_connection_id: connection.id, updated_at: new Date().toISOString(),
+          }).eq('phone', phone);
+        }
+      }
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handlePresenceUpdate(supabase: any, instance: string, data: unknown) {
+  const presenceData = isRecord(data) ? data : {};
+  const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
+  const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
+
+  if (jid && !jid.endsWith('@g.us')) {
+    let isComposing = false;
+    if (presences) {
+      for (const [, pState] of Object.entries(presences)) {
+        if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
+      }
+    } else {
+      const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
+      isComposing = directStatus === 'composing';
+    }
+
+    const phone = normalizePhone(jid);
+    if (phone) {
+      const connection = await getConnectionByInstance(supabase, instance);
+      if (connection) {
+        const contact = await getContactByPhone(supabase, phone, connection.id);
+        if (contact) {
+          const channel = supabase.channel(`typing:${contact.id}`);
+          await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
+          supabase.removeChannel(channel);
+        }
+      }
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleChatsUpdate(supabase: any, instance: string, data: unknown) {
+  const chats = Array.isArray(data) ? data : [data];
+  for (const chat of chats) {
+    const chatData = chat as Record<string, unknown>;
+    const jid = chatData.id as string;
+    if (!jid || jid.endsWith('@g.us')) continue;
+
+    const phone = jid.replace('@s.whatsapp.net', '');
+    const unreadCount = chatData.unreadCount as number;
+
+    if (unreadCount !== undefined) {
+      const connection = await getConnectionByInstance(supabase, instance);
+      if (connection) {
+        const contact = await getContactByPhone(supabase, phone, connection.id);
+        if (contact && unreadCount === 0) {
+          await supabase.from('messages').update({ is_read: true })
+            .eq('contact_id', contact.id).eq('sender', 'contact').eq('is_read', false);
+        }
+      }
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleLabelsEdit(supabase: any, instance: string, data: unknown) {
+  const labelData = isRecord(data) ? data : {};
+  const labelId = labelData.id as string;
+  const labelName = labelData.name as string;
+  const labelColor = labelData.color as string;
+  const deleted = labelData.deleted as boolean;
+  if (!labelId) return;
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  if (deleted) {
+    // GO pode mandar delete sem name; casa pelo prefixo estável wa:{id}:
+    await supabase.from('tags').delete().ilike('name', `wa:${labelId}:%`);
+  } else {
+    const tagName = labelName || `Label ${labelId}`;
+    const { data: existingTag } = await supabase.from('tags').select('id').ilike('name', `wa:${labelId}:%`).maybeSingle();
+    if (existingTag) {
+      await supabase.from('tags').update({ name: `wa:${labelId}:${tagName}`, color: labelColor || '#3B82F6' }).eq('id', existingTag.id);
+    } else {
+      await supabase.from('tags').insert({ name: `wa:${labelId}:${tagName}`, color: labelColor || '#3B82F6' });
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleLabelsAssociation(supabase: any, instance: string, data: unknown) {
+  const assocData = isRecord(data) ? data : {};
+  const labelId = assocData.labelId as string || (assocData.label as Record<string, unknown>)?.id as string;
+  const chatId = assocData.chatId as string;
+  const type = assocData.type as string;
+  if (!labelId || !chatId) return;
+
+  const phone = chatId.replace('@s.whatsapp.net', '').replace('@g.us', '');
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  const contact = await getContactByPhone(supabase, phone, connection.id);
+  const { data: tag } = await supabase.from('tags').select('id').ilike('name', `wa:${labelId}:%`).maybeSingle();
+
+  if (contact && tag) {
+    if (type === 'remove') {
+      await supabase.from('contact_tags').delete().eq('contact_id', contact.id).eq('tag_id', tag.id);
+    } else {
+      const { data: existing } = await supabase.from('contact_tags').select('id')
+        .eq('contact_id', contact.id).eq('tag_id', tag.id).maybeSingle();
+      if (!existing) {
+        await supabase.from('contact_tags').insert({ contact_id: contact.id, tag_id: tag.id });
+      }
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleCallEvent(supabase: any, instance: string, data: unknown) {
+  const callData = isRecord(data) ? data : {};
+  const from = callData.from as string;
+  const isVideo = normalizeEvolutionCallVideo(callData.isVideo);
+  const callStatus = typeof callData.status === 'string' ? callData.status : '';
+  if (!from) return;
+
+  const phone = from.replace('@s.whatsapp.net', '');
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  let contact = await getContactByPhone(supabase, phone, connection.id);
+  if (!contact) {
+    const { data: newContact, error: insertErr } = await supabase.from('contacts')
+      .insert({ phone, name: phone, whatsapp_connection_id: connection.id })
+      .select('id, avatar_url, assigned_to, name').single();
+    if (insertErr && insertErr.code === '23505') {
+      const phonesVariants = [phone, `+${phone}`, phone.replace(/^\+/, '')];
+      const { data: existing, error: existingError } = await supabase.from('contacts').select('id, avatar_url, assigned_to, name')
+        .in('phone', [...new Set(phonesVariants)]).limit(1).maybeSingle();
+      if (existingError) throw new Error('Unable to recover concurrent call contact');
+      if (existing) {
+        contact = existing;
+        const { error: updateError } = await supabase.from('contacts')
+          .update({ whatsapp_connection_id: connection.id, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+        if (updateError) throw new Error('Unable to associate concurrent call contact');
+      }
+    } else if (insertErr) {
+      throw new Error('Unable to persist incoming call contact');
+    } else {
+      contact = newContact;
+    }
+  }
+  if (!contact) throw new Error('Unable to resolve incoming call contact');
+
+  // calls.status tem CHECK (ringing/answered/ended/missed/busy/failed).
+  // O Evolution emite nomes fora da lista; normalize antes de persistir.
+  const normalizedStatus = normalizeEvolutionCallStatus(callStatus);
+  const rawEventId = callData.id ?? callData.callId ?? callData.call_id;
+  const eventId = typeof rawEventId === 'string' && rawEventId.length <= 200 ? rawEventId : null;
+  const { error: persistError } = await supabase.rpc('record_incoming_call_event', {
+    p_contact_id: contact.id,
+    p_whatsapp_connection_id: connection.id,
+    p_status: normalizedStatus,
+    p_is_video: isVideo,
+    p_provider_event_id: eventId,
+    p_should_notify: shouldNotifyIncomingCall(callStatus),
+  });
+  if (persistError) throw new Error('Unable to persist incoming call event');
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleChatsDelete(supabase: any, instance: string, data: unknown) {
+  const chats = Array.isArray(data) ? data : [data];
+  for (const chat of chats) {
+    const chatData = isRecord(chat) ? chat : {};
+    const jid = (chatData.id as string) || (chatData.remoteJid as string);
+    if (!jid || jid.endsWith('@g.us')) continue;
+    const phone = normalizePhone(jid);
+    if (!phone) continue;
+    const connection = await getConnectionByInstance(supabase, instance);
+    if (!connection) continue;
+    const contact = await getContactByPhone(supabase, phone, connection.id);
+    if (contact) {
+      const now = new Date().toISOString();
+      await supabase.from('messages')
+        .update({ is_deleted: true, status: 'deleted', status_updated_at: now })
+        .eq('contact_id', contact.id);
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleApplicationStartup(supabase: any, instance: string) {
+  console.log(`Application startup event from instance: ${instance}`);
+  // Also invalidate cache on startup so stale connection data is refreshed.
+  invalidateConnectionCache(instance);
+  const { data: conn } = await supabase.from('whatsapp_connections')
+    .select('id, status').eq('instance_id', instance).maybeSingle();
+  if (conn && conn.status === 'disconnected') {
+    await supabase.from('whatsapp_connections')
+      .update({ status: 'qr_pending', updated_at: new Date().toISOString() }).eq('id', conn.id);
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleContactsSet(supabase: any, instance: string, data: unknown) {
+  const contacts = toEventRecords(data, ['contacts']);
+  if (contacts.length === 0) return;
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  let synced = 0, skipped = 0;
+  for (const contactData of contacts) {
+    const jid = (contactData.id as string) || (contactData.remoteJid as string);
+    if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast')) { skipped++; continue; }
+    const phone = normalizePhone(jid);
+    if (!phone) { skipped++; continue; }
+    const pushName = (contactData.pushName as string) || (contactData.name as string) || (contactData.notify as string);
+    if (!pushName) { skipped++; continue; }
+    const existing = await getContactByPhone(supabase, phone, connection.id);
+    if (existing) { skipped++; continue; }
+
+    const { error: insertErr } = await supabase.from('contacts').insert({ phone, name: pushName, whatsapp_connection_id: connection.id });
+    if (insertErr && insertErr.code === '23505') { skipped++; continue; }
+    if (insertErr) { skipped++; continue; }
+    synced++;
+  }
+  console.log(`contacts.set: synced ${synced}, skipped ${skipped} for ${instance}`);
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleChatsSet(supabase: any, instance: string, data: unknown) {
+  const chats = toEventRecords(data, ['chats']);
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection || chats.length === 0) return;
+
+  let processed = 0;
+  for (const chat of chats) {
+    const jid = chat.id as string;
+    if (!jid || jid.endsWith('@g.us')) continue;
+    const phone = normalizePhone(jid);
+    if (!phone) continue;
+    const unreadCount = chat.unreadCount as number;
+    if (unreadCount === 0) {
+      const contact = await getContactByPhone(supabase, phone, connection.id);
+      if (contact) {
+        await supabase.from('messages').update({ is_read: true })
+          .eq('contact_id', contact.id).eq('sender', 'contact').eq('is_read', false);
+        processed++;
+      }
+    }
+  }
+  console.log(`chats.set: processed ${processed} of ${chats.length} for ${instance}`);
+}

@@ -1,0 +1,36 @@
+--- a/src/lib/__tests__/rlsGroupAccess.test.ts
++++ b/src/lib/__tests__/rlsGroupAccess.test.ts
+@@ -37,6 +37,13 @@
+ 
+ const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
+ 
++/**
++ * DELETE de conexão é admin-only (migration connections_delete_admin_only):
++ * só is_admin puro. Não casa com is_admin_or_supervisor — a exigência para
++ * DELETE é ESTRITAMENTE mais forte que a de INSERT/UPDATE, nunca mais fraca.
++ */
++const APENAS_ADMIN = /is_admin\(\s*auth\.uid\(\)\s*\)/;
++
+ /** Comandos de escrita — `FOR ALL` e avaliado contra cada um deles. */
+ const ESCRITA: ComandoRls[] = ['INSERT', 'UPDATE', 'DELETE'];
+ 
+@@ -113,13 +120,16 @@
+     }
+   });
+ 
+-  it('INSERT/UPDATE/DELETE exigem admin ou supervisor', () => {
++  it('INSERT/UPDATE exigem admin ou supervisor; DELETE exige só admin', () => {
+     // FOR ALL cobre os quatro comandos: cada comando de escrita precisa de
+     // ao menos uma policy cobridora, toda ela com predicado de admin.
++    // DELETE é admin-only desde a migration connections_delete_admin_only
++    // (excluir conexão é destrutivo): a exigência é is_admin estrito.
+     for (const comando of ESCRITA) {
++      const exigencia = comando === 'DELETE' ? APENAS_ADMIN : ADMIN_OU_SUPERVISOR;
+       expect(
+-        comandoProtegido(policies, comando, ADMIN_OU_SUPERVISOR),
+-        `${comando} sem cobertura admin/supervisor`,
++        comandoProtegido(policies, comando, exigencia),
++        `${comando} sem cobertura ${comando === 'DELETE' ? 'admin' : 'admin/supervisor'}`,
+       ).toBe(true);
+     }
+     const escrita = policies.filter((p) => ESCRITA.some((c) => cobreComando(p, c)));

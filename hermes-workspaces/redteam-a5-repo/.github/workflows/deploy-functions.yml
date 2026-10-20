@@ -1,0 +1,372 @@
+# =================================================
+# Deploy de Edge Functions - MANUAL (workflow_dispatch)
+# =================================================
+# Por que existe: ate 28/08/2026 as edge functions eram deployadas na mao.
+# Isso causou drift silencioso entre repo e producao: tres funcoes
+# (evolution-sync, migrate-media-storage, recover-corrupted-audios) ficaram
+# com verify_jwt=false em producao sem estarem no config.toml, expostas na
+# internet executando com service_role.
+#
+# Por que MANUAL e nao em push: deploy automatico em main levaria commit
+# ruim direto para producao sem intervencao. Aqui voce escolhe a hora.
+#
+# O config.toml e a fonte da verdade do verify_jwt: qualquer funcao fora da
+# lista de excecoes volta a verify_jwt=true ao ser deployada.
+# =================================================
+
+name: Deploy Edge Functions
+
+on:
+  workflow_dispatch:
+    inputs:
+      function_name:
+        description: 'Nome da funcao (ex: gmail-oauth). Vazio = TODAS.'
+        required: false
+        default: ''
+        type: string
+      source_ref:
+        description: 'SHA/tag anterior da main para rollback. Vazio = SHA atual.'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: false
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+
+jobs:
+  deploy:
+    name: Deploy Edge Functions
+    # Aprovacao humana obrigatoria: sem isto um workflow_dispatch promovia edge
+    # functions para producao sem nenhum gate alem de estar na main.
+    environment: producao-edge-functions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # GITHUB_TOKEN elevado a contents:write apenas neste job, para o passo de
+    # tag de rastreabilidade — dispensa PAT (DEPLOY_FUNCTIONS_TOKEN).
+    permissions:
+      contents: write
+    steps:
+      # E09 (auditoria de GitHub Actions, 2026-09-26) — considerado e
+      # descartado: um passo dentro do job para detectar outro run
+      # waiting/queued (mesma ideia do E47 em db-migrate.yml) NUNCA
+      # executaria de fato aqui. A concurrency (group: deploy-edge-functions,
+      # cancel-in-progress: false) ja impede um 2o job do mesmo grupo de
+      # iniciar qualquer step enquanto o 1o estiver waiting/in_progress — o
+      # 2o dispatch fica preso em "queued" pelo proprio GitHub Actions ANTES
+      # de rodar qualquer coisa, inclusive um passo de deteccao. Os runs
+      # 36265179129/36265412081 (cancelled) em 26/09 foram exatamente isso:
+      # a concorrencia funcionou, alguem so cancelou por impaciencia com a
+      # fila. Mitigacao real: checar a aba Actions antes de um novo dispatch
+      # (nenhum outro run deste workflow em waiting/queued/in_progress); se
+      # um "Waiting" antigo nao for mais necessario, cancele-o em vez de
+      # empilhar outro por cima.
+      - name: Exigir ref confiavel da main
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy de producao so pode executar a partir de refs/heads/main."
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Provar checkout imutavel
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          DEPLOYED_GIT_SHA=$(git rev-parse HEAD)
+          if [ -z "$SOURCE_REF" ]; then
+            test "$DEPLOYED_GIT_SHA" = "$GITHUB_SHA"
+          else
+            # Rollback so aceita commit historico ancestral da main que disparou o workflow.
+            git merge-base --is-ancestor "$DEPLOYED_GIT_SHA" "$GITHUB_SHA"
+          fi
+          echo "DEPLOYED_GIT_SHA=$DEPLOYED_GIT_SHA" >> "$GITHUB_ENV"
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Fixar coletor confiavel mesmo durante rollback
+        run: |
+          mkdir -p "$RUNNER_TEMP/edge-tooling"
+          git archive "$GITHUB_SHA" scripts/edge-deploy | tar -x -C "$RUNNER_TEMP/edge-tooling"
+
+      - name: Validar gerador e manifesto de deployment
+        run: |
+          node --test scripts/edge-deploy/*.unit.mjs
+          node scripts/edge-deploy/generate-manifest.mjs --check
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Validar destino e credencial
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FN: ${{ inputs.function_name }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN ausente."
+            exit 1
+          fi
+          if [ "$PROJECT_REF" != "tnnnlkbymytvtqngbbqh" ]; then
+            echo "::error::SUPABASE_PROJECT_REF nao corresponde ao projeto oficial do Zapp Web V2."
+            exit 1
+          fi
+          if [ -n "$FN" ]; then
+            node --input-type=module <<'NODE'
+          import manifest from './supabase/deployment-manifest.json' with { type: 'json' };
+          if (!manifest.functions.some((fn) => fn.name === process.env.FN)) {
+            console.error(`Funcao ausente do manifesto: ${process.env.FN}`);
+            process.exit(1);
+          }
+          NODE
+          fi
+          echo "OK: destino oficial confirmado."
+
+      - name: Configurar secrets nas edges
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PROMOGIFTS_SUPABASE_URL: ${{ secrets.PROMOGIFTS_SUPABASE_URL }}
+          PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY }}
+          EXTERNAL_SUPABASE_URL: ${{ secrets.EXTERNAL_SUPABASE_URL }}
+          EXTERNAL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY }}
+          PREVIEW_EGRESS_PROXY_URL: ${{ secrets.PREVIEW_EGRESS_PROXY_URL }}
+          PREVIEW_EGRESS_SHARED_SECRET: ${{ secrets.PREVIEW_EGRESS_SHARED_SECRET }}
+          FN: ${{ inputs.function_name }}
+        run: |
+          if [ -n "$CRON_SECRET" ]; then
+            echo "Setando CRON_SECRET nas edges"
+            supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+          fi
+          # Deploy total (FN vazio) também inclui crm-integration e deve falhar
+          # fechado se suas dependências server-side não estiverem prontas.
+          if [ "$FN" = "crm-integration" ] || [ -z "$FN" ]; then
+            if [ -z "$EXTERNAL_SUPABASE_URL" ] || [ -z "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" ]; then
+              echo "::error::Credenciais server-side do CRM externo ausentes."
+              exit 1
+            fi
+            node --input-type=module <<'NODE'
+          const expected = 'pgxfvjmuubtbowutlide';
+          const url = new URL(process.env.EXTERNAL_SUPABASE_URL);
+          if (url.href !== `https://${expected}.supabase.co/`) throw new Error('Endpoint CRM externo invalido');
+          const parts = process.env.EXTERNAL_SUPABASE_SERVICE_ROLE_KEY.split('.');
+          if (parts.length !== 3) throw new Error('A chave CRM deve ser JWT service_role verificavel');
+          const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+          if (claims.ref !== expected || claims.role !== 'service_role') throw new Error('Identidade da chave CRM invalida');
+          console.log('OK: endpoint e identidade service_role do CRM comprovados.');
+          NODE
+            STATUS=$(curl --silent --show-error --output /tmp/crm-preflight.json --write-out '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              "$EXTERNAL_SUPABASE_URL/rest/v1/rpc/get_contact_360_by_phone" \
+              -H 'Content-Type: application/json' \
+              -H "apikey: $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+              --data '{"p_phone":"00000000"}')
+            if [ "$STATUS" != "200" ]; then
+              echo "::error::Preflight read-only do CRM falhou (HTTP $STATUS)."
+              exit 1
+            fi
+            supabase secrets set \
+              EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
+              EXTERNAL_SUPABASE_SERVICE_ROLE_KEY="$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+              --project-ref "$PROJECT_REF"
+          fi
+          if [ "$FN" = "promogifts-catalog" ] || [ -z "$FN" ]; then
+            if [ -z "$PROMOGIFTS_SUPABASE_URL" ] || [ -z "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" ]; then
+              echo "::error::Credenciais server-side do catalogo ausentes."
+              exit 1
+            fi
+            echo "Validando acesso server-side minimo ao catalogo"
+            STATUS=$(curl --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
+              "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id&limit=1" \
+              -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")
+            if [ "$STATUS" != "200" ]; then
+              echo "::error::Preflight do catalogo falhou (HTTP $STATUS)."
+              exit 1
+            fi
+            node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
+            echo "Setando endpoint e credencial server-side do catalogo nas edges"
+            supabase secrets set \
+              PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
+              PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+              --project-ref "$PROJECT_REF"
+          fi
+          # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
+          # seu segredo HMAC. Sem eles, a funcao fica segura mas deixa de
+          # produzir previews, o que seria um deploy funcionalmente incompleto.
+          if [ "$FN" = "fetch-link-preview" ] || [ -z "$FN" ]; then
+            if [ -z "$PREVIEW_EGRESS_PROXY_URL" ] || [ -z "$PREVIEW_EGRESS_SHARED_SECRET" ]; then
+              echo "::error::PREVIEW_EGRESS_PROXY_URL e PREVIEW_EGRESS_SHARED_SECRET sao obrigatorios para fetch-link-preview."
+              exit 1
+            fi
+            node --input-type=module <<'NODE'
+          const endpoint = new URL(process.env.PREVIEW_EGRESS_PROXY_URL);
+          if (
+            endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.port ||
+            !/(?:^|\/)v1\/fetch$/.test(endpoint.pathname) || endpoint.search || endpoint.hash
+          ) {
+            throw new Error('PREVIEW_EGRESS_PROXY_URL deve ser HTTPS, sem credenciais/porta/query/fragmento e terminar em /v1/fetch');
+          }
+          if (process.env.PREVIEW_EGRESS_SHARED_SECRET.length < 32) {
+            throw new Error('PREVIEW_EGRESS_SHARED_SECRET deve ter pelo menos 32 caracteres');
+          }
+          console.log('OK: configuracao do proxy de previews validada.');
+          NODE
+            supabase secrets set \
+              PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
+              PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
+              --project-ref "$PROJECT_REF"
+          fi
+
+      - name: Capturar inventario estrutural antes do deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          umask 077
+          mkdir -p "$RUNNER_TEMP/edge-deployment-evidence"
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" --snapshot \
+            --manifest supabase/deployment-manifest.json \
+            --output "$RUNNER_TEMP/edge-deployment-evidence/edge-before.json"
+
+      - name: Deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FN: ${{ inputs.function_name }}
+        run: |
+          # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
+          # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
+          # a verificação pós-deploy não encontrava o deploy esperado.
+          set -o pipefail
+          EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+          DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
+          if [ -n "$FN" ]; then
+            echo "Deploy da funcao: $FN"
+            supabase functions deploy "$FN" --project-ref "$PROJECT_REF" | tee "$DEPLOY_LOG"
+          else
+            echo "Deploy de TODAS as funcoes"
+            supabase functions deploy --project-ref "$PROJECT_REF" | tee "$DEPLOY_LOG"
+          fi
+          # O CLI pula (sem bump de versao) uma funcao cujo bundle local bate
+          # byte a byte com o ja publicado, sinalizando "No change found in
+          # Function: X". Sem capturar isso, a verificacao pos-deploy esgota
+          # as tentativas esperando um bump que nunca vai acontecer para essa
+          # funcao (achado da auditoria de 25/09/2026, run 36183348853).
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
+          const rawLog = readFileSync(`${evidenceDir}/deploy-output.log`, 'utf8');
+          // F-03 (run 36583351162, 2026-09-29): supabase CLI emite ANSI mesmo piped para tee;
+          // strip de ANSI + padrao sem ancoras ^/$ evita falso-negativo que esvaziava unchangedSet
+          // e fazia a attestacao esgotar 144 tentativas esperando version bumps que nunca viriam.
+          const log = rawLog.replace(/\x1b\[[0-9;]*[mGKHF]/g, '');
+          const unchanged = [...log.matchAll(/No change found in Function: (\S+)/g)].map((m) => m[1]);
+          writeFileSync(`${evidenceDir}/unchanged-functions.json`, JSON.stringify(unchanged));
+          console.log(`Funcoes sem mudanca de bundle: ${unchanged.length ? unchanged.join(', ') : 'nenhuma'}`);
+          NODE
+
+      - name: Capturar e validar manifesto remoto pos-deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FN: ${{ inputs.function_name }}
+        run: |
+          umask 077
+          EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+          cp supabase/deployment-manifest.json "$EVIDENCE_DIR/deployment-manifest.json"
+          SCOPE=${FN:-all}
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" \
+            --manifest supabase/deployment-manifest.json \
+            --before "$EVIDENCE_DIR/edge-before.json" \
+            --output "$EVIDENCE_DIR/edge-deployment-attestation.json" \
+            --git-sha "$DEPLOYED_GIT_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --scope "$SCOPE" \
+            --unchanged "$EVIDENCE_DIR/unchanged-functions.json"
+
+      - name: Executar smoke positivo e negativo por funcao
+        env:
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          node scripts/edge-deploy/smoke-functions.mjs \
+            --manifest supabase/deployment-manifest.json \
+            --base-url "https://$PROJECT_REF.supabase.co/functions/v1" \
+            --output "$RUNNER_TEMP/edge-deployment-evidence/edge-smoke-evidence.json" \
+            --git-sha "$DEPLOYED_GIT_SHA" \
+            --run-id "$GITHUB_RUN_ID"
+
+      - name: Publicar resumo da evidencia
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+          const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
+          const lines = ['## Edge deployment evidence', ''];
+          const attestationPath = `${evidenceDir}/edge-deployment-attestation.json`;
+          const smokePath = `${evidenceDir}/edge-smoke-evidence.json`;
+          if (existsSync(attestationPath)) {
+            const attestation = JSON.parse(readFileSync(attestationPath, 'utf8'));
+            lines.push(`- Source manifest: \`${attestation.source_manifest_sha256}\``);
+            lines.push(`- Remote functions reconciled: ${attestation.function_count}`);
+            lines.push('- Remote bundle digests: captured from Supabase Management API');
+            lines.push(`- Stable samples: ${attestation.verification.consecutive_samples}; observation: ${attestation.verification.observation_ms} ms`);
+            lines.push(`- Changes outside scope: ${attestation.verification.changed_outside_scope.length}`);
+            lines.push('- Source/bundle binary equivalence: NOT proven (metadata-only attestation)');
+            lines.push(`- Deployment scope: \`${attestation.deployment_scope}\``);
+          }
+          if (existsSync(smokePath)) {
+            const smoke = JSON.parse(readFileSync(smokePath, 'utf8'));
+            lines.push(`- Smoke: ${smoke.summary.passed}/${smoke.summary.total} passed`);
+          }
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
+          NODE
+
+      - name: Registrar tag de deploy
+        # Cria tag leve de rastreabilidade no commit deployado usando o
+        # GITHUB_TOKEN (job elevado a contents:write) — sem PAT. Best-effort:
+        # falha ao criar a tag apenas avisa, nao derruba o deploy.
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="edge-deploy/$(date -u +%Y%m%d-%H%M%S)-${DEPLOYED_GIT_SHA:0:8}"
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              tag -a "$TAG" "$DEPLOYED_GIT_SHA" \
+              -m "Deploy de edge functions em producao — run $GITHUB_RUN_ID"
+          if git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"; then
+            echo "::notice::Tag de rastreabilidade criada: $TAG"
+          else
+            echo "::warning::Falha ao criar tag de rastreabilidade $TAG (deploy nao afetado)."
+          fi
+
+      - name: Arquivar manifesto, atestado e smokes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: edge-deployment-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/edge-deployment-evidence/
+          if-no-files-found: warn
+          retention-days: 30

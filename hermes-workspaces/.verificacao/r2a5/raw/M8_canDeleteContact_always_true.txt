@@ -1,0 +1,232 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/.verificacao/r2a5/repo
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx (9 tests | 3 failed) 1796ms
+     × não oferece Excluir quando can_delete é false (mas mantém Editar) 1061ms
+     × bloqueia só quando todo selecionado conhecido está sem permissão 6ms
+     × ignora o que está fora da seleção 2ms
+ ❯ src/components/contacts/__tests__/ContactDeletePermission.test.tsx (8 tests | 3 failed) 1051ms
+     × esconde só quando o servidor diz que não pode (false) 11ms
+     × não oferece Excluir quando can_delete é false (mas mantém Editar) 557ms
+     × não oferece Excluir quando can_delete é false 91ms
+
+ Test Files  2 failed | 11 passed (13)
+      Tests  6 failed | 135 passed (141)
+   Start at  19:27:26
+   Duration  9.87s (transform 13.31s, setup 3.43s, import 30.59s, tests 15.90s, environment 21.39s)
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > ContactsTable · item Excluir (visão Tabela) > não oferece Excluir quando can_delete é false (mas mantém Editar)
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <div
+  class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground text-destructive"
+  data-orientation="vertical"
+  data-radix-collection-item=""
+  role="menuitem"
+  tabindex="-1"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-trash2 lucide-trash-2 w-4 h-4 mr-2"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10 11v6"
+    />
+    <path
+      d="M14 11v6"
+    />
+    <path
+      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+    />
+    <path
+      d="M3 6h18"
+    />
+    <path
+      d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    />
+  </svg>
+  Excluir
+</div> instead[39m
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:39:47
+     37|
+     38|     await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDo…
+     39|     expect(screen.queryByText('Excluir')).not.toBeInTheDocument();
+       |                                               ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > canDeleteSelectedContacts · botão Excluir do lote > bloqueia só quando todo selecionado conhecido está sem permissão
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:75:83
+     73|
+     74|   it('bloqueia só quando todo selecionado conhecido está sem permissão…
+     75|     expect(canDeleteSelectedContacts(['a', 'b'], [c('a', false), c('b'…
+       |                                                                                   ^
+     76|   });
+     77|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > canDeleteSelectedContacts · botão Excluir do lote > ignora o que está fora da seleção
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:87:77
+     85|
+     86|   it('ignora o que está fora da seleção', () => {
+     87|     expect(canDeleteSelectedContacts(['a'], [c('a', false), c('b', tru…
+       |                                                                             ^
+     88|   });
+     89| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeletePermission.test.tsx > canDeleteContact > esconde só quando o servidor diz que não pode (false)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/contacts/__tests__/ContactDeletePermission.test.tsx:33:53
+     31| describe('canDeleteContact', () => {
+     32|   it('esconde só quando o servidor diz que não pode (false)', () => {
+     33|     expect(canDeleteContact({ can_delete: false })).toBe(false);
+       |                                                     ^
+     34|   });
+     35|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeletePermission.test.tsx > ContactListItem · item Excluir > não oferece Excluir quando can_delete é false (mas mantém Editar)
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <div
+  class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground text-destructive"
+  data-orientation="vertical"
+  data-radix-collection-item=""
+  role="menuitem"
+  tabindex="-1"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-trash2 lucide-trash-2 w-3.5 h-3.5 mr-2"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10 11v6"
+    />
+    <path
+      d="M14 11v6"
+    />
+    <path
+      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+    />
+    <path
+      d="M3 6h18"
+    />
+    <path
+      d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    />
+  </svg>
+  Excluir
+</div> instead[39m
+ ❯ src/components/contacts/__tests__/ContactDeletePermission.test.tsx:53:47
+     51|
+     52|     await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDo…
+     53|     expect(screen.queryByText('Excluir')).not.toBeInTheDocument();
+       |                                               ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeletePermission.test.tsx > ContactCard · item Excluir > não oferece Excluir quando can_delete é false
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <div
+  class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground text-destructive"
+  data-orientation="vertical"
+  data-radix-collection-item=""
+  role="menuitem"
+  tabindex="-1"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-trash2 lucide-trash-2 w-3.5 h-3.5 mr-2"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10 11v6"
+    />
+    <path
+      d="M14 11v6"
+    />
+    <path
+      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+    />
+    <path
+      d="M3 6h18"
+    />
+    <path
+      d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    />
+  </svg>
+  Excluir
+</div> instead[39m
+ ❯ src/components/contacts/__tests__/ContactDeletePermission.test.tsx:84:47
+     82|
+     83|     await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDo…
+     84|     expect(screen.queryByText('Excluir')).not.toBeInTheDocument();
+       |                                               ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+error: "vitest" exited with code 1

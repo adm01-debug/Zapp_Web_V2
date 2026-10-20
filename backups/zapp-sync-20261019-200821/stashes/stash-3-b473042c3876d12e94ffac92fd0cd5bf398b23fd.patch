@@ -1,0 +1,147 @@
+commit b473042c3876d12e94ffac92fd0cd5bf398b23fd
+Merge: df5d7885ec 6ceaf2d714 762a98b359
+Author:     Hermes Senior <hermes-senior@promobrindes.local>
+AuthorDate: Sun Oct 11 12:02:14 2026 -0300
+Commit:     Hermes Senior <hermes-senior@promobrindes.local>
+CommitDate: Sun Oct 11 12:02:14 2026 -0300
+
+    On v2/contagem-chips-countbychip-2610111154b7aa: worktree devolvido: stash de OUTRO agente (queues) restaurado pelo pop acidental de 11/10 12:00
+
+diff --git a/src/components/queues/CreateQueueDialog.tsx b/src/components/queues/CreateQueueDialog.tsx
+index dc7dd020f9..22abb74320 100644
+--- a/src/components/queues/CreateQueueDialog.tsx
++++ b/src/components/queues/CreateQueueDialog.tsx
+@@ -10,6 +10,10 @@ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { Textarea } from '@/components/ui/textarea';
++// Paleta do seletor de cor da fila (tokens do `tokens.css`): vive em `queueColors.ts`
++// para o `EditQueueDialog` usar a MESMA lista sem depender deste módulo — as telas
++// de teste mockam este diálogo inteiro.
++import { QUEUE_COLORS } from './queueColors';
+ 
+ interface CreateQueueDialogProps {
+   open: boolean;
+@@ -17,21 +21,11 @@ interface CreateQueueDialogProps {
+   onSubmit: (queue: { name: string; description: string; color: string }) => void;
+ }
+ 
+-const COLORS = [
+-  '#3B82F6', // blue
+-  '#10B981', // green
+-  '#F59E0B', // amber
+-  '#EF4444', // red
+-  '#8B5CF6', // purple
+-  '#EC4899', // pink
+-  '#06B6D4', // cyan
+-  '#84CC16', // lime
+-];
+ 
+ export function CreateQueueDialog({ open, onOpenChange, onSubmit }: CreateQueueDialogProps) {
+   const [name, setName] = useState('');
+   const [description, setDescription] = useState('');
+-  const [color, setColor] = useState(COLORS[0]);
++  const [color, setColor] = useState(QUEUE_COLORS[0]);
+   const [loading, setLoading] = useState(false);
+ 
+   const handleSubmit = async (e: React.FormEvent) => {
+@@ -43,7 +37,7 @@ export function CreateQueueDialog({ open, onOpenChange, onSubmit }: CreateQueueD
+       await onSubmit({ name, description, color });
+       setName('');
+       setDescription('');
+-      setColor(COLORS[0]);
++      setColor(QUEUE_COLORS[0]);
+       onOpenChange(false);
+     } finally {
+       setLoading(false);
+@@ -84,7 +78,7 @@ export function CreateQueueDialog({ open, onOpenChange, onSubmit }: CreateQueueD
+           <div className="space-y-2">
+             <Label className="text-foreground">Cor</Label>
+             <div className="flex gap-2 flex-wrap">
+-              {COLORS.map((c) => (
++              {QUEUE_COLORS.map((c) => (
+                 <button
+                   key={c}
+                   type="button"
+diff --git a/src/components/queues/EditQueueDialog.tsx b/src/components/queues/EditQueueDialog.tsx
+index de1ea3f5d2..83935e0265 100644
+--- a/src/components/queues/EditQueueDialog.tsx
++++ b/src/components/queues/EditQueueDialog.tsx
+@@ -10,17 +10,7 @@ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { Textarea } from '@/components/ui/textarea';
+-
+-const COLORS = [
+-  '#3B82F6', // blue
+-  '#10B981', // green
+-  '#F59E0B', // amber
+-  '#EF4444', // red
+-  '#8B5CF6', // purple
+-  '#EC4899', // pink
+-  '#06B6D4', // cyan
+-  '#84CC16', // lime
+-];
++import { QUEUE_COLORS } from './queueColors';
+ 
+ /** Campos que o formulário de edição precisa conhecer de uma fila existente. */
+ export interface EditableQueue {
+@@ -86,7 +76,7 @@ interface EditQueueFormProps {
+ function EditQueueForm({ queue, onSubmit, onCancel, onSaved }: EditQueueFormProps) {
+   const [name, setName] = useState(queue.name);
+   const [description, setDescription] = useState(queue.description ?? '');
+-  const [color, setColor] = useState(queue.color || COLORS[0]);
++  const [color, setColor] = useState(queue.color || QUEUE_COLORS[0]);
+   const [maxWait, setMaxWait] = useState(
+     queue.max_wait_time_minutes === null ? '' : String(queue.max_wait_time_minutes)
+   );
+@@ -155,7 +145,7 @@ function EditQueueForm({ queue, onSubmit, onCancel, onSaved }: EditQueueFormProp
+       <div className="space-y-2">
+         <Label className="text-foreground">Cor</Label>
+         <div className="flex gap-2 flex-wrap">
+-          {COLORS.map((c) => (
++          {QUEUE_COLORS.map((c) => (
+             <button
+               key={c}
+               type="button"
+diff --git a/src/components/queues/QueueCard.tsx b/src/components/queues/QueueCard.tsx
+index 0c4f31d258..3d80c6a690 100644
+--- a/src/components/queues/QueueCard.tsx
++++ b/src/components/queues/QueueCard.tsx
+@@ -27,7 +27,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
+       <CardHeader className="pb-2">
+         <div className="flex items-start justify-between">
+           <div className="flex items-center gap-3">
+-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${queue.color}15` }}>
++            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `color-mix(in srgb, ${queue.color} 15%, transparent)` }}>
+               <MessageSquare className="w-5 h-5" style={{ color: queue.color }} />
+             </div>
+             <div>
+diff --git a/src/components/queues/queueColors.ts b/src/components/queues/queueColors.ts
+new file mode 100644
+index 0000000000..3455a754ea
+--- /dev/null
++++ b/src/components/queues/queueColors.ts
+@@ -0,0 +1,22 @@
++/**
++ * Paleta do seletor de cor de fila — tokens do `tokens.css`, nunca hex solto.
++ *
++ * O valor é guardado como CSS em `queues.color` e usado direto em `style`
++ * (`hsl(var(--token))` resolve por tema, então troca junto com o tema claro/escuro).
++ * Vive num módulo próprio para `CreateQueueDialog` e `EditQueueDialog` usarem a
++ * MESMA lista — telas de teste mockam o diálogo inteiro, e a paleta não pode
++ * depender dele.
++ *
++ * Violeta/rosa/lima ainda não têm token semântico: usam o par `--dash-*` até o
++ * `t_f3f17002` publicar `--violet`/`--teal`/`--rosa`; trocar então.
++ */
++export const QUEUE_COLORS = [
++  'hsl(var(--primary))',      // azul
++  'hsl(var(--success))',      // verde
++  'hsl(var(--warning))',      // âmbar
++  'hsl(var(--destructive))',  // vermelho
++  'hsl(var(--dash-violet))',  // violeta
++  'hsl(var(--dash-red))',     // rosa
++  'hsl(var(--info))',         // ciano
++  'hsl(var(--dash-green))',   // lima
++];

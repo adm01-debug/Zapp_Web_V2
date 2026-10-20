@@ -1,0 +1,3 @@
+ M .tmp/relato.md
+ M supabase/migrations/20261013210000_message_reactions_autoria.sql
+ M supabase/tests/rls_message_reactions_autoria.sql

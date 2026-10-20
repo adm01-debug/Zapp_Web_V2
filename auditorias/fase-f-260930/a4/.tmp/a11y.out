@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  19:34:31
+   Duration  3.21s (transform 764ms, setup 247ms, import 1.25s, tests 453ms, environment 1.02s)
+

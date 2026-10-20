@@ -1,0 +1,612 @@
+import React, { useEffect } from 'react';
+import {
+  ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, Plus,
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { cn } from '@/lib/utils';
+import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
+import { TalkXContactSelector } from './TalkXContactSelector';
+import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
+import { TalkXMessageEditor } from './TalkXMessageEditor';
+import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { toast } from 'sonner';
+
+const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
+
+const STEPS: { n: WizardStep; label: string; hint: string }[] = [
+  { n: 1, label: 'Público', hint: 'Segmentos e filtros' },
+  { n: 2, label: 'Mensagem', hint: 'Template e conteúdo' },
+  { n: 3, label: 'Entrega', hint: 'Agendamento' },
+  { n: 4, label: 'Revisão', hint: 'Confira e lance' },
+];
+
+interface Props {
+  campaign: TalkXCampaign | null;
+  onClose: () => void;
+  onLaunched?: (campaignId: string, status: 'scheduled' | 'sending') => void;
+  initial?: { segmentId?: string; templateId?: string; step?: WizardStep };
+  /** URL state is owned by TalkXView; this component only requests transitions. */
+  routeStep?: WizardStep;
+  onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
+  onDraftIdentity?: (campaignId: string) => void;
+}
+
+export type WizardState = ReturnType<typeof useCampaignEditor>;
+
+export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
+  const ed = useCampaignEditor(campaign, onClose, initial);
+
+  // E61: beforeunload se campanha tem dados nao salvos
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => { if (ed.name.trim().length > 0 || ed.selectedContacts.length > 0) { e.preventDefault(); } };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [ed.name, ed.selectedContacts.length]);
+  const step = ed.step;
+
+  const maximumAllowedStep = (() => {
+    if (!ed.canProceed[1]) return 1;
+    if (!ed.canProceed[2]) return 2;
+    if (!ed.canProceed[3]) return 3;
+    return 4;
+  })() as WizardStep;
+
+  const requestStep = (requestedStep: WizardStep, replace = false) => {
+    const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
+    ed.setStep(safeStep);
+    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+  };
+
+  // O estado da URL pode mudar por histórico do navegador ou por um link
+  // copiado. Nunca aceita salto acima do último pré-requisito válido.
+  useEffect(() => {
+    if (routeStep === undefined || routeStep === step) return;
+    requestStep(routeStep, true);
+  // `requestStep` is intentionally rebuilt from the latest form validity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeStep, maximumAllowedStep, step]);
+
+  useEffect(() => {
+    if (ed.draftCampaignId) onDraftIdentity?.(ed.draftCampaignId);
+  }, [ed.draftCampaignId, onDraftIdentity]);
+
+  const next = () => {
+    if (!ed.canProceed[step]) return;
+    requestStep(Math.min(4, step + 1) as WizardStep);
+  };
+  const prev = () => requestStep(Math.max(1, step - 1) as WizardStep);
+
+  const saveDraft = async () => {
+    try {
+      const id = await ed.handleSave('draft');
+      if (id) onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+    }
+  };
+
+  return (
+    <div className="w-full min-w-0 space-y-4">
+      {/* E61: Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+        <span>Talk X</span>
+        <span className="text-border">›</span>
+        <span>Campanhas</span>
+        <span className="text-border">›</span>
+        <span>Nova Campanha</span>
+        <span className="text-border">›</span>
+        <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
+      </nav>
+
+            {/* Header + stepper */}
+      <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">
+        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+          <button type="button" onClick={onClose} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
+          <IconTile icon={step === 4 ? Check : Zap} color={step === 4 ? 'green' : 'blue'} size={48} />
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold font-display text-foreground tracking-[-0.02em] leading-tight truncate">{step === 4 ? 'Revisão Final' : campaign ? 'Editar campanha' : 'Nova campanha'}</h1>
+            <p className="text-xs text-foreground-secondary">{step === 4 ? 'Confira todos os detalhes da sua campanha antes de lançar.' : 'Configure público, mensagem e entrega com segurança.'}</p>
+          </div>
+        </div>
+        <ol className="flex items-center gap-2 xl:gap-0 flex-wrap">
+          {STEPS.map((s, i) => {
+            const done = step > s.n; const active = step === s.n;
+            return (
+              <li key={s.n} className="flex items-center">
+                <button type="button" onClick={() => (done || s.n < step) && requestStep(s.n)} className="flex items-center gap-2.5 group">
+                  <span className={cn('w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold border transition-colors', active ? 'bg-primary border-primary text-white shadow-[0_0_0_4px_hsl(var(--primary)/.2)]' : done ? 'bg-dash-green border-dash-green text-white' : 'border-border/70 text-muted-foreground bg-input/40')}>
+                    {done ? <Check className="w-4 h-4" /> : s.n}
+                  </span>
+                  <span className="hidden md:block text-left">
+                    <span className={cn('block text-[13px] font-semibold leading-tight', active ? 'text-foreground' : 'text-foreground-secondary')}>{s.label}</span>
+                    <span className="block text-2xs text-muted-foreground">{s.hint}</span>
+                  </span>
+                </button>
+                {i < STEPS.length - 1 && <span className={cn('hidden xl:block h-px w-10 mx-3', done ? 'bg-dash-green' : 'bg-border')} />}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      <div className={cn('grid gap-4 min-w-0', step === 4 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px]')}>
+        <div className="min-w-0 space-y-4">
+          {step === 1 && <StepAudience ed={ed} />}
+          {step === 2 && <StepMessage ed={ed} />}
+          {step === 3 && <TalkXWizardDelivery ed={ed} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
+              <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
+              {ed.autosaveStatus === 'saving' && <span className="text-3xs text-muted-foreground" role="status">Salvando alterações…</span>}
+              {ed.autosaveStatus === 'offline' && (
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-3xs text-dash-amber hover:underline">
+                  Sem conexão — tentar novamente
+                </button>
+              )}
+              {ed.autosaveStatus === 'error' && (
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                  Não salvo — tentar novamente
+                </button>
+              )}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
+              {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
+                <span className="text-3xs text-muted-foreground">
+                  Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
+                </span>
+              )}
+            </div>
+            {step < 4 && (
+              <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
+                Continuar <ArrowRight className="w-4 h-4" />
+              </PrimaryButton>
+            )}
+          </div>
+        </div>
+
+        {step < 4 && <WizardRail ed={ed} />}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Passo 1 — Público                                                  */
+/* ------------------------------------------------------------------ */
+
+function SectionCard({ icon, title, subtitle, right, children }: { icon: React.ElementType; title: string; subtitle?: string; right?: React.ReactNode; children: React.ReactNode }) {
+  const Icon = icon;
+  return (
+    <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <IconTile icon={Icon as never} size={40} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-bold text-foreground">{title}</p>
+          {subtitle && <p className="text-xs text-foreground-secondary">{subtitle}</p>}
+        </div>
+        {right}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { icon: React.ElementType; title: string; desc: string; active: boolean; onClick: () => void; disabled?: boolean; badge?: string }) {
+  const Icon = icon;
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
+      <IconTile icon={Icon as never} size={40} color="blue" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-2xs text-foreground-secondary leading-snug mt-0.5">{desc}</p>
+        {badge && <span className="inline-block mt-1.5 text-3xs font-semibold px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground">{badge}</span>}
+      </div>
+      <span className={cn('w-4 h-4 rounded-full border-2 shrink-0 mt-0.5', active ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_hsl(var(--card))]' : 'border-border')} />
+    </button>
+  );
+}
+
+/**
+ * V24 — uma linha de regra do público. Campos e operadores vêm do MESMO
+ * catálogo do editor de segmentos (`RULE_FIELDS`/`RULE_OPS`), então a regra
+ * montada aqui é a mesma que o motor compila para PostgREST.
+ */
+function AudienceRuleRow({ rule, ed }: { rule: SegmentRule; ed: WizardState }) {
+  const field = RULE_FIELDS.find((definition) => definition.value === rule.field) ?? RULE_FIELDS[0];
+  const ops = RULE_OPS[field.kind] ?? RULE_OPS.text;
+  const needsValue = rule.op !== 'is_set' && rule.op !== 'is_empty';
+
+  // Trocar o campo troca o tipo: reinicia operador e valor para nunca deixar
+  // uma combinação que o motor rejeite (ex.: ilike em coluna uuid).
+  const changeField = (value: string) => {
+    const next = RULE_FIELDS.find((definition) => definition.value === value) ?? RULE_FIELDS[0];
+    ed.updateAudienceRule(rule.id, { field: next.value, op: (RULE_OPS[next.kind] ?? RULE_OPS.text)[0].value, value: '' });
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <Select value={rule.field} onValueChange={changeField}>
+        <SelectTrigger aria-label="Campo do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {RULE_FIELDS.map((definition) => <SelectItem key={definition.value} value={definition.value}>{definition.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <Select value={rule.op} onValueChange={(value) => ed.updateAudienceRule(rule.id, { op: value as RuleOp })}>
+        <SelectTrigger aria-label="Operador do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {ops.map((op) => <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      {needsValue && (field.options ? (
+        <Select value={rule.value} onValueChange={(value) => ed.updateAudienceRule(rule.id, { value })}>
+          <SelectTrigger aria-label="Valor do filtro" className="h-8 text-xs w-[170px] bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+          <SelectContent>
+            {field.options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ) : (
+        <Input
+          value={rule.value}
+          onChange={(event) => ed.updateAudienceRule(rule.id, { value: event.target.value })}
+          aria-label="Valor do filtro"
+          placeholder={field.kind === 'date' ? 'dias' : 'Valor'}
+          inputMode={field.kind === 'number' || field.kind === 'date' ? 'numeric' : undefined}
+          className="h-8 text-xs w-[170px] bg-input/40 border-border/70"
+        />
+      ))}
+      <button type="button" onClick={() => ed.removeAudienceRule(rule.id)} aria-label="Remover filtro" className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></button>
+    </div>
+  );
+}
+
+/** V24 — filtros do passo 1 como regras do público (mesma fonte dos segmentos). */
+function AudienceRulesEditor({ ed }: { ed: WizardState }) {
+  const hasRules = ed.audienceRules.groups.some((group) => group.rules.length > 0);
+  return (
+    <div className="mb-3 space-y-2 rounded-xl border border-border/70 bg-input/30 p-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5"><Filter className="w-3.5 h-3.5" /> Filtros do público</p>
+        <span className="text-3xs text-muted-foreground">
+          {typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}
+        </span>
+      </div>
+      {ed.audienceRules.groups.map((group) => (
+        <div key={group.id} className="space-y-2">
+          {group.rules.length > 1 && (
+            <button
+              type="button"
+              onClick={() => ed.setGroupMatch(group.id, group.match === 'and' ? 'or' : 'and')}
+              className="h-7 px-2 rounded-md text-3xs font-medium border border-primary/30 bg-primary/10 text-primary-glow"
+            >
+              {group.match === 'and' ? 'Todas as regras (E)' : 'Qualquer regra (OU)'}
+            </button>
+          )}
+          {group.rules.map((rule) => <AudienceRuleRow key={rule.id} rule={rule} ed={ed} />)}
+        </div>
+      ))}
+      {!hasRules && <p className="text-2xs text-muted-foreground">Sem filtros — o público é toda a base de contatos com telefone.</p>}
+      <button
+        type="button"
+        onClick={() => ed.addAudienceRule()}
+        className="h-8 px-2.5 rounded-lg text-xs font-medium border border-border/70 bg-input/40 hover:bg-muted/50 flex items-center gap-1.5"
+      >
+        <Plus className="w-3.5 h-3.5" /> Adicionar filtro
+      </button>
+    </div>
+  );
+}
+
+function StepAudience({ ed }: { ed: WizardState }) {
+  // V25 — o passo 1 só oferece segmentos ATIVOS (a página de gestão de
+  // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
+  // lista vem do hook compartilhado sem alteração.
+  const activeSegments = ed.segments.filter((s) => s.status === 'active');
+  return (
+    <>
+      <SectionCard icon={FileText} title="Informações da campanha">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
+          <div>
+            <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
+            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={ed.name.trim().length > 0 && ed.name.trim().length < 3} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            {ed.name.trim().length > 0 && ed.name.trim().length < 3 && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos 3 caracteres</p>
+            )}
+          </div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Objetivo</Label>
+            <Select value={ed.objective} onValueChange={ed.setObjective}>
+              <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon }) => (
+                  <SelectItem key={value} value={value}>
+                    <span className="flex items-center gap-2"><ObjectiveIcon className="w-4 h-4 text-muted-foreground" />{label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Conexão WhatsApp</Label>
+            <Select value={ed.connectionId} onValueChange={ed.setConnectionId}>
+              <SelectTrigger aria-label="Conexão WhatsApp" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {(ed.connections ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.phone_number || 'sem número'})</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
+          <div><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div>
+            <Label className="text-xs text-foreground-secondary">Responsável</Label>
+            <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
+              <SelectTrigger aria-label="Responsável" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {(ed.owners ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name || p.email || 'Sem nome'}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {(ed.connections ?? []).length === 0 && (
+          <div className="mt-3">
+            <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard icon={Users} title="Origem do público" subtitle="Escolha de onde virão os contatos para esta campanha.">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <SourceCard icon={Users} title="Contatos ZAPP" desc="Use seus contatos da plataforma com filtros avançados." active={ed.audienceSource === 'contacts'} onClick={() => ed.setAudienceSource('contacts')} />
+          <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={activeSegments.length === 0} badge={activeSegments.length === 0 ? 'Nenhum segmento salvo' : `${activeSegments.length} segmentos`} />
+          <SourceCard icon={Database} title="CRM 360°" desc="Selecione contatos do seu CRM com base em negócios e estágios." active={ed.audienceSource === 'crm360'} onClick={() => ed.setAudienceSource('crm360')} disabled badge="Vinculação CRM 360° não configurada" />
+        </div>
+        {ed.audienceSource === 'segment' && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {activeSegments.map((s) => {
+              const active = ed.segmentId === s.id;
+              return (
+                <button key={s.id} type="button" onClick={() => ed.setSegmentId(s.id)} className={cn('text-left rounded-xl border p-3 transition-all', active ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
+                    <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+                  </div>
+                  <p className="text-2xs text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
+                  <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </SectionCard>
+
+      {ed.audienceSource === 'contacts' && (
+        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
+          <AudienceRulesEditor ed={ed} />
+          <TalkXContactSelector
+            contacts={ed.contacts || []}
+            filteredContacts={ed.filteredContacts}
+            selectedContacts={ed.selectedContacts}
+            contactSearch={ed.contactSearch}
+            setContactSearch={ed.setContactSearch}
+            companyFilter={ed.companyFilter}
+            setCompanyFilter={ed.setCompanyFilter}
+            tagFilter={ed.tagFilter}
+            setTagFilter={ed.setTagFilter}
+            companies={ed.companies}
+            tags={ed.tags}
+            toggleContact={ed.toggleContact}
+            selectAll={ed.selectAll}
+            clearFilters={ed.clearFilters}
+          />
+        </SectionCard>
+      )}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Passo 2 — Mensagem                                                 */
+/* ------------------------------------------------------------------ */
+
+function StepMessage({ ed }: { ed: WizardState }) {
+  const approved = ed.templates.filter((t) => t.status === 'approved');
+  return (
+    <>
+      <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
+        right={(
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
+              {approved.length > 0 && <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
+              {approved.map((t) => (
+                <DropdownMenuItem key={t.id} onClick={() => ed.applyTemplate(t.id)} className="flex flex-col items-start gap-0.5">
+                  <span className="font-medium text-xs">{t.name}</span><span className="text-3xs text-muted-foreground line-clamp-1">{t.content}</span>
+                </DropdownMenuItem>
+              ))}
+              <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Rápidos</p>
+              {MESSAGE_TEMPLATES.map((t) => (
+                <DropdownMenuItem key={t.name} onClick={() => ed.setMessageTemplate(t.template)} className="flex flex-col items-start gap-0.5">
+                  <span className="font-medium text-xs">{t.name}</span><span className="text-3xs text-muted-foreground line-clamp-1">{t.template}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      >
+        <div className="flex items-center gap-1.5 flex-wrap mb-3">
+          {[{ v: '', l: 'Texto', I: MessageSquare }, ...MEDIA_TYPES.map((m) => ({ v: m.value, l: m.label, I: MEDIA_ICONS[m.value as keyof typeof MEDIA_ICONS] }))].map(({ v, l, I }) => {
+            const active = v === '' ? !ed.hasMedia : ed.hasMedia && ed.mediaType === v;
+            return (
+              <button key={l} type="button" onClick={() => { if (v === '') ed.toggleMedia(false); else { ed.toggleMedia(true); ed.setMediaType(v); } }} className={cn('h-8 px-3 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors', active ? 'bg-primary border-primary text-white' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>
+                <I className="w-3.5 h-3.5" />{l}
+              </button>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
+          <TalkXMessageEditor
+            value={ed.messageTemplate}
+            onChange={ed.setMessageTemplate}
+            placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
+            rows={7}
+            limit={4096}
+            knownVariables={VARIABLE_KEYS}
+            footer={(
+              <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
+                <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
+              </div>
+            )}
+          />
+          <div className="rounded-xl border border-border/70 bg-input/30 p-3">
+            <p className="text-xs font-semibold text-foreground mb-2">Variáveis</p>
+            <div className="flex flex-wrap gap-1.5">
+              {VARIABLES.map((v) => (
+                <Tooltip key={v.key}>
+                  <TooltipTrigger asChild>
+                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </div>
+        </div>
+                {ed.hasMedia && (
+          <div className="mt-3 rounded-xl border border-border/70 bg-input/30 p-3 flex items-center gap-3">
+            <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground">Adicionar mídia ({ed.mediaType || 'imagem'})</p>
+              <p className="text-2xs text-muted-foreground">Imagens, vídeos, documentos ou áudios via URL pública. Máx. 16 MB.</p>
+            </div>
+            <div className="relative w-full max-w-sm">
+              <Input value={ed.mediaUrl} onChange={(e) => ed.setMediaUrl(e.target.value)} placeholder="https://exemplo.com/arquivo.jpg" className="h-9 pr-8 bg-input/40 border-border/70 text-xs" />
+              {ed.mediaUrl && <button type="button" onClick={() => ed.setMediaUrl('')} aria-label="Limpar URL da mídia" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>}
+            </div>
+          </div>
+        )}
+      </SectionCard>
+
+      {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
+      {(ed.messageTemplate.split('http').length - 1) > 2 && (
+        <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 px-3 py-2 flex items-start gap-2">
+          <Sparkles className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <p className="text-xs text-foreground-secondary">Mais de 2 links podem acionar filtros de spam. Use com moderação.</p>
+        </div>
+      )}
+
+      {ed.templates.length > 0 && (
+        <SectionCard icon={Sparkles} title="Sugestões da biblioteca" subtitle="Templates aprovados mais usados.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {approved.slice(0, 3).map((t) => (
+              <button key={t.id} type="button" onClick={() => ed.applyTemplate(t.id)} className={cn('text-left rounded-xl border p-3 transition-all', ed.templateId === t.id ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
+                <p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p>
+                <p className="text-2xs text-foreground-secondary line-clamp-2 mt-0.5">{t.content}</p>
+                <div className="flex items-center gap-2 mt-2"><Badge variant="outline" className="text-3xs h-4">{t.category}</Badge><span className="text-3xs text-muted-foreground">{fmtInt(t.use_count)} usos</span></div>
+              </button>
+            ))}
+          </div>
+        </SectionCard>
+      )}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Rail — Resumo da campanha + prévia                                  */
+/* ------------------------------------------------------------------ */
+
+function StatTile({ icon, color, label, value, sub, subTone }: { icon: React.ElementType; color: 'blue' | 'green' | 'red' | 'violet' | 'amber'; label: string; value: string; sub?: string; subTone?: string }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-input/20 p-3 flex items-start gap-2.5 min-w-0">
+      <IconTile icon={icon as never} color={color} size={36} />
+      <div className="min-w-0">
+        <p className="text-2xs text-foreground-secondary leading-tight">{label}</p>
+        <p className="text-lg font-bold text-foreground leading-tight tabular-nums mt-0.5 truncate">{value}</p>
+        {sub && <p className={cn('text-2xs mt-0.5', subTone ?? 'text-muted-foreground')}>{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string; name: string; description?: string | null; rules: unknown; estimated_count: number; last_used_at?: string | null }; estimatedCount?: number }) {
+  const { data: est, isFetching } = useAudienceEstimate(segment.rules as import('@/hooks/integrations/useTalkXSegments').SegmentRules, true);
+  const count = est?.count ?? estimatedCount ?? segment.estimated_count;
+  return (
+    <RailCard icon={Bookmark} color="violet" title={segment.name} subtitle={segment.description || 'Segmento salvo'}
+      right={isFetching ? <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" /> : undefined}
+    >
+      <p className="text-2xs text-foreground-secondary">Público estimado</p>
+      <p className={cn('text-2xl font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{fmtInt(count)}<span className="text-xs font-normal text-muted-foreground ml-1">contatos</span></p>
+      {est?.sample && est.sample.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          <p className="text-2xs text-foreground-secondary">Amostra (5)</p>
+          {est.sample.map((c) => (
+            <div key={c.id} className="flex items-center gap-2">
+              <InitialsAvatar name={c.name || '?'} size={24} />
+              <div className="min-w-0">
+                <p className="text-2xs font-medium text-foreground truncate">{c.name}</p>
+                <p className="text-3xs text-foreground-secondary truncate">{c.company || c.phone}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </RailCard>
+  );
+}
+
+function WizardRail({ ed }: { ed: WizardState }) {
+  const sample = ed.contacts?.[0];
+  // Review da PR #909: sem os campos customizados reais do contato de
+  // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
+  // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
+  const { fields: sampleCustomFields } = useContactCustomFields(sample?.id);
+  const sampleCustomValues = React.useMemo(() => {
+    // Object.create(null) (não {}): um campo customizado chamado "__proto__"
+    // num objeto comum invoca o setter de protótipo em vez de virar
+    // propriedade enumerável — o preview mostraria "[__proto__]" mesmo o
+    // envio real (que já usa o mesmo padrão) mandando o valor de verdade
+    // (achado do review).
+    const values = Object.create(null) as Record<string, string>;
+    for (const f of sampleCustomFields) {
+      if (f.field_value == null) continue;
+      values[f.field_name] = f.field_value;
+    }
+    return values;
+  }, [sampleCustomFields]);
+  const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
+  return (
+    <div className="space-y-4 min-w-0">
+      <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
+        <div className="grid grid-cols-2 gap-2.5">
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
+          <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
+          <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
+        </div>
+      </RailCard>
+      <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
+        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
+      </RailCard>
+      {ed.selectedSegment && <SegmentPreviewCard segment={ed.selectedSegment} estimatedCount={ed.segmentEstimate} />}
+    </div>
+  );
+}

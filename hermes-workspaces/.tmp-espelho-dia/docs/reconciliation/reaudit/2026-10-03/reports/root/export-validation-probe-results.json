@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "runner": "tools/export_validation_probe.py",
+  "source_pins": [
+    {
+      "path": "supabase-export/validate_destino.sh",
+      "git_blob_sha": "6ff9558ba387a7dce03e9e8c9ea8e632a8d7780e",
+      "sha256": "f01dfcc2d890cb5d603da2e48a45e6ef158e979e02b15ac6f5b973071016165c",
+      "line_start": 1,
+      "line_end": 95
+    }
+  ],
+  "primary_reproductions": 1,
+  "behavior_controls": 2,
+  "cases": [
+    {
+      "id": "ROOT-EXPORT-P01",
+      "kind": "PRIMARY_REPRODUCTION",
+      "mode": "connection_error",
+      "observed_exit_code": 0,
+      "fake_node_invocations": 2,
+      "announces_success": true,
+      "json_exists": false,
+      "csv_exists": false,
+      "stdout": "▶  Validando destino...\npsql: simulated connection failure\n\n──────────────────────────────────────────────\n Resumo: 0 FAIL  |  0 EXTRA\n──────────────────────────────────────────────\n📝 Gerando logs de validação...\n📄 JSON: /tmp/reaudit-export-g8s88np_/validation.json\n✅ Destino validado com sucesso.\n",
+      "stderr": "psql: simulated connection failure\n",
+      "pass": true
+    },
+    {
+      "id": "ROOT-EXPORT-C01",
+      "kind": "BEHAVIOR_CONTROL",
+      "mode": "metric_failure",
+      "observed_exit_code": 1,
+      "fake_node_invocations": 1,
+      "announces_success": false,
+      "json_exists": false,
+      "csv_exists": false,
+      "stdout": "▶  Validando destino...\n│ tables │ ❌ FAIL │\n\n──────────────────────────────────────────────\n Resumo: 1 FAIL  |  0 EXTRA\n──────────────────────────────────────────────\n❌ Validação FALHOU — reaplique os blocos faltantes.\n",
+      "stderr": "",
+      "pass": true
+    },
+    {
+      "id": "ROOT-EXPORT-C02",
+      "kind": "BEHAVIOR_CONTROL",
+      "mode": "success",
+      "observed_exit_code": 0,
+      "fake_node_invocations": 2,
+      "announces_success": true,
+      "json_exists": true,
+      "csv_exists": true,
+      "stdout": "▶  Validando destino...\n│ tables │ ✅ OK │\n\n──────────────────────────────────────────────\n Resumo: 0 FAIL  |  0 EXTRA\n──────────────────────────────────────────────\n📝 Gerando logs de validação...\n📄 JSON: /tmp/reaudit-export-2ze7ifq2/validation.json\n📊 CSV: /tmp/reaudit-export-2ze7ifq2/validation.csv (append)\n✅ Destino validado com sucesso.\n",
+      "stderr": "",
+      "pass": true
+    }
+  ],
+  "limits": [
+    "Exact Bash file executed with fake node on PATH. No psql, database or network call occurred.",
+    "All JSON/CSV outputs and fake executables were confined to a temporary directory, removed after observation.",
+    "Success control writes a synthetic result; it does not validate the SQL metrics themselves.",
+    "No product file changed; import.sh was inspected only, not executed."
+  ]
+}

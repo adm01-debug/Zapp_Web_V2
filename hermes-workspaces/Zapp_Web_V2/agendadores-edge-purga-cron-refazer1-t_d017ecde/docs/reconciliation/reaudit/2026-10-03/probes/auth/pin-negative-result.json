@@ -1,0 +1,8 @@
+{
+  "case": "changed source fails preflight before executing product code",
+  "status": "PASS",
+  "exit_code": 1,
+  "expected_failure": "Source size/hash mismatch before execution",
+  "results_file_created": false,
+  "modified_original_source": false
+}

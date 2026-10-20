@@ -1,0 +1,165 @@
+NAO-EXPLICADA  rls|ai_usage_outbox
+NAO-EXPLICADA  rls|gmail_oauth_states
+DRIFT-CANONICO rls|talkx_storage_purge_queue
+EXPLICADA      columns|ai_usage_logs.event_id
+EXPLICADA      columns|ai_usage_outbox.created_at
+EXPLICADA      columns|ai_usage_outbox.event_id
+EXPLICADA      columns|ai_usage_outbox.id
+EXPLICADA      columns|ai_usage_outbox.motivo
+EXPLICADA      columns|ai_usage_outbox.payload
+EXPLICADA      columns|ai_usage_outbox.processed_at
+EXPLICADA      columns|ai_usage_outbox.tentativas
+DRIFT-CANONICO columns|audit_logs.dedupe_key
+EXPLICADA      columns|gmail_oauth_states.consumed_at
+EXPLICADA      columns|gmail_oauth_states.created_at
+EXPLICADA      columns|gmail_oauth_states.expires_at
+EXPLICADA      columns|gmail_oauth_states.id
+EXPLICADA      columns|gmail_oauth_states.state
+EXPLICADA      columns|gmail_oauth_states.user_id
+DRIFT-CANONICO columns|talkx_storage_purge_queue.attempts
+DRIFT-CANONICO columns|talkx_storage_purge_queue.bucket_id
+DRIFT-CANONICO columns|talkx_storage_purge_queue.enqueued_at
+EXPLICADA      columns|talkx_storage_purge_queue.id
+DRIFT-CANONICO columns|talkx_storage_purge_queue.last_error
+DRIFT-CANONICO columns|talkx_storage_purge_queue.object_id
+DRIFT-CANONICO columns|talkx_storage_purge_queue.object_name
+EXPLICADA      columns|talkx_storage_purge_queue.processed_at
+DRIFT-CANONICO columns|talkx_storage_purge_queue.reason
+DRIFT-CANONICO columns|user_sessions.auth_session_id
+EXPLICADA      indexes|ai_usage_logs.ai_usage_logs_event_id_uidx
+EXPLICADA      indexes|ai_usage_outbox.ai_usage_outbox_event_id_uidx
+NAO-EXPLICADA  indexes|ai_usage_outbox.ai_usage_outbox_pkey
+EXPLICADA      indexes|ai_usage_outbox.idx_ai_usage_outbox_pendentes
+DRIFT-CANONICO indexes|audit_logs.ux_audit_logs_dedupe_key
+EXPLICADA      indexes|gmail_oauth_states.gmail_oauth_states_open_user_state_idx
+NAO-EXPLICADA  indexes|gmail_oauth_states.gmail_oauth_states_pkey
+DRIFT-CANONICO indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pending_dedup
+DRIFT-CANONICO indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pending_idx
+NAO-EXPLICADA  indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pkey
+DRIFT-CANONICO indexes|user_sessions.idx_user_sessions_auth_session_id
+DRIFT-CANONICO indexes|user_sessions.idx_user_sessions_user_auth_session
+EXPLICADA      defaults|ai_usage_outbox.created_at
+EXPLICADA      defaults|ai_usage_outbox.id
+EXPLICADA      defaults|ai_usage_outbox.tentativas
+EXPLICADA      defaults|gmail_oauth_states.created_at
+EXPLICADA      defaults|gmail_oauth_states.expires_at
+EXPLICADA      defaults|gmail_oauth_states.id
+DRIFT-CANONICO defaults|talkx_storage_purge_queue.attempts
+DRIFT-CANONICO defaults|talkx_storage_purge_queue.enqueued_at
+EXPLICADA      defaults|talkx_storage_purge_queue.id
+DRIFT-CANONICO defaults|talkx_storage_purge_queue.reason
+NAO-EXPLICADA  policies|ai_usage_outbox."Service role can manage AI usage outbox"
+DRIFT-CANONICO policies|team_conversation_members.tcm_delete_own_or_admin
+DRIFT-CANONICO policies|team_conversation_members.tcm_insert_member
+DRIFT-CANONICO triggers|profiles.trg_revoke_sessions_on_profile_deactivate
+DRIFT-CANONICO triggers|user_sessions.trg_user_sessions_auth_session_guard
+DRIFT-CANONICO functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+EXPLICADA      functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+DRIFT-CANONICO functions|f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)
+DRIFT-CANONICO functions|f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)
+DRIFT-CANONICO functions|f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)
+DRIFT-CANONICO functions|f:resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)
+DRIFT-CANONICO functions|f:revoke_auth_sessions(p_scope text, p_actor_user_id uuid, p_target_user_id uuid, p_target_session_id uuid, p_preserve_session_id uuid)
+DRIFT-CANONICO functions|f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)
+DRIFT-CANONICO functions|f:trg_revoke_sessions_on_profile_deactivate()
+DRIFT-CANONICO functions|f:trg_user_sessions_auth_session_guard()
+DRIFT-CANONICO functions|f:purge_talkx_expired_data(p_limit integer)
+DRIFT-CANONICO functions|f:set_team_member_role(p_conversation_id uuid, p_profile_id uuid, p_new_role text)
+DRIFT-CANONICO functions|f:talkx_engine_alerts()
+DRIFT-CANONICO functions|f:trigger_talkx_engine_tick()
+NAO-EXPLICADA  constraints|relation:ai_usage_outbox.ai_usage_outbox_pkey
+NAO-EXPLICADA  constraints|relation:gmail_oauth_states.gmail_oauth_states_pkey
+NAO-EXPLICADA  constraints|relation:gmail_oauth_states.gmail_oauth_states_user_id_fkey
+DRIFT-CANONICO constraints|relation:talkx_storage_purge_queue.talkx_storage_purge_queue_attempts_check
+NAO-EXPLICADA  constraints|relation:talkx_storage_purge_queue.talkx_storage_purge_queue_pkey
+DRIFT-CANONICO constraints|relation:talkx_alerts.talkx_alerts_kind_check
+DRIFT-CANONICO column_grants|r:public.team_conversations.avatar_url|authenticated|UPDATE|grantor=postgres
+DRIFT-CANONICO column_grants|r:public.team_conversations.name|authenticated|UPDATE|grantor=postgres
+DRIFT-CANONICO column_grants|r:public.team_conversations.updated_at|authenticated|UPDATE|grantor=postgres
+NAO-EXPLICADA  default_grants|<global>|postgres|f|postgres|EXECUTE|grantor=postgres
+NAO-EXPLICADA  default_grants|row:<global>|owner=postgres|object=f
+DRIFT-CANONICO routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|PUBLIC|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|authenticated|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|authenticated|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|authenticated|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)|authenticated|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)|service_role|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)|service_role|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:revoke_auth_sessions(p_scope text, p_actor_user_id uuid, p_target_user_id uuid, p_target_session_id uuid, p_preserve_session_id uuid)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:revoke_auth_sessions(p_scope text, p_actor_user_id uuid, p_target_user_id uuid, p_target_session_id uuid, p_preserve_session_id uuid)|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)|authenticated|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:trg_revoke_sessions_on_profile_deactivate()|authenticated|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:trg_revoke_sessions_on_profile_deactivate()|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:trg_revoke_sessions_on_profile_deactivate()|service_role|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:trg_user_sessions_auth_session_guard()|authenticated|EXECUTE|grantor=postgres
+DRIFT-CANONICO routine_grants|f:trg_user_sessions_auth_session_guard()|postgres|EXECUTE|grantor=postgres
+EXPLICADA      routine_grants|f:trg_user_sessions_auth_session_guard()|service_role|EXECUTE|grantor=postgres
+EXPLICADA      relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|DELETE|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|INSERT|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|MAINTAIN|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|REFERENCES|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|SELECT|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|TRIGGER|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|TRUNCATE|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.ai_usage_outbox|postgres|UPDATE|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|DELETE|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|INSERT|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|MAINTAIN|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|REFERENCES|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|SELECT|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|TRIGGER|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|TRUNCATE|grantor=postgres
+EXPLICADA      relation_grants|r:public.ai_usage_outbox|service_role|UPDATE|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|DELETE|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|INSERT|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|MAINTAIN|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|REFERENCES|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|SELECT|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|TRIGGER|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|TRUNCATE|grantor=postgres
+NAO-EXPLICADA  relation_grants|r:public.gmail_oauth_states|postgres|UPDATE|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|DELETE|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|INSERT|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|MAINTAIN|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|REFERENCES|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|SELECT|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|TRIGGER|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|TRUNCATE|grantor=postgres
+EXPLICADA      relation_grants|r:public.gmail_oauth_states|service_role|UPDATE|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|DELETE|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|INSERT|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|MAINTAIN|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|REFERENCES|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|SELECT|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|TRIGGER|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|TRUNCATE|grantor=postgres
+DRIFT-CANONICO relation_grants|r:public.talkx_storage_purge_queue|postgres|UPDATE|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|DELETE|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|INSERT|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|MAINTAIN|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|REFERENCES|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|SELECT|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|TRIGGER|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|TRUNCATE|grantor=postgres
+EXPLICADA      relation_grants|r:public.talkx_storage_purge_queue|service_role|UPDATE|grantor=postgres
+
+total de linhas do diff: 160
+  DRIFT-CANONICO 57
+  EXPLICADA      75
+  NAO-EXPLICADA  28

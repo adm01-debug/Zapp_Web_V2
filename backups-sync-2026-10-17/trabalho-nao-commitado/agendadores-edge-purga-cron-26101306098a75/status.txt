@@ -1,0 +1,8 @@
+ M scripts/db-audit/agendadores-edge-e-purga-cron.test.sh
+ M scripts/db-audit/pg-cron-jobs-baseline.json
+ M supabase/config.toml
+ M supabase/functions/auto-close-conversations/index.test.ts
+ M supabase/functions/auto-close-conversations/index.ts
+ M supabase/migrations/20261013093000_agendadores_edge_e_purga_cron.sql
+ D supabase/migrations/20261014183000_agendar_auto_close.sql
+ D supabase/tests/agendar_auto_close_conversations.sql

@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "name": "zapp-web-supabase-export",
+  "version": "1.0.0",
+  "generatedAt": "2026-05-12T00:00:00Z",
+  "schema": "public",
+  "directory": "supabase-export/",
+  "namingConvention": "BLOCO_<NN>_<slug>.sql",
+  "idempotent": true,
+  "dataIncluded": false,
+  "baseline": {
+    "tables": 120,
+    "tablesWithRls": 120,
+    "primaryKeys": 120,
+    "foreignKeys": 169,
+    "uniqueConstraints": 46,
+    "checkConstraints": 22,
+    "indexes": 293,
+    "rlsPolicies": 362,
+    "functions": 59,
+    "triggers": 69,
+    "views": 7,
+    "enums": 4
+  },
+  "blocks": [
+    {
+      "id": 1,
+      "file": "BLOCO_01_schema_completo.sql",
+      "title": "Schema completo (consolidado)",
+      "responsibility": "Dump único contendo extensions, types, tables, constraints, indexes, FKs, functions, triggers, views e RLS policies — alternativa all-in-one.",
+      "applyOrder": null,
+      "category": "consolidated",
+      "alternativeTo": [11, 2, 12, 13, 10, 14, 8, 15],
+      "required": false
+    },
+    {
+      "id": 2,
+      "file": "BLOCO_02_types_enums_domains.sql",
+      "title": "Types, Enums e Domains",
+      "responsibility": "Cria todos os tipos customizados, enums e domains do schema public.",
+      "applyOrder": 2,
+      "category": "types",
+      "dependsOn": [11],
+      "required": true
+    },
+    {
+      "id": 3,
+      "file": "BLOCO_03_rls_policies.sql",
+      "title": "RLS Policies (v1 — depreciado)",
+      "responsibility": "Versão antiga das políticas de RLS. Substituído pelo BLOCO 14.",
+      "applyOrder": null,
+      "category": "rls",
+      "deprecated": true,
+      "supersededBy": 14,
+      "required": false
+    },
+    {
+      "id": 4,
+      "file": "BLOCO_04_functions.sql",
+      "title": "Functions (v1 — depreciado)",
+      "responsibility": "Versão antiga das funções. Substituído pelo BLOCO 10.",
+      "applyOrder": null,
+      "category": "functions",
+      "deprecated": true,
+      "supersededBy": 10,
+      "required": false
+    },
+    {
+      "id": 5,
+      "file": "BLOCO_05_triggers.sql",
+      "title": "Triggers (v1 — depreciado)",
+      "responsibility": "Versão antiga dos triggers. Substituído pelo BLOCO 15.",
+      "applyOrder": null,
+      "category": "triggers",
+      "deprecated": true,
+      "supersededBy": 15,
+      "required": false
+    },
+    {
+      "id": 6,
+      "file": "BLOCO_06_indexes.sql",
+      "title": "Indexes (standalone — incluso em 13)",
+      "responsibility": "Índices isolados. Já inclusos no BLOCO 13.",
+      "applyOrder": null,
+      "category": "indexes",
+      "supersededBy": 13,
+      "required": false
+    },
+    {
+      "id": 7,
+      "file": "BLOCO_07_foreign_keys.sql",
+      "title": "Foreign Keys (standalone — incluso em 13)",
+      "responsibility": "FKs isoladas. Já inclusas no BLOCO 13.",
+      "applyOrder": null,
+      "category": "constraints",
+      "supersededBy": 13,
+      "required": false
+    },
+    {
+      "id": 8,
+      "file": "BLOCO_08_views.sql",
+      "title": "Views",
+      "responsibility": "Cria todas as views do schema public via CREATE OR REPLACE VIEW.",
+      "applyOrder": 7,
+      "category": "views",
+      "dependsOn": [12, 13, 10],
+      "required": true
+    },
+    {
+      "id": 9,
+      "file": "BLOCO_09_rls_policies.sql",
+      "title": "RLS Policies (v2 — depreciado)",
+      "responsibility": "Versão intermediária das políticas. Substituído pelo BLOCO 14.",
+      "applyOrder": null,
+      "category": "rls",
+      "deprecated": true,
+      "supersededBy": 14,
+      "required": false
+    },
+    {
+      "id": 10,
+      "file": "BLOCO_10_functions.sql",
+      "title": "Functions (final)",
+      "responsibility": "Cria todas as funções utilitárias e de regras de negócio do schema public via CREATE OR REPLACE FUNCTION.",
+      "applyOrder": 5,
+      "category": "functions",
+      "dependsOn": [12, 13],
+      "required": true
+    },
+    {
+      "id": 11,
+      "file": "BLOCO_11_extensions.sql",
+      "title": "Database Extensions",
+      "responsibility": "Habilita extensions necessárias (pgcrypto, pg_trgm, http, etc.) via CREATE EXTENSION IF NOT EXISTS.",
+      "applyOrder": 1,
+      "category": "extensions",
+      "dependsOn": [],
+      "required": true
+    },
+    {
+      "id": 12,
+      "file": "BLOCO_12_tables_and_types.sql",
+      "title": "Tables + Types",
+      "responsibility": "Cria enums e tabelas idempotentemente (CREATE TABLE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS), incluindo defaults, NOT NULL e ENABLE ROW LEVEL SECURITY.",
+      "applyOrder": 3,
+      "category": "tables",
+      "dependsOn": [11, 2],
+      "required": true
+    },
+    {
+      "id": 13,
+      "file": "BLOCO_13_constraints_indexes.sql",
+      "title": "Constraints + Indexes + Foreign Keys",
+      "responsibility": "Aplica PKs, UNIQUEs, CHECKs, índices (B-tree/GIN) e foreign keys via DO blocks que checam pg_constraint.",
+      "applyOrder": 4,
+      "category": "constraints",
+      "dependsOn": [12],
+      "required": true
+    },
+    {
+      "id": 14,
+      "file": "BLOCO_14_rls_policies.sql",
+      "title": "RLS Policies (final)",
+      "responsibility": "Cria todas as policies de RLS via DO blocks que checam pg_policies. Substitui BLOCOs 03 e 09.",
+      "applyOrder": 6,
+      "category": "rls",
+      "dependsOn": [12, 10],
+      "required": true
+    },
+    {
+      "id": 15,
+      "file": "BLOCO_15_triggers.sql",
+      "title": "Triggers + Trigger Functions (final)",
+      "responsibility": "Cria as funções RETURNS trigger e os triggers correspondentes via DO blocks que checam pg_trigger. Substitui BLOCO 05.",
+      "applyOrder": 9,
+      "category": "triggers",
+      "dependsOn": [12, 10],
+      "required": true
+    }
+  ],
+  "auxiliaries": [
+    {
+      "file": "POST_IMPORT_CHECKLIST.sql",
+      "purpose": "Checklist SQL para rodar após importação completa.",
+      "runWhen": "post-import"
+    },
+    {
+      "file": "POST_EXPORT_CHECKLIST.sh",
+      "purpose": "Valida presença e tamanho dos 15 blocos na pasta supabase-export/.",
+      "runWhen": "post-export"
+    },
+    {
+      "file": "VALIDATE_DESTINO.sql",
+      "purpose": "Compara contagens do destino contra a baseline (PKs, FKs, RLS, indexes, policies).",
+      "runWhen": "post-import"
+    },
+    {
+      "file": "validate_destino.sh",
+      "purpose": "Wrapper shell que executa VALIDATE_DESTINO.sql contra $DESTINO_URL e retorna exit code.",
+      "runWhen": "post-import"
+    },
+    {
+      "file": "import.sh",
+      "purpose": "Runner de importação que aplica os blocos na ordem correta e roda a validação final.",
+      "runWhen": "import"
+    },
+    {
+      "file": "VALIDATE_DESTINO_JSON.sql",
+      "purpose": "Gera saída JSON estruturada com as métricas de validação.",
+      "runWhen": "post-import"
+    },
+    {
+      "file": "README.md",
+      "purpose": "Documentação do padrão de exportação (pasta única, naming, manifesto, ordem de aplicação).",
+      "runWhen": "reference"
+    }
+  ],
+  "applyOrder": [
+    "BLOCO_11_extensions.sql",
+    "BLOCO_02_types_enums_domains.sql",
+    "BLOCO_12_tables_and_types.sql",
+    "BLOCO_13_constraints_indexes.sql",
+    "BLOCO_10_functions.sql",
+    "BLOCO_14_rls_policies.sql",
+    "BLOCO_08_views.sql",
+    "BLOCO_15_triggers.sql"
+  ],
+  "validation": {
+    "preImport": "bash supabase-export/POST_EXPORT_CHECKLIST.sh",
+    "postImport": "DESTINO_URL=postgresql://... bash supabase-export/validate_destino.sh"
+  },
+  "rules": {
+    "fixedDirectory": "supabase-export/",
+    "idempotencyRequired": true,
+    "ddlOnly": true,
+    "schemaWhitelist": ["public"],
+    "schemaBlacklist": ["auth", "storage", "realtime", "vault", "supabase_functions"]
+  }
+}

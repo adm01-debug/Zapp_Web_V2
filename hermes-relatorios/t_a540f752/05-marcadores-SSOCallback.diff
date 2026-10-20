@@ -1,0 +1,17 @@
+diff --cc src/pages/SSOCallback.tsx
+index 8b23a669e9,f56f37faff..0000000000
+--- a/src/pages/SSOCallback.tsx
++++ b/src/pages/SSOCallback.tsx
+@@@ -29,9 -28,6 +29,12 @@@ function sanitizeAuthError(raw: string 
+  
+  export default function SSOCallback() {
+    const navigate = useNavigate();
+++<<<<<<< HEAD
+ +  const location = useLocation();
+ +  // Destino pedido antes do SSO (?next= ou state.from); '/' como padrao.
+ +  const destinoPosLogin = resolverDestinoPosLogin(location);
+++=======
+++>>>>>>> 8cb091ace6 (fix(auth): polimento de reset de senha, SSO e instalacao PWA)
+    const rawUrlError = getUrlError();
+    const initialError = rawUrlError ? sanitizeAuthError(rawUrlError) : null;
+    const [status, setStatus] = useState<CallbackStatus>(initialError ? 'error' : 'loading');

@@ -1,0 +1,235 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-selecao-lote-acompanha-filtro-26101312252db7/.tmp/prova-base
+
+········x···xxxxxx··········xxx·
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkMarkAsRead > marca só as mensagens NÃO lidas RECEBIDAS (sender=contact) dos contatos selecionados e recarrega
+AssertionError: expected { table: 'messages', …(3) } to match object { table: 'messages', …(3) }
+
+- Expected
++ Received
+
+@@ -3,11 +3,10 @@
+      "contact_id": [
+        "c1",
+        "c2",
+      ],
+      "is_read": false,
+-     "sender": "contact",
+    },
+    "op": "update",
+    "payload": {
+      "is_read": true,
+    },
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:282:25
+    280|
+    281|     expect(recorded).toHaveLength(1);
+    282|     expect(recorded[0]).toMatchObject({
+       |                         ^
+    283|       table: 'messages',
+    284|       op: 'update',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato) > agente: uma RPC por contato, destino só em p_to_agent_id, limpa a seleção e recarrega
+AssertionError: expected [] to deeply equal [ 'transfer_conversation', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "transfer_conversation",
+-   "transfer_conversation",
+- ]
++ []
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:353:41
+    351|     });
+    352|
+    353|     expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversatio…
+       |                                         ^
+    354|     expect(rpcCalls.map((c) => c.args)).toEqual([
+    355|       { p_contact_id: 'c1', p_to_agent_id: 'ag-2', p_to_queue_id: null…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato) > fila: manda p_to_queue_id e deixa p_to_agent_id nulo
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:373:22
+    371|     });
+    372|
+    373|     expect(rpcCalls).toHaveLength(1);
+       |                      ^
+    374|     expect(rpcCalls[0].args).toEqual({
+    375|       p_contact_id: 'c1',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato) > a mensagem opcional NÃO é persistida (p_note vai nulo)
+TypeError: Cannot read properties of undefined (reading 'args')
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:390:24
+    388|     });
+    389|
+    390|     expect(rpcCalls[0].args).toEqual({
+       |                        ^
+    391|       p_contact_id: 'c1',
+    392|       p_to_agent_id: 'ag-2',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato) > sucesso parcial: tenta os dois, avisa as contagens, mantém a seleção e rejeita
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:404:64
+    402|
+    403|     await act(async () => {
+    404|       await expect(result.current.bulkTransfer('agent', 'ag-2')).rejec…
+       |                                                                ^
+    405|         message: 'contato sem permissao',
+    406|       });
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:403:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato) > todos falham: rejeita, avisa 0 de N, mantém a seleção e não recarrega
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:427:63
+    425|
+    426|     await act(async () => {
+    427|       await expect(result.current.bulkTransfer('queue', 'q-1')).reject…
+       |                                                               ^
+    428|     });
+    429|
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:426:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato) > rejeição crua da RPC (rede): preserva o toast de erro, mantém a seleção e propaga
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:444:64
+    442|
+    443|     await act(async () => {
+    444|       await expect(result.current.bulkTransfer('agent', 'ag-2')).rejec…
+       |                                                                ^
+    445|     });
+    446|
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:443:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — a seleção acompanha o filtro visível > poda a seleção por interseção: o id que sai da lista filtrada não fica selecionado
+AssertionError: expected Set{ 'c1', 'c2' } to deeply equal Set{ 'c1' }
+
+- Expected
++ Received
+
+  Set {
+    "c1",
++   "c2",
+  }
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:663:40
+    661|     rerender({ convs: [conversation('c1')] });
+    662|
+    663|     expect(result.current.selectedIds).toEqual(new Set(['c1']));
+       |                                        ^
+    664|   });
+    665|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — a seleção acompanha o filtro visível > a ação em lote só atinge o que está visível: o contato escondido pelo filtro não vai para o banco
+AssertionError: expected { contact_id: [ 'c1', 'c2' ], …(1) } to deeply equal { contact_id: [ 'c1' ], …(2) }
+
+- Expected
++ Received
+
+  {
+    "contact_id": [
+      "c1",
++     "c2",
+    ],
+    "is_read": false,
+-   "sender": "contact",
+  }
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:680:33
+    678|
+    679|     expect(recorded).toHaveLength(1);
+    680|     expect(recorded[0].filters).toEqual({ contact_id: ['c1'], is_read:…
+       |                                 ^
+    681|     expect(mocks.toast.success).toHaveBeenCalledWith('1 conversa(s) ma…
+    682|     expect(result.current.selectedIds.size).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — a seleção acompanha o filtro visível > filtro que esvazia a lista limpa a seleção e nenhuma ação encontra alvo
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:694:45
+    692|     rerender({ convs: [] });
+    693|
+    694|     expect(result.current.selectedIds.size).toBe(0);
+       |                                             ^
+    695|     await act(async () => {
+    696|       await result.current.bulkMarkAsRead();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 21 passed | 1 expected fail (32)
+   Start at  12:41:31
+   Duration  3.29s (transform 465ms, setup 1.09s, import 254ms, tests 178ms, environment 1.49s)
+

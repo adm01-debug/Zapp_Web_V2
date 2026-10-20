@@ -1,0 +1,5 @@
+MM src/components/calls/ActiveCallPanel.tsx
+M  src/components/calls/CallKpiCard.tsx
+MM src/components/calls/__tests__/ActiveCallPanel.test.tsx
+M  src/components/calls/__tests__/telefoniaContraste.test.tsx
+?? src/components/calls/__tests__/CallKpiCard.test.tsx

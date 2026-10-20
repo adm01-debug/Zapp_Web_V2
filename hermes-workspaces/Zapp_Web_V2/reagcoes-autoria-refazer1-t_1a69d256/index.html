@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ZAPP WEB</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Preconnect to Google Fonts for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload critical fonts for faster LCP.
+         Faixas variaveis (wght@min..max), nao pesos estaticos: o CSS pede
+         450/550/650/800/900 no dark (src/styles/base.css) que nenhum peso
+         estatico cobre — o navegador tinha que sintetizar. Faixa continua
+         cobre qualquer peso pedido dentro do eixo da fonte (Jakarta vai ate
+         800 — nao existe corte 900 publicado; Outfit cobre 100-900 inteiro).
+         JetBrains Mono entra pela mesma URL: font-mono/.text-code citavam
+         essa familia sem nenhum @font-face carregando ela. -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('theme');
+          var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', isDark);
+          
+          var skin = localStorage.getItem('theme-custom-colors');
+          if (skin) {
+            var c = JSON.parse(skin), root = document.documentElement;
+            if (c.v === 6) {
+              var mode = isDark ? 'dark' : 'light';
+              // Alto contraste: as cores vêm da classe `.high-contrast` (accessibility.css).
+              // Escrever o cache inline aqui venceria a classe e anularia o modo (mesmo
+              // cuidado do applyThemePreset); a classe entra já no boot para não piscar.
+              var altoContraste = localStorage.getItem('highContrast') === 'true';
+              if (altoContraste) root.classList.add('high-contrast');
+              if (!altoContraste && c.cssVarsCache && c.cacheMode === mode) {
+                for (var k in c.cssVarsCache) root.style.setProperty('--' + k, c.cssVarsCache[k]);
+              }
+              if (typeof c.borderRadius === 'number' && isFinite(c.borderRadius)) {
+                var r = Math.max(0, Math.min(20, c.borderRadius));
+                root.style.setProperty('--radius', (r / 16) + 'rem');
+              }
+              if (c.preset) root.setAttribute('data-preset-id', c.preset);
+            } else if (c.v !== 5) {
+              localStorage.removeItem('theme-custom-colors'); /* v5 fica: ThemeInitializer migra */
+            }
+          }
+        } catch(e) {
+          console.error('[BOOT] Theme init failed:', e);
+        }
+      })();
+    </script>
+    <script>
+      try { sessionStorage.removeItem('zapp-preview-boot-retry-done'); } catch(e) {}
+    </script>
+    <script>
+      // Boot diagnostic – captures any error before React mounts and surfaces
+      // a visible reason if mount doesn't happen within the timeout.
+      (function() {
+        // O default de produção é 8s. O override (window.__BOOT_DEADLINE_MS) existe
+        // para o CI/spec visual: com o dev server vite frio e vários workers em
+        // paralelo, o React 19 pode levar >8s para montar e o watchdog destruiria
+        // o app (#root zerado) — falha flaky "Falha ao inicializar o app".
+        var deadline = Date.now() + (window.__BOOT_DEADLINE_MS || 8000);
+        var interval = setInterval(function() {
+          if (document.getElementById('root') && document.getElementById('root').firstChild) {
+            clearInterval(interval);
+            return;
+          }
+          if (Date.now() > deadline) {
+            clearInterval(interval);
+            var errs = (window.__bootErrors || []).map(function(e) { return e; }).join('\n');
+            var root = document.getElementById('root');
+            if (!root) return;
+            root.innerHTML = ''
+            + '<div style="min-height:100vh;background:#030712;color:#e5e7eb;font-family:system-ui,sans-serif;padding:24px;overflow:auto;">'
+            + '<h1 style="color:#f87171;font-size:20px;margin:0 0 8px;">&#9888;&#65039; Falha ao inicializar o app</h1>'
+            + '<p style="color:#9ca3af;font-size:13px;margin:0 0 16px;">O React n\u00e3o montou em 8s. Detalhes abaixo:</p>'
+            + '<div style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;">'
+            + (errs || '(sem erros capturados — verifique o console)')
+            + '</div>'
+            + '<button onclick="location.reload()" style="margin-top:16px;background:#2563eb;color:#fff;border:0;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;">Recarregar</button>'
+            + '</div>';
+          }
+        }, 500);
+
+        window.__bootErrors = window.__bootErrors || [];
+        window.onerror = function(msg, src, line, col, err) {
+          window.__bootErrors.push(
+            '[JS] ' + msg + (src ? ' @ ' + src + ':' + line : '')
+          );
+        };
+        window.addEventListener('unhandledrejection', function(ev) {
+          var reason = ev.reason;
+          window.__bootErrors.push(
+            '[Promise] ' + (reason && reason.stack ? reason.stack : String(reason))
+          );
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,2 @@
+ M supabase/migrations/20261010060000_talkx_monitor_panel.sql
+ M supabase/migrations/20261010085230_talkx_monitor_panel_engine_health.sql

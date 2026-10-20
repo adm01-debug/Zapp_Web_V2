@@ -1,0 +1,159 @@
+[
+  {
+    "number": 1862,
+    "status": "ACTIVE_VERIFIED_LIVE_DRIFT",
+    "priority": "P1",
+    "finding": "No log do main às21:42UTC03/10:779migrations no repo,781no ledger, extras20261003182707 e20261003192707 (fixtures de mídia); types/catalog/manifest/grants desatualizados;73edges declaradas/73diretórios.",
+    "next": "Reconciliar ledger e artefatos com evidência imutável. Não confundir sync#1863 com resolução das duas fixtures.",
+    "evidence": [
+      "job-111299332677-logs.raw.json",
+      "main-check-runs.raw.json"
+    ]
+  },
+  {
+    "number": 1854,
+    "status": "ACTIVE_OBSERVABILITY_GAP_NOT_CONFIRMED_SETTINGS_REGRESSION",
+    "priority": "P1",
+    "finding": "Comentário21:13UTC:7merge settings lidas como null; branch protection e actions403; tentativa restore allow_auto_merge403. Falta leitura suficiente para afirmar divergência real.",
+    "next": "Separar ausência/erro de API de valor booleano falso; medir permissões autorizadas e impedir correções cegas por null.",
+    "evidence": [
+      "issue-1854-comments.raw.json"
+    ]
+  },
+  {
+    "number": 1810,
+    "status": "CURRENT_BRANCH_HYGIENE_REPORT_REQUIRES_FILTERING",
+    "priority": "P2",
+    "finding": "Relatório03/10 lista origin como candidato junto a três refs. origin representa potencial ref simbólica/remoto e não é automaticamente branch deletável.",
+    "next": "Usar inventário branch SHA+PR+conteúdo do agenteGit; excluir refs simbólicas e branches reutilizadas de qualquer poda.",
+    "evidence": [
+      "issues.normalized.json",
+      "../git/"
+    ]
+  },
+  {
+    "number": 1454,
+    "status": "HISTORICAL_FAILURE_SUPERSEDED_BY_CURRENT_SYNC_PR",
+    "priority": "P2",
+    "finding": "Última falha registrada02/10; atual main tem dois jobs types-sync success, gerou#1863 baseada no main2e7cf81. Falha de propor sync não equivale ao bloqueio dos checks da PR.",
+    "next": "Reconciliar issue antiga após confirmar objetivo do gate e execução mais recente; manter problemas de CI/ACL/ledger em tarefas específicas.",
+    "evidence": [
+      "issue-1454-comments.raw.json",
+      "main-check-runs.raw.json",
+      "pr-1863.raw.json"
+    ]
+  },
+  {
+    "number": 1267,
+    "status": "FIX_MERGED_SOURCE_CONFIRMED_LIVE_UNVERIFIED",
+    "priority": "P1",
+    "finding": "#1314 merged; últimas definições dos2guards em20260930300000_multiplix_guards_fail_closed.sql levantam42501 quando caller authenticated não tem auth.role; nenhuma redefinição posterior achada. Harness cobre erro.",
+    "next": "Não reimplementar correção existente; validar aplicação e comportamento vivo autorizado antes de encerrar segurança.",
+    "evidence": [
+      "pulls.normalized.json",
+      "../../Zapp_Web_V2/supabase/migrations/20260930300000_multiplix_guards_fail_closed.sql",
+      "../../Zapp_Web_V2/scripts/db-audit/multiplix-rls.test.sh"
+    ]
+  },
+  {
+    "number": 1266,
+    "status": "FIX_MERGED_SOURCE_CONFIRMED_LIVE_UNVERIFIED",
+    "priority": "P1",
+    "finding": "#1313 merged (migration20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql); código e harness corrigem ambiguidade e recursão; snapshot posterior registra hashes. Issue ainda aberta, sem comentários.",
+    "next": "Validar replay/aplicação e SELECT autenticado atual; não contar correção como nova pendência de implementação.",
+    "evidence": [
+      "pulls.normalized.json",
+      "issues.normalized.json",
+      "../modules/"
+    ]
+  },
+  {
+    "number": 1265,
+    "status": "FIX_MERGED_SOURCE_CONFIRMED_LIVE_UNVERIFIED",
+    "priority": "P1",
+    "finding": "#1309 merged (migration20260930260000_team_reaction_membership_guard.sql), reforça associação de conversa em RPCs/policies reactions e receipts. Código+harness no baseline, issue ainda aberta.",
+    "next": "Validar caminho RPC e INSERT direto em ambiente autorizado; confirmar isolamento e estado vivo antes de encerrar.",
+    "evidence": [
+      "pulls.normalized.json",
+      "issues.normalized.json",
+      "../modules/"
+    ]
+  },
+  {
+    "number": 382,
+    "status": "HISTORICAL_PLAN_RECONCILIATION",
+    "priority": "P2",
+    "finding": "Issue pede status E01-E100 em plano antigo; projeto já tem linhagens posteriores e#1713 automatiza STATUS doV4. A existência do placarV4 não edita retroativamente o documento antigo.",
+    "next": "Mapear linhagem e status histórico, arquivar/substituir explicitamente; não duplicarE01-E100 como novas100tarefas.",
+    "evidence": [
+      "issues.normalized.json",
+      "pr-1713.raw.json"
+    ]
+  },
+  {
+    "number": 380,
+    "status": "PARTIALLY_DOCUMENTED_EXTERNAL_OPERATION_UNVERIFIED",
+    "priority": "P2",
+    "finding": "Existem docs/runbooks/secret-rotation.md e cron-secret-rotation.md, mas busca em runbooks/ops não localizou runbook específicoevolution/restart; agendamento e rotação efetiva não são comprovados por código.",
+    "next": "Verificar cadência/execução com responsável; completar runbook exato daVPS/containers sem executar rotação por esta auditoria.",
+    "evidence": [
+      "issues.normalized.json",
+      "../../Zapp_Web_V2/docs/runbooks/secret-rotation.md"
+    ]
+  },
+  {
+    "number": 378,
+    "status": "HISTORICAL_REMOTE_CLEANUP_PARTIAL_LOCAL_UNKNOWN",
+    "priority": "P2",
+    "finding": "Comentários26/09 declaram85branches remotas removidas e apenasmain+automation/types-sync naquele instante; original diz auto-delete desligado mas comentários corrigem paratrue. Inventário atualGit é diferente; locais/stashes/pasta irmã não são observáveis neste clone.",
+    "next": "Atualizar relato temporal, reaplicar análise porSHA e preservar trabalho exclusivo; manter máquina original como desconhecida.",
+    "evidence": [
+      "issue-378-comments.raw.json",
+      "../git/"
+    ]
+  },
+  {
+    "number": 377,
+    "status": "AUDIT_PARTIALLY_AUTOMATED_CURRENT_DRIFT",
+    "priority": "P1",
+    "finding": "Checks atuais medem drift/ledger/paridade; main viva21:42falha com779/781. Auditorias posteriores não tornam todaRLS de setembro automaticamente conforme; documentoRLS abril merece revisão histórica.",
+    "next": "Consolidar evidência por contrato e tabela; corrigir drift sob plano de execução autorizado e avaliar documentação obsoleta.",
+    "evidence": [
+      "job-111299332677-logs.raw.json",
+      "issues.normalized.json"
+    ]
+  },
+  {
+    "number": 376,
+    "status": "PARTIALLY_IMPLEMENTED_COVERAGE_SCOPE",
+    "priority": "P2",
+    "finding": "vitest.config.ts já inclui location-picker e ContactForm além de lib/services, com piso de mapa85%lines/75%branches. Hooks e maioria dos componentes continuam fora do include.",
+    "next": "Atualizar escopo residual por módulo e medir antes de ampliar. Não repetir afimação de que sólib/services entram.",
+    "evidence": [
+      "../../Zapp_Web_V2/vitest.config.ts"
+    ]
+  },
+  {
+    "number": 375,
+    "status": "PARTIALLY_REFACTORED_GOD_FILES_PERSIST",
+    "priority": "P2",
+    "finding": "talkxShared.tsx antigo está ausente; TalkXCampaignRunning.tsx tem840linhas e useCampaignEditor.ts932 no baseline. ESLint não contém max-lines. Requisito 'antes da fase2' é histórico.",
+    "next": "Mapear responsabilidades atuais e testes já existentes, separar refactors concretos de etapa antiga.",
+    "evidence": [
+      "../../Zapp_Web_V2/src/components/talkx/TalkXCampaignRunning.tsx",
+      "../../Zapp_Web_V2/src/components/talkx/useCampaignEditor.ts",
+      "../../Zapp_Web_V2/eslint.config.js"
+    ]
+  },
+  {
+    "number": 374,
+    "status": "PARTIAL_REDUCTION_WITH_EXISTING_LINT_RATCHET",
+    "priority": "P2",
+    "finding": "Regex ':any|as any' com whitespace conta68ocorrências no srcTS/TSX; ESLintbaseline contém66issues no-explicit-any e configextendsrecommended. Contagem histórica253 e afirmação 'semratchet' não refletem esse baseline. Métodosregex/AST/baseline não são intercambiáveis.",
+    "next": "Reconciliar critério original com ratchet já existente; medir execução fresca antes de afirmar total de diagnósticos atuais; residualmeta<50.",
+    "evidence": [
+      "../../Zapp_Web_V2/scripts/ci/eslint-baseline.json",
+      "../../Zapp_Web_V2/eslint.config.js"
+    ]
+  }
+]

@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "files": {
+    "src/components/layout/Sidebar.tsx": {
+      "assessment": "Corpo completo: filtra navegação por NavigationService/roles/permissões, filtra favoritos por canAccess e retira duplicados da primária; scroll único, modos recolhido/expandido e controles do rodapé. Busca dispara open-global-search da paleta antiga, fronteira de GOV001 do root, sem novo ID. Notificações/tema não recebem data-tour neste JSX.",
+      "consumers": []
+    },
+    "src/components/layout/SidebarNavItem.tsx": {
+      "assessment": "Ref/ícone/active/badge, prefetch e dois modos completos. data-tour vem do id da navegação. Favorito chama stopPropagation; botão aninhado no botão principal em modo expandido documentado como estrutura a validar por browser/AT, sem inferir duplo clique ou quebrar navegação automaticamente. Badge texto genérico não certifica não lidas de toda entidade.",
+      "consumers": []
+    },
+    "src/components/layout/SidebarNavGroup.tsx": {
+      "assessment": "Leitura/escrita local de grupos, default/persistência/active override, trigger, AnimatePresence e mapa de itens completos. Armazenamento indisponível é capturado; hasActiveItem mantém grupo aberto deliberadamente. Payload JSON fora do contrato é limite de robustez local, não incidente alegado.",
+      "consumers": []
+    },
+    "src/components/layout/SidebarBackButton.tsx": {
+      "assessment": "Guarda canGoBack+callback e placeholder do modo recolhido completos; preserva altura e foco/label no botão presente. onGoBack é do dono do histórico, não histórico implementado aqui.",
+      "consumers": []
+    },
+    "src/components/layout/SidebarUserPill.tsx": {
+      "assessment": "Avatar/nome/role, estado de presença e popover completos; passa setMyPresenceStatus ao menu e fecha após ações. Presença é valor do hook, não heartbeat comprovado. API031 do providers continua dono do contrato de presença.",
+      "consumers": []
+    },
+    "src/components/layout/PageHeader.tsx": {
+      "assessment": "Todos ramos de título/ações/breadcrumb/back completos. hidePageBreadcrumbs contextual é decisão preservada; Início explícito evita duplicar rótulo. Callbacks interceptam href quando fornecidos; retorno sem callback usa navigate(-1). Não reintroduzir breadcrumb desktop por diagnóstico antigo.",
+      "consumers": []
+    },
+    "src/components/layout/PageTemplate.tsx": {
+      "assessment": "Props e ramos header/actions/filters/content, padding/fullBleed/constrained e variants completos. Consumidor real SettingsView; CSS/layout visual não foi medido. Fonte não tem scroller próprio apesar de comentário do ViewContainer; rastreamento dirigido deve avaliar alcance, não prometer captura visual.",
+      "consumers": []
+    },
+    "src/components/layout/ViewContainer.tsx": {
+      "assessment": "Reset de scroll por viewId, ramos fullScreen/ownScroll e wrapper scroll compartilhado lidos. ownScroll=settings conforme ViewRouter; contexto ref apenas no ramo padrão. Não amplia LT-LAYOUT001 antigo nem julga viewport sem medição.",
+      "consumers": []
+    },
+    "src/components/layout/ViewLoadingFallback.tsx": {
+      "assessment": "Skeletons, role status/aria-busy e padding opcional completos. Loading é estado de apresentação, não sucesso de query.",
+      "consumers": []
+    },
+    "src/components/layout/A11yBoilerplate.tsx": {
+      "assessment": "Skip-link e live regions polite/assertive completos; não é focus trap de modal e não altera tab-order global.",
+      "consumers": []
+    },
+    "src/components/layout/MediaVolumeToggle.tsx": {
+      "assessment": "Wrapper inteiro encaminha variant sidebar ao controle de mídia, preservando diferença em relação aos alertas; operações do MediaVolumeControl pertencem à revisão Inbox.",
+      "consumers": []
+    },
+    "src/components/layout/RoleBadge.tsx": {
+      "assessment": "Mapas de labels/variants completos e papel vindo do consumidor. Badge não concede autorização e não compara precedência de papéis.",
+      "consumers": []
+    },
+    "src/components/layout/VoiceCopilotFAB.tsx": {
+      "assessment": "Botão flutuante+tooltip completos; onClick vem do consumidor, nenhum acesso ao microfone/rede acontece neste wrapper.",
+      "consumers": []
+    },
+    "src/contexts/LayoutContext.tsx": {
+      "assessment": "Contexto/provider/hook completos, default hidePageBreadcrumbs false e estado Zen opcional. Ocultar trilha no desktop é decisão preservada do AppShell.",
+      "consumers": []
+    },
+    "src/contexts/LayoutScrollContext.tsx": {
+      "assessment": "Contexto/ref/hook completos; default current null, provider do ViewContainer no ramo scroll. Ausência do contexto nos ramos sem scroller é deliberada.",
+      "consumers": []
+    },
+    "src/components/transitions/transitionVariants.ts": {
+      "assessment": "Todos ramos none/fade/slide/zoom/flip/parallax completos; duração limitada0.05–0.4 e defaults. none ainda faz fade80ms, reduz movimento geométrico; não equivale a provar que toda animação foi desativada.",
+      "consumers": []
+    },
+    "src/components/transitions/transitionConfig.ts": {
+      "assessment": "Lookup por prefixo mais longo e store zapp:reduce-motion completos; guards de Storage preservados. Chave/formato distintos do controle de acessibilidade ativo, rastreados no consumidor.",
+      "consumers": []
+    },
+    "src/components/transitions/useTransitionPreferences.ts": {
+      "assessment": "Estado local, leitura inicial, media query/change cleanup e setter persistente completos. reducedMotion = sistema OU chave própria; não consome contexto HighContrast nem classe reduced-motion. Divergência de preferência confirmada, sem render medido.",
+      "consumers": []
+    },
+    "src/components/transitions/RouteTransition.tsx": {
+      "assessment": "Config memo, variant reduzida, AnimatePresence por pathname e filho completos. Chave pathname é da rota, não troca de view interna no Index. Contrato de preferência própria rastreado; não reimplementar o motor Framer em prova.",
+      "consumers": []
+    },
+    "src/components/transitions/PageTransitionProvider.tsx": {
+      "assessment": "Wrapper integral delega RouteTransition e declara respeito à preferência do usuário; consumidor AppRoutes confirmado por faixa.",
+      "consumers": []
+    },
+    "src/components/onboarding/OnboardingTour.tsx": {
+      "assessment": "Contexto, guarda de uso, start/end/next/prev/goTo e onComplete completos. End é usado tanto no término quanto no fechamento/skip; não promete tour inteiramente assistido. Overlay sempre montado no Provider.",
+      "consumers": []
+    },
+    "src/components/onboarding/TourOverlay.tsx": {
+      "assessment": "Posicionamento, retry10, skip de alvo ausente/zerado, listeners+cleanup, SVG/callout/controles completos. Falta reset de targetRect durante alvo faltante; mede antes de scrollIntoView e só escuta resize (limite geométrico a validar). Ausência de alvos padrão rastreada; não inferido duplo Enter nativo sem DOM.",
+      "consumers": []
+    },
+    "src/components/onboarding/WelcomeModal.tsx": {
+      "assessment": "Todo modal lido: guarda open, listener Escape e cleanup, conteúdo/ações e aria-modal. Não põe foco inicial, trap de Tab, restauração ou inert no fundo; fluxo Index mantém AppShell irmão montado. Tests só labels/landmark/Escape não provam ciclo de foco.",
+      "consumers": []
+    },
+    "src/components/onboarding/OnboardingChecklist.tsx": {
+      "assessment": "Timers, checkAllSteps sequencial, dismiss por usuário, progress e dois layouts completos. Efeito[user] remonta ao voltar ao dashboard; hipótese stale por navegar a Settings foi rejeitada após consumer. Exibe tema marcado quando checkCondition recebe data ausente; fechamento/progresso não escreve configuração.",
+      "consumers": []
+    },
+    "src/components/onboarding/checklistSteps.ts": {
+      "assessment": "Seis checks integralmente lidos e comparados aos rótulos. Queries SDK ignoram error; tema compara undefined contra null/system e devolve true, ao contrário do hook agregado que guarda settings. Perfil usa nome (foto descrita mas não exigida pelo check), conexão depende visibilidade/RLS; não inventada obrigação global nova.",
+      "consumers": []
+    },
+    "src/components/layout/ProfileMenuContent.tsx": {
+      "assessment": "Conteúdo completo: status chama callback opcional+fecha, settings navega e logout opcional. Nenhum SDK ou persistência própria; papel/heartbeat não derivado no menu.",
+      "consumers": []
+    },
+    "src/components/layout/sidebarNavConfig.ts": {
+      "assessment": "Exports e aliases inteiros, derivados de NavigationService. Ordem dos seis grupos é pressuposto atual; não modifica dados.",
+      "consumers": []
+    },
+    "src/components/transitions/index.ts": {
+      "assessment": "Reexports integrais; não instala handlers nem publica setter de preferência por conta própria.",
+      "consumers": []
+    },
+    "src/components/onboarding/defaultTourSteps.ts": {
+      "assessment": "Seis passos/seletores completos. notifications/theme não correspondem a produtores data-tour atuais; parte do contrato atual do tour, não apenas formato CSS.",
+      "consumers": []
+    },
+    "src/pages/Index.tsx": {
+      "assessment": "Corpo integral lido como suporte: auth guard, navegação, checklist habilitado só dashboard, AppShell persistente mas card condicional, Welcome e TourProvider. Antiga CommandPalette/Gmail/audit são fronteiras do root; não duplicadas.",
+      "consumers": []
+    },
+    "src/hooks/ui/useOnboardingChecklist.ts": {
+      "assessment": "Hook completo comparado ao card: guarda if(settings) antes de theme, enabled muda ao dashboard, estado/dismiss/reset e queries. Não duplica achado de scope global sem RLS; ausência de dados e freshness devem ser explicitadas.",
+      "consumers": []
+    },
+    "src/providers/AppProviders.tsx": {
+      "assessment": "Corpo completo: ErrorBoundary/retry3 e fallbacks, Query/Auth/HighContrast/toast/tooltip/ThemeSync e providers. Não existe gestão global de foco para Welcome. Limpar Cache chama localStorage.clear, observado sem execução; classificar recuperação depende do consumidor de ErrorBoundary.",
+      "consumers": []
+    },
+    "src/components/theme/HighContrastToggle.tsx": {
+      "assessment": "Corpo completo298: preferências de contraste e sistema, reaplicação de preset, multiplicador, reducedMotion/classe+Storage, largeText e diálogo de configurações. UI reduz movimento escreve reducedMotion=true, rota lê outra chave. Storage getters/setters não guardados no provider; não testado browser privado. Esta leitura encerra saldo298 que root pediu depois.",
+      "consumers": []
+    },
+    "src/components/onboarding/__tests__/WelcomeModal.a11y.test.tsx": {
+      "assessment": "Teste inteiro lido, não executado: verifica um dialog, aria-modal+label, axe region e fechado. Não exercita foco inicial/Tab/inert/restauração; manter a prova positiva de landmark.",
+      "consumers": []
+    },
+    "src/components/onboarding/__tests__/OnboardingTour.test.tsx": {
+      "assessment": "Teste inteiro310 lido, não executado: estado/transições do Provider, formato de seletores, callback de ações e Escape/aria do Welcome. querySelector não lançar não prova alvo existente; não há tour real contra Sidebar nem scroll/focus fixture.",
+      "consumers": []
+    },
+    "src/components/layout/AppShell.tsx": {
+      "assessment": "Suporte dirigido: Sidebar fora de Zen/mobile, main focusable, card só dashboard e ViewRouter. Root é dono da leitura integral.",
+      "reviewed_ranges": [
+        [
+          110,
+          163
+        ]
+      ],
+      "consumers": []
+    },
+    "src/pages/ViewRouter.tsx": {
+      "assessment": "Suporte dirigido: metadata de layouts/ownScroll=settings e ViewContainer; view interna tem AnimatePresence/OS reduced motion, não usa a preferência do HighContrast.",
+      "reviewed_ranges": [
+        [
+          1,
+          47
+        ],
+        [
+          88,
+          124
+        ],
+        [
+          150,
+          183
+        ]
+      ],
+      "consumers": []
+    },
+    "src/routes/AppRoutes.tsx": {
+      "assessment": "Montagem do PageTransitionProvider ao redor de rotas, incluindo /queues/rotas de auth nos mapas; acesso depende de ProtectedRoute onde aplicável.",
+      "reviewed_ranges": [
+        [
+          40,
+          119
+        ]
+      ],
+      "consumers": []
+    },
+    "src/services/navigation.service.ts": {
+      "assessment": "Getters completos de navegação primária/grupos/avançado conferidos; seus IDs não incluem notifications ou theme singular. Restante da autorização canAccess não lido nesta ampliação e pertence ao root.",
+      "reviewed_ranges": [
+        [
+          1,
+          160
+        ]
+      ],
+      "consumers": []
+    },
+    "src/styles/accessibility.css": {
+      "assessment": "Regra reduced-motion reduz CSS animation/transition durations e scroll behavior; não é consumo da flag no hook de transição. Não se relata duração observada de Framer.",
+      "reviewed_ranges": [
+        [
+          50,
+          76
+        ]
+      ],
+      "consumers": []
+    },
+    "src/index.css": {
+      "assessment": "Regra nativa de View Transitions tem media query do sistema. Não vincula o toggle interno nem corrige preferência do hook por si só.",
+      "reviewed_ranges": [
+        [
+          35,
+          56
+        ]
+      ],
+      "consumers": []
+    },
+    "src/components/settings/AppearanceSettings.tsx": {
+      "assessment": "Controle real de tema oferece dark/light/system e chama updateSettings; campos adjacentes de perfil e densidade. Não certifica toda persistência por trecho.",
+      "reviewed_ranges": [
+        [
+          1,
+          86
+        ]
+      ],
+      "consumers": []
+    },
+    "src/hooks/system/useUserSettings.ts": {
+      "assessment": "Persistência dirigida inclui theme no upsert e valida error. Confirma que SDK data ausente não é prova de tema selecionado; fonte não executada.",
+      "reviewed_ranges": [
+        [
+          151,
+          202
+        ]
+      ],
+      "consumers": []
+    },
+    "src/components/mobile/MobileDrawerMenu.tsx": {
+      "assessment": "Leitura integral por extensão do contrato modal: navegação e recentes filtram canAccessView; busca local funciona. Wrapper motion declara dialog/aria-modal, fecha por backdrop, botão e drag; não implementa foco inicial, contenção, retorno, inert ou Escape. Storage de recentes e interação foram lidos, sem browser ou mutação. Root mantém PLAT010/011 nos estados de busca/notificações; não recontados.",
+      "consumers": [
+        "src/pages/Index.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          320
+        ]
+      ]
+    },
+    "src/components/mobile/MobileShell.tsx": {
+      "assessment": "Leitura integral como consumidor do drawer: controla isOpen por Header/BottomNavigation e onClose; não oferece gerenciamento de foco ou Escape ao drawer. Busca e notificações locais são achados PLAT010/011 do root e ficam fora desta contagem.",
+      "consumers": [
+        "src/pages/Index.tsx"
+      ],
+      "reviewed_ranges": [
+        [
+          1,
+          109
+        ]
+      ]
+    },
+    "src/components/settings/SettingsView.tsx": {
+      "assessment": "Suporte dirigido ao PageTemplate: header/ações e conteúdo da aba de aparência. Possível owner de scroll não promovido: comportamento CSS overflow-y depende do DOM e não foi medido.",
+      "reviewed_ranges": [
+        [
+          40,
+          75
+        ],
+        [
+          211,
+          236
+        ]
+      ],
+      "consumers": []
+    },
+    "src/hooks/ui/useTheme.ts": {
+      "assessment": "Suporte dirigido à preferência visual de tema: sincroniza estado/store/localStorage theme e classes. Isso não transforma data ausente do SDK em confirmação de tema persistido; restante do hook não foi integralmente lido neste lote.",
+      "reviewed_ranges": [
+        [
+          1,
+          185
+        ]
+      ],
+      "consumers": [
+        "src/components/layout/Sidebar.tsx"
+      ]
+    }
+  },
+  "candidate_notes": [
+    "REFRESH_CARD_REJECTED: card desmonta fora do dashboard e remonta ao voltar.",
+    "R2-INF-036–039 delimitam quatro mecanismos; só 036–038 têm três casos offline. Modal 039 inclui WelcomeModal e MobileDrawerMenu como dois loci, com contrato de foco analisado estaticamente."
+  ]
+}

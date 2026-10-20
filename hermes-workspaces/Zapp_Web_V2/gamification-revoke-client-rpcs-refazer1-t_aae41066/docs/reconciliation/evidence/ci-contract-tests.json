@@ -1,0 +1,35 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "scripts/ci/actions-kpi.unit.mjs",
+    "scripts/ci/workflow-contracts.unit.mjs",
+    "scripts/ci/verify-ledger-statements.unit.mjs",
+    "scripts/ci/dry-run-plan.unit.mjs",
+    "scripts/ci/redigir-relatorio.unit.mjs",
+    "scripts/ci/check-quarantine.unit.mjs",
+    "scripts/ci/issue-templates.unit.mjs",
+    "scripts/ci/check-pr-workflow-secrets.unit.mjs",
+    "scripts/ci/github-settings-guard.unit.mjs",
+    "scripts/ci/check-workflow-pins.unit.mjs",
+    "scripts/edge-deploy/secrets-scope.unit.mjs",
+    "scripts/edge-deploy/redigir-log.unit.mjs",
+    "scripts/edge-deploy/deploy-plan.unit.mjs",
+    "scripts/edge-deploy/deployment-record.unit.mjs",
+    "scripts/edge-deploy/stable-inventory.unit.mjs"
+  ],
+  "exit_code": 0,
+  "summary": [
+    "✔ nunca emite conteudo de resposta da API no log de progresso (0.755589ms)",
+    "✔ E55: exaustao entrega lastReason com a ultima causa observada (1.820637ms)",
+    "ℹ tests 150",
+    "ℹ suites 3",
+    "ℹ pass 150",
+    "ℹ fail 0",
+    "ℹ cancelled 0",
+    "ℹ skipped 0",
+    "ℹ todo 0",
+    "ℹ duration_ms 463.532698"
+  ],
+  "stderr": ""
+}

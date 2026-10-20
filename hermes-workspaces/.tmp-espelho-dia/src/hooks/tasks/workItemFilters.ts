@@ -1,0 +1,104 @@
+import type { Priority } from './workItem.types';
+
+/**
+ * Etapa 45: estado da barra de filtros do módulo de Tarefas.
+ * Etapa 024: recorte por prazo, ao lado dos filtros que já existiam.
+ *
+ * Vive fora do componente de propósito: o parse/serialize da URL e as regras de
+ * "tem filtro ativo" são puros e testáveis sem React. O nome dos parâmetros é o
+ * do plano (`q`, `prio`, `contact`, `alarm`, `due`); só o `done` fica
+ * invertido — ver `searchWithFilters`.
+ */
+
+/** Recorte por prazo (etapa 024/037). `all` = sem recorte. */
+export type DueFilter = 'all' | 'overdue' | 'today' | 'week' | 'none';
+
+export interface TasksFilters {
+  q: string;
+  prio: Priority | 'all';
+  /** id do contato (o filtro casa com `item.contact.id`). */
+  contact: string | null;
+  /** só o que tem alarme marcado (`remind_at`). */
+  alarm: boolean;
+  /** mostrar as concluídas — o padrão do módulo é mostrar (etapas 48 e 51). */
+  done: boolean;
+  /** Etapa 024: recorte por prazo. Ausente é lido como `all`. */
+  due?: DueFilter;
+}
+
+export const DEFAULT_FILTERS: TasksFilters = {
+  q: '',
+  prio: 'all',
+  contact: null,
+  alarm: false,
+  done: true,
+  due: 'all',
+};
+
+/** Um filtro está ativo quando alguma coisa sai do padrão do módulo. */
+export function isFilterActive(f: TasksFilters): boolean {
+  return (
+    f.q.trim() !== '' ||
+    f.prio !== 'all' ||
+    f.contact !== null ||
+    f.alarm ||
+    !f.done ||
+    (f.due ?? 'all') !== 'all'
+  );
+}
+
+/** Lê os filtros da query string, ignorando qualquer parâmetro desconhecido.
+ * SEC-FRONTEND-05: o texto livre da busca (`q`, telefone/nome) NUNCA é lido da
+ * URL — recarregar a página ou abrir um link antigo não restaura a busca.
+ * `searchWithFilters` já remove `q` herdado ao reescrever, então ele também
+ * some da barra de endereço. */
+export function filtersFromSearch(search: string): TasksFilters {
+  const params = new URLSearchParams(search);
+  const prio = params.get('prio');
+  const contact = params.get('contact');
+  const due = params.get('due');
+
+  return {
+    q: '',
+    prio: prioridadesValidas.includes(prio as Priority) ? (prio as Priority) : 'all',
+    contact: contact && contact !== '' ? contact : null,
+    alarm: params.get('alarm') === '1',
+    // `done` é `true` por padrão: só a exceção (esconder) precisa viajar na URL.
+    done: params.get('done') !== '0',
+    // Um valor fora da lista cai no padrão (`all`), como a prioridade.
+    due: prazosValidos.includes(due as DueFilter) ? (due as DueFilter) : 'all',
+  };
+}
+
+const prioridadesValidas: Array<Priority | 'all'> = ['all', 'low', 'medium', 'high', 'urgent'];
+
+const prazosValidos: DueFilter[] = ['all', 'overdue', 'today', 'week', 'none'];
+
+/**
+ * Devolve a query string com os filtros, preservando o resto (o `view` da rota,
+ * por exemplo). Só escreve o que difere do padrão, para o "Limpar" esvaziar de
+ * verdade a URL.
+ *
+ * `done`: o plano lista `done=1`; como mostrar concluídas já é o padrão do
+ * módulo, o que vale escrever é a exceção (`done=0`) — senão a URL nasceria
+ * "suja" e o "Limpar" nunca apareceria.
+ *
+ * `due`: `all` é o padrão, então só o valor escolhido é escrito.
+ */
+export function searchWithFilters(search: string, f: TasksFilters): string {
+  const params = new URLSearchParams(search);
+
+  // O texto da busca nunca viaja na URL, e um `q` herdado (link antigo ou
+  // favorito) precisa ser removido ao reescrever os filtros — senão o texto
+  // continuaria na barra de endereço.
+  params.delete('q');
+  if (f.prio !== 'all') params.set('prio', f.prio); else params.delete('prio');
+  if (f.contact) params.set('contact', f.contact); else params.delete('contact');
+  if (f.alarm) params.set('alarm', '1'); else params.delete('alarm');
+  if (f.done) params.delete('done'); else params.set('done', '0');
+  const due = f.due ?? 'all';
+  if (due !== 'all') params.set('due', due); else params.delete('due');
+
+  const qs = params.toString();
+  return qs === '' ? '' : `?${qs}`;
+}

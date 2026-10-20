@@ -1,0 +1,56 @@
+{
+  "M5_ListItem_gate_true": {
+    "exit": 1,
+    "test_files": "1 failed | 12 passed (13)",
+    "tests": "1 failed | 140 passed (141)",
+    "red_files": [
+      "src/components/contacts/__tests__/ContactDeletePermission.test.tsx"
+    ],
+    "red_test_names": [
+      "não oferece Excluir quando can_delete é false (mas mantém Editar)"
+    ],
+    "file": "src/components/contacts/ContactListItem.tsx",
+    "verdict": "MORTA"
+  },
+  "M6_Card_gate_true": {
+    "exit": 1,
+    "test_files": "1 failed | 12 passed (13)",
+    "tests": "1 failed | 140 passed (141)",
+    "red_files": [
+      "src/components/contacts/__tests__/ContactDeletePermission.test.tsx"
+    ],
+    "red_test_names": [
+      "não oferece Excluir quando can_delete é false"
+    ],
+    "file": "src/components/contacts/ContactCard.tsx",
+    "verdict": "MORTA"
+  },
+  "M7_bulk_button_always_enabled": {
+    "exit": 0,
+    "test_files": "13 passed (13)",
+    "tests": "141 passed (141)",
+    "red_files": [],
+    "red_test_names": [],
+    "file": "src/components/contacts/BulkActionsBar.tsx",
+    "verdict": "SOBREVIVENTE"
+  },
+  "M8_canDeleteContact_always_true": {
+    "exit": 1,
+    "test_files": "2 failed | 11 passed (13)",
+    "tests": "6 failed | 135 passed (141)",
+    "red_files": [
+      "src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx",
+      "src/components/contacts/__tests__/ContactDeletePermission.test.tsx"
+    ],
+    "red_test_names": [
+      "não oferece Excluir quando can_delete é false (mas mantém Editar)",
+      "bloqueia só quando todo selecionado conhecido está sem permissão",
+      "ignora o que está fora da seleção",
+      "esconde só quando o servidor diz que não pode (false)",
+      "não oferece Excluir quando can_delete é false (mas mantém Editar)",
+      "não oferece Excluir quando can_delete é false"
+    ],
+    "file": "src/components/contacts/contactPermissions.ts",
+    "verdict": "MORTA"
+  }
+}

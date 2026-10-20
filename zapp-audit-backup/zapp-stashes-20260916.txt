@@ -1,0 +1,4 @@
+stash@{0}: On feat/crm-integration-gateway: codex-crm-gateway-before-foundation-manifest
+stash@{1}: On chore/label-facade-features-demo: pre-sync-cleanup safety net (conteudo confirmado redundante/superado pelo main)
+stash@{2}: On fix/migration-replay-idempotency: local port override for ephemeral replay testing
+stash@{3}: On feat/tooling-sentry-husky-codeql-coverage: WIP unrelated to dependency-vuln task (sentry, webhook fixes, migration, codeql workflow) - stashed by agent before creating fix/dependency-vulnerabilities-safe-range

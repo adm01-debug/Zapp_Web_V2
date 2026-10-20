@@ -1,0 +1,3 @@
+M  .tmp/relato.md
+M  supabase/migrations/20261013210006_autoria_e_oraculo_de_papel.sql
+M  supabase/tests/autoria_e_oraculo_de_papel.sql

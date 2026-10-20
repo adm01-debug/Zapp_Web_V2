@@ -1,0 +1,5 @@
+ M supabase/functions/_shared/ai-image-input.ts
+ M supabase/functions/classify-emoji/index.ts
+ M supabase/functions/classify-sticker/index.ts
+ M tests/contracts/ai-image-input.contract.test.ts
+ M tests/contracts/ai-vision-classifiers-mock.contract.test.ts

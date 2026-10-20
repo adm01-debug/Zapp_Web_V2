@@ -1,0 +1,1 @@
+/home/joaquim_ataides/.local/bin/zapp-verify

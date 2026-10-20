@@ -1,0 +1,159 @@
+{
+  "collection": "ZAPP — Campanhas / Talk X",
+  "image_count": 17,
+  "images": [
+    {
+      "file": "01_Campanhas_Visao_Geral.png",
+      "title": "Campanhas — visão geral",
+      "description": "Tela principal aprovada como referência visual.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1586233,
+      "sha256": "d2beb1231c764cc7976e9abcb6621e43f873209b3e3ea4e2c9fbae00c68c0d5d"
+    },
+    {
+      "file": "02_Segmentos_Biblioteca_Detalhes.png",
+      "title": "Segmentos — biblioteca e detalhes",
+      "description": "Listagem, filtros e painel de detalhes do segmento.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1604053,
+      "sha256": "e0e89c738a9f26ead9d83f0ef1a859608378b035cec9b2071907dd44a1e9e3d3"
+    },
+    {
+      "file": "03_Segmentos_Criar_Editar.png",
+      "title": "Segmentos — criar e editar",
+      "description": "Construtor de regras, grupos de condições e resumo do público.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1666836,
+      "sha256": "5e9f5558f26d3d5224ebc1353d15a9ebfff64bb5d197c78a5e0c6d4e8657b7c8"
+    },
+    {
+      "file": "04_Templates_Biblioteca.png",
+      "title": "Templates — biblioteca",
+      "description": "Galeria de modelos de mensagens.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1781221,
+      "sha256": "c00b9e322e1c038e1ceb6c7627d32ed4a3a3e13ab7dac8ef68174f5a2713e181"
+    },
+    {
+      "file": "05_Templates_Criar_Editar.png",
+      "title": "Templates — criar e editar",
+      "description": "Editor de conteúdo e pré-visualização da mensagem.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1617681,
+      "sha256": "49a2832f11de83bea3a7fd45f3a7f80f1cc39db134ca713a775ffff8d1e3ddf9"
+    },
+    {
+      "file": "06_Lista_de_Supressao.png",
+      "title": "Lista de supressão",
+      "description": "Contatos suprimidos, filtros e ações da lista.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1637938,
+      "sha256": "7d212111a1ba1329005520ed5fa9c91069691fcaaad503a03bfbcc3b1b49b040"
+    },
+    {
+      "file": "07_Analytics.png",
+      "title": "Analytics",
+      "description": "Painéis, gráficos e indicadores de campanhas.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1653235,
+      "sha256": "afe535fdc49826e6aff5b05e8590098c040b9033c89be19df91a18162c0697ab"
+    },
+    {
+      "file": "08_Nova_Campanha.png",
+      "title": "Nova campanha",
+      "description": "Origem do público, filtros, mensagem e resumo lateral.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1513323,
+      "sha256": "a52639c879a7f6dda3d1c4a73370b6e0d4b87551ee6b08cd439af62d0f84b12e"
+    },
+    {
+      "file": "09_Revisao_Final_Confirmacao.png",
+      "title": "Revisão final e confirmação",
+      "description": "Resumo da campanha, prévia e modal de confirmação de lançamento.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1624844,
+      "sha256": "827c9a56bce9fa5aca6e24e6721b5fbaf7964924ef81833c1cb104f92ebdb4e2"
+    },
+    {
+      "file": "10_Campanha_Agendada.png",
+      "title": "Campanha agendada",
+      "description": "Configurações de data, horário e resumo do agendamento.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1591506,
+      "sha256": "004e9cd74081be1f98c2aedbbd7d2c69767443f859de41100d5edb4ba1598d6b"
+    },
+    {
+      "file": "11_Monitor_ao_Vivo.png",
+      "title": "Monitor ao vivo",
+      "description": "Acompanhamento operacional e destinatários em tempo real.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1558888,
+      "sha256": "58d3146d15c2a0609e17acb438ebc89d442b7d8ee2aa8b153bbb7c26b2d415af"
+    },
+    {
+      "file": "12_Campanha_Em_Andamento.png",
+      "title": "Campanha em andamento",
+      "description": "Progresso, destinatários e confirmação de pausa.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1625448,
+      "sha256": "bf2cc4439592b844ac4358863556450f549d29c358dea13d83660bc5b54e023c"
+    },
+    {
+      "file": "13_Campanha_Pausada_Retomada.png",
+      "title": "Campanha pausada e retomada",
+      "description": "Estado pausado, checklist e confirmação de retomada.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1595535,
+      "sha256": "7281ba04174ae5c4fe69b0d7aeefdf4718925bac3f25b1166619c598b2556575"
+    },
+    {
+      "file": "14_Relatorio_Campanha_Concluida.png",
+      "title": "Relatório de campanha concluída",
+      "description": "Relatório, gráficos e resumo de resultados.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1626465,
+      "sha256": "b7b2e456a243a164d1cb7523ac3d90b8f988c867ea22528afcaa849cfdf1e232"
+    },
+    {
+      "file": "15_Importacao_Vinculacao_CRM360.png",
+      "title": "Importação e vinculação CRM 360°",
+      "description": "Importação de contatos, vínculos e revisão de conflitos.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1621313,
+      "sha256": "8b6b47d2f7392bb89ec5d86aafdf58421cfc43e73fedec3fc787c7f65f3dced3"
+    },
+    {
+      "file": "16_Ajuda_TalkX.png",
+      "title": "Ajuda do Talk X",
+      "description": "Tópicos, guias e checklist de ajuda.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1570282,
+      "sha256": "2adb1973b3185d5ff1c26e49bda43755b57cd137859b25ae27366afee8387ff0"
+    },
+    {
+      "file": "17_Estados_do_Sistema_e_Modais.png",
+      "title": "Estados do sistema e modais",
+      "description": "Prancha de estados vazio, loading, erro, indisponibilidade e modais críticos.",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1533583,
+      "sha256": "0a80f5b3c132817035e718c064a26d6ee141b6d569f3b10675354589a0d64a0e"
+    }
+  ]
+}

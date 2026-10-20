@@ -1,0 +1,11 @@
+27	2	src/components/admin/AdminUsersTable.tsx
+16	1	src/components/admin/ForceLogoutButton.tsx
+110	0	src/components/admin/__tests__/AdminUsersTable.reauth.test.tsx
+69	16	src/components/admin/__tests__/ForceLogoutButton.test.tsx
+180	42	src/components/auth/ReauthDialog.tsx
+83	0	src/components/auth/__tests__/ReauthGuard.test.tsx
+15	1	src/components/connections/ConnectionDeleteDialog.tsx
+15	1	src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx
+73	0	src/components/connections/__tests__/ConnectionDeleteDialog.reauth.test.tsx
+24	3	src/pages/admin/RolesPage.tsx
+104	0	src/pages/admin/__tests__/RolesPage.reauth.test.tsx

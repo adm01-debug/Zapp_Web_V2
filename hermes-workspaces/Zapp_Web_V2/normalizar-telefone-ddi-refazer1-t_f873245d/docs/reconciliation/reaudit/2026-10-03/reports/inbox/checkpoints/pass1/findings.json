@@ -1,0 +1,2330 @@
+{
+  "schema_version": "1.0",
+  "area": "Inbox/Chat usuário",
+  "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "generated_at": "2026-10-04T01:35:01.394032+00:00",
+  "finding_count": 30,
+  "states": {
+    "confirmado estaticamente": 29,
+    "lacuna": 1
+  },
+  "severities": {
+    "P1": 12,
+    "P2": 17,
+    "P3": 1
+  },
+  "offline_probes": 20,
+  "probe_integrity": {
+    "head_verified": true,
+    "source_blobs_verified": 20,
+    "pins_sha256": "2486b6a14ac20a7b7e0b98fea1bcf046b439f85554a7b347ff004e1abf76101d",
+    "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "runner_sha256": "556dca06ac9038e9c67f4540348dfd01652c3ba8e8acae35747b70b8f37e006b"
+  },
+  "read_only_source": true,
+  "no_external_service_calls": true,
+  "findings": [
+    {
+      "id": "R2-INB-001",
+      "title": "Resposta/citação selecionada no Composer perde o ID antes do transporte",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "handleSend lê e limpa replyToMessage, mas só passa a string assinada para onSendMessage. O contrato de props, a ponte Inbox e messageSender continuam sem replyToId, apesar de o serviço canônico aceitar o campo.",
+      "consumer_and_precondition": "ChatPanel ativo, usuário clica Responder em uma mensagem e envia texto; também afeta ChatPopup que usa o mesmo painel.",
+      "observable_effect": "O destinatário recebe texto sem vínculo de resposta. O preview de citação desaparece, sugerindo que a resposta foi enviada corretamente.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 108,
+          "line_end": 126,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "wasReply é apenas logado; onSendMessage recebe um argumento."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 42,
+          "line_end": 45,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Prop onSendMessage aceita somente content."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 150,
+          "line_end": 169,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Ponte transmite somente contactId e content."
+        },
+        {
+          "path": "src/hooks/realtime/messageSender.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/realtime/messageSender.ts",
+          "line_start": 21,
+          "line_end": 40,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "4e1b99ee91c393ffa0dd184430e0e26a52cc9ed5",
+          "claim": "Envio ativo não recebe quote."
+        },
+        {
+          "path": "src/services/outbound-message.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/outbound-message.service.ts",
+          "line_start": 110,
+          "line_end": 119,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+          "claim": "p_reply_to_id existe no contrato canônico."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.11"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "O clique Responder deve carregar o ID original até enqueue e a entrega.",
+        "Ao falhar envio, preservar texto original e citação.",
+        "Teste de integração do Composer deve verificar o payload final, além do preview."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "reply_metadata"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-002",
+      "title": "Encaminhar mensagem pelo chat anuncia conclusão sem executar envio",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "O callback handleForwardToTargets contém somente log.debug. O ForwardMessageDialog aceita o retorno void legado como conclusão e mostra sucesso.",
+      "consumer_and_precondition": "Mensagem no balão → Encaminhar → contato ou grupo → confirmar. Esta rota é diferente do encaminhamento real da aba Arquivos.",
+      "observable_effect": "O diálogo fecha com Mensagem encaminhada, mas nenhum RPC/serviço de envio é invocado.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 130,
+          "line_end": 133,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Handler do chat sem transporte."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatDialogs.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatDialogs.tsx",
+          "line_start": 53,
+          "line_end": 58,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+          "claim": "ForwardMessageDialog ligado ao handler."
+        },
+        {
+          "path": "src/components/inbox/ForwardMessageDialog.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ForwardMessageDialog.tsx",
+          "line_start": 25,
+          "line_end": 52,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3fec40733d538a5d963737755814f28489a3c0e7",
+          "claim": "Contrato legado void e todos os tipos de destino."
+        },
+        {
+          "path": "src/hooks/chat/useForwardMessage.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useForwardMessage.ts",
+          "line_start": 161,
+          "line_end": 165,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "4112f141c796c19343cd3856188edbb8098dc1e0",
+          "claim": "void vira resultado null."
+        },
+        {
+          "path": "src/hooks/chat/useForwardMessage.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useForwardMessage.ts",
+          "line_start": 197,
+          "line_end": 242,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "4112f141c796c19343cd3856188edbb8098dc1e0",
+          "claim": "Fluxo null anuncia sucesso e reseta diálogo."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.12",
+        "3.12"
+      ],
+      "previous_finding_relationship": "Nova falha no caminho do balão. OTH-001 é diferente: na aba Arquivos há envio real, mas a seleção fora do filtro é omitida. Não reconta OTH-001.",
+      "acceptance_criteria": [
+        "Encaminhar deve usar contrato canônico e informar resultado por destino.",
+        "Falha parcial deve conservar destinos pendentes e permitir retry idempotente.",
+        "Testar o caminho do balão separadamente da aba Arquivos."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "forward_interactive_noop"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-003",
+      "title": "Construtor de mensagens interativas confirma envio sem transporte",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "handleSendInteractiveMessage só cria um toast. O builder chama o callback, limpa o formulário e fecha sem contrato assíncrono.",
+      "consumer_and_precondition": "Menu de ferramentas do Composer → Mensagem Interativa → botões, lista ou CTA URL → enviar.",
+      "observable_effect": "Mensagem interativa enviada é exibido, mas não há enqueue/entrega da composição; o conteúdo é descartado.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 242,
+          "line_end": 248,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Handler de envio apenas toast; clique interativo também é somente feedback local."
+        },
+        {
+          "path": "src/components/inbox/InteractiveMessageBuilder.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/InteractiveMessageBuilder.tsx",
+          "line_start": 43,
+          "line_end": 48,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "b757acc44b4d22765eb022c8d7058928b90df893",
+          "claim": "onSend seguido de resetForm e fechamento."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatDialogs.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatDialogs.tsx",
+          "line_start": 53,
+          "line_end": 58,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+          "claim": "Wiring efetivo."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatInputToolbars.tsx",
+          "line_start": 131,
+          "line_end": 150,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "574d864f2b373d7ff3c932b8b355d267d8c0cd6c",
+          "claim": "Menu visível abre esse builder; AdvancedMessageMenu é outra rota."
+        }
+      ],
+      "feature_catalog_ids": [
+        "3.7",
+        "3.8",
+        "3.9"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Implementar resultado explícito de envio para os três tipos ou apresentar funcionalidade indisponível.",
+        "Fechar/limpar somente após aceite do transporte; preservar composição em falha.",
+        "Não usar testes de poll/contact de AdvancedMessageMenu como prova dos tipos interativos."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "forward_interactive_noop"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Não afirma que enquetes/cartões também são no-op: AdvancedMessageMenu chama sendRichOutboundMessage. Não pressupõe suporte atual do provedor a cada tipo.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-004",
+      "title": "Histórico anterior às últimas 1000 mensagens não é alcançável pela UI ativa",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "useMessages implementa cursor e loadOlderMessages, e useRealtimeInbox os exporta, mas RealtimeInboxView/ChatPanel/ChatMessagesArea não os consomem. ChatPopup tampouco os consome.",
+      "consumer_and_precondition": "Contato possui mais de 1000 mensagens; usuário procura conteúdo mais antigo pela rolagem ou busca dentro da conversa.",
+      "observable_effect": "A conversa e a busca local exibem somente a janela inicial. Não existe botão/sentinel no caminho ativo para carregar a página anterior.",
+      "evidence": [
+        {
+          "path": "src/hooks/chat/useMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessages.ts",
+          "line_start": 18,
+          "line_end": 18,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+          "claim": "Página inicial fixada em 1000."
+        },
+        {
+          "path": "src/hooks/chat/useMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessages.ts",
+          "line_start": 104,
+          "line_end": 148,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+          "claim": "Paginação existe no hook."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 215,
+          "line_end": 218,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Ponte exporta hasOlder e loadOlder."
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 289,
+          "line_end": 328,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "claim": "Props do ChatPanel não carregam paginação."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatMessagesArea.tsx",
+          "line_start": 17,
+          "line_end": 40,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+          "claim": "Interface de props sem paginação."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatMessagesArea.tsx",
+          "line_start": 127,
+          "line_end": 199,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+          "claim": "Render ativo sem controle de carga anterior."
+        },
+        {
+          "path": "src/hooks/chat/useChatSearch.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useChatSearch.ts",
+          "line_start": 139,
+          "line_end": 167,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f5854ca4a4fe5374588c3fb4062dd965fc2454d9",
+          "claim": "Busca somente messages carregadas."
+        },
+        {
+          "path": "src/pages/ChatPopup.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ChatPopup.tsx",
+          "line_start": 70,
+          "line_end": 73,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+          "claim": "Popup também ignora cursor."
+        },
+        {
+          "path": "src/hooks/__tests__/useMessages.test.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/__tests__/useMessages.test.tsx",
+          "line_start": 246,
+          "line_end": 270,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6d68ed2b12ef9f1664ba45de647b60fd1a906f42",
+          "claim": "Teste chama loadOlder diretamente, sem verificar alcançabilidade na UI."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.25",
+        "2.3"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Ligar cursor à UI com indicação de início/fim e estado de erro.",
+        "Preservar âncora ao prepend e lidar com timestamps iguais.",
+        "Teste de consumidor com 1001+mensagens deve abrir/localizar a mais antiga."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-005",
+      "title": "Janela global de mensagens transforma conversas ativas em histórico vazio e zero não lidas",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "A carga inicial usa 500 contatos recentes e 1000 mensagens globais. buildConversation calcula último item/unread somente dessa amostra; filtros de abertas exigem messages.length>0 e markAsRead pula o contato se o unread amostrado for zero.",
+      "consumer_and_precondition": "Dois contatos acessíveis A e B; as 1000 mensagens globais mais recentes pertencem a A, e B tem conversa aberta com mensagens anteriores, inclusive não lidas.",
+      "observable_effect": "B fica sem lastMessage e unreadCount 0 e desaparece da lista de abertas, ainda que esteja entre os 500 contatos. A busca local da lista não recupera contatos fora da amostra.",
+      "evidence": [
+        {
+          "path": "src/services/realtime.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/realtime.service.ts",
+          "line_start": 20,
+          "line_end": 22,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc",
+          "claim": "Limites globais."
+        },
+        {
+          "path": "src/services/realtime.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/realtime.service.ts",
+          "line_start": 45,
+          "line_end": 89,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc",
+          "claim": "Cargas e montagem sem agregado por contato."
+        },
+        {
+          "path": "src/hooks/realtime/realtimeUtils.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/realtime/realtimeUtils.ts",
+          "line_start": 17,
+          "line_end": 27,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "91f68d605c8bbf3dc0769e098e57ab36fc7f45a7",
+          "claim": "unread e lastMessage derivados do subconjunto."
+        },
+        {
+          "path": "src/hooks/inbox/useInboxFilters.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useInboxFilters.ts",
+          "line_start": 79,
+          "line_end": 110,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+          "claim": "Aberta exige amostra não vazia."
+        },
+        {
+          "path": "src/hooks/chat/useRealtimeMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useRealtimeMessages.ts",
+          "line_start": 246,
+          "line_end": 254,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "b5dc702c078893767a550f56093e4708679e43c9",
+          "claim": "Early return se unreadCount 0."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.1",
+        "2.6",
+        "2.10"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Usar consultas paginadas de conversas/última mensagem/agregado de não lidas, sem inferir ausência de histórico de uma amostra global.",
+        "Conservar contatos abertos sem mensagens na janela.",
+        "Fixture com 1001 mensagens de dois contatos deve preservar B e sua contagem."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "global_window_hides_contact"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "O cenário de truncamento é reproduzido localmente; volume/distribuição atuais em produção não foram medidos. O campo opcional contacts.unread_messages não evita a exclusão anterior por messages.length.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-006",
+      "title": "Falha após enqueue remove o anexo persistido e retry cria outra ação",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "useFileUploadLogic faz rollback de storage para qualquer rejeição de sendOutboundMessage. Esse serviço primeiro persiste a mensagem e depois dispara entrega, que pode rejeitar com a linha já criada. Nova tentativa faz novo upload/URL, mudando actionKey/clientMessageId.",
+      "consumer_and_precondition": "Upload bem-sucedido; enqueue confirmado; entrega rejeita ou sua resposta é perdida. Usuário reenvia o mesmo arquivo.",
+      "observable_effect": "Mensagem/worker pode apontar para objeto removido. Uma tentativa posterior cria outro ID de ação, podendo duplicar entrega sob resultado anterior incerto.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/useFileUploadLogic.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/useFileUploadLogic.ts",
+          "line_start": 90,
+          "line_end": 136,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "af489a0f3136df5d5316ed2b2a409795ba457304",
+          "claim": "Nome novo por tentativa e remoção incondicional no catch de envio."
+        },
+        {
+          "path": "src/services/outbound-message.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/outbound-message.service.ts",
+          "line_start": 71,
+          "line_end": 88,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+          "claim": "URL integra a chave e controla ID pendente."
+        },
+        {
+          "path": "src/services/outbound-message.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/outbound-message.service.ts",
+          "line_start": 110,
+          "line_end": 145,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+          "claim": "Enqueue precede dispatch que ainda pode falhar."
+        },
+        {
+          "path": "src/lib/storage_object_upload.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/lib/storage_object_upload.ts",
+          "line_start": 54,
+          "line_end": 61,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "1945625b0d173202c91d559739e2c45ecf820c43",
+          "claim": "Rollback realmente chama storage.remove."
+        },
+        {
+          "path": "src/components/inbox/__tests__/useFileUploadLogic.test.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/__tests__/useFileUploadLogic.test.tsx",
+          "line_start": 102,
+          "line_end": 117,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "49d05220efc7fa5d0649126e6f66a26052768cd7",
+          "claim": "Teste exige remover objeto em qualquer rejeição do mock, sem modelar enqueue já persistido."
+        },
+        {
+          "path": "src/hooks/chat/useForwardMedia.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useForwardMedia.ts",
+          "line_start": 118,
+          "line_end": 130,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "72696d66e0aa8f8e1114d5742aa9e9fdd2eeb63d",
+          "claim": "Caminho de forward consulta se mensagem foi enfileirada."
+        },
+        {
+          "path": "src/hooks/chat/useForwardMedia.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useForwardMedia.ts",
+          "line_start": 173,
+          "line_end": 190,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "72696d66e0aa8f8e1114d5742aa9e9fdd2eeb63d",
+          "claim": "Forward já distingue resultado incerto antes de apagar cópia."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.35",
+        "3.2",
+        "3.3",
+        "3.5"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Rollback só quando houver evidência de que nenhum registro persistido referencia o objeto.",
+        "Manter ID lógico e objeto no retry de resultado incerto.",
+        "Simular upload→enqueue→falha dispatch e verificar objeto/ID, além do erro visual."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "media_rollback"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-007",
+      "title": "Retry de texto duplica assinatura e rompe a idempotência",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "handleSend aplica assinatura antes de enviar e restaura messageContent já assinado no catch. applySignature sempre prefixa novamente. A chave de idempotência do serviço inclui o texto.",
+      "consumer_and_precondition": "Assinatura ativa; primeira tentativa de envio tem resultado incerto ou erro; usuário clica reenviar no draft restaurado.",
+      "observable_effect": "Segundo envio contém duas assinaturas e usa outro clientMessageId, permitindo duplicação que a retenção de ID do serviço tentava impedir.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 108,
+          "line_end": 127,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Restauração usa payload assinado."
+        },
+        {
+          "path": "src/hooks/chat/useMessageSignature.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessageSignature.ts",
+          "line_start": 51,
+          "line_end": 54,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "e968bbed653ad68b4c0ecf35fbfb0a53a374e30b",
+          "claim": "Prefixo sempre aplicado quando habilitado."
+        },
+        {
+          "path": "src/services/outbound-message.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/outbound-message.service.ts",
+          "line_start": 71,
+          "line_end": 88,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+          "claim": "Conteúdo participa da identidade da ação."
+        }
+      ],
+      "feature_catalog_ids": [
+        "3.1"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Restaurar o texto original do editor, preservando a identidade lógica da tentativa.",
+        "Retry de erro ambíguo deve reutilizar clientMessageId e não duplicar assinatura.",
+        "Cobrir callback Desfazer, que também restaura texto assinado."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "signature_retry"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-008",
+      "title": "Gravador não interrompe captura no limite de duração nem no unmount",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "stopRecording/cancelRecording dependem de isRecording. O timer criado por startRecording e o cleanup do useEffect([]) capturam a versão inicial em que isRecording=false; os guards impedem stop/tracks.stop. O hook não tem cleanup próprio.",
+      "consumer_and_precondition": "Gravação iniciada pelo componente AudioRecorder; atingir maxDuration ou trocar de contato/fechar componente enquanto grava.",
+      "observable_effect": "O contador deixa de aumentar no limite, porém o MediaRecorder e as tracks podem continuar capturando após a UI ter sido desmontada.",
+      "evidence": [
+        {
+          "path": "src/hooks/communication/useAudioRecorder.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/communication/useAudioRecorder.ts",
+          "line_start": 14,
+          "line_end": 21,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+          "claim": "Estado inicial false e refs do recurso."
+        },
+        {
+          "path": "src/hooks/communication/useAudioRecorder.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/communication/useAudioRecorder.ts",
+          "line_start": 55,
+          "line_end": 77,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+          "claim": "Timer captura stopRecording inicial."
+        },
+        {
+          "path": "src/hooks/communication/useAudioRecorder.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/communication/useAudioRecorder.ts",
+          "line_start": 79,
+          "line_end": 106,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+          "claim": "Guards dependem do estado capturado."
+        },
+        {
+          "path": "src/components/inbox/AudioRecorder.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/AudioRecorder.tsx",
+          "line_start": 50,
+          "line_end": 57,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6690c7a1bc23e14251d9d78b26523f4670df65f5",
+          "claim": "Cleanup captura cancelRecording do primeiro render."
+        },
+        {
+          "path": "src/hooks/__tests__/useAudioRecorder.test.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/__tests__/useAudioRecorder.test.ts",
+          "line_start": 1,
+          "line_end": 117,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "ccbe6915b3cbf33f493dbfdb422647a6a521102d",
+          "claim": "Testes não exercitam ciclo real start/stop/unmount."
+        },
+        {
+          "path": "src/components/inbox/__tests__/AudioRecorder.test.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/__tests__/AudioRecorder.test.tsx",
+          "line_start": 4,
+          "line_end": 14,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3cb5dc88b38621dbe3536dd35a75019405c65005",
+          "claim": "Hook é substituído por mock."
+        }
+      ],
+      "feature_catalog_ids": [
+        "4.1",
+        "3.4"
+      ],
+      "previous_finding_relationship": "Nova falha de captura de microfone. VOL-01 trata AudioContext do player/volume, recurso e ciclo diferentes.",
+      "acceptance_criteria": [
+        "Gerir liberação por refs/estado real do MediaRecorder, com cleanup idempotente.",
+        "Cancelar captura também se getUserMedia resolver depois do unmount ou construtor falhar.",
+        "Verificar stop, tracks.stop e clearInterval no timeout/unmount em testes de lifecycle."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "recorder_lifecycle"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Probe usa MediaRecorder e tracks simulados, sem microfone/browser físico. A continuação da captura resulta da semântica de closures; incidência/dispositivos reais não foram medidos.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-009",
+      "title": "Transferência do chat e em lote viola o contrato do diálogo",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "ChatDialogs omite queueId e força o tipo connection para callback agent|queue. O diálogo trata todos como sem fila e filtra colegas. Callback converte connection em queue_id, ignora nota e resolve mesmo com erro. BulkActionsToolbar repete o cast e fecha sem await.",
+      "consumer_and_precondition": "Transferir a partir do header/chip/slash do ChatPanel, ou toolbar de seleção; contato já tem fila, ou usuário seleciona Conexão, ou update é rejeitado.",
+      "observable_effect": "Colegas desaparecem indevidamente do picker. Connection ID é enviado como queue ID. Falha fecha/limpa o diálogo; a nota não é persistida/enviada.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/ChatDialogs.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatDialogs.tsx",
+          "line_start": 30,
+          "line_end": 33,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+          "claim": "Contrato restrito do callback."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatDialogs.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatDialogs.tsx",
+          "line_start": 53,
+          "line_end": 53,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+          "claim": "Cast amplia tipo e omite queueId."
+        },
+        {
+          "path": "src/components/inbox/TransferDialog.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/TransferDialog.tsx",
+          "line_start": 61,
+          "line_end": 95,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "bea5653b01d3051d32a0847be085fb0a008e790e",
+          "claim": "Ausência de queueId ativa self-only; fechamento depende de rejeição."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 196,
+          "line_end": 205,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "type!==agent vira queue_id, message ignorada e erro resolve."
+        },
+        {
+          "path": "src/components/inbox/BulkActionsToolbar.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/BulkActionsToolbar.tsx",
+          "line_start": 30,
+          "line_end": 33,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "00c19c95ac6a54d4cc8fc6950edea3005c24aa60",
+          "claim": "Lote não aguarda."
+        },
+        {
+          "path": "src/components/inbox/BulkActionsToolbar.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/BulkActionsToolbar.tsx",
+          "line_start": 127,
+          "line_end": 131,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "00c19c95ac6a54d4cc8fc6950edea3005c24aa60",
+          "claim": "Mesmo cast e queueId ausente no lote."
+        },
+        {
+          "path": "src/hooks/inbox/useInboxBulkActions.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useInboxBulkActions.ts",
+          "line_start": 71,
+          "line_end": 94,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "e367da296db645080bb69a62096897453061a02f",
+          "claim": "Lote também roteia else para queue_id."
+        },
+        {
+          "path": "src/components/inbox/ConversationListSidebar.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ConversationListSidebar.tsx",
+          "line_start": 297,
+          "line_end": 303,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "4f54f1e9dd47cc023ad29dba8804602a8b4594e5",
+          "claim": "Sidebar passa queueId, mas fecha após callback resolvido."
+        },
+        {
+          "path": "src/hooks/chat/useConversationActions.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useConversationActions.ts",
+          "line_start": 177,
+          "line_end": 190,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "e2197ee8ea0014c088f0ae54be0eaa9895917ede",
+          "claim": "Consumer de lista resolve também quando operação falha/não suporta connection."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.22",
+        "2.34"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Passar contexto correto de fila e tipos suportados por cada consumidor, sem cast que encubra incompatibilidade.",
+        "Falha deve rejeitar/preservar diálogo e seleção.",
+        "Definir destino da nota de transferência e verificar persistência.",
+        "Testar header, sidebar e lote separadamente; sidebar passa queueId, mas ainda resolve erros de transferContact."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "transfer_wrong_kind"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "FK de conexão→fila foi simulado na probe; a escrita incorreta de queue_id é confirmada estaticamente. Se IDs coincidirem, o destino incorreto pode ser aceito, portanto o achado não depende exclusivamente de erro FK.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-010",
+      "title": "Agendamento fecha e apaga draft antes de confirmar persistência",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "ScheduleMessageDialog tipa onSchedule como void, chama sem await e imediatamente mostra sucesso/reseta. O callback real é assíncrono, faz upload/insert e captura erro de upload apenas em log.",
+      "consumer_and_precondition": "Agendar mensagem pelo Composer; upload ou persistência demora/falha.",
+      "observable_effect": "Mensagem agendada! aparece durante a operação pendente e o draft/anexo são descartados. Falha posterior pode exibir toast contrário ou somente log, sem recuperação do draft.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/ScheduleMessageDialog.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ScheduleMessageDialog.tsx",
+          "line_start": 19,
+          "line_end": 22,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c888205672230e8a41e6766d7878211edf6db7f9",
+          "claim": "Callback void."
+        },
+        {
+          "path": "src/components/inbox/ScheduleMessageDialog.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ScheduleMessageDialog.tsx",
+          "line_start": 38,
+          "line_end": 59,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c888205672230e8a41e6766d7878211edf6db7f9",
+          "claim": "Sucesso/reset antes do resultado."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 207,
+          "line_end": 223,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Callback real await upload/schedule e catch somente log."
+        },
+        {
+          "path": "src/hooks/chat/useScheduledMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useScheduledMessages.ts",
+          "line_start": 44,
+          "line_end": 83,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "68fa21fd6d09f821beef4ba9842e0f28c87b478b",
+          "claim": "Persistência pode rejeitar após o diálogo fechar."
+        },
+        {
+          "path": "src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx",
+          "line_start": 21,
+          "line_end": 28,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "45ac1d44e998e461f43fed94849c78362f3dc4ee",
+          "claim": "Mock síncrono não cobre o contrato async."
+        }
+      ],
+      "feature_catalog_ids": [
+        "21.1"
+      ],
+      "previous_finding_relationship": "Nova falha da UI. Separada do executor ausente nos artefatos versionados investigado pelo agente providers (R2-API-017 provisório) e da leitura global da Agenda investigada pelo agente IA.",
+      "acceptance_criteria": [
+        "Usar Promise com estado pendente e sucesso apenas após confirmação.",
+        "Preservar draft/anexo em qualquer falha e evitar submissão duplicada.",
+        "Dar tratamento explícito para upload persistido mas insert rejeitado."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "schedule_before_persistence"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-011",
+      "title": "Seletor de anexos permite seleção múltipla mas aproveita somente o primeiro",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "O input nativo de FileUploader tem multiple, mas handleFileChange usa e.target.files?.[0]. O caminho alternativo de drag/paste/chip usa handleExternalFiles e funciona de modo diferente.",
+      "consumer_and_precondition": "Ícone Anexar arquivo do FileUploader; selecionar dois ou mais arquivos no sistema operacional.",
+      "observable_effect": "Só o primeiro arquivo entra no preview/envio, sem informar que os demais foram ignorados.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/FileUploader.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/FileUploader.tsx",
+          "line_start": 102,
+          "line_end": 114,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "b5c8d3dde234f9dd8940254958989db890f95b99",
+          "claim": "Input multiple acionado pelo ícone."
+        },
+        {
+          "path": "src/components/inbox/useFileUploadLogic.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/useFileUploadLogic.ts",
+          "line_start": 207,
+          "line_end": 231,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "af489a0f3136df5d5316ed2b2a409795ba457304",
+          "claim": "handleExternalFiles usa fila; handleFileChange só files[0]."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatInputArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatInputArea.tsx",
+          "line_start": 100,
+          "line_end": 108,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "5bdbf7cbfea12de98d1afb06e51d190b75313c80",
+          "claim": "Chip externo já encaminha todos."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.35"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Unificar todos os entrypoints no pipeline de múltiplos arquivos.",
+        "Contagem/preview devem corresponder aos arquivos selecionados e reportar rejeições individuais."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "native_multiple_files"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-012",
+      "title": "Galeria classifica áudio WebM como vídeo e diverge dos contadores",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "Fallback getMediaType dá precedência à extensão webm na categoria vídeo antes de verificar messageType=audio. Counts usa a coluna message_type. classify usa o fallback quando MIME/ptt faltam.",
+      "consumer_and_precondition": "Registro de mensagem audio com URL.webm e media_type/media_mimetype/ptt ausentes. ChatService.uploadAudio produz justamente URLs.webm; registros antigos também podem satisfazer o caso.",
+      "observable_effect": "Chip Áudio pode mostrar contagem que não corresponde aos itens; gravação aparece em Vídeos. Encaminhar pela galeria reutiliza tipo classificado e pode tentar envio como vídeo.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/media-gallery/mediaUtils.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/media-gallery/mediaUtils.ts",
+          "line_start": 10,
+          "line_end": 19,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "981dacf45c0ea7aacc83f8cf3c3a81298e83b099",
+          "claim": "webm vence messageType audio."
+        },
+        {
+          "path": "src/hooks/chat/useContactMedia.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useContactMedia.ts",
+          "line_start": 136,
+          "line_end": 150,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "dd62b290ce7572ee7cc76e3b0b2019402fc02942",
+          "claim": "Condição para o fallback."
+        },
+        {
+          "path": "src/hooks/chat/useContactMediaCounts.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useContactMediaCounts.ts",
+          "line_start": 38,
+          "line_end": 52,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "332d8e529d6ca6585179b57042d6872940c44075",
+          "claim": "Counts por message_type."
+        },
+        {
+          "path": "src/services/chat.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/chat.service.ts",
+          "line_start": 111,
+          "line_end": 127,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "70a69d19defffac347d37d7001b8876e9f5b8b68",
+          "claim": "Upload de voz usa.webm."
+        },
+        {
+          "path": "src/components/inbox/tabs/FilesTab.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/tabs/FilesTab.tsx",
+          "line_start": 166,
+          "line_end": 185,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "de1d14e73e67927d6503cc87c4ac58cd3b507872",
+          "claim": "Tipo do item segue para forward."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.26",
+        "3.4"
+      ],
+      "previous_finding_relationship": "Diferente de OTH-002, que trata invalidação de cache após excluir. Aqui as consultas atualizadas podem divergir por regra de classificação.",
+      "acceptance_criteria": [
+        "Definir uma classificação compartilhada para listagem, contagem e encaminhamento.",
+        "Tipo explícito de mensagem áudio deve prevalecer sobre extensão ambígua.",
+        "Testar WebM áudio, MP4 áudio e sticker WebP com/sem metadata."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "gallery_webm_audio"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Precondição de ausência de metadata é explícita; não afirma que todos os áudios vivos carecem de MIME ou que webhooks nunca enriquecem registros.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-013",
+      "title": "Overlay de realtime antigo sobrescreve snapshot mais novo no refetch",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "realtimeOverlayRef guarda o último evento de cada mensagem por toda a montagem e sempre é aplicado por cima do resultado de fetch. Só é limpo ao trocar/desabilitar contato, sem limitar overlay a eventos ocorridos durante a consulta.",
+      "consumer_and_precondition": "Evento delivered/edição chega; atualização posterior read/nova edição não chega por realtime; refetch autoritativo retorna valor novo para o mesmo ID.",
+      "observable_effect": "Após atualizar, o chat continua mostrando delivered/conteúdo antigo. O mecanismo de reconciliação reintroduz estado ultrapassado.",
+      "evidence": [
+        {
+          "path": "src/hooks/chat/useMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessages.ts",
+          "line_start": 73,
+          "line_end": 90,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+          "claim": "Overlay inteiro vence snapshot."
+        },
+        {
+          "path": "src/hooks/chat/useMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessages.ts",
+          "line_start": 150,
+          "line_end": 193,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+          "claim": "Eventos populam overlay."
+        },
+        {
+          "path": "src/hooks/chat/useMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessages.ts",
+          "line_start": 212,
+          "line_end": 240,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+          "claim": "Limpeza apenas na troca/desabilitação de contato."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.1",
+        "2.19"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Escopar overlay por geração de consulta ou comparar versão/timestamp confiável.",
+        "Snapshot novo deve vencer evento anterior sem descartar evento ocorrido durante fetch.",
+        "Testar ambas ordens de corrida e tombstones de exclusão."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "overlay_stale"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-014",
+      "title": "Editar e apagar mensagem exibem sucesso mesmo com operação rejeitada",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "Edição e exclusão aguardam query PostgREST, mas não verificam result.error. Edição pode pular o provedor sem instance/externalId e ainda anunciar sucesso. Exclusão captura falha GO e usa apenas presença de externalId para dizer para todos; callback repete update sem examinar erro.",
+      "consumer_and_precondition": "Ação de editar/apagar no balão; provedor rejeita ou contexto de conexão falta; e/ou banco devolve erro resolvido.",
+      "observable_effect": "Operador é informado de edição ou apagamento para todos que não ocorreu. Se só GO falhar e DB aceitar, a UI local diverge do conteúdo ainda existente no WhatsApp; se ambos falharem, nem o estado local precisa mudar.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 89,
+          "line_end": 105,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Edição ignora result.error e limpa editor também na falha."
+        },
+        {
+          "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/MessageHoverToolbar.tsx",
+          "line_start": 53,
+          "line_end": 68,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8eb6d284602e804426c8b7d0d9f71e0581173f41",
+          "claim": "Falha GO capturada; DB.error ignorado; toast para todos."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatMessagesArea.tsx",
+          "line_start": 57,
+          "line_end": 63,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+          "claim": "Callback repete deleteMessage e só captura throw."
+        },
+        {
+          "path": "src/services/chat.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/chat.service.ts",
+          "line_start": 104,
+          "line_end": 109,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "70a69d19defffac347d37d7001b8876e9f5b8b68",
+          "claim": "deleteMessage retorna query sem throwOnError."
+        },
+        {
+          "path": "src/components/inbox/MessageContextActions.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/MessageContextActions.tsx",
+          "line_start": 55,
+          "line_end": 73,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "bb710fa3ceed6eb7d2bbd2b3747287830cf38c1f",
+          "claim": "Componente legado repete padrão, sem presumir alcançabilidade."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.15",
+        "3.1"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Checar resultado de cada fronteira; diferenciar remoção local de remoção remota.",
+        "Editar precisa confirmar provedor/contexto e persistência ou informar resultado parcial.",
+        "Preservar draft de edição quando falhar.",
+        "Injetar {error} resolvido e rejeição GO nos testes do consumidor ativo."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "delete_false_success",
+          "edit_false_success"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Não atribui rejeição de mensagens sent ao trigger: o guard vigente protege content sob condição específica de sending, não sent. RLS/grants/dados atuais não foram presumidos. Não afirma ocultação otimista em memória quando ambos updates falham.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-015",
+      "title": "Cache offline válido é abandonado após falha de carga e não alimenta chat selecionado",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "useOfflineCache escolhe cache somente enquanto isOffline&&loading. Após a carga falhar, loading=false devolve array vazio. RealtimeInboxView prioriza erro global sobre cache; mensagens selecionadas sempre vêm de localMsgs, mesmo havendo 20 mensagens por contato no cache.",
+      "consumer_and_precondition": "Existe cache válido; abrir/recarregar Inbox sem conexão, ou selecionar uma conversa disponível no cache.",
+      "observable_effect": "Conversas podem aparecer temporariamente e desaparecer após conclusão da falha. O cache não sustenta leitura das mensagens na conversa selecionada.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useOfflineCache.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/system/useOfflineCache.ts",
+          "line_start": 29,
+          "line_end": 45,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c1984e76f25b69f5aab57a7da0d38a229b4184a6",
+          "claim": "Cache salva mensagens por conversa."
+        },
+        {
+          "path": "src/hooks/system/useOfflineCache.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/system/useOfflineCache.ts",
+          "line_start": 99,
+          "line_end": 112,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c1984e76f25b69f5aab57a7da0d38a229b4184a6",
+          "claim": "Fallback condicionado a loading."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 52,
+          "line_end": 64,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Cache e mensagens locais são fontes separadas."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 190,
+          "line_end": 200,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Contato selecionado usa sempre localMsgs."
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 199,
+          "line_end": 209,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "claim": "Erro global substitui a UI mesmo com cache."
+        }
+      ],
+      "feature_catalog_ids": [],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Distinguir falha offline de ausência real de dados; usar cache válido até recuperação explícita.",
+        "Oferecer mensagens em cache na conversa selecionada e identificar seu recorte.",
+        "Não apagar cache/draft por falha transitória."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "offline_cache_dropped"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Auditoria não reabre escopo de autenticação/cache por usuário: limpeza no sign-out foi observada e fica com o agente de auth. Não testa Service Worker/browser offline real.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-016",
+      "title": "Enter contorna limite de caracteres aplicado ao botão Enviar",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "O botão depende de isOverLimit, mas handleKeyDown chama handleSend diretamente; handleSend só valida texto vazio e isSending. Não há validação compartilhada do limite.",
+      "consumer_and_precondition": "Composer com 4097 caracteres; botão desabilitado; pressionar Enter sem Shift.",
+      "observable_effect": "Payload acima do limite anunciado é enviado, enquanto clicar no botão é impedido. Política varia conforme forma de acionamento.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/ChatInputArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatInputArea.tsx",
+          "line_start": 251,
+          "line_end": 263,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "5bdbf7cbfea12de98d1afb06e51d190b75313c80",
+          "claim": "Botão usa isOverLimit."
+        },
+        {
+          "path": "src/components/inbox/chat/useChatInputLogic.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatInputLogic.ts",
+          "line_start": 93,
+          "line_end": 103,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "bfc4b3d4c6be9c2763f6ed6bc7673f12bbcd649d",
+          "claim": "Caminho do botão valida limite."
+        },
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 85,
+          "line_end": 108,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "handleSend não valida comprimento."
+        },
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 142,
+          "line_end": 148,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Enter chama handleSend diretamente."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.42",
+        "3.1"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Validar limite no comando de envio compartilhado, inclusive edição e assinatura.",
+        "Botão, Enter e demais entrypoints devem ter o mesmo resultado e preservar texto em rejeição."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "enter_limit"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-017",
+      "title": "Atalhos de busca têm dois handlers concorrentes no Composer",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "Ctrl+F executa toggle no textarea e no listener de window, sem stopPropagation/defaultPrevented, retornando ao estado anterior. Ctrl+K abre diálogo local do ChatPanel e também o global da Inbox pelo listener de document.",
+      "consumer_and_precondition": "Foco no textarea do chat; pressionar Ctrl+F ou Ctrl+K. Mac Cmd+F também duplica; a duplicação de K no handler local só se aplica a Ctrl.",
+      "observable_effect": "Ctrl+F não abre/fecha a busca como esperado; Ctrl+K pode abrir dois diálogos, um deles com seleção inerte.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 142,
+          "line_end": 148,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Handlers locais."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 101,
+          "line_end": 104,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "handleSetActiveTool faz toggle funcional."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 170,
+          "line_end": 174,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Segundo Ctrl/Cmd+F no window."
+        },
+        {
+          "path": "src/hooks/ui/useGlobalSearchShortcut.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/ui/useGlobalSearchShortcut.ts",
+          "line_start": 7,
+          "line_end": 19,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a88d9102273dd7df9ea9e60ef5536bb21e386176",
+          "claim": "Ctrl/Cmd+K global não inspeciona evento já consumido."
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 151,
+          "line_end": 151,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "claim": "Listener global montado junto ao chat."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.7",
+        "2.42",
+        "28.1",
+        "28.3"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Definir um dono por atalho e respeitar evento consumido/propagação.",
+        "Um pressionamento deve abrir somente um painel; repetir deve ter resultado previsível.",
+        "Testar foco no textarea e fora dele."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "ctrl_f_double_toggle"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-018",
+      "title": "Ações rápidas e seleção da busca embutida fecham sem executar intenção",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "GlobalSearch define Nova conversa e Respostas rápidas como onOpenChange(false) apenas. A instância em ChatDialogs recebe onSelectResult que só faz log/toast, diferentemente da instância da Inbox.",
+      "consumer_and_precondition": "Abrir busca e clicar Nova conversa/Respostas rápidas, ou selecionar resultado na instância aberta pelo handler do Composer.",
+      "observable_effect": "Busca fecha sem abrir conversa/gestão de respostas. No diálogo do chat, selecionar contato/mensagem só produz Resultado selecionado, mantendo a conversa corrente.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/GlobalSearch.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/GlobalSearch.tsx",
+          "line_start": 40,
+          "line_end": 46,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+          "claim": "Duas quick actions sem operação."
+        },
+        {
+          "path": "src/components/inbox/GlobalSearch.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/GlobalSearch.tsx",
+          "line_start": 54,
+          "line_end": 59,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+          "claim": "Seleção fecha e limpa busca."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatDialogs.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatDialogs.tsx",
+          "line_start": 55,
+          "line_end": 55,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+          "claim": "Consumer local somente log/toast."
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 195,
+          "line_end": 197,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "claim": "Outro consumer tem navegação real."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.7",
+        "2.32"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Ligar as ações às operações reais ou retirá-las do seletor.",
+        "Compartilhar contrato de seleção/navegação entre consumidores.",
+        "Selecionar mensagem deve definir também como alcançar a mensagem, inclusive fora da janela inicial."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-019",
+      "title": "Navegação da busca gera NaN quando não há resultados e ignora ações rápidas",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "ArrowUp/Down fazem módulo total mesmo quando total=0. O total considera só tags ou results, sem as ações visíveis. A chegada assíncrona de resultados não reseta selectedIndex.",
+      "consumer_and_precondition": "Pressionar seta com consulta pendente/sem resultados e aguardar resultado sem mudar query; ou navegar ações rápidas do diálogo vazio.",
+      "observable_effect": "selectedIndex vira NaN e Enter não escolhe resultado até editar a consulta. Ações rápidas visíveis também não entram na navegação anunciada.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/GlobalSearch.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/GlobalSearch.tsx",
+          "line_start": 65,
+          "line_end": 80,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+          "claim": "Módulo zero e total incompleto."
+        },
+        {
+          "path": "src/components/inbox/GlobalSearch.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/GlobalSearch.tsx",
+          "line_start": 184,
+          "line_end": 199,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+          "claim": "Ações renderizadas fora de results."
+        },
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 223,
+          "line_end": 238,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "claim": "Chegada de resultado não reseta índice; apenas handleSearch o faz."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.7",
+        "2.42"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Proteger total zero e normalizar índice quando lista muda.",
+        "Navegar a mesma sequência que é renderizada, incluindo ações rápidas.",
+        "Cobrir tecla durante loading, zero→não zero e troca de filtro."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "global_search_nan_index"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-020",
+      "title": "Filtro por tag na busca limita contatos tarde demais e não limita mensagens",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "Busca de contatos aplica LIMIT10 antes de filtrar tags em JS. Consultas de mensagens/transcrições não aplicam tags selecionadas. Assim o chip de tag não representa um escopo comum.",
+      "consumer_and_precondition": "Tag VIP selecionada; primeiro contato VIP é o 11º da ordem alfabética; ou buscar texto com tag aplicada e mensagens de outros contatos.",
+      "observable_effect": "Busca retorna zero contatos apesar de haver correspondência, ou mostra mensagens fora da tag selecionada.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 108,
+          "line_end": 139,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "claim": "Mensagem sem filtro de tags."
+        },
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 142,
+          "line_end": 162,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "claim": "Transcrição também não aplica tags."
+        },
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 165,
+          "line_end": 186,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "claim": "Tag aplicada depois do LIMIT10."
+        },
+        {
+          "path": "src/components/inbox/GlobalSearch.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/GlobalSearch.tsx",
+          "line_start": 138,
+          "line_end": 153,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+          "claim": "Chips ativos comunicam o filtro."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.7"
+      ],
+      "previous_finding_relationship": "Relaciona-se a TRA-011 (catálogo de tags obtido sem paginação), mas não o duplica: este achado ocorre mesmo quando a tag já está carregada/selecionada corretamente.",
+      "acceptance_criteria": [
+        "Aplicar filtro antes da paginação e definir escopo consistente para cada tipo.",
+        "Mostrar diferença de escopo quando uma categoria não suporta determinado filtro.",
+        "Fixture com contato VIP após 10 resultados e mensagens semVIP deve produzir resultado correto."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "global_search_tag_semantics"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-021",
+      "title": "Menu do balão, menu do header e comandos anunciam ações ainda sem implementação",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "Itens visíveis de Favoritar/Fixar/Responder depois/Reportar no balão não têm handler. Adicionar tag no header tampouco tem callback. Slash /note e /tag somente mostram mensagens informativas e limpam o input.",
+      "consumer_and_precondition": "Usuário seleciona essas ações nos menus ativos ou executa /note ou /tag.",
+      "observable_effect": "Nenhuma alteração, agendamento ou abertura de editor ocorre; a interface oferece operações que não conclui.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/MessageHoverToolbar.tsx",
+          "line_start": 148,
+          "line_end": 181,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8eb6d284602e804426c8b7d0d9f71e0581173f41",
+          "claim": "Itens e submenu sem onClick/onSelect."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatPanelHeader.tsx",
+          "line_start": 160,
+          "line_end": 166,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+          "claim": "Adicionar tag sem ação."
+        },
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 150,
+          "line_end": 158,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "/note e /tag apenas toast após limpar input."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.15",
+        "2.16",
+        "2.23",
+        "2.33"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Cada item deve executar a intenção declarada e informar resultado, ou ser sinalizado/ocultado como indisponível.",
+        "Não confundir Favoritar mensagem com Favoritar contato, que tem implementação diferente.",
+        "Teste interação do consumidor, não apenas presença do label."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-022",
+      "title": "Falha ao enviar áudio desmonta gravador e descarta gravação recuperável",
+      "severity": "P1",
+      "state": "confirmado estaticamente",
+      "cause": "handleAudioSend captura rejeição e sempre define isRecordingAudio=false. A ponte principal também captura erro de upload/envio, e o callback do popup só faz log. O blob reside no estado do AudioRecorder desmontado.",
+      "consumer_and_precondition": "Gravar/revisar voz e clicar Enviar; upload ou transporte falha.",
+      "observable_effect": "Usuário perde a gravação que poderia reenviar. O feedback pode dizer Tente novamente, mas o áudio não está mais disponível na UI.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/AudioRecorder.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/AudioRecorder.tsx",
+          "line_start": 26,
+          "line_end": 29,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6690c7a1bc23e14251d9d78b26523f4670df65f5",
+          "claim": "Blob mantido apenas no componente."
+        },
+        {
+          "path": "src/components/inbox/AudioRecorder.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/AudioRecorder.tsx",
+          "line_start": 84,
+          "line_end": 88,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6690c7a1bc23e14251d9d78b26523f4670df65f5",
+          "claim": "onSend sem resultado/estado pendente local."
+        },
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 270,
+          "line_end": 275,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Fecha mesmo em rejeição."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 171,
+          "line_end": 182,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Ponte captura erro de envio."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 288,
+          "line_end": 295,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Estado controla gravador e seu callback."
+        },
+        {
+          "path": "src/pages/ChatPopup.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ChatPopup.tsx",
+          "line_start": 142,
+          "line_end": 164,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+          "claim": "Popup captura erro sem rejeitar."
+        }
+      ],
+      "feature_catalog_ids": [
+        "4.1",
+        "3.4"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Preservar blob/preview até confirmação ou descarte explícito.",
+        "Rejeições devem percorrer a cadeia e manter opção de retry.",
+        "Resultado incerto deve reusar objeto/ID da tentativa anterior."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "audio_error_closes_recorder"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-023",
+      "title": "Popup remapeia Message como linha crua e remove dados necessários ao balão",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "ChatPopup recebe Message[] já adaptado de useMessages, força RawMessage e cria outro objeto com apenas um subconjunto dos campos. Perde external_id, is_deleted, location, isEdited e link_preview.",
+      "consumer_and_precondition": "Abrir popup via header para conversa com localização, mídia apagada, mensagem editada ou ação que precisa de ID remoto.",
+      "observable_effect": "Localização fica sem conteúdo visível; mídia marcada apagada pode renderizar como ativa; reações/edição/exclusão perdem ID remoto; previews e indicador editada desaparecem.",
+      "evidence": [
+        {
+          "path": "src/pages/ChatPopup.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ChatPopup.tsx",
+          "line_start": 46,
+          "line_end": 62,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+          "claim": "Mapper restrito descarta campos."
+        },
+        {
+          "path": "src/pages/ChatPopup.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ChatPopup.tsx",
+          "line_start": 70,
+          "line_end": 73,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+          "claim": "Fonte é useMessages."
+        },
+        {
+          "path": "src/pages/ChatPopup.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ChatPopup.tsx",
+          "line_start": 128,
+          "line_end": 130,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+          "claim": "Cast faz segunda adaptação."
+        },
+        {
+          "path": "src/adapters/inboxAdapter.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/adapters/inboxAdapter.ts",
+          "line_start": 23,
+          "line_end": 36,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f1af7f3f6957dbad7090951c02f30420563c1565",
+          "claim": "Primeira adaptação já preserva e cria campos."
+        },
+        {
+          "path": "src/components/inbox/chat/MessageBubble.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/MessageBubble.tsx",
+          "line_start": 112,
+          "line_end": 160,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c18dd32e97ebbea0e252914a81481ee0c14d7147",
+          "claim": "external_id e is_deleted controlam ações/placeholder."
+        },
+        {
+          "path": "src/components/inbox/chat/MessageBubble.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/MessageBubble.tsx",
+          "line_start": 198,
+          "line_end": 198,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c18dd32e97ebbea0e252914a81481ee0c14d7147",
+          "claim": "Localização exige location."
+        },
+        {
+          "path": "src/components/inbox/chat/MessageBubble.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/MessageBubble.tsx",
+          "line_start": 230,
+          "line_end": 248,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c18dd32e97ebbea0e252914a81481ee0c14d7147",
+          "claim": "Texto de location é excluído e outros campos são consumidos."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.4",
+        "3.6",
+        "2.15",
+        "2.18"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Passar Message[] diretamente ou usar um único mapper compartilhado sem cast via unknown.",
+        "Comparar o mesmo registro no Inbox e popup para location/deleted/edit/preview/ID remoto."
+      ],
+      "offline_reproduction": {
+        "available": true,
+        "probe_ids": [
+          "popup_discards_fields"
+        ],
+        "command": "node --disable-warning=ExperimentalWarning /workspace/scratch/f8f9b9cbce53/reaudit/reports/inbox/probes/run.mjs",
+        "method": "Código real TypeScript ou callback extraído mecanicamente do TSX; fronteiras simuladas. Ver método e limitações em probes/README.md."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-024",
+      "title": "Erro na carga de mensagens selecionadas é transformado em conversa vazia",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "useMessages registra error e termina loading sem mensagens. useRealtimeInbox não expõe localMsgs.error; a View só checa erro da lista global. Popup também ignora error do hook.",
+      "consumer_and_precondition": "Lista de conversas carregada; fetch das mensagens do contato selecionado falha por transporte/permissão.",
+      "observable_effect": "Chat abre vazio, sem distinguir falha de ausência de histórico e sem estado de erro/retry específico para essa consulta.",
+      "evidence": [
+        {
+          "path": "src/hooks/chat/useMessages.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessages.ts",
+          "line_start": 92,
+          "line_end": 101,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+          "claim": "Error separado de messages, loading termina."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 58,
+          "line_end": 64,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Hook local consumido sem erro."
+        },
+        {
+          "path": "src/hooks/inbox/useRealtimeInbox.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useRealtimeInbox.ts",
+          "line_start": 208,
+          "line_end": 228,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+          "claim": "Retorno não expõe erro/refetch local."
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 199,
+          "line_end": 209,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "claim": "Tratamento apenas de inbox.error global."
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 289,
+          "line_end": 328,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "claim": "Loading some e painel pode renderizar vazio."
+        },
+        {
+          "path": "src/pages/ChatPopup.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ChatPopup.tsx",
+          "line_start": 70,
+          "line_end": 73,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+          "claim": "Popup também não lê error."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.25"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Distinguir empty/error/loading na conversa selecionada.",
+        "Expor refetch local e preservar mensagens anteriores quando houver.",
+        "Simular lista bem-sucedida e falha somente na consulta de mensagens."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-025",
+      "title": "Mensagem nova e indicador de digitação forçam rolagem ao fim durante leitura",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "ChatPanel chama scrollToBottom sempre que messages.length ou isContactTyping muda. A implementação do comando sempre usa último índice, sem verificar distância do fim ou intenção do usuário.",
+      "consumer_and_precondition": "Operador rola para mensagem antiga já carregada; chega mensagem ou muda indicador de digitação.",
+      "observable_effect": "Viewport salta ao fim e perde o ponto de leitura/pesquisa. O mesmo comportamento prejudicaria prepend ao conectar a paginação.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 137,
+          "line_end": 138,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Efeito incondicional."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatMessagesArea.tsx",
+          "line_start": 82,
+          "line_end": 97,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+          "claim": "scrollToBottom sempre escolhe último índice."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatMessagesArea.tsx",
+          "line_start": 127,
+          "line_end": 128,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+          "claim": "Container ativo não mantém condição de aderência ao fim."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.3",
+        "2.8",
+        "2.10"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Só seguir automaticamente quando usuário estiver no fim ou ao próprio envio conforme decisão explícita.",
+        "Preservar âncora e oferecer indicador de novas mensagens quando usuário está lendo acima.",
+        "Testar digitação e mensagem nova com scroll fora do fim."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-026",
+      "title": "Presença de digitação entre agentes colide na identidade literal agent",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "ChatPanel fornece currentUserId=\"agent\" para todos. useTypingPresence usa esse valor como chave e remove da lista toda presença cujo key coincide com currentUserId.",
+      "consumer_and_precondition": "Dois agentes no mesmo contato através do ChatPanel; um digita.",
+      "observable_effect": "Presence agrupa ambos na mesma chave e cada cliente exclui todo o grupo como se fosse si mesmo; aviso de colega digitando não aparece.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 115,
+          "line_end": 117,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "ID literal para todos."
+        },
+        {
+          "path": "src/hooks/chat/useTypingPresence.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useTypingPresence.ts",
+          "line_start": 38,
+          "line_end": 48,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3888be830b95aed8b3ff71d80800d7d2570d79f9",
+          "claim": "Payload usa esse ID."
+        },
+        {
+          "path": "src/hooks/chat/useTypingPresence.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useTypingPresence.ts",
+          "line_start": 80,
+          "line_end": 115,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "3888be830b95aed8b3ff71d80800d7d2570d79f9",
+          "claim": "Chave e exclusão do próprio grupo."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.9",
+        "2.24"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Usar identidade real e escopo apropriado por sessão/usuário.",
+        "Excluir só a própria presença, mantendo colegas e múltiplas abas de forma definida.",
+        "Fixture de duas identidades deve produzir nome de colega sem atribuir digitação ao contato."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Não afirma que broadcast contact_typing do webhook esteja quebrado; esse canal de informação usa um handler separado.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-027",
+      "title": "Filtro Última interação reintroduz sessões antigas do mesmo dia",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "useChatSearch encontra início da sessão por gap>4 h, mas arredonda o cutoff para startOfDay antes de filtrar.",
+      "consumer_and_precondition": "Mensagens às 09 h e 18 h do mesmo dia, sem mensagens intermediárias; usuário aplica Última interação.",
+      "observable_effect": "Filtro inclui a sessão das 09 h apesar de o algoritmo ter reconhecido uma sessão separada às 18 h.",
+      "evidence": [
+        {
+          "path": "src/hooks/chat/useChatSearch.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useChatSearch.ts",
+          "line_start": 78,
+          "line_end": 94,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f5854ca4a4fe5374588c3fb4062dd965fc2454d9",
+          "claim": "Cutoff correto é arredondado para meia-noite."
+        },
+        {
+          "path": "src/hooks/chat/useChatSearch.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useChatSearch.ts",
+          "line_start": 125,
+          "line_end": 135,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f5854ca4a4fe5374588c3fb4062dd965fc2454d9",
+          "claim": "Filtro passa a aceitar o dia inteiro."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.25"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Manter timestamp exato do início de sessão para esse preset.",
+        "Distinguir presets de dia e de sessão; testar gaps no mesmo dia e atravessando meia-noite."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-028",
+      "title": "Lista virtualizada descarta a prioridade de não lidas calculada pelos filtros",
+      "severity": "P2",
+      "state": "confirmado estaticamente",
+      "cause": "useInboxFilters ordena não lidas antes de lidas. VirtualizedRealtimeList reordena toda entrada por timestamp antes de agrupar, apesar do comentário de preservar a ordem interna.",
+      "consumer_and_precondition": "Duas conversas no mesmo grupo de data, a mais antiga não lida e a mais recente lida.",
+      "observable_effect": "A prioridade calculada para não lidas é perdida no componente que efetivamente renderiza.",
+      "evidence": [
+        {
+          "path": "src/hooks/inbox/useInboxFilters.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useInboxFilters.ts",
+          "line_start": 167,
+          "line_end": 176,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+          "claim": "Sort por não lidas e depois tempo."
+        },
+        {
+          "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/VirtualizedRealtimeList.tsx",
+          "line_start": 118,
+          "line_end": 145,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+          "claim": "Sort por tempo desfaz prioridade antes dos grupos."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.1",
+        "2.6"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Escolher regra de produto explícita e implementá-la uma vez.",
+        "Se não lidas têm prioridade, preservar essa ordem dentro dos grupos de data e fixadas.",
+        "Teste ordem visual com lida nova e não lida antiga no mesmo grupo."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Confirmação estática do contrato descrito. Não mede incidência em produção nem demonstra configuração/dados do serviço em execução.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-029",
+      "title": "Adiar conversa grava snooze, mas efeito operacional e retomada não são consumidos pela Inbox",
+      "severity": "P2",
+      "state": "lacuna",
+      "cause": "snoozeConversation persiste snooze_until e expõe snoozedIds/isSnoozed. No caminho ativo lido, serviço/filtros/lista não usam o estado para suspender/retomar a conversa, e não há indicador de snooze nesses consumidores.",
+      "consumer_and_precondition": "Ação Adiar no menu da conversa ou /snooze, insert bem-sucedido.",
+      "observable_effect": "Confirma Conversa adiada, mas conversa permanece com o mesmo comportamento de listagem. O significado operacional de adiar e retomada na hora devida não foi demonstrado.",
+      "evidence": [
+        {
+          "path": "src/hooks/chat/useConversationActions.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useConversationActions.ts",
+          "line_start": 133,
+          "line_end": 162,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "e2197ee8ea0014c088f0ae54be0eaa9895917ede",
+          "claim": "Persistência e toast de adiar."
+        },
+        {
+          "path": "src/hooks/chat/useConversationActions.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useConversationActions.ts",
+          "line_start": 192,
+          "line_end": 212,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "e2197ee8ea0014c088f0ae54be0eaa9895917ede",
+          "claim": "Estado exposto."
+        },
+        {
+          "path": "src/hooks/inbox/useInboxFilters.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useInboxFilters.ts",
+          "line_start": 75,
+          "line_end": 177,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+          "claim": "Filtros ativos sem snooze."
+        },
+        {
+          "path": "src/services/realtime.service.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/services/realtime.service.ts",
+          "line_start": 45,
+          "line_end": 89,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc",
+          "claim": "Carga sem snooze."
+        },
+        {
+          "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/useChatPanelHandlers.ts",
+          "line_start": 182,
+          "line_end": 184,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+          "claim": "Slash encaminha a ação real de persistência."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.16",
+        "2.33"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Definir se adiar significa remover da fila, silenciar, sinalizar ou só registrar.",
+        "Implementar/ligar consumidores e retomada do contrato escolhido.",
+        "Testar efeito imediatamente após adiar e após expirar o prazo."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Ausência foi verificada nos consumidores ativos, não inferida apenas de falta de imports. Agendador/integração externa não foi consultado; a decisão de produto sobre o efeito desejado não está resolvida aqui.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    },
+    {
+      "id": "R2-INB-030",
+      "title": "Header declara contato Online sem consultar presença online",
+      "severity": "P3",
+      "state": "confirmado estaticamente",
+      "cause": "Header renderiza bolinha verde sempre e, quando não está digitando, texto Online incondicional. Nenhuma prop/estado de presença online participa dessa decisão.",
+      "consumer_and_precondition": "Abrir qualquer conversa quando isContactTyping=false, inclusive histórico sem sinal recente de presença.",
+      "observable_effect": "Operador recebe afirmação Online sem evidência do estado do contato.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatPanelHeader.tsx",
+          "line_start": 81,
+          "line_end": 89,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+          "claim": "Bolinha verde incondicional."
+        },
+        {
+          "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/ChatPanelHeader.tsx",
+          "line_start": 116,
+          "line_end": 119,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+          "claim": "Online é o else de digitação."
+        }
+      ],
+      "feature_catalog_ids": [
+        "2.4"
+      ],
+      "previous_finding_relationship": "Lacuna nova identificada nesta reauditoria; não corresponde a um achado específico de Inbox entre os 104 registros anteriores. A presença estrutural do arquivo no inventário anterior não foi tratada como revisão semântica de cada função.",
+      "acceptance_criteria": [
+        "Exibir online somente com sinal válido e prazo de expiração, ou usar estado desconhecido/neutro.",
+        "Ausência de digitação não deve significar presença online."
+      ],
+      "offline_reproduction": {
+        "available": false,
+        "probe_ids": [],
+        "command": null,
+        "method": "Inspeção do caminho ativo e dos trechos citados; sem reprodução de DOM/provedor/banco neste trabalho."
+      },
+      "limitations": "Não determina estado de nenhum contato real; a afirmação independe de dados no próprio render.",
+      "baseline_comparison": {
+        "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+        "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+        "all_evidence_files_identical_to_baseline": true,
+        "classification": "lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual"
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+-- rollback: reinsere a linha de teste removida (residuo do contato fixture, recriado pelo proximo run
+--   de e2e; sem efeito funcional no app). Nao ha perda de dado de producao a recuperar:
+--   INSERT INTO public.conversation_closures (id, contact_id, close_reason, created_at)
+--   VALUES ('7f9648b9-af0a-4e48-b257-b68527b0b585',
+--           '04dff4dc-c6b1-4283-ac22-bd8639804759',
+--           'resolved', '2026-10-03T15:55:56.891366+00:00')
+--   ON CONFLICT (id) DO NOTHING;
+--
+-- Reparo: limpeza de dados de teste E2E que a migration de 27/09 nao conseguiu executar.
+--
+-- A migration `20260927540000_security_gamification_guards_e2e_cleanup_avg_null` tentava:
+--
+--   DELETE FROM public.conversation_closures
+--   WHERE conversation_id IN (
+--     SELECT id FROM public.conversations WHERE contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759'
+--   );
+--
+-- Esse statement nunca rodou, por DOIS motivos independentes, ambos medidos no banco canonico:
+--   1. `public.conversations` nao existe. A tabela atual de conversa de contato nao tem esse nome
+--      (`public.team_conversations` e chat INTERNO de equipe, com outro schema: sem `contact_id`).
+--   2. `public.conversation_closures.conversation_id` tambem nao existe. A tabela passou a ser
+--      chaveada por `contact_id` direto — o subselect era desnecessario e impossivel.
+--
+-- Producao sa ficou sem a limpeza: o contato de teste seguia com 1 closure registrada.
+--
+-- Reparo por versao nova, como manda a regra 7: a `20260927540000` permanece intocada.
+-- Idempotente: DELETE escopado por `contact_id` exato; reexecutar nao altera nada.
+-- Medicao antes: 1 linha do contato de teste, de um total de 18 na tabela.
+
+DELETE FROM public.conversation_closures
+WHERE contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759';

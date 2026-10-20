@@ -1,0 +1,2 @@
+policies|nova_tabela."pol_leitura"
+policies|nova_tabela.pol_leitura

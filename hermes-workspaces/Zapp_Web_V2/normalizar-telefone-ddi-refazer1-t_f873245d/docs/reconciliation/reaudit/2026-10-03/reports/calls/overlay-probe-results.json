@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/hooks/communication/useIncomingCallListener.ts",
+      "git_blob_sha": "1133f6b7d3f9abbbcf320167d2a1c6e7830ec2c9",
+      "sha256": "ffc4bf5634107d699438348a232c6aa12ea26ab410de906cf8e35f2d0fc2d5ac"
+    },
+    {
+      "path": "src/components/calls/IncomingCallAlert.tsx",
+      "git_blob_sha": "ae3a1d5827a86f49d939a4d0ae3575fae23db516",
+      "sha256": "6b0bca8bfb1845723b616a49c46e80f76fbb1f2316f01ba18fa1dac9d09a96bb"
+    },
+    {
+      "path": "src/components/calls/CallDialog.tsx",
+      "git_blob_sha": "abcc1e9db5f8ed07eb5edfda3ac4787cb5f24102",
+      "sha256": "440f8ed83e671756d079411f0dda7c03e05955783254ea2bf6019a7253d48a3e"
+    },
+    {
+      "path": "src/hooks/calls/useTerminoRemoto.ts",
+      "git_blob_sha": "2f245a7cfcfd5097d2fbe72de74c3b8d6f0e382b",
+      "sha256": "691ec1449c90674ff1714a9b4eeed6214d6d4612d142df8bd58f3550970db90e"
+    },
+    {
+      "path": "src/lib/calls/terminoRemoto.ts",
+      "git_blob_sha": "bb6222e4bc928e140044f3592a40b2c79ef10388",
+      "sha256": "64d7ddfa4a6402371f0e0ac5208e29410516223d57bfb290c752eae4689ec206"
+    },
+    {
+      "path": "src/lib/calls/toqueDaChamada.ts",
+      "git_blob_sha": "14bcbb863439b37d9157845b5fb0ab2ffb90e595",
+      "sha256": "d6bc850cdeca069368a77c85ab44ec8da93c73a5ec2470016b50c39a03ef9793"
+    },
+    {
+      "path": "src/lib/calls/session.ts",
+      "git_blob_sha": "45be0b4a8d5a9916a585255d644c974fa5d0338d",
+      "sha256": "d7a60de9be747c09a9aeec0843a7e00da3bea78f6ae9c6bfeb1f0a8ea7355c45"
+    },
+    {
+      "path": "src/lib/calls/callStatus.ts",
+      "git_blob_sha": "1578593aaede12bfc383486bf14171c513c00aaa",
+      "sha256": "7b9af27431784e30334d2e08a583b145eef7fc90dd022e4968afcfdf82054a5f"
+    },
+    {
+      "path": "src/providers/CallSessionProvider.tsx",
+      "git_blob_sha": "47d783cd156b15af5267802d8321875f6c06e085",
+      "sha256": "59238f72c7f676912999f6b059594272a6d06e872b22c49fdc1c931baedcfac3"
+    },
+    {
+      "path": "src/hooks/calls/useCallChannels.ts",
+      "git_blob_sha": "09b876d49d1d42f3f5df57781d68fa662fbf2b13",
+      "sha256": "c714944fa5d659415947d9a2578083337f6c4b3ea0ef01684b250510c7b895a5"
+    },
+    {
+      "path": "src/hooks/communication/useSipClient.ts",
+      "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+      "sha256": "eaa66eecd2d93c8675732174f98f47ca928d54a4193ef5319525b65b3b1123fe"
+    },
+    {
+      "path": "src/App.tsx",
+      "git_blob_sha": "4328fcf14cd3765f0cbda0a426a068a21ebc958a",
+      "sha256": "3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220"
+    }
+  ],
+  "script_sha256": "042d6966b21af3f0f42259e42bdd536b3e01ee108078a940f26574fa5ebc67fb",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "CALL-P08",
+      "status": "PASS",
+      "title": "Ending the matching provider session does not remove the notification overlay input",
+      "observed": {
+        "provider_status": "ended",
+        "notification_call_id_after_end": "A",
+        "ring_state_from_unchanged_input": "tocando",
+        "explicit_dismiss_clears": true
+      },
+      "limitations": "Whole listener hook and reducer, exact remote callback and pure ring rule. React primitives, successful calls query and notification delivery are synthetic. No mounted overlay or audible ringtone; UI effect is verified statically against the retained input."
+    },
+    {
+      "id": "CALL-P09",
+      "status": "PASS",
+      "title": "The prior answer flag maps a new incoming call to the answered dialog without accepting it",
+      "observed": {
+        "new_notification_call_id": "B",
+        "retained_show_dialog": true,
+        "accept_calls": 1,
+        "new_call_visual_status": "answered"
+      },
+      "limitations": "Exact answer callback, whole listener and exact visualStatus; the initialStatus literal is read from actual JSX. Preserved component instance and no explicit dialog-close action are scenario preconditions. Does not claim B was answered at the transport."
+    },
+    {
+      "id": "CALL-P10",
+      "status": "PASS",
+      "title": "Answer on a WhatsApp notification invokes the SIP session API without notification identity",
+      "observed": {
+        "notification_call_id": "whatsapp-B",
+        "current_provider_session_id": "unrelated-voip",
+        "sip_calls": [
+          "acceptIncomingCall"
+        ],
+        "provider_status_after_click": "connecting",
+        "connected_whatsapp_exposes_answer": true
+      },
+      "limitations": "Exact alert/provider callbacks and capability functions; SIP boundary is a spy. Concurrent unrelated SIP ringing is an explicit scenario, not observed traffic. Independently, an idle SIP engine has no WhatsApp adapter dispatch or WhatsApp persistence through this path."
+    },
+    {
+      "id": "CALL-P11",
+      "status": "PASS",
+      "title": "Remote call update validates the watched ID but neither the live session ID nor the valid event for ringing",
+      "observed": {
+        "matching_ringing_session_after_end": "ringing_in",
+        "watched_call": "B",
+        "unrelated_live_session": "A",
+        "unrelated_live_session_after_end": "ended",
+        "payload_id_mismatch_ignored": true
+      },
+      "limitations": "Exact remote callback plus whole reducer. The positive control preserves the existing comparison against the subscribed ID. The cross-call scenario assumes the overlay is watching B while the provider owns A; only provider state, not SIP transport hangup, is demonstrated."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0,
+  "method": "HEAD and all source blobs verified before parsing/evaluation. Exact AST callbacks, whole pure modules and whole listener hook; synthetic React state, query, notification and SIP boundaries. No browser rendering or provider acceptance."
+}

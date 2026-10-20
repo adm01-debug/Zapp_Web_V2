@@ -1,0 +1,520 @@
+From c45e8f6b611b55ec005b51eed22951a9dad50101 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Thu, 1 Oct 2026 08:00:11 -0300
+Subject: [PATCH] fix(db): endurece o cron sem DML direto em cron.job
+
+O apply pos-merge da 20260930390000 falhou em producao com 42501 permission denied for
+table job: no Supabase o cron.job pertence ao supabase_admin e as funcoes do pg_cron sao
+SECURITY INVOKER, entao nenhum DML direto na tabela passa pelo caminho canonico.
+
+A correcao troca o DELETE do homonimo de outro dono por DETECCAO que levanta excecao
+(com o comando de correcao no HINT, para quem tem supabase_admin) e usa
+cron.unschedule(jobid) para duplicata entre jobs nossos, mantendo cron.alter_job para
+preservar jobid e active.
+
+O contrato passa a provar isso em vez de confiar no stub: o cron.job do stub ganha um
+escudo que devolve 42501 (como producao), entra assercao de arquivo contra DML direto e
+mutacao que reintroduz o DELETE exigindo que o apply seja barrado. O D3 passa a exigir a
+deteccao que levanta, com o hash do mundo intacto antes e depois.
+
+Verificacao: contrato A/B/C/D em PostgreSQL descartavel - 78 PASS, zero falha, escudo
+barrando DML direto com 42501; typecheck exit 0; lint-ratchet novas=0; db:guard 0 novas;
+producao medida: ledger 20260930390000, service_role sem EXECUTE, checagem {64} viva,
+alter_job em uso, jobs 17/18 com jobid preservado, 5 execucoes succeeded e 0 erro HTTP.
+---
+ .../db-audit/cron-secret-l5-contract.test.sh  | 265 ++++++++++++++----
+ ...0930390000_endurece_l5_contrato_e_jobs.sql |  64 +++--
+ 2 files changed, 257 insertions(+), 72 deletions(-)
+
+diff --git a/scripts/db-audit/cron-secret-l5-contract.test.sh b/scripts/db-audit/cron-secret-l5-contract.test.sh
+index c34d3b27..1852e3a0 100644
+--- a/scripts/db-audit/cron-secret-l5-contract.test.sh
++++ b/scripts/db-audit/cron-secret-l5-contract.test.sh
+@@ -28,23 +28,32 @@
+ #   limpo, a assercao de ACL FALHA e o vazamento do segredo volta para a anon.
+ #
+ # BLOCO D (mutacao, follow-up): aplica 20260930390000_endurece_l5_contrato_e_jobs e
+-#   prova, assercao a assercao, os quatro furos medidos no contrato antigo MAIS a
+-#   idempotencia -- cada uma com uma MUTACAO em COPIA temporaria que a derruba e cuja
+-#   mensagem crua sai rotulada [EVIDENCIA] (padrao do BLOCO C):
+-#     D1/D2  E5.3  segredo vazio / truncado (32 hex) faz a funcao LEVANTAR e nao toca job
+-#     D3     E3.2  homonimo de OUTRO dono nao sobrevive ao reagendamento
+-#     D4     E4.2  job desativado de proposito preserva jobid e active
+-#     D5     P7.6  service_role perde o EXECUTE em apply_zapp_cron_secrets_l5()
++#   prova, assercao a assercao, os furos medidos no contrato antigo MAIS a idempotencia --
++#   cada uma com uma MUTACAO em COPIA temporaria que a derruba e cuja mensagem crua sai
++#   rotulada [EVIDENCIA] (padrao do BLOCO C):
++#     D0    E3.2  assercao de ARQUIVO: a migration NAO tem DML direto em cron.job (so
++#                 leitura + cron.unschedule/alter_job/schedule) -- o vetor exato do 42501
++#                 medido em producao. O stub PROVA o 42501 com um escudo.
++#     D1/D2 E5.3  segredo vazio / truncado (32 hex) faz a funcao LEVANTAR e nao toca job
++#     D3    E3.2  homonimo de OUTRO dono e DETECTADO (nao removido): a funcao LEVANTA e
++#                 nenhum job e tocado (hash do mundo intacto)
++#     D4    E4.2  job desativado de proposito preserva jobid e active
++#     D5    P7.6  service_role perde o EXECUTE em apply_zapp_cron_secrets_l5()
+ #     D6           reaplicar nao duplica o mundo (alter_job no lugar de schedule)
+ #
+ # LIMITE DECLARADO: o container NAO tem o Vault nem o pg_cron do Supabase. O
+ # pre.sql cria STUBS fieis ao necessario para as TRES migrations aplicarem e para
+ # os quatro furos existirem de verdade no stub: cron.job com username + UNIQUE
+ # (jobname, username), cron.unschedule() que so apaga job do proprio dono,
+-# cron.alter_job() que altera so os parametros nao-nulos (pg_cron 1.6) e o
++# cron.alter_job() que altera so os parametros nao-nulos (pg_cron 1.6), um ESCUDO
++# (trigger BEFORE INSERT/UPDATE/DELETE FOR EACH STATEMENT) que levanta 42501 em qualquer
++# DML direto -- contornado por DENTRO pelos stubs de cron.schedule/unschedule/alter_job
++# via session_replication_role=replica, como o dono da tabela -- e o
+ # ALTER DEFAULT PRIVILEGES que reproduz o default ACL do Supabase (EXECUTE para
+ # anon/authenticated/service_role em funcao nova em public) -- sem esse default ACL
+-# o furo P7.6 nem existiria no stub. O que este contrato prova e o que as
++# o furo P7.6 nem existiria no stub. Sem o ESCUDO, o DML direto (que so passava por o
++# Postgres descartavel rodar como superuser) nao existiria no stub -- foi exatamente o
++# gap que deixou o defeito de producao passar. O que este contrato prova e o que as
+ # migrations fazem sobre essa superficie, nao o comportamento interno do pg_cron
+ # real -- exceto gen_random_bytes, que e o pgcrypto de verdade.
+ #
+@@ -91,6 +100,15 @@ psql_file_db() {
+ }
+ psql_file() { psql_file_db postgres "$1"; }
+ 
++# DML de MANUTENCAO no cron.job (montar cenario de teste): atravessa o escudo como o dono
++# da tabela faria -- o mesmo atalho que o pg_cron real usa por dentro. O caminho da
++# MIGRATION nao tem esse atalho; e exatamente o que o escudo prova.
++psql_dml_db() {
++  local db="$1" sql="$2"
++  docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d "$db" \
++    -c 'SET session_replication_role = replica' -c "$sql"
++}
++
+ expect_error() {
+   local label="$1" needle="$2" sql="$3" output status
+   set +e
+@@ -132,6 +150,44 @@ expect_value_db() {
+ normaliza_sql() { sed -E 's/--.*$//' "$1" | tr '\n' ' ' | tr -s ' '; }
+ conta_ocorrencias() { grep -oE "$2" <<< "$1" | wc -l | tr -d ' ' || true; }
+ 
++# Assercao de ARQUIVO (E3.2) por AFIRMACAO (o padrao existe / nao existe), NUNCA por
++# CONTAGEM de texto: contagem muda de veredito por comentario E por string literal -- o
++# HINT desta migration cita "FROM cron.job" e "username <> current_user" em prosa -- e essa
++# e a licao do supabase-usage-guard.mjs. Por que a regra: medido em producao, cron.job
++# pertence a supabase_admin e as funcoes do pg_cron sao SECURITY INVOKER; o dono de
++# apply_zapp_cron_secrets_l5() recebe 42501 "permission denied for table job" em QUALQUER
++# DML direto (foi o que derrubou o apply pos-merge do E3.2). O unico acesso permitido a
++# cron.job e LEITURA (SELECT ... FROM cron.job); as ESCRITAS passam obrigatoriamente por
++# cron.unschedule / cron.alter_job / cron.schedule, que resolvem o dono por dentro.
++# Ecoa o motivo e retorna 1 quando a regra quebra.
++checa_sem_dml_direto() {
++  local arquivo="$1" norm precedentes
++  norm="$(normaliza_sql "$arquivo")"
++  if grep -qE 'DELETE[[:space:]]+FROM[[:space:]]+cron\.job' <<< "$norm"; then
++    printf 'a migration voltou a fazer DELETE direto em cron.job (o apply pos-merge da 42501 em producao)'; return 1
++  fi
++  if grep -qE '(UPDATE|INSERT[[:space:]]+INTO|TRUNCATE)[[:space:]]*cron\.job' <<< "$norm"; then
++    printf 'a migration faz UPDATE/INSERT/TRUNCATE direto em cron.job (o apply pos-merge da 42501 em producao)'; return 1
++  fi
++  if ! grep -qE 'PERFORM[[:space:]]+cron\.unschedule\(' <<< "$norm"; then
++    printf 'a migration deveria remover duplicata entre jobs NOSSOS por cron.unschedule(jobid)'; return 1
++  fi
++  if ! grep -qE 'PERFORM[[:space:]]+cron\.alter_job\(' <<< "$norm"; then
++    printf 'a migration deveria alterar o job existente por cron.alter_job(job_id:=...)'; return 1
++  fi
++  if ! grep -qE 'PERFORM[[:space:]]+cron\.schedule\(' <<< "$norm"; then
++    printf 'a migration deveria (re)criar o job ausente por cron.schedule(...)'; return 1
++  fi
++  # Todo acesso a cron.job tem de ser LEITURA: a UNICA palavra que pode preceder a tabela e
++  # FROM. O comentario ja saiu em normaliza_sql; a prosa do HINT cita "FROM cron.job"
++  # (tambem leitura), entao a afirmacao vale sem contar ocorrencia.
++  precedentes="$( { grep -oE '[A-Za-z_]+[[:space:]]+cron\.job' <<< "$norm" || true; } | sort -u | tr '\n' '|')"
++  if [[ "$precedentes" != 'FROM cron.job|' ]]; then
++    printf 'a migration acessa cron.job por algo que nao e leitura (precedentes: %s)' "$precedentes"; return 1
++  fi
++  return 0
++}
++
+ command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
+ docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
+ [[ -f "$migration_secrets" ]] || fail "migration nao encontrada: $migration_secrets"
+@@ -199,30 +255,71 @@ CREATE TABLE IF NOT EXISTS cron.job (
+   username text NOT NULL DEFAULT current_user,
+   CONSTRAINT cron_job_jobname_username_key UNIQUE (jobname, username)
+ );
++-- ── ESCUDO do cron.job (E3.2): DML direto e IMPOSSIVEL pelo caminho canonico ─────
++-- Medido em producao: cron.job pertence a supabase_admin, as funcoes do pg_cron sao
++-- SECURITY INVOKER e o dono da NOSSA funcao recebe 42501 "permission denied for table
++-- job" em qualquer DML direto (foi o que derrubou o apply pos-merge do E3.2). O stub
++-- reproduz isso com um trigger de STATEMENT que levanta o MESMO 42501. Os stubs de
++-- cron.schedule/unschedule/alter_job contornam por DENTRO com session_replication_role
++-- = replica -- o atalho do dono da tabela, que o pg_cron real tem e a MIGRATION nao.
++-- Sem este escudo o DML direto passava batido (so funcionava porque o Postgres
++-- descartavel rodava como superuser): foi exatamente o gap do contrato anterior.
++-- (Sem DROP TRIGGER IF EXISTS cru: ele emite NOTICE "does not exist, skipping" a cada
++--  banco novo e polui o log do contrato. O DO so dropa se existir.)
++DO $$
++BEGIN
++  IF EXISTS (SELECT 1 FROM pg_trigger
++              WHERE tgname = 'cron_job_escudo_dml_direto'
++                AND tgrelid = 'cron.job'::regclass) THEN
++    DROP TRIGGER cron_job_escudo_dml_direto ON cron.job;
++  END IF;
++END $$;
++CREATE OR REPLACE FUNCTION cron.zapp_escudo_dml_direto_cron_job()
++  RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++  RAISE EXCEPTION 'permission denied for table job'
++    USING ERRCODE = '42501',
++          HINT = 'cron.job pertence a supabase_admin: use cron.schedule/cron.unschedule/cron.alter_job, nunca DML direto.';
++END $$;
++CREATE TRIGGER cron_job_escudo_dml_direto
++  BEFORE INSERT OR UPDATE OR DELETE ON cron.job
++  FOR EACH STATEMENT EXECUTE FUNCTION cron.zapp_escudo_dml_direto_cron_job();
++
+ CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text)
+   RETURNS bigint LANGUAGE plpgsql AS $$
+ DECLARE v bigint;
+ BEGIN
++  -- Contorno interno do dono da tabela (pg_cron real): vale so ate o fim da transacao.
++  PERFORM set_config('session_replication_role', 'replica', true);
+   INSERT INTO cron.job (jobname, schedule, command, username)
+   VALUES (job_name, schedule, command, current_user)
+   RETURNING jobid INTO v;
+   RETURN v;
+ END $$;
+ -- Real: cron.unschedule(job_id) apaga SO o job do dono da sessao. E exatamente por
+--- isso que o homonimo de outro dono sobrevive ao caminho antigo (E3.2).
++-- isso que o homonimo de outro dono NAO e alcancavel daqui (E3.2), e por isso o
++-- reagendamento nao pode apagar a linha do outro dono por DML direto (42501).
+ CREATE OR REPLACE FUNCTION cron.unschedule(job_id bigint)
+-  RETURNS boolean LANGUAGE sql AS $$
+-    DELETE FROM cron.job WHERE jobid = job_id AND username = current_user RETURNING true $$;
++  RETURNS boolean LANGUAGE plpgsql AS $$
++DECLARE v boolean;
++BEGIN
++  PERFORM set_config('session_replication_role', 'replica', true);
++  DELETE FROM cron.job WHERE jobid = job_id AND username = current_user RETURNING true INTO v;
++  RETURN COALESCE(v, false);
++END $$;
+ -- Real (pg_cron 1.6): alter_job muda SO o que foi passado; o resto fica como esta
+ -- (jobid e active inclusive). Os parametros chegam por nome (job_id/schedule/command).
+ CREATE OR REPLACE FUNCTION cron.alter_job(job_id bigint, schedule text DEFAULT NULL,
+                                           command text DEFAULT NULL, active boolean DEFAULT NULL)
+-  RETURNS void LANGUAGE sql AS $$
+-    UPDATE cron.job AS j
+-       SET schedule = COALESCE($2, j.schedule),
+-           command  = COALESCE($3, j.command),
+-           active   = COALESCE($4, j.active)
+-     WHERE j.jobid = $1 $$;
++  RETURNS void LANGUAGE plpgsql AS $$
++BEGIN
++  PERFORM set_config('session_replication_role', 'replica', true);
++  UPDATE cron.job AS j
++     SET schedule = COALESCE($2, j.schedule),
++         command  = COALESCE($3, j.command),
++         active   = COALESCE($4, j.active)
++   WHERE j.jobid = $1;
++END $$;
+ 
+ -- ── roles do PostgREST (idempotente: o pre.sql roda em mais de um banco) ───────
+ DO $$
+@@ -254,6 +351,11 @@ SQL
+ # dois com credencial publica (gmail-incremental-sync e talkx-scheduler-1min) ficam
+ # FORA do escopo do L5 e sao o que a assercao E6.2 passa a documentar em vez de negar.
+ cat > "$tmp_dir/seed.sql" <<'SQL'
++-- O seed reproduz jobs que JA existiam em producao (criados pelo dono da tabela). Ele
++-- roda como esse dono (session_replication_role=replica) para atravessar o escudo do
++-- cron.job -- exatamente o atalho que a MIGRATION nao tem e nao pode ter.
++SET session_replication_role = replica;
++
+ INSERT INTO vault.secrets (name, description, secret) VALUES
+   ('zapp_anon_key',  'anon key do projeto (publica, vai no bundle do front)', 'anon-key-publica-do-projeto'),
+   ('talkx_anon_key', 'anon key usada pelo talkx-scheduler (publica)',         'anon-key-publica-do-talkx')
+@@ -508,16 +610,69 @@ nova_base_db() { # $1 = nome do banco
+ # em prosa, e o REVOKE ocupa DUAS linhas; comentar ou quebrar linha nao pode mudar o
+ # veredito (o mesmo defeito de leitura que o supabase-usage-guard.mjs ja teve).
+ sql_norm="$(normaliza_sql "$migration_endurece")"
+-[[ "$(conta_ocorrencias "$sql_norm" '\{64\}')" == '2' ]] \
+-  || fail 'o arquivo do repo deveria ter as 2 checagens ^[0-9a-f]{64}$'
+-[[ "$(conta_ocorrencias "$sql_norm" 'username <> current_user')" == '2' ]] \
+-  || fail 'o arquivo do repo deveria ter os 2 DELETE de homonimo de outro dono'
+-[[ "$(conta_ocorrencias "$sql_norm" 'PERFORM[[:space:]]+cron\.alter_job\(')" == '2' ]] \
+-  || fail 'o arquivo do repo deveria ter as 2 CHAMADAS de cron.alter_job (o comentario do cabecalho cita o nome e nao conta)'
++# Assertar por AFIRMACAO (existencia de padrao), NUNCA por contagem de texto: o comentario
++# ja sai em normaliza_sql, mas a STRING do HINT continua no SQL e cita "cron.alter_job",
++# "FROM cron.job" e "username <> current_user" em prosa -- contar ocorrencia mudaria de
++# veredito por causa dessa prosa (a licao do supabase-usage-guard.mjs).
++grep -qE '\^\[0-9a-f\]\{64\}\$' <<< "$sql_norm" \
++  || fail 'o arquivo do repo perdeu a checagem de formato ^[0-9a-f]{64}$ do segredo'
+ grep -qE 'REVOKE ALL ON FUNCTION public\.apply_zapp_cron_secrets_l5\(\) FROM PUBLIC, anon, authenticated, service_role' <<< "$sql_norm" \
+   || fail 'o REVOKE do arquivo do repo tem de cobrir PUBLIC, anon, authenticated e service_role (mesmo com o REVOKE em duas linhas)'
+ printf '[PASS] %s\n' 'D0 o arquivo do repo (20260930390000) esta intacto; toda mutacao e COPIA em $tmp_dir'
+ 
++# ── assercao de ARQUIVO (E3.2): a migration NAO pode conter DML direto em cron.job ──
++# Por que: medido em producao, cron.job pertence a supabase_admin e as funcoes do pg_cron
++# sao SECURITY INVOKER; o dono de apply_zapp_cron_secrets_l5() recebe 42501 ("permission
++# denied for table job") em QUALQUER DML direto -- foi o que derrubou o apply pos-merge do
++# E3.2. O unico acesso permitido a cron.job e LEITURA (SELECT ... FROM cron.job); as
++# ESCRITAS passam por cron.unschedule / cron.alter_job / cron.schedule. Assercao por
++# AFIRMACAO, nunca por contagem -- mencao em comentario E em string literal conta numa
++# contagem e nao pode mudar o veredito (a licao do supabase-usage-guard.mjs).
++if grep -qE 'DELETE[[:space:]]+FROM[[:space:]]+cron\.job' <<< "$sql_norm"; then
++  fail 'a migration do repo voltou a fazer DML direto em cron.job (o apply pos-merge da 42501 em producao)'
++fi
++if grep -qE '(UPDATE|INSERT[[:space:]]+INTO|TRUNCATE)[[:space:]]*cron\.job' <<< "$sql_norm"; then
++  fail 'a migration do repo faz UPDATE/INSERT/TRUNCATE direto em cron.job (o apply pos-merge da 42501 em producao)'
++fi
++grep -qE 'AND[[:space:]]+username[[:space:]]*<>[[:space:]]*current_user' <<< "$sql_norm" \
++  || fail 'a migration do repo perdeu a deteccao do job de outro dono'
++grep -qE 'PERFORM[[:space:]]+cron\.unschedule\(' <<< "$sql_norm" \
++  || fail 'a migration do repo deveria remover duplicata entre jobs NOSSOS por cron.unschedule(jobid)'
++grep -qE 'PERFORM[[:space:]]+cron\.alter_job\(' <<< "$sql_norm" \
++  || fail 'a migration do repo deveria alterar o job existente por cron.alter_job(job_id:=...)'
++grep -qE 'PERFORM[[:space:]]+cron\.schedule\(' <<< "$sql_norm" \
++  || fail 'a migration do repo deveria (re)criar o job ausente por cron.schedule(...)'
++if assercao_msg="$(checa_sem_dml_direto "$migration_endurece")"; then
++  printf '[PASS] %s\n' 'D0b (E3.2) o SQL do repo nao tem DML direto em cron.job: so leitura + cron.unschedule/alter_job/schedule'
++else
++  fail "D0b (E3.2) a migration do repo tem acesso proibido a cron.job: $assercao_msg (em producao: 42501)"
++fi
++
++# O escudo existe no stub de verdade: DML direto em cron.job levanta 42501 pelo caminho
++# canonico -- foi exatamente o erro medido no apply pos-merge (o gap do contrato antigo).
++expect_error 'D0c (E3.2) o stub do cron.job PROIBE DML direto com 42501 (o defeito real)' \
++  'permission denied for table job' \
++  "DELETE FROM cron.job WHERE jobname = 'connection-health-check'"
++
++# MUTACAO do escudo: REINTRODUZ, numa COPIA, o DML direto que existia no E3.2 defeituoso --
++# o corpo da deteccao ganha um DELETE em cron.job. O apply dessa copia tem de FALHAR com o
++# 42501 medido em producao; sem isso o escudo seria decorativo e o gap continuaria aberto.
++mut_dml_direto="$tmp_dir/nova.com_dml_direto.sql"
++sed "/IF v_intruso IS NOT NULL THEN/a\\    DELETE FROM cron.job WHERE jobname IN ('connection-health-check','avatars-refresh') AND username <> current_user;" \
++  "$migration_endurece" > "$mut_dml_direto"
++grep -qE 'DELETE[[:space:]]+FROM[[:space:]]+cron\.job' "$mut_dml_direto" \
++  || fail 'a copia D0d nao recebeu o DML direto injetado'
++if checa_sem_dml_direto "$mut_dml_direto" >/dev/null 2>&1; then
++  fail 'D0d: a assercao de arquivo NAO pegou o DML direto injetado na copia'
++fi
++printf '[EVIDENCIA] %s\n' "a assercao de arquivo recusa a copia: $(checa_sem_dml_direto "$mut_dml_direto" || true)"
++printf '[PASS] %s\n' 'D0d a assercao de arquivo FALHA com DML direto injetado em cron.job'
++nova_base_db d0d_mut
++psql_dml_db d0d_mut "INSERT INTO cron.job (jobname, schedule, command, username)
++  VALUES ('connection-health-check','*/5 * * * *','SELECT 1','outro_dono')"
++expect_error_file 'D0e (E3.2) o apply da copia com DML direto e BARrado pelo escudo: 42501 (o defeito real)' \
++  d0d_mut "$mut_dml_direto" 'permission denied for table job'
++
+ nova_base_db d_ref
+ 
+ # P7.6: o furo existe ANTES do endurecimento. A versao 20260930250000 so revogava
+@@ -544,24 +699,31 @@ expect_value_db 'D6b reaplicar nao duplica: o mundo segue com 11 jobs' '11' \
+ expect_value_db 'D6c e nenhum jobname ficou duplicado' '0' \
+   "SELECT count(*) FROM (SELECT jobname FROM cron.job GROUP BY jobname HAVING count(*) > 1) d" d_ref
+ 
+-# D3 (E3.2): homonimo de OUTRO dono. O indice unico real e (jobname, username), entao
+-# um job de mesmo nome criado por outro usuario coexiste -- e cron.unschedule() so
+-# alcanca o proprio dono, deixando o homonimo vivo (2 jobs ativos no caminho antigo).
+-psql_db d_ref "INSERT INTO cron.job (jobname, schedule, command, username)
++# D3 (E3.2): homonimo de OUTRO dono. O indice unico real e (jobname, username), entao um
++# job de mesmo nome criado por outro usuario coexiste -- e cron.unschedule() so alcanca o
++# proprio dono. DML direto para apagar a linha do outro dono e IMPOSSIVEL (42501, medido).
++# A nova semantica NAO remove o homonimo: ela DETECTA e LEVANTA, sem tocar em job nenhum
++# (por isso o hash do mundo fica intacto). A remocao fica para quem tem supabase_admin.
++nova_base_db d3_ref
++expect_value_db 'D3a (E3.2) o job do escopo existe sozinho (1) antes de plantar o homonimo' '1' \
++  "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check'" d3_ref
++psql_dml_db d3_ref "INSERT INTO cron.job (jobname, schedule, command, username)
+   VALUES ('connection-health-check','*/5 * * * *','SELECT 1','outro_dono')"
+-expect_value_db 'D3a (E3.2) cenario montado: 2 jobs com o mesmo nome, um de outro dono' '2' \
+-  "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check'" d_ref
+-psql_file_db d_ref "$migration_endurece"   # 3a aplicacao
+-expect_value_db 'D3b (E3.2) sobra 1 job com o nome do escopo (o homonimo de outro dono sai)' '1' \
+-  "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check'" d_ref
+-expect_value_db 'D3c (E3.2) e o sobrevivente e do dono canonico (current_user)' 't' \
+-  "SELECT bool_and(username = current_user) FROM cron.job WHERE jobname = 'connection-health-check'" d_ref
++expect_value_db 'D3b (E3.2) cenario montado: 2 jobs com o mesmo nome, um de OUTRO dono' '2' \
++  "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check'" d3_ref
++hash_com_intruso="$(psql_db d3_ref "$SQL_JOBS_HASH")"
++expect_error_file 'D3c (E3.2) homonimo de outro dono faz a migration LEVANTAR (nao silenciar)' \
++  d3_ref "$migration_endurece" 'de outro dono'
++expect_value_db 'D3d (E3.2) e a migration LEVANTOU antes de tocar em job: hash do mundo intacto' \
++  "$hash_com_intruso" "$SQL_JOBS_HASH" d3_ref
++expect_value_db 'D3e (E3.2) o homonimo de outro dono segue vivo (a linha do outro dono nao e apagavel daqui)' '1' \
++  "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check' AND username = 'outro_dono'" d3_ref
+ 
+ # D4 (E4.2): um job desativado de proposito nao pode voltar a rodar so porque a
+ # migration foi reaplicada; o jobid tambem tem de ser o mesmo (historicamente o
+ # caminho unschedule+schedule recriava o job e o historico em job_run_details ficava orfao).
+ jobid_antes="$(psql_db d_ref "SELECT jobid FROM cron.job WHERE jobname = 'connection-health-check'")"
+-psql_db d_ref "UPDATE cron.job SET active = false WHERE jobname = 'connection-health-check'"
++psql_dml_db d_ref "UPDATE cron.job SET active = false WHERE jobname = 'connection-health-check'"
+ expect_value_db 'D4a (E4.2) o job do escopo esta desativado (active=false) antes de reaplicar' 'f' \
+   "SELECT active FROM cron.job WHERE jobname = 'connection-health-check'" d_ref
+ psql_file_db d_ref "$migration_endurece"   # 4a aplicacao
+@@ -617,25 +779,26 @@ else
+   fail 'D2: a mutacao nao derrubou a assercao'
+ fi
+ 
+-# D3: neutralizados o DELETE do homonimo de outro dono e a limpeza de extras -- o
+-# caminho antigo, que so enxerga o proprio dono, deixa o homonimo vivo.
+-mut_sem_homonimo="$tmp_dir/nova.sem_delete_outro_dono.sql"
+-sed -e 's/username <> current_user/username IS NULL/g' \
+-    -e 's/AND jobid <> (SELECT min(jobid)/AND false AND jobid <> (SELECT min(jobid)/g' \
+-  "$migration_endurece" > "$mut_sem_homonimo"
+-[[ "$(grep -c 'username <> current_user' "$mut_sem_homonimo")" == '0' ]] \
+-  || fail 'a copia D3 ainda remove homonimo de outro dono'
+-printf '[PASS] %s\n' 'D3 a copia mutada nao remove mais o homonimo de outro dono nem os extras'
++# D3 (mutacao): a copia tem a DETECCAO do homonimo neutralizada (o IF que levanta deixa de
++# levantar). Sem a deteccao, o caminho antigo -- que so enxerga o proprio dono -- deixa o
++# homonimo de outro dono vivo: a assercao D3 (1 job) tem de FALHAR.
++mut_sem_deteccao="$tmp_dir/nova.sem_deteccao_de_homonimo.sql"
++sed 's/IF v_intruso IS NOT NULL THEN/IF false THEN/' "$migration_endurece" > "$mut_sem_deteccao"
++[[ "$(grep -c 'INTO v_intruso' "$mut_sem_deteccao")" == '1' ]] \
++  || fail 'a copia D3 deveria manter o SELECT do intruso (so o IF que levanta foi neutralizado)'
++[[ "$(grep -c 'IF v_intruso IS NOT NULL THEN' "$mut_sem_deteccao")" == '0' ]] \
++  || fail 'a copia D3 ainda levanta no homonimo de outro dono'
++printf '[PASS] %s\n' 'D3 a copia mutada neutralizou a deteccao do homonimo de outro dono (IF false)'
+ 
+ nova_base_db d3_mut
+-psql_db d3_mut "INSERT INTO cron.job (jobname, schedule, command, username)
++psql_dml_db d3_mut "INSERT INTO cron.job (jobname, schedule, command, username)
+   VALUES ('connection-health-check','*/5 * * * *','SELECT 1','outro_dono')"
+-psql_file_db d3_mut "$mut_sem_homonimo"
+-d3_mut_evidencia="$( ( expect_value_db 'D3 (mutacao) sobra 1 job com o nome do escopo' '1' \
++psql_file_db d3_mut "$mut_sem_deteccao"
++d3_mut_evidencia="$( ( expect_value_db 'D3 (mutacao) sobra 1 job com o nome do escopo (a deteccao levantaria)' '1' \
+     "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check'" d3_mut ) 2>&1 >/dev/null || true )"
+ if [[ "$d3_mut_evidencia" == *"[FAIL]"* && "$d3_mut_evidencia" == *"esperado '1', obtido '2'"* ]]; then
+   printf '[EVIDENCIA] %s\n' "$d3_mut_evidencia"
+-  printf '[PASS] %s\n' 'D3 a assercao de homonimo FALHA com o DELETE de outro dono removido'
++  printf '[PASS] %s\n' 'D3 a assercao de homonimo FALHA sem a deteccao (o homonimo de outro dono sobrevive)'
+ else
+   printf '%s\n' "$d3_mut_evidencia" >&2
+   fail 'D3: a mutacao nao derrubou a assercao de homonimo'
+@@ -650,7 +813,7 @@ grep -qE '^[[:space:]]*PERFORM[[:space:]]+cron\.unschedule\(' "$mut_d4" || fail
+ printf '[PASS] %s\n' 'D4 a copia mutada trocou alter_job por unschedule+schedule (versao anterior)'
+ 
+ nova_base_db d4_mut
+-psql_db d4_mut "UPDATE cron.job SET active = false WHERE jobname = 'connection-health-check'"
++psql_dml_db d4_mut "UPDATE cron.job SET active = false WHERE jobname = 'connection-health-check'"
+ jobid_antes_mut="$(psql_db d4_mut "SELECT jobid FROM cron.job WHERE jobname = 'connection-health-check'")"
+ psql_file_db d4_mut "$mut_d4"
+ d4_jobid_evidencia="$( ( expect_value_db 'D4 (mutacao) o jobid deveria ser preservado' "$jobid_antes_mut" \
+@@ -700,7 +863,7 @@ sed 's/IF v_jobid IS NULL THEN/IF true THEN/g' "$migration_endurece" > "$mut_d6"
+ printf '[PASS] %s\n' 'D6 a copia mutada passou a agendar sempre (cron.schedule incondicional)'
+ 
+ nova_base_db d6_mut
+-psql_db d6_mut "DELETE FROM cron.job WHERE jobname IN ('connection-health-check','avatars-refresh')"
++psql_dml_db d6_mut "DELETE FROM cron.job WHERE jobname IN ('connection-health-check','avatars-refresh')"
+ expect_value_db 'D6 (mutacao) a base comeca com 9 jobs (os dois do escopo fora)' '9' \
+   "SELECT count(*) FROM cron.job" d6_mut
+ psql_file_db d6_mut "$mut_d6"
+diff --git a/supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql b/supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql
+index 437d7e08..cf7400e0 100644
+--- a/supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql
++++ b/supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql
+@@ -3,7 +3,7 @@
+ --
+ -- A 20260930250000 entregou o reagendamento dos dois jobs numa funcao versionada
+ -- (public.apply_zapp_cron_secrets_l5()) e foi aplicada. Uma verificacao adversarial
+--- em PostgreSQL descartarelho (128 asseracoes) mediu quatro furos QUE ESTAO NO
++-- em PostgreSQL descartavel (128 asseracoes) mediu quatro furos QUE ESTAO NO
+ -- CONTRATO ATUAL e que esta migration fecha:
+ --
+ --   E5.3  o guard checava apenas IS NULL: um segredo existente VAZIO ('') passava e
+@@ -11,11 +11,15 @@
+ --         cada tick, permanente (exatamente o modo de falha que o comentario da
+ --         20260930250000 dizia evitar). Agora o formato e conferido (64 hex = 32
+ --         bytes) e a funcao LEVANTA antes de tocar em qualquer job.
+---   E3.2  o indice unico real do pg_cron e (jobname, username) e cron.unschedule()
+---         so enxerga job do proprio dono: um homonimo criado por outro usuario
+---         sobrevivia ao unschedule e o agendamento virava DOIS jobs ativos. Agora os
+---         homonimos de outro dono sao removidos por jobid (delete direto, que nao
+---         depende de dono).
++--   E3.2  o indice unico real do pg_cron e (jobname, username): um homonimo criado
++--         por OUTRO usuario convive com o nosso e o agendamento vira DOIS jobs
++--         ativos. Apagar a linha do outro dono NAO e possivel por aqui -- medido
++--         em producao: cron.job pertence a supabase_admin, as funcoes do pg_cron
++--         sao SECURITY INVOKER e o dono desta funcao recebe
++--         "permission denied for table job" (42501) em qualquer DML direto. O que
++--         esta ao alcance e nao silenciar: o homonimo de outro dono e DETECTADO e a
++--         funcao LEVANTA com o comando que quem tem supabase_admin roda para remover.
++--         (Antes, o contrato nao dizia nada e o resultado eram dois jobs ativos.)
+ --   E4.2  unschedule + schedule recria o job: o jobid muda e um job desativado de
+ --         proposito (active=false) volta a rodar; o historico em cron.job_run_details
+ --         fica orfao. Agora o job existente e ALTERADO no lugar (cron.alter_job), que
+@@ -28,9 +32,9 @@
+ --         inclui service_role (a chave usada por ~60 edge functions nao tem motivo para
+ --         executar reagendamento de cron).
+ --
+--- O reagendamento em si nao muda: os dois jobs continuam com o mesmo schedule, o mesmo
+--- comando e o mesmo x-cron-secret lido por subquery do Vault. Por isso esta migration
+--- NAO depende do deploy das edges (ao contrario da 20260930250000, que dependia).
++-- Reagendamento: os dois jobs continuam com o mesmo schedule, o mesmo comando e o mesmo
++-- x-cron-secret lido por subquery do Vault. Por isso esta migration NAO depende do deploy
++-- das edges (ao contrario da 20260930250000, que dependia).
+ --
+ -- rollback: n/a — nao guarda dado nem cria objeto novo: substitui o corpo de
+ --   public.apply_zapp_cron_secrets_l5() (create or replace) e fecha a ACL dela.
+@@ -51,6 +55,7 @@ DECLARE
+   v_health  text;
+   v_avatars text;
+   v_jobid   bigint;
++  v_intruso text;
+ BEGIN
+   SELECT decrypted_secret INTO v_health
+     FROM vault.decrypted_secrets WHERE name = 'connection_health_check_cron_secret';
+@@ -68,14 +73,29 @@ BEGIN
+       USING HINT = 'O segredo e criado por 20260930240000_cron_secret_dedicado_l5. Se existe vazio ou truncado, rotacione antes de reagendar (docs/runbooks/cron-secret-rotation.md).';
+   END IF;
+ 
++  -- ── guarda de dono (E3.2), para os dois jobs ────────────────────────────────
++  -- Um homonimo de outro dono nao e alcancavel daqui (cron.job e de supabase_admin e
++  -- DML direto da 42501). Silenciar isso e o que produzia dois jobs ativos: melhor
++  -- falhar alto e entregar o comando de correcao.
++  SELECT string_agg(DISTINCT username, ', ') INTO v_intruso
++    FROM cron.job
++   WHERE jobname IN ('connection-health-check', 'avatars-refresh')
++     AND username <> current_user;
++  IF v_intruso IS NOT NULL THEN
++    RAISE EXCEPTION 'cron_secret_l5: existe job (connection-health-check/avatars-refresh) de outro dono: %', v_intruso
++      USING HINT = 'Como supabase_admin: SELECT jobid, jobname, username FROM cron.job WHERE username <> current_user; e depois SELECT cron.unschedule(jobid); para cada um. Enquanto isso o agendamento fica duplicado (dois jobs ativos com o mesmo nome).';
++  END IF;
++
+   -- ── connection-health-check (de */5 min, timeout 30s) ────────────────────────
+-  -- E3.2: homonimo de OUTRO dono nao e alcancado por cron.unschedule().
+-  DELETE FROM cron.job
+-   WHERE jobname = 'connection-health-check' AND username <> current_user;
+-  -- Estado anormal (mais de um nosso): fica o de menor jobid, os extras saem por jobid.
+-  DELETE FROM cron.job
+-   WHERE jobname = 'connection-health-check'
+-     AND jobid <> (SELECT min(jobid) FROM cron.job WHERE jobname = 'connection-health-check');
++  -- Estado anormal entre jobs NOSSOS: fica o de menor jobid. cron.unschedule(jobid)
++  -- e o caminho permitido (resolve o dono por dentro do pg_cron).
++  FOR v_jobid IN
++    SELECT jobid FROM cron.job
++     WHERE jobname = 'connection-health-check'
++       AND jobid <> (SELECT min(jobid) FROM cron.job WHERE jobname = 'connection-health-check')
++  LOOP
++    PERFORM cron.unschedule(v_jobid);
++  END LOOP;
+ 
+   SELECT jobid INTO v_jobid FROM cron.job WHERE jobname = 'connection-health-check';
+   IF v_jobid IS NULL THEN
+@@ -114,11 +134,13 @@ BEGIN
+   END IF;
+ 
+   -- ── avatars-refresh (de hora em hora, timeout 150s) ─────────────────────────
+-  DELETE FROM cron.job
+-   WHERE jobname = 'avatars-refresh' AND username <> current_user;
+-  DELETE FROM cron.job
+-   WHERE jobname = 'avatars-refresh'
+-     AND jobid <> (SELECT min(jobid) FROM cron.job WHERE jobname = 'avatars-refresh');
++  FOR v_jobid IN
++    SELECT jobid FROM cron.job
++     WHERE jobname = 'avatars-refresh'
++       AND jobid <> (SELECT min(jobid) FROM cron.job WHERE jobname = 'avatars-refresh')
++  LOOP
++    PERFORM cron.unschedule(v_jobid);
++  END LOOP;
+ 
+   SELECT jobid INTO v_jobid FROM cron.job WHERE jobname = 'avatars-refresh';
+   IF v_jobid IS NULL THEN
+-- 
+2.43.0
+

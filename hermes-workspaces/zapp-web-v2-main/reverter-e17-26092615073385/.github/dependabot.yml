@@ -1,0 +1,55 @@
+# Dependabot configuration file
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Bun dependencies: keep bun.lock synchronized with package.json.
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "adm01-debug"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "⬆️ deps:"
+    # Keep updates independent so failures map to one dependency/changelog.
+    # The open PR limit bounds review load without hiding regressions in a batch.
+    # Major upgrades require a dedicated compatibility plan and full gates.
+    # This restriction applies only to version updates; security updates remain eligible.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+      # Alias fixado para contratos que ainda exercitam a API Zod v3.
+      # O updater Bun tenta resolver o nome do alias no registry e recebe 404;
+      # o pacote real `zod` continua elegivel para atualizacoes independentes.
+      - dependency-name: "zod3"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    reviewers:
+      - "adm01-debug"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "⬆️ ci:"
+    # init e analyze do codeql-action precisam da mesma versao: isolados, cada PR
+    # falha no CodeQL ("Loaded a configuration file for version X, but running Y").
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"

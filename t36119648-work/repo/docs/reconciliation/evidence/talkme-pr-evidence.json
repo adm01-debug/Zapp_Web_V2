@@ -1,0 +1,378 @@
+[
+  {
+    "number": 1377,
+    "title": "fix(talk-me): corrige fila realtime, acessibilidade e privilégios",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1377",
+    "created_at": "2026-10-01T11:49:00Z",
+    "merged_at": "2026-10-01T13:27:39Z",
+    "closed_at": "2026-10-01T13:27:39Z",
+    "merge_commit_sha": "eccbd04e95bb40f397b6af4f064f32f8e40e51c8",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "## Problema\n\nA auditoria do TALK ME encontrou quatro falhas práticas: a busca podia esvaziar a fila ao digitar e apagar antes do debounce; um aceite já confirmado no banco podia ficar preso em “Assumindo…”; subscriptions Realtime continuavam gerando consultas com o modal fechado; e o foco/contraste do carrossel falhava em cenários de teclado e WebKit. A auditoria também encontrou privilégios PostgreSQL estruturais desnecessários nos dados usados pelo fluxo.\n\n## Alterações\n\n- preserva os contatos durante o debounce e bloqueia o aceite enquanto a busca ainda não foi resolvida;\n- retorna o aceite assim que `talk_me_claim` confirma e atualiza o badge em segundo plano;\n- mantém Realtime somente nas quatro tabelas publicadas e apenas com o modal aberto;\n- reconcilia mudanças raras de elegibilidade a cada 60 segundos somente com a tela aberta e visível;\n- cancela timers e requisições ao fechar ou desmontar;\n- sincroniza seleção e foco após a atualização do DOM, inclusive no WebKit;\n- limita setas aos cards e associa empresa, cargo e mensagem à descrição acessível;\n- corrige o contraste do fallback dos avatares laterais;\n- adiciona a migration `20260930460000_harden_talk_me_client_table_privileges.sql`, removendo privilégios de estrutura dos papéis clientes e fortalecendo os guards de fila/responsável;\n- adiciona contrato executável para anon, authenticated, service_role, RLS, spoof de claims, replay e operações permitidas.\n\n## Validação\n\n- 352 arquivos de teste e 4.697 testes aprovados; 38 todo documentados;\n- 41/41 testes focados do TALK ME;\n- TypeScript, build, implicit-any e ESLint focado aprovados;\n- `db:guard` aprovado com 696 migrations válidas e zero violações novas;\n- contrato SQL TALK ME 33/33;\n- contrato ACL/guards 25/25;\n- contrato Contatos 19/19;\n- contrato de autorização Inbox 6/6;\n- Playwright auth 18/18 em Chromium, Firefox e WebKit;\n- Axe sem violações no fluxo revisado em Chromium, Firefox e WebKit;\n- layout validado em 1366×650 e 1024×500.\n\nO lint global mantém a dívida histórica existente de 648 erros e 297 avisos; os arquivos alterados estão limpos.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nCorrige as falhas de fila, aceite, realtime e acessibilidade apontadas pela auditoria do TALK ME e endurece os privilégios PostgreSQL do fluxo.\n\n**Frontend**\n\n- Preserva os contatos durante o debounce e bloqueia o aceite enquanto a busca não é resolvida, evitando que digitar e apagar esvazie a fila.\n- Retorna o aceite assim que `talk_me_claim` confirma e atualiza o badge em segundo plano, sem aguardar a atualização secundária.\n- Mantém Realtime apenas nas quatro tabelas publicadas e somente com o modal aberto, com reconciliação de elegibilidade a cada 60 segundos apenas com a tela aberta e visível; reconcilia filas e itens ao abrir o modal.\n- Cancela timers, intervalos e requisições pendentes ao fechar ou desmontar, abortando consultas em andamento.\n- Restaura a seleção e o foco após o DOM atualizar (incluindo WebKit), limita as setas aos próprios cards e associa empresa, cargo e mensagem à descrição acessível.\n- Corrige o contraste do fallback dos avatares laterais.\n\n**Banco**\n\n- Adiciona a migration `20260930460000_harden_talk_me_client_table_privileges.sql`, que remove privilégios estruturais de `anon`/`authenticated`/`service_role`, mantém RLS nas sete tabelas e torna `audit_logs` somente leitura para `authenticated` e append-only para `service_role`.\n- Unifica a resolução do ator efetivo no helper `resolve_contact_guard_actor()`: sessão com uid é sempre tratada como usuário final, e o bypass exige JWT e papel PostgreSQL `service_role` concordantes.\n- Adiciona contrato executável validando RLS, spoof de claims, replay da migration e as operações permitidas para cada papel.\n\n<sup>Written for commit b8b27907fa15b0eb529d8d38a98eec77cb9b46c5. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1377?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "A",
+        "path": "scripts/db-audit/talk-me-client-privileges.test.sh"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/TalkMeView.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/__tests__/TalkMeView.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/useTalkMeQueue.ts"
+      },
+      {
+        "change": "A",
+        "path": "supabase/migrations/20260930460000_harden_talk_me_client_table_privileges.sql"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1367,
+    "title": "fix(talk-me): exibe destaque e fila sem rolagem em desktop",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1367",
+    "created_at": "2026-10-01T10:34:23Z",
+    "merged_at": "2026-10-01T10:45:33Z",
+    "closed_at": "2026-10-01T10:45:33Z",
+    "merge_commit_sha": "e4d7e1b56ae4371a482a698748f187b0a7680703",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "## Alteração\nO cabeçalho alto e os cards grandes deixavam a fila inferior fora da área visível. O cabeçalho desktop passa de cerca de 89 px para 53 px (-40%). O cartão principal passa de 360 × 440 para 288 × 352 px e a fila de 216 × 264 para 173 × 211 px (aproximadamente -20%), com espaçamentos menores.\n\nAs alturas se adaptam ao espaço disponível. Abaixo de 768 px de altura em desktop, identidade e mensagem ficam lado a lado para manter o botão de aceite e a fila visíveis. Celulares e situações sem espaço suficiente mantêm rolagem natural. As iniciais dos cards inferiores usam contraste neutro em preto e branco.\n\n## Validação\n- 28 testes existentes de TalkMeView e useTalkMeQueue passaram.\n- Typecheck, build e ESLint do componente passaram.\n- Harness local com 32 contatos sintéticos, mensagens longas e múltiplas mensagens: Chromium, Firefox e WebKit exibiram destaque, aceite e fila sem overflow vertical em 1920×900, 1366×768 e 1366×650; seleção pela faixa inferior funcionou.\n- Verificadas também larguras de 1024 px e celular 390×844; no celular há rolagem para manter o conteúdo acessível.\n- Axe apontou contraste nos cards laterais deliberadamente atenuados; não se declara conformidade integral de acessibilidade.\n\nAlteração visual, sem migration ou mudança no fluxo de aceite.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nFixes the Talk Me layout so the highlight, accept button, and queue stay visible on desktop without scrolling.\n\nThe header drops from ~89px to ~53px (−40%) and cards shrink roughly 20% with tighter spacing. Below 768px of desktop height, identity and message go side by side to keep the accept button and queue visible. Phones and low-space contexts keep natural scrolling. Queue card initials now use neutral black/white contrast.\n\n**Validação**\n- 28 TalkMeView and useTalkMeQueue tests pass.\n- Typecheck, build, and ESLint pass for the component.\n- Harness with 32 synthetic contacts, long messages, and multiple messages: Chromium, Firefox, and WebKit show highlight, accept, and queue without vertical overflow at 1920×900, 1366×768, and 1366×650; selection via the bottom strip works.\n- Verified at 1024px width and on phone 390×844; phone scrolls to keep content reachable.\n- Axe flags contrast on deliberately subdued side cards; full accessibility conformance is not claimed.\n- No migration or flow change.\n\n<sup>Written for commit 055d059eee8bfa2cea5a4aba874702518255fd19. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1367?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "M",
+        "path": "src/features/talk-me/TalkMeView.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/features/talk-me/talk-me-layout.css"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1357,
+    "title": "docs(talk-me): contextualiza build de implementação",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1357",
+    "created_at": "2026-10-01T06:42:59Z",
+    "merged_at": "2026-10-01T06:51:54Z",
+    "closed_at": "2026-10-01T06:51:54Z",
+    "merge_commit_sha": "efdfac92edbadfd69f529ab42e9922c62143be04",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "Ajusta o relatório final para registrar o `buildId` como evidência histórica do deploy da implementação. Commits documentais posteriores podem alterar o identificador servido sem mudar o código validado.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nClarifies that the `buildId` in the Talk Me report records the deployment validated before this documentation was integrated, so later doc-only commits won't be mistaken for changes to validated code.\n\n<sup>Written for commit 0d5a0ddc8b222f12dcd726d2ff6f5efa3b4add41. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1357?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "M",
+        "path": "docs/design/RELATORIO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-10-01.md"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1356,
+    "title": "docs(talk-me): registra execução do refinamento",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1356",
+    "created_at": "2026-10-01T06:33:49Z",
+    "merged_at": "2026-10-01T06:42:27Z",
+    "closed_at": "2026-10-01T06:42:27Z",
+    "merge_commit_sha": "98cd1c94cb4514a67bce4e3b2bd8bda2ee0a3c49",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "Registra a conclusão das 50 etapas do refinamento do TALK ME, vinculando cada etapa à implementação ou validação correspondente. Inclui decisões finais, resultados de testes, CI, acessibilidade, multibrowser, deploy, limite do preview protegido por SSO e procedimento de reversão.\n\nDocumentação apenas; não altera código, banco ou dados.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nAdds the execution report for the TALK ME visual and navigation refinement, consolidating the completion of all 50 planned steps into a single document.\n\n- Records consolidated decisions, verification results (CI, accessibility, multibrowser, deploy), and the SSO-protected preview limitation.\n- Details the rollback procedure as a revert of the documented integration commit.\n- Documentation only; no code, database, or data changes.\n\n<sup>Written for commit 237aa9f7bb78ad17eaccce166b686f620b3a21f3. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1356?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "A",
+        "path": "docs/design/RELATORIO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-10-01.md"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1352,
+    "title": "feat(talk-me): refina carrossel e fila de espera",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1352",
+    "created_at": "2026-09-30T22:39:17Z",
+    "merged_at": "2026-10-01T06:31:44Z",
+    "closed_at": "2026-10-01T06:31:45Z",
+    "merge_commit_sha": "c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "O TALK ME agora separa o destaque do Inbox com um painel opaco, posiciona o contato principal mais alto e inclui uma faixa inferior sincronizada com cartões 40% menores, fotos em preto e branco, setas e arraste. A seleção continua separada do aceite, e a paginação preserva páginas carregadas durante refresh/realtime, descarta respostas obsoletas e impede consultas concorrentes.\n\nValidação:\n- 4.650 testes passaram em 348 arquivos; 38 itens seguem marcados como todo\n- 28 testes direcionados do TALK ME passaram\n- contrato SQL TALK ME: 33 cenários passaram\n- TypeScript, build, lint dos arquivos alterados, guardas de banco e implicit-any passaram\n- axe sem violações WCAG A/AA atribuíveis à mudança\n- Chromium, Firefox e WebKit validados em 1920×1080, 1366×768, 1024×768, 390×844, 320×568 e 667×375\n- fila sintética de 500 itens chegou ao último contato sem duplicação\n\nO lint global continua falhando por 945 ocorrências preexistentes fora destes quatro arquivos; o ratchet do commit confirmou zero nova dívida.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nRefines the TALK ME carousel with a dedicated spotlight panel and a lower waiting queue strip that syncs selection without triggering acceptance.\n\n- Separates the highlighted contact into an opaque panel, with the queue below as a scrollable strip of smaller, black-and-white cards.\n- Selection in the strip updates the spotlight card and stays separate from the acceptance action.\n- Keeps loaded pages when a realtime refresh happens, discards responses from stale searches, and blocks concurrent page loads.\n- Adds a visible retry state when loading the next page fails, and keeps existing cards on screen.\n\n<sup>Written for commit ce0d9ec29b466b98080fc7e9d2d3407f2873ed1e. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1352?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "M",
+        "path": "src/features/talk-me/TalkMeView.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/__tests__/TalkMeView.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/useTalkMeQueue.ts"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1351,
+    "title": "feat(talk-me): refina carrossel e fila de espera",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1351",
+    "created_at": "2026-09-30T22:38:21Z",
+    "merged_at": null,
+    "closed_at": "2026-09-30T22:39:11Z",
+    "merge_commit_sha": "cca40f50f25c0c81b84074bbd8e9ab7c4ad3a90e",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "Substituído por uma branch recriada a partir da `main` atual para manter o histórico e o diff limpos. A implementação e as validações permanecem as mesmas.",
+    "merged": false,
+    "reachable_from_baseline": false,
+    "changed_files": [],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1349,
+    "title": "docs(talk-me): plano de refinamento visual em 50 etapas",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1349",
+    "created_at": "2026-09-30T22:05:59Z",
+    "merged_at": "2026-09-30T22:31:56Z",
+    "closed_at": "2026-09-30T22:31:56Z",
+    "merge_commit_sha": "d4d715b9f7119d3ef9428c9a9526ea601f777994",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "Documenta o refinamento do TALK ME: painel opaco, destaque aproximadamente 20% mais alto e faixa inferior sincronizada com cartões P&B reduzidos em 40%, setas laterais e acesso progressivo à fila completa.\n\nAs 50 etapas incluem ação, entrega e critério de aceite, com decisões visuais pendentes explícitas, simulações de paginação e concorrência, acessibilidade, responsividade e validação futura. Todas permanecem pendentes; este PR contém somente o plano.\n\nValidação documental: sequência 001–050 sem lacunas ou duplicatas, campos obrigatórios em todas as etapas e links locais existentes.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nAdds a 50-step refinement plan for the TALK ME interface visual overhaul.\n\nThe plan specifies an opaque panel, a main carousel about 20% taller, and a synchronized bottom strip of reduced-size black-and-white cards for full queue navigation. It details action, deliverable, and acceptance criteria for each step, covering pagination, concurrency, accessibility, and responsiveness, and flags pending visual decisions.\n\nDocumentation only — all 50 steps remain pending; no implementation, dependencies, or data changes are included.\n\n<sup>Written for commit f3bdca55495752e9066edbc6f756fa254c949635. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1349?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "A",
+        "path": "docs/design/PLANO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-09-30.md"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1348,
+    "title": "fix(inbox): deixa TALK ME preto com metal apenas na borda",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1348",
+    "created_at": "2026-09-30T21:31:10Z",
+    "merged_at": "2026-09-30T21:39:07Z",
+    "closed_at": "2026-09-30T21:39:07Z",
+    "merge_commit_sha": "826fa1486a51d8bfdab285abb5a6e76ce7921426",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "O shader do TALK ME atravessava o preenchimento translúcido e iluminava todo o botão. Agora o centro é preto opaco e cobre o shader, deixando uma faixa metálica animada de 2 px no contorno. O rótulo e o contador seguem acima das camadas visuais.\n\nValidação local: 5 testes do componente, ESLint do arquivo e build Vite concluídos.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nFixes the TALK ME liquid metal shader bleeding through the translucent fill and lighting up the whole button. The center is now opaque black and covers the shader, leaving the animated 2px metallic effect only on the border. Label and counter stay above the visual layers.\n\n<sup>Written for commit ec5f076c340105ae3aecf8a3fd6641293c1ec065. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1348?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "M",
+        "path": "src/components/ui/liquid-metal-button.tsx"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1316,
+    "title": "fix(inbox): endurece autorização e UX do TALK ME",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1316",
+    "created_at": "2026-09-30T18:14:43Z",
+    "merged_at": "2026-09-30T18:34:33Z",
+    "closed_at": "2026-09-30T18:34:33Z",
+    "merge_commit_sha": "d3ed11cba198bbdaa96b12c08145aa84c12ae7f0",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "Perfis inativos, feature flag desligada e modelos reais de grupo ainda permitiam caminhos indevidos nas RPCs do TALK ME. A fila também podia exibir resultados antigos durante busca/realtime e tinha lacunas de teclado, leitura assistiva e telas baixas.\n\n## Alterações\n\n- revalida flag, perfil ativo, fila, vínculo e elegibilidade no servidor antes do aceite;\n- centraliza a elegibilidade em uma função interna sem permissão para clientes;\n- exclui grupos por tipo legado, categoria, JID e cadastro em `whatsapp_groups`;\n- torna o retry do vencedor idempotente e preserva um único evento de auditoria;\n- corrige desempate de mensagens por `(created_at, id)` e corrida com revogação;\n- impede respostas assíncronas antigas e limita rajadas realtime a dois segundos;\n- mantém o botão TALK ME acessível mesmo sem conversa selecionada;\n- associa nome, empresa, cargo, espera e mensagem ao cartão para leitores de tela;\n- move foco junto com as setas no cartão sem interceptar o seletor de departamento;\n- melhora contraste e acomodação em telas de pouca altura.\n\n## Validação\n\n- contrato SQL TALK ME: 31 cenários aprovados, incluindo ACL da função interna, autorização e concorrência;\n- Vitest focado: 30 testes aprovados;\n- suíte completa: 345 arquivos e 4.539 testes aprovados (40 TODO);\n- contratos Edge: 24 arquivos e 516 testes aprovados;\n- typecheck, implicit-any, ESLint dos arquivos alterados, tipografia e db guard aprovados;\n- build de produção e orçamento de bundle aprovados;\n- cobertura focada: 81,30% de linhas e 73,82% de branches.",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "M",
+        "path": "scripts/db-audit/talk-me-queue-contract.test.sh"
+      },
+      {
+        "change": "M",
+        "path": "src/components/inbox/ConversationListSidebar.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/components/inbox/RealtimeInboxView.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/components/ui/__tests__/liquid-metal-button.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/components/ui/liquid-metal-button.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/TalkMeView.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/__tests__/TalkMeView.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/features/talk-me/useTalkMeQueue.ts"
+      },
+      {
+        "change": "A",
+        "path": "supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1310,
+    "title": "feat(inbox): adiciona fila TALK ME com aceite atômico",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1310",
+    "created_at": "2026-09-30T17:23:08Z",
+    "merged_at": "2026-09-30T17:44:39Z",
+    "closed_at": "2026-09-30T17:44:39Z",
+    "merge_commit_sha": "facb1d00d20ecbc3c13772429fa2a08e8255055b",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "## Problema\n\nAtendimentos de um departamento que ainda não foram aceitos ficavam misturados ao fluxo comum. O atendente não tinha uma visão dedicada, segura e ordenada para escolher e assumir uma conversa.\n\n## Resultado\n\n- adiciona **TALK ME** no extremo direito da barra superior do Inbox, acima dos avatares fixados;\n- mantém o botão Zen ao lado de “Conversas”;\n- abre uma tela dedicada com seletor de departamento, busca e carrossel manual;\n- mostra foto, nome, empresa, cargo, espera, posição, mensagens pendentes e última mensagem;\n- só abre o chat depois do aceite confirmado pelo servidor;\n- usa metal líquido com fallback estático, WebGL assíncrono e redução de movimento;\n- adiciona a flag `inbox.talk-me` para liberação e desligamento imediato.\n\n## Segurança e consistência\n\nA migration cria três RPCs com escopo revalidado no servidor. A leitura respeita filas ativas e associação do perfil. O aceite usa bloqueio de linha, atualização condicional e auditoria; dois atendentes simultâneos produzem exatamente um vencedor. `PUBLIC` e `anon` não recebem permissão de execução.\n\n## Validação\n\n- 30 testes Vitest focados aprovados;\n- 19 cenários do contrato PostgreSQL aprovados, incluindo concorrência com duas conexões;\n- typecheck e build de produção aprovados;\n- ESLint do escopo com zero erro e zero alerta;\n- instalação com lockfile congelado aprovada;\n- ratchet de implicit-any com zero ocorrência;\n- guard Supabase sem violação nova;\n- revisão visual em desktop, celular, tema escuro, fallback e posição final;\n- consulta equivalente no banco canônico encontrou 33 itens elegíveis e executou em cerca de 2,3 ms antes do índice dedicado.\n\nA suíte global executou 4.526 testes com sucesso e 40 TODOs; o processo retorna erro por dois timers antigos de `useSendProduct`, fora deste diff. O lint global também mantém a linha-base histórica fora do escopo.\n\n<!-- This is an auto-generated description by cubic. -->\n---\n## Summary by cubic\nAdiciona a fila TALK ME no Inbox: conversas sem responsável ganham uma tela dedicada onde o atendente escolhe e assume um atendimento com aceite atômico.\n\n- Botão TALK ME no extremo direito da barra superior, com efeito de metal líquido, fallback estático e redução de movimento.\n- Tela com seletor de departamento, busca no servidor e carrossel; o chat só abre depois do aceite confirmado pelo servidor.\n- O aceite usa bloqueio de linha e atualização condicional: aceites simultâneos produzem exatamente um vencedor.\n- A leitura respeita filas ativas e associação do perfil; a flag `inbox.talk-me`, ativada por padrão pela migration, controla a liberação.\n\n<sup>Written for commit 89b47929b605645c3ba3c18d8286d9619dbd9223. Summary will update on new commits.</sup>\n\n<a href=\"https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1310?utm_source=github\" target=\"_blank\" rel=\"noopener noreferrer\" data-no-image-dialog=\"true\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://www.cubic.dev/buttons/review-in-cubic-light.svg\"><img alt=\"Review in cubic\" src=\"https://www.cubic.dev/buttons/review-in-cubic-dark.svg\"></picture></a>\n\n<!-- End of auto-generated description by cubic. -->\n\n",
+    "merged": true,
+    "reachable_from_baseline": true,
+    "changed_files": [
+      {
+        "change": "M",
+        "path": ".github/workflows/db-guard.yml"
+      },
+      {
+        "change": "M",
+        "path": "bun.lock"
+      },
+      {
+        "change": "A",
+        "path": "docs/design/PLANO_TALK_ME_100_ETAPAS_2026-09-30.md"
+      },
+      {
+        "change": "A",
+        "path": "docs/design/RELATORIO_EXECUCAO_TALK_ME_2026-09-30.md"
+      },
+      {
+        "change": "M",
+        "path": "package.json"
+      },
+      {
+        "change": "A",
+        "path": "scripts/db-audit/talk-me-queue-contract.test.sh"
+      },
+      {
+        "change": "M",
+        "path": "src/components/inbox/ConversationListSidebar.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/components/inbox/RealtimeInboxView.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/components/inbox/chat/ConversationTabs.tsx"
+      },
+      {
+        "change": "M",
+        "path": "src/components/inbox/chat/__tests__/ConversationTabs.test.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/components/ui/__tests__/liquid-metal-button.test.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/components/ui/liquid-metal-button.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/features/talk-me/TalkMeView.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/features/talk-me/__tests__/TalkMeView.test.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx"
+      },
+      {
+        "change": "A",
+        "path": "src/features/talk-me/types.ts"
+      },
+      {
+        "change": "A",
+        "path": "src/features/talk-me/useTalkMeQueue.ts"
+      },
+      {
+        "change": "M",
+        "path": "src/integrations/supabase/types.ts"
+      },
+      {
+        "change": "A",
+        "path": "supabase/migrations/20260930290000_talk_me_queue_claim.sql"
+      }
+    ],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  },
+  {
+    "number": 1301,
+    "title": "docs(inbox): plano TALK ME em 100 etapas",
+    "state": "closed",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1301",
+    "created_at": "2026-09-30T16:20:35Z",
+    "merged_at": null,
+    "closed_at": "2026-09-30T17:24:33Z",
+    "merge_commit_sha": "d1ed4ebf5c85a3740d0bd9e0ae07b8674564d65f",
+    "head_ref": null,
+    "base_ref": null,
+    "body": "Substituído pelo PR #1310, que preserva o plano de 100 etapas e inclui a implementação, os testes, a migration e o relatório de execução autorizados posteriormente.",
+    "merged": false,
+    "reachable_from_baseline": false,
+    "changed_files": [],
+    "qualification": "Historical PR reports and merge are separate from current test/runtime evidence."
+  }
+]

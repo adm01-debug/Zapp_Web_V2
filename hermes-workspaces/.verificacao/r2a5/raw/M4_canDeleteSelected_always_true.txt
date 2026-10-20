@@ -1,0 +1,95 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/.verificacao/r2a5/repo
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx (9 tests | 4 failed) 1016ms
+     × sem seleção não decide nada (undefined = comportamento anterior) 6ms
+     × selecionado que não está na lista carregada NÃO bloqueia (undefined) — bug do paginar 1ms
+     × bloqueia só quando todo selecionado conhecido está sem permissão 4ms
+     × ignora o que está fora da seleção 2ms
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  4 failed | 137 passed (141)
+   Start at  19:26:09
+   Duration  9.03s (transform 10.85s, setup 2.47s, import 24.80s, tests 12.03s, environment 22.38s)
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > canDeleteSelectedContacts · botão Excluir do lote > sem seleção não decide nada (undefined = comportamento anterior)
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:67:60
+     65|
+     66|   it('sem seleção não decide nada (undefined = comportamento anterior)…
+     67|     expect(canDeleteSelectedContacts([], [c('a', false)])).toBeUndefin…
+       |                                                            ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > canDeleteSelectedContacts · botão Excluir do lote > selecionado que não está na lista carregada NÃO bloqueia (undefined) — bug do paginar
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:71:76
+     69|
+     70|   it('selecionado que não está na lista carregada NÃO bloqueia (undefi…
+     71|     expect(canDeleteSelectedContacts(['fora-da-pagina'], [c('b', false…
+       |                                                                            ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > canDeleteSelectedContacts · botão Excluir do lote > bloqueia só quando todo selecionado conhecido está sem permissão
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:75:83
+     73|
+     74|   it('bloqueia só quando todo selecionado conhecido está sem permissão…
+     75|     expect(canDeleteSelectedContacts(['a', 'b'], [c('a', false), c('b'…
+       |                                                                                   ^
+     76|   });
+     77|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx > canDeleteSelectedContacts · botão Excluir do lote > ignora o que está fora da seleção
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx:87:77
+     85|
+     86|   it('ignora o que está fora da seleção', () => {
+     87|     expect(canDeleteSelectedContacts(['a'], [c('a', false), c('b', tru…
+       |                                                                             ^
+     88|   });
+     89| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+error: "vitest" exited with code 1

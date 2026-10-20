@@ -1,0 +1,2 @@
+88	0	supabase/migrations/20261013210000_message_reactions_autoria.sql
+255	0	supabase/tests/rls_message_reactions_autoria.sql

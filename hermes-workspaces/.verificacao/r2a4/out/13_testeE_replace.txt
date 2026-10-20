@@ -1,0 +1,32 @@
+=== E) create or replace numa funcao JA endurecida ===
+--- E1) proacl apos endurecer ---
+                    proacl                     
+-----------------------------------------------
+ {postgres=X/postgres,service_role=X/postgres}
+(1 row)
+
+--- E2) CREATE OR REPLACE identico (migration futura reescreve o corpo) ---
+  oid  |                    proacl                     
+-------+-----------------------------------------------
+ 16412 | {postgres=X/postgres,service_role=X/postgres}
+(1 row)
+
+--- E3) anon tenta executar apos o replace ---
+psql:<stdin>:11: ERROR:  permission denied for function audit_fn
+--- E4) DROP + CREATE (mesmo nome, objeto NOVO) ---
+  oid  |                                       proacl                                       
+-------+------------------------------------------------------------------------------------
+ 16413 | {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(1 row)
+
+psql:<stdin>:16: ERROR:  trigger functions can only be called as triggers
+CONTEXT:  compilation of PL/pgSQL function "audit_fn" near line 1
+--- E5) CREATE OR REPLACE com assinatura diferente (vira overload NOVO) ---
+psql:<stdin>:18: ERROR:  trigger functions cannot have declared arguments
+HINT:  The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead.
+CONTEXT:  compilation of PL/pgSQL function "audit_fn" near line 1
+  oid  |                                       proacl                                       
+-------+------------------------------------------------------------------------------------
+ 16413 | {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(1 row)
+

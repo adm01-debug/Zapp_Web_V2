@@ -1,0 +1,118 @@
+===== channel_connections_safe =====
+ SELECT id,
+    channel_type,
+    name,
+    status,
+    is_active,
+    external_account_id,
+    external_page_id,
+    webhook_url,
+    whatsapp_connection_id,
+    created_at,
+    updated_at,
+    created_by
+   FROM channel_connections;
+===== gmail_accounts_safe =====
+ SELECT id,
+    user_id,
+    email_address,
+    is_active,
+    sync_status,
+    last_sync_at,
+    last_error,
+    token_expires_at,
+    created_at,
+    updated_at
+   FROM gmail_accounts;
+===== password_reset_requests_safe =====
+ SELECT id,
+    user_id,
+    email,
+    reason,
+    status,
+    reviewed_by,
+    reviewed_at,
+    rejection_reason,
+    token_expires_at,
+    ip_address,
+    user_agent,
+    created_at,
+    updated_at
+   FROM password_reset_requests;
+===== profiles_public =====
+ SELECT id,
+    user_id,
+    name,
+    avatar_url,
+    is_active,
+    department,
+    job_title
+   FROM profiles;
+===== talkx_campaign_metrics =====
+ SELECT id AS campaign_id,
+    segment_id,
+    template_id,
+    status,
+    total_recipients,
+    sent_count,
+    delivered_count,
+    COALESCE(replied_count, 0) AS replied_count,
+    outcome_unknown_count,
+    round(
+        CASE
+            WHEN sent_count > 0 THEN delivered_count::numeric / sent_count::numeric * 100::numeric
+            ELSE 0::numeric
+        END, 1) AS delivery_rate_pct,
+    round(
+        CASE
+            WHEN sent_count > 0 THEN COALESCE(replied_count, 0)::numeric / sent_count::numeric * 100::numeric
+            ELSE 0::numeric
+        END, 1) AS reply_rate_pct,
+    EXTRACT(epoch FROM completed_at - started_at)::integer AS duration_secs,
+    started_at,
+    completed_at,
+    created_at,
+    id,
+    name AS campaign_name
+   FROM talkx_campaigns c
+  WHERE status = 'completed'::text AND started_at IS NOT NULL AND completed_at IS NOT NULL;
+===== whatsapp_connections_agent =====
+ SELECT id,
+    name,
+    status,
+    phone_number,
+    is_default
+   FROM whatsapp_connections;
+===== whatsapp_connections_public =====
+ SELECT id,
+    name,
+    status,
+    is_default
+   FROM whatsapp_connections;
+===== whatsapp_connections_safe =====
+ SELECT id,
+    name,
+    phone_number,
+    status,
+    is_default,
+        CASE
+            WHEN has_role(auth.uid(), 'admin'::app_role) THEN qr_code
+            ELSE NULL::text
+        END AS qr_code,
+        CASE
+            WHEN has_role(auth.uid(), 'admin'::app_role) THEN instance_id
+            ELSE NULL::text
+        END AS instance_id,
+    farewell_message,
+    farewell_enabled,
+    battery_level,
+    is_plugged,
+    retry_count,
+    max_retries,
+    last_health_check,
+    health_status,
+    health_response_ms,
+    created_by,
+    created_at,
+    updated_at
+   FROM whatsapp_connections;

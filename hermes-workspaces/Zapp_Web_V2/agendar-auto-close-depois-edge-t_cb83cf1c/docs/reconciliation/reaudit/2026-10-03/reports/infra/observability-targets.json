@@ -1,0 +1,222 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "matrix_sha256": "3e4a4a8e76834e487d34b49cada5fbd6cef62af394d7653f3197fdbba591e67b",
+  "targets": [
+    {
+      "path": "src/components/monitoring/MonitoringDiagnosticPanel.tsx",
+      "bodies_without_containing_review_span": 17,
+      "branch_nodes_in_those_bodies": 49,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 202
+    },
+    {
+      "path": "src/components/performance/PerformanceMonitor.tsx",
+      "bodies_without_containing_review_span": 14,
+      "branch_nodes_in_those_bodies": 36,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 291
+    },
+    {
+      "path": "src/lib/web-vitals.ts",
+      "bodies_without_containing_review_span": 11,
+      "branch_nodes_in_those_bodies": 25,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 187
+    },
+    {
+      "path": "src/components/diagnostics/DiagnosticsView.tsx",
+      "bodies_without_containing_review_span": 14,
+      "branch_nodes_in_those_bodies": 23,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 324
+    },
+    {
+      "path": "src/components/monitoring/MonitoringStatsCards.tsx",
+      "bodies_without_containing_review_span": 8,
+      "branch_nodes_in_those_bodies": 23,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 164
+    },
+    {
+      "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+      "bodies_without_containing_review_span": 15,
+      "branch_nodes_in_those_bodies": 22,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 346
+    },
+    {
+      "path": "src/components/monitoring/MonitoringConnectionsList.tsx",
+      "bodies_without_containing_review_span": 14,
+      "branch_nodes_in_those_bodies": 19,
+      "await_nodes_in_those_bodies": 2,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 135
+    },
+    {
+      "path": "src/hooks/system/useDiagnosticsData.ts",
+      "bodies_without_containing_review_span": 17,
+      "branch_nodes_in_those_bodies": 16,
+      "await_nodes_in_those_bodies": 15,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 288
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+      "bodies_without_containing_review_span": 25,
+      "branch_nodes_in_those_bodies": 15,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 115
+    },
+    {
+      "path": "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx",
+      "bodies_without_containing_review_span": 11,
+      "branch_nodes_in_those_bodies": 15,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 151
+    },
+    {
+      "path": "src/components/performance/OptimizedImage.tsx",
+      "bodies_without_containing_review_span": 14,
+      "branch_nodes_in_those_bodies": 15,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 296
+    },
+    {
+      "path": "src/components/monitoring/MonitoringEventTimeline.tsx",
+      "bodies_without_containing_review_span": 20,
+      "branch_nodes_in_those_bodies": 14,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 209
+    },
+    {
+      "path": "src/components/diagnostics/ConnectionHealthPanel.tsx",
+      "bodies_without_containing_review_span": 7,
+      "branch_nodes_in_those_bodies": 13,
+      "await_nodes_in_those_bodies": 3,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 270
+    },
+    {
+      "path": "src/components/performance/VirtualizedList.tsx",
+      "bodies_without_containing_review_span": 16,
+      "branch_nodes_in_those_bodies": 12,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 264
+    },
+    {
+      "path": "src/components/monitoring/MonitoringWebhookPanel.tsx",
+      "bodies_without_containing_review_span": 13,
+      "branch_nodes_in_those_bodies": 11,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 176
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringActions.ts",
+      "bodies_without_containing_review_span": 6,
+      "branch_nodes_in_those_bodies": 9,
+      "await_nodes_in_those_bodies": 9,
+      "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+      "lines": 88
+    },
+    {
+      "path": "src/components/monitoring/MonitoringHealthLogs.tsx",
+      "bodies_without_containing_review_span": 11,
+      "branch_nodes_in_those_bodies": 8,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 124
+    },
+    {
+      "path": "src/components/monitoring/MonitoringSLAPanel.tsx",
+      "bodies_without_containing_review_span": 3,
+      "branch_nodes_in_those_bodies": 8,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 148
+    },
+    {
+      "path": "src/components/performance/Prefetcher.tsx",
+      "bodies_without_containing_review_span": 34,
+      "branch_nodes_in_those_bodies": 7,
+      "await_nodes_in_those_bodies": 4,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 187
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringNotifications.ts",
+      "bodies_without_containing_review_span": 8,
+      "branch_nodes_in_those_bodies": 5,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 70
+    },
+    {
+      "path": "src/components/performance/LazyRoutes.tsx",
+      "bodies_without_containing_review_span": 37,
+      "branch_nodes_in_those_bodies": 5,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 161
+    },
+    {
+      "path": "src/components/performance/HotRoutePrefetcher.tsx",
+      "bodies_without_containing_review_span": 9,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 2,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 59
+    },
+    {
+      "path": "src/components/monitoring/MonitoringMessageChart.tsx",
+      "bodies_without_containing_review_span": 6,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 83
+    },
+    {
+      "path": "src/components/performance/metricThresholds.ts",
+      "bodies_without_containing_review_span": 4,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 19
+    },
+    {
+      "path": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
+      "bodies_without_containing_review_span": 10,
+      "branch_nodes_in_those_bodies": 2,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 57
+    },
+    {
+      "path": "src/components/performance/hotRoutePrefetch.ts",
+      "bodies_without_containing_review_span": 10,
+      "branch_nodes_in_those_bodies": 1,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 40
+    },
+    {
+      "path": "src/components/monitoring/MonitoringSkeletons.tsx",
+      "bodies_without_containing_review_span": 7,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 96
+    }
+  ]
+}

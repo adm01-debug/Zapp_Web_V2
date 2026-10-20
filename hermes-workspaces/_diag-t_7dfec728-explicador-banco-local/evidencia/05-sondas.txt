@@ -1,0 +1,57 @@
+########## SONDA 1: fixture SINTETICA (tabela nova, SEM GRANT/REVOKE/policy) ##########
+fixture=fixture-sint
+migrations pendentes (NOVAS): 20261007120000_nova_tabela_sem_acl.sql
+linhas: 10
+  NAO-EXPLICADA  rls|nova_tabela
+  NAO-EXPLICADA  indexes|nova_tabela.nova_tabela_pkey
+  NAO-EXPLICADA  constraints|relation:nova_tabela.nova_tabela_pkey
+  EXPLICADA      columns|nova_tabela.id
+  EXPLICADA      columns|nova_tabela.nome
+  EXPLICADA      defaults|nova_tabela.id
+  NAO-EXPLICADA  relation_grants|r:public.nova_tabela|authenticated|SELECT|grantor=postgres
+  NAO-EXPLICADA  relation_grants|r:public.nova_tabela|anon|SELECT|grantor=postgres
+  NAO-EXPLICADA  relation_grants|r:public.nova_tabela|service_role|SELECT|grantor=postgres
+  NAO-EXPLICADA  relation_grants|r:public.nova_tabela|postgres|SELECT|grantor=postgres
+  => EXPLICADA=3, NAO-EXPLICADA=7
+
+########## SONDA 1b: MESMA tabela, COM REVOKE/GRANT por papel ##########
+fixture=fixture-sint-acl
+migrations pendentes (NOVAS): 20261007120200_nova_tabela_com_acl.sql
+linhas: 10
+  NAO-EXPLICADA  rls|nova_tabela
+  NAO-EXPLICADA  indexes|nova_tabela.nova_tabela_pkey
+  NAO-EXPLICADA  constraints|relation:nova_tabela.nova_tabela_pkey
+  EXPLICADA      columns|nova_tabela.id
+  EXPLICADA      columns|nova_tabela.nome
+  EXPLICADA      defaults|nova_tabela.id
+  EXPLICADA      relation_grants|r:public.nova_tabela|authenticated|SELECT|grantor=postgres
+  EXPLICADA      relation_grants|r:public.nova_tabela|anon|SELECT|grantor=postgres
+  EXPLICADA      relation_grants|r:public.nova_tabela|service_role|SELECT|grantor=postgres
+  NAO-EXPLICADA  relation_grants|r:public.nova_tabela|postgres|SELECT|grantor=postgres
+  => EXPLICADA=6, NAO-EXPLICADA=4
+
+########## SONDA 2: nome de policy COM aspas x SEM aspas ##########
+fixture=fixture-policy
+migrations pendentes (NOVAS): 20261007120100_nova_tabela_policy.sql
+linhas: 2
+  NAO-EXPLICADA  policies|nova_tabela."pol_leitura"
+  EXPLICADA      policies|nova_tabela.pol_leitura
+  => EXPLICADA=1, NAO-EXPLICADA=1
+
+########## SONDA 3: diff so de rls, SEM migration pendente ##########
+fixture=fixture-real
+migrations pendentes (NOVAS): <vazio: nenhuma pendente>
+linhas: 3
+  DRIFT-CANONICO rls|ai_usage_outbox
+  DRIFT-CANONICO rls|gmail_oauth_states
+  DRIFT-CANONICO rls|talkx_storage_purge_queue
+  => DRIFT-CANONICO=3
+
+########## SONDA 4: diff so de rls, COM as 3 pendentes reais ##########
+fixture=fixture-real
+migrations pendentes (NOVAS): 20261004195051_gmail_oauth_state_attempts.sql 20261005183057_ia_timeout_001_event_id_outbox.sql 20261005190058_ia_timeout_001_outbox_acl.sql
+linhas: 3
+  NAO-EXPLICADA  rls|ai_usage_outbox
+  NAO-EXPLICADA  rls|gmail_oauth_states
+  DRIFT-CANONICO rls|talkx_storage_purge_queue
+  => DRIFT-CANONICO=1, NAO-EXPLICADA=2

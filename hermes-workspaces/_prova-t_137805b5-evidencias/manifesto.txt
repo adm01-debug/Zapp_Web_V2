@@ -1,0 +1,35 @@
+== MANIFESTO t_137805b5 ==
+2026-10-07T17:55:39-03:00
+workspace=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/prova-nao-regressao-migrations-261007171658e1
+BRANCH=v2/prova-nao-regressao-migrations-261007171658e1
+BASE_DIA=dia/2026-10-07
+git diff --name-only dia/2026-10-07...HEAD:
+(vazio)
+
+-- shas --
+aa5301f7f6e6aa66e5a0a88c9511c2583c7756fed489522677ccf3fb14175508  /home/joaquim_ataides/.local/bin/zapp-verify
+aa5301f7f6e6aa66e5a0a88c9511c2583c7756fed489522677ccf3fb14175508  prova/alvos/zapp-verify.atual
+82fa553dc289e0f61c886f4c76e4043c4c861a9b8965533d528f6995af7ff63d  prova/alvos/zapp-verify.novo
+f6828357521bfb7d05abf869cf867d8ec763fa2eb7c84945f0a164e0e3f50d5f  prova/alvos/bloco-atual.py
+aa90ec32db6903c74c9de253dd9a886a7f785c35036aa0aa3fe8eeedf407f6ae  prova/alvos/bloco-novo.py
+
+-- estado real --
+16a06b0796e447d19ed9b2473b6c1bebdcef1a45df19d1b4ac7a8c194421daae  /home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100709037ed9/estado/falhas.tsv
+  21 /home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100709037ed9/estado/falhas.tsv
+  47 /home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100709037ed9/estado/check-diferencas.txt
+  68 total
+794
+
+-- fixtures (sem as arvores de migrations) --
+c1-rls-positivo 2
+c2-rls-negativo 2
+c3-index-positivo 2
+c4-index-negativo 2
+c5-column-negativo 2
+c6a-acl-policy-negativo 2
+c6b-acl-papel-negativo 2
+c6b2-acl-papel-naocitado 2
+c6c-acl-funcao-negativo 2
+c6d-acl-explicito-igual 2
+c7-real 795
+c8-real-falha 795

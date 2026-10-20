@@ -1,0 +1,19 @@
+{
+ "ms": 52,
+ "rows": [
+  {
+   "grantee": "anon",
+   "tabelas": 130
+  },
+  {
+   "grantee": "authenticated",
+   "tabelas": 155
+  },
+  {
+   "grantee": "service_role",
+   "tabelas": 158
+  }
+ ],
+ "row_count": 3,
+ "truncated": false
+}

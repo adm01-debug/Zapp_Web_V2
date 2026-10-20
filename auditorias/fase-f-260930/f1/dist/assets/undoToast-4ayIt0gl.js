@@ -1,0 +1,1 @@
+import{r as e}from"./dist-Ck6tG7Oq.js";function t({message:t,onUndo:n,delay:r=5e3,icon:i=`🗑️`}){e(t,{icon:i,duration:r,action:{label:`Desfazer`,onClick:()=>{n(),e.success(`Ação desfeita`,{duration:2e3,icon:`↩️`})}},onDismiss:()=>{}})}export{t};

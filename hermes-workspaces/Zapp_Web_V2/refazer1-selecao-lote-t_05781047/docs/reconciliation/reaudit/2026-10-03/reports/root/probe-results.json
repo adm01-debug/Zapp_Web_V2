@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "parser_version": "5.9.3",
+  "scope": "Exact source nodes transpiled with synthetic dependencies; no DB, provider, browser, network, deployment or product mutation.",
+  "limitations": [
+    "UTC date helpers are fixtures; these probes do not validate date-fns locale/DST behavior.",
+    "Queue-goal consumer closure is proven by direct source inspection; the rejection behavior runs the exact saveGoal node."
+  ],
+  "probes": [
+    {
+      "id": "ROOT-P01",
+      "description": "Assigned contacts are classified as resolved without a resolution event",
+      "status": "PASS",
+      "observed": {
+        "actually_resolved": 0,
+        "reported_resolved_percentage": 70,
+        "input_assigned": 10
+      }
+    },
+    {
+      "id": "ROOT-P02",
+      "description": "Thirty-day buckets overlap and count the final day twice",
+      "status": "PASS",
+      "observed": {
+        "input_messages": 1,
+        "summed_messages": 2,
+        "overlapping_bucket_dates": [
+          "2026-09-28",
+          "2026-09-30"
+        ]
+      }
+    },
+    {
+      "id": "ROOT-P03",
+      "description": "Queue goal save resolves after a rejected update",
+      "status": "PASS",
+      "observed": {
+        "rejected_update": true,
+        "promise_rejected": false,
+        "consumer_can_close": true,
+        "toast_titles": [
+          "Erro ao salvar metas"
+        ]
+      }
+    },
+    {
+      "id": "ROOT-P04",
+      "description": "SLA dashboard and history produce different rates for the same pending records",
+      "status": "PASS",
+      "observed": {
+        "same_rows": 10,
+        "pending_without_breach": 9,
+        "breached_with_late_response": 1,
+        "metrics_rate": 0,
+        "history_rate": 90,
+        "history_days_for_7d": 8,
+        "precondition": "Nine open or historical pending rows and one response after ten minutes; live presence of these rows was not asserted."
+      }
+    },
+    {
+      "id": "ROOT-P05",
+      "description": "All SLA periods impose a 365-day lower bound",
+      "status": "PASS",
+      "observed": {
+        "label": "Todos",
+        "actual_days": 365,
+        "lower_bound": "2025-10-03T12:00:00.000Z"
+      }
+    },
+    {
+      "id": "ROOT-P06",
+      "description": "QueueDetails generates a fixed time and a percentage proxy",
+      "status": "PASS",
+      "observed": {
+        "input_contacts": 50,
+        "assigned": 10,
+        "computed_without_response_or_resolution_events": {
+          "totalContacts": 50,
+          "assignedContacts": 10,
+          "waitingContacts": 40,
+          "avgResponseTime": "~3 min",
+          "resolvedToday": 7
+        }
+      }
+    }
+  ],
+  "source_files": [
+    {
+      "path": "src/hooks/business/useQueueAnalytics.ts",
+      "blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+      "sha256": "d6a5c21c396f62b4f0c3e37a13edbcf8b1fa2b71cfe70082608c88544cd34921"
+    },
+    {
+      "path": "src/hooks/business/useQueueGoals.ts",
+      "blob_sha": "2ffbbc81541d01bc31b23497659622e4b417dfdb",
+      "sha256": "155c274e24e9d6259e36ed4d611e1e6a2199c1dfe6d8062070debc9ab3ea780f"
+    },
+    {
+      "path": "src/hooks/sla/useSLAMetrics.ts",
+      "blob_sha": "1838a91f296f4db476bd1341909e41baaba003f4",
+      "sha256": "9a7146816f3b3e0daeebc85a710ccc1e468ffbe2c861847501f197fb4bec77ef"
+    },
+    {
+      "path": "src/hooks/sla/useSLAHistory.ts",
+      "blob_sha": "8a186811316ec3a3d51ed2edcab2ed6f00e12137",
+      "sha256": "1f00ee0980912734580704fe1023c87a163acb45c299366d16ad6a69494e9d49"
+    },
+    {
+      "path": "src/pages/QueueDetails.tsx",
+      "blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+      "sha256": "52453c4ab5d682a10e7de45b7e145415e1c0184db5f79ebbd78ab74eff706b92"
+    }
+  ]
+}

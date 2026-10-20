@@ -1,0 +1,49 @@
+=== V1) ANON lendo as views (security_invoker=true) ===
+-- anon: whatsapp_connections_public
+ id | name | status | is_default 
+----+------+--------+------------
+(0 rows)
+
+-- anon: whatsapp_connections_agent
+ id | name | status | phone_number | is_default 
+----+------+--------+--------------+------------
+(0 rows)
+
+-- anon: whatsapp_connections_safe
+ id | name | phone_number | status | is_default | qr_code | instance_id 
+----+------+--------------+--------+------------+---------+-------------
+(0 rows)
+
+-- anon: tabela base direto
+ id | name | phone_number | status | is_default | qr_code | instance_id | created_by 
+----+------+--------------+--------+------------+---------+-------------+------------
+(0 rows)
+
+=== V2) ANON lendo a view SEM security_invoker (contrafactual) ===
+ id |   name    |  status   
+----+-----------+-----------
+  1 | Comercial | connected
+  2 | Suporte   | connected
+(2 rows)
+
+=== V3) AUTHENTICATED SEM VINCULO (nao-admin) lendo as views ===
+              set_config              
+--------------------------------------
+ e22b14b6-09fb-401b-a477-59b94550b7a6
+(1 row)
+
+-- authenticated nao-admin: public
+ id | name | status | is_default 
+----+------+--------+------------
+(0 rows)
+
+-- authenticated nao-admin: agent (phone_number)
+ id | name | status | phone_number | is_default 
+----+------+--------+--------------+------------
+(0 rows)
+
+-- authenticated nao-admin: safe (qr_code deve vir NULL)
+ id | name | phone_number | status | is_default | qr_code | instance_id 
+----+------+--------------+--------+------------+---------+-------------
+(0 rows)
+

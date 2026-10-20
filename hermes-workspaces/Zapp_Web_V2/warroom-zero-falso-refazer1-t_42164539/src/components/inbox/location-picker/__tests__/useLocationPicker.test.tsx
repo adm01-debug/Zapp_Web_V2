@@ -1,0 +1,521 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+
+const h = vi.hoisted(() => ({
+  getToken: vi.fn(),
+  report: vi.fn(),
+  loadMapbox: vi.fn(),
+  toast: vi.fn(),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: vi.fn() } } }));
+vi.mock('@/lib/errorReporter', () => ({ reportClientError: vi.fn() }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/mapboxToken', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/mapboxToken')>();
+  return {
+    ...actual,
+    getMapboxToken: (...args: unknown[]) => h.getToken(...args),
+    reportMapboxFailure: (...args: unknown[]) => h.report(...args),
+  };
+});
+vi.mock('@/lib/mapboxLoader', () => ({ loadMapbox: () => h.loadMapbox() }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.toast(...args) }));
+
+import { useLocationPicker } from '../useLocationPicker';
+import { resetReverseGeocodeCacheForTests } from '@/lib/mapboxGeocode';
+import { MapboxTokenError, MAPBOX_MAP_LOAD_TIMEOUT_MS } from '@/lib/mapboxToken';
+
+type Handler = (event?: unknown) => void;
+
+class FakeMap {
+  static instances: FakeMap[] = [];
+  opts: { center: [number, number]; zoom: number };
+  handlers = new Map<string, Handler[]>();
+  removed = false;
+  flyTo = vi.fn();
+  addControl = vi.fn();
+  getCenter() { return { lng: this.opts.center[0], lat: this.opts.center[1] }; }
+  constructor(opts: { center: [number, number]; zoom: number }) {
+    this.opts = opts;
+    FakeMap.instances.push(this);
+  }
+  on(event: string, handler: Handler) {
+    const list = this.handlers.get(event) ?? [];
+    list.push(handler);
+    this.handlers.set(event, list);
+    return this;
+  }
+  emit(event: string, payload?: unknown) { this.handlers.get(event)?.forEach((fn) => fn(payload)); }
+  remove() { this.removed = true; }
+}
+
+class FakeMarker {
+  static instances: FakeMarker[] = [];
+  lngLat: [number, number] | null = null;
+  constructor() { FakeMarker.instances.push(this); }
+  setLngLat(value: [number, number]) { this.lngLat = value; return this; }
+  addTo() { return this; }
+}
+
+class FakeNavigationControl {}
+
+const fakeMapbox = { Map: FakeMap, Marker: FakeMarker, NavigationControl: FakeNavigationControl, accessToken: '' };
+
+type Props = { open: boolean; tab: 'map' | 'current' };
+type View = ReturnType<typeof renderPicker>;
+
+function mockGeolocation(lat: number, lng: number) {
+  Object.defineProperty(globalThis.navigator, 'geolocation', {
+    configurable: true,
+    value: {
+      getCurrentPosition: (onOk: (position: { coords: { latitude: number; longitude: number } }) => void) =>
+        onOk({ coords: { latitude: lat, longitude: lng } }),
+    },
+  });
+}
+
+// Começa na aba "current": o container do mapa ainda não existe, como no Radix.
+function renderPicker() {
+  return renderHook((p: Props) => useLocationPicker(p.open, p.tab), { initialProps: { open: true, tab: 'current' } as Props });
+}
+
+// O Radix monta os filhos da aba num render POSTERIOR ao da troca (`children: present &&
+// children`, com o `present` virando true só no layout-effect do Presence). Por isso o
+// container sempre chega depois de o effect do mapa já ter rodado — esta é a ordem real
+// do navegador, e é o que os testes precisam exercitar.
+async function attachContainer(view: View) {
+  await act(async () => { view.result.current.mapContainer(document.createElement('div')); });
+}
+
+async function renderReadyOnMapTab() {
+  const view = renderPicker();
+  await act(async () => {});
+  await act(async () => { view.rerender({ open: true, tab: 'map' }); });
+  await attachContainer(view);
+  await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
+  return view;
+}
+
+describe('useLocationPicker', () => {
+  beforeEach(() => {
+    h.getToken.mockReset();
+    h.report.mockReset();
+    h.toast.mockReset();
+    h.loadMapbox.mockReset();
+    h.loadMapbox.mockResolvedValue(fakeMapbox);
+    FakeMap.instances = [];
+    FakeMarker.instances = [];
+    resetReverseGeocodeCacheForTests();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('carrega o mapa e limpa o spinner no evento load', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    const view = await renderReadyOnMapTab();
+    expect(FakeMap.instances[0].opts.center).toEqual([-46.6333, -23.5505]);
+    act(() => FakeMap.instances[0].emit('load'));
+    expect(view.result.current.isMapLoaded).toBe(true);
+    expect(view.result.current.mapError).toBeNull();
+  });
+
+  it('container que só aparece depois da troca de aba ainda cria o mapa e arma o watchdog', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    // Troca de aba: o effect roda antes de o container existir (Presence do Radix).
+    await act(async () => { view.rerender({ open: true, tab: 'map' }); await vi.advanceTimersByTimeAsync(0); });
+    expect(FakeMap.instances).toHaveLength(0);
+
+    // Container chega no render seguinte: o effect precisa reagir a isso.
+    await act(async () => { view.result.current.mapContainer(document.createElement('div')); await vi.advanceTimersByTimeAsync(0); });
+    expect(FakeMap.instances).toHaveLength(1);
+
+    // E o watchdog tem de estar armado: sem 'load', vira erro com retry.
+    await act(async () => { await vi.advanceTimersByTimeAsync(MAPBOX_MAP_LOAD_TIMEOUT_MS); });
+    expect(view.result.current.mapError).toBe('O mapa demorou demais para carregar.');
+    expect(h.report).toHaveBeenCalledWith('timeout', 'picker');
+  });
+
+  it('timeout do token vira mensagem de timeout e é reportado', async () => {
+    h.getToken.mockRejectedValue(new MapboxTokenError('timeout'));
+    const view = renderPicker();
+    await waitFor(() => expect(view.result.current.mapError).toBe('O mapa demorou demais para carregar.'));
+    expect(h.report).toHaveBeenCalledWith('timeout', 'picker', expect.any(MapboxTokenError));
+  });
+
+  it('sessão expirada mostra a causa em vez da mensagem genérica', async () => {
+    h.getToken.mockRejectedValue(new MapboxTokenError('unauthorized'));
+    const view = renderPicker();
+    await waitFor(() => expect(view.result.current.mapError).toBe('Sessão expirada. Recarregue a página.'));
+  });
+
+  it('erro 401 do mapa vira "token inválido"', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    const view = await renderReadyOnMapTab();
+    act(() => FakeMap.instances[0].emit('error', { error: { status: 401 } }));
+    expect(view.result.current.mapError).toBe('O token do mapa é inválido ou expirou.');
+    expect(h.report).toHaveBeenCalledWith('invalid_token', 'picker', { status: 401 });
+  });
+
+  it('sem load em 20 s mostra erro; um load tardio limpa o erro', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => { view.rerender({ open: true, tab: 'map' }); await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => { view.result.current.mapContainer(document.createElement('div')); await vi.advanceTimersByTimeAsync(0); });
+    expect(FakeMap.instances).toHaveLength(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(MAPBOX_MAP_LOAD_TIMEOUT_MS); });
+    expect(view.result.current.mapError).toBe('O mapa demorou demais para carregar.');
+    expect(h.report).toHaveBeenCalledWith('timeout', 'picker');
+    act(() => FakeMap.instances[0].emit('load'));
+    expect(view.result.current.mapError).toBeNull();
+  });
+
+  it('retry limpa o erro e busca o token de novo com force', async () => {
+    h.getToken.mockRejectedValueOnce(new MapboxTokenError('network')).mockResolvedValue('pk.test');
+    const view = renderPicker();
+    await waitFor(() => expect(view.result.current.mapError).toBe('Sem conexão com o servidor de mapas.'));
+    act(() => view.result.current.retryMap());
+    expect(view.result.current.mapError).toBeNull();
+    await waitFor(() => expect(h.getToken).toHaveBeenCalledTimes(2));
+    expect(h.getToken).toHaveBeenNthCalledWith(1, { force: false });
+    expect(h.getToken).toHaveBeenNthCalledWith(2, { force: true });
+  });
+
+  it('GPS seleciona a coordenada mesmo sem token do Mapbox', async () => {
+    h.getToken.mockRejectedValue(new MapboxTokenError('server_error'));
+    mockGeolocation(-23.5, -46.6);
+    const view = renderPicker();
+    await waitFor(() => expect(view.result.current.mapError).not.toBeNull());
+    await act(async () => { view.result.current.getCurrentLocation(); });
+    await waitFor(() => expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 }));
+  });
+
+  it('recria o mapa centrado e o marcador ao voltar para a aba do mapa', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    mockGeolocation(-23.5, -46.6);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ features: [{ text: 'Rua A', place_name: 'Rua A, São Paulo' }] }) }));
+    const view = await renderReadyOnMapTab();
+    act(() => FakeMap.instances[0].emit('load'));
+    await act(async () => { view.result.current.getCurrentLocation(); });
+    await waitFor(() => expect(view.result.current.selectedLocation?.address).toBe('Rua A, São Paulo'));
+
+    // Sair da aba desmonta o container no Radix: o mapa é destruído.
+    act(() => view.rerender({ open: true, tab: 'current' }));
+    expect(FakeMap.instances[0].removed).toBe(true);
+    await act(async () => { view.result.current.mapContainer(null); });
+
+    act(() => view.rerender({ open: true, tab: 'map' }));
+    await attachContainer(view);
+    await waitFor(() => expect(FakeMap.instances).toHaveLength(2));
+    expect(FakeMap.instances[1].opts.center).toEqual([-46.6, -23.5]);
+    expect(FakeMap.instances[1].opts.zoom).toBe(16);
+    act(() => FakeMap.instances[1].emit('load'));
+    expect(FakeMarker.instances).toHaveLength(2);
+    expect(FakeMarker.instances[1].lngLat).toEqual([-46.6, -23.5]);
+  });
+
+  it('busca: 429 e falha viram toast; sem resultado vira "Local não encontrado"', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const view = renderPicker();
+    await act(async () => {});
+    act(() => view.result.current.setSearchQuery('avenida paulista'));
+
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 429 });
+    await act(async () => { await view.result.current.searchLocation(); });
+    expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Muitas buscas seguidas' }));
+
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await act(async () => { await view.result.current.searchLocation(); });
+    expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Falha na busca' }));
+
+    // A busca tem duas camadas (Search Box e, se ela não achar, o geocoding v5).
+    const vazio = { ok: true, json: async () => ({ features: [] }) };
+    fetchMock.mockResolvedValueOnce(vazio).mockResolvedValueOnce(vazio);
+    await act(async () => { await view.result.current.searchLocation(); });
+    expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Local não encontrado' }));
+    expect(view.result.current.isSearching).toBe(false);
+  });
+
+  it('busca sem token avisa em vez de não fazer nada', async () => {
+    h.getToken.mockRejectedValue(new MapboxTokenError('server_error'));
+    const view = renderPicker();
+    await waitFor(() => expect(view.result.current.mapError).not.toBeNull());
+    act(() => view.result.current.setSearchQuery('avenida paulista'));
+    await act(async () => { await view.result.current.searchLocation(); });
+    expect(h.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Busca indisponível' }));
+  });
+
+  it('nova busca cancela a anterior e só o resultado mais novo vale; reset limpa tudo', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    const signals: AbortSignal[] = [];
+    const fetchMock = vi.fn((_url: string, init: { signal: AbortSignal }) => {
+      signals.push(init.signal);
+      if (signals.length === 1) {
+        return new Promise((_resolve, reject) => {
+          init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ features: [{ center: [-46.6, -23.5], text: 'B', place_name: 'B, SP' }] }) });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const view = renderPicker();
+    await act(async () => {});
+    act(() => view.result.current.setSearchQuery('a'));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => { first = view.result.current.searchLocation(); });
+    await act(async () => { await view.result.current.searchLocation(); });
+    await act(async () => { await first; });
+
+    expect(signals[0].aborted).toBe(true);
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6, name: 'B', address: 'B, SP' });
+
+    act(() => view.result.current.reset());
+    expect(view.result.current.selectedLocation).toBeNull();
+    expect(view.result.current.searchQuery).toBe('');
+  });
+
+  it('geocoding pendurado não trava a seleção: depois do timeout vale a coordenada', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    mockGeolocation(-23.5, -46.6);
+    // Requisição que nunca responde: antes, `selectedLocation` ficava nulo para sempre e o
+    // botão Enviar nunca habilitava — sem erro na tela.
+    const fetchMock = vi.fn((_url: string, init: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    await act(async () => { view.result.current.getCurrentLocation(); await vi.advanceTimersByTimeAsync(0); });
+    expect(view.result.current.selectedLocation).toBeNull();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); });
+    expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 });
+  });
+
+  it('busca pendurada vira erro no timeout, libera o spinner e registra telemetria', async () => {
+    vi.useFakeTimers();
+    h.getToken.mockResolvedValue('pk.test');
+    const fetchMock = vi.fn((_url: string, init: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const view = renderPicker();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    act(() => view.result.current.setSearchQuery('avenida paulista'));
+
+    let search: Promise<void> = Promise.resolve();
+    act(() => { search = view.result.current.searchLocation(); });
+    expect(view.result.current.isSearching).toBe(true);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); await search; });
+    expect(view.result.current.isSearching).toBe(false);
+    expect(h.toast).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Falha na busca' }));
+    expect(h.report).toHaveBeenCalledWith('timeout', 'picker', expect.anything());
+  });
+
+  it('com vários candidatos o marcador não se move sozinho: quem escolhe é o operador', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    // Search Box devolve 3 candidatos (é o que acontece com "Promo Brindes Curitiba").
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        features: [
+          { geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } },
+          { geometry: { coordinates: [-49.27, -25.43] }, properties: { name: 'Brindes Curitiba', full_address: 'Curitiba - PR' } },
+          { geometry: { coordinates: [-40.36, -20.37] }, properties: { name: 'Brendes', full_address: 'Vila Velha - ES' } },
+        ],
+      }),
+    }));
+    const view = await renderReadyOnMapTab();
+    act(() => FakeMap.instances[0].emit('load'));
+    act(() => view.result.current.setSearchQuery('brindes'));
+    await act(async () => { await view.result.current.searchLocation(); });
+
+    expect(view.result.current.searchResults).toHaveLength(3);
+    expect(view.result.current.selectedLocation).toBeNull();
+    expect(FakeMarker.instances).toHaveLength(0);
+
+    act(() => view.result.current.chooseSearchResult(view.result.current.searchResults[1]));
+    expect(view.result.current.selectedLocation).toEqual({ lat: -25.43, lng: -49.27, name: 'Brindes Curitiba', address: 'Curitiba - PR' });
+    expect(view.result.current.searchResults).toHaveLength(0);
+    expect(FakeMarker.instances[0].lngLat).toEqual([-49.27, -25.43]);
+  });
+
+  it('candidato único é selecionado direto, sem lista', async () => {
+    h.getToken.mockResolvedValue('pk.test');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ features: [{ geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } }] }),
+    }));
+    const view = await renderReadyOnMapTab();
+    act(() => FakeMap.instances[0].emit('load'));
+    act(() => view.result.current.setSearchQuery('xbz brindes'));
+    await act(async () => { await view.result.current.searchLocation(); });
+
+    expect(view.result.current.searchResults).toHaveLength(0);
+    expect(view.result.current.selectedLocation).toEqual({ lat: -23.57, lng: -46.62, name: 'XBZ Brindes', address: 'R. da Independência, São Paulo' });
+  });
+
+  // E30 (Fase 4) — clique no mapa/GPS não pode deixar sobra de uma busca antiga.
+  describe('convivência com clique no mapa e GPS (E30)', () => {
+    it('clicar no mapa depois de uma busca com vários candidatos limpa a lista antiga', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          features: [
+            { geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } },
+            { geometry: { coordinates: [-49.27, -25.43] }, properties: { name: 'Brindes Curitiba', full_address: 'Curitiba - PR' } },
+          ],
+        }),
+      }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => view.result.current.setSearchQuery('brindes'));
+      await act(async () => { await view.result.current.searchLocation(); });
+      expect(view.result.current.searchResults).toHaveLength(2);
+
+      // Clique no mapa: mesmo caminho de sempre (reverseGeocode -> select), sem token
+      // pra simplificar o teste (cai direto em select({ lat, lng })).
+      act(() => FakeMap.instances[0].emit('click', { lngLat: { lng: -46.6, lat: -23.5 } }));
+      await waitFor(() => expect(view.result.current.searchResults).toHaveLength(0));
+    });
+  });
+
+  // E31 (Fase 4) — proximity dinâmico: centro do mapa enquanto ele está visível, posição do
+  // agente (GPS) na aba "current" sem mapa, e São Paulo como piso sem nenhum dos dois.
+  describe('proximity dinâmico (E31)', () => {
+    it('sem mapa e sem GPS, proximity é São Paulo (DEFAULT_CENTER)', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      const view = renderPicker();
+      await act(async () => {});
+      expect(view.result.current.proximity).toEqual({ lng: -46.6333, lat: -23.5505 });
+    });
+
+    it('com o mapa visível, proximity é o centro do mapa', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      expect(view.result.current.proximity).toEqual({ lng: -46.6333, lat: -23.5505 });
+    });
+
+    it('mover o mapa (moveend) atualiza o proximity para o novo centro', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      FakeMap.instances[0].opts.center = [-49.27, -25.43];
+      act(() => FakeMap.instances[0].emit('moveend'));
+      expect(view.result.current.proximity).toEqual({ lng: -49.27, lat: -25.43 });
+    });
+
+    it('GPS obtido na aba "current" (sem mapa) vira o proximity', async () => {
+      h.getToken.mockRejectedValue(new MapboxTokenError('server_error'));
+      mockGeolocation(-23.5, -46.6);
+      const view = renderPicker();
+      await waitFor(() => expect(view.result.current.mapError).not.toBeNull());
+      await act(async () => { view.result.current.getCurrentLocation(); });
+      await waitFor(() => expect(view.result.current.proximity).toEqual({ lng: -46.6, lat: -23.5 }));
+    });
+
+    it('sair da aba do mapa volta a priorizar a posição do agente sobre o centro do mapa antigo', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      mockGeolocation(-23.5, -46.6);
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      FakeMap.instances[0].opts.center = [-49.27, -25.43];
+      act(() => FakeMap.instances[0].emit('moveend'));
+      expect(view.result.current.proximity).toEqual({ lng: -49.27, lat: -25.43 });
+
+      act(() => view.rerender({ open: true, tab: 'current' }));
+      await act(async () => { view.result.current.getCurrentLocation(); });
+      await waitFor(() => expect(view.result.current.proximity).toEqual({ lng: -46.6, lat: -23.5 }));
+    });
+  });
+
+  // E50 — a origem da escolha é o que alimenta `location_sent` no picker; quem DECIDE o valor é
+  // este hook (o picker só o repassa). Sem isso, o evento não responde por onde o agente chegou.
+  describe('origem da escolha (E50)', () => {
+    it('clique no mapa registra origin click', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ features: [] }) }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+
+      act(() => FakeMap.instances[0].emit('click', { lngLat: { lng: -46.6, lat: -23.5 } }));
+      await waitFor(() => expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 }));
+      expect(view.result.current.selectedOrigin).toBe('click');
+    });
+
+    it('localização atual (GPS) registra origin gps', async () => {
+      h.getToken.mockRejectedValue(new MapboxTokenError('server_error'));
+      mockGeolocation(-23.5, -46.6);
+      const view = renderPicker();
+      await waitFor(() => expect(view.result.current.mapError).not.toBeNull());
+
+      await act(async () => { view.result.current.getCurrentLocation(); });
+      await waitFor(() => expect(view.result.current.selectedLocation).toEqual({ lat: -23.5, lng: -46.6 }));
+      expect(view.result.current.selectedOrigin).toBe('gps');
+    });
+
+    it('busca por texto (candidato único) registra origin forward', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ features: [{ geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } }] }),
+      }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => view.result.current.setSearchQuery('xbz brindes'));
+
+      await act(async () => { await view.result.current.searchLocation(); });
+      expect(view.result.current.selectedOrigin).toBe('forward');
+    });
+
+    it('escolha de um candidato da lista registra origin suggest', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          features: [
+            { geometry: { coordinates: [-46.62, -23.57] }, properties: { name: 'XBZ Brindes', full_address: 'R. da Independência, São Paulo' } },
+            { geometry: { coordinates: [-49.27, -25.43] }, properties: { name: 'Brindes Curitiba', full_address: 'Curitiba - PR' } },
+          ],
+        }),
+      }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => view.result.current.setSearchQuery('brindes'));
+      await act(async () => { await view.result.current.searchLocation(); });
+      expect(view.result.current.searchResults).toHaveLength(2);
+
+      act(() => view.result.current.chooseSearchResult(view.result.current.searchResults[0]));
+      expect(view.result.current.selectedOrigin).toBe('suggest');
+    });
+
+    it('reset limpa a origem junto com a seleção', async () => {
+      h.getToken.mockResolvedValue('pk.test');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ features: [] }) }));
+      const view = await renderReadyOnMapTab();
+      act(() => FakeMap.instances[0].emit('load'));
+      act(() => FakeMap.instances[0].emit('click', { lngLat: { lng: -46.6, lat: -23.5 } }));
+      await waitFor(() => expect(view.result.current.selectedOrigin).toBe('click'));
+
+      act(() => view.result.current.reset());
+      expect(view.result.current.selectedOrigin).toBeNull();
+    });
+  });
+});

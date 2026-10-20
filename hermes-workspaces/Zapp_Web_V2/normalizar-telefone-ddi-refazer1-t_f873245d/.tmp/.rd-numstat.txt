@@ -1,0 +1,2 @@
+106	0	supabase/migrations/20261013051843_normalize_contact_phone_ddi.sql
+278	0	supabase/tests/normalize_contact_phone_ddi.sql

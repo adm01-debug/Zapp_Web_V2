@@ -1,0 +1,15 @@
+ M src/components/admin/AdminUsersTable.tsx
+ M src/components/notifications/NotificationSettingsPanel.tsx
+ M src/components/notifications/NotificationTypeCards.tsx
+ M src/components/notifications/PushNotificationCard.tsx
+ M src/components/security/RateLimitConfigPanel.tsx
+ M src/components/security/SecurityNotificationsPanel.tsx
+ M src/components/security/SecurityOverview.tsx
+ M src/components/settings/ThemeCustomizer.tsx
+ M src/components/settings/theme/PresetCard.tsx
+?? src/components/admin/__tests__/AdminUsersTable.hierarchy.test.tsx
+?? src/components/notifications/__tests__/NotificationSettingsPanel.a11y.test.tsx
+?? src/components/notifications/__tests__/NotificationTypeCards.a11y.test.tsx
+?? src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx
+?? src/components/settings/__tests__/ThemeCustomizer.hierarchy.test.tsx
+?? src/components/settings/theme/__tests__/PresetCard.a11y.test.tsx

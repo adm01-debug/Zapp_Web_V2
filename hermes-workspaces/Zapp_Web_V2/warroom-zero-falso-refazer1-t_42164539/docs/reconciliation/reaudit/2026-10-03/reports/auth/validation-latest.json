@@ -1,0 +1,67 @@
+{
+  "validated_at": "2026-10-04T06:40:19.752200+00:00",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_status": "clean",
+  "findings": 53,
+  "evidence_spans": 298,
+  "files_hashed": 623,
+  "coverage_counts": {
+    "targeted": 60,
+    "semantic": 474,
+    "structural": 89
+  },
+  "test_review": {
+    "status": "COMPLETE",
+    "files": 88,
+    "actual_lines_read": 14464,
+    "source_pins_verified": 88,
+    "test_execution": "NOT_EXECUTED"
+  },
+  "report_files": [
+    "findings.json",
+    "coverage.json",
+    "report.md",
+    "calls-cross-review.md",
+    "calls-cross-review.json",
+    "test-review.json",
+    "test-review.md",
+    "shell-review.json",
+    "shell-review.md",
+    "database-peer-test-review.json",
+    "database-peer-test-review.md",
+    "database-peer-test-review-validation.json",
+    "style-review.json",
+    "style-review.md"
+  ],
+  "live_calls": 0,
+  "product_changes": 0,
+  "new_probe_runs": 0,
+  "independent_existing_probe_reviews": [
+    "CALL-P08",
+    "CALL-P09",
+    "CALL-P10",
+    "CALL-P11"
+  ],
+  "shell_review": {
+    "status": "COMPLETE",
+    "files": 12,
+    "actual_lines_read": 3546,
+    "source_pins_verified": 12,
+    "script_execution": "NOT_EXECUTED"
+  },
+  "database_peer_test_review": {
+    "status": "COMPLETE",
+    "files": 52,
+    "actual_lines_read": 4169,
+    "source_pins_verified": 52,
+    "test_execution": "NOT_EXECUTED",
+    "coverage_owned_by": "database"
+  },
+  "style_review": {
+    "status": "COMPLETE",
+    "files": 2,
+    "actual_lines_read": 1027,
+    "source_pins_verified": 2,
+    "runtime_execution": "NOT_EXECUTED"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-09-22",
+  "repository": "adm01-debug/Zapp_Web_V2",
+  "project_ref": "tnnnlkbymytvtqngbbqh",
+  "audited_git_sha": "102a500156ea830ab218bd87be5c31efa9f640d9",
+  "fix_pr": 509,
+  "fix_merge_sha": "0933e01b6df78192950091850b0571b3efd6f24b",
+  "db_live_runs": [35767411179, 35767806526],
+  "main_ci_run": { "id": 35767806459, "conclusion": "success" },
+  "main_db_offline_run": { "id": 35767806707, "conclusion": "success" },
+  "main_codeql_run": { "id": 35767806531, "conclusion": "success" },
+  "latest_artifact": "db-live-evidence-35767806526-1",
+  "latest_runtime_collected_at": "2026-09-22T18:33:28.268Z",
+  "artifact_sha256": {
+    "fresh-catalog.json": "514f55b3c0a5339439b11af1297be03f1ee28749e15c735b4bfbd40bebe0f3ae",
+    "fresh-manifest.json": "96b4931977042f4fb8238b05a3b3ddc0a3343618e8737bab6665617e170feca0",
+    "runtime-config.json": "2c1ea40f919a699fe6bd48112883b00dafaaaf8220179f9caee3458e560ef4e5"
+  },
+  "comparison_scope": "offline comparison of artifacts collected by trusted main workflow; not an independent live local connection",
+  "structural_manifest_sections": 16,
+  "structural_drifts": 0,
+  "catalog_counts": {
+    "tables": 144,
+    "views": 8,
+    "columns": 1572,
+    "function_names": 92,
+    "function_signatures": 93
+  },
+  "migration_counts": {
+    "local": 447,
+    "remote": 447,
+    "satisfy_guard_evidence_rules": 432,
+    "legacy_name_file_pinned_without_historical_content": 11,
+    "additional_historical_warnings": 4
+  },
+  "runtime": {
+    "status": "PARTIAL",
+    "failures": [],
+    "autovacuum": "VERIFIED",
+    "realtime": "INVENTORIED_NOT_BASELINED",
+    "cron": "COUNTS_ONLY",
+    "storage": "COUNTS_ONLY",
+    "ledger": "METADATA_ONLY_NO_HISTORICAL_CONTENT_PROOF",
+    "backups": "NOT_VERIFIED_RESTORE_REQUIRED"
+  },
+  "tests": {
+    "node_guard_pass": 339,
+    "deno_contract_pass": 24,
+    "application_contract_pass": 167,
+    "vitest_pass": 3148,
+    "vitest_todo_not_executed": 35,
+    "edge_non_mutating_smoke_pass": 67,
+    "edge_non_mutating_smoke_total": 67,
+    "real_pg17_transport_integration": "PASS",
+    "real_pg17_runtime_sql_integration": "PASS"
+  },
+  "edge_source_manifest_sha256": "12eca5b7a2210b0ac0da702e9bab713e7b75160166b408c5dc15bd7c45c6e39d",
+  "typecheck": "PASS",
+  "lint_ratchet": { "baseline": 1107, "observed": 1104, "new": 0 },
+  "build_budget_gzip_kb": {
+    "initial_js": 325.5,
+    "initial_css": 35.7,
+    "largest_js_chunk": 486.0,
+    "total_assets": 3961.4,
+    "result": "PASS"
+  },
+  "frontend_observed_build_id": "102a500156ea830ab218bd87be5c31efa9f640d9",
+  "frontend_production_deployment_id": 6597926629,
+  "original_checkout_preserved_sha": "7d3682c8aedfa5f031192b3ef7ac3c4b1c611f6d",
+  "production_sql_mutations_by_this_round": 0,
+  "edge_deployments_by_this_round": 0,
+  "all_historical_plans_complete": false,
+  "backup_restore_verified": false,
+  "source_to_remote_bundle_equivalence_proven": false,
+  "authenticated_business_e2e_verified": false
+}

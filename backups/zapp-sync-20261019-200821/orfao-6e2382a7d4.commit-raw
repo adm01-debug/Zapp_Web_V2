@@ -1,0 +1,6 @@
+tree 79daf0fb46b10a4720bc38704c397be6ebd3e7a7
+parent 3f123b523b6d78d489716a9b75aff98ec7e8d4a3
+author Joaquim Ataides <ti@promobrindes.com.br> 1790868277 -0300
+committer Joaquim Ataides <ti@promobrindes.com.br> 1790868277 -0300
+
+fix(ci): estabiliza checks estritos da main

@@ -1,0 +1,12 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Critério de pronto ainda não demonstrado: "Cada componente citado tem teste de carregando/erro/vazio". Mostre no diff/teste ou diga no relato o que falta.
+  2. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/hooks/business/__tests__/useDemandPrediction.previsao.test.tsx, src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx, src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+OK      db_guard        0s
+FALHOU  tipos         174s  (ver /home/joaquim_ataides/.local/state/zapp-verify/b286b9b775d1/tipos.log)
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 61s
+/home/joaquim_ataides/arquitetura-v2/typecheck-rapido/tc-rapido.sh: line 21: 2965851 Killed                  node node_modules/typescript/bin/tsc -p tsconfig.$p.json --noEmit --incremental --tsBuildIn
+tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: tsc -b falhou com exit null: 
+VERIFY: VERMELHO em tipos (174s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac/.tmp/verify-2610131523c5ac.log)

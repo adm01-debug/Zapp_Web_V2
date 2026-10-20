@@ -1,0 +1,303 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { log } from '@/lib/logger';
+import { toast } from '@/hooks/ui/use-toast';
+import type mapboxgl from 'mapbox-gl';
+import { loadMapbox, type MapboxModule } from '@/lib/mapboxLoader';
+import { reverseGeocodePlace, searchPlaces, type GeoSearchPlace, type GeoProximity } from '@/lib/mapboxGeocode';
+import {
+  getMapboxToken,
+  mapboxFailureKindFromMapError,
+  mapboxFailureKindOf,
+  mapboxFailureMessage,
+  reportMapboxFailure,
+  MAPBOX_MAP_LOAD_TIMEOUT_MS,
+} from '@/lib/mapboxToken';
+
+interface SelectedLocation {
+  lat: number;
+  lng: number;
+  name?: string;
+  address?: string;
+}
+
+/**
+ * E50: por onde o agente chegou até a localização escolhida — é o `origin` do evento
+ * `location_sent`. `suggest` = lista de sugestões; `forward` = busca por texto; `click` = clique
+ * no mapa; `gps` = localização atual. Nunca carrega termo/endereço/coordenada.
+ */
+export type LocationOrigin = 'suggest' | 'forward' | 'click' | 'gps';
+
+const DEFAULT_CENTER: [number, number] = [-46.6333, -23.5505];
+// Referencia estavel: usada como fallback de `proximity` (abaixo). Um objeto literal novo a
+// cada render quebraria a igualdade referencial nas deps do useCallback/useEffect de quem
+// consome `proximity` (useAddressAutocomplete), reiniciando o debounce sem o operador digitar.
+const DEFAULT_PROXIMITY: GeoProximity = { lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] };
+
+export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
+  // Callback ref com estado, e nao useRef: o Radix Tabs monta os filhos da aba num
+  // render posterior ao da troca (`children: present && children`, com o `present`
+  // virando true so no layout-effect do Presence). Com useRef o effect do mapa rodava
+  // com `.current` ainda null, saia no early-return e nunca mais era reexecutado —
+  // spinner eterno, sem mapa, sem watchdog e sem erro. Com estado, a chegada do
+  // container reexecuta o effect.
+  const [mapNode, setMapNode] = useState<HTMLDivElement | null>(null);
+  const mapContainer = useCallback((node: HTMLDivElement | null) => { setMapNode(node); }, []);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const mapboxRef = useRef<MapboxModule | null>(null);
+  // Coordenada que chegou (busca/GPS) antes do chunk do Mapbox resolver: aplicada no 'load'.
+  const pendingMarker = useRef<[number, number] | null>(null);
+  // Espelho de selectedLocation: o effect do mapa recria o marcador ao voltar para a aba
+  // sem precisar reexecutar a cada nova seleção.
+  const selectedRef = useRef<SelectedLocation | null>(null);
+  // Só a última busca/clique vale: a anterior é cancelada para não sobrescrever o resultado.
+  const geoAbort = useRef<AbortController | null>(null);
+
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapAttempt, setMapAttempt] = useState(0);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  // E50: acompanha `selectedLocation` — as duas são setadas/limpas juntas por `select`.
+  const [selectedOrigin, setSelectedOrigin] = useState<LocationOrigin | null>(null);
+  // E31: proximity dinamico do /suggest (Fase 4) - centro do mapa enquanto ele esta visivel,
+  // ou a posicao do agente apos o GPS, com Sao Paulo como piso. Nenhum efeito no fluxo antigo:
+  // so alimenta quem ler `proximity` (o hook de autocomplete).
+  const [mapCenter, setMapCenter] = useState<GeoProximity | null>(null);
+  const [agentPosition, setAgentPosition] = useState<GeoProximity | null>(null);
+  // Candidatos da busca. A API sempre devolve algo (ate para texto sem sentido), entao com mais
+  // de um resultado quem decide e o operador — nao mandamos o marcador para o primeiro sozinho.
+  const [searchResults, setSearchResults] = useState<GeoSearchPlace[]>([]);
+
+  const select = useCallback((location: SelectedLocation | null, origin: LocationOrigin) => {
+    selectedRef.current = location;
+    setSelectedLocation(location);
+    setSelectedOrigin(location ? origin : null);
+  }, []);
+
+  const nextGeoSignal = useCallback((): AbortSignal => {
+    geoAbort.current?.abort();
+    const controller = new AbortController();
+    geoAbort.current = controller;
+    return controller.signal;
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    getMapboxToken({ force: mapAttempt > 0 })
+      .then((token) => { if (!cancelled) setMapboxToken(token); })
+      .catch((err) => {
+        if (cancelled) return;
+        const kind = mapboxFailureKindOf(err);
+        reportMapboxFailure(kind, 'picker', err);
+        setMapError(mapboxFailureMessage(kind));
+      });
+    return () => { cancelled = true; };
+  }, [open, mapAttempt]);
+
+  const updateMarker = useCallback((lng: number, lat: number) => {
+    const mapboxgl = mapboxRef.current;
+    if (!map.current || !mapboxgl) {
+      pendingMarker.current = [lng, lat];
+      return;
+    }
+    if (marker.current) {
+      marker.current.setLngLat([lng, lat]);
+    } else {
+      const el = document.createElement('div');
+      el.innerHTML = `<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg animate-bounce"><svg class="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>`;
+      marker.current = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map.current);
+    }
+    map.current.flyTo({ center: [lng, lat], zoom: 16 });
+  }, []);
+
+  const reverseGeocode = useCallback(async (lng: number, lat: number, origin: LocationOrigin) => {
+    // O endereço é opcional: sem token (ou sem resposta do Mapbox) a coordenada continua
+    // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita. A consulta tem
+    // timeout e cache no módulo: uma requisição pendurada não trava mais a seleção.
+    if (!mapboxToken) { setSearchResults([]); select({ lat, lng }, origin); return; }
+    const signal = nextGeoSignal();
+    setSearchResults([]);
+    const place = await reverseGeocodePlace(lat, lng, mapboxToken);
+    if (signal.aborted) return;
+    select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng }, origin);
+  }, [mapboxToken, nextGeoSignal, select]);
+
+  useEffect(() => {
+    if (!mapNode || !mapboxToken || !open || activeTab !== 'map') return;
+    let cancelled = false;
+    let loaded = false;
+    // Sem `load` nem `error` no prazo (chunk, estilo ou tiles pendurados): vira erro com retry.
+    const watchdog = setTimeout(() => {
+      if (loaded || cancelled) return;
+      reportMapboxFailure('timeout', 'picker');
+      setMapError(mapboxFailureMessage('timeout'));
+    }, MAPBOX_MAP_LOAD_TIMEOUT_MS);
+    loadMapbox().then((mapboxgl) => {
+      if (cancelled) return;
+      // Limpa erro anterior aqui, e nao no corpo do effect: setState sincrono dentro do
+      // effect dispara render em cascata (react-hooks/set-state-in-effect).
+      setMapError(null);
+      mapboxRef.current = mapboxgl;
+      mapboxgl.accessToken = mapboxToken;
+      // Voltar para a aba do mapa recria o mapa: centraliza direto na seleção existente.
+      const restored = selectedRef.current;
+      const initialCenter: GeoProximity = restored ? { lng: restored.lng, lat: restored.lat } : { lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] };
+      setMapCenter(initialCenter);
+      map.current = new mapboxgl.Map({
+        container: mapNode,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: restored ? [restored.lng, restored.lat] : DEFAULT_CENTER,
+        zoom: restored ? 16 : 12,
+      });
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Token invalido, estilo ou rede falham no 'error' do mapa, nao no loadMapbox().
+      map.current.on('error', (e) => {
+        if (loaded || cancelled) return;
+        const kind = mapboxFailureKindFromMapError(e.error);
+        reportMapboxFailure(kind, 'picker', e.error);
+        setMapError(mapboxFailureMessage(kind));
+      });
+      map.current.on('load', () => {
+        loaded = true;
+        clearTimeout(watchdog);
+        setMapError(null);
+        setIsMapLoaded(true);
+        const current = selectedRef.current;
+        const target = pendingMarker.current ?? (current ? ([current.lng, current.lat] as [number, number]) : null);
+        pendingMarker.current = null;
+        if (target) updateMarker(target[0], target[1]);
+      });
+      map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat, 'click'); });
+      // E31: centro do mapa alimenta o `proximity` do autocomplete enquanto o operador navega.
+      map.current.on('moveend', () => { const c = map.current?.getCenter(); if (c) setMapCenter({ lng: c.lng, lat: c.lat }); });
+    }).catch((err) => {
+      if (cancelled) return;
+      const kind = mapboxFailureKindOf(err);
+      reportMapboxFailure(kind, 'picker', err);
+      setMapError(mapboxFailureMessage(kind));
+    });
+    return () => { cancelled = true; clearTimeout(watchdog); map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
+  }, [mapNode, mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
+
+  // Fechar o picker descarta a coordenada pendente; um retry do mapa a preserva.
+  useEffect(() => { if (!open) pendingMarker.current = null; }, [open]);
+
+  const retryMap = useCallback(() => { setMapError(null); setMapAttempt((n) => n + 1); }, []);
+
+  const getCurrentLocation = useCallback(() => {
+    setIsLoadingLocation(true);
+    if (!navigator.geolocation) {
+      toast({ title: 'Não suportado', description: 'Geolocalização não é suportada pelo seu navegador.', variant: 'destructive' });
+      setIsLoadingLocation(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => { const { latitude, longitude } = position.coords; setAgentPosition({ lng: longitude, lat: latitude }); updateMarker(longitude, latitude); await reverseGeocode(longitude, latitude, 'gps'); setIsLoadingLocation(false); },
+      (error) => { log.error('Error getting location:', error); toast({ title: 'Erro ao obter localização', description: 'Verifique se a permissão de localização está ativada.', variant: 'destructive' }); setIsLoadingLocation(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [updateMarker, reverseGeocode]);
+
+  /**
+   * F2/E12: aceita o termo por parâmetro. O input do combobox (flag ligada) está ligado a
+   * `autocomplete.query` e nunca chama `setSearchQuery` — sem o parâmetro, o Enter sem sugestão
+   * destacada chamava esta função com `searchQuery` vazio e voltava na primeira linha (C2).
+   * O caminho da flag desligada continua usando `searchQuery`.
+   */
+  const searchLocation = useCallback(async (explicitQuery?: string) => {
+    const query = (explicitQuery ?? searchQuery).trim();
+    if (!query) return;
+    if (!mapboxToken) {
+      toast({ title: 'Busca indisponível', description: 'O serviço de mapas não respondeu. Use "Tentar novamente" no mapa.', variant: 'destructive' });
+      return;
+    }
+    const signal = nextGeoSignal();
+    setSearchResults([]);
+    setIsSearching(true);
+    try {
+      // Vies geografico: o centro do mapa (ou Sao Paulo, o centro padrao) desempata resultados
+      // homonimos e evita que uma busca de SP caia em outro estado.
+      const center = map.current?.getCenter();
+      const result = await searchPlaces(query, mapboxToken, signal, {
+        lng: center?.lng ?? DEFAULT_CENTER[0],
+        lat: center?.lat ?? DEFAULT_CENTER[1],
+      });
+      if (result.ok) {
+        if (result.places.length === 1) {
+          const only = result.places[0];
+          setSearchResults([]);
+          updateMarker(only.lng, only.lat);
+          select({ lat: only.lat, lng: only.lng, name: only.name, address: only.address }, 'forward');
+        } else {
+          setSearchResults(result.places);
+        }
+        return;
+      }
+      setSearchResults([]);
+      // Busca substituída por outra mais nova: nada na tela.
+      if (result.kind === 'aborted') return;
+      if (result.kind === 'not_found') {
+        toast({ title: 'Local não encontrado', description: 'Tente buscar por outro endereço.', variant: 'destructive' });
+        return;
+      }
+      if (result.kind === 'rate_limited') {
+        toast({ title: 'Muitas buscas seguidas', description: 'Aguarde um instante e tente de novo.', variant: 'destructive' });
+        return;
+      }
+      if (result.kind === 'timeout') {
+        reportMapboxFailure('timeout', 'picker', { stage: 'search' });
+        toast({ title: 'Falha na busca', description: 'A busca demorou demais. Tente novamente.', variant: 'destructive' });
+        return;
+      }
+      toast({
+        title: 'Falha na busca',
+        description: result.kind === 'network'
+          ? 'Verifique sua conexão e tente novamente.'
+          : 'Não foi possível consultar o endereço. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      // A busca antiga não desliga o spinner da nova.
+      if (!signal.aborted) setIsSearching(false);
+    }
+  }, [searchQuery, mapboxToken, updateMarker, nextGeoSignal, select]);
+
+  /** O operador escolheu um dos candidatos: marca no mapa e fecha a lista. */
+  const chooseSearchResult = useCallback((place: GeoSearchPlace) => {
+    setSearchResults([]);
+    updateMarker(place.lng, place.lat);
+    select({ lat: place.lat, lng: place.lng, name: place.name, address: place.address }, 'suggest');
+  }, [select, updateMarker]);
+
+  const reset = useCallback(() => {
+    geoAbort.current?.abort();
+    pendingMarker.current = null;
+    select(null, 'click');
+    setSearchResults([]);
+    setSearchQuery('');
+    setIsSearching(false);
+  }, [select]);
+
+  // E31: centro do mapa manda enquanto ele esta visivel (aba 'map'); o ramo do GPS na aba
+  // 'current' so importa de verdade de forma indireta hoje - o autocomplete so fica habilitado
+  // com activeTab === 'map', entao a posicao do agente influencia a busca via selectedRef
+  // (vira o centro inicial do mapa ao trocar de aba), nao por este ramo ser lido diretamente.
+  // Mantido explicito mesmo assim: documenta a prioridade e deixa a saida sempre definida
+  // (nunca undefined) para qualquer consumidor futuro deste hook. Sem nenhum dos dois, Sao
+  // Paulo (o DEFAULT_CENTER de hoje).
+  const proximity: GeoProximity = activeTab === 'map' && mapCenter
+    ? mapCenter
+    : activeTab === 'current' && agentPosition
+      ? agentPosition
+      : DEFAULT_PROXIMITY;
+
+  return {
+    mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken, searchQuery, setSearchQuery, isSearching,
+    selectedLocation, selectedOrigin, searchResults, chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
+  };
+}

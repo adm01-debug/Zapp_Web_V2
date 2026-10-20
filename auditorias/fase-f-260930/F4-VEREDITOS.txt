@@ -1,0 +1,66 @@
+F4 — MUTAÇÕES SOBREVIVENTES DA AUDITORIA F3: RESULTADO CRU
+==========================================================
+Data: 2026-10-01 (BRT) · PR #1372 · merge 762c7c25044be174f643be3c251973a6ef9ca41d
+Script: F4-mut-f4.py (nesta pasta)
+
+Comando: python3 .tmp/mut-f4.py   (no workspace, a partir de origin/main @ 7939e00b)
+Método: aplica a mutação → roda src/components/tasks/__tests__/ + src/hooks/tasks/__tests__/
+→ restaura → exige `git diff --quiet` nos 3 arquivos de produção antes de seguir.
+
+Saída capturada (verbatim):
+
+== baseline ==
+ Test Files  9 passed (9)
+      Tests  141 passed (141)
+
+== M17-aria-controls-auto-ref: MORTA (a suite pega)
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 140 passed (141)
+
+== M19/M20/M27-doingCount-ignorado (Board sem a prop real): MORTA (a suite pega)
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 140 passed (141)
+
+== M23-cabecalho-hoje-filtrado (so a mutacao M23): MORTA (a suite pega)
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 140 passed (141)
+
+== M24-kpi-doing-filtrado (so a mutacao M24): MORTA (a suite pega)
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 140 passed (141)
+
+== M25-doingReal-filtrado (so a mutacao M25): MORTA (a suite pega)
+ Test Files  1 failed | 8 passed (9)
+      Tests  2 failed | 139 passed (141)
+
+== arvore de producao limpa e todas as mutacoes medidas ==
+
+--- FIM da saida crua ---
+
+Gates do mesmo commit (verbatim):
+typecheck exit=0 · tipografia: guard-rail de tipografia aprovado · lint-ratchet: baseline=971,
+atual=945, removidas=26, novas=0 · implicit-any 0 (baseline 0) · db:guard: nenhuma violacao nova,
+694 migrations validas · build ✓ 4,77s · bundle 4054,7/4100 KB (CSS 39,3/80) · suite completa:
+350 arquivos, 4674 passed | 38 todo, 0 falhas.
+
+Auditoria de GitHub/produção: topo do main = 762c7c25 ("test(tarefas): cobre os cenários das
+mutações que sobreviveram à auditoria F3 (#1372)"), 3 arquivos; /version.json segue buildId
+36048ae8 (= PR #1360) — esperado, porque #1372 é só teste + ledger e não muda artefato de runtime.
+
+Erro do auditor (registrado, não escondido): a v1 do script copiava o backup DEPOIS de editar, então
+a restauração devolvia o código mutado e as mutações seguintes rodavam contaminadas (M24/M25 saíram
+com M23 ainda aplicado). A v1 foi descartada; o resultado acima é da v2, com backup antes da escrita.
+
+COTEJO INDEPENDENTE (mesmo dia, depois do merge): uma extração cega das definições das 7 mutações a
+partir de .tmp/mutations.json (campos old/new literais, conferidos contra HEAD 826fa148) propôs, sem
+conhecer o que eu havia escrito, os mesmos testes que foram entregues: M17 -> `alvo !== botao`
+(identidade, não existência); M19/M20/M27 -> Quadro com 1 card visível e `doingCount=3` exigindo '3/3'
+no cabeçalho da coluna; M23 -> "para hoje" com o filtro esvaziando a tela; M24/M25 -> card KPI
+"Fazendo" em '3/3' com filtro ativo. Nenhuma lacuna nova. O extrator não conseguiu executar nada (o
+SSH dele estava quebrado), então a morte das mutações é a medida por execução registrada acima —
+não um desenho.
+
+Observação registrada SEM ação (fora do escopo do PR #1372): o caso pré-existente "Fase F: o cabeçalho
+conta a lista REAL" usa `makeTaskRow()` sem `due_date`, então passaria mesmo se assertasse "para hoje".
+A cobertura de "para hoje" real ficou no arquivo novo (`contagensReaisVsFiltradas.test.tsx`); endurecer
+o caso antigo exigiria outro PR, que não foi pedido.

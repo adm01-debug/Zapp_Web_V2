@@ -1,0 +1,2 @@
+A  src/components/talkx/__tests__/useTalkXLifecycle.test.tsx
+A  src/components/talkx/useTalkXLifecycle.tsx

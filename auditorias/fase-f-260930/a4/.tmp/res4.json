@@ -1,0 +1,49 @@
+[
+ {
+  "id": "M24-kpi-doing-filtrado",
+  "desc": "PROBE: card KPI 'Fazendo' volta a contar o recorte filtrado (kpiData) em vez do real",
+  "file": "src/components/tasks/TasksModule.tsx",
+  "test": "src/components/tasks/__tests__/TasksModule.test.tsx",
+  "expect": "VIVO",
+  "summary": "18 passed (18)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  18 passed (18)\n   Start at  19:36:49\n   Duration  3.25s (transform 407ms, setup 59ms, import 925ms, tests 1.61s, environment 528ms)\n\n"
+ },
+ {
+  "id": "M25-doingReal-filtrado",
+  "desc": "PROBE: doingReal passa a ser calculado sobre a lista FILTRADA (quebra a trava de WIP real)",
+  "file": "src/components/tasks/TasksModule.tsx",
+  "test": "src/components/tasks/__tests__/TasksModule.test.tsx",
+  "expect": "VIVO",
+  "summary": "18 passed (18)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  18 passed (18)\n   Start at  19:36:53\n   Duration  3.53s (transform 367ms, setup 64ms, import 860ms, tests 1.97s, environment 507ms)\n\n"
+ },
+ {
+  "id": "M26-collapse-invertido",
+  "desc": "PROBE: aria-expanded=true com o conteudo escondido (incoerencia oposta)",
+  "file": "src/components/tasks/agenda/TasksAgendaMode.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "DEAD",
+  "summary": "2 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "\"Atrasadas\" nasce colapsado quando passa de 3 e abre no clique",
+   "com até 3 atrasadas, o bloco já vem aberto"
+  ],
+  "raw_tail": "div>\u001b[39m\n\u001b[36m</body>\u001b[39m\n ❯ Object.getElementError ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/config.js:37:19\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:76:38\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:52:17\n ❯ ../../../hermes-workspaces/Zapp_Web_V2/auditoria-fase-f-2609301907fce5/node_modules/@testing-library/dom/dist/query-helpers.js:95:19\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:196:19\n    194|   it('com até 3 atrasadas, o bloco já vem aberto', () => {\n    195|     renderAgenda([], [makeItem({ title: 'Vencida única' })]);\n    196|     expect(screen.getByText('Vencida única')).toBeTruthy();\n       |                   ^\n    197|     expect(screen.getByRole('button', { name: /1 atrasada/ }).getAttri…\n    198|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\n\n\n Test Files  1 failed (1)\n      Tests  2 failed | 9 passed (11)\n   Start at  19:36:57\n   Duration  1.71s (transform 190ms, setup 88ms, import 537ms, tests 358ms, environment 571ms)\n\n"
+ },
+ {
+  "id": "M27-boardmode-doing-ignorado-cenario",
+  "desc": "PROBE: TasksBoardMode sem doingCount, contra agendaGroups (sem efeito) -- controle",
+  "file": "src/components/tasks/board/TasksBoardMode.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "VIVO",
+  "summary": "11 passed (11)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  19:36:59\n   Duration  1.60s (transform 158ms, setup 58ms, import 484ms, tests 393ms, environment 531ms)\n\n"
+ }
+]

@@ -1,0 +1,14 @@
+--- a/scripts/ci/check-test-inventory.mjs
++++ b/scripts/ci/check-test-inventory.mjs
+@@ -115,6 +115,11 @@
+   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
+   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
+   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
++  // Runtime de follow-ups (L5 / item t_f949da13; refazer 1 t_1a45b46d): prova as 4 RPCs
++  // (enroll/complete/cancel/due), a RLS de SELECT, a matrícula 1:1 e o Rollback em
++  // Postgres 17 descartável (docker). Passo de YAML a promover em db-guard.yml pelo
++  // dono do workflow.
++  'scripts/db-audit/followup-runtime.test.sh',
+ ]);
+ 
+ // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

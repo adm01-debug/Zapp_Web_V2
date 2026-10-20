@@ -1,0 +1,2 @@
+ M .tmp/relato.md
+ M ESTADO.md

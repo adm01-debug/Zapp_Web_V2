@@ -1,0 +1,851 @@
+import React, { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import {
+  X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
+import { TalkXQueryBoundary } from './kit/states';
+import {
+  useTalkXTemplateLibraryStats,
+  useTalkXTemplateStats,
+  pointsDelta,
+  TALKX_TEMPLATE_STATS_PERIODS,
+  TALKX_STATS_MIN_BASE,
+} from '@/hooks/integrations/useTalkXTemplateStats';
+import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
+import { TalkXMessagePreview } from './TalkXMessagePreview';
+import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { KpiCard } from './kit/kpi';
+import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
+import { useTalkXConfirm } from './kit/useTalkXConfirm';
+import { parseTalkXTemplateRoute, type TalkXTemplateTab } from './talkxTemplateRoute';
+import {
+  IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
+  VARIABLE_KEYS, personalizePreview, fmtInt,
+} from './talkxShared';
+
+/**
+ * X193 — o corte de largura do painel do editor é o mesmo `xl` do Tailwind
+ * (1280 px), lido pelo `matchMedia` (sem `setState` em efeito). Abaixo dele o
+ * rail não cabe ao lado do editor e o painel vem pela gaveta.
+ */
+const CONSULTA_PAINEL_LARGO = '(min-width: 1280px)';
+
+function assinarPainelLargo(aoMudar: () => void) {
+  if (typeof window.matchMedia !== 'function') return () => {};
+  const media = window.matchMedia(CONSULTA_PAINEL_LARGO);
+  media.addEventListener('change', aoMudar);
+  return () => media.removeEventListener('change', aoMudar);
+}
+
+function painelLargo() {
+  return typeof window.matchMedia !== 'function' || window.matchMedia(CONSULTA_PAINEL_LARGO).matches;
+}
+
+function usePainelLargo() {
+  return useSyncExternalStore(assinarPainelLargo, painelLargo, () => true);
+}
+
+interface Props {
+  templates: TalkXTemplate[];
+  isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+  editing: TalkXTemplate | null;
+  onClose: () => void;
+  /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
+  onOpenMonitor?: (campaignId: string) => void;
+  /** X094 — sub-aba pedida no endereço: `ttab=conteudo|ab|historico`. */
+  initialTtab?: TalkXTemplateTab;
+  /** X094 — troca de template feita na biblioteca lateral chega ao endereço. */
+  onActiveTemplateChange?: (templateId: string) => void;
+}
+
+export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, onClose, onOpenMonitor, initialTtab = 'conteudo', onActiveTemplateChange }: Props) {
+  const {
+    createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
+    saveVariant, deleteVariant, countVariantRecipients,
+  } = useTalkXTemplates();
+  const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
+  const { confirmar, dialogo } = useTalkXConfirm();
+
+  // Inicializa campos do template sendo editado
+  const [eName, setEName] = useState(editing?.name ?? '');
+  const [eDesc, setEDesc] = useState(editing?.description ?? '');
+  const [eCat, setECat] = useState(editing?.category ?? 'geral');
+  const [eContent, setEContent] = useState(editing?.content ?? '');
+  const [eMediaUrl, setEMediaUrl] = useState(editing?.media_url ?? '');
+  const [eMediaType, setEMediaType] = useState(editing?.media_type ?? '');
+  const [eHasMedia, setEHasMedia] = useState(!!editing?.media_url);
+  const [eStatus, setEStatus] = useState<'draft' | 'review' | 'approved'>(editing?.status ?? 'approved');
+  const [eTags, setETags] = useState<string[]>(editing?.tags ?? []);
+  const [eTagInput, setETagInput] = useState('');
+  const [eCustomVars, setECustomVars] = useState<string[]>(editing?.custom_variables ?? []);
+  const [eCustomVarInput, setECustomVarInput] = useState('');
+  // E47: test sheet
+  const [showTest, setShowTest] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(editing?.updated_at ?? null);
+  const [versions, setVersions] = useState<Array<{
+    id: string; template_id: string; version_number: number; name: string; description: string | null; content: string;
+    category: string; status: string; media_url: string|null; media_type: string|null;
+    tags: string[]; custom_variables: string[]; created_at: string;
+  }>>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [showVersions, setShowVersions] = useState(initialTtab === 'historico');
+  const [variants, setVariants] = useState<TemplateVariant[]>([]);
+  // X094 — a sub-aba do endereço abre o painel correspondente já carregado.
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
+  const [savingVariant, setSavingVariant] = useState(false);
+  // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
+  // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
+  // render que criou o handler assíncrono); `versionsTemplateIdRef` diz de qual
+  // template é o histórico exibido. Toda resposta ou mutação só vale se a origem
+  // bater com o template ativo.
+  const activeTemplateIdRef = useRef<string | null>(editing?.id ?? null);
+  const versionsTemplateIdRef = useRef<string | null>(null);
+  const [libSearch, setLibSearch] = useState('');
+  const [libCat, setLibCat] = useState('all');
+  // X193: abaixo de 1280 px (xl) o painel direito não cabe ao lado do editor e
+  // passa a ser gaveta, aberta pelo botão do cabeçalho (mesmo corte do CSS).
+  const larguraLarga = usePainelLargo();
+  const [painelAberto, setPainelAberto] = useState(false);
+
+  // Fonte única de troca: invalida callbacks antigos no mesmo tick, antes do render.
+  const activateTemplate = (templateId: string) => {
+    activeTemplateIdRef.current = templateId;
+    setActiveTemplateId(templateId);
+  };
+
+  // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
+  const activeTemplate = templates.find((t) => t.id === activeTemplateId) ?? editing;
+
+  // X091 — KPIs das telas 04 e 05 nas RPCs de métricas (X086). A faixa do topo usa
+  // os números da biblioteca; o card "Desempenho deste template" segue o template
+  // ATIVO (não a prop `editing`) e o período escolhido (7/30/90 dias).
+  const { stats: libStats } = useTalkXTemplateLibraryStats(30, 3);
+  const [statsDias, setStatsDias] = useState(30);
+  const { stats: templateStats } = useTalkXTemplateStats(activeTemplateId, statsDias);
+
+  // X091 — widget "Em andamento" do cabeçalho: a campanha em envio MAIS RECENTE
+  // (`status='sending'`, por `started_at`). Sem campanha em envio ele não aparece.
+  const { campaigns } = useTalkX();
+  const sendingCampaign = campaigns
+    .filter((c) => c.status === 'sending')
+    .sort((a, b) => new Date(b.started_at ?? b.created_at).getTime() - new Date(a.started_at ?? a.created_at).getTime())[0] ?? null;
+  const horaInicio = sendingCampaign
+    ? new Date(sendingCampaign.started_at ?? sendingCampaign.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  const fmtPct1 = (n: number | null | undefined) =>
+    (n == null ? null : `${n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`);
+  const fmtDelta1 = (n: number) => Math.abs(n).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  /** Variação em pontos percentuais — nula abaixo da base mínima (A9) nos dois períodos. */
+  const pp = (cur: number | null | undefined, prev: number | null | undefined, invertida = false) => {
+    const delta = pointsDelta(cur, prev, templateStats?.sent, templateStats?.previous?.sent);
+    if (delta == null) return null;
+    const bom = invertida ? delta <= 0 : delta >= 0;
+    return { text: `${delta >= 0 ? '↑' : '↓'} ${fmtDelta1(delta)} p.p.`, tone: bom ? 'text-success' : 'text-destructive' };
+  };
+  const enviosDelta = (() => {
+    const cur = templateStats?.sent;
+    const prev = templateStats?.previous?.sent;
+    if (cur == null || prev == null || prev < TALKX_STATS_MIN_BASE || cur < TALKX_STATS_MIN_BASE) return null;
+    const variacao = ((cur - prev) / prev) * 100;
+    return { text: `${variacao >= 0 ? '↑' : '↓'} ${fmtDelta1(variacao)}%`, tone: variacao >= 0 ? 'text-success' : 'text-destructive' };
+  })();
+  const perfTiles = [
+    { label: 'Envios', value: templateStats?.sent == null ? null : fmtInt(templateStats.sent), delta: enviosDelta, hint: 'Mensagens enviadas com o template no período' },
+    { label: 'Taxa de resposta', value: fmtPct1(templateStats?.reply_rate_pct), delta: pp(templateStats?.reply_rate_pct, templateStats?.previous?.reply_rate_pct), hint: 'Destinatários que responderam ÷ enviados no período' },
+    { label: 'Taxa de conversão', value: fmtPct1(templateStats?.conversion_rate_pct), delta: pp(templateStats?.conversion_rate_pct, templateStats?.previous?.conversion_rate_pct), hint: 'Conversões das campanhas do template ÷ enviados no período' },
+    { label: 'Taxa de rejeição', value: fmtPct1(templateStats?.rejection_rate_pct), delta: pp(templateStats?.rejection_rate_pct, templateStats?.previous?.rejection_rate_pct, true), hint: 'Pedidos de saída (opt-out) de campanhas do template ÷ enviados. Falha de envio não é rejeição.' },
+  ];
+
+  // Dirty-check: qualquer campo alterado em relação ao original
+  const isDirty = activeTemplate
+    ? eName !== activeTemplate.name
+      || eDesc !== (activeTemplate.description ?? '')
+      || eCat !== activeTemplate.category
+      || eContent !== activeTemplate.content
+      || eStatus !== activeTemplate.status
+      || JSON.stringify(eTags) !== JSON.stringify(activeTemplate.tags ?? [])
+      || eHasMedia !== !!activeTemplate.media_url
+      || eMediaUrl !== (activeTemplate.media_url ?? '')
+      || eMediaType !== (activeTemplate.media_type ?? '')
+      || JSON.stringify(eCustomVars) !== JSON.stringify(activeTemplate.custom_variables ?? [])
+    : eName.trim().length > 0 || eContent.trim().length > 0;
+
+  const save = async () => {
+    if (saving) return;
+    if (!eName.trim() || !eContent.trim()) return;
+    if (eHasMedia && !/^https:\/\//i.test(eMediaUrl)) {
+      toast.error('Informe uma URL de mídia HTTPS válida.');
+      return;
+    }
+    setSaving(true);
+    const payload: TemplateInput = {
+      name: eName, description: eDesc || null, category: eCat, content: eContent,
+      media_url: eHasMedia ? eMediaUrl : null,
+      media_type: eHasMedia && eMediaType ? eMediaType : null,
+      tags: eTags, status: eStatus,
+      custom_variables: eCustomVars,
+    };
+    try {
+      if (activeTemplateId) {
+        if (!expectedUpdatedAt) throw new Error('Versão do template indisponível; reabra o editor');
+        await updateTemplate.mutateAsync({ id: activeTemplateId, expectedUpdatedAt, ...payload });
+      }
+      else await createTemplate.mutateAsync(payload);
+      onClose();
+    } catch (e) {
+      console.error('Falha ao salvar template', e);
+    } finally { setSaving(false); }
+  };
+
+  const loadTemplate = async (t: TalkXTemplate) => {
+    setVersions([]); setShowVersions(false);
+    if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
+    // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
+    activateTemplate(t.id);
+    // X094 — a ref sozinha não basta: o endereço da tela 05 é a fonte de verdade do
+    // template aberto e precisa acompanhar a troca feita aqui na biblioteca lateral.
+    onActiveTemplateChange?.(t.id);
+    versionsTemplateIdRef.current = null;
+    // R2-MOD-024: trocar de template zera o loading do historico. Sem isto, uma
+    // resposta pendente de A descartada na troca para B prendia `loadingVersions`.
+    setLoadingVersions(false);
+    setSavingVariant(false);
+    setVariants([]); setShowVariants(false);
+    setExpectedUpdatedAt(t.updated_at);
+    setVersions([]); setShowVersions(false);
+    setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
+    setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
+    setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
+
+    // X094 — se a troca veio enquanto uma sub-aba estava no endereço, a tela não
+    // pode mostrar Conteúdo enquanto a URL ainda diz `ttab=ab|historico`: mantém
+    // a mesma sub-aba no novo template e carrega os dados dela.
+    const nextTab = parseTalkXTemplateRoute(window.location.search).route?.ttab ?? initialTtab;
+    if (nextTab === 'ab') {
+      setShowVariants(true);
+      void loadVariants(t.id);
+    }
+    else if (nextTab === 'historico') {
+      setShowVersions(true);
+      void fetchVersions(t.id);
+    }
+  };
+
+  // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
+  const knownTemplateVariables = useMemo(
+    () => [...VARIABLE_KEYS, ...eCustomVars.map((variable) => `{{${variable}}}`)],
+    [eCustomVars],
+  );
+
+  /** Insere markup na posicao do cursor (painéis de variaveis fora do editor). */
+  const insertAtCursor = (text: string) => messageEditorRef.current?.insertAtCursor(text);
+
+
+  /** E47: envia mensagem de teste para o numero informado */
+  const handleTest = async () => {
+    const phone = testPhone.replace(/\D/g, '');
+    if (!phone || phone.length < 10) { setTestResult({ ok: false, msg: 'Número inválido' }); return; }
+    if (!eContent.trim()) { setTestResult({ ok: false, msg: 'Template vazio' }); return; }
+    setTesting(true); setTestResult(null);
+    try {
+      await testTemplate({ templateContent: eContent, mediaUrl: eHasMedia ? eMediaUrl : null, mediaType: eHasMedia ? eMediaType : null, phone, customVariables: eCustomVars });
+      setTestResult({ ok: true, msg: `Mensagem enviada para ${phone}` });
+    } catch (e) {
+      setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro desconhecido' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+
+  /** R2-MOD-024: a origem (template) da resposta ainda é o template ativo? */
+  const isActiveOrigin = (templateId: string | null | undefined) =>
+    !!templateId && templateId === activeTemplateIdRef.current;
+
+  /** E46: usa hook para buscar historico de versoes; descarta resposta atrasada de outro template */
+  const fetchVersions = async (templateId: string) => {
+    setLoadingVersions(true);
+    try {
+      const data = await fetchVersionHistory(templateId);
+      if (!isActiveOrigin(templateId)) return;
+      versionsTemplateIdRef.current = templateId;
+      setVersions(data);
+    } finally {
+      // R2-MOD-024: so o request do template ATIVO pode zerar o loading. A resposta
+      // descartada de A (que chega depois da troca para B) nao pode alterar o painel
+      // atual nem deixar `loadingVersions` preso; a propria troca ja zera o flag.
+      if (isActiveOrigin(templateId)) setLoadingVersions(false);
+    }
+  };
+
+  /** R2-MOD-024: carrega variantes do template dado, ignorando resposta que chegue depois da troca. */
+  const loadVariants = async (templateId: string) => {
+    const vs = await fetchVariants(templateId);
+    if (!isActiveOrigin(templateId)) return;
+    setVariants(vs);
+  };
+
+  const removeVariant = async (variant: TemplateVariant) => {
+    const templateId = variant.template_id;
+    if (!isActiveOrigin(templateId)) return;
+
+    const recipientCount = await countVariantRecipients(variant.id);
+    if (!isActiveOrigin(templateId)) return;
+    if (recipientCount > 0) {
+      const confirmado = await confirmar({
+        ...PRESETS_DO_PRODUTO.excluirVariante,
+        details: [{ label: 'Envios', value: fmtInt(recipientCount) }],
+      });
+      if (!confirmado) return;
+      if (!isActiveOrigin(templateId)) return;
+    }
+
+    await deleteVariant(variant.id);
+    if (!isActiveOrigin(templateId)) return;
+    setVariants((current) => current.filter((item) => item.id !== variant.id));
+  };
+
+  const saveActiveVariant = async (variant: TemplateVariant) => {
+    const templateId = variant.template_id;
+    if (!isActiveOrigin(templateId)) return;
+    setSavingVariant(true);
+    try {
+      if (!isActiveOrigin(templateId)) return;
+      await saveVariant(templateId, variant);
+      if (!isActiveOrigin(templateId)) return;
+    } finally {
+      if (isActiveOrigin(templateId)) setSavingVariant(false);
+    }
+  };
+
+  const addVariant = async () => {
+    const templateId = activeTemplateIdRef.current;
+    if (!templateId || variants.some((variant) => variant.template_id !== templateId)) return;
+
+    const nextLabel = (['A', 'B', 'C'] as const).find((label) => !variants.find((variant) => variant.label === label));
+    if (!nextLabel) return;
+    const count = variants.length + 1;
+    const baseWeight = Math.floor(100 / count);
+    const extraWeight = 100 - baseWeight * count;
+
+    setSavingVariant(true);
+    try {
+      for (let index = 0; index < variants.length; index++) {
+        if (!isActiveOrigin(templateId)) return;
+        await saveVariant(templateId, {
+          ...variants[index],
+          weight: baseWeight + (index < extraWeight ? 1 : 0),
+        });
+        if (!isActiveOrigin(templateId)) return;
+      }
+
+      if (!isActiveOrigin(templateId)) return;
+      await saveVariant(templateId, {
+        template_id: templateId,
+        label: nextLabel,
+        content: eContent,
+        media_url: null,
+        media_type: null,
+        weight: baseWeight + (variants.length < extraWeight ? 1 : 0),
+      });
+      if (!isActiveOrigin(templateId)) return;
+      await loadVariants(templateId);
+      if (!isActiveOrigin(templateId)) return;
+    } catch {
+      if (!isActiveOrigin(templateId)) return;
+      try {
+        await loadVariants(templateId);
+      } catch {
+        // Mantém a lista local quando nem a recuperação da origem ativa responde.
+      }
+      if (!isActiveOrigin(templateId)) return;
+    } finally {
+      if (isActiveOrigin(templateId)) setSavingVariant(false);
+    }
+  };
+
+  // X094 — a sub-aba pedida no endereço abre o painel correspondente já carregado:
+  // `ttab=ab` traz as variantes e `ttab=historico` traz as versões do template aberto.
+  // Só a sub-aba do endereço monta o painel; reabrir o mesmo template não recarrega.
+  useEffect(() => {
+    const templateId = activeTemplateIdRef.current;
+    if (!templateId) return;
+    if (initialTtab === 'ab') void loadVariants(templateId);
+    else if (initialTtab === 'historico') void fetchVersions(templateId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTtab]);
+
+  /** E46: restaura campos de uma versao anterior */
+  const restoreVersion = async (v: typeof versions[0]) => {
+    // R2-MOD-024: recusa restaurar histórico que não pertence ao template ativo.
+    if (!isActiveOrigin(v.template_id)) return;
+    if (!(await confirmar(PRESETS_DO_PRODUTO.restaurarVersao))) return;
+    setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
+    setEStatus(v.status as 'draft'|'review'|'approved');
+    setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
+    setETags(v.tags ?? []); setECustomVars(v.custom_variables ?? []);
+    setShowVersions(false);
+  };
+
+  const libFiltered = templates.filter((t) => {
+    const q = libSearch.toLowerCase();
+    const matchCat = libCat === 'all' || t.category === libCat;
+    const matchQ = !q || t.name.toLowerCase().includes(q) || t.category.includes(q);
+    return matchCat && matchQ;
+  });
+
+  // X193 — o painel direito é o MESMO conteúdo nos dois caminhos: rail a partir
+  // de xl (1280) e conteúdo da gaveta abaixo dele. Uma fonte só, sem duplicar.
+  const painelLateral = (
+    <>
+      <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
+        {/* X088: a moldura do editor é o uso "frame" do MESMO renderizador do
+            cartão (`TalkXMessagePreview`) — formatação, mídia e tela cheia
+            iguais nos dois lugares. */}
+        <TalkXMessagePreview
+          variant="frame"
+          text={personalizePreview(eContent)}
+          mediaUrl={eHasMedia ? eMediaUrl : null}
+          mediaType={eHasMedia ? eMediaType : null}
+        />
+      </RailCard>
+      <div className="rounded-2xl bg-card border border-border/70 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <History className="w-3.5 h-3.5 text-foreground-secondary" />
+            <p className="text-xs font-semibold text-foreground">Variações A/B</p>
+          </div>
+          <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
+        </div>
+        {showVariants && (
+          <div className="space-y-2 mt-1 mb-3">
+            {variants.map((v) => (
+              <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
+                  <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
+                </div>
+                <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+              </div>
+            ))}
+            {variants.length < 3 && (
+              <button type="button" disabled={savingVariant || !activeTemplateId} onClick={() => void addVariant()} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
+            )}
+            {variants.length > 0 && (
+              <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
+          <p className="text-xs font-semibold text-foreground">Histórico</p>
+          <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) void fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
+        </div>
+        {showVersions && (
+          <div className="space-y-1">
+            {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versão salva.</p> : versions.map((v) => (
+              <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
+                <div className="min-w-0">
+                  <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
+                  <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex gap-4 min-w-0" style={{ minHeight: 'calc(100vh - 160px)' }}>
+      {/* === COLUNA ESQUERDA: biblioteca === */}
+      <aside className="hidden lg:flex flex-col w-[220px] xl:w-[240px] flex-shrink-0 gap-3">
+        <div className="rounded-2xl bg-card border border-border/70 p-3 flex flex-col gap-2 flex-1">
+          <p className="text-xs font-semibold text-foreground">Biblioteca</p>
+          <Input
+            value={libSearch}
+            onChange={(e) => setLibSearch(e.target.value)}
+            placeholder="Buscar…"
+            className="h-8 text-xs bg-input/40 border-border/70"
+          />
+          {/* Chips de categoria */}
+          <div className="flex flex-wrap gap-1">
+            {(['all', ...TEMPLATE_CATEGORIES]).map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setLibCat(c)}
+                className={cn(
+                  'h-6 px-2 rounded-md text-3xs font-medium border transition-colors',
+                  libCat === c
+                    ? 'border-primary bg-primary/10 text-foreground'
+                    : 'border-border/60 text-muted-foreground hover:border-primary/40',
+                )}
+              >
+                {c === 'all' ? 'Todos' : c}
+              </button>
+            ))}
+          </div>
+          {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
+          <div className="flex-1 overflow-y-auto space-y-1">
+            <TalkXQueryBoundary
+              query={{ isLoading, isError, error }}
+              entity="os templates"
+              onRetry={onRetry}
+              skeleton={<TalkXSkeletonRows rows={5} />}
+              isEmpty={libFiltered.length === 0}
+              empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}
+            >
+              {libFiltered.map((t) => {
+                const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => { void loadTemplate(t); }}
+                    className={cn(
+                      'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
+                      activeTemplateId === t.id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border/50 hover:border-primary/30 hover:bg-muted/20',
+                    )}
+                  >
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', sm.tone === 'success' ? 'bg-dash-green' : sm.tone === 'muted' ? 'bg-muted-foreground' : 'bg-dash-amber')} />
+                      <p className="text-2xs font-semibold text-foreground truncate flex-1">{t.name}</p>
+                    </div>
+                    <p className="text-3xs text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
+                  </button>
+                );
+              })}
+            </TalkXQueryBoundary>
+          </div>
+        </div>
+      </aside>
+
+      {/* === COLUNA CENTRO: editor === */}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
+          <KpiCard icon={Check} color="green" index={1} label="Templates aprovados" value={libStats?.approved ?? null} bars={libStats?.approved_series ?? null} hint={libStats?.approved != null && libStats.total ? `${Math.round((libStats.approved / libStats.total) * 100)}% do total` : 'Aprovados entre os templates'} />
+          <KpiCard icon={BarChart3} color="violet" index={2} label="Melhor taxa de resposta" value={libStats?.best_reply?.reply_rate_pct ?? null} suffix="%" hint={libStats?.best_reply?.name ? `Template: ${libStats.best_reply.name}${libStats.best_reply.version ? ` v${libStats.best_reply.version}` : ''}` : 'Ranking só com base mínima de enviados'} />
+          <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />
+        </div>
+        {/* X094 — trilha da tela 05: o editor é uma tela interna do módulo, no mesmo
+            desenho do breadcrumb do wizard. */}
+        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Templates</span>
+        </nav>
+        {/* Header */}
+        <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              void (async () => {
+                if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
+                onClose();
+              })();
+            }}
+            aria-label="Voltar"
+            className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <IconTile icon={FileText} size={40} />
+          <div className="min-w-0 flex-1">
+            <p className="text-xl font-bold font-display text-foreground">{editing ? 'Editar template' : 'Novo template'}</p>
+            <p className="text-xs text-foreground-secondary">Personalize a mensagem e adicione variáveis</p>
+          </div>
+          {sendingCampaign && (
+            <button
+              type="button"
+              onClick={() => onOpenMonitor?.(sendingCampaign.id)}
+              title={`Abrir o monitor de "${sendingCampaign.name}"`}
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border/60 bg-input/40 text-2xs font-medium text-foreground-secondary hover:text-foreground hover:border-primary/40 shrink-0"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-success motion-safe:animate-pulse" aria-hidden="true" />
+              Em andamento · Talk X · Iniciada às {horaInicio}
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* X193: abaixo de 1280 px (xl) o painel direito não cabe ao lado do
+                editor e vem por aqui; a partir de xl o rail segue valendo. */}
+            {!larguraLarga && (
+              <GhostButton
+                icon={History}
+                onClick={() => setPainelAberto(true)}
+                title="Abrir a pré-visualização, as variações e o histórico do template"
+              >
+                Prévia e histórico
+              </GhostButton>
+            )}
+            {editing && (
+              <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
+            )}
+            <GhostButton icon={Send} onClick={() => { setShowTest(true); setTestResult(null); }}>Testar</GhostButton>
+            <PrimaryButton
+              icon={saving ? undefined : Check}
+              onClick={save}
+              disabled={!eName.trim() || !eContent.trim() || saving}
+            >
+              {saving ? 'Salvando…' : 'Salvar template'}
+            </PrimaryButton>
+          </div>
+        </div>
+
+        {/* Campos */}
+        <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
+            <div><Label className="text-xs text-foreground-secondary">Nome do Template</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} placeholder="Boas-vindas" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+            <div>
+              <Label htmlFor="talkx-template-categoria" className="text-xs text-foreground-secondary">Categoria</Label>
+              <Select value={eCat} onValueChange={setECat}>
+                <SelectTrigger id="talkx-template-categoria" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectContent>{TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="talkx-template-status" className="text-xs text-foreground-secondary">Status</Label>
+              <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft' | 'review' | 'approved')}>
+                <SelectTrigger id="talkx-template-status" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* X094 — a descrição já existia no estado (e ia para o banco no save) mas
+              não tinha campo: não havia como escrevê-la em lugar nenhum. */}
+          <div>
+            <Label htmlFor="talkx-template-descricao" className="text-xs text-foreground-secondary">Descrição</Label>
+            <Input
+              id="talkx-template-descricao"
+              value={eDesc}
+              onChange={(e) => setEDesc(e.target.value)}
+              placeholder="Para que serve este template"
+              className="mt-1.5 h-10 bg-input/40 border-border/70"
+            />
+          </div>
+
+          {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}
+          <div>
+            <Label className="text-xs text-foreground-secondary">Mensagem</Label>
+            <TalkXMessageEditor
+              ref={messageEditorRef}
+              className="mt-1.5"
+              value={eContent}
+              // Preserva o corte em 1024 do editor original.
+              onChange={(next) => setEContent(next.slice(0, 1024))}
+              rows={7}
+              limit={1024}
+              knownVariables={knownTemplateVariables}
+              placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial…"
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); }
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); void save(); }
+              }}
+            />
+          </div>
+
+          {/* Todas as variáveis disponíveis */}
+          <div>
+            <p className="text-2xs text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
+            <div className="flex flex-wrap gap-1.5">
+              {VARIABLE_KEYS.map((v) => (
+                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mídia */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Label className="text-xs text-foreground-secondary">Mídia (opcional)</Label>
+              <div className="flex gap-1.5">
+                {[{ v: '', l: 'Sem mídia', icon: X }, { v: 'image', l: 'Imagem', icon: Image }, { v: 'video', l: 'Vídeo', icon: Video }, { v: 'document', l: 'Doc', icon: FileText }, { v: 'audio', l: 'Áudio', icon: Music }].map(({ v, l, icon: Icon }) => {
+                  const active = v === '' ? !eHasMedia : eHasMedia && eMediaType === v;
+                  return (
+                    <button key={l} type="button" onClick={() => {
+                      if (v === '') { setEHasMedia(false); setEMediaType(''); }
+                      else { setEHasMedia(true); setEMediaType(v); }
+                    }} className={cn('h-7 px-2 rounded-md text-2xs font-medium border flex items-center gap-1', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:border-primary/40')}>
+                      <Icon className="w-3 h-3" />{l}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {eHasMedia && <Input value={eMediaUrl} onChange={(e) => setEMediaUrl(e.target.value)} placeholder="URL da mídia (ex: https://…/imagem.jpg)" className="h-9 bg-input/40 border-border/70 text-xs" />}
+          </div>
+
+
+          {/* E45: Variaveis customizadas */}
+          <div>
+            <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-[hsl(var(--primary-text))]">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              {eCustomVars.map((v) => (
+                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
+                  {'{{'}{v}{'}}'}
+                  <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} aria-label={`Remover variável ${v}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                value={eCustomVarInput}
+                onChange={(e) => setECustomVarInput(e.target.value.replace(/[^a-z0-9_]/gi, '').toLowerCase().replace(/^[0-9]+/, ''))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && eCustomVarInput.trim()) {
+                    const v = eCustomVarInput.trim();
+                    setECustomVars((p) => [...new Set([...p, v])]);
+                    setECustomVarInput('');
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="nome_variavel (Enter)"
+                className="h-7 w-44 bg-input/40 border-border/70 text-xs font-mono"
+              />
+              <button
+                type="button"
+                disabled={!eCustomVarInput.trim()}
+                onClick={() => {
+                  if (eCustomVarInput.trim()) {
+                    insertAtCursor('{{' + eCustomVarInput.trim() + '}}');
+                    setECustomVars((p) => [...new Set([...p, eCustomVarInput.trim()])]);
+                    setECustomVarInput('');
+                  }
+                }}
+                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20 disabled:opacity-40"
+              >
+                + Inserir
+              </button>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <Label className="text-xs text-foreground-secondary">Tags</Label>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              {eTags.map((t) => (
+                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-[hsl(var(--primary-text))]">
+                  #{t}
+                  <button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))} aria-label={`Remover tag ${t}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
+                </span>
+              ))}
+              <Input
+                value={eTagInput}
+                onChange={(e) => setETagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && eTagInput.trim()) {
+                    setETags((p) => [...new Set([...p, eTagInput.trim().toLowerCase()])]);
+                    setETagInput('');
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="+ tag (Enter)"
+                className="h-7 w-32 bg-input/40 border-border/70 text-xs"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* X091 — "Desempenho deste template". Fica fora do rail para aparecer em
+            qualquer largura, segue o template ATIVO e o período do seletor. */}
+        <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[15px] font-bold text-foreground">Desempenho deste template</p>
+              <p className="text-xs text-foreground-secondary mt-0.5">
+                {activeTemplate ? `Envios, resposta, conversão e rejeição de "${activeTemplate.name}"` : 'Salve o template para acompanhar o desempenho'}
+              </p>
+            </div>
+            <Select value={String(statsDias)} onValueChange={(v) => setStatsDias(Number(v))}>
+              <SelectTrigger aria-label="Período do desempenho" className="h-8 w-[140px] bg-input/40 border-border/70 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {TALKX_TEMPLATE_STATS_PERIODS.map((d) => <SelectItem key={d} value={String(d)}>Últimos {d} dias</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {!activeTemplateId ? (
+            <p className="text-xs text-foreground-secondary">Salve o template para acompanhar o desempenho.</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+              {perfTiles.map((t) => (
+                <div key={t.label} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1" title={t.hint}>
+                  <p className="text-sm font-bold text-foreground tabular-nums">{t.value ?? 'Sem dados ainda'}</p>
+                  <p className="text-3xs text-foreground-secondary">{t.label}</p>
+                  {t.delta && <p className={cn('text-3xs font-semibold', t.delta.tone)}>{t.delta.text}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {(activeTemplate?.tags ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {(activeTemplate?.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-3xs">#{t}</Badge>)}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* X193 — abaixo de 1280 px (xl) o painel direito não cabe ao lado do editor:
+          vira gaveta aberta pelo botão do cabeçalho. A partir de xl vale o rail
+          (o `hidden xl:flex` abaixo), com largura menor em 1280 e cheia no 2xl. */}
+      {!larguraLarga && (
+        <Sheet open={painelAberto} onOpenChange={setPainelAberto}>
+          <SheetContent side="right" aria-describedby={undefined} className="w-[min(360px,92vw)] overflow-y-auto p-4">
+            <SheetTitle className="sr-only">Pré-visualização e histórico do template</SheetTitle>
+            <div className="mt-4 flex flex-col gap-3">{painelLateral}</div>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {/* === COLUNA DIREITA: preview === */}
+      <aside className="hidden xl:flex flex-col w-[260px] 2xl:w-[300px] flex-shrink-0 gap-3">
+        {painelLateral}
+      </aside>
+
+      {/* E47: Test Dialog */}
+      {dialogo}
+      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
+            <div>
+              <Label className="text-xs text-foreground-secondary">Número de destino</Label>
+              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
+            </div>
+            {testResult && (
+              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
+                {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
+                {testResult.msg}
+              </div>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
+              <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
+            </div></DialogContent></Dialog>
+    </div>
+  );
+}

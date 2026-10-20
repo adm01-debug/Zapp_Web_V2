@@ -1,0 +1,3 @@
+ M src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx
+ M src/hooks/team-chat/__tests__/useDepartmentWhatsAppCredentials.contrato-rpc.test.tsx
+ M src/hooks/team-chat/useDepartmentManagement.ts

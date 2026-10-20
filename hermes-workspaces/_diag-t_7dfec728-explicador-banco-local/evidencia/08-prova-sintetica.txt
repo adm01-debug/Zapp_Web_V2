@@ -1,0 +1,7 @@
+########## PROVA 2: fixture SINTETICA (rodada inteira) ##########
+COMANDO: NOVAS=20261007120000_nova_tabela_sem_acl.sql W="$PWD/fixture-sint" ST="$PWD/fixture-sint/estado" python3 "$PWD/fixture-sint/explicador_extraido.py"
+diferença não explicada por migration pendente: rls|nova_tabela; indexes|nova_tabela.nova_tabela_pkey; constraints|relation:nova_tabela.nova_tabela_pkey (+4)
+rc=1
+########## PROVA 3: fixture filtrada so ao ai_usage_outbox ##########
+diferença não explicada por migration pendente: rls|ai_usage_outbox; indexes|ai_usage_outbox.ai_usage_outbox_pkey; policies|ai_usage_outbox."Service role can manage AI usage outbox" (+9)
+rc=1

@@ -1,0 +1,1853 @@
+ M .env.production
+ M .github/workflows/ci.yml
+ M .github/workflows/db-guard.yml
+ M .github/workflows/db-live-guard.yml
+ M .github/workflows/db-migrate.yml
+ M .github/workflows/deploy-functions.yml
+ M .github/workflows/e2e-logado.yml
+ M .github/workflows/e2e-talkx.yml
+ M .github/workflows/settings-guard.yml
+ M .github/workflows/supabase-sync.yml
+ M .github/workflows/targeted-ledger-evidence.yml
+ M .github/workflows/types-sync.yml
+ M .gitignore
+ M CHANGELOG.md
+ M bun.lock
+ M docs/COMPLETE_SYSTEM_FEATURES.md
+ M docs/INCIDENT-RUNBOOK.md
+ M docs/README.md
+ M docs/TROUBLESHOOTING.md
+ M docs/adr/README.md
+ M docs/audits/ARQUITETURA_V2_DESCOBERTAS.md
+ M docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md
+ D docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md
+ D docs/audits/evidence/branch-protection-2026-10-14.json
+ D docs/audits/funcionalidades-pendentes-2026-10-11/01-talkx-multiplix.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/02-ia-dashboard.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/03-telefonia-teamchat.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/04-contatos-crm-email.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/05-tarefas-catalogo-mapa-go.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/06-inbox-arquivos-design.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/07-infra-ci-banco-governanca.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/08-legado-e-codigo.md
+ D docs/audits/funcionalidades-pendentes-2026-10-11/README.md
+ M docs/audits/web-vitals-e36-2026-10-03.md
+ D docs/ci/ARQUITETURA_ALVO_GITHUB_2026-10-14.md
+ M docs/ci/README.md
+ M docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md
+ M docs/hermes/FLUXO-HERMES.md
+ M docs/ia/IA-004-matriz-autorizacao.md
+ M docs/ia/IA-171-a-IA-180-agentes-especializados.md
+ M docs/migration/PLANO.md
+ M docs/multiplix/COMPONENTES.md
+ M docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md
+ M docs/plans/PLANO_LIGACOES_WHATSAPP_MEOWCALLER_100_ETAPAS_2026-10-07.md
+ M docs/runbooks/bloqueio-meta.md
+ M docs/runbooks/slo.md
+ M docs/talkx/ARQUITETURA.md
+ M docs/talkx/CHANGELOG_TALKX.md
+ M docs/talkx/OPERACAO.md
+ M docs/talkx/README.md
+ M docs/telefonia/CAPACIDADES.md
+ M docs/telefonia/CONTRATO.md
+ M e2e/a11y-contraste.spec.ts
+ M e2e/busca-global-paleta.spec.ts
+ M e2e/email-navy-visual.spec.ts
+ M e2e/files-tab.spec.ts
+ M e2e/fixtures/talkx-demo/02-segmentos-biblioteca-detalhes.json
+ M e2e/fixtures/talkx-demo/03-segmentos-criar-editar.json
+ M e2e/fixtures/talkx-demo/04-templates-biblioteca.json
+ M e2e/fixtures/talkx-demo/05-templates-criar-editar.json
+ M e2e/fixtures/talkx-demo/06-lista-de-supressao.json
+ M e2e/fixtures/talkx-demo/07-analytics.json
+ M e2e/fixtures/talkx-demo/08-nova-campanha.json
+ M e2e/fixtures/talkx-demo/09-revisao-final-confirmacao.json
+ M e2e/fixtures/talkx-demo/10-campanha-agendada.json
+ M e2e/fixtures/talkx-demo/11-monitor-ao-vivo.json
+ M e2e/fixtures/talkx-demo/12-campanha-em-andamento.json
+ M e2e/fixtures/talkx-demo/13-campanha-pausada-retomada.json
+ M e2e/fixtures/talkx-demo/14-relatorio-campanha-concluida.json
+ M e2e/fixtures/talkx-demo/15-importacao-vinculacao-crm360.json
+ M e2e/fixtures/talkx-demo/16-ajuda-talkx.json
+ M e2e/fixtures/talkx-demo/17-estados-sistema-modais.json
+ M e2e/multiplix.spec.ts
+ M e2e/navegacao-modulos.spec.ts
+ D e2e/quarantine.json
+ M e2e/talkx.spec.ts
+ M e2e/tarefas-quadro.spec.ts
+ M e2e/telefonia.spec.ts
+ M e2e/theme-alto-contraste.spec.ts
+ M index.html
+ M package.json
+ M performance-budget.json
+ M playwright.config.ts
+ M public/version.json
+ M scripts/ci/bundle-budget.unit.mjs
+ M scripts/ci/check-quarantine.mjs
+ M scripts/ci/check-quarantine.unit.mjs
+ M scripts/ci/check-talkx-docs.unit.mjs
+ M scripts/ci/check-test-inventory.mjs
+ M scripts/ci/ci-e2e-projects.unit.mjs
+ M scripts/ci/db-migrate-contratos.unit.mjs
+ M scripts/ci/dry-run-plan.unit.mjs
+ M scripts/ci/prova-orcamento-argv-secrets.unit.mjs
+ M scripts/ci/workflow-contracts.unit.mjs
+ M scripts/db-audit/check-migration-drift.mjs
+ M scripts/db-audit/check-migration-drift.test.mjs
+ M scripts/db-audit/consolidar-veredito.mjs
+ D scripts/db-audit/contracts/20261004195051.sql
+ M scripts/db-audit/department-whatsapp-mode-rpc.test.sh
+ M scripts/db-audit/dry-run-plan.mjs
+ M scripts/db-audit/grants-baseline.json
+ M scripts/db-audit/known-violations.json
+ M scripts/db-audit/multiplix-delivery-leases.test.sh
+ M scripts/db-audit/multiplix-send-mutation.py
+ M scripts/db-audit/replay-local-harness.test.sh
+ M scripts/db-audit/replay-local.sh
+ M scripts/db-audit/revoke-auth-sessions.test.sh
+ M scripts/db-audit/talkx-analytics-contract.test.mjs
+ M scripts/db-audit/talkx-events-contract.test.sh
+ M scripts/db-audit/talkx-retry-resolve.test.sh
+ M scripts/db-audit/wa-label-connection-scope.test.sh
+ M scripts/db-audit/wa-tag-and-status-authorization.test.sh
+ M scripts/ia/ensaio-provisionamento.mjs
+ M src/App.tsx
+ M src/adapters/__tests__/evolutionAdapter.test.ts
+ M src/adapters/evolutionAdapter.ts
+ D src/components/BulkActionsBar.tsx
+ M src/components/CommandPalette.tsx
+ M src/components/admin/AIUsageDashboard.tsx
+ M src/components/admin/AIUsageLogsTab.tsx
+ M src/components/admin/AIUsageUsersTab.tsx
+ M src/components/admin/AdminUsersTable.tsx
+ M src/components/admin/AdminView.tsx
+ M src/components/admin/MediaMigrationTool.tsx
+ M src/components/admin/VisibilityGrantsManager.tsx
+ M src/components/admin/__tests__/useAdminDataRoleChange.test.ts
+ M src/components/admin/useAdminData.ts
+ M src/components/agents/AgentsView.tsx
+ M src/components/agents/InviteAgentDialog.tsx
+ M src/components/agents/__tests__/AgentsView.actions.test.tsx
+ M src/components/agents/__tests__/AgentsView.capacidade.test.tsx
+ M src/components/agents/__tests__/InviteAgentDialog.test.tsx
+ M src/components/ai/AutoTicketClassifier.tsx
+ M src/components/ai/ChurnPredictionDashboard.tsx
+ M src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx
+ M src/components/alerts/EvolutionDisconnectBanner.tsx
+ M src/components/auth/HeroBenefits.tsx
+ M src/components/auth/PasswordStrengthMeter.tsx
+ M src/components/auth/ProtectedRoute.tsx
+ M src/components/auth/ReauthDialog.tsx
+ M src/components/auth/SocialProof.tsx
+ M src/components/auth/__tests__/ProtectedRoute.mfa.test.tsx
+ M src/components/automations/AutomationCard.tsx
+ M src/components/automations/AutomationEditorDialog.tsx
+ M src/components/automations/__tests__/AutomationEditorDialog.test.tsx
+ M src/components/automations/__tests__/AutomationsManager.persistencia.test.tsx
+ M src/components/automations/automationConstants.ts
+ M src/components/calls/ActiveCallPanel.tsx
+ M src/components/calls/CallDialog.tsx
+ M src/components/calls/CallHistoryTabs.tsx
+ M src/components/calls/CallKpiCard.tsx
+ M src/components/calls/CallsKpiGrid.tsx
+ M src/components/calls/PeriodSelect.tsx
+ M src/components/calls/TelefoniaTopActions.tsx
+ M src/components/calls/TelefoniaView.tsx
+ M src/components/calls/__tests__/ActiveCallPanel.test.tsx
+ M src/components/calls/__tests__/CallDialog.test.tsx
+ M src/components/calls/__tests__/CallHistoryCard.test.tsx
+ M src/components/calls/__tests__/RecordingPlayer.test.tsx
+ M src/components/calls/__tests__/TelefoniaTopActions.test.tsx
+ M src/components/calls/__tests__/TelefoniaView.painel.test.tsx
+ M src/components/campaigns/CampaignABTesting.tsx
+ M src/components/campaigns/CampaignsView.tsx
+ M src/components/catalog/CatalogBulkBar.tsx
+ M src/components/catalog/CatalogBulkSendDialog.tsx
+ M src/components/catalog/CatalogProductCard.tsx
+ M src/components/catalog/CatalogRail.tsx
+ M src/components/catalog/ContactSelectionStep.tsx
+ M src/components/catalog/ExternalProductCatalog.tsx
+ M src/components/catalog/ExternalProductManagement.tsx
+ M src/components/catalog/ProductDetailDialog.tsx
+ M src/components/catalog/SendProductDialog.tsx
+ M src/components/catalog/WhatsAppTemplatesManager.tsx
+ M src/components/catalog/__tests__/CT28_bulkBar.test.tsx
+ M src/components/catalog/__tests__/CT30_responsivo.test.tsx
+ M src/components/catalog/__tests__/CT39_downloadFotos.test.tsx
+ M src/components/catalog/__tests__/CT40_badgeTokens.test.tsx
+ M src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx
+ M src/components/catalog/__tests__/CT67_a11y.test.tsx
+ M src/components/catalog/__tests__/CT68_acessibilidade.test.tsx
+ M src/components/catalog/__tests__/CT70_reducedMotion.test.tsx
+ M src/components/catalog/__tests__/CatalogBulkSendDialog.bulkOutcome.test.tsx
+ M src/components/catalog/__tests__/CatalogRail.test.tsx
+ M src/components/catalog/__tests__/ContactSelectionStep.test.tsx
+ M src/components/catalog/__tests__/ExternalProductCatalog.test.tsx
+ M src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx
+ M src/components/catalog/__tests__/ExternalProductManagement.test.tsx
+ M src/components/catalog/__tests__/ProductDetailDialog.test.tsx
+ M src/components/catalog/__tests__/R2MOD048_favoritoEnvio.test.tsx
+ M src/components/catalog/__tests__/R2_MOD_010_selecaoPersistente.test.tsx
+ M src/components/catalog/__tests__/SL038_badgesTokensTema.test.tsx
+ M src/components/catalog/__tests__/SendProductDialog.test.tsx
+ M src/components/catalog/__tests__/catalogExport.test.ts
+ M src/components/catalog/__tests__/catalogShared.test.tsx
+ M src/components/catalog/__tests__/sendProductUtils.test.ts
+ M src/components/catalog/__tests__/useSendProduct.test.tsx
+ M src/components/catalog/catalogExport.ts
+ M src/components/catalog/catalogShared.tsx
+ M src/components/catalog/sendProductUtils.ts
+ M src/components/catalog/useSendProduct.ts
+ M src/components/chatbot/ChatbotExecutionsDashboard.tsx
+ M src/components/chatbot/ChatbotFlowsView.tsx
+ M src/components/compliance/LGPDComplianceView.tsx
+ M src/components/compliance/__tests__/LGPDComplianceView.test.tsx
+ M src/components/connections/BusinessHoursDialog.tsx
+ M src/components/connections/ConnectionCard.tsx
+ M src/components/connections/ConnectionsView.tsx
+ M src/components/connections/InstanceSettingsTabContent.tsx
+ D src/components/connections/IntegrationsPanel.tsx
+ M src/components/connections/__tests__/ConnectionsView.trava-multiconexao.test.tsx
+ D src/components/connections/__tests__/IntegrationsPanel.desativar.test.tsx
+ M src/components/contacts/CRMContactCard.tsx
+ M src/components/contacts/ContactActivityTimeline.tsx
+ M src/components/contacts/ContactAnalyticsDashboard.tsx
+ M src/components/contacts/ContactCard.tsx
+ M src/components/contacts/ContactCompareDialog.tsx
+ M src/components/contacts/ContactContentArea.tsx
+ M src/components/contacts/ContactDetailPanel.tsx
+ M src/components/contacts/ContactEmptyState.tsx
+ M src/components/contacts/ContactGroupedList.tsx
+ M src/components/contacts/ContactKanbanView.tsx
+ M src/components/contacts/ContactListItem.tsx
+ M src/components/contacts/ContactMapView.tsx
+ M src/components/contacts/ContactMergeDialog.tsx
+ M src/components/contacts/ContactRegionMap.tsx
+ M src/components/contacts/ContactSearchWithSuggestions.tsx
+ M src/components/contacts/ContactViewSwitcher.tsx
+ M src/components/contacts/ContactsTable.tsx
+ M src/components/contacts/ContactsView.tsx
+ M src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx
+ M src/components/contacts/__tests__/ContactAnalyticsDashboard.test.tsx
+ M src/components/contacts/__tests__/ContactDeletePermission.test.tsx
+ M src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx
+ M src/components/contacts/__tests__/ContactKanbanAggregates.test.tsx
+ M src/components/contacts/__tests__/ContactMapView.test.tsx
+ M src/components/contacts/__tests__/ContactRegionMap.test.tsx
+ M src/components/contacts/__tests__/ContactToolbar.test.tsx
+ M src/components/contacts/__tests__/useContactsViewState.test.tsx
+ M src/components/contacts/contactTypeConfig.tsx
+ M src/components/contacts/useContactsViewState.ts
+ M src/components/crm360/CRM360ExplorerView.tsx
+ M src/components/crm360/CRM360StatsCards.tsx
+ M src/components/crm360/CompanyFormDialog.tsx
+ M src/components/crm360/ContactFormDialog.tsx
+ M src/components/crm360/DataExplorerTable.tsx
+ M src/components/csat/CSATDashboard.tsx
+ M src/components/dashboard/AIQuickAccess.tsx
+ M src/components/dashboard/ActivityHeatmap.tsx
+ M src/components/dashboard/AgentPerformancePanel.tsx
+ M src/components/dashboard/ConversationHeatmap.tsx
+ M src/components/dashboard/DashboardFilters.tsx
+ M src/components/dashboard/DashboardView.tsx
+ M src/components/dashboard/GamificationEffects.tsx
+ M src/components/dashboard/GoalsConfigDialog.tsx
+ D src/components/dashboard/MetricComparison.tsx
+ D src/components/dashboard/MiniSparkline.tsx
+ M src/components/dashboard/SatisfactionMetrics.tsx
+ M src/components/dashboard/ScheduledReportsManager.tsx
+ M src/components/dashboard/SentimentAlertsDashboard.tsx
+ M src/components/dashboard/SentimentTabContent.tsx
+ M src/components/dashboard/SentimentTrendChart.tsx
+ D src/components/dashboard/TrendIndicator.tsx
+ M src/components/dashboard/__tests__/AIQuickAccess.test.tsx
+ M src/components/dashboard/__tests__/DashboardCard.test.tsx
+ M src/components/dashboard/__tests__/DashboardView.test.tsx
+ M src/components/dashboard/__tests__/VolumeChart.test.tsx
+ M src/components/dashboard/aiFeatures.ts
+ M src/components/dashboard/goals/goalsStatus.ts
+ M src/components/dashboard/overview/CsatCard.tsx
+ M src/components/dashboard/overview/DashboardCard.tsx
+ M src/components/dashboard/overview/DashboardKpiCard.tsx
+ M src/components/dashboard/overview/NowPanel.tsx
+ M src/components/dashboard/overview/SentimentTrendCard.tsx
+ M src/components/dashboard/overview/TeamHighlightCard.tsx
+ M src/components/dashboard/overview/VolumeChart.tsx
+ M src/components/dashboard/sla/SLAAgentTable.tsx
+ M src/components/dashboard/sla/SLAConfigTable.tsx
+ M src/components/dashboard/sla/SLASummaryCard.tsx
+ M src/components/dashboard/war-room/WarRoomAlertRow.tsx
+ M src/components/dashboard/war-room/WarRoomQueueRow.tsx
+ M src/components/docs/SystemFeaturesView.tsx
+ M src/components/docs/__tests__/SystemFeaturesView.test.tsx
+ M src/components/email/EmailChatInbox.tsx
+ M src/components/email/__tests__/EmailChatThread.previaAnexo.test.tsx
+ M src/components/email/__tests__/EmailVolumeMedicao.test.tsx
+ M src/components/errors/ErrorBoundary.tsx
+ M src/components/errors/__tests__/ErrorBoundary.test.tsx
+ M src/components/errors/__tests__/error-boundary-chunk-reload.test.tsx
+ M src/components/gamification/DemoAchievements.tsx
+ D src/components/gamification/GamificationProvider.tsx
+ M src/components/gamification/MiniGameDialogs.tsx
+ M src/components/gamification/TrainingMiniGames.tsx
+ M src/components/gamification/miniGamesData.ts
+ M src/components/gmail/EmailComposer.tsx
+ M src/components/gmail/EmailThreadView.tsx
+ M src/components/gmail/GmailInboxView.tsx
+ M src/components/gmail/__tests__/EmailComposer.test.tsx
+ M src/components/gmail/__tests__/EmailThreadView.test.tsx
+ M src/components/gmail/__tests__/GmailInboxView.test.tsx
+ M src/components/groups/GroupsView.tsx
+ M src/components/groups/__tests__/GroupsView.test.tsx
+ M src/components/inbox/AIConversationAssistant.tsx
+ M src/components/inbox/AgentReassignmentPanel.tsx
+ M src/components/inbox/AudioMessagePlayer.tsx
+ M src/components/inbox/BulkActionsToolbar.tsx
+ M src/components/inbox/ChatPanel.tsx
+ M src/components/inbox/CloseConversationDialog.tsx
+ M src/components/inbox/ContactDetails.tsx
+ M src/components/inbox/ContactDetailsResponsive.tsx
+ M src/components/inbox/ContactPurchasesPanel.tsx
+ M src/components/inbox/ContactTypeFilter.tsx
+ M src/components/inbox/ConversationListSidebar.tsx
+ M src/components/inbox/ConversationSummary.tsx
+ M src/components/inbox/FileUploader.tsx
+ M src/components/inbox/GlobalSearch.tsx
+ M src/components/inbox/ImagePreview.tsx
+ M src/components/inbox/InboxEmptyChat.tsx
+ M src/components/inbox/InboxFilters.tsx
+ M src/components/inbox/InteractiveMessage.tsx
+ M src/components/inbox/InteractiveMessageBuilder.tsx
+ M src/components/inbox/MediaPreview.tsx
+ M src/components/inbox/MediaVolumeControl.tsx
+ D src/components/inbox/MessageContextMenu.tsx
+ M src/components/inbox/MessageReactions.tsx
+ M src/components/inbox/MessageTemplates.tsx
+ M src/components/inbox/NewConversationModal.tsx
+ M src/components/inbox/NextBestActionEngine.tsx
+ M src/components/inbox/ObjectionDetector.tsx
+ M src/components/inbox/RealtimeCollaboration.tsx
+ M src/components/inbox/RealtimeInboxView.tsx
+ M src/components/inbox/SLAIndicator.tsx
+ M src/components/inbox/StickerPicker.tsx
+ M src/components/inbox/TransferDialog.tsx
+ M src/components/inbox/UniversityHelp.tsx
+ M src/components/inbox/VideoFullscreen.tsx
+ M src/components/inbox/VirtualizedRealtimeList.tsx
+ M src/components/inbox/VoiceChanger.tsx
+ M src/components/inbox/VoiceChangerPicker.tsx
+ M src/components/inbox/WhisperMode.tsx
+ M src/components/inbox/__tests__/ChatPanel.ligar.test.tsx
+ M src/components/inbox/__tests__/CloseConversationDialog.test.tsx
+ M src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+ M src/components/inbox/__tests__/ContactTypeFilter.grupos.test.tsx
+ M src/components/inbox/__tests__/ConversationTabs.test.tsx
+ M src/components/inbox/__tests__/GlobalSearch.navigation.test.tsx
+ M src/components/inbox/__tests__/InteractiveMessageBuilder.r2-inb-003.test.tsx
+ M src/components/inbox/__tests__/MediaVolume.test.tsx
+ M src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx
+ M src/components/inbox/__tests__/RealtimeInboxView.selectedMessagesError.test.tsx
+ M src/components/inbox/__tests__/StatusChips.test.tsx
+ M src/components/inbox/__tests__/TransferDialog.test.tsx
+ M src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx
+ M src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx
+ M src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+ M src/components/inbox/ai-tools/AIResponseCard.tsx
+ M src/components/inbox/ai-tools/HistoryTab.tsx
+ M src/components/inbox/ai-tools/PeriodFilterSelector.tsx
+ M src/components/inbox/ai-tools/SentimentTab.tsx
+ M src/components/inbox/ai-tools/ToolPanel.tsx
+ M src/components/inbox/ai-tools/VisionIcon.tsx
+ M src/components/inbox/chat/ChatDialogs.tsx
+ D src/components/inbox/chat/ChatHeader.tsx
+ M src/components/inbox/chat/ChatMessagesArea.tsx
+ M src/components/inbox/chat/ChatPanelHeader.tsx
+ M src/components/inbox/chat/ChatQuickRepliesPopover.tsx
+ M src/components/inbox/chat/ChatSearchBar.tsx
+ M src/components/inbox/chat/ChatSearchResultsList.tsx
+ M src/components/inbox/chat/ConversationTabContent.tsx
+ M src/components/inbox/chat/ConversationTabs.tsx
+ D src/components/inbox/chat/CrmBadges.tsx
+ M src/components/inbox/chat/MentionAutocomplete.tsx
+ M src/components/inbox/chat/MessageBubble.tsx
+ M src/components/inbox/chat/MessageHoverToolbar.tsx
+ M src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx
+ M src/components/inbox/chat/__tests__/ChatPanelHeader.test.tsx
+ M src/components/inbox/chat/__tests__/ConversationTabs.test.tsx
+ M src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx
+ M src/components/inbox/chat/__tests__/useChatPanelHandlers.r2-inb-003.test.tsx
+ M src/components/inbox/chat/index.ts
+ M src/components/inbox/chat/messageSendTimeline.ts
+ M src/components/inbox/chat/useChatInputLogic.ts
+ M src/components/inbox/chat/useChatPanelHandlers.ts
+ M src/components/inbox/collaboration/HandoffDialog.tsx
+ M src/components/inbox/collaboration/MentionInput.tsx
+ M src/components/inbox/contact-details/CompactContactHeader.tsx
+ D src/components/inbox/contact-details/Contact360Helpers.tsx
+ M src/components/inbox/contact-details/ContactActionButtons.tsx
+ M src/components/inbox/contact-details/ContactHeaderSection.tsx
+ M src/components/inbox/contact-details/ContactIntelligencePanel.tsx
+ D src/components/inbox/contact-details/ExternalContact360Panel.tsx
+ D src/components/inbox/contact-details/__tests__/Contact360Helpers.fuso.test.tsx
+ M src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx
+ M src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx
+ M src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts
+ M src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx
+ M src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts
+ M src/components/inbox/contact-details/sidebar/sidebarSections.ts
+ M src/components/inbox/conversation-list/StatusChips.tsx
+ M src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx
+ M src/components/inbox/interactive-builder/useInteractiveMessage.ts
+ M src/components/inbox/media-gallery/MediaPreviewDialog.tsx
+ M src/components/inbox/media-gallery/__tests__/MediaPreviewDialog.test.tsx
+ M src/components/inbox/search/GlobalSearchFilters.tsx
+ M src/components/inbox/stickers/PersonalStickers.tsx
+ M src/components/inbox/stickers/StickerCategoryBar.tsx
+ M src/components/inbox/stickers/StickerManager.tsx
+ M src/components/inbox/stickers/StickerTypes.ts
+ M src/components/inbox/summary/SummaryResult.tsx
+ M src/components/inbox/tabs/AudioPlayButton.tsx
+ M src/components/inbox/tabs/Crm360Tab.tsx
+ M src/components/inbox/tabs/FileCard.tsx
+ M src/components/inbox/tabs/FileDetailPanel.tsx
+ M src/components/inbox/tabs/FilesContent.tsx
+ M src/components/inbox/tabs/FilesListView.tsx
+ M src/components/inbox/tabs/FilesTab.tsx
+ M src/components/inbox/tabs/FilesTableView.tsx
+ M src/components/inbox/tabs/FilesToolbar.tsx
+ M src/components/inbox/tabs/JourneyTab.tsx
+ M src/components/inbox/tabs/KpiStrip.tsx
+ M src/components/inbox/tabs/SalesViewTab.tsx
+ M src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx
+ M src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx
+ M src/components/inbox/tabs/__tests__/FileCard.test.tsx
+ M src/components/inbox/tabs/__tests__/FileDetailPanel.test.tsx
+ M src/components/inbox/tabs/__tests__/FilesListView.test.tsx
+ M src/components/inbox/tabs/__tests__/FilesTab.periodo.test.tsx
+ M src/components/inbox/tabs/__tests__/FilesTab.test.tsx
+ M src/components/inbox/tabs/__tests__/FilesTableView.test.tsx
+ M src/components/inbox/tabs/__tests__/FilesToolbar.test.tsx
+ M src/components/inbox/tabs/__tests__/JourneyTab.test.tsx
+ M src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx
+ M src/components/inbox/tabs/journey/JourneyStatsHero.tsx
+ M src/components/inbox/useFileUploadLogic.ts
+ M src/components/inbox/useGlobalSearchData.ts
+ M src/components/integrations/GmailIntegrationCard.tsx
+ M src/components/integrations/GoogleCalendarIntegration.tsx
+ M src/components/integrations/IntegrationsHub.tsx
+ M src/components/integrations/N8nIntegrationView.tsx
+ M src/components/knowledge/KnowledgeBaseView.tsx
+ M src/components/layout/PageTemplate.tsx
+ M src/components/layout/Sidebar.tsx
+ M src/components/layout/SidebarBackButton.tsx
+ M src/components/layout/SidebarNavItem.tsx
+ M src/components/layout/ViewContainer.tsx
+ M src/components/layout/__tests__/Sidebar.test.tsx
+ M src/components/layout/__tests__/SidebarBackButton.test.tsx
+ M src/components/layout/__tests__/VoiceActionBridge.test.tsx
+ M src/components/leaderboard/Leaderboard.tsx
+ M src/components/mfa/MFABackupCodes.tsx
+ M src/components/mfa/MFAEnroll.tsx
+ M src/components/mfa/MFASettings.tsx
+ M src/components/mfa/MFAVerify.tsx
+ D src/components/mobile/BottomSheet.tsx
+ D src/components/mobile/FloatingActionButtons.tsx
+ D src/components/mobile/InAppNotification.tsx
+ D src/components/mobile/InAppNotificationProvider.tsx
+ M src/components/mobile/MiniChatPiP.tsx
+ M src/components/mobile/MobileDrawerMenu.tsx
+ M src/components/mobile/MobileHeader.tsx
+ D src/components/mobile/MobileNavigation.tsx
+ D src/components/mobile/MobileSlidePanel.tsx
+ M src/components/mobile/NotificationsPanel.tsx
+ D src/components/mobile/SwipeGestures.tsx
+ D src/components/mobile/TouchRipple.tsx
+ M src/components/mobile/__tests__/MiniChatPiP.test.tsx
+ M src/components/mobile/__tests__/MobileHeader.test.tsx
+ M src/components/mobile/__tests__/MobileShellSearch.test.tsx
+ D src/components/mobile/index.ts
+ D src/components/mobile/swipeUtils.ts
+ M src/components/monitoring/EvolutionMonitoringDashboard.tsx
+ M src/components/monitoring/MonitoringDiagnosticPanel.tsx
+ M src/components/monitoring/MonitoringEventTimeline.tsx
+ M src/components/monitoring/MonitoringHealthLogs.tsx
+ M src/components/monitoring/MonitoringSLAPanel.tsx
+ D src/components/multiplix/MultiplixComposerDialog.tsx
+ M src/components/multiplix/MultiplixMonitor.tsx
+ M src/components/multiplix/MultiplixView.tsx
+ D src/components/multiplix/__tests__/MultiplixComposerDialog.contagem.test.tsx
+ M src/components/multiplix/__tests__/MultiplixMonitor.recipients.test.tsx
+ M src/components/multiplix/__tests__/MultiplixView.disparos-recentes.test.tsx
+ M src/components/multiplix/__tests__/MultiplixView.lista-virtualizada.test.tsx
+ M src/components/notifications/NotificationSettingsPanel.tsx
+ M src/components/notifications/NotificationTypeCards.tsx
+ M src/components/notifications/NotificationsPopover.tsx
+ M src/components/notifications/PushNotificationCard.tsx
+ M src/components/notifications/PushNotificationToggle.tsx
+ M src/components/notifications/ScreenProtectionToggle.tsx
+ M src/components/notifications/SoundVolumeControl.tsx
+ M src/components/notifications/__tests__/NotificationsPopover.test.tsx
+ M src/components/notifications/__tests__/SoundVolumeControl.test.tsx
+ M src/components/nps/NPSDashboard.tsx
+ M src/components/omnichannel/ChannelRoutingRules.tsx
+ M src/components/omnichannel/OmnichannelInbox.tsx
+ M src/components/omnichannel/OmnichannelManager.tsx
+ M src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx
+ M src/components/onboarding/OnboardingChecklist.tsx
+ M src/components/onboarding/TourOverlay.tsx
+ M src/components/onboarding/WelcomeModal.tsx
+ M src/components/onboarding/__tests__/OnboardingTour.test.tsx
+ M src/components/onboarding/defaultTourSteps.ts
+ D src/components/payments/PaymentLinksView.tsx
+ M src/components/performance/PerformanceMonitor.tsx
+ M src/components/performance/__tests__/PerformanceMonitor.test.tsx
+ M src/components/queues/CreateQueueDialog.tsx
+ M src/components/queues/EditQueueDialog.tsx
+ M src/components/queues/QueueAlertsDisplay.tsx
+ M src/components/queues/QueueCard.tsx
+ M src/components/queues/QueuesComparisonDashboard.tsx
+ M src/components/queues/SLAAgentTable.tsx
+ M src/components/queues/SLADashboard.tsx
+ M src/components/queues/SLAMetricCards.tsx
+ M src/components/queues/__tests__/QueuesView.test.tsx
+ M src/components/reports/AbandonmentRate.tsx
+ M src/components/reports/AdvancedReportsView.tsx
+ D src/components/reports/AutoExportManager.tsx
+ M src/components/reports/ConversationHeatmap.tsx
+ M src/components/reports/PeriodComparison.tsx
+ M src/components/reports/ReportCharts.tsx
+ M src/components/reports/__tests__/AbandonmentRate.test.tsx
+ M src/components/reports/__tests__/AdvancedReportsView.periodComparison.test.tsx
+ M src/components/schedule/ScheduleCalendarView.tsx
+ M src/components/schedule/__tests__/ScheduleCalendarView.agenda.test.tsx
+ M src/components/security/AuditLogDashboard.tsx
+ M src/components/security/BlockedIPDialogs.tsx
+ M src/components/security/BlockedIPsPanel.tsx
+ M src/components/security/DeviceCard.tsx
+ M src/components/security/GeoBlockingPanel.tsx
+ M src/components/security/IPWhitelistPanel.tsx
+ M src/components/security/PasskeysPanel.tsx
+ M src/components/security/PasswordResetRequestsPanel.tsx
+ M src/components/security/QuarantinePanel.tsx
+ M src/components/security/RateLimitConfigPanel.tsx
+ M src/components/security/RateLimitRealtimeAlerts.tsx
+ M src/components/security/SecurityNotificationsPanel.tsx
+ M src/components/security/SecurityOverview.tsx
+ M src/components/security/SecurityView.tsx
+ M src/components/security/__tests__/AuditLogDashboard.test.tsx
+ M src/components/security/__tests__/RateLimitConfigPanel.test.tsx
+ M src/components/security/__tests__/SecurityView.a11y.test.tsx
+ M src/components/settings/AppearanceSettings.tsx
+ M src/components/settings/AutomationSettings.tsx
+ M src/components/settings/AvatarUpload.tsx
+ M src/components/settings/CSATAutoConfig.tsx
+ M src/components/settings/ChatbotL1Config.tsx
+ M src/components/settings/FollowUpSequences.tsx
+ M src/components/settings/GlobalSettingsSection.tsx
+ M src/components/settings/IntegrationKeysSection.tsx
+ M src/components/settings/KeyboardShortcutsSettings.tsx
+ M src/components/settings/MediaLibraryAdmin.tsx
+ M src/components/settings/SLAConfigurationManager.tsx
+ M src/components/settings/SettingsView.tsx
+ M src/components/settings/SoundCategoryCard.tsx
+ M src/components/settings/ThemeCustomizer.tsx
+ M src/components/settings/__tests__/AutomationSettings.test.tsx
+ M src/components/settings/__tests__/CSATAutoConfig.test.tsx
+ M src/components/settings/__tests__/GlobalSettingsSection.sem-consumidor.test.tsx
+ M src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+ M src/components/settings/__tests__/KeyboardShortcutsSettings.test.tsx
+ M src/components/settings/__tests__/SLAConfigurationManager.test.tsx
+ M src/components/settings/__tests__/SettingsView.test.tsx
+ M src/components/settings/ai-providers/AIProviderFormDialog.tsx
+ M src/components/settings/ai-providers/useAIProviders.ts
+ M src/components/settings/media-library/AIGenerateDialog.tsx
+ M src/components/settings/media-library/__tests__/AIGenerateDialog.test.tsx
+ M src/components/settings/media-library/useMediaLibrary.ts
+ M src/components/settings/sla/SLARuleFormDialog.tsx
+ M src/components/settings/sla/__tests__/SLARuleFormDialog.zodResolver.test.tsx
+ M src/components/settings/theme/__tests__/presets.test.ts
+ M src/components/sla/SLAHistoryDashboard.tsx
+ M src/components/talkx/TalkXAnalytics.tsx
+ M src/components/talkx/TalkXAudienceFilters.tsx
+ M src/components/talkx/TalkXCampaignPaused.tsx
+ M src/components/talkx/TalkXCampaignRunning.tsx
+ M src/components/talkx/TalkXCampaignScheduled.tsx
+ M src/components/talkx/TalkXCampaignWizard.tsx
+ M src/components/talkx/TalkXContactSelector.tsx
+ M src/components/talkx/TalkXLiveMonitor.tsx
+ M src/components/talkx/TalkXMessageEditor.tsx
+ M src/components/talkx/TalkXOverview.tsx
+ M src/components/talkx/TalkXSegments.tsx
+ M src/components/talkx/TalkXSettings.tsx
+ M src/components/talkx/TalkXSuppression.tsx
+ M src/components/talkx/TalkXTemplateEditor.tsx
+ M src/components/talkx/TalkXTemplates.tsx
+ M src/components/talkx/TalkXView.tsx
+ M src/components/talkx/TalkXWizardDelivery.tsx
+ M src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx
+ M src/components/talkx/__tests__/TalkXAnalytics.rotulos.test.tsx
+ M src/components/talkx/__tests__/TalkXAnalytics.states.test.tsx
+ M src/components/talkx/__tests__/TalkXAudienceFilters.test.tsx
+ M src/components/talkx/__tests__/TalkXCampaignScheduled.lifecycle.test.tsx
+ M src/components/talkx/__tests__/TalkXCampaignScheduled.states.test.tsx
+ M src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx
+ M src/components/talkx/__tests__/TalkXOverview.filters.test.tsx
+ M src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+ M src/components/talkx/__tests__/TalkXPaginacao.tamanhoPagina.test.tsx
+ M src/components/talkx/__tests__/TalkXSegmentBuilder.test.tsx
+ M src/components/talkx/__tests__/TalkXSegments.builder.test.tsx
+ M src/components/talkx/__tests__/TalkXSegments.detailFresh.test.tsx
+ M src/components/talkx/__tests__/TalkXSuppression.authoring.test.tsx
+ M src/components/talkx/__tests__/TalkXSuppression.phoneOnly.test.tsx
+ M src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx
+ M src/components/talkx/__tests__/TalkXTemplates.duplicarAtalho.test.tsx
+ M src/components/talkx/__tests__/TalkXTemplates.gallery.test.tsx
+ M src/components/talkx/__tests__/TalkXTemplates.states.test.tsx
+ M src/components/talkx/__tests__/TalkXVariablesGrammar.test.tsx
+ M src/components/talkx/__tests__/TalkXView.route.test.tsx
+ M src/components/talkx/__tests__/TalkXView.templates.test.tsx
+ M src/components/talkx/__tests__/useCampaignEditor.test.tsx
+ M src/components/talkx/__tests__/useCampaignRowActions.test.tsx
+ M src/components/talkx/help/TalkXHelpArticle.tsx
+ M src/components/talkx/help/TalkXHelpCenter.tsx
+ M src/components/talkx/kit/__tests__/barrel.test.ts
+ M src/components/talkx/kit/cells.tsx
+ M src/components/talkx/kit/constants.ts
+ M src/components/talkx/kit/dialogs.tsx
+ M src/components/talkx/kit/kpi.tsx
+ M src/components/talkx/kit/preview.tsx
+ M src/components/talkx/kit/primitives.tsx
+ M src/components/talkx/kit/table.tsx
+ M src/components/talkx/segments/RuleRow.tsx
+ M src/components/talkx/segments/TalkXSegmentBuilder.tsx
+ M src/components/talkx/segments/segmentBuilderReducer.ts
+ D src/components/talkx/talkxTabRoute.ts
+ M src/components/talkx/tracking/TalkXSentSummaryChart.tsx
+ M src/components/talkx/useCampaignEditor.ts
+ M src/components/talkx/useTalkXLifecycle.tsx
+ M src/components/tasks/TasksEmptyState.tsx
+ M src/components/tasks/TasksModule.tsx
+ M src/components/tasks/__tests__/TasksListMode.test.tsx
+ M src/components/tasks/__tests__/TasksModule.test.tsx
+ M src/components/tasks/__tests__/WorkItemCard.test.tsx
+ M src/components/tasks/__tests__/WorkItemSheet.test.tsx
+ M src/components/tasks/__tests__/cardAcoes.test.tsx
+ M src/components/tasks/__tests__/taskComponents.test.tsx
+ M src/components/tasks/board/BoardColumn.tsx
+ M src/components/tasks/board/TasksBoardMode.tsx
+ M src/components/tasks/list/TasksListMode.tsx
+ M src/components/tasks/shared/ModeSwitcher.tsx
+ M src/components/tasks/shared/QuickAdd.tsx
+ M src/components/tasks/shared/TasksFilterBar.tsx
+ M src/components/tasks/shared/TasksKpiStrip.tsx
+ M src/components/tasks/shared/WorkItemCard.tsx
+ M src/components/tasks/shared/WorkItemSheet.tsx
+ M src/components/tasks/shared/pointerMedia.ts
+ M src/components/team-chat/DepartmentManagementDialog.tsx
+ M src/components/team-chat/NewConversationDialog.tsx
+ M src/components/team-chat/TeamChatInputArea.tsx
+ M src/components/team-chat/TeamChatPanel.tsx
+ M src/components/team-chat/TeamChatView.tsx
+ M src/components/team-chat/TeamConversationList.tsx
+ M src/components/team-chat/TeamFileUploader.tsx
+ M src/components/team-chat/TeamPerformancePanel.tsx
+ M src/components/team-chat/__tests__/team-chat-comprehensive.test.ts
+ M src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts
+ M src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts
+ M src/components/team-chat/__tests__/teamChatParts.mediaHost.test.tsx
+ M src/components/team-chat/teamChatParts.tsx
+ M src/components/team-chat/useTeamChatPanel.ts
+ M src/components/transcriptions/TranscriptionsHistoryView.tsx
+ M src/components/ui/EmptyState.tsx
+ M src/components/ui/VolumeSliderPopoverContent.tsx
+ M src/components/ui/__tests__/VolumeSliderPopoverContent.test.tsx
+ M src/components/ui/__tests__/card.test.tsx
+ M src/components/ui/breadcrumb.tsx
+ M src/components/ui/card.tsx
+ M src/components/ui/chart.tsx
+ M src/components/ui/dialog.tsx
+ M src/components/ui/emoji-picker.tsx
+ M src/components/ui/message-reactions.tsx
+ M src/components/ui/pagination.tsx
+ M src/components/ui/quick-peek.tsx
+ M src/components/ui/sheet.tsx
+ M src/components/ui/sidebar/sidebar-primitives.tsx
+ M src/components/ui/skip-link.tsx
+ M src/components/ui/toast.tsx
+ M src/components/voice/ElevenLabsDialogue.tsx
+ M src/components/voice/ElevenLabsVoiceDesign.tsx
+ M src/components/voice/VoiceSearchOverlay.tsx
+ M src/components/voice/VoiceSearchOverlayConnected.tsx
+ M src/components/wallet/ClientWalletView.tsx
+ M src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx
+ M src/hooks/__tests__/useAgentGamification.test.tsx
+ M src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts
+ D src/hooks/__tests__/useBulkActions.archive-fsm.test.tsx
+ D src/hooks/__tests__/useBulkActions.test.tsx
+ M src/hooks/__tests__/useChatSearch.test.ts
+ M src/hooks/__tests__/useDeviceDetection.test.tsx
+ M src/hooks/__tests__/useEvolutionApi.test.ts
+ M src/hooks/__tests__/useMFA.test.tsx
+ M src/hooks/__tests__/useMessages.test.tsx
+ M src/hooks/__tests__/useNotificationSettings.test.tsx
+ M src/hooks/__tests__/usePushNotifications.test.ts
+ M src/hooks/__tests__/useReauthentication.test.tsx
+ M src/hooks/__tests__/useSentimentAlerts.test.ts
+ M src/hooks/__tests__/useSipClient.test.ts
+ M src/hooks/__tests__/useUrlFilters.test.tsx
+ M src/hooks/__tests__/useUserRole.test.tsx
+ M src/hooks/analytics/__tests__/useAIStats.test.tsx
+ M src/hooks/analytics/useAIStats.ts
+ M src/hooks/analytics/useAIUsageDashboard.ts
+ M src/hooks/analytics/useGoalNotifications.ts
+ M src/hooks/auth/__tests__/useAuthForm.email.test.tsx
+ M src/hooks/auth/__tests__/useAuthForm.passkey.test.tsx
+ M src/hooks/auth/__tests__/useAuthForm.senha.test.tsx
+ M src/hooks/auth/useAuth.tsx
+ M src/hooks/auth/useAuthForm.ts
+ M src/hooks/auth/useMFA.ts
+ M src/hooks/auth/useReauthentication.ts
+ M src/hooks/business/__tests__/useClientWallet.test.tsx
+ M src/hooks/business/useBusinessHoursCheck.ts
+ M src/hooks/business/useClientWallet.ts
+ M src/hooks/business/useNPSSurveys.ts
+ M src/hooks/calls/__tests__/useCallRecording.test.tsx
+ M src/hooks/calls/__tests__/useTelefoniaFilters.test.tsx
+ M src/hooks/calls/useTelefoniaFilters.ts
+ M src/hooks/chat/__tests__/useConversationActions.test.ts
+ M src/hooks/chat/__tests__/useConversationHistoryTimeline.janela.test.tsx
+ M src/hooks/chat/__tests__/useConversationHistoryTimeline.test.ts
+ M src/hooks/chat/__tests__/useFilesViewState.test.tsx
+ M src/hooks/chat/__tests__/useMediaSenderProfiles.test.tsx
+ M src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx
+ M src/hooks/chat/__tests__/useNextBestAction.test.tsx
+ M src/hooks/chat/useChatSearch.ts
+ M src/hooks/chat/useConversationActions.ts
+ M src/hooks/chat/useConversationHistoryTimeline.ts
+ M src/hooks/chat/useFilesViewState.ts
+ M src/hooks/chat/useLatestAnalysis.ts
+ M src/hooks/chat/useMediaSenderProfiles.ts
+ M src/hooks/chat/useMessageReactions.ts
+ M src/hooks/chat/useMessageSignature.ts
+ M src/hooks/chat/useMessageStatus.ts
+ M src/hooks/chat/useMessages.ts
+ M src/hooks/chat/useNextBestAction.ts
+ M src/hooks/chat/useRealtimeMessages.ts
+ M src/hooks/chat/useTeamChatNotifications.ts
+ M src/hooks/communication/useAudioPlayer.ts
+ M src/hooks/communication/useAudioRecorder.ts
+ M src/hooks/communication/useCalls.ts
+ M src/hooks/communication/useVoiceAgent.ts
+ M src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx
+ M src/hooks/crm/__tests__/useContactEnrichedData.test.tsx
+ M src/hooks/crm/index.ts
+ M src/hooks/crm/useAgentReassignment.ts
+ D src/hooks/crm/useContactAssignment.ts
+ M src/hooks/crm/useContactEnrichedData.ts
+ M src/hooks/crm/useContactPurchases.ts
+ M src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx
+ M src/hooks/dashboard/useDashboardKpi.ts
+ M src/hooks/dashboard/useDashboardUrlFilters.ts
+ D src/hooks/evolution/__tests__/useEvolutionIntegrations.test.ts
+ M src/hooks/evolution/index.ts
+ D src/hooks/evolution/useEvolutionIntegrations.ts
+ D src/hooks/gamification/__tests__/mutations.test.tsx
+ M src/hooks/gamification/index.ts
+ D src/hooks/gamification/mutations.ts
+ M src/hooks/gamification/useAgentGamification.ts
+ M src/hooks/gamification/useLeaderboard.ts
+ M src/hooks/inbox/__tests__/useConnectionsManager.qrIdentity.test.ts
+ M src/hooks/inbox/__tests__/useContactQuickActions.test.tsx
+ M src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+ M src/hooks/inbox/__tests__/useInboxFilters.dia-local.test.tsx
+ M src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+ M src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx
+ M src/hooks/inbox/index.ts
+ D src/hooks/inbox/useBulkActions.ts
+ M src/hooks/inbox/useConnectionsManager.ts
+ M src/hooks/inbox/useContactQuickActions.ts
+ M src/hooks/inbox/useInboxBulkActions.ts
+ M src/hooks/inbox/useInboxFilters.ts
+ M src/hooks/inbox/useObjectionDetector.ts
+ M src/hooks/inbox/useRealtimeInbox.ts
+ M src/hooks/inbox/useSentimentAlerts.ts
+ M src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts
+ M src/hooks/integrations/__tests__/useCatalogSendReadiness.test.ts
+ M src/hooks/integrations/__tests__/useCustomEmojis.persistencia.test.tsx
+ M src/hooks/integrations/__tests__/useGmail.historicoPaginacao.test.tsx
+ M src/hooks/integrations/__tests__/useGmail.syncParcial.test.tsx
+ M src/hooks/integrations/__tests__/useGmail.test.ts
+ M src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx
+ M src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx
+ M src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx
+ M src/hooks/integrations/__tests__/usePersonalStickers.identidade.test.tsx
+ M src/hooks/integrations/__tests__/usePersonalStickers.webp.test.tsx
+ M src/hooks/integrations/__tests__/useTalkXInsights.test.ts
+ M src/hooks/integrations/__tests__/useTalkXMonitor.test.ts
+ M src/hooks/integrations/__tests__/useTalkXSegments.test.ts
+ D src/hooks/integrations/__tests__/useTalkXSuppression.test.ts
+ M src/hooks/integrations/evolutionApi.types.ts
+ M src/hooks/integrations/useCatalogContactSearch.ts
+ M src/hooks/integrations/useCatalogSendReadiness.ts
+ M src/hooks/integrations/useCustomEmojis.ts
+ M src/hooks/integrations/useEvolutionApi.ts
+ M src/hooks/integrations/useGmail.ts
+ M src/hooks/integrations/useKnowledgeBase.ts
+ M src/hooks/integrations/useMultiplixDispatches.ts
+ M src/hooks/integrations/usePersonalStickers.ts
+ M src/hooks/integrations/useTalkX.ts
+ M src/hooks/integrations/useTalkXInsights.ts
+ M src/hooks/integrations/useTalkXMonitor.ts
+ M src/hooks/integrations/useTalkXSegments.ts
+ M src/hooks/integrations/useTalkXSuppression.ts
+ M src/hooks/integrations/useWhatsAppStatus.ts
+ D src/hooks/payments/usePaymentLinks.ts
+ M src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx
+ M src/hooks/reactions/useBatchReactions.ts
+ M src/hooks/reactions/useReactionMutations.ts
+ M src/hooks/realtime/realtimeUtils.ts
+ M src/hooks/realtime/useSupabaseRealtime.ts
+ M src/hooks/sla/useSLACalculation.ts
+ M src/hooks/sla/useSLANotifications.ts
+ M src/hooks/sticker-picker/useStickerPicker.ts
+ M src/hooks/system/__tests__/useDiagnosticsData.test.ts
+ M src/hooks/system/useDiagnosticsData.ts
+ M src/hooks/system/useNotificationSettings.ts
+ M src/hooks/system/usePermissions.ts
+ M src/hooks/system/usePushNotifications.ts
+ M src/hooks/system/useSearchHistory.ts
+ M src/hooks/system/useUrlFilters.ts
+ M src/hooks/system/useUserRole.ts
+ M src/hooks/system/useUserSettings.ts
+ M src/hooks/tasks/__tests__/useMyWorkItems.test.tsx
+ M src/hooks/tasks/__tests__/useTasksFilters.test.tsx
+ M src/hooks/tasks/__tests__/workItemAggregates.test.ts
+ M src/hooks/tasks/__tests__/workItemFilters.test.ts
+ M src/hooks/tasks/useMyWorkItems.ts
+ M src/hooks/tasks/useTasksFilters.ts
+ M src/hooks/tasks/workItem.types.ts
+ M src/hooks/tasks/workItemAggregates.ts
+ M src/hooks/tasks/workItemFilters.ts
+ M src/hooks/team-chat/__tests__/rls-contract.test.ts
+ M src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx
+ M src/hooks/team-chat/__tests__/useDepartmentProfiles.profiles-rpc.test.tsx
+ M src/hooks/team-chat/__tests__/useTeamChatMutations.mute.test.ts
+ M src/hooks/team-chat/__tests__/useTeamConversations.test.tsx
+ M src/hooks/team-chat/__tests__/useTeamMessageReactions.test.tsx
+ M src/hooks/team-chat/__tests__/useTeamMessages.read-state.test.tsx
+ M src/hooks/team-chat/__tests__/useTeamMessages.test.tsx
+ M src/hooks/team-chat/index.ts
+ M src/hooks/team-chat/teamChatTypes.ts
+ M src/hooks/team-chat/useActiveDepartments.ts
+ M src/hooks/team-chat/useDepartmentManagement.ts
+ M src/hooks/team-chat/useParticipantStats.ts
+ M src/hooks/team-chat/useTeamChatMembers.ts
+ M src/hooks/team-chat/useTeamChatMutations.ts
+ M src/hooks/team-chat/useTeamConversations.ts
+ M src/hooks/team-chat/useTeamMemberDetails.ts
+ M src/hooks/team-chat/useTeamMessageReactions.ts
+ M src/hooks/team-chat/useTeamMessages.ts
+ M src/hooks/team-chat/useTeamPerformance.ts
+ M src/hooks/ui/useDeviceDetection.ts
+ M src/hooks/voice/types.ts
+ M src/integrations/supabase/types.ts
+ M src/lib/__tests__/formatters.test.ts
+ D src/lib/__tests__/groupsAutoSync.test.ts
+ M src/lib/__tests__/mapboxToken.test.ts
+ D src/lib/__tests__/phoneNormalization.test.ts
+ D src/lib/__tests__/rateLimiter.test.ts
+ M src/lib/__tests__/rlsSchemaGuard.test.ts
+ M src/lib/__tests__/serverLogin.test.ts
+ D src/lib/__tests__/webhookStatusPriority.test.ts
+ M src/lib/audit.ts
+ M src/lib/calls/sipProvisioning.ts
+ M src/lib/filesPeriod.ts
+ M src/lib/formatters.ts
+ M src/lib/journey/__tests__/model.test.ts
+ M src/lib/journey/model.ts
+ M src/lib/journey/periodRange.ts
+ M src/lib/journey/rawRows.ts
+ M src/lib/lazyWithRetry.ts
+ M src/lib/mapboxToken.ts
+ M src/lib/motion.ts
+ M src/lib/queryClient.ts
+ M src/lib/serverLogin.ts
+ M src/lib/urlSafety.ts
+ M src/lib/web-vitals.ts
+ M src/main.tsx
+ M src/pages/AdminTelemetriaPage.tsx
+ M src/pages/Auth.tsx
+ M src/pages/ChatPopup.tsx
+ M src/pages/Index.tsx
+ M src/pages/Install.tsx
+ M src/pages/QueueDetails.tsx
+ M src/pages/QueuesComparison.tsx
+ M src/pages/ResetPassword.tsx
+ M src/pages/SSOCallback.tsx
+ M src/pages/TwoFactorAuth.tsx
+ M src/pages/ViewRouter.tsx
+ M src/pages/admin/RateLimitDashboard.tsx
+ M src/pages/admin/RolesPage.tsx
+ M src/pages/lazyViews.ts
+ M src/pages/queue-details/__tests__/QueueDetails.configurar.test.tsx
+ M src/pages/queue-details/__tests__/QueueDetails.totais.test.tsx
+ M src/providers/AppProviders.tsx
+ M src/routes/AppRoutes.tsx
+ M src/services/__tests__/auth.service.signIn.test.ts
+ M src/services/__tests__/navigation.service.test.ts
+ M src/services/__tests__/outbound-message.service.test.ts
+ M src/services/auth.service.ts
+ M src/services/navigation.service.ts
+ M src/services/outbound-message.service.ts
+ M src/styles/__tests__/cp1FidelidadeCarvao.test.ts
+ M src/styles/accessibility.css
+ M src/styles/components.css
+ M src/styles/tokens.css
+ M src/styles/utilities.css
+ M src/test/volumeControlMocks.ts
+ M src/types/chat.ts
+ M supabase/deployment-manifest.json
+ M supabase/functions/_shared/__tests__/f58-item-receipts.test.ts
+ M supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts
+ M supabase/functions/_shared/ai-feature-flags.ts
+ M supabase/functions/_shared/ai-guards.ts
+ M supabase/functions/_shared/evolution-api-proxy.ts
+ M supabase/functions/_shared/evolution-send.ts
+ M supabase/functions/_shared/evolution-sync-actions.ts
+ M supabase/functions/_shared/evolution-webhook-handlers.ts
+ M supabase/functions/_shared/evolution-webhook-messages.ts
+ M supabase/functions/_shared/gmail-helpers.ts
+ M supabase/functions/_shared/request-policy.ts
+ M supabase/functions/_shared/schemas.ts
+ M supabase/functions/_shared/talkx-window.ts
+ M supabase/functions/_shared/validation.ts
+ M supabase/functions/ai-conversation-analysis/index.ts
+ M supabase/functions/ai-conversation-summary/contact-context.test.ts
+ M supabase/functions/ai-conversation-summary/contact-context.ts
+ M supabase/functions/ai-conversation-summary/index.ts
+ M supabase/functions/ai-kb-ingest/index.test.ts
+ M supabase/functions/ai-proxy/index.test.ts
+ M supabase/functions/ai-proxy/index.ts
+ M supabase/functions/ai-suggest-reply/index.test.ts
+ M supabase/functions/ai-suggest-reply/index.ts
+ M supabase/functions/ai-transcribe-audio/index.ts
+ M supabase/functions/approve-password-reset/index.ts
+ M supabase/functions/auth-login/index.test.ts
+ M supabase/functions/auth-login/index.ts
+ M supabase/functions/classify-audio-meme/index.ts
+ M supabase/functions/classify-emoji/index.test.ts
+ M supabase/functions/classify-emoji/index.ts
+ M supabase/functions/classify-sticker/index.test.ts
+ M supabase/functions/classify-sticker/index.ts
+ M supabase/functions/connection-health-check/index.test.ts
+ M supabase/functions/connection-health-check/index.ts
+ M supabase/functions/create-user/index.test.ts
+ M supabase/functions/create-user/index.ts
+ M supabase/functions/crm-integration/index.test.ts
+ M supabase/functions/detect-new-device/index.test.ts
+ M supabase/functions/detect-new-device/index.ts
+ M supabase/functions/elevenlabs-agent-token/index.ts
+ M supabase/functions/elevenlabs-dialogue/index.test.ts
+ M supabase/functions/elevenlabs-dialogue/index.ts
+ M supabase/functions/elevenlabs-scribe-token/index.ts
+ M supabase/functions/elevenlabs-sfx/index.ts
+ M supabase/functions/elevenlabs-sfx/request.ts
+ M supabase/functions/elevenlabs-sts/index.test.ts
+ M supabase/functions/elevenlabs-sts/index.ts
+ M supabase/functions/elevenlabs-tts-stream/index.ts
+ M supabase/functions/elevenlabs-tts/index.ts
+ M supabase/functions/elevenlabs-voice-design/index.test.ts
+ M supabase/functions/elevenlabs-voice-design/index.ts
+ M supabase/functions/evolution-api/index.test.ts
+ M supabase/functions/evolution-api/index.ts
+ M supabase/functions/evolution-api/session-flavor-routes.test.ts
+ M supabase/functions/evolution-sync/index.ts
+ M supabase/functions/fetch-link-preview/index.test.ts
+ M supabase/functions/fetch-link-preview/index.ts
+ M supabase/functions/get-call-recording/index.test.ts
+ M supabase/functions/get-call-recording/index.ts
+ M supabase/functions/gmail-send/index.ts
+ M supabase/functions/gmail-sync/index.ts
+ M supabase/functions/message-delivery/index.test.ts
+ M supabase/functions/message-delivery/index.ts
+ M supabase/functions/migrate-media-storage/index.ts
+ M supabase/functions/multiplix-audience/index.test.ts
+ M supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts
+ M supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts
+ M supabase/functions/multiplix-dispatch/actions/audience.ts
+ M supabase/functions/multiplix-dispatch/actions/inspect.ts
+ M supabase/functions/multiplix-dispatch/actions/listing.ts
+ M supabase/functions/multiplix-dispatch/index.ts
+ M supabase/functions/multiplix-send/index.test.ts
+ M supabase/functions/multiplix-send/index.ts
+ M supabase/functions/multiplix-voices/index.test.ts
+ M supabase/functions/send-scheduled-report/index.test.ts
+ M supabase/functions/send-scheduled-report/index.ts
+ M supabase/functions/talkx-link/index.test.ts
+ M supabase/functions/talkx-link/index.ts
+ M supabase/functions/talkx-report/index.test.ts
+ M supabase/functions/talkx-report/index.ts
+ M supabase/functions/talkx-scheduler/index.test.ts
+ M supabase/functions/talkx-scheduler/index.ts
+ M supabase/functions/talkx-send/index.ts
+ M supabase/functions/talkx-send/process-recipient.ts
+ M supabase/functions/voice-changer/index.ts
+ M supabase/functions/voice-copilot-action/index.ts
+ M supabase/functions/webauthn/index.ts
+ M supabase/migrations/20261003182707_fixture_e2e_aba_arquivos_midia.sql
+ M supabase/migrations/20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql
+ M supabase/schema-catalog.json
+ M tailwind.config.ts
+ M tests/contracts/_adv_vocabulary-consumers-gaps.test.ts
+ M tests/contracts/ai-vision-classifiers-mock.contract.test.ts
+ M tests/contracts/axe-campanhas.contract.test.ts
+ M tests/contracts/contraste-aa-componentes.contract.test.ts
+ M tests/contracts/media-volume-surfaces.contract.test.ts
+ M tests/contracts/multiplix-dispatch-domain-api.contract.test.ts
+ M tests/contracts/multiplix-docs.contract.test.ts
+ M tests/contracts/schemas.contract.test.ts
+ M tests/contracts/sl059-ia010-provisionamento.contract.test.ts
+ M vitest.config.ts
+?? ESTADO.md
+?? FEATURE_REGISTRY.md
+?? TESTING_CONVENTION.md
+?? docs/CONEXOES_WHATSAPP_RUNBOOK.md
+?? docs/DB-INVENTORY.md
+?? docs/HEALTH_SCORE.md
+?? docs/JORNADA_MENSAGEM_WHATSAPP.md
+?? docs/REALTIME-CHANNELS-INVENTORY.md
+?? docs/adr/ADR-008-motor-de-chamadas-whatsapp.md
+?? docs/adr/ADR-009-arquitetura-sla-canonica.md
+?? docs/adr/ADR-009-inbox-fonte-unica-de-mensagens.md
+?? docs/adr/ADR-009-permissoes-de-rota-e-special-agent.md
+?? docs/adr/ADR-010-dashboard-sla-sem-dados.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CHAT_UI_PARTE1_2026-10-11.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CHAT_UI_PARTE2_COMPORTAMENTO_2026-10-11.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CHAT_UI_PARTE3_HOOKS_E_TESTES_2026-10-11.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CHAT_UI_PARTE4_SEGUNDA_PASSADA_2026-10-11.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CHAT_UI_PARTE5_SEGUNDA_PASSADA_CHAT2_2026-10-11.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CONTATO_LISTA_IA_PARTE10_SEGUNDA_PASSADA_2026-10-13.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_CONTATO_LISTA_IA_PARTE9_2026-10-12.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_06_2026-10-13_PARTE4_CONTATO_MIDIA.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_06_2026-10-13_PARTE5_INVENTARIO_TESTES.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE4_INVENTARIO.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_11_2026-10-13_PARTE1_indicadores_paineis.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_11_2026-10-13_PARTE2_ia_voz.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_11_2026-10-13_PARTE3_templates_tabs_lista.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_11_2026-10-13_PARTE4_upload_inventario_testes.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_13_2026-10-13_PARTE3_MOTION_EMPTY_MOBILE.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_13_2026-10-13_PARTE4_V2_PROPRIA.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_16_2026-10-13_PARTE1_CONEXOES_CARTAO_QR.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_16_2026-10-13_PARTE2_CONEXOES_CONFIG.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_16_2026-10-13_PARTE3_DASHBOARD_GERAL.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_16_2026-10-13_PARTE4_DASHBOARD_SLA_SENTIMENTO.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_16_2026-10-13_PARTE5_INVENTARIO_TESTES.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_26_2026-10-13_PARTE3_TEAMCHAT_TEMA_VOZ_SEGURANCA.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_DOC_26_2026-10-13_PARTE5_FLUXOS_BANCO.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_FEATURES_BATCH1_PARTE8_2026-10-12.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_FRONTEND_PARTE6_2026-10-11.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_FRONTEND_PARTE7_SEGUNDA_PASSADA_2026-10-12.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_HOOKS_RAIZ_3_PARTE11_SEGUNDA_PASSADA_2026-10-13.md
+?? docs/audits/AUDITORIA_PARIDADE_V3_UI_PARTE7_COMPONENTS_UI_2026-10-12.md
+?? docs/audits/RECONCILIACAO_CARTOES_PARIDADE_V3_2026-10-11.md
+?? docs/audits/edge-functions-authz-coverage.md
+?? docs/crm-integration/
+?? docs/design/ARQUIVOS_FILTRO_DATA.md
+?? docs/design/ARQUIVOS_MINIATURAS_E_FIGURINHAS.md
+?? docs/design/CHAT_MICROINTERACOES.md
+?? docs/design/CONTROLES_VOLUME_SIDEBAR.md
+?? docs/design/EMAIL_LINK_CONTATO.md
+?? docs/design/INVENTARIO_VIOLETAS_SOLTOS.md
+?? docs/design/contatos-redesign-2026-10-12/
+?? docs/design/telefonia-baseline-2026-09-29/contraste.md
+?? docs/handoffs/HANDOFF_ARQUITETURA_AGENTES_2026-10-11.md
+?? docs/migration/MATRIZ_EDGE_TABELA.md
+?? docs/multiplix/CHANGELOG_MULTIPLIX.md
+?? docs/plans/PLANO_ARQUIVAR_E_CONTADORES_2026-10-11.md
+?? docs/plans/PLANO_BADGE_ARQUIVADAS_2026-10-11.md
+?? docs/plans/PLANO_CONTADORES_ACOMPANHAM_FILTROS_2026-10-11.md
+?? docs/plans/PLANO_CONTATOS_REDESIGN_100_ETAPAS_2026-10-12.md
+?? docs/plans/PLANO_CONTATOS_REDESIGN_REV2_2026-10-12.md
+?? docs/plans/PLANO_LOGIN_V3_FUNDO_TEXTOS_2026-10-11.md
+?? docs/plans/PLANO_PARIDADE_V3_30_ETAPAS_2026-10-11.md
+?? docs/plans/PLANO_PARIDADE_V3_DOCS_04_A_16_2026-10-12.md
+?? docs/plans/PLANO_PARIDADE_V3_DOCS_10_A_40_2026-10-12.md
+?? docs/plans/PLANO_PARIDADE_V3_DOC_05_3A_PASSADA_2026-10-13.md
+?? docs/plans/PLANO_PARIDADE_V3_DOC_11_SEGUNDA_PASSADA_2026-10-13.md
+?? docs/plans/PLANO_PARIDADE_V3_DOC_16_SEGUNDA_PASSADA_2026-10-13.md
+?? docs/plans/PLANO_PARIDADE_V3_DOC_26_2026-10-13.md
+?? docs/plans/PLANO_PARIDADE_V3_HOOKS_INBOX_PASSADA2_2026-10-13.md
+?? docs/plans/PLANO_PARIDADE_V3_HOOKS_RAIZ2_2026-10-13.md
+?? docs/plans/PLANO_PARIDADE_V3_SEGUNDA_PASSADA_DOCS_04_05_23_2026-10-13.md
+?? docs/plans/PLANO_REMOCAO_TAGS_2026-10-12.md
+?? docs/plans/PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md
+?? docs/plans/PLANO_VOLUME_DIAL_2026-10-11.md
+?? docs/runbooks/recriar-banco-local.md
+?? docs/talkx/DIAGNOSTICO-rulevalueinput-instavel-2026-10-13.md
+?? docs/talkx/v4/DESEMPENHO.md
+?? docs/tarefas/
+?? e2e/a11y-config-admin.spec.ts
+?? e2e/a11y-tarefas-dashboard.spec.ts
+?? e2e/conexoes.spec.ts
+?? e2e/email-link-contato.spec.ts
+?? e2e/fixtures/conexoes.ts
+?? e2e/fixtures/seed-files-tab.mjs
+?? e2e/inbox-sidebar-topo.spec.ts
+?? e2e/multiplix-responsivo.spec.ts
+?? e2e/provas/
+?? e2e/quarantine.d.ts
+?? e2e/quarantine.js
+?? e2e/quarantine.unit.mjs
+?? e2e/quick-controls-volume.spec.ts
+?? e2e/skins-e2e.spec.ts
+?? e2e/tarefas-linha-de-base.spec.ts
+?? scripts/ci/a11y-button-name-baseline.json
+?? scripts/ci/a11y-button-name-ratchet.mjs
+?? scripts/ci/a11y-button-name-ratchet.unit.mjs
+?? scripts/ci/check-bundle-secrets.mjs
+?? scripts/ci/check-bundle-secrets.unit.mjs
+?? scripts/ci/check-supabase-url-import-meta.mjs
+?? scripts/ci/check-supabase-url-import-meta.unit.mjs
+?? scripts/ci/db-inventory-doc.unit.mjs
+?? scripts/ci/docs-estado-registry-convention.unit.mjs
+?? scripts/ci/e2e-teardown.mjs
+?? scripts/ci/e2e-teardown.unit.mjs
+?? scripts/ci/edge-coverage-authz.unit.mjs
+?? scripts/ci/gerar-matriz-edge-tabela.mjs
+?? scripts/ci/gerar-matriz-edge-tabela.unit.mjs
+?? scripts/ci/multiplix-send-mutation-ci.unit.mjs
+?? scripts/ci/planos-dia-11.unit.mjs
+?? scripts/ci/playwright-config-e81.unit.mjs
+?? scripts/ci/playwright-version-lock.unit.mjs
+?? scripts/ci/replay-migrations-guard.unit.mjs
+?? scripts/ci/slo-docs-honesty.unit.mjs
+?? scripts/ci/talkx-docs-drift.unit.mjs
+?? scripts/ci/team-chat-local-gates.sh
+?? scripts/ci/team-chat-local-gates.unit.mjs
+?? scripts/ci/verify-crm-integration-doc.unit.mjs
+?? scripts/db-audit/check-live-invariants.sql
+?? scripts/db-audit/check-live-invariants.test.sh
+?? scripts/db-audit/check-screen-permission-db-guards.mjs
+?? scripts/db-audit/check-screen-permission-db-guards.test.mjs
+?? scripts/db-audit/conversation-closures-reopen-same-day.test.sh
+?? scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh
+?? scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh
+?? scripts/db-audit/ia-usage-outbox-duravel.test.sh
+?? scripts/db-audit/interactive-buttons-list-behavior.test.sh
+?? scripts/db-audit/login_gate_rpc.test.sh
+?? scripts/db-audit/multiplix-completion-item-queue.test.sh
+?? scripts/db-audit/multiplix-drain-enum-cast.test.sh
+?? scripts/db-audit/pg-cron-jobs-baseline.js
+?? scripts/db-audit/pg-cron-jobs-baseline.json
+?? scripts/db-audit/pg-cron-jobs-baseline.test.mjs
+?? scripts/db-audit/profiles-role-escalation-guard.test.sh
+?? scripts/db-audit/recriar-banco-local.test.sh
+?? scripts/db-audit/secd-caller-check.test.sh
+?? scripts/db-audit/talkx-campaign-window-open.test.sh
+?? scripts/db-audit/talkx-conversion-defaults.test.sh
+?? scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh
+?? scripts/db-audit/talkx-engine-window-contract.test.mjs
+?? scripts/db-audit/talkx-template-second-update-snapshot.test.sh
+?? scripts/db-audit/team-chat-department-transfer-guards.test.sh
+?? scripts/db-audit/team-chat-media-contract.test.sh
+?? scripts/db-audit/team-direct-conversation-race.test.sh
+?? scripts/db-audit/team-member-role-rpcs.test.sh
+?? scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
+?? scripts/db/
+?? scripts/docs/
+?? scripts/tarefas/
+?? src/__tests__/coverage-catalogo.test.ts
+?? src/__tests__/multiplix-changelog-registry.test.ts
+?? src/__tests__/pwa-instalavel.test.tsx
+?? src/adapters/__tests__/evolutionAdapter.unsupported-message-types.test.ts
+?? src/assets/hero-worldmap.jpg
+?? src/components/__tests__/CT70_reduzirMovimentoAutomacaoIa.test.tsx
+?? src/components/__tests__/Y29_gateDownloadOutros.test.tsx
+?? src/components/__tests__/componentesDuplicados.test.ts
+?? src/components/__tests__/coresCruasInboxCrm.test.tsx
+?? src/components/__tests__/y17Selos.contraste.test.tsx
+?? src/components/admin/__tests__/AIUsageDashboard.estado-a11y.test.tsx
+?? src/components/admin/__tests__/AdminUsersTable.hierarchy.test.tsx
+?? src/components/admin/__tests__/AdminUsersTable.papel-invalido.test.tsx
+?? src/components/admin/__tests__/AdminView.a11y.test.tsx
+?? src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx
+?? src/components/admin/__tests__/AdminView.limiteChats.test.tsx
+?? src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx
+?? src/components/admin/__tests__/VisibilityGrantsManager.a11y.test.tsx
+?? src/components/admin/__tests__/useAdminDataColumns.test.ts
+?? src/components/admin/__tests__/useAdminDataCreateUser.test.ts
+?? src/components/agents/ConnectionsHeader.tsx
+?? src/components/agents/__tests__/AgentsView.conexoes.test.tsx
+?? src/components/agents/__tests__/AgentsView.pendencias.test.tsx
+?? src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+?? src/components/auth/__tests__/HeroBenefits.test.tsx
+?? src/components/auth/__tests__/PasswordStrengthMeter.acessivel.test.tsx
+?? src/components/auth/__tests__/ProtectedRoute.acesso-negado.test.tsx
+?? src/components/auth/__tests__/ProtectedRoute.saida.test.tsx
+?? src/components/auth/__tests__/ReauthDialog.fechar.test.tsx
+?? src/components/auth/__tests__/ReauthDialog.motivo.test.tsx
+?? src/components/auth/__tests__/SocialProof.test.tsx
+?? src/components/calls/__tests__/CallKpiCard.alerta.test.tsx
+?? src/components/calls/__tests__/telefoniaContraste.test.tsx
+?? src/components/calls/__tests__/telefoniaMotion.test.tsx
+?? src/components/campaigns/__tests__/CampaignABTesting.a11y.test.tsx
+?? src/components/campaigns/__tests__/CampaignsView.a11y-progress.test.tsx
+?? src/components/catalog/__tests__/CT69_contrasteBadges.test.tsx
+?? src/components/catalog/__tests__/ExternalProductManagementN058.test.tsx
+?? src/components/catalog/__tests__/WhatsAppTemplatesManager.a11y.test.tsx
+?? src/components/catalog/__tests__/WhatsAppTemplatesManager.adminGate.test.tsx
+?? src/components/catalog/__tests__/Y29_gateDownload.test.tsx
+?? src/components/catalog/__tests__/Y29_gateDownloadManagement.test.tsx
+?? src/components/chatbot/__tests__/ChatbotExecutionsDashboard.a11y.test.tsx
+?? src/components/chatbot/__tests__/ChatbotExecutionsFlow.section-error-boundary.test.tsx
+?? src/components/chatbot/__tests__/ChatbotFlowsView.a11y.test.tsx
+?? src/components/connections/ConnectionAuditDialog.tsx
+?? src/components/connections/ConnectionDeleteDialog.tsx
+?? src/components/connections/ConnectionDisconnectDialog.tsx
+?? src/components/connections/__tests__/BusinessHoursDialog.aria-labels.test.tsx
+?? src/components/connections/__tests__/BusinessHoursIndicator.test.tsx
+?? src/components/connections/__tests__/ConnectionAuditDialog.test.tsx
+?? src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx
+?? src/components/connections/__tests__/ConnectionCard.saude.test.tsx
+?? src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx
+?? src/components/connections/__tests__/ConnectionQueuesDialog.test.tsx
+?? src/components/connections/__tests__/ConnectionsView.estatisticas.todo.test.tsx
+?? src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx
+?? src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx
+?? src/components/connections/__tests__/InstanceSettingsTabContent.aria-labels.test.tsx
+?? src/components/contacts/__tests__/ContactActivityTimeline.nota.test.tsx
+?? src/components/contacts/__tests__/ContactCardInfo.test.tsx
+?? src/components/contacts/__tests__/ContactCompareDialog.redesign.test.tsx
+?? src/components/contacts/__tests__/ContactDetailPanel.esc-e-rotulo.test.tsx
+?? src/components/contacts/__tests__/ContactEmptyState.typography.test.tsx
+?? src/components/contacts/__tests__/ContactGroupedList.typography.test.tsx
+?? src/components/contacts/__tests__/ContactHealthIndicator.test.tsx
+?? src/components/contacts/__tests__/ContactListItemGrid.test.tsx
+?? src/components/contacts/__tests__/ContactMergeDialog.test.tsx
+?? src/components/contacts/__tests__/ContactPolimento.test.tsx
+?? src/components/contacts/__tests__/ContactSelectionConsistency.test.tsx
+?? src/components/contacts/__tests__/contactDisplay.test.ts
+?? src/components/contacts/__tests__/contactsMotion.test.ts
+?? src/components/contacts/__tests__/controlesToque.test.tsx
+?? src/components/contacts/__tests__/tipografiaPisoEscalaContatos.test.tsx
+?? src/components/contacts/contactDisplay.ts
+?? src/components/contacts/contactsMotion.ts
+?? src/components/crm360/__tests__/CRM360ExplorerView.heading-ordem-abas-altura.test.tsx
+?? src/components/crm360/__tests__/CRM360StatsCards.disponibilidade.test.tsx
+?? src/components/crm360/__tests__/CompanyFormDialog.cnpj.test.tsx
+?? src/components/crm360/__tests__/DataExplorerTable.a11y.test.tsx
+?? src/components/crm360/__tests__/crm360FormDialogs.a11y.test.tsx
+?? src/components/csat/__tests__/
+?? src/components/dashboard/__tests__/ActivityHeatmap.test.tsx
+?? src/components/dashboard/__tests__/ConversationHeatmap.test.tsx
+?? src/components/dashboard/__tests__/DashboardFilters.a11y.test.tsx
+?? src/components/dashboard/__tests__/DashboardFilters.limpar.test.tsx
+?? src/components/dashboard/__tests__/DashboardView.section-error.test.tsx
+?? src/components/dashboard/__tests__/GamificationEffects.sparkline.test.tsx
+?? src/components/dashboard/__tests__/GoalsConfigDialog.metas.test.tsx
+?? src/components/dashboard/__tests__/SatisfactionMetrics.test.tsx
+?? src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx
+?? src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx
+?? src/components/dashboard/__tests__/SystemHealthCard.test.tsx
+?? src/components/dashboard/__tests__/systemHealth.test.ts
+?? src/components/dashboard/overview/SystemHealthCard.tsx
+?? src/components/dashboard/sla/__tests__/
+?? src/components/dashboard/systemHealth.ts
+?? src/components/errors/StaleBundleNotice.tsx
+?? src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx
+?? src/components/errors/__tests__/ErrorBoundary.cenarios.test.tsx
+?? src/components/errors/__tests__/StaleBundleNotice.test.tsx
+?? src/components/gamification/__tests__/TrainingMiniGames.storage.test.tsx
+?? src/components/gmail/GmailLabelSidebar.tsx
+?? src/components/gmail/__tests__/GmailLabelSidebar.test.tsx
+?? src/components/gmail/__tests__/GmailStatusFilter.a11y.test.tsx
+?? src/components/inbox/__tests__/AgentReassignmentPanel.confirmacao.test.tsx
+?? src/components/inbox/__tests__/AgentReassignmentPanel.rotulos-botao.test.tsx
+?? src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx
+?? src/components/inbox/__tests__/BulkActionsToolbar.resultado.test.tsx
+?? src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx
+?? src/components/inbox/__tests__/ChatPanelHandlers.localizacao.test.tsx
+?? src/components/inbox/__tests__/ChatTransferContract.test.tsx
+?? src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx
+?? src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx
+?? src/components/inbox/__tests__/ConversationListSidebar.empty-state.test.tsx
+?? src/components/inbox/__tests__/ConversationListSidebar.largura.test.tsx
+?? src/components/inbox/__tests__/ConversationListSidebar.topo.test.tsx
+?? src/components/inbox/__tests__/FileUploader.n-039.test.tsx
+?? src/components/inbox/__tests__/FileUploader.retry-envio.test.tsx
+?? src/components/inbox/__tests__/GlobalSearch.aria.test.tsx
+?? src/components/inbox/__tests__/GlobalSearchFilters.test.tsx
+?? src/components/inbox/__tests__/GlobalSearchResults.test.tsx
+?? src/components/inbox/__tests__/ImagePreviewVideoFullscreen.aria.test.tsx
+?? src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx
+?? src/components/inbox/__tests__/InboxFilters.nomes-seletores.test.tsx
+?? src/components/inbox/__tests__/InteractiveMessage.call-button.test.tsx
+?? src/components/inbox/__tests__/MessageReactions.pendente-erro.test.tsx
+?? src/components/inbox/__tests__/MessageTemplates.a11y-buttons.test.tsx
+?? src/components/inbox/__tests__/NewConversationModal.accessible-name.test.tsx
+?? src/components/inbox/__tests__/NextBestActionEngine.acoes.test.tsx
+?? src/components/inbox/__tests__/QuickReplyCardList.test.tsx
+?? src/components/inbox/__tests__/RealtimeInboxView.emailChip.test.tsx
+?? src/components/inbox/__tests__/RealtimeInboxView.mobile-nova-conversa.test.tsx
+?? src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx
+?? src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx
+?? src/components/inbox/__tests__/SummaryResult.test.tsx
+?? src/components/inbox/__tests__/TemplateEditorDialog.test.tsx
+?? src/components/inbox/__tests__/ToolPanel.accessibility.test.tsx
+?? src/components/inbox/__tests__/VideoPreview.erro.test.tsx
+?? src/components/inbox/__tests__/VirtualizedRealtimeList.quickPeek.test.tsx
+?? src/components/inbox/__tests__/VoiceChanger.falhas.test.tsx
+?? src/components/inbox/__tests__/VoiceChanger.reduced-motion.test.tsx
+?? src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx
+?? src/components/inbox/__tests__/VoiceChangerPicker.reduced-motion.test.tsx
+?? src/components/inbox/__tests__/WhisperMode.a11y.test.tsx
+?? src/components/inbox/__tests__/WhisperMode.destino.test.tsx
+?? src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx
+?? src/components/inbox/__tests__/contrastePlayerSlider.test.tsx
+?? src/components/inbox/__tests__/emojiConstants.test.ts
+?? src/components/inbox/__tests__/ferramentas-ia.anuncio-estado.test.tsx
+?? src/components/inbox/__tests__/linkPreviewUtils.test.ts
+?? src/components/inbox/__tests__/localDay.localInstantFromDayAndTime.test.ts
+?? src/components/inbox/__tests__/mediaUtils.getFilename.test.ts
+?? src/components/inbox/__tests__/slashCommandsData.invariantes.test.ts
+?? src/components/inbox/__tests__/swipeActions.test.ts
+?? src/components/inbox/__tests__/template-utils.test.ts
+?? src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx
+?? src/components/inbox/__tests__/useGlobalSearchData.curingas.test.tsx
+?? src/components/inbox/__tests__/useInteractiveMessage.test.ts
+?? src/components/inbox/__tests__/useSummaryTts.test.ts
+?? src/components/inbox/ai-tools/__tests__/AIResponseCard.copia.test.tsx
+?? src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx
+?? src/components/inbox/chat/ContactPresenceIndicator.tsx
+?? src/components/inbox/chat/ConversationDeliverySummary.tsx
+?? src/components/inbox/chat/EmailUnreadChip.tsx
+?? src/components/inbox/chat/MessageBubbleUnsupported.tsx
+?? src/components/inbox/chat/SendErrorBanner.tsx
+?? src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx
+?? src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx
+?? src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx
+?? src/components/inbox/chat/__tests__/ChatQuickRepliesPopover.a11y.test.tsx
+?? src/components/inbox/chat/__tests__/ChatSearchBar.aviso-resultados.test.tsx
+?? src/components/inbox/chat/__tests__/ConversationDeliverySummary.test.tsx
+?? src/components/inbox/chat/__tests__/EmailUnreadChip.a11y.test.tsx
+?? src/components/inbox/chat/__tests__/EmailUnreadChip.test.tsx
+?? src/components/inbox/chat/__tests__/MentionAutocomplete.test.tsx
+?? src/components/inbox/chat/__tests__/MessageBubble.chat-text-size.test.tsx
+?? src/components/inbox/chat/__tests__/MessageBubbleUnsupported.test.tsx
+?? src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx
+?? src/components/inbox/chat/__tests__/SendErrorBanner.filtro-autor-idade.pendentes.test.ts
+?? src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx
+?? src/components/inbox/chat/__tests__/groupWindow.test.ts
+?? src/components/inbox/chat/__tests__/useChatInputLogic.rascunho-por-usuario.test.tsx
+?? src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+?? src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx
+?? src/components/inbox/chat/chatMessageNavigation.ts
+?? src/components/inbox/chat/contactPresence.ts
+?? src/components/inbox/chat/groupWindow.ts
+?? src/components/inbox/chat/motion/
+?? src/components/inbox/collaboration/__tests__/
+?? src/components/inbox/contact-details/StoryViewer.tsx
+?? src/components/inbox/contact-details/WhatsAppStatusSection.tsx
+?? src/components/inbox/contact-details/__tests__/ContactActionButtons.email-a11y.test.tsx
+?? src/components/inbox/contact-details/__tests__/ContactDetails.inteligencia.test.tsx
+?? src/components/inbox/contact-details/__tests__/ContactIntelligencePanel.test.tsx
+?? src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx
+?? src/components/inbox/contact-details/storyUtils.ts
+?? src/components/inbox/stickers/__tests__/StickerManager.envio.test.tsx
+?? src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx
+?? src/components/inbox/tabs/__tests__/FilesTab.cabecalho-funil.test.tsx
+?? src/components/inbox/tabs/__tests__/FilesTab.period.integration.test.tsx
+?? src/components/inbox/tabs/__tests__/KpiStrip.contraste.test.tsx
+?? src/components/inbox/tabs/journey/JourneyEventCard.tsx
+?? src/components/inbox/tabs/journey/JourneyFilters.tsx
+?? src/components/inbox/tabs/journey/JourneyTimeline.tsx
+?? src/components/inbox/tabs/journey/__tests__/JourneyEventCard.test.tsx
+?? src/components/inbox/tabs/journey/__tests__/JourneyFilters.test.tsx
+?? src/components/inbox/tabs/journey/__tests__/JourneyTimeline.test.tsx
+?? src/components/integrations/__tests__/GoogleCalendarIntegration.test.tsx
+?? src/components/integrations/__tests__/N8nIntegrationView.test.tsx
+?? src/components/integrations/__tests__/corCruaTokens.test.tsx
+?? src/components/knowledge/__tests__/
+?? src/components/layout/__tests__/SidebarNavItem.a11y.test.tsx
+?? src/components/layout/__tests__/cabecalho-grupo-crm.test.tsx
+?? src/components/layout/__tests__/shellLayout.contrato.test.tsx
+?? src/components/leaderboard/__tests__/Leaderboard.erro.test.tsx
+?? src/components/mfa/__tests__/MFAEnroll.semCopia.test.tsx
+?? src/components/mfa/__tests__/MFASettings.leituraAcessivel.test.tsx
+?? src/components/mfa/__tests__/MFAVerify.erroFoco.test.tsx
+?? src/components/mobile/__tests__/MobileDrawerMenu.a11y.test.tsx
+?? src/components/mobile/__tests__/MobileHeader.titulos.test.tsx
+?? src/components/mobile/__tests__/NotificationsPanel.a11y.test.tsx
+?? src/components/monitoring/MonitoringIncidents.tsx
+?? src/components/monitoring/__tests__/MonitoringDiagnosticPanel.sem-export.test.tsx
+?? src/components/monitoring/__tests__/MonitoringEventTimeline.no-content.test.tsx
+?? src/components/monitoring/__tests__/MonitoringHealthLogs.status.test.tsx
+?? src/components/monitoring/__tests__/MonitoringIncidents.test.tsx
+?? src/components/monitoring/__tests__/monitoring-a11y.test.tsx
+?? src/components/monitoring/__tests__/useConnectionIncidents.test.ts
+?? src/components/monitoring/hooks/useConnectionIncidents.ts
+?? src/components/multiplix/__tests__/MultiplixMonitor.a11y.test.tsx
+?? src/components/multiplix/__tests__/MultiplixMonitor.estados.test.tsx
+?? src/components/multiplix/__tests__/MultiplixMonitor.estimativa.test.tsx
+?? src/components/multiplix/__tests__/MultiplixMonitor.memoPorLinha.test.tsx
+?? src/components/multiplix/__tests__/MultiplixMonitor.replies.test.tsx
+?? src/components/multiplix/__tests__/MultiplixView.contagem.test.tsx
+?? src/components/multiplix/__tests__/MultiplixView.painel01.test.tsx
+?? src/components/multiplix/__tests__/MultiplixView.selecao-composicao.test.tsx
+?? src/components/multiplix/__tests__/MultiplixView.tres-regioes.test.tsx
+?? src/components/multiplix/__tests__/fundacaoVisual.test.tsx
+?? src/components/notifications/__tests__/NotificationSettingsPanel.a11y.test.tsx
+?? src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx
+?? src/components/notifications/__tests__/NotificationTypeCards.a11y.test.tsx
+?? src/components/notifications/__tests__/NotificationsPopover.a11y.test.tsx
+?? src/components/notifications/__tests__/PushNotificationCard.a11y.test.tsx
+?? src/components/notifications/__tests__/PushNotificationToggle.dica.test.tsx
+?? src/components/notifications/__tests__/ScreenProtectionToggle.dica.test.tsx
+?? src/components/nps/__tests__/
+?? src/components/omnichannel/OmnichannelChatPanel.tsx
+?? src/components/omnichannel/__tests__/ChannelRoutingRules.a11y.test.tsx
+?? src/components/omnichannel/__tests__/OmnichannelChatPanel.test.tsx
+?? src/components/omnichannel/__tests__/OmnichannelManager.a11y.test.tsx
+?? src/components/onboarding/__tests__/TourOverlay.a11y.test.tsx
+?? src/components/queues/__tests__/QueueCard.a11y.test.tsx
+?? src/components/queues/__tests__/QueuesComparisonDashboard.a11y.test.tsx
+?? src/components/queues/__tests__/SLADashboard.redundancia.test.tsx
+?? src/components/queues/__tests__/SLADashboard.rotulos-botao.test.tsx
+?? src/components/queues/queueColors.ts
+?? src/components/reports/__tests__/ConversationHeatmap.test.tsx
+?? src/components/reports/__tests__/PeriodComparison.test.tsx
+?? src/components/reports/__tests__/ReportCharts.descricao-textual.test.tsx
+?? src/components/schedule/__tests__/ScheduleCalendarView.a11y.test.tsx
+?? src/components/security/__tests__/BlockedIPsPanel.select.test.tsx
+?? src/components/security/__tests__/BotoesAcao.nomes.test.tsx
+?? src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx
+?? src/components/security/__tests__/IPListasErro.contrasteTema.test.tsx
+?? src/components/security/__tests__/IPListasErro.test.tsx
+?? src/components/security/__tests__/IPWhitelistPanel.select.test.tsx
+?? src/components/security/__tests__/PasskeysPanel.a11y.test.tsx
+?? src/components/security/__tests__/PasswordResetRequestsPanel.abas.test.tsx
+?? src/components/security/__tests__/PasswordResetRequestsPanel.acesso-negado.test.tsx
+?? src/components/security/__tests__/PasswordResetRequestsPanel.select.test.tsx
+?? src/components/security/__tests__/QuarantinePanel.abas.test.tsx
+?? src/components/security/__tests__/RateLimitConfigPanel.a11y.test.tsx
+?? src/components/security/__tests__/RateLimitRealtimeAlerts.test.tsx
+?? src/components/security/__tests__/SecurityNotificationsPanel.a11y.test.tsx
+?? src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx
+?? src/components/security/__tests__/SecurityView.supervisor.test.tsx
+?? src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+?? src/components/settings/__tests__/AvatarUpload.invalidacao.test.tsx
+?? src/components/settings/__tests__/ChatbotL1Config.test.tsx
+?? src/components/settings/__tests__/FollowUpSequences.a11y.test.tsx
+?? src/components/settings/__tests__/MediaLibraryAdmin.a11y.test.tsx
+?? src/components/settings/__tests__/SoundCategoryCard.test.tsx
+?? src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx
+?? src/components/settings/__tests__/ThemeCustomizer.hierarchy.test.tsx
+?? src/components/settings/ai-providers/__tests__/AIProviderFormDialog.a11y.test.tsx
+?? src/components/settings/ai-providers/__tests__/useAIProviders.select.test.tsx
+?? src/components/shared/
+?? src/components/talkx/TalkXMessagePreview.tsx
+?? src/components/talkx/TalkXScheduleTimeline.tsx
+?? src/components/talkx/__tests__/RuleValueInput.test.tsx
+?? src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx
+?? src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
+?? src/components/talkx/__tests__/TalkXAnalytics.insights.test.tsx
+?? src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx
+?? src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx
+?? src/components/talkx/__tests__/TalkXCampaignActionsCard.test.tsx
+?? src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx
+?? src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx
+?? src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+?? src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx
+?? src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx
+?? src/components/talkx/__tests__/TalkXHealthCard.test.tsx
+?? src/components/talkx/__tests__/TalkXLimitsDialog.test.tsx
+?? src/components/talkx/__tests__/TalkXLinksManager.test.tsx
+?? src/components/talkx/__tests__/TalkXMessagePreview.test.tsx
+?? src/components/talkx/__tests__/TalkXMultiSegmentos.test.tsx
+?? src/components/talkx/__tests__/TalkXOperationalTimeline.test.tsx
+?? src/components/talkx/__tests__/TalkXOverview.comparativo.test.tsx
+?? src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx
+?? src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx
+?? src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx
+?? src/components/talkx/__tests__/TalkXSegmentProgressTable.test.tsx
+?? src/components/talkx/__tests__/TalkXSegments.feedbackMassa.test.tsx
+?? src/components/talkx/__tests__/TalkXSegments.groups.test.tsx
+?? src/components/talkx/__tests__/TalkXSegments.library.test.tsx
+?? src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppression.add.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppression.editReasonVazio.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppression.kpis.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppression.search.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppression.searchServer.test.tsx
+?? src/components/talkx/__tests__/TalkXSuppressionReasons.test.tsx
+?? src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx
+?? src/components/talkx/__tests__/TalkXTemplateEditor.states.test.tsx
+?? src/components/talkx/__tests__/TalkXTemplateKpis.test.tsx
+?? src/components/talkx/__tests__/TalkXView.ajuda-teclado.test.tsx
+?? src/components/talkx/__tests__/TalkXView.carregamento.test.tsx
+?? src/components/talkx/__tests__/TalkXView.section-error-boundary.test.tsx
+?? src/components/talkx/__tests__/TalkXWizardDelivery.confirmacao.test.tsx
+?? src/components/talkx/__tests__/TalkXWizardDelivery.recomendacoes-cta.test.tsx
+?? src/components/talkx/__tests__/TalkXWizardReview.resumo.test.tsx
+?? src/components/talkx/__tests__/contrasteAA.test.tsx
+?? src/components/talkx/__tests__/talkxRoute.test.ts
+?? src/components/talkx/__tests__/talkxSegmentsRoute.test.ts
+?? src/components/talkx/__tests__/talkxTimelineCopy.test.ts
+?? src/components/talkx/__tests__/useTalkXLifecycle.test.tsx
+?? src/components/talkx/analytics/
+?? src/components/talkx/kit/__tests__/dialogPresets.test.tsx
+?? src/components/talkx/kit/dialogPresets.ts
+?? src/components/talkx/kit/useTalkXConfirm.tsx
+?? src/components/talkx/links/
+?? src/components/talkx/report/
+?? src/components/talkx/segments/RuleValueInput.tsx
+?? src/components/talkx/segments/talkxSegmentsRoute.ts
+?? src/components/talkx/suppression/
+?? src/components/talkx/talkxAnalyticsFilters.ts
+?? src/components/talkx/talkxRoute.ts
+?? src/components/talkx/talkxScheduleStatus.ts
+?? src/components/talkx/tracking/TalkXCampaignActionsCard.tsx
+?? src/components/talkx/tracking/TalkXHealthCard.tsx
+?? src/components/talkx/tracking/TalkXLimitsDialog.tsx
+?? src/components/talkx/tracking/TalkXOperationalTimeline.tsx
+?? src/components/talkx/tracking/TalkXRecipientRowActions.tsx
+?? src/components/talkx/tracking/TalkXResumeChecklist.tsx
+?? src/components/talkx/tracking/TalkXSegmentProgressTable.tsx
+?? src/components/talkx/tracking/talkxCampaignRules.ts
+?? src/components/talkx/tracking/talkxHealth.ts
+?? src/components/talkx/tracking/talkxSegmentProgress.ts
+?? src/components/talkx/tracking/talkxTimelineCopy.ts
+?? src/components/tasks/__tests__/NewTaskDialog.destino.test.tsx
+?? src/components/tasks/__tests__/NewTaskDialog.lembrete.test.tsx
+?? src/components/tasks/__tests__/WorkItemSheet.painel.test.tsx
+?? src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx
+?? src/components/tasks/__tests__/barraCapturaDisposicao.test.tsx
+?? src/components/tasks/__tests__/cabecalhoNovaTarefa.test.tsx
+?? src/components/tasks/__tests__/kpiDependencias.test.tsx
+?? src/components/tasks/__tests__/kpiStripTarefas.test.tsx
+?? src/components/tasks/__tests__/primitivosCompartilhados.test.tsx
+?? src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+?? src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx
+?? src/components/tasks/__tests__/zen.tarefas.test.tsx
+?? src/components/tasks/board/__tests__/BoardColumn.politica-coluna.test.tsx
+?? src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx
+?? src/components/tasks/board/boardInteracao.ts
+?? src/components/tasks/shared/ContactAvatar.tsx
+?? src/components/tasks/shared/DateLabel.tsx
+?? src/components/tasks/shared/NewTaskDialog.tsx
+?? src/components/tasks/shared/PriorityPill.tsx
+?? src/components/tasks/shared/StatusPill.tsx
+?? src/components/tasks/shared/TaskCheckbox.tsx
+?? src/components/tasks/shared/TasksHeaderMenu.tsx
+?? src/components/tasks/shared/TasksUiContext.tsx
+?? src/components/tasks/shared/new-task/
+?? src/components/tasks/shared/sheet/
+?? src/components/tasks/shared/tasksUi.ts
+?? src/components/team-chat/__tests__/NewConversationDialog.test.tsx
+?? src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx
+?? src/components/team-chat/__tests__/team-chat-n182-a11y.test.tsx
+?? src/components/team-chat/__tests__/teamChatParts.windowOpen.test.tsx
+?? src/components/team-chat/__tests__/useTeamChatPanel.search.test.tsx
+?? src/components/theme/ChatTextSize.tsx
+?? src/components/theme/__tests__/ChatTextSize.test.tsx
+?? src/components/theme/useChatTextSize.ts
+?? src/components/transcriptions/__tests__/TranscriptionsHistoryView.a11y.test.tsx
+?? src/components/ui/VolumeDial.tsx
+?? src/components/ui/__tests__/EmptyState.test.tsx
+?? src/components/ui/__tests__/VolumeDial.test.tsx
+?? src/components/ui/__tests__/chart.test.tsx
+?? src/components/ui/__tests__/emoji-picker.test.tsx
+?? src/components/ui/__tests__/message-reactions.test.tsx
+?? src/components/ui/__tests__/primitivos-a11y-pt.test.tsx
+?? src/components/ui/__tests__/skip-link.a11y.test.tsx
+?? src/components/ui/__tests__/skip-link.test.tsx
+?? src/components/ui/__tests__/supabase-connectivity-banner.test.tsx
+?? src/components/ui/supabase-connectivity-banner.tsx
+?? src/components/voice/__tests__/
+?? src/components/wallet/__tests__/
+?? src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.salvar.test.tsx
+?? src/hooks/__tests__/useBulkActions.removido.test.ts
+?? src/hooks/__tests__/useCalls.contato.test.ts
+?? src/hooks/__tests__/usePushNotifications.sem-assinatura.test.ts
+?? src/hooks/__tests__/useSearchHistory.semAuthProvider.test.tsx
+?? src/hooks/admin/
+?? src/hooks/agents/
+?? src/hooks/analytics/__tests__/useAIUsageDashboard.estado.test.tsx
+?? src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx
+?? src/hooks/auth/__tests__/useAuth.aviso-dispositivo.test.tsx
+?? src/hooks/auth/__tests__/useAuth.rascunho-inbox-logout.test.tsx
+?? src/hooks/business/__tests__/useBusinessHours.test.tsx
+?? src/hooks/business/__tests__/useBusinessHoursCheck.test.tsx
+?? src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+?? src/hooks/chat/__tests__/snoozeDurations.test.ts
+?? src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx
+?? src/hooks/chat/__tests__/useContactMedia.stickers.test.tsx
+?? src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
+?? src/hooks/chat/__tests__/useConversationHistoryTimeline.chamadas.test.tsx
+?? src/hooks/chat/__tests__/useLatestAnalysis.test.tsx
+?? src/hooks/chat/__tests__/useMessageSignature.test.ts
+?? src/hooks/chat/__tests__/useMessages.paginacao.test.tsx
+?? src/hooks/chat/__tests__/useMessages.reconexao.test.tsx
+?? src/hooks/chat/__tests__/useRealtimeMessages.reconexao.test.tsx
+?? src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx
+?? src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx
+?? src/hooks/chat/journey/useJourneyActors.ts
+?? src/hooks/chat/snoozeDurations.ts
+?? src/hooks/chat/useAutomationSuggestions.ts
+?? src/hooks/chat/useWhisperCount.ts
+?? src/hooks/chat/useWhisperMessagesMutation.ts
+?? src/hooks/communication/__tests__/audioExclusivo.players.test.tsx
+?? src/hooks/communication/__tests__/mediaVolume.players.test.tsx
+?? src/hooks/communication/__tests__/useVoiceAgent.ttsAviso.test.ts
+?? src/hooks/connections/
+?? src/hooks/contacts/__tests__/useContainerColumns.test.ts
+?? src/hooks/contacts/useContainerColumns.ts
+?? src/hooks/crm/__tests__/useAgentReassignment.invalidacao.test.tsx
+?? src/hooks/crm/__tests__/useContactIntelligence.test.tsx
+?? src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx
+?? src/hooks/crm/__tests__/useContactPurchases.test.tsx
+?? src/hooks/crm/__tests__/useVisibleAgents.test.tsx
+?? src/hooks/dashboard/__tests__/useDashboardKpi.periodo.test.tsx
+?? src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts
+?? src/hooks/gmail/__tests__/useContactUnreadEmails.realtime.test.tsx
+?? src/hooks/inbox/__tests__/chipCounts.test.ts
+?? src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts
+?? src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts
+?? src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx
+?? src/hooks/inbox/__tests__/useObjectionDetector.n169.test.tsx
+?? src/hooks/inbox/__tests__/useRealtimeInbox.aviso-conversa-aberta.test.tsx
+?? src/hooks/inbox/chipCounts.ts
+?? src/hooks/inbox/useConnectionAuditLogs.ts
+?? src/hooks/integrations/__tests__/useCustomEmojis.ordenacaoUploadErro.test.tsx
+?? src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts
+?? src/hooks/integrations/__tests__/useGmailLabels.test.ts
+?? src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx
+?? src/hooks/integrations/__tests__/useMultiplixDispatches.multiplix-audience.test.ts
+?? src/hooks/integrations/__tests__/useTalkXLiveChannel.test.tsx
+?? src/hooks/integrations/__tests__/useTalkXOverviewStats.test.tsx
+?? src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx
+?? src/hooks/integrations/__tests__/useTalkXSegments.acoesEmMassa.test.tsx
+?? src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts
+?? src/hooks/integrations/__tests__/useTalkXSuppression.test.tsx
+?? src/hooks/integrations/useGmailLabels.ts
+?? src/hooks/integrations/useTalkXAnalytics.ts
+?? src/hooks/integrations/useTalkXCampaignTimeline.ts
+?? src/hooks/integrations/useTalkXLinks.ts
+?? src/hooks/integrations/useTalkXLiveChannel.ts
+?? src/hooks/integrations/useTalkXMediaUrl.ts
+?? src/hooks/integrations/useTalkXOverviewStats.ts
+?? src/hooks/integrations/useTalkXResumeChecklist.ts
+?? src/hooks/integrations/useTalkXTemplateStats.ts
+?? src/hooks/queues/
+?? src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx
+?? src/hooks/realtime/__tests__/messageTypeClassification.test.ts
+?? src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts
+?? src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx
+?? src/hooks/realtime/__tests__/useSupabaseRealtime.reconexao.test.tsx
+?? src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx
+?? src/hooks/sla/__tests__/useSLACalculation.proporcional.test.tsx
+?? src/hooks/sla/useContactSlaTimeline.ts
+?? src/hooks/sticker-picker/__tests__/useStickerPicker.recentes.test.tsx
+?? src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx
+?? src/hooks/system/__tests__/useCurrentModule.test.ts
+?? src/hooks/system/__tests__/usePermissions.test.tsx
+?? src/hooks/system/__tests__/useSupabaseConnectivity.test.ts
+?? src/hooks/system/useClientErrors.ts
+?? src/hooks/system/useSupabaseConnectivity.ts
+?? src/hooks/system/useSystemHealthSignals.ts
+?? src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx
+?? src/hooks/tasks/__tests__/workItemBoardGroups.test.ts
+?? src/hooks/tasks/__tests__/workItemFormat.test.ts
+?? src/hooks/tasks/__tests__/workItemPresets.test.ts
+?? src/hooks/tasks/useWorkItemDraft.ts
+?? src/hooks/tasks/workItemBoardGroups.ts
+?? src/hooks/tasks/workItemFormat.ts
+?? src/hooks/tasks/workItemPresets.ts
+?? src/hooks/team-chat/README.md
+?? src/hooks/team-chat/__tests__/contratosModulo.test.ts
+?? src/hooks/team-chat/__tests__/queryKeys.test.ts
+?? src/hooks/team-chat/__tests__/useActiveDepartments.test.tsx
+?? src/hooks/team-chat/__tests__/useTeamChatMutations.membership.test.tsx
+?? src/hooks/team-chat/__tests__/useTeamConversations.inbox.test.tsx
+?? src/hooks/team-chat/__tests__/useTeamFiles.test.tsx
+?? src/hooks/team-chat/__tests__/useTeamMessageReactions.canal-e-reconexao.test.tsx
+?? src/hooks/team-chat/__tests__/useTeamMessageReactions.toggle-rpc.test.tsx
+?? src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx
+?? src/hooks/team-chat/queryKeys.ts
+?? src/hooks/team-chat/useTeamFiles.ts
+?? src/hooks/ui/__tests__/useAriaAnnouncer.test.tsx
+?? src/hooks/ui/__tests__/useDocumentTitle.test.tsx
+?? src/hooks/ui/__tests__/useKeyboardHeight.test.tsx
+?? src/hooks/ui/__tests__/useViewTransition.test.tsx
+?? src/lib/__tests__/accessError.test.ts
+?? src/lib/__tests__/appRole.test.ts
+?? src/lib/__tests__/audioPlayerState.test.ts
+?? src/lib/__tests__/chunkReload.test.ts
+?? src/lib/__tests__/clipboard.test.ts
+?? src/lib/__tests__/cnpjUtils.test.ts
+?? src/lib/__tests__/contactHealth.test.ts
+?? src/lib/__tests__/crossTabSendDedupe.test.ts
+?? src/lib/__tests__/downloadFile.test.ts
+?? src/lib/__tests__/edgeAuthHeaders.test.ts
+?? src/lib/__tests__/filesPeriod.adversarial.test.ts
+?? src/lib/__tests__/inboxDraftSession.test.ts
+?? src/lib/__tests__/ipValidation.test.ts
+?? src/lib/__tests__/lazyWithRetry.test.tsx
+?? src/lib/__tests__/offlineQueue.test.ts
+?? src/lib/__tests__/periodEquivalence.test.ts
+?? src/lib/__tests__/postLoginRedirect.test.ts
+?? src/lib/__tests__/postLoginRedirect.twoFactorAuth.test.tsx
+?? src/lib/__tests__/queryRetry.test.ts
+?? src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx
+?? src/lib/__tests__/sendThrottle.test.ts
+?? src/lib/__tests__/slaTimeline.test.ts
+?? src/lib/__tests__/supervisorPriority.test.ts
+?? src/lib/__tests__/urlSafety.href-seguro.test.ts
+?? src/lib/__tests__/web-vitals-alvos.test.ts
+?? src/lib/__tests__/web-vitals-fcp-tti.test.ts
+?? src/lib/appRole.ts
+?? src/lib/audio/
+?? src/lib/audioPlayerState.ts
+?? src/lib/avisoDispositivo.ts
+?? src/lib/calls/MediaTransport.ts
+?? src/lib/calls/WhatsAppCallEngine.ts
+?? src/lib/calls/__tests__/MediaTransport.contrato.test.ts
+?? src/lib/calls/__tests__/WhatsAppCallEngine.contrato.test.ts
+?? src/lib/calls/__tests__/sipProvisioning.test.ts
+?? src/lib/chunkReload.ts
+?? src/lib/clipboard.ts
+?? src/lib/cnpjUtils.ts
+?? src/lib/contactHealth.ts
+?? src/lib/crossTabSendDedupe.ts
+?? src/lib/downloadFile.ts
+?? src/lib/inboxDraftSession.ts
+?? src/lib/ipValidation.ts
+?? src/lib/journey/__tests__/mappers.test.ts
+?? src/lib/journey/mappers.ts
+?? src/lib/offlineQueue.ts
+?? src/lib/postLoginRedirect.ts
+?? src/lib/queryRetry.ts
+?? src/lib/rlsError.ts
+?? src/lib/sendThrottle.ts
+?? src/lib/slaTimeline.ts
+?? src/lib/supervisorPriority.ts
+?? src/pages/AccessDenied.tsx
+?? src/pages/__tests__/AccessDenied.test.tsx
+?? src/pages/__tests__/Auth.coluna-v3.test.tsx
+?? src/pages/__tests__/Auth.fundo-mapa.test.tsx
+?? src/pages/__tests__/Auth.sem-cadastro.test.tsx
+?? src/pages/__tests__/ChatPopup.a11y.test.tsx
+?? src/pages/__tests__/ClientErrorsPanel.test.tsx
+?? src/pages/__tests__/Install.limpeza-listeners.test.tsx
+?? src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx
+?? src/pages/__tests__/ResetPassword.acessivel.test.tsx
+?? src/pages/__tests__/ResetPassword.redirect-cancelavel.test.tsx
+?? src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx
+?? src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx
+?? src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx
+?? src/pages/__tests__/twoFactorAuth.retrySaida.test.tsx
+?? src/pages/admin-telemetria/ClientErrorsPanel.tsx
+?? src/pages/admin/__tests__/RolesPage.a11y.test.tsx
+?? src/pages/queue-details/__tests__/QueueDetails.consultas.test.tsx
+?? src/pages/queue-details/__tests__/QueueDetails.erro.test.tsx
+?? src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx
+?? src/routes/__tests__/
+?? src/services/connection-health.service.ts
+?? src/styles/__tests__/chatTextSize.test.ts
+?? src/styles/__tests__/fluidTypeScale.test.ts
+?? src/styles/__tests__/mobileAreaSeguraRolagem.test.ts
+?? src/styles/__tests__/violetaContraste.test.ts
+?? src/test/fakeIndexedDb.ts
+?? src/utils/__tests__/normalizeMediaUrl.test.ts
+?? supabase/functions/_shared/__tests__/edge-boot.test.ts
+?? supabase/functions/_shared/__tests__/evolution-helpers-phone-status.test.ts
+?? supabase/functions/_shared/__tests__/evolution-message-id.test.ts
+?? supabase/functions/_shared/__tests__/evolution-presence-group-typing.test.ts
+?? supabase/functions/_shared/__tests__/evolution-sync-actions.test.ts
+?? supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts
+?? supabase/functions/_shared/__tests__/evolution-webhook-messages.test.ts
+?? supabase/functions/_shared/__tests__/rate-limit-log.test.ts
+?? supabase/functions/_shared/away-message-webhook.test.ts
+?? supabase/functions/_shared/evolution-instance-token.ts
+?? supabase/functions/_shared/rate-limit-log.ts
+?? supabase/functions/ai-conversation-analysis/limite-por-usuario.test.ts
+?? supabase/functions/ai-conversation-analysis/sem-tags-no-prompt.test.ts
+?? supabase/functions/ai-transcribe-audio/index.test.ts
+?? supabase/functions/approve-password-reset/index.test.ts
+?? supabase/functions/automation-suggest-reply/
+?? supabase/functions/classify-audio-meme/index.test.ts
+?? supabase/functions/elevenlabs-agent-token/index.test.ts
+?? supabase/functions/elevenlabs-scribe-token/index.test.ts
+?? supabase/functions/elevenlabs-sfx/index.test.ts
+?? supabase/functions/elevenlabs-tts-stream/index.test.ts
+?? supabase/functions/elevenlabs-tts/index.test.ts
+?? supabase/functions/evolution-sync/index.test.ts
+?? supabase/functions/fetch-link-preview/__tests__/
+?? supabase/functions/gmail-send/trash-persistencia.test.ts
+?? supabase/functions/gmail-sync/gmail-labels-mutation.test.ts
+?? supabase/functions/gmail-sync/gmail-labels-schema.test.ts
+?? supabase/functions/migrate-media-storage/__tests__/
+?? supabase/functions/recover-message-media/
+?? supabase/functions/talkx-send/f43-correlation.test.ts
+?? supabase/functions/talkx-send/n118-send-weekdays-wiring.test.ts
+?? supabase/functions/voice-changer/index.test.ts
+?? supabase/functions/voice-copilot-action/index.test.ts
+?? supabase/functions/voice-copilot-action/voice-copilot-catalog.test.ts
+?? supabase/functions/webauthn/index.test.ts
+?? supabase/migrations/20261005095819_scope_wa_label_rpc_by_connection.sql
+?? supabase/migrations/20261005110431_team_chat_department_create_transfer_guards.sql
+?? supabase/migrations/20261005111026_talkx_storage_purge_drain.sql
+?? supabase/migrations/20261005111312_p1_department_whatsapp_mode.sql
+?? supabase/migrations/20261005134241_pg_cron_detector_timeouts_e_falhas_seguidas.sql
+?? supabase/migrations/20261005185729_transfer_conversation_rpc.sql
+?? supabase/migrations/20261006064259_multiplix_conclusao_fila_itens.sql
+?? supabase/migrations/20261006152414_team_chat_direct_conversation_race_guard.sql
+?? supabase/migrations/20261006170426_fix_member_role_leave_remove_rpcs.sql
+?? supabase/migrations/20261006180831_login_gate_rpc.sql
+?? supabase/migrations/20261006193506_talkx_cron_runs_gate.sql
+?? supabase/migrations/20261006210406_talkx_retry_reabertura_consentimento.sql
+?? supabase/migrations/20261006222007_talkx_conversion_defaults_webhook.sql
+?? supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql
+?? supabase/migrations/20261007004252_talkx_engine_window_contract.sql
+?? supabase/migrations/20261007004545_secd_caller_check_13.sql
+?? supabase/migrations/20261007010129_multiplix_drain_enum_cast.sql
+?? supabase/migrations/20261007010651_team_chat_media_contract_locators.sql
+?? supabase/migrations/20261007012808_department_invite_contract_audit_vocabulary.sql
+?? supabase/migrations/20261007013217_conversation_closures_reopen_same_day.sql
+?? supabase/migrations/20261008210159_ia_usage_outbox_duravel.sql
+?? supabase/migrations/20261009000118_revoke_whatsapp_connections_anon_grants.sql
+?? supabase/migrations/20261009011641_multiplix_drain_enum_cast.sql
+?? supabase/migrations/20261009062323_sec_p2_definer_storage.sql
+?? supabase/migrations/20261009063730_talkx_segment_bulk_actions.sql
+?? supabase/migrations/20261009142650_e2e_cleanup_conversation_closures_rpc.sql
+?? supabase/migrations/20261011000017_talkx_template_snapshot_second_update.sql
+?? supabase/migrations/20261011000020_talkx_templates_channel_media_archive.sql
+?? supabase/migrations/20261011003004_talkx_campaign_timeline_page.sql
+?? supabase/migrations/20261011003025_fecha_get_profile_role_for_check.sql
+?? supabase/migrations/20261011003027_funcoes_definer_pg_temp_search_path.sql
+?? supabase/migrations/20261011155015_contact_tags_atomic.sql
+?? supabase/migrations/20261011192905_global_settings_secrets.sql
+?? supabase/migrations/20261012233536_gamification_revoke_client_rpcs.sql
+?? supabase/migrations/20261013014629_sla_config_single_default.sql
+?? supabase/migrations/20261014014129_close_stale_calls.sql
+?? supabase/tests/chat_media_buckets_limits.sql
+?? supabase/tests/close_stale_calls.sql
+?? supabase/tests/gamification_revoke_client_rpcs.sql
+?? supabase/tests/global_settings_secrets_rls.sql
+?? supabase/tests/indeterminate_optout_outbox.sql
+?? supabase/tests/rls_message_templates.sql
+?? supabase/tests/sec_p2_definer_storage.sql
+?? supabase/tests/sla_configurations_single_default.sql
+?? supabase/tests/special_agent_visibility.sql
+?? supabase/tests/talkx_segment_bulk_actions.sql
+?? supabase/tests/transfer_conversation_atomicidade.sql
+?? supabase/tests/user_devices_unique.sql
+?? supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql
+?? tests/contracts/contraste-cores-categoria.contract.test.ts
+?? tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts
+?? tests/contracts/requireauth-network-policy.contract.test.ts
+?? tests/contracts/telefonia-contrato-docs.contract.test.ts
+?? tests/contracts/tokens-violetas-orfaos.contract.test.ts
+?? tests/contracts/version-json-evolution-url.contract.test.ts
+?? tests/contracts/web-vitals-alvos.contract.test.ts

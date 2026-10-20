@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/dashboard-equipe-satisfacao-metas-sla-26-2610131523c5ac
+
+
+ Test Files  2 passed (2)
+      Tests  15 passed | 1 todo (16)
+   Start at  15:48:34
+   Duration  8.31s (transform 865ms, setup 1.07s, import 3.50s, tests 5.28s, environment 2.86s)
+

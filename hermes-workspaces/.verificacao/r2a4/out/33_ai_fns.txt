@@ -1,0 +1,27 @@
+{
+ "ms": 8,
+ "rows": [
+  {
+   "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "proname": "ai_is_canonical_churn_risk"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "proname": "ai_is_canonical_priority"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "proname": "ai_is_canonical_sentiment"
+  },
+  {
+   "acl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "proname": "ai_is_canonical_urgency"
+  },
+  {
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "proname": "ai_text_array"
+  }
+ ],
+ "row_count": 5,
+ "truncated": false
+}

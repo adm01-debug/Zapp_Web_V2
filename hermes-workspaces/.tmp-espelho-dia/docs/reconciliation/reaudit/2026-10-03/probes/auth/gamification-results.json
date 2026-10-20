@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-10-04T02:39:32.365Z",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "provenance": {
+    "pins_path": "/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/gamification-pins.json",
+    "integrity_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "integrity_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_source_files": 4,
+    "verified_before_execution": true,
+    "source_kind": "git_checkout"
+  },
+  "network_calls": 0,
+  "database_calls": 0,
+  "source_modified": false,
+  "results": [
+    {
+      "id": "P-AUTH-11",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/components/dashboard/DashboardWidgetRenderer.tsx",
+          "blob_sha": "566782938f8de0bebcd166ded452b4f89970abe3"
+        },
+        {
+          "file": "src/components/gamification/MiniGameDialogs.tsx",
+          "blob_sha": "8569ac3983114bb1e1c4f00b7d7fead20a1727cc"
+        },
+        {
+          "file": "src/components/gamification/TrainingMiniGames.tsx",
+          "blob_sha": "5ed087017c1fa5b97603845b75316d785b2b9129"
+        },
+        {
+          "file": "src/components/gamification/miniGamesData.ts",
+          "blob_sha": "f49db178088a56b89dbe7a07765e0a015241f4d9"
+        }
+      ],
+      "observed": {
+        "completions_after_typing": 2,
+        "typing_score": 33,
+        "quiz_selected": true,
+        "quiz_open_after_effects": false,
+        "quiz_score_written_without_answer": 33,
+        "toasts_after_selecting_quiz": [
+          {
+            "title": "🎮 Quiz do Atendimento Completo!",
+            "description": "Você ganhou 16 XP e bateu seu recorde!"
+          },
+          {
+            "title": "🎮 Quiz do Atendimento Completo!",
+            "description": "Você ganhou 16 XP"
+          }
+        ]
+      },
+      "limitation": "Exact SpeedTypingGame/TrainingMiniGames declarations and game constants. Synthetic React useState equality, persistent component slots and dependency-aware useEffect scheduler; virtual intervals advance60 ticks without waiting. Other games are rendered as element stubs, no answers submitted. Proves callback/closure effect ordering and local state/storage corruption, not browser timing or database XP."
+    }
+  ]
+}

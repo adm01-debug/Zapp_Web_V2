@@ -1,0 +1,71 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a1
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — debounce > M1 debounce + outro filtro antes dos 200ms
+A1-M1 {"aposDigitar":{"id":1,"filters":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"liga","isActive":false,"urlWindow":""},"timersAntesDoPrio":"n/a","aposPrio":{"id":2,"filters":{"q":"","prio":"high","contact":null,"alarm":false,"done":true},"textoDaBusca":"liga","isActive":true,"urlWindow":"?prio=high"},"aposDebounce":{"id":3,"filters":{"q":"","prio":"high","contact":null,"alarm":false,"done":true},"textoDaBusca":"liga","isActive":true,"urlWindow":"?prio=high"}}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — debounce > M1b variantes: contact / alarm / done
+A1-M1b {"via":"contact","id":1,"filters":{"q":"","prio":"all","contact":"c1","alarm":false,"done":true},"textoDaBusca":"liga","isActive":true,"urlWindow":"?contact=c1"}
+A1-M1b {"via":"alarm","id":2,"filters":{"q":"","prio":"all","contact":"c1","alarm":true,"done":true},"textoDaBusca":"liga","isActive":true,"urlWindow":"?contact=c1&alarm=1"}
+A1-M1b {"via":"done","id":3,"filters":{"q":"","prio":"all","contact":"c1","alarm":true,"done":false},"textoDaBusca":"liga","isActive":true,"urlWindow":"?contact=c1&alarm=1&done=0"}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — debounce > M2 clear cancela o timer pendente
+A1-M2 {"timersComDebounce":1,"timersAposClear":0,"timersFinal":0,"id":1,"filters":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"","isActive":false,"urlWindow":""}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — debounce > M2b clear + digitar + desmontar: sobra timer vivo?
+A1-M2b {"timersAposClear":0,"timersAposSegundoDigitar":1,"timersAposAvancar":0,"id":1,"filters":{"q":"orçamento","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"orçamento","isActive":true,"urlWindow":"?q=or%C3%A7amento"}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — debounce > M5 desmontar com debounce pendente
+A1-M5 {"timersAntesDeDesmontar":1,"timersDepoisDeDesmontar":0}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — debounce > M1c o timer que "perdeu" fica com id morto na ref (clear depois nao quebra)
+A1-M1c {"timersAposDebouncePerdido":0,"timersAposClear":0,"id":1,"filters":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"","isActive":false,"urlWindow":""}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M6 navegacao dupla A->B: o ultimo vence
+A1-M6 {"a":{"id":1,"filters":{"q":"um","prio":"low","contact":null,"alarm":false,"done":true},"textoDaBusca":"um","isActive":true,"urlWindow":"?q=um&prio=low"},"b":{"id":2,"filters":{"q":"dois","prio":"urgent","contact":null,"alarm":false,"done":true},"textoDaBusca":"dois","isActive":true,"urlWindow":"?q=dois&prio=urgent"},"c":{"id":3,"filters":{"q":"dois","prio":"urgent","contact":null,"alarm":false,"done":true},"textoDaBusca":"dois","isActive":true,"urlWindow":"?q=dois&prio=urgent"}}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M7 navegar para a MESMA search nao reidrata (mesmo com estado divergente)
+A1-M7 {"aposPrio":{"id":1,"filters":{"q":"","prio":"urgent","contact":null,"alarm":false,"done":true},"textoDaBusca":"","isActive":true,"urlWindow":"?prio=urgent"},"routerVistoPeloRouter":"","aposNavegarParaRaiz":{"id":2,"filters":{"q":"","prio":"urgent","contact":null,"alarm":false,"done":true},"textoDaBusca":"","isActive":true,"urlWindow":"?prio=urgent"},"routerDepois":"","filtroSobreviveu":"urgent"}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M8 navegacao durante debounce pendente: URL vence?
+A1-M8 {"depoisDeDigitar":{"id":1,"filters":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"liga","isActive":false,"urlWindow":""},"aposNavegar":{"id":2,"filters":{"q":"","prio":"high","contact":null,"alarm":false,"done":true},"textoDaBusca":"","isActive":true,"urlWindow":"?prio=high"},"final":{"id":3,"filters":{"q":"","prio":"high","contact":null,"alarm":false,"done":true},"textoDaBusca":"","isActive":true,"urlWindow":"?prio=high"}}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M9 voltar/avancar (ir(-1) / ir(1))
+A1-M9 {"comDois":{"id":1,"filters":{"q":"dois","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"dois","isActive":true,"urlWindow":"?q=dois"},"voltou":{"id":2,"filters":{"q":"um","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"um","isActive":true,"urlWindow":"?q=um"},"avancou":{"id":3,"filters":{"q":"dois","prio":"all","contact":null,"alarm":false,"done":true},"textoDaBusca":"dois","isActive":true,"urlWindow":"?q=dois"},"router":"?q=dois"}
+
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — debounce > M1 debounce + outro filtro antes dos 200ms 42ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — debounce > M1b variantes: contact / alarm / done 15ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — debounce > M2 clear cancela o timer pendente 4ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — debounce > M2b clear + digitar + desmontar: sobra timer vivo? 5ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — debounce > M5 desmontar com debounce pendente 4ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — debounce > M1c o timer que "perdeu" fica com id morto na ref (clear depois nao quebra) 5ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M6 navegacao dupla A->B: o ultimo vence 10ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M7 navegar para a MESMA search nao reidrata (mesmo com estado divergente) 5ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M8 navegacao durante debounce pendente: URL vence? 5ms
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M10 conta renders por navegacao (loop?)
+A1-M10 {"rendersMontagem":1,"rendersAposNavegar":3,"rendersAposTempo":3,"delta":2,"resultou":{"q":"liga","prio":"high","contact":null,"alarm":true,"done":false}}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M11 trocar filtro nao move o router e nao muda o location do router
+A1-M11 {"antes":{"router":"","window":""},"depois":{"router":"","window":"?prio=high"}}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — URL / historico > M12 replaceState preserva view/task e nao empilha historico
+A1-M12 {"hist0":1,"hist1":1,"hist2":1,"url":"?view=board&task=abc&prio=high&contact=c1&alarm=1&done=0","params":{"view":"board","task":"abc","prio":"high","contact":"c1","alarm":"1","done":"0"}}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — URL / historico > M13 clear() com view/task na URL
+A1-M13 {"url":"?view=board&task=abc","filtros":{"q":"","prio":"all","contact":null,"alarm":false,"done":true},"texto":""}
+
+stdout | .tmp/a1-hook-memory.test.tsx > A1 — URL / historico > M14 zero requests novos quando o filtro muda
+A1-M14 {"fetch":0,"xhrOpen":0,"url":"?view=board"}
+
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M9 voltar/avancar (ir(-1) / ir(1)) 7ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M10 conta renders por navegacao (loop?) 4ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — reidratacao pelo router > M11 trocar filtro nao move o router e nao muda o location do router 3ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — URL / historico > M12 replaceState preserva view/task e nao empilha historico 6ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — URL / historico > M13 clear() com view/task na URL 3ms
+ ✓ .tmp/a1-hook-memory.test.tsx > A1 — URL / historico > M14 zero requests novos quando o filtro muda 5ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  19:23:01
+   Duration  1.57s (transform 121ms, setup 115ms, import 211ms, tests 126ms, environment 903ms)
+

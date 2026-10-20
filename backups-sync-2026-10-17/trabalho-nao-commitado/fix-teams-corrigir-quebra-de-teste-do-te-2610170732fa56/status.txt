@@ -1,0 +1,9 @@
+ M .tmp/verify.log
+ M .tmp/vermelho.log
+M  src/hooks/team-chat/README.md
+M  src/hooks/team-chat/__tests__/useTeamMessages.test.tsx
+A  src/hooks/team-chat/__tests__/useTeamReadState.test.tsx
+M  src/hooks/team-chat/queryKeys.ts
+M  src/hooks/team-chat/useTeamMessages.ts
+A  src/hooks/team-chat/useTeamReadState.ts
+M  src/integrations/supabase/types.ts

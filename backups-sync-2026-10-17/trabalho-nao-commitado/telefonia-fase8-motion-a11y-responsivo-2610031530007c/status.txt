@@ -1,0 +1,4 @@
+ M src/components/calls/CallHistoryTable.tsx
+ M src/components/calls/CallHistoryTabs.tsx
+ M src/components/calls/TelefoniaView.tsx
+ M src/components/calls/__tests__/VoIPPanel.test.tsx

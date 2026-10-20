@@ -1,0 +1,11 @@
+ M src/components/dashboard/SentimentAlertsDashboard.tsx
+ M src/components/dashboard/WarRoomDashboard.tsx
+ M src/components/dashboard/war-room/WarRoomAgentCard.tsx
+ M src/components/dashboard/war-room/WarRoomAlertRow.tsx
+ M src/components/dashboard/war-room/WarRoomQueueRow.tsx
+ M src/components/queues/SLAAgentTable.tsx
+ M src/components/queues/SLADashboard.tsx
+ M src/components/queues/SLAMetricCards.tsx
+?? src/components/dashboard/__tests__/warRoomSentimento-botoes.a11y.test.tsx
+?? src/components/dashboard/war-room/__tests__/
+?? src/components/queues/__tests__/slaProgresso.a11y.test.tsx

@@ -1,0 +1,12 @@
+ M src/components/catalog/ExternalProductManagement.tsx
+ M src/components/catalog/__tests__/ProductDetailDialog.test.tsx
+ M src/components/email/__tests__/EmailChatThread.previaAnexo.test.tsx
+ M src/components/inbox/media-gallery/__tests__/MediaPreviewDialog.test.tsx
+ M src/components/queues/QueueCard.tsx
+ M src/components/queues/QueueGoalsDialog.tsx
+ M src/components/settings/media-library/__tests__/AIGenerateDialog.test.tsx
+ M src/components/ui/dialog.tsx
+ M src/components/ui/sheet.tsx
+?? src/components/queues/__tests__/QueueCard.a11y.test.tsx
+?? src/components/queues/__tests__/QueueGoalsDialog.a11y.test.tsx
+?? src/components/ui/__tests__/dialogSheetFechar.a11y.test.tsx

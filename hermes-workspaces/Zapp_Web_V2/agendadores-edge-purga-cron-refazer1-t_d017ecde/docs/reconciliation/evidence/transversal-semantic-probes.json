@@ -1,0 +1,55 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "command": "node --experimental-strip-types audit/modules/transversal/local-semantic-probes.mjs",
+  "probe_kind": "direct import of unchanged pinned TypeScript functions; synthetic fixture inputs; injected in-memory fetcher",
+  "network_requests": 0,
+  "connection_state_cases": [
+    {
+      "input": {
+        "data": {
+          "Connected": true,
+          "LoggedIn": true
+        }
+      },
+      "expected": "open",
+      "actual": "open",
+      "matches_plan_contract": true
+    },
+    {
+      "input": {
+        "data": {
+          "Connected": false,
+          "LoggedIn": true
+        }
+      },
+      "expected": "connecting",
+      "actual": "open",
+      "matches_plan_contract": false
+    },
+    {
+      "input": {
+        "data": {
+          "Connected": false,
+          "LoggedIn": false
+        }
+      },
+      "expected": "close",
+      "actual": "close",
+      "matches_plan_contract": true
+    }
+  ],
+  "transport_captures": [
+    {
+      "url": "https://example.invalid/send/text",
+      "method": "POST",
+      "apikey_marker": "fixture-primary-token"
+    },
+    {
+      "url": "https://example.invalid/send/text",
+      "method": "POST",
+      "apikey_marker": "fixture-secondary-token"
+    }
+  ],
+  "secondary_without_explicit_token_uses_primary_fixture": true,
+  "secondary_with_explicit_token_uses_secondary_fixture": true
+}

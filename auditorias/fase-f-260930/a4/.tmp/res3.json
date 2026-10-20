@@ -1,0 +1,85 @@
+[
+ {
+  "id": "M17-aria-controls-auto-ref",
+  "desc": "PROBE: id 'agenda-atrasadas' movido para o PROPRIO botao (aria-controls auto-referente)",
+  "file": "src/components/tasks/agenda/TasksAgendaMode.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "VIVO",
+  "summary": "11 passed (11)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  19:31:30\n   Duration  1.72s (transform 279ms, setup 80ms, import 610ms, tests 300ms, environment 482ms)\n\n"
+ },
+ {
+  "id": "M18-aria-controls-outro-id",
+  "desc": "PROBE: aria-controls aponta para elemento EXISTENTE mas errado (o strip de dias)",
+  "file": "src/components/tasks/agenda/TasksAgendaMode.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "F2 (auditoria): o botão \"Atrasadas\" aponta para a região que controla (`aria-controls`)"
+  ],
+  "raw_tail": "930/a4\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx (11 tests | 1 failed) 283ms\n     × F2 (auditoria): o botão \"Atrasadas\" aponta para a região que controla (`aria-controls`) 30ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado) > F2 (auditoria): o botão \"Atrasadas\" aponta para a região que controla (`aria-controls`)\nAssertionError: expected 'agenda-atrasadas-errado' to be 'agenda-atrasadas' // Object.is equality\n\nExpected: \"agenda-atrasadas\"\nReceived: \"agenda-atrasadas-errado\"\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:118:49\n    116|\n    117|     const botao = screen.getByRole('button', { name: /atrasada/i });\n    118|     expect(botao.getAttribute('aria-controls')).toBe('agenda-atrasadas…\n       |                                                 ^\n    119|     expect(document.getElementById('agenda-atrasadas')).toBeTruthy();\n    120|   });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n   Start at  19:31:32\n   Duration  1.29s (transform 211ms, setup 51ms, import 457ms, tests 283ms, environment 397ms)\n\n"
+ },
+ {
+  "id": "M19-doingCount-ignorado",
+  "desc": "PROBE: TasksBoardMode ignora a prop doingCount (usa so a coluna visivel)",
+  "file": "src/components/tasks/board/TasksBoardMode.tsx",
+  "test": "src/components/tasks/__tests__/taskComponents.test.tsx",
+  "expect": "VIVO",
+  "summary": "20 passed (20)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\nNot implemented: Window's scrollTo() method\nNot implemented: Window's scrollTo() method\nNot implemented: Window's scrollTo() method\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  19:31:34\n   Duration  2.92s (transform 283ms, setup 53ms, import 750ms, tests 1.48s, environment 396ms)\n\n"
+ },
+ {
+  "id": "M20-doingCount-ignorado-mod",
+  "desc": "PROBE: mesmo M19, contra TasksModule.test.tsx",
+  "file": "src/components/tasks/board/TasksBoardMode.tsx",
+  "test": "src/components/tasks/__tests__/TasksModule.test.tsx",
+  "expect": "VIVO",
+  "summary": "18 passed (18)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  18 passed (18)\n   Start at  19:31:38\n   Duration  6.94s (transform 1.25s, setup 148ms, import 2.42s, tests 3.03s, environment 1.06s)\n\n"
+ },
+ {
+  "id": "M21-dedup-doD",
+  "desc": "PROBE: groupAgendaDay deduplica o item que tem prazo E alarme (quebra o DoD)",
+  "file": "src/hooks/tasks/workItemAggregates.ts",
+  "test": "src/hooks/tasks/__tests__/workItemAggregates.test.ts",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "o item com prazo E alarme no mesmo dia entra nos dois grupos (DoD)"
+  ],
+  "raw_tail": "1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts (44 tests | 1 failed) 46ms\n     × o item com prazo E alarme no mesmo dia entra nos dois grupos (DoD) 10ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 55 — Agenda: pontos do dia e os 3 grupos > o item com prazo E alarme no mesmo dia entra nos dois grupos (DoD)\nAssertionError: expected [ 'hora' ] to deeply equal [ 'hora', 'dois' ]\n\n- Expected\n+ Received\n\n  [\n    \"hora\",\n-   \"dois\",\n  ]\n\n ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:156:37\n    154|\n    155|     expect(g.alarmes.map(i => i.id)).toEqual(['alarme', 'dois']);   //…\n    156|     expect(g.prazos.map(i => i.id)).toEqual(['hora', 'dois']);      //…\n       |                                     ^\n    157|     expect(g.semHora.map(i => i.id)).toEqual(['dia']);\n    158|     expect(g.alarmes.map(i => i.id)).toContain('dois');               …\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 43 passed (44)\n   Start at  19:31:46\n   Duration  2.03s (transform 468ms, setup 161ms, import 558ms, tests 46ms, environment 988ms)\n\n"
+ },
+ {
+  "id": "M22-collapse-ignorado",
+  "desc": "PROBE: conteudo das Atrasadas renderiza mesmo colapsado (aria-expanded desmente o DOM)",
+  "file": "src/components/tasks/agenda/TasksAgendaMode.tsx",
+  "test": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+  "expect": "DEAD",
+  "summary": "1 ⎯⎯⎯⎯⎯⎯⎯",
+  "status": "DEAD (teste pegou)",
+  "failed_tests": [
+   "\"Atrasadas\" nasce colapsado quando passa de 3 e abre no clique"
+  ],
+  "raw_tail": ".11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx (11 tests | 1 failed) 879ms\n     × \"Atrasadas\" nasce colapsado quando passa de 3 e abre no clique 84ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 55 > \"Atrasadas\" nasce colapsado quando passa de 3 e abre no clique\nAssertionError: expected <span …(1)></span> to be null\n\n- Expected:\nnull\n\n+ Received:\n<span\n  class=\"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground\"\n>\n  Vencida 1\n</span>\n\n ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:185:45\n    183|     const bloco = screen.getByRole('button', { name: /4 atrasadas/ });\n    184|     expect(bloco.getAttribute('aria-expanded')).toBe('false');\n    185|     expect(screen.queryByText('Vencida 1')).toBeNull();\n       |                                             ^\n    186|\n    187|     fireEvent.click(bloco);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n   Start at  19:31:49\n   Duration  3.85s (transform 660ms, setup 119ms, import 1.35s, tests 879ms, environment 1.26s)\n\n"
+ },
+ {
+  "id": "M23-cabecalho-hoje-filtrado",
+  "desc": "PROBE: 'para hoje' do cabecalho usa o recorte filtrado (so 'abertas' foi coberto)",
+  "file": "src/components/tasks/TasksModule.tsx",
+  "test": "src/components/tasks/__tests__/TasksModule.test.tsx",
+  "expect": "VIVO",
+  "summary": "18 passed (18)",
+  "status": "VIVO (teste NAO pegou)",
+  "failed_tests": [],
+  "raw_tail": "\n RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a4\n\n\n Test Files  1 passed (1)\n      Tests  18 passed (18)\n   Start at  19:31:54\n   Duration  6.78s (transform 1.70s, setup 339ms, import 2.39s, tests 2.90s, environment 955ms)\n\n"
+ }
+]

@@ -1,0 +1,114 @@
+## Descrição
+
+Corrige sete comportamentos errados que a auditoria adversarial da FASE E (etapas 43–57, 5
+frentes independentes + reprodução do coordenador) reproduziu com saída crua — nenhum era mentira
+de entrega, todos eram bugs que a suíte de 4517 testes não pegava. Causa raiz primeiro: `clear()`
+sem `clearTimeout` (o filtro fantasma voltava 200 ms depois), URL lida só na montagem, busca sem
+normalizar acento, concluída sem carimbo sumindo da Lista, vazio da Lista decidido só pela busca,
+"Coluna vazia" convivendo com o rodapé, contagens de tela aplicadas ao dado real (cabeçalho/WIP) e
+rótulo de contato com `??` sobre string vazia.
+
+Relatório da auditoria: `~/auditorias/fase-e-260930/RELATORIO-CONSOLIDADO.md` (HEAD auditado
+`942d7e8a`).
+
+## Tipo de Mudança
+
+- [x] 🐛 Bug fix (correção de bug)
+- [ ] ✨ Nova feature (funcionalidade nova)
+- [ ] 💥 Breaking change (mudança que quebra compatibilidade)
+- [ ] 📚 Documentação
+- [ ] 🎨 Estilo/UI
+- [ ] ♻️ Refatoração
+- [ ] ⚡ Performance
+- [ ] ✅ Testes
+- [ ] 🔧 DevOps/CI
+- [ ] 🔒 Segurança
+
+## Plano
+
+- Plano do Claude: não há plano novo. São os achados da auditoria adversarial da FASE E (etapas 43–57 do `docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md`), executados como **FASE F**.
+- Passos executados:
+  - reconhecimento antes de editar (`temHora` só é usado na Agenda; `applyFilters` roda num único ponto — sem duplo recorte);
+  - sete correções em sete arquivos, cada uma com teste que **falha** no código anterior;
+  - nove mutações cirúrgicas — **9/9 mortas**, árvore restaurada entre cada uma;
+  - gates completos (typecheck, tipografia, lint-ratchet, suíte completa, build, bundle);
+  - registro no ledger (`docs/design/TAREFAS_QUADRO_STATUS.md`, CP-E + bloco da FASE F).
+- Divergências do plano: o plano das 100 etapas não prevê a FASE F (as correções nasceram da auditoria); nenhuma etapa do plano foi alterada.
+
+## Banco de dados
+
+Teste fora de produção: não se aplica (nenhuma mudança de schema ou de dado).
+
+nenhuma mudança
+
+## Rollback
+
+não se aplica
+
+## Testes Realizados
+
+- [x] typecheck: `bun run typecheck` → exit 0
+- [x] lint: `node scripts/ci/lint-ratchet.mjs` → baseline=971, atual=948, novas=0 (23 removidas) · `node scripts/qa/medir-tipografia.cjs --check` → aprovado
+- [x] build: `bun run build` → built in 7.34s
+- [x] testes unitários: `bunx vitest run` → 345 arquivos, **4549 passed**, 40 todo, 0 erro não tratado
+- [x] db:guard / contrato de migrations: não se aplica (sem DDL)
+- [x] prova red-first / mutation do teste novo: 9 casos novos (124 → 133 nos arquivos de Tarefas) e **9/9 mutações mortas**
+
+## Checklist
+
+- [x] Código segue o padrão do projeto (AGENTS.md / CLAUDE.md lidos)
+- [x] Self-review realizado no diff completo (`git diff origin/main...HEAD`)
+- [x] Sem console.log ou debug code
+- [x] Sem secrets/credenciais hardcoded
+- [x] Tipos TypeScript corretos
+- [x] RLS policies consideradas (se DB) — não se aplica
+- [x] Documentação atualizada (ledger da FASE E/F)
+- [x] Hooks de pre-commit/pre-push passaram sem `--no-verify`
+
+## Achados fora do escopo (NÃO corrigidos)
+
+- `src/components/layout/PageHeader.tsx` — `<li>` dentro de `<li>` (warning de validação em toda tela); componente compartilhado por várias páginas, precisa de PR próprio.
+- `TasksAgendaMode` (AUD55-05) — a faixa de 7 dias não se atualiza sozinha na virada da meia-noite com a aba aberta.
+- `TasksAgendaMode` (AUD55-06) — ponto `destructive` no dia 0 quando há atrasadas antigas (ambíguo por desenho).
+- `Crm360Tab.tsx:120/167/245` — dois botões que levam à mesma rota.
+- `TasksModule.tsx` — `Filter` importado sem uso; CP-D do ledger promete 7 chips no QuickAdd e o componente tem 4 (divergência de documentação, não de código).
+
+## Notas para Reviewer
+
+- **Decisão de produto embutida (registrada com o Joaquim em `20260930-155149`):** *filtro é recorte de tela* — vale para o que descreve a tela (KPIs do recorte, colunas), não para o que descreve o dado (contagem do cabeçalho, card "Fazendo" e a trava de WIP). Sem isso a tela anunciava "1/3" com três itens reais e oferecia um drop que o hook recusa com rollback.
+- A reidratação da URL é **ajuste durante o render** (padrão do React para "o dado de fora mudou"), não `useEffect` de sincronização — o `lint-ratchet` conta efeito de sincronização como dívida nova.
+- `searchQuery` continua aceito como prop opcional na Lista (compatibilidade); a semântica do vazio agora é `filtersActive ?? (searchQuery !== '')`.
+- **A Fase F2 vem em PR separado:** 2º `create` seguido na Agenda (prazo perdido depois do 1º envio), ordenação de "Prazos" por `due_date`, grupo "Sem hora" (fim do dia 23:59/00:00 = dia inteiro), rascunho preservado ao trocar de dia, `aria-controls` no "Atrasadas" e blindagem do `PriorityChip` com prioridade nula.
+- Etapas 54 e 58 seguem dependendo de sessão logada (login de QA no cofre do Hermes).
+
+
+<!-- This is an auto-generated description by cubic. -->
+---
+## Summary by cubic
+Corrige sete comportamentos errados que a auditoria adversarial das etapas 43–57 reproduziu com saída crua, todos bugs que a suíte de testes não pegava.
+
+**Bug Fixes**
+
+- `clear()` não cancelava o debounce pendente, então o filtro voltava sozinho 200 ms depois com o campo vazio e `?q=` na URL.
+- A URL era lida só na montagem; deep-links que chegavam depois eram ignorados, agora o `search` do router reidrata o estado por ajuste no render.
+- A busca exigia acento exato — "cafe" não achava "Café" — e lista nula derrubava o recorte.
+- Concluída sem `completed_at` sumia da Lista; agora a Lista usa a mesma regra que o Quadro já aplicava.
+- A Lista só oferecia "Limpar filtros" quando o vazio vinha da busca; agora qualquer filtro ativo oferece.
+- Coluna com só concluídas antigas atrás do rodapé dizia "Coluna vazia" ao mesmo tempo que mostrava "Ver mais antigas".
+- Contato sem nome deixava o gatilho em branco e id fora da lista se passava por "Todos os contatos".
+
+**Refactors**
+
+- Cabeçalho, card "Fazendo" e trava de WIP passam a contar a lista real em vez do recorte filtrado — filtro é recorte de tela, não de trabalho.
+- `applyFilters` normaliza acento/caixa e ganha guarda `items ?? []`.
+- `bucketByDue` inclui concluída sem carimbo na janela de 7 dias, alinhando com a regra do `splitDoneByRecency`.
+
+9 testes novos (cada um falha no código anterior) e 9 mutações cirúrgicas mortas.
+
+<sup>Written for commit 8704f3a2ff4cb1fb4eb90af19a02bb700bb9e861. Summary will update on new commits.</sup>
+
+<a href="https://cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1325?utm_source=github" target="_blank" rel="noopener noreferrer" data-no-image-dialog="true"><picture><source media="(prefers-color-scheme: dark)" srcset="https://www.cubic.dev/buttons/review-in-cubic-dark.svg"><source media="(prefers-color-scheme: light)" srcset="https://www.cubic.dev/buttons/review-in-cubic-light.svg"><img alt="Review in cubic" src="https://www.cubic.dev/buttons/review-in-cubic-dark.svg"></picture></a>
+
+<!-- End of auto-generated description by cubic. -->
+
+

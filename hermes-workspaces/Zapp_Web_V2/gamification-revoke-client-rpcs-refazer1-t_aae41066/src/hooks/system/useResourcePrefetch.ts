@@ -1,0 +1,328 @@
+import { useEffect, useCallback, useRef } from 'react';
+import { log } from '@/lib/logger';
+
+interface PrefetchOptions {
+  /**
+   * Prefetch on mount
+   */
+  onMount?: boolean;
+  /**
+   * Prefetch on hover
+   */
+  onHover?: boolean;
+  /**
+   * Delay before prefetching (ms)
+   */
+  delay?: number;
+  /**
+   * Cache duration (ms) - default 5 minutes
+   */
+  cacheDuration?: number;
+}
+
+// Global cache for prefetched resources
+const prefetchCache = new Map<string, { data: unknown; timestamp: number }>();
+const pendingPrefetches = new Map<string, Promise<unknown>>();
+
+/**
+ * Hook for prefetching resources
+ */
+export function usePrefetch<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  options: PrefetchOptions = {}
+) {
+  const {
+    onMount = false,
+    delay = 0,
+    cacheDuration = 5 * 60 * 1000, // 5 minutes
+  } = options;
+
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const prefetch = useCallback(async (): Promise<T | null> => {
+    // Check cache
+    const cached = prefetchCache.get(key);
+    if (cached && Date.now() - cached.timestamp < cacheDuration) {
+      return cached.data as T;
+    }
+
+    // Check if already prefetching. O "follower" espera a mesma promise que o
+    // "leader" já disparou, mas não pode devolvê-la crua: ela nunca passou
+    // pelo isMountedRef nem pelo try/catch do leader (aquele catch só protege
+    // quem chamou fetcher() primeiro), então sem isso o follower rejeitaria
+    // a Promise<T | null> do contrato e vazaria dado pra um chamador já
+    // desmontado.
+    const pending = pendingPrefetches.get(key);
+    if (pending) {
+      return (pending as Promise<T>).then(
+        (data) => (isMountedRef.current ? data : null),
+        (error) => {
+          log.warn(`Prefetch failed for ${key}:`, error);
+          return null;
+        }
+      );
+    }
+
+    // Start prefetch
+    const promise = fetcher();
+    pendingPrefetches.set(key, promise);
+
+    try {
+      const data = await promise;
+      prefetchCache.set(key, { data, timestamp: Date.now() });
+      // Se o componente que chamou prefetch() já desmontou enquanto o
+      // fetch estava em voo, não devolve os dados pra ele — evita que o
+      // padrão comum `const data = await prefetch(); setState(data)`
+      // rode setState num componente desmontado. O cache global continua
+      // sendo populado normalmente para outros consumidores.
+      if (!isMountedRef.current) {
+        return null;
+      }
+      return data;
+    } catch (error) {
+      log.warn(`Prefetch failed for ${key}:`, error);
+      return null;
+    } finally {
+      pendingPrefetches.delete(key);
+    }
+  }, [key, fetcher, cacheDuration]);
+
+  const schedulePrefetch = useCallback(() => {
+    if (delay > 0) {
+      timeoutRef.current = setTimeout(prefetch, delay);
+    } else {
+      prefetch();
+    }
+  }, [prefetch, delay]);
+
+  const cancelPrefetch = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  }, []);
+
+  // Prefetch on mount if enabled
+  useEffect(() => {
+    if (onMount) {
+      schedulePrefetch();
+    }
+
+    return () => {
+      cancelPrefetch();
+    };
+  }, [onMount, schedulePrefetch, cancelPrefetch]);
+
+  return {
+    prefetch,
+    schedulePrefetch,
+    cancelPrefetch,
+    getCached: () => prefetchCache.get(key)?.data as T | undefined,
+    isCached: () => {
+      const cached = prefetchCache.get(key);
+      return cached ? Date.now() - cached.timestamp < cacheDuration : false;
+    },
+  };
+}
+
+/**
+ * Hook for prefetching routes/components
+ */
+export function useRoutePrefetch() {
+  const prefetchedRoutes = useRef(new Set<string>());
+  const timeoutIds = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const idleCallbackIds = useRef(new Set<number>());
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    const scheduledTimeouts = timeoutIds.current;
+    const scheduledIdleCallbacks = idleCallbackIds.current;
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+      scheduledTimeouts.forEach((id) => clearTimeout(id));
+      scheduledTimeouts.clear();
+
+      if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        scheduledIdleCallbacks.forEach((id) => window.cancelIdleCallback(id));
+      }
+      scheduledIdleCallbacks.clear();
+    };
+  }, []);
+
+  const prefetchRoute = useCallback((routePath: string) => {
+    if (prefetchedRoutes.current.has(routePath)) return;
+
+    // Mark as prefetched
+    prefetchedRoutes.current.add(routePath);
+
+    // Use requestIdleCallback for non-critical prefetching
+    const callback = () => {
+      if (!isMounted.current || typeof document === 'undefined') return;
+
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.as = 'document';
+      link.href = routePath;
+      document.head.appendChild(link);
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      let idleCallbackId = 0;
+      idleCallbackId = window.requestIdleCallback(() => {
+        idleCallbackIds.current.delete(idleCallbackId);
+        callback();
+      });
+      idleCallbackIds.current.add(idleCallbackId);
+    } else {
+      const timeoutId = setTimeout(() => {
+        timeoutIds.current.delete(timeoutId);
+        callback();
+      }, 100);
+      timeoutIds.current.add(timeoutId);
+    }
+  }, []);
+
+  return { prefetchRoute };
+}
+
+/**
+ * Hook for image prefetching
+ */
+export function useImagePrefetch() {
+  const prefetchedImages = useRef(new Set<string>());
+
+  const prefetchImage = useCallback((src: string): Promise<void> => {
+    if (prefetchedImages.current.has(src)) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        prefetchedImages.current.add(src);
+        resolve();
+      };
+      img.onerror = reject;
+      img.src = src;
+    });
+  }, []);
+
+  const prefetchImages = useCallback((srcs: string[]): Promise<void[]> => {
+    return Promise.all(srcs.map((src) => prefetchImage(src)));
+  }, [prefetchImage]);
+
+  return { prefetchImage, prefetchImages };
+}
+
+/**
+ * Hook for intersection-based prefetching
+ */
+export function useIntersectionPrefetch<T>(
+  fetcher: () => Promise<T>,
+  options: {
+    threshold?: number;
+    rootMargin?: string;
+    enabled?: boolean;
+  } = {}
+) {
+  const { threshold = 0.1, rootMargin = '100px', enabled = true } = options;
+  const elementRef = useRef<HTMLElement>(null);
+  const hasPrefetched = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    if (!enabled || hasPrefetched.current || !elementRef.current) return;
+
+    isMountedRef.current = true;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasPrefetched.current && isMountedRef.current) {
+            hasPrefetched.current = true;
+            fetcher().catch((err) => log.warn('Intersection prefetch failed:', err));
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold, rootMargin }
+    );
+
+    observer.observe(elementRef.current);
+
+    return () => {
+      isMountedRef.current = false;
+      observer.disconnect();
+    };
+  }, [fetcher, threshold, rootMargin, enabled]);
+
+  return elementRef;
+}
+
+/**
+ * Prefetch critical app data on idle
+ */
+export function useCriticalDataPrefetch(
+  fetchers: Array<{ key: string; fetch: () => Promise<unknown> }>
+) {
+  useEffect(() => {
+    const isMountedRef = { current: true };
+    let idleCallbackId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const prefetchAll = async () => {
+      for (const { key, fetch } of fetchers) {
+        if (!isMountedRef.current) return;
+        if (!prefetchCache.has(key)) {
+          try {
+            const data = await fetch();
+            if (!isMountedRef.current) return;
+            prefetchCache.set(key, { data, timestamp: Date.now() });
+          } catch (error) {
+            log.warn(`Failed to prefetch ${key}:`, error);
+          }
+        }
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      idleCallbackId = (window as Window).requestIdleCallback(() => prefetchAll());
+    } else {
+      timeoutId = setTimeout(prefetchAll, 1000);
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      if (idleCallbackId !== undefined && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [fetchers]);
+}
+
+/**
+ * Clear all prefetch cache
+ */
+export function clearPrefetchCache() {
+  prefetchCache.clear();
+}
+
+/**
+ * Get cached data by key
+ */
+export function getPrefetchedData<T>(key: string): T | undefined {
+  return prefetchCache.get(key)?.data as T | undefined;
+}

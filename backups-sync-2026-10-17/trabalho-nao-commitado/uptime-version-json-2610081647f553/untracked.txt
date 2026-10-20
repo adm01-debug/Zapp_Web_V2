@@ -1,0 +1,2 @@
+scripts/ci/uptime-check.mjs
+scripts/ci/uptime-check.unit.mjs

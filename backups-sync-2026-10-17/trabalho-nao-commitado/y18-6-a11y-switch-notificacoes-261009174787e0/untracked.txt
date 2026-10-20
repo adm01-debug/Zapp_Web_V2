@@ -1,0 +1,6 @@
+src/components/admin/__tests__/AdminUsersTable.hierarchy.test.tsx
+src/components/notifications/__tests__/NotificationSettingsPanel.a11y.test.tsx
+src/components/notifications/__tests__/NotificationTypeCards.a11y.test.tsx
+src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx
+src/components/settings/__tests__/ThemeCustomizer.hierarchy.test.tsx
+src/components/settings/theme/__tests__/PresetCard.a11y.test.tsx

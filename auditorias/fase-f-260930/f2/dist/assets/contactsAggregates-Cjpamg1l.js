@@ -1,0 +1,1 @@
+var e=[[`contacts-kpi`],[`contacts-type-counts`]];function t(t){for(let n of e)t.invalidateQueries({queryKey:[...n]})}var n={refetchOnMount:`always`};export{t as n,n as t};

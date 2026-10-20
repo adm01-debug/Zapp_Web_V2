@@ -1,0 +1,848 @@
+diff --git a/src/components/talkx/TalkXLiveMonitor.tsx b/src/components/talkx/TalkXLiveMonitor.tsx
+index a5488906f..9f1b2131e 100644
+--- a/src/components/talkx/TalkXLiveMonitor.tsx
++++ b/src/components/talkx/TalkXLiveMonitor.tsx
+@@ -4,6 +4,7 @@ import {
+   SkipForward, Activity, RefreshCw, Zap, Inbox,
+ } from 'lucide-react';
+ import { useQuery, useQueryClient } from '@tanstack/react-query';
++import { endOfDay, parseISO, startOfDay } from 'date-fns';
+ // eslint-disable-next-line no-restricted-imports
+ import { supabase } from '@/integrations/supabase/client';
+ import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
+@@ -21,11 +22,26 @@ import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectio
+ import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
+ import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
+ import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
+-interface Props { campaignId: string; onBack?: () => void }
++interface Props {
++  campaignId: string;
++  onBack?: () => void;
++  /** X145 — filtros do cabeçalho da aba Monitor (tracking/TalkXMonitorHeader.tsx).
++   *  `statusFilter`/`onStatusFilterChange` são o MESMO estado do select do card de
++   *  destinatários: recortam a lista, nunca os KPIs nem o gráfico.
++   *  `day` é o dia local (yyyy-MM-dd) escolhido no filtro de dia. */
++  statusFilter?: string;
++  onStatusFilterChange?: (value: string) => void;
++  segmentId?: string;
++  day?: string;
++  /** Muda de valor a cada clique em "Atualizar": refaz as leituras desta tela. */
++  refreshToken?: number;
++}
+ type MonitorTab = 'overview' | 'recipients' | 'timeline';
+ const REFETCH = 4000;
+ 
+-export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
++export function TalkXLiveMonitor({
++  campaignId, onBack, statusFilter: statusFilterProp, onStatusFilterChange, segmentId, day, refreshToken,
++}: Props) {
+   const qc = useQueryClient();
+   const lifecycle = useTalkXLifecycle();
+   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
+@@ -34,7 +50,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+     events, isLoading: eventsLoading, isError: eventsError, error: eventsErrorObj, refetch: refetchEvents,
+   } = useTalkXEvents(campaignId);
+   const [tab, setTab] = useState<MonitorTab>('overview');
+-  const [statusFilter, setStatusFilter] = useState('all');
++  // X145: quando o cabeçalho da aba Monitor manda o filtro, ele é a fonte; sem ele o
++  // select do card de destinatários continua sendo o dono do estado.
++  const [localStatusFilter, setLocalStatusFilter] = useState('all');
++  const statusFilter = statusFilterProp ?? localStatusFilter;
++  const setStatusFilter = onStatusFilterChange ?? setLocalStatusFilter;
+   const [elapsedSec, setElapsedSec] = useState(0);
+ 
+   const {
+@@ -63,12 +83,20 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+     error: recipientsErrorObj,
+     refetch: refetchRecipients,
+   } = useQuery({
+-    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
++    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter, segmentId ?? 'all', day ?? 'all'],
+     queryFn: async () => {
+       let q = supabase.from('talkx_recipients')
+         .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
+         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
+       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
++      if (segmentId && segmentId !== 'all') q = q.eq('segment_id', segmentId);
++      if (day) {
++        // X145: o recorte do dia não pode esconder quem ainda está na fila (sem `sent_at`):
++        // a campanha em andamento mostra o que saiu no dia + o que ainda espera.
++        const from = startOfDay(parseISO(day)).toISOString();
++        const to = endOfDay(parseISO(day)).toISOString();
++        q = q.or(`sent_at.is.null,and(sent_at.gte.${from},sent_at.lte.${to})`);
++      }
+       const { data, error } = await q;
+       if (error) throw error;
+       return (data ?? []) as unknown as TalkXRecipient[];
+@@ -103,8 +131,19 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
+   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
+ 
+-  // Real rate data from hook (E02) — replaced Math.random with actual DB data
+-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
++  // Real rate data from hook (E02) — replaced Math.random with actual DB data.
++  // X145: o filtro de status do cabeçalho/dos destinatários recorta a LISTA, nunca o
++  // gráfico nem os KPIs — por isso o ritmo é lido sem o status.
++  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId);
++
++  // X145: o botão "Atualizar" do cabeçalho refaz as leituras desta tela.
++  useEffect(() => {
++    if (!refreshToken) return;
++    void refetchCampaign();
++    void refetchRecipients();
++    void refetchRate();
++    void refetchEvents();
++  }, [refreshToken, refetchCampaign, refetchRecipients, refetchRate, refetchEvents]);
+ 
+   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
+   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
+diff --git a/src/components/talkx/TalkXView.tsx b/src/components/talkx/TalkXView.tsx
+index bc89261bf..ca1993d4f 100644
+--- a/src/components/talkx/TalkXView.tsx
++++ b/src/components/talkx/TalkXView.tsx
+@@ -1,8 +1,9 @@
+ import { toast } from 'sonner';
+ import React, { useEffect, useState, useMemo, useCallback } from 'react';
++import { format } from 'date-fns';
+ import {
+   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
+-  LayoutDashboard, HelpCircle,
++  LayoutDashboard, HelpCircle, Activity,
+ } from 'lucide-react';
+ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+@@ -12,7 +13,7 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
+ import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
+ import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
+ import { navigateToView } from '@/hooks/system/useNavigationHistory';
+-import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
++import { ModuleHeader, IconTile, TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
+ import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
+ import { TalkXHelpCenter } from './help/TalkXHelpCenter';
+ import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
+@@ -26,12 +27,33 @@ import { TalkXAnalytics } from './TalkXAnalytics';
+ import { TalkXSettings } from './TalkXSettings';
+ import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
+ import { TalkXCampaignRunning } from './TalkXCampaignRunning';
++import { TalkXMonitorHeader } from './tracking/TalkXMonitorHeader';
+ import { parseTalkXWizardRoute, pushTalkXWizardRoute, replaceTalkXWizardRoute, type TalkXWizardRoute } from './talkxWizardRoute';
+ import { goTab, readTab, readSub } from './talkxTabRoute';
+ import type { WizardStep } from './useCampaignEditor';
+ 
+ export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+ 
++/**
++ * X145 — regra do seletor de campanha da aba "Monitor": a campanha pedida pela URL
++ * (quando está ativa), senão a `sending` mais recente, senão a `paused` mais recente.
++ * Sem nenhuma ativa devolve `null` e a aba mostra o estado vazio do kit.
++ */
++function pickMonitorCampaign(campaigns: TalkXCampaign[], preferredId?: string | null): TalkXCampaign | null {
++  const recency = (campaign: TalkXCampaign) => {
++    const when = campaign.started_at ?? campaign.created_at;
++    const time = when ? new Date(when).getTime() : 0;
++    return Number.isNaN(time) ? 0 : time;
++  };
++  const active = campaigns.filter((c) => c.status === 'sending' || c.status === 'paused');
++  if (preferredId) {
++    const preferred = active.find((c) => c.id === preferredId);
++    if (preferred) return preferred;
++  }
++  const byRecency = [...active].sort((a, b) => recency(b) - recency(a));
++  return byRecency.find((c) => c.status === 'sending') ?? byRecency.find((c) => c.status === 'paused') ?? null;
++}
++
+ export default function TalkXView() {
+   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
+   const { data: teamProfiles = [] } = useTeamProfiles();
+@@ -63,6 +85,15 @@ export default function TalkXView() {
+   // yet. It is safe to keep the current editor alive, but a reload must still
+   // resolve the ID from the canonical query before opening it.
+   const [localDraftRouteId, setLocalDraftRouteId] = useState<string | null>(null);
++  // X145 — estado da aba "Monitor" (a aba vive na URL: ?view=talkx&tab=monitor).
++  // O dia começa em hoje, no mesmo formato do filtro do cabeçalho (yyyy-MM-dd).
++  const [monitorDay, setMonitorDay] = useState(() => format(new Date(), 'yyyy-MM-dd'));
++  const [monitorSegment, setMonitorSegment] = useState('all');
++  const [monitorStatus, setMonitorStatus] = useState('all');
++  const [monitorRefreshToken, setMonitorRefreshToken] = useState(0);
++  const [monitorTabCampaignId, setMonitorTabCampaignId] = useState<string | null>(
++    () => new URLSearchParams(window.location.search).get('campaign'),
++  );
+ 
+   const writeWizardRoute = useCallback((route: TalkXWizardRoute | null, replace = false) => {
+     if (replace) replaceTalkXWizardRoute(route);
+@@ -181,6 +212,23 @@ export default function TalkXView() {
+     return m;
+   }, [teamProfiles]);
+ 
++  // X145 — o que a aba "Monitor" mostra: a campanha do seletor, as candidatas do chip
++  // e as segmentações da campanha (o vínculo por campanha que a tela conhece é
++  // `talkx_campaigns.segment_id`; sem ele o filtro de segmentação não é oferecido).
++  const monitorCampaign = useMemo(
++    () => pickMonitorCampaign(campaigns, monitorTabCampaignId),
++    [campaigns, monitorTabCampaignId],
++  );
++  const monitorActiveCampaigns = useMemo(
++    () => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'),
++    [campaigns],
++  );
++  const monitorSegments = useMemo(() => {
++    const segmentId = monitorCampaign?.segment_id;
++    if (!segmentId) return [];
++    return [{ value: segmentId, label: segments.find((s) => s.id === segmentId)?.name ?? 'Segmento da campanha' }];
++  }, [monitorCampaign?.segment_id, segments]);
++
+   // X026: duplicar agora cria o rascunho no banco (RPC duplicate_talkx_campaign) e
+   // abre o editor sobre a linha devolvida — não é mais um objeto só de cliente.
+   const duplicateCampaign = useCallback(async (c: TalkXCampaign) => {
+@@ -344,6 +392,14 @@ export default function TalkXView() {
+             >
+               <LayoutDashboard className="w-4 h-4 shrink-0" />Visão geral
+             </TabsTrigger>
++            <TabsTrigger value="monitor"
++              className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
++                data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
++                data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
++                hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
++            >
++              <Activity className="w-4 h-4 shrink-0" />Monitor
++            </TabsTrigger>
+             <TabsTrigger value="suppression"
+               className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
+                 data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
+@@ -396,6 +452,51 @@ export default function TalkXView() {
+             onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); }}
+           />
+         </TabsContent>
++        <TabsContent value="monitor" className="mt-4">
++          {/* X145: carregando -> erro -> vazio -> conteúdo. Sem isso, uma leitura de
++              campanhas que falhou aparecia como "nenhuma campanha em andamento". */}
++          <TalkXQueryBoundary
++            query={{ isLoading, isError, error: campaignsError }}
++            entity="campanhas"
++            onRetry={() => { void refetchCampaigns(); }}
++            skeleton={<TalkXSkeletonRows rows={4} />}
++            isEmpty={!monitorCampaign}
++            empty={(
++              <TalkXEmptyState
++                title="Nenhuma campanha em andamento"
++                description="Assim que uma campanha começar a enviar, o acompanhamento em tempo real aparece aqui."
++                actionLabel="Nova campanha"
++                onAction={() => openNew()}
++              />
++            )}
++          >
++            {monitorCampaign && (
++              <div className="space-y-4 min-w-0">
++                <TalkXMonitorHeader
++                  campaign={monitorCampaign}
++                  activeCampaigns={monitorActiveCampaigns}
++                  onSelectCampaign={setMonitorTabCampaignId}
++                  segments={monitorSegments}
++                  segment={monitorSegment}
++                  onSegmentChange={setMonitorSegment}
++                  status={monitorStatus}
++                  onStatusChange={setMonitorStatus}
++                  day={monitorDay}
++                  onDayChange={setMonitorDay}
++                  onRefresh={() => setMonitorRefreshToken((token) => token + 1)}
++                />
++                <TalkXLiveMonitor
++                  campaignId={monitorCampaign.id}
++                  statusFilter={monitorStatus}
++                  onStatusFilterChange={setMonitorStatus}
++                  segmentId={monitorSegment}
++                  day={monitorDay}
++                  refreshToken={monitorRefreshToken}
++                />
++              </div>
++            )}
++          </TalkXQueryBoundary>
++        </TabsContent>
+         <TabsContent value="segments" className="mt-4">
+           <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />
+         </TabsContent>
+diff --git a/src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx b/src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx
+new file mode 100644
+index 000000000..2ca85f7df
+--- /dev/null
++++ b/src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx
+@@ -0,0 +1,136 @@
++import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
++import { fireEvent, render, screen } from '@testing-library/react';
++import { format, subDays } from 'date-fns';
++import { TalkXMonitorHeader, type MonitorCampaign } from '../tracking/TalkXMonitorHeader';
++
++// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
++// `hasPointerCapture` no pointerdown que o abre.
++beforeAll(() => {
++  Element.prototype.hasPointerCapture = () => false;
++  Element.prototype.setPointerCapture = () => {};
++  Element.prototype.releasePointerCapture = () => {};
++});
++
++/**
++ * TL-154 (X145) — cabeçalho da aba "Monitor" do módulo.
++ *
++ * O componente é renderizado de verdade: o que se prova aqui é o que a pessoa vê e
++ * o que cada controle devolve para a tela (o dia, a segmentação, o status, a troca
++ * de campanha e o botão atualizar). Quem lê os dados é a tela — ver
++ * `TalkXView.monitor.test.tsx` para o recorte chegando na leitura.
++ */
++
++const isoDay = (date: Date) => format(date, 'yyyy-MM-dd');
++const startedAt = subDays(new Date(), 2).toISOString();
++
++const sending: MonitorCampaign = { id: 'c-sending', name: 'Campanha de hoje', status: 'sending', started_at: startedAt };
++const paused: MonitorCampaign = { id: 'c-paused', name: 'Campanha pausada', status: 'paused', started_at: subDays(new Date(), 5).toISOString() };
++const completed: MonitorCampaign = { id: 'c-done', name: 'Campanha concluída', status: 'completed', started_at: subDays(new Date(), 9).toISOString() };
++
++/** Abre um select do cabeçalho pelo rótulo acessível (mesmo padrão da paginação). */
++function abrirSelect(nome: string) {
++  fireEvent.pointerDown(screen.getByRole('combobox', { name: nome }), {
++    button: 0, ctrlKey: false, pointerType: 'mouse',
++  });
++}
++
++function renderHeader(overrides: Partial<Parameters<typeof TalkXMonitorHeader>[0]> = {}) {
++  const props = {
++    campaign: sending,
++    activeCampaigns: [sending, paused, completed],
++    onSelectCampaign: vi.fn(),
++    segments: [{ value: 'seg-vip', label: 'Clientes VIP' }],
++    segment: 'all',
++    onSegmentChange: vi.fn(),
++    status: 'all',
++    onStatusChange: vi.fn(),
++    day: isoDay(new Date()),
++    onDayChange: vi.fn(),
++    onRefresh: vi.fn(),
++    ...overrides,
++  };
++  render(<TalkXMonitorHeader {...props} />);
++  return props;
++}
++
++afterEach(() => vi.clearAllMocks());
++
++describe('TalkXMonitorHeader (X145)', () => {
++  it('(1) mostra a trilha, o título do mock e o subtítulo sem citar o canal', () => {
++    renderHeader();
++
++    expect(screen.getByText('Teletransporte')).toBeTruthy();
++    expect(screen.getByText('Chat')).toBeTruthy();
++    expect(screen.getByText('Campanhas')).toBeTruthy();
++    expect(screen.getByText('Talk X')).toBeTruthy();
++    expect(screen.getByRole('heading', { name: 'Monitor ao Vivo' })).toBeTruthy();
++    expect(screen.getByText('Acompanhe o desempenho da sua campanha em tempo real.')).toBeTruthy();
++  });
++
++  it('(2) o filtro de dia abre em "Hoje" e escolher outro dia devolve a data escolhida', () => {
++    const props = renderHeader();
++
++    const gatilho = screen.getByRole('combobox', { name: 'Dia' });
++    expect(gatilho.textContent ?? '').toMatch(/^Hoje · /);
++
++    abrirSelect('Dia');
++    // itens: "Hoje" + ontem + anteontem (a campanha começou há 2 dias)
++    const opcoes = screen.getAllByRole('option');
++    expect(opcoes).toHaveLength(3);
++    fireEvent.click(opcoes[1]);
++
++    expect(props.onDayChange).toHaveBeenCalledWith(isoDay(subDays(new Date(), 1)));
++  });
++
++  it('(3) o filtro de segmentação lista as segmentações da campanha e devolve o id', () => {
++    const props = renderHeader();
++
++    expect(screen.getByText('Todas as segmentações')).toBeTruthy();
++    abrirSelect('Segmentação');
++    fireEvent.click(screen.getByRole('option', { name: 'Clientes VIP' }));
++
++    expect(props.onSegmentChange).toHaveBeenCalledWith('seg-vip');
++  });
++
++  it('(4) sem segmentação na campanha o filtro não aparece (não há controle sem consumidor)', () => {
++    renderHeader({ segments: [] });
++
++    expect(screen.queryByRole('combobox', { name: 'Segmentação' })).toBeNull();
++    expect(screen.queryByText('Todas as segmentações')).toBeNull();
++  });
++
++  it('(5) o filtro de status oferece os mesmos status do card de destinatários', () => {
++    const props = renderHeader();
++
++    abrirSelect('Status');
++    fireEvent.click(screen.getByRole('option', { name: 'Entregue' }));
++
++    expect(props.onStatusChange).toHaveBeenCalledWith('delivered');
++  });
++
++  it('(6) o botão atualizar aciona a releitura da tela', () => {
++    const props = renderHeader();
++
++    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
++
++    expect(props.onRefresh).toHaveBeenCalledTimes(1);
++  });
++
++  it('(7) o chip seletor mostra "Em andamento · nome · Iniciada às HH:mm" e troca de campanha', () => {
++    const props = renderHeader();
++
++    const hora = format(new Date(startedAt), 'HH:mm');
++    expect(screen.getByRole('combobox', { name: 'Campanha em acompanhamento' }).textContent)
++      .toBe(`Em andamento · Campanha de hoje · Iniciada às ${hora}`);
++
++    abrirSelect('Campanha em acompanhamento');
++    const pausada = `Pausada · Campanha pausada · Iniciada às ${format(new Date(paused.started_at as string), 'HH:mm')}`;
++    expect(screen.getByRole('option', { name: pausada })).toBeTruthy();
++    // a concluída não é oferecida: o seletor lista só sending/paused
++    expect(screen.queryByRole('option', { name: /Campanha concluída/ })).toBeNull();
++
++    fireEvent.click(screen.getByRole('option', { name: pausada }));
++
++    expect(props.onSelectCampaign).toHaveBeenCalledWith('c-paused');
++  });
++});
+diff --git a/src/components/talkx/__tests__/TalkXView.monitor.test.tsx b/src/components/talkx/__tests__/TalkXView.monitor.test.tsx
+new file mode 100644
+index 000000000..fc525c4da
+--- /dev/null
++++ b/src/components/talkx/__tests__/TalkXView.monitor.test.tsx
+@@ -0,0 +1,258 @@
++import { beforeAll, afterEach, describe, expect, it, vi } from 'vitest';
++import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { format, startOfDay, subDays } from 'date-fns';
++
++/**
++ * TL-154 (X145) — a aba "Monitor" do módulo Talk X.
++ *
++ * Renderiza a tela de verdade e o Monitor de verdade (só o cliente do banco é falso,
++ * e ele GRAVA o que foi pedido): o que se prova aqui é que a aba existe ao lado das
++ * demais, que a campanha aberta sai da regra (sending mais recente → paused → estado
++ * vazio do kit) e que cada filtro do cabeçalho chega na leitura certa.
++ */
++
++const h = vi.hoisted(() => ({
++  campaigns: [] as Array<Record<string, unknown>>,
++  segmentos: [] as Array<{ id: string; name: string }>,
++  queries: [] as Array<{ table: string; id: string | null; filters: Array<[string, unknown]>; or: string | null }>,
++  rateArgs: [] as unknown[][],
++  isLoading: false,
++  isError: false,
++  error: null as Error | null,
++  refetchCalls: 0,
++}));
++
++vi.mock('@/integrations/supabase/client', () => {
++  type Rec = { table: string; id: string | null; filters: Array<[string, unknown]>; or: string | null };
++  const makeChain = (table: string) => {
++    const rec: Rec = { table, id: null, filters: [], or: null };
++    h.queries.push(rec);
++    const resolve = () => Promise.resolve({
++      data: table === 'talkx_campaigns' ? h.campaigns.find((c) => c.id === rec.id) ?? null : [],
++      error: null,
++    });
++    const builder: Record<string, unknown> = {};
++    builder.select = () => builder;
++    builder.eq = (col: string, value: unknown) => {
++      rec.filters.push([col, value]);
++      if (col === 'id') rec.id = String(value);
++      return builder;
++    };
++    builder.or = (expr: string) => { rec.or = expr; return builder; };
++    builder.order = () => builder;
++    builder.limit = () => builder;
++    builder.single = () => resolve();
++    // O construtor é "thenable": o código encadeia `.eq` depois do `.limit` e só então aguarda.
++    builder.then = (ok: (v: unknown) => unknown, fail?: (e: unknown) => unknown) => resolve().then(ok, fail);
++    return builder;
++  };
++  return {
++    supabase: {
++      from: (table: string) => makeChain(table),
++      channel: () => ({ on: () => ({ on: () => ({ subscribe: () => ({}) }) }) }),
++      removeChannel: () => {},
++    },
++  };
++});
++
++vi.mock('@/hooks/integrations/useTalkX', () => ({
++  useTalkX: () => ({
++    campaigns: h.campaigns,
++    isLoading: h.isLoading,
++    isError: h.isError,
++    error: h.error,
++    isLive: false,
++    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
++    deleteCampaign: { mutate: vi.fn() },
++    duplicateCampaign: { mutateAsync: vi.fn() },
++    refetchCampaigns: () => { h.refetchCalls += 1; },
++  }),
++}));
++vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: h.segmentos }) }));
++vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
++vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
++vi.mock('@/hooks/integrations/useTalkXEvents', () => ({
++  useTalkXEvents: () => ({ events: [], isLoading: false, isError: false, error: null, refetch: vi.fn(), logEvent: vi.fn() }),
++}));
++vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
++  useTalkXConnectionStatus: () => ({ status: null, label: null, loading: false }),
++}));
++vi.mock('@/hooks/integrations/useTalkXMonitor', () => ({
++  useTalkXMonitor: (...args: unknown[]) => {
++    h.rateArgs.push(args);
++    return { rateByMinute: [], isLoading: false, isError: false, refetch: vi.fn() };
++  },
++}));
++vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
++  TalkXCampaignWizard: ({ campaign }: { campaign: { id?: string } | null }) => (
++    <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} />
++  ),
++}));
++vi.mock('@/components/talkx/TalkXOverview', () => ({ TalkXOverview: () => <div data-testid="overview" /> }));
++vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));
++vi.mock('@/components/talkx/TalkXTemplates', () => ({ TalkXTemplates: () => <div /> }));
++vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div data-testid="suppression" /> }));
++vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div /> }));
++vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div /> }));
++vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div /> }));
++vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
++
++import TalkXView from '@/components/talkx/TalkXView';
++
++// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
++// `hasPointerCapture` no pointerdown que o abre.
++beforeAll(() => {
++  Element.prototype.hasPointerCapture = () => false;
++  Element.prototype.setPointerCapture = () => {};
++  Element.prototype.releasePointerCapture = () => {};
++});
++
++const baseCampaign = {
++  name: 'Campanha de base', message_template: 'Olá', status: 'sending',
++  total_recipients: 10, sent_count: 3, delivered_count: 2, failed_count: 1,
++  outcome_unknown_count: 0, started_at: subDays(new Date(), 1).toISOString(), completed_at: null,
++  whatsapp_connection_id: null, created_at: subDays(new Date(), 2).toISOString(),
++};
++
++const sending = { ...baseCampaign, id: 'c-sending', name: 'Campanha em andamento', status: 'sending', segment_id: 'seg-vip', started_at: subDays(new Date(), 2).toISOString() };
++const paused = { ...baseCampaign, id: 'c-paused', name: 'Campanha pausada', status: 'paused', started_at: subDays(new Date(), 5).toISOString() };
++const completed = { ...baseCampaign, id: 'c-done', name: 'Campanha concluída', status: 'completed' };
++
++function renderView() {
++  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++  return render(<QueryClientProvider client={qc}><TalkXView /></QueryClientProvider>);
++}
++
++const campanhaLida = () => h.queries.filter((q) => q.table === 'talkx_campaigns').map((q) => q.id);
++const recorteDeDestinatarios = () => h.queries.filter((q) => q.table === 'talkx_recipients');
++const janelaDeHoje = () => {
++  const recortes = recorteDeDestinatarios();
++  return recortes.length > 0 ? recortes[recortes.length - 1].or ?? '' : '';
++};
++const temFiltro = (coluna: string, valor: unknown) => recorteDeDestinatarios()
++  .some((q) => q.filters.some(([c, v]) => c === coluna && v === valor));
++
++function abrirSelect(nome: string) {
++  fireEvent.pointerDown(screen.getByRole('combobox', { name: nome }), {
++    button: 0, ctrlKey: false, pointerType: 'mouse',
++  });
++}
++
++beforeAll(() => { h.segmentos = [{ id: 'seg-vip', name: 'Clientes VIP' }]; });
++
++afterEach(() => {
++  vi.clearAllMocks();
++  h.queries = [];
++  h.rateArgs = [];
++  h.isLoading = false;
++  h.isError = false;
++  h.error = null;
++  h.refetchCalls = 0;
++});
++
++describe('TalkXView — aba Monitor (X145)', () => {
++  it('(1) ?tab=monitor abre a aba com as demais abas do módulo visíveis e a sending mais recente', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [completed, paused, sending];
++    renderView();
++
++    expect(screen.getByRole('tab', { name: 'Visão geral' })).toBeTruthy();
++    expect(screen.getByRole('tab', { name: 'Monitor' }).getAttribute('data-state')).toBe('active');
++    expect(screen.getByRole('tab', { name: 'Lista de supressão' })).toBeTruthy();
++    expect(screen.getByRole('button', { name: /Analytics/ })).toBeTruthy();
++    expect(screen.getByRole('button', { name: /Templates/ })).toBeTruthy();
++
++    expect(await screen.findByRole('heading', { name: 'Monitor ao Vivo' })).toBeTruthy();
++    expect(screen.getByRole('combobox', { name: 'Campanha em acompanhamento' }).textContent)
++      .toContain('Em andamento · Campanha em andamento · Iniciada às');
++
++    await waitFor(() => expect(campanhaLida()).toContain('c-sending'));
++  });
++
++  it('(2) sem campanha em envio, a aba escolhe a pausada mais recente', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [completed, paused];
++    renderView();
++
++    expect(await screen.findByRole('heading', { name: 'Monitor ao Vivo' })).toBeTruthy();
++    await waitFor(() => expect(campanhaLida()).toContain('c-paused'));
++  });
++
++  it('(3) sem nenhuma campanha ativa, mostra o estado vazio do kit com "Nova campanha"', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [completed];
++    renderView();
++
++    const painel = await screen.findByRole('tabpanel');
++    expect(within(painel).getByText('Nenhuma campanha em andamento')).toBeTruthy();
++    expect(screen.queryByText('Monitor ao Vivo')).toBeNull();
++
++    fireEvent.click(within(painel).getByRole('button', { name: 'Nova campanha' }));
++    await waitFor(() => expect(screen.getByTestId('wizard').getAttribute('data-campaign-id')).toBe('new'));
++  });
++
++  it('(4) o filtro de status do cabeçalho recorta a lista de destinatários e não o ritmo', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [sending];
++    renderView();
++
++    await screen.findByRole('heading', { name: 'Monitor ao Vivo' });
++    await waitFor(() => expect(recorteDeDestinatarios().length).toBeGreaterThan(0));
++    expect(temFiltro('status', 'delivered')).toBe(false);
++
++    abrirSelect('Status');
++    fireEvent.click(screen.getByRole('option', { name: 'Entregue' }));
++
++    await waitFor(() => expect(temFiltro('status', 'delivered')).toBe(true));
++    // o gráfico/KPIs não são recortados pelo status: a leitura do ritmo nunca leva o filtro
++    expect(h.rateArgs.length).toBeGreaterThan(0);
++    expect(h.rateArgs.every((args) => args.length === 1)).toBe(true);
++  });
++
++  it('(5) o filtro de segmentação recorta a leitura pelo segmento da campanha', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [sending];
++    renderView();
++
++    await screen.findByRole('heading', { name: 'Monitor ao Vivo' });
++    abrirSelect('Segmentação');
++    fireEvent.click(screen.getByRole('option', { name: 'Clientes VIP' }));
++
++    await waitFor(() => expect(temFiltro('segment_id', 'seg-vip')).toBe(true));
++  });
++
++  it('(6) o filtro de dia recorta a janela do dia escolhido (sem esconder quem está na fila)', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [sending];
++    renderView();
++
++    await screen.findByRole('heading', { name: 'Monitor ao Vivo' });
++    await waitFor(() => expect(janelaDeHoje()).toContain('sent_at.is.null'));
++    const janelaInicial = janelaDeHoje();
++
++    abrirSelect('Dia');
++    const outroDia = screen.getAllByRole('option').filter((item) => !(item.textContent ?? '').startsWith('Hoje'));
++    fireEvent.click(outroDia[0]);
++
++    const janelaDeOntem = startOfDay(subDays(new Date(), 1)).toISOString();
++    await waitFor(() => expect(janelaDeHoje()).not.toBe(janelaInicial));
++    expect(janelaDeHoje()).toContain(janelaDeOntem);
++    expect(janelaDeHoje()).toContain(`${format(subDays(new Date(), 1), 'yyyy-MM-dd')}`);
++  });
++
++  it('(7) leitura de campanhas com erro mostra o erro do kit, nunca o vazio, e "Tentar novamente" refaz a leitura', async () => {
++    window.history.replaceState(null, '', '/?view=talkx&tab=monitor');
++    h.campaigns = [];
++    h.isError = true;
++    h.error = new Error('falha de rede');
++    renderView();
++
++    const painel = await screen.findByRole('tabpanel');
++    expect(within(painel).getByText('Não foi possível carregar as campanhas')).toBeTruthy();
++    expect(screen.queryByText('Nenhuma campanha em andamento')).toBeNull();
++
++    fireEvent.click(within(painel).getByRole('button', { name: 'Tentar novamente' }));
++    await waitFor(() => expect(h.refetchCalls).toBe(1));
++  });
++});
+diff --git a/src/components/talkx/tracking/TalkXMonitorHeader.tsx b/src/components/talkx/tracking/TalkXMonitorHeader.tsx
+new file mode 100644
+index 000000000..f7daef213
+--- /dev/null
++++ b/src/components/talkx/tracking/TalkXMonitorHeader.tsx
+@@ -0,0 +1,173 @@
++import { useMemo } from 'react';
++import { format, parseISO } from 'date-fns';
++import { ptBR } from 'date-fns/locale';
++import { Activity, CalendarDays } from 'lucide-react';
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
++import { IconTile, RECIPIENT_STATUS, TalkXFilterBar } from '../talkxShared';
++import { fmtTime } from '../talkxShared';
++import type { FilterDefinition } from '../talkxShared';
++
++/**
++ * X145 (TL-154) — cabeçalho da aba "Monitor" do módulo Talk X.
++ *
++ * É só apresentação: recebe a campanha em acompanhamento, as opções dos filtros e
++ * o estado de cada filtro, e devolve cada mudança por callback. Quem lê os dados
++ * é a tela (`TalkXView`) e o painel (`TalkXLiveMonitor`), então o cabeçalho não
++ * busca nada sozinho.
++ *
++ * Duas decisões do desenho, registradas aqui:
++ *  - o filtro de dia vai de `started_at` até hoje e o rótulo é o do mock
++ *    ("Hoje · Qui, 08 de out de 2026");
++ *  - o título e o subtítulo não citam o canal: a regra permanente de 08/10/2026
++ *    proíbe indicar canal/origem em tela nova.
++ */
++
++export interface MonitorCampaign {
++  id: string;
++  name: string;
++  status: string;
++  started_at: string | null;
++  created_at?: string | null;
++}
++
++export interface MonitorSegmentOption {
++  value: string;
++  label: string;
++}
++
++const MAX_DAY_OPTIONS = 31;
++
++/** Dia local (não UTC) em ISO curto — o filtro de dia é o dia de quem olha a tela. */
++function localDayISO(date: Date = new Date()): string {
++  return format(date, 'yyyy-MM-dd');
++}
++
++/** Rótulo do dia no formato do mock: hoje ganha o prefixo explícito. */
++function dayLabel(iso: string, today: string): string {
++  const raw = format(parseISO(iso), "EEE, dd 'de' MMM 'de' yyyy", { locale: ptBR }).replace(/\./g, '');
++  const titled = raw.charAt(0).toUpperCase() + raw.slice(1);
++  return iso === today ? `Hoje · ${titled}` : titled;
++}
++
++/** Dias oferecidos: de ontem até o dia em que a campanha começou (hoje é o item padrão). */
++function dayOptions(startedAt: string | null, today: string): MonitorSegmentOption[] {
++  const start = startedAt ? new Date(startedAt) : null;
++  const startIso = start && !Number.isNaN(start.getTime()) ? localDayISO(start) : today;
++  const options: MonitorSegmentOption[] = [];
++  let cursor = parseISO(today);
++  for (let i = 0; i < MAX_DAY_OPTIONS; i += 1) {
++    const cursorIso = localDayISO(cursor);
++    if (cursorIso < startIso) break;
++    if (cursorIso !== today) options.push({ value: cursorIso, label: dayLabel(cursorIso, today) });
++    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
++  }
++  return options;
++}
++
++/** Texto do chip seletor: "Em andamento · <nome> · Iniciada às HH:mm". */
++function campaignChipLabel(campaign: MonitorCampaign): string {
++  const state = campaign.status === 'paused' ? 'Pausada' : 'Em andamento';
++  const started = fmtTime(campaign.started_at);
++  return started && started !== '—'
++    ? `${state} · ${campaign.name} · Iniciada às ${started}`
++    : `${state} · ${campaign.name}`;
++}
++
++export interface TalkXMonitorHeaderProps {
++  /** Campanha aberta no monitor. */
++  campaign: MonitorCampaign;
++  /** Campanhas oferecidas pelo seletor (só `sending`/`paused`). */
++  activeCampaigns: MonitorCampaign[];
++  onSelectCampaign: (id: string) => void;
++  /** Segmentações da campanha. Vazio esconde o filtro (não há o que recortar). */
++  segments: MonitorSegmentOption[];
++  segment: string;
++  onSegmentChange: (value: string) => void;
++  status: string;
++  onStatusChange: (value: string) => void;
++  day: string;
++  onDayChange: (day: string) => void;
++  onRefresh: () => void;
++  refreshing?: boolean;
++}
++
++export function TalkXMonitorHeader({
++  campaign, activeCampaigns, onSelectCampaign,
++  segments, segment, onSegmentChange,
++  status, onStatusChange,
++  day, onDayChange,
++  onRefresh, refreshing = false,
++}: TalkXMonitorHeaderProps) {
++  const today = localDayISO();
++  const isToday = day === today;
++  const days = useMemo(() => dayOptions(campaign.started_at, today), [campaign.started_at, today]);
++  const filters: FilterDefinition[] = useMemo(() => {
++    const list: FilterDefinition[] = [
++      { key: 'day', label: 'Dia', allLabel: dayLabel(today, today), options: days, icon: CalendarDays },
++    ];
++    if (segments.length > 0) {
++      list.push({ key: 'segment', label: 'Segmentação', allLabel: 'Todas as segmentações', options: segments });
++    }
++    list.push({
++      key: 'status', label: 'Status', allLabel: 'Todos os status',
++      options: Object.entries(RECIPIENT_STATUS).map(([value, meta]) => ({ value, label: meta.label })),
++    });
++    return list;
++  }, [days, segments, today]);
++
++  // O seletor lista a campanha aberta junto das demais ativas: ela sempre tem item.
++  const selectableCampaigns = useMemo(() => {
++    const active = activeCampaigns.filter((c) => c.status === 'sending' || c.status === 'paused');
++    return active.some((c) => c.id === campaign.id) ? active : [campaign, ...active];
++  }, [activeCampaigns, campaign]);
++
++  const handleFilter = (key: string, value: string) => {
++    if (key === 'day') { onDayChange(value === 'all' ? today : value); return; }
++    if (key === 'segment') { onSegmentChange(value); return; }
++    if (key === 'status') { onStatusChange(value); return; }
++  };
++
++  return (
++    <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5 space-y-3" aria-label="Cabeçalho do monitor">
++      <nav aria-label="breadcrumb" className="flex flex-wrap items-center gap-1.5 text-2xs text-muted-foreground">
++        <span>Teletransporte</span>
++        <span className="text-border" aria-hidden="true">›</span>
++        <span>Chat</span>
++        <span className="text-border" aria-hidden="true">›</span>
++        <span>Campanhas</span>
++        <span className="text-border" aria-hidden="true">›</span>
++        <span className="text-foreground font-medium">Talk X</span>
++      </nav>
++
++      <div className="flex items-center gap-3.5 min-w-0">
++        <IconTile icon={Activity} color="blue" size={48} glow />
++        <div className="min-w-0">
++          <h2 className="text-xl font-bold font-display text-foreground tracking-[-0.02em] truncate">Monitor ao Vivo</h2>
++          <p className="text-xs text-foreground-secondary">Acompanhe o desempenho da sua campanha em tempo real.</p>
++        </div>
++      </div>
++
++      <TalkXFilterBar
++        filters={filters}
++        values={{ day: isToday ? 'all' : day, segment, status }}
++        onFilter={handleFilter}
++        onClear={() => { onDayChange(today); onSegmentChange('all'); onStatusChange('all'); }}
++        hasActive={!isToday || segment !== 'all' || status !== 'all'}
++        onRefresh={onRefresh}
++        refreshing={refreshing}
++        rightSlot={(
++          <Select value={campaign.id} onValueChange={onSelectCampaign}>
++            <SelectTrigger aria-label="Campanha em acompanhamento" className="h-9 text-xs bg-input/40 border-border/70 rounded-lg w-full sm:w-auto sm:min-w-[240px]">
++              <SelectValue />
++            </SelectTrigger>
++            <SelectContent>
++              {selectableCampaigns.map((item) => (
++                <SelectItem key={item.id} value={item.id}>{campaignChipLabel(item)}</SelectItem>
++              ))}
++            </SelectContent>
++          </Select>
++        )}
++      />
++    </section>
++  );
++}

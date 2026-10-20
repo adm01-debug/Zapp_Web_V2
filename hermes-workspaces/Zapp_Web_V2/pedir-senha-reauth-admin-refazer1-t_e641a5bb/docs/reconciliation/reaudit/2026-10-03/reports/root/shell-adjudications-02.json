@@ -1,0 +1,60 @@
+[
+  {
+    "roster_index": 4,
+    "adjudication": [
+      "Leitura integral 1–179. O bootstrap tem até três tentativas apenas para subir o PostgreSQL descartável, exige duas respostas e não repete falhas SQL/assertivas. ON_ERROR_STOP=1 e pipefail protegem setup e aplicação das cinco migrations reais (99–108). Fixtures usam user_roles e profile/user distintos, além de campos de worker lease.",
+      "Os testes confrontam mensagens específicas para escrita de contador/audiência, transição direta, insert fabricado, falta de audiência/instante, fuso inválido e janela invertida; controles positivos conferem draft e fuso padrão, snapshot com um destinatário após replay, cascade de delete e operação de service_role. A fixture simplifica auth por GUC e visibilidade do contato; testa o recorte de estados e migrations listadas, sem provar fluxo UI, worker real, concorrência ou cadeia completa. Sem execução neste passe."
+    ]
+  },
+  {
+    "roster_index": 5,
+    "adjudication": [
+      "Leitura integral 1–200: setup estrito, container descartável com cleanup restrito, readiness por logs e SELECT. Aplica duas vezes a migration fail-closed e instala manualmente os dois triggers (113–121). Os controles com SET LOCAL ROLE authenticated sem claim exigem talkx_guard_auth_role_undefined para campanha e destinatário; postgres/service_role têm estado persistido conferido; claims presentes recebem erros específicos de mutabilidade (134–198).",
+      "É um ensaio direcionado dos dois guards. O helper de papel em 70–74 é reconstruído sobre profiles.role e o schema/associação dos triggers é mínimo. A réplica de auth.role preserva NULL no cenário pertinente, mas não verifica validação de JWT nem composição das migrations posteriores. Os casos negativos procuram mensagens em saída capturada; os positivos de sistema conferem gravação. Nenhum comando do harness foi executado."
+    ]
+  },
+  {
+    "roster_index": 6,
+    "adjudication": [
+      "Leitura integral 1–404, inclusive SQL e nove grupos de assertivas. Setup e aplicação da migration real usam ON_ERROR_STOP=1; operações negativas e sessões capturadas usam wrapper permissivo. O arquivo da migration é selecionado por marcador com fallback local, o que delimita reprodutibilidade fora do pin. Fixtures incluem cinco campanhas, dois contatos, recibos e respostas com tempos distintos.",
+      "Controles positivos confrontam delivered_at/read_at e contadores após leitura sem recibo anterior e replay; wrapper de duas/três entradas; atribuição pelo telefone apesar de contact_id distinto; janela 48/72 horas; média/mediana 161; catálogo da publicação; ACL de anon e reaplicação sem duplicação. Não é um conjunto de simples constantes: observa dados alterados pela migration/RPC.",
+      "Limites: assert_has com a letra t (277, 308, 317) não valida sozinho o retorno booleano, mas as verificações de estado/contadores seguintes dão suporte independente. A função is_admin_or_supervisor retorna true (121–122), mensagens só têm id e auth é GUC; portanto não há prova geral de autorização/visibilidade. pg_publication_tables valida configuração, não entrega Realtime. O teste aplica só o delta X027 e não exercita provedores ou o encadeamento completo de triggers. Não foi executado na reauditoria."
+    ]
+  },
+  {
+    "roster_index": 7,
+    "adjudication": [
+      "Leitura integral 1–126. O RED aplica dois arquivos reais com --single-transaction e exige mensagem de erro mais ausência de tabela no primeiro caso. GREEN aplica/reaplica a correção, confere tabela, RLS, seis seeds e duas policies. Casos de leitura com SET LOCAL ROLE e UPDATE de agente com RETURNING/count observam resultados reais no banco descartável se executados.",
+      "Limite concreto da prova de admin (120–121), suporte à família GOV003/TC-011: UPDATE updated_at=updated_at seguido de SELECT 1 só demonstra que o comando não gerou erro; RLS pode atualizar zero linhas e ainda retornar o mesmo 1. O teste de agente em 123–124, por outro lado, mede efetivamente as linhas retornadas. O helper de papel usa profiles.role reconstruído. Esse recorte não prova que a cadeia completa de replay ultrapasse automaticamente a migration original inválida; o harness captura a falha e segue de modo explícito. Sem execução neste passe."
+    ]
+  },
+  {
+    "roster_index": 8,
+    "adjudication": [
+      "Leitura integral 1–84. Fixtures cobrem failed, outcome_unknown, teto de tentativas e sent, aplicam a migration V19 e exigem os retornos t/t/f/f, além de persistência pending:1 para o primeiro destinatário (69–82). Esses controles direcionados são preservados.",
+      "ON_ERROR_STOP=0 em 9 limita a garantia de setup/aplicação completa pelo exit code; o RED aceita does not exist ou a palavra genérica function (61–63). As chamadas configuram claim service_role, mas permanecem conectadas como postgres, sem SET ROLE; não são teste da ACL efetiva de service_role. A fixture não contém campanhas/worker/conexão/triggers da cadeia atual e só uma das duas reaberturas recebe verificação final de estado. Não se infere execução aprovada nem autorização real."
+    ]
+  },
+  {
+    "roster_index": 9,
+    "adjudication": [
+      "Leitura integral 1–237. Após RED de coluna ausente, o harness aplica a migration V25, confere tipo/FK/ON DELETE SET NULL, owner persistido após INSERT/UPDATE, revisão crescente, replay com revisão preservada, conflito ao mudar só owner e recusa por FK com ausência de linha (136–235). As identidades profile e auth user são distintas e os dois owners são fixtures diferentes.",
+      "O corpo anterior é reconstruído localmente em 108–129; is_admin_or_supervisor retorna true e validação de timezone usa regex simplificada. ON_ERROR_STOP=0 pode mascarar erro parcial na aplicação pelo exit code, embora as assertivas de dados posteriores tenham valor. As sessões mudam claims sem SET ROLE, logo não validam ACL/RLS reais. A FK é inspecionada estruturalmente para SET NULL, sem deletar owner; não se extrapola para ciclo completo ou versão atual da RPC após todas migrations. Sem execução."
+    ]
+  },
+  {
+    "roster_index": 10,
+    "adjudication": [
+      "Leitura integral 1–266. O stub anterior da RPC levanta erro explícito (132–141), de modo que o caminho positivo depende da substituição pela migration V26. São conferidos tipo/FK, persistência de template_version_id na criação e atualização, revisão, replay, conflito ao mudar somente a versão, rejeição de versão inexistente sem linha residual e exclusão da versão com SET NULL persistido (158–264).",
+      "O setup mínimo não aplica a cadeia completa de templates e seus triggers; helper de papel retorna true, timezone é regex, ON_ERROR_STOP=0 não garante aplicação integral pelo exit code e claims são configuradas em conexão postgres sem SET ROLE. Os controles comprovam o recorte explícito de schema e RPC se executados, sem demonstrar autorização, imutabilidade ou integração UI. Nenhum comando do harness foi executado neste passe."
+    ]
+  },
+  {
+    "roster_index": 11,
+    "adjudication": [
+      "Leitura integral 1–316: três containers descartáveis distintos, temporários com trap, ON_ERROR_STOP=1, propagação de status e mensagem esperada, cópia da migration e comparação SHA256/cmp no fim. Aplica o arquivo real após demonstrar nullable e vocabulário aberto; confere NOT NULL, validação das cinco CHECKs, cinco rejeições por constraint, valores canônicos, default 70 e limites de volume (165–227).",
+      "A reversão é executável no schema mínimo por DROP de CHECKs/NOT NULL, seguida de escrita anteriormente vedada. As mutações são preparadas em cópias, verificadas por conteúdo e aplicadas em containers novos: ausência de VALIDATE precisa produzir convalidated=false, e substituição de soft precisa rejeitar o valor canônico com constraint específica (230–314). Esses controles não dependem de qualquer erro genérico.",
+      "Limites: a fixture reproduz o recorte de duas linhas e não a cadeia inteira nem a base implantada; o rótulo linhas intactas usa count filtrado de três campos (226–227), não comparação de todas as colunas. Os testes de vocabulário positivo percorrem message_sound_type, e os negativos cobrem os cinco tipos. O ensaio de integridade SQL não valida reprodução de áudio ou consumidores das preferências; não substitui a evidência PLAT sobre consumidores. Nenhuma migration, reversão, Docker ou suíte foi executada nesta reauditoria."
+    ]
+  }
+]

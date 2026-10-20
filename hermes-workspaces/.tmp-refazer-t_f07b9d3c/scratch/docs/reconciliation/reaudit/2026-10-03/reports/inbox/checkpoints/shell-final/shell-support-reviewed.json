@@ -1,0 +1,21 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": [
+    {
+      "path": "scripts/db-audit/talkx-blacklist-policy-runtime.sql",
+      "source_sha256": "2956d313ec0ab04ac2f1f21995609104f23aaadcab9ec5ab2ace727204317565",
+      "git_blob_sha": "bfbd9b83322da75e401092ba01b3252f4e031f94",
+      "line_count": 41,
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 41
+        }
+      ],
+      "reviewer": "inbox",
+      "review_level": "semantic",
+      "reviewed_contract": "CTEs target_relation/target_policy/payload; JSON summary; SHA256 do resumo",
+      "limits": "Leitura integral sem SQL executado. Inspeciona somente policy com nome talkx_blacklist_update; não detecta outra policy permissiva nem RLS bypass. restricted_policy_count exige substring do helper nas duas expressões, podendo aceitar OR true adicional. Hash cobre resumo, não definição completa de todos os objetos. Útil para detectar as duas formas esperadas pela fixture, não prova equivalência do catálogo completo."
+    }
+  ]
+}

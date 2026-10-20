@@ -1,0 +1,57 @@
+From c57074acc6f7f5edf697dcf6d7ae9e94d63f6de9 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <joaquim@ataides>
+Date: Sat, 10 Oct 2026 05:13:32 -0300
+Subject: [PATCH 3/5] fix(volume): contrato media-volume-surfaces aponta para o
+ arquivo certo do chat interno
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+O '<audio>' e a ligação ao controle único saem de teamChatParts.tsx
+(TC-006, ec1bb1453); o TeamChatPanel virou shell. A entrada 'chat interno
+da equipe' apontava para o shell e deixava o contrato vermelho na base.
+Adiciona teste que prova a ligação do <audio> efetivo ao controle único
++ que o shell não volta a segurar a ligação órfã.
+---
+ .../media-volume-surfaces.contract.test.ts    | 25 +++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/tests/contracts/media-volume-surfaces.contract.test.ts b/tests/contracts/media-volume-surfaces.contract.test.ts
+index 406abcf98..c8257e0ad 100644
+--- a/tests/contracts/media-volume-surfaces.contract.test.ts
++++ b/tests/contracts/media-volume-surfaces.contract.test.ts
+@@ -68,6 +68,31 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle
+     ).not.toMatch(/useMediaElementVolume/);
+   });
+ 
++  /**
++   * A mesma confusão shell × arquivo que RENDERIZA vale para o chat interno: a ocorrência
++   * textual do hook num shell que não tem `<audio>` não é prova. A superfície do chat interno
++   * é `teamChatParts` e tem de ligar o controle ao `<audio>` EFETIVO; o shell não pode voltar
++   * a segurar a ligação órfã (mero `import`/chamada do hook sem elemento).
++   */
++  it('chat interno da equipe liga o <audio> efetivo ao controle único', () => {
++    const fonte = read('src/components/team-chat/teamChatParts.tsx');
++
++    expect(fonte, 'as partes do chat interno precisam renderizar um <audio>').toContain('<audio');
++    expect(
++      fonte,
++      'o <audio> efetivo precisa estar ligado ao controle único de volume',
++    ).toMatch(/useMediaElementVolume\(audioRef\)/);
++    expect(
++      fonte,
++      'a ref do controle precisa estar aplicada ao elemento',
++    ).toMatch(/<audio\s+ref=\{audioRef\}/);
++
++    expect(
++      read('src/components/team-chat/TeamChatPanel.tsx'),
++      'o shell do chat interno não renderiza áudio: não pode voltar a segurar a ligação órfã',
++    ).not.toMatch(/useMediaElementVolume/);
++  });
++
+   it('as prévias de voz/TTS também usam o controle único', () => {
+     for (const arquivo of [
+       'src/components/inbox/TextToAudioButton.tsx',
+-- 
+2.43.0
+

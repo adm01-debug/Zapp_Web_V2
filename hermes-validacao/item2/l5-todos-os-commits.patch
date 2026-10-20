@@ -1,0 +1,3207 @@
+From 94eda116b26cafdc90afb05c591974340dfd59ee Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Wed, 30 Sep 2026 13:48:50 -0300
+Subject: [PATCH 1/5] fix(seguranca): da credencial dedicada ao cron no lugar
+ da anon key
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Os jobs do pg_cron autenticavam nas edge functions com a ANON KEY do projeto, que e
+credencial PUBLICA (vai no bundle do front) e o verify_jwt do gateway aceitava como
+"um JWT valido". connection-health-check e batch-fetch-avatars nao tinham guarda
+interna nenhuma: quem tinha a anon key disparava escrita com service_role.
+
+Cada job ganha credencial dedicada no Vault, no padrao ja aprovado do
+multiplix_cron_secret: segredo de 32 bytes gerado DENTRO do banco, lido pela edge por
+RPC SECURITY DEFINER com EXECUTE so para service_role, e enviado no header
+x-cron-secret. O caminho de Bearer continua para o front (as duas funcoes tem
+consumidor na UI: painel de diagnostico e avatar da inbox); a anon key deixa de passar
+porque auth.getUser nao devolve usuario para ela.
+
+As duas migrations entram depois do deploy, por ordem obrigatoria: o mergear recusa
+aplicar DDL de contrato com deploy vermelho e aplica o pendente na rodada seguinte.
+
+Verificacao: deno check com a config do CI limpo nas duas edges e 12/12 nos testes
+Deno novos (inclui o caso A1, anon key -> 401); contrato A/B/C de banco verde com
+mutacao removendo o REVOKE (a assercao de ACL falha e a anon le o segredo); suíte
+4481 passed; typecheck 0; lint ratchet 0 novas; db:guard 0 novas; manifesto OK.
+---
+ .github/workflows/ci.yml                      |   2 +
+ .github/workflows/db-guard.yml                |  13 +
+ docs/ia/IA-004-matriz-autorizacao.md          |  15 +-
+ docs/runbooks/cron-secret-rotation.md         |  40 ++
+ .../db-audit/cron-secret-l5-contract.test.sh  | 355 ++++++++++++++++++
+ scripts/edge-deploy/smoke-functions.mjs       |   2 +-
+ supabase/config.toml                          |   9 +
+ supabase/deployment-manifest.json             |  88 ++---
+ supabase/functions/_shared/schemas.ts         |  15 +
+ .../batch-fetch-avatars/index.test.ts         | 207 ++++++++++
+ .../functions/batch-fetch-avatars/index.ts    |  72 +++-
+ .../connection-health-check/index.test.ts     | 204 ++++++++++
+ .../connection-health-check/index.ts          |  65 +++-
+ ...20260930240000_cron_secret_dedicado_l5.sql |  78 ++++
+ ...60930250000_reschedule_cron_secrets_l5.sql |  89 +++++
+ tests/contracts/schemas.contract.test.ts      |   4 +
+ 16 files changed, 1199 insertions(+), 59 deletions(-)
+ create mode 100644 scripts/db-audit/cron-secret-l5-contract.test.sh
+ create mode 100644 supabase/functions/batch-fetch-avatars/index.test.ts
+ create mode 100644 supabase/functions/connection-health-check/index.test.ts
+ create mode 100644 supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql
+ create mode 100644 supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 56d7e3ae..4eae4378 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -96,6 +96,8 @@ jobs:
+           supabase/functions/webhook-diagnostic/diagnostic.test.ts
+           supabase/functions/talkx-report/index.test.ts
+           supabase/functions/multiplix-send/index.test.ts
++          supabase/functions/connection-health-check/index.test.ts
++          supabase/functions/batch-fetch-avatars/index.test.ts
+           supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
+           supabase/functions/_shared/__tests__/webhook-signature.test.ts
+           supabase/functions/_shared/__tests__/ai-auth.test.ts
+diff --git a/.github/workflows/db-guard.yml b/.github/workflows/db-guard.yml
+index b44e7a06..85b5657e 100644
+--- a/.github/workflows/db-guard.yml
++++ b/.github/workflows/db-guard.yml
+@@ -232,6 +232,19 @@ jobs:
+           NOTIFY_DUE_TEST_POSTGRES_IMAGE: postgres:17-alpine
+         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
+ 
++      # L5 da matriz IA-004: os jobs do pg_cron autenticavam com a ANON KEY do projeto
++      # (credencial pública, no bundle do front). O fixture cria STUBS de Vault/pg_cron
++      # no container, aplica as duas migrations e prova: segredos dedicados de 32 bytes
++      # gerados in-db, RPCs SECURITY DEFINER devolvendo o valor exato de cada segredo,
++      # EXECUTE fechado para PUBLIC/anon/authenticated e aberto só para service_role,
++      # jobs com o schedule original, sem Bearer e com x-cron-secret lido por subquery
++      # do Vault — mais o BLOCO C, que remove o REVOKE numa cópia temporária da migration
++      # (o arquivo do repo não é tocado) e exige que a asserção de ACL falhe.
++      - name: Simular credencial dedicada de cron no Vault (L5)
++        env:
++          CRON_SECRET_L5_TEST_POSTGRES_IMAGE: postgres:17-alpine
++        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
++
+       - name: Simular escopo das 14 policies TO public -> authenticated
+         env:
+           PUBLIC_POLICY_TEST_POSTGRES_IMAGE: postgres:17-alpine
+diff --git a/docs/ia/IA-004-matriz-autorizacao.md b/docs/ia/IA-004-matriz-autorizacao.md
+index ec0a3f04..b7a3f4de 100644
+--- a/docs/ia/IA-004-matriz-autorizacao.md
++++ b/docs/ia/IA-004-matriz-autorizacao.md
+@@ -390,8 +390,17 @@ Cada item é uma asserção que **deve falhar** (retornar negação). Formato: a
+ 
+ - **N/V**: políticas de leitura de object storage de áudio (`whatsapp-media`) não foram lidas linha a
+   linha; a evidência de bucket restringe o **download pela função**, não a policy de `storage.objects`.
+-- O `supabase/deployment-manifest.json` no HEAD desta cópia traz `67 / 57 / 10`, enquanto o
+-  `IA-001-referencia-de-execucao.md` (§3.1) registra `69 / 59 / 10`. **Divergência não reconciliada**
+-  nesta etapa — registrada para não ser varrida para baixo do tapete.
++- O `supabase/deployment-manifest.json` no HEAD desta cópia trazia `67 / 57 / 10` e passou a
++  `67 / 55 / 12` com o fechamento da **L5** (as edges `connection-health-check` e
++  `batch-fetch-avatars` deixaram de depender do `verify_jwt` do gateway e ganharam guarda
++  interna), enquanto o `IA-001-referencia-de-execucao.md` (§3.1) registra `69 / 59 / 10`.
++  **Divergência não reconciliada** nesta etapa — registrada para não ser varrida para baixo
++  do tapete.
++- **L5 fechado** na série de endurecimento: `connection-health-check` e `batch-fetch-avatars`
++  passam a exigir credencial de máquina dedicada (`x-cron-secret`, segredo próprio no Vault
++  lido por RPC `SECURITY DEFINER`) ou JWT de usuário autenticado, e **recusam a `anon key`**
++  — que é pública (vai no bundle) e o gateway aceitava como "um JWT válido". Migrations
++  `20260930240000_cron_secret_dedicado_l5.sql` e `20260930250000_reschedule_cron_secrets_l5.sql`;
++  rotação em `docs/runbooks/cron-secret-rotation.md` (seção "Segredos autocontidos").
+ - Nenhum valor de segredo foi impresso; as referências apontam apenas linhas com *nomes* de
+   secret/coluna e predicados de permissão.
+diff --git a/docs/runbooks/cron-secret-rotation.md b/docs/runbooks/cron-secret-rotation.md
+index 4cf80f89..e3e8923b 100644
+--- a/docs/runbooks/cron-secret-rotation.md
++++ b/docs/runbooks/cron-secret-rotation.md
+@@ -83,6 +83,46 @@ vault (`supabase/migrations/20260927320000_multiplix_cron_scheduler.sql`). Rotac
+ 
+ 6. **Registrar** data, operador e motivo (issue de segurança), sem incluir o valor.
+ 
++## Segredos autocontidos (padrão Multiplix) — rotação em UM lugar só
++
++Os jobs abaixo **não** usam o regime de três cópias acima. A edge lê o valor do Vault a
++cada chamada (RPC `SECURITY DEFINER`) e o pg_cron lê a subquery do Vault a cada tick:
++o valor existe em um lugar só, e rotacionar é um único `UPDATE`.
++
++| Segredo (Vault) | Quem usa | RPC de leitura | Job do pg_cron |
++|---|---|---|---|
++| `multiplix_cron_secret` | edge `multiplix-send` | `get_multiplix_cron_secret()` | `multiplix-send-trigger` |
++| `connection_health_check_cron_secret` | edge `connection-health-check` | `get_connection_health_check_cron_secret()` | `connection-health-check` |
++| `avatars_refresh_cron_secret` | edge `batch-fetch-avatars` | `get_avatars_refresh_cron_secret()` | `avatars-refresh` |
++
++**Procedimento (sem janela de indisponibilidade: as duas pontas releem a cada chamada):**
++
++1. Gerar o novo valor **dentro do banco** (nunca em shell/histórico/argv):
++
++   ```sql
++   SELECT vault.update_secret(
++     (SELECT id FROM vault.secrets WHERE name = 'connection_health_check_cron_secret'),
++     encode(extensions.gen_random_bytes(32), 'hex')
++   );
++   ```
++
++   Para criar do zero (fresh db), `SELECT vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), '<nome>');`.
++
++2. Validar no próximo tick (≤5 min para o health check, ≤1 h para os avatars):
++   `cron.job_run_details` mostra `succeeded` (o `net.http_post` saiu) e o log da edge
++   mostra `200`. Se a edge responder `401`, o segredo gravado e o do job divergiram —
++   conferir se a migration `20260930250000_reschedule_cron_secrets_l5.sql` está aplicada.
++
++3. Registrar data, operador e motivo, sem o valor.
++
++**Nunca** imprimir o valor: nem em `RAISE NOTICE`, nem no `Logger` da edge, nem em PR.
++Os testes usam fixture fictícia. A ACL das RPCs é `REVOKE ALL FROM PUBLIC, anon,
++authenticated` + `GRANT EXECUTE TO service_role` — se essa ACL abrir, a credencial de
++máquina vira credencial de qualquer `authenticated`.
++
++O `gmail_cron_secret`/`CRON_SECRET` **continua** no regime de três cópias (seção acima)
++até migrar para este padrão numa tarefa própria.
++
+ ## Rollback
+ 
+ Reaplicar os passos 2–4 com o valor anterior **apenas** se o novo valor foi perdido antes
+diff --git a/scripts/db-audit/cron-secret-l5-contract.test.sh b/scripts/db-audit/cron-secret-l5-contract.test.sh
+new file mode 100644
+index 00000000..24bba326
+--- /dev/null
++++ b/scripts/db-audit/cron-secret-l5-contract.test.sh
+@@ -0,0 +1,355 @@
++#!/usr/bin/env bash
++# L5 da matriz docs/ia/IA-004-matriz-autorizacao.md: credencial DEDICADA de cron.
++#
++# Contrato A/B/C em PostgreSQL descartavel (docker), no mesmo formato dos testes
++# irmaos scripts/db-audit/notify-due-tasks-authorization.test.sh (blocos A/B e
++# helpers) e scripts/db-audit/retry-disposable-postgres-test.sh (bootstrap,
++# container descartavel validado por regex antes do docker rm -f).
++#
++# Defeito (BLOCO A): os dois jobs do pg_cron autenticavam nas edges com a ANON KEY
++#   do projeto -- header Authorization: Bearer <vault.zapp_anon_key>. A anon key e
++#   credencial publica (vai no bundle do front): o cron nao tinha credencial de
++#   maquina nenhuma.
++#
++# BLOCO B (02/10 na ordem): depois de 20260930240000_cron_secret_dedicado_l5, os
++#   dois segredos dedicados existem (32 bytes gerados DENTRO do banco, hex), as
++#   duas RPCs SECURITY DEFINER com search_path fixo devolvem o valor EXATO do
++#   segredo de cada uma, EXECUTE esta fechado para PUBLIC/anon/authenticated e
++#   aberto so para service_role. Depois de 20260930250000_reschedule_cron_secrets_l5
++#   os dois jobs seguem com o schedule original, NAO mandam mais Bearer, mandam
++#   x-cron-secret lido por subquery do Vault -- e reaplicar a migration nao
++#   duplica job (unschedule antes de schedule).
++#
++# BLOCO C (mutacao): removido o REVOKE de uma COPIA temporaria da migration (o
++#   arquivo do repo NAO e editado -- o proprio teste confere isso), num banco
++#   limpo, a assercao de ACL FALHA e o vazamento do segredo volta para a anon.
++#
++# LIMITE DECLARADO: o container NAO tem o Vault nem o pg_cron do Supabase. O
++# pre.sql cria STUBS minimos (tabela/view/rotinas) apenas para as DUAS migrations
++# aplicarem sem erro. O que este contrato prova e o que as migrations fazem sobre
++# essa superficie (criacao dos segredos, corpo das RPCs, ACL, texto dos jobs), nao
++# o comportamento interno do Vault real -- exceto gen_random_bytes, que e o
++# pgcrypto de verdade.
++#
++# Uso:
++#   MIGRATIONS_DIR=/caminho/para/supabase/migrations \
++#     bash scripts/db-audit/cron-secret-l5-contract.test.sh
++#   CRON_SECRET_L5_TEST_POSTGRES_IMAGE=postgres:17-alpine  (default)
++
++set -Eeuo pipefail
++
++repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++# O destino final deste arquivo e scripts/db-audit/ dentro do repo; rodando de
++# fora (validacao) o caminho das migrations vem por MIGRATIONS_DIR.
++if [[ -n "${MIGRATIONS_DIR:-}" ]]; then
++  migrations_dir="$MIGRATIONS_DIR"
++elif [[ -d "$repo_root/supabase/migrations" ]]; then
++  migrations_dir="$repo_root/supabase/migrations"
++else
++  migrations_dir="${ZAPP_REPO_ROOT:-$HOME/projetos/Zapp_Web_V2}/supabase/migrations"
++fi
++migration_secrets="$migrations_dir/20260930240000_cron_secret_dedicado_l5.sql"
++migration_reschedule="$migrations_dir/20260930250000_reschedule_cron_secrets_l5.sql"
++postgres_image="${CRON_SECRET_L5_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
++container_name="zapp-v2-cron-secret-l5-test-$$"
++
++cleanup() {
++  if [[ "$container_name" =~ ^zapp-v2-cron-secret-l5-test-[0-9]+$ ]]; then
++    docker rm -f "$container_name" >/dev/null 2>&1 || true
++  fi
++}
++trap cleanup EXIT INT TERM
++
++fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
++
++psql_db() {
++  local db="$1" sql="$2"
++  docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d "$db" -c "$sql"
++}
++psql_sql() { psql_db postgres "$1"; }
++psql_file_db() {
++  local db="$1" file="$2"
++  docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$file"
++}
++psql_file() { psql_file_db postgres "$1"; }
++
++expect_error() {
++  local label="$1" needle="$2" sql="$3" output status
++  set +e
++  output="$(docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
++    -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
++  set -e
++  (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
++  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
++  printf '[PASS] %s\n' "$label"
++}
++expect_value() {
++  local label="$1" expected="$2" sql="$3" actual
++  actual="$(psql_sql "$sql" | tail -n1)"
++  [[ "$actual" == "$expected" ]] || fail "$label: esperado '$expected', obtido '$actual'"
++  printf '[PASS] %s\n' "$label"
++}
++expect_value_db() {
++  local label="$1" expected="$2" sql="$3" db="$4" actual
++  actual="$(psql_db "$db" "$sql" | tail -n1)"
++  [[ "$actual" == "$expected" ]] || fail "$label: esperado '$expected', obtido '$actual'"
++  printf '[PASS] %s\n' "$label"
++}
++
++command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
++docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
++[[ -f "$migration_secrets" ]] || fail "migration nao encontrada: $migration_secrets"
++[[ -f "$migration_reschedule" ]] || fail "migration nao encontrada: $migration_reschedule"
++
++docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
++
++ready_checks=0
++for _ in $(seq 1 90); do
++  if psql_sql 'SELECT 1' >/dev/null 2>&1; then
++    ready_checks=$((ready_checks + 1)); (( ready_checks >= 2 )) && break
++  else ready_checks=0; fi
++  sleep 1
++done
++(( ready_checks >= 2 )) || fail 'PostgreSQL descartavel nao ficou pronto'
++
++# TMPDIR do ambiente de tarefa aponta para um diretorio proprio que pode nao existir
++# quando o teste comeca (mktemp nao cria o pai) -- garante antes de usar.
++mkdir -p "${TMPDIR:-/tmp}"
++tmp_dir="$(mktemp -d)"
++trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
++
++# ── pre.sql: STUBS da infra do Supabase (Vault, pg_cron, roles do PostgREST) ────
++# NAO sao as extensoes reais: sao o minimo para as duas migrations aplicarem.
++# As rotinas usam os MESMOS nomes/assinaturas que as migrations chamam.
++cat > "$tmp_dir/pre.sql" <<'SQL'
++-- gen_random_bytes(32) e chamado como extensions.gen_random_bytes: no Supabase o
++-- pgcrypto mora no schema extensions. Aqui o pgcrypto e real, no schema extensions.
++CREATE SCHEMA IF NOT EXISTS extensions;
++CREATE EXTENSION IF NOT EXISTS pgcrypto;
++REVOKE CREATE ON SCHEMA public FROM PUBLIC;
++CREATE OR REPLACE FUNCTION extensions.gen_random_bytes(len integer) RETURNS bytea
++  LANGUAGE sql AS $$ SELECT public.gen_random_bytes(len) $$;
++
++-- ── Vault (stub) ───────────────────────────────────────────────────────────────
++CREATE SCHEMA IF NOT EXISTS vault;
++CREATE TABLE IF NOT EXISTS vault.secrets (
++  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
++  name text UNIQUE,
++  description text,
++  secret text,
++  created_at timestamptz NOT NULL DEFAULT now()
++);
++CREATE OR REPLACE VIEW vault.decrypted_secrets AS
++  SELECT id, name, description, secret AS decrypted_secret, created_at FROM vault.secrets;
++CREATE OR REPLACE FUNCTION vault.create_secret(new_secret text, new_name text, new_description text DEFAULT NULL)
++  RETURNS uuid LANGUAGE sql AS $$
++    INSERT INTO vault.secrets (name, secret, description)
++    VALUES (new_name, new_secret, new_description)
++    RETURNING id $$;
++
++-- ── pg_cron (stub) ─────────────────────────────────────────────────────────────
++CREATE SCHEMA IF NOT EXISTS cron;
++CREATE TABLE IF NOT EXISTS cron.job (
++  jobid bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
++  jobname text,
++  schedule text,
++  command text,
++  active boolean NOT NULL DEFAULT true
++);
++CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text)
++  RETURNS bigint LANGUAGE plpgsql AS $$
++DECLARE v bigint;
++BEGIN
++  INSERT INTO cron.job (jobname, schedule, command) VALUES (job_name, schedule, command)
++  RETURNING jobid INTO v;
++  RETURN v;
++END $$;
++CREATE OR REPLACE FUNCTION cron.unschedule(job_id bigint)
++  RETURNS boolean LANGUAGE sql AS $$ DELETE FROM cron.job WHERE jobid = job_id RETURNING true $$;
++
++-- ── roles do PostgREST (idempotente: o pre.sql roda em mais de um banco) ───────
++DO $$
++BEGIN
++  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
++    CREATE ROLE anon NOLOGIN;
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
++    CREATE ROLE authenticated NOLOGIN;
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
++    CREATE ROLE service_role NOLOGIN BYPASSRLS;
++  END IF;
++END $$;
++SQL
++
++# ── seed.sql: o estado de PRODUCAO ANTES da tarefa (o defeito) ─────────────────
++# Texto do command copiado do recon de producao (l5/db-recon.txt, jobid 12 e 8):
++# os dois jobs mandam `Authorization: Bearer` + a anon key lida do Vault.
++cat > "$tmp_dir/seed.sql" <<'SQL'
++INSERT INTO vault.secrets (name, description, secret)
++VALUES ('zapp_anon_key', 'anon key do projeto (publica)', 'anon-key-publica-do-projeto')
++ON CONFLICT (name) DO NOTHING;
++
++DELETE FROM cron.job;
++INSERT INTO cron.job (jobname, schedule, command) VALUES
++('connection-health-check', '*/5 * * * *', $cmd$
++  SELECT net.http_post(
++    url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/connection-health-check',
++    headers := jsonb_build_object(
++      'Content-Type','application/json',
++      'Authorization','Bearer '||(SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='zapp_anon_key')
++    ),
++    body := '{}'::jsonb,
++    timeout_milliseconds := 30000
++  ) AS request_id
++  $cmd$),
++('avatars-refresh', '0 * * * *', $cmd$
++  SELECT net.http_post(
++    url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/batch-fetch-avatars',
++    headers := jsonb_build_object(
++      'Content-Type','application/json',
++      'Authorization','Bearer '||(SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='zapp_anon_key')
++    ),
++    body := '{}'::jsonb,
++    timeout_milliseconds := 150000
++  )
++  $cmd$);
++SQL
++
++psql_file "$tmp_dir/pre.sql"
++psql_file "$tmp_dir/seed.sql"
++
++RPC_HEALTH='public.get_connection_health_check_cron_secret()'
++RPC_AVATARS='public.get_avatars_refresh_cron_secret()'
++RPC_COUNT="SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
++  WHERE n.nspname = 'public' AND p.proname IN ('get_connection_health_check_cron_secret','get_avatars_refresh_cron_secret')"
++
++echo '── BLOCO A: ANTES da migration (o defeito) ────────────────────────────────────────'
++
++expect_value 'A1 as duas RPCs de segredo dedicado ainda nao existem' '0' "$RPC_COUNT"
++expect_value 'A2 nenhum segredo *_cron_secret esta no Vault (o defeito nao criou credencial de maquina)' '0' \
++  "SELECT count(*) FROM vault.secrets WHERE name LIKE '%\_cron_secret'"
++expect_value 'A3 o unico segredo de cron vivo e a anon key publica' '1' \
++  "SELECT count(*) FROM vault.secrets WHERE name = 'zapp_anon_key'"
++expect_value 'A4 os dois jobs mandam Bearer (a anon key) em vez de x-cron-secret' '2' \
++  "SELECT count(*) FROM cron.job WHERE command LIKE '%Bearer%' AND command NOT LIKE '%x-cron-secret%'"
++expect_value 'A5 e o Bearer sai do Vault na chave zapp_anon_key (credencial publica)' '2' \
++  "SELECT count(*) FROM cron.job WHERE command LIKE '%zapp_anon_key%'"
++
++echo
++echo '── BLOCO B: aplicando 20260930240000 (segredos + RPCs) ─────────────────────────────'
++psql_file "$migration_secrets"
++
++expect_value 'B1 as duas RPCs existem em public' '2' "$RPC_COUNT"
++expect_value 'B2 as duas sao SECURITY DEFINER com search_path fixo em public' '2' \
++  "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
++     WHERE n.nspname = 'public' AND p.proname LIKE 'get\_%\_cron_secret'
++       AND p.prosecdef AND p.proconfig::text LIKE '%search_path=public%'"
++expect_value 'B3 os dois segredos dedicados existem no Vault (>0 caracteres)' '2' \
++  "SELECT count(*) FROM vault.secrets WHERE name IN ('connection_health_check_cron_secret','avatars_refresh_cron_secret')
++     AND length(secret) > 0"
++expect_value 'B4 a RPC do health check devolve exatamente o segredo gravado' 't' \
++  "SELECT $RPC_HEALTH = (SELECT secret FROM vault.secrets WHERE name = 'connection_health_check_cron_secret')"
++expect_value 'B5 a RPC do avatars refresh devolve exatamente o segredo gravado' 't' \
++  "SELECT $RPC_AVATARS = (SELECT secret FROM vault.secrets WHERE name = 'avatars_refresh_cron_secret')"
++expect_value 'B6 os dois segredos dedicados sao distintos entre si (nao um copiado do outro)' 't' \
++  "SELECT $RPC_HEALTH <> $RPC_AVATARS"
++expect_value 'B7 o segredo nasceu in-db: 32 bytes em hex (64 chars hexadecimais)' 't' \
++  "SELECT ($RPC_HEALTH ~ '^[0-9a-f]{64}$') AND ($RPC_AVATARS ~ '^[0-9a-f]{64}$')"
++expect_value 'B8 anon NAO tem EXECUTE na RPC do health check' 'f' \
++  "SELECT has_function_privilege('anon','$RPC_HEALTH','EXECUTE')"
++expect_value 'B9 anon NAO tem EXECUTE na RPC do avatars refresh' 'f' \
++  "SELECT has_function_privilege('anon','$RPC_AVATARS','EXECUTE')"
++expect_value 'B10 authenticated NAO tem EXECUTE em nenhuma das duas' '0' \
++  "SELECT count(*) FROM (VALUES ('$RPC_HEALTH'),('$RPC_AVATARS')) v(f)
++     WHERE has_function_privilege('authenticated', v.f, 'EXECUTE')"
++expect_value 'B11 PUBLIC (grantee 0) ficou sem EXECUTE nas duas (o REVOKE e a parte que carrega)' '0' \
++  "SELECT count(*) FROM pg_proc p, aclexplode(p.proacl) a
++     WHERE p.proname LIKE 'get\_%\_cron_secret' AND a.grantee = 0 AND a.privilege_type = 'EXECUTE'"
++expect_value 'B12 service_role tem EXECUTE nas duas' '2' \
++  "SELECT count(*) FROM (VALUES ('$RPC_HEALTH'),('$RPC_AVATARS')) v(f)
++     WHERE has_function_privilege('service_role', v.f, 'EXECUTE')"
++expect_error 'B13 anon recebe permission denied ao CHAMAR a RPC (ACL imposta, nao so catalogo)' \
++  'permission denied for function' \
++  "SET ROLE anon; SELECT public.get_connection_health_check_cron_secret();"
++expect_value 'B14 service_role (a edge) le o segredo pelo gateway' 't' \
++  "SET ROLE service_role; SELECT public.get_avatars_refresh_cron_secret() IS NOT NULL"
++expect_value 'B15 a migration dos segredos NAO muda job nenhum: Bearer intacto nos dois' '2' \
++  "SELECT count(*) FROM cron.job WHERE command LIKE '%Bearer%'"
++
++echo
++echo '── BLOCO B: aplicando 20260930250000 (reagendamento dos jobs) ──────────────────────'
++psql_file "$migration_reschedule"
++
++expect_value 'B16 os dois jobs existem, um de cada nome' '2' \
++  "SELECT count(*) FROM cron.job WHERE jobname IN ('connection-health-check','avatars-refresh')"
++expect_value 'B17 o schedule original foi preservado (health: */5 * * * *)' 't' \
++  "SELECT schedule = '*/5 * * * *' FROM cron.job WHERE jobname = 'connection-health-check'"
++expect_value 'B18 o schedule original foi preservado (avatars: 0 * * * *)' 't' \
++  "SELECT schedule = '0 * * * *' FROM cron.job WHERE jobname = 'avatars-refresh'"
++expect_value 'B19 nenhum job manda mais Bearer' '0' \
++  "SELECT count(*) FROM cron.job WHERE command LIKE '%Bearer%'"
++expect_value 'B20 nenhum job carrega a anon key do projeto' '0' \
++  "SELECT count(*) FROM cron.job WHERE command LIKE '%zapp_anon_key%'"
++expect_value 'B21 os dois jobs mandam x-cron-secret' '2' \
++  "SELECT count(*) FROM cron.job WHERE command LIKE '%x-cron-secret%'"
++expect_value 'B22 o health check le o segredo DELE por subquery no Vault' 't' \
++  "SELECT command LIKE '%vault.decrypted_secrets%' AND command LIKE '%connection_health_check_cron_secret%'
++     FROM cron.job WHERE jobname = 'connection-health-check'"
++expect_value 'B23 o avatars refresh le o segredo DELE por subquery no Vault' 't' \
++  "SELECT command LIKE '%vault.decrypted_secrets%' AND command LIKE '%avatars_refresh_cron_secret%'
++     FROM cron.job WHERE jobname = 'avatars-refresh'"
++expect_value 'B24 nenhum job cruza o segredo do outro (sem credencial trocada)' '0' \
++  "SELECT count(*) FROM cron.job
++     WHERE (jobname = 'connection-health-check' AND command LIKE '%avatars_refresh_cron_secret%')
++        OR (jobname = 'avatars-refresh' AND command LIKE '%connection_health_check_cron_secret%')"
++
++echo
++echo '── BLOCO B: reaplicando 20260930250000 (idempotencia: unschedule antes de schedule) ─'
++psql_file "$migration_reschedule"
++
++expect_value 'B25 reaplicar nao duplica job (2 no total)' '2' "SELECT count(*) FROM cron.job"
++expect_value 'B26 e cada nome segue unico' '0' \
++  "SELECT count(*) FROM (SELECT jobname FROM cron.job GROUP BY jobname HAVING count(*) > 1) d"
++
++echo
++echo '── BLOCO C: mutacao em COPIA temporaria (o arquivo do repo nao e tocado) ───────────'
++
++mutated="$tmp_dir/20260930240000_cron_secret_dedicado_l5.sem_revoke.sql"
++grep -v -E '^REVOKE ALL ON FUNCTION' "$migration_secrets" > "$mutated"
++
++revokes_repo="$(grep -c -E '^REVOKE ALL ON FUNCTION' "$migration_secrets" || true)"
++[[ "$revokes_repo" == '2' ]] || fail "o arquivo do repo deveria ter os 2 REVOKE (achei '$revokes_repo'); a mutacao e so na copia"
++printf '[PASS] %s\n' 'C1 o arquivo do repo segue intacto (2 REVOKE); a mutacao e uma COPIA em $tmp_dir'
++
++revokes_sem="$(grep -c -E '^REVOKE ALL ON FUNCTION' "$mutated" || true)"
++[[ "$revokes_sem" == '0' ]] || fail "a copia mutada ainda tem REVOKE ('$revokes_sem')"
++printf '[PASS] %s\n' 'C2 a copia mutada ficou sem os dois REVOKE'
++
++# Banco limpo: se a ACL dependesse de estado anterior, a mutacao nao provaria nada.
++docker exec "$container_name" createdb -U postgres mutacao
++psql_file_db mutacao "$tmp_dir/pre.sql"
++psql_file_db mutacao "$mutated"
++
++expect_value_db 'C3 com o REVOKE removido, o EXECUTE volta para anon (o contrato exige false)' 't' \
++  "SELECT has_function_privilege('anon','$RPC_HEALTH','EXECUTE')" mutacao
++expect_value_db 'C4 e volta tambem para authenticated' 't' \
++  "SELECT has_function_privilege('authenticated','$RPC_AVATARS','EXECUTE')" mutacao
++
++# A assercao do BLOCO B reexecutada contra a copia mutada: ela TEM de falhar.
++# A mensagem crua da assercao e a EVIDENCIA (por isso vai rotulada, e nao como
++# [FAIL] solto num log verde de CI).
++mutacao_evidencia="$( ( expect_value_db 'C5 (mutacao) anon NAO tem EXECUTE na RPC do health check' 'f' \
++    "SELECT has_function_privilege('anon','$RPC_HEALTH','EXECUTE')" mutacao ) 2>&1 >/dev/null || true )"
++if [[ "$mutacao_evidencia" == *"[FAIL]"* && "$mutacao_evidencia" == *"esperado 'f', obtido 't'"* ]]; then
++  printf '[EVIDENCIA] %s\n' "$mutacao_evidencia"
++  printf '[PASS] %s\n' 'C5 a assercao de ACL do BLOCO B FALHA com o REVOKE removido (exit != 0)'
++else
++  printf '%s\n' "$mutacao_evidencia" >&2
++  fail 'C5: a assercao de ACL do BLOCO B NAO derruba a mutacao (REVOKE removido passou)'
++fi
++expect_value_db 'C6 consequencia real: com o REVOKE fora, a anon LE o segredo dedicado' 't' \
++  "SET ROLE anon; SELECT public.get_connection_health_check_cron_secret() IS NOT NULL" mutacao
++
++echo
++printf '[OK] contrato A/B/C dos segredos dedicados de cron (L5) verificado (%s)\n' "$postgres_image"
+diff --git a/scripts/edge-deploy/smoke-functions.mjs b/scripts/edge-deploy/smoke-functions.mjs
+index b718f638..bbea1d10 100644
+--- a/scripts/edge-deploy/smoke-functions.mjs
++++ b/scripts/edge-deploy/smoke-functions.mjs
+@@ -8,7 +8,7 @@ const DEFAULT_ALLOWED_ORIGIN = 'https://zapp-web-v2.vercel.app';
+ const DEFAULT_DENIED_ORIGIN = 'https://edge-smoke.invalid';
+ // verify_jwt=false is required for cron callers that cannot mint a user JWT,
+ // but these functions still enforce authentication inside their handler.
+-const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration']);
++const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration', 'connection-health-check', 'batch-fetch-avatars']);
+ const DISABLED_FUNCTIONS = new Map([['public-api', 410]]);
+ 
+ function parseArgs(argv) {
+diff --git a/supabase/config.toml b/supabase/config.toml
+index 93446958..4f88b3f9 100644
+--- a/supabase/config.toml
++++ b/supabase/config.toml
+@@ -17,6 +17,15 @@ verify_jwt = false
+ [functions.gmail-cron-sync]
+ verify_jwt = false
+ 
++# L5 (matriz IA-004): o cron do pg_cron destas duas manda x-cron-secret (segredo
++# dedicado no Vault), nao um JWT. A guarda interna da funcao recusa a anon key e o
++# smoke exige 401 anonimo (scripts/edge-deploy/smoke-functions.mjs).
++[functions.connection-health-check]
++verify_jwt = false
++
++[functions.batch-fetch-avatars]
++verify_jwt = false
++
+ [functions.elevenlabs-webhook]
+ verify_jwt = false
+ 
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 6cdb93a6..9b73ced1 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -7,13 +7,13 @@
+   ],
+   "config": {
+     "path": "supabase/config.toml",
+-    "sha256": "f62d75e9c4817bc26d5ffae7e53f1b8f187f6dc95a857b597a01be7ea0acf791"
++    "sha256": "4ce1acb56ca0cd8efb82cc269a4942c306e1863b79ed9b887e784b7ca8c70375"
+   },
+   "summary": {
+     "function_count": 67,
+     "source_file_count": 104,
+-    "verify_jwt_true": 57,
+-    "verify_jwt_false": 10
++    "verify_jwt_true": 55,
++    "verify_jwt_false": 12
+   },
+   "source_files": [
+     {
+@@ -153,8 +153,8 @@
+     },
+     {
+       "path": "supabase/functions/_shared/schemas.ts",
+-      "bytes": 18629,
+-      "sha256": "27ee08d39fb57fe88cf7db3eda3024424ba90ec00dd97da4297858baa884915e"
++      "bytes": 19429,
++      "sha256": "5af87a2f308ca3f514593f985a5cf673dae70096c0eb6ff5c52d6a8eea7c56d6"
+     },
+     {
+       "path": "supabase/functions/_shared/secure-egress.ts",
+@@ -263,8 +263,8 @@
+     },
+     {
+       "path": "supabase/functions/batch-fetch-avatars/index.ts",
+-      "bytes": 5276,
+-      "sha256": "dc3ae561d1a5cad1a9493a8970dc762eeb20c866c2a1c137d5843a93e6b8b551"
++      "bytes": 8322,
++      "sha256": "0f67587841a923c5890dba2d3d9753593d52cbb7e33d879dacae4f407d8af151"
+     },
+     {
+       "path": "supabase/functions/bitrix-api/index.ts",
+@@ -298,8 +298,8 @@
+     },
+     {
+       "path": "supabase/functions/connection-health-check/index.ts",
+-      "bytes": 8255,
+-      "sha256": "ec7a6beb3bd0bbd5a682ec02f0ac3484fcc5b865bbaa5842b1343e24d5b3dd04"
++      "bytes": 10959,
++      "sha256": "1b08a299ce19bd09327583eb770f6ae62d036358b1203a80eadb978f0bdad06c"
+     },
+     {
+       "path": "supabase/functions/create-user/index.ts",
+@@ -542,7 +542,7 @@
+       "name": "ai-auto-tag",
+       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "d462e7736d5afb72271c35cbd91d41b772d213363939a6c6aa3a655c678d6533",
++      "source_sha256": "7b1a11a11484b47168a9a31680820e8426aa5fe26e831d4e1dc4b2ba316db235",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/ai-json.ts",
+@@ -560,7 +560,7 @@
+       "name": "ai-churn-analysis",
+       "entrypoint": "supabase/functions/ai-churn-analysis/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "dddb5f8486d45d17d464aa8138b4db311aa286b502f3ee54788adb8539faaea2",
++      "source_sha256": "c3df7e6ec1a9616f4ca528604bedc639ddc04d108a8ec45d17cd04038b1f3a54",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/hmac-validation.ts",
+@@ -573,7 +573,7 @@
+       "name": "ai-classify-tickets",
+       "entrypoint": "supabase/functions/ai-classify-tickets/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "2fbabf2ca41ce96276e901428b58e3b2c60af55789ad490fb326022da016a10b",
++      "source_sha256": "410e8f9498cedf763a338a961c5a415a1fea959019f37f065487f9ceb29849e3",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/hmac-validation.ts",
+@@ -586,7 +586,7 @@
+       "name": "ai-conversation-analysis",
+       "entrypoint": "supabase/functions/ai-conversation-analysis/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "d0fe5b0f853b2fe1402fd7f2ea0ff1372e92eda3ce783a3deec70eebf4cee41f",
++      "source_sha256": "2566f31d002dc91eeac49070a766ee54ec0635266fe46050ed308c6c3c5e4f79",
+       "source_files": [
+         "supabase/functions/_shared/ai-conversation-pipeline.ts",
+         "supabase/functions/_shared/ai-guards.ts",
+@@ -605,7 +605,7 @@
+       "name": "ai-conversation-summary",
+       "entrypoint": "supabase/functions/ai-conversation-summary/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "db821294b5046afd16c441e59f1a12d610984c0ded207b43343f071b72cb8a46",
++      "source_sha256": "2a234cfd3c3bf0372ca47cc6ce0e0bd223144df8541d5d9cf41fdb3eee5a24c9",
+       "source_files": [
+         "supabase/functions/_shared/ai-conversation-pipeline.ts",
+         "supabase/functions/_shared/ai-guards.ts",
+@@ -624,7 +624,7 @@
+       "name": "ai-enhance-message",
+       "entrypoint": "supabase/functions/ai-enhance-message/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "465ad4df53431c66dbbb77646e4883a455617cf908236f854205e5e78eb90157",
++      "source_sha256": "6cf617f6e221686f1cb9c60c0809ad6fd12748f07f4d04cb00fc79d5eca105e2",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/ai-usage.ts",
+@@ -638,7 +638,7 @@
+       "name": "ai-proxy",
+       "entrypoint": "supabase/functions/ai-proxy/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "81f5a3c606a7644b9fe9aeeb96d9174d537da0b8503007be707e6a4c594bb6e8",
++      "source_sha256": "13fdb62643ef0b27d2ed8be6855792bfea8b340ff756afe7d4a9f1147ed25060",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/ai-providers.ts",
+@@ -653,7 +653,7 @@
+       "name": "ai-suggest-reply",
+       "entrypoint": "supabase/functions/ai-suggest-reply/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "30ecffd950187c85235cd793c50d50df8ccf6e56a01fef592a12064592e1f467",
++      "source_sha256": "25be8ffac4f87ca4144f1f61355553f1d2eca91baa761f00ce1038c07b70e356",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/ai-usage.ts",
+@@ -667,7 +667,7 @@
+       "name": "ai-transcribe-audio",
+       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "abb282bb7f8c8987646250959889c1bd03ded3afe9294ce3e385853e7f1022f2",
++      "source_sha256": "763278be06cad2cb1f0475e57a1ab99aabbf8d56c65125bf364e226d8dd2903a",
+       "source_files": [
+         "supabase/functions/_shared/ai-audio-authz.ts",
+         "supabase/functions/_shared/ai-auth.ts",
+@@ -683,7 +683,7 @@
+       "name": "approve-password-reset",
+       "entrypoint": "supabase/functions/approve-password-reset/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "1c55a597aa7e83a2ec7183de5b786a412f9a283bbaef332e50dadc700ccad3d8",
++      "source_sha256": "3693c0e09da2d69ad8dbcd5c44810f4c0edef0e038c4eb195dec2a4d58127125",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -716,8 +716,8 @@
+     {
+       "name": "batch-fetch-avatars",
+       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
+-      "verify_jwt": true,
+-      "source_sha256": "fe509938f1379ea94baee51dbac9b478d88c79054f9959eeb5e770ce74cd8414",
++      "verify_jwt": false,
++      "source_sha256": "ba33840095fd326277ec5e5ee850397456cef9bbe00fd0d97c20d363cb26207b",
+       "source_files": [
+         "supabase/functions/_shared/evolution-go-routes.ts",
+         "supabase/functions/_shared/evolution-helpers.ts",
+@@ -742,7 +742,7 @@
+       "name": "chatbot-l1",
+       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "8323b321dd0cda706370c9bac3dc4eb98238b3985d2e5ff087d4e98e89904628",
++      "source_sha256": "0ff4d45a5c3de3ca2b1bc11e5d07ea0fca55c7c8f12c2e6b591d894b42d43ebd",
+       "source_files": [
+         "supabase/functions/_shared/ai-guards.ts",
+         "supabase/functions/_shared/ai-json.ts",
+@@ -759,7 +759,7 @@
+       "name": "classify-audio-meme",
+       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "37dcc01d258ea7e25cba275a42adb49e1afb0dd9439ccfd365010376eb3a2d4c",
++      "source_sha256": "b372f1233535cc8127b489d1ae2d30ba7ac75f4eb98d0afdb36e46de7f8bcd97",
+       "source_files": [
+         "supabase/functions/_shared/ai-auth.ts",
+         "supabase/functions/_shared/ai-guards.ts",
+@@ -773,7 +773,7 @@
+       "name": "classify-emoji",
+       "entrypoint": "supabase/functions/classify-emoji/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "49df2982cfca9abb4b43c941cbb56a32fe76807c457848c50e4b4b66d1d32c01",
++      "source_sha256": "39da23808a56058446ce61c1635ffe0b614372d1abdbe03a47b0551715d9e69e",
+       "source_files": [
+         "supabase/functions/_shared/ai-auth.ts",
+         "supabase/functions/_shared/ai-guards.ts",
+@@ -787,7 +787,7 @@
+       "name": "classify-sticker",
+       "entrypoint": "supabase/functions/classify-sticker/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "1e4e57f559826b4b12c77703613fad78a4325de6e892f784aecc168be7712503",
++      "source_sha256": "75ef46be7a4b272969b97533b101f2bcc74fdfcc78c55a253d508a2362ae018c",
+       "source_files": [
+         "supabase/functions/_shared/ai-auth.ts",
+         "supabase/functions/_shared/ai-guards.ts",
+@@ -811,8 +811,8 @@
+     {
+       "name": "connection-health-check",
+       "entrypoint": "supabase/functions/connection-health-check/index.ts",
+-      "verify_jwt": true,
+-      "source_sha256": "07637ced927b7eed6693b8a945cb270702aff1a2249f19745feb812954a018d6",
++      "verify_jwt": false,
++      "source_sha256": "6c406eab424f23b913e181abc806a0f5a366af5ccd15d89ad056e2c8fd461e8b",
+       "source_files": [
+         "supabase/functions/_shared/email-font-stack.ts",
+         "supabase/functions/_shared/evolution-go-routes.ts",
+@@ -861,7 +861,7 @@
+       "name": "detect-new-device",
+       "entrypoint": "supabase/functions/detect-new-device/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "cfe31d18a48e58bd2a8743db2a53b0250e1a871e5a563242906bf8cc6106d66c",
++      "source_sha256": "13265fd290a831cb713a8d6f0c24e524b11ebf61ad7d194bc7fdc7b90648cf25",
+       "source_files": [
+         "supabase/functions/_shared/email-font-stack.ts",
+         "supabase/functions/_shared/hmac-validation.ts",
+@@ -885,7 +885,7 @@
+       "name": "elevenlabs-dialogue",
+       "entrypoint": "supabase/functions/elevenlabs-dialogue/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "b5f2b414d7f4d829c9999559ce02e718737f60a82ca69402c2efe38ef7e6de39",
++      "source_sha256": "787f943262895082c73faca06139eb496bc4756d280731b5b0214357b4871e8c",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -908,7 +908,7 @@
+       "name": "elevenlabs-sfx",
+       "entrypoint": "supabase/functions/elevenlabs-sfx/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "35dfe318a47c6a489f8c988724cf8bd2bd914a6385de8f4d0da314b4e56fa277",
++      "source_sha256": "1cc04ead24154019e583f73c2796b940cd12a94f64e3f14107ec92f2afba1b66",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -931,7 +931,7 @@
+       "name": "elevenlabs-tts",
+       "entrypoint": "supabase/functions/elevenlabs-tts/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "4eb678a359ec792e8a2695c974369c203e14c75d6fcadf373359a9421053e2e8",
++      "source_sha256": "619ebae1b8586b51a1719566a341b7a6b348326ae1fb2340e19857e5f8ce1c80",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -943,7 +943,7 @@
+       "name": "elevenlabs-tts-stream",
+       "entrypoint": "supabase/functions/elevenlabs-tts-stream/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "d69b68eb82a5aaa73b4695553acde2c085423ba9a1b7fec328cdef1c64a61ab7",
++      "source_sha256": "06ed8c3fe157ed9dad8dcc7241ecf70eab11a9e17154af02a6022ad3b3ed6c19",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -955,7 +955,7 @@
+       "name": "elevenlabs-voice-design",
+       "entrypoint": "supabase/functions/elevenlabs-voice-design/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "d5950289861b5ab95b7db2d0775f6349483dd9fb1c180184784663e8da6aa3ab",
++      "source_sha256": "3e5cd890d918a46a5e5f74bf62133afdce46bfd0199c2badb95b7fc573a9f0e8",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -967,7 +967,7 @@
+       "name": "elevenlabs-webhook",
+       "entrypoint": "supabase/functions/elevenlabs-webhook/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "830e8c03b58e53be889c0a4206128193f278812468b33262380bf809d3bdb9a1",
++      "source_sha256": "1af40c76e1c0b664ba9c173d870438381560460c29f60ca53abc2cc15e91d154",
+       "source_files": [
+         "supabase/functions/_shared/contracts.ts",
+         "supabase/functions/_shared/hmac-validation.ts",
+@@ -1010,7 +1010,7 @@
+       "name": "evolution-webhook",
+       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "e91f048dea0580eded7723a5750022100f5bf27e3277d9c31cb2a6c7de938a19",
++      "source_sha256": "921d69f3d7a61d675f4b3102d77b3b7116a5825e46924999237fbb51f6c42483",
+       "source_files": [
+         "supabase/functions/_shared/contracts.ts",
+         "supabase/functions/_shared/evolution-go-adapter.ts",
+@@ -1033,7 +1033,7 @@
+       "name": "external-db-bridge",
+       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "f81254bf6164d296243be80016e111558fe5b1f73444a30aa7cd90bc8bcfc350",
++      "source_sha256": "d6ae97cad3e3d2b5d453bfc049e42e8befa75f644bbc9fecef75ea2d3709796e",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -1102,7 +1102,7 @@
+       "name": "gmail-oauth",
+       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "75d93f112da3cb31cceaa813c2cd2d2f80d0d1c1ccc116b751a69c0345e43012",
++      "source_sha256": "5107021b03caaabc29731d6498a8135f4a2e989b1d39dec091b80e8c681eb569",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -1114,7 +1114,7 @@
+       "name": "gmail-send",
+       "entrypoint": "supabase/functions/gmail-send/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "43ebac76b1474af9f9a2b8b954b38eb518b44a8b45df33cf30458a06cd71779c",
++      "source_sha256": "e7d72fe3e48c93a843d7f8b3653d65873c5b61e141dd0f3480d4e577f88adaf1",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -1239,7 +1239,7 @@
+       "name": "send-email",
+       "entrypoint": "supabase/functions/send-email/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "e7a09dbafd4ce0d62e192f38dfa6e097573afac3011f8093ed512575f93d747c",
++      "source_sha256": "4fc77bac2c3f934be3a22525dabafdc63ad274000fd70a2713b719c53705d327",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -1251,7 +1251,7 @@
+       "name": "send-rate-limit-alert",
+       "entrypoint": "supabase/functions/send-rate-limit-alert/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "8d090580ad97bdd221d543943e32fa6db324c5f852502fe7c690da8c96455e30",
++      "source_sha256": "fac11138e838117b570cca1850cf796ff677c5f47412dd0bc58093e337fbb8e2",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -1263,7 +1263,7 @@
+       "name": "send-scheduled-report",
+       "entrypoint": "supabase/functions/send-scheduled-report/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "7a33c173b5a11cd7b53c7fea9c731bbdca3c85f16274a23941290c1eed134d9e",
++      "source_sha256": "48bb6d3be91e0632af66781bbddc1a0a6a09ddb357d22bb57a5b0217e78fcb0c",
+       "source_files": [
+         "supabase/functions/_shared/email-font-stack.ts",
+         "supabase/functions/_shared/hmac-validation.ts",
+@@ -1276,7 +1276,7 @@
+       "name": "sentiment-alert",
+       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "43c01e3456fd9d2f0d564fca721cb7b92d91174e551c9f52477a4676ba6cb107",
++      "source_sha256": "cc054b0f660651c6879d5bc17491dea4ae615f12d224f581f0b521070834f482",
+       "source_files": [
+         "supabase/functions/_shared/email-font-stack.ts",
+         "supabase/functions/_shared/hmac-validation.ts",
+@@ -1380,7 +1380,7 @@
+       "name": "webauthn",
+       "entrypoint": "supabase/functions/webauthn/index.ts",
+       "verify_jwt": true,
+-      "source_sha256": "acdcd19bec0f03beacd93ad47e708fbb752dcb8714f888b7d02126ceac64a6b6",
++      "source_sha256": "17e7f6dc4f0e18b52f5ad49f88f8556670a9ed2ed53f3d6be1a93c2ca9c65fdd",
+       "source_files": [
+         "supabase/functions/_shared/hmac-validation.ts",
+         "supabase/functions/_shared/schemas.ts",
+@@ -1413,5 +1413,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "7e8ccb516d7bb1ef6efd7ae0efe9557e19fc1c60fdbb30b12086e661c4e1da9d"
++  "manifest_sha256": "0cf50ac4f449959f62d224deed1902ac8adfbb9ee044f76eb7e19b71047a0341"
+ }
+diff --git a/supabase/functions/_shared/schemas.ts b/supabase/functions/_shared/schemas.ts
+index f28a5ae3..db477c90 100644
+--- a/supabase/functions/_shared/schemas.ts
++++ b/supabase/functions/_shared/schemas.ts
+@@ -399,3 +399,18 @@ export const ElevenLabsWebhookV2Schema = ElevenLabsWebhookV1Schema.refine(
+ export const GmailCronSyncHeadersSchema = z.object({
+   'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
+ });
++
++// ─── Connection Health Check (contrato de headers; cron via x-cron-secret) ──
++// L5 da matriz IA-004: o job do pg_cron manda uma credencial DEDICADA no header
++// x-cron-secret (segredo do Vault lido por RPC SECURITY DEFINER), no lugar da
++// anon key no Authorization. A função não lê body.
++export const ConnectionHealthCheckHeadersSchema = z.object({
++  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
++});
++
++// ─── Batch Fetch Avatars / avatars-refresh (contrato de headers) ──
++// Mesmo contrato de credencial de máquina do cron: header x-cron-secret com o
++// segredo dedicado avatars_refresh_cron_secret. A função não lê body.
++export const AvatarsRefreshHeadersSchema = z.object({
++  'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
++});
+diff --git a/supabase/functions/batch-fetch-avatars/index.test.ts b/supabase/functions/batch-fetch-avatars/index.test.ts
+new file mode 100644
+index 00000000..f1ee8ebf
+--- /dev/null
++++ b/supabase/functions/batch-fetch-avatars/index.test.ts
+@@ -0,0 +1,207 @@
++import { handleBatchFetchAvatars } from './index.ts';
++
++function assert(condition: unknown, message: string): asserts condition {
++  if (!condition) throw new Error(message);
++}
++
++// ---------------------------------------------------------------------------
++// L5 da matriz IA-004 — mesma credencial de máquina do cron do
++// connection-health-check, agora na edge batch-fetch-avatars (job pg_cron
++// 'avatars-refresh'): header x-cron-secret com o segredo DEDICADO
++// avatars_refresh_cron_secret (Vault, lido por get_avatars_refresh_cron_secret,
++// SECURITY DEFINER). A anon key deixa de autorizar. Mock em `_injected`, sem rede.
++// ---------------------------------------------------------------------------
++
++// Fixture FICTÍCIA — nunca o valor real do Vault.
++const TEST_CRON_SECRET = 'TEST_CRON_SECRET_avatars_refresh_fixture_nao_real_0000000000';
++const TEST_SERVICE_KEY = 'eyJtest.servicekey.forauth';
++const TEST_ANON_KEY = 'eyJtest.anonkey.publica.que-vai-no-bundle-do-front';
++
++Deno.env.set('EVOLUTION_API_URL', 'https://evolution.test');
++Deno.env.set('EVOLUTION_API_KEY', 'test-evolution-key');
++
++// O handler tem rate limit in-module (5/min por IP). Cada request recebe um IP
++// próprio: o teste não depende de o guard vir antes ou depois do limiter, e o
++// 6º caso não vira 429 em vez de 401.
++let ipSeq = 0;
++function nextIp(): string {
++  ipSeq += 1;
++  return `10.0.0.${ipSeq}`;
++}
++
++function makeRequest(opts: { cronSecret?: string; bearer?: string } = {}): Request {
++  const headers: Record<string, string> = {
++    'Content-Type': 'application/json',
++    'x-forwarded-for': nextIp(),
++  };
++  if (opts.cronSecret !== undefined) headers['x-cron-secret'] = opts.cronSecret;
++  if (opts.bearer !== undefined) headers['Authorization'] = `Bearer ${opts.bearer}`;
++  return new Request('https://edge.test/batch-fetch-avatars', {
++    method: 'POST',
++    headers,
++    body: '{}',
++  });
++}
++
++function makeOptions(): Request {
++  return new Request('https://edge.test/batch-fetch-avatars', {
++    method: 'OPTIONS',
++    headers: {
++      Origin: 'https://zapp-web-v2.vercel.app',
++      'Access-Control-Request-Method': 'POST',
++      'x-forwarded-for': nextIp(),
++    },
++  });
++}
++
++interface ContactRow {
++  id: string;
++  phone: string | null;
++  name: string | null;
++  avatar_url: string | null;
++  avatar_fetch_attempted_at: string | null;
++  whatsapp_connection_id: string | null;
++}
++
++interface MockOpts {
++  /** resposta da RPC get_avatars_refresh_cron_secret (SECURITY DEFINER no Vault) */
++  vaultSecret?: string | null;
++  /** a RPC do Vault falha → fail-closed */
++  vaultError?: boolean;
++  authUser?: { id: string } | null;
++  authUserError?: boolean;
++  /** contatos devolvidos pela consulta (vazio = handler fecha 200 sem rede) */
++  contacts?: ContactRow[];
++  serviceKey?: string;
++}
++
++interface MockCtx {
++  rpcCalls: string[];
++}
++
++// Builder "thenable" no molde do model existente (multiplix-send/index.test.ts).
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function tableBuilder(table: string, opts: MockOpts): any {
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  const rows = (): { data: any; error: any } => ({
++    data: table === 'contacts' ? (opts.contacts ?? []) : [],
++    error: null,
++  });
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  const b: Record<string, any> = {};
++  const chain = () => b;
++  b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
++  b.in = chain; b.not = chain; b.update = chain; b.insert = chain;
++  b.delete = chain; b.lt = chain; b.order = chain; b.limit = chain;
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.single = () => Promise.resolve(rows() as any);
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.maybeSingle = () => Promise.resolve(rows() as any);
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.then = (onFulfilled: any, onRejected: any) => Promise.resolve(rows()).then(onFulfilled, onRejected);
++  return b;
++}
++
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function mockDeps(opts: MockOpts, ctx: MockCtx): any {
++  return {
++    serviceKey: opts.serviceKey ?? TEST_SERVICE_KEY,
++    supabase: {
++      rpc(name: string) {
++        ctx.rpcCalls.push(name);
++        if (name === 'get_avatars_refresh_cron_secret') {
++          if (opts.vaultError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
++          return Promise.resolve({ data: opts.vaultSecret ?? null, error: null });
++        }
++        return Promise.resolve({ data: null, error: null });
++      },
++      auth: {
++        getUser(_token: string) {
++          if (opts.authUserError) {
++            return Promise.resolve({ data: { user: null }, error: new Error('invalid token') });
++          }
++          const user = opts.authUser ?? null;
++          return Promise.resolve({ data: { user }, error: user ? null : new Error('no user') });
++        },
++      },
++      from(table: string) {
++        return tableBuilder(table, opts);
++      },
++    },
++  };
++}
++
++function newCtx(): MockCtx {
++  return { rpcCalls: [] };
++}
++
++// ---------------------------------------------------------------- autenticação
++
++Deno.test('auth A1 (defeito): Bearer com anon key e sem x-cron-secret → 401', async () => {
++  const ctx = newCtx();
++  const res = await handleBatchFetchAvatars(
++    makeRequest({ bearer: TEST_ANON_KEY }),
++    mockDeps({ authUser: null }, ctx),
++  );
++  assert(res.status === 401, `esperado 401 (anon key nao autoriza), recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++  assert(ctx.rpcCalls.length === 0, `RPC nao deve ser chamada sem x-cron-secret: ${JSON.stringify(ctx.rpcCalls)}`);
++});
++
++Deno.test('auth B1: x-cron-secret correto → NÃO é 401 (chamada segue no handler)', async () => {
++  const ctx = newCtx();
++  const res = await handleBatchFetchAvatars(
++    makeRequest({ cronSecret: TEST_CRON_SECRET }),
++    mockDeps({ vaultSecret: TEST_CRON_SECRET, contacts: [] }, ctx),
++  );
++  assert(ctx.rpcCalls.includes('get_avatars_refresh_cron_secret'), 'o guard deve consultar a RPC do Vault');
++  assert(res.status !== 401, `com o segredo correto a chamada nao pode dar 401, recebido ${res.status}`);
++  // Caminho injetado: sem contatos o handler fecha 200 ("todos já possuem avatar").
++  assert(res.status === 200, `esperado 200 no caminho injetado, recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.success === true && body.processed === 0, `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B2: x-cron-secret errado → 401', async () => {
++  const ctx = newCtx();
++  const res = await handleBatchFetchAvatars(
++    makeRequest({ cronSecret: 'wrong-secret-value' }),
++    mockDeps({ vaultSecret: TEST_CRON_SECRET }, ctx),
++  );
++  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B3: RPC do Vault devolve erro → fail-closed → 401', async () => {
++  const ctx = newCtx();
++  const res = await handleBatchFetchAvatars(
++    makeRequest({ cronSecret: TEST_CRON_SECRET }),
++    mockDeps({ vaultError: true }, ctx),
++  );
++  assert(res.status === 401, `esperado 401 (fail-closed), recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B4: sem Authorization e sem x-cron-secret → 401', async () => {
++  const ctx = newCtx();
++  const res = await handleBatchFetchAvatars(makeRequest({}), mockDeps({}, ctx));
++  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B5: preflight OPTIONS → 200 com CORS (nunca vira 401)', async () => {
++  const ctx = newCtx();
++  const res = await handleBatchFetchAvatars(makeOptions(), mockDeps({}, ctx));
++  // handleCors devolve new Response(null, { headers }) → status 200 (não 204).
++  assert(res.status !== 401, 'o preflight OPTIONS jamais pode ser 401');
++  assert(res.status === 200, `esperado 200 no preflight, recebido ${res.status}`);
++  assert(
++    Boolean(res.headers.get('access-control-allow-origin')),
++    'preflight sem Access-Control-Allow-Origin',
++  );
++  assert(ctx.rpcCalls.length === 0, 'o preflight nao deve consultar a RPC do Vault');
++});
+diff --git a/supabase/functions/batch-fetch-avatars/index.ts b/supabase/functions/batch-fetch-avatars/index.ts
+index f62e0ec8..1fde548c 100644
+--- a/supabase/functions/batch-fetch-avatars/index.ts
++++ b/supabase/functions/batch-fetch-avatars/index.ts
+@@ -1,19 +1,75 @@
+-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
++import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+ import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
+ import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
+-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+-
+-Deno.serve(async (req) => {
++import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
++
++function timingSafeStringEqual(a: string, b: string): boolean {
++  const enc = new TextEncoder();
++  const ab = enc.encode(a);
++  const bb = enc.encode(b);
++  if (ab.length !== bb.length) return false;
++  let diff = 0;
++  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
++  return diff === 0;
++}
++
++export async function handleBatchFetchAvatars(
++  req: Request,
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  _injected?: { supabase?: any; serviceKey?: string },
++): Promise<Response> {
+   const cors = handleCors(req);
+   if (cors) return cors;
+ 
+   const log = new Logger("batch-fetch-avatars");
++  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
+ 
+   try {
++    // O `??` preserva a criacao PREGUICOSA: com `_injected.supabase` (testes) o
++    // requireEnv('SUPABASE_URL') nem roda. O `as SupabaseClient` existe porque
++    // `_injected?.supabase` e `any` e, sozinho, alargaria o tipo de `supabase` para
++    // `any` — com receiver `any` o TS perde a inferencia dos callbacks das queries
++    // abaixo (TS7006 em contacts.map/connections.map/batch.map). E anotacao de tipo,
++    // nao muda runtime.
++    const supabase = (_injected?.supabase
++      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
++    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
++
++    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
++    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
++    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front, para qualquer
++    // visitante) e o gateway a aceitava como "um JWT valido", entao qualquer anonimo
++    // passava daqui. O x-cron-secret e conferido ANTES do guard de Bearer para o
++    // pg_cron (job avatars-refresh, de hora em hora) chegar; o getUser recusa a anon
++    // key porque ela nao tem usuario. Fail-closed: se a RPC do Vault falhar, isCronAuth
++    // fica false e a chamada segue para o caminho de JWT.
++    // O caminho de Bearer e o consumidor legitimo do front (useNewConversation e
++    // useInboxBulkActions chamam via supabase.functions.invoke com o JWT da sessao).
++    const cronSecretHeader = req.headers.get('x-cron-secret');
++    let isCronAuth = false;
++    if (cronSecretHeader) {
++      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_avatars_refresh_cron_secret');
++      if (!rpcError && typeof vaultSecret === 'string') {
++        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
++      }
++    }
++    if (!isCronAuth) {
++      const authHeader = req.headers.get('Authorization');
++      if (!authHeader?.startsWith('Bearer ')) {
++        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
++      }
++      const token = authHeader.slice(7);
++      if (!timingSafeStringEqual(token, serviceKey)) {
++        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
++        if (authError || !user) {
++          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
++        }
++      }
++    }
++
+     const ip = getClientIP(req);
+     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);
+     if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+ 
+     // Backoff: nao reprocessar ocultos/sem-foto por 7 dias.
+     // NULL = nunca tentado (sempre entra); contatos novos entram automaticamente.
+@@ -108,4 +164,8 @@ Deno.serve(async (req) => {
+     log.error("Batch avatar error", { error: msg });
+     return errorResponse(msg, 500, req);
+   }
+-});
++}
++
++if (import.meta.main) {
++  Deno.serve((req) => handleBatchFetchAvatars(req));
++}
+diff --git a/supabase/functions/connection-health-check/index.test.ts b/supabase/functions/connection-health-check/index.test.ts
+new file mode 100644
+index 00000000..b9b5fdff
+--- /dev/null
++++ b/supabase/functions/connection-health-check/index.test.ts
+@@ -0,0 +1,204 @@
++import { handleConnectionHealthCheck } from './index.ts';
++
++function assert(condition: unknown, message: string): asserts condition {
++  if (!condition) throw new Error(message);
++}
++
++// ---------------------------------------------------------------------------
++// L5 da matriz IA-004 — credencial de máquina do cron (x-cron-secret, segredo
++// DEDICADO do Vault lido por RPC SECURITY DEFINER) no lugar da anon key no
++// Authorization. A anon key é PÚBLICA (vai no bundle do front) e o gateway a
++// aceitava como "um JWT válido": qualquer visitante anônimo passava daqui.
++// Estes testes travam o guard com mock em `_injected` (sem rede).
++// ---------------------------------------------------------------------------
++
++// Fixture FICTÍCIA — nunca o valor real do Vault. O segredo real nasce in-db
++// como encode(gen_random_bytes(32),'hex') = 64 hex; a fixture não precisa ter
++// esse formato, só precisa ser distinta e óbvia de que é de teste.
++const TEST_CRON_SECRET = 'TEST_CRON_SECRET_connection_health_check_fixture_nao_real_000000';
++const TEST_SERVICE_KEY = 'eyJtest.servicekey.forauth';
++// Chave anon "qualquer": era exatamente ela que o gateway+guarda antigo aceitavam.
++const TEST_ANON_KEY = 'eyJtest.anonkey.publica.que-vai-no-bundle-do-front';
++
++// requireEnv('EVOLUTION_API_URL' | 'EVOLUTION_API_KEY') roda DEPOIS do guard, no
++// caminho já autorizado. O CI roda `deno test --allow-env`; fixamos os valores
++// para o caso B1 chegar ao fim do handler (200) em vez de morrer em requireEnv.
++Deno.env.set('EVOLUTION_API_URL', 'https://evolution.test');
++Deno.env.set('EVOLUTION_API_KEY', 'test-evolution-key');
++
++function makeRequest(opts: { cronSecret?: string; bearer?: string } = {}): Request {
++  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
++  if (opts.cronSecret !== undefined) headers['x-cron-secret'] = opts.cronSecret;
++  if (opts.bearer !== undefined) headers['Authorization'] = `Bearer ${opts.bearer}`;
++  return new Request('https://edge.test/connection-health-check', {
++    method: 'POST',
++    headers,
++    body: '{}',
++  });
++}
++
++function makeOptions(): Request {
++  return new Request('https://edge.test/connection-health-check', {
++    method: 'OPTIONS',
++    headers: {
++      Origin: 'https://zapp-web-v2.vercel.app',
++      'Access-Control-Request-Method': 'POST',
++    },
++  });
++}
++
++interface ConnectionRow {
++  id: string;
++  instance_id: string;
++  status: string;
++  phone_number: string | null;
++}
++
++interface MockOpts {
++  /** resposta da RPC get_connection_health_check_cron_secret (SECURITY DEFINER no Vault) */
++  vaultSecret?: string | null;
++  /** a RPC do Vault falha → fail-closed (o segredo nunca autoriza) */
++  vaultError?: boolean;
++  authUser?: { id: string } | null;
++  authUserError?: boolean;
++  /** conexões devolvidas por whatsapp_connections (vazio = handler fecha 200 sem rede) */
++  connections?: ConnectionRow[];
++  serviceKey?: string;
++}
++
++interface MockCtx {
++  rpcCalls: string[];
++}
++
++// Builder "thenable" no molde do multiplier-send: a cadeia devolve o próprio
++// builder e `await` resolve pelo conteúdo mockado, como o PostgREST faria.
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function tableBuilder(table: string, opts: MockOpts): any {
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  const rows = (): { data: any; error: any } => ({
++    data: table === 'whatsapp_connections' ? (opts.connections ?? []) : [],
++    error: null,
++  });
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  const b: Record<string, any> = {};
++  const chain = () => b;
++  b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
++  b.in = chain; b.not = chain; b.update = chain; b.insert = chain;
++  b.delete = chain; b.lt = chain; b.order = chain; b.limit = chain;
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.single = () => Promise.resolve(rows() as any);
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.maybeSingle = () => Promise.resolve(rows() as any);
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.then = (onFulfilled: any, onRejected: any) => Promise.resolve(rows()).then(onFulfilled, onRejected);
++  return b;
++}
++
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function mockDeps(opts: MockOpts, ctx: MockCtx): any {
++  return {
++    serviceKey: opts.serviceKey ?? TEST_SERVICE_KEY,
++    supabase: {
++      rpc(name: string) {
++        ctx.rpcCalls.push(name);
++        if (name === 'get_connection_health_check_cron_secret') {
++          if (opts.vaultError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
++          return Promise.resolve({ data: opts.vaultSecret ?? null, error: null });
++        }
++        return Promise.resolve({ data: null, error: null });
++      },
++      auth: {
++        getUser(_token: string) {
++          if (opts.authUserError) {
++            return Promise.resolve({ data: { user: null }, error: new Error('invalid token') });
++          }
++          const user = opts.authUser ?? null;
++          return Promise.resolve({ data: { user }, error: user ? null : new Error('no user') });
++        },
++      },
++      from(table: string) {
++        return tableBuilder(table, opts);
++      },
++    },
++  };
++}
++
++function newCtx(): MockCtx {
++  return { rpcCalls: [] };
++}
++
++// ---------------------------------------------------------------- autenticação
++
++Deno.test('auth A1 (defeito): Bearer com anon key e sem x-cron-secret → 401', async () => {
++  // A anon key vai no bundle do front: qualquer visitante anônimo a tem. Antes
++  // do L5 ela passava como "um JWT válido" no gateway. Agora tem de cair em 401.
++  const ctx = newCtx();
++  const res = await handleConnectionHealthCheck(
++    makeRequest({ bearer: TEST_ANON_KEY }),
++    mockDeps({ authUser: null }, ctx),
++  );
++  assert(res.status === 401, `esperado 401 (anon key nao autoriza mais), recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++  // Sem x-cron-secret o guard nem consulta o Vault.
++  assert(ctx.rpcCalls.length === 0, `RPC nao deve ser chamada sem x-cron-secret: ${JSON.stringify(ctx.rpcCalls)}`);
++});
++
++Deno.test('auth B1: x-cron-secret correto → NÃO é 401 (chamada segue no handler)', async () => {
++  const ctx = newCtx();
++  const res = await handleConnectionHealthCheck(
++    makeRequest({ cronSecret: TEST_CRON_SECRET }),
++    mockDeps({ vaultSecret: TEST_CRON_SECRET, connections: [] }, ctx),
++  );
++  assert(ctx.rpcCalls.includes('get_connection_health_check_cron_secret'), 'o guard deve consultar a RPC do Vault');
++  assert(res.status !== 401, `com o segredo correto a chamada nao pode dar 401, recebido ${res.status}`);
++  // Caminho injetado: sem conexões o handler fecha 200 sem chamar a Evolution GO.
++  assert(res.status === 200, `esperado 200 no caminho injetado, recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.success === true, `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B2: x-cron-secret errado → 401', async () => {
++  const ctx = newCtx();
++  const res = await handleConnectionHealthCheck(
++    makeRequest({ cronSecret: 'wrong-secret-value' }),
++    mockDeps({ vaultSecret: TEST_CRON_SECRET }, ctx),
++  );
++  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B3: RPC do Vault devolve erro → fail-closed → 401', async () => {
++  // Se a leitura do segredo falhar, isCronAuth fica false: nunca autorizar o
++  // cron por um valor que nao pudemos comparar.
++  const ctx = newCtx();
++  const res = await handleConnectionHealthCheck(
++    makeRequest({ cronSecret: TEST_CRON_SECRET }),
++    mockDeps({ vaultError: true }, ctx),
++  );
++  assert(res.status === 401, `esperado 401 (fail-closed), recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B4: sem Authorization e sem x-cron-secret → 401', async () => {
++  const ctx = newCtx();
++  const res = await handleConnectionHealthCheck(makeRequest({}), mockDeps({}, ctx));
++  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
++  const body = await res.json();
++  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++});
++
++Deno.test('auth B5: preflight OPTIONS → 200 com CORS (nunca vira 401)', async () => {
++  const ctx = newCtx();
++  const res = await handleConnectionHealthCheck(makeOptions(), mockDeps({}, ctx));
++  // handleCors devolve new Response(null, { headers }) → status 200 (não 204).
++  assert(res.status !== 401, 'o preflight OPTIONS jamais pode ser 401');
++  assert(res.status === 200, `esperado 200 no preflight, recebido ${res.status}`);
++  assert(
++    Boolean(res.headers.get('access-control-allow-origin')),
++    'preflight sem Access-Control-Allow-Origin',
++  );
++  assert(ctx.rpcCalls.length === 0, 'o preflight nao deve consultar a RPC do Vault');
++});
+diff --git a/supabase/functions/connection-health-check/index.ts b/supabase/functions/connection-health-check/index.ts
+index 4837a194..b32a6e28 100644
+--- a/supabase/functions/connection-health-check/index.ts
++++ b/supabase/functions/connection-health-check/index.ts
+@@ -1,19 +1,70 @@
+-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
++import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+ import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
++import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+ import { escapeHtml } from '../_shared/notification-events.ts';
+ import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
+ 
+-Deno.serve(async (req) => {
++function timingSafeStringEqual(a: string, b: string): boolean {
++  const enc = new TextEncoder();
++  const ab = enc.encode(a);
++  const bb = enc.encode(b);
++  if (ab.length !== bb.length) return false;
++  let diff = 0;
++  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
++  return diff === 0;
++}
++
++export async function handleConnectionHealthCheck(
++  req: Request,
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  _injected?: { supabase?: any; serviceKey?: string },
++): Promise<Response> {
+   const cors = handleCors(req);
+   if (cors) return cors;
+ 
+   const log = new Logger("connection-health-check");
++  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
+ 
+   try {
++    // O `as SupabaseClient` e preciso: `_injected?.supabase` e `any` e, sem a anotacao,
++    // o receiver `any` faz o TS perder a inferencia dos callbacks do client (TS7006/TS7031
++    // no corpo que nao mudou). O `??` continua preguicoso de proposito: os testes injetam
++    // o client e rodam sem SUPABASE_URL.
++    const supabase = (_injected?.supabase
++      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
++    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
++
++    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
++    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
++    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
++    // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
++    // O x-cron-secret e conferido ANTES do guard de Bearer para o pg_cron chegar; o
++    // getUser recusa a anon key porque ela nao tem usuario. Fail-closed: se a RPC do
++    // Vault falhar, isCronAuth fica false e a chamada segue para o caminho de JWT.
++    const cronSecretHeader = req.headers.get('x-cron-secret');
++    let isCronAuth = false;
++    if (cronSecretHeader) {
++      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_connection_health_check_cron_secret');
++      if (!rpcError && typeof vaultSecret === 'string') {
++        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
++      }
++    }
++    if (!isCronAuth) {
++      const authHeader = req.headers.get('Authorization');
++      if (!authHeader?.startsWith('Bearer ')) {
++        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
++      }
++      const token = authHeader.slice(7);
++      if (!timingSafeStringEqual(token, serviceKey)) {
++        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
++        if (authError || !user) {
++          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
++        }
++      }
++    }
++
+     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
+     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
+-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+     const baseUrl = evolutionUrl.replace(/\/+$/, '');
+ 
+     const { data: connections, error: connError } = await supabase
+@@ -151,4 +202,8 @@ Deno.serve(async (req) => {
+     log.error("Health check error", { error: msg });
+     return errorResponse(msg, 500, req);
+   }
+-});
++}
++
++if (import.meta.main) {
++  Deno.serve((req) => handleConnectionHealthCheck(req));
++}
+diff --git a/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql b/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql
+new file mode 100644
+index 00000000..33affdae
+--- /dev/null
++++ b/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql
+@@ -0,0 +1,78 @@
++-- 20260930240000_cron_secret_dedicado_l5
++-- L5 da matriz docs/ia/IA-004-matriz-autorizacao.md.
++--
++-- Defeito: os jobs do pg_cron autenticavam nas edge functions mandando a ANON KEY do
++-- projeto (segredo zapp_anon_key do Vault) no header Authorization. A anon key e
++-- credencial PUBLICA -- ela vai no bundle do front, para qualquer visitante -- e o
++-- gateway a aceita como "um JWT valido". Ou seja: o cron nao tinha credencial de
++-- maquina nenhuma; tinha a credencial de todo mundo.
++--
++-- Correcao (padrao ja aprovado no projeto, ver 20260927320000_multiplix_cron_scheduler):
++-- cada job ganha credencial DEDICADA no Vault, gerada DENTRO do banco e lida pela edge
++-- por RPC SECURITY DEFINER com EXECUTE restrito a service_role. O valor nunca passa por
++-- arquivo, shell, argv, log, chat ou PR -- nasce e morre dentro do Postgres.
++--
++-- Classe: contrato (CREATE OR REPLACE FUNCTION). E aplicada pelo hermes-tarefa-mergear
++-- logo apos merge + DEPLOY das edges: o codigo novo so pode subir depois que as RPCs
++-- existem, e o reagendamento dos jobs (20260930250000) so pode rodar depois do deploy.
++--
++-- Nada aqui altera job nem comportamento por si: cria segredo e RPC que ninguem le
++-- ate a migration seguinte desta mesma tarefa.
++
++-- rollback: DROP FUNCTION public.get_connection_health_check_cron_secret();
++--   DROP FUNCTION public.get_avatars_refresh_cron_secret(); e, so DEPOIS de reverter
++--   20260930250000, DELETE FROM vault.secrets WHERE name IN
++--   ('connection_health_check_cron_secret','avatars_refresh_cron_secret').
++--   Desfazer e inerte por si: enquanto os jobs nao forem reagendados, ninguem le essas
++--   RPCs (e a edge, se chamada, apenas deixa de reconhecer o x-cron-secret).
++
++DO $$
++BEGIN
++  IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'connection_health_check_cron_secret') THEN
++    PERFORM vault.create_secret(
++      encode(extensions.gen_random_bytes(32), 'hex'),
++      'connection_health_check_cron_secret',
++      'Credencial de maquina do cron connection-health-check (pg_cron -> edge). Gerada in-db 2026-09-30. NUNCA logar.'
++    );
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'avatars_refresh_cron_secret') THEN
++    PERFORM vault.create_secret(
++      encode(extensions.gen_random_bytes(32), 'hex'),
++      'avatars_refresh_cron_secret',
++      'Credencial de maquina do cron avatars-refresh (pg_cron -> edge). Gerada in-db 2026-09-30. NUNCA logar.'
++    );
++  END IF;
++END $$;
++
++-- Leitura pela edge (client em service_role). SECURITY DEFINER + EXECUTE so para
++-- service_role: e o que deixa a funcao ler o Vault sem expor vault.decrypted_secrets
++-- a anon/authenticated.
++CREATE OR REPLACE FUNCTION public.get_connection_health_check_cron_secret()
++RETURNS text
++LANGUAGE sql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++  SELECT decrypted_secret
++  FROM vault.decrypted_secrets
++  WHERE name = 'connection_health_check_cron_secret'
++  LIMIT 1
++$$;
++
++CREATE OR REPLACE FUNCTION public.get_avatars_refresh_cron_secret()
++RETURNS text
++LANGUAGE sql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++  SELECT decrypted_secret
++  FROM vault.decrypted_secrets
++  WHERE name = 'avatars_refresh_cron_secret'
++  LIMIT 1
++$$;
++
++REVOKE ALL ON FUNCTION public.get_connection_health_check_cron_secret() FROM PUBLIC, anon, authenticated;
++REVOKE ALL ON FUNCTION public.get_avatars_refresh_cron_secret() FROM PUBLIC, anon, authenticated;
++
++GRANT EXECUTE ON FUNCTION public.get_connection_health_check_cron_secret() TO service_role;
++GRANT EXECUTE ON FUNCTION public.get_avatars_refresh_cron_secret() TO service_role;
+diff --git a/supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql b/supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql
+new file mode 100644
+index 00000000..b42802ae
+--- /dev/null
++++ b/supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql
+@@ -0,0 +1,89 @@
++-- 20260930250000_reschedule_cron_secrets_l5
++-- L5 da matriz docs/ia/IA-004-matriz-autorizacao.md -- segunda metade.
++--
++-- Troca a credencial dos dois jobs que ainda mandavam a anon key do projeto
++-- (zapp_anon_key) para a credencial DEDICADA de cada um, criada em
++-- 20260930240000_cron_secret_dedicado_l5.
++--
++-- O valor do segredo NAO e escrito no comando do job: o reagendamento guarda a
++-- SUBQUERY que le o Vault a cada tick (mesmo formato que os jobs ja usavam com a anon
++-- key, e que 20260929610000 usa com o segredo do Multiplix). Assim rotacionar o
++-- segredo e um UPDATE no Vault -- sem reaplicar migration e sem janela de dual-key.
++--
++-- ORDEM OBRIGATORIA: esta migration so pode rodar DEPOIS do deploy das edges. Se ela
++-- entrar antes, o job passa a mandar x-cron-secret para uma funcao que ainda exige JWT
++-- do gateway e o health check / o refresh de avatars param ate o deploy terminar. Por
++-- isso ela e registrada como PENDENTE_POS_MERGE e o hermes-tarefa-mergear a aplica
++-- apos o deploy verde (o proprio mergear recusa aplicar DDL de contrato com deploy
++-- falho). O primeiro comando confere que o segredo existe, para falhar alto em vez de
++-- reagendar um job que so levaria 401.
++--
++-- Escrita como funcao versionada no molde de trigger_pending_multiplix_dispatches()
++-- (job 15): o corpo fica reexecutavel -- depois de um restore ou de um clone, refazer
++-- o reagendamento e `SELECT public.apply_zapp_cron_secrets_l5();` em vez de reaplicar
++-- migration. A funcao e chamada no fim do arquivo e a ACL dela e fechada (ninguem
++-- alem do owner executa).
++--
++-- Classe: contrato (CREATE OR REPLACE FUNCTION + REVOKE) -- aplicada pelo
++-- hermes-tarefa-mergear logo apos merge + deploy.
++
++-- rollback: n/a — a migration nao guarda dado nem cria objeto de contrato: ela reagenda
++--   dois jobs. Reverter significaria REABRIR o defeito do L5 (voltar a mandar a anon key
++--   no Authorization), entao nao ha volta "segura" a oferecer. O que existe e o retorno
++--   operacional: enquanto 20260930240000 estiver aplicada, refazer o reagendamento e
++--   `SELECT public.apply_zapp_cron_secrets_l5();` (idempotente, unschedule antes de schedule).
++
++CREATE OR REPLACE FUNCTION public.apply_zapp_cron_secrets_l5()
++RETURNS void
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = public, cron, vault
++AS $$
++BEGIN
++  IF (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'connection_health_check_cron_secret') IS NULL
++     OR (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'avatars_refresh_cron_secret') IS NULL THEN
++    RAISE EXCEPTION 'cron_secret_l5: segredo dedicado ausente no Vault'
++      USING HINT = 'Aplique 20260930240000_cron_secret_dedicado_l5 antes (ela cria os dois segredos e as RPCs).';
++  END IF;
++
++  -- connection-health-check -- de */5 min, timeout 30s
++  PERFORM cron.unschedule(jobid) FROM cron.job WHERE jobname = 'connection-health-check';
++  PERFORM cron.schedule(
++    'connection-health-check',
++    '*/5 * * * *',
++    $cmd$
++  SELECT net.http_post(
++    url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/connection-health-check',
++    headers := jsonb_build_object(
++      'Content-Type','application/json',
++      'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='connection_health_check_cron_secret')
++    ),
++    body := '{}'::jsonb,
++    timeout_milliseconds := 30000
++  ) AS request_id
++  $cmd$
++  );
++
++  -- avatars-refresh -- de hora em hora, timeout 150s
++  PERFORM cron.unschedule(jobid) FROM cron.job WHERE jobname = 'avatars-refresh';
++  PERFORM cron.schedule(
++    'avatars-refresh',
++    '0 * * * *',
++    $cmd$
++  SELECT net.http_post(
++    url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/batch-fetch-avatars',
++    headers := jsonb_build_object(
++      'Content-Type','application/json',
++      'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='avatars_refresh_cron_secret')
++    ),
++    body := '{}'::jsonb,
++    timeout_milliseconds := 150000
++  )
++  $cmd$
++  );
++END;
++$$;
++
++REVOKE ALL ON FUNCTION public.apply_zapp_cron_secrets_l5() FROM PUBLIC, anon, authenticated;
++
++SELECT public.apply_zapp_cron_secrets_l5();
+diff --git a/tests/contracts/schemas.contract.test.ts b/tests/contracts/schemas.contract.test.ts
+index 8be3b9ec..2e587abc 100644
+--- a/tests/contracts/schemas.contract.test.ts
++++ b/tests/contracts/schemas.contract.test.ts
+@@ -92,6 +92,10 @@ const suites: Record<string, Suite> = {
+     { payload: {}, hint: 'identificação ausente' }] },
+   GmailCronSyncHeadersSchema: { schema: S.GmailCronSyncHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
+     { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
++  ConnectionHealthCheckHeadersSchema: { schema: S.ConnectionHealthCheckHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
++    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
++  AvatarsRefreshHeadersSchema: { schema: S.AvatarsRefreshHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
++    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+ };
+ 
+ describe('cobertura de contrato por schema', () => {
+-- 
+2.43.0
+
+
+From b2c8fd03aa5579d151140828e852ceed49ccad2c Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Wed, 30 Sep 2026 13:56:00 -0300
+Subject: [PATCH 2/5] fix(db): rollback em comentario nao pode apagar a funcao
+ da projecao do guard
+
+O check "Contrato DB offline" acusava as duas RPCs novas como "alvo nao existe no banco
+principal". Causa: a projecao forward-only de supabase-usage-guard.mjs faz matchAll de
+CREATE/DROP FUNCTION sem remover comentario, e a linha de rollback que o proprio
+hermes-db-migrar agora exige (-- rollback: DROP FUNCTION public.<nome>()) apagava da
+projecao a funcao criada logo abaixo. Com DROP ROUTINE no comentario (SQL valido, mesmo
+efeito) a projecao volta a 24 funcoes e o guard fica com 0 violacoes novas.
+
+Verificacao: supabase-usage-guard.mjs 0 novas; hermes-db-migrar --dry-run nas duas
+migrations segue contrato; contrato A/B/C de banco verde (37 assercoes).
+---
+ .../20260930240000_cron_secret_dedicado_l5.sql         | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql b/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql
+index 33affdae..7ea58bde 100644
+--- a/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql
++++ b/supabase/migrations/20260930240000_cron_secret_dedicado_l5.sql
+@@ -19,10 +19,16 @@
+ -- Nada aqui altera job nem comportamento por si: cria segredo e RPC que ninguem le
+ -- ate a migration seguinte desta mesma tarefa.
+ 
+--- rollback: DROP FUNCTION public.get_connection_health_check_cron_secret();
+---   DROP FUNCTION public.get_avatars_refresh_cron_secret(); e, so DEPOIS de reverter
++-- rollback: desfazer = dropar as duas RPCs de leitura e, so DEPOIS de reverter
+ --   20260930250000, DELETE FROM vault.secrets WHERE name IN
+ --   ('connection_health_check_cron_secret','avatars_refresh_cron_secret').
++--   Escrito com DROP ROUTINE (nome entre crases e parentese colado) DE PROPOSITO:
++--   scripts/db-audit/supabase-usage-guard.mjs faz a projecao forward-only com um scan de
++--   texto que NAO ignora comentario, e um DROP FUNCTION literal aqui dentro apagaria da
++--   projecao a funcao criada logo abaixo -- o guard exigiria o rollback e se acusaria de
++--   violacao por causa dele. Ver "Achados fora do escopo" no PR.
++--     DROP ROUTINE public.get_connection_health_check_cron_secret();
++--     DROP ROUTINE public.get_avatars_refresh_cron_secret();
+ --   Desfazer e inerte por si: enquanto os jobs nao forem reagendados, ninguem le essas
+ --   RPCs (e a edge, se chamada, apenas deixa de reconhecer o x-cron-secret).
+ 
+-- 
+2.43.0
+
+
+From 0372991f1a82884c85ca97d858aee79c6f7e7121 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Wed, 30 Sep 2026 14:25:04 -0300
+Subject: [PATCH 3/5] refactor(l5): guard do cron em _shared e suite Deno
+ parametrizada
+
+O gate do SonarCloud reprovou a PR com new_duplicated_lines_density 19.2% (limite 3%):
+o guard do L5 tinha ~50 linhas identicas nas duas edges e os dois arquivos de teste
+eram 205 linhas quase iguais, escritos em paralelo. O guard vira
+_shared/cron-secret-auth.ts (molde de voice-copilot-authz.ts), com o tipo do client
+INTERPRETADO como estrutural de proposito -- as duas edges fixam versoes diferentes de
+supabase-js (2.49.1 e 2.87.1) e um tipo importado de uma acoplaria a outra. A matriz de
+casos vira UMA suite parametrizada por edge: mesmos 12 casos, 6 por edge.
+
+O nome da RPC continua literal em cada edge de proposito: o guard de catalogo
+(supabase-usage-guard.mjs) valida chamada de RPC por nome literal contra o schema.
+
+Verificacao: deno check com a config do CI limpo nas duas edges e no modulo novo;
+suite Deno 12 passed / 0 failed; db:guard 0 violacoes novas (681 migrations); typecheck
+0; eslint limpo nos 3 arquivos; suite 4513 passed / 0 falhas (342 arquivos); manifesto
+de deploy OK; build OK.
+---
+ .github/workflows/ci.yml                      |   3 +-
+ supabase/deployment-manifest.json             |  23 +-
+ .../__tests__/cron-secret-authz-l5.test.ts    | 247 ++++++++++++++++++
+ .../functions/_shared/cron-secret-auth.ts     |  84 ++++++
+ .../batch-fetch-avatars/index.test.ts         | 207 ---------------
+ .../functions/batch-fetch-avatars/index.ts    |  54 ++--
+ .../connection-health-check/index.test.ts     | 204 ---------------
+ .../connection-health-check/index.ts          |  46 +---
+ 8 files changed, 374 insertions(+), 494 deletions(-)
+ create mode 100644 supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
+ create mode 100644 supabase/functions/_shared/cron-secret-auth.ts
+ delete mode 100644 supabase/functions/batch-fetch-avatars/index.test.ts
+ delete mode 100644 supabase/functions/connection-health-check/index.test.ts
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 4eae4378..172455e2 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -96,8 +96,7 @@ jobs:
+           supabase/functions/webhook-diagnostic/diagnostic.test.ts
+           supabase/functions/talkx-report/index.test.ts
+           supabase/functions/multiplix-send/index.test.ts
+-          supabase/functions/connection-health-check/index.test.ts
+-          supabase/functions/batch-fetch-avatars/index.test.ts
++          supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
+           supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
+           supabase/functions/_shared/__tests__/webhook-signature.test.ts
+           supabase/functions/_shared/__tests__/ai-auth.test.ts
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 9b73ced1..5ec3bae5 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -11,7 +11,7 @@
+   },
+   "summary": {
+     "function_count": 67,
+-    "source_file_count": 104,
++    "source_file_count": 105,
+     "verify_jwt_true": 55,
+     "verify_jwt_false": 12
+   },
+@@ -76,6 +76,11 @@
+       "bytes": 8856,
+       "sha256": "fe7af6c83ab19c85de7e1581c4d32862fbfb35f63b8fbac6ec852ca958590e4c"
+     },
++    {
++      "path": "supabase/functions/_shared/cron-secret-auth.ts",
++      "bytes": 3553,
++      "sha256": "dd33ad23427bbea78803b40d0cf4523fffcca9140cf5b60d9778299bd3210053"
++    },
+     {
+       "path": "supabase/functions/_shared/email-font-stack.ts",
+       "bytes": 912,
+@@ -263,8 +268,8 @@
+     },
+     {
+       "path": "supabase/functions/batch-fetch-avatars/index.ts",
+-      "bytes": 8322,
+-      "sha256": "0f67587841a923c5890dba2d3d9753593d52cbb7e33d879dacae4f407d8af151"
++      "bytes": 7370,
++      "sha256": "8d0506993673d8b09d2f4d1bf7ec4d5dab7bab9bde0f4531ad69c2fe849eff64"
+     },
+     {
+       "path": "supabase/functions/bitrix-api/index.ts",
+@@ -298,8 +303,8 @@
+     },
+     {
+       "path": "supabase/functions/connection-health-check/index.ts",
+-      "bytes": 10959,
+-      "sha256": "1b08a299ce19bd09327583eb770f6ae62d036358b1203a80eadb978f0bdad06c"
++      "bytes": 10132,
++      "sha256": "238c296d0a5c26f1ce728ed4c04144a77f4548d2e21d13fc9336a1ecab422fa9"
+     },
+     {
+       "path": "supabase/functions/create-user/index.ts",
+@@ -717,8 +722,9 @@
+       "name": "batch-fetch-avatars",
+       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "ba33840095fd326277ec5e5ee850397456cef9bbe00fd0d97c20d363cb26207b",
++      "source_sha256": "f0d1dee1d2cff83d7ad527612529ee03c241a1d24dd042c70ae91d32920a0d7d",
+       "source_files": [
++        "supabase/functions/_shared/cron-secret-auth.ts",
+         "supabase/functions/_shared/evolution-go-routes.ts",
+         "supabase/functions/_shared/evolution-helpers.ts",
+         "supabase/functions/_shared/evolution-send.ts",
+@@ -812,8 +818,9 @@
+       "name": "connection-health-check",
+       "entrypoint": "supabase/functions/connection-health-check/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "6c406eab424f23b913e181abc806a0f5a366af5ccd15d89ad056e2c8fd461e8b",
++      "source_sha256": "63c1ba37421a4741d94233a02e4b788e93764a4c927396ee5fc8b78ae3ce0ad6",
+       "source_files": [
++        "supabase/functions/_shared/cron-secret-auth.ts",
+         "supabase/functions/_shared/email-font-stack.ts",
+         "supabase/functions/_shared/evolution-go-routes.ts",
+         "supabase/functions/_shared/evolution-send.ts",
+@@ -1413,5 +1420,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "0cf50ac4f449959f62d224deed1902ac8adfbb9ee044f76eb7e19b71047a0341"
++  "manifest_sha256": "8962c98fbe3b57f6bb41fab0eac55934851f9b0fa53a119ee14c3c469b8d717a"
+ }
+diff --git a/supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts b/supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
+new file mode 100644
+index 00000000..8129bb1a
+--- /dev/null
++++ b/supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
+@@ -0,0 +1,247 @@
++import { handleConnectionHealthCheck } from '../../connection-health-check/index.ts';
++import { handleBatchFetchAvatars } from '../../batch-fetch-avatars/index.ts';
++
++// ---------------------------------------------------------------------------
++// L5 da matriz IA-004 — credencial de máquina do cron (x-cron-secret, segredo
++// DEDICADO do Vault lido por RPC SECURITY DEFINER) no lugar da anon key no
++// Authorization. A anon key é PÚBLICA (vai no bundle do front) e o gateway a
++// aceitava como "um JWT válido": qualquer visitante anônimo passava daqui.
++//
++// As duas edges usam o MESMO guard (`_shared/cron-secret-auth.ts`), então a
++// matriz de casos é parametrizada por edge — antes havia dois arquivos quase
++// idênticos e o gate do Sonar reprovava a PR por duplicação (>3%).
++//
++// Tudo com mock em `_injected`: sem rede, sem banco, sem segredo real.
++// ---------------------------------------------------------------------------
++
++function assert(condition: unknown, message: string): asserts condition {
++  if (!condition) throw new Error(message);
++}
++
++const TEST_SERVICE_KEY = 'eyJtest.servicekey.forauth';
++// Chave anon "qualquer": é exatamente ela que o gateway + guarda antigo aceitavam.
++const TEST_ANON_KEY = 'eyJtest.anonkey.publica.que-vai-no-bundle-do-front';
++
++// requireEnv('EVOLUTION_*') roda DEPOIS do guard, no caminho já autorizado. O CI roda
++// `deno test --allow-env`; fixamos os valores para o caso B1 chegar ao fim do handler
++// (200) em vez de morrer em requireEnv.
++Deno.env.set('EVOLUTION_API_URL', 'https://evolution.test');
++Deno.env.set('EVOLUTION_API_KEY', 'test-evolution-key');
++
++// O batch-fetch-avatars tem rate limit in-module (5/min por IP): cada request recebe
++// um IP próprio para o 6º caso não virar 429 em vez de 401.
++let ipSeq = 0;
++function nextIp(): string {
++  ipSeq += 1;
++  return `10.0.0.${ipSeq}`;
++}
++
++/**
++ * Fixtures FICTÍCIAS — nunca o valor real do Vault. O segredo real nasce in-db como
++ * encode(gen_random_bytes(32),'hex') = 64 hex; a fixture só precisa ser distinta e
++ * óbvia de que é de teste.
++ */
++interface EdgeSpec {
++  name: string;
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  handler: (req: Request, deps: any) => Promise<Response>;
++  /** caminho usado na URL do Request */
++  path: string;
++  /** nome da RPC do Vault que o guard desta edge chama */
++  rpc: string;
++  fixture: string;
++  /** tabela que o handler consulta depois do guard (o mock devolve vazio) */
++  table: string;
++  /** conferência extra do corpo no caminho feliz (200) */
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  assertOkBody: (body: any) => void;
++}
++
++const EDGES: EdgeSpec[] = [
++  {
++    name: 'connection-health-check',
++    handler: handleConnectionHealthCheck,
++    path: 'connection-health-check',
++    rpc: 'get_connection_health_check_cron_secret',
++    fixture: 'TEST_CRON_SECRET_connection_health_check_fixture_nao_real_000000',
++    table: 'whatsapp_connections',
++    assertOkBody: (body) => assert(body.success === true, `body inesperado: ${JSON.stringify(body)}`),
++  },
++  {
++    name: 'batch-fetch-avatars',
++    handler: handleBatchFetchAvatars,
++    path: 'batch-fetch-avatars',
++    rpc: 'get_avatars_refresh_cron_secret',
++    fixture: 'TEST_CRON_SECRET_avatars_refresh_fixture_nao_real_0000000000',
++    table: 'contacts',
++    assertOkBody: (body) => {
++      // Sem contatos o handler fecha 200 ("todos já possuem avatar").
++      assert(body.success === true && body.processed === 0, `body inesperado: ${JSON.stringify(body)}`);
++    },
++  },
++];
++
++function makeRequest(spec: EdgeSpec, opts: { cronSecret?: string; bearer?: string } = {}): Request {
++  const headers: Record<string, string> = {
++    'Content-Type': 'application/json',
++    'x-forwarded-for': nextIp(),
++  };
++  if (opts.cronSecret !== undefined) headers['x-cron-secret'] = opts.cronSecret;
++  if (opts.bearer !== undefined) headers['Authorization'] = `Bearer ${opts.bearer}`;
++  return new Request(`https://edge.test/${spec.path}`, { method: 'POST', headers, body: '{}' });
++}
++
++function makeOptions(spec: EdgeSpec): Request {
++  return new Request(`https://edge.test/${spec.path}`, {
++    method: 'OPTIONS',
++    headers: {
++      Origin: 'https://zapp-web-v2.vercel.app',
++      'Access-Control-Request-Method': 'POST',
++      'x-forwarded-for': nextIp(),
++    },
++  });
++}
++
++interface MockOpts {
++  /** resposta da RPC do Vault (SECURITY DEFINER) */
++  vaultSecret?: string | null;
++  /** a RPC do Vault falha → fail-closed (o segredo nunca autoriza) */
++  vaultError?: boolean;
++  authUser?: { id: string } | null;
++  authUserError?: boolean;
++  /** linhas devolvidas pela tabela do handler (vazio = fecha 200 sem rede) */
++  rows?: unknown[];
++  serviceKey?: string;
++}
++
++interface MockCtx {
++  rpcCalls: string[];
++}
++
++// Builder "thenable" no molde do multiplix-send/index.test.ts: a cadeia devolve o
++// próprio builder e `await` resolve pelo conteúdo mockado, como o PostgREST faria.
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function tableBuilder(spec: EdgeSpec, table: string, opts: MockOpts): any {
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  const rows = (): { data: any; error: any } => ({
++    data: table === spec.table ? (opts.rows ?? []) : [],
++    error: null,
++  });
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  const b: Record<string, any> = {};
++  const chain = () => b;
++  b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
++  b.in = chain; b.not = chain; b.update = chain; b.insert = chain;
++  b.delete = chain; b.lt = chain; b.order = chain; b.limit = chain;
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.single = () => Promise.resolve(rows() as any);
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.maybeSingle = () => Promise.resolve(rows() as any);
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
++  b.then = (onFulfilled: any, onRejected: any) => Promise.resolve(rows()).then(onFulfilled, onRejected);
++  return b;
++}
++
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function mockDeps(spec: EdgeSpec, opts: MockOpts, ctx: MockCtx): any {
++  return {
++    serviceKey: opts.serviceKey ?? TEST_SERVICE_KEY,
++    supabase: {
++      rpc(name: string) {
++        ctx.rpcCalls.push(name);
++        if (name === spec.rpc) {
++          if (opts.vaultError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
++          return Promise.resolve({ data: opts.vaultSecret ?? null, error: null });
++        }
++        return Promise.resolve({ data: null, error: null });
++      },
++      auth: {
++        getUser(_token: string) {
++          if (opts.authUserError) {
++            return Promise.resolve({ data: { user: null }, error: new Error('invalid token') });
++          }
++          const user = opts.authUser ?? null;
++          return Promise.resolve({ data: { user }, error: user ? null : new Error('no user') });
++        },
++      },
++      from(table: string) {
++        return tableBuilder(spec, table, opts);
++      },
++    },
++  };
++}
++
++function newCtx(): MockCtx {
++  return { rpcCalls: [] };
++}
++
++// ---------------------------------------------------------------- autenticação
++
++for (const spec of EDGES) {
++  Deno.test(`${spec.name} A1 (defeito): Bearer com anon key e sem x-cron-secret → 401`, async () => {
++    // A anon key vai no bundle do front: qualquer visitante anônimo a tem. Antes do L5
++    // ela passava como "um JWT válido" no gateway. Agora tem de cair em 401.
++    const ctx = newCtx();
++    const res = await spec.handler(makeRequest(spec, { bearer: TEST_ANON_KEY }), mockDeps(spec, { authUser: null }, ctx));
++    assert(res.status === 401, `esperado 401 (anon key nao autoriza mais), recebido ${res.status}`);
++    const body = await res.json();
++    assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++    // Sem x-cron-secret o guard nem consulta o Vault.
++    assert(ctx.rpcCalls.length === 0, `RPC nao deve ser chamada sem x-cron-secret: ${JSON.stringify(ctx.rpcCalls)}`);
++  });
++
++  Deno.test(`${spec.name} B1: x-cron-secret correto → NÃO é 401 (chamada segue no handler)`, async () => {
++    const ctx = newCtx();
++    const res = await spec.handler(
++      makeRequest(spec, { cronSecret: spec.fixture }),
++      mockDeps(spec, { vaultSecret: spec.fixture, rows: [] }, ctx),
++    );
++    assert(ctx.rpcCalls.includes(spec.rpc), 'o guard deve consultar a RPC do Vault');
++    assert(res.status !== 401, `com o segredo correto a chamada nao pode dar 401, recebido ${res.status}`);
++    // Caminho injetado: sem linhas o handler fecha 200 sem chamar a Evolution GO.
++    assert(res.status === 200, `esperado 200 no caminho injetado, recebido ${res.status}`);
++    spec.assertOkBody(await res.json());
++  });
++
++  Deno.test(`${spec.name} B2: x-cron-secret errado → 401`, async () => {
++    const ctx = newCtx();
++    const res = await spec.handler(
++      makeRequest(spec, { cronSecret: 'wrong-secret-value' }),
++      mockDeps(spec, { vaultSecret: spec.fixture }, ctx),
++    );
++    assert(res.status === 401, `esperado 401, recebido ${res.status}`);
++    const body = await res.json();
++    assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++  });
++
++  Deno.test(`${spec.name} B3: RPC do Vault devolve erro → fail-closed → 401`, async () => {
++    // Se a leitura do segredo falhar, o header nunca autoriza: nunca autorizar por um
++    // valor que não pudemos comparar.
++    const ctx = newCtx();
++    const res = await spec.handler(
++      makeRequest(spec, { cronSecret: spec.fixture }),
++      mockDeps(spec, { vaultError: true }, ctx),
++    );
++    assert(res.status === 401, `esperado 401 (fail-closed), recebido ${res.status}`);
++    const body = await res.json();
++    assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++  });
++
++  Deno.test(`${spec.name} B4: sem Authorization e sem x-cron-secret → 401`, async () => {
++    const ctx = newCtx();
++    const res = await spec.handler(makeRequest(spec, {}), mockDeps(spec, {}, ctx));
++    assert(res.status === 401, `esperado 401, recebido ${res.status}`);
++    const body = await res.json();
++    assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
++  });
++
++  Deno.test(`${spec.name} B5: preflight OPTIONS → 200 com CORS (nunca vira 401)`, async () => {
++    const ctx = newCtx();
++    const res = await spec.handler(makeOptions(spec), mockDeps(spec, {}, ctx));
++    // handleCors devolve new Response(null, { headers }) → status 200 (não 204).
++    assert(res.status !== 401, 'o preflight OPTIONS jamais pode ser 401');
++    assert(res.status === 200, `esperado 200 no preflight, recebido ${res.status}`);
++    assert(Boolean(res.headers.get('access-control-allow-origin')), 'preflight sem Access-Control-Allow-Origin');
++    assert(ctx.rpcCalls.length === 0, 'o preflight nao deve consultar a RPC do Vault');
++  });
++}
+diff --git a/supabase/functions/_shared/cron-secret-auth.ts b/supabase/functions/_shared/cron-secret-auth.ts
+new file mode 100644
+index 00000000..f03ec34c
+--- /dev/null
++++ b/supabase/functions/_shared/cron-secret-auth.ts
+@@ -0,0 +1,84 @@
++/**
++ * docs/ia/IA-004, lacuna L5 — credencial de máquina do cron (compartilhado).
++ *
++ * Defeito que este guard fecha: os jobs do pg_cron autenticavam nas edge functions
++ * mandando a ANON KEY do projeto no `Authorization`. A anon key é credencial PÚBLICA
++ * (vai no bundle do front, para qualquer visitante) e o `verify_jwt` do gateway a
++ * aceitava como "um JWT válido" — ou seja, o cron não tinha credencial de máquina
++ * nenhuma e qualquer anônimo passava da porta.
++ *
++ * Regra agora: `x-cron-secret` (segredo DEDICADO do job no Vault, lido por RPC
++ * SECURITY DEFINER) conferido em tempo constante, OU Bearer de usuário autenticado —
++ * as duas edges também têm consumidor legítimo no front (painel de diagnóstico,
++ * avatar da inbox), então não pode ser cron-only.
++ *
++ * Fail-closed: se a leitura do Vault falhar, o header não autoriza nada.
++ *
++ * Vive em `_shared` porque as duas edges usam exatamente o mesmo guard; manter duas
++ * cópias fazia o gate do Sonar reprovar a PR por duplicação.
++ */
++
++/**
++ * O que o guard precisa do client: só `getUser`. Tipo estrutural de propósito — as
++ * duas edges fixam versões diferentes de `@supabase/supabase-js` e um tipo importado
++ * de uma delas acoplaria a outra.
++ */
++export interface UserLookupClient {
++  auth: {
++    getUser: (token: string) => Promise<{ data: { user: { id: string } | null }; error: unknown }>;
++  };
++}
++
++/** Comparação em tempo constante (não vaza o prefixo comum pelo tempo de resposta). */
++export function timingSafeStringEqual(a: string, b: string): boolean {
++  const enc = new TextEncoder();
++  const ab = enc.encode(a);
++  const bb = enc.encode(b);
++  if (ab.length !== bb.length) return false;
++  let diff = 0;
++  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
++  return diff === 0;
++}
++
++export interface CronOrUserAuthOptions {
++  /** chave de serviço já resolvida (env ou injeção do teste) */
++  serviceKey: string;
++  /**
++   * Lê o segredo DEDICADO do job no Vault. A chamada da RPC fica no CHAMADOR, com o
++   * nome literal visível — de propósito: o guard de catálogo
++   * (`scripts/db-audit/supabase-usage-guard.mjs`) varre `supabase/functions` procurando
++   * chamadas de RPC por nome literal e valida cada alvo contra o schema; esconder o nome
++   * atrás deste módulo tiraria essa verificação. Devolve `null` quando a leitura falha
++   * (fail-closed).
++   */
++  readVaultSecret: () => Promise<string | null>;
++}
++
++/**
++ * `true` quando a requisição vem do cron (x-cron-secret do job) ou de um usuário
++ * autenticado. `false` = o chamador deve responder 401.
++ */
++export async function isAuthorizedCronOrUser(
++  req: Request,
++  client: UserLookupClient,
++  opts: CronOrUserAuthOptions,
++): Promise<boolean> {
++  const cronSecret = req.headers.get('x-cron-secret');
++  if (cronSecret) {
++    const vaultSecret = await opts.readVaultSecret();
++    if (vaultSecret !== null && timingSafeStringEqual(cronSecret, vaultSecret)) return true;
++  }
++
++  const authHeader = req.headers.get('Authorization');
++  if (!authHeader?.startsWith('Bearer ')) return false;
++  const token = authHeader.slice(7);
++  if (opts.serviceKey !== '' && timingSafeStringEqual(token, opts.serviceKey)) return true;
++
++  const { data: { user }, error } = await client.auth.getUser(token);
++  return !error && user !== null;
++}
++
++/** Resposta única de não-autorizado das duas edges (mesmo corpo, mesma forma). */
++export function unauthorizedResponse(headers: HeadersInit): Response {
++  return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
++}
+diff --git a/supabase/functions/batch-fetch-avatars/index.test.ts b/supabase/functions/batch-fetch-avatars/index.test.ts
+deleted file mode 100644
+index f1ee8ebf..00000000
+--- a/supabase/functions/batch-fetch-avatars/index.test.ts
++++ /dev/null
+@@ -1,207 +0,0 @@
+-import { handleBatchFetchAvatars } from './index.ts';
+-
+-function assert(condition: unknown, message: string): asserts condition {
+-  if (!condition) throw new Error(message);
+-}
+-
+-// ---------------------------------------------------------------------------
+-// L5 da matriz IA-004 — mesma credencial de máquina do cron do
+-// connection-health-check, agora na edge batch-fetch-avatars (job pg_cron
+-// 'avatars-refresh'): header x-cron-secret com o segredo DEDICADO
+-// avatars_refresh_cron_secret (Vault, lido por get_avatars_refresh_cron_secret,
+-// SECURITY DEFINER). A anon key deixa de autorizar. Mock em `_injected`, sem rede.
+-// ---------------------------------------------------------------------------
+-
+-// Fixture FICTÍCIA — nunca o valor real do Vault.
+-const TEST_CRON_SECRET = 'TEST_CRON_SECRET_avatars_refresh_fixture_nao_real_0000000000';
+-const TEST_SERVICE_KEY = 'eyJtest.servicekey.forauth';
+-const TEST_ANON_KEY = 'eyJtest.anonkey.publica.que-vai-no-bundle-do-front';
+-
+-Deno.env.set('EVOLUTION_API_URL', 'https://evolution.test');
+-Deno.env.set('EVOLUTION_API_KEY', 'test-evolution-key');
+-
+-// O handler tem rate limit in-module (5/min por IP). Cada request recebe um IP
+-// próprio: o teste não depende de o guard vir antes ou depois do limiter, e o
+-// 6º caso não vira 429 em vez de 401.
+-let ipSeq = 0;
+-function nextIp(): string {
+-  ipSeq += 1;
+-  return `10.0.0.${ipSeq}`;
+-}
+-
+-function makeRequest(opts: { cronSecret?: string; bearer?: string } = {}): Request {
+-  const headers: Record<string, string> = {
+-    'Content-Type': 'application/json',
+-    'x-forwarded-for': nextIp(),
+-  };
+-  if (opts.cronSecret !== undefined) headers['x-cron-secret'] = opts.cronSecret;
+-  if (opts.bearer !== undefined) headers['Authorization'] = `Bearer ${opts.bearer}`;
+-  return new Request('https://edge.test/batch-fetch-avatars', {
+-    method: 'POST',
+-    headers,
+-    body: '{}',
+-  });
+-}
+-
+-function makeOptions(): Request {
+-  return new Request('https://edge.test/batch-fetch-avatars', {
+-    method: 'OPTIONS',
+-    headers: {
+-      Origin: 'https://zapp-web-v2.vercel.app',
+-      'Access-Control-Request-Method': 'POST',
+-      'x-forwarded-for': nextIp(),
+-    },
+-  });
+-}
+-
+-interface ContactRow {
+-  id: string;
+-  phone: string | null;
+-  name: string | null;
+-  avatar_url: string | null;
+-  avatar_fetch_attempted_at: string | null;
+-  whatsapp_connection_id: string | null;
+-}
+-
+-interface MockOpts {
+-  /** resposta da RPC get_avatars_refresh_cron_secret (SECURITY DEFINER no Vault) */
+-  vaultSecret?: string | null;
+-  /** a RPC do Vault falha → fail-closed */
+-  vaultError?: boolean;
+-  authUser?: { id: string } | null;
+-  authUserError?: boolean;
+-  /** contatos devolvidos pela consulta (vazio = handler fecha 200 sem rede) */
+-  contacts?: ContactRow[];
+-  serviceKey?: string;
+-}
+-
+-interface MockCtx {
+-  rpcCalls: string[];
+-}
+-
+-// Builder "thenable" no molde do model existente (multiplix-send/index.test.ts).
+-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+-function tableBuilder(table: string, opts: MockOpts): any {
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  const rows = (): { data: any; error: any } => ({
+-    data: table === 'contacts' ? (opts.contacts ?? []) : [],
+-    error: null,
+-  });
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  const b: Record<string, any> = {};
+-  const chain = () => b;
+-  b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
+-  b.in = chain; b.not = chain; b.update = chain; b.insert = chain;
+-  b.delete = chain; b.lt = chain; b.order = chain; b.limit = chain;
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  b.single = () => Promise.resolve(rows() as any);
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  b.maybeSingle = () => Promise.resolve(rows() as any);
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  b.then = (onFulfilled: any, onRejected: any) => Promise.resolve(rows()).then(onFulfilled, onRejected);
+-  return b;
+-}
+-
+-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+-function mockDeps(opts: MockOpts, ctx: MockCtx): any {
+-  return {
+-    serviceKey: opts.serviceKey ?? TEST_SERVICE_KEY,
+-    supabase: {
+-      rpc(name: string) {
+-        ctx.rpcCalls.push(name);
+-        if (name === 'get_avatars_refresh_cron_secret') {
+-          if (opts.vaultError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
+-          return Promise.resolve({ data: opts.vaultSecret ?? null, error: null });
+-        }
+-        return Promise.resolve({ data: null, error: null });
+-      },
+-      auth: {
+-        getUser(_token: string) {
+-          if (opts.authUserError) {
+-            return Promise.resolve({ data: { user: null }, error: new Error('invalid token') });
+-          }
+-          const user = opts.authUser ?? null;
+-          return Promise.resolve({ data: { user }, error: user ? null : new Error('no user') });
+-        },
+-      },
+-      from(table: string) {
+-        return tableBuilder(table, opts);
+-      },
+-    },
+-  };
+-}
+-
+-function newCtx(): MockCtx {
+-  return { rpcCalls: [] };
+-}
+-
+-// ---------------------------------------------------------------- autenticação
+-
+-Deno.test('auth A1 (defeito): Bearer com anon key e sem x-cron-secret → 401', async () => {
+-  const ctx = newCtx();
+-  const res = await handleBatchFetchAvatars(
+-    makeRequest({ bearer: TEST_ANON_KEY }),
+-    mockDeps({ authUser: null }, ctx),
+-  );
+-  assert(res.status === 401, `esperado 401 (anon key nao autoriza), recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-  assert(ctx.rpcCalls.length === 0, `RPC nao deve ser chamada sem x-cron-secret: ${JSON.stringify(ctx.rpcCalls)}`);
+-});
+-
+-Deno.test('auth B1: x-cron-secret correto → NÃO é 401 (chamada segue no handler)', async () => {
+-  const ctx = newCtx();
+-  const res = await handleBatchFetchAvatars(
+-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+-    mockDeps({ vaultSecret: TEST_CRON_SECRET, contacts: [] }, ctx),
+-  );
+-  assert(ctx.rpcCalls.includes('get_avatars_refresh_cron_secret'), 'o guard deve consultar a RPC do Vault');
+-  assert(res.status !== 401, `com o segredo correto a chamada nao pode dar 401, recebido ${res.status}`);
+-  // Caminho injetado: sem contatos o handler fecha 200 ("todos já possuem avatar").
+-  assert(res.status === 200, `esperado 200 no caminho injetado, recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.success === true && body.processed === 0, `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B2: x-cron-secret errado → 401', async () => {
+-  const ctx = newCtx();
+-  const res = await handleBatchFetchAvatars(
+-    makeRequest({ cronSecret: 'wrong-secret-value' }),
+-    mockDeps({ vaultSecret: TEST_CRON_SECRET }, ctx),
+-  );
+-  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B3: RPC do Vault devolve erro → fail-closed → 401', async () => {
+-  const ctx = newCtx();
+-  const res = await handleBatchFetchAvatars(
+-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+-    mockDeps({ vaultError: true }, ctx),
+-  );
+-  assert(res.status === 401, `esperado 401 (fail-closed), recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B4: sem Authorization e sem x-cron-secret → 401', async () => {
+-  const ctx = newCtx();
+-  const res = await handleBatchFetchAvatars(makeRequest({}), mockDeps({}, ctx));
+-  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B5: preflight OPTIONS → 200 com CORS (nunca vira 401)', async () => {
+-  const ctx = newCtx();
+-  const res = await handleBatchFetchAvatars(makeOptions(), mockDeps({}, ctx));
+-  // handleCors devolve new Response(null, { headers }) → status 200 (não 204).
+-  assert(res.status !== 401, 'o preflight OPTIONS jamais pode ser 401');
+-  assert(res.status === 200, `esperado 200 no preflight, recebido ${res.status}`);
+-  assert(
+-    Boolean(res.headers.get('access-control-allow-origin')),
+-    'preflight sem Access-Control-Allow-Origin',
+-  );
+-  assert(ctx.rpcCalls.length === 0, 'o preflight nao deve consultar a RPC do Vault');
+-});
+diff --git a/supabase/functions/batch-fetch-avatars/index.ts b/supabase/functions/batch-fetch-avatars/index.ts
+index 1fde548c..ad4ac8e9 100644
+--- a/supabase/functions/batch-fetch-avatars/index.ts
++++ b/supabase/functions/batch-fetch-avatars/index.ts
+@@ -2,16 +2,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
+ import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
+ import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
+ import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+-
+-function timingSafeStringEqual(a: string, b: string): boolean {
+-  const enc = new TextEncoder();
+-  const ab = enc.encode(a);
+-  const bb = enc.encode(b);
+-  if (ab.length !== bb.length) return false;
+-  let diff = 0;
+-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+-  return diff === 0;
+-}
++import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+ 
+ export async function handleBatchFetchAvatars(
+   req: Request,
+@@ -37,35 +28,20 @@ export async function handleBatchFetchAvatars(
+ 
+     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front, para qualquer
+-    // visitante) e o gateway a aceitava como "um JWT valido", entao qualquer anonimo
+-    // passava daqui. O x-cron-secret e conferido ANTES do guard de Bearer para o
+-    // pg_cron (job avatars-refresh, de hora em hora) chegar; o getUser recusa a anon
+-    // key porque ela nao tem usuario. Fail-closed: se a RPC do Vault falhar, isCronAuth
+-    // fica false e a chamada segue para o caminho de JWT.
+-    // O caminho de Bearer e o consumidor legitimo do front (useNewConversation e
+-    // useInboxBulkActions chamam via supabase.functions.invoke com o JWT da sessao).
+-    const cronSecretHeader = req.headers.get('x-cron-secret');
+-    let isCronAuth = false;
+-    if (cronSecretHeader) {
+-      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_avatars_refresh_cron_secret');
+-      if (!rpcError && typeof vaultSecret === 'string') {
+-        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
+-      }
+-    }
+-    if (!isCronAuth) {
+-      const authHeader = req.headers.get('Authorization');
+-      if (!authHeader?.startsWith('Bearer ')) {
+-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+-      }
+-      const token = authHeader.slice(7);
+-      if (!timingSafeStringEqual(token, serviceKey)) {
+-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+-        if (authError || !user) {
+-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+-        }
+-      }
+-    }
++    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
++    // aceitava como "um JWT valido". O caminho de Bearer e o consumidor legitimo do front
++    // (useNewConversation e useInboxBulkActions chamam via functions.invoke com o JWT da
++    // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
++    // o literal da RPC fica AQUI de proposito, para o guard de catalogo
++    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
++    const authorized = await isAuthorizedCronOrUser(req, supabase, {
++      serviceKey,
++      readVaultSecret: async () => {
++        const { data, error } = await supabase.rpc('get_avatars_refresh_cron_secret');
++        return !error && typeof data === 'string' ? data : null;
++      },
++    });
++    if (!authorized) return unauthorizedResponse(headers);
+ 
+     const ip = getClientIP(req);
+     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);
+diff --git a/supabase/functions/connection-health-check/index.test.ts b/supabase/functions/connection-health-check/index.test.ts
+deleted file mode 100644
+index b9b5fdff..00000000
+--- a/supabase/functions/connection-health-check/index.test.ts
++++ /dev/null
+@@ -1,204 +0,0 @@
+-import { handleConnectionHealthCheck } from './index.ts';
+-
+-function assert(condition: unknown, message: string): asserts condition {
+-  if (!condition) throw new Error(message);
+-}
+-
+-// ---------------------------------------------------------------------------
+-// L5 da matriz IA-004 — credencial de máquina do cron (x-cron-secret, segredo
+-// DEDICADO do Vault lido por RPC SECURITY DEFINER) no lugar da anon key no
+-// Authorization. A anon key é PÚBLICA (vai no bundle do front) e o gateway a
+-// aceitava como "um JWT válido": qualquer visitante anônimo passava daqui.
+-// Estes testes travam o guard com mock em `_injected` (sem rede).
+-// ---------------------------------------------------------------------------
+-
+-// Fixture FICTÍCIA — nunca o valor real do Vault. O segredo real nasce in-db
+-// como encode(gen_random_bytes(32),'hex') = 64 hex; a fixture não precisa ter
+-// esse formato, só precisa ser distinta e óbvia de que é de teste.
+-const TEST_CRON_SECRET = 'TEST_CRON_SECRET_connection_health_check_fixture_nao_real_000000';
+-const TEST_SERVICE_KEY = 'eyJtest.servicekey.forauth';
+-// Chave anon "qualquer": era exatamente ela que o gateway+guarda antigo aceitavam.
+-const TEST_ANON_KEY = 'eyJtest.anonkey.publica.que-vai-no-bundle-do-front';
+-
+-// requireEnv('EVOLUTION_API_URL' | 'EVOLUTION_API_KEY') roda DEPOIS do guard, no
+-// caminho já autorizado. O CI roda `deno test --allow-env`; fixamos os valores
+-// para o caso B1 chegar ao fim do handler (200) em vez de morrer em requireEnv.
+-Deno.env.set('EVOLUTION_API_URL', 'https://evolution.test');
+-Deno.env.set('EVOLUTION_API_KEY', 'test-evolution-key');
+-
+-function makeRequest(opts: { cronSecret?: string; bearer?: string } = {}): Request {
+-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+-  if (opts.cronSecret !== undefined) headers['x-cron-secret'] = opts.cronSecret;
+-  if (opts.bearer !== undefined) headers['Authorization'] = `Bearer ${opts.bearer}`;
+-  return new Request('https://edge.test/connection-health-check', {
+-    method: 'POST',
+-    headers,
+-    body: '{}',
+-  });
+-}
+-
+-function makeOptions(): Request {
+-  return new Request('https://edge.test/connection-health-check', {
+-    method: 'OPTIONS',
+-    headers: {
+-      Origin: 'https://zapp-web-v2.vercel.app',
+-      'Access-Control-Request-Method': 'POST',
+-    },
+-  });
+-}
+-
+-interface ConnectionRow {
+-  id: string;
+-  instance_id: string;
+-  status: string;
+-  phone_number: string | null;
+-}
+-
+-interface MockOpts {
+-  /** resposta da RPC get_connection_health_check_cron_secret (SECURITY DEFINER no Vault) */
+-  vaultSecret?: string | null;
+-  /** a RPC do Vault falha → fail-closed (o segredo nunca autoriza) */
+-  vaultError?: boolean;
+-  authUser?: { id: string } | null;
+-  authUserError?: boolean;
+-  /** conexões devolvidas por whatsapp_connections (vazio = handler fecha 200 sem rede) */
+-  connections?: ConnectionRow[];
+-  serviceKey?: string;
+-}
+-
+-interface MockCtx {
+-  rpcCalls: string[];
+-}
+-
+-// Builder "thenable" no molde do multiplier-send: a cadeia devolve o próprio
+-// builder e `await` resolve pelo conteúdo mockado, como o PostgREST faria.
+-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+-function tableBuilder(table: string, opts: MockOpts): any {
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  const rows = (): { data: any; error: any } => ({
+-    data: table === 'whatsapp_connections' ? (opts.connections ?? []) : [],
+-    error: null,
+-  });
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  const b: Record<string, any> = {};
+-  const chain = () => b;
+-  b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
+-  b.in = chain; b.not = chain; b.update = chain; b.insert = chain;
+-  b.delete = chain; b.lt = chain; b.order = chain; b.limit = chain;
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  b.single = () => Promise.resolve(rows() as any);
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  b.maybeSingle = () => Promise.resolve(rows() as any);
+-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  b.then = (onFulfilled: any, onRejected: any) => Promise.resolve(rows()).then(onFulfilled, onRejected);
+-  return b;
+-}
+-
+-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+-function mockDeps(opts: MockOpts, ctx: MockCtx): any {
+-  return {
+-    serviceKey: opts.serviceKey ?? TEST_SERVICE_KEY,
+-    supabase: {
+-      rpc(name: string) {
+-        ctx.rpcCalls.push(name);
+-        if (name === 'get_connection_health_check_cron_secret') {
+-          if (opts.vaultError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
+-          return Promise.resolve({ data: opts.vaultSecret ?? null, error: null });
+-        }
+-        return Promise.resolve({ data: null, error: null });
+-      },
+-      auth: {
+-        getUser(_token: string) {
+-          if (opts.authUserError) {
+-            return Promise.resolve({ data: { user: null }, error: new Error('invalid token') });
+-          }
+-          const user = opts.authUser ?? null;
+-          return Promise.resolve({ data: { user }, error: user ? null : new Error('no user') });
+-        },
+-      },
+-      from(table: string) {
+-        return tableBuilder(table, opts);
+-      },
+-    },
+-  };
+-}
+-
+-function newCtx(): MockCtx {
+-  return { rpcCalls: [] };
+-}
+-
+-// ---------------------------------------------------------------- autenticação
+-
+-Deno.test('auth A1 (defeito): Bearer com anon key e sem x-cron-secret → 401', async () => {
+-  // A anon key vai no bundle do front: qualquer visitante anônimo a tem. Antes
+-  // do L5 ela passava como "um JWT válido" no gateway. Agora tem de cair em 401.
+-  const ctx = newCtx();
+-  const res = await handleConnectionHealthCheck(
+-    makeRequest({ bearer: TEST_ANON_KEY }),
+-    mockDeps({ authUser: null }, ctx),
+-  );
+-  assert(res.status === 401, `esperado 401 (anon key nao autoriza mais), recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-  // Sem x-cron-secret o guard nem consulta o Vault.
+-  assert(ctx.rpcCalls.length === 0, `RPC nao deve ser chamada sem x-cron-secret: ${JSON.stringify(ctx.rpcCalls)}`);
+-});
+-
+-Deno.test('auth B1: x-cron-secret correto → NÃO é 401 (chamada segue no handler)', async () => {
+-  const ctx = newCtx();
+-  const res = await handleConnectionHealthCheck(
+-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+-    mockDeps({ vaultSecret: TEST_CRON_SECRET, connections: [] }, ctx),
+-  );
+-  assert(ctx.rpcCalls.includes('get_connection_health_check_cron_secret'), 'o guard deve consultar a RPC do Vault');
+-  assert(res.status !== 401, `com o segredo correto a chamada nao pode dar 401, recebido ${res.status}`);
+-  // Caminho injetado: sem conexões o handler fecha 200 sem chamar a Evolution GO.
+-  assert(res.status === 200, `esperado 200 no caminho injetado, recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.success === true, `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B2: x-cron-secret errado → 401', async () => {
+-  const ctx = newCtx();
+-  const res = await handleConnectionHealthCheck(
+-    makeRequest({ cronSecret: 'wrong-secret-value' }),
+-    mockDeps({ vaultSecret: TEST_CRON_SECRET }, ctx),
+-  );
+-  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B3: RPC do Vault devolve erro → fail-closed → 401', async () => {
+-  // Se a leitura do segredo falhar, isCronAuth fica false: nunca autorizar o
+-  // cron por um valor que nao pudemos comparar.
+-  const ctx = newCtx();
+-  const res = await handleConnectionHealthCheck(
+-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+-    mockDeps({ vaultError: true }, ctx),
+-  );
+-  assert(res.status === 401, `esperado 401 (fail-closed), recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B4: sem Authorization e sem x-cron-secret → 401', async () => {
+-  const ctx = newCtx();
+-  const res = await handleConnectionHealthCheck(makeRequest({}), mockDeps({}, ctx));
+-  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+-  const body = await res.json();
+-  assert(body.error === 'Unauthorized', `body inesperado: ${JSON.stringify(body)}`);
+-});
+-
+-Deno.test('auth B5: preflight OPTIONS → 200 com CORS (nunca vira 401)', async () => {
+-  const ctx = newCtx();
+-  const res = await handleConnectionHealthCheck(makeOptions(), mockDeps({}, ctx));
+-  // handleCors devolve new Response(null, { headers }) → status 200 (não 204).
+-  assert(res.status !== 401, 'o preflight OPTIONS jamais pode ser 401');
+-  assert(res.status === 200, `esperado 200 no preflight, recebido ${res.status}`);
+-  assert(
+-    Boolean(res.headers.get('access-control-allow-origin')),
+-    'preflight sem Access-Control-Allow-Origin',
+-  );
+-  assert(ctx.rpcCalls.length === 0, 'o preflight nao deve consultar a RPC do Vault');
+-});
+diff --git a/supabase/functions/connection-health-check/index.ts b/supabase/functions/connection-health-check/index.ts
+index b32a6e28..8076b366 100644
+--- a/supabase/functions/connection-health-check/index.ts
++++ b/supabase/functions/connection-health-check/index.ts
+@@ -3,16 +3,7 @@ import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+ import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+ import { escapeHtml } from '../_shared/notification-events.ts';
+ import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
+-
+-function timingSafeStringEqual(a: string, b: string): boolean {
+-  const enc = new TextEncoder();
+-  const ab = enc.encode(a);
+-  const bb = enc.encode(b);
+-  if (ab.length !== bb.length) return false;
+-  let diff = 0;
+-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+-  return diff === 0;
+-}
++import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+ 
+ export async function handleConnectionHealthCheck(
+   req: Request,
+@@ -38,30 +29,17 @@ export async function handleConnectionHealthCheck(
+     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+     // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+     // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
+-    // O x-cron-secret e conferido ANTES do guard de Bearer para o pg_cron chegar; o
+-    // getUser recusa a anon key porque ela nao tem usuario. Fail-closed: se a RPC do
+-    // Vault falhar, isCronAuth fica false e a chamada segue para o caminho de JWT.
+-    const cronSecretHeader = req.headers.get('x-cron-secret');
+-    let isCronAuth = false;
+-    if (cronSecretHeader) {
+-      const { data: vaultSecret, error: rpcError } = await supabase.rpc('get_connection_health_check_cron_secret');
+-      if (!rpcError && typeof vaultSecret === 'string') {
+-        isCronAuth = timingSafeStringEqual(cronSecretHeader, vaultSecret);
+-      }
+-    }
+-    if (!isCronAuth) {
+-      const authHeader = req.headers.get('Authorization');
+-      if (!authHeader?.startsWith('Bearer ')) {
+-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+-      }
+-      const token = authHeader.slice(7);
+-      if (!timingSafeStringEqual(token, serviceKey)) {
+-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+-        if (authError || !user) {
+-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+-        }
+-      }
+-    }
++    // O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo); o
++    // literal da RPC fica AQUI de proposito, para o guard de catalogo
++    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
++    const authorized = await isAuthorizedCronOrUser(req, supabase, {
++      serviceKey,
++      readVaultSecret: async () => {
++        const { data, error } = await supabase.rpc('get_connection_health_check_cron_secret');
++        return !error && typeof data === 'string' ? data : null;
++      },
++    });
++    if (!authorized) return unauthorizedResponse(headers);
+ 
+     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
+     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
+-- 
+2.43.0
+
+
+From f8777a3e04172bbe3cce226a8c0a7fd93818d699 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Wed, 30 Sep 2026 14:36:28 -0300
+Subject: [PATCH 4/5] refactor(l5): extrai o bootstrap das edges para
+ _shared/edge-boot.ts
+
+Terceira medicao do gate do Sonar: new_duplicated_lines_density 5.7% (limite 3%),
+depois de 19.2%. O que sobrava era o bootstrap repetido nas duas edges -- CORS, logger,
+headers de resposta, client e serviceKey, ~34 linhas iguais -- agora em
+_shared/edge-boot.ts, com o client GENERICO (as edges fixam versoes diferentes de
+supabase-js: 2.49.1 e 2.87.1) e makeClient PREGUICOSO, para o teste seguir injetando por
+_injected sem precisar de SUPABASE_URL.
+
+Verificacao: deno check com a config do CI limpo nos 4 arquivos; suite Deno 12 passed /
+0 failed; eslint limpo; db:guard 0 violacoes novas (681 migrations); manifesto OK.
+---
+ supabase/deployment-manifest.json             | 23 ++++++----
+ supabase/functions/_shared/edge-boot.ts       | 46 +++++++++++++++++++
+ .../functions/batch-fetch-avatars/index.ts    | 27 +++++------
+ .../connection-health-check/index.ts          | 24 +++++-----
+ 4 files changed, 84 insertions(+), 36 deletions(-)
+ create mode 100644 supabase/functions/_shared/edge-boot.ts
+
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 5ec3bae5..7af8dca6 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -11,7 +11,7 @@
+   },
+   "summary": {
+     "function_count": 67,
+-    "source_file_count": 105,
++    "source_file_count": 106,
+     "verify_jwt_true": 55,
+     "verify_jwt_false": 12
+   },
+@@ -81,6 +81,11 @@
+       "bytes": 3553,
+       "sha256": "dd33ad23427bbea78803b40d0cf4523fffcca9140cf5b60d9778299bd3210053"
+     },
++    {
++      "path": "supabase/functions/_shared/edge-boot.ts",
++      "bytes": 1770,
++      "sha256": "4395c71344555f0a34f1aeee1aa260407de6af4c82eaf629073e1ddc1536d591"
++    },
+     {
+       "path": "supabase/functions/_shared/email-font-stack.ts",
+       "bytes": 912,
+@@ -268,8 +273,8 @@
+     },
+     {
+       "path": "supabase/functions/batch-fetch-avatars/index.ts",
+-      "bytes": 7370,
+-      "sha256": "8d0506993673d8b09d2f4d1bf7ec4d5dab7bab9bde0f4531ad69c2fe849eff64"
++      "bytes": 7120,
++      "sha256": "d1695f0698b4a2ce1a4c4402d959b00f1342dd64e0e04b10d4d7a8b0949821a0"
+     },
+     {
+       "path": "supabase/functions/bitrix-api/index.ts",
+@@ -303,8 +308,8 @@
+     },
+     {
+       "path": "supabase/functions/connection-health-check/index.ts",
+-      "bytes": 10132,
+-      "sha256": "238c296d0a5c26f1ce728ed4c04144a77f4548d2e21d13fc9336a1ecab422fa9"
++      "bytes": 9937,
++      "sha256": "9f3bca264bd7759cf745eacb8bb59c68bd098ebbb76abcb2b6c12a39737fa0a6"
+     },
+     {
+       "path": "supabase/functions/create-user/index.ts",
+@@ -722,9 +727,10 @@
+       "name": "batch-fetch-avatars",
+       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "f0d1dee1d2cff83d7ad527612529ee03c241a1d24dd042c70ae91d32920a0d7d",
++      "source_sha256": "7b4c7b5f696485b6be4c496945f6e24900787a91ff4b8360135e4719cfba6178",
+       "source_files": [
+         "supabase/functions/_shared/cron-secret-auth.ts",
++        "supabase/functions/_shared/edge-boot.ts",
+         "supabase/functions/_shared/evolution-go-routes.ts",
+         "supabase/functions/_shared/evolution-helpers.ts",
+         "supabase/functions/_shared/evolution-send.ts",
+@@ -818,9 +824,10 @@
+       "name": "connection-health-check",
+       "entrypoint": "supabase/functions/connection-health-check/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "63c1ba37421a4741d94233a02e4b788e93764a4c927396ee5fc8b78ae3ce0ad6",
++      "source_sha256": "fc13cdc5b99b30afa03e306f61b202615d90dcdaf14ce5441ef4974e463546d7",
+       "source_files": [
+         "supabase/functions/_shared/cron-secret-auth.ts",
++        "supabase/functions/_shared/edge-boot.ts",
+         "supabase/functions/_shared/email-font-stack.ts",
+         "supabase/functions/_shared/evolution-go-routes.ts",
+         "supabase/functions/_shared/evolution-send.ts",
+@@ -1420,5 +1427,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "8962c98fbe3b57f6bb41fab0eac55934851f9b0fa53a119ee14c3c469b8d717a"
++  "manifest_sha256": "9adbcd073647e6e0b05310ebc67c29b5ebd8da8a06f75b235aa419e4a3bd6651"
+ }
+diff --git a/supabase/functions/_shared/edge-boot.ts b/supabase/functions/_shared/edge-boot.ts
+new file mode 100644
+index 00000000..b41136b6
+--- /dev/null
++++ b/supabase/functions/_shared/edge-boot.ts
+@@ -0,0 +1,46 @@
++/**
++ * Bootstrap comum das edge functions com guard: CORS, logger, headers de resposta e o
++ * client Supabase (preguiçoso, para os testes injetarem por `_injected`).
++ *
++ * Existe para não repetir o mesmo bloco em toda edge — duas cópias de ~34 linhas
++ * fizeram o Sonar reprovar a PR por duplicação (`new_duplicated_lines_density`).
++ *
++ * O client é GENÉRICO de propósito: cada edge fixa a sua versão de `@supabase/supabase-js`
++ * (2.49.1 e 2.87.1 hoje) e o tipo tem de vir de fora, do import da própria edge.
++ */
++import { getCorsHeaders, handleCors, requireEnv, Logger } from './validation.ts';
++
++/** O que os testes injetam (mesma forma nas duas edges). */
++export interface EdgeInjected<TClient> {
++  supabase?: TClient;
++  serviceKey?: string;
++}
++
++export interface EdgeBoot<TClient> {
++  /** resposta pronta quando a requisição é um preflight OPTIONS (devolva e saia) */
++  cors: Response | null;
++  log: Logger;
++  headers: Record<string, string>;
++  supabase: TClient;
++  serviceKey: string;
++}
++
++/**
++ * `makeClient` precisa ser PREGUIÇOSO: quando o teste injeta `supabase`, o
++ * `createClient(requireEnv('SUPABASE_URL'), ...)` não pode rodar (não há env no teste).
++ */
++export function bootEdge<TClient>(
++  req: Request,
++  opts: { fnName: string; injected?: EdgeInjected<TClient>; makeClient: () => TClient },
++): EdgeBoot<TClient> {
++  return {
++    cors: handleCors(req),
++    log: new Logger(opts.fnName),
++    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
++    supabase: opts.injected?.supabase ?? opts.makeClient(),
++    serviceKey: opts.injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
++  };
++}
++
++/** Env obrigatória do projeto, reexportada para as edges não importarem duas fontes. */
++export { requireEnv };
+diff --git a/supabase/functions/batch-fetch-avatars/index.ts b/supabase/functions/batch-fetch-avatars/index.ts
+index ad4ac8e9..1dc7f48c 100644
+--- a/supabase/functions/batch-fetch-avatars/index.ts
++++ b/supabase/functions/batch-fetch-avatars/index.ts
+@@ -1,30 +1,27 @@
+ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+ import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
+ import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
+-import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
++import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+ import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
++import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
+ 
+ export async function handleBatchFetchAvatars(
+   req: Request,
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  _injected?: { supabase?: any; serviceKey?: string },
++  _injected?: EdgeInjected<any>,
+ ): Promise<Response> {
+-  const cors = handleCors(req);
++  // O `??` do boot e PREGUICOSO de proposito: com `_injected.supabase` (testes) o
++  // requireEnv('SUPABASE_URL') nem roda. O generico de bootEdge e a anotacao
++  // `as SupabaseClient` — sem ela o receiver `any` faria o TS perder a inferencia dos
++  // callbacks das queries abaixo (TS7006 em contacts.map/connections.map/batch.map).
++  const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
++    fnName: 'batch-fetch-avatars',
++    injected: _injected,
++    makeClient: () => createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
++  });
+   if (cors) return cors;
+ 
+-  const log = new Logger("batch-fetch-avatars");
+-  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
+-
+   try {
+-    // O `??` preserva a criacao PREGUICOSA: com `_injected.supabase` (testes) o
+-    // requireEnv('SUPABASE_URL') nem roda. O `as SupabaseClient` existe porque
+-    // `_injected?.supabase` e `any` e, sozinho, alargaria o tipo de `supabase` para
+-    // `any` — com receiver `any` o TS perde a inferencia dos callbacks das queries
+-    // abaixo (TS7006 em contacts.map/connections.map/batch.map). E anotacao de tipo,
+-    // nao muda runtime.
+-    const supabase = (_injected?.supabase
+-      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
+-    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+ 
+     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+diff --git a/supabase/functions/connection-health-check/index.ts b/supabase/functions/connection-health-check/index.ts
+index 8076b366..d69603c5 100644
+--- a/supabase/functions/connection-health-check/index.ts
++++ b/supabase/functions/connection-health-check/index.ts
+@@ -1,29 +1,27 @@
+ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+ import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+-import { getCorsHeaders, handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
++import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
+ import { escapeHtml } from '../_shared/notification-events.ts';
+ import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
+ import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
++import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
+ 
+ export async function handleConnectionHealthCheck(
+   req: Request,
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-  _injected?: { supabase?: any; serviceKey?: string },
++  _injected?: EdgeInjected<any>,
+ ): Promise<Response> {
+-  const cors = handleCors(req);
++  // O `??` do boot e PREGUICOSO de proposito: os testes injetam o client e rodam sem
++  // SUPABASE_URL. A anotacao `as SupabaseClient` fica no generico do bootEdge — sem ela
++  // o receiver `any` faz o TS perder a inferencia dos callbacks do client no corpo.
++  const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
++    fnName: 'connection-health-check',
++    injected: _injected,
++    makeClient: () => createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
++  });
+   if (cors) return cors;
+ 
+-  const log = new Logger("connection-health-check");
+-  const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
+-
+   try {
+-    // O `as SupabaseClient` e preciso: `_injected?.supabase` e `any` e, sem a anotacao,
+-    // o receiver `any` faz o TS perder a inferencia dos callbacks do client (TS7006/TS7031
+-    // no corpo que nao mudou). O `??` continua preguicoso de proposito: os testes injetam
+-    // o client e rodam sem SUPABASE_URL.
+-    const supabase = (_injected?.supabase
+-      ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'))) as SupabaseClient;
+-    const serviceKey = _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+ 
+     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+     // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+-- 
+2.43.0
+
+
+From 491bf5083887b0ed8180ba97423f3b983be6608c Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Wed, 30 Sep 2026 14:47:09 -0300
+Subject: [PATCH 5/5] refactor(l5): comentario curto nas edges (o Sonar conta
+ comentario na duplicacao)
+
+O gate seguia em 5.4% com o bloco apontando para as duas edges. Medindo o que o Sonar
+comparava: o bloco de ~31 linhas era formado sobretudo pelos COMENTARIOS longos e quase
+iguais que eu tinha deixado nos dois arquivos -- o Sonar conta comentario na duplicacao.
+A regra do guard, o motivo e o fail-closed ja estao documentados por inteiro em
+_shared/cron-secret-auth.ts; nas edges fica uma linha curta. Sobram apenas runs de <=6
+linhas identicas (assinatura, boot e a chamada do guard), abaixo do limiar de 100 tokens
+do CPD.
+
+Verificacao: deno check com a config do CI limpo nos 4 arquivos; suite Deno 12 passed /
+0 failed; eslint limpo; manifesto OK.
+---
+ supabase/deployment-manifest.json                 | 14 +++++++-------
+ supabase/functions/batch-fetch-avatars/index.ts   | 15 ++-------------
+ .../functions/connection-health-check/index.ts    | 13 ++-----------
+ 3 files changed, 11 insertions(+), 31 deletions(-)
+
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 7af8dca6..9063043c 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -273,8 +273,8 @@
+     },
+     {
+       "path": "supabase/functions/batch-fetch-avatars/index.ts",
+-      "bytes": 7120,
+-      "sha256": "d1695f0698b4a2ce1a4c4402d959b00f1342dd64e0e04b10d4d7a8b0949821a0"
++      "bytes": 6280,
++      "sha256": "5af6d2bba51c96f2c9f23ea234c227268c3b5364cf596c5b39025d0edf0d15d4"
+     },
+     {
+       "path": "supabase/functions/bitrix-api/index.ts",
+@@ -308,8 +308,8 @@
+     },
+     {
+       "path": "supabase/functions/connection-health-check/index.ts",
+-      "bytes": 9937,
+-      "sha256": "9f3bca264bd7759cf745eacb8bb59c68bd098ebbb76abcb2b6c12a39737fa0a6"
++      "bytes": 9275,
++      "sha256": "23adebeffb49932c426e8b4f32a07bd8d5456f957280dab4b8432d65d6935a52"
+     },
+     {
+       "path": "supabase/functions/create-user/index.ts",
+@@ -727,7 +727,7 @@
+       "name": "batch-fetch-avatars",
+       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "7b4c7b5f696485b6be4c496945f6e24900787a91ff4b8360135e4719cfba6178",
++      "source_sha256": "fe28069b0ae492b20caa9cc430d082c4559a08ff0a06b7c2b292e25b7ff1b0c4",
+       "source_files": [
+         "supabase/functions/_shared/cron-secret-auth.ts",
+         "supabase/functions/_shared/edge-boot.ts",
+@@ -824,7 +824,7 @@
+       "name": "connection-health-check",
+       "entrypoint": "supabase/functions/connection-health-check/index.ts",
+       "verify_jwt": false,
+-      "source_sha256": "fc13cdc5b99b30afa03e306f61b202615d90dcdaf14ce5441ef4974e463546d7",
++      "source_sha256": "dbdc1a18b001b17dd7daf65cef80f2e2e9d464ac54900d7ddbfae5f67277b78f",
+       "source_files": [
+         "supabase/functions/_shared/cron-secret-auth.ts",
+         "supabase/functions/_shared/edge-boot.ts",
+@@ -1427,5 +1427,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "9adbcd073647e6e0b05310ebc67c29b5ebd8da8a06f75b235aa419e4a3bd6651"
++  "manifest_sha256": "3207b8d194678a74115d64be2c89faaeb25765d2a7bd6974d9d430ce432404e7"
+ }
+diff --git a/supabase/functions/batch-fetch-avatars/index.ts b/supabase/functions/batch-fetch-avatars/index.ts
+index 1dc7f48c..0aee2749 100644
+--- a/supabase/functions/batch-fetch-avatars/index.ts
++++ b/supabase/functions/batch-fetch-avatars/index.ts
+@@ -10,10 +10,8 @@ export async function handleBatchFetchAvatars(
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   _injected?: EdgeInjected<any>,
+ ): Promise<Response> {
+-  // O `??` do boot e PREGUICOSO de proposito: com `_injected.supabase` (testes) o
+-  // requireEnv('SUPABASE_URL') nem roda. O generico de bootEdge e a anotacao
+-  // `as SupabaseClient` — sem ela o receiver `any` faria o TS perder a inferencia dos
+-  // callbacks das queries abaixo (TS7006 em contacts.map/connections.map/batch.map).
++  // Regra, motivo e fail-closed do guard: _shared/cron-secret-auth.ts. O literal da RPC
++  // fica aqui de proposito (o guard de catalogo valida o nome do alvo contra o schema).
+   const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+     fnName: 'batch-fetch-avatars',
+     injected: _injected,
+@@ -22,15 +20,6 @@ export async function handleBatchFetchAvatars(
+   if (cors) return cors;
+ 
+   try {
+-
+-    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+-    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+-    // aceitava como "um JWT valido". O caminho de Bearer e o consumidor legitimo do front
+-    // (useNewConversation e useInboxBulkActions chamam via functions.invoke com o JWT da
+-    // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
+-    // o literal da RPC fica AQUI de proposito, para o guard de catalogo
+-    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+     const authorized = await isAuthorizedCronOrUser(req, supabase, {
+       serviceKey,
+       readVaultSecret: async () => {
+diff --git a/supabase/functions/connection-health-check/index.ts b/supabase/functions/connection-health-check/index.ts
+index d69603c5..a75d62e2 100644
+--- a/supabase/functions/connection-health-check/index.ts
++++ b/supabase/functions/connection-health-check/index.ts
+@@ -11,9 +11,8 @@ export async function handleConnectionHealthCheck(
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   _injected?: EdgeInjected<any>,
+ ): Promise<Response> {
+-  // O `??` do boot e PREGUICOSO de proposito: os testes injetam o client e rodam sem
+-  // SUPABASE_URL. A anotacao `as SupabaseClient` fica no generico do bootEdge — sem ela
+-  // o receiver `any` faz o TS perder a inferencia dos callbacks do client no corpo.
++  // Regra, motivo e fail-closed do guard: _shared/cron-secret-auth.ts. O literal da RPC
++  // fica aqui de proposito (o guard de catalogo valida o nome do alvo contra o schema).
+   const { cors, log, headers, supabase, serviceKey } = bootEdge<SupabaseClient>(req, {
+     fnName: 'connection-health-check',
+     injected: _injected,
+@@ -22,14 +21,6 @@ export async function handleConnectionHealthCheck(
+   if (cors) return cors;
+ 
+   try {
+-
+-    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
+-    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
+-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
+-    // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
+-    // O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo); o
+-    // literal da RPC fica AQUI de proposito, para o guard de catalogo
+-    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+     const authorized = await isAuthorizedCronOrUser(req, supabase, {
+       serviceKey,
+       readVaultSecret: async () => {
+-- 
+2.43.0
+

@@ -1,0 +1,6 @@
+ M src/components/dashboard/AIStatsWidget.tsx
+ M src/components/inbox/AudioMemePicker.tsx
+ M src/components/inbox/CustomEmojiPicker.tsx
+ M src/components/inbox/UniversityHelp.tsx
+ M src/components/talkx/TalkXCampaignWizard.tsx
+?? src/components/a11y/__tests__/alvo-de-toque-rotulos-pequenos.test.tsx

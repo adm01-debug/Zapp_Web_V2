@@ -1,0 +1,22 @@
+diff --git a/src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx b/src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx
+index 3693486935..622fdaaf7e 100644
+--- a/src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx
++++ b/src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx
+@@ -260,7 +260,7 @@ describe('useSatisfactionBreakdown — agregação da janela', () => {
+     expect(d.trendValue).toBe(0);
+   });
+ 
+-  it('por agente e por fila: nome resolvido, melhor CSAT primeiro e fallback de registro removido', async () => {
++  it('por agente e por fila: nome resolvido, melhor CSAT primeiro; fila inexistente vira "Fila removida" e linha sem agente/fila conta no total sem criar entrada', async () => {
+     h.queues = { data: [{ id: 'q1', name: 'Vendas' }], error: null };
+     h.paginas = [
+       {
+@@ -291,7 +291,7 @@ describe('useSatisfactionBreakdown — agregação da janela', () => {
+     expect(d.totalResponses).toBe(4);
+   });
+ 
+-  it('agente com avaliação mas perfil apagado aparece como "Agente removido"', async () => {
++  it('linha sem agent_id não cria entrada em byAgent — conta só no total (sem "Agente removido")', async () => {
+     h.paginas = [
+       { data: [linha('a1', 5, diasAtras(0), null, null)], error: null },
+       { data: [], error: null },

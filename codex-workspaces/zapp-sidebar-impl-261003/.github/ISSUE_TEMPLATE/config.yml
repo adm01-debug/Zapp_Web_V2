@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentação
+    url: https://github.com/adm01-debug/zapp-web/tree/main/docs
+    about: Consulte nossa documentação antes de abrir uma issue
+  - name: 💬 Suporte
+    url: https://wa.me/5511999999999
+    about: Para suporte urgente, entre em contato via WhatsApp

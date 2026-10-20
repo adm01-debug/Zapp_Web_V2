@@ -1,0 +1,311 @@
+diff --git a/src/components/contacts/ContactForm.tsx b/src/components/contacts/ContactForm.tsx
+index a8bfcfe31..67ad4113d 100644
+--- a/src/components/contacts/ContactForm.tsx
++++ b/src/components/contacts/ContactForm.tsx
+@@ -19,6 +19,8 @@ import type { GeoSearchPlace } from '@/lib/mapboxGeocode';
+ const ADDRESS_LISTBOX_ID = 'contact-form-address-listbox';
+ /** Só endereço/rua/cidade (E41) — POI não faz sentido para "onde entregar o brinde". */
+ const ADDRESS_SEARCH_TYPES = 'address,street,place';
++/** Regra 3 (item 5): campos cuja edição MANUAL pode invalidar a coordenada já gravada. */
++const CAMPOS_DE_ENDERECO = ['address', 'address_number', 'neighborhood', 'city', 'state', 'postal_code'];
+ 
+ export interface ContactFormValues {
+   name: string;
+@@ -105,9 +107,20 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
+     return () => document.removeEventListener('pointerdown', onPointerDown);
+   }, [addressListOpen]);
+ 
++  // Regra 3 da decisão 20260930-122408-sem-tarefa (opção a): o operador reescreveu o endereço à
++  // mão e a coordenada continua a MESMA → o pino pode estar no lugar velho. Aqui só sinalizamos;
++  // nunca apagamos nem reescrevemos a coordenada automaticamente.
++  const [coordenadaPossivelmenteVelha, setCoordenadaPossivelmenteVelha] = useState(false);
++  const marcarCoordenadaPossivelmenteVelha = (field: string) => {
++    if (!CAMPOS_DE_ENDERECO.includes(field)) return;
++    if (values.latitude || values.longitude) setCoordenadaPossivelmenteVelha(true);
++  };
++
+   /** Preenche os campos a partir do `/retrieve` — o operador continua podendo editar tudo depois. */
+   const fillFromPlace = (place: GeoSearchPlace) => {
+     const c = place.components;
++    // Regra 2: a coordenada nova acompanha o endereço escolhido — o aviso de "coordenada velha" sai.
++    setCoordenadaPossivelmenteVelha(false);
+     onChange('address', c?.street || place.name || values.address || '');
+     if (c?.addressNumber) onChange('address_number', c.addressNumber);
+     if (c?.neighborhood) onChange('neighborhood', c.neighborhood);
+@@ -275,7 +288,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
+               <Label htmlFor="postal_code">CEP</Label>
+               <Input id="postal_code" placeholder="00000-000" inputMode="numeric"
+                 value={formatCep(values.postal_code || '')}
+-                onChange={(e) => onChange('postal_code', e.target.value.replace(/\D/g, '').slice(0, 8))}
++                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('postal_code'); onChange('postal_code', e.target.value.replace(/\D/g, '').slice(0, 8)); }}
+                 maxLength={9} />
+             </div>
+             <div className="col-span-2 space-y-1.5">
+@@ -294,6 +307,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
+                   }
+                   placeholder="Rua, avenida..." value={values.address || ''}
+                   onChange={(e) => {
++                    marcarCoordenadaPossivelmenteVelha('address');
+                     onChange('address', e.target.value);
+                     addressAutocomplete.setQuery(e.target.value);
+                     setAddressListOpen(true);
+@@ -335,12 +349,12 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
+             <div className="space-y-1.5">
+               <Label htmlFor="address_number">Número</Label>
+               <Input id="address_number" placeholder="123 ou S/N" value={values.address_number || ''}
+-                onChange={(e) => onChange('address_number', e.target.value)} maxLength={20} />
++                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('address_number'); onChange('address_number', e.target.value); }} maxLength={20} />
+             </div>
+             <div className="col-span-2 space-y-1.5">
+               <Label htmlFor="neighborhood">Bairro</Label>
+               <Input id="neighborhood" placeholder="Bairro" value={values.neighborhood || ''}
+-                onChange={(e) => onChange('neighborhood', e.target.value)} maxLength={100} />
++                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('neighborhood'); onChange('neighborhood', e.target.value); }} maxLength={100} />
+             </div>
+           </div>
+ 
+@@ -348,15 +362,22 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
+             <div className="col-span-2 space-y-1.5">
+               <Label htmlFor="city">Cidade</Label>
+               <Input id="city" placeholder="Cidade" value={values.city || ''}
+-                onChange={(e) => onChange('city', e.target.value)} maxLength={100} />
++                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('city'); onChange('city', e.target.value); }} maxLength={100} />
+             </div>
+             <div className="space-y-1.5">
+               <Label htmlFor="state">UF</Label>
+               <Input id="state" placeholder="SP" value={values.state || ''}
+-                onChange={(e) => onChange('state', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
++                onChange={(e) => { marcarCoordenadaPossivelmenteVelha('state'); onChange('state', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2)); }}
+                 maxLength={2} />
+             </div>
+           </div>
++
++          {coordenadaPossivelmenteVelha && (
++            <p role="status" className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
++              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
++              O endereço foi alterado, mas a localização (coordenada) continua a anterior — ela pode estar desatualizada.
++            </p>
++          )}
+         </div>
+ 
+         <p className="text-xs text-muted-foreground flex items-center gap-1"><span className="text-destructive">*</span> Campos obrigatórios</p>
+diff --git a/src/components/contacts/__tests__/ContactFormEndereco.test.tsx b/src/components/contacts/__tests__/ContactFormEndereco.test.tsx
+index 74a061cd9..438970962 100644
+--- a/src/components/contacts/__tests__/ContactFormEndereco.test.tsx
++++ b/src/components/contacts/__tests__/ContactFormEndereco.test.tsx
+@@ -161,3 +161,64 @@ describe('ContactForm — autocomplete de endereço (E41)', () => {
+     }
+   });
+ });
++
++/**
++ * Item 5 (decisão 20260930-122408-sem-tarefa, opção a) — regra 3: o endereço foi reescrito à mão
++ * e a coordenada continua a MESMA → o pino pode estar no lugar velho. Aviso discreto, e nada é
++ * apagado nem reescrito sozinho.
++ */
++describe('ContactForm — coordenada possivelmente desatualizada (item 5, regra 3)', () => {
++  const AVISO = /localização \(coordenada\) continua a anterior/i;
++  const comCoordenada = { address: 'Av. Paulista', latitude: '-23.5613', longitude: '-46.6565' };
++
++  it('reescrever o endereço à mão com coordenada já gravada mostra o aviso', () => {
++    renderForm(comCoordenada);
++    expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
++
++    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
++
++    expect(screen.getByText(AVISO)).toBeInTheDocument();
++  });
++
++  it('sem coordenada nenhuma, mexer no endereço NÃO mostra o aviso', () => {
++    renderForm({ address: 'Av. Paulista' });
++
++    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
++
++    expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
++  });
++
++  it('editar outro campo de endereço (cidade) também sinaliza', () => {
++    renderForm({ city: 'São Paulo', latitude: '-23.5', longitude: '-46.6' });
++
++    fireEvent.change(screen.getByLabelText('Cidade'), { target: { value: 'Campinas' } });
++
++    expect(screen.getByText(AVISO)).toBeInTheDocument();
++  });
++
++  it('editar um campo que NÃO é de endereço (nome) não sinaliza', () => {
++    renderForm({ latitude: '-23.5', longitude: '-46.6' });
++
++    fireEvent.change(screen.getByLabelText(/Nome Principal/), { target: { value: 'Beltrano' } });
++
++    expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
++  });
++
++  it('escolher uma sugestão do autocomplete LIMPA o aviso (a coordenada nova acompanha — regra 2)', async () => {
++    h.select.mockResolvedValue({ lat: -22.9, lng: -43.2, name: 'Rua X', address: 'Rua X' });
++    const anteriores = h.suggestions;
++    h.suggestions = [{ id: 's1', name: 'Rua X', address: 'Rua X', kind: 'street' }];
++    try {
++      renderForm(comCoordenada);
++      fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua X' } });
++      expect(screen.getByText(AVISO)).toBeInTheDocument();
++
++      fireEvent.focus(screen.getByLabelText('Logradouro'));
++      fireEvent.click(screen.getByRole('option', { name: /Rua X/ }));
++
++      await waitFor(() => expect(screen.queryByText(AVISO)).not.toBeInTheDocument());
++    } finally {
++      h.suggestions = anteriores;
++    }
++  });
++});
+diff --git a/src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx b/src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx
+index 23d463dde..6fb6d0333 100644
+--- a/src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx
++++ b/src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx
+@@ -298,6 +298,32 @@ describe('EditContactDialog', () => {
+     });
+   });
+ 
++  // ========== ITEM 5 (decisão 20260930-122408-sem-tarefa, opção a) ==========
++  it('com a coordenada carregada, salvar sem tocar no endereço NÃO envia latitude/longitude (regra 1)', async () => {
++    renderDialog({
++      contact: { ...baseContact, address: 'Av. Paulista', latitude: -23.5613, longitude: -46.6565 },
++    });
++    fireEvent.change(screen.getByDisplayValue('John Doe'), { target: { value: 'Jonas' } });
++    fireEvent.click(screen.getByText('Salvar'));
++
++    await waitFor(() => {
++      const updatePayload = mockUpdate.mock.calls[0][0];
++      expect(updatePayload).toEqual({ name: 'Jonas' });
++    });
++  });
++
++  it('item 5: reescrever o endereço à mão com coordenada carregada sinaliza coordenada possivelmente velha (regra 3)', () => {
++    renderDialog({
++      contact: { ...baseContact, address: 'Av. Paulista', latitude: -23.5613, longitude: -46.6565 },
++    });
++    const aviso = /localização \(coordenada\) continua a anterior/i;
++    expect(screen.queryByText(aviso)).not.toBeInTheDocument();
++
++    fireEvent.change(screen.getByLabelText('Logradouro'), { target: { value: 'Rua Nova' } });
++
++    expect(screen.getByText(aviso)).toBeInTheDocument();
++  });
++
+   it('não chama o supabase quando Salvar é clicado sem nenhuma edição', async () => {
+     const { onOpenChange } = renderDialog();
+     fireEvent.click(screen.getByText('Salvar'));
+diff --git a/src/components/inbox/contact-details/__tests__/editContactShape.test.ts b/src/components/inbox/contact-details/__tests__/editContactShape.test.ts
+index 69be72811..c9f516857 100644
+--- a/src/components/inbox/contact-details/__tests__/editContactShape.test.ts
++++ b/src/components/inbox/contact-details/__tests__/editContactShape.test.ts
+@@ -58,3 +58,36 @@ describe('buildEditContactShape — endereço (A4-D)', () => {
+     expect(shape).toMatchObject({ nickname: 'Joãozinho', company: 'XBZ', job_title: 'Diretor', surname: 'Silva', contact_type: 'lead' });
+   });
+ });
++
++/**
++ * Item 5 (decisão 20260930-122408-sem-tarefa, opção a): o `EditContactDialog` já aceitava
++ * latitude/longitude no tipo, no estado e nos parsers — mas o shape nunca as entregava, então o
++ * form abria com a coordenada VAZIA e o operador não enxergava o pino já gravado.
++ */
++describe('buildEditContactShape — coordenada (item 5)', () => {
++  const coordenada = { latitude: -23.5613, longitude: -46.6565 };
++
++  it('repassa latitude/longitude vindas do dado enriquecido', () => {
++    const shape = buildEditContactShape({ contact: contato, enrichedData: coordenada });
++
++    expect(shape.latitude).toBe(-23.5613);
++    expect(shape.longitude).toBe(-46.6565);
++  });
++
++  it('usa a coordenada do próprio contato quando a query não trouxe (rede de segurança)', () => {
++    const shape = buildEditContactShape({
++      contact: { ...contato, ...coordenada },
++      enrichedData: null,
++    });
++
++    expect(shape.latitude).toBe(-23.5613);
++    expect(shape.longitude).toBe(-46.6565);
++  });
++
++  it('sem coordenada nenhuma fica undefined — e o Salvar por diferença não grava null por cima', () => {
++    const shape = buildEditContactShape({ contact: contato });
++
++    expect(shape.latitude).toBeUndefined();
++    expect(shape.longitude).toBeUndefined();
++  });
++});
+diff --git a/src/components/inbox/contact-details/editContactShape.ts b/src/components/inbox/contact-details/editContactShape.ts
+index c5d7c05e5..8c9c975cb 100644
+--- a/src/components/inbox/contact-details/editContactShape.ts
++++ b/src/components/inbox/contact-details/editContactShape.ts
+@@ -31,6 +31,8 @@ export interface EditContactShapeSource {
+   neighborhood?: string | null;
+   postal_code?: string | null;
+   state?: string | null;
++  latitude?: number | null;
++  longitude?: number | null;
+ }
+ 
+ export function buildEditContactShape({
+@@ -60,5 +62,9 @@ export function buildEditContactShape({
+     neighborhood: enrichedData?.neighborhood ?? contact.neighborhood ?? undefined,
+     postal_code: enrichedData?.postal_code ?? contact.postal_code ?? undefined,
+     state: enrichedData?.state ?? contact.state ?? undefined,
++    // Item 5 (onda 2): a coordenada sai daqui também. Sem ela o `EditContactDialog` abria com
++    // lat/lng vazios (o form até os aceita, mas nunca os recebia) e não exibia o pino atual.
++    latitude: enrichedData?.latitude ?? contact.latitude ?? undefined,
++    longitude: enrichedData?.longitude ?? contact.longitude ?? undefined,
+   };
+ }
+diff --git a/src/hooks/crm/useContactEnrichedData.ts b/src/hooks/crm/useContactEnrichedData.ts
+index 4b4d62fe4..14ffb0a2e 100644
+--- a/src/hooks/crm/useContactEnrichedData.ts
++++ b/src/hooks/crm/useContactEnrichedData.ts
+@@ -21,6 +21,11 @@ export interface EnrichedContactData {
+   neighborhood?: string | null;
+   postal_code?: string | null;
+   state?: string | null;
++  // Item 5 (decisão 20260930-122408-sem-tarefa, opção a): a coordenada entra no painel para o
++  // editor abrir COM ela — sem isso o form abria vazio e o operador não enxergava a localização
++  // já gravada. Opcionais para não quebrar fixtures legadas.
++  latitude?: number | null;
++  longitude?: number | null;
+ }
+ 
+ export interface AIConversationTag {
+diff --git a/src/services/__tests__/contact.service.enriched.test.ts b/src/services/__tests__/contact.service.enriched.test.ts
+index cacb6b1d5..43d0c4ddd 100644
+--- a/src/services/__tests__/contact.service.enriched.test.ts
++++ b/src/services/__tests__/contact.service.enriched.test.ts
+@@ -38,4 +38,14 @@ describe('ContactService.fetchEnrichedData — endereço (A4-D)', () => {
+       expect(cols).toContain(coluna);
+     }
+   });
++
++  // Item 5: sem a coordenada na query o editor abre com lat/lng vazios mesmo quando o contato tem.
++  it('pede latitude/longitude (item 5)', async () => {
++    await ContactService.fetchEnrichedData('c1');
++
++    const cols = colunasPedidas[colunasPedidas.length - 1] ?? '';
++    for (const coluna of ['latitude', 'longitude']) {
++      expect(cols, `faltou pedir "${coluna}"`).toContain(coluna);
++    }
++  });
+ });
+diff --git a/src/services/contact.service.ts b/src/services/contact.service.ts
+index b0f56d007..d362a5e47 100644
+--- a/src/services/contact.service.ts
++++ b/src/services/contact.service.ts
+@@ -168,7 +168,9 @@ export class ContactService {
+        .from('contacts')
+        // A4-D (onda 2): as 6 colunas de endereço entram aqui. Sem elas o painel abria o editor com
+       // `address`/`city`/`postal_code` vazios e o Salvar gravava esse vazio por cima do endereço.
+-      .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state')
++      // Item 5 (onda 2): latitude/longitude entram pelo mesmo motivo — o editor precisa abrir com a
++      // coordenada para poder preservá-la (o Salvar é por diferença; não tocar = não gravar).
++      .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state, latitude, longitude')
+        .eq('id', contactId)
+        .single();
+    }

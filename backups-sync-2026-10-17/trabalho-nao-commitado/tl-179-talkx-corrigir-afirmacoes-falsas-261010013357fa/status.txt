@@ -1,0 +1,3 @@
+ M docs/talkx/ARQUITETURA.md
+ M docs/talkx/PARIDADE.md
+ M scripts/ci/talkx-docs-drift.unit.mjs

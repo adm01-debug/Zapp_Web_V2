@@ -1,0 +1,3 @@
+src/components/dashboard/__tests__/warRoomSentimento-botoes.a11y.test.tsx
+src/components/dashboard/war-room/__tests__/war-room-nomes.a11y.test.tsx
+src/components/queues/__tests__/slaProgresso.a11y.test.tsx

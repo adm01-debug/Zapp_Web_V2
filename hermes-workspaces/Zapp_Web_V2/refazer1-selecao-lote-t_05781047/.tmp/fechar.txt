@@ -1,0 +1,2 @@
+FECHADO (modo V2, local): v2/inbox-selecao-lote-acompanha-filtro-26101312252db7 @ ed2a4b644 — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101312252db7.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.

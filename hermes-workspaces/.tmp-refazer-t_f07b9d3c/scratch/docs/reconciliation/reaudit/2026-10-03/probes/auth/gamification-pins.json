@@ -1,0 +1,26 @@
+{
+  "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "files": [
+    {
+      "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
+      "git_blob_sha": "566782938f8de0bebcd166ded452b4f89970abe3",
+      "bytes": 15179
+    },
+    {
+      "path": "src/components/gamification/MiniGameDialogs.tsx",
+      "git_blob_sha": "8569ac3983114bb1e1c4f00b7d7fead20a1727cc",
+      "bytes": 8638
+    },
+    {
+      "path": "src/components/gamification/TrainingMiniGames.tsx",
+      "git_blob_sha": "5ed087017c1fa5b97603845b75316d785b2b9129",
+      "bytes": 4276
+    },
+    {
+      "path": "src/components/gamification/miniGamesData.ts",
+      "git_blob_sha": "f49db178088a56b89dbe7a07765e0a015241f4d9",
+      "bytes": 2702
+    }
+  ]
+}

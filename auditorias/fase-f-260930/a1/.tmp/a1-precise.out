@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a1
+
+stdout | .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P1) filtro -> navigate("/") -> a URL fica limpa e o filtro continua aplicado?
+A1-P1 {"comFiltro":{"barra":"?prio=high","router":"","prio":"high"},"logo":{"barra":"","router":"","prio":"high"},"depois":{"barra":"","router":"","prio":"high","veApp":null}}
+
+ ✓ .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P1) filtro -> navigate("/") -> a URL fica limpa e o filtro continua aplicado? 80ms
+stdout | .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P2) navigate para a MESMA search e depois mexer num filtro
+A1-P2 {"aposNavigate":{"barra":"","prio":"high","veApp":null},"aposTocar":{"barra":"?prio=high&alarm=1","prio":"high"}}
+
+ ✓ .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P2) navigate para a MESMA search e depois mexer num filtro 106ms
+stdout | .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P3) debounce: digitar -> esperar 250ms reais -> a busca aplicou?
+A1-P3 {"logo":{"q":"","texto":"liga"},"depois":{"q":"liga","texto":"liga","barra":"?q=liga","router":""}}
+
+ ✓ .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P3) debounce: digitar -> esperar 250ms reais -> a busca aplicou? 304ms
+stdout | .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P4) digitar -> 250ms (aplica) -> mudar prio -> o q sobrevive?
+A1-P4 {"aplicado":{"q":"liga","barra":"?q=liga"},"final":{"q":"liga","prio":"high","barra":"?q=liga&prio=high"}}
+
+ ✓ .tmp/a1-precise.test.tsx > A1 — escrita na URL apos navegacao (timers reais) > P4) digitar -> 250ms (aplica) -> mudar prio -> o q sobrevive? 356ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  19:28:01
+   Duration  1.93s (transform 102ms, setup 87ms, import 189ms, tests 850ms, environment 674ms)
+

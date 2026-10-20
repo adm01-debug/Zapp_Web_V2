@@ -1,0 +1,415 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity": {
+    "head_verified": true,
+    "source_blobs_verified": 35,
+    "pins_sha256": "b950bec3c548df82dd27820bf55e3591edb3900e34c51d1ee264c9143689cdbd",
+    "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "runner_sha256": "fb71f7abb4b56665a589ccfa39c3479ab1a6cb2537ecf8191bcf252f33fdd99f"
+  },
+  "engine": "v24.19.0",
+  "no_network": true,
+  "method": "Quinta passagem: consumidores Inbox e chat, TypeScript/TSX extraídos com estado, mídia e SDK sintéticos; nenhuma operação real.",
+  "source_blob_hashes": {
+    "src/lib/storage_object_reference.ts": "7edf9e17f861b96f90f2d346132b1e1557a0f97c",
+    "src/components/inbox/quick-replies/QuickReplyDialog.tsx": "c05102453430abb6d44b7ce01e5fe7bcb85e23ba",
+    "src/components/inbox/QuickRepliesManager.tsx": "5d247dbc7921dc42d7dee3d7890ef50c39865f34",
+    "src/components/settings/SettingsView.tsx": "c576115115689b975b3897df601519e09de34f53",
+    "src/components/inbox/ContactTypeFilter.tsx": "e930b55f4f5eb28a35e1bea0bb205a0420617f09",
+    "src/hooks/inbox/useInboxFilters.ts": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+    "src/components/inbox/VirtualizedRealtimeList.tsx": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+    "src/components/inbox/conversation-list/StatusChips.tsx": "516ed68982337cd006948a28b0f8050f1c796a8e",
+    "src/components/inbox/RealtimeInboxView.tsx": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+    "src/components/inbox/__tests__/StatusChips.test.tsx": "80c01e2750da240ea311c81d9f31d0df35b5f5e0",
+    "src/components/inbox/VoiceChangerPicker.tsx": "8c02944bb93ab12de5951377ca93c59535eb86fc",
+    "src/components/inbox/chat/useChatPanelHandlers.ts": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+    "src/components/inbox/TextToAudioButton.tsx": "6252c98509dafdd868fe59bc37c5118ae849ecd6",
+    "src/components/inbox/chat/ChatInputToolbars.tsx": "574d864f2b373d7ff3c932b8b355d267d8c0cd6c",
+    "src/components/inbox/useChatMediaSending.ts": "0971cdcf93610ede183103e7cc195f5582689052",
+    "src/hooks/chat/useContactMedia.ts": "dd62b290ce7572ee7cc76e3b0b2019402fc02942",
+    "src/hooks/storage/useResolvedStorageUrl.ts": "fa8a58242a22ce01eecb47bd3e6736d859e98c3f",
+    "src/components/inbox/tabs/FileThumb.tsx": "eca45212b17eb0a4b74b6d46767b77e489f7f033",
+    "src/components/inbox/tabs/__tests__/FileThumb.test.tsx": "9001744655a2101c973fe5e23eeaf01921e19cd9",
+    "src/components/inbox/tabs/FileDetailPanel.tsx": "1063db9f0cccd2da72e125fa2fd253c36fd83638",
+    "src/components/inbox/tabs/FilesTab.tsx": "de1d14e73e67927d6503cc87c4ac58cd3b507872",
+    "src/components/inbox/WhisperMode.tsx": "fc38f7f87df8affe0df641292ca8ba2fb2a99eac",
+    "src/components/inbox/ChatPanel.tsx": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+    "src/components/inbox/LeadRiskScorePanel.tsx": "83a51feb50aeb669436d9975340e1572d9515059",
+    "src/components/inbox/contact-details/ContactAccordionSections.tsx": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+    "src/components/inbox/stickers/StickerManager.tsx": "77141cad892057b8dad0503ac72c1e9562e46355",
+    "src/components/inbox/RealtimeCollaboration.tsx": "262bb4854ae43d599315a1a7d52bc5b2d97f4eae",
+    "src/components/inbox/collaboration/HandoffDialog.tsx": "2db38c55befcfd0d5da5c773f86cd8d780bfdc76",
+    "src/components/inbox/contact-details/ContactActionButtons.tsx": "851aa7e03c6010ebbdd240bfdc5c52ddba94f55d",
+    "src/hooks/inbox/useSentimentAlerts.ts": "f0de5862d5eedd0b1e30d188835698ba4c37568d",
+    "src/hooks/inbox/useRealtimeSentimentAlerts.ts": "a31268015f367b726c7a2baec21b4e0d8dd36615",
+    "src/App.tsx": "4328fcf14cd3765f0cbda0a426a068a21ebc958a",
+    "src/pages/ViewRouter.tsx": "9964a4ea364a29ff6a59c5e49e199c2eeab22ec9",
+    "src/components/dashboard/DashboardView.tsx": "1a89a0f309bbc5aaeae9f03761faadd7e61715ab",
+    "src/components/inbox/AIConversationAssistant.tsx": "374f129a2b95556b16b26ad1c21a0c5332b328ac"
+  },
+  "results": [
+    {
+      "id": "quick_reply_dialog_stale_target",
+      "description": "Editar B reutiliza o formulário de A; primeira edição após montagem vazia abre sem o registro",
+      "observed": {
+        "firstEditInitiallyBlank": true,
+        "updates": [
+          {
+            "id": "template-A",
+            "data": {
+              "title": "Draft A",
+              "content": "Text intended for A",
+              "shortcut": "/a",
+              "category": "geral"
+            }
+          },
+          {
+            "id": "template-B",
+            "data": {
+              "title": "Draft A",
+              "content": "Text intended for A",
+              "shortcut": "/a",
+              "category": "geral"
+            }
+          }
+        ],
+        "remountedControlTitle": "Original B"
+      },
+      "limitations": "Estado/hooks reais sem DOM; props seguem o pai persistente atual, verificado no TSX. Banco não chamado; o efeito provado é ID B receber payload de A no callback de atualização."
+    },
+    {
+      "id": "group_filter_removes_required_hyphen",
+      "description": "Filtro de grupos rejeita até o formato que sua própria regex espera e inclui grupo em individuais",
+      "observed": {
+        "groupCounts": [
+          {
+            "filter": "grupo",
+            "count": 0
+          },
+          {
+            "filter": "grupo_orcamentos",
+            "count": 0
+          },
+          {
+            "filter": "grupo_aprovacao",
+            "count": 0
+          },
+          {
+            "filter": "grupo_os",
+            "count": 0
+          },
+          {
+            "filter": "grupo_acerto",
+            "count": 0
+          },
+          {
+            "filter": "grupo_sem_categoria",
+            "count": 0
+          }
+        ],
+        "individualIds": [
+          "group",
+          "person"
+        ],
+        "allControl": 2
+      },
+      "limitations": "Predicado, opções e função de filtro reais; fixture explicita um grupo já presente na lista. Não depende de dados/quantidade de grupos produtivos."
+    },
+    {
+      "id": "status_chip_uses_auth_id_for_profile_fk",
+      "description": "Contato próprio fica com contador zero quando auth.id difere de profile.id; badge de outro atendente inclui o próprio",
+      "observed": {
+        "mismatchedIdentityCounts": {
+          "all": 1,
+          "unread": 0,
+          "attending": 0,
+          "waiting": 0,
+          "resolved": 0
+        },
+        "identicalIdentityControl": {
+          "all": 1,
+          "unread": 0,
+          "attending": 1,
+          "waiting": 0,
+          "resolved": 0
+        },
+        "selfBadgeRenderedByRowCondition": true
+      },
+      "limitations": "Contagem e condição de badge reais; não demonstra dados produtivos. Fixture separa identidades que os testes existentes igualam; filtro ativo usa profileId conforme contrato."
+    },
+    {
+      "id": "voice_picker_unmount_keeps_stream",
+      "description": "Desmontagem do VoiceChangerPicker não aciona a limpeza que para tracks",
+      "observed": {
+        "stopCallsAfterUnmount": 0,
+        "recordingAfterUnmount": true,
+        "explicitCleanupControlStops": 1
+      },
+      "limitations": "MediaRecorder e tracks sintéticos; corpo real do componente sem efeito de desmontagem. Não abre microfone físico. A remontagem keyed no consumidor elimina o componente sem chamar seu onOpenChange."
+    },
+    {
+      "id": "voice_picker_permission_resolves_after_close",
+      "description": "Permissão simulada concedida após fechar inicia gravação com popover fechado",
+      "observed": {
+        "popoverOpen": false,
+        "isRecording": true,
+        "recordersStarted": 1,
+        "trackStops": 0
+      },
+      "limitations": "Callback onOpenChange extraído literalmente do TSX; getUserMedia é promessa controlada. Prova de ordem de operações, sem teste de permissão/driver físico."
+    },
+    {
+      "id": "generated_tts_send_before_outbound",
+      "description": "TTS fecha e descarta blob com sucesso antes de o envio falhar no pai",
+      "observed": {
+        "eventsBeforeDeliverySettled": [
+          [
+            "tts",
+            "success",
+            "Áudio gerado com a voz Fixture!"
+          ],
+          [
+            "parent",
+            "begin"
+          ],
+          [
+            "tts",
+            "success",
+            "Áudio enviado!"
+          ]
+        ],
+        "eventsAfterFailure": [
+          [
+            "tts",
+            "success",
+            "Áudio gerado com a voz Fixture!"
+          ],
+          [
+            "parent",
+            "begin"
+          ],
+          [
+            "tts",
+            "success",
+            "Áudio enviado!"
+          ],
+          [
+            "parent",
+            "error",
+            "Erro ao enviar áudio"
+          ]
+        ],
+        "convertedBlobRetained": false
+      },
+      "limitations": "Conversão/fetch/player e envio simulados; handlers reais da UI e pai. Texto original pode continuar no editor; perda provada é a prévia de áudio gerada, sem afirmar entrega ao provedor."
+    },
+    {
+      "id": "transformed_voice_send_before_outbound",
+      "description": "Voz transformada limpa prévia e confirma envio enquanto sendOutboundMessage ainda está pendente",
+      "observed": {
+        "eventsBeforeOutboundSettled": [
+          [
+            "picker",
+            "success",
+            "Áudio enviado! 🎤"
+          ],
+          [
+            "outbound",
+            "begin"
+          ]
+        ],
+        "eventsAfterFailure": [
+          [
+            "picker",
+            "success",
+            "Áudio enviado! 🎤"
+          ],
+          [
+            "outbound",
+            "begin"
+          ],
+          [
+            "parent",
+            "error",
+            "Erro ao enviar áudio meme"
+          ]
+        ],
+        "uploadedObjects": 1,
+        "previewRetained": false
+      },
+      "limitations": "Storage/fetch e transporte simulados; callback normalizador tratado como identidade nesta prova, pois não é o contrato sob teste. Não afirma objeto órfão em toda rejeição incerta do provedor."
+    },
+    {
+      "id": "batch_signed_thumbnail_cannot_refresh",
+      "description": "Imagem que já recebeu assinatura em lote chama refresh de source vazio e permanece indisponível",
+      "observed": {
+        "batch": [
+          {
+            "bucket": "whatsapp-media",
+            "paths": [
+              "contact/a.png"
+            ],
+            "ttl": 3600
+          }
+        ],
+        "failedBatchThumb": {
+          "signCalls": 0,
+          "failed": true,
+          "srcUnchanged": true
+        },
+        "individualFallbackControl": {
+          "signCalls": 2,
+          "failed": false
+        }
+      },
+      "limitations": "Assinador em lote, hook de resolução e estado/callback ThumbImage reais. Falha de imagem injetada modela assinatura expirada/invalidada; nenhum HTTP real. O teste existente simula resolver sem conferir seu argumento."
+    },
+    {
+      "id": "file_detail_error_persists_into_next_item",
+      "description": "Erro de imagem A mantém placeholder quando detalhes passam para B com URL válida",
+      "observed": {
+        "afterSwitch": {
+          "itemId": "B",
+          "displayUrl": "https://fixture.invalid/b.png",
+          "hasError": true,
+          "imageBranchAvailable": false
+        },
+        "remountControlHasError": false
+      },
+      "limitations": "Estado e onError reais; FilesTab preserva instância sem key ao trocar selected. Não é o refresh A→B de INB-033 e não depende de URL assinada. Nenhum DOM/HTTP real."
+    },
+    {
+      "id": "whisper_conditional_consumer_omits_target",
+      "description": "Se montado com as props condicionais de ChatPanel, Sussurro retorna antes do INSERT por falta de targetAgentId",
+      "observed": {
+        "conditionalMountInsertCalls": 0,
+        "draftRetained": true,
+        "explicitTargetControlInsert": {
+          "contact_id": "contact-1",
+          "sender_id": "supervisor-1",
+          "target_agent_id": "agent-1",
+          "content": "Fixture coaching"
+        }
+      },
+      "limitations": "Contrato condicional, sem finding de jornada ativa: ChatPanel inicia whisper=false e a leitura dos comandos/ações não estabeleceu uma abertura desse estado. Hook state/handler reais com query/realtime/DB locais; nenhum envio a pessoa, INSERT apenas em array de fixture."
+    },
+    {
+      "id": "lead_score_failed_load_writes_defaults",
+      "description": "Depois de SELECT falhar, editar só origem e salvar sobrescreve scores/consentimento com defaults",
+      "observed": {
+        "failedReadThenAuthorizedWrite": {
+          "writes": [
+            {
+              "lead_score": 0,
+              "risk_score": 0,
+              "lead_origin": "referral",
+              "consent_status": null
+            }
+          ],
+          "row": {
+            "lead_score": 0,
+            "risk_score": 0,
+            "lead_origin": "referral",
+            "consent_status": null
+          }
+        },
+        "successfulReadControl": {
+          "writes": [
+            {
+              "lead_score": 85,
+              "risk_score": 35,
+              "lead_origin": "referral",
+              "consent_status": "granted"
+            }
+          ],
+          "row": {
+            "lead_score": 85,
+            "risk_score": 35,
+            "lead_origin": "referral",
+            "consent_status": "granted"
+          }
+        }
+      },
+      "limitations": "Consulta/mutation e estado reais; banco é modelo local com escrita autorizada. Pré-condição: falha transitória de leitura e recuperação no save do mesmo contato; não há alegação de mistura entre contatos keyed."
+    },
+    {
+      "id": "sticker_manager_recent_toggle_no_effect",
+      "description": "Controle Recentes muda estado visual sem alterar itens, ordem ou consulta",
+      "observed": {
+        "before": [
+          "older-popular",
+          "new-unused"
+        ],
+        "after": [
+          "older-popular",
+          "new-unused"
+        ],
+        "showRecent": true
+      },
+      "limitations": "Estado/filter useMemo e wiring TSX reais; query é fixture. Não afirma que o picker principal de stickers tenha a mesma falha: é o administrador de figurinhas compartilhadas."
+    },
+    {
+      "id": "quick_reply_card_reports_copy_without_clipboard",
+      "description": "Clique no card de resposta rápida em Configurações anuncia cópia sem escrever no clipboard",
+      "observed": {
+        "copyWritesAfterCard": 0,
+        "successAfterCard": [
+          "toast",
+          "success",
+          "Resposta copiada!"
+        ],
+        "explicitCopyControlWrites": 1,
+        "useCountCalls": 1
+      },
+      "limitations": "Handlers reais e contrato Settings sem onSelect; clipboard é array local. O botão específico Copiar funciona como controle e não é incluído na falha."
+    },
+    {
+      "id": "collaboration_handoff_error_variant",
+      "description": "Rota Adicionar participante → Transferir anuncia sucesso após UPDATE devolver error",
+      "observed": {
+        "operations": [
+          {
+            "table": "contacts",
+            "payload": {
+              "assigned_to": "target-agent"
+            },
+            "field": "id",
+            "id": "fixture-contact"
+          }
+        ],
+        "events": [
+          [
+            "open",
+            false
+          ],
+          [
+            "toast",
+            "success",
+            "Conversa transferida com sucesso!"
+          ]
+        ]
+      },
+      "limitations": "Extensão de evidência do contrato INB-009, preservado literalmente. Callback/pai reais; não executa transferência, lookup Auth ou nota (comment vazio)."
+    },
+    {
+      "id": "sentiment_actions_without_conversation_navigation",
+      "description": "Ver conversa apenas loga; Ver detalhes depende de elemento da aba IA sem rota alternativa",
+      "observed": {
+        "localAction": "Ver conversa",
+        "localActionEffect": [
+          "Sentiment notification received",
+          {
+            "notificationId": "fixture-notification"
+          }
+        ],
+        "withoutMatchingElementClicks": 0,
+        "matchingElementControlClicks": 1,
+        "selectors": [
+          "[value=\"ai\"]",
+          "[value=\"ai\"]"
+        ]
+      },
+      "limitations": "Hooks e handlers reais; DOM é uma fronteira mínima, sem render Radix. Dashboard define ai dinamicamente, portanto não se alega ausência universal do alvo nem falha de um botão real no Dashboard. A variante global exige tela sem elemento correspondente; a local não navega em nenhuma ramificação do handler. Nenhum alerta/mensagem/serviço real."
+    }
+  ]
+}

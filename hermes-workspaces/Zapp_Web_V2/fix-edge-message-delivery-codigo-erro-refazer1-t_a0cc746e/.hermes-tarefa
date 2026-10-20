@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=fix-edge-message-delivery-codigo-erro
+ID=2610130945e618
+BRANCH=v2/fix-edge-message-delivery-codigo-erro-2610130945e618
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fix-edge-message-delivery-codigo-erro-2610130945e618
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T09:45:47-03:00
+KANBAN=t_996e42f2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fix-edge-message-delivery-codigo-erro-2610130945e618/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130945e618
+PRONTO_SHA=5bb163778794da39b6c815e225df201e1f243f90

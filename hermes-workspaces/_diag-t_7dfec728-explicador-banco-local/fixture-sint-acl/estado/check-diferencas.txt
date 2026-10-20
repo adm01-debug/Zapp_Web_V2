@@ -1,0 +1,10 @@
+rls|nova_tabela
+indexes|nova_tabela.nova_tabela_pkey
+constraints|relation:nova_tabela.nova_tabela_pkey
+columns|nova_tabela.id
+columns|nova_tabela.nome
+defaults|nova_tabela.id
+relation_grants|r:public.nova_tabela|authenticated|SELECT|grantor=postgres
+relation_grants|r:public.nova_tabela|anon|SELECT|grantor=postgres
+relation_grants|r:public.nova_tabela|service_role|SELECT|grantor=postgres
+relation_grants|r:public.nova_tabela|postgres|SELECT|grantor=postgres

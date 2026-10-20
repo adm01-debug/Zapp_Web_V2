@@ -1,0 +1,144 @@
+import { useState } from 'react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
+import { Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { WorkItemCard }         from '../shared/WorkItemCard';
+import { BoardColumnSkeleton } from '../shared/BoardColumnSkeleton';
+import { QuickAdd }             from '../shared/QuickAdd';
+import { TasksEmptyState }      from '../TasksEmptyState';
+import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+import type { WorkItemInput }   from '@/hooks/tasks/useMyWorkItems';
+import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
+import type { WorkItemCardActions } from '../shared/cardActions';
+
+interface Props extends WorkItemCardActions {
+  status: WorkItemStatus;
+  items: WorkItem[];
+  isLoading: boolean;
+  doingCount: number;
+  /** Etapa 52 (B8): coluna de origem do arrasto em curso (null = nenhum). */
+  dragSourceStatus: WorkItemStatus | null;
+  /** Etapa 81: ponteiro grosso desliga o arrasto — quem move é o `MoveToMenu`. */
+  dragDisabled?: boolean;
+  onOpen: (item: WorkItem) => void;
+  onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
+  onDelete: (item: WorkItem) => void;
+  onCreate?: (input: WorkItemInput) => Promise<void>;
+}
+
+export function BoardColumn({
+  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, onOpen, onMoveTo, onDelete, onCreate,
+  onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+}: Props) {
+  const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
+  const limit = WIP_LIMITS[status];
+  const hardFull  = limit.hard != null && doingCount >= limit.hard;
+  const softOver  = limit.soft != null && items.length > limit.soft;
+  // Etapa 52 (B8): a coluna cheia continua aceitando o que veio dela mesma
+  // (reorganizar dentro de "Fazendo" com 3/3), e recusa o que vem de fora.
+  // Etapa 81: em ponteiro grosso o arrasto não existe — nada entra por drop.
+  const isDropDisabled = dragDisabled || (hardFull && dragSourceStatus !== status);
+
+  // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
+  // de 30 dias no rodapé "Ver mais antigas (30 dias)" (filtro local, sem query nova).
+  const [showOlderDone, setShowOlderDone] = useState(false);
+  const doneSplit = status === 'done' ? splitDoneByRecency(items) : null;
+  const visibleItems = doneSplit
+    ? (showOlderDone ? [...doneSplit.recent, ...doneSplit.older] : doneSplit.recent)
+    : items;
+
+  const headerCount = limit.hard
+    ? `${doingCount}/${limit.hard}`
+    : visibleItems.length > 0 ? String(visibleItems.length) : '';
+
+  return (
+    <div className="flex flex-col shrink-0 min-w-[232px] xl:min-w-[260px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
+      {/* cabeçalho sticky */}
+      <div className={[
+        'flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
+        hardFull ? 'text-destructive' : softOver ? 'text-warning' : 'text-foreground',
+        hardFull ? 'ring-1 ring-destructive/40' : '',
+      ].join(' ')}>
+        <span className="flex-1 min-w-0 truncate text-[13px] font-semibold">{col.label}</span>
+        {headerCount && (
+          <span className={`text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
+            {headerCount}
+          </span>
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" className="h-5 w-5 rounded flex items-center justify-center hover:bg-muted" aria-label="Política da coluna">
+              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+            {col.policy}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* QuickAdd na coluna Backlog */}
+      {status === 'backlog' && onCreate && (
+        <div className="px-2 pt-2">
+          <QuickAdd onAdd={onCreate} defaultStatus="backlog" compact placeholder="Capturar tarefa…" />
+        </div>
+      )}
+
+      {/* cards */}
+      <Droppable droppableId={status} isDropDisabled={isDropDisabled}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
+          >
+            {isLoading && <BoardColumnSkeleton />}
+            {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
+                coluna NÃO está vazia — antes ela mostrava "Coluna vazia" e o
+                "Ver mais antigas (30 dias)" ao mesmo tempo. */}
+            {!isLoading && visibleItems.length === 0 && (doneSplit?.older.length ?? 0) === 0 && (
+              <TasksEmptyState variant="column" policy={col.policy} />
+            )}
+            {!isLoading && visibleItems.map((item, index) => (
+              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={dragDisabled}>
+                {(drag, snap) => (
+                  <div ref={drag.innerRef} {...drag.draggableProps}>
+                    <WorkItemCard
+                      item={item}
+                      mode="board"
+                      isDragging={snap.isDragging}
+                      dragHandleProps={drag.dragHandleProps ?? undefined}
+                      onOpen={() => onOpen(item)}
+                      onMoveTo={(to) => onMoveTo(item, to)}
+                      onDelete={() => onDelete(item)}
+                      contactName={item.contact?.name ?? undefined}
+                      onOpenContact={onOpenContact ? () => onOpenContact(item) : undefined}
+                      onRequestWaitingReason={onRequestWaitingReason ? () => onRequestWaitingReason(item) : undefined}
+                      doingCount={doingCount}
+                      onComplete={onComplete ? () => onComplete(item) : undefined}
+                      onReopen={onReopen ? () => onReopen(item) : undefined}
+                      onSnooze={onSnooze ? (minutes) => onSnooze(item, minutes) : undefined}
+                      onClearReminder={onClearReminder ? () => onClearReminder(item) : undefined}
+                      onOpenReminder={onOpenReminder ? () => onOpenReminder(item) : undefined}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {!isLoading && doneSplit && doneSplit.older.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowOlderDone(s => !s)}
+                className="w-full rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+              >
+                {showOlderDone ? 'Ver menos' : 'Ver mais antigas (30 dias)'}
+              </button>
+            )}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </div>
+  );
+}

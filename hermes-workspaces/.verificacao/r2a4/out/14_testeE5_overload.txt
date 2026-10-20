@@ -1,0 +1,24 @@
+=== E5b) overload: mesma assinatura x assinatura nova (funcao normal) ===
+  oid  |                                 proacl                                 
+-------+------------------------------------------------------------------------
+ 16415 | {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(1 row)
+
+--- replace MESMA assinatura ---
+  oid  |                                 proacl                                 
+-------+------------------------------------------------------------------------
+ 16415 | {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(1 row)
+
+--- replace com assinatura DIFERENTE (overload novo) ---
+  oid  |      assinatura      |                                       proacl                                       
+-------+----------------------+------------------------------------------------------------------------------------
+ 16415 | a integer            | {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+ 16416 | a integer, b integer | {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(2 rows)
+
+--- anon executa overload novo rep_fn(1) ---
+psql:<stdin>:12: ERROR:  function public.rep_fn(integer) is not unique
+LINE 1: SELECT public.rep_fn(1) AS r;
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.

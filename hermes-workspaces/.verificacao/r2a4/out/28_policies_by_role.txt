@@ -1,0 +1,19 @@
+{
+ "ms": 15,
+ "rows": [
+  {
+   "n": 421,
+   "roles": "{authenticated}"
+  },
+  {
+   "n": 4,
+   "roles": "{service_role}"
+  },
+  {
+   "n": 1,
+   "roles": "{anon}"
+  }
+ ],
+ "row_count": 3,
+ "truncated": false
+}

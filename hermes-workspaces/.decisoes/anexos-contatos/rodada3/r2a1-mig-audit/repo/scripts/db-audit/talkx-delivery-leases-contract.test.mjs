@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const migration = await readFile(new URL('../../supabase/migrations/20260911130000_add_talkx_recipient_delivery_leases.sql', import.meta.url), 'utf8');
+const completionMigration = await readFile(new URL('../../supabase/migrations/20260911170000_add_talkx_campaign_completion_rpc.sql', import.meta.url), 'utf8');
+const quarantineMigration = await readFile(new URL('../../supabase/migrations/20260911180000_quarantine_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
+const outcomeCounterMigration = await readFile(new URL('../../supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql', import.meta.url), 'utf8');
+const receiptMigration = await readFile(new URL('../../supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql', import.meta.url), 'utf8');
+const messageSnapshotMigration = await readFile(new URL('../../supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql', import.meta.url), 'utf8');
+const edgeFunction = await readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8');
+
+test('Talk X leases are service-role-only and fence claim completion', () => {
+  assert.match(migration, /FOR UPDATE OF recipient SKIP LOCKED/i);
+  assert.match(migration, /delivery_claim_token = gen_random_uuid\(\)/i);
+  assert.match(migration, /talkx_delivery_claim_conflict/i);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.claim_talkx_recipient[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.claim_talkx_recipient[\s\S]*TO service_role/i);
+  assert.match(migration, /delivery_claim_token = p_claim_token/i);
+});
+
+test('talkx-send claims before touching the provider and completes with its lease token', () => {
+  const claim = edgeFunction.lastIndexOf('claim_talkx_recipient');
+  const provider = edgeFunction.lastIndexOf('/message/sendText/');
+  const completion = edgeFunction.lastIndexOf('complete_talkx_recipient');
+  assert.ok(claim >= 0 && provider >= 0 && claim < provider, 'claim must precede provider send');
+  assert.ok(completion > provider, 'completion must follow provider send');
+  assert.match(edgeFunction, /p_claim_token:\s*claim\.claim_token/);
+  assert.match(edgeFunction, /transition_talkx_campaign/);
+  assert.doesNotMatch(edgeFunction, /\.update\(\{ status: newStatus \}\)/);
+  assert.match(edgeFunction, /campaignAction !== "start"/);
+  assert.match(edgeFunction, /complete_talkx_campaign_if_drained/);
+  assert.match(edgeFunction, /p_status:\s*"outcome_unknown"/);
+  assert.match(edgeFunction, /talkx_recipient_quarantine_failed/);
+  assert.match(edgeFunction, /liveTalkXInstanceId/);
+  assert.match(edgeFunction, /talkx_connection_state_lookup_failed/);
+  assert.doesNotMatch(edgeFunction, /fetchWithRetry/);
+});
+
+test('ambiguous provider outcomes are terminal and cannot be re-claimed automatically', () => {
+  assert.match(quarantineMigration, /'outcome_unknown'/);
+  assert.match(quarantineMigration, /p_status NOT IN \('sent', 'failed', 'skipped', 'outcome_unknown'\)/);
+  assert.match(quarantineMigration, /REVOKE ALL ON FUNCTION public\.complete_talkx_recipient[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(quarantineMigration, /GRANT EXECUTE ON FUNCTION public\.complete_talkx_recipient[\s\S]*TO service_role/i);
+});
+
+test('only the delivery worker can account for quarantined provider outcomes', () => {
+  assert.match(outcomeCounterMigration, /ADD COLUMN IF NOT EXISTS outcome_unknown_count integer NOT NULL DEFAULT 0/i);
+  assert.match(outcomeCounterMigration, /NEW\.outcome_unknown_count IS DISTINCT FROM OLD\.outcome_unknown_count/i);
+  assert.match(outcomeCounterMigration, /outcome_unknown_count = campaign\.outcome_unknown_count \+ CASE WHEN p_status = 'outcome_unknown' THEN 1 ELSE 0 END/i);
+});
+
+test('Talk X completion is service-only, locked and requires a drained queue', () => {
+  assert.match(completionMigration, /FOR UPDATE/i);
+  assert.match(completionMigration, /recipient\.status IN \('pending', 'sending'\)/i);
+  assert.match(completionMigration, /status = 'completed'/i);
+  assert.match(completionMigration, /REVOKE ALL ON FUNCTION public\.complete_talkx_campaign_if_drained[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(completionMigration, /GRANT EXECUTE ON FUNCTION public\.complete_talkx_campaign_if_drained[\s\S]*TO service_role/i);
+});
+
+test('Talk X persists provider receipts and delivery acknowledgements atomically', () => {
+  assert.match(receiptMigration, /record_talkx_recipient_sent/i);
+  assert.match(receiptMigration, /record_talkx_recipient_delivered/i);
+  assert.match(receiptMigration, /mark_talkx_recipient_dispatch_started/i);
+  assert.match(receiptMigration, /provider_dispatch_started_at IS NOT NULL/i);
+  assert.match(receiptMigration, /provider_dispatch_started_at IS NULL/i);
+  assert.match(receiptMigration, /talkx_recipient_is_suppressed/i);
+  assert.match(receiptMigration, /public\.talkx_blacklist/i);
+  assert.match(receiptMigration, /pg_advisory_xact_lock/i);
+  assert.match(receiptMigration, /delivered_count = campaign\.delivered_count \+ 1/i);
+  assert.match(receiptMigration, /whatsapp_connection_id = p_connection_id/i);
+  assert.match(receiptMigration, /REVOKE ALL ON FUNCTION public\.record_talkx_recipient_sent[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(receiptMigration, /GRANT EXECUTE ON FUNCTION public\.record_talkx_recipient_delivered[\s\S]*TO service_role/i);
+  assert.match(edgeFunction, /mark_talkx_recipient_dispatch_started/);
+  assert.match(edgeFunction, /record_talkx_recipient_sent/);
+  const typingDelay = edgeFunction.indexOf('await sleep(typingDelay)');
+  const recheck = edgeFunction.indexOf('await isRecipientSuppressed', typingDelay);
+  const connectionRecheck = edgeFunction.indexOf('beforeSendConnection', typingDelay);
+  const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', recheck);
+  assert.ok(typingDelay >= 0 && connectionRecheck > typingDelay && recheck > connectionRecheck && dispatchMark > recheck, 'connection and suppression must be rechecked after typing and before the provider dispatch marker');
+});
+
+test('Talk X campaign transition RPC serializes delivery lifecycle changes', async () => {
+  const transitionMigration = await readFile(new URL('../../supabase/migrations/20260911150000_add_talkx_campaign_transition_rpc.sql', import.meta.url), 'utf8');
+  assert.match(transitionMigration, /FOR UPDATE/i);
+  assert.match(transitionMigration, /talkx_campaign_start_denied_from_/i);
+  assert.match(transitionMigration, /talkx_campaign_recipients_required/i);
+  assert.match(transitionMigration, /REVOKE ALL ON FUNCTION public\.transition_talkx_campaign[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(transitionMigration, /GRANT EXECUTE ON FUNCTION public\.transition_talkx_campaign[\s\S]*TO service_role/i);
+});
+
+test('Talk X snapshots the exact A/B message before a provider dispatch', () => {
+  assert.match(messageSnapshotMigration, /variant_id_snapshot uuid/i);
+  assert.match(messageSnapshotMigration, /message_snapshot_at timestamptz/i);
+  assert.match(messageSnapshotMigration, /persist_talkx_recipient_message_snapshot/i);
+  assert.match(messageSnapshotMigration, /message_snapshot_at IS NULL/i);
+  assert.match(messageSnapshotMigration, /variant_id_snapshot = COALESCE\(recipient\.variant_id_snapshot, recipient\.variant_id, p_variant_id\)/i);
+  assert.match(messageSnapshotMigration, /REVOKE ALL ON FUNCTION public\.persist_talkx_recipient_message_snapshot[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(messageSnapshotMigration, /GRANT EXECUTE ON FUNCTION public\.persist_talkx_recipient_message_snapshot[\s\S]*TO service_role/i);
+
+  const snapshot = edgeFunction.indexOf('persist_talkx_recipient_message_snapshot');
+  const dispatchMark = edgeFunction.indexOf('mark_talkx_recipient_dispatch_started', snapshot);
+  const provider = edgeFunction.indexOf('/message/sendText/', snapshot);
+  assert.ok(snapshot >= 0 && dispatchMark > snapshot && provider > dispatchMark, 'the immutable recipient snapshot must precede the dispatch marker and provider POST');
+  assert.match(edgeFunction, /talkx_variant_snapshot_source_unavailable/);
+  assert.match(edgeFunction, /talkx_invalid_persisted_media_snapshot/);
+});

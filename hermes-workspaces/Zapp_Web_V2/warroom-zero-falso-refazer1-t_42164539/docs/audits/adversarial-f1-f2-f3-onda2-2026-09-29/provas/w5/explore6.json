@@ -1,0 +1,242 @@
+{
+  "body": "Pular para conteúdo principal\nPular para navegação\nPular para o conteúdo\nZ\nWM\nContatos\n\nBase de clientes e leads (0 contatos)\n\nSincronizar\nNovo Contato\n\nTotal de Contatos\n\n0\n\nNovos (30 dias)\n\n1\n\nEmpresas\n\n1\n\nFornecedores\n\n0\n\nTodos\n0\nCliente\nFornecedor\nTransportadora\nColaborador\nPrestador de Serviço\nParceiro\nNome (A-Z)\nFiltros\nFiltros Salvos\nCards\nLista\nTabela\nMais\nColunas\nComece sua base de contatos\n\nAdicione seu primeiro contato manualmente para começar sua base de contatos\n\nNovo Contato\n📱\n\nWhatsApp\n\nIntegre conversas\n\n🏷️\n\nTags\n\nOrganize por categorias\n\n📊\n\nAnalytics\n\nAcompanhe métricas\n\nNavegou para Contatos",
+  "btns": [
+    {
+      "aria": "ZAPP — Ir para Inbox",
+      "text": "Z",
+      "vis": true
+    },
+    {
+      "aria": "Expandir menu",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Voltar à tela anterior",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Chat",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Teams",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Email",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Contatos",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Multiplix",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Catálogo",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Telefonia",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Quadro",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Tarefas",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Conquistas",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Dashboard",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Busca global (⌘K)",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Vendas & CRM — expandir",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Automação & IA — expandir",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Analytics — expandir",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Conexões — expandir",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Sistema — expandir",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Em Desenvolvimento — expandir",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Perfil e status",
+      "text": "WM",
+      "vis": true
+    },
+    {
+      "aria": "Desativar proteção de tela",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Desativar todas as notificações",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Silenciar sons de alerta",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Volume dos áudios e vídeos",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": "Modo escuro",
+      "text": "",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Sincronizar",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Novo Contato",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Todos0",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Cliente",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Fornecedor",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Transportadora",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Colaborador",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Prestador de Serviço",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Parceiro",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Nome (A-Z)",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Filtros",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Filtros Salvos",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Cards",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Lista",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Tabela",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Mais",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Colunas",
+      "vis": true
+    },
+    {
+      "aria": null,
+      "text": "Novo Contato",
+      "vis": true
+    },
+    {
+      "aria": "Assistente de voz",
+      "text": "",
+      "vis": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "",
+      "ph": "Buscar por nome, telefone, email ou empresa…",
+      "aria": null
+    }
+  ]
+}

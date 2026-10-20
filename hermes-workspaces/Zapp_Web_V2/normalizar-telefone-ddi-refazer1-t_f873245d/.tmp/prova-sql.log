@@ -1,0 +1,13 @@
+NOTICE:  RED OK: trigger antiga deixa 10-11 digitos sem DDI (defeito confirmado)
+psql:/repo/supabase/migrations/20261013051843_normalize_contact_phone_ddi.sql:78: NOTICE:  normalize_contact_phone_ddi: 1 contato(s) de 10-11 digitos cuja forma com 55 ja existe em outro contato: PRESERVADOS sem alteracao (nenhuma linha apagada ou sobrescrita).
+NOTICE:  G1 OK: backfill pos 55 nos 5 legados de 10-11 digitos
+NOTICE:  G2 OK: estrangeiro (12 digitos) e numero ja com 55 (13) preservados
+NOTICE:  G3 OK: colisao preservada, nenhuma linha apagada/sobrescrita (9 contatos)
+NOTICE:  G4 OK: updated_at preservado no backfill
+NOTICE:  G5 OK: 11/10 digitos ganham 55; 13 fica; regravar nao duplica
+NOTICE:  G6 OK: authenticated insere com normalizacao; chamada direta negada (42501)
+psql:/repo/supabase/migrations/20261013051843_normalize_contact_phone_ddi.sql:58: NOTICE:  relation "_rb_normalize_contact_phone_ddi" already exists, skipping
+psql:/repo/supabase/migrations/20261013051843_normalize_contact_phone_ddi.sql:78: NOTICE:  normalize_contact_phone_ddi: 1 contato(s) de 10-11 digitos cuja forma com 55 ja existe em outro contato: PRESERVADOS sem alteracao (nenhuma linha apagada ou sobrescrita).
+NOTICE:  G7 OK: reaplicacao idempotente (telefones estaveis; apoio sem duplicar)
+NOTICE:  R OK: rollback devolveu dados, removeu a tabela de apoio e restaurou a funcao
+NOTICE:  normalize_contact_phone_ddi: TODAS as assercoes passaram (RED/G1-G7/R)

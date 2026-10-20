@@ -1,0 +1,6 @@
+ M scripts/ci/check-test-inventory.mjs
+ M supabase/deployment-manifest.json
+ M supabase/functions/crm-integration/index.test.ts
+ M supabase/functions/crm-integration/index.ts
+?? scripts/db-audit/talkx-crm-link-batch.test.sh
+?? supabase/migrations/20261003262707_talkx_crm_link_batch.sql

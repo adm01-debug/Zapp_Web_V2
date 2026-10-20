@@ -1,0 +1,12 @@
+{
+ "ms": 0,
+ "rows": [
+  {
+   "db": "postgres",
+   "version": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit",
+   "current_user": "postgres"
+  }
+ ],
+ "row_count": 1,
+ "truncated": false
+}

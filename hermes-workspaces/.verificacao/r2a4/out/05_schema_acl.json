@@ -1,0 +1,22 @@
+{
+ "ms": 3,
+ "rows": [
+  {
+   "owner": "pg_database_owner",
+   "nspacl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,postgres=U/pg_database_owner,anon=U/pg_database_owner,authenticated=U/pg_database_owner,service_role=U/pg_database_owner}",
+   "nspname": "public"
+  },
+  {
+   "owner": "supabase_admin",
+   "nspacl": "{supabase_admin=UC/supabase_admin,anon=U/supabase_admin,authenticated=U/supabase_admin,service_role=U/supabase_admin,supabase_auth_admin=UC/supabase_admin,dashboard_user=UC/supabase_admin,postgres=U/supabase_admin}",
+   "nspname": "auth"
+  },
+  {
+   "owner": "supabase_admin",
+   "nspacl": "{supabase_admin=UC/supabase_admin,postgres=U*/supabase_admin,anon=U/supabase_admin,authenticated=U/supabase_admin,service_role=U/supabase_admin,supabase_storage_admin=U*C*/supabase_admin,dashboard_user=UC/supabase_admin}",
+   "nspname": "storage"
+  }
+ ],
+ "row_count": 3,
+ "truncated": false
+}

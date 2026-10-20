@@ -1,0 +1,926 @@
+From 9816b32406eb3fe6c481ce6791fea0d64061d644 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <ti@promobrindes.com.br>
+Date: Thu, 8 Oct 2026 22:40:54 -0300
+Subject: [PATCH] feat(multiplix): edge multiplix-prepare-voice deduplica o TTS
+ por roteiro distinto (F65/TL-003)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+1 chamada ao elevenlabs-tts por hash sha256(roteiro final, voice_id, modelo,
+voice_settings) — 50 contatos com roteiro comum = 1 chamada e 1 ativo; ativo no
+bucket privado multiplix-voice/<departamento>/ entregue por signed URL de TTL do
+envio; teto de 20 roteiros distintos por lote (limite do provedor) com erro
+nomeado; voz sem grant vivo do F64 nao gera (403). Teste Deno com 15 casos
+(fetch stubado): o mutante do dedup mata os 3 casos do aceite.
+---
+ supabase/deployment-manifest.json             |  27 +-
+ .../multiplix-prepare-voice/index.test.ts     | 409 +++++++++++++++++
+ .../multiplix-prepare-voice/index.ts          | 422 ++++++++++++++++++
+ 3 files changed, 854 insertions(+), 4 deletions(-)
+ create mode 100644 supabase/functions/multiplix-prepare-voice/index.test.ts
+ create mode 100644 supabase/functions/multiplix-prepare-voice/index.ts
+
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 69c220f63..091b6a451 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -7,9 +7,9 @@
+     "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af"
+   },
+   "summary": {
+-    "function_count": 75,
+-    "source_file_count": 149,
+-    "verify_jwt_true": 61,
++    "function_count": 76,
++    "source_file_count": 150,
++    "verify_jwt_true": 62,
+     "verify_jwt_false": 14
+   },
+   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
+@@ -634,6 +634,11 @@
+       "bytes": 22133,
+       "sha256": "e42466f0f0b8bd8fadd5f65ef1a9e32d2d2f74c4e7b83acd53103471035be426"
+     },
++    {
++      "path": "supabase/functions/multiplix-prepare-voice/index.ts",
++      "bytes": 15669,
++      "sha256": "02978a9fcfb8cbca613455b3461c00a7a9c07b796c64da78491f80ab7a8bc546"
++    },
+     {
+       "path": "supabase/functions/multiplix-send/index.ts",
+       "bytes": 58664,
+@@ -1586,6 +1591,20 @@
+         "supabase/functions/multiplix-dispatch/index.ts"
+       ]
+     },
++    {
++      "name": "multiplix-prepare-voice",
++      "entrypoint": "supabase/functions/multiplix-prepare-voice/index.ts",
++      "verify_jwt": true,
++      "source_sha256": "eb837017935ca35cf8788f9dfa05a6d7f513a7f4fb33d21305e88babe6d39e2e",
++      "source_files": [
++        "supabase/functions/_shared/hmac-validation.ts",
++        "supabase/functions/_shared/messaging/media.ts",
++        "supabase/functions/_shared/ssrf.ts",
++        "supabase/functions/_shared/validation.ts",
++        "supabase/functions/multiplix-prepare-voice/index.ts",
++        "supabase/functions/multiplix-voices/index.ts"
++      ]
++    },
+     {
+       "name": "multiplix-send",
+       "entrypoint": "supabase/functions/multiplix-send/index.ts",
+@@ -1924,5 +1943,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "41b8a4c8b4cba9f655cc965bcdc4ae753e35a6b6c69a76f140fd2feb6777e16d"
++  "manifest_sha256": "6ddf0d62e658bfd34bbdb7962201d5a42754a87c5292bfa023246c68214ba8c1"
+ }
+diff --git a/supabase/functions/multiplix-prepare-voice/index.test.ts b/supabase/functions/multiplix-prepare-voice/index.test.ts
+new file mode 100644
+index 000000000..a05ffea7e
+--- /dev/null
++++ b/supabase/functions/multiplix-prepare-voice/index.test.ts
+@@ -0,0 +1,409 @@
++// F65 (Bloco H — Voz): contrato da edge `multiplix-prepare-voice`.
++//
++// Duas camadas, como no contrato do F64:
++//  1. as DECISOES puras — o hash de deduplicacao (`sha256(roteiro final, voice_id, modelo,
++//     voice_settings)`), o caminho no bucket privado, o agrupamento por roteiro e quem nao tem grant;
++//  2. o HANDLER, com `fetch` stubado: 401 sem bearer, 503 sem env, 400 fora do contrato, o aceite do
++//     F65 ("50 contatos com roteiro comum = 1 chamada") e a recusa nomeada do lote acima do teto e da
++//     voz sem grant — nos dois casos SEM gastar cota do provedor.
++//
++// `requireAuth` bate em `${SUPABASE_URL}/auth/v1/user`; o resto e PostgREST, Storage e o proprio
++// `elevenlabs-tts`. O stub roteia por trecho de URL (e, quando preciso, pelo metodo), entao cada
++// teste declara exatamente as respostas do seu caminho e o contador de chamadas de TTS e medido.
++import {
++  assetPath,
++  canonicalVoiceSettings,
++  dedupeScripts,
++  handleMultiplixPrepareVoiceRequest,
++  MAX_DISTINCT_TTS_PER_REQUEST,
++  MULTIPLIX_PREPARE_VOICE_TOO_MANY_DISTINCT,
++  MULTIPLIX_VOICE_SEM_AUTORIZACAO,
++  scriptHash,
++  voicesWithoutGrant,
++  type VoiceRequestItem,
++} from './index.ts';
++import type { CallerContext, VoiceGrantRow } from '../multiplix-voices/index.ts';
++
++function assert(condition: unknown, message: string): asserts condition {
++  if (!condition) throw new Error(message);
++}
++
++// ── autores ────────────────────────────────────────────────────────────────────
++const USER_B = '20000000-0000-0000-0000-00000000000b';
++const PERFIL_B = '10000000-0000-0000-0000-00000000000b';
++const VOZ_OK = 'voice-autorizada';
++const VOZ_REVOGADA = 'voice-revogada';
++const ASSET_ID = '30000000-0000-0000-0000-000000000001';
++const HASH_REAPROVEITADO = 'b'.repeat(64);
++
++function item(over: Partial<VoiceRequestItem> = {}): VoiceRequestItem {
++  return { texto: 'Ola, tudo bem?', voice_id: VOZ_OK, modelo: 'eleven_v3', ...over };
++}
++
++function grantRow(over: Partial<VoiceGrantRow> = {}): VoiceGrantRow {
++  return {
++    voice_id: VOZ_OK, titular: 'Titular A', roles: ['agent'], perfis: null,
++    origem: 'contrato-2026-01', revoked_at: null, ...over,
++  };
++}
++
++// ────────────────────────────── 1. decisoes ────────────────────────────────────
++Deno.test('F65: scriptHash e estavel e muda com roteiro, voz, modelo e settings', async () => {
++  const base = item();
++  const h = await scriptHash(base);
++  assert(/^[0-9a-f]{64}$/.test(h), `hash deveria ser sha256 hex: ${h}`);
++  assert(await scriptHash(item()) === h, 'o mesmo item deveria dar o mesmo hash');
++  assert(await scriptHash(item({ texto: 'Outro roteiro' })) !== h, 'roteiro diferente deveria mudar o hash');
++  assert(await scriptHash(item({ voice_id: 'outra-voz' })) !== h, 'voice_id diferente deveria mudar o hash');
++  assert(await scriptHash(item({ modelo: 'eleven_multilingual_v2' })) !== h, 'modelo diferente deveria mudar o hash');
++  assert(
++    await scriptHash(item({ voice_settings: { stability: 0.4 } })) !== h,
++    'voice_settings diferente deveria mudar o hash',
++  );
++});
++
++Deno.test('F65: a ORDEM das chaves de voice_settings nao muda o hash (canoniza antes de digerir)', async () => {
++  const a = item({ voice_settings: { stability: 0.5, similarity_boost: 0.75 } });
++  const b = item({ voice_settings: { similarity_boost: 0.75, stability: 0.5 } });
++  assert(
++    await scriptHash(a) === await scriptHash(b),
++    'a mesma configuracao em ordem diferente gerou hash diferente — geraria audio duplicado',
++  );
++  assert(
++    canonicalVoiceSettings({ b: 1, a: 2 }) === canonicalVoiceSettings({ a: 2, b: 1 }),
++    'canonicalVoiceSettings nao ordena as chaves',
++  );
++  assert(canonicalVoiceSettings(null) === '[]', 'sem settings o canonico deveria ser a lista vazia');
++});
++
++Deno.test('F65: assetPath grava dentro do bucket privado em <departamento>/<hash>.mp3', () => {
++  const caminho = assetPath('comercial', 'a'.repeat(64));
++  assert(caminho === `comercial/${'a'.repeat(64)}.mp3`, `caminho inesperado: ${caminho}`);
++  assert(!caminho.startsWith('/'), 'caminho nao deveria comecar com barra (o bucket e o prefixo)');
++});
++
++Deno.test('F65: 50 contatos com roteiro comum = 1 roteiro distinto com 50 indices', async () => {
++  const itens = Array.from({ length: 50 }, () => item());
++  const distintos = await dedupeScripts(itens);
++  assert(distintos.length === 1, `deveria sobrar 1 roteiro distinto: ${distintos.length}`);
++  assert(distintos[0].indexes.length === 50, `os 50 contatos deveriam cair no mesmo roteiro: ${distintos[0].indexes.length}`);
++  assert(distintos[0].indexes[0] === 0 && distintos[0].indexes[49] === 49, 'os indices deveriam preservar a ordem');
++});
++
++Deno.test('F65: roteiros diferentes viram roteiros distintos, na ordem de primeira aparicao', async () => {
++  const distintos = await dedupeScripts([
++    item({ texto: 'A' }),
++    item({ texto: 'B' }),
++    item({ texto: 'A' }),
++    item({ texto: 'C' }),
++    item({ texto: 'B' }),
++  ]);
++  assert(distintos.length === 3, `deveriam ser 3 roteiros: ${distintos.length}`);
++  assert(
++    JSON.stringify(distintos.map((d) => d.item.texto)) === JSON.stringify(['A', 'B', 'C']),
++    `ordem inesperada: ${distintos.map((d) => d.item.texto).join(',')}`,
++  );
++  assert(JSON.stringify(distintos[0].indexes) === JSON.stringify([0, 2]), 'indices do roteiro A errados');
++  assert(JSON.stringify(distintos[1].indexes) === JSON.stringify([1, 4]), 'indices do roteiro B errados');
++});
++
++Deno.test('F65: voicesWithoutGrant acha so a voz sem grant vivo que alcance o chamador', () => {
++  const caller: CallerContext = { userId: USER_B, roleNames: ['agent'], profileId: PERFIL_B, isStaff: false };
++  const grants = [
++    grantRow({ voice_id: 'voice-por-papel', roles: ['agent'] }),
++    grantRow({ voice_id: VOZ_REVOGADA, roles: ['agent'], revoked_at: '2026-10-03T00:00:00Z' }),
++  ];
++  const sem = voicesWithoutGrant(['voice-por-papel', VOZ_REVOGADA, 'voice-inexistente'], grants, caller);
++  assert(JSON.stringify(sem) === JSON.stringify(['voice-inexistente', VOZ_REVOGADA].sort()), `sem grant inesperado: ${sem.join(',')}`);
++  // staff (admin/supervisor) alcanca qualquer grant vivo — a revogada continua fora
++  const admin: CallerContext = { ...caller, isStaff: true };
++  assert(
++    JSON.stringify(voicesWithoutGrant(['voice-por-papel'], grants, admin)) === '[]',
++    'staff deveria alcancar o grant vivo',
++  );
++});
++
++// ────────────────────────────── 2. handler ─────────────────────────────────────
++interface Route {
++  match: string;
++  method?: string;
++  body?: unknown;
++  raw?: Uint8Array;
++  status?: number;
++  contentType?: string;
++}
++
++function withFetch(routes: Route[]) {
++  const original = globalThis.fetch;
++  const seen: Array<{ method: string; url: string }> = [];
++  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
++    const url = typeof input === 'string'
++      ? input
++      : input instanceof URL
++      ? input.toString()
++      : (input as Request).url;
++    const method = (init?.method ?? (typeof input === 'object' && input !== null && 'method' in input ? (input as Request).method : 'GET'))
++      .toUpperCase();
++    seen.push({ method, url });
++    const route = routes.find((r) => url.includes(r.match) && (!r.method || r.method === method));
++    if (!route) return Promise.resolve(new Response('nao stubado', { status: 599 }));
++    if (route.raw) {
++      return Promise.resolve(
++        new Response(route.raw as unknown as BodyInit, {
++          status: route.status ?? 200,
++          headers: { 'content-type': route.contentType ?? 'audio/mpeg' },
++        }),
++      );
++    }
++    return Promise.resolve(
++      new Response(JSON.stringify(route.body ?? null), {
++        status: route.status ?? 200,
++        headers: { 'content-type': 'application/json' },
++      }),
++    );
++  }) as typeof fetch;
++  return {
++    seen,
++    tts: () => seen.filter((s) => s.method === 'POST' && s.url.includes('/functions/v1/elevenlabs-tts')),
++    restore: () => { globalThis.fetch = original; },
++  };
++}
++
++const ENV_KEYS = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY'] as const;
++
++function withEnv(values: Partial<Record<(typeof ENV_KEYS)[number], string>>, fn: () => Promise<void>) {
++  const saved = ENV_KEYS.map((k) => [k, Deno.env.get(k)] as const);
++  for (const key of ENV_KEYS) {
++    const value = values[key];
++    if (value === undefined) Deno.env.delete(key);
++    else Deno.env.set(key, value);
++  }
++  return fn().finally(() => {
++    for (const [key, value] of saved) {
++      if (value === undefined) Deno.env.delete(key);
++      else Deno.env.set(key, value);
++    }
++  });
++}
++
++const ENV_OK = {
++  SUPABASE_URL: 'https://stub.supabase.co',
++  SUPABASE_SERVICE_ROLE_KEY: 'service-key-de-teste',
++  SUPABASE_ANON_KEY: 'anon-key-de-teste',
++};
++
++const ROTA_AUTH: Route = { match: '/auth/v1/user', body: { id: USER_B, aud: 'authenticated' } };
++const ROTA_RATE: Route = { match: '/rest/v1/rpc/consume_rate_limit', body: [{ allowed: true, remaining: 19 }] };
++const ROTA_PAPEL_AGENT: Route = { match: '/rest/v1/user_roles', body: [{ role: 'agent' }] };
++const ROTA_PERFIL_B: Route = { match: '/rest/v1/profiles', body: { id: PERFIL_B } };
++const ROTA_NAO_STAFF: Route = { match: '/rest/v1/rpc/is_admin_or_supervisor', body: false };
++const ROTA_GRANT_OK: Route = { match: '/rest/v1/multiplix_voice_grants', body: [grantRow()] };
++const ROTA_ASSET_VAZIO: Route = { match: '/rest/v1/multiplix_voice_assets', method: 'GET', body: null };
++const ROTA_ASSET_INSERT: Route = { match: '/rest/v1/multiplix_voice_assets', method: 'POST', body: { id: ASSET_ID } };
++const ROTA_UPLOAD: Route = { match: '/storage/v1/object/multiplix-voice', method: 'POST', body: { Key: 'ok' } };
++const ROTA_SIGN: Route = {
++  match: '/storage/v1/object/sign/multiplix-voice',
++  method: 'POST',
++  body: { signedURL: '/object/sign/multiplix-voice/comercial/a.mp3?token=abc' },
++};
++const ROTA_TTS: Route = {
++  match: '/functions/v1/elevenlabs-tts',
++  method: 'POST',
++  raw: new Uint8Array([0x49, 0x44, 0x33, 0x04]),
++  contentType: 'audio/mpeg',
++};
++
++function rotaCallerOk(): Route[] {
++  return [ROTA_AUTH, ROTA_RATE, ROTA_PAPEL_AGENT, ROTA_PERFIL_B, ROTA_NAO_STAFF];
++}
++
++function makeRequest(body: unknown, withAuth = true): Request {
++  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
++  if (withAuth) headers.Authorization = 'Bearer token-de-teste';
++  return new Request('https://stub.supabase.co/functions/v1/multiplix-prepare-voice', {
++    method: 'POST', headers, body: JSON.stringify(body),
++  });
++}
++
++function prepareBody(items: VoiceRequestItem[], departamento = 'comercial') {
++  return { action: 'prepare', params: { departamento, items } };
++}
++
++Deno.test('F65 handler: sem bearer devolve 401 e nao toca a rede', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([]);
++    try {
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody([item()]), false));
++      assert(res.status === 401, `esperado 401, veio ${res.status}`);
++      assert(stub.seen.length === 0, `nao deveria tocar a rede: ${stub.seen.map((s) => s.url).join(',')}`);
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: sem env configurada devolve 503', async () => {
++  await withEnv({}, async () => {
++    const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody([item()])));
++    assert(res.status === 503, `esperado 503, veio ${res.status}`);
++  });
++});
++
++Deno.test('F65 handler: acao fora do contrato devolve 400', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([ROTA_AUTH, ROTA_RATE]);
++    try {
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest({ action: 'prepare-now', params: {} }));
++      assert(res.status === 400, `esperado 400, veio ${res.status}`);
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: 50 contatos com roteiro comum = 1 chamada ao elevenlabs-tts', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([
++      ...rotaCallerOk(),
++      ROTA_GRANT_OK,
++      ROTA_ASSET_VAZIO,
++      ROTA_ASSET_INSERT,
++      ROTA_UPLOAD,
++      ROTA_TTS,
++      ROTA_SIGN,
++    ]);
++    try {
++      const itens = Array.from({ length: 50 }, () => item());
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody(itens)));
++      assert(res.status === 200, `esperado 200, veio ${res.status}`);
++      const payload = await res.json() as {
++        distinct: number;
++        chamadas_tts: number;
++        ja_existentes: number;
++        assets: Array<{ indexes: number[]; url: string; expires_in: number }>;
++      };
++      assert(payload.distinct === 1, `deveria haver 1 roteiro distinto: ${payload.distinct}`);
++      assert(payload.chamadas_tts === 1, `50 contatos com roteiro comum deveriam custar 1 chamada: ${payload.chamadas_tts}`);
++      assert(stub.tts().length === 1, `o provedor deveria receber 1 POST: ${stub.tts().length}`);
++      assert(payload.assets.length === 1, `deveria haver 1 ativo: ${payload.assets.length}`);
++      assert(payload.assets[0].indexes.length === 50, 'os 50 contatos deveriam apontar para o mesmo ativo');
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: roteiros distintos custam uma chamada cada', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([
++      ...rotaCallerOk(),
++      ROTA_GRANT_OK,
++      ROTA_ASSET_VAZIO,
++      ROTA_ASSET_INSERT,
++      ROTA_UPLOAD,
++      ROTA_TTS,
++      ROTA_SIGN,
++    ]);
++    try {
++      const res = await handleMultiplixPrepareVoiceRequest(
++        makeRequest(prepareBody([item({ texto: 'A' }), item({ texto: 'B' }), item({ texto: 'C' })])),
++      );
++      assert(res.status === 200, `esperado 200, veio ${res.status}`);
++      const payload = await res.json() as { distinct: number; chamadas_tts: number };
++      assert(payload.distinct === 3, `deveriam ser 3 roteiros: ${payload.distinct}`);
++      assert(payload.chamadas_tts === 3, `3 roteiros deveriam custar 3 chamadas: ${payload.chamadas_tts}`);
++      assert(stub.tts().length === 3, `o provedor deveria receber 3 POSTs: ${stub.tts().length}`);
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: hash JA existente e valido reaproveita o ativo e nao chama o TTS', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([
++      ...rotaCallerOk(),
++      ROTA_GRANT_OK,
++      { match: '/rest/v1/multiplix_voice_assets', method: 'GET', body: { id: ASSET_ID, caminho: 'comercial/reuso.mp3', invalidated_at: null } },
++      ROTA_SIGN,
++    ]);
++    try {
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody([item()])));
++      assert(res.status === 200, `esperado 200, veio ${res.status}`);
++      const payload = await res.json() as { chamadas_tts: number; ja_existentes: number; assets: Array<{ caminho: string }> };
++      assert(payload.chamadas_tts === 0, `o ativo valido deveria ser reaproveitado: ${payload.chamadas_tts}`);
++      assert(payload.ja_existentes === 1, `deveria contar 1 reaproveitado: ${payload.ja_existentes}`);
++      assert(stub.tts().length === 0, 'nao deveria chamar o TTS');
++      assert(payload.assets[0].caminho === 'comercial/reuso.mp3', `caminho inesperado: ${payload.assets[0].caminho}`);
++      // O contrato que importa: a consulta NAO pode aceitar ativo INVALIDADO (F45) — o filtro tem que
++      // ir na propria consulta, porque quem responde e o PostgREST.
++      const lookup = stub.seen.find((s) => s.method === 'GET' && s.url.includes('/rest/v1/multiplix_voice_assets'));
++      assert(!!lookup, 'a consulta ao ativo nao aconteceu');
++      const url = new URL(lookup!.url);
++      assert(url.searchParams.get('invalidated_at') === 'is.null', `a consulta deveria filtrar invalidated_at is null: ${lookup!.url}`);
++      assert(url.searchParams.get('hash')?.startsWith('eq.'), `a consulta deveria filtrar pelo hash: ${lookup!.url}`);
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: voz sem grant vivo devolve 403 e NAO gasta cota do provedor', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([
++      ...rotaCallerOk(),
++      { match: '/rest/v1/multiplix_voice_grants', body: [grantRow({ voice_id: 'outra-voz' })] },
++    ]);
++    try {
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody([item()])));
++      assert(res.status === 403, `esperado 403, veio ${res.status}`);
++      const payload = await res.json() as { error: string; voices: string[] };
++      assert(payload.error === MULTIPLIX_VOICE_SEM_AUTORIZACAO, `erro inesperado: ${payload.error}`);
++      assert(JSON.stringify(payload.voices) === JSON.stringify([VOZ_OK]), `voz sem grant inesperada: ${payload.voices}`);
++      assert(stub.tts().length === 0, 'voz sem grant nao poderia gerar audio');
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: lote acima do teto do provedor devolve erro NOMEADO e nao gera nada', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([ROTA_AUTH, ROTA_RATE]);
++    try {
++      const itens = Array.from({ length: MAX_DISTINCT_TTS_PER_REQUEST + 1 }, (_, i) => item({ texto: `roteiro ${i}` }));
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody(itens)));
++      assert(res.status === 429, `esperado 429, veio ${res.status}`);
++      const payload = await res.json() as { error: string; distinct: number; max: number };
++      assert(payload.error === MULTIPLIX_PREPARE_VOICE_TOO_MANY_DISTINCT, `erro inesperado: ${payload.error}`);
++      assert(payload.distinct === MAX_DISTINCT_TTS_PER_REQUEST + 1, `distinct inesperado: ${payload.distinct}`);
++      assert(payload.max === MAX_DISTINCT_TTS_PER_REQUEST, `max inesperado: ${payload.max}`);
++      assert(stub.tts().length === 0, 'o lote acima do teto nao poderia gerar audio');
++    } finally {
++      stub.restore();
++    }
++  });
++});
++
++Deno.test('F65 handler: a entrega e signed URL de TTL do envio, nunca URL publica', async () => {
++  await withEnv(ENV_OK, async () => {
++    const stub = withFetch([
++      ...rotaCallerOk(),
++      ROTA_GRANT_OK,
++      { match: '/rest/v1/multiplix_voice_assets', method: 'GET', body: { id: ASSET_ID, caminho: `comercial/${HASH_REAPROVEITADO}.mp3`, invalidated_at: null } },
++      ROTA_SIGN,
++    ]);
++    try {
++      const res = await handleMultiplixPrepareVoiceRequest(makeRequest(prepareBody([item()])));
++      const payload = await res.json() as { assets: Array<{ url: string; expires_in: number; caminho: string }> };
++      assert(res.status === 200, `esperado 200, veio ${res.status}`);
++      for (const ativo of payload.assets) {
++        assert(ativo.url.includes('/storage/v1/object/sign/'), `a url deveria ser ASSINADA: ${ativo.url}`);
++        assert(!ativo.url.includes('/object/public/'), `a url nao pode ser publica: ${ativo.url}`);
++        assert(ativo.expires_in === 300, `o TTL deveria ser o do envio (300s): ${ativo.expires_in}`);
++      }
++    } finally {
++      stub.restore();
++    }
++  });
++});
+diff --git a/supabase/functions/multiplix-prepare-voice/index.ts b/supabase/functions/multiplix-prepare-voice/index.ts
+new file mode 100644
+index 000000000..70e1f56bf
+--- /dev/null
++++ b/supabase/functions/multiplix-prepare-voice/index.ts
+@@ -0,0 +1,422 @@
++// F65 (Bloco H — Voz) — docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md, linha 139.
++//
++// Enfileira a VOZ IA de um envio: recebe os roteiros FINAIS (ja com as variaveis resolvidas por
++// contato) e devolve, por roteiro DISTINTO, UM ativo de audio no bucket privado
++// `multiplix-voice/<departamento>/`.
++//
++// O que o F65 pede e onde cada parte mora aqui:
++//   * a chave de deduplicacao e `sha256(roteiro final, voice_id, modelo, voice_settings)` — o MESMO
++//     `hash` que `multiplix_voice_assets` (F64) declara UNIQUE. 50 contatos com o mesmo roteiro
++//     produzem 1 hash, logo 1 chamada ao `elevenlabs-tts` e 1 linha, em vez de 50 chamadas;
++//   * o ativo vai para o bucket PRIVADO `multiplix-voice` (F64) e a entrega e sempre por signed URL
++//     de TTL do envio (`DEFAULT_MEDIA_TTL_SECONDS`) — nunca por URL publica;
++//   * o provedor de TTS aceita 20 chamadas por minuto: o lote que passaria disso e recusado com erro
++//     NOMEADO antes de gastar cota, e a fila reenfileira o resto.
++//
++// Quem autoriza a VOZ e o grant do F64: voz sem grant vivo que alcance o chamador nao gera (403) —
++// a MESMA regra da recuperacao (`multiplix-voices`/`assets.sign`). A regra mora em um lugar so:
++// `grantReachesCaller` do `multiplix-voices`, importado aqui (mesmo padrao do `multiplix-dispatch`,
++// que consome funcoes do `multiplix-audience`).
++//
++// O cliente do banco aqui e o SERVICE — a edge ESCREVE o ativo e assina no bucket privado, entao as
++// regras de visibilidade sao aplicadas EXPLICITAMENTE neste arquivo. A autorizacao do CHAMADOR e
++// validada em `requireAuth`. As decisoes ficam em funcoes PURAS, testadas sem rede.
++import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
++import { z } from 'https://esm.sh/zod@3.23.8';
++import {
++  enforceRateLimit, errorResponse, getClientIP, handleCors, internalErrorResponse, jsonResponse,
++  requireAuth, requireEnv,
++} from '../_shared/validation.ts';
++import { DEFAULT_MEDIA_TTL_SECONDS } from '../_shared/messaging/media.ts';
++import {
++  VOICE_BUCKET, grantReachesCaller, type CallerContext, type VoiceGrantRow,
++} from '../multiplix-voices/index.ts';
++
++/**
++ * Teto do provedor de TTS (F65: "respeita 20 req/min"): um lote com mais roteiros DISTINTOS que isso
++ * estouraria a cota paga. O lote e recusado nomeado (a fila reenfileira o resto) em vez de gerar
++ * parcialmente — o envio nunca sai com metade dos audios.
++ */
++export const MAX_DISTINCT_TTS_PER_REQUEST = 20;
++
++/** Erro nomeado do lote acima do teto do provedor. */
++export const MULTIPLIX_PREPARE_VOICE_TOO_MANY_DISTINCT = 'multiplix_prepare_voice_too_many_distinct';
++
++/** Erro nomeado quando a voz pedida nao tem grant vivo que alcance o chamador (regra do F64). */
++export const MULTIPLIX_VOICE_SEM_AUTORIZACAO = 'multiplix_voice_sem_autorizacao';
++
++/** Roteiro FINAL de um item: variaveis ja resolvidas, uma entrada por (destinatario x bloco de voz). */
++export interface VoiceRequestItem {
++  texto: string;
++  voice_id: string;
++  modelo: string;
++  voice_settings?: Record<string, unknown> | null;
++}
++
++/** Um roteiro DISTINTO e os indices dos itens que o compartilham (a fila e por roteiro, nao por contato). */
++export interface DistinctScript {
++  hash: string;
++  item: VoiceRequestItem;
++  indexes: number[];
++}
++
++/**
++ * Serializa `voice_settings` de forma CANONICA: a ordem das chaves nao pode mudar o hash, senao o
++ * mesmo audio seria gerado duas vezes so porque o objeto veio montado em outra ordem.
++ */
++export function canonicalVoiceSettings(settings: Record<string, unknown> | null | undefined): string {
++  if (!settings) return '[]';
++  const chaves = Object.keys(settings).sort();
++  return JSON.stringify(chaves.map((chave) => [chave, settings[chave] ?? null]));
++}
++
++/** sha256 em hex de `[roteiro final, voice_id, modelo, voice_settings]` — a chave de dedup do F65. */
++export async function scriptHash(item: VoiceRequestItem): Promise<string> {
++  const payload = [
++    item.texto,
++    item.voice_id,
++    item.modelo,
++    canonicalVoiceSettings(item.voice_settings),
++  ].join('\u0000');
++  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
++  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
++}
++
++/**
++ * Caminho do objeto DENTRO do bucket privado (o nome do bucket ja e `multiplix-voice`):
++ * `<departamento>/<hash>.mp3`. O departamento e a pasta que o F65 pede e o hash e o nome do arquivo,
++ * para que o mesmo roteiro reaproveite o mesmo caminho.
++ */
++export function assetPath(departamento: string, hash: string): string {
++  return `${departamento}/${hash}.mp3`;
++}
++
++/** Agrupa os itens pelo hash do roteiro, preservando a ordem da PRIMEIRA aparicao. */
++export async function dedupeScripts(items: VoiceRequestItem[]): Promise<DistinctScript[]> {
++  const porHash = new Map<string, DistinctScript>();
++  for (let index = 0; index < items.length; index += 1) {
++    const item = items[index];
++    const hash = await scriptHash(item);
++    const existente = porHash.get(hash);
++    if (existente) existente.indexes.push(index);
++    else porHash.set(hash, { hash, item, indexes: [index] });
++  }
++  return [...porHash.values()];
++}
++
++/** Vozes pedidas SEM grant vivo que alcance o chamador — a geracao delas e negada (regra do F64). */
++export function voicesWithoutGrant(
++  voiceIds: string[],
++  grants: VoiceGrantRow[],
++  caller: CallerContext,
++): string[] {
++  const permitidas = new Set(
++    grants.filter((grant) => grantReachesCaller(grant, caller)).map((grant) => grant.voice_id),
++  );
++  return [...new Set(voiceIds)].filter((voiceId) => !permitidas.has(voiceId)).sort();
++}
++
++const itemSchema = z.object({
++  texto: z.string().min(1, 'texto e obrigatorio').max(5000),
++  voice_id: z.string().min(1, 'voice_id e obrigatorio').max(100),
++  modelo: z.string().min(1, 'modelo e obrigatorio').max(100),
++  voice_settings: z.record(z.unknown()).nullish(),
++});
++
++const requestSchema = z.object({
++  action: z.literal('prepare'),
++  params: z.object({
++    departamento: z.string().min(1, 'departamento e obrigatorio').max(60),
++    items: z.array(itemSchema).min(1, 'items e obrigatorio').max(5000),
++  }),
++});
++
++type PrepareParams = z.infer<typeof requestSchema>['params'];
++
++interface ErroNomeado {
++  error: string;
++}
++
++interface AssetPreparado {
++  hash: string;
++  asset_id: string;
++  caminho: string;
++  indexes: number[];
++  url: string;
++  expires_in: number;
++}
++
++/** Cria o cliente SERVICE (escreve ativo e assina no bucket privado). */
++function serviceClient(req: Request) {
++  const supabaseUrl = requireEnv('SUPABASE_URL');
++  const serviceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
++  const client = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
++  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization') || '';
++  return { client, supabaseUrl, authHeader };
++}
++
++/**
++ * Gera UM ativo: chama o `elevenlabs-tts` UMA vez, grava o audio no bucket privado e registra a
++ * linha em `multiplix_voice_assets`. So e chamada quando o hash NAO tem ativo valido — e o que faz
++ * "50 contatos com roteiro comum" custarem uma chamada.
++ */
++async function gerarAtivo(
++  client: ReturnType<typeof serviceClient>['client'],
++  supabaseUrl: string,
++  authHeader: string,
++  departamento: string,
++  item: VoiceRequestItem,
++  hash: string,
++  callerProfileId: string | null,
++): Promise<AssetPreparado> {
++  const caminho = assetPath(departamento, hash);
++
++  const ttsRes = await fetch(`${supabaseUrl}/functions/v1/elevenlabs-tts`, {
++    method: 'POST',
++    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
++    // `voice_settings` NAO vai no corpo: o `elevenlabs-tts` de hoje fixa as settings. O hash ainda
++    // as cobre, entao duas settings diferentes NUNCA reaproveitam o mesmo audio (lado conservador).
++    body: JSON.stringify({ text: item.texto, voiceId: item.voice_id, modelId: item.modelo }),
++  });
++  if (!ttsRes.ok) {
++    throw new Error(`elevenlabs_tts_${ttsRes.status}`);
++  }
++  const audio = new Uint8Array(await ttsRes.arrayBuffer());
++  if (audio.byteLength === 0) {
++    throw new Error('elevenlabs_tts_vazio');
++  }
++
++  const { error: uploadError } = await client.storage
++    .from(VOICE_BUCKET)
++    .upload(caminho, audio, { contentType: 'audio/mpeg', upsert: true });
++  if (uploadError) {
++    throw new Error(`multiplix_voice_upload_failed: ${uploadError.message}`);
++  }
++
++  const { data: inserido, error: insertError } = await client
++    .from('multiplix_voice_assets')
++    .insert({
++      hash,
++      caminho,
++      voice_id: item.voice_id,
++      modelo: item.modelo,
++      caracteres: item.texto.length,
++      created_by: callerProfileId,
++    })
++    .select('id')
++    .single();
++  if (insertError || !inserido?.id) {
++    throw new Error(`multiplix_voice_asset_insert_failed: ${insertError?.message ?? 'sem id'}`);
++  }
++
++  return {
++    hash,
++    asset_id: inserido.id as string,
++    caminho,
++    indexes: [],
++    url: '',
++    expires_in: DEFAULT_MEDIA_TTL_SECONDS,
++  };
++}
++
++export interface PrepareOutcome {
++  preparados: AssetPreparado[];
++  jaExistentes: number;
++  chamadasTts: number;
++}
++
++/**
++ * Nucleo do F65, com o fetch STUBADO nos testes: percorre os roteiros distintos, reaproveita o ativo
++ * de mesmo hash quando ele existe e valido (INVALIDADO pelo F45 nao serve) e gera os que faltam.
++ * Devolve quantas chamadas de TTS foram feitas — e o que "50 contatos com roteiro comum = 1 chamada"
++ * mede.
++ */
++export async function prepararDistintos(
++  client: ReturnType<typeof serviceClient>['client'],
++  supabaseUrl: string,
++  authHeader: string,
++  departamento: string,
++  distintos: DistinctScript[],
++  callerProfileId: string | null,
++): Promise<PrepareOutcome> {
++  const preparados: AssetPreparado[] = [];
++  let jaExistentes = 0;
++  let chamadasTts = 0;
++
++  for (const distinto of distintos) {
++    const { data: existente, error: lookupError } = await client
++      .from('multiplix_voice_assets')
++      .select('id, caminho, invalidated_at')
++      .eq('hash', distinto.hash)
++      .is('invalidated_at', null)
++      .maybeSingle();
++    if (lookupError) {
++      throw new Error(`multiplix_voice_asset_lookup_failed: ${lookupError.message}`);
++    }
++
++    if (existente?.id && existente.caminho) {
++      jaExistentes += 1;
++      preparados.push({
++        hash: distinto.hash,
++        asset_id: existente.id as string,
++        caminho: existente.caminho as string,
++        indexes: [],
++        url: '',
++        expires_in: DEFAULT_MEDIA_TTL_SECONDS,
++      });
++      continue;
++    }
++
++    const novo = await gerarAtivo(
++      client,
++      supabaseUrl,
++      authHeader,
++      departamento,
++      distinto.item,
++      distinto.hash,
++      callerProfileId,
++    );
++    chamadasTts += 1;
++    preparados.push(novo);
++  }
++
++  // Assina todos os ativos do MESMO jeito (frescos ou reaproveitados): a entrega e sempre por signed
++  // URL de TTL do envio. Junta os indices aqui para a resposta fechar item -> ativo.
++  for (let i = 0; i < preparados.length; i += 1) {
++    const alvo = preparados[i];
++    const { data: assinado, error: signError } = await client.storage
++      .from(VOICE_BUCKET)
++      .createSignedUrl(alvo.caminho, DEFAULT_MEDIA_TTL_SECONDS);
++    if (signError || !assinado?.signedUrl) {
++      throw new Error(`multiplix_voice_sign_failed: ${signError?.message ?? 'sem url'}`);
++    }
++    alvo.url = assinado.signedUrl;
++    alvo.indexes = distintos[i].indexes;
++  }
++
++  return { preparados, jaExistentes, chamadasTts };
++}
++
++export async function handleMultiplixPrepareVoiceRequest(req: Request): Promise<Response> {
++  const cors = handleCors(req);
++  if (cors) return cors;
++
++  try {
++    requireEnv('SUPABASE_URL');
++    requireEnv('SUPABASE_SERVICE_ROLE_KEY');
++  } catch {
++    return errorResponse('Multiplix prepare-voice is not configured', 503, req);
++  }
++
++  const auth = await requireAuth(req);
++  if (auth instanceof Response) return auth;
++  const { userId } = auth;
++
++  // Teto do provedor (F65): 20 por minuto, por chamador.
++  const rate = await enforceRateLimit(
++    `multiplix-prepare-voice:${userId}:${getClientIP(req)}`,
++    MAX_DISTINCT_TTS_PER_REQUEST,
++    60_000,
++  );
++  if (!rate.allowed) {
++    const limited = errorResponse('Rate limit exceeded', 429, req);
++    limited.headers.set('Retry-After', '60');
++    return limited;
++  }
++
++  let body: unknown;
++  try {
++    body = await req.json();
++  } catch {
++    return errorResponse('Invalid JSON body', 400, req);
++  }
++  const parsed = requestSchema.safeParse(body);
++  if (!parsed.success) return errorResponse('Invalid request', 400, req);
++  const { departamento, items } = parsed.data.params as PrepareParams;
++
++  const { client, supabaseUrl, authHeader } = serviceClient(req);
++
++  try {
++    const distintos = await dedupeScripts(items as VoiceRequestItem[]);
++    if (distintos.length > MAX_DISTINCT_TTS_PER_REQUEST) {
++      // Recusa o lote INTEIRO antes de qualquer chamada: gerar parcialmente deixaria o envio com
++      // metade dos audios (o F69 trata a pendencia, mas o lote desnecessariamente grande e erro de quem
++      // enfileirou). O corpo nomeia o motivo para a fila dividir e reenfileirar o resto.
++      return jsonResponse(
++        {
++          error: MULTIPLIX_PREPARE_VOICE_TOO_MANY_DISTINCT,
++          distinct: distintos.length,
++          max: MAX_DISTINCT_TTS_PER_REQUEST,
++        },
++        429,
++        req,
++      );
++    }
++
++    // Quem autoriza a VOZ e o grant do F64 (mesma fonte que `multiplix-voices` usa): papel/perfil do
++    // chamador + grant vivo. Sem grant, a geracao e negada antes de gastar cota do provedor.
++    const [{ data: roleRows }, { data: profileRow }, staffResult] = await Promise.all([
++      client.from('user_roles').select('role').eq('user_id', userId),
++      client.from('profiles').select('id').eq('user_id', userId).maybeSingle(),
++      client.rpc('is_admin_or_supervisor', { _user_id: userId }),
++    ]);
++    const caller: CallerContext = {
++      userId,
++      roleNames: (roleRows ?? []).map((row: { role: string }) => row.role),
++      profileId: (profileRow?.id as string | undefined) ?? null,
++      isStaff: !staffResult.error && staffResult.data === true,
++    };
++
++    const voiceIds = [...new Set(distintos.map((distinto) => distinto.item.voice_id))];
++    const { data: grantRows, error: grantError } = await client
++      .from('multiplix_voice_grants')
++      .select('voice_id, titular, roles, perfis, origem, revoked_at')
++      .in('voice_id', voiceIds);
++    if (grantError) return errorResponse('Falha ao ler os grants de voz', 500, req);
++
++    const semGrant = voicesWithoutGrant(voiceIds, (grantRows ?? []) as VoiceGrantRow[], caller);
++    if (semGrant.length > 0) {
++      return jsonResponse(
++        { error: MULTIPLIX_VOICE_SEM_AUTORIZACAO, voices: semGrant },
++        403,
++        req,
++      );
++    }
++
++    const { preparados, jaExistentes, chamadasTts } = await prepararDistintos(
++      client,
++      supabaseUrl,
++      authHeader,
++      departamento,
++      distintos,
++      caller.profileId,
++    );
++
++    if (preparados.some((ativo) => !ativo.url)) {
++      return errorResponse('Falha ao assinar o ativo de voz', 500, req);
++    }
++
++    return jsonResponse(
++      {
++        departamento,
++        distinct: distintos.length,
++        chamadas_tts: chamadasTts,
++        ja_existentes: jaExistentes,
++        assets: preparados.map((ativo) => ({
++          hash: ativo.hash,
++          asset_id: ativo.asset_id,
++          caminho: ativo.caminho,
++          indexes: ativo.indexes,
++          url: ativo.url,
++          expires_in: ativo.expires_in,
++        })),
++      },
++      200,
++      req,
++    );
++  } catch (error: unknown) {
++    return internalErrorResponse(error, req);
++  }
++}
++
++if (import.meta.main) Deno.serve((req) => handleMultiplixPrepareVoiceRequest(req));
+-- 
+2.43.0
+

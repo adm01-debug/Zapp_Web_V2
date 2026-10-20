@@ -1,0 +1,41 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "verified_at": "2026-10-04T06:17:41.702947+00:00",
+  "all_tracked_files_checked": 4068,
+  "source_blob_mismatches": [],
+  "source_git_status_clean": true,
+  "findings": 64,
+  "evidence_ranges_covered": true,
+  "compared_to_baseline": 431,
+  "all_identical_to_baseline": true,
+  "offline_probes": 64,
+  "original_20_probe_artifacts_unchanged": true,
+  "previous_28_probe_artifacts_unchanged": true,
+  "previous_41_probe_artifacts_unchanged": true,
+  "previous_49_probe_artifacts_unchanged": true,
+  "all_64_probe_artifacts_unchanged_since_pass5": true,
+  "all_64_findings_unchanged_since_pass5": true,
+  "previous_53_findings_unchanged": true,
+  "previous_39_findings_unchanged": true,
+  "pass3_findings_only_extensions": [
+    "R2-INB-042",
+    "R2-INB-043"
+  ],
+  "communication_batch_full_semantic_files": 8,
+  "media_batch_full_semantic_files": 5,
+  "pass5_full_semantic_files": 140,
+  "coverage_counts": {
+    "targeted": 61,
+    "semantic": 370,
+    "structural": 63
+  },
+  "test_roster_files_semantically_adjudicated": 125,
+  "test_roster_lines_semantically_adjudicated": 18903,
+  "test_reviewers": {
+    "inbox": 80,
+    "root": 45
+  },
+  "peer_review_records_with_verified_hashes": 2,
+  "test_support_files_reviewed": 7,
+  "test_suites_executed": false
+}

@@ -1,0 +1,10 @@
+ea8235426a4e25cfdf1ee5c43edbc1bbbd6533fd stash@{0} WIP on (no branch): d85d6db447 setup cenario 2b: arquivo decoy para provar colisao do parser de rename
+4d10ed4f109e8d33b8bc161aacaa14785fef553a stash@{1} WIP on fix/f1a-lote-b-main: 10d843f921 fix(test): mock de @/lib/logger sem createLogger — 9 arquivos (lote F1a)
+c759b1be56b071731f9a28b5b21025d756d55aa5 stash@{2} On main: preservacao antes de sincronizar main canonica 2026-10-16
+b473042c3876d12e94ffac92fd0cd5bf398b23fd stash@{3} On v2/contagem-chips-countbychip-2610111154b7aa: worktree devolvido: stash de OUTRO agente (queues) restaurado pelo pop acidental de 11/10 12:00
+7fcb4967ff55c4b457e06b2b648ff78da405f84f stash@{4} WIP on v2/n154-chaves-integracao-nome-olho-2610092334fc0a: 2f310f0ba fix(integration-keys): add aria-label and aria-pressed to eye toggle button
+06e6f69c93cf5c9a2d013f1d8d840707e8edc94b stash@{5} WIP on v2/n214-mapbox-token-log-2610092240454b: ae1840866 fix(mapbox-token): sanitize access_token from detail before logging
+0a9b556c68735eb7459b93d3023edc3b28dc225f stash@{6} WIP on v2/n-175-conexoes-colunas-whatsapp-261009200210a4: 753bd275a fix(n-175): remove connectionsCount error handling, keep select('id') swap only
+acdb69e32261fd24686c35d191e1f76a921a0e2e stash@{7} On v2/t-c479c6e8-2610091852ae57: trabalho-pendente-anterior
+4798730d1863b1b053682d7828fbc0adf573d499 stash@{8} On v2/tl-175d-talkx-e2e-acessibilidade-26100908528115: 175d-correcoes-dos-cartoes-pais-aplicadas-para-medir
+6d7cd91aee8880a76880f067e445065619348c55 stash@{9} On v2/r04-cartao-arquivo-mockup-2610090951b10b: worktree r04 (t_30e8e544): stash de OUTRO agente restaurado pelo pop acidental de 09/10 10:08 (team-chat SL-069 F76/F77/F79)

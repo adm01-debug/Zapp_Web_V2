@@ -1,0 +1,253 @@
+# PLANO DE FINALIZAÇÃO — TAREFAS + LEMBRETES + QUADRO KANBAN | ZAPP WEB V2 — 100 ETAPAS
+
+> **Versão:** 2.0 — 29/09/2026 — sucede o plano de 150 etapas (v1.0). Baseado no `RELATORIO_AUDITORIA_TAREFAS_FUSAO.md` (mesma pasta).
+> **Executor:** Claude (chat com MCP) ou Claude Code (`claude -p`, quando a cota liberar em 01/10) — container `claude-code`, worktree `/workspace/repos/Zapp_Web_V2-tarefas`
+> **Repo:** `adm01-debug/Zapp_Web_V2` · **Deploy:** Vercel `zapp_web_v2` (team `juca1`) — merge em `main` = produção
+> **Ledger:** `docs/design/TAREFAS_QUADRO_STATUS.md` (seções CP-A … CP-J abaixo substituem CP2 … CP11)
+> **Ponto de partida:** banco 100% migrado (PR #1130 em `main`); front na PR #1133 (`claude/feat-tarefas-f2-hook-202609281655` @ `79feaa08`) com CI vermelho.
+
+---
+
+## 0. REGRAS (herdadas do plano v1, com 4 acréscimos)
+
+1. Nenhum checkpoint fecha sem evidência no ledger (SHA, screenshot, saída de script, query).
+2. Ordem é lei: **desbloqueio → hook → Sheet → QuickAdd → telas → avisos → chat → a11y → testes → QA/cutover**.
+3. DDL em produção só com `APROVADO`. Este plano tem **uma** migration nova (etapa 97, drop de `reminders_pending`) e ela fica aguardando.
+4. Diff mínimo; reescrita autorizada só para: `QuickAdd.tsx`, `TasksAgendaMode.tsx`, `TasksTab.tsx` (mini-quadro).
+5. Ratchets são gates (`tsc -b --force` = 0; lint-ratchet; typecheck-ratchet; implicit-any; vitest).
+6. Branch por fase: `claude/<tipo>-tarefas-<fase>-<AAMMDD-HHMM>`. Uma PR por fase. **Fase A trabalha na branch da PR #1133** (é a única exceção: ela já é "minha" e está aberta).
+7. **Novo — Cadeia de pushes:** nunca fazer push vazio em série para "forçar CI"; o `concurrency.cancel-in-progress` cancela o run anterior e o novo pode nem nascer. Um push, esperar o run terminar, só então outro. Se o CI não nascer em 3 min, usar `workflow_dispatch` (`POST /actions/workflows/ci.yml/dispatches`).
+8. **Novo — Logs de CI:** a API de logs devolve 403 para este token. Diagnóstico = reproduzir localmente com o **mesmo comando** do workflow (`tsc -b --force`, não `--noEmit`) e ler `.github/workflows/ci.yml` para saber o que cada step roda.
+9. **Novo — Tipos:** depois de regenerar `types.ts` (etapa 11), `Record<string, any>` é proibido em código novo do módulo. Se o TS reclamar de coluna, a coluna está errada — não o tipo.
+10. **Novo — Cada bug B1–B15 do relatório tem etapa própria** e o commit cita o código do bug (`fix(tarefas): B2 — …`).
+11. Shell `dash`; sem `python3`; `nohup git push … &` se o hook de pre-push estourar o tempo.
+12. Se algo aqui contradisser o código real, o código real vence e a divergência vai para o ledger antes de decidir.
+
+---
+
+## 1. MAPA DE DEPENDÊNCIAS (por que a ordem é esta)
+
+```
+A. CI verde + prod segura ─┐
+                           ├─► B. types.ts + hook (contato, otimista, snooze, move c/ índice)
+                           │        │
+                           │        ├─► C. WorkItemSheet (edição, motivo de espera, ?task=)  ──► B2, B3 resolvidos
+                           │        ├─► D. QuickAdd completo (CSS, Data, Lembrar, @, !)      ──► B1 resolvido
+                           │        └─► E. Lista / Quadro / Agenda (KPIs, filtros, 7d, grupos) ► B4, B5, B7, B8, B9, B13
+                           │
+                           └─► F. Avisos (toast, popover da Sidebar, badge, título)  ──► B6 resolvido; depende de B (snooze)
+                                    │
+                                    └─► G. Chat (Notas, /remind, atalho) ──► B10
+                                            │
+                                            └─► H. A11y/mobile/motion ──► I. Testes ──► J. QA + cutover + docs
+```
+
+---
+
+## 2. O PLANO — 100 ETAPAS · 10 FASES · 10 CHECKPOINTS
+
+Formato: `[ ] N. Ação — arquivo — DoD`. Marque `[x]` **só** com evidência no ledger.
+
+### FASE A — Desbloqueio do CI e produção segura (etapas 1–10) → CP-A
+
+- [ ] **1.** **Produção agora:** abrir `https://zapp-web-v2.vercel.app/?view=tasks` com o usuário QA (Playwright `/workspace/qa/shot.mjs`) e capturar `out/A-01-prod-atual.png` + `console.json`. Se a tela quebrou (código antigo lendo `status='pending'` que não existe mais), registrar como **incidente P1** no ledger e priorizar o merge da PR #1133. — DoD: screenshot + erros de console no ledger.
+- [ ] **2.** Reproduzir o typecheck-ratchet como o CI: `git checkout claude/feat-tarefas-f2-hook-202609281655 && npm ci && node scripts/ci/typecheck-ratchet.mjs` **sem timeout curto** (rodar com `nohup … > /tmp/ratchet.log 2>&1 &` e esperar). Ler o log inteiro. — DoD: causa raiz do B14 escrita no ledger (arquivo:linha).
+- [ ] **3.** Corrigir o B14 na própria branch da PR #1133. Hipóteses em ordem: (a) `NotesTab.test.tsx` tipa `openTasks` com shape antigo; (b) `tsconfig.app.json` inclui testes e o mock `vi.importMock` não existe; (c) `ViewRouter` cast. — DoD: `node scripts/ci/typecheck-ratchet.mjs` local = `novas=0`.
+- [ ] **4.** Corrigir o **B11**: `NotesTab.test.tsx` → `mockUseConversationTasks.mockReturnValue({ byDue: { overdue: openTasks, today: [], tomorrow: [], upcoming: [], noDue: [], done7d: [] }, create: mockCreateTask, isLoading: false })`; renomear a variável para `mockUseMyWorkItems`. `npx vitest run src/components/inbox/tabs` verde. — DoD: exit 0.
+- [ ] **5.** Corrigir o **B9** (acentos: "Amanhã", "Próximas", "Concluídas" em `TasksListMode.tsx`) e o **B12** (remover `Backspace` de `WorkItemCard.tsx:37`). Um commit `fix(tarefas): B9 B12 — acentos e Backspace`. — DoD: grep sem "Amanha|Proximas|Concluidas".
+- [ ] **6.** Um único push. Esperar o CI nascer (≤ 3 min) e terminar. Se não nascer, `workflow_dispatch` em `ci.yml` **e** `db-guard.yml` com `ref` da branch. — DoD: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E` todos `success` no HEAD da PR.
+- [ ] **7.** Se `🧪 Unit Tests` ou `🎭 E2E` falharem por teste que citava "Lembretes"/`RemindersTab`/`SalesPipelineView`, atualizar o teste (nunca o comportamento). — DoD: lista dos testes tocados no ledger.
+- [ ] **8.** Squash-merge da PR #1133 (`github_merge_pull_request`, `merge_method: squash`). — DoD: SHA do merge no ledger.
+- [ ] **9.** Deploy: `vercel` deployment do SHA com `state=READY` e `target=production` (MCP Vercel `list_deployments`). Abrir `?view=tasks`, `?view=pipeline`, inbox com um contato → `out/A-09-prod-{tasks,board,chat}.png`. Console sem `error`. — DoD: 3 screenshots + 0 erros.
+- [ ] **10.** Atualizar o ledger: fechar CP-A; reescrever a seção de resíduos com os itens do relatório. Commit `chore(tarefas): ledger CP-A` em branch própria `claude/chore-tarefas-ledger-<carimbo>` → PR → merge. — DoD: ledger em `main`.
+
+**CP-A — Front novo em produção sem regressão.** Gate: PR #1133 mergeada, deploy READY, 3 screenshots, console limpo.
+
+---
+
+### FASE B — Tipos regenerados e hook completo (etapas 11–22) → CP-B
+
+- [ ] **11.** Branch `claude/feat-tarefas-b-hook-<carimbo>` a partir de `main`. Regenerar tipos: `bunx supabase gen types typescript --project-id tnnnlkbymytvtqngbbqh --schema public > src/integrations/supabase/types.ts` (token em `/root/.secrets/zapp-v2.env`). Conferir que o diff toca `conversation_tasks` (6 colunas novas), `reminders` (`migrated_task_id`) e `get_conversation_tab_counts`. Se o diff tocar outras tabelas por drift antigo, **aceitar** (é o estado real do banco) e registrar. — DoD: `git diff --stat src/integrations/supabase/types.ts`.
+- [ ] **12.** **B15:** remover `type TaskInsert`/`TaskUpdate` de `useMyWorkItems.ts` e os `as TaskInsert`/`as TaskUpdate`; usar `Database['public']['Tables']['conversation_tasks']['Insert' | 'Update']`. `tsc -b --force` = 0. — DoD: `grep -c "Record<string, any>" src/hooks/tasks/useMyWorkItems.ts` = 0.
+- [ ] **13.** Join do contato: `select('*, contacts:contact_id(id,name,phone,avatar_url)')`. Tipar `WorkItem` com `contact?: { id, name, phone, avatar_url } | null` (em `workItem.types.ts`, opcional para não quebrar os testes puros). Mapear `row.contacts → item.contact`. — DoD: `items[0].contact?.name` preenchido para a tarefa migrada (contato `ff9a9634…`).
+- [ ] **14.** Update otimista em `move`, `complete`, `reopen`, `deleteItem` e `update`: `onMutate` cancela queries da key, guarda `previous`, aplica `applyTransition`/patch no cache; `onError` restaura `previous` + `toast.error`; `onSettled` invalida. — DoD: simular `supabase.update` rejeitado (mock) → cache volta ao anterior.
+- [ ] **15.** `move(item, to, opts?: { index?: number; waitingReason?: string })`: quando `index` vier, recalcular `position` (0..n) da coluna de destino **e** da de origem num único `upsert` em lote (`onConflict: 'id'`); item novo (`create`) recebe `position = (min da coluna) - 1`. — DoD: mover entre colunas persiste ordem após F5.
+- [ ] **16.** `snooze(item, minutes | 'tomorrow9')`: `remind_at` = `now + minutes` ou amanhã 09:00 local; `notified_at = null`. Exportar no hook. — DoD: chamada altera as duas colunas.
+- [ ] **17.** `setReminder(item, iso | null)` (define/remove alarme) e validação **`remind_in_past`**: se `iso < now - 60s` → `throw Object.assign(new Error('remind_in_past'), { blocked: 'remind_in_past' })`; aplicar também em `create` e `update`. — DoD: teste unitário rejeita.
+- [ ] **18.** `cancel(item)` explícito (= `move(item,'cancelled')` com undo) e manter `deleteItem` como alias (decisão D8). Remover `hasMounted` da API pública (mover a flag para `TasksModule`). — DoD: API do hook documentada em JSDoc no topo do arquivo.
+- [ ] **19.** **B6:** `useMyWorkItemsBadge` = atrasadas + `remind_at <= now AND notified_at IS NOT NULL AND status NOT IN (done,cancelled)` (avisado e não tratado). Uma única query `select('id,due_date,remind_at,notified_at,status')` e contagem no cliente (evita 2 round-trips). Realtime: invalidar `['work-items-badge']` no mesmo canal do hook principal. — DoD: badge cai a 0 ao adiar/concluir.
+- [ ] **20.** **B13:** query key **sem** `includeDone`; a query traz sempre `done` dos últimos 30 dias (`.or('status.neq.done,completed_at.gte.<now-30d>')`) e `cancelled` só quando `includeCancelled`. Lista e Quadro filtram localmente (7d / 30d). — DoD: trocar de modo = 0 requests a `conversation_tasks` (Network do Playwright).
+- [ ] **21.** Testes `src/hooks/tasks/__tests__/useMyWorkItems.test.tsx` (padrão de `src/hooks/__tests__/useNotifications.test.tsx`): create; complete + undo; move com WIP cheio (bloqueia sem chamar supabase); move para waiting sem motivo (bloqueia); snooze; remind_in_past; rollback em erro; badge. Mínimo 10 casos. — DoD: verde.
+- [ ] **22.** Commit `feat(tarefas): fase B — tipos regenerados, contato no item, mutations otimistas, snooze, move com índice (B6 B13 B15)`. PR, CI verde, merge. — DoD: SHA.
+
+**CP-B — Hook completo.** Gate: 10+ testes do hook; `types.ts` regenerado; 0 `Record<string, any>`; badge correto.
+
+---
+
+### FASE C — Sheet de edição, Aguardando, ações do card (etapas 23–34) → CP-C
+
+- [ ] **23.** Branch `claude/feat-tarefas-c-sheet-<carimbo>`. Criar `src/components/tasks/shared/WorkItemSheet.tsx`: `Sheet side="right"` (`w-[420px]`; `side="bottom" h-[90vh]` abaixo de `md`). Props `{ item | null, open, onOpenChange, onSave(patch), onMove(to, waitingReason?), onSnooze, onSetReminder, onCancel, doingCount, focusField?: 'waiting_reason' }`. — DoD: abre/fecha; Esc fecha.
+- [ ] **24.** Campos do Sheet, nesta ordem: título (`Input`, autofocus), estado (`Select` com as 5 colunas; `doing` desabilitado com texto "Fazendo está cheio (3/3)" quando `doingCount >= 3` e o item não está em doing), **motivo de espera** (`Textarea`, só quando estado = Aguardando, obrigatório, erro inline "Diga por que parou"), prioridade (4 chips clicáveis), contato (`ContactPicker` — reaproveitar o de `src/components/inbox` ou criar `ContactCombobox` sobre `useContactsSearch`), prazo (`Popover` + `Calendar` shadcn + hora opcional), alarme (`Popover` data+hora; mostra "Avisado em {notified_at}" quando já disparou; botão "Adiar ▾"), descrição (`Textarea` colapsada). — DoD: 8 campos editam e persistem.
+- [ ] **25.** Rodapé do Sheet: "Salvar" (`bg-primary`), "Cancelar tarefa" (ghost destructive, undo), "Concluir" (`bg-success`). Salvar desabilitado sem mudança. `Ctrl+Enter` salva. — DoD: 3 ações ligadas às mutations da Fase B.
+- [ ] **26.** **B3:** `TasksModule` renderiza `<WorkItemSheet item={selectedItem} …/>`; `onOpen` do card seta o item. — DoD: clicar no card abre o Sheet com os dados certos.
+- [ ] **27.** Deep-link `?task=<id>`: `TasksModule` lê `URLSearchParams` no mount; se houver id e o item existir (ou buscar por id se não estiver no cache), abre o Sheet; ao abrir/fechar, `history.replaceState` adiciona/remove `task`. — DoD: F5 com `?task=…` reabre; fechar limpa a URL.
+- [ ] **28.** **B2 (DnD):** em `TasksBoardMode.handleDragEnd`, quando destino = `waiting` e o item não tem `waiting_reason`: **não** chamar `move`; chamar `onRequestWaitingReason(item)` → `TasksModule` abre o Sheet com `focusField='waiting_reason'` e estado pré-selecionado "Aguardando"; ao salvar, `move(item,'waiting',{waitingReason})`. O card volta à origem enquanto isso (comportamento da lib). — DoD: arrastar para Aguardando → Sheet → salvar → card aparece em Aguardando.
+- [ ] **29.** **B2 (kebab e MoveToMenu):** mesma regra — "Mover para → Aguardando" abre o Sheet pedindo o motivo. "Mover para → Fazendo" desabilitado com tooltip "Fazendo está cheio (3/3)" quando cheio. — DoD: 2 caminhos testados.
+- [ ] **30.** Kebab completo: **Abrir · Concluir/Reabrir · Lembrar-me ▾ (15 min · 1 h · Amanhã 9h · Escolher… → abre Sheet no campo alarme · Remover alarme) · Mover para ▸ · Cancelar (undo)**. Decisão D8: "Remover" vira "Cancelar". — DoD: 5 grupos no menu; todos ligados.
+- [ ] **31.** `RemindChip`: vira `Popover` com Adiar 15 min · 1 h · Amanhã 9h · Remover (chama `snooze`/`setReminder(null)`); vencido + `notified_at` → `BellRing text-destructive`. `stopPropagation`. — DoD: popover funciona no card e no Sheet.
+- [ ] **32.** `ContactChip`: avatar 18px com `getAvatarColor` (`@/lib/avatar-colors`) ou `avatar_url`; clique → `openContact(id)` (`?view=inbox&contact=<id>` — confirmar o parâmetro real com `grep -rn "selectedContactId\|contact=" src/hooks/inbox src/pages`). Passar `item.contact` do hook para o card. — DoD: chip aparece na tarefa migrada e abre o chat.
+- [ ] **33.** Criar `src/components/tasks/board/MoveToMenu.tsx`: botão `ArrowRightLeft` 16px no card (visível em `pointer: coarse`; hover em desktop) com as 5 opções, mesmas regras de WIP/motivo. — DoD: em 390×844 move sem arrastar.
+- [ ] **34.** Commit `feat(tarefas): fase C — Sheet de edição, Aguardando com motivo, deep-link ?task=, kebab completo, RemindChip/ContactChip (B2 B3)`. PR, CI verde, merge, screenshot `out/C-34-sheet.png`. — DoD: SHA + screenshot.
+
+**CP-C — Editar e Aguardando funcionam.** Gate: Sheet edita 8 campos; Aguardando recebe cartão por DnD, kebab e menu; `?task=` reabre.
+
+---
+
+### FASE D — QuickAdd completo e CSS dos chips (etapas 35–42) → CP-D
+
+- [ ] **35.** Branch `claude/feat-tarefas-d-quickadd-<carimbo>`. **B1:** criar em `src/styles/components.css` as classes `.chip-btn` (`inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-border bg-input text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors`) e `.chip-active` (`… bg-primary/15 border-primary/50 text-primary-glow`) via `@apply`. Verificar que `components.css` é importado em `src/index.css`. — DoD: chips com borda e fundo no screenshot.
+- [ ] **36.** Chips **sempre visíveis** (não só após digitar), à direita do campo em `≥ md`; abaixo em mobile; em `compact` viram um botão `⋯` que abre `Popover` com os mesmos chips. — DoD: layout nos dois tamanhos.
+- [ ] **37.** Chip **Data**: `Popover` + `Calendar` (shadcn, `locale ptBR`) + `Input type=time` opcional. Substitui o preset quando escolhido; o chip mostra "Sex 03/10". — DoD: cria com a data escolhida.
+- [ ] **38.** Chip **Lembrar**: `Popover` com presets (Em 1 h · Amanhã 9h · Próx. seg 9h) + data/hora livre. Validação inline: passado → borda `destructive` + "O alarme precisa ser no futuro" e o botão Criar desabilita. — DoD: erro inline; presets funcionam.
+- [ ] **39.** Chip **@ Contato**: `ContactCombobox` (mesmo da etapa 24) com busca por nome/telefone; chip mostra avatar + nome; `×` remove. Oculto quando `defaultContactId` vier (chat). — DoD: cria vinculada ao contato.
+- [ ] **40.** Chip **! Prioridade**: 4 opções (Baixa/Média/Alta/Urgente); default Média. — DoD: cria com a prioridade.
+- [ ] **41.** Parser leve **sem NLP** (G-5 mantido): só atalhos de teclado dentro do campo — `Ctrl+1/2/3` = Hoje/Amanhã/Próx. semana; `Ctrl+L` abre Lembrar; `Ctrl+@` abre contato. Documentar no `title` do campo. — DoD: 3 atalhos.
+- [ ] **42.** Testes `src/components/tasks/__tests__/QuickAdd.test.tsx`: Enter cria; Escape limpa; chip Hoje preenche `dueDate`; Lembrar no passado bloqueia; `compact` mostra `⋯`. Commit `feat(tarefas): fase D — QuickAdd com Data, Lembrar, @Contato, !Prioridade e CSS dos chips (B1)`. PR, CI, merge, screenshot. — DoD: SHA.
+
+**CP-D — Captura completa.** Gate: 7 chips estilizados e funcionais; validação de passado; teste verde.
+
+---
+
+### FASE E — Lista, Quadro e Agenda no padrão do plano (etapas 43–58) → CP-E
+
+- [ ] **43.** Branch `claude/feat-tarefas-e-telas-<carimbo>`. Subtítulo do `PageHeader` = `"{abertas} abertas · {hoje} para hoje"` com `toLocaleString('pt-BR')`. — DoD: números reais.
+- [ ] **44.** KPIs no padrão `ContactKpiCard`: 5 cards `h-[88px] rounded-[14px]`, tile 44px (`bg-kpi-*`), ícone 20px, valor 26/700 tabular, label 13/500. Cores: Atrasadas `kpi-yellow` (`destructive/15` se > 0), Para hoje `kpi-blue`, Fazendo `kpi-purple` "n/3", Concluídas 7d `kpi-green`, Tempo médio `muted`. Grid `grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3`. — DoD: E.2 `kpiCard=88±4`.
+- [ ] **45.** Barra de filtros (`useReducer`): busca com `debounce 200ms` · `Select` prioridade · `Select` contato (com busca) · toggle "Com alarme" · toggle "Mostrar concluídas" · "Limpar" (só com filtro ativo). Estado em `?q=&prio=&contact=&alarm=1&done=1` (`replaceState`). — DoD: 5 filtros; URL reflete.
+- [ ] **46.** Filtro aplicado nos **3 modos** (função pura `applyFilters(items, filters)` em `workItemAggregates.ts` + teste). Quadro com filtro que esvazia coluna mostra `variant="column"`. — DoD: filtrar por prioridade esvazia colunas no Quadro.
+- [ ] **47.** **B7:** `?view=pipeline` **sempre** abre em `board`; `?view=tasks` abre no último modo salvo ou `list`. Persistir só em `onChange` do `ModeSwitcher`. — DoD: teste `TasksModule.test.tsx` cobre os 2 casos.
+- [ ] **48.** **B4:** seção "Concluídas (7 dias)" da Lista passa a receber `done7d` (query da etapa 20 já traz done 30d; `bucketByDue` filtra 7d). Cabeçalho colapsado; "ver mais (30 dias)" no rodapé. — DoD: concluir → item aparece na seção.
+- [ ] **49.** Lista: "Próximas" agrupa por dia ("Amanhã", "Qua 01/10", …, "Semana que vem" para > 7d) com subcabeçalho `text-[12px]`; "Sem prazo" colapsa quando > 10; tooltip no cabeçalho "Ordenado por prazo, depois prioridade". — DoD: 3 comportamentos.
+- [ ] **50.** Animação de concluir: `motion.div` `exit={{ opacity: 0, height: 0 }}` 200ms via `AnimatePresence` por item (respeita reduced-motion). — DoD: item some com fade.
+- [ ] **51.** **B5:** coluna Concluído do Quadro mostra só `completed_at ≥ now-7d`, ordem `completed_at desc`, rodapé "Ver mais antigas (30 dias)" (filtro local). — DoD: paginação local.
+- [ ] **52.** **B8:** `isDropDisabled = hardFull && dragSourceStatus !== 'doing'` usando `onDragStart` no `DragDropContext` para guardar a origem. Cabeçalho cheio ganha `ring-1 ring-destructive/40`. — DoD: reordenar dentro de Fazendo cheio funciona; 4ª de fora não solta.
+- [ ] **53.** `TasksEmptyState variant="column"` recebe `policy` e mostra o texto da política em `text-muted-foreground/70`. `BoardColumnSkeleton` (3 `WorkItemCardSkeleton`) usado no `isLoading`. Remover `max-h-[calc(100vh-280px)]` → `min-h-0 flex-1` com o pai em `h-full`. — DoD: 3 itens.
+- [ ] **54.** Rota `pipeline` (`layout: 'full'`): verificar em 1440 se as 5 colunas cabem; se não, `-mx-[var(--layout-gutter)] px-4` **só** no modo board. Registrar a decisão. — DoD: screenshot 1440 com 5 colunas.
+- [ ] **55.** Agenda — reescrita autorizada: ponto do dia com cor por tipo (prazo `primary`, alarme `warning`, atrasada `destructive` — até 3 pontos); bloco "Atrasadas" expansível (colapsado por padrão se > 3); lista do dia em **3 grupos** (Alarmes por `remind_at` com hora à esquerda `w-14 tabular-nums`; Prazos por `due_date`; Sem hora). — DoD: item com prazo e alarme no mesmo dia aparece nos 2 grupos.
+- [ ] **56.** `WorkItemCard mode="agenda"`: linha única `h-11` (checkbox · título · chips à direita · kebab), sem motivo de espera. — DoD: altura 44±2.
+- [ ] **57.** `QuickAdd` na Agenda com chip Data pré-preenchido com o dia selecionado. Decisão D7 mantida (faixa hoje → +6). — DoD: criar cai no dia certo.
+- [ ] **58.** Commit `feat(tarefas): fase E — KPIs, filtros nos 3 modos, Concluídas 7d, Quadro (WIP/ordem), Agenda em grupos (B4 B5 B7 B8)`. PR, CI, merge, screenshots `out/E-58-{list,board,agenda}.png` (1672) e `board-1280.png`. — DoD: SHA + 4 screenshots.
+
+**CP-E — Três modos no padrão.** Gate: E.2 → `kpiCard 88±4 · columns 5 · agendaDay 64±2`; filtros valem nos 3 modos; 0 requests na troca de modo.
+
+---
+
+### FASE F — Avisos: toast, popover da Sidebar, badge, título (etapas 59–70) → CP-F
+
+- [ ] **59.** Branch `claude/feat-tarefas-f-avisos-<carimbo>`. Criar `src/hooks/tasks/useWorkItemNotifications.ts`: dado `notification` com `metadata.task_id`/`contact_id`, expõe `openTask()` (`?view=tasks&task=<id>` via `NavigationService`), `openContact()`, `snooze(minutes | 'tomorrow9')` (Fase B), `complete()`, e `markRead()` (`useNotifications` já tem). — DoD: 5 ações tipadas.
+- [ ] **60.** Localizar o popover de notificações em `Sidebar.tsx` (`grep -n "notifications" src/components/layout/Sidebar.tsx`) e o componente de item da lista. Adicionar `case 'reminder_due'`: ícone `BellRing text-warning`, título, mensagem, **3 botões `h-8`**: "Abrir", "Adiar ▾" (`DropdownMenu` 15 min · 1 h · Amanhã 9h), "Concluir". Todas marcam lida. Outros tipos inalterados. — DoD: item renderiza com 3 botões.
+- [ ] **61.** Toast realtime: em `useNotifications.ts` (canal `notifications-changes`), quando `type === 'reminder_due'` → `toast.custom` (sonner) com título, contato e os mesmos 3 botões; duração 15 s; sem som (não existe padrão no app). — DoD: criar tarefa com alarme +2 min no usuário QA → toast em ≤ 3 min.
+- [ ] **62.** **Badge da sidebar:** descobrir como `SidebarNavItem` recebe `badge` (`grep -n badge src/components/layout/SidebarNavItem.tsx src/services/navigation.service.ts`). Ligar `useMyWorkItemsBadge()` ao item `tasks` (não ao `pipeline`). Cor `bg-destructive` se houver atrasada, senão `bg-warning`. — DoD: badge aparece com 1 atrasada.
+- [ ] **63.** Título da aba: hook `useDocumentBadge(count)` (sobre `useDocumentTitle.ts`) prefixa `"(n) "` quando `count > 0` e a aba está oculta (`document.visibilityState`); reverte ao voltar. — DoD: título muda.
+- [ ] **64.** Push (G-7): ler `src/hooks/system/usePushNotifications.ts`, `PushNotificationToggle.tsx` e o service worker (`public/sw.js` ou `vite-plugin-pwa`). Se houver Edge Function/trigger que envia push por tipo → adicionar `reminder_due`. Se não → **não implementar**; registrar "push: fora da v1 (sem mecanismo genérico)" com o arquivo lido como evidência. — DoD: decisão no ledger.
+- [ ] **65.** Sheet mostra "Avisado em {notified_at}" e "Adiar ▾" no campo alarme (Fase C deixou o slot). — DoD: estado visível na tarefa migrada (`notified_at` preenchido).
+- [ ] **66.** Idempotência ponta a ponta (produção, usuário QA): criar tarefa com alarme +2 min → esperar → `SELECT count(*) FROM notifications WHERE metadata->>'task_id'=…` = 1 → Adiar 15 min → esperar → = 2 → Concluir → `status='done'`, `remind_at IS NULL`. Timestamps no ledger. — DoD: sequência 1 → 2 → done.
+- [ ] **67.** Concluir antes do horário: criar com alarme +5 min, concluir em 1 min, esperar 6 min → 0 notificações. — DoD: 0 linhas.
+- [ ] **68.** Slash command **B10**: `/remind` em `useChatPanelHandlers.ts:182` passa a chamar `create({ title: 'Lembrete: ' + contato, remindAt: amanhã 9h, contactId, status: 'todo' })` e abrir a aba Tarefas com o Sheet do item criado (para ajustar hora). Texto do comando em `slashCommandsData.ts`: "Criar tarefa com alarme para este contato". — DoD: `/remind` grava no banco.
+- [ ] **69.** Testes `useWorkItemNotifications.test.ts` (snooze 15/60/tomorrow9 com `now` fixo; complete marca lida) e do item de notificação (`reminder_due` → 3 botões; `info` → inalterado). — DoD: verde.
+- [ ] **70.** Commit `feat(tarefas): fase F — avisos de alarme (toast, popover, badge, título), /remind real (B6 B10)`. PR, CI, merge, screenshots `out/F-70-{toast,popover,badge}.png`. — DoD: SHA.
+
+**CP-F — Alarme de ponta a ponta.** Gate: etapa 66 com timestamps; badge e toast em produção.
+
+---
+
+### FASE G — Chat: Notas, redirecionamento, atalho, mini-quadro (etapas 71–76) → CP-G
+
+- [ ] **71.** Branch `claude/feat-tarefas-g-chat-<carimbo>`. `NotesTab.tsx` seção "Pendências": trocar `openTasks.map` por resumo "{n} tarefas abertas com este contato" + botão "Ver na aba Tarefas" (`onTabChange('tasks')` — descobrir a prop real em `ConversationTabContent`) + `QuickAdd compact`. — DoD: sem lista duplicada.
+- [ ] **72.** `TasksTab.tsx` — reescrita autorizada: mini-quadro vertical por status (Fazendo · A fazer · Aguardando · Caixa de entrada, cada um colapsável com contador) + "Concluídas" (7d) colapsada; `QuickAdd` com chip Lembrar em destaque e `@` oculto. — DoD: 5 grupos.
+- [ ] **73.** Redirecionamento: se a aba ativa persistida (`grep -rn "activeTab" src/components/inbox/RealtimeInboxView.tsx src/hooks/inbox`) for `'reminders'` → mapear para `'tasks'`. — DoD: usuário que estava em Lembretes cai em Tarefas.
+- [ ] **74.** Atalho no chat: `Alt+T` (verificar conflito em `useKeyboardShortcuts`) abre a aba Tarefas com foco no `QuickAdd`. — DoD: registrado sem conflito.
+- [ ] **75.** Testes: `ConversationTabs.test.tsx` (8 abas, badge `tasksOpen`), `TasksTab.test.tsx` (grupos, quick add com contato), `NotesTab.test.tsx` (resumo + botão). — DoD: `npx vitest run src/components/inbox` verde.
+- [ ] **76.** Commit `feat(tarefas): fase G — chat: Notas sem duplicação, mini-quadro na aba Tarefas, redirecionamento, Alt+T`. PR, CI, merge, screenshots `out/G-76-{tarefas,notas}.png`. — DoD: SHA.
+
+**CP-G — Chat coerente.** Gate: `git grep -n "Lembrete" src/components/inbox` = só "Lembrar-me"/"/remind"; badge == itens.
+
+---
+
+### FASE H — Acessibilidade, mobile, motion, tema claro (etapas 77–84) → CP-H
+
+- [ ] **77.** Branch `claude/feat-tarefas-h-a11y-<carimbo>`. Mover os atalhos para `useKeyboardShortcuts` com escopo `view in ('tasks','pipeline')` e guarda de input: `N` (QuickAdd), `1/2/3` (modo), `/` (busca), `E` (Sheet do card focado), `X` (concluir), `Delete` (cancelar c/ undo), `?` (painel de atalhos se existir). — DoD: 7 atalhos.
+- [ ] **78.** `aria-live="polite"` em `TasksModule` (região `sr-only`) anunciando "Tarefa criada", "Concluída", "Movida para {coluna} ({n} de {limite})", "Desfeito". `DragDropContext` com `dragHandleUsageInstructions` em pt-BR e `aria-roledescription="tarefa arrastável"` no card. — DoD: texto injetado (E.5).
+- [ ] **79.** `useReducedMotion` no `AnimatePresence` do módulo, na animação de concluir e na entrada de cards; regra em `utilities.css`: `@media (prefers-reduced-motion: reduce) { [data-rbd-draggable-id] { transition: none !important; } }`. — DoD: E.2 com `reducedMotion: 'reduce'` → todas as `transitionDuration = 0s`.
+- [ ] **80.** Contraste (E.3): 4 `PriorityChip`, `DueChip` atrasado, cabeçalho "Fazendo 3/3", política cinza, chips do QuickAdd. Ajustar tokens até ≥ 4.5:1 texto / 3:1 ícone. — DoD: tabela.
+- [ ] **81.** Mobile 390×844: Lista 1 coluna, KPIs 2/linha, QuickAdd `⋯`; Quadro `snap-x snap-mandatory` + 5 dots + setas ‹ › no cabeçalho + `MoveToMenu` sempre visível + drag desabilitado em `pointer: coarse`; Agenda faixa com scroll; Sheet `side="bottom"`. — DoD: `scrollWidth ≤ innerWidth` nos 3 modos (`out/H-81-mobile-{list,board,agenda}.png`).
+- [ ] **82.** Tema claro: `localStorage.theme='light'` → 3 modos + Sheet + toast. Screenshots `out/H-82-light-{list,board,agenda}.png`. — DoD: sem regressão de contraste.
+- [ ] **83.** Zen (`?view=inbox` com `isZen`): `QuickAdd` e mini-quadro não estouram a largura do painel. — DoD: `out/H-83-zen.png`.
+- [ ] **84.** Commit `feat(tarefas): fase H — atalhos, aria-live, reduced-motion, mobile, tema claro`. PR, CI, merge. — DoD: SHA.
+
+**CP-H — Acessível e responsivo.** Gate: 7 atalhos; reduced-motion 0s; contraste ok; 3 modos mobile sem overflow; tema claro ok.
+
+---
+
+### FASE I — Testes de componente e performance (etapas 85–90) → CP-I
+
+- [ ] **85.** Branch `claude/test-tarefas-i-componentes-<carimbo>`. `WorkItemCard.test.tsx`: 6 status renderizam; checkbox chama `onToggleDone`; Enter chama `onOpen`; `X` conclui; `Delete` cancela; `Backspace` **não** faz nada; kebab mostra 5 grupos; "Fazendo" desabilitado com WIP cheio. — DoD: ≥ 8 casos.
+- [ ] **86.** `TasksListMode.test.tsx`: 6 seções; "Concluídas" recebe `done7d`; "Próximas" agrupa por dia; empty `all`/`filter`. `TasksModule.test.tsx`: `defaultMode`; `?view=pipeline` força board; `?task=` abre Sheet; atalho N. — DoD: ≥ 8 casos.
+- [ ] **87.** `TasksBoardMode.test.tsx` (testar `handleDragEnd` extraído para função pura `resolveDragEnd(result, byStatus, doingCount)` → `{ action: 'reorder' | 'move' | 'need_reason' | 'blocked', … }`): 5 colunas; doing cheio bloqueia; waiting sem motivo pede; reorder recalcula `position`; mover entre colunas recalcula as duas. — DoD: ≥ 6 casos.
+- [ ] **88.** `TasksAgendaMode.test.tsx` (`now` fixo): distribuição por dia; 3 grupos; atrasadas sempre visíveis; fim de semana marcado. `WorkItemSheet.test.tsx`: motivo obrigatório em Aguardando; Fazendo desabilitado; Salvar desabilitado sem mudança. — DoD: ≥ 8 casos.
+- [ ] **89.** Performance: script E.6 (`/workspace/qa/tasks-seed.mjs`) cria 300 tarefas no usuário QA via REST, mede TTI dos 3 modos com Playwright (`performance.now` até `[data-testid=work-item-card]` ≥ 50), apaga tudo. `npm run build` → tamanho gzip do chunk do módulo (`dist/assets/*Tasks*`) ≤ 45 KB. — DoD: 4 números no ledger.
+- [ ] **90.** Commit `test(tarefas): fase I — testes de componente (card, lista, quadro, agenda, sheet) e medição de performance`. PR, CI, merge. — DoD: SHA; `npx vitest run src/components/tasks src/hooks/tasks` ≥ 60 testes verdes.
+
+**CP-I — Rede de testes.** Gate: ≥ 12 arquivos de teste no domínio; ≥ 60 casos; bundle ≤ 45 KB gz.
+
+---
+
+### FASE J — QA final, isolamento, docs, cutover (etapas 91–100) → CP-J
+
+- [ ] **91.** Gates técnicos em `main` atualizado: `tsc -b --force` (0) · `lint-ratchet` · `typecheck-ratchet` · `implicit-any-check` · `npm run lint` · `npx vitest run` (suite inteira) · `npm run build` · `bundle-budget.mjs`. — DoD: 8 saídas com exit 0.
+- [ ] **92.** E.5 funcional em produção (Playwright, usuário QA) — **24 checks**: criar por QuickAdd · Hoje · Lembrar +2 min · do chat com contato · concluir + desfazer · editar no Sheet (título, prioridade, prazo, alarme) · Fazendo ×3 e bloquear a 4ª · Aguardando pede motivo (DnD e kebab) · reordenar · cancelar + desfazer · filtro por prioridade nos 3 modos · busca · troca de modo sem request · Agenda por dia · `?task=` · badge sidebar · toast do alarme · Adiar · `/remind` · Alt+K/Alt+P/N/1/2/3 · mobile mover pelo menu · console sem `error`. — DoD: JSON `{ok, fail}` no ledger, 24/24.
+- [ ] **93.** E.2 geometria (1672×941): `quickAdd 44±2 · kpiCard 88±4 · modeSwitcher 44±2 · card ≥72 · agendaCard 44±2 · columns 5 · columnGap 12±2 · sheet 420±4`. — DoD: tabela OK/FAIL.
+- [ ] **94.** E.3 cores: fundo, card, 4 chips de prioridade, chips do QuickAdd, coluna cheia, coluna vazia, chip atrasado — ΔE ≤ 8 (fundos ≤ 6). — DoD: tabela.
+- [ ] **95.** **Isolamento (segurança):** com o usuário QA e um segundo usuário de teste (criar `qa.visual2@promobrindes.com.br` via Admin API — não destrutivo): tarefa de A não aparece para B em Lista/Quadro/Agenda/chat; `PATCH /rest/v1/conversation_tasks?id=eq.<A>` com JWT de B → 0 linhas; `DELETE` idem. — DoD: 2 screenshots + 2 respostas REST no ledger.
+- [ ] **96.** Dados migrados: `SELECT count(*) FROM reminders WHERE migrated_task_id IS NULL` = 0; abrir a tarefa migrada na Lista e no Sheet do dono (Admin 01). — DoD: ID conferido.
+- [ ] **97.** **Migration (aguarda APROVADO):** `supabase/migrations/<ts>_tab_counts_drop_reminders_pending.sql` — `get_conversation_tab_counts` sem `reminders_pending`; front: remover `remindersPending` de `useConversationTabCounts.ts` (tolera o campo até o merge). PR separada `chore(tarefas): remover reminders_pending da RPC`. — DoD: PR aberta e **não** mergeada.
+- [ ] **98.** Docs: `docs/COMPLETE_SYSTEM_FEATURES.md` e `FUNCTIONALITIES_INVENTORY.md` — atualizar as linhas de Tarefas / Lembretes / Pipeline (≤ 10 linhas de diff). Plano v1 ganha nota no topo: "Substituído por PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md em 29/09/2026". — DoD: diff ≤ 15 linhas.
+- [ ] **99.** Contrato (seção 5 do plano v1) conferido item a item com "como verifiquei" ao lado; resíduos honestos no ledger (push se ficou fora, parser, virtualização, Agenda sem DnD, delegação, recorrência, subtarefas, colunas personalizáveis). — DoD: 20 itens + seção de resíduos.
+- [ ] **100.** Verificação final de produção: deployment READY do último merge; E.1 em `?view=tasks`, `?view=pipeline`, inbox → `out/J-100-prod-{tasks,board,chat}.png`; E.3 uma última vez; `SELECT jobname, active FROM cron.job WHERE jobname='tasks-notify-due'` = ativo; `SELECT count(*) FROM notifications WHERE type='reminder_due' AND created_at > now()-interval '1 day'` > 0. **Só então** escrever "concluído" no ledger. — DoD: 3 screenshots + 2 queries.
+
+**CP-J — Entregue.** Gate: 24/24 funcional, geometria e cores ok, isolamento provado, migração conferida, docs atualizados, produção verificada, ledger completo.
+
+---
+
+## 3. CRITÉRIOS DE ACEITAÇÃO FINAIS (iguais ao v1, com o que faltava em negrito)
+**Produto:** um conceito (Tarefa), três modos, um lugar no chat; **editar tudo pelo Sheet; Aguardando com motivo; alarme com Abrir/Adiar/Concluir no toast, no popover e no badge**.
+**Kanban:** 5 colunas com políticas; WIP 3 hard / 5 soft; **reordenar dentro de Fazendo cheio; Concluído 7d + ver mais**; DnD com mouse, teclado e menu.
+**Captura:** **7 chips estilizados** (Hoje, Amanhã, Próx. semana, Data, Lembrar, @, !) com validação de passado.
+**Avisos:** cron ativo; **toast + popover + badge + título da aba**; adiar/concluir/abrir; idempotente (1 → 2 → done).
+**Dados:** `types.ts` regenerado; **0 `Record<string, any>`**; RLS provada com 2 usuários; migração conferida.
+**Técnico:** typecheck 0, ratchets, **≥ 60 testes no domínio**, build, bundle ≤ 45 KB gz, reduced-motion, tema claro, mobile.
+**Honestidade:** ledger com números, SHAs, caminhos e timestamps; resíduos declarados.
+
+---
+
+## APÊNDICE A — Ordem de merge e o que cada PR libera
+| PR | Fase | Libera para o usuário |
+|---|---|---|
+| #1133 (existente) | A | Lista/Quadro/Agenda básicos; aba única no chat |
+| B | B | Nome do contato no card; badge correto; troca de modo instantânea |
+| C | C | **Editar tarefa; Aguardando; adiar alarme pelo chip** |
+| D | D | Captura com data, hora, contato e prioridade |
+| E | E | KPIs bonitos, filtros, Concluídas, Agenda por grupos |
+| F | F | **Aviso do alarme com botões; badge na sidebar; /remind de verdade** |
+| G | G | Notas sem duplicar; mini-quadro no chat |
+| H | H | Atalhos completos; mobile; tema claro |
+| I | I | (sem mudança visível; rede de testes) |
+| J | J | Docs; migration de limpeza (aguarda APROVADO) |
+
+## APÊNDICE B — Mapa bug → etapa
+B1→35 · B2→28,29 · B3→26 · B4→48 · B5→51 · B6→19 · B7→47 · B8→52 · B9→5 · B10→68 · B11→4 · B12→5 · B13→20 · B14→2,3 · B15→12
+
+## APÊNDICE C — Comando de disparo (Claude Code, quando a cota liberar)
+```sh
+cd /workspace/repos/Zapp_Web_V2-tarefas && git fetch origin && git checkout main && git pull && \
+claude -p 'Leia docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md e docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md por completo. Execute o plano da Fase A à Fase J, fechando cada checkpoint SOMENTE com a evidência exigida em docs/design/TAREFAS_QUADRO_STATUS.md. Uma branch e uma PR por fase. Nunca pushes vazios em série. Se um gate falhar 3 vezes, registre o resíduo e siga. A migration da etapa 97 fica aberta aguardando APROVADO.' --model sonnet
+```

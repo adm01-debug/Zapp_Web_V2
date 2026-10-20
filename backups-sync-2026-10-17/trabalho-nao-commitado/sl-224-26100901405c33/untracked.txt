@@ -1,0 +1,1 @@
+tests/contracts/tipografia-tokens-regra.contract.test.ts

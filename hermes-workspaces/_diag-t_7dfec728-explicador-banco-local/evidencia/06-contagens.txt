@@ -1,0 +1,5 @@
+$ grep -rc FALHOU banco_local ~/arquitetura-v2/integrador/verificacoes/
+FALHOU banco_local: 16 linha(s) em 16 arquivo(s) de 59
+AVISO  banco_local: 21 linha(s) em 21 arquivo(s)
+string de sucesso 'toda diferenca e citada por elas': 0 ocorrencia(s)
+linhas FALHOU que comecam por rls|: 16 de 16

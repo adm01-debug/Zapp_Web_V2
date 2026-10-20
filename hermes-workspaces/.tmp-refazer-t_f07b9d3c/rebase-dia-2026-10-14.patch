@@ -1,0 +1,180 @@
+diff --git a/src/components/tasks/TasksModule.tsx b/src/components/tasks/TasksModule.tsx
+--- a/src/components/tasks/TasksModule.tsx
++++ b/src/components/tasks/TasksModule.tsx
+@@ -5,7 +5,7 @@
+ import { Switch } from '@/components/ui/switch';
+ import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
+ import { openContactChat }  from '@/components/catalog/useSendProduct';
+-import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
++import { memoizedApplyFilters, memoizedBucketByDue, memoizedBucketByStatus, memoizedKpis } from '@/hooks/tasks/workItemAggregates';
+ import { countDoing } from '@/hooks/tasks/workItemMachine';
+ import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
+ import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+@@ -60,18 +60,22 @@
+   // recorte aplicado UMA vez, sobre os itens que a query única já carregou —
+   // nenhum modo nem filtro dispara request novo (B13 continua valendo).
+   const filtros = useTasksFilters();
+-  const items = applyFilters(hook.items, filtros.filters);
+-  const byDue = bucketByDue(items);
+-  const byStatus = bucketByStatus(items);
+-  const kpiData = kpis(items);
++  // Etapa 185: versões memorizadas — a MESMA lista e os MESMOS filtros devolvem
++  // a MESMA referência, então trocar de modo não refaz o recorte nem os baldes.
++  const items = memoizedApplyFilters(hook.items, filtros.filters);
++  const byDue = memoizedBucketByDue(items);
++  const byStatus = memoizedBucketByStatus(items);
++  const kpiData = memoizedKpis(items);
+ 
+   // Fase F (auditoria): o filtro é recorte de TELA. O que descreve o trabalho
+   // real — contagem do cabeçalho, card "Fazendo" e a trava de WIP do Quadro —
+   // olha a lista completa; senão a tela anuncia "1/3" com 3 reais e aceita um
+   // drop que o próprio hook recusa (rollback com toast).
+-  const kpiReal      = kpis(hook.items);
++  // Etapa 185: `hook.kpis`/`hook.byStatus` JÁ são o resultado sobre `hook.items`
++  // (memoizados no hook) — reusar evita o mesmo cálculo duas vezes por render.
++  const kpiReal      = hook.kpis;
+   const doingReal    = countDoing(hook.items);
+-  const byStatusReal = bucketByStatus(hook.items);
++  const byStatusReal = hook.byStatus;
+ 
+   // Etapa 023 (cartão T13): o KPI "Atrasadas"/"Para hoje" é um BOTÃO de
+   // recorte de prazo. Ele escreve no MESMO filtro da barra (`setDue`) — nada de
+
+diff --git a/src/hooks/tasks/workItemAggregates.ts b/src/hooks/tasks/workItemAggregates.ts
+--- a/src/hooks/tasks/workItemAggregates.ts
++++ b/src/hooks/tasks/workItemAggregates.ts
+@@ -450,3 +450,58 @@
+   const desc = (a: WorkItem, b: WorkItem) => (stamp(b) ?? 0) - (stamp(a) ?? 0);
+   return { recent: recent.sort(desc), older: older.sort(desc) };
+ }
++
++// ---------------------------------------------------------------------------
++// Etapa 185 — memoização dos selectors (referências estáveis)
++// ---------------------------------------------------------------------------
++// Os selectors são puros, mas a tela os chama a CADA render e cada chamada
++// devolvia arrays/objetos NOVOS — mesmo sem nada ter mudado. Isso invalidava o
++// `useMemo` dos filhos e refazia o recorte + os baldes na troca de modo. O
++// `useMyWorkItems` já protege os derivados dele com `useMemo(…, [items])`
++// (`byDue`/`byStatus`/`kpis`); abaixo a MESMA garantia vale para quem chama o
++// selector fora de um componente (o `TasksModule` recorta a lista uma vez e
++// reusa o resultado nos três modos).
++//
++// A chave é a IDENTIDADE da entrada (a lista de itens — e, no recorte, também o
++// objeto de filtros): a query só troca a referência quando há dado novo e os
++// filtros só trocam quando mudam, então o memo acerta exatamente quando deve.
++// Entrada nova recalcula e troca a entrada.
++
++/**
++ * Guarda o ÚLTIMO resultado com a chave que o produziu, comparada por
++ * identidade (elemento a elemento). Uma entrada só: memória constante, nada de
++ * segurar listas antigas. `now` continua opcional como no selector puro; como a
++ * tela não o passa, o primeiro cálculo é reaproveitado — o mesmo contrato do
++ * `useMemo(…, [items])`.
++ */
++function memoLast<A extends readonly unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
++  let cache: { args: A; result: R } | null = null;
++  return (...args: A): R => {
++    if (cache && cache.args.length === args.length && cache.args.every((a, i) => Object.is(a, args[i]))) {
++      return cache.result;
++    }
++    const result = fn(...args);
++    cache = { args, result };
++    return result;
++  };
++}
++
++/** Etapa 185: `applyFilters` estável — mesma lista + mesmos filtros = mesmo recorte. */
++export const memoizedApplyFilters = memoLast(
++  (items: WorkItem[], f: TasksFilters): WorkItem[] => applyFilters(items, f),
++);
++
++/** Etapa 185: `bucketByDue` estável — a Lista reusa os baldes entre renders. */
++export const memoizedBucketByDue = memoLast(
++  (items: WorkItem[], now?: Date): BucketsByDue => bucketByDue(items, now),
++);
++
++/** Etapa 185: `bucketByStatus` estável — as colunas do Quadro não são recriadas à toa. */
++export const memoizedBucketByStatus = memoLast(
++  (items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> => bucketByStatus(items),
++);
++
++/** Etapa 185: `kpis` estável — a faixa de KPIs não recalcula na troca de modo. */
++export const memoizedKpis = memoLast(
++  (items: WorkItem[], now?: Date): KpiSnapshot => kpis(items, now),
++);
+
+diff --git a/src/hooks/tasks/__tests__/workItemAggregates.test.ts b/src/hooks/tasks/__tests__/workItemAggregates.test.ts
+--- a/src/hooks/tasks/__tests__/workItemAggregates.test.ts
++++ b/src/hooks/tasks/__tests__/workItemAggregates.test.ts
+@@ -1,6 +1,6 @@
+ import { describe, it, expect } from 'vitest';
+ import { startOfDay } from 'date-fns';
+-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime, agendaDayCounts, agendaDayAriaLabel, daySubtitle } from '../workItemAggregates';
++import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime, agendaDayCounts, agendaDayAriaLabel, daySubtitle, memoizedApplyFilters, memoizedBucketByDue, memoizedBucketByStatus, memoizedKpis } from '../workItemAggregates';
+ import { localDayKey } from '@/lib/localDay';
+ import { DEFAULT_FILTERS } from '../workItemFilters';
+ import type { WorkItem } from '../workItem.types';
+@@ -652,3 +652,62 @@
+     expect(depois.flatMap(w => w.dueTasks).map(i => i.id)).toEqual(['meia']);
+   });
+ });
++
++/**
++ * Etapa 185 — a tela chama os selectors a cada render; sem memo, cada chamada
++ * devolvia arrays/objetos NOVOS e invalidava o `useMemo` dos filhos. Aqui ficam
++ * as testemunhas: a mesma entrada devolve a MESMA referência e a segunda
++ * chamada NÃO relê os itens.
++ */
++describe('etapa 185 — memoização dos selectors (referências estáveis)', () => {
++  it('mesma lista devolve a MESMA referência para o recorte, os baldes e os KPIs', () => {
++    const lista = [makeItem({ id: 'a', status: 'todo' }), makeItem({ id: 'b', status: 'doing' })];
++
++    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(memoizedApplyFilters(lista, DEFAULT_FILTERS));
++    expect(memoizedBucketByDue(lista)).toBe(memoizedBucketByDue(lista));
++    expect(memoizedBucketByStatus(lista)).toBe(memoizedBucketByStatus(lista));
++    expect(memoizedKpis(lista)).toBe(memoizedKpis(lista));
++  });
++
++  it('a segunda chamada com a MESMA lista não relê os itens (não recalcula)', () => {
++    let leituras = 0;
++    const espiao = new Proxy(makeItem({ id: 'a', status: 'todo' }) as WorkItem, {
++      get(alvo, prop, recv) { leituras += 1; return Reflect.get(alvo, prop, recv); },
++    });
++    const lista = [espiao];
++
++    memoizedBucketByDue(lista);
++    const aposPrimeira = leituras;
++    expect(aposPrimeira).toBeGreaterThan(0);   // o 1º cálculo leu de fato os itens
++
++    memoizedBucketByDue(lista);
++    expect(leituras).toBe(aposPrimeira);       // o 2º veio do cache: zero leitura
++  });
++
++  it('lista nova recalcula e devolve referência nova (o cache não devolve constante)', () => {
++    const a = [makeItem({ id: 'a' })];
++    const b = [makeItem({ id: 'a' })];
++
++    expect(memoizedKpis(a)).not.toBe(memoizedKpis(b));
++  });
++
++  it('trocar o filtro troca o recorte (a chave inclui os filtros)', () => {
++    const lista = [makeItem({ id: 'a', priority: 'high' }), makeItem({ id: 'b', priority: 'low' })];
++
++    const semFiltro = memoizedApplyFilters(lista, DEFAULT_FILTERS);
++    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(semFiltro); // hit com os mesmos filtros
++
++    const comPrio = memoizedApplyFilters(lista, { ...DEFAULT_FILTERS, prio: 'high' });
++    expect(comPrio).not.toBe(semFiltro);
++    expect(comPrio.map(i => i.id)).toEqual(['a']);
++  });
++
++  it('o valor memoizado é idêntico ao do selector puro', () => {
++    const lista = [makeItem({ id: 'a', status: 'done', completed_at: now.toISOString() })];
++
++    expect(memoizedBucketByDue(lista)).toEqual(bucketByDue(lista));
++    expect(memoizedBucketByStatus(lista)).toEqual(bucketByStatus(lista));
++    expect(memoizedKpis(lista)).toEqual(kpis(lista));
++    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toEqual(applyFilters(lista, DEFAULT_FILTERS));
++  });
++});
+

@@ -1,0 +1,484 @@
+{
+  "schema_version": 1,
+  "repository": "adm01-debug/Zapp_Web_V2",
+  "audit_date": "2026-10-04",
+  "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+  "previous_r2_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "summary": {
+    "total": 15,
+    "by_priority": {
+      "P1": 3,
+      "P2": 11,
+      "P3": 1
+    },
+    "by_classification": {
+      "SOURCE_DEFECT": 10,
+      "CONDITIONAL_RISK": 3,
+      "REFINEMENT_OF_PREVIOUS": 1,
+      "POLICY_SCOPE_GAP": 1
+    }
+  },
+  "notes": [
+    "Não somar automaticamente aos 372 registros R2 como bugs independentes.",
+    "R3-DELTA-010 é refinamento explícito de R2-API-010.",
+    "Deduplicação global de todos os 372 registros não foi repetida nesta etapa.",
+    "Classificação de defeito no código não comprova incidente em produção."
+  ],
+  "findings": [
+    {
+      "id": "R3-DELTA-001",
+      "priority": "P1",
+      "classification": "SOURCE_DEFECT",
+      "title": "Vocabulário incompatível impede a gravação do lote de alertas",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "talkx_engine_health → talkx_engine_alerts → talkx_engine_alert_events → trigger_talkx_engine_tick",
+      "precondition": "Existe ao menos um sinal de resultado incerto com idade superior ao limite da view.",
+      "source_observation": "A view emite outcome_unknown_24h; o CHECK da tabela admite outcome_unknown. A função insere o kind recebido sem tradução. O tick envolve a chamada em EXCEPTION WHEN OTHERS THEN NULL. ON CONFLICT DO NOTHING não resolve essa incompatibilidade de CHECK.",
+      "impact": "O INSERT de um lote que mistura o sinal incompatível com alertas válidos é rejeitado. O tick pode prosseguir sem armazenar esses alertas e sem expor a falha naquele bloco.",
+      "source_ids": [
+        "S03",
+        "S09",
+        "P02"
+      ],
+      "offline_case_ids": [
+        "M01",
+        "M02"
+      ],
+      "correction_direction": "Unificar o contrato de kind entre view, produtor, CHECK e consumidor; registrar falha de monitoramento sem impedir o motor.",
+      "acceptance_criteria": [
+        "Gerar simultaneamente outcome desconhecido vencido e campanha parada; ambos os alertas válidos devem persistir.",
+        "Testar abertura, repetição deduplicada e fechamento para cada kind permitido.",
+        "Uma falha de persistência deve ser observável, não absorvida por um bloco vazio."
+      ],
+      "limitations": "Confirmado no contrato do código. O contraexemplo usou SQLite para modelar a rejeição do lote, não PostgreSQL real. Não foi consultada a incidência de alertas no banco vivo.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-002",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "A RPC de histórico do cron não repete o controle de papel da visão de saúde",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "talkx_engine_cron_runs",
+      "precondition": "Chamador autenticado possui o EXECUTE concedido pela migration; função está exposta pelo schema da API.",
+      "source_observation": "A função SECURITY DEFINER consulta cron.job_run_details e retorna informações operacionais. O EXECUTE é concedido a authenticated; o corpo não exige is_admin_or_supervisor. O filtro de autorização no uso pela view não protege uma chamada direta à RPC.",
+      "impact": "Uma conta comum pode alcançar histórico operacional e return_message fora do caminho protegido da tela de saúde.",
+      "source_ids": [
+        "S03",
+        "S09"
+      ],
+      "offline_case_ids": [],
+      "correction_direction": "Aplicar autorização dentro da RPC ou restringir seu EXECUTE a um chamador de serviço, mantendo um caminho administrativo auditável.",
+      "acceptance_criteria": [
+        "Chamada direta autenticada por agente comum deve ser negada.",
+        "Admin/supervisor autorizado deve receber somente os dados necessários.",
+        "Testar também usuário inativo, sessão anônima e sessão expirada."
+      ],
+      "limitations": "O grant e o corpo foram lidos na migration. A exposição efetiva via API, os grants atuais e uma tentativa com credencial de usuário não foram testados.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-003",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "Cursor de timestamp perde logs que empatam na borda da página",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "talkx_campaign_logs",
+      "precondition": "Duas ou mais linhas compartilham created_at e o limite da página corta esse grupo.",
+      "source_observation": "A consulta ordena por created_at e id, mas recebe somente p_after timestamptz e filtra created_at > p_after. O segundo elemento da ordenação não faz parte do cursor.",
+      "impact": "A página seguinte omite registros com o mesmo timestamp do último registro entregue, mesmo que seus IDs ainda não tenham sido vistos.",
+      "source_ids": [
+        "S03",
+        "S09"
+      ],
+      "offline_case_ids": [
+        "M08",
+        "M09"
+      ],
+      "correction_direction": "Usar cursor composto por created_at e id, com predicado consistente com a mesma ordenação.",
+      "acceptance_criteria": [
+        "Criar três logs com timestamp idêntico e consultar com limite dois; a segunda página deve trazer o terceiro.",
+        "Percorrer o conjunto inteiro sem perda nem repetição.",
+        "Testar inserções concorrentes e limites mínimo/máximo."
+      ],
+      "limitations": "Perda reproduzida em modelo de paginação. A RPC PostgreSQL e a interface consumidora não foram executadas.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-004",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "Retry em lote aceita IDs inexistentes e pode reabrir campanha com zero destinatários",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "retry_talkx_recipients",
+      "precondition": "Ator privilegiado fornece uma lista não vazia contendo IDs inexistentes ou nulos; campanha pode estar completed.",
+      "source_observation": "A validação compara a contagem de linhas encontradas com a contagem das encontradas na campanha. Não compara com o conjunto solicitado. Para uma lista sem correspondências, 0 = 0 passa; o loop não altera destinatários, mas a etapa de reabertura ainda pode mudar a campanha.",
+      "impact": "Sucesso parcial ou vazio apresentado como operação válida; evento de retomada e estado sending sem trabalho correspondente.",
+      "source_ids": [
+        "S01",
+        "S10"
+      ],
+      "offline_case_ids": [
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07"
+      ],
+      "correction_direction": "Validar o conjunto completo de IDs, rejeitar nulos/inexistentes e definir explicitamente a política de repetidos. Só reabrir se houver transição válida de destinatários.",
+      "acceptance_criteria": [
+        "Lista somente inexistente: erro, sem mudança de campanha ou evento.",
+        "Lista mista válida/inexistente: operação integralmente rejeitada, salvo contrato explícito de resultados por item.",
+        "ID de outra campanha continua sendo recusado; lista válida conserva o fluxo atual."
+      ],
+      "limitations": "Autorização administrativa existente não foi ignorada. A prova é de cardinalidade e fluxo, com modelos locais; não foi invocada a RPC viva.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-005",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "Reabertura por retry não aplica a nova confirmação exigida no lançamento",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "retry_talkx_recipients → enforce_talkx_campaign_mutability → continue",
+      "precondition": "Campanha antiga completed possui consent_confirmed_at nulo, destinatário elegível para retry e ator privilegiado.",
+      "source_observation": "X032 adiciona a confirmação de lançamento, mas as colunas são anuláveis. O caminho X031 de retry reabre para sending. O bypass interno app.talkx_retry_write é aceito antes dos controles posteriores de mutabilidade; o continue parte do estado sending. A confirmação que bloqueia o start normal não é aplicada no mesmo ponto desse caminho.",
+      "impact": "Invariante de confirmação fica diferente entre o lançamento normal e a retomada manual de campanhas anteriores.",
+      "source_ids": [
+        "S01",
+        "S02",
+        "S04",
+        "S10",
+        "S11",
+        "S24"
+      ],
+      "offline_case_ids": [
+        "M16"
+      ],
+      "correction_direction": "Centralizar as precondições para todo ingresso em sending ou documentar e testar uma exceção de negócio deliberada. Preservar gates de supressão, elegibilidade, conexão e lease.",
+      "acceptance_criteria": [
+        "Aplicar X031, X032 e X033 em ordem sobre fixture realista com campanha legada.",
+        "Retry sem confirmação não deve contornar a regra de lançamento.",
+        "Retry de campanha corretamente confirmada continua permitido conforme as demais regras."
+      ],
+      "limitations": "Cadeia de código e modelo confirmam a divergência; a sequência real das três migrations não foi executada nesta etapa. Não é alegação jurídica de ausência de consentimento de cada contato.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-006",
+      "priority": "P1",
+      "classification": "SOURCE_DEFECT",
+      "title": "Expurgo remove metadados de Storage sem excluir o objeto físico",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "purge_talkx_expired_data → storage.objects",
+      "precondition": "Há mídia elegível do bucket talkx-media e o DELETE direto é permitido pelo ambiente.",
+      "source_observation": "A definição efetiva de expurgo em X033 faz DELETE em storage.objects. O serviço de Storage mantém ali metadados; o arquivo físico exige operação pela API de Storage.",
+      "impact": "Se o DELETE ocorrer, pode deixar objeto físico órfão, inacessível pela API e ainda armazenado/cobrado. O código não prova liberação física dos arquivos.",
+      "source_ids": [
+        "S02",
+        "S03",
+        "P01"
+      ],
+      "offline_case_ids": [],
+      "correction_direction": "Separar seleção/manifesto de expurgo da remoção física por API de Storage, com confirmação do resultado, repetição segura e reconciliação de órfãos.",
+      "acceptance_criteria": [
+        "Em ambiente de teste, comprovar desaparecimento do objeto pela API e no provedor, não só da linha SQL.",
+        "Conservar objetos ainda referenciados por qualquer consumidor válido.",
+        "Uma falha parcial deve manter informação suficiente para repetir e reconciliar a remoção."
+      ],
+      "limitations": "Não foi excluído nenhum arquivo. Se o ambiente bloquear DML direto em Storage, o efeito será erro, não remoção de metadados; a presença desse bloqueio não foi verificada. A auditoria de todas as referências ao objeto ainda é necessária.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-007",
+      "priority": "P1",
+      "classification": "CONDITIONAL_RISK",
+      "title": "Erro no expurgo pode impedir o tick de chegar aos envios",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "trigger_talkx_engine_tick → purge_talkx_expired_data",
+      "precondition": "A etapa de expurgo lança erro não tratado: configuração inválida, permissão, Storage ou outra dependência.",
+      "source_observation": "A definição final do tick chama o expurgo antes das etapas de reconciliação/fan-out e fora de um bloco isolado de tratamento. Falha nessa chamada interrompe o restante da função. Gravar o marcador antes não o torna persistido independentemente da transação.",
+      "impact": "Acoplamento de manutenção à disponibilidade do motor; falha de limpeza pode impedir processamento e se repetir no tick seguinte.",
+      "source_ids": [
+        "S03",
+        "S11"
+      ],
+      "offline_case_ids": [
+        "M10",
+        "M11",
+        "M12"
+      ],
+      "correction_direction": "Isolar a manutenção em execução própria ou num bloco controlado com sinalização e política explícita. Definir quando retenção deve bloquear envio e quando deve apenas alertar.",
+      "acceptance_criteria": [
+        "Injetar falha de expurgo no PostgreSQL descartável e observar se a política escolhida é cumprida.",
+        "Alerta de falha permanece visível; o marcador não informa sucesso inexistente.",
+        "Teste de recuperação deve provar retomada sem duplicação."
+      ],
+      "limitations": "O risco é condicional; não foi observado motor parado em produção. O teste local modela a ordem e o rollback, não a execução real do cron.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-008",
+      "priority": "P2",
+      "classification": "CONDITIONAL_RISK",
+      "title": "Lote único diário não prova cumprimento da retenção em volumes maiores",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "purge_talkx_expired_data(1000)",
+      "precondition": "Quantidade de dados vencidos ultrapassa a capacidade diária do lote.",
+      "source_observation": "O tick usa limite 1000 e o expurgo marca o dia como processado. Nova chamada no mesmo dia é ignorada, mesmo que sobrem elegíveis. O próprio teste X032 exige esse comportamento; não se trata de uma falha acidental de idempotência.",
+      "impact": "O prazo de retenção pode ser excedido. No exemplo sintético de 2501 linhas vencidas, ficam 1501 após o primeiro dia e são necessários ao menos três dias sem novas entradas.",
+      "source_ids": [
+        "S03",
+        "S11"
+      ],
+      "offline_case_ids": [
+        "M13",
+        "M14"
+      ],
+      "correction_direction": "Definir capacidade e atraso máximo admissível. Processar lotes com cursor e orçamento por execução até esgotar a fila, ou medir/alertar o backlog de retenção.",
+      "acceptance_criteria": [
+        "Teste com volume superior ao limite deve informar quantos elegíveis restaram e sua maior idade.",
+        "Medir taxa real de expiração versus capacidade de processamento.",
+        "Provar que repetição controlada conclui o backlog sem reprocessamento destrutivo."
+      ],
+      "limitations": "Não foi medido volume real. O cenário de 1500 novas expirações/dia é hipótese de capacidade, não estatística do ZAPP.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-009",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "Limpeza histórica pode ser interpretada como falha recente do motor",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "purge_talkx_expired_data → talkx_engine_health",
+      "precondition": "Destinatários antigos em estado failed possuem snapshots que serão limpos.",
+      "source_observation": "O expurgo atualiza updated_at ao limpar snapshots. A view de saúde usa updated_at para contar falhas na janela recente, sem separar o instante da falha do instante da manutenção.",
+      "impact": "Cinco falhas históricas limpas podem produzir um sinal de cinco falhas recentes sem nenhum novo disparo, distorcendo diagnóstico e alertas.",
+      "source_ids": [
+        "S03"
+      ],
+      "offline_case_ids": [
+        "M15"
+      ],
+      "correction_direction": "Basear saúde operacional em timestamp imutável da transição de falha ou nos eventos de entrega, não em updated_at genérico.",
+      "acceptance_criteria": [
+        "Executar expurgo sobre falhas antigas e confirmar que a métrica de falhas recentes não muda.",
+        "Gerar falha nova e confirmar incremento.",
+        "Alterações administrativas e retenção não podem simular tentativa de envio."
+      ],
+      "limitations": "Interação confirmada pelos predicados lidos e modelo local; não foram consultados falsos alertas no ambiente vivo.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-010",
+      "priority": "P2",
+      "classification": "REFINEMENT_OF_PREVIOUS",
+      "title": "Janela inválida tem comportamentos diferentes no TypeScript e no SQL de saúde",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "deliveryWindowStatus ↔ cálculo de janela em talkx_engine_health",
+      "precondition": "Configuração malformada de horário/dias ou timezone alcança o consumidor.",
+      "source_observation": "O helper TypeScript pode permitir envio quando comparações contêm NaN, ou lançar erro se days não oferecer includes. Para timezone inválido, ele recusa. O SQL de saúde usa casts e conversão de timezone que podem lançar erro, sem contrato de erro equivalente.",
+      "impact": "Worker e monitor podem divergir sobre a mesma configuração. A análise refina R2-API-010; não é contada como descoberta independente de validação de horário.",
+      "source_ids": [
+        "S03",
+        "S07",
+        "S23"
+      ],
+      "offline_case_ids": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05",
+        "N06"
+      ],
+      "correction_direction": "Definir normalização e esquema de configuração comum, validação na escrita e recusa segura na leitura. Testar paridade entre os dois consumidores.",
+      "acceptance_criteria": [
+        "Mesma tabela de entradas válidas/inválidas deve produzir decisões equivalentes no SQL e no TypeScript.",
+        "Configuração inválida retorna estado inválido explícito, nunca envio permitido por NaN.",
+        "Conservar os controles válidos de dia, horário e timezone."
+      ],
+      "limitations": "Os testes N01–N06 executam corpo extraído, não o handler inteiro. O save de rascunho já impede uma janela parcial em seu caminho normal; esse caso não foi apresentado como fluxo normalmente alcançável.",
+      "previous_finding": "R2-API-010",
+      "live_evidence": "MATCHING_WINDOW_HELPER_OBSERVED_IN_DEPLOYED_TALKX_SEND_V609",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-011",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "Exceção em destinatário posterior perde logs já acumulados no lote",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "runRecipient → state.deliveryLogs → flushDeliveryLogs → finally",
+      "precondition": "Uma tentativa já produziu entrada no buffer; um destinatário posterior lança antes do flush de fim da passagem.",
+      "source_observation": "O flush ocorre depois do loop. Há caminhos de processRecipient que lançam antes de retornar um resultado. O finally externo libera a lease, mas não descarrega o buffer. Além disso, o flush remove entradas do buffer antes do insert best-effort, sem fila durável para repetir.",
+      "impact": "A trilha de auditoria pode perder tentativas anteriores válidas, justamente durante uma passagem com erro. Um envio e sua persistência principal não dependem de o log sobrevivente existir.",
+      "source_ids": [
+        "S04",
+        "S05",
+        "S12"
+      ],
+      "offline_case_ids": [
+        "N22",
+        "N23"
+      ],
+      "correction_direction": "Garantir persistência/reconciliação dos registros mesmo em saída excepcional. Evitar que erro de observabilidade mascare a falha original; definir estratégia de lote durável ou descarregamento protegido.",
+      "acceptance_criteria": [
+        "Primeiro destinatário termina e segundo lança antes do flush; a trilha do primeiro deve persistir.",
+        "Simular falha do insert de logs e provar repetição ou sinalização sem perda silenciosa.",
+        "Lease deve ser liberada nos cenários positivos e negativos."
+      ],
+      "limitations": "O contraexemplo N22 é modelo de fluxo, não execução do handler real. O mesmo arranjo foi observado no bundle implantado v609, sem invocar envios.",
+      "previous_finding": null,
+      "live_evidence": "MATCHING_RELEVANT_SOURCE_OBSERVED_IN_DEPLOYED_TALKX_SEND_V609",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-012",
+      "priority": "P3",
+      "classification": "SOURCE_DEFECT",
+      "title": "Contexto de quarentena sobrescreve a tentativa ordinal do logger filho",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "Logger.child → Logger.log → processRecipient(quarentena)",
+      "precondition": "Primeira tentativa parte de attempt_count zero e produz log de quarentena com o valor original.",
+      "source_observation": "runRecipient vincula attempt = attempt_count + 1 ao logger filho. Na chamada de quarentena o contexto fornece attempt = attemptSoFar. A mesclagem ...bound, ...ctx permite sobrescrever o valor um pelo valor zero.",
+      "impact": "A mesma tentativa aparece com numeração diferente entre log estruturado e registro de entrega, dificultando correlação.",
+      "source_ids": [
+        "S04",
+        "S05",
+        "S06",
+        "S25"
+      ],
+      "offline_case_ids": [
+        "N07",
+        "N08"
+      ],
+      "correction_direction": "Escolher um significado único de attempt. Não sobrescrever o ordinal com o contador anterior; manter identidade de correlação explícita.",
+      "acceptance_criteria": [
+        "Primeira tentativa deve registrar o mesmo ordinal em todos os pontos.",
+        "Reenvios e quarentena devem manter correlação com o contador efetivamente incrementado.",
+        "Conservar requestId e vínculo de destinatário no logger filho."
+      ],
+      "limitations": "N08 executa a classe Logger extraída. O corpo equivalente foi observado no bundle v609 e continua no helper da main de corte final.",
+      "previous_finding": null,
+      "live_evidence": "MATCHING_LOGGER_AND_CALLSITE_OBSERVED_IN_DEPLOYED_TALKX_SEND_V609",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-013",
+      "priority": "P2",
+      "classification": "SOURCE_DEFECT",
+      "title": "Template N8N testa tamanho de array em um item de alerta",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "HTTP Request → IF no template talkx-alerts.json",
+      "precondition": "A consulta devolve uma lista JSON de alertas no modo de resposta configurado.",
+      "source_observation": "O nó HTTP Request separa a lista em itens. O IF seguinte avalia $json.length como se cada item ainda fosse o array. O objeto individual de alerta não possui esse número.",
+      "impact": "Alertas podem não seguir para envio, ou o nó pode falhar na validação de tipo, dependendo da versão/conversão do N8N.",
+      "source_ids": [
+        "S08",
+        "P04"
+      ],
+      "offline_case_ids": [
+        "N20",
+        "N21"
+      ],
+      "correction_direction": "Definir o contrato de itens: processar cada alerta diretamente, ou agregar a lista de forma explícita antes de verificar seu tamanho.",
+      "acceptance_criteria": [
+        "Importar o template na versão realmente utilizada e ensaiar zero, um e vários alertas.",
+        "Verificar o shape recebido por cada nó e uma notificação por unidade definida no contrato.",
+        "Resposta de erro não pode ser tratada como objeto de alerta válido."
+      ],
+      "limitations": "Não foi executado N8N nem comprovado que esse template esteja ativado. O export está inativo e a versão instalada não foi observada. A confirmação refere-se ao contrato do template e ao código primário consultado.",
+      "previous_finding": null,
+      "live_evidence": "N8N_INSTALLATION_AND_WORKFLOW_EXECUTION_NOT_VERIFIED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-014",
+      "priority": "P2",
+      "classification": "CONDITIONAL_RISK",
+      "title": "Never Error sem ramificação por status pode esconder falha HTTP do canal de alertas",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "HTTP GET/POST do template N8N",
+      "precondition": "Um endpoint devolve HTTP 401, 403, 429 ou 5xx com uma resposta HTTP válida.",
+      "source_observation": "O template ativa Never Error e não possui validação explícita de status HTTP bem-sucedido nos pontos inspecionados. O nó final de envio pode concluir normalmente com resposta de erro.",
+      "impact": "Execução do workflow pode parecer encerrada sem que a notificação tenha sido entregue; um problema de credencial ou destino deixa de acionar o fluxo de falha esperado.",
+      "source_ids": [
+        "S08",
+        "P03"
+      ],
+      "offline_case_ids": [],
+      "correction_direction": "Verificar status e conteúdo esperado; encaminhar falhas para retentativa limitada, registro e canal independente. Separar falha HTTP de ausência legítima de alertas.",
+      "acceptance_criteria": [
+        "Simular 200 com resposta válida, lista vazia, 401, 429 e 500.",
+        "Erro no POST final não deve ser certificado como entrega.",
+        "Testar timeout e falha de transporte separadamente."
+      ],
+      "limitations": "Never Error não implica absorção de todo erro de rede. Não houve chamada a endpoints de notificação; risco condicional do template.",
+      "previous_finding": null,
+      "live_evidence": "N8N_INSTALLATION_AND_WORKFLOW_EXECUTION_NOT_VERIFIED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    },
+    {
+      "id": "R3-DELTA-015",
+      "priority": "P2",
+      "classification": "POLICY_SCOPE_GAP",
+      "title": "Expurgo denominado Talk X alcança jobs de IA de outros módulos",
+      "code_sha": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "component": "purge_talkx_expired_data → public.ai_jobs",
+      "precondition": "Há jobs terminais antigos no armazenamento compartilhado, inclusive de funções alheias ao Talk X.",
+      "source_observation": "O predicado de DELETE restringe idade e estados terminais, mas não função, tipo de job ou módulo. A origem Talk X do procedimento não limita automaticamente a tabela compartilhada.",
+      "impact": "Histórico de IA de outros módulos, inclusive estado outcome_unknown antigo, pode entrar no expurgo. Falta comprovar que a política de retenção compartilhada autoriza esse alcance.",
+      "source_ids": [
+        "S03",
+        "S11"
+      ],
+      "offline_case_ids": [
+        "M17"
+      ],
+      "correction_direction": "Registrar a autoridade e o escopo de retenção. Usar rotina global explicitamente governada ou restringir o predicado aos jobs do domínio desejado.",
+      "acceptance_criteria": [
+        "Fixture com jobs Talk X e não Talk X deve comprovar a política escolhida.",
+        "Definir tratamento específico de pendências de reconciliação e auditoria.",
+        "A documentação deve explicar responsabilidade, prazo e consequências da remoção."
+      ],
+      "limitations": "É uma lacuna de decisão/escopo, não prova automática de exclusão indevida. Nenhum registro de ai_jobs foi removido ou consultado nesta auditoria.",
+      "previous_finding": null,
+      "live_evidence": "SQL_MIGRATION_REGISTERED_BODY_NOT_INSPECTED",
+      "implementation_status": "NOT_CHANGED",
+      "production_reproduction": false
+    }
+  ]
+}

@@ -1,0 +1,1229 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+index f8412e03..a6507842 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -1,13 +1,29 @@
+ {
++  "permissions": {
++    "allow": [
++      "Skill(update-config)",
++      "Skill(update-config:*)"
++    ]
++  },
+   "hooks": {
+     "PreToolUse": [
+       {
+         "matcher": "Bash|Grep",
+-        "hooks": [{"type": "command", "command": "/workspace/.local/bin/graphify hook-guard search"}]
++        "hooks": [
++          {
++            "type": "command",
++            "command": "/workspace/.local/bin/graphify hook-guard search"
++          }
++        ]
+       },
+       {
+         "matcher": "Read|Glob",
+-        "hooks": [{"type": "command", "command": "/workspace/.local/bin/graphify hook-guard read"}]
++        "hooks": [
++          {
++            "type": "command",
++            "command": "/workspace/.local/bin/graphify hook-guard read"
++          }
++        ]
+       }
+     ]
+   }
+diff --git a/.env.example b/.env.example
+index 830525e1..d4dec25c 100644
+--- a/.env.example
++++ b/.env.example
+@@ -11,8 +11,13 @@ VITE_SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co
+ VITE_SUPABASE_PUBLISHABLE_KEY=sua-anon-key-aqui
+ 
+ # GESTÃO DE CLIENTES — CRM Promobrindes (banco externo, projeto pgxfvjmuubtbowutlide)
+-VITE_CLIENTES_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
+-VITE_CLIENTES_SUPABASE_ANON_KEY=your-external-anon-key
++VITE_CRM_INTEGRATION_ENABLED=true
++
++# CRM externo: configurar somente como Supabase Edge Function Secrets.
++# EXTERNAL_SUPABASE_URL=https://your-external-project.supabase.co
++# EXTERNAL_SUPABASE_SERVICE_ROLE_KEY=configure-as-edge-secret
++# Temporary compatibility only; remove after external anon grants are revoked.
++# EXTERNAL_SUPABASE_ANON_KEY=your-external-anon-key
+ 
+ # ==============================================================================
+ # EVOLUTION GO - WHATSAPP (OBRIGATÓRIO para Edge Functions)
+diff --git a/.env.production b/.env.production
+index 2f5ad036..084e56fd 100644
+--- a/.env.production
++++ b/.env.production
+@@ -10,8 +10,9 @@ VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
+ # GESTÃO DE CLIENTES — CRM Promobrindes (Supabase Cloud)
+ # Projeto: pgxfvjmuubtbowutlide
+ # 57.728 empresas | 48.623 clientes | 4.747 contatos | 10.460 interações
+-VITE_CLIENTES_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
+-VITE_CLIENTES_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneGZ2am11dWJ0Ym93dXRsaWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMjcwMTIsImV4cCI6MjA4NTcwMzAxMn0.sW9N_LChqwVNUvMmQWXx87Vhs3eoTI2OKg2TT_Cg4V0
++# Staged rollout: change to true only after the canonical DB migration and
++# crm-integration Edge Function have passed authenticated production smoke tests.
++VITE_CRM_INTEGRATION_ENABLED=false
+ 
+ # App config
+ VITE_APP_NAME=ZAPP
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 9d31c04a..34895af1 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -17,8 +17,7 @@ on:
+ env:
+   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+   VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+-  VITE_CLIENTES_SUPABASE_URL: ${{ secrets.VITE_CLIENTES_SUPABASE_URL }}
+-  VITE_CLIENTES_SUPABASE_ANON_KEY: ${{ secrets.VITE_CLIENTES_SUPABASE_ANON_KEY }}
++  VITE_CRM_INTEGRATION_ENABLED: 'true'
+ 
+ permissions:
+   contents: read
+@@ -55,7 +54,9 @@ jobs:
+         run: bun install --frozen-lockfile
+ 
+       - name: 🧪 Test CI and Edge deployment guards
+-        run: node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
++        run: >-
++          node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
++          scripts/db-audit/crm-sync-outbox-contract.test.mjs
+ 
+       - name: 🔐 Verify immutable GitHub Action pins
+         run: node scripts/ci/check-workflow-pins.mjs
+@@ -143,8 +144,7 @@ jobs:
+         env:
+           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+-          VITE_CLIENTES_SUPABASE_URL: ${{ secrets.VITE_CLIENTES_SUPABASE_URL }}
+-          VITE_CLIENTES_SUPABASE_ANON_KEY: ${{ secrets.VITE_CLIENTES_SUPABASE_ANON_KEY }}
++          VITE_CRM_INTEGRATION_ENABLED: 'true'
+ 
+       # Artifact de dist/ so em PR — em push para main o deploy e feito pela
+       # Vercel, e o upload custava 41.6k GigabyteHours de storage em agosto.
+diff --git a/docs/CRM360_TECHNICAL_DOCS.md b/docs/CRM360_TECHNICAL_DOCS.md
+index 963673c2..7ffa313d 100644
+--- a/docs/CRM360_TECHNICAL_DOCS.md
++++ b/docs/CRM360_TECHNICAL_DOCS.md
+@@ -65,8 +65,11 @@ Mapeamento score→stage:
+ ## Variáveis de Ambiente
+ 
+ ```env
+-VITE_EXTERNAL_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
+-VITE_EXTERNAL_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
++VITE_CRM_INTEGRATION_ENABLED=true
++
++# Somente em Supabase Edge Function Secrets (nunca no Vercel/browser):
++EXTERNAL_SUPABASE_URL=https://external-project.supabase.co
++EXTERNAL_SUPABASE_ANON_KEY=configure-no-dashboard
+ ```
+ 
+ ## Cadeia de Dados (Flow Completo)
+diff --git a/docs/DEPLOYMENT.md b/docs/DEPLOYMENT.md
+index e98dbdc0..cd66e3de 100644
+--- a/docs/DEPLOYMENT.md
++++ b/docs/DEPLOYMENT.md
+@@ -164,12 +164,13 @@ supabase secrets list --project-ref tnnnlkbymytvtqngbbqh
+ VITE_SUPABASE_URL=https://tnnnlkbymytvtqngbbqh.supabase.co
+ VITE_SUPABASE_ANON_KEY=xxx
+ 
+-# Externo
+-VITE_CLIENTES_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
+-VITE_CLIENTES_SUPABASE_ANON_KEY=xxx
++# Externo — manter false ate banco + Edge passarem os smokes do runbook
++VITE_CRM_INTEGRATION_ENABLED=false
+ 
+-# Nota: VITE_CLIE5TES_* tem fallback hardcoded (anon key pública por design).
+-# No Vercel, VITE_CLIENTES_* é opcional — o fallback já aponta para pgxfvjmuubtbowutlide.
++# As credenciais do CRM externo nao pertencem ao Vercel/frontend. Configure
++# EXTERNAL_SUPABASE_URL e EXTERNAL_SUPABASE_ANON_KEY somente nos Edge Secrets
++# do projeto Supabase canonico; preferir EXTERNAL_SUPABASE_SERVICE_ROLE_KEY
++# e revogar os grants anon externos na fase final do rollout.
+ 
+ # Sentry
+ VITE_SENTRY_DSN=xxx
+@@ -186,6 +187,12 @@ EVOLUTION_API_KEY=xxx
+ PROMOGIFTS_SUPABASE_URL=https://doufsxqlfjyuvxuezpln.supabase.co
+ PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=xxx
+ 
++# CRM empresas/contatos (somente edge crm-integration)
++EXTERNAL_SUPABASE_URL=https://pgxfvjmuubtbowutlide.supabase.co
++EXTERNAL_SUPABASE_SERVICE_ROLE_KEY=xxx
++# Compatibilidade temporaria ate a revogacao dos grants anon externos
++EXTERNAL_SUPABASE_ANON_KEY=xxx
++
+ # IA
+ OPENAI_API_KEY=sk-xxx
+ ANTHROPIC_API_KEY=sk-ant-xxx
+diff --git a/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md b/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md
+index 272e0f87..24b469fe 100644
+--- a/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md
++++ b/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md
+@@ -18,8 +18,7 @@ Já foram criados e commitados no GitHub:
+ 
+ Os **environment secrets** necessários já estão no `.env`:
+ ```
+-VITE_EXTERNAL_SUPABASE_URL="https://pgxfvjmuubtbowutlide.supabase.co"
+-VITE_EXTERNAL_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneGZ2am11dWJ0Ym93dXRsaWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMjcwMTIsImV4cCI6MjA4NTcwMzAxMn0.sW9N_LChqwVNUvMmQWXx87Vhs3eoTI2OKg2TT_Cg4V0"
++VITE_CRM_INTEGRATION_ENABLED="true"
+ ```
+ 
+ **IMPORTANTE:** Esses secrets também precisam ser adicionados no painel do Lovable em Settings → Environment Variables.
+@@ -122,21 +121,17 @@ O componente `src/components/inbox/ConversationList.tsx` mostra a lista de conve
+ 
+ ## REFERÊNCIA TÉCNICA DOS ARQUIVOS EXISTENTES
+ 
+-### Client externo (src/integrations/supabase/externalClient.ts)
++### Gateway externo (src/lib/crmIntegration.ts)
+ ```typescript
+-import { createClient } from '@supabase/supabase-js';
+-const EXTERNAL_SUPABASE_URL = import.meta.env.VITE_EXTERNAL_SUPABASE_URL || '';
+-const EXTERNAL_SUPABASE_ANON_KEY = import.meta.env.VITE_EXTERNAL_SUPABASE_ANON_KEY || '';
+-export const externalSupabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY, {
+-  auth: { persistSession: false, autoRefreshToken: false },
+-});
+-export const isExternalConfigured = Boolean(EXTERNAL_SUPABASE_URL && EXTERNAL_SUPABASE_ANON_KEY);
++// O navegador envia somente seu JWT do banco canonico. URL e chave do CRM
++// ficam exclusivamente nos Edge Function Secrets de crm-integration.
++await supabase.functions.invoke('crm-integration', { body: { action, ...payload } });
+ ```
+ 
+ ### Hook 360° (src/hooks/useExternalContact360.ts)
+ ```typescript
+ // Recebe um phone string, limpa caracteres não-numéricos, e chama:
+-// externalSupabase.rpc('get_contact_360_by_phone', { p_phone: cleanedPhone })
++// crm-integration: rpc get_contact_360_by_phone, com JWT canonico
+ // Retorna Contact360Data (ver src/types/contact360.ts)
+ // Cache: staleTime 10min, gcTime 30min
+ export function useExternalContact360(phone: string | undefined)
+diff --git a/docs/security/secret-surface-inventory.md b/docs/security/secret-surface-inventory.md
+index 271d05e9..419f0a1c 100644
+--- a/docs/security/secret-surface-inventory.md
++++ b/docs/security/secret-surface-inventory.md
+@@ -36,8 +36,9 @@ Owner padrão: **adm01** (onde não houver outro indicado). "Edge env" = ambient
+ 
+ | Nome | Projeto (ref) | Superfície | Classe | Rotação |
+ |---|---|---|---|---|
+-| `VITE_CLIENTES_SUPABASE_URL` / `VITE_CLIENTES_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | `.env.production`, GitHub Secrets, fallback em `externalClient.ts` | público | Dashboard do projeto |
+-| `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | Edge env | público/limitado | Dashboard do projeto |
++| `VITE_CRM_INTEGRATION_ENABLED` | n/a | `.env.production`/bundle | flag pública | n/a |
++| `EXTERNAL_SUPABASE_URL` / `EXTERNAL_SUPABASE_SERVICE_ROLE_KEY` | `pgxfvjmuubtbowutlide` | Edge env (`crm-integration`) | URL pública / chave secreta server-side | Dashboard do projeto CRM |
++| `EXTERNAL_SUPABASE_ANON_KEY` | `pgxfvjmuubtbowutlide` | Edge env (`crm-integration`, `external-db-proxy`) | compatibilidade temporária; remover após revogar grants `anon` | Dashboard do projeto CRM |
+ | `PROMOGIFTS_SUPABASE_URL` / `PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY` | a confirmar | Edge env + GitHub Actions | servidor privilegiado; nunca frontend | Dashboard do projeto PromoGifts (owner a confirmar) |
+ | (histórico) chaves `anon` do projeto `allrjhkpuscmgbsnmjlv` | legado | `.env` removido do HEAD (F-05) | público | n/a |
+ 
+@@ -49,8 +50,8 @@ Owner padrão: **adm01** (onde não houver outro indicado). "Edge env" = ambient
+ | `DESTINO_URL` | 2026-08-28 | 2026-08-28 | workflow `db-live-guard` |
+ | `SUPABASE_ACCESS_TOKEN` | 2026-08-28 | 2026-08-29 | workflows Supabase CLI |
+ | `SUPABASE_PROJECT_REF` | 2026-08-28 | 2026-08-28 | workflows Supabase CLI |
+-| `VITE_CLIENTES_SUPABASE_ANON_KEY` | 2026-08-27 | 2026-08-27 | build no CI |
+-| `VITE_CLIENTES_SUPABASE_URL` | 2026-08-27 | 2026-08-27 | build no CI |
++| `VITE_CLIENTES_SUPABASE_ANON_KEY` | 2026-08-27 | 2026-08-27 | legado; remover do GitHub após deploy de `crm-integration` |
++| `VITE_CLIENTES_SUPABASE_URL` | 2026-08-27 | 2026-08-27 | legado; remover do GitHub após deploy de `crm-integration` |
+ | `VITE_SUPABASE_PUBLISHABLE_KEY` | 2026-08-27 | 2026-08-27 | build no CI |
+ | `VITE_SUPABASE_URL` | 2026-08-27 | 2026-08-27 | build no CI |
+ 
+@@ -161,4 +162,3 @@ Legenda: **FP** = falso positivo · **PUB** = público por design · **SUSP** =
+ 3. **Histórico:** `git log -S`/`-G` e `git log --follow` nos arquivos sinalizados; datas de inclusão/remoção registradas acima.
+ 4. **Não executado (fora de escopo/limitação):** enumeração de secrets do Supabase (CLI), Vercel e Hostinger; validação ativa de qualquer credencial contra serviços; rewrite de histórico Git; rotações (Classe D).
+ 5. **Risco residual conhecido:** valores SUSP permanecem no histórico e (para F-01/F-02) no HEAD até a aprovação das correções; credencial MCP e credencial Vercel seguem os trâmites da etapa 006.
+-
+diff --git a/scripts/edge-deploy/smoke-functions.mjs b/scripts/edge-deploy/smoke-functions.mjs
+index f8729d88..15d907b1 100644
+--- a/scripts/edge-deploy/smoke-functions.mjs
++++ b/scripts/edge-deploy/smoke-functions.mjs
+@@ -6,6 +6,9 @@ import { verifyManifestDigest } from './manifest-lib.mjs';
+ 
+ const DEFAULT_ALLOWED_ORIGIN = 'https://zapp-web-v2.vercel.app';
+ const DEFAULT_DENIED_ORIGIN = 'https://edge-smoke.invalid';
++// verify_jwt=false is required for cron callers that cannot mint a user JWT,
++// but these functions still enforce authentication inside their handler.
++const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration']);
+ 
+ function parseArgs(argv) {
+   const args = {
+@@ -78,7 +81,7 @@ export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch })
+       deniedOrigin !== DEFAULT_DENIED_ORIGIN && deniedOrigin !== '*';
+ 
+     let anonymousGateway = null;
+-    if (fn.verify_jwt) {
++    if (fn.verify_jwt || INTERNAL_AUTH_FUNCTIONS.has(fn.name)) {
+       const anonymous = await fetchWithRetry(url, {
+         method: 'POST',
+         headers: { Origin: DEFAULT_ALLOWED_ORIGIN, 'Content-Type': 'application/json' },
+diff --git a/scripts/edge-deploy/smoke-functions.unit.mjs b/scripts/edge-deploy/smoke-functions.unit.mjs
+index 759664ce..74af54f0 100644
+--- a/scripts/edge-deploy/smoke-functions.unit.mjs
++++ b/scripts/edge-deploy/smoke-functions.unit.mjs
+@@ -50,6 +50,19 @@ test('smokeFunction never POSTs to a public webhook', async () => {
+   assert.ok(recorder.calls.every((call) => call.init.method === 'OPTIONS'));
+ });
+ 
++test('smokeFunction proves internal auth for the public cron gateway', async () => {
++  const recorder = secureFetchRecorder();
++  const result = await smokeFunction({
++    fn: { name: 'crm-integration', verify_jwt: false },
++    baseUrl: 'https://project.supabase.co/functions/v1',
++    retries: 1,
++    fetchImpl: recorder.fetchImpl,
++  });
++  assert.equal(result.passed, true);
++  assert.deepEqual(result.checks.anonymous_gateway, { status: 401, passed: true });
++  assert.equal(recorder.calls.length, 3);
++});
++
+ test('smokeFunction fails closed when an endpoint returns wildcard CORS', async () => {
+   const result = await smokeFunction({
+     fn: { name: 'wildcard', verify_jwt: false },
+diff --git a/src/components/admin/AdminCRMDashboard.tsx b/src/components/admin/AdminCRMDashboard.tsx
+index c333cf3e..556de2c4 100644
+--- a/src/components/admin/AdminCRMDashboard.tsx
++++ b/src/components/admin/AdminCRMDashboard.tsx
+@@ -3,6 +3,7 @@
+  * Shows summary cards and quick data previews from the external CRM database
+  */
+ import { memo } from 'react';
++import { useQuery } from '@tanstack/react-query';
+ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+ import { Badge } from '@/components/ui/badge';
+ import { Skeleton } from '@/components/ui/skeleton';
+@@ -16,6 +17,59 @@ import { useExternalSelect } from '@/hooks/integrations/useExternalDB';
+ import { isExternalConfigured } from '@/integrations/supabase/externalClient';
+ import { useNavigate } from 'react-router-dom';
+ import type { ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
++import { callCRMIntegration } from '@/lib/crmIntegration';
++
++interface CRMQueueHealth {
++  pending: number;
++  processing: number;
++  failed: number;
++  dead_letter: number;
++  succeeded_24h: number;
++  succeeded_without_link: number;
++  oldest_ready_age_seconds: number;
++  generated_at: string;
++}
++
++function IntegrationHealth() {
++  const health = useQuery({
++    queryKey: ['crm-integration-health'],
++    queryFn: async () => {
++      const response = await callCRMIntegration<{ external_reachable: boolean; queue: CRMQueueHealth }>('health');
++      return response.data;
++    },
++    refetchInterval: 60_000,
++    staleTime: 30_000,
++    retry: 1,
++  });
++  const queue = health.data?.queue;
++  const degraded = Boolean(queue && (
++    queue.dead_letter > 0 || queue.succeeded_without_link > 0 || queue.oldest_ready_age_seconds > 900
++  ));
++
++  return (
++    <Card className={degraded || health.isError ? 'border-destructive/50' : 'border-border/50'}>
++      <CardContent className="p-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
++        <div className="flex items-center gap-2 font-medium">
++          <Activity className="h-4 w-4 text-primary" /> Saúde da integração
++        </div>
++        {health.isLoading ? <Skeleton className="h-5 w-48" /> : health.isError ? (
++          <Badge variant="destructive">Health check indisponível</Badge>
++        ) : (
++          <>
++            <Badge variant={health.data?.external_reachable ? 'outline' : 'destructive'}>
++              CRM {health.data?.external_reachable ? 'conectado' : 'indisponível'}
++            </Badge>
++            <span>Pendentes: {queue?.pending ?? 0}</span>
++            <span>Falhas: {queue?.failed ?? 0}</span>
++            <span>DLQ: {queue?.dead_letter ?? 0}</span>
++            <span>Sucesso 24h: {queue?.succeeded_24h ?? 0}</span>
++            <span>Sem vínculo: {queue?.succeeded_without_link ?? 0}</span>
++          </>
++        )}
++      </CardContent>
++    </Card>
++  );
++}
+ 
+ // ─── Metric Card ─────────────────────────────────────────────
+ function MetricCard({ label, table, icon: Icon, color }: {
+@@ -218,6 +272,8 @@ export const AdminCRMDashboard = memo(function AdminCRMDashboard() {
+         </Button>
+       </div>
+ 
++      <IntegrationHealth />
++
+       {/* Metric cards */}
+       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+         <MetricCard label="Clientes" table="customers" icon={ShoppingCart} color="bg-info/15 text-info" />
+diff --git a/src/components/contacts/__tests__/ExternalDataIntegration.test.tsx b/src/components/contacts/__tests__/ExternalDataIntegration.test.tsx
+index 7ef7c4d0..5c128e4c 100644
+--- a/src/components/contacts/__tests__/ExternalDataIntegration.test.tsx
++++ b/src/components/contacts/__tests__/ExternalDataIntegration.test.tsx
+@@ -3,48 +3,42 @@ import { renderHook, waitFor } from '@testing-library/react';
+ import React from 'react';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ 
+-// Mock RPC and direct table calls used by the updated hooks
++// Mock the authenticated CRM gateway used by hooks and services.
+ const mockRpc = vi.fn();
+ const mockFrom = vi.fn();
+ 
+-vi.mock('@/integrations/supabase/externalClient', () => {
+-  const _mockRpc = (...args: any[]) => (globalThis as any).__extMockRpc(...args);
+-  const _mockFrom = (table: string) => {
+-    (globalThis as any).__extMockFrom(table);
+-    return {
+-      select: vi.fn(() => ({
+-        not: vi.fn(() => ({
+-          limit: vi.fn(() => {
+-            if (table === 'salespeople') {
+-              return Promise.resolve({
+-                data: [
+-                  { role: 'Closer' },
+-                  { role: 'SDR' },
+-                  { role: 'Gerente' },
+-                  { role: '  Hybrid  ' },
+-                  { role: '' },
+-                  { role: null },
+-                ],
+-                error: null,
+-              });
+-            }
+-            return Promise.resolve({ data: [], error: null });
+-          }),
+-        })),
+-      })),
+-    };
+-  };
+-  const client = { rpc: _mockRpc, from: _mockFrom };
+-  return {
+-    externalSupabase: client,
+-    getExternalSupabase: () => client,
+-    isExternalConfigured: true,
+-  };
+-});
++vi.mock('@/integrations/supabase/externalClient', () => ({ isExternalConfigured: true }));
++
++vi.mock('@/lib/crmIntegration', () => ({
++  callCRMIntegration: async (action: string, payload: Record<string, unknown>) => {
++    if (action === 'rpc') {
++      const result = await (globalThis as unknown as {
++        __extMockRpc: (rpc: unknown, params: unknown) => Promise<{ data: unknown; error?: Error }>;
++      }).__extMockRpc(payload.rpc, payload.params);
++      if (result.error) throw result.error;
++      return { data: result.data, meta: { record_count: 1, duration_ms: 1, severity: 'ok' } };
++    }
++    if (action === 'select') {
++      (globalThis as unknown as { __extMockFrom: (table: unknown) => void }).__extMockFrom(payload.table);
++      return {
++        data: payload.table === 'salespeople' ? [
++          { role: 'Closer' }, { role: 'SDR' }, { role: 'Gerente' },
++          { role: '  Hybrid  ' }, { role: '' }, { role: null },
++        ] : [],
++        meta: { record_count: 6, duration_ms: 1, severity: 'ok' },
++      };
++    }
++    throw new Error(`Unexpected action: ${action}`);
++  },
++}));
+ 
+ // Bridge mock fns to globalThis so the hoisted factory can access them
+-(globalThis as any).__extMockRpc = mockRpc;
+-(globalThis as any).__extMockFrom = mockFrom;
++const testGlobals = globalThis as unknown as {
++  __extMockRpc: typeof mockRpc;
++  __extMockFrom: typeof mockFrom;
++};
++testGlobals.__extMockRpc = mockRpc;
++testGlobals.__extMockFrom = mockFrom;
+ 
+ vi.mock('@/lib/logger', () => ({
+   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+diff --git a/src/components/inbox/CRMAutoSync.tsx b/src/components/inbox/CRMAutoSync.tsx
+index 2cb377c0..98c731f2 100644
+--- a/src/components/inbox/CRMAutoSync.tsx
++++ b/src/components/inbox/CRMAutoSync.tsx
+@@ -114,7 +114,7 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
+       const summary = buildSummary(conversation, messages);
+ 
+       syncConversation({
+-        phone: conversation.contact.phone,
++        contactId: conversation.contact.id,
+         channel: 'whatsapp',
+         direction: 'inbound',
+         assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
+@@ -122,7 +122,6 @@ export function CRMAutoSync({ conversation, messageCount, agentName, messages }:
+         sentiment,
+         messageCount: messageCount || messages?.length || 0,
+         agentName: agentName || undefined,
+-        zappConversationId: conversation.id,
+       });
+ 
+       log.info('CRM auto-sync triggered:', { id: conversation.id, sentiment });
+@@ -147,14 +146,13 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
+   const handleSync = async () => {
+     try {
+       const result = await syncConversationAsync({
+-        phone: conversation.contact.phone,
++        contactId: conversation.contact.id,
+         channel: 'whatsapp',
+         direction: 'inbound',
+         assunto: `Conversa WhatsApp — ${conversation.contact.name}`,
+         resumo: conversation.lastMessage?.content?.slice(0, 500) || undefined,
+         sentiment: 'neutral',
+         messageCount: messageCount || 0,
+-        zappConversationId: conversation.id,
+       });
+ 
+       if (result?.synced) {
+@@ -165,6 +163,9 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
+             ? `Score atualizado: ${result.new_relationship_score}`
+             : undefined,
+         });
++      } else if (result?.queued) {
++        setLastSyncTime(new Date());
++        toast.info('Sincronização agendada', { description: 'A fila CRM fará novas tentativas automaticamente.' });
+       } else if (result?.reason === 'duplicate') {
+         setLastSyncTime(new Date());
+         toast.info('Já sincronizado', { description: 'Esta conversa já foi enviada ao CRM.' });
+diff --git a/src/components/inbox/useGlobalSearchData.ts b/src/components/inbox/useGlobalSearchData.ts
+index 1ffb4cae..c724822b 100644
+--- a/src/components/inbox/useGlobalSearchData.ts
++++ b/src/components/inbox/useGlobalSearchData.ts
+@@ -1,7 +1,8 @@
+ import { useState, useCallback, useEffect, useMemo } from 'react';
+ import { log } from '@/lib/logger';
+ import { supabase } from '@/integrations/supabase/client';
+-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { callCRMIntegration } from '@/lib/crmIntegration';
+ import { useDebounce } from '@/hooks/system/useDebounce';
+ import { useSearchHistory } from '@/hooks/system/useSearchHistory';
+ import { subDays, subMonths, startOfDay } from 'date-fns';
+@@ -43,7 +44,6 @@ export function useGlobalSearchData(open: boolean) {
+   const [results, setResults] = useState<SearchResult[]>([]);
+   const [selectedIndex, setSelectedIndex] = useState(0);
+   const [allTags, setAllTags] = useState<TagSuggestion[]>([]);
+-  const [tagSuggestions, setTagSuggestions] = useState<TagSuggestion[]>([]);
+   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+   const [activeTypes, setActiveTypes] = useState<Set<ResultType>>(new Set(['message', 'transcription', 'contact', 'action', 'crm']));
+   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+@@ -60,15 +60,16 @@ export function useGlobalSearchData(open: boolean) {
+     }
+   }, [open]);
+ 
+-  useEffect(() => {
++  const tagSuggestions = useMemo(() => {
+     if (search.startsWith('#') || search.includes(' #')) {
+       const tagQuery = search.includes(' #')
+         ? search.split(' #').pop()?.toLowerCase() || ''
+         : search.slice(1).toLowerCase();
+-      setTagSuggestions(allTags.filter(t => t.name.toLowerCase().includes(tagQuery) && !selectedTags.includes(t.id)).slice(0, 5));
+-    } else {
+-      setTagSuggestions([]);
++      return allTags
++        .filter(t => t.name.toLowerCase().includes(tagQuery) && !selectedTags.includes(t.id))
++        .slice(0, 5);
+     }
++    return [];
+   }, [search, allTags, selectedTags]);
+ 
+   const toggleType = useCallback((type: ResultType) => {
+@@ -172,10 +173,11 @@ export function useGlobalSearchData(open: boolean) {
+ 
+       if (types.has('crm') && isExternalConfigured && cleanQuery.length >= 3) {
+         try {
+-          const { data: crmData } = await getExternalSupabase().rpc('search_contacts_advanced', {
+-            p_search: cleanQuery, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
+-            p_estado: null, p_cliente_ativado: null, p_ja_comprou: null,
+-            p_sort_by: 'relevance', p_page: 0, p_page_size: 8,
++          const { data: crmData } = await callCRMIntegration<{ results?: Record<string, string | null>[] }>('rpc', {
++            rpc: 'search_contacts_advanced',
++            params: { p_search: cleanQuery, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
++              p_estado: null, p_cliente_ativado: null, p_ja_comprou: null,
++              p_sort_by: 'relevance', p_page: 0, p_page_size: 8 },
+           });
+           if (crmData?.results) {
+             const localPhones = new Set(searchResults.filter(r => r.type === 'contact').map(r => r.preview.replace(/\D/g, '')));
+@@ -216,14 +218,16 @@ export function useGlobalSearchData(open: boolean) {
+ 
+   useEffect(() => {
+     if (search.length >= 2 || selectedTags.length > 0 || mediaTypeFilter !== 'all') {
+-      performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
++      const timer = window.setTimeout(() => {
++        void performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
++      }, 0);
++      return () => window.clearTimeout(timer);
+     }
+   }, [activeTypes, dateFilter, selectedTags, mediaTypeFilter]);
+ 
+   const handleTagSelect = useCallback((tag: TagSuggestion) => {
+     setSelectedTags(prev => [...prev, tag.id]);
+     setSearch(prev => prev.replace(/#\w*$/, '').trim());
+-    setTagSuggestions([]);
+   }, []);
+ 
+   const removeTag = useCallback((tagId: string) => {
+diff --git a/src/hooks/crm/useAdvancedContactSearch.ts b/src/hooks/crm/useAdvancedContactSearch.ts
+index 84ce237f..a985c97a 100644
+--- a/src/hooks/crm/useAdvancedContactSearch.ts
++++ b/src/hooks/crm/useAdvancedContactSearch.ts
+@@ -7,7 +7,8 @@
+  */
+ import { useQuery, keepPreviousData } from '@tanstack/react-query';
+ import { useState, useCallback, useMemo } from 'react';
+-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { callCRMIntegration } from '@/lib/crmIntegration';
+ import { log } from '@/lib/logger';
+ import type {
+   SearchContactsParams,
+@@ -35,32 +36,23 @@ export function useAdvancedContactSearch() {
+   const query = useQuery<SearchContactsResponse | null>({
+     queryKey: ['advanced-contact-search', params],
+     queryFn: async () => {
+-      const { data, error } = await getExternalSupabase().rpc('search_contacts_advanced', {
+-        p_search: params.search || null,
+-        p_vendedor: params.vendedor || null,
+-        p_ramo: params.ramo || null,
+-        p_rfm_segment: params.rfm_segment || null,
+-        p_estado: params.estado || null,
+-        p_cliente_ativado: params.cliente_ativado ?? null,
+-        p_ja_comprou: params.ja_comprou ?? null,
+-        p_sort_by: params.sort_by || 'relevance',
+-        p_page: params.page || 0,
+-        p_page_size: params.page_size || DEFAULT_PAGE_SIZE,
+-      });
+-
+-      if (error) {
++      try {
++        const { data } = await callCRMIntegration<SearchContactsResponse>('rpc', {
++          rpc: 'search_contacts_advanced',
++          params: {
++            p_search: params.search || null, p_vendedor: params.vendedor || null,
++            p_ramo: params.ramo || null, p_rfm_segment: params.rfm_segment || null,
++            p_estado: params.estado || null, p_cliente_ativado: params.cliente_ativado ?? null,
++            p_ja_comprou: params.ja_comprou ?? null, p_sort_by: params.sort_by || 'relevance',
++            p_page: params.page || 0, p_page_size: params.page_size || DEFAULT_PAGE_SIZE,
++          },
++        });
++        if (data?.filters) setCachedFilters(data.filters);
++        return data;
++      } catch (error) {
+         log.error('Advanced search error:', error);
+         return null;
+       }
+-
+-      const response = data as SearchContactsResponse;
+-
+-      // Cache filter options
+-      if (response?.filters) {
+-        setCachedFilters(response.filters);
+-      }
+-
+-      return response;
+     },
+     enabled: isExternalConfigured && hasActiveFilters,
+     placeholderData: keepPreviousData,
+diff --git a/src/hooks/crm/useContactIntelligence.ts b/src/hooks/crm/useContactIntelligence.ts
+index aeb203f4..7fb540d6 100644
+--- a/src/hooks/crm/useContactIntelligence.ts
++++ b/src/hooks/crm/useContactIntelligence.ts
+@@ -6,7 +6,8 @@
+  * best times, churn risk, DISC tips, and last interactions.
+  */
+ import { useQuery } from '@tanstack/react-query';
+-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { callCRMIntegration } from '@/lib/crmIntegration';
+ import { log } from '@/lib/logger';
+ 
+ export interface ContactBriefing {
+@@ -98,14 +99,15 @@ export function useContactIntelligence(phone: string | undefined) {
+     queryKey: ['contact-intelligence', cleanedPhone],
+     queryFn: async () => {
+       if (!cleanedPhone || cleanedPhone.length < 8) return null;
+-      const { data, error } = await getExternalSupabase().rpc('get_contact_intelligence_by_phone', {
+-        p_phone: cleanedPhone,
+-      });
+-      if (error) {
++      try {
++        const { data } = await callCRMIntegration<ContactIntelligenceData>('rpc', {
++          rpc: 'get_contact_intelligence_by_phone', params: { p_phone: cleanedPhone },
++        });
++        return data;
++      } catch (error) {
+         log.error('Intelligence RPC error:', error);
+         return null;
+       }
+-      return data as ContactIntelligenceData;
+     },
+     enabled: isExternalConfigured && !!cleanedPhone && cleanedPhone.length >= 8,
+     staleTime: 1000 * 60 * 15, // 15 min
+diff --git a/src/hooks/integrations/useExternalDB.ts b/src/hooks/integrations/useExternalDB.ts
+index 3e93c93d..2a7a1494 100644
+--- a/src/hooks/integrations/useExternalDB.ts
++++ b/src/hooks/integrations/useExternalDB.ts
+@@ -1,10 +1,12 @@
+ /**
+  * useExternalDB — Generic hook for querying any table in the external CRM database
+- * Uses externalSupabase client directly (secured by RLS policies on the external DB)
++ * Uses the authenticated crm-integration Edge Function. External credentials and
++ * privileged table access never reach the browser.
+  */
+  import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+  import { useState, useCallback } from 'react';
+- import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
++ import { isExternalConfigured } from '@/integrations/supabase/externalClient';
++ import { callCRMIntegration } from '@/lib/crmIntegration';
+  import { ExternalCRMService } from '@/services/crm/external-crm.service';
+ import type {
+   ExternalDBFilter,
+@@ -130,7 +132,7 @@ export function useExternalTableBrowser<T = Record<string, unknown>>(tableName:
+   };
+ }
+ 
+-// ─── Mutation (insert/update/delete via external client) ──────
++// ─── Mutation via authenticated server-side integration ──────
+ export function useExternalMutation() {
+   const queryClient = useQueryClient();
+ 
+@@ -141,29 +143,13 @@ export function useExternalMutation() {
+       data?: Record<string, unknown> | Record<string, unknown>[];
+       match?: Record<string, unknown>;
+     }) => {
+-      if (params.action === 'insert') {
+-        const { data, error } = await getExternalSupabase().from(params.table).insert(params.data as any).select();
+-        if (error) throw new Error(error.message);
+-        return data;
+-      }
+-      if (params.action === 'update') {
+-        let q = getExternalSupabase().from(params.table).update(params.data as any);
+-        if (params.match) {
+-          for (const [k, v] of Object.entries(params.match)) q = q.eq(k, v as string);
+-        }
+-        const { data, error } = await q.select();
+-        if (error) throw new Error(error.message);
+-        return data;
+-      }
+-      if (params.action === 'delete') {
+-        let q = getExternalSupabase().from(params.table).delete();
+-        if (params.match) {
+-          for (const [k, v] of Object.entries(params.match)) q = q.eq(k, v as string);
+-        }
+-        const { data, error } = await q.select();
+-        if (error) throw new Error(error.message);
+-        return data;
+-      }
++      const response = await callCRMIntegration<unknown[]>('mutate', {
++        mutationAction: params.action,
++        table: params.table,
++        data: params.data,
++        match: params.match,
++      });
++      return response.data;
+     },
+     onSuccess: (_, variables) => {
+       queryClient.invalidateQueries({ queryKey: ['external-db', variables.table] });
+diff --git a/src/hooks/integrations/useSyncToCRM.ts b/src/hooks/integrations/useSyncToCRM.ts
+index 740032a0..9eebdc5e 100644
+--- a/src/hooks/integrations/useSyncToCRM.ts
++++ b/src/hooks/integrations/useSyncToCRM.ts
+@@ -11,25 +11,26 @@
+  * Usage: call syncConversation() when a conversation is resolved/closed.
+  */
+ import { useMutation, useQueryClient } from '@tanstack/react-query';
+-import { getExternalSupabase, isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { isExternalConfigured } from '@/integrations/supabase/externalClient';
++import { callCRMIntegration } from '@/lib/crmIntegration';
+ import { log } from '@/lib/logger';
+ 
+ interface SyncParams {
+-  phone: string;
++  /** Canonical Zapp contact UUID. Phone is resolved server-side. */
++  contactId: string;
+   channel?: string;
+   direction?: string;
+   assunto?: string;
+   resumo?: string;
+-  conteudo?: string;
+   sentiment?: string;
+   messageCount?: number;
+   durationSeconds?: number;
+   agentName?: string;
+-  zappConversationId?: string;
+ }
+ 
+ interface SyncResult {
+   synced: boolean;
++  queued?: boolean;
+   reason?: string;
+   interaction_id?: string;
+   contact_id?: string;
+@@ -44,32 +45,23 @@ export function useSyncToCRM() {
+     mutationFn: async (params) => {
+       if (!isExternalConfigured) return null;
+ 
+-      const { data, error } = await getExternalSupabase().rpc('sync_interaction_from_zapp', {
+-        p_phone: params.phone,
+-        p_channel: params.channel || 'whatsapp',
+-        p_direction: params.direction || 'inbound',
+-        p_assunto: params.assunto || null,
+-        p_resumo: params.resumo || null,
+-        p_conteudo: params.conteudo || null,
+-        p_sentiment: params.sentiment || 'neutral',
+-        p_message_count: params.messageCount || 0,
+-        p_duration_seconds: params.durationSeconds || null,
+-        p_agent_name: params.agentName || null,
+-        p_zapp_conversation_id: params.zappConversationId || null,
++      const response = await callCRMIntegration<SyncResult>('enqueueSync', {
++        contactId: params.contactId,
++        channel: params.channel || 'whatsapp',
++        direction: params.direction || 'inbound',
++        assunto: params.assunto || null,
++        resumo: params.resumo || null,
++        sentiment: params.sentiment || 'neutral',
++        messageCount: params.messageCount || 0,
++        durationSeconds: params.durationSeconds || null,
++        agentName: params.agentName || null,
+       });
+-
+-      if (error) {
+-        log.error('CRM sync error:', error);
+-        throw error;
+-      }
+-
+-      return data as SyncResult;
++      return response.data;
+     },
+     onSuccess: (result, params) => {
+-      if (result?.synced) {
++      if (result?.synced || result?.queued) {
+         // Invalidate the 360° cache for this phone so it refreshes
+-        const cleanPhone = params.phone.replace(/[^0-9]/g, '');
+-        queryClient.invalidateQueries({ queryKey: ['external-contact-360', cleanPhone] });
++        queryClient.invalidateQueries({ queryKey: ['external-contact-360'] });
+         queryClient.invalidateQueries({ queryKey: ['external-contact-360-batch'] });
+         log.info('CRM sync success:', result);
+       }
+diff --git a/src/integrations/supabase/externalClient.ts b/src/integrations/supabase/externalClient.ts
+index 0898985e..c6c0aa92 100644
+--- a/src/integrations/supabase/externalClient.ts
++++ b/src/integrations/supabase/externalClient.ts
+@@ -1,49 +1,8 @@
+-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+-
+ /**
+- * externalClient — cliente Supabase para o CRM externo (pgxfvjmuubtbowutlide)
+- * 57.728 empresas | 48.623 clientes | 4.747 contatos | 10.460 interações
+- *
+- * RPCs: get_companies_by_phones_batch, search_contacts_advanced,
+- *       get_contact_360_by_phone, sync_interaction_from_zapp,
+- *       get_contact_intelligence_by_phone
+- *
+- * storageKey único evita Multiple GoTrueClient warning
+- * Realtime desabilitado — apenas REST queries contra o CRM
++ * O CRM externo e acessado exclusivamente pela Edge Function autenticada
++ * `crm-integration`. Nenhuma URL ou chave do projeto externo e enviada ao
++ * navegador.
+  */
+-
+-const EXTERNAL_URL =
+-  import.meta.env.VITE_CLIENTES_SUPABASE_URL ||
+-  'https://pgxfvjmuubtbowutlide.supabase.co';
+-
+-const EXTERNAL_KEY =
+-  import.meta.env.VITE_CLIENTES_SUPABASE_ANON_KEY ||
+-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneGZ2am11dWJ0Ym93dXRsaWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMjcwMTIsImV4cCI6MjA4NTcwMzAxMn0.sW9N_LChqwVNUvMmQWXx87Vhs3eoTI2OKg2TT_Cg4V0';
+-
+-export const isExternalConfigured = true;
+-
+-export const externalSupabase: SupabaseClient = createClient(
+-  EXTERNAL_URL,
+-  EXTERNAL_KEY,
+-  {
+-    auth: {
+-      storageKey: 'external-sb-auth-token',
+-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+-      autoRefreshToken: false,
+-      persistSession: false,
+-      detectSessionInUrl: false,
+-    },
+-    realtime: {
+-      params: { eventsPerSecond: -1 },
+-    },
+-    global: {
+-      headers: {
+-        'x-client-info': 'zapp-web-external-crm',
+-      },
+-    },
+-  },
+-);
+-
+-export function getExternalSupabase(): SupabaseClient {
+-  return externalSupabase;
+-}
++// Fail closed during staged deployments: the browser only switches to the
++// server-side gateway after DB + Edge smoke tests have passed.
++export const isExternalConfigured = import.meta.env.VITE_CRM_INTEGRATION_ENABLED === 'true';
+diff --git a/src/services/crm/external-crm.service.ts b/src/services/crm/external-crm.service.ts
+index 86441fd5..b3e1ff3b 100644
+--- a/src/services/crm/external-crm.service.ts
++++ b/src/services/crm/external-crm.service.ts
+@@ -1,91 +1,71 @@
+- import { getExternalSupabase } from '@/integrations/supabase/externalClient';
+- import { queryExternalProxy } from '@/lib/externalProxy';
+- import { log } from '@/lib/logger';
++import { callCRMIntegration } from '@/lib/crmIntegration';
++import { queryExternalProxy } from '@/lib/externalProxy';
++import { log } from '@/lib/logger';
++import type { ExternalDBFilter } from '@/types/externalDB';
++import type { EvolutionMessage } from '@/types/evolutionExternal';
++
++interface ContactSearchItem {
++  company_name?: string | null;
++  cargo?: string | null;
++}
++
++interface ContactSearchResponse {
++  results?: ContactSearchItem[];
++}
+  
+  export class ExternalCRMService {
+    static async getContact360Batch(phones: string[]) {
+      const cleanedPhones = [...new Set(phones.map(p => p.replace(/[^0-9]/g, '')).filter(p => p.length >= 8))];
+      if (cleanedPhones.length === 0) return new Map();
+  
+-     const { data, error } = await getExternalSupabase().rpc('get_companies_by_phones_batch', {
+-       p_phones: cleanedPhones,
+-     });
+- 
+-     if (error) {
+-       log.error('[ExternalCRMService] Batch CRM lookup error:', error);
+-       return new Map();
+-     }
+- 
+-     const map = new Map<string, any>();
+-     if (data && typeof data === 'object') {
+-       for (const [phone, info] of Object.entries(data)) {
+-         map.set(phone, info);
+-         const clean = phone.replace(/[^0-9]/g, '');
+-         if (clean !== phone) map.set(clean, info);
+-         if (!phone.startsWith('55') && clean.length <= 11) {
+-           map.set('55' + clean, info);
++     try {
++       const { data } = await callCRMIntegration<Record<string, unknown>>('rpc', {
++         rpc: 'get_companies_by_phones_batch',
++         params: { p_phones: cleanedPhones },
++       });
++       const map = new Map<string, unknown>();
++       if (data && typeof data === 'object') {
++         for (const [phone, info] of Object.entries(data)) {
++           map.set(phone, info);
++           const clean = phone.replace(/[^0-9]/g, '');
++           if (clean !== phone) map.set(clean, info);
++           if (!phone.startsWith('55') && clean.length <= 11) map.set('55' + clean, info);
+          }
+        }
++       return map;
++     } catch (error) {
++       log.error('[ExternalCRMService] Batch CRM lookup error:', error);
++       return new Map();
+      }
+-     return map;
+    }
+  
+    static async queryExternal<T = unknown>(params: {
+      table: string;
+      select?: string;
+-     filters?: any[];
++     filters?: ExternalDBFilter[];
+      order?: { column: string; ascending?: boolean };
+      limit?: number;
+      offset?: number;
+      countMode?: 'exact' | 'planned' | 'estimated';
+    }) {
+-     const start = performance.now();
+-     let query = getExternalSupabase()
+-       .from(params.table)
+-       .select(params.select || '*', { count: params.countMode || undefined });
+- 
+-     if (params.filters) {
+-       for (const f of params.filters) {
+-         query = query.filter(f.column, f.operator, f.value as string);
+-       }
+-     }
+- 
+-     if (params.order) {
+-       query = query.order(params.order.column, { ascending: params.order.ascending ?? true });
+-     }
+- 
+-     const limit = params.limit || 50;
+-     const offset = params.offset || 0;
+-     query = query.range(offset, offset + limit - 1);
+- 
+-     const { data, error, count } = await query;
+-     const duration = Math.round(performance.now() - start);
+- 
+-     if (error) throw new Error(error.message);
+- 
++     const response = await callCRMIntegration<T[]>('select', params);
+      return {
+-       data: (data as T[]) || [],
+-       meta: {
+-         record_count: count ?? (Array.isArray(data) ? data.length : null),
+-         duration_ms: duration,
+-         severity: duration > 3000 ? 'slow' : 'ok',
+-       },
++       data: response.data || [],
++       meta: response.meta || { record_count: 0, duration_ms: 0, severity: 'ok' as const },
+      };
+    }
+  
+    static async callRPC<T = unknown>(rpc: string, params?: Record<string, unknown>) {
+-     const start = performance.now();
+-     const { data, error } = await getExternalSupabase().rpc(rpc, params || {});
+-     const duration = Math.round(performance.now() - start);
+-     if (error) throw new Error(error.message);
++     const response = await callCRMIntegration<T | T[]>('rpc', { rpc, params: params || {} });
++     const data = response.data;
+      return {
+        data: Array.isArray(data) ? data as T[] : [data as T],
+-       meta: { record_count: Array.isArray(data) ? data.length : 1, duration_ms: duration, severity: 'ok' },
++       meta: response.meta || { record_count: Array.isArray(data) ? data.length : 1, duration_ms: 0, severity: 'ok' as const },
+      };
+    }
+  
+    static async fetchEvolutionMessages(limit = 500) {
+-     const result = await queryExternalProxy<any>({
++     const result = await queryExternalProxy<EvolutionMessage>({
+        table: 'evolution_messages',
+        select: '*',
+        order: { column: 'created_at', ascending: false },
+@@ -95,7 +75,7 @@
+    }
+  
+    static async fetchEvolutionMessagesByJid(remoteJid: string, limit = 1000) {
+-     const result = await queryExternalProxy<any>({
++     const result = await queryExternalProxy<EvolutionMessage>({
+        table: 'evolution_messages',
+        select: '*',
+        filters: [{ column: 'remote_jid', operator: 'eq', value: remoteJid }],
+@@ -109,16 +89,15 @@
+      const cleanedPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanedPhone.length < 8) return null;
+  
+-     const { data, error } = await getExternalSupabase().rpc('get_contact_360_by_phone', {
+-       p_phone: cleanedPhone,
+-     });
+- 
+-     if (error) {
++     try {
++       const { data } = await callCRMIntegration<unknown>('rpc', {
++         rpc: 'get_contact_360_by_phone', params: { p_phone: cleanedPhone },
++       });
++       return data;
++     } catch (error) {
+        log.error('[ExternalCRMService] Error fetching contact 360:', error);
+        return null;
+      }
+- 
+-     return data;
+    }
+  
+    static async fetchUniqueCompanies(maxPages = 5, pageSize = 200) {
+@@ -126,28 +105,25 @@
+      let page = 0;
+  
+      while (page < maxPages) {
+-       const { data, error } = await getExternalSupabase().rpc('search_contacts_advanced', {
+-         p_search: null,
+-         p_vendedor: null,
+-         p_ramo: null,
+-         p_rfm_segment: null,
+-         p_estado: null,
+-         p_cliente_ativado: true,
+-         p_ja_comprou: null,
+-         p_sort_by: 'name',
+-         p_page: page,
+-         p_page_size: pageSize,
+-       });
+- 
+-       if (error) {
++       let data: ContactSearchResponse;
++       try {
++         ({ data } = await callCRMIntegration<ContactSearchResponse>('rpc', {
++           rpc: 'search_contacts_advanced',
++           params: {
++             p_search: null, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
++             p_estado: null, p_cliente_ativado: true, p_ja_comprou: null,
++             p_sort_by: 'name', p_page: page, p_page_size: pageSize,
++           },
++         }));
++       } catch (error) {
+          log.error('[ExternalCRMService] Error fetching companies:', error);
+          break;
+        }
+  
+-       const results = (data as any)?.results || [];
++       const results = data?.results || [];
+        if (results.length === 0) break;
+  
+-       results.forEach((r: any) => {
++       results.forEach((r) => {
+          const name = String(r.company_name || '').trim();
+          if (name) allNames.push(name);
+        });
+@@ -162,28 +138,35 @@
+    static async fetchUniqueRoles() {
+      const allCargos: string[] = [];
+  
+-     const { data: salesRoles, error: e1 } = await getExternalSupabase()
+-       .from('salespeople')
+-       .select('role')
+-       .not('role', 'is', null)
+-       .limit(500);
+- 
+-     if (!e1 && salesRoles) {
+-       salesRoles.forEach((r: any) => {
++     let salesRoles: Array<{ role: string | null }> = [];
++     try {
++       const response = await callCRMIntegration<Array<{ role: string | null }>>('select', {
++         table: 'salespeople', select: 'role', limit: 500,
++       });
++       salesRoles = response.data || [];
++     } catch (error) {
++       log.error('[ExternalCRMService] Error fetching sales roles:', error);
++     }
++     if (salesRoles) {
++       salesRoles.forEach((r) => {
+          const v = String(r.role || '').trim();
+          if (v) allCargos.push(v);
+        });
+      }
+  
+-     const { data: searchData, error: e2 } = await getExternalSupabase().rpc('search_contacts_advanced', {
+-       p_cliente_ativado: true,
+-       p_page: 0,
+-       p_page_size: 200,
+-     });
+- 
+-     if (!e2 && searchData) {
+-       const results = (searchData as any)?.results || [];
+-       results.forEach((r: any) => {
++     let searchData: ContactSearchResponse | null = null;
++     try {
++       const response = await callCRMIntegration<ContactSearchResponse>('rpc', {
++         rpc: 'search_contacts_advanced',
++         params: { p_cliente_ativado: true, p_page: 0, p_page_size: 200 },
++       });
++       searchData = response.data;
++     } catch (error) {
++       log.error('[ExternalCRMService] Error fetching role facets:', error);
++     }
++     if (searchData) {
++       const results = searchData.results || [];
++       results.forEach((r) => {
+          const v = String(r.cargo || '').trim();
+          if (v) allCargos.push(v);
+        });
+@@ -191,4 +174,4 @@
+  
+      return [...new Set(allCargos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    }
+- }
+\ No newline at end of file
++ }
+diff --git a/supabase/config.toml b/supabase/config.toml
+index 009788c1..79ed53bf 100644
+--- a/supabase/config.toml
++++ b/supabase/config.toml
+@@ -33,5 +33,11 @@ verify_jwt = false
+ [functions.promogifts-catalog]
+ verify_jwt = true
+ 
++# Gateway com autenticacao interna obrigatoria: JWT de usuario/service_role ou
++# x-cron-secret para o worker. verify_jwt=false permite o cron externo; a funcao
++# rejeita qualquer requisicao antes de consultar o CRM quando nenhum deles existe.
++[functions.crm-integration]
++verify_jwt = false
++
+ [functions.csp-report]
+ verify_jwt = false
+diff --git a/supabase/deployment-manifest.json b/supabase/deployment-manifest.json
+index 5d1a1b6f..3b03c0df 100644
+--- a/supabase/deployment-manifest.json
++++ b/supabase/deployment-manifest.json
+@@ -7,13 +7,13 @@
+   ],
+   "config": {
+     "path": "supabase/config.toml",
+-    "sha256": "a25ecdbd721a67b020e3b2f34fce57e1b153ec0b226bca49ddf0c09fd4494155"
++    "sha256": "94b522b1255b20ad4d9ca58232c1c5d209a9eab22fd9028a9764d0a1a258251e"
+   },
+   "summary": {
+-    "function_count": 63,
+-    "source_file_count": 81,
++    "function_count": 64,
++    "source_file_count": 83,
+     "verify_jwt_true": 55,
+-    "verify_jwt_false": 8
++    "verify_jwt_false": 9
+   },
+   "source_files": [
+     {
+@@ -36,6 +36,11 @@
+       "bytes": 1391,
+       "sha256": "d626eeb39308fd9028a7e79fc42b4d6f4b306fb62fa66320fd1de82225f843d6"
+     },
++    {
++      "path": "supabase/functions/_shared/crm-integration-contract.ts",
++      "bytes": 4879,
++      "sha256": "7939dbfa4f80eb4150577255d8a2dcc5bdf844708a3e7d8e778b59bdd49330f4"
++    },
+     {
+       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
+       "bytes": 11999,
+@@ -211,6 +216,11 @@
+       "bytes": 6171,
+       "sha256": "6e249e4b173cec59251083e9912ac0cc7817440974bb66f5d60a166e37899c9e"
+     },
++    {
++      "path": "supabase/functions/crm-integration/index.ts",
++      "bytes": 15574,
++      "sha256": "b8ab771df9a1cf48aaedbc882a744977547a1d18fd3ee1bde08ae275c21baa1b"
++    },
+     {
+       "path": "supabase/functions/csp-report/index.ts",
+       "bytes": 4503,
+@@ -690,6 +700,18 @@
+         "supabase/functions/create-user/index.ts"
+       ]
+     },
++    {
++      "name": "crm-integration",
++      "entrypoint": "supabase/functions/crm-integration/index.ts",
++      "verify_jwt": false,
++      "source_sha256": "1dc49bb51a47658346a2aaf0a39784aade0db0127269cdf8f8c81842f2e371dd",
++      "source_files": [
++        "supabase/functions/_shared/crm-integration-contract.ts",
++        "supabase/functions/_shared/hmac-validation.ts",
++        "supabase/functions/_shared/validation.ts",
++        "supabase/functions/crm-integration/index.ts"
++      ]
++    },
+     {
+       "name": "csp-report",
+       "entrypoint": "supabase/functions/csp-report/index.ts",
+@@ -1199,5 +1221,5 @@
+       ]
+     }
+   ],
+-  "manifest_sha256": "29b850206d9220f13d279ee94b66a700e222932f7fb7fa1b0249ed66c811dfe0"
++  "manifest_sha256": "c938d6c894854fb98272e74a7500cdff23df8114a2c49c3e68e2f0803550fe2f"
+ }

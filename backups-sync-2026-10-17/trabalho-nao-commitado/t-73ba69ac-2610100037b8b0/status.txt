@@ -1,0 +1,6 @@
+UU supabase/functions/ai-proxy/index.test.ts
+M  supabase/functions/classify-sticker/index.test.ts
+UU supabase/functions/elevenlabs-dialogue/index.test.ts
+M  supabase/functions/elevenlabs-voice-design/index.test.ts
+UU supabase/functions/multiplix-audience/index.test.ts
+M  supabase/functions/multiplix-voices/index.test.ts

@@ -1,0 +1,8 @@
+181	0	src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx
+120	0	src/components/dashboard/__tests__/DemandPrediction.leitura.test.tsx
+160	0	src/components/dashboard/__tests__/GoalsDashboard.metas.test.tsx
+166	0	src/components/dashboard/__tests__/SLAMetricsDashboard.kpis.test.tsx
+238	0	src/components/dashboard/__tests__/SatisfactionMetrics.estados.test.tsx
+144	0	src/hooks/business/__tests__/useDemandPrediction.previsao.test.tsx
+272	0	src/hooks/business/__tests__/useNPSSurveys.estados.test.tsx
+348	0	src/hooks/business/__tests__/useSatisfactionBreakdown.paginacao.test.tsx

@@ -1,0 +1,279 @@
+From a49dba26104bc09dd05817f08de080594bb5a3a4 Mon Sep 17 00:00:00 2001
+From: Joaquim Ataides <joaquim@ataides>
+Date: Sat, 10 Oct 2026 07:27:26 -0300
+Subject: [PATCH 4/5] fix(performance): cache do Bun nos jobs com bun install
+ (SL-095)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Aplica actions/cache nos jobs de CI que executam bun install,
+usando ~/.bun/install/cache com chave baseada em hashFiles('bun.lock').
+
+6 workflows afetados: ci.yml (6 jobs), db-guard.yml, e2e-logado.yml,
+e2e-talkx.yml, types-sync.yml. Teste E67 adicionado em
+scripts/ci/workflow-contracts.unit.mjs para auditoria contínua.
+---
+ .github/workflows/ci.yml               | 37 +++++++++++
+ .github/workflows/db-guard.yml         |  6 ++
+ .github/workflows/e2e-logado.yml       |  6 ++
+ .github/workflows/e2e-talkx.yml        |  6 ++
+ .github/workflows/types-sync.yml       |  7 +++
+ scripts/ci/workflow-contracts.unit.mjs | 85 +++++++++++++++++++++++++-
+ 6 files changed, 146 insertions(+), 1 deletion(-)
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 07a6c1305..9d83f0af5 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -65,6 +65,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📚 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+@@ -216,6 +222,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📚 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+@@ -267,6 +279,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📚 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+@@ -324,6 +342,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📚 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+@@ -373,6 +397,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📚 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+@@ -490,6 +520,13 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        if: steps.paths.outputs.map_changed == 'true'
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📚 Install dependencies
+         if: steps.paths.outputs.map_changed == 'true'
+         run: bun install --frozen-lockfile --ignore-scripts
+diff --git a/.github/workflows/db-guard.yml b/.github/workflows/db-guard.yml
+index dd87bc7cd..f6cd1f1e6 100644
+--- a/.github/workflows/db-guard.yml
++++ b/.github/workflows/db-guard.yml
+@@ -184,6 +184,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: Cache do Bun (instalacao)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: Instalar dependencias do guard AST
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+diff --git a/.github/workflows/e2e-logado.yml b/.github/workflows/e2e-logado.yml
+index 3a8e25fcb..e640db35f 100644
+--- a/.github/workflows/e2e-logado.yml
++++ b/.github/workflows/e2e-logado.yml
+@@ -70,6 +70,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📦 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+diff --git a/.github/workflows/e2e-talkx.yml b/.github/workflows/e2e-talkx.yml
+index 417322385..f3aaf4831 100644
+--- a/.github/workflows/e2e-talkx.yml
++++ b/.github/workflows/e2e-talkx.yml
+@@ -67,6 +67,12 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: 🗃️ Cache do Bun (instalação)
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: 📦 Install dependencies
+         run: bun install --frozen-lockfile --ignore-scripts
+ 
+diff --git a/.github/workflows/types-sync.yml b/.github/workflows/types-sync.yml
+index 9a0501ec3..c8105fbb5 100644
+--- a/.github/workflows/types-sync.yml
++++ b/.github/workflows/types-sync.yml
+@@ -338,6 +338,13 @@ jobs:
+         with:
+           bun-version: '1.4.0'
+ 
++      - name: Cache do Bun (instalacao)
++        if: steps.diff.outputs.schema_changed == 'true'
++        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
++        with:
++          path: ~/.bun/install/cache
++          key: bun-${{ hashFiles('bun.lock') }}
++
+       - name: Instalar dependencias
+         if: steps.diff.outputs.schema_changed == 'true'
+         run: bun install --frozen-lockfile --ignore-scripts
+diff --git a/scripts/ci/workflow-contracts.unit.mjs b/scripts/ci/workflow-contracts.unit.mjs
+index 2827b2765..a52caeae1 100644
+--- a/scripts/ci/workflow-contracts.unit.mjs
++++ b/scripts/ci/workflow-contracts.unit.mjs
+@@ -247,7 +247,12 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
+     if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+     const blocos = passos(texto);
+ 
+-    const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
++    // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
++    // install) — o passo dos browsers do Playwright é o que aponta para
++    // `~/.cache/ms-playwright`, não necessariamente o primeiro `actions/cache`.
++    const cache = blocos.find(
++      (p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
++    );
+     if (!cache) {
+       problemas.push(`${nome}: sem passo actions/cache para os browsers`);
+       continue;
+@@ -293,3 +298,81 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
+ 
+   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+ });
++
++// E67 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo job que roda
++// `bun install` restaura o cache global do Bun ANTES de instalar.
++//
++// Por que importa: o `bun install` é o passo mais repetido e mais caro do
++// pipeline (10 jobs em 5 workflows). Sem `actions/cache`, cada run baixa o
++// registry inteiro do zero.
++//
++// Âncoras que o teste trava, cada uma por um motivo:
++//   (a) o passo de cache existe no MESMO job (cache de outro job não serve);
++//   (b) ele vem ANTES do install (depois não economiza nada);
++//   (c) o caminho é `~/.bun/install/cache` (o cache global de pacotes);
++//   (d) a chave acompanha `hashFiles('bun.lock')` — chave fixa devolveria
++//       dependência velha para um lock novo, e o `--frozen-lockfile` passaria
++//       a validar contra o que não foi instalado.
++
++const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
++const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
++const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
++
++/** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
++function blocosDeJob(texto) {
++  const linhas = texto.split('\n');
++  const inicio = linhas.findIndex((l) => /^jobs:\s*$/.test(l));
++  if (inicio === -1) return [];
++
++  const blocos = [];
++  let atual = null;
++  for (let i = inicio + 1; i < linhas.length; i += 1) {
++    const l = linhas[i];
++    if (/^ {2}["']?[A-Za-z0-9_][A-Za-z0-9_.-]*["']?:\s*$/.test(l)) {
++      if (atual) blocos.push(atual);
++      atual = { nome: l.trim().replace(/:$/, '').replace(/["']/g, ''), linhas: [] };
++      continue;
++    }
++    // Chave de topo de novo: acabou o bloco `jobs:`.
++    if (/^\S/.test(l)) {
++      if (atual) blocos.push(atual);
++      atual = null;
++      continue;
++    }
++    if (atual) atual.linhas.push(l);
++  }
++  if (atual) blocos.push(atual);
++  return blocos.map((b) => ({ nome: b.nome, texto: b.linhas.join('\n') }));
++}
++
++test('E67: todo job que roda bun install restaura o cache do Bun antes de instalar', () => {
++  const problemas = [];
++  let jobsComInstall = 0;
++
++  for (const nome of nomes) {
++    for (const job of blocosDeJob(wf[nome])) {
++      const linhasJob = job.texto.split('\n');
++      const idxInstall = linhasJob.findIndex((l) => /\bbun install\b/.test(l));
++      if (idxInstall === -1) continue;
++      jobsComInstall += 1;
++
++      const idxCache = linhasJob.findIndex((l) => USES_CACHE.test(l));
++      if (idxCache === -1) {
++        problemas.push(`${nome} → ${job.nome}: sem passo actions/cache`);
++        continue;
++      }
++      if (idxCache > idxInstall) {
++        problemas.push(`${nome} → ${job.nome}: cache DEPOIS do bun install (não economiza nada)`);
++      }
++      if (!linhasJob.some((l) => PATH_CACHE_BUN.test(l))) {
++        problemas.push(`${nome} → ${job.nome}: cache sem path ~/.bun/install/cache`);
++      }
++      if (!linhasJob.some((l) => KEY_CACHE_BUN.test(l))) {
++        problemas.push(`${nome} → ${job.nome}: cache sem key atrelada a bun.lock (hashFiles('bun.lock'))`);
++      }
++    }
++  }
++
++  assert.ok(jobsComInstall > 0, 'nenhum job com bun install encontrado: o extrator de jobs quebrou');
++  assert.deepEqual(problemas, [], `job com bun install sem cache do Bun:\n${problemas.join('\n')}`);
++});
+-- 
+2.43.0
+

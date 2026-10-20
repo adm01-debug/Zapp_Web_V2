@@ -1,0 +1,21 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/auditorias/fase-f-260930/a1
+
+stdout | .tmp/a1-real.test.tsx > A1 — debounce em tempo real > R1) digitar, 100ms depois clicar em "Alta", esperar 300ms
+A1-R1 {"antesDoChip":{"q":"","texto":"liga","barra":""},"final":{"q":"","prio":"high","texto":"liga","barra":"?prio=high","router":""}}
+
+ ✓ .tmp/a1-real.test.tsx > A1 — debounce em tempo real > R1) digitar, 100ms depois clicar em "Alta", esperar 300ms 458ms
+stdout | .tmp/a1-real.test.tsx > A1 — debounce em tempo real > R2) digitar, 250ms (aplica), clicar em "Alta" — caso bom para contraste
+A1-R2 {"q":"liga","prio":"high","barra":"?q=liga&prio=high","router":""}
+
+ ✓ .tmp/a1-real.test.tsx > A1 — debounce em tempo real > R2) digitar, 250ms (aplica), clicar em "Alta" — caso bom para contraste 563ms
+stdout | .tmp/a1-real.test.tsx > A1 — debounce em tempo real > R3) clicar em "Alta" e digitar em seguida
+A1-R3 {"q":"liga","prio":"high","texto":"liga","barra":"?prio=high&q=liga","router":""}
+
+ ✓ .tmp/a1-real.test.tsx > A1 — debounce em tempo real > R3) clicar em "Alta" e digitar em seguida 310ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:29:31
+   Duration  3.92s (transform 274ms, setup 183ms, import 552ms, tests 1.34s, environment 1.49s)
+

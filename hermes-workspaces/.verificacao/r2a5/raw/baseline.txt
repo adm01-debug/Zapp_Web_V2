@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/.verificacao/r2a5/repo
+
+
+ Test Files  13 passed (13)
+      Tests  141 passed (141)
+   Start at  19:25:31
+   Duration  5.68s (transform 5.39s, setup 2.14s, import 12.21s, tests 7.93s, environment 18.53s)
+
+

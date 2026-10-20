@@ -1,0 +1,447 @@
+// Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
+import { evoFetch, extractBase64Media } from './evolution-send.ts';
+import { attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
+
+import {
+  isRecord, normalizePhone, resolveEventJid,
+  getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
+} from "./evolution-helpers.ts";
+import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+
+// Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
+// com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
+// download via API. Retorna a URL permanente no Storage ou null.
+// deno-lint-ignore no-explicit-any
+// Avatar apontando para o CDN do WhatsApp (URL expira) precisa ser re-buscado.
+// Compara o hostname parseado, nao substring (CodeQL js/incomplete-url-substring-sanitization).
+function isWhatsAppCdnUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === 'pps.whatsapp.net' || host.endsWith('.pps.whatsapp.net');
+  } catch {
+    return false;
+  }
+}
+
+async function persistIncomingMedia(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  messageType: string, msgId: string, parsedUrl: string | null,
+  contactId?: string,
+): Promise<string | null> {
+  const message = data.message as Record<string, unknown> | undefined;
+  const webhookB64 = (data.base64 as string) || (message?.base64 as string);
+  if (typeof webhookB64 === 'string' && webhookB64) {
+    const fromB64 = await persistBase64Media(supabase, webhookB64, '', messageType, msgId, contactId);
+    if (fromB64) return fromB64;
+  }
+  const directUrl = parsedUrl || (data.mediaUrl as string) || (message?.mediaUrl as string) || null;
+  if (directUrl && directUrl.startsWith('http')) {
+    const fromUrl = await persistMediaToStorage(supabase, directUrl, messageType, msgId, contactId);
+    if (fromUrl) return fromUrl;
+  }
+  return await persistMediaViaApi(supabase, instance, data, messageType, msgId, contactId);
+}
+
+const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
+
+// Fire-and-forget OG enrichment for received messages.
+// deno-lint-ignore no-explicit-any
+async function enrichIncomingLinkPreview(
+  supabase: any, messageId: string, content: string | null | undefined,
+  supabaseUrl: string, supabaseServiceKey: string,
+): Promise<void> {
+  try {
+    if (!content) return;
+    const match = content.match(URL_REGEX);
+    if (!match) return;
+    const url = match[0].replace(/[).,;!?]+$/, '');
+    const resp = await fetch(`${supabaseUrl}/functions/v1/fetch-link-preview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseServiceKey}`,
+        apikey: supabaseServiceKey,
+      },
+      body: JSON.stringify({ url }),
+    });
+    if (!resp.ok) { await resp.text().catch(() => ''); return; }
+    const json = await resp.json().catch(() => null) as { preview?: unknown } | null;
+    if (!json?.preview) return;
+    await supabase.from('messages').update({ link_preview: json.preview }).eq('id', messageId);
+  } catch (err) {
+    console.error('[INCOMING] link_preview enrichment failed:', err);
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleOutgoingWhatsAppMessage(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
+) {
+  const externalId = key.id;
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  // Escopado por whatsapp_connection_id/sender para bater com o indice unico
+  // real (ux_messages_dedup). key.id do WhatsApp so eh garantidamente unico
+  // por chat/dispositivo, nao globalmente -- sem o escopo, uma colisao entre
+  // duas conexoes diferentes faria este pre-check achar a linha errada.
+  const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
+    .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
+
+  // E32: persistir par LID→JID em contact_identity_map quando ambos chegam no mesmo evento.
+  // Executado antes do early-return de duplicata para garantir backfill mesmo em reprocessamentos.
+  // Operação fire-and-forget: falha não impede o processamento da mensagem.
+  void (async () => {
+    try {
+      const rawLid = key.remoteJid ?? '';
+      const rawJid = key.remoteJidAlt;
+      const isLidFormat = (s: string) => s.includes('@lid') || /^\d{14,15}$/.test(s.replace(/@.*/, ''));
+      if (rawLid && rawJid && rawLid !== rawJid && isLidFormat(rawLid) && !isLidFormat(rawJid)) {
+        const { error: mapErr } = await supabase.from('contact_identity_map').upsert(
+          { lid: rawLid, jid: rawJid, last_seen: new Date().toISOString(), source: 'evolution-go' },
+          { onConflict: 'lid', ignoreDuplicates: false }
+        );
+        if (mapErr) console.warn('[E32] contact_identity_map upsert failed:', mapErr.code, mapErr.message);
+      }
+    } catch (e) {
+      console.warn('[E32] contact_identity_map unexpected error:', e);
+    }
+  })();
+
+  if (existingMessage) return;
+
+  const payloadKey = isRecord(data.key) ? data.key : null;
+  const bestJid = resolveEventJid(key, payloadKey, data);
+
+  const phone = normalizePhone(bestJid ?? undefined);
+  if (!phone || bestJid?.includes('@g.us')) {
+    console.log(`[FROM_ME] Ignored message ${externalId}: unresolved recipient`, { bestJid });
+    return;
+  }
+
+  const contact = await getContactByPhone(supabase, phone, connection.id);
+  if (!contact) return;
+
+  const message = data.message as Record<string, unknown> | undefined;
+  const parsed = parseMessageContent(message, data);
+  if (parsed.messageType === 'reaction') return;
+  if (!parsed.content && parsed.messageType === 'text') return;
+
+  let { mediaUrl } = parsed;
+  if (['image', 'video', 'audio', 'document'].includes(parsed.messageType)) {
+    const msgId = key.id.replace(/[^a-zA-Z0-9]/g, '');
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, parsed.messageType, msgId, mediaUrl, contact.id);
+    if (permanentUrl) mediaUrl = permanentUrl;
+  }
+
+  const messageCreatedAt = (data.messageTimestamp as number)
+    ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
+
+  const recentCutoff = new Date(Date.now() - 60_000).toISOString();
+  const { data: pendingMessage } = await supabase.from('messages').select('id')
+    .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
+    .is('external_id', null).gte('created_at', recentCutoff)
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+
+  if (pendingMessage?.id) {
+    await supabase.from('messages').update({ status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString() }).eq('id', pendingMessage.id);
+    return;
+  }
+
+  // E08: upsert idempotente contra race condition de webhooks paralelos.
+  // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,
+  // gerado novo a cada insert) como alvo do conflito e o DO NOTHING nunca
+  // dispara. ux_messages_dedup (migration 20260901100002) e indice unico
+  // nao-parcial em (whatsapp_connection_id, external_id, sender), entao o
+  // conflito e inferivel.
+  const { error: msgError } = await supabase.from('messages').upsert({
+    contact_id: contact.id, whatsapp_connection_id: connection.id, content: parsed.content,
+    message_type: parsed.messageType, media_url: mediaUrl, sender: 'agent', external_id: externalId,
+    status: 'sent', created_at: messageCreatedAt, agent_id: contact.assigned_to || null,
+  }, { onConflict: 'whatsapp_connection_id,external_id,sender', ignoreDuplicates: true });
+
+  if (msgError) { console.error('[FROM_ME] Error inserting outgoing message:', msgError); return; }
+  await supabase.from('contacts').update({ updated_at: new Date().toISOString() }).eq('id', contact.id);
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleIncomingMessage(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
+  supabaseUrl: string, supabaseServiceKey: string
+) {
+  const payloadKey = isRecord(data.key) ? data.key : null;
+  const bestJid = resolveEventJid(key, payloadKey, data);
+
+  // E32: persistir par LID→JID em contact_identity_map quando ambos chegam no mesmo evento.
+  // Mensagens recebidas também carregam remoteJid/remoteJidAlt com LID e JID real.
+  // Operação fire-and-forget: falha não impede o processamento da mensagem.
+  void (async () => {
+    try {
+      const rawLid = key.remoteJid ?? '';
+      const rawJid = key.remoteJidAlt;
+      const isLidFormat = (s: string) => s.includes('@lid') || /^\d{14,15}$/.test(s.replace(/@.*/, ''));
+      if (rawLid && rawJid && rawLid !== rawJid && isLidFormat(rawLid) && !isLidFormat(rawJid)) {
+        const { error: mapErr } = await supabase.from('contact_identity_map').upsert(
+          { lid: rawLid, jid: rawJid, last_seen: new Date().toISOString(), source: 'evolution-go' },
+          { onConflict: 'lid', ignoreDuplicates: false }
+        );
+        if (mapErr) console.warn('[E32] contact_identity_map upsert failed:', mapErr.code, mapErr.message);
+      }
+    } catch (e) {
+      console.warn('[E32] contact_identity_map unexpected error:', e);
+    }
+  })();
+
+  const phone = normalizePhone(bestJid ?? undefined);
+  if (!phone || bestJid?.includes('@g.us')) {
+    console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid });
+    return;
+  }
+  const message = data.message as Record<string, unknown> | undefined;
+  const parsed = parseMessageContent(message, data);
+  if (parsed.messageType === 'reaction') return;
+
+  let { mediaUrl } = parsed;
+  const { content, messageType } = parsed;
+
+  // Texto sem conteúdo e sem mídia (undecryptable/protocol residual) viraria
+  // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
+  if (!content && messageType === 'text' && !mediaUrl) {
+    console.log(`[INCOMING] Ignored empty message ${key.id}`);
+    return;
+  }
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  if (messageType === 'sticker') {
+    mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
+  }
+
+  if (['image', 'video', 'audio', 'document'].includes(messageType)) {
+    const msgId = key.id || `${Date.now()}`;
+    const earlyContact = await getContactByPhone(supabase, phone, connection.id);
+    const permanentUrl = await persistIncomingMedia(supabase, instance, data, messageType, msgId, mediaUrl, earlyContact?.id);
+    if (permanentUrl) mediaUrl = permanentUrl;
+  }
+
+  const messageCreatedAt = (data.messageTimestamp as number)
+    ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
+
+  // Uma transacao (migration 20260905050000): find-or-create do contato com
+  // variantes do 9o digito e relink de conexao + upsert idempotente da mensagem
+  // (ux_messages_dedup, preservando status/conteudo de mensagem apagada).
+  // Antes eram 3-5 round-trips sem atomicidade; falha no meio deixava contato
+  // sem mensagem ou relink parcial.
+  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
+    p_connection_id: connection.id,
+    p_phone: phone,
+    p_push_name: (data.pushName as string) || null,
+    p_content: content,
+    p_message_type: messageType,
+    p_media_url: mediaUrl,
+    p_external_id: key.id,
+    p_created_at: messageCreatedAt,
+  });
+  if (txError) {
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
+    return;
+  }
+  const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
+    contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
+    contact_created: boolean; message_id: string | null; outcome: 'inserted' | 'updated' | 'duplicate';
+  } | null;
+  if (!tx?.contact_id) {
+    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone });
+    return;
+  }
+
+  // Avatar fica fora da transacao: chamada externa a Evolution GO.
+  if (tx.contact_created || !tx.avatar_url || isWhatsAppCdnUrl(tx.avatar_url)) {
+    const picUrl = await fetchProfilePicFromApi(instance, phone);
+    if (picUrl) {
+      const avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
+      if (avatarUrl) await supabase.from('contacts').update({ avatar_url: avatarUrl }).eq('id', tx.contact_id);
+    }
+  }
+
+  if (tx.outcome === 'duplicate' || !tx.message_id) {
+    console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
+    return;
+  }
+  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
+  if (tx.outcome === 'inserted' && messageType === 'text' && content) {
+    void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
+  }
+  // E57: opt-out automatico por palavra-chave (gateado por campanha recente 30 dias)
+  if ((tx.outcome === 'inserted' || tx.outcome === 'updated') && messageType === 'text' && content && !key.fromMe) {
+    if (TALKX_OPT_OUT_RE.test(content.trim()) && tx.contact_id) {
+      // Fix P1: usar phone resolvido via bestJid/normalizePhone (ja disponivel no escopo da funcao pai)
+      const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
+      if (resolvedPhone && resolvedPhone.length >= 8) {
+        // Gate: verificar se ha campanha recente (30 dias) para o contato
+        const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentSend } = await supabase.from('talkx_recipients')
+          .select('id').eq('contact_id', tx.contact_id)
+          .not('sent_at', 'is', null).gte('sent_at', cutoff).limit(1);
+        if (recentSend && recentSend.length > 0) {
+          const { data: newId, error: suppErr } = await supabase.rpc('talkx_suppress_contact', {
+            p_contact_id: tx.contact_id,
+            p_phone: resolvedPhone,
+            p_reason: 'Opt-out via mensagem: ' + content.trim().slice(0, 50),
+            p_reason_code: 'opt_out',
+            p_origin: 'auto_optout',
+            p_source_message_id: tx.message_id ?? null,
+          });
+          if (newId) {
+            console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
+            // E59: enviar mensagem de confirmacao ao contato
+            try {
+              const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
+              const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
+              if (evolutionUrl && evolutionKey) {
+                await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
+                  number: resolvedPhone,
+                  text: 'Você foi removido da lista de comunicações da Promo Brindes. Não receberemos mais mensagens para este número. Em caso de dúvidas, entre em contato pelo nosso site.',
+                  delay: 500,
+                });
+                console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
+              }
+            } catch (notifErr) {
+              console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
+            }
+          } else if (!suppErr) {
+            console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');
+          } else {
+            console.warn('[OPT-OUT] Falha:', suppErr?.message);
+          }
+        } else {
+          console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
+        }
+      }
+    }
+  }
+
+  // E88: atribuir resposta TalkX (janela 72 h), exceto opt-out
+  if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
+    if (!TALKX_OPT_OUT_RE.test((content ?? '').trim())) {
+      void attributeTalkXReply(supabase, tx.contact_id, tx.message_id);
+    }
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleStickerMedia(
+  supabase: any, instance: string, data: Record<string, unknown>,
+  message: Record<string, unknown> | undefined, key: { id: string }
+): Promise<string | null> {
+  let mediaUrl: string | null = null;
+
+  const uploadBase64Sticker = async (base64Data: string): Promise<string | null> => {
+    try {
+      const cleanB64 = base64Data.replace(/^data:[^;]+;base64,/, '');
+      const binaryStr = atob(cleanB64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      if (bytes.length < 50) return null;
+      const fileName = `sticker_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
+      const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`);
+        return urlData.publicUrl;
+      }
+      return null;
+    } catch { return null; }
+  };
+
+  const b64Direct = (data.base64 as string) || (message?.base64 as string) ||
+    ((message?.stickerMessage as Record<string, unknown>)?.base64 as string);
+  if (b64Direct) mediaUrl = await uploadBase64Sticker(b64Direct);
+
+  if (!mediaUrl) {
+    const stickerNode = message?.stickerMessage as Record<string, unknown> | undefined;
+    const directMediaUrl = (data.mediaUrl as string) || stickerNode?.mediaUrl as string || stickerNode?.URL as string || stickerNode?.url as string;
+    if (directMediaUrl && directMediaUrl.startsWith('http')) {
+      try {
+        const resp = await fetch(directMediaUrl, { signal: AbortSignal.timeout(10000) });
+        if (resp.ok) {
+          const arrayBuf = await resp.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuf);
+          if (bytes.length > 100) {
+            const fileName = `sticker_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
+            const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
+            if (!uploadErr) { const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`); mediaUrl = urlData.publicUrl; }
+          }
+        }
+      } catch (dlErr) { console.error('[STICKER] mediaUrl download error:', dlErr); }
+    }
+  }
+
+  if (!mediaUrl) {
+    try {
+      const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
+      const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
+      if (evolutionUrl && evolutionKey) {
+        const resp = await evoFetch(evolutionUrl.replace(/\/+$/, ''), evolutionKey,
+          `/chat/getBase64FromMediaMessage/${instance}`,
+          { message: { key: data.key, message: data.message }, convertToMp4: false },
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
+        if (resp.ok) {
+          const result = await resp.json();
+          const media = extractBase64Media(result);
+          if (media) mediaUrl = await uploadBase64Sticker(media.base64);
+        }
+      }
+    } catch (apiErr) { console.error('[STICKER] API fetch error:', apiErr); }
+  }
+
+  if (mediaUrl) {
+    try {
+      const { data: existing } = await supabase.from('stickers').select('id').eq('image_url', mediaUrl).maybeSingle();
+      if (!existing) {
+        let category = 'recebidas';
+        try {
+          const classifyResp = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/classify-sticker`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+            body: JSON.stringify({ image_url: mediaUrl }), signal: AbortSignal.timeout(20000),
+          });
+          if (classifyResp.ok) { const classifyResult = await classifyResp.json(); category = classifyResult.category || 'recebidas'; }
+        } catch { /* classification failed, use default */ }
+        await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: mediaUrl, category, is_favorite: false, use_count: 0 });
+      }
+    } catch { /* save error */ }
+  }
+
+  return mediaUrl;
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleAudioTranscription(supabase: any, _contactId: string, messageId: string, mediaUrl: string, supabaseUrl: string, supabaseServiceKey: string) {
+  const { data: globalSetting } = await supabase.from('global_settings')
+    .select('value').eq('key', 'auto_transcription_enabled').maybeSingle();
+  if (globalSetting?.value === 'false') return;
+
+  await supabase.from('messages').update({ transcription_status: 'processing' }).eq('id', messageId);
+
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/ai-transcribe-audio`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
+      body: JSON.stringify({ audioUrl: mediaUrl, messageId }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      await supabase.from('messages').update({ transcription: result.text, transcription_status: 'completed' }).eq('id', messageId);
+    } else {
+      await supabase.from('messages').update({ transcription_status: 'failed' }).eq('id', messageId);
+    }
+  } catch {
+    await supabase.from('messages').update({ transcription_status: 'failed' }).eq('id', messageId);
+  }
+}

@@ -1,0 +1,2078 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": [
+    {
+      "path": "src/main.tsx",
+      "git_blob_sha": "53e586cae25308e6c1b280e97c9101a0cd2e5a3d",
+      "source_sha256": "df91ccf7d1d34c0321952a8ac9dcf9849a8b8092190912382d16c3aa9c742a1f",
+      "line_start": 1,
+      "line_end": 82,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Boot, marca de montagem, handlers globais, StrictMode e axe apenas em DEV lidos. O ErrorBoundary importado aqui não envolve createRoot; App mantém fronteiras internas, sem novo finding por import não usado. Não executado.",
+      "runtime_executed": false
+    },
+    {
+      "path": "src/i18n/team-chat.ts",
+      "git_blob_sha": "c8d0b5a0b85d9eed8aff45f6e297147b81f4a1b2",
+      "source_sha256": "cc47572bbf88c59f9e8c1378c7e809c9b84d9e4cbb82831b530df6c7657210b6",
+      "line_start": 1,
+      "line_end": 77,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Catálogo PT-BR e quatro interpoladores simples: plural de membro/mensagem, junção de nomes e remetente. Dados não equivalem a permissão ou envio; sem novo defeito material confirmado.",
+      "runtime_executed": false
+    },
+    {
+      "path": "src/data/emojiDatabase.ts",
+      "git_blob_sha": "e4e226f0917da6180c727670317bf39382adf481",
+      "source_sha256": "8a629bce836d3575eb60e92bffc893f596d3da7e241d113265fcaf3b5e559cac",
+      "line_start": 1,
+      "line_end": 636,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Onze categorias e todos os dados/5 corpos lidos em duas faixas mais recomposição de trecho truncado. Busca normaliza acentos e testa emoji literal, cache é local ao módulo. Repetição de emojis entre categorias e falta de trim após guarda são limites de apresentação, sem falha material do consumidor demonstrada.",
+      "runtime_executed": false
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "git_blob_sha": "a0f19c04287a9f6bfd29dd2d723c044402242167",
+      "source_sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+      "line_start": 1,
+      "line_end": 158,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Três funções e nove mutações lidas. Caminho de workspace fixo; baseline verde, alvo literal, restauração finally e SHA são controles positivos. rodar não usa argumento alvo e trata qualquer nonzero como morto; extensão encaminhada a INF019. Nenhuma mutação ou comando do script executado.",
+      "runtime_executed": false
+    },
+    {
+      "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+      "git_blob_sha": "97de049fe73709a9da7f048c51d8eac33c0735de",
+      "source_sha256": "48f97722f1163d660a2045780e234aef3eeeefaad497bf20cc8756bc7ca9c88d",
+      "line_start": 1,
+      "line_end": 148,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Os dois testes de handleSaveUser montam o hook real e conferem envio de can_download true/false em objectContaining, com banco/Storage/admin/Edge simulados; não verificam gravação final, combinação de campos ou autorização no servidor. Os casos de interface constroem literais já válidos e só testam sua propriedade/tipo. O título sobre não aceitar null em runtime não demonstra rejeição de null: nenhum valor inválido é entregue a um validador. Limite de evidência de teste, sem novo defeito do produto inferido.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
+      "git_blob_sha": "fcde975678be6389d73cd8b6bd2c33cd371255da",
+      "source_sha256": "75b1b1534591660f92c99e6a33e7c9116a9b1bdac31848e7e143e2ebc9bd9987",
+      "line_start": 1,
+      "line_end": 194,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Smoke de render usa seis tags fixas e consulta simulada sempre bem-sucedida; confirma título/controles/categorias. ClassifyTag, derivePriority, CATEGORIES, PRIORITY_MAP e agrupamento são reimplementações/literais locais ao teste, sem vínculo de execução com a lógica real do componente. O caso de lista vazia configura um vi.fn recém-criado que não é usado pelo mock de Supabase; permanece a fixture de seis tags e só se verifica o título. O caso de confiança zero valida a expressão local que converte zero em70, sem afirmar correção do domínio. Nenhum teste dispara classificar em lote com retorno {error}, portanto não refuta R2-AUTH-048.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/components/groups/__tests__/GroupsView.test.tsx",
+      "git_blob_sha": "825ddafcb9facef3c04860aedd5cf2170e1874f1",
+      "source_sha256": "9d4c0e6a1f243140e7a9d14e6bd39c83741599bbe09cea46082f03e877f4aa73",
+      "line_start": 1,
+      "line_end": 124,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta GroupsView real sob mock de motion/Auth/feedback/Supabase. Cobre lista vazia, linhas, filtro, nome da conexão, admin, erro de fetch, sync com instanceName/getParticipants e erro por falta de conexão; isso é evidência útil de apresentação e montagem dos argumentos. Não aciona o menu Enviar mensagem nem o envio broadcast com falha. O feedback simulado captura exceções e chama onSuccess só no sucesso; os contratos de seleção/draft de R2-API-061/062 precisam provas próprias, não são cobertos pelo simples rótulo Selecionar todos.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
+      "git_blob_sha": "88132d3b58c63bdf18ae3f0c07083d90dde7f422",
+      "source_sha256": "9fe82088749ed6a0dbc22c5db8a016f9c585de0de45d5a3d01907def5bac2b00",
+      "line_start": 1,
+      "line_end": 219,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta MFABackupCodes real: verifica dez códigos/formato/unicidade da amostra, props, cópia, Blob/text/plain/revogação, confirmação e callbacks. O teste de ícone usa fake timers com act e restauração em finally, controle de agendamento válido. Esses casos não persistem códigos nem os apresentam a um verificador MFA. Formato e cópia não demonstram recuperação da conta, uso único ou vínculo ao usuário; unicidade numa amostra não é prova criptográfica.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/components/notifications/__tests__/SoundVolumeControl.test.tsx",
+      "git_blob_sha": "5aee084886dd9e6a36c7bd81d512ed942d296c32",
+      "source_sha256": "d2360813130d40680edeb138228602a9893ed0126fe1dfeaceccd7831d2d465f",
+      "line_start": 1,
+      "line_end": 173,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta SoundVolumeControl real e dispara roda, teclado, clique e press longo; cobre passos de5, limites10–100, mudo sem alterar volume, nome acessível, slider aos400ms, dedup do click subsequente e indicação de volume baixo. useNotificationSettings é substituído por settings mutável e spy. Os testes conferem payload/estado de apresentação, sem provar armazenamento, emissão sonora física, preferência após recarga ou sincronização de múltiplos controles.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/components/onboarding/__tests__/OnboardingTour.test.tsx",
+      "git_blob_sha": "0a7a61f51cba62668147882b7835a25a24a458fc",
+      "source_sha256": "f61a69b03193baf163d3c0a5b74f734311ba8537395635f15ca2622f84e87296",
+      "line_start": 1,
+      "line_end": 310,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "TourProvider real é exercitado para iniciar/finalizar, índice, limites, callback, contexto obrigatório e teclas. WelcomeModal real cobre render fechado/aberto, iniciar/pular, Escape e nome/papel modal; são controles de comportamento concretos. O teste de seletor CSS exige apenas que querySelector não lance; resultado null passa, portanto não valida existência dos alvos INF038. aria-modal=true não prova foco inicial, contenção/retorno de foco ou inert, limites de INF039; nenhum achado adicional foi contado.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/helpers/alertBehaviorTestKit.ts",
+      "git_blob_sha": "5ee23dbaf4344b9ff02c4f99a07fe6f0dfe210ba",
+      "source_sha256": "205cd1b3faec1038dbfa9542e1f58562fd9721c8e9ee957b8044f176a2326764",
+      "line_start": 1,
+      "line_end": 123,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Kit de fronteiras dos alertas lido integralmente: coleta callbacks de Realtime, parametriza tipos/volume/quietHours e dedupe, retorna contactRow e consultas/mutações sintéticas. O getter de quietHours é avaliado por chamada, permitindo testes de mudança após mount. Não executa dedupe real, canal remoto, RLS ou persistência; claimNotificationEvent retorna somente um boolean configurado. resetAlertKit não restaura todas as propriedades/coleções de spies, e os testes consumidores devem configurar o que usam; isso ficou limite do harness, sem incidente de produto inferido.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/sentimentAlerts.behavior.test.ts",
+      "git_blob_sha": "b272f04430f8ea2f7c161a8ce94579a53e6c68b4",
+      "source_sha256": "b7604fad0a97c63909a8aae3e0d45e4361482d56f81203657b75bbafa8aaf794",
+      "line_start": 1,
+      "line_end": 153,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa os dois hooks reais e entrega payload.new ou retorno Edge simulado. Prova chamada de playNotificationSound com tipo/volume e caminhos silenciosos por desativação, tipo diferente, dedupe negado, alerted=false, notifyCaller=false e erro de invoke. A decisão real de dedupe, armazenamento do volume, emissão de áudio e navegação das ações do toast não são exercitadas. O título com persistidos significa dados fornecidos pelo mock do painel; não comprova gravação no banco nem refuta INB064.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useApplicableSLA.test.ts",
+      "git_blob_sha": "5efa3500a81ef5cfee81e4cfb647746eb91e5d85",
+      "source_sha256": "93a259f513d07cc29cbb24ed63d25eb4a5399e0367d15954ce3475562deb67ed",
+      "line_start": 1,
+      "line_end": 276,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Todos os cenários de hierarquia/escopo/fallback executam resolveApplicableSLA definido dentro do próprio teste44–94, com tipos/factories locais e apenas import de vitest. Confirmam a intenção dessa cópia, incluindo precedência e default, mas não o hook produtivo. Não há execução da consulta/ordenação nem do indicador/trigger consumidor; o teste entrega regras já ordenadas. Não refuta SLA003 (configuração não governa o caminho efetivo). Caso integrante da família de testes sem vínculo ao código de produto, sem contar cada assertiva como funcionalidade.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useAutoCloseConversations.test.tsx",
+      "git_blob_sha": "8033a65d65708cb88cd4af8bdba057c5e8aaec77",
+      "source_sha256": "6648d8010e0c8085b3472457f572ef9b04018fad9396add03fe3f3f763aff415",
+      "line_start": 1,
+      "line_end": 123,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useAutoCloseConversations com QueryClient novo e retryfalse. Cobre configuração retornada, loading pendente, erro→undefined e preservação do valor0, explicitamente atribuindo validação à UI. Nenhum caso atualiza configuração ou fecha uma conversa, aciona cron ou verifica mensagem de encerramento. O nome validates inactivity_hours bounds acompanha uma asserção de leitura de0, não rejeição do valor; registrar leitura não implica validação executada pelo hook.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useBulkActions.test.tsx",
+      "git_blob_sha": "db4969dc8aa0f58835adbecf73bacefe10bb483b",
+      "source_sha256": "2b2768c294cfb62b846b13e35ff904a736183e4c31d6473f9b4b63e0f28475ab",
+      "line_start": 1,
+      "line_end": 179,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useBulkActions real e exercita seleção, alternância, deselect/selectall, contagem, seleção parcial, projeção de itens e isExecuting inicial. As duas alterações em um act também exercitam atualização funcional do estado. Os métodos de delete/update são simulados e não são acionados por esses testes. Não há cenário de execução em lote, falha parcial, mudança de página/dados ou associação da seleção a usuário/tenant; os testes de seleção não certificam mutations.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useCRUD.test.tsx",
+      "git_blob_sha": "d09f6a05b800e3173a2a0889da0623d82a571e85",
+      "source_sha256": "8eee9c2f17d089de2ceccbc3b415246334228341a7d00f2d61442139f0f106dc",
+      "line_start": 1,
+      "line_end": 169,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useCRUD real com QueryClient e mocks para select/insert/update/delete. Verifica presença de métodos/flags, aceita configurações sem lançamento e aciona create/bulkDelete. Os casos de configuração apenas exigem result definido; create e bulkDelete só conferem from('test_table'), sem exigir IDs/payload, efeito persistido ou tratamento de erro. Esse alcance de smoke não foi transformado em aprovação do contrato de CRUD/ACL/paginação.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useChatSearch.test.ts",
+      "git_blob_sha": "6655f35c1c70303f61469c935c10c1c23a679f97",
+      "source_sha256": "33e6710bc2c37f5f77d5951d221dc9f06541c8e7939a1b9244ef73f851b0076a",
+      "line_start": 1,
+      "line_end": 260,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useChatSearch real com oito mensagens e relógio simulado: verifica debounce, exclusão lógica, normalização de acentos, filtros de mídia/link, combinação de filtros, navegação circular, destaque, callback, limpeza e ausência de resultados. Esses controles positivos verificam o hook sobre a coleção recebida. Não consultam histórico paginado no banco nem montam a rolagem e os consumidores de navegação do chat.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useGlobalKeyboardShortcuts.test.tsx",
+      "git_blob_sha": "8bb4c5fd02dba0466e640e439e7b11c4c5c1d75f",
+      "source_sha256": "c0854ae75dcd455c2e454216bb1a17c545adff819a3f32bf4105678ccf6e557f",
+      "line_start": 1,
+      "line_end": 134,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useGlobalKeyboardShortcuts real, verifica o registro de sete comandos escopados a tarefas e despacha eventos de teclado para tarefas/pipeline, outra view, foco em input, modificador Ctrl e ajuda. Os controles negativos de escopo e foco são relevantes. A simulação não executa as ações de negócio do módulo de tarefas, nem navegação global Ctrl+2 ou persistência de preferências.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useNotificationSettings.test.tsx",
+      "git_blob_sha": "61df2f3b11a1d59e1f4f6196d9d270d0d71cb5c6",
+      "source_sha256": "ae4f1bedd917d458af7415fbb645139e24b1edb51ba535e5d824af015b3c6735",
+      "line_start": 1,
+      "line_end": 367,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useNotificationSettings real com QueryClient, usuário e Supabase simulados. Verifica carregamento, defaults, campos, seleção e gravação de sound_volume, limites, atualização otimista, erro de upsert com aviso, reset de volume, vocabulário de som, limitação de toasts e fronteiras de quiet hours inclusive intervalos noturnos. Há assertivas substanciais sobre o hook real; elas não demonstram persistência dos três booleans de sons por categoria nem falha do upsert no reset. Não afastam PLAT003/PLAT004, e não constituem execução contra banco ou áudio real.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useOfflineCache.test.ts",
+      "git_blob_sha": "98de6996347136259afa0ec71a1dbe52fa0fb696",
+      "source_sha256": "d176efbcc096edcf02d624d316fe8ac21351dcd1d4793da3be23b09499cc42f8",
+      "line_start": 1,
+      "line_end": 125,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useOfflineCache real com navigator e localStorage simulados: cobre identidade online, gravação e timestamp, limites de 50 conversas/20 mensagens, bloqueio durante loading, limpeza, expiração em 31 minutos e eventos online/offline. O teste não monta logout ou alternância de usuário, nem trata quotas e JSON corrompido. A ausência desses cenários não é um novo vazamento: a integração de limpeza em Auth foi examinada separadamente.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useOnboarding.test.tsx",
+      "git_blob_sha": "fbc1073fa8bcb960a6ef7eec4c3b44b611725740",
+      "source_sha256": "f0de42be44f8836f7426c1f50f701963228e6a182dca58c5713adfea3f6edea3",
+      "line_start": 1,
+      "line_end": 150,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useOnboarding real e verifica usuário ausente, flag local por usuário, existência ou ausência de user_settings, erro de leitura que assume conclusão, API de conclusão e upsert com onConflict=user_id/ignoreDuplicates=true. O caso final exige que a conclusão local sobreviva à rejeição da persistência remota, comportamento local explicitamente pretendido no teste. O arquivo não demonstra conclusão durável em outro navegador, foco/inert do modal nem presença dos alvos do tour.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useOnboardingChecklist.test.tsx",
+      "git_blob_sha": "bfd23b0bbbd5b9dbb29acba134a873d0b4f4b906",
+      "source_sha256": "1bc226ff5538eae5226e5e71cbfa56c60219a24d9f8f12cddd2837e9081e6dcd",
+      "line_start": 1,
+      "line_end": 135,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useOnboardingChecklist real com tabelas simuladas. Verifica nome de perfil suficiente/curto, funções e campos expostos, ausência de usuário sem exceção e progresso no intervalo 0–100. Alguns títulos são mais fortes que a assertiva: all false somente exige status definido, e dismissal só verifica estado inicial e funções. O teste não monta OnboardingChecklistCard com tema indefinido e não afasta INF036; tampouco verifica operações de dismiss e erros de persistência.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useQueues.test.tsx",
+      "git_blob_sha": "81b22e22acabaf186db8449e6fe61aaa62f4836e",
+      "source_sha256": "dceb7e5954ab707eecab7e27b792d2a4c1cd74bebb6973e70f1215a669fc0916",
+      "line_start": 1,
+      "line_end": 122,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useQueues real e exige duas filas, vínculo de membro ao nome correto, estado inicial de loading e waiting_count igual a zero. O comentário registra que a contagem foi movida à camada de serviço; o teste não prova a contagem operacional de espera. O mock oferece insert de fila e operações de membros, mas nenhum caso os aciona. Não cobre salvar/excluir fila, erro de inclusão de membro ou os componentes de comparação e período relacionados a QUE007–QUE010.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useQueuesComparison.test.tsx",
+      "git_blob_sha": "f9037560dfec18d06edbe35ca78f8ea783762a9b",
+      "source_sha256": "11316ce6c70255601f8a0d215444d575b63c42fc1735ae85d063eaa63d627273",
+      "line_start": 1,
+      "line_end": 122,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa e monta useQueuesComparison real, mas o cenário intitulado fetches and compares queues somente aguarda loading=false. O cenário de erro faz a mesma assertiva; apenas o cenário de filas vazias exige queuesPerformance=[]. O mock de mensagens encerra a cadeia em in() com uma Promise e não oferece gte/lte requeridos pela produção; o catch do hook termina loading mesmo assim. Nenhuma assertiva exige as métricas das fixtures, portanto o cenário não demonstra comparação correta, filtragem temporal ou proteção contra retorno fora de ordem de QUE010.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+      "git_blob_sha": "1429eaa096f3b5c136ef0fe52a8b360cf75c000e",
+      "source_sha256": "43cc00f7bb7411457695599a0c9753f1336707cf6abbeae61e638fb63073be08",
+      "line_start": 1,
+      "line_end": 156,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useRateLimitLogs real com Promise que oferece abortSignal. Verifica três logs, soma 280, contagem de linhas bloqueadas, IPs únicos e identificação do IP bloqueado, vazio, refresh de 30 segundos, atualização conjunta de estatísticas, limpeza ao desmontar e ausência de consulta sem permissão. Os controles de polling e autorização do hook são concretos. O cenário de erro só aguarda fim do loading; não verifica mensagem de erro do dashboard nem ações de bloqueio/desbloqueio. blockedRequests=1 é a contagem de linhas da fixture, não prova do volume de requisições bloqueadas no servidor.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useResourcePrefetch.test.ts",
+      "git_blob_sha": "563c4be7bb9c3cce40ade0e3668b4c4bf1f47c88",
+      "source_sha256": "b7944df65fb43fe35c1b4ffbb4974a114d5439fd3b983932364d762e82acb273",
+      "line_start": 1,
+      "line_end": 370,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa os hooks e helpers reais de prefetch. Além da API exposta, cobre cache, deduplicação, erro, líder/seguidor desmontados, rejeição compartilhada, cancelamento de rota no fallback, idle callback, interrupção de escrita ao desmontar e IntersectionObserver antes/depois da desmontagem. Os controles positivos e negativos são preservados: existe observação de dados e chamadas reais do módulo sob fetchers simulados. ImagePrefetch só tem verificações de funções expostas; nenhum cenário demonstra download HTTP de imagens ou benefício de desempenho em navegação real.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useSLACalculation.test.ts",
+      "git_blob_sha": "fa69a17aae52f96bbf5caeb38531fcbbf696c7b8",
+      "source_sha256": "d0e0a377df187b2be7c63252d697e6b177c67399656ee04fbde4c22a11724f78",
+      "line_start": 1,
+      "line_end": 172,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "O único import é Vitest. calculateStatus, formatTimeRemaining e deriveWorstStatus são definidos dentro do próprio teste e todas as assertivas exercitam essas cópias, incluindo fronteiras de warning/deadline, conclusão e formatação. As expectativas documentam intenção, mas uma alteração divergente no hook de produção não é observada por esse arquivo. É outro locus da família de testes sem vínculo com o código produtivo, relacionado a TC-011; não equivale a defeito adicional no cálculo de SLA.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useSLAHistory.test.tsx",
+      "git_blob_sha": "10ec94529898f664c3b026b9bb37b5ab1c1ce431",
+      "source_sha256": "fe4a1898599c4b7cff9ef00240ab2067e67e0eef833abc2a371cbf170d5ef3aa",
+      "line_start": 1,
+      "line_end": 124,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useSLAHistory real com React Query e verifica loading, períodos, estrutura de dias/trends, vazio e duas violações de primeira resposta, preservando a regra comentada de ignorar resolução. O caso de erro retornado exige data=null. Os testes de 30/90 dias apenas aguardam loading; não conferem datas enviadas ou conteúdo dos buckets. A estrutura e a regra de primeira resposta têm controles positivos, mas fuso horário, navegação do dashboard e ordenação assíncrona não são demonstrados por este arquivo.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useSavedFilters.test.tsx",
+      "git_blob_sha": "0db310dce87a1adab277fe5de2db9175170a9cb3",
+      "source_sha256": "c86b22e69b12aa8658b2c9199d983f364f6f8a3f53af39a9b4811759520158b5",
+      "line_start": 1,
+      "line_end": 127,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useSavedFilters real sob React Query e mocks de autenticação/consulta: exige duas entradas, identifica o filtro default, retorna vazio sem usuário e verifica estado inicial e funções expostas. Salvar, atualizar, apagar e trocar default nunca são acionados; o cenário de erro apenas aguarda fim do loading. Portanto o arquivo não demonstra persistência, isolamento de usuário nas mutações nem recuperação de falhas desses comandos.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useSearchHistory.test.ts",
+      "git_blob_sha": "74a693b486467b10ddb6de887d7b15c748064eb1",
+      "source_sha256": "f0113df30a817299e426e02c272f1bbb8863f43024db67c554175f99b989fd31",
+      "line_start": 1,
+      "line_end": 163,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useSearchHistory real e verifica adição, tamanho mínimo, deduplicação sem distinguir maiúsculas, limite de dez itens, remoção, limpeza, persistência/restauração, JSON inválido, recência e trim. As assertivas exercitam estado e localStorage de fato, com controles positivos e negativos. Não montam a pesquisa remota ou seu vínculo com resultados nem demonstram isolamento entre contas e tratamento de quota; esses limites não geram achado por si sós.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
+      "git_blob_sha": "d97c507dbb791daed7bf304b513a8b5c289ba5fe",
+      "source_sha256": "37c780826782dba5fff8ac00c38cddff481807ee7648ea4eb20cdefb2c974ef2",
+      "line_start": 1,
+      "line_end": 260,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useSentimentAlerts real, usa notificationDedupe real e simula Edge Function, preferências, som e consultas. Cobre delegação à política do destinatário mesmo com preferência local desativada, retorno de erro, alerta, deduplicação com Realtime, notifyCaller=false, leitura recente e som condicionado à preferência de menção. Os controles de decisão local são concretos; resposta alerted/emailSent do mock não comprova envio/persistência no servidor. Não aciona a navegação do toast, portanto não afasta INB064.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts",
+      "git_blob_sha": "2e6850e5037e005237a181740acde464ce93e6a8",
+      "source_sha256": "ef7176c4ec1cbd7ae8706ae3ca77accaa35b08cfa021b92c45da62919c376b2d",
+      "line_start": 1,
+      "line_end": 186,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa o hook ativo de chat e usa grafo WebAudio falso, canal cujo callback é capturado e consulta de membership simulada. Exige os ganhos para volumes 60/100 e ausência de som para autor, não membro, conversa muda, preferência desligada, quiet hours e conversa atual. É evidência vinculada ao caminho produtivo de som, com vários controles negativos; preserva a distinção expressa em comentário sobre o antigo hook sem consumidor. Não demonstra áudio físico, permissão de notificações push ou transporte Realtime real.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useUserRole.test.tsx",
+      "git_blob_sha": "549509c3ec9c363f970c994f09ab2c332ac351d3",
+      "source_sha256": "caa1e8d7841fb3b795cebb4a3cdeaff8ec39d9d1fb583da3a4cd96806411955f",
+      "line_start": 1,
+      "line_end": 208,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useUserRole real com QueryClient e auth/Supabase simulados. Verifica usuário ausente, composição de papéis, hasRole e a permissão multiplix.dispatch.create por RPC user_has_permission com argumentos exatos, tanto concedida a agente quanto negada a supervisor. Os controles de permissão nominal são substanciais. A resposta da RPC é simulada, sem executar SECURITY DEFINER/RLS ou a navegação ProtectedRoute; não constitui prova de autorização no banco.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useVisiblePolling.test.tsx",
+      "git_blob_sha": "f041d9e983a3f4dc586b9468132b7de82b56b5d1",
+      "source_sha256": "9d2e2fc4c5ab49a73b77b44ad8431e7cc2a547461ef4dbe5bd39ffadb54c644f",
+      "line_start": 1,
+      "line_end": 136,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useVisiblePolling real com timers, visibilidade e conectividade controlados. Cobre leitura inicial, intervalo após conclusão, pausa oculta/offline, retomada, coalescência de refresh, rejeição, abort/cleanup, StrictMode, substituição de callback e remoção de autorização. Os casos verificam chamadas, sinais AbortSignal e ausência de timers, com fronteiras positivas e negativas. Isso demonstra o contrato do agendador sob simulação; a tarefa fornecida e os servidores reais permanecem fora do teste.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useConversationActions.test.ts",
+      "git_blob_sha": "fc01adb434a208c8fa986996cdc50ea3b761d008",
+      "source_sha256": "7141cc88acd8a87791d56983020a208812910cb72244a8ff27cebbb46b29054b",
+      "line_start": 1,
+      "line_end": 355,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useConversationActions real; o fake de favoritos replica inserts/deletes para que o refetch pelo bus não mascare o estado. Verifica arquivamento e undo com assigned_to original, erro sem undo, transferência por agente/fila, rejeição por conexão, durações de snooze, estado de pin/favorite e filtros exatos contact_id+pinned_by no unpin. Há observação de payloads, filtros e erros reais do hook sob banco simulado. Não reproduz transferência concorrente, autorização RLS, falhas de leitura do assigned_to nem todos os erros de pin/snooze; a assertiva de 9h usa fuso do runtime, sem certificar regra operacional de fuso.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx",
+      "git_blob_sha": "513f33d12e2656a996c733a6cb6505499d627d4d",
+      "source_sha256": "7850cd33ae9d56b67ce1780e9bff45e3dbd4e599ccb5e68cdb34722906fe1085",
+      "line_start": 1,
+      "line_end": 140,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa helpers e hook reais de colunas e verifica limites, tabela de larguras, capacidade 7 reduzida à opção 6, prioridade da preferência, primeira medida e redimensionamento. O contêiner fornece getBoundingClientRect fixo e o ResizeObserver é falso, explicitamente declarado no teste. Portanto os cálculos e a reação do hook têm evidência; medidas e encaixe visual no navegador real não são demonstrados.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useFilesViewState.test.tsx",
+      "git_blob_sha": "25f9333d68ddd55a8cb1a2cb25b0e2bfe7e11999",
+      "source_sha256": "de735b430851ea7005cd9ec8b2130f1d0afb2970a3d0365c034cf4ec8eb73c9b",
+      "line_start": 1,
+      "line_end": 163,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useFilesViewState real, verifica JSON/versão/domínio inválidos, sanitização campo a campo, persistência de viewMode/columns sem tocar chaves do catálogo, sessão em memória para filtro/busca/ordem, remontagem e separação entre usuário/contato. Há controles positivos de isolamento entre usuários, SIGNED_OUT e troca de contato com hook montado. O cenário de não persistência de sessão condiciona as assertivas ao storage existir, mas confere o estado em memória; nenhum desses testes demonstra a UI completa ou o servidor.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useForwardMedia.test.ts",
+      "git_blob_sha": "04f2b36a1c07367755469d0fdaf4a80f2b3adb18",
+      "source_sha256": "9a9b7d24aff20ee22757981c9e13254d995a3c5a22edaf448530e198a0b022c1",
+      "line_start": 1,
+      "line_end": 229,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa forwardMediaMessages e createForwardRunState reais; observa quatro cópias/envios por dois arquivos e dois destinos, URLs derivadas de cada path copiado, bucket de áudio, recusa de origem externa/grupo, limpeza condicionada à reconciliação e conservação do objeto quando a consulta falha. Os testes exercitam retry de sete pares com duas falhas e reaproveitamento do objeto existente, com controles de chamadas e progresso. Storage, outbound e reconciliação são simulados; não demonstram RLS, entrega externa ou idempotência durável entre processos.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useNewConversation.test.tsx",
+      "git_blob_sha": "51fe1e51c610abe3029dad20091ac9b870b462ff",
+      "source_sha256": "8de0d8022e2fa3abf01c994cd8ccf0494956b3c97571be2aaca0deead9e723ea",
+      "line_start": 1,
+      "line_end": 139,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useNewConversation real e observa telefone normalizado na consulta e insert, payload de mensagem, invalidação dos dois agregados, callbacks e fechamento. O caso duplicado exige ausência de insert, invalidação e envio, com toast de erro específico. A fronteira positiva/duplicidade é concreta. O mock resolve sendOutboundMessage com undefined e não simula erros/estados retornados, concorrência de criação ou troca de conexão; não certifica entrega pelo gateway.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/ui/__tests__/useVolumeRocker.test.tsx",
+      "git_blob_sha": "395fcf827f0fbe349ccb517fd39fe125b7833e07",
+      "source_sha256": "9ae85b4471740391454e4434bcf680cd3fd0ea4d0a79455be9b85a2fff802f81",
+      "line_start": 1,
+      "line_end": 179,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta um host DOM mínimo com useVolumeRocker real. Testa enabled/wheelEnabled, defaultPrevented, passos ±5, mute, fronteira de 399/400ms, dedupe do click longo, cancelamento ao soltar, Enter e ausência de captura global. Os eventos/timers são simulados mas atravessam os handlers reais do hook. Não demonstram persistência de volume, reprodução física nem toda a integração dos dois componentes consumidores.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/groupsAutoSync.test.ts",
+      "git_blob_sha": "8a65a8570ff2aa076ef3016b26239efa91bfa480",
+      "source_sha256": "02524b08e73376fc2b5904a8e80ee3a6d983dbb8d7c1200dd261bd80c02729e1",
+      "line_start": 1,
+      "line_end": 247,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Só importa Vitest; extractGroupData e normalizeApiResponse são cópias locais. Todos os casos, inclusive o bloco denominado Integration: Full Group Sync Flow, exercitam essas funções internas e fixtures Evolution/GO. As assertivas documentam uma normalização pretendida, mas não importam actions.ts nem o sincronizador produtivo e não verificam seu vínculo textual. É um locus concreto da extensão da família TC-011, sem inferir defeito adicional de grupos a partir da cópia.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/mapboxGeocode.test.ts",
+      "git_blob_sha": "ef3391d719daff14fb58498cbc0da966aa89a54e",
+      "source_sha256": "dddf704ae7d3788c1cb501118f9506021806a593f1363965eafb708e207b7e1f",
+      "line_start": 1,
+      "line_end": 415,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa as funções reais de mapboxGeocode e simula fetch. Verifica coordenadas/URL codificada, deduplicação/cache limitado, não cachear falha, timeout/abort, coordenada não finita, forward com fallback v5/relevância, sugestão por sessão, distinção entre vazio legítimo e shape inválido e retrieve lng/lat. São controles de contrato HTTP e fronteiras úteis, incluindo sinais abortados e ausência de chamada. As fixtures não comprovam disponibilidade, cobrança ou resposta atual do Mapbox; o comentário de limit=1 em um título não supera a assertiva explícita de limit=5.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/mapboxSession.test.ts",
+      "git_blob_sha": "3e4f56a478f721373b7d2d1eec2e633188b74c7a",
+      "source_sha256": "4b685bab43c8389e61921e68c0221fa02cef0d0603bc0fbfaf0919eb415a2cf9",
+      "line_start": 1,
+      "line_end": 158,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa mapboxSession real e simula logAudit e relógio. Verifica reaproveitamento e expiração por inatividade, encerramento por retrieve/explícito, rotação depois de 51 chamadas suggest e evento de auditoria somente no primeiro uso, com source/default corretos. Também verifica chamada sem sessão em DEV e PROD e ausência de sessão fantasma. O caso de teto não discrimina exatamente o instante 50 versus 51; logAudit é mock e não comprova cobrança ou agregação mensal no banco.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/mapboxToken.test.ts",
+      "git_blob_sha": "a83c13e832a4cf0cd2c8d66f6507501f3d178b98",
+      "source_sha256": "ddbf2a5a4d139b165c4cc47f9c617ff638526d7e5c6518c0d4b0513e90bbf39e",
+      "line_start": 1,
+      "line_end": 132,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa mapboxToken real; verifica cache, deduplicação simultânea, force, timeout com abort, classes de HTTP/SDK/rede, token ausente, não cachear falha, classificação arbitrária e encaminhamento da telemetria com source/kind. As assertivas observam o contrato local e seus argumentos de erro. O servidor get-mapbox-token e o serviço de mapas são simulados; validade operacional do token e entrega real da telemetria não são inferidas.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/mediaVolumeElement.test.ts",
+      "git_blob_sha": "30b9c6bb629a22aa206707e48097ce920c8b3983",
+      "source_sha256": "43a1845033aa105e7280007248bd3816e184d30a1e7fc8e51e9485d9775f7e02",
+      "line_start": 1,
+      "line_end": 210,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa módulos reais de volume com singletons limpos. Verifica volume nativo, falta de suporte sem AudioContext, criação de GainNode somente após play, reutilização de source, store/loadedmetadata, detach/recriação do elemento e sinais de presença de faixa de áudio. O próprio arquivo explicita a limitação jsdom: volume read-only e APIs WebAudio/decodificação são simulados. Os controles de estado e ciclo de vida são preservados, sem afirmar áudio em iOS físico ou decodificação real.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/mediaVolumeStore.test.ts",
+      "git_blob_sha": "bcff7d098be6002baec7a4d9ab28edfef8e1aa10",
+      "source_sha256": "beb80cc92b35d0ac0b4dc9da36a858bd556c9bddef6dd9c4852fa2c54542bdbd",
+      "line_start": 1,
+      "line_end": 219,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa mediaVolumeStore real a cada cenário. Verifica defaults, identidade do snapshot, curva quadrática com controle não linear, sanitização e clamp, storage indisponível, persistência/reload, mute preservando volume, subscribers e sincronização por FakeBroadcastChannel/evento storage. Há casos de erro e fronteiras úteis e separação entre escrita e leitura inválida. A sincronização é simulada em módulos no mesmo processo e não comprova comportamento em abas reais; o teste de payload inválido usa acesso opcional ao peer, limite registrado sem desqualificar os demais controles.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/rateLimiter.test.ts",
+      "git_blob_sha": "a3661794378cd003c0fd1922019d677848abd534",
+      "source_sha256": "a5c069a4d0e6b82445c4bde2a620244ae7c5225a99ed003c7ff2e0c4433515b0",
+      "line_start": 1,
+      "line_end": 195,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "O único import é Vitest. RateLimiter, limites e todas as operações são definidos dentro do teste; os casos de 300/301, janelas, isolamento e cleanup exercitam exclusivamente essa classe local. As fronteiras documentam intenção mas não importam nem verificam o rate limiter produtivo do webhook. Trata-se de outro locus de teste desconectado na família TC-011; não é prova de limitação em Edge Functions distribuídas.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/runGuard-simulation.test.ts",
+      "git_blob_sha": "2507bdab008f52d305ddd6d6db14d79df0317d22",
+      "source_sha256": "52e9d3fbf95d1b718a1104d3d529cac64cc3ba6a82d7b6f88c90f0fd8c3a60d1",
+      "line_start": 1,
+      "line_end": 314,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa createRunGuard real e usa promises controladas e seeds determinísticas. Verifica última execução, invalidate, sequência equivalente a double invoke e IDs crescentes, com controles negativos sem guarda e sem gate de chave ativa. O objeto sob teste é real, mas state, loader, activeKey e o gate da segunda família são um modelo local. Os muitos cenários finitos não montam painéis consumidores nem provam que cada painel usa essas proteções; portanto não afastam corridas como QUE010 em outro hook.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/scenario-simulation.test.ts",
+      "git_blob_sha": "f6f014a70eaa20e30880e0b8080e0cc85ec0dc97",
+      "source_sha256": "1919b30bdf9df30b0d4c0e20147ecacce32288ebbe0f3a4deac96771602cda76",
+      "line_start": 1,
+      "line_end": 316,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa funções produtivas de churn, classificação de tickets, thresholds, formatação WhatsApp e cn, exercitando amostras determinísticas e fronteiras explícitas. Preserva controles úteis de faixa/monotonicidade, formas inválidas, confidence null/zero e percentual, além de escape de payloads e formatação positiva. O vínculo é real: em especial confidence=0 deve permanecer zero, ao contrário da cópia local em AutoTicketClassifier.test.tsx. Os checks de XSS inspecionam strings e um conjunto finito de payloads; não demonstram execução de DOM em navegador nem segurança universal de todos os renderizadores.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/serverLogin.test.ts",
+      "git_blob_sha": "054a04735a2df0b0f11858bff6d9b96e8beb5630",
+      "source_sha256": "4efdcfe3fedb87709330f64a6fef7fe90477d2b50a546d0bc77c455aff054a89",
+      "line_start": 1,
+      "line_end": 135,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa serverLogin real e verifica URL/região, headers e body, tokens, locks 401/423, respostas indisponíveis e timeout com sinal de abort. O teto de 60 segundos é uma expectativa independente da constante produtiva, e o controle de sucesso verifica limpeza do timer. Esses controles são mais fortes que apenas avançar a própria constante. Auth-login, GoTrue e banco são simulados; os números de latência em comentário são históricos e não medidos neste passe. O fallback do chamador não é executado aqui.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/services/__tests__/navigation.service.test.ts",
+      "git_blob_sha": "3622c6089689477508066db9e1014a4a208a8539",
+      "source_sha256": "411afa7179f6b2a1ed67c4cd417bc84b39fb10a2c5fd636f369132d5402752a2",
+      "line_start": 1,
+      "line_end": 138,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa NavigationService real e verifica grupos de maturidade, IDs únicos, layout full, lista primária, recusa de IDs desconhecidos, papéis e permissão nominal de Multiplix com controles positivos e negativos. O teste valida metadados e funções de decisão, sem montar Sidebar/ViewRouter/rotas. Não demonstra a navegação efetiva nas páginas SLA de PLAT012; a ausência de integrações incompletas nos grupos maduros não certifica todos os itens como implementados.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/test/mocks/tarefas.ts",
+      "git_blob_sha": "8bf246a046aa7a3c6aaba21deac31b9eb4742f7f",
+      "source_sha256": "518c92f064b981a70309fab4866872579f634fb5c4bb21dfa0a1443a719be1ae",
+      "line_start": 1,
+      "line_end": 133,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Harness de tarefas fornece spies compartilhados de auth, leitura, escrita, canal, toast/undo e QueryClient sem retry/cache persistente. Usa o createQueryBuilder compartilhado e expõe última leitura para que os consumidores verifiquem filtros; separa resultados de leitura/escrita e permite falhas de mutation. makeTaskRow é fixture com campos e override, não consulta ao esquema. Este arquivo habilita observação nos consumidores, sem afirmar por si só que filtros, rollback ou autorização são efetivamente assertados em todos eles.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/test/setup.ts",
+      "git_blob_sha": "be4a8e3b9f5aa4e2731a308ce224ca3d86c378b6",
+      "source_sha256": "04c5e098ad0199f831cd92f598212356fffb24c62970321f9f9b41cf406693ea",
+      "line_start": 1,
+      "line_end": 127,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Setup registra matchers DOM/axe, matchMedia falso e observers vazios, e instala fetch que rejeita hosts supabase.co/in preservando o transporte original para outros destinos. A exceção explícita de WebSocket e os limites do regex/override são mantidos na leitura. O histórico de requisições em comentário não foi reexecutado nem adotado como medição atual. O setup não contém reset global de fake timers; os arquivos com casos dependentes devem cuidar da restauração ou do isolamento configurado. Nenhuma suíte foi iniciada neste passe.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+      "git_blob_sha": "2204a619ab1d269dc65b69500ab3af5e5c03665c",
+      "source_sha256": "148dc546dd551b196d4ceb22167e396012e98c52e6552298d3468e605cb86746",
+      "line_start": 1,
+      "line_end": 256,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Ratchet lê recursivamente arquivos TS de Edge Functions e fixa contagem 213, três ocorrências e mapa de produtores legados. Outros casos leem fontes e exigem presença de dívida conhecida ou ausência de padrões já corrigidos, incluindo migração para parseJsonObject. É uma medição textual deliberada de dívida, não teste de execução ou alegação de produto aprovado. O stripper por regex e os padrões finitos não constituem parsing semântico completo; passar as assertivas que preservam defeitos não demonstra correção desses defeitos.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/_adv_vocabulary-consumers-gaps.test.ts",
+      "git_blob_sha": "a89c5ce5fa296ece34310ce6e505a053b0ca77f3",
+      "source_sha256": "6682177aa669737848715f71b9d34f3a785e94e9bc887b6d097975a532f2ea16",
+      "line_start": 1,
+      "line_end": 217,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Artefato adversarial explicitamente mede defeitos/gaps com padrões de fonte e SQL: compara mapas de vocabulário, defaults e consumidores fora do guard, distinguindo migrations históricas e função posterior, com ratchets inversos para correções. A leitura confirma que estes testes foram concebidos como inventário de trabalho, não testes que certificam funcionalidades. As descrições precisam ser confrontadas com consumidores e estado SQL vigente; regex presente sozinho não prova execução ou alcance de todo caso listado.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-capabilities.contract.test.ts",
+      "git_blob_sha": "e3c77149d831e131150e8126bd3ff12fe9764f50",
+      "source_sha256": "5503389e45330d09b4137e399dcdefe275753725e7a0b491e2d10564c5249288",
+      "line_start": 1,
+      "line_end": 684,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa lazily ai-capabilities real e verifica cinco tipos, base desconhecida, estreitamento de features, ampliação declarada de modalidades e igualdade exata dos conjuntos permitidos. Cobre limites válidos/parciais/inválidos, configurações de forma errada, dados JSON com __proto__/chaves herdadas, e quatro códigos de erro com fronteiras de limites. Os controles positivos e negativos são substanciais e vinculados ao módulo real. Os tipos e fixtures locais expressam o contrato esperado, não cópias da implementação. Declarar capacidade não é executar o adaptador/provedor, nem comprovar que todo chamador fornece necessidade e limites adequados.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-central-routing-ratchet.contract.test.ts",
+      "git_blob_sha": "75e337ef881aa6981d27a0511e4e7e1ad3c7e8e2",
+      "source_sha256": "2872f8fb0791692a1acbb24312c4b411b3c9b1cce5bdc1e34bf601754568c196",
+      "line_start": 1,
+      "line_end": 315,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Ratchet lê TS de produção, protege literais antes de remover comentários e verifica import/chamada textual de generateWithRouting, ausência de credenciais/modelo fixos e allowlist explícita de dívida de voz/áudio. Nos dois classificadores de visão exige modalidade e pelo menos duas ocorrências de categoria outros. Os controles de fonte são úteis e preservam dívida declarada. chamadas/blocoParenteses são análise textual, não AST nem execução; contar ocorrências não prova que os catches ou todos os ramos usam a degradação correta. A exclusão de testes considera apenas o sufixo .test.ts.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-conversation-analysis-contract.test.ts",
+      "git_blob_sha": "793e52c75e9a1dfe8638168b00b62e8483c50561",
+      "source_sha256": "0bc3fd3f155c6932e2b0665bfca0fcbc8eb0914a1b78f523f874b81d1a84b9a9",
+      "line_start": 1,
+      "line_end": 134,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê o source de ai-conversation-analysis e exige ausência de defaults inventados, normalizadores, validação/envelope, RPC de persistência, campos, tratamento de persistError e ordem textual de revalidação/cancelamento/requestId. É um contrato de origem com padrões concretos, sem importar o handler. Proximidade e ordem textual não provam atomicidade SQL, ausência de efeitos em todos os ramos ou recência sob concorrência; as conclusões operacionais dependem da revisão do handler/RPC.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-conversation-summary-contract.test.ts",
+      "git_blob_sha": "7f17009b11ee33af6a38537256686984af393f8b",
+      "source_sha256": "8a497126906a472927cfdb2f75aa06bde52921cc88151e8e52ef03a03efb739a",
+      "line_start": 1,
+      "line_end": 200,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê ai-conversation-summary e verifica defaults removidos, ordem dos normalizadores, shape/escala, envelope, conteúdo do payload da RPC e tratamento de erro/cancelamento. O cabeçalho declara que examina a forma do código e não executa o handler Deno. Preserva valor dos ratchets e seu limite: slices/indexOf/regex não são prova de controle de fluxo nem transação executada. Alguns recortes usam delimitadores sem conferir existência individual, exigindo confronto com fonte vigente antes de interpretar resultado como aceite funcional.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-fallback-and-test.contract.test.ts",
+      "git_blob_sha": "c987e532562bf8899c7f599d4c5f501b4e899552",
+      "source_sha256": "f085af408fff70ef48f8ac22d9ed9d08f1c57e51a7145ce387f8d0c0d16f4d66",
+      "line_start": 1,
+      "line_end": 403,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê ai-proxy/ai-providers e ancora autorização de fallback na conjunção inteira sem disjunção, modo test antes do fallback, destino configurado, corpo de runProviderTest com um dispatch e sem retry, metadados e códigos/status. Há controles textuais mais precisos que mera presença de símbolo. Ainda usa remoção de comentários, balanceamento e janelas por regex, inclusive proximidade de status; não executa pedidos nem comprova compatibilidade, credenciais ou disponibilidade do provedor testado.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-generate.contract.test.ts",
+      "git_blob_sha": "70997a3a44af6d4068eb052775cbfa991512f959",
+      "source_sha256": "1cafafabd7d621a4180345b94e27fd8ab858a8b850c2beb92f5e4140843b8ed2",
+      "line_start": 1,
+      "line_end": 661,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Combina leitura textual de ai-generate para interface/imports/chamadas/guards/filtros/timeout/logs com import real de ai-routing e ai-capabilities no bloco final. Este último verifica resolução por finalidade, capacidade tools, filtros reservados, política system sem mutação e substituição de modelo. A contagem logs>=retornos e as janelas estruturais não estabelecem cobertura de todos os caminhos de execução nem entrega de registros. O conjunto de quatro provedores é fixture histórica declarada; não é inventário atual do banco. Os testes puros são controles positivos reais, distintos desses limites de análise textual.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-image-input.contract.test.ts",
+      "git_blob_sha": "24a52484e28f1956c8ae424459926e9b16cc1ed9",
+      "source_sha256": "36964f6a02117f0454938e32b4c1acee4e7dcb1d1d31ad948e07189f9fbbee4d",
+      "line_start": 1,
+      "line_end": 372,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa toInlineImage real, injeta Deno.env/fetch e verifica data URL byte a byte, URL autenticada e headers de serviço, encoding de segmentos, MIME, limite por header/corpo/header mentiroso/data URL e maxBytes menor. Cobre 403/404, não imagem/vazio, origem e bucket recusados, travessia, ausência de credencial e erro serializado. As assertivas de ausência de fetch e fronteiras são concretas. Os bytes de fixture não constituem imagem decodificada, e Storage/RLS/pertencimento ao contato ou usuário do chamador não são exercitados por esse helper isolado.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts",
+      "git_blob_sha": "1cf091d0981fa2e6980b6e8e7b4a3b51e3058bea",
+      "source_sha256": "702095af98565a95dcc44de7ea38c17e0272fae9bd31c5dcf2ea314b7f3483e4",
+      "line_start": 1,
+      "line_end": 786,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa módulos reais de estados no front e worker com cliente Supabase falso; verifica sete estados, quatro terminais, todos os 49 pares de transição, rótulos e partial não concluído com controle succeeded. O caso enqueue aciona o wrapper e exige rejeição após tentativa de acesso à infra simulada. As seis funções SQL, UNIQUE, SKIP LOCKED, colunas e rollback são verificados apenas no texto de uma migration; isso não executa locks, leases, expiração nem durabilidade. O caso de enqueue tenta assinaturas plausíveis e não exige identidade do erro lançado. Preserva o mérito da máquina de estados sem estendê-lo à fila inteira.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts",
+      "git_blob_sha": "88578e12b58c4abd9adaba10190dede5325629da",
+      "source_sha256": "db71f1a1c1d83b28799a215f507ebaf631515c3891f7a4774e031d80b9ae28cb",
+      "line_start": 1,
+      "line_end": 825,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa guards, budget e despacho reais com Supabase/Deno/fetch simulados. Verifica limite inclusivo, chave por janela, negação 429, falha aberta identificada, reserva permitida/negada/inválida, distinção [] versus null, argumentos settle/release/reconcile, estimativa/chave canônica e integração reserva→despacho→liquidação/liberação. Os controles de chamada e ausência de envio com orçamento negado são concretos. A idempotência da reserva é implementada pelo Map do mock e comprova reenvio estável da chave, sem provar atomicidade SQL ou concorrência; tampouco valida custo faturado externamente ou recuperação de falhas reais do banco.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-resilience-prazos-retry.contract.test.ts",
+      "git_blob_sha": "a89e4e7a26aa7d4dcf1c02b080c4063c99f53e70",
+      "source_sha256": "31edd0e7922837e361514e1dfe3506735ccd803d52aadab9c3a140806e4a95d4",
+      "line_start": 1,
+      "line_end": 631,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa classifyFailure/withRetry e adaptadores reais; cobre classes de erro, tentativas transitórias/permanentes, teto de chamadas, variação de jitter e abort/ausência de timer. O despacho real é carregado com adaptadores simulados para observar timeout padrão e precedência do chamador. O sinal state_unknown é aceito em qualquer uma de várias formas e não prova sinalização por todos os consumidores. O último caso chama budgetMs=30.000 com callbacks instantâneos e apenas exige tempo<60.000; não demonstra o teto total de 30 segundos com tentativa lenta. Os controles de retry existentes continuam válidos dentro desse alcance.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-response-contracts.behavior.contract.test.ts",
+      "git_blob_sha": "ecdf66ae7a3d2ace5c2fb4041fa3f0bb55003280",
+      "source_sha256": "e7a1e6be138ab4c55ab5289ad484dc80006d624f7847ef2463c0d400822f5a4e",
+      "line_start": 1,
+      "line_end": 178,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa schemas/parseModelOutput/envelope e normalizadores reais, verificando saída válida, opcionais ausentes, tipos/faixas/enums inválidos, caminho exato de erro, zero preservado e normalização de legado com controle bruto recusado. Cobre também resumo, três sugestões e confidence de tags. São testes de contrato de dados efetivo, sem duplicar a implementação. O envelope com texto nada foi gravado não verifica efeitos de persistência do handler; banco, renderização e contexto completo de produção não são exercitados aqui.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-routing.contract.test.ts",
+      "git_blob_sha": "0957cdded4e2070bb1c5743fb2ba60ce7620eedf",
+      "source_sha256": "4a4da8710f9b59acc13841f5c09d8043c7dcefb87fb00c0be7b5f275b8506e3c",
+      "line_start": 1,
+      "line_end": 668,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa ai-routing real para resolver provedor/modelo, mensagens e filtros, com cenários de ausência/ambiguidade/inativo/finalidade, ordem das linhas, allowlists e listas de segurança pinadas independentemente. O restante lê ai-proxy/ai-providers com regex de fronteira e status. Os controles puros observam o módulo produtivo; regras de modelo como default gpt-4o para google_gemini são a expectativa codificada, sem comprovar compatibilidade externa. Manter política no índice zero não demonstra obediência do modelo. A guarda deliberadamente impossível dentro da interseção allowlist/reservadas é uma falha intencional de sanidade, não tautologia que passe.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-vision-classifiers-mock.contract.test.ts",
+      "git_blob_sha": "b07468ab4bf137ba0f546fc005589e054d2d5476",
+      "source_sha256": "f5614bcaa92a83cabeba0f22a99dd593dc4d965027b433e5ce100e665f6e2a97",
+      "line_start": 1,
+      "line_end": 814,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Carrega handlers reais de classify-emoji/sticker via Deno.serve capturado, toInlineImage e generateWithRouting reais; simula identidade, banco, fetch duplo de imagem/provedor e logAiUsage. Verifica data URL e multipart, destino/modelo de visão versus texto, falhas de imagem/HTTP/rede, categoria outros e chamadas de auditoria nos cenários enumerados. O encadeamento entre consumidores reais é um controle positivo forte dentro do harness. Auth foi substituída, logAiUsage é spy e Storage/provedor são dublês: não comprova autorização, linha persistida em ai_usage_logs, imagem decodificada nem entrega externa; a cobertura de cenários enumerados não equivale a todos os caminhos possíveis.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-vision-modality.contract.test.ts",
+      "git_blob_sha": "ce345d5fd1c01bdbdf24d42e13ca9bd6dbded844",
+      "source_sha256": "2ea872eb9ce115795cfdae2d6ded79e16b12eb84dd5f9e30643928c3bec32eb8",
+      "line_start": 1,
+      "line_end": 326,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa generateWithRouting real com banco/ambiente/fetch/log simulados. Verifica texto no default, visão sem exigir default, ausência/ambiguidade/inativo com nenhuma chamada, multipart preservado, propósito inválido e chamadas de log nos três desfechos enumerados. O encadeamento de seleção e payload é real dentro do harness, com controles de ausência de envio. Não executa autenticação dos endpoints, imagem/Storage ou inserção do log; a fixture de modelos não é declaração de disponibilidade comercial atual.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-vocabulary-consumers.contract.test.ts",
+      "git_blob_sha": "1e32d7b695dffb59ce3b5ca3d61428c4c2b6e0a2",
+      "source_sha256": "a8b2703afb51b93ef83c07c391fedf06b13c2a9ad70566be3cce409527a1449f",
+      "line_start": 1,
+      "line_end": 198,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê cinco consumidores pinados de vocabulário e verifica imports, ausência de comparações cruas e opções canônicas; os próprios detectores recebem regressões conhecidas e código correto como controles positivos/negativos. Também importa normalizadores reais para legado, canônico e desconhecido. O escopo é a lista explícita de cinco caminhos, não todos os consumidores. As regex de import/comparação não provam renderização ou fluxo de dados completo; a revisão adversarial _adv_vocabulary-consumers-gaps enumera outros consumidores fora desse guard.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-vocabulary-parity.contract.test.ts",
+      "git_blob_sha": "8be79fbdeaafa7daea8aa527041639ab3ac8869e",
+      "source_sha256": "ecb5a88aecbedffb77602c3594e04ef7cf57eb28dcc70b9609a19df171b906a3",
+      "line_start": 1,
+      "line_end": 234,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa portas front e canônica e exige identidade de referência para sete exports e igualdade do conjunto de símbolos, impedindo reintrodução de cópia local mesmo com comportamento igual. Arrays e quatro mapas são comparados a especificação literal independente extraída do source. Comparar resultados das duas referências já idênticas é redundante para semântica, mas o objetivo de identidade está corretamente verificado. Os mapas e casos adicionais complementam a prova; não demonstram conformidade de todos os consumidores ou do esquema SQL.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-vocabulary.behavior.contract.test.ts",
+      "git_blob_sha": "c4289db2cfdf084aa3b9d1e20cf0dc5af984faf3",
+      "source_sha256": "29282bef920873614cf50fe86be90ac8bc01b4626bd6595124abd506b12d243d",
+      "line_start": 1,
+      "line_end": 130,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa o vocabulário real por front e Edge e executa tabelas independentes de esperado/known para sentimento, urgência e prioridade, incluindo ausência, tipos inválidos, aliases e conversão de urgência em prioridade. As duas entradas são o mesmo módulo por reexport, fato explicitado no teste. Os controles verificam semântica e rejeição de valores inventados; o título conjunto que está no banco compara constante local, sem consultar CHECKs ou o estado do banco.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/axe-contatos.contract.test.ts",
+      "git_blob_sha": "72cc9fe920f1091c474fa7b660b76b46252e59de",
+      "source_sha256": "f442524ebd54a44c881753053b543bc8f11e72572bbdae7186cca59a56b050bc",
+      "line_start": 1,
+      "line_end": 28,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê ContactCard.tsx e exige um bloco Checkbox e a construção aria-label={. O cabeçalho referencia uma varredura histórica de axe e lista contrastes ainda não corrigidos. Este arquivo não executa axe nem calcula o nome acessível, não verificando o conteúdo interpolado do label ou contraste. É uma trava textual específica, sem demonstrar acessibilidade integral da tela.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/contraste-aa-componentes.contract.test.ts",
+      "git_blob_sha": "89cdd9b9f3c46d79583eaa59fe79166892ee0dbe",
+      "source_sha256": "09938e25d7a0f0afd0310e8d71bdb526a820590d7a60209dad287e7d1c7a3f2f",
+      "line_start": 1,
+      "line_end": 290,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê tokens.css/accessibility.css e fontes reais, calcula razões com medidor local de luminância e testa parser em fixtures de múltiplos blocos/comentários/aninhamento. Confere warning e texto secundário em claro/escuro, remove padrões de alfa/hardcoded e mede combobox em quatro temas com vínculo textual aos componentes. O próprio contrato preserva a decisão de não alterar a skin e declara o par destructive ainda abaixo de AA; isso não é aprovação global de contraste. As razões derivam de tokens/composição esperada, sem computed style ou navegador real. O parser exato foi introduzido para distinguir .high-contrast de .dark.high-contrast.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/contraste-balao-midia.contract.test.ts",
+      "git_blob_sha": "3f680b4f6b7e5eea45133e2794893221c1144df5",
+      "source_sha256": "956e95f0a002d08fe2a7b497e960fa483fdc7ff8e725012464334f90e230b21f",
+      "line_start": 1,
+      "line_end": 144,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê tokens, acessibilidade, AudioMessagePlayer e slider; calcula contraste esperado de texto, ícones, waveform e trilha, com exigências textuais das classes. O limiar 4.4 no alto contraste está explicitamente documentado como exceção autorizada da skin, sem alegar AA pleno. Não há renderização/computed style. O parser usa indexOf do seletor e .high-contrast também encontra .dark.high-contrast, podendo sobrepor a simulação do tema claro com tokens escuros; encaminhado a Infra para confrontar consequência/deduplicação. A exceção autorizada de limiar não foi promovida a defeito.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts",
+      "git_blob_sha": "be9f4976b2b0b78e95b4041ec7b076dd5dd087e6",
+      "source_sha256": "3186fec3408a4f838e04d51c7d977ce1eb61c522bb904ec8817165b2ab217374",
+      "line_start": 1,
+      "line_end": 273,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê uma migration, useMyWorkItems, Crm360Tab e talkx-send; exige colunas/índices parciais exatos, adição/rollback, chave no insert, 23505, memória de chaves e claim antes de evoFetch. Esses ratchets fixam construções do contrato, sem executar SQL, concorrência, duplo submit ou efeito do provedor. if not exists não basta para demonstrar replay integral de todas as instruções, e a ordem da primeira ocorrência textual do claim não prova todos os caminhos de envio.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ia051-correlacao-no-caminho-sincrono.test.ts",
+      "git_blob_sha": "e9b9a52683e9b9b78bf1c4a396bbc725a0242ac7",
+      "source_sha256": "2d1b96eea39894e83c8430676efc797895d81b7c948d09d7c77ed5c2ef8e011d",
+      "line_start": 1,
+      "line_end": 126,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê chamadas de três componentes, duas do detector de objeções, quatro repasses no servidor e logs do proxy para preservar requestId e recusar os padrões explícitos de identificador derivado de contato. O cabeçalho distingue guarda de origem de comportamento. As fatias por marcadores e verificação de palavras não demonstram correlação persistida em todas as execuções, unicidade do requestId ou ausência de outras formas de dado pessoal; o registrador é revisado separadamente.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ia052-rota-efetiva.test.ts",
+      "git_blob_sha": "b835360ca08d5bfa9c06298b03d18e2609378c97",
+      "source_sha256": "545d7e33a8ebadfbf4775126592f2476810d30a85a73ba90876f241aaa0280bb",
+      "line_start": 1,
+      "line_end": 147,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê generate, ai-proxy, dois classificadores visuais e usage para preservar campos da rota efetiva, modalidade e fallback. Conta ocorrências e fatia blocos por marcadores; verifica que a declaração de rota antecede registrador, que dois logs awaited do proxy escolhem o provedor efetivo e que os três logs awaited de cada classificador indicam visão. São guardas de origem, sem execução do registrador, persistência ou prova de todos os caminhos. O contador do proxy considera especificamente chamadas awaited e não certifica o fluxo de streaming. Os testes comportamentais reais do roteador fornecem evidência complementar dentro de seus mocks, sem transformar este contrato textual em execução de produção.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/ia056-agregacao-no-servidor.test.ts",
+      "git_blob_sha": "9ce5726ed03c490bd1ec656ad71262dcd2471159",
+      "source_sha256": "85993d46b153d32a7dea3431705e02bd0c051b6fcd555e27b42b87667b594c4d",
+      "line_start": 1,
+      "line_end": 138,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê hook, tabela, painel e uma migration para preservar paginação com range/count, totais vindos do resumo, rótulos de cobertura e agregação SQL com janela semiaberta. Exige grants/revokes específicos e ausência textual de SECURITY DEFINER e de um limite numérico no fim da linha. As assertivas detectam regressões nas construções nomeadas; não consultam uma base com mais de mil linhas, não executam RLS, agregação ou navegação entre páginas. A presença do contrato textual não demonstra todos os limites possíveis da consulta nem durabilidade do dado, e a revisão não inventa defeito apenas por essa fronteira de prova.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/messaging-adapter.contract.test.ts",
+      "git_blob_sha": "99863979a026d857afc70e72a00ceb3785098b40",
+      "source_sha256": "1bcd03c8fef41aa57514a154060874dbdf100bbe19ec70a369b0034939dbc74d",
+      "line_start": 1,
+      "line_end": 253,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Exercita o adapter send e os classificadores/planos reais com fetch controlado: presença antes do envio, endpoint, identificador retornado, 429/503, códigos permanentes, backoff e tetos de tentativas. Cobre respostas GO de destinatário inexistente, sinal de abort encaminhado à chamada e propagação de AbortError. Os casos de política de retentativa incluem resultados calculados diretamente, sem executar agendador, fila durável ou dead letter. O helper devolve a última Response quando esgota as respostas previstas; o contexto é uma fronteira de IO simulada, sem envio real, compatibilidade universal do provedor ou relógio operacional.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "tests/contracts/notification-sound-persistence.contract.test.ts",
+      "git_blob_sha": "bfd8e79e6624a9d20c7f5267168724d9f5d8b517",
+      "source_sha256": "53bf781f6a59e89110366817fe8af9d1ed3ba3b81129dcb4f3c1f0c9d951ca76",
+      "line_start": 1,
+      "line_end": 125,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê fontes reais para preservar a remoção de soundType legado, leitura/gravação das cinco colunas de tipo, tipo correto para SLA/meta e preview do painel. Confere a remoção da util sem volume e os imports/chamadas com tipo persistido e soundVolume em uma lista explícita de consumidores. São guardas textuais e de existência, sem renderização, gravação no banco, reload ou reprodução de áudio. A última assertiva percorre linhas de seis arquivos conhecidos; o título todos os caminhos não é inventário dinâmico de qualquer consumidor futuro, e não cobre por si só persistência dos três booleanos de categorias identificados em PLAT003.",
+      "runtime_executed": false,
+      "evidence": "test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useAudioPlayer.test.tsx",
+      "git_blob_sha": "7f0ffd37069448bc43a0adb067af3c665949df20",
+      "source_sha256": "269b3c0b78b67d0e0cc46da5874ea4cecb3e20fba679ef2bb128bdde65b2b355",
+      "line_start": 1,
+      "line_end": 126,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Exercita o useAudioPlayer real com assinatura de Storage simulada: não expõe URL vencida enquanto aguarda, assina locator estável, mantém erro sem voltar à credencial vencida e preserva URL externa sem fetch. Avança Date.now em51 minutos e aciona togglePlay para verificar nova assinatura, load e play. O elemento de áudio e seu EventTarget são dublês; a prova não inclui decodificação, reprodução física ou ACL do Storage. O caso de renovação observa o hook real, sem confundir uma URL shaped public com a política real de acesso do bucket.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useContactCustomFields.test.tsx",
+      "git_blob_sha": "ac7ab2769b4467f43b856900c9f0c6de4da26fe2",
+      "source_sha256": "96afe844d17f35691039c5676480c3e9cf5c1806f79212f864b2b0a4fe51b36b",
+      "line_start": 1,
+      "line_end": 59,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useContactCustomFields real com builder de banco simulado; confirma consulta à tabela, estado vazio sem id, loading inicial e existência das funções add/remove. Não chama as mutações nem verifica os campos retornados no caso nominal; as funções mockSelect/mockUpsert/mockDelete declaradas no topo não constituem assertivas dos writes. Ausência de contactId verifica saída vazia, sem afirmar que o mockFrom não foi chamado.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useContactNotes.test.tsx",
+      "git_blob_sha": "9e2bab5828f44886a659f252cab9a5449853737e",
+      "source_sha256": "6faa94456d260f548ebb82e2ad22d364ea91f17e4f01d7390aab4e558966f205",
+      "line_start": 1,
+      "line_end": 121,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useContactNotes real com usuário/perfil/notas simulados e QueryClient; confere saída definida no fetch nominal e array vazio na fixture sem notas. Inclui rejeição de consulta e usuário ausente. Os dois últimos casos exigem apenas o fim de loading, sem mensagem de erro, ausência de consulta ou contrato de autenticação. Os builders de insert/update/delete não são acionados por testes de mutação, e notes definido não certifica conteúdo/autoria/ordenação.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useMessageStatus.test.tsx",
+      "git_blob_sha": "5b084bddba9525db4681dc5cc4390d1f11b1c07f",
+      "source_sha256": "1bef9837b9dbf2bc412e43a769bf9376ce298f647b8046ff0ff0ee2dee5b6dbb",
+      "line_start": 1,
+      "line_end": 90,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useMessageStatus real com consulta e canal simulados; cobre estado vazio sem contato, existência de getMessageStatus e limpeza ao remover id. No caso nominal statusUpdates.size>=0 aceita também o mapa vazio; não confere os quatro status da fixture ou transições realtime. Erro exige só loading=false e a limpeza não exige previamente mapa não vazio; é limite concreto da prova, não novo defeito de status confirmado.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useMessages.test.tsx",
+      "git_blob_sha": "6d68ed2b12ef9f1664ba45de647b60fd1a906f42",
+      "source_sha256": "235fc66a7ac3542bd28ab1923bea565bc3deb7e564f827ec98d74b7605e49c5d",
+      "line_start": 1,
+      "line_end": 274,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Exercita useMessages e seu serviço real sobre builders de IO: ordem cronológica, erro exposto, limpeza, troca A→B com conclusão invertida, invalidação ao desabilitar e refresh ao habilitar. Verifica que refetch não volta a loading=true e preserva cinco mensagens antigas e a primeira da página anterior ao incorporar a nova, chegando a1006 ids. O caso isolado enabled=false só confere retorno definido, mas o caso comportamental posterior observa efetivamente a invalidação da resposta pendente. Realtime e banco são simulados; esses controles não provam RLS nem todos os consumidores, e são evidência positiva que não pode ser descartada por outras suites usarem cópias.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/__tests__/useQuickReplies.test.tsx",
+      "git_blob_sha": "db27217d8b915466cc2d9d186cdb2d2aa03e532c",
+      "source_sha256": "ccf37192bfedc28ab74aed0ba8f3effc997de344387d24c76bd1e7fd37397d48",
+      "line_start": 1,
+      "line_end": 108,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useQuickReplies real com usuário e QueryClient; espera fim do carregamento, saída definida e array vazio na fixture vazia. O caso sem usuário verifica apenas loading=false; não afirma ausência de consulta nem visibilidade global/privada. Builders de insert/update/delete existem no mock, mas a suíte não os chama nem valida incrementos de uso ou gravação.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useContactMedia.test.tsx",
+      "git_blob_sha": "ac5f4376990bb2f8284dc33d439b3c0d33d72fff",
+      "source_sha256": "61eed33738c7b18c647514a442ea23b4bce9cf3a25dfdc74bb44fed168d091f9",
+      "line_start": 1,
+      "line_end": 250,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Exercita useContactMedia e helpers reais: pedido60+1, cursor created_at/id,201 itens em quatro páginas sem ids repetidos, filtro de apagadas, classificação/fallbacks, assinatura por bucket, erros de Storage e consulta, labels e nomes. O controle sem contato exige nenhuma consulta. As páginas chegam de fixtures e o filtro é observado como argumento do builder, sem execução SQL/ordenação no servidor. A simulação de contagem e assinatura não prova ACL, URLs válidas ou mídia decodificável; fornece prova comportamental útil do consumidor dentro dessa fronteira.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useContactMediaCounts.test.tsx",
+      "git_blob_sha": "f5f76bcc214e3f0c1b12a5e74b35c51de3669b2b",
+      "source_sha256": "e38594e63e215eee8daf7f1fcc83085efe4322c3c54004a4bf6e2b86dd192494",
+      "line_start": 1,
+      "line_end": 93,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta hook real e exige cinco consultas de count exact/head, cinco resultados, filtro de apagadas e áudio+ptt. Confere zero sem contato e chave de invalidação real. Os thenables devolvem contagens prontas por argumentos; não contam linhas reais nem executam SQL. O título em paralelo é apoiado por número de chamadas e resultados, sem medição de sobreposição temporal; paridade de MIME/classificação com todos os casos da lista não é demonstrada.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useMessages.media.test.tsx",
+      "git_blob_sha": "67cd9cb3fbd83ca07b3639b63894ba74bf9913fe",
+      "source_sha256": "7d6d19b13695d3225066dce7c1e3ad14894435fb9583247c690fc8e368fc076e",
+      "line_start": 1,
+      "line_end": 110,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useMessages real, captura a configuração entregue ao hook realtime e injeta INSERT. Exige exatamente três invalidações com as chaves reais de galeria, badge e chips para mídia do contato atual, com negativos para sem media_url e outro contato. ChatService e assinatura realtime são substituídos; cobre callback e política de invalidação, sem tráfego WebSocket, atualização material da lista ou outros tipos de evento. O negativo de contato impede extrapolar uma mera presença de invalidateQueries.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/contactsAggregates.test.ts",
+      "git_blob_sha": "7a492f66cf39734a5f13c02a79c2fe8d805bb264",
+      "source_sha256": "5064954af0d2382d556b2fd8420d3147147c03368cb85e7eac77a91040faa59c",
+      "line_start": 1,
+      "line_end": 26,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Preenche um QueryClient real e chama invalidateContactsAggregates real; verifica invalidação de ambos filtros KPI, contadores e duas buscas. Mantém como controle negativo a query de última mensagem não invalidada. São estados reais do cache em memória, sem executar fetch, mutação do contato ou consistência eventual do servidor.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/contactsAggregatesRefetchOnMount.test.tsx",
+      "git_blob_sha": "a6408c10d265ae694488ba533c81d72f32af8f07",
+      "source_sha256": "854cc472c9cc35548a7bbca6f418d7a04f41d8b1bcb32782dcec4158d71d03b5",
+      "line_start": 1,
+      "line_end": 89,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta os hooks reais de KPI e busca com staleTime de cinco minutos e refetchOnMount global false; desmonta/remonta no mesmo QueryClient e exige segunda consulta para KPI, tipos e lista. A fronteira de dados é simulada e os resultados são vazios; o teste prova política de revalidação na remontagem, não novos números corretos ou atualização sem desmontar. O builder permissivo é suficiente para observar chamadas, sem substituir um teste de consulta SQL.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAdvancedContactSearch.filters.test.ts",
+      "git_blob_sha": "9b3ca926f1009c9aa556d64512c5a6dab515b817",
+      "source_sha256": "b074b55b7eb36c50aa44b0f9b0b02595785c3a7d691587e361c1d57f37803cb6",
+      "line_start": 1,
+      "line_end": 15,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa normalizeSearchFilterValue real e confere que false/zero sobrevivem, vazio vira undefined e texto ativo permanece. É um contrato puro com cinco entradas, sem montar a tela ou efetuar pesquisa no servidor; não testa o restante do hook pelo simples fato de importar dele.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
+      "git_blob_sha": "485165fc617afbef1d88e56ea613d41ba0d424de",
+      "source_sha256": "098eade06d9c8557447ec5535768998ca0544ca4f349369f758ac59f49db7bbd",
+      "line_start": 1,
+      "line_end": 89,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa aggregateCrm360 real e fixa NOW; confere vazio honesto, estados de compra elegíveis, delta com duas janelas, deals abertos/propostas/ganhos, etapa recente, união de interações e interesses deduplicados limitados a três. O caso de interações anuncia limite quatro mas fornece apenas três elegíveis; não prova truncamento acima do limite. Datas a um/oito meses usam múltiplos de30 dias distantes das bordas, e não certificam a fronteira de seis meses, query ou ACL.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactEnrichedData.test.tsx",
+      "git_blob_sha": "e7a7aff78e654c3561eb68ccafb0c15e27d8bfa6",
+      "source_sha256": "f93b4b240fc56bd7dfe8d241efe6ba65e2556d26eab5137d3cfbd614a5142ea8",
+      "line_start": 1,
+      "line_end": 168,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta hook real e injeta UPDATE no callback do canal compartilhado simulado, alterando a fixture consultada; observa nickname atualizado. Confere erro transitório sem success:null e troca de contato com nova company; limpa log.error e restaura o mock de falha em finally. O último caso verifica resultado da nova consulta, sem afirmar via callback que somente a assinatura do novo id foi mantida. A máquina realtime e banco têm fronteiras simuladas; a prova positiva de atualização não certifica ACL ou transporte WebSocket.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactSidebar.test.tsx",
+      "git_blob_sha": "69f852a1cb369d3d3bceef1ca467970fbfebd283",
+      "source_sha256": "b1403ae8c76d2ce67f3a99392b5085d70615377a1c2582c154eb4722565e4363",
+      "line_start": 1,
+      "line_end": 76,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useContactSidebar real com serviço/gate simulados: disabled sem chamada, loading pendente, found:false→not_found, rejeição→error, found:true→ok e dados, id ausente sem loader infinito. O teste not_found não injeta explicitamente null embora o título mencione ambos; o fallback padrão é null, mas os casos relevantes o substituem. Retry é aguardado até error, sem afirmar contagem exata ou funcionamento do CRM externo.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.pagination.test.ts",
+      "git_blob_sha": "612d6ba061a716710ba64693ae38aae02fb14706",
+      "source_sha256": "536218a74426b60fdb1ce5ac6b44bb46df6056d7c0a515a767f415b8feedd39d",
+      "line_start": 1,
+      "line_end": 62,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama fetchKpiRows real com range que gera2498 linhas e registra intervalos; confere ids lógicos distintos, três páginas e ordens com coluna id. Cobre também múltiplo exato do tamanho da página com consulta extra vazia. O servidor é um gerador de fixtures, sem filtros efetivos ou snapshot consistente sob inserts concorrentes. orders.every aceita array vazio e sozinho não exige order chamado; ranges e cardinalidade são assertivas concretas, e o arquivo complementar verifica soft-delete.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.query.test.tsx",
+      "git_blob_sha": "8a0e6cf6472c0b233d788650fbd9d001c99f0255",
+      "source_sha256": "47af88974bd4a50c0ce4cb9f0b70ee9019fcfac999f06246f126df8d6f0b88c2",
+      "line_start": 1,
+      "line_end": 56,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama fetchKpiRows real e registra .is; com includeLegacy false e true exige chamada e primeiro par deleted_at/null. O próprio comentário identifica a lacuna do mock no teste de paginação anterior. As duas fixtures retornam página vazia; o título cada página não observa múltiplas páginas. Protege o filtro na primeira consulta dos dois modos, sem provar o resultado SQL ou todas as iterações.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.test.ts",
+      "git_blob_sha": "0799ae0fc8f532e3ff039309651add57d4c6828c",
+      "source_sha256": "f3273bf85a53dd1aa8145c25a932732127734ac27c533e992069c680e1fc98af",
+      "line_start": 1,
+      "line_end": 204,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Exercita aggregateKpi real com relógio fixado e fixtures independentes: janelas30/60, mínimo49/50, distintos com trim/case, fornecedores, sete buckets, cumulativos12, deltas totais e entradas exatamente no dia30. Verifica valores concretos como120%,50% e10% e ausência de percentual inventado em base toda nova. Os dados são arrays completos e a função é pura; não demonstra a consulta, identidade de empresa além da normalização definida ou comportamento de datas futuras/inválidas. Casos de monotonicidade/tipo convivem com valores concretos, sem serem tratados como cópias locais.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useEmailContactContext.test.tsx",
+      "git_blob_sha": "dcfafb31b9f8e0c58730f6139cbaf76b7943c23b",
+      "source_sha256": "2a41b0f2e11be5a7bbdc1acdba244563aaa8c6e6b6e50c9e0ddbf9645c22c950",
+      "line_start": 1,
+      "line_end": 75,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta hook real com identidade de usuário e CRM simulados; exige consulta com conta/thread/contato e escolha externa, disabled sem chamada, mapeamento de negação e payload exato da mutation linkCompany. O título da mutation afirma invalidar contexto, mas o caso só confere chamada de vínculo e não observa invalidação/refetch. A rejeição por texto controlado não executa autorização da Edge ou relacionamento no banco.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/inbox/__tests__/useInboxFilters.dia-local.test.tsx",
+      "git_blob_sha": "dc414919ebfb2aed5f3b91a4700b3eedbf29cfe9",
+      "source_sha256": "1a5ae73be84b762f1aa89cf0fcc411d4ee28ef265ee323a4d862dfe888fe1d79",
+      "line_start": 1,
+      "line_end": 135,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useInboxFilters real com MemoryRouter, helpers de dia reais e tempo fixado; observa round-trip dos filtros e exclusão da conversa no dia seguinte, preserva intervalo e limpa datas. Inclui controle sem data com ambos contatos. O timezone usado é o do processo que executaria a suíte; o arquivo não configura uma matriz de fusos. window.location.search não representa a localização interna de MemoryRouter, portanto essa assertiva isolada é fraca, mas os valores do hook e a lista filtrada são evidência comportamental real.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/inbox/__tests__/useObjectionDetector.ia048.test.tsx",
+      "git_blob_sha": "21955c0ed147c5aaeb006931062c683120b4a4e3",
+      "source_sha256": "bb4d89531ad71244eebff42ee3ffb29f3630d2ce8b0e0d253f257c6251da8697",
+      "line_start": 1,
+      "line_end": 103,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useObjectionDetector real e usa promises controladas para analyze/rewrite; exige resultado no contato atual e descarte após A→B, reset de loading/analyzed e ausência de toast de sucesso da reescrita antiga. A Edge é mockada e não há execução de modelo; a prova cobre o consumidor e guardas de resultado superado, sem certificar precisão da objeção, persistência ou abort do trabalho remoto.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/inbox/useInboxUIState.test.ts",
+      "git_blob_sha": "6e9d94feed953f3fa32f01d765a905c2ceeb6c95",
+      "source_sha256": "f295780b34d84d49df09f5fc964fd4cb1e294ae6f6baf48a413167d0bb47a28f",
+      "line_start": 1,
+      "line_end": 35,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useInboxUIState real com innerWidth390/1280; exige detalhes inicialmente fechados/abertos e toggle explícito no celular. Restaura largura após cada caso. São dois valores de viewport e estado do hook, sem layout, breakpoint exato, evento resize ou painel visual; não transforma todo comportamento responsivo em homologado.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
+      "git_blob_sha": "dd364b82e23ca11d79ad0684c21ea4884fccd7dc",
+      "source_sha256": "1e42b4e22c924d947276ea8c49955d9fd640f758c9e56b4a8a6f5dabfdbd862c",
+      "line_start": 1,
+      "line_end": 164,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Importa os helpers reais de busca e registro; confere payload completo snake_case, opcionais null, zeros preservados, três status e erro de insert logado sem rejeição. Cobre mínimo dois caracteres, normalização de dígitos e escape de vírgula/aspas na construção do filtro. O caso de telefone usa substring includes local como explicação e também observa filtro real, sem executar PostgREST. O contrato de erro absorvido fica explícito; não prova durabilidade do log ou que uma busca mascarada encontra todo formato possível.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useTeamMessages.test.tsx",
+      "git_blob_sha": "29239f417bfd7a348aa64233cd7d3d1ea6e394ac",
+      "source_sha256": "9ccc99d2dffc45ce4ad1d518121fa82f67e0630a8ec4b59074f96735e0385a3d",
+      "line_start": 1,
+      "line_end": 65,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Monta useTeamMessages real com useQuery simulado fornecendo duas mensagens; exige apenas um recibo para remetente alheio, perfil/status/conversation_id exatos e onConflict composto. Não executa a consulta, RLS ou NOT NULL no Postgres; protege o payload do hook para a fixture atual. É evidência comportamental de Team Chat e deve coexistir com a crítica TC-011 aos outros testes desconectados.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/lib/__tests__/emailContactIdentity.test.ts",
+      "git_blob_sha": "9441ca71e71b6346d3d41e2023fb8f3ff0dec940",
+      "source_sha256": "5f5e6a9f8ac47b877bc9051f859c99d9cb221679a10b67c9bc9316ead34b15f2",
+      "line_start": 1,
+      "line_end": 37,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama resolveEmailConversationPerson real para thread cuja última mensagem é nossa, thread só de saída e resposta posterior de outro endereço; preserva participante externo original e destinatário principal sem usar CC. O primeiro título fala latest inbound, mas só fornece uma mensagem inbound; o terceiro fixa a escolha do participante original. Não cobre uma thread com múltiplos participantes originais ambíguos, conta inexistente ou transporte Gmail.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/services/__tests__/contact.service.enriched.test.ts",
+      "git_blob_sha": "43d0c4ddd3bb2ecd16a964b4cc99e23d14a6f921",
+      "source_sha256": "6afc032c39cf3bee100721b061abf1e686529a2b6fea9413de79bc9fe92a0333",
+      "line_start": 1,
+      "line_end": 51,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama ContactService.fetchEnrichedData real e captura a string select para exigir seis colunas de endereço, cinco campos já existentes e latitude/longitude. As verificações usam toContain, de modo que address pode estar contido em address_number; não equivalem a análise de identificadores. Não retornam dados de endereço nem montam/salvam o editor, e a lista de chamadas não é resetada entre os três casos, embora cada um chame o serviço e leia a última.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/services/__tests__/contact.service.legacy.test.ts",
+      "git_blob_sha": "540f66bbd86dc2b72fd2f1e1bc389abae482f235",
+      "source_sha256": "d69882b18fef4ae2f975756f928d7362fa8adc117ac2585083d23acef052130d",
+      "line_start": 1,
+      "line_end": 32,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama os métodos reais de ContactService e verifica os argumentos de search_contacts e contacts_count_by_type com legado desligado/ligado, incluindo objeto vazio no contador padrão. O primeiro matcher impede um valor não nulo reconhecido por expect.anything, mas não é teste estrito de ausência de propriedade undefined/null. A RPC devolve fixture vazia e seus defaults e permissões são avaliados separadamente no banco.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/services/__tests__/outbound-message.service.test.ts",
+      "git_blob_sha": "fe47c2a45573346de738392d2a91ee1b75212958",
+      "source_sha256": "edb31a6f6efb5c8b7e475b88432957d270a66a04946c8f538eb1a95bdcd4d19d",
+      "line_start": 1,
+      "line_end": 98,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama os serviços reais de envio simples/rico com RPC e Edge simuladas; exige payload de enqueue, resultado do gateway, ausência de dispatch em erro de enqueue e corpo de enquete. Inclui uma falha ambígua seguida de retry com ids observados. crypto.randomUUID está fixo no mesmo literal em todas as chamadas; por isso os ids iguais no teste de reuso não distinguem preservação da ação de nova geração a cada tentativa. Não executa SQL, entrega ou durabilidade, e a prova de idempotência precisa de gerador sequencial/controle negativo para detectar perda da identidade.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/types/__tests__/emailContactContext.test.ts",
+      "git_blob_sha": "81e77f87ebf4ef45529079014703daa0cdc21c68",
+      "source_sha256": "776562ff41e5bc582855fe6937e99a1432d3a499e7aeaaad980a4f620fe3e89d",
+      "line_start": 1,
+      "line_end": 51,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama isEmailContactContext real com estados e objetos positivos/negativos: not_linked, company incompleta, about objeto, rede social fora do contrato, candidatos ambíguos tipados e estado não modelado. O título bounded do estado ambíguo fornece apenas dois candidatos; não observa o limite superior nem candidatos malformados. O teste valida shape, sem renderização, resolução de identidade ou autorização do contexto.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "tests/contracts/ai-conversation-messages.contract.test.ts",
+      "git_blob_sha": "a35e19b145d2077cb4d5bd62ec80d779dd06e7ef",
+      "source_sha256": "95d9961310fbbfe4cdf32577adfd44819b7b34128d102209d0eb54f9a6e1ef74",
+      "line_start": 1,
+      "line_end": 113,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Exercita schemas e medidor reais; protege id/type/mediaUrl/created_at/periodDays, legado message_type, período opcional, erro agregado150 mil contra aceitação100 mil caracteres, limite individual5001 e métricas3 mensagens/5 caracteres. São parse e contagem sobre dados sintéticos, sem consulta de conversa, tokens do provedor ou execução da análise. O título1..365 testa30,0,999 e não cada borda; os tetos textuais são guardas do envelope, sem afirmar orçamento real em tokens.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "tests/contracts/axe-inbox.contract.test.ts",
+      "git_blob_sha": "01bd7a583b8d997fc1c46a10be4b43b9e520fb96",
+      "source_sha256": "ba43bbf87daeab21c411318dac92d1380b724bd8cdca7a78b7a10c35e03862ac",
+      "line_start": 1,
+      "line_end": 51,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Lê quatro fontes reais para preservar nav sem role inadequado, classe de avatar e nomes dos botões do modal/aviso; as assertivas são regex de contrato. Não executa axe ou navegador. O cabeçalho cita medições históricas e exceções de skin explicitamente decididas; essas razões não foram reapresentadas como medição atual nem as exceções autorizadas como defeito novo.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx",
+      "git_blob_sha": "36641b2a46bc248b273f0fe6f3b357409df1bbcf",
+      "source_sha256": "d477aa6470525884e888c6ef10635729554993ca55d5b18a5bbe673c716b33e0",
+      "line_start": 1,
+      "line_end": 275,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza FilesTab real com hooks de dados e larguras simulados; verifica grid8→6 com painel inline, Sheet sobreposto preservando5 colunas, seleção por filtro56→2, sobrevivência ao recorte e ausência de ids no localStorage. Exclusão recusada mantém seleção e toast de erro; aceita exige payload/id exatos e limpeza da seleção. O sucesso explicita que o item só sai após refetch, não realizado pelo mock; não se contou essa remoção como observada. Largura retorna valores fixos e classes são assertadas sem motor de layout, enquanto RLS e Storage não são executados.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
+      "git_blob_sha": "867bec9c3db0f9dbbc80b7387f3f6cab1bac2089",
+      "source_sha256": "1bb241b01c4593f706ecfa60ab044e054ec9c5e6cbdddb0053c47123708e2cdf",
+      "line_start": 1,
+      "line_end": 166,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza FilesTab real com duas mídias e contagens de fixtures; testa classes da grade, chips, busca/filtro, vazio, limpeza, detalhe e Carregar tudo chamando duas páginas simuladas. Reseta preferências e memória por conversa antes de cada caso. O teste Carregar tudo observa o loop pelas flags retornadas, sem incorporar novas linhas no hook mockado. Contagens ditas reais são fixtures calculadas sobre o array e não banco; não há reprodução física ou validação visual das classes.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
+      "git_blob_sha": "224f9bea55a74d47be3e9685b552919854261089",
+      "source_sha256": "2e1d31dd2c044ea156d80e5f927e92388f00a3c02e8e10645ddd8025a155a1dd",
+      "line_start": 1,
+      "line_end": 98,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza tabela real com duas linhas, identifica colunas ordenáveis, callbacks de ordenação e aria-sort, removendo colunas por largura683/520. Confere table-fixed, wrapper de overflow e ids de linha. O caso cujo título inclui Tamanho→biggest só monta o estado biggest e clica Arquivo→alpha; não clica o botão Tamanho. As larguras são props e não layout medido, e não há ordenação do array pelo consumidor nesse teste.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesToolbar.test.tsx",
+      "git_blob_sha": "3d4dd943d46662d713c4eaff5ed9ff75c4912405",
+      "source_sha256": "7fa3bbe774630e049f67222784c6fab90106c29bbc2b054faa8a9a66d084b91b",
+      "line_start": 1,
+      "line_end": 77,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza FilesToolbar real e verifica controles nomeados, classes flex-wrap/min-width, callback de digitação, quatro opções e alternância Selecionar/Cancelar com aria-pressed e contador após rerender explícito. A assertiva com título ordem do plano só exige presença, sem comparar ordem DOM. Não executa busca/ordenação do hook ou geometria responsiva; os callbacks e atributos do componente são os efeitos observados.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/KpiStrip.test.tsx",
+      "git_blob_sha": "841397b158529ebeaabc4c16770b8a523280565b",
+      "source_sha256": "fb516ecdc56f75e1b44b4aaf448be407e5be067eeea5b87053449edbe2443651",
+      "line_start": 1,
+      "line_end": 46,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza KpiStrip real e verifica rótulo, número, subtítulo, tabela de cinco tons e precedência de iconClassName sobre tone. As assertivas inspecionam classes, não contraste calculado ou KPI derivado de dados. Os tons com alfa preservam o contrato de skin e não foram promovidos a nova violação de contraste sem medição e decisão.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/NotesTab.test.tsx",
+      "git_blob_sha": "a1c15b1733c18d6daaa41fec85d3ea46dbfd91e9",
+      "source_sha256": "2e6869ec893ce1e23f6de4f4ba7458b82e52785e6c7575ca19cb00a607666542",
+      "line_start": 1,
+      "line_end": 128,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza NotesTab real com hooks atuais simulados; verifica nota/objeção, criação de fato e tarefa com contato fixo, toggle de promessa, data sem hora e horário local, contagem de tarefas sem duplicar lista e navegação para tasks. Os callbacks de escrita são spies, sem erros, persistência ou alteração da fixture retornada. A data local usa o fuso do processo e não matriz de navegadores; presença de texto da nota não prova sozinha seu agrupamento visual correto.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
+      "git_blob_sha": "7d60b38ab5fcf86d2524d6f0af00cb3fb9b7ab1d",
+      "source_sha256": "f413520f416f1b78809adc7cae01fa86f46031888913c8de059d156fd622042c",
+      "line_start": 1,
+      "line_end": 140,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza SalesViewTab com resumo CRM mockado e consulta de compras simulada; testa vazio, dados, proposta aberta e vocabulário. Pela UI cria compra e exige created_by/profileId, contact_id, título e invalidação da chave CRM. A prova de insert atravessa componente real, mas termina no stub e não testa RLS/erro/persistência. A consulta de compras e o resumo são fixtures independentes, sem assertiva de consistência entre valor total500 e os dois valores100 fornecidos.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/SectionCard.test.tsx",
+      "git_blob_sha": "c0ecd2e77881c9cd9f8b3e6e1d597690afe52bff",
+      "source_sha256": "f3741b1ca715bbe0c6a58b1c01b37860b175f640cf5bec970acee6c0c1dd5d60",
+      "line_start": 1,
+      "line_end": 63,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza SectionCard real com título, count, conteúdo, tom, ações e subtítulo/headerRight; clica a ação e exige uma chamada. Link/pill são verificados por classes e os seletores de span são globais; não prova navegação semântica, contraste ou layout. O caso default cita texto e background mas só exige background na assertiva.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/TasksTab.test.tsx",
+      "git_blob_sha": "d37378644b012d24995ea8cbcf2b36874c3ef4db",
+      "source_sha256": "1b4eee06b79006e898946446363e4a55e87d28fcf87c7358099341acafdfc8df",
+      "line_start": 1,
+      "line_end": 153,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza TasksTab real com byStatus/byDue simulados; exige contactId no hook, cinco grupos, contadores, tarefa no grupo correto, colapso/reabertura e chamadas complete/move para os itens corretos. O hook já entrega agrupamentos prontos e a suíte não valida cálculo de status/prazo no banco. QuickAdd é apenas mostrado neste arquivo, sem submissão; o teste NotesTab complementar observa criação, mas não transforma estes casos em prova de gravação.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/fileDisplay.test.ts",
+      "git_blob_sha": "d35777f8cc200b4103e56de204b77a85173c415b",
+      "source_sha256": "3a1845386356e38ee920d33f309cc09eebbb8c44e14610726c1865a7f2346ef0",
+      "line_start": 1,
+      "line_end": 30,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama formatMeta/formatSize/formatFileDate reais; verifica composição, tamanho ausente sem separador duplo e B/KB/MB com valores concretos. A data esperada vem do próprio formatFileDate para testar consistência entre formatadores, não um valor independente de data/fuso. Não há layout nem cobertura de tamanhos negativos/NaN por esses cinco casos.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/filesSort.test.ts",
+      "git_blob_sha": "e1708a3e054d0846a6cc4884fa07aa2499a54de6",
+      "source_sha256": "29003e14037bae1c3c70054bffb95c2db20d45de230591d8df7562ecf79ffdd0",
+      "line_start": 1,
+      "line_end": 81,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Chama sortMediaItems e filterMediaItems reais; verifica tamanho desconhecido no fim, desempate data/id, sentidos recente/antigo, ordem alfabética, não mutação da entrada e busca por nome/caption sem distinguir caixa. As regras puras são observadas com ids esperados; isso não prova ordenação ou filtragem no servidor nem todas as datas inválidas. O caso não mutar usa array já em ordem alfabética, tornando esse controle menos forte do que uma entrada invertida.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/mobile/__tests__/SwipeableMessage.test.tsx",
+      "git_blob_sha": "dc59d548247515f3053f4f29891bda41ff490388",
+      "source_sha256": "a5fe7d10446a06bf71297b91299868301f41e64ab9de160a5332775bb88aaba0",
+      "line_start": 1,
+      "line_end": 51,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza SwipeableMessage real em ramo desktop/mobile e com className; observa os filhos e classe de raiz. O mock motion descarta handlers e useMotionValue sempre retorna0; nenhum gesto ou callback swipe é acionado. O modo mobile não é resetado entre o segundo e terceiro casos, e a mera presença dos filhos não distingue a existência do wrapper anunciado.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/mobile/__tests__/VoiceDictationButton.test.tsx",
+      "git_blob_sha": "3a91310e8b94b0c76b343aa5d0dbe2db77b13ccc",
+      "source_sha256": "31da7f25d34b8c80f6ec2b0860762c559cbd40b03882110cc9ea8970c6572f69",
+      "line_start": 1,
+      "line_end": 64,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Renderiza VoiceDictationButton real com speech hook simulado; confere botão suportado, retorno null quando não suportado, aria-label idle e disabled. Não clica, injeta transcrição ou percorre listening; mockToggleListening não é assertado. Tooltip/motion são substituídos e não há microfone ou Speech API real.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx",
+      "git_blob_sha": "a0cdf817e81e6acd187540fc6bd2aefa3abeabc5",
+      "source_sha256": "feea10dcb1493144d0c6d3abc96cc654df77ebf7bcec37163d8f34c8987df140",
+      "line_start": 1,
+      "line_end": 217,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Arquivo misto: renderiza OmnichannelInbox real para títulos, seis cards, input, botão de limpar filtro e badges de conexões. Outros blocos definem CHANNEL_CONFIG local e calculam filtros, contadores, initials e arrays vazios inteiramente no próprio teste. A busca real observa apenas valor digitado, e o filtro de canal apenas a presença de Limpar filtro, sem exigir a lista resultante. As fórmulas locais não validam a implementação; isso complementa GOV003/TC-011 sem novo ID, preservando os controles reais de renderização.",
+      "runtime_executed": false,
+      "evidence": "inbox-peer-test-review-extra.json"
+    },
+    {
+      "path": "supabase-export/POST_EXPORT_CHECKLIST.sh",
+      "git_blob_sha": "339cd06a594a73c3eab1aee03ac1115af53f7f5f",
+      "source_sha256": "f3b8b516db6224ee2745d0a9aa59e869f99fb9501a22576fb0750343fc590157",
+      "line_start": 1,
+      "line_end": 94,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral: quinze caminhos literais, existência e tamanho mínimo50bytes, soma de linhas/bytes e exit1 em ausente/suspeito. Não faz hash, parseSQL ou prova de integridade relacional; o título final restringe a presença/população. Não executado.",
+      "runtime_executed": false,
+      "runtime_limit": "Bash with fake node only; other files inspected, not executed",
+      "evidence": "manual-review.json"
+    },
+    {
+      "path": "supabase-export/import.sh",
+      "git_blob_sha": "53f53e740054c816faf60543b67f574668bbb1d3",
+      "source_sha256": "441768cc71af25af17dd0c1fbf841384c69b9d0f2a578a236056f00826b6f67c",
+      "line_start": 1,
+      "line_end": 43,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral: exige DESTINO_URL e set-e, aplica oito blocos via psql-safe em ordem estática, pula ausentes e anuncia importação antes da validação. Não é transação entre blocos e depende do cwd. Sem execução de importação. Cadeia com validador frágil registrada em GOV004.",
+      "runtime_executed": false,
+      "runtime_limit": "Bash with fake node only; other files inspected, not executed",
+      "evidence": "manual-review.json"
+    },
+    {
+      "path": "supabase-export/validate_destino.sh",
+      "git_blob_sha": "6ff9558ba387a7dce03e9e8c9ea8e632a8d7780e",
+      "source_sha256": "f01dfcc2d890cb5d603da2e48a45e6ef158e979e02b15ac6f5b973071016165c",
+      "line_start": 1,
+      "line_end": 95,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral: argumento/env, arquivos ancorados no diretório, temp e trap, pipeline node|tee sem pipefail, contagem textual de FAIL/EXTRA, JSON/CSV sem checar retorno e exit0 final. GOV004 reproduz erro de conexão com stub node, negativo métrica e sucesso sintético; nenhuma conexão real.",
+      "runtime_executed": true,
+      "runtime_limit": "Bash with fake node only; other files inspected, not executed",
+      "evidence": "export-validation-probe-results.json"
+    },
+    {
+      "path": "scripts/db-audit/cron-secret-l5-contract.test.sh",
+      "git_blob_sha": "9efbb61d1332ece54d6a024c430e606c50bd875a",
+      "source_sha256": "bfcf688b2244d85cbbd84b5a5b7e89b663d5578715cc6a6a454f578ff2c01e7f",
+      "line_start": 1,
+      "line_end": 882,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–882. O harness usa PostgreSQL descartável, set -Eeuo pipefail, ON_ERROR_STOP, dois checks de readiness, identificação restrita do container e limpeza dos temporários (65–145, 204–215). Fixtures constroem Vault e pg_cron simplificados (217–344); URLs nos comandos ficam como texto na tabela cron.job. A leitura não executou nenhum comando do harness. A/B verificam antes/depois de migrations reais: geração e distinção de segredos, ACL efetiva com has_function_privilege e SET ROLE, reprogramação de 11 jobs, nomes fora de escopo preservados e replay idempotente (454–551). Mutações C/D validam mensagens e valores específicos, em vez de aceitar qualquer exit code. D cobre bloqueio de DML, homônimo de outro dono, jobid/active, segredo inválido, duplicação e ACL (599–882). Esses controles positivos são preservados. Limites dos stubs: alter_job não filtra username (321–325); session_replication_role é alterada em transação pelos helpers e não restaurada dentro deles. Isso delimita fidelidade ao pg_cron real; não demonstra defeito produtivo. O hash de jobs usado no controle não abrange todas as colunas, e asserções específicas de dono suplementam a checagem. Extensão documental TC-011/GOV003: D2-MUT anunciado como segredo truncado reutiliza d1_mut após preparar secret='' em 758–759. Entre D1-MUT e D2-MUT (760–780) não há UPDATE para 32 caracteres; os dois exercitam a variante vazia. O controle não mutante de truncamento em 745–749 efetivamente prepara 32 caracteres e continua válido. Não se afirma que toda a suíte seja tautológica nem que a migration aceite truncamento.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/drop-redundant-messages-external-id-index.test.sh",
+      "git_blob_sha": "a763e0da1405fd97b92001a090535ddb26c5ffa7",
+      "source_sha256": "85a880958f2df80b35de97d78de62a33b7e90feb3f36fba98f72b4922bc76512",
+      "line_start": 1,
+      "line_end": 143,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–143: Docker descartável e temporários isolados, ON_ERROR_STOP, comparação de valor e erro SQLSTATE por substring; aplica a migration real e a reaplica. A/B conferem ausência/presença de índices, unicidade efetiva com duplicata e conservação da linha (108–141). Os EXPLAIN em 60–64 e 132–135 desabilitam seqscan e usam fixture com uma linha. Demonstram disponibilidade de caminho por índice sob essa configuração; não medem custo, latência ou escolha do planejador em produção. B8 exige o nome ux_messages_dedup, enquanto B7 só exige substring Index. O pre.sql reconstrói o recorte dos três índices; não aplica a cadeia completa de schema. Sem execução neste passe.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/send-messages-permission-authorization.test.sh",
+      "git_blob_sha": "3c830651803bbea13fde469179b666c6ee37e1a6",
+      "source_sha256": "20080a0dfef013da3fa45cc17920afaea10f54cb7f5a02c4daaa1f6850f43fcf",
+      "line_start": 1,
+      "line_end": 335,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–335: o harness reconstrói um contrato de permissões e o corpo antigo de enqueue_outbound_message (68–265), usa profiles.id diferente de auth user_id e duas identidades com permissões distintas (267–299). Aplica a migration real após demonstrar a gravação indevida no baseline sintético; testa recusa, ausência de linha, envio autorizado, atribuição correta de profile, claims ausentes e ACL (301–333). ON_ERROR_STOP e pipefail propagam erros; expect_error exige falha e mensagem. A visibilidade de contato é stub constante true (120–122), auth é reconstruída por GUC e o schema é mínimo. Logo o teste é evidência direcionada de send_messages, não prova geral de RLS/visibilidade, validação do JWT ou cadeia completa de migrations. O rótulo B1 anuncia 42501, mas a assertiva confere a mensagem, não separadamente o SQLSTATE. Nenhum comando de banco foi executado na reauditoria.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talk-me-queue-contract.test.sh",
+      "git_blob_sha": "86941160cc05d1f1ceba8850e527259eccaf1898",
+      "source_sha256": "42b0364204e0438a891a500854d8e5e29c99ea9412c55446ac7078c77340e404",
+      "line_start": 1,
+      "line_end": 357,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–357, incluindo recuperação explícita do trecho 282–357 após truncamento da saída. O teste aplica duas migrations reais a schema mínimo com identidades profile/user distintas e auth.uid por GUC. A/B conferem elegibilidade por fila, busca, cursor, ordem, exclusão de grupos por várias representações, ACL de anon/helper, perfil atribuído, auditoria e retry idempotente (233–271). C alterna membro, flag e atividade do perfil, conferindo também ausência de atribuição/auditoria; E testa fila externa. Há duas sessões PostgreSQL para revogação e duas para disputa de aceite (300–350), com estado final e auditoria única; isso é um controle positivo real se o harness for executado. Limites: os loops de espera 305–308 e 314–317 não falham explicitamente quando o lock esperado não é observado, portanto uma execução pode testar revogação sequencial sem isolar a intercalação anunciada. D exige exatamente um sucesso e estado final, mas não verifica a mensagem específica do processo perdedor. A revisão não executou o harness nem extrapola o auth.uid simulado para autenticação real.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+      "git_blob_sha": "03c5e4931dcd93ffbc7fc3dbcf8013fd570d947e",
+      "source_sha256": "c2e2a835e5f2fd793d4e1f8c7f6643fc71db550793230b07cc3cd276a06fdf58",
+      "line_start": 1,
+      "line_end": 179,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–179. O bootstrap tem até três tentativas apenas para subir o PostgreSQL descartável, exige duas respostas e não repete falhas SQL/assertivas. ON_ERROR_STOP=1 e pipefail protegem setup e aplicação das cinco migrations reais (99–108). Fixtures usam user_roles e profile/user distintos, além de campos de worker lease. Os testes confrontam mensagens específicas para escrita de contador/audiência, transição direta, insert fabricado, falta de audiência/instante, fuso inválido e janela invertida; controles positivos conferem draft e fuso padrão, snapshot com um destinatário após replay, cascade de delete e operação de service_role. A fixture simplifica auth por GUC e visibilidade do contato; testa o recorte de estados e migrations listadas, sem provar fluxo UI, worker real, concorrência ou cadeia completa. Sem execução neste passe.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-guards-fail-closed.test.sh",
+      "git_blob_sha": "d546111ae0c466d474822bbb25844f9361c027ab",
+      "source_sha256": "4ac00b9f1979e1c658efeb6812593f3a7749e604f248923a141dda839b7a040e",
+      "line_start": 1,
+      "line_end": 200,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–200: setup estrito, container descartável com cleanup restrito, readiness por logs e SELECT. Aplica duas vezes a migration fail-closed e instala manualmente os dois triggers (113–121). Os controles com SET LOCAL ROLE authenticated sem claim exigem talkx_guard_auth_role_undefined para campanha e destinatário; postgres/service_role têm estado persistido conferido; claims presentes recebem erros específicos de mutabilidade (134–198). É um ensaio direcionado dos dois guards. O helper de papel em 70–74 é reconstruído sobre profiles.role e o schema/associação dos triggers é mínimo. A réplica de auth.role preserva NULL no cenário pertinente, mas não verifica validação de JWT nem composição das migrations posteriores. Os casos negativos procuram mensagens em saída capturada; os positivos de sistema conferem gravação. Nenhum comando do harness foi executado.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-receipts-replies.test.sh",
+      "git_blob_sha": "44e487c108f075d370223c2ace078ee770165e2e",
+      "source_sha256": "0a19be52977729e0aab0da982883402b122ae72b622fee6c57a5d2b97d4f0b22",
+      "line_start": 1,
+      "line_end": 404,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–404, inclusive SQL e nove grupos de assertivas. Setup e aplicação da migration real usam ON_ERROR_STOP=1; operações negativas e sessões capturadas usam wrapper permissivo. O arquivo da migration é selecionado por marcador com fallback local, o que delimita reprodutibilidade fora do pin. Fixtures incluem cinco campanhas, dois contatos, recibos e respostas com tempos distintos. Controles positivos confrontam delivered_at/read_at e contadores após leitura sem recibo anterior e replay; wrapper de duas/três entradas; atribuição pelo telefone apesar de contact_id distinto; janela 48/72 horas; média/mediana 161; catálogo da publicação; ACL de anon e reaplicação sem duplicação. Não é um conjunto de simples constantes: observa dados alterados pela migration/RPC. Limites: assert_has com a letra t (277, 308, 317) não valida sozinho o retorno booleano, mas as verificações de estado/contadores seguintes dão suporte independente. A função is_admin_or_supervisor retorna true (121–122), mensagens só têm id e auth é GUC; portanto não há prova geral de autorização/visibilidade. pg_publication_tables valida configuração, não entrega Realtime. O teste aplica só o delta X027 e não exercita provedores ou o encadeamento completo de triggers. Não foi executado na reauditoria.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-settings-replay-idempotent.test.sh",
+      "git_blob_sha": "d630f837d90ced607ebbf3f6e7f50359c6a0ca55",
+      "source_sha256": "5caa7cd4098fdc0de7294292cee72592732b712418000d2784408a0170e28875",
+      "line_start": 1,
+      "line_end": 126,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–126. O RED aplica dois arquivos reais com --single-transaction e exige mensagem de erro mais ausência de tabela no primeiro caso. GREEN aplica/reaplica a correção, confere tabela, RLS, seis seeds e duas policies. Casos de leitura com SET LOCAL ROLE e UPDATE de agente com RETURNING/count observam resultados reais no banco descartável se executados. Limite concreto da prova de admin (120–121), suporte à família GOV003/TC-011: UPDATE updated_at=updated_at seguido de SELECT 1 só demonstra que o comando não gerou erro; RLS pode atualizar zero linhas e ainda retornar o mesmo 1. O teste de agente em 123–124, por outro lado, mede efetivamente as linhas retornadas. O helper de papel usa profiles.role reconstruído. Esse recorte não prova que a cadeia completa de replay ultrapasse automaticamente a migration original inválida; o harness captura a falha e segue de modo explícito. Sem execução neste passe.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v19-retry-recipient.test.sh",
+      "git_blob_sha": "d073a74efadb5eb75fcd26fce7ee433c5b57c307",
+      "source_sha256": "a05803316af16e749e34b2b4a78414ba79461435591fa0f6170d070d64cb1879",
+      "line_start": 1,
+      "line_end": 84,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–84. Fixtures cobrem failed, outcome_unknown, teto de tentativas e sent, aplicam a migration V19 e exigem os retornos t/t/f/f, além de persistência pending:1 para o primeiro destinatário (69–82). Esses controles direcionados são preservados. ON_ERROR_STOP=0 em 9 limita a garantia de setup/aplicação completa pelo exit code; o RED aceita does not exist ou a palavra genérica function (61–63). As chamadas configuram claim service_role, mas permanecem conectadas como postgres, sem SET ROLE; não são teste da ACL efetiva de service_role. A fixture não contém campanhas/worker/conexão/triggers da cadeia atual e só uma das duas reaberturas recebe verificação final de estado. Não se infere execução aprovada nem autorização real.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v25-owner.test.sh",
+      "git_blob_sha": "701bfdc1aaa5cd7ee0c9defe8e068a88d83c1be5",
+      "source_sha256": "4283daee91ddec858cc64285838b5f1830ed481152b6873e1785afc0012c7e5a",
+      "line_start": 1,
+      "line_end": 237,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–237. Após RED de coluna ausente, o harness aplica a migration V25, confere tipo/FK/ON DELETE SET NULL, owner persistido após INSERT/UPDATE, revisão crescente, replay com revisão preservada, conflito ao mudar só owner e recusa por FK com ausência de linha (136–235). As identidades profile e auth user são distintas e os dois owners são fixtures diferentes. O corpo anterior é reconstruído localmente em 108–129; is_admin_or_supervisor retorna true e validação de timezone usa regex simplificada. ON_ERROR_STOP=0 pode mascarar erro parcial na aplicação pelo exit code, embora as assertivas de dados posteriores tenham valor. As sessões mudam claims sem SET ROLE, logo não validam ACL/RLS reais. A FK é inspecionada estruturalmente para SET NULL, sem deletar owner; não se extrapola para ciclo completo ou versão atual da RPC após todas migrations. Sem execução.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v26-template-version.test.sh",
+      "git_blob_sha": "718d405a7d9f44f3f40a6764e1b050391c8d16c5",
+      "source_sha256": "0c751f0d1080833a8f1bb1b4258852e52c73a4edcbdb1cb42c6ac242c558d237",
+      "line_start": 1,
+      "line_end": 266,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–266. O stub anterior da RPC levanta erro explícito (132–141), de modo que o caminho positivo depende da substituição pela migration V26. São conferidos tipo/FK, persistência de template_version_id na criação e atualização, revisão, replay, conflito ao mudar somente a versão, rejeição de versão inexistente sem linha residual e exclusão da versão com SET NULL persistido (158–264). O setup mínimo não aplica a cadeia completa de templates e seus triggers; helper de papel retorna true, timezone é regex, ON_ERROR_STOP=0 não garante aplicação integral pelo exit code e claims são configuradas em conexão postgres sem SET ROLE. Os controles comprovam o recorte explícito de schema e RPC se executados, sem demonstrar autorização, imutabilidade ou integração UI. Nenhum comando do harness foi executado neste passe.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "scripts/db-audit/user-settings-sound-integrity-contract.test.sh",
+      "git_blob_sha": "380c5e14d53de8d30376022bb977153e32b70aad",
+      "source_sha256": "d46adda179f1809bdf54318c4e7e53a52d763554678465827cf06dd80736b796",
+      "line_start": 1,
+      "line_end": 316,
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "adjudication": "Leitura integral 1–316: três containers descartáveis distintos, temporários com trap, ON_ERROR_STOP=1, propagação de status e mensagem esperada, cópia da migration e comparação SHA256/cmp no fim. Aplica o arquivo real após demonstrar nullable e vocabulário aberto; confere NOT NULL, validação das cinco CHECKs, cinco rejeições por constraint, valores canônicos, default 70 e limites de volume (165–227). A reversão é executável no schema mínimo por DROP de CHECKs/NOT NULL, seguida de escrita anteriormente vedada. As mutações são preparadas em cópias, verificadas por conteúdo e aplicadas em containers novos: ausência de VALIDATE precisa produzir convalidated=false, e substituição de soft precisa rejeitar o valor canônico com constraint específica (230–314). Esses controles não dependem de qualquer erro genérico. Limites: a fixture reproduz o recorte de duas linhas e não a cadeia inteira nem a base implantada; o rótulo linhas intactas usa count filtrado de três campos (226–227), não comparação de todas as colunas. Os testes de vocabulário positivo percorrem message_sound_type, e os negativos cobrem os cinco tipos. O ensaio de integridade SQL não valida reprodução de áudio ou consumidores das preferências; não substitui a evidência PLAT sobre consumidores. Nenhuma migration, reversão, Docker ou suíte foi executada nesta reauditoria.",
+      "runtime_executed": false,
+      "evidence": "shell-review.json"
+    },
+    {
+      "path": "src/index.css",
+      "adjudication": "Leitura integral 1–56. Ordem dos oito imports, camadas Tailwind, animação pulse-subtle, min-height com fallback vh/dvh, overflow-x, root flex e transições nativas foram examinados. As regras de View Transition neste entrypoint sucedem as de animations.css; o media query de movimento reduzido usa important. A presença de regras não certifica suporte do navegador, clipping em viewport real ou todos os ramos de acessibilidade. Sem build/render neste passe.",
+      "source_sha256": "1d66c0deacfc8d621aba7338fc47f0586106808241c212ec36973415bab265b0",
+      "git_blob_sha": "254f24ac2540ee32491672d39fc3e537c629c518",
+      "line_start": 1,
+      "line_end": 56,
+      "reviewed_ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/features/talk-me/talk-me-layout.css",
+      "adjudication": "Leitura integral 1–88. Dimensões padrão, clamps desktop, limites de altura 872/767 e reorganização horizontal 45%/55% foram examinados em conjunto; o layout curto fixa card de 160px e largura 440px. As regras deixam os breakpoints menores no fluxo original; alcance, zoom e overflow final dependem da árvore de componentes e fonte calculada. Não se inferiu corte efetivo de conteúdo sem renderização. Sem observação visual nesta reauditoria.",
+      "source_sha256": "894da8eca9a574e2c75b6de92e2b35eeb41ad8a6252461ad36cc78ddbc12118f",
+      "git_blob_sha": "a23997291bc4b282eaa9a6517cc94d2dbba3d38e",
+      "line_start": 1,
+      "line_end": 88,
+      "reviewed_ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/accessibility.css",
+      "adjudication": "Leitura integral 1–175. Tokens high-contrast claro/escuro, classe reduced-motion, media query incluindo pseudo-elementos, prefers-contrast:more, large-text, skeletons, foco/skip link, live region, densidade e content-visibility foram examinados. O seletor de classe reduced-motion não lista pseudo-elementos, enquanto a preferência de sistema lista; a composição efetiva com consumidores/animações deve ser distinguida. Não se presume que a presença de touch-target, skip-link ou aria-live-region seja sua adoção por todos componentes. A tolerância histórica de contraste não foi redefinida e nenhum contraste/AT foi certificado por leitura de tokens.",
+      "source_sha256": "ab0c400cb831f529da67e359a0b7c7dd61b45cd78eab905206d09c09fd863c67",
+      "git_blob_sha": "c45ce29d669b331c13244fa9050937145ff11cb9",
+      "line_start": 1,
+      "line_end": 175,
+      "reviewed_ranges": [
+        [
+          1,
+          175
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/animations.css",
+      "adjudication": "Leitura integral 1–205. Keyframes de movimento, opacidade, sombras, ripple, skeleton, typing e arco de conversa foram examinados. @property registra o ângulo e a aba oculta pausa a animação do pseudo-elemento selecionado. As regras finais incluem redução de movimento de sistema e pausa por tab-hidden, controles positivos preservados. Os efeitos de View Transition são também definidos posteriormente no entrypoint. Existência de keyframe não prova consumidor nem repaint/desempenho medido; não houve render ou benchmark.",
+      "source_sha256": "d4af22fd12eaf43fc3a2778f438ee8375315f6393829756a450146dff3578ebd",
+      "git_blob_sha": "98728439883fe3c0dd9cef161ce56ada7d06852c",
+      "line_start": 1,
+      "line_end": 205,
+      "reviewed_ranges": [
+        [
+          1,
+          205
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/sidebar.css",
+      "adjudication": "Leitura integral 1–89. Estados ativos/hover, badges, compatibilidade neon, reveals, transformações, sombras e animações foram examinados. Classes reveal começam ocultas e exigem classe revealed do consumidor. As classes de compatibilidade explicitamente no-op não foram tratadas como defeito sem promessa/consumidor. Escopo CSS não demonstra navegação, ativação do menu ou gestão de foco; o contrato de navegação permanece nos findings de plataforma/infra. Sem execução visual.",
+      "source_sha256": "34b2e7b0a62140b1f24ab77eddb48715b589eb551366ddd491c36ea8d69e4dee",
+      "git_blob_sha": "718928747fa6694fcacd933757d14856969096e5",
+      "line_start": 1,
+      "line_end": 89,
+      "reviewed_ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/team-chat-tokens.css",
+      "adjudication": "Leitura integral 1–75. Tokens de layout, cores ligadas ao tema global, bolhas, estados, analytics, durações, bordas e sombras foram examinados. Sombras escuras usam preferência de sistema e data-theme; redução de sistema zera três durações. Tokens não provam aplicação aos componentes. A combinação data-theme, classes do tema e preferência do sistema depende do consumidor; não se declarou defeito apenas por nomes de seletores nem se homologou contraste/layout. Nenhuma UI executada.",
+      "source_sha256": "23e1abbb4ae9fba4b25dcf35a503acae6c86ec9c2b70788856966e07fbd5a58c",
+      "git_blob_sha": "16ffc6d566770599e4d4fb490f80dee2220aee84",
+      "line_start": 1,
+      "line_end": 75,
+      "reviewed_ranges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/base.css",
+      "adjudication": "Leitura integral 1–230. Reset de bordas, smooth scroll, transição temporária de tema, tipografia, pesos dark, fontes fluidas com especificidade, placeholders, controles nativos, scrollbar e indicadores focus-visible foram examinados. O arquivo declara relações de especificidade com Tailwind, mas os valores de comentário não foram convertidos em medição visual atual. Os controles de foco removem outline e desenham box-shadow; a composição com diversity-overrides merece conferência no consumidor e foi encaminhada para peer review. Sem build, rasterização ou teste assistivo.",
+      "source_sha256": "4cb5ba40dd00708e4afc95695cc3986594198110309af355ab8b013bf98e8a9a",
+      "git_blob_sha": "dae510567cab6de8a7452dccc076c674ecec575b",
+      "line_start": 1,
+      "line_end": 230,
+      "reviewed_ranges": [
+        [
+          1,
+          230
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/diversity-overrides.css",
+      "adjudication": "Leitura integral 1–121. Preset ativado por html[data-preset-id=diversity], fundos rainbow por classe/estado, scrollbar, slider e ajustes de borda foram examinados. O bloco 74–80 usa seletores de substring ring-primary/ring-2/ring-1 e box-shadow:none!important. A substring também alcança classes de variante, como focus-visible:ring-2 do Button padrão, enquanto base.css usa box-shadow para foco. O mecanismo foi encaminhado à frente Auth para conferir caminho ativo e classificar sem afirmar execução DOM. Seletores por classe de hover/focus em 102–106 são incondicionais quanto à pseudo-classe: registrou-se o alcance exato, sem declarar incidente visual sem contexto.",
+      "source_sha256": "37b571c2251ba6b710974c30543d57749bdaa60af83f4b70174b49d1a7dbe408",
+      "git_blob_sha": "30d18102ff74eac76eaf6efdc692d36ec27f2b57",
+      "line_start": 1,
+      "line_end": 121,
+      "reviewed_ranges": [
+        [
+          1,
+          121
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "src/styles/utilities.css",
+      "adjudication": "Leitura integral 1–247. Utilitários tipográficos, scrollbars, texto gradiente, elevação/sombras, máscaras, card-lift/card-glow, redução de movimento e overrides de tarefas foram examinados. Os seletores de tarefas e chips têm escopo explícito, incluindo portal conforme o desenho de classe. Há controles de movimento reduzido para transição/transform e regras específicas para arrasto inline; esses controles foram preservados. Valores de contraste nos comentários são declarações históricas, não medições deste passe. Não se certificou efeito computado de máscara, fonte, contraste ou dispositivo.",
+      "source_sha256": "47599808c923d7d7d7b849e95501280aec7ef4007cc97e759e48a370d9229227",
+      "git_blob_sha": "2b4122f86570766e60f5012c93d626198edbe9bb",
+      "line_start": 1,
+      "line_end": 247,
+      "reviewed_ranges": [
+        [
+          1,
+          247
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "docs/design/ZAPP_DARKBLUE_PREMIUM_TOKENS.css",
+      "adjudication": "Leitura integral 1–68. Referência de paleta, tipografia, raio, largura de sidebar e adapter semântico scoped foi examinada, com tokens dark separados. É uma referência documental; não foi tratada como stylesheet necessariamente carregada na aplicação nem como autoridade para reverter presets atuais. Sua presença não valida a UI implantada. Sem render de referência.",
+      "source_sha256": "c3bbeb3c314e0eeb77c476e3332d78463f250ff991584bdc31b40b447a464e3a",
+      "git_blob_sha": "800282222e1f297477fdbf026601e566c852ab6e",
+      "line_start": 1,
+      "line_end": 68,
+      "reviewed_ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": "docs/talkx/references/INDEX.html",
+      "adjudication": "Leitura integral 1–89, incluindo CSS inline. Galeria estática de 17 imagens, links relativos de preview/download, rel=noopener, alt/dimensões, lazy loading, foco e breakpoint de uma coluna foram examinados. Não há JavaScript inline neste documento. O rodapé classifica as referências como ilustrativas e pede confronto de requisitos/capacidades. Os rótulos e screenshots não foram convertidos em prova de funcionamento do Talk X, e a leitura não validou pixels, autenticidade das aprovações históricas ou dimensões reais das imagens. Sem abertura de navegador.",
+      "source_sha256": "7c41296ab706a4e8681b259969837b53e72a3852d722bb3c19f5ed31491cb4b5",
+      "git_blob_sha": "427e342080c352e80b4d73f08534c99ecee92495",
+      "line_start": 1,
+      "line_end": 89,
+      "reviewed_ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "style-review.json"
+    },
+    {
+      "path": ".claude/ecc-tools.json",
+      "adjudication": "Leitura integral 1–251: metadados de geração, readiness, perfil solicitado security versus efetivo developer, componentes/pacotes selecionados e filtrados, dependências, arquivos e adapters foram examinados. É um registro gerado em agosto, com readiness zero e workflows vazio; não comprova instalação ativa nem ausência atual de relatórios. A lista memory de outro arquivo não se confunde com Claude-Mem. Nenhum pacote ou adapter foi executado/instalado.",
+      "source_sha256": "37bf019fe69f11bcced461cd5c6db3b7142dde54abfd318f845606a7f5c4f1db",
+      "git_blob_sha": "b6339ea2fbb7f179c0b3c6f5b70d7ba7b5eafa71",
+      "line_start": 1,
+      "line_end": 251,
+      "reviewed_ranges": [
+        [
+          1,
+          251
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".claude/identity.json",
+      "adjudication": "Leitura integral 1–14: identidade sugerida, nível técnico, preferência de estilo e domínio TypeScript. Metadado histórico gerado; não substitui instruções explícitas atuais nem demonstra configuração carregada em qualquer sessão.",
+      "source_sha256": "38cd47a8ed4791bb8c96b5e03e02f068b8307f034fe9916984ebf2fc50e56453",
+      "git_blob_sha": "cc095fb4ab12783f2fbaec0534417ff1cc488770",
+      "line_start": 1,
+      "line_end": 14,
+      "reviewed_ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".claude/settings.json",
+      "adjudication": "Leitura integral 1–26: PreToolUse cobre Bash/Grep e Read/Glob, chama graphify hook-guard após command -v e usa timeout10. A ausência do executável termina com exit0 por desenho, portanto configuração no arquivo não prova que a guarda esteja instalada/ativa. Não houve execução do hook nem alteração de permissões.",
+      "source_sha256": "34714cbaac87fd8491884fae9a3cee66794d27773fe10eff4dbedbf24b18a9df",
+      "git_blob_sha": "df8954581c1e4cc15c9cf7b30e00774a403f5cc2",
+      "line_start": 1,
+      "line_end": 26,
+      "reviewed_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".codex/config.toml",
+      "adjudication": "Leitura integral 1–48: baseline declara MCPs GitHub, Context7, Exa, memory, Playwright e sequential-thinking; registra configuração de seis threads/uma profundidade e três papéis de agente. Declarações npx/latest não fixam uma instalação materializada; este exame não invocou comandos nem tomou as permissões do arquivo como autoridade sobre a sessão. MCP server-memory não é evidência de inclusão de Claude-Mem, Headroom ou Cartographer.",
+      "source_sha256": "9f3c06bc0ac723bfff4636b2e9f9dbd18c2d77909475ebee7c0e06056fab75b2",
+      "git_blob_sha": "bc1ee67f60844cb9744e0be8dc78bf97af259bf3",
+      "line_start": 1,
+      "line_end": 48,
+      "reviewed_ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".codex/agents/docs-researcher.toml",
+      "adjudication": "Leitura integral 1–9: papel de consulta documental, modelo/effort declarados e sandbox read-only. Configuração local examinada como dado do repositório, sem disparar agente com esse modelo ou inferir disponibilidade atual do modelo.",
+      "source_sha256": "e14712b0a5f5e7378819200a07b2867ff84607d7b7dccd222e6fe38da17533e4",
+      "git_blob_sha": "0daae570b16c18326a81568204dd828213c23dbb",
+      "line_start": 1,
+      "line_end": 9,
+      "reviewed_ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".codex/agents/explorer.toml",
+      "adjudication": "Leitura integral 1–9: papel de exploração, sandbox read-only, rastreamento de execução e busca dirigida. A existência da configuração não comprova que um executor a carregou; nenhuma política de sessão foi modificada.",
+      "source_sha256": "ba9d7a10cf04a9b25a35ae8fc094b840cceef624d542f45b9d7cf3cdc78126ab",
+      "git_blob_sha": "732df7aff20d5c1d5aed8926cb9a640d866f9b5f",
+      "line_start": 1,
+      "line_end": 9,
+      "reviewed_ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".codex/agents/reviewer.toml",
+      "adjudication": "Leitura integral 1–9: papel de revisão de correção/segurança/regressão, esforço declarado high e sandbox read-only. O arquivo não é evidência de revisão executada ou aprovação de código; esse alcance foi preservado.",
+      "source_sha256": "9edbc2b5334fed555f2e8001142fcd78938bd1de8355aeb020c0dd8f0315cd80",
+      "git_blob_sha": "b13ed9cf1ffedccc2d36531d7f073f9a337d0ee7",
+      "line_start": 1,
+      "line_end": 9,
+      "reviewed_ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".agents/skills/zapp-web-v2/agents/openai.yaml",
+      "adjudication": "Leitura integral 1–6: nome/descrição/prompt de interface e allow_implicit_invocation. Metadado de descoberta da skill do repositório, sem prova de instalação global ou execução. A skill não foi criada nem alterada neste passe.",
+      "source_sha256": "a0470a5ef10247fcf19efa1d1d7bef9bc470ab801f2e2062e65ecea0b2874224",
+      "git_blob_sha": "070b8b283e2b09b531278268e32eff77003e1b15",
+      "line_start": 1,
+      "line_end": 6,
+      "reviewed_ranges": [
+        [
+          1,
+          6
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".editorconfig",
+      "adjudication": "Leitura integral 1–30: UTF-8/LF, duas posições por padrão, exceção de Markdown, SQL com quatro posições e Makefile com tabs. São preferências de editor, não verificação de formatação de todos os arquivos nem configuração de compilador.",
+      "source_sha256": "b01687baa25c1b5d9f04202a0f2212c847da188cb34a2df0bded7b936f920905",
+      "git_blob_sha": "9db2bf2075137455c2a8d83dca7b84278968472c",
+      "line_start": 1,
+      "line_end": 30,
+      "reviewed_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".gitattributes",
+      "adjudication": "Leitura integral da linha1: atribui merge driver graphify ao JSON do grafo. O atributo não instala nem define o executável do driver; o repositório não foi submetido a merge por esta auditoria.",
+      "source_sha256": "d1580533de3f8a648e168aa83833886a092e0e07cee9da22df8aea2c31a4e428",
+      "git_blob_sha": "acc196711845f8af1ea15ea3e278bc55b9c966d3",
+      "line_start": 1,
+      "line_end": 1,
+      "reviewed_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".graphifyignore",
+      "adjudication": "Leitura integral 1–14: exclui ambientes/segredos, baselines, dependências, build/coverage e saídas do grafo; .env.example é exceção explícita. Esse filtro vale para a ferramenta que o interpretar; não constitui controle de acesso ou remoção de arquivos Git e não prova ausência de dados sensíveis no histórico.",
+      "source_sha256": "9c9c6b9fb1681ebbf75cbcb4c91885ff0be20ad52c7c1e99ed014f2cb8a888c7",
+      "git_blob_sha": "364617a522facf7fe7b4714a6501f1f601edf953",
+      "line_start": 1,
+      "line_end": 14,
+      "reviewed_ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".nvmrc",
+      "adjudication": "Leitura integral da linha1: major Node24 declarado. O pin de major não fixa patch ou comprova runtime de CI/produção; nenhuma versão foi instalada.",
+      "source_sha256": "68ca3fba3b7e864770cb61aeb306d4bd4354b68ab4dd38450860c5d823e42a53",
+      "git_blob_sha": "a45fd52cc5891570d6299fab38643103c3955474",
+      "line_start": 1,
+      "line_end": 1,
+      "reviewed_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".prettierignore",
+      "adjudication": "Leitura integral 1–35: exclusões de dependências, build, locks, cache, tipos gerados, cobertura, IDE e minificados. Exclusão de formatação não equivale a exclusão da auditoria; o vendor minificado permanece separado no denominador próprio.",
+      "source_sha256": "66ce434d6b681c192dedc06d982809f72ae012aed89c643674aacd7384fd1c51",
+      "git_blob_sha": "25d35cad367a51fd320751612a68390d0483c6a8",
+      "line_start": 1,
+      "line_end": 35,
+      "reviewed_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".prettierrc",
+      "adjudication": "Leitura integral 1–12: semicolons, aspas simples, trailingComma es5, largura100, parênteses de arrow, LF e plugin Tailwind. É configuração de formatação; não prova que plugin esteja carregado ou que lint/testes passaram. Nenhum formatador executado.",
+      "source_sha256": "94e0d6ebf703f2d7b28a19328fab7b6b6dc52b4d0b09a539e526a62bb61a0429",
+      "git_blob_sha": "c73d85db8eef315f8a6d1283295eae353d59e07c",
+      "line_start": 1,
+      "line_end": 12,
+      "reviewed_ranges": [
+        [
+          1,
+          12
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".vscode/extensions.json",
+      "adjudication": "Leitura integral 1–19: recomendações de editor, lint, Tailwind, Git, corretor e assistência de código; lista de indesejadas vazia. Recomendação não é instalação nem autorização para instalar; não foi inferido estado do ambiente do usuário.",
+      "source_sha256": "c0494cb916f0a1d149ffe0a3930ecf9e621bbda5e79123cd8f7b405baa241b36",
+      "git_blob_sha": "3187acabda6b5049d4fd85d73b076dfb191be47d",
+      "line_start": 1,
+      "line_end": 19,
+      "reviewed_ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".vscode/settings.json",
+      "adjudication": "Leitura integral 1–66: formatter e ações explícitas de save, preferências TypeScript/Emmet/Tailwind, regex de classes, lint e exclusões de busca/arquivos. O tsdk aponta para dependência local; opções do editor não substituem tsconfig e exclusões visuais não removem arquivos rastreados. Nenhuma configuração do editor foi aplicada.",
+      "source_sha256": "d8f62de239e954be99ba86f5f32af356b908bfd1a4bda832b81948b6f305d3db",
+      "git_blob_sha": "22087c806bce24be90411f2610ae3c11bfa9e29c",
+      "line_start": 1,
+      "line_end": 66,
+      "reviewed_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".gitignore",
+      "adjudication": "Leitura integral 1–127: regras de ambientes, segredos, CA explicitamente permitido, artefatos de build/teste, sessões E2E, caches, editor, locks e worktrees. O próprio comentário permite .env.production para variáveis públicas; padrões ignore não removem dados já rastreados. A avaliação de credenciais/ambientes permanece na revisão Infra e não houve abertura de credenciais adicionais ou alteração de regras.",
+      "source_sha256": "513a6932650d0e6cf72766b2ec65ca916d7d7fe580abeeb73a0cbce954a8c482",
+      "git_blob_sha": "9d1dbd76cc644a7e56d20467384b5696e59be128",
+      "line_start": 1,
+      "line_end": 127,
+      "reviewed_ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    },
+    {
+      "path": ".claude/homunculus/instincts/inherited/zapp-web-v2-instincts.yaml",
+      "adjudication": "Leitura integral 1–127: seis blocos de convenções de commit, comprimento, nomes, imports, exports e localização de testes, com confiança e origem declaradas. Os dois blocos de commits citam amostra de um commit; são heurísticas históricas e não levantamento exaustivo do repositório atual. Conteúdo misto de frontmatter e Markdown não foi tratado como YAML de runtime nem como nova autorização para alterar padrões.",
+      "source_sha256": "d734d9c89718044e9588972799b6b236b34d92b02ccadf295f5a202ac2cd3ac1",
+      "git_blob_sha": "e5acba1d66f8701b425333e8b5935fac4d980d3c",
+      "line_start": 1,
+      "line_end": 127,
+      "reviewed_ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false,
+      "evidence": "config-review.json"
+    }
+  ]
+}

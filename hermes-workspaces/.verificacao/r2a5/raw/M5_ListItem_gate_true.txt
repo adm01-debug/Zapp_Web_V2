@@ -1,0 +1,67 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/.verificacao/r2a5/repo
+
+ ❯ src/components/contacts/__tests__/ContactDeletePermission.test.tsx (8 tests | 1 failed) 585ms
+     × não oferece Excluir quando can_delete é false (mas mantém Editar) 300ms
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 140 passed (141)
+   Start at  19:27:01
+   Duration  5.43s (transform 5.96s, setup 902ms, import 10.73s, tests 8.38s, environment 10.24s)
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/contacts/__tests__/ContactDeletePermission.test.tsx > ContactListItem · item Excluir > não oferece Excluir quando can_delete é false (mas mantém Editar)
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <div
+  class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground text-destructive"
+  data-orientation="vertical"
+  data-radix-collection-item=""
+  role="menuitem"
+  tabindex="-1"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-trash2 lucide-trash-2 w-3.5 h-3.5 mr-2"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10 11v6"
+    />
+    <path
+      d="M14 11v6"
+    />
+    <path
+      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+    />
+    <path
+      d="M3 6h18"
+    />
+    <path
+      d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    />
+  </svg>
+  Excluir
+</div> instead[39m
+ ❯ src/components/contacts/__tests__/ContactDeletePermission.test.tsx:53:47
+     51|
+     52|     await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDo…
+     53|     expect(screen.queryByText('Excluir')).not.toBeInTheDocument();
+       |                                               ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+error: "vitest" exited with code 1

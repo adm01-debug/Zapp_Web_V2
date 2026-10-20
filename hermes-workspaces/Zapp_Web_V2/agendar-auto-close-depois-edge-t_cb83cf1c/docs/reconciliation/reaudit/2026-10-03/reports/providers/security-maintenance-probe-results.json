@@ -1,0 +1,105 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "additional_pins": [
+    {
+      "path": "supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql",
+      "git_blob_sha": "d740a43d0a3ca803f58eb8c2f40eff0f019a0d12",
+      "sha256": "cc618235ad1abaee18f7f91b14287f018fdb39ce7a02b9e04175530c88726d04"
+    },
+    {
+      "path": "supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql",
+      "git_blob_sha": "b5667939713f0c5d3e06d7813a66ad7427f0a520",
+      "sha256": "09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f"
+    },
+    {
+      "path": "supabase/migrations/20260930760000_searchbox_usage_daily.sql",
+      "git_blob_sha": "d74b0505cf4fdeb84b03637b5fee04820e262091",
+      "sha256": "f970c7234d7da1d0c7706e6297c9fe93396b133b9cbb57a579446692cb9cc411"
+    },
+    {
+      "path": "docs/mapa/USO_SEARCHBOX.md",
+      "git_blob_sha": "6310775343764616e4913bf31865d9dc7000fcb5",
+      "sha256": "52e2c8d07854e2bf24cd830c2ecd8f2e4f426769aaa28ae244be2ed380cfe227"
+    }
+  ],
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Complete handler evaluation after reviewed import removal/type erasure; real response/CORS helpers and Web streams. Valid schema result, DB, env, logger, rate limiter, cron-auth response and Resend are explicit in-memory boundaries. SQL predicates/upsert are simulated, not executed. No product code changed.",
+  "source_hashes": {
+    "supabase/functions/_shared/validation.ts": "257890b6c2c20f463f6bb01b670306681b00bdc3685eda012c4296aad620d61e",
+    "supabase/functions/_shared/schemas.ts": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7",
+    "supabase/config.toml": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af",
+    "supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql": "cc618235ad1abaee18f7f91b14287f018fdb39ce7a02b9e04175530c88726d04",
+    "supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql": "09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f",
+    "supabase/migrations/20260930760000_searchbox_usage_daily.sql": "f970c7234d7da1d0c7706e6297c9fe93396b133b9cbb57a579446692cb9cc411",
+    "docs/mapa/USO_SEARCHBOX.md": "52e2c8d07854e2bf24cd830c2ecd8f2e4f426769aaa28ae244be2ed380cfe227",
+    "supabase/functions/send-rate-limit-alert/index.ts": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+    "supabase/functions/cleanup-rate-limit-logs/index.ts": "9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac",
+    "supabase/functions/searchbox-budget-alert/index.ts": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1",
+    "supabase/functions/csp-report/index.ts": "029925a360928bc6c4cc35934192a13ecd111f06903c1b2092f85127ac093040"
+  },
+  "results": [
+    {
+      "id": "P34",
+      "noConfiguredSecret": 200,
+      "configuredSecretMissingHeader": 401,
+      "forbiddenBoundaryCallsAfterRejection": 0,
+      "outcome": "Complete handler accepts admitted-user fixture with no INTERNAL_ALERT_SECRET; a configured secret rejects missing header before service client. Gateway and JWT were not executed."
+    },
+    {
+      "id": "P35",
+      "alertStatus": 200,
+      "resultingPermanent": false,
+      "expiresAt": "2026-10-04T12:15:00.000Z",
+      "cleanupStatus": 200,
+      "remainingRowsAfter16Minutes": 0,
+      "outcome": "Valid internal alert replaces permanent block with 15-minute TTL; complete cleanup handler deletes the now-temporary expired row. Upsert and predicates are simulated from the pinned source; no live SQL or enforcement gate was tested."
+    },
+    {
+      "id": "P36",
+      "http": 200,
+      "success": true,
+      "persistedBlocks": 0,
+      "persistedAlerts": 1,
+      "notificationClaimsBlocked": true,
+      "outcome": "Complete handler receives a failed block UPSERT but leaves a high-severity blocked alert, creates an admin notification claiming blocking, and acknowledges success."
+    },
+    {
+      "id": "P37",
+      "sameMonthSuccessfulEmailCalls": 2,
+      "monthlyNotificationPresent": true,
+      "ledgerReadByEdge": false,
+      "providerErrorResponse": 502,
+      "invalidSecretResponse": 403,
+      "outcome": "Complete channel-2 handler sends on two cron dates in the same month although the channel-1 ledger exists; provider failure and invalid cron secret correctly fail. Email is intercepted, not delivered."
+    },
+    {
+      "id": "P38",
+      "legacy": 204,
+      "reportingApiBatch": 204,
+      "acceptedBatchCount": 10,
+      "actualStreamOverLimitDespiteFalseHeader": 413,
+      "streamCancelled": true,
+      "malformed": 400,
+      "wrongMethod": 405,
+      "rateLimited": 429,
+      "outcome": "Complete collector removes query/fragments from URL fields, skips objects/unlisted fields, limits batches to 10 and enforces actual bytes with stream cancellation. Rate limit result is simulated; no anonymous attack or live logging occurred."
+    }
+  ]
+}
