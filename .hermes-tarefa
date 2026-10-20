@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=avatar-caminho-imprevisivel
+ID=2610122249548a
+BRANCH=v2/avatar-caminho-imprevisivel-2610122249548a
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avatar-caminho-imprevisivel-2610122249548a
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T22:49:26-03:00
+KANBAN=t_dc0f1b11
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avatar-caminho-imprevisivel-2610122249548a/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610122249548a
+PRONTO_SHA=b4e4f88f505ae00eb01f28403c351524ee097ed9

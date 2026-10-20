@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791856164 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791856166 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 b58ada47fc403e475b4ac4c1534927c621e15f50 Hermes Senior <hermes-senior@promobrindes.local> 1791857062 -0300	commit: fix(edge): avatar de contato em caminho imprevisivel e sem URL antiga valida
+b58ada47fc403e475b4ac4c1534927c621e15f50 a95a9eeed58c7f9497035b8a8d68e9976cdd78d6 Hermes Senior <hermes-senior@promobrindes.local> 1791857135 -0300	commit: docs(edge): relato da entrega do avatar imprevisivel
+a95a9eeed58c7f9497035b8a8d68e9976cdd78d6 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791857148 -0300	reset: moving to HEAD~2
+96dd72dc5f5db919bdbb4ffdc269510addca6165 4db174d93e9801e82d0f021624ae8b48ac980e66 Hermes Senior <hermes-senior@promobrindes.local> 1791857148 -0300	commit: fix(edge): avatar de contato em caminho imprevisivel e sem URL antiga valida
+4db174d93e9801e82d0f021624ae8b48ac980e66 b4e4f88f505ae00eb01f28403c351524ee097ed9 Hermes Senior <hermes-senior@promobrindes.local> 1791857193 -0300	commit (amend): fix(edge): avatar de contato em caminho imprevisivel e sem URL antiga valida
+b4e4f88f505ae00eb01f28403c351524ee097ed9 bbeafcd55693ce35c778c8e2abb8545eb0a6ea6c Hermes Senior <hermes-senior@promobrindes.local> 1792021396 -0300	commit: test(edge): idempotencia da migracao de avatar e ramo de falha do legado
+bbeafcd55693ce35c778c8e2abb8545eb0a6ea6c 17a5e93808f32bab898bb9a91314483f66143b84 Hermes Senior <hermes-senior@promobrindes.local> 1792021433 -0300	commit: docs(edge): relato do refazer 1 da migracao de avatar
