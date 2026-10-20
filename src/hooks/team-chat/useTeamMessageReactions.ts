@@ -6,6 +6,9 @@ import { toast } from 'sonner';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { queryKeys } from './queryKeys';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('useTeamMessageReactions');
 
 interface RawReaction {
   id: string;
@@ -84,6 +87,10 @@ export function useTeamMessageReactions(conversationId: string) {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) as reações da conversa corrente
         // são refeitas.
+        // E91: a queda do canal era silenciosa; loga o estado de erro.
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.warn('team:reactions CHANNEL_ERROR', { conversationId, status });
+        }
         if (status !== 'SUBSCRIBED') return;
         if (jaInscrito) revalidar();
         jaInscrito = true;
