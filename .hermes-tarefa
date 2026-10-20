@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=ai-transcribe-audio-ledger-timeouts-2610
+ID=2610152019c077
+BRANCH=v2/ai-transcribe-audio-ledger-timeouts-2610-2610152019c077
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ai-transcribe-audio-ledger-timeouts-2610-2610152019c077
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T20:19:15-03:00
+KANBAN=t_eeac9ac7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ai-transcribe-audio-ledger-timeouts-2610-2610152019c077/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610152019c077
+PRONTO_SHA=6bdc9796ab16530ef79cdfc977da71112b66d95f
