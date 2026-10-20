@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=atendentes-pendencias-ultimos-envios-ref
+ID=2610130944d54e
+BRANCH=v2/atendentes-pendencias-ultimos-envios-ref-2610130944d54e
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atendentes-pendencias-ultimos-envios-ref-2610130944d54e
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T09:44:22-03:00
+KANBAN=t_b20ba3c7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atendentes-pendencias-ultimos-envios-ref-2610130944d54e/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130944d54e
+PRONTO_SHA=39d72b67ac9f7e47c1a7380c6f34fff87e912c7d
