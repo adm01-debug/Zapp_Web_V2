@@ -347,6 +347,7 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   const contratos = ler('vitest.contracts.config.ts');
   const pacote = JSON.parse(ler('package.json'));
   const ci = ler('.github/workflows/ci.yml');
+  const deployFns = ler('.github/workflows/deploy-functions.yml');
 
   // 1. unidade do app: glob do Vitest citado no doc == glob do arquivo
   const globApp = "src/**/*.{test,spec}.{ts,tsx}";
@@ -372,16 +373,12 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   assert.equal(pacote.scripts.test, 'vitest run');
   assert.equal(pacote.scripts['test:e2e'], 'playwright test');
 
-  // 4. os comandos de CI citados precisam estar no ci.yml, incluindo a linha completa de node:test.
-  for (const trecho of [
-    "deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1",
-    "deno check --config scripts/ci/deno.json --frozen",
-  ]) {
-    assert.ok(ci.includes(trecho), `ci.yml não tem mais o passo \`${trecho}\``);
-    assert.ok(doc.includes(trecho), `TESTING_CONVENTION.md não cita o passo real da CI: \`${trecho}\``);
-  }
-  const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs');
-  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]+)`/);
+  // 4. o runner node:test da CI: o ci.yml atual usa linha simples (`run: node --test ...`),
+  //    não bloco `>-`; o doc tem de citar exatamente essa linha.
+  const nodeCiLinha = ci.split('\n').find((l) => l.trim().startsWith('run: node --test scripts/ci/*.unit.mjs'));
+  assert.ok(nodeCiLinha, 'ci.yml não tem mais o passo node:test');
+  const comandoNodeCi = normalizaEspacos(nodeCiLinha.replace(/^\s*run:\s*/, ''));
+  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]*)`/);
   assert.ok(comandoNodeDoc, 'TESTING_CONVENTION.md não cita o comando node:test da CI');
   assert.equal(
     normalizaEspacos(comandoNodeDoc[1]),
@@ -393,8 +390,13 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
     'TESTING_CONVENTION.md não pode reduzir a varredura da CI a scripts/ci/*.unit.mjs',
   );
 
-  // 5. a camada Deno das edges: o doc precisa citar o glob de teste das edges que a CI usa
-  assert.ok(ci.includes("git ls-files 'supabase/functions/**/*.test.ts'"), 'a CI perdeu o glob dos testes Deno');
+  // 5. a camada Deno das edges: o deploy typecheca as edges antes de publicar
+  //    (deploy-functions.yml); o doc cita o check real e o glob de teste das edges.
+  assert.ok(
+    deployFns.includes('deno check supabase/functions/**/index.ts'),
+    'deploy-functions.yml perdeu o deno check das edges',
+  );
+  assert.ok(doc.includes('deno check supabase/functions/**/index.ts'), 'TESTING_CONVENTION.md não cita o deno check real');
   assert.ok(doc.includes('supabase/functions/**/*.test.ts'), 'TESTING_CONVENTION.md não cita os testes Deno das edges');
 
   // 6. a convenção de nome do diretório de contratos vale para todos os arquivos de lá

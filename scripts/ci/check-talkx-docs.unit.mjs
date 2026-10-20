@@ -46,6 +46,7 @@ export const PREDECESSORES = [
 /** Documentos correntes do módulo (caminho relativo a `docs/talkx/`). */
 export const DOCS_CORRENTES = [
   'README.md',
+  'ESTADOS.md',
   'PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md',
   'ARQUITETURA.md',
   'OPERACAO.md',

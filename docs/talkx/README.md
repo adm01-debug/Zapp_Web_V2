@@ -11,6 +11,7 @@ auditoria e handoff de sessão vivem no [arquivo](./_arquivo/README.md).
 |---|---|
 | [PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md](./PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md) | **Plano vigente** — 200 etapas (X001–X200) |
 | [v4/STATUS.md](./v4/STATUS.md) | **Placar do plano** — etapas concluídas e elementos do mock fechados; gerado por `scripts/talkx/v4-status.mjs` |
+| [ESTADOS.md](./ESTADOS.md) | Matriz tela × estado do sistema; gerada por `scripts/talkx/gen-estados.mjs` |
 | [v4/README.md](./v4/README.md) | Material de apoio do plano: `v4/etapas/`, `v4/inventario/`, `v4/etapas.json` |
 | [v4/DECISOES.md](./v4/DECISOES.md) | Decisões de arquitetura (A1–A18) e de negócio (N01–N45) |
 | [ARQUITETURA.md](./ARQUITETURA.md) | Componentes, máquina de estados e métrica→fonte — com as correções pendentes no banner do topo |
