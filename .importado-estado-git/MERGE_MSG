@@ -1,0 +1,5 @@
+fix(auth): polimento de reset de senha, SSO e instalacao PWA
+
+# Conflicts:
+#	.tmp/relato.md
+#	src/pages/SSOCallback.tsx

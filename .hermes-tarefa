@@ -1,0 +1,14 @@
+PROJETO=Zapp_Web_V2
+SLUG=auth-polimento-reset-sso-pwa-t-316115eb
+ID=2610130646fb4f
+BRANCH=v2/auth-polimento-reset-sso-pwa-t-316115eb-2610130646fb4f
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-polimento-reset-sso-pwa-t-316115eb-2610130646fb4f
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T06:46:05-03:00
+KANBAN=t_316115eb
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-polimento-reset-sso-pwa-t-316115eb-2610130646fb4f/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130646fb4f

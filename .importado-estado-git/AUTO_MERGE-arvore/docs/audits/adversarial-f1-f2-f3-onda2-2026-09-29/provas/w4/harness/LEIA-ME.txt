@@ -1,0 +1,24 @@
+# Harness de performance (W4) — nota sobre as extensões `.txt`
+
+Este diretório é **material de auditoria**, não código de produto. Todos os arquivos que a análise
+automática do **SonarCloud** trataria como código (`00-schema.sql`, `04-seed.sql`, `07-bench.sql`,
+`16-concorrencia.sh`, `17-relatorio.py`, `run-lean.sh`, …) estão com o sufixo **`.txt`**, preservando o
+conteúdo integral.
+
+**Por que:** o SonarCloud deste repositório roda em modo de análise automática (não há
+`sonar-project.properties`) e classifica esses scripts como código novo sem cobertura. Medido neste PR:
+com eles no formato original, o *Quality Gate* caía para `new_reliability_rating = 5` (limite 1) por
+causa de 3 BLOCKERs, entre eles `plsql:DeleteOrUpdateWithoutWhereCheck` no seed de auditoria
+(`04-seed.sql`) — que é um `UPDATE`/`DELETE` sem `WHERE` **intencional** num banco descartável.
+
+**Para reexecutar** (removendo o sufixo de todos os arquivos que o runner usa):
+
+```bash
+cd docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w4/harness
+for f in *.txt generated/*.txt; do mv "$f" "${f%.txt}"; done
+./run-lean.sh <volume> <base|idx> <container>
+```
+
+O mesmo critério vale para as sondas das outras frentes: `provas/w1/` (`*.sh.txt`, `*.tsx.txt`),
+`provas/w2/` (`*.sh.txt`), `provas/w3/` (`*.sh.txt`, incluindo o harness de replay proposto para o CI)
+e `provas/w5/` (`*.mjs.txt`, `*.html.txt`).

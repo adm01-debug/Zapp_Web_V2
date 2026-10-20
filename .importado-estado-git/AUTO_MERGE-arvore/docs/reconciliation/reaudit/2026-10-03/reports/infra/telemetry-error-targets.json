@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "primary_files": 7,
+  "primary_lines": 685,
+  "targets": [
+    {
+      "path": "src/components/errors/ErrorBoundary.tsx",
+      "lines": 254,
+      "sha256": "fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/AdminTelemetriaPage.tsx",
+      "lines": 151,
+      "sha256": "a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryStatsCards.tsx",
+      "lines": 60,
+      "sha256": "fb0467566d2e293f48a0c20084de3a5970d66e1f980a9fd40a2e6033f288ea1e",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryTable.tsx",
+      "lines": 88,
+      "sha256": "351510648414af0ce45528db1ed08ec743d02894d50e0899083481b885eab0b4",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryTopOffenders.tsx",
+      "lines": 44,
+      "sha256": "5c3bd94943b88f1a41d1f70c80b9886c39bdc295c6ef3bd93baee0d1954dc9fa",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/admin-telemetria/telemetryTypes.ts",
+      "lines": 18,
+      "sha256": "e5eeadc26833cc9f0480a7dd1d6db05f78e754e62c16b2090176a974f2126f06",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/pages/admin-telemetria/telemetryUtils.tsx",
+      "lines": 70,
+      "sha256": "566b087d0f34ae9afad23181d16ea044d7c120f56f2f1b569a9b43e7f2eb8188",
+      "review_status": "PENDING_READING"
+    }
+  ],
+  "excluded_already_read": [
+    "src/components/theme/HighContrastToggle.tsx"
+  ],
+  "controls": [
+    "Roster is not semantic coverage.",
+    "No product code execution."
+  ]
+}
