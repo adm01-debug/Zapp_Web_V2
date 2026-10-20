@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato } from './fila-merge.mjs';
+import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato, motivoFora, TETO_TRAVADA_MS } from './fila-merge.mjs';
 
 const OBRIG = ['🧪 Unit Tests', 'Contrato DB offline'];
-const ok = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: '2026-10-15T10:00:00Z' });
-const rodando = (name) => ({ __typename: 'CheckRun', name, status: 'IN_PROGRESS', conclusion: '', startedAt: '2026-10-15T10:05:00Z' });
-const falhou = (name, startedAt = '2026-10-15T10:00:00Z') => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'FAILURE', startedAt });
+const AGORA_ISO = () => new Date().toISOString();
+const ok = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: AGORA_ISO() });
+const rodando = (name) => ({ __typename: 'CheckRun', name, status: 'IN_PROGRESS', conclusion: '', startedAt: AGORA_ISO() });
+const falhou = (name, startedAt = AGORA_ISO()) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'FAILURE', startedAt });
 const verde = OBRIG.map(ok);
 
 function pr(number, extra = {}) {
@@ -26,10 +27,11 @@ test('os checks obrigatórios saem do baseline do settings-guard (fonte única)'
   assert.ok(lista.includes('🧩 Node CI Scripts'));
 });
 
-test('estado do check: ausente e em andamento são pendentes; cancelado não conta como falha', () => {
+test('estado do check: ausente e em andamento são pendentes; cancelado trava (GA49)', () => {
   assert.equal(estadoDoCheck([], '🧪 Unit Tests'), 'pendente');
   assert.equal(estadoDoCheck([rodando('🧪 Unit Tests')], '🧪 Unit Tests'), 'pendente');
-  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }], '🧪 Unit Tests'), 'pendente');
+  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }], '🧪 Unit Tests'), 'bloqueado');
+  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'ACTION_REQUIRED' }], '🧪 Unit Tests'), 'bloqueado');
   assert.equal(estadoDoCheck([falhou('🧪 Unit Tests')], '🧪 Unit Tests'), 'falhou');
   assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'SKIPPED' }], '🧪 Unit Tests'), 'passou');
 });
@@ -61,6 +63,48 @@ test('classificar: draft, sem auto-merge, outra base e conflito ficam fora da fi
 test('classificar: BEHIND com checks verdes aguarda; com check obrigatório vermelho fica bloqueada', () => {
   assert.equal(classificar(pr(1), OBRIG), 'aguardando');
   assert.equal(classificar(pr(1, { statusCheckRollup: [ok('🧪 Unit Tests'), falhou('Contrato DB offline')] }), OBRIG), 'bloqueada');
+});
+
+test('GA49: em dia com check CANCELLED vira bloqueada (nao pendente eterna)', () => {
+  const cancelado = [{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }, ok('Contrato DB offline')];
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: cancelado }), OBRIG), 'bloqueada');
+  const d = decidir(
+    [pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: cancelado }), pr(2)],
+    OBRIG,
+  );
+  assert.equal(d.acao, 'atualizar');
+  assert.equal(d.pr, 2);
+  assert.deepEqual(d.bloqueadas, [1]);
+});
+
+test('GA49: teto de 45 min — em dia e sem andamento ha mais de 45 min libera a vez', () => {
+  const agora = Date.parse('2026-10-15T12:00:00Z');
+  const velho = new Date(agora - TETO_TRAVADA_MS - 60_000).toISOString();
+  const travado = OBRIG.map((name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: velho }));
+  // COMPLETED+sUCCESS ha 46 min, nada rodando: a fila nao pode esperar para sempre.
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: travado }), OBRIG, agora), 'bloqueada');
+  const recente = new Date(agora - 5 * 60_000).toISOString();
+  const fresco = OBRIG.map((name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: recente }));
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: fresco }), OBRIG, agora), 'em-voo');
+  // Rodando agora, mesmo com startedAt velho: continua em voo.
+  const rodandoVelho = [{ __typename: 'CheckRun', name: OBRIG[0], status: 'IN_PROGRESS', conclusion: '', startedAt: velho }, fresco[1]];
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: rodandoVelho }), OBRIG, agora), 'em-voo');
+});
+
+test('GA50: mergeable CONFLICTING fica fora como conflito; decidir lista o motivo', () => {
+  assert.equal(classificar(pr(9, { mergeStateStatus: 'CLEAN', mergeable: 'CONFLICTING' }), OBRIG), 'fora');
+  assert.equal(motivoFora(pr(9, { mergeStateStatus: 'CLEAN', mergeable: 'CONFLICTING' })), 'conflito');
+  assert.equal(motivoFora(pr(9, { isDraft: true })), 'draft');
+  assert.equal(motivoFora(pr(9, { autoMergeRequest: null })), 'sem auto-merge');
+  const d = decidir(
+    [pr(9, { mergeStateStatus: 'DIRTY' }), pr(2)],
+    OBRIG,
+  );
+  assert.equal(d.acao, 'atualizar');
+  assert.deepEqual(d.fora, [{ number: 9, motivo: 'conflito' }]);
+  // PR sem auto-merge fora nao entra no resumo (nao e "fila travada").
+  const d2 = decidir([pr(9, { autoMergeRequest: null })], OBRIG);
+  assert.deepEqual(d2.fora, []);
 });
 
 test('classificar: atualizada com a main e rodando (ou verde) ocupa a vez', () => {

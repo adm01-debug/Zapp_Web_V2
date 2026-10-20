@@ -7,7 +7,7 @@ original_migration="$repo_root/supabase/migrations/20260830153000_webhook_failur
 harden_migration="$repo_root/supabase/migrations/20260831120000_harden_webhook_failures_acl.sql"
 guard_sql="$repo_root/scripts/db-audit/check-webhook-failures-acl.sql"
 container_name="zapp-v2-webhook-acl-test-$$"
-postgres_image="${WEBHOOK_ACL_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${WEBHOOK_ACL_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 passed=0
 
 cleanup() {

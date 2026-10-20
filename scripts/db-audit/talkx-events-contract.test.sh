@@ -30,7 +30,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260929730000_talkx_events_contract_v11.sql"
 migration_v11_1="$repo_root/supabase/migrations/20260929840000_talkx_campaign_events_xor_and_grants_v11_1.sql"
-pg_image="${TALKX_EVENTS_CONTRACT_PG_IMAGE:-postgres:17-alpine}"
+pg_image="${TALKX_EVENTS_CONTRACT_PG_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 pg_name="zapp-talkx-events-contract-$$"
 passed=0
 

@@ -24,7 +24,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="${MESSAGE_GROUP_SENDER_MIGRATION:-$repo_root/supabase/migrations/20261011140613_messages_group_sender.sql}"
 helpers_migration="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
 messages_rls_migration="$repo_root/supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql"
-postgres_image="${MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-messages-group-sender-$$"
 
 cleanup() {

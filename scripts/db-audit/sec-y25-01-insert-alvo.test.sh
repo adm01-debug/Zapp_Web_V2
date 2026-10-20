@@ -30,7 +30,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 correction="${SEC_Y25_CORRECAO:-$repo_root/supabase/migrations/20261009090603_sec_y25_01_insert_alvo.sql}"
 helpers_migration="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
-postgres_image="${SEC_Y25_INSERT_ALVO_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${SEC_Y25_INSERT_ALVO_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-y25-insert-alvo-test-$$"
 
 cleanup() {

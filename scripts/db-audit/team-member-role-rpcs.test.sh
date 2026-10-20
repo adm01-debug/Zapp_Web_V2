@@ -27,7 +27,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migrations_dir="${TEAM_MEMBER_ROLE_TEST_MIGRATIONS_DIR:-$repo_root/supabase/migrations}"
-postgres_image="${TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-team-member-role-test-$$"
 
 # Ultima definicao das duas RPCs ANTES da correcao (bloco A) e a propria correcao (bloco B).

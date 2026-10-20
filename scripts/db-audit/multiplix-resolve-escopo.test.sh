@@ -52,7 +52,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 singu_dir="$repo_root/supabase/migrations/_foreign/singu"
 funcao_origem='20261005103000_singu_resolve_redige_fora_escopo.sql'
 funcao_arquivo="${MULTIPLIX_RESOLVE_ESCOPO_TEST_FUNCAO_ARQUIVO:-$singu_dir/$funcao_origem}"
-postgres_image="${MULTIPLIX_RESOLVE_ESCOPO_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${MULTIPLIX_RESOLVE_ESCOPO_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-multiplix-resolve-test-$$"
 
 cleanup() {

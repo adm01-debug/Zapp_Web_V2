@@ -28,7 +28,7 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migrations_dir="$repo_root/supabase/migrations"
 fix_migration="$migrations_dir/20261002431230_talkx_regressoes_fix.sql"
-postgres_image="${TALKX_REGRESSOES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_REGRESSOES_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-regressoes-chain-test-$$"
 test_password="talkx_regressoes_chain_test_only"
 

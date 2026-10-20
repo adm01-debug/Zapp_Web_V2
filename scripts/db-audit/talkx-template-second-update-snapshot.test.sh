@@ -36,7 +36,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_guard="$repo_root/supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql"
 migration_v3="$repo_root/supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql"
 migration_fix="${TALKX_SECOND_UPDATE_FIX_FILE:-$repo_root/supabase/migrations/20261011000017_talkx_template_snapshot_second_update.sql}"
-postgres_image="${TALKX_SECOND_UPDATE_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_SECOND_UPDATE_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 tmp_dir="${TALKX_SECOND_UPDATE_TMPDIR:-${TMPDIR:-$repo_root/.tmp}}"
 
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }

@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-postgres_image="${MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-message-phase1-$RANDOM-$$"
 test_password="message_phase1_test_only"
 concurrency_dir=""
@@ -18,6 +18,12 @@ cleanup() {
 trap cleanup EXIT INT TERM
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
+# GA70: sob o docker-shim o banco chama-se shim_<container> (exportado em
+# $DOCKER_SHIM_STATE_DIR/<container>.db); fora dele e 'postgres'.
+expected_db() {
+  local f="${DOCKER_SHIM_STATE_DIR:-/tmp/docker-shim-state}/$container_name.db"
+  if [[ -f "$f" ]]; then cat "$f"; else printf 'postgres'; fi
+}
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
@@ -182,10 +188,10 @@ INSERT INTO public.contacts(id,phone,assigned_to,queue_id,whatsapp_connection_id
 SQL
 
 preflight_runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/message-delivery-phase1-runtime.sql")"
-RUNTIME_PROOF="$preflight_runtime_proof" node --input-type=module <<'NODE'
+EXPECTED_DB="$(expected_db)" RUNTIME_PROOF="$preflight_runtime_proof" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_PROOF);
 const ok = proof.server_major === 17
-  && proof.database === 'postgres'
+  && proof.database === process.env.EXPECTED_DB
   && proof.service_role_inherits_authenticated === false
   && proof.message_column_count === 0
   && proof.closure_column_count === 0
@@ -698,10 +704,10 @@ close_2="$(grep -E '^[0-9a-f-]{36}:[0-9a-f-]{36}$' "$concurrency_dir/close-2" | 
   || fail 'close concorrente nao convergiu'
 
 runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/message-delivery-phase1-runtime.sql")"
-RUNTIME_PROOF="$runtime_proof" node --input-type=module <<'NODE'
+EXPECTED_DB="$(expected_db)" RUNTIME_PROOF="$runtime_proof" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_PROOF);
 const ok = proof.server_major === 17
-  && proof.database === 'postgres'
+  && proof.database === process.env.EXPECTED_DB
   && proof.message_column_count === 7
   && proof.closure_column_count === 1
   && proof.event_column_count === 1

@@ -35,7 +35,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MIGRATIONS_DIR = join(ROOT, 'supabase', 'migrations');
 const DOCKER = resolverExecutavel('docker');
 const CONTAINER = `zapp-v2-talkx-window-${process.pid}`;
-const IMAGE = process.env.TALKX_WINDOW_TEST_POSTGRES_IMAGE || 'postgres:17-alpine';
+const IMAGE = process.env.TALKX_WINDOW_TEST_POSTGRES_IMAGE || 'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24';
 
 // ── SQL dos artefatos reais ──────────────────────────────────────────────────
 

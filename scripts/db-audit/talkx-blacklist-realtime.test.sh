@@ -40,7 +40,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="${TALKX_BLACKLIST_REALTIME_TEST_MIGRATION:-$repo_root/supabase/migrations/20261011000013_talkx_blacklist_realtime_column_scope.sql}"
-postgres_image="${TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-blacklist-realtime-test-$$"
 test_password="talkx_blacklist_realtime_test_only"
 

@@ -28,7 +28,7 @@ migration_x016="$repo_root/supabase/migrations/20261002391230_talkx_audience_rpc
 migration_x017="$repo_root/supabase/migrations/20261002421230_talkx_audience_snapshot.sql"
 migration_x057a="$repo_root/supabase/migrations/20261002641230_talkx_v4_x057_segmentos.sql"
 migration_x057b="${TALKX_X057B_MIGRATION:-$repo_root/supabase/migrations/20261009032420_x057b_rpc_segmentos.sql}"
-postgres_image="${TALKX_CAMPAIGN_SEGMENTS_RPC_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_CAMPAIGN_SEGMENTS_RPC_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-campaign-segments-rpc-test-$$"
 test_password="talkx_campaign_segments_rpc_test_only"
 

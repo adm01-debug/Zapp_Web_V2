@@ -22,7 +22,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="${RECUPERACAO_ANONIMA_MIGRATION:-$repo_root/supabase/migrations/20261015182400_recuperacao_anonima_pedido_reset.sql}"
-postgres_image="${RECUPERACAO_ANONIMA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${RECUPERACAO_ANONIMA_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-recuperacao-anonima-test-$$"
 
 cleanup() {

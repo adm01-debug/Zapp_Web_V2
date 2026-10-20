@@ -28,7 +28,7 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const MIGRATIONS_DIR = path.join(REPO_ROOT, 'supabase/migrations');
 const POSTGRES_IMAGE = process.env.POSTGRES_TEST_IMAGE
   || process.env.CATALOG_TEST_POSTGRES_IMAGE
-  || 'postgres:17-alpine';
+  || 'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24';
 const CONTAINER = `zapp-v2-sla-delivery-test-${process.pid}`;
 
 const T = '2026-10-06 12:00:00+00';

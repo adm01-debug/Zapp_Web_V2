@@ -10,7 +10,7 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 audience_migration="$repo_root/supabase/migrations/20261002391230_talkx_audience_rpc.sql"
 migration="${TALKX_SEGMENT_HEALTH_MIGRATION:-$repo_root/supabase/migrations/20261011003010_talkx_segment_health.sql}"
-postgres_image="${TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="seghealth-$$"
 test_password="seghealth"
 

@@ -235,9 +235,8 @@ const testShOnDisk = gitLsFilesOuDisco('scripts/db-audit')
   .filter(f => f.endsWith('.test.sh'));
 
 const dbGuardYaml = read('.github/workflows/db-guard.yml');
-const testShInGuard = new Set(
-  [...dbGuardYaml.matchAll(/\bscripts\/db-audit\/\S+\.test\.sh\b/g)].map(m => m[0])
-);
+// GA73: so bloco `run:` conta (mencao em comentario nao executa nada).
+const testShEmGuard = new Set(refsShEmBlocos(blocosRunDeWorkflow(dbGuardYaml)));
 
 // ── 3. Suites Node: disco vs passos de workflow ───────────────────────────────
 // O caminho da suite conta como coberto quando aparece dentro de um bloco `run:` de algum
@@ -247,10 +246,10 @@ const testShInGuard = new Set(
 const SUFIXO_SUITE_NODE = /\.(?:test|unit|integration)\.mjs$/;
 const CAMINHO_SUITE_NODE = /scripts\/[A-Za-z0-9_./*-]+\.(?:test|unit|integration)\.mjs/g;
 
-/** Caminhos e globos de suites Node citados nos blocos `run:` de um workflow. */
-export function padroesNodeDeWorkflow(yaml) {
+/** Texto agregado dos blocos `run:` de um workflow (o que o runner executa). */
+export function blocosRunDeWorkflow(yaml) {
   const linhas = String(yaml).split('\n');
-  const padroes = new Set();
+  const blocos = [];
   for (let i = 0; i < linhas.length; i += 1) {
     const abertura = /^(\s*)run:\s*(.*)$/.exec(linhas[i]);
     if (!abertura) continue;
@@ -258,14 +257,26 @@ export function padroesNodeDeWorkflow(yaml) {
     const bloco = [abertura[2]];
     for (let j = i + 1; j < linhas.length; j += 1) {
       const linha = linhas[j];
-      if (linha.trim() === '') continue; // linha vazia não fecha o bloco
+      if (linha.trim() === '') continue; // linha vazia nao fecha o bloco
       if (linha.length - linha.trimStart().length <= recuo) break;
-      if (linha.trimStart().startsWith('#')) continue; // passo comentado não executa nada
+      if (linha.trimStart().startsWith('#')) continue; // passo comentado nao executa nada
       bloco.push(linha);
     }
-    for (const padrao of bloco.join('\n').match(CAMINHO_SUITE_NODE) ?? []) padroes.add(padrao);
+    blocos.push(bloco.join('\n'));
   }
+  return blocos.join('\n');
+}
+
+/** Caminhos e globos de suites Node citados nos blocos `run:` de um workflow. */
+export function padroesNodeDeWorkflow(yaml) {
+  const padroes = new Set();
+  for (const padrao of blocosRunDeWorkflow(yaml).match(CAMINHO_SUITE_NODE) ?? []) padroes.add(padrao);
   return [...padroes].sort();
+}
+
+/** `.test.sh` citados nos blocos `run:` (GA73: mencao em comentario nao vale). */
+export function refsShEmBlocos(blocos) {
+  return [...new Set([...String(blocos).matchAll(/\bscripts\/db-audit\/\S+\.test\.sh\b/g)].map((m) => m[0]))].sort();
 }
 
 /** Casa um caminho com um glob simples: `*` não atravessa `/`, `**` atravessa. */
@@ -324,8 +335,14 @@ export function orfaosDoInventario() {
   }
 
   for (const f of testShOnDisk) {
-    if (!testShInGuard.has(f) && !ALLOWLIST.has(f)) {
+    if (!testShEmGuard.has(f) && !ALLOWLIST.has(f)) {
       orphans.push({ file: f, yaml: 'db-guard.yml' });
+    }
+  }
+  // GA73: sentido inverso — YAML que aponta arquivo inexistente.
+  for (const ref of testShEmGuard) {
+    if (!testShOnDisk.includes(ref) && !ALLOWLIST.has(ref)) {
+      orphans.push({ file: ref, yaml: 'db-guard.yml (referencia sem arquivo no disco)' });
     }
   }
 

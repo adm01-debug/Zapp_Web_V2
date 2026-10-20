@@ -10,7 +10,7 @@ cleanup() {
 }
 trap cleanup EXIT
 docker run --rm -d --network none --name "$container_name" \
-  -e POSTGRES_PASSWORD=runtime_fixture_only postgres:17-alpine >/dev/null
+  -e POSTGRES_PASSWORD=runtime_fixture_only ${POSTGRES_TEST_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24} >/dev/null
 ready=false
 for attempt in $(seq 1 45); do
   logs=$(docker logs "$container_name" 2>&1)

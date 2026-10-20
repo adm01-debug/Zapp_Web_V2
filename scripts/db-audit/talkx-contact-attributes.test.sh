@@ -8,7 +8,7 @@ migration="$repo_root/supabase/migrations/20261011003016_talkx_contact_attribute
 dep_roles="$repo_root/supabase/migrations/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql"
 dep_visib="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
 dep_enum="$repo_root/supabase/migrations/20260329175853_8f18172f-981a-4c58-b505-ce1630af8ab6.sql"
-postgres_image="${TALKX_CONTACT_ATTR_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_CONTACT_ATTR_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-talkx-contact-attr-test-$$"
 cleanup() {
   if [[ "$container_name" =~ ^zapp-v2-talkx-contact-attr-test-[0-9]+$ ]]; then

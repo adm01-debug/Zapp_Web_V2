@@ -23,7 +23,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 origin_base="$repo_root/supabase/migrations/20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql"
 origin_idor="$repo_root/supabase/migrations/20260924230500_fix_contact_id_idor_snoozes_pins_favorites.sql"
 migration="$repo_root/supabase/migrations/20261011003011_scope_snoozes_pins_favorites_policies_to_authenticated.sql"
-postgres_image="${SNOOZES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${SNOOZES_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-snoozes-test-$$"
 
 cleanup() {

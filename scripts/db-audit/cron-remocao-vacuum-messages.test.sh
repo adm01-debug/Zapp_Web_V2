@@ -22,7 +22,7 @@
 # Uso: bash scripts/db-audit/cron-remocao-vacuum-messages.test.sh <migration da remocao>
 set -euo pipefail
 
-IMG="${CRON_REMOCAO_VACUUM_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+IMG="${CRON_REMOCAO_VACUUM_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 NAME="cron-rm-vac-$$"
 MIG="${1:?uso: $0 <caminho da migration que remove o job residual>}"
 RAIZ="$(cd "$(dirname "$0")/../.." && pwd)"

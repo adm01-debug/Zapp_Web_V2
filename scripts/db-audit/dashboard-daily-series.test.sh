@@ -59,7 +59,7 @@ assert_has() {
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao acessivel'
-pg_image="${DASHBOARD_DAILY_SERIES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+pg_image="${DASHBOARD_DAILY_SERIES_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 docker run --rm -d --name "$cid" -e POSTGRES_PASSWORD=dashboard_daily_series_test_only "$pg_image" >/dev/null
 
 ready=false

@@ -23,7 +23,7 @@ assert_has() { [[ "$3" == *"$2"* ]] || fail "$1: esperado conter '$2', obtido ->
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao acessivel'
-docker run --rm -d --name "$cid" -e POSTGRES_PASSWORD=contacts_stats_series_test_only "${CONTACTS_STATS_SERIES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}" >/dev/null
+docker run --rm -d --name "$cid" -e POSTGRES_PASSWORD=contacts_stats_series_test_only "${CONTACTS_STATS_SERIES_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}" >/dev/null
 ready=false
 for _ in $(seq 1 90); do
   m="$(docker logs "$cid" 2>&1 | grep -c 'database system is ready to accept connections' || true)"

@@ -6,6 +6,7 @@ import {
   coletarJobs,
   coletarRuns,
   corpoDoKpi,
+  detectarLote,
   duracaoMinutos,
   maisLentos,
   paginaTemMais,

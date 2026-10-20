@@ -34,7 +34,7 @@ mig_e14="$repo_root/supabase/migrations/20260928500000_team_chat_e14_department_
 mig_e15="$repo_root/supabase/migrations/20260928510000_team_chat_e15_accept_department_invite_rpc.sql"
 mig_e16="$repo_root/supabase/migrations/20260928520000_team_chat_e16_create_department_invite_rpc.sql"
 mig_e17="$repo_root/supabase/migrations/20260928530000_team_chat_e17_department_audit_logs_hardening.sql"
-postgres_image="${DEPARTMENT_INVITE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${DEPARTMENT_INVITE_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-department-invite-test-$$"
 
 cleanup() {

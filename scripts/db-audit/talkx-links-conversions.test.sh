@@ -22,7 +22,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="${TALKX_X021_MIGRATION:-$(ls "$repo_root"/supabase/migrations/*_talkx_v4_x021_links_conversoes_investimento.sql 2>/dev/null | head -1)}"
 [[ -n "$migration" && -f "$migration" ]] || { echo "migration X021 não encontrada ($migration)" >&2; exit 1; }
 
-pg_image="${TALKX_LINKS_CONV_PG_IMAGE:-postgres:17-alpine}"
+pg_image="${TALKX_LINKS_CONV_PG_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 pg_name="zapp-talkx-links-conv-$$"
 passed=0
 

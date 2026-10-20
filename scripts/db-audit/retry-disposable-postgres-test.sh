@@ -44,7 +44,7 @@ PRE_PULL_BASE_WAIT="${PRE_PULL_BASE_WAIT:-15}"
 
 # W57: POSTGREST_TEST_IMAGE agora aponta direto para ghcr.io (sem rate limit do ECR).
 # Para imagens ECR ainda existentes, o espelho ghcr.io vem primeiro.
-# Para imagens ghcr.io, o ECR e mantido so como fallback -- nenhuma mensagem de "espelho"
+# GA74: o caminho inverso (ECR como fallback de ghcr.io) foi removido.
 # aparece em um run normal (criterio de verificacao do W57).
 espelho_do_ecr() {
   case "$1" in
@@ -52,13 +52,9 @@ espelho_do_ecr() {
     *) printf '' ;;
   esac
 }
-# ECR como fallback quando o primario e ghcr.io (e o pull falha).
-ecr_fallback_do_ghcr() {
-  case "$1" in
-    ghcr.io/supabase/*) printf 'public.ecr.aws/supabase/%s' "${1#ghcr.io/supabase/}" ;;
-    *) printf '' ;;
-  esac
-}
+# GA74: o fallback ghcr.io -> ECR foi removido (puxava sem digest,
+# ou seja, `:latest` — morto e perigoso). So o espelho ECR -> ghcr.io
+# permanece, para fugir do rate limit anonimo do ECR.
 
 pre_pull_images() {
   if ! command -v docker >/dev/null 2>&1; then
@@ -66,7 +62,7 @@ pre_pull_images() {
     return 0
   fi
 
-  local var imagem tentativa espera espelho espelho_tag fallback fallback_tag
+  local var imagem tentativa espera espelho espelho_tag
   while read -r var; do
     imagem="${!var}"
     [[ -n "$imagem" ]] || continue
@@ -91,16 +87,6 @@ pre_pull_images() {
       if docker pull "$imagem" >/dev/null 2>&1; then
         printf 'INFO: imagem baixada: %s\n' "$imagem"
         break
-      fi
-      # Para imagens ghcr.io: ECR como fallback de ultimo recurso (W57).
-      fallback="$(ecr_fallback_do_ghcr "${imagem%%@*}")"
-      fallback_tag="${fallback%%:*}"
-      if [[ -n "$fallback_tag" ]] && docker pull "${fallback%%@*}" >/dev/null 2>&1; then
-        docker tag "${fallback%%@*}" "${imagem%%@*}"
-        if docker image inspect "$imagem" >/dev/null 2>&1; then
-          printf 'WARN: ghcr.io falhou; imagem obtida do ECR como fallback: %s\n' "${fallback%%@*}" >&2
-          break
-        fi
       fi
       if [[ "$tentativa" -eq "$PRE_PULL_ATTEMPTS" ]]; then
         printf 'ERRO: registry não entregou %s em %s tentativas (rate limit ou imagem inexistente)\n' \
@@ -128,17 +114,18 @@ attempts="${DISPOSABLE_PG_ATTEMPTS:-6}"
 espera="${DISPOSABLE_PG_BASE_WAIT:-5}"
 for attempt in $(seq 1 "$attempts"); do
   log_file=$(mktemp)
-  if "$@" >"$log_file" 2>&1; then
-    cat "$log_file"
+  # GA74: transmite o log em tempo real (tee) em vez de despejar tudo no fim.
+  set +o pipefail
+  "$@" 2>&1 | tee "$log_file"
+  status=${PIPESTATUS[0]}
+  set -o pipefail
+  if [[ "$status" -eq 0 ]]; then
     rm -f "$log_file"
     exit 0
-  else
-    status=$?
   fi
   if ! grep -Eq "$BOOTSTRAP_FAILURE_PATTERN" "$log_file"; then
     # Falha que NAO e de bootstrap (SQL, ACL, policy ou assercao do contrato):
     # nao repetir. Repetir aqui mascararia defeito real de RLS.
-    cat "$log_file" >&2
     rm -f "$log_file"
     exit "$status"
   fi
@@ -147,7 +134,6 @@ for attempt in $(seq 1 "$attempts"); do
     causa=$(grep -Eo "$BOOTSTRAP_FAILURE_PATTERN" "$log_file" | head -1)
     ultima=$(grep -E 'No such file or directory|connection to server|server closed|shutting down|FATAL' \
       "$log_file" | tail -1)
-    cat "$log_file" >&2
     rm -f "$log_file"
     printf '\nERRO: o PostgreSQL descartavel nao subiu em %s tentativas.\n' "$attempt" >&2
     printf 'ERRO: assinatura de bootstrap casada: %s\n' "${causa:-<nao capturada>}" >&2
@@ -156,7 +142,6 @@ for attempt in $(seq 1 "$attempts"); do
     exit "$status"
   fi
 
-  cat "$log_file" >&2
   rm -f "$log_file"
   printf 'WARN: PostgreSQL descartável não estabilizou; nova tentativa em %ss (%s/%s)\n' \
     "$espera" "$attempt" "$attempts" >&2

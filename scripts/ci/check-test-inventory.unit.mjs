@@ -7,9 +7,11 @@ import { join } from 'node:path';
 import {
   ALLOWLIST_NODE,
   RAIZ,
+  blocosRunDeWorkflow,
   casaPadrao,
   orfaosNode,
   padroesNodeDeWorkflow,
+  refsShEmBlocos,
   suitesNodeOrfas,
 } from './check-test-inventory.mjs';
 
@@ -101,4 +103,37 @@ test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa 
   });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
+});
+
+// GA73: o lado .test.sh conta so blocos `run:` (mencao em comentario nao vale)
+// e checa o sentido inverso (YAML apontando arquivo inexistente).
+const GUARD_FIX = [
+  'name: db-guard',
+  'jobs:',
+  '  offline-contract:',
+  '    steps:',
+  '      # scripts/db-audit/so-comentado.test.sh aparece em comentario, nao roda',
+  '      - name: roda o contrato',
+  '        run: bash scripts/db-audit/coberto.test.sh',
+  '      - name: bloco de uma linha com dois testes',
+  '        run: bash scripts/db-audit/outro.test.sh && bash scripts/db-audit/coberto.test.sh',
+  '      - name: aponta arquivo que nao existe',
+  '        run: bash scripts/db-audit/nao-existe.test.sh',
+].join('\n');
+
+test('GA73: blocosRunDeWorkflow exclui comentario; refsShEmBlocos so pega run', () => {
+  const blocos = blocosRunDeWorkflow(GUARD_FIX);
+  assert.equal(blocos.includes('so-comentado'), false, 'comentario nao executa');
+  assert.deepEqual(refsShEmBlocos(blocos), [
+    'scripts/db-audit/coberto.test.sh',
+    'scripts/db-audit/nao-existe.test.sh',
+    'scripts/db-audit/outro.test.sh',
+  ]);
+});
+
+test('GA73: .test.sh so em comentario nao cobre; ref sem arquivo e orfa reversa', () => {
+  // cobertura: so-comentado nao esta em run -> seria orfao se existisse no disco
+  assert.equal(refsShEmBlocos(blocosRunDeWorkflow(GUARD_FIX)).includes('scripts/db-audit/so-comentado.test.sh'), false);
+  // sentido inverso: nao-existe.test.sh citado mas sem arquivo -> orfao reverso
+  assert.equal(refsShEmBlocos(blocosRunDeWorkflow(GUARD_FIX)).includes('scripts/db-audit/nao-existe.test.sh'), true);
 });

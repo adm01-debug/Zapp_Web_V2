@@ -26,7 +26,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261007001008_message_reactions_agente_sem_chave_de_contato.sql"
 history_migration="$repo_root/supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql"
-postgres_image="${MESSAGE_REACTIONS_AUTHOR_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${MESSAGE_REACTIONS_AUTHOR_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-message-reactions-author-test-$$"
 
 cleanup() {

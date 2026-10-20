@@ -7,7 +7,7 @@ migration="$repo_root/supabase/migrations/20260911150000_add_talkx_campaign_tran
 # que o talkx-send chama) e a retomada de start passa a ser idempotente
 # (sending -> sending, sem tocar started_at).
 worker_lease_migration="$repo_root/supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql"
-postgres_image="${TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-campaign-transitions-test-$$"
 test_password="talkx_campaign_transitions_test_only"
 

@@ -32,7 +32,7 @@ try {
   fs.chmodSync(directory, 0o700);
   execFileSync(resolverExecutavel('docker'), ['run', '--rm', '-d', '--network', 'none', '--name', container,
     '--env', 'POSTGRES_PASSWORD', '--env', 'POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=trust',
-    '--volume', `${directory}:${directory}:ro`, 'postgres:17-alpine'],
+    '--volume', `${directory}:${directory}:ro`, 'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24'],
   { ...options, env: { ...cleanEnv, POSTGRES_PASSWORD: password } });
   started = true;
   let ready = false;

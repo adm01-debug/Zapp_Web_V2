@@ -28,7 +28,7 @@ unify_migration="$repo_root/supabase/migrations/20260928140000_tasks_unify_remin
 # falha (prova que o teste detecta a ausência dos índices).
 migration_completed="${MIGRATION_COMPLETED_OVERRIDE:-$migration_completed}"
 migration_position="${MIGRATION_POSITION_OVERRIDE:-$migration_position}"
-postgres_image="${CONVERSATION_TASKS_COMPLETED_INDEX_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${CONVERSATION_TASKS_COMPLETED_INDEX_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-tasks-completed-index-test-$$"
 
 cleanup() {

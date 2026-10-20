@@ -12,7 +12,7 @@
 # F. falha alto se um job sumiu, em vez de aplicar meia escala.
 set -euo pipefail
 
-IMG="${PG_CRON_ESCALONAMENTO_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+IMG="${PG_CRON_ESCALONAMENTO_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 NAME="pg-cron-esc-$$"
 MIG="${1:?uso: $0 <caminho da migration>}"
 FALHAS=0

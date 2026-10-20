@@ -13,7 +13,7 @@ set -Eeuo pipefail
 #   d) RPC (dono)                 -> continua funcionando (regressão).
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-postgres_image="${TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_ESCAPE_HATCH_AUTH_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-talkx-escape-hatch-auth-$RANDOM-$$"
 test_password="talkx_escape_hatch_auth_test_only"
 

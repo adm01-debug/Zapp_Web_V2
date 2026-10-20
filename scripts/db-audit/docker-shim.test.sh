@@ -56,6 +56,11 @@ if printf '%s' "$query" | grep -qi "rolname"; then
   printf 'postgres\n'
   printf 'supabase_admin\n'
 fi
+# GA66: registra toda query (testes de rm) e falha CREATE sob demanda.
+printf '%s\n' "$query" >> "${PSQL_LOG:-/dev/null}"
+if [[ "${PSQL_FAIL_CREATE:-0}" == "1" ]] && printf '%s' "$query" | grep -qi '^CREATE DATABASE'; then
+  exit 1
+fi
 exit 0
 ENDPSQL
 chmod +x "$BIN_DIR/psql"
@@ -69,9 +74,11 @@ export POSTGRES_SERVICE_PORT="5432"
 export POSTGRES_SERVICE_PASS="testpass"
 export POSTGRES_SERVICE_USER="postgres"
 export DOCKER_SHIM_STATE_DIR="$STATE_DIR"
+export PSQL_LOG="$TMPDIR_TEST/psql.log"
+: > "$PSQL_LOG"
 
 # ── 1. docker run --name ──────────────────────────────────────────────────────
-out="$("$SHIM" run --name my_container postgres:17-alpine)"
+out="$("$SHIM" run --name my_container postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24)"
 check "run: retorna shimid" "shimid_my_container" "$out"
 [[ -f "$STATE_DIR/my_container.db" ]] \
   && ok "run: cria arquivo de estado .db" \
@@ -114,7 +121,7 @@ fi
 
 # ── 7. docker pull → exit 0 sem chamar o real ─────────────────────────────────
 >"$TMPDIR_TEST/docker.log"
-"$SHIM" pull postgres:17-alpine \
+"$SHIM" pull postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 \
   && ok "pull: sai com 0" \
   || fail "pull: saiu com erro"
 # pull nao deve chamar DOCKER_REAL
@@ -126,7 +133,7 @@ fi
 
 # ── 8. docker tag → exit 0 sem chamar o real ─────────────────────────────────
 >"$TMPDIR_TEST/docker.log"
-"$SHIM" tag postgres:17-alpine local/test:latest \
+"$SHIM" tag postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 local/test:latest \
   && ok "tag: sai com 0" \
   || fail "tag: saiu com erro"
 if [[ -s "$TMPDIR_TEST/docker.log" ]]; then
@@ -136,7 +143,7 @@ else
 fi
 
 # ── 9. docker image inspect → exit 0 ──────────────────────────────────────────
-"$SHIM" image inspect postgres:17-alpine \
+"$SHIM" image inspect postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 \
   && ok "image inspect: sai com 0" \
   || fail "image inspect: saiu com erro"
 
@@ -149,10 +156,56 @@ grep -q "ps -a" "$TMPDIR_TEST/docker.log" \
 
 # ── 11. docker run sem --name → passa pro real ────────────────────────────────
 >"$TMPDIR_TEST/docker.log"
-"$SHIM" run postgres:17-alpine 2>/dev/null || true
+"$SHIM" run postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 2>/dev/null || true
 grep -q "run postgres" "$TMPDIR_TEST/docker.log" \
   && ok "run sem --name: delega ao DOCKER_REAL" \
   || fail "run sem --name: nao delegou ao DOCKER_REAL"
+
+# ── 12. GA66: CREATE DATABASE falho → run sai != 0 e limpa o estado ──────
+>"$PSQL_LOG"
+if PSQL_FAIL_CREATE=1 "$SHIM" run --name falha_create postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 2>/dev/null; then
+  fail "run com CREATE falho: devia sair != 0"
+else
+  ok "run com CREATE falho: sai != 0"
+fi
+[[ ! -f "$STATE_DIR/falha_create.db" ]] \
+  && ok "run com CREATE falho: limpa o .db" \
+  || fail "run com CREATE falho: deixou .db para tras"
+
+# ── 13. GA66: rm sem snapshot de roles nao derruba role nenhum ──────────────
+"$SHIM" run --name sem_snapshot postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 >/dev/null
+rm -f "$STATE_DIR/sem_snapshot.roles"
+>"$PSQL_LOG"
+"$SHIM" rm -f sem_snapshot 2>/dev/null \
+  && ok "rm sem snapshot: sai com 0" \
+  || fail "rm sem snapshot: saiu com erro"
+if grep -q "DROP ROLE" "$PSQL_LOG"; then
+  fail "rm sem snapshot: emitiu DROP ROLE (antes: 880 erros no log)"
+else
+  ok "rm sem snapshot: nenhum DROP ROLE (fail closed)"
+fi
+[[ ! -f "$STATE_DIR/sem_snapshot.db" ]] \
+  && ok "rm sem snapshot: remove o .db" \
+  || fail "rm sem snapshot: nao removeu o .db"
+
+# ── 14. GA66: rm com snapshot derruba so o delta ─────────────────────────────
+"$SHIM" run --name com_delta postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24 >/dev/null
+# snapshot so com postgres: supabase_admin (do serviço) vira delta a derrubar.
+printf 'postgres' > "$STATE_DIR/com_delta.roles"
+>"$PSQL_LOG"
+"$SHIM" rm -f com_delta 2>/dev/null \
+  && ok "rm com delta: sai com 0" \
+  || fail "rm com delta: saiu com erro"
+if grep -q 'DROP ROLE IF EXISTS "supabase_admin"' "$PSQL_LOG"; then
+  ok "rm com delta: derruba so o role novo (supabase_admin)"
+else
+  fail "rm com delta: nao derrubou o role novo; log: $(cat "$PSQL_LOG")"
+fi
+if grep -q 'DROP ROLE IF EXISTS "postgres"' "$PSQL_LOG"; then
+  fail "rm com delta: tentou derrubar role do snapshot (postgres)"
+else
+  ok "rm com delta: preserva roles do snapshot"
+fi
 
 # ── resultado final ───────────────────────────────────────────────────────────
 printf '\n%d/%d testes passaram\n' "$PASS" "$((PASS+FAIL))"

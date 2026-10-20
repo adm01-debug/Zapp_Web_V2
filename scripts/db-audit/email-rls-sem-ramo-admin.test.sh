@@ -27,7 +27,7 @@ mig_roles="$mig_dir/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql"
 mig_email="$mig_dir/20260403105341_f342fbf7-d1d3-48b1-83b0-03df78b6c590.sql"
 mig_gmail="$mig_dir/20260404173941_26ed03e4-e874-44a0-b864-5db85b0ec44c.sql"
 mig_drop_ins="$mig_dir/20260829030000_drop_insert_policies_email.sql"
-postgres_image="${EMAIL_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${EMAIL_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-email-rls-test-$$"
 
 cleanup() {

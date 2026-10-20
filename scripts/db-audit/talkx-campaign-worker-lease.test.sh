@@ -22,7 +22,7 @@ set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration="$repo_root/supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql"
-postgres_image="${TALKX_CAMPAIGN_WORKER_LEASE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_CAMPAIGN_WORKER_LEASE_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-campaign-worker-lease-test-$$"
 test_password="talkx_campaign_worker_lease_test_only"
 

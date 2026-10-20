@@ -16,7 +16,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_old="$repo_root/supabase/migrations/20260404174826_2a7cc468-0dc4-44de-a806-6f28e4b7525f.sql"
 migration_new="$repo_root/supabase/migrations/20261010113500_gmail_write_blocks_restrictive.sql"
-postgres_image="${GMAIL_BLOCKS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${GMAIL_BLOCKS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-gmail-blocks-test-$$"
 
 cleanup() {

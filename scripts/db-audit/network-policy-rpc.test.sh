@@ -26,7 +26,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-postgres_image="${NETWORK_POLICY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${NETWORK_POLICY_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 
 main_container="zapp-v2-netpolicy-test-$$"
 mut_container="zapp-v2-netpolicy-mut-$$"

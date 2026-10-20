@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # RLS isola, reaplicar e no-op. Rollback extraido da migration remove tudo.
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-postgres_image="${TALKX_HELP_TOP_TOPICS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_HELP_TOP_TOPICS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-talkx-help-top-$RANDOM-$$"
 up="$repo_root/supabase/migrations/20261010071304_talkx_help_views_top_topics.sql"
 

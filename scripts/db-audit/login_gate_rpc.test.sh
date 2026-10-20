@@ -25,7 +25,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$(ls "$repo_root"/supabase/migrations/*_login_gate_rpc.sql | head -n1)"
-postgres_image="${LOGIN_GATE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${LOGIN_GATE_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-login-gate-test-$$"
 bench_n="${LOGIN_GATE_BENCH_N:-300}"
 

@@ -14,7 +14,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 guard_sql="$repo_root/scripts/db-audit/check-secdef-public-execute.sql"
 migration="$repo_root/supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql"
 container_name="zapp-v2-secdef-exec-test-$$"
-postgres_image="${SECDEF_EXEC_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${SECDEF_EXEC_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 passed=0
 
 cleanup() {

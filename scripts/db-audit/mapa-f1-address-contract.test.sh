@@ -25,7 +25,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-image="${MAPA_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+image="${MAPA_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 docker run --rm -d --network none --name "$container_name" \
   -e POSTGRES_PASSWORD=mapa_f1_fixture_only "$image" >/dev/null
 
