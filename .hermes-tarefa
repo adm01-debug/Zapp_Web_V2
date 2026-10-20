@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditar-testes-talkx-timeout
+ID=26101301264df2
+BRANCH=v2/auditar-testes-talkx-timeout-26101301264df2
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditar-testes-talkx-timeout-26101301264df2
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:26:02-03:00
+KANBAN=t_b6d4802b
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditar-testes-talkx-timeout-26101301264df2/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101301264df2
+PRONTO_SHA=c14d3dd5cc73df03e64b6a796ceb37447298503d
