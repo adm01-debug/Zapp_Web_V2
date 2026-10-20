@@ -147,3 +147,351 @@
 20/10 12:18:25    OK: avulsos importados e conferidos byte a byte (refs/heads/importado/arquivos-avulsos, 144180 arquivos)
 20/10 12:18:25 refs: antes 5822, depois 14380; refs antigas que mudaram durante a execucao (outros chats podem mexer nas branches deles): 0
 20/10 12:18:25 RESUMO: {"passo1: refs de commits soltos": 4117, "clones: refs criadas": 915, "bundles: refs a criar": 401, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 7, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 23, "worktrees: pastas regeneraveis (nao entram)": 59444, "worktrees: ficaram por repositorio desconhecido dentro": 0}
+20/10 12:18:25 indice gravado e conferido na branch importado/indice (8558 refs listadas)
+20/10 12:18:25 FIM_OK
+20/10 13:49:22 ======================================================================
+20/10 13:49:22 INICIO RODADA 1: importar (nao apaga nada)
+20/10 13:49:22 autoteste OK: arvore recalculada aqui == git (7540 arquivos); hash de arquivo == git
+20/10 13:49:26 commits preservados no repositorio: 56509
+20/10 13:49:28 Kanban: 796 cartoes abertos
+20/10 13:49:38 passo 4: worktrees: 3118 saem, 185 ficam {'estado da fabrica (.integra)': 10, 'atividade nas ultimas 72 h': 18, 'cartao aberto no Kanban': 153, 'travada': 1, 'usada por servico': 3}
+20/10 13:49:39    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
+20/10 13:49:41    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/a11y-nome-papel-6-pontos-26101406531182
+20/10 13:49:44    recapturada e conferida byte a byte: refs/importado/estado/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa (antes 644a05e69668, agora ccdada5d185a)
+20/10 13:49:44    recapturada e conferida byte a byte: refs/importado/estado/a11y-nome-papel-6-pontos-26101406531182 (antes e364f469c333, agora bc7753ab0467)
+20/10 13:49:44    lote 1-40: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:49:49    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/alertas-crise-globais-supervisao-2610151-26101614567373
+20/10 13:49:50    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f
+20/10 13:49:50    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/analises-conversa-cache-query-t-fc794700-26101615025066
+20/10 13:49:52    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/aplicar-base-original-outbox-inbound-69-261011193393d1
+20/10 13:49:52    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7
+20/10 13:49:53    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-2610112015f508
+20/10 13:49:53    recapturada e conferida byte a byte: refs/importado/estado/alertas-crise-globais-supervisao-2610151-26101614567373 (antes 27465f415183, agora 50e554690ddd)
+20/10 13:49:53    recapturada e conferida byte a byte: refs/importado/estado/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f (antes 05f203b5f529, agora 13f6ee7c93ea)
+20/10 13:49:54    recapturada e conferida byte a byte: refs/importado/estado/analises-conversa-cache-query-t-fc794700-26101615025066 (antes bcb064c01645, agora 260ff5cea791)
+20/10 13:49:54    recapturada e conferida byte a byte: refs/importado/estado/aplicar-base-original-outbox-inbound-69-261011193393d1 (antes 4a9d1d834a7a, agora 16483f2ca8c6)
+20/10 13:49:54    recapturada e conferida byte a byte: refs/importado/estado/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7 (antes e49ea0e34ef5, agora 70fc5a88de30)
+20/10 13:49:54    recapturada e conferida byte a byte: refs/importado/estado/arrastar-polido-quadro-teclado-rolagem-2610112015f508 (antes 9df652cc952a, agora 767e4bbb7bd3)
+20/10 13:49:54    lote 41-80: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/arvore-integracao-merge-simulado-2610171013b714
+20/10 13:50:01    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/assume-return-conversation-refazer2-26101114573d0f
+20/10 13:50:02 PAROU: ja existe outra execucao rodando
+20/10 13:50:03    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/audio-memes-storage-realtime-2610151908f-26101614551169
+20/10 13:50:03    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/audio-player-a11y-2610152109114a-2610161508dc74
+20/10 13:50:04    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/audit-admin-changes-261013012225d2
+20/10 13:50:08    recapturada e conferida byte a byte: refs/importado/estado/arvore-integracao-merge-simulado-2610171013b714 (antes 32aafb5c7b7b, agora 6af7c8d3f350)
+20/10 13:50:08    recapturada e conferida byte a byte: refs/importado/estado/assume-return-conversation-refazer2-26101114573d0f (antes a0eaa2ddc9b8, agora 642d4d728c5b)
+20/10 13:50:08    recapturada e conferida byte a byte: refs/importado/estado/audio-memes-storage-realtime-2610151908f-26101614551169 (antes 32d0a38503d7, agora afb127f943ba)
+20/10 13:50:08    recapturada e conferida byte a byte: refs/importado/estado/audio-player-a11y-2610152109114a-2610161508dc74 (antes e27e8b33e198, agora d353796d0d58)
+20/10 13:50:08    recapturada e conferida byte a byte: refs/importado/estado/audit-admin-changes-261013012225d2 (antes 1952156a6968, agora b2ad61c36dd4)
+20/10 13:50:09    lote 81-120: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:10    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/aviso-tipo-notificacao-som-recusado-2610161528a89e
+20/10 13:50:13    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/baseline-inbox-lista-sem-piscar-26101707524612
+20/10 13:50:15    recapturada e conferida byte a byte: refs/importado/estado/aviso-tipo-notificacao-som-recusado-2610161528a89e (antes 4fdfb5f39fa1, agora 0e13f1eeae14)
+20/10 13:50:15    recapturada e conferida byte a byte: refs/importado/estado/baseline-inbox-lista-sem-piscar-26101707524612 (antes 4b77ab59b33e, agora 05431f693e3b)
+20/10 13:50:15    lote 121-160: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:21    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/cherry-pick-branch-anterior-26101706269006
+20/10 13:50:22    recapturada e conferida byte a byte: refs/importado/estado/cherry-pick-branch-anterior-26101706269006 (antes b258ee8c19a0, agora 81ce4c4581c2)
+20/10 13:50:22    lote 161-200: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:26    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/conexoes-cartao-responsivo-estados-2610130153259a
+20/10 13:50:29    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/conexoes-instancias-orfas-admin-2610161511c7f8
+20/10 13:50:30    recapturada e conferida byte a byte: refs/importado/estado/conexoes-cartao-responsivo-estados-2610130153259a (antes f0fe3425450e, agora 3dada7d65132)
+20/10 13:50:30    recapturada e conferida byte a byte: refs/importado/estado/conexoes-instancias-orfas-admin-2610161511c7f8 (antes d62831c62131, agora a4d5004bb1df)
+20/10 13:50:30    lote 201-240: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:31    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/consent-status-guard-lgpd-2610152203edb5-26101615138daa
+20/10 13:50:35    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/contatos-inbox-excluidos-telefone-duplic-261017065622dc
+20/10 13:50:36    recapturada e conferida byte a byte: refs/importado/estado/consent-status-guard-lgpd-2610152203edb5-26101615138daa (antes 03c4301f3e5f, agora 0f9010de07e3)
+20/10 13:50:36    recapturada e conferida byte a byte: refs/importado/estado/contatos-inbox-excluidos-telefone-duplic-261017065622dc (antes d042ab189ce0, agora 796c69fb2e92)
+20/10 13:50:36    lote 241-280: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:40    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/corrigir-exclusoes-sync-incremental-manu-2610170630721e
+20/10 13:50:41    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/criar-migration-audit-admin-change-2610161458a6eb
+20/10 13:50:42    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/csat-erro-zero-paginacao-tendencia-26101-2610161458d029
+20/10 13:50:43    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/ct-088-remover-edicao-em-massa-2610161454e751
+20/10 13:50:44    recapturada e conferida byte a byte: refs/importado/estado/corrigir-exclusoes-sync-incremental-manu-2610170630721e (antes 505933f3d7de, agora 33ad60f65bc3)
+20/10 13:50:44    recapturada e conferida byte a byte: refs/importado/estado/criar-migration-audit-admin-change-2610161458a6eb (antes d5cd0db77fcd, agora 3d792a32c664)
+20/10 13:50:44    recapturada e conferida byte a byte: refs/importado/estado/csat-erro-zero-paginacao-tendencia-26101-2610161458d029 (antes 392540a5d06c, agora 43f5d5e56cb9)
+20/10 13:50:44    recapturada e conferida byte a byte: refs/importado/estado/ct-088-remover-edicao-em-massa-2610161454e751 (antes 7adf06993cfe, agora 0950573b93fb)
+20/10 13:50:44    lote 281-320: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:51    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/e2e-logado-causa-raiz-browsers-2610170944667f
+20/10 13:50:52    recapturada e conferida byte a byte: refs/importado/estado/e2e-logado-causa-raiz-browsers-2610170944667f (antes 285e8577fc12, agora 61d7e6388c17)
+20/10 13:50:52    lote 321-360: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:53    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/efeitos-animados-reduzir-movimento-26101-2610161501b113
+20/10 13:50:57    recapturada e conferida byte a byte: refs/importado/estado/efeitos-animados-reduzir-movimento-26101-2610161501b113 (antes 422a720e8e4f, agora 4e40a139ffcf)
+20/10 13:50:57    lote 361-400: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:50:58    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/estados-vazios-carregamento-5-telas-2610-2610132327f931
+20/10 13:51:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/evolution-api-sem-segredos-26101316216bd-261017073277eb
+20/10 13:51:01    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/evolution-breaker-ci-espelho-261017065608e5
+20/10 13:51:01    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/evolution-read-actions-controle-26101406530351
+20/10 13:51:02    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/exclusao-sem-confirmacao-automacao-26101-2610132244b1bb
+20/10 13:51:02    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/falha-papeis-acesso-negado-falso-2610140649f656
+20/10 13:51:04    recapturada e conferida byte a byte: refs/importado/estado/estados-vazios-carregamento-5-telas-2610-2610132327f931 (antes fc97f5151a7c, agora 5441d188ea70)
+20/10 13:51:04    recapturada e conferida byte a byte: refs/importado/estado/evolution-api-sem-segredos-26101316216bd-261017073277eb (antes 2ab2e938322e, agora 34f5249a3fff)
+20/10 13:51:04    recapturada e conferida byte a byte: refs/importado/estado/evolution-breaker-ci-espelho-261017065608e5 (antes ffdf92ae35b7, agora b9f6f5e0c3f6)
+20/10 13:51:04    recapturada e conferida byte a byte: refs/importado/estado/evolution-read-actions-controle-26101406530351 (antes a407b79f5e9d, agora f4d859ab83f7)
+20/10 13:51:04    recapturada e conferida byte a byte: refs/importado/estado/exclusao-sem-confirmacao-automacao-26101-2610132244b1bb (antes 5ead6ba17242, agora fe2457501d9b)
+20/10 13:51:04    recapturada e conferida byte a byte: refs/importado/estado/falha-papeis-acesso-negado-falso-2610140649f656 (antes bcdfa538b659, agora e8651c0b837f)
+20/10 13:51:04    lote 401-440: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:08    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/finalizar-suite-inbox-relato-2610170837c13b
+20/10 13:51:10    recapturada e conferida byte a byte: refs/importado/estado/finalizar-suite-inbox-relato-2610170837c13b (antes f5d8acdac32d, agora f20556cea632)
+20/10 13:51:10    lote 441-480: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:11    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-chat-menu-status-admin-espelho-2610170645bd7d
+20/10 13:51:12    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467
+20/10 13:51:12    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-contatos-destravar-teste-userealtime-2610170655f3ce
+20/10 13:51:16    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-ia-ultima-analise-erro-t-cf797f89-26101615040491
+20/10 13:51:16    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-incremental-limit-phantom-2610170752-26101708014b0d
+20/10 13:51:17    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/fix-lgpd-voice-agent-timeout-26101312395897
+20/10 13:51:18    recapturada e conferida byte a byte: refs/importado/estado/fix-chat-menu-status-admin-espelho-2610170645bd7d (antes 1fa6ab04440a, agora b4e03e61baba)
+20/10 13:51:18    recapturada e conferida byte a byte: refs/importado/estado/fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467 (antes 5d6873574e6e, agora 5d073114bb65)
+20/10 13:51:18    recapturada e conferida byte a byte: refs/importado/estado/fix-contatos-destravar-teste-userealtime-2610170655f3ce (antes 5587cac1d529, agora a1d554f30985)
+20/10 13:51:18    recapturada e conferida byte a byte: refs/importado/estado/fix-ia-ultima-analise-erro-t-cf797f89-26101615040491 (antes f9e3be6a0f56, agora 3eaa751d358e)
+20/10 13:51:18    recapturada e conferida byte a byte: refs/importado/estado/fix-incremental-limit-phantom-2610170752-26101708014b0d (antes 8536aee74e2f, agora 3e7e39663d3e)
+20/10 13:51:18    recapturada e conferida byte a byte: refs/importado/estado/fix-lgpd-voice-agent-timeout-26101312395897 (antes 4e685953d72f, agora 0030f0dc74e0)
+20/10 13:51:18    lote 481-520: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:19    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/fix-rotas-guardas-coerentes-install-admi-2610121901d51f
+20/10 13:51:19    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-seen-state-hydration-merge-26101708012995
+20/10 13:51:22    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f
+20/10 13:51:22    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56
+20/10 13:51:26    recapturada e conferida byte a byte: refs/importado/estado/fix-rotas-guardas-coerentes-install-admi-2610121901d51f (antes 8532e7786da0, agora eb91f3f66303)
+20/10 13:51:26    recapturada e conferida byte a byte: refs/importado/estado/fix-seen-state-hydration-merge-26101708012995 (antes 218262dc5da9, agora d5f47e717b81)
+20/10 13:51:26    recapturada e conferida byte a byte: refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f (antes 7ee789008a68, agora 29a72a4f67bd)
+20/10 13:51:26    recapturada e conferida byte a byte: refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56 (antes 3c85f782c47c, agora a6bd02f5472f)
+20/10 13:51:26    lote 521-560: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:28    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6
+20/10 13:51:28    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/grupos-categoria-sem-like-erro-tratado-2-261016151237a9
+20/10 13:51:32    recapturada e conferida byte a byte: refs/importado/estado/grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6 (antes d58f29c582bf, agora 6b53026054a7)
+20/10 13:51:32    recapturada e conferida byte a byte: refs/importado/estado/grupos-categoria-sem-like-erro-tratado-2-261016151237a9 (antes b51c925b41be, agora 0d70dd465d71)
+20/10 13:51:32    lote 561-600: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:39    lote 601-640: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:44    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/lista-tabela-estrutura-grupos-tarefa-con-26101308449243
+20/10 13:51:44    recapturada e conferida byte a byte: refs/importado/estado/lista-tabela-estrutura-grupos-tarefa-con-26101308449243 (antes 254eb2b98ce5, agora 5126ea8ce13e)
+20/10 13:51:44    lote 641-680: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:45    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/login-v3-seta-contraste-2610111302ded9
+20/10 13:51:50    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/mini-games-xp-real-limite-diario-267-26101120112f0c
+20/10 13:51:50    recapturada e conferida byte a byte: refs/importado/estado/login-v3-seta-contraste-2610111302ded9 (antes 54e51f1a2abf, agora fec884efbb17)
+20/10 13:51:50    recapturada e conferida byte a byte: refs/importado/estado/mini-games-xp-real-limite-diario-267-26101120112f0c (antes 1cab897c1caf, agora d7e47a0b607a)
+20/10 13:51:50    lote 681-720: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:54    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/multiplix-drain-ci-espelho-261017064674b1
+20/10 13:51:56    recapturada e conferida byte a byte: refs/importado/estado/multiplix-drain-ci-espelho-261017064674b1 (antes 8ebfc53e5d56, agora d46aa4c0904d)
+20/10 13:51:56    lote 721-760: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:51:56    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/n-011-storage-apagar-policies-duplicadas-2610101218fac0
+20/10 13:52:03    recapturada e conferida byte a byte: refs/importado/estado/n-011-storage-apagar-policies-duplicadas-2610101218fac0 (antes f38d77376eaa, agora 78a0e2f6aaf6)
+20/10 13:52:03    lote 761-800: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:08    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/n094-talkx-atributos-rls-retomar-2610131057cf3a
+20/10 13:52:08    recapturada e conferida byte a byte: refs/importado/estado/n094-talkx-atributos-rls-retomar-2610131057cf3a (antes fb719c981ff9, agora a03b75ebb830)
+20/10 13:52:08    lote 801-840: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:09    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/n097-talkx-banco-pre-checagem-retomada-26101707178adb
+20/10 13:52:15    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-retomar-261013132915c2
+20/10 13:52:15    recapturada e conferida byte a byte: refs/importado/estado/n097-talkx-banco-pre-checagem-retomada-26101707178adb (antes 47575e83dc90, agora 080b5b1c0299)
+20/10 13:52:15    recapturada e conferida byte a byte: refs/importado/estado/n142-banco-leitura-reacoes-retomar-261013132915c2 (antes 5beeecbe45b8, agora 4430653b28ac)
+20/10 13:52:15    lote 841-880: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:20    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/normalizar-telefone-ddi-2610130213e4d6
+20/10 13:52:22    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/notificacao-navegador-nao-derruba-aviso-2610161445ddf3
+20/10 13:52:23    recapturada e conferida byte a byte: refs/importado/estado/normalizar-telefone-ddi-2610130213e4d6 (antes f053e9f0b032, agora a4bb117b9325)
+20/10 13:52:23    recapturada e conferida byte a byte: refs/importado/estado/notificacao-navegador-nao-derruba-aviso-2610161445ddf3 (antes 307dfd551e61, agora 1a9149681987)
+20/10 13:52:23    lote 881-920: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:25    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/pagamentos-remover-modulo-t-98dfa08e-26101118106c95
+20/10 13:52:27    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/painel-saude-conexao-credential-26101521-26101615109b69
+20/10 13:52:29    recapturada e conferida byte a byte: refs/importado/estado/pagamentos-remover-modulo-t-98dfa08e-26101118106c95 (antes 0248f1572cfd, agora c9e3c07fe2d1)
+20/10 13:52:29    recapturada e conferida byte a byte: refs/importado/estado/painel-saude-conexao-credential-26101521-26101615109b69 (antes 2e16bdd8c1e4, agora c0433e81590d)
+20/10 13:52:29    lote 921-960: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:36    lote 961-1000: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:36    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/preserva-read-at-backfill-recibos-261012111484e1
+20/10 13:52:43    recapturada e conferida byte a byte: refs/importado/estado/preserva-read-at-backfill-recibos-261012111484e1 (antes cc6ff2a569f4, agora e133cec5ee62)
+20/10 13:52:43    lote 1001-1040: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:48    lote 1041-1080: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:53    lote 1081-1120: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:52:54    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/recover-message-media-26101113320dfd
+20/10 13:52:55    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/recuperacao-realtime-queda-refazer-t-0aa-26101115165e45
+20/10 13:52:58    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/refazer-admin-login-attempts-t-3f767083-26101121473241
+20/10 13:52:59    recapturada e conferida byte a byte: refs/importado/estado/recover-message-media-26101113320dfd (antes 053a33933281, agora 1ec00d7b1b3b)
+20/10 13:52:59    recapturada e conferida byte a byte: refs/importado/estado/recuperacao-realtime-queda-refazer-t-0aa-26101115165e45 (antes c49a34069626, agora f45cd96e5b9f)
+20/10 13:52:59    recapturada e conferida byte a byte: refs/importado/estado/refazer-admin-login-attempts-t-3f767083-26101121473241 (antes 299d73d2cda4, agora e600a222c8a2)
+20/10 13:52:59    lote 1121-1160: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:01    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e
+20/10 13:53:04    recapturada e conferida byte a byte: refs/importado/estado/refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e (antes 6f065e57c96f, agora d4c873d9147e)
+20/10 13:53:04    lote 1161-1200: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:13    lote 1201-1240: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:15    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/refazer-member-role-rpcs-saida-31-26101706464fcd
+20/10 13:53:16    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/refazer-multiplix-graphify-update-force--26101118384408
+20/10 13:53:20    recapturada e conferida byte a byte: refs/importado/estado/refazer-member-role-rpcs-saida-31-26101706464fcd (antes 2be077dcec42, agora 4a5167155abb)
+20/10 13:53:20    recapturada e conferida byte a byte: refs/importado/estado/refazer-multiplix-graphify-update-force--26101118384408 (antes ef61d0894358, agora 6cea3a6c7d3b)
+20/10 13:53:20    lote 1241-1280: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:26    lote 1281-1320: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:35    lote 1321-1360: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:38    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/remove-codigo-morto-chat-chatheader-2610-2610111241c0d9
+20/10 13:53:42    recapturada e conferida byte a byte: refs/importado/estado/remove-codigo-morto-chat-chatheader-2610-2610111241c0d9 (antes 288fcf5142f9, agora 05338f10ef7e)
+20/10 13:53:42    lote 1361-1400: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:47    lote 1401-1440: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:53    lote 1441-1480: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:53:59    lote 1481-1520: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb
+20/10 13:54:05    recapturada e conferida byte a byte: refs/importado/estado/rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb (antes 4291cbc244f5, agora 489afdb85141)
+20/10 13:54:05    lote 1521-1560: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:06    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sec-y25-01-insert-alvo-t-0586a806-26101707511312
+20/10 13:54:11    recapturada e conferida byte a byte: refs/importado/estado/sec-y25-01-insert-alvo-t-0586a806-26101707511312 (antes 19a9c7f4946f, agora f75fba9dddfc)
+20/10 13:54:11    lote 1561-1600: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:15    lote 1601-1640: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:20    lote 1641-1680: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:26    lote 1681-1720: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:31    lote 1721-1760: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:36    lote 1761-1800: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:37    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sla-resolve-applicable-t-81c550ae-2610170742c161
+20/10 13:54:43    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag1-git-2610170855737f
+20/10 13:54:43    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag2-front-26101708550eb1
+20/10 13:54:44    recapturada e conferida byte a byte: refs/importado/estado/sla-resolve-applicable-t-81c550ae-2610170742c161 (antes e9c785f33c8b, agora 2b2cbe579a5d)
+20/10 13:54:44    recapturada e conferida byte a byte: refs/importado/estado/sync-ag1-git-2610170855737f (antes 9a7524ae75a5, agora 6dc48c292845)
+20/10 13:54:44    recapturada e conferida byte a byte: refs/importado/estado/sync-ag2-front-26101708550eb1 (antes f61a1dfd28db, agora 35d35ba536dd)
+20/10 13:54:44    lote 1801-1840: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:54:45    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag3-edge-26101708555409
+20/10 13:54:45    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag4-banco-2610170855a3ad
+20/10 13:54:45    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag4b-banco-canonico-ro-2610170938704d
+20/10 13:54:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag5-qualidade-2610170855c187
+20/10 13:54:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-01-ci-causa-raiz-2610170944cf50
+20/10 13:54:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-03-db-guard-catalogo-stale-26101709440ca2
+20/10 13:54:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-05-components-lote-1-26101709579290
+20/10 13:54:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-06-resgate-hooks-lib-services-2610171004d83a
+20/10 13:54:47    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-07-front-pages-integrations-raiz-2610171005ebcb
+20/10 13:54:47    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf
+20/10 13:54:48    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1
+20/10 13:54:48    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-10-seguranca-banco-rls-26101709499002
+20/10 13:54:48    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-11-testes-contracts-e2e-origin-on-261017100048c5
+20/10 13:54:48    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-12-worktrees-26101710087fba
+20/10 13:54:48    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-13-limpeza-lotes-2610171043b6a1
+20/10 13:54:49    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-14-ci-workflows-2610170955ef2c
+20/10 13:54:49    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-15-docs-reconciliacao-registro-26101711145898
+20/10 13:54:49    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-16-mensageria-talkx-multiplix-2610171101300d
+20/10 13:54:50    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-17-ia-divergencias-2610171114c1fc
+20/10 13:54:50    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-18-ambientes-vercel-2610171114ce60
+20/10 13:54:50    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-20-performance-rituais-261017111784ba
+20/10 13:54:51    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-23-reconciliar-153-migrations-26101711229059
+20/10 13:54:51    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-25-runbook-lote1-2610171149c18f
+20/10 13:54:51    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937
+20/10 13:54:51    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-27-plano-isolamento-preview-2610171149d0fe
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync-ag3-edge-26101708555409 (antes 45c4c662e494, agora 9d1ce44bfd58)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync-ag4-banco-2610170855a3ad (antes 27a216703e7c, agora 957c16bd81b5)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync-ag4b-banco-canonico-ro-2610170938704d (antes cc979db352d6, agora f9e623f46643)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync-ag5-qualidade-2610170855c187 (antes d10ef334ef2d, agora 8b6ecb3988e0)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-01-ci-causa-raiz-2610170944cf50 (antes d74d4fb44435, agora 65173f16e485)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-03-db-guard-catalogo-stale-26101709440ca2 (antes f207266c7ebb, agora 0e48cad96596)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-05-components-lote-1-26101709579290 (antes b3cb518ced4c, agora 217bc0ca0672)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-06-resgate-hooks-lib-services-2610171004d83a (antes 0527bd178163, agora 58d5d6885e3d)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-07-front-pages-integrations-raiz-2610171005ebcb (antes 86d9610511af, agora 46f49b7e0668)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf (antes 236ddb1cf5fe, agora 8282778aefa9)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1 (antes a22e1bf692bd, agora e713bc80b812)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-10-seguranca-banco-rls-26101709499002 (antes 2af37853be1b, agora abbc976ad21a)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-11-testes-contracts-e2e-origin-on-261017100048c5 (antes 2c968f27054a, agora 1da08188a5af)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-12-worktrees-26101710087fba (antes ab30674f2954, agora 48725ffb836c)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-13-limpeza-lotes-2610171043b6a1 (antes 2c8f74eaac1c, agora 28ec574a9d83)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-14-ci-workflows-2610170955ef2c (antes 6814b803e714, agora eef2ef6a4ffa)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-15-docs-reconciliacao-registro-26101711145898 (antes 32becc046abf, agora 4fcc6bed7fc9)
+20/10 13:55:00    recapturada e conferida byte a byte: refs/importado/estado/sync20-16-mensageria-talkx-multiplix-2610171101300d (antes 2e4814a38073, agora 0a97130bb8be)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-17-ia-divergencias-2610171114c1fc (antes 145f01afbbe8, agora 206bd4ad4762)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-18-ambientes-vercel-2610171114ce60 (antes 6861abe18635, agora e29340974da0)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-20-performance-rituais-261017111784ba (antes 1c622691e90a, agora b35457cd8c1e)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-23-reconciliar-153-migrations-26101711229059 (antes 60ea2504913d, agora aa78d08fbe44)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-25-runbook-lote1-2610171149c18f (antes 8181e21566fb, agora b0eca591ef93)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937 (antes 1039a8466ec2, agora e93df7c7cdec)
+20/10 13:55:01    recapturada e conferida byte a byte: refs/importado/estado/sync20-27-plano-isolamento-preview-2610171149d0fe (antes 067130852819, agora 2dead39e8420)
+20/10 13:55:01    lote 1841-1880: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:08    lote 1881-1920: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:10    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-139a0959-26101319274a70
+20/10 13:55:13    recapturada e conferida byte a byte: refs/importado/estado/t-139a0959-26101319274a70 (antes 0a6b5b2e4d92, agora dfa31d9c7ede)
+20/10 13:55:13    lote 1921-1960: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:14    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-1be848fa-2610131459a5be
+20/10 13:55:19    recapturada e conferida byte a byte: refs/importado/estado/t-1be848fa-2610131459a5be (antes 4eabe5cc243a, agora d57b973df964)
+20/10 13:55:19    lote 1961-2000: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:20    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-313f15cd-261013000804a1
+20/10 13:55:24    recapturada e conferida byte a byte: refs/importado/estado/t-313f15cd-261013000804a1 (antes cae3da381c43, agora 0ede9c5b971b)
+20/10 13:55:24    lote 2001-2040: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:25    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-3f8cf71b-26101615180dda
+20/10 13:55:29    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-4fa178e3-2610170647f2aa
+20/10 13:55:30    recapturada e conferida byte a byte: refs/importado/estado/t-3f8cf71b-26101615180dda (antes ec948331e971, agora 22025158f859)
+20/10 13:55:30    recapturada e conferida byte a byte: refs/importado/estado/t-4fa178e3-2610170647f2aa (antes 700371dae70d, agora b34443750228)
+20/10 13:55:30    lote 2041-2080: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:35    lote 2081-2120: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:36    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-5f3ab2b7-26101707317fa6
+20/10 13:55:41    recapturada e conferida byte a byte: refs/importado/estado/t-5f3ab2b7-26101707317fa6 (antes 1ec170fc14da, agora 4fda5b83ad0a)
+20/10 13:55:41    lote 2121-2160: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:42    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-6fab3edf-2610131613f552
+20/10 13:55:45    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-78c8ce80-26101216027f34
+20/10 13:55:46    recapturada e conferida byte a byte: refs/importado/estado/t-6fab3edf-2610131613f552 (antes 0698cbc1178c, agora ee2129e4e29c)
+20/10 13:55:46    recapturada e conferida byte a byte: refs/importado/estado/t-78c8ce80-26101216027f34 (antes eadd718882e4, agora 847c6985ded1)
+20/10 13:55:46    lote 2161-2200: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:51    lote 2201-2240: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:55:53    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-94faf950-2610161519dbc6
+20/10 13:55:57    recapturada e conferida byte a byte: refs/importado/estado/t-94faf950-2610161519dbc6 (antes 64d4ee5c29a5, agora 605f1b5f88b8)
+20/10 13:55:57    lote 2241-2280: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:03    lote 2281-2320: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:04    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-b129dfdc-2610120043782e
+20/10 13:56:10    recapturada e conferida byte a byte: refs/importado/estado/t-b129dfdc-2610120043782e (antes 970764aad80a, agora 02580d88c573)
+20/10 13:56:10    lote 2321-2360: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:15    lote 2361-2400: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:20    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-d8fe8268-2610112017fc97
+20/10 13:56:21    recapturada e conferida byte a byte: refs/importado/estado/t-d8fe8268-2610112017fc97 (antes ba708619e227, agora 1b4b3ae4a7f8)
+20/10 13:56:21    lote 2401-2440: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:30    lote 2441-2480: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:35    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-f8a6790c-2610170755c344
+20/10 13:56:36    recapturada e conferida byte a byte: refs/importado/estado/t-f8a6790c-2610170755c344 (antes 8f82dc970558, agora 8209be6f8bb0)
+20/10 13:56:36    lote 2481-2520: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:36    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-fe7f27a2-2610131345e18f
+20/10 13:56:41    recapturada e conferida byte a byte: refs/importado/estado/t-fe7f27a2-2610131345e18f (antes fa3ccffbe01f, agora 8cf541d8bf54)
+20/10 13:56:41    lote 2521-2560: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:46    lote 2561-2600: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:56:49    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/talkx-salvar-variantes-n110-261013104166e5
+20/10 13:56:51    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/talkx-snapshot-espelho-ci-2610170646ddf9
+20/10 13:56:51    recapturada e conferida byte a byte: refs/importado/estado/talkx-salvar-variantes-n110-261013104166e5 (antes 006909d24491, agora 69448dc3c5a8)
+20/10 13:56:51    recapturada e conferida byte a byte: refs/importado/estado/talkx-snapshot-espelho-ci-2610170646ddf9 (antes 8dab222b91c3, agora abcbc1c9e0fe)
+20/10 13:56:51    lote 2601-2640: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/team-chat-realtime-canais-t-64581412-261017064405c0
+20/10 13:57:01    recapturada e conferida byte a byte: refs/importado/estado/team-chat-realtime-canais-t-64581412-261017064405c0 (antes a05f0b112070, agora 4fd4808854df)
+20/10 13:57:01    lote 2641-2680: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:03    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/teams-chat-settings-wiring-2610170726004a
+20/10 13:57:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/test-usebusinesshours-rpc-t-df995145-261017072003d4
+20/10 13:57:06    recapturada e conferida byte a byte: refs/importado/estado/teams-chat-settings-wiring-2610170726004a (antes b3cf38a24874, agora 5a6a1ea5c03b)
+20/10 13:57:06    recapturada e conferida byte a byte: refs/importado/estado/test-usebusinesshours-rpc-t-df995145-261017072003d4 (antes 6293a4b6d21f, agora c5e7126c92b3)
+20/10 13:57:06    lote 2681-2720: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:07    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/testes-email-acoes-lixo-token-cron-26101-2610161512e8af
+20/10 13:57:07    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/testes-prova-auditoria-papeis-reais-26101615129c06
+20/10 13:57:08    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/testes-replyto-citada-ausente-otimista-26101615026c64
+20/10 13:57:11    recapturada e conferida byte a byte: refs/importado/estado/testes-email-acoes-lixo-token-cron-26101-2610161512e8af (antes 24280450db3e, agora 816d71886ae9)
+20/10 13:57:11    recapturada e conferida byte a byte: refs/importado/estado/testes-prova-auditoria-papeis-reais-26101615129c06 (antes b8e6a4be0e2f, agora d3f23b605215)
+20/10 13:57:11    recapturada e conferida byte a byte: refs/importado/estado/testes-replyto-citada-ausente-otimista-26101615026c64 (antes 966a44c232d3, agora 7ace2e279d81)
+20/10 13:57:11    lote 2721-2760: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:15    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/tl-054a-talkx-data-agendamento-26101006421abd
+20/10 13:57:18    recapturada e conferida byte a byte: refs/importado/estado/tl-054a-talkx-data-agendamento-26101006421abd (antes edc492dfa334, agora b38f3bdf3e14)
+20/10 13:57:18    lote 2761-2800: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:23    lote 2801-2840: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:28    lote 2841-2880: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:32    lote 2881-2920: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:38    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/types-sync-causa-raiz-26101709440412
+20/10 13:57:39    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/unsupported-message-bubble-refazer-2610111234928e
+20/10 13:57:41    recapturada e conferida byte a byte: refs/importado/estado/types-sync-causa-raiz-26101709440412 (antes 39ab7dedf316, agora fb9f4a7ddabe)
+20/10 13:57:41    recapturada e conferida byte a byte: refs/importado/estado/unsupported-message-bubble-refazer-2610111234928e (antes cd389538d55a, agora 317e89c53edc)
+20/10 13:57:41    lote 2921-2960: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:45    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/variacoes-ab-talkx-tl-126-2610122111d5fc
+20/10 13:57:45    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/verifica-inbox-live-path-26101708271e12
+20/10 13:57:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/verifica-replyto-n1-verify-t775e45ba-26101615107516
+20/10 13:57:58    recapturada e conferida byte a byte: refs/importado/estado/variacoes-ab-talkx-tl-126-2610122111d5fc (antes a55b8b92e114, agora 8d629b272a4d)
+20/10 13:57:58    recapturada e conferida byte a byte: refs/importado/estado/verifica-inbox-live-path-26101708271e12 (antes bfaaf99a6569, agora b4f02521b7ea)
+20/10 13:57:58    recapturada e conferida byte a byte: refs/importado/estado/verifica-replyto-n1-verify-t775e45ba-26101615107516 (antes 46b080477082, agora 120342a5e2eb)
+20/10 13:57:58    lote 2961-3000: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:57:58    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/verify-relato-fechar-auditoria-2610161520e528
+20/10 13:58:03    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/warroom-estados-zero-falso-261013002023ce
+20/10 13:58:04    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/warroom-rpcs-agentes-filas-26101219463e05
+20/10 13:58:05    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/warroom-rpcs-hook-261012202546f0
+20/10 13:58:05    recapturada e conferida byte a byte: refs/importado/estado/verify-relato-fechar-auditoria-2610161520e528 (antes 0e13e6d57004, agora 37cab1910f96)
+20/10 13:58:05    recapturada e conferida byte a byte: refs/importado/estado/warroom-estados-zero-falso-261013002023ce (antes 5ade9d364929, agora 0978ea744f39)
+20/10 13:58:05    recapturada e conferida byte a byte: refs/importado/estado/warroom-rpcs-agentes-filas-26101219463e05 (antes d478957b350a, agora 51c51900dcbe)
+20/10 13:58:05    recapturada e conferida byte a byte: refs/importado/estado/warroom-rpcs-hook-261012202546f0 (antes 0525129c8ee4, agora 3a7d4e441e97)
+20/10 13:58:05    lote 3001-3040: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:58:06    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/webauthn-login-sem-email-desafio-unico-2610122306aad8
+20/10 13:58:06    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/whisper-audio-path-26101304547a65
+20/10 13:58:10    recapturada e conferida byte a byte: refs/importado/estado/webauthn-login-sem-email-desafio-unico-2610122306aad8 (antes 8bb625e9cfe1, agora 6ade71acb6c4)
+20/10 13:58:10    recapturada e conferida byte a byte: refs/importado/estado/whisper-audio-path-26101304547a65 (antes e2452ce42f00, agora a3a13c3f5944)
+20/10 13:58:10    lote 3041-3080: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:58:15    recapturar (o disco mudou desde a importacao): ~/zapp-worktrees/sincronizacao-canonica-20261016
+20/10 13:58:16    recapturada e conferida byte a byte: refs/importado/estado/sincronizacao-canonica-20261016 (antes 00ae4c887818, agora 57228a2e4061)
+20/10 13:58:16    lote 3081-3118: importadas e conferidas (rodada 1: nada apagado)
+20/10 13:58:16    copias de banco que nao entram (somem com as pastas): kanban.db x3 350 MB, board.db x1 117 MB, kanban.db-shm x1 0 MB, kanban.db-wal x1 0 MB
+20/10 13:58:16 refs: antes 14381, depois 14400; refs antigas que mudaram durante a execucao (outros chats podem mexer nas branches deles): 0
+20/10 13:58:16 RESUMO: {"worktrees: recapturadas (disco mudou ou o git status nao conferia)": 129, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 1, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 0, "worktrees: pastas regeneraveis (nao entram)": 2808, "worktrees: ficaram por repositorio desconhecido dentro": 0}

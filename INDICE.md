@@ -1,11 +1,11 @@
 # Importacao do trabalho do Zapp Web V2 espalhado no WSL
 
-Gerado por importar.py em 20/10/2026 12:18. Rodada: 1 (importar).
+Gerado por importar.py em 20/10/2026 13:58. Rodada: 1 (importar).
 
 ## Como achar as coisas
 
 - branches `importado/<origem>/<nome original>`: branches de clones e de copias de seguranca (bundles) que o repositorio nao tinha;
-- `refs/importado/estado/<worktree>`: foto completa de cada worktree (arquivos alterados, nao commitados, ignorados uteis e o estado do git em `.importado-estado-git/`); o 1o pai e o HEAD da worktree;
+- `refs/importado/estado/<worktree>`: foto completa de cada worktree (arquivos alterados, nao commitados, ignorados uteis e o estado do git em `.importado-estado-git/`); o 1o pai e o HEAD da worktree; se a foto foi refeita (mensagem com `recaptura:`), o ultimo pai e a foto anterior;
 - `refs/importado/<clone>/estado`: foto da pasta de cada clone separado; `.../stash/NNN`, `.../soltos/<sha>`, `.../extra/<sha>`: stashes e commits sem branch;
 - `refs/importado/repo-soltos/<sha>`: commits do proprio repositorio que nenhuma branch apontava (a limpeza do git os apagaria);
 - branch `importado/arquivos-avulsos`: patches, diffs e pastas soltas, com o caminho relativo a /home/joaquim_ataides;
@@ -13,7 +13,7 @@ Gerado por importar.py em 20/10/2026 12:18. Rodada: 1 (importar).
 
 Ver uma foto: `git show --stat <ref>` · listar: `git for-each-ref refs/importado refs/heads/importado`
 
-## Refs criadas (8558)
+## Refs criadas (8576)
 
 15fa3ceefee7e8a8cb38cd10c648332c0081e426 refs/heads/importado/arquivos-avulsos
 8eed2c40b02f1678bf7eabaece238b7568e76a13 refs/heads/importado/bundle-Zapp_Web_V2_all_refs/hermes/contraste-elemento-s43-2610040649e49d
@@ -442,7 +442,7 @@ e43e18d5a853e97f0a9dbc82d33e1a04fccb11b8 refs/importado/estado/003-capturas-play
 cfbf15b15e3a8dc90ba0a19d72a9b63c76cf1538 refs/importado/estado/13-botoes-icone-nome-acessivel-26101306083e76
 e7922c201a2d8801c330f585bcfb0ee492a19624 refs/importado/estado/261013100782ed-2610161340dc9c
 ceccfb97904db945e4c4f02a6bf762b9a443e92f refs/importado/estado/299-talk-x-cancelamento-em-voo-261016011-2610160114d52c
-644a05e69668d4781e1f093e37ecdca3864ca209 refs/importado/estado/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
+ccdada5d185a98115c9c74e15a2d153ac58a1252 refs/importado/estado/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
 cf70c984c21c1eac879acc7b6c8d3cfe5b1c971e refs/importado/estado/a11y-balao-teclado-videofullscreen-dialo-26101523526a62
 6d96bbb00c57982fd7885c21a7128b53e102c35e refs/importado/estado/a11y-dica-botao-acessibilidade-0819e1a9-2610121805fee4
 35357a02721784dac5180966ae7ea231ed1081a5 refs/importado/estado/a11y-ferramentas-ia-conversa-26101223323305
@@ -453,7 +453,7 @@ db327fbe5a73919d2945fa78cb536922cc352e63 refs/importado/estado/a11y-icon-buttons
 d88259642078701f1433e0423abe08e90f51c6a1 refs/importado/estado/a11y-motionconfig-raiz-rehacer-2610151731b57c
 72f3fc85511b5987a9e5c755c1576c76710f8d72 refs/importado/estado/a11y-nome-papel-6-pontos-2610101800fbc9
 18f5da700f5d61e0e526f97cff2c26f51ddcba96 refs/importado/estado/a11y-nome-papel-6-pontos-2610131918ebd1
-e364f469c3337e6d1b1043db21955005cd1190b3 refs/importado/estado/a11y-nome-papel-6-pontos-26101406531182
+bc7753ab04670eed346870c30c9907a36c7eeac6 refs/importado/estado/a11y-nome-papel-6-pontos-26101406531182
 679790092d511aa8581eb4995f2b693af3eecbd9 refs/importado/estado/a11y-textos-primitivos-ui-2610121623d000
 f9c4d669e565116209c30e0a6fc0e6bfcabbd00a refs/importado/estado/a11y-timers-skip-link-26101516500b8c
 f775d527553228a4e53fff3d75fd19265fa776b5 refs/importado/estado/a2e44b38-2610152334b8a8
@@ -492,14 +492,14 @@ dd28d593e101a4610f6c6eb5e89d7379ac562090 refs/importado/estado/ajustar-relato-re
 482d10b37947cc4ec7ca544ab08bcb9a77ed7003 refs/importado/estado/alerta-chamada-foto-contato-2610151604cb55
 867d552366658544ceec3bd677e3312d2b8ae9c8 refs/importado/estado/alerta-conexao-prefs-261015185180e1
 e00d70b77396167cb7f4a5e151d6f0b1c6b3dd6d refs/importado/estado/alerta-falha-envio-26101318308772
-27465f4151832faa18d802cf52c2e5b4f27bf839 refs/importado/estado/alertas-crise-globais-supervisao-2610151-26101614567373
+50e554690dddc4475b016f25001c1a6321db6635 refs/importado/estado/alertas-crise-globais-supervisao-2610151-26101614567373
 c76fe95c2e84ab97ed2fadd7b27c901671b08dee refs/importado/estado/alertas-crise-globais-supervisao-2610151938847c
 d6db7597472c889e64b425bcb9d8d38417f21146 refs/importado/estado/alternancia-lista-grade-talkx-2610131455d696
 bf768115c02def0ed7d296bf6eefa74a6dd32e1e refs/importado/estado/alvos-toque-44px-ponteiro-grosso-26101312559e6e
 60d9b757a01b60211383b2e75c1ec5a963ef4d61 refs/importado/estado/alvos-toque-44px-refazer1-261013154315fc
-05f203b5f5290a40b1392bfb4ba22d1ab135c4a4 refs/importado/estado/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f
+13f6ee7c93eaf50961c93f404805f92cb3e73cb4 refs/importado/estado/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f
 c2ec4dcd15eec68e6aca9af0610ccfbe4ef110cb refs/importado/estado/analises-conversa-cache-query-2610152032dabe
-bcb064c016455ad1b2154f6941d5b7cfd4f2e6f7 refs/importado/estado/analises-conversa-cache-query-t-fc794700-26101615025066
+260ff5cea79158caffc03a07359e14f475b79568 refs/importado/estado/analises-conversa-cache-query-t-fc794700-26101615025066
 df1c182b3795f900266965a2fc155a08a7c774b5 refs/importado/estado/anexos-progresso-upload-aviso-2610151622b92e
 f796b51a906d58b1d2c611b7c5a82a32de26bb38 refs/importado/estado/anexos-progresso-upload-aviso-26101614146a2c
 987b0deb9ebfa48b45ee15f5dbdb7afed1d5e4ed refs/importado/estado/aniversarios-team-chat-26101607414dfb
@@ -508,18 +508,18 @@ dbc9b5e59ab006ea201598f106582409e5db2909 refs/importado/estado/apagar-mensagem-r
 66f1e1bd50114a7919d37c11c5cb6e74aa6bc037 refs/importado/estado/apagar-mensagem-um-caminho-261013043659b8
 c57aa857538e775f89f3ad76d9e0460ad7a469b1 refs/importado/estado/aparencia-tamanho-texto-chat-2610130537e450
 976c95d0e92a8b397b72b925406f7cf3c281544f refs/importado/estado/aplicar-at-time-zone-window-fixes-2610130856a5b5
-4a9d1d834a7aa66d2cbae78d9ee19d303dae5c8b refs/importado/estado/aplicar-base-original-outbox-inbound-69-261011193393d1
-e49ea0e34ef511d0d6468ea73b3041f39870e169 refs/importado/estado/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7
+16483f2ca8c6b03622b8c8c4102962b3d5b0699a refs/importado/estado/aplicar-base-original-outbox-inbound-69-261011193393d1
+70fc5a88de308f13729b1da6ceca5c653d3220d1 refs/importado/estado/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7
 8497e9dff65b0bd98d087a99d06c9d3de442c7b1 refs/importado/estado/app-bootstrap-rpc-2610151932feb3
 04f45de900f1aba715a04d1403dd4b99cfce37f6 refs/importado/estado/arquivar-conversa-aba-arquivadas-26101216356cd1
 0bcc373f7eec196a6240e832406b0f55ab004a5a refs/importado/estado/arquivar-grava-estado-arquivada-261011121791df
 4e44263022292825462ccadca5127f81ab85fcb6 refs/importado/estado/arquivar-grava-estado-arquivada-rebase-261016120219fd
 06a2ac5c2e0b13c164f33a228410fcb2c7d7a369 refs/importado/estado/arquivar-semantica-unica-261015153820e6
 c090f3bb647d9a4066582130d867c1f8cd0826a8 refs/importado/estado/arrastar-polido-quadro-teclado-rolagem-261011192359f6
-9df652cc952aa744a619df0b9921a343380f7bc0 refs/importado/estado/arrastar-polido-quadro-teclado-rolagem-2610112015f508
-32aafb5c7b7bce84193322ea4cfc93b899d5240b refs/importado/estado/arvore-integracao-merge-simulado-2610171013b714
+767e4bbb7bd38f86e91e0775aabd4e48a6677f7a refs/importado/estado/arrastar-polido-quadro-teclado-rolagem-2610112015f508
+6af7c8d3f3500d502979458c41c0861e2ef456d4 refs/importado/estado/arvore-integracao-merge-simulado-2610171013b714
 51f3c5d3b1e8cc8fef28e0cdd66f5dd7bdf84109 refs/importado/estado/assume-return-conversation-261011112785a0
-a0eaa2ddc9b8d1a1782153b8766c00a45fa4edc7 refs/importado/estado/assume-return-conversation-refazer2-26101114573d0f
+642d4d728c5b4a04e5658538d0ba74d43060b3fd refs/importado/estado/assume-return-conversation-refazer2-26101114573d0f
 d8ee1d49c1b304eb17a4ae15f10bae6fc137b72a refs/importado/estado/assume-return-conversation-refazer4-2610152318dab7
 8029654eff9d145a56088e04d284c25bd9ac7c79 refs/importado/estado/assumir-devolver-fila-hook-2610111001cf93
 b6ce324ca909245176562174c332c2d464e84528 refs/importado/estado/atalho-m-mute-audio-261015155937e9
@@ -530,13 +530,13 @@ b3be8f0df1f91df47f756e94283f09a6e0d4f055 refs/importado/estado/atendentes-penden
 b201db16274a0897c00a501acb20ac30d7d1015f refs/importado/estado/audio-gravador-pausa-recuperacao-2610130601fcc2
 9cf793c29a5351ce4db350595bb05de3256a6e86 refs/importado/estado/audio-memes-bucket-admin-delete-26101521094dda
 2ee6929ee0cc81ac0644bbbd3829e8be09075fec refs/importado/estado/audio-memes-realtime-26101520262013
-32d0a38503d75669862b579e21c375c7cef2a172 refs/importado/estado/audio-memes-storage-realtime-2610151908f-26101614551169
+afb127f943baf49084f6f21f2db936f3e5568a2a refs/importado/estado/audio-memes-storage-realtime-2610151908f-26101614551169
 6e1679bee611df8cc62ff2d563888fa1a4786e39 refs/importado/estado/audio-memes-storage-realtime-2610151908f83c
 a707682d16b59767742e4f1f373cd9da914a1db9 refs/importado/estado/audio-player-a11y-2610152109114a
-e27e8b33e19811db9ce20fd239528b39b9465f53 refs/importado/estado/audio-player-a11y-2610152109114a-2610161508dc74
+d353796d0d58db5150f66dda50b3aae1de5a6e17 refs/importado/estado/audio-player-a11y-2610152109114a-2610161508dc74
 460bf379719454383a77a30495d00f7c899c7c96 refs/importado/estado/audio-retentativa-idempotente-2610151619366c
 11b9d1489339af26d8c440d0b05ce93c2a3c0850 refs/importado/estado/audio-voz-bucket-privado-26101522455c4c
-1952156a6968fab1e5970391e70017f355944dd1 refs/importado/estado/audit-admin-changes-261013012225d2
+b2ad61c36dd47c70b8b1a2b0bb8f8c194570ce76 refs/importado/estado/audit-admin-changes-261013012225d2
 f09931528647bb4ab01ff282df83558875381010 refs/importado/estado/audit-admin-changes-26101602537e84
 2bfc074974cf8c4ef4f3c1b516ede9a252d2540c refs/importado/estado/audit-log-aba-real-261013-261013161107e9
 1eaee36b1af09a63ece5574f528e0106dbf4027b refs/importado/estado/audit-log-summary-por-periodo-261013145182df
@@ -564,7 +564,7 @@ b60c9a9b9b8cdfb8d28dbd1b32677186a615d863 refs/importado/estado/automation-sugges
 d7d4d3d238627694392427b9d9cac3f83618a4fb refs/importado/estado/avanco-etapa-deal-performed-by-26101219250fac
 c1b646b99b64d7458116ec6b23cf73434a2ed8b0 refs/importado/estado/avatar-caminho-imprevisivel-2610122249548a
 c0413cdba8c952139d8ada05ed83a7a968b522bd refs/importado/estado/aviso-preview-sound-false-219641c9-26101614255aa6
-4fdfb5f39fa1f1184b24a9f32876c67d2526f788 refs/importado/estado/aviso-tipo-notificacao-som-recusado-2610161528a89e
+0e13f1eeae1425ad095cabfe4eb4c19d06ce6d0d refs/importado/estado/aviso-tipo-notificacao-som-recusado-2610161528a89e
 30246eede1068a7ca441faed6f5520f25818dbd7 refs/importado/estado/avisos-globais-conexao-degradada-servido-2610122027cebe
 c7f3af08171042d1c781a4eb4fba089b24ef5861 refs/importado/estado/avisos-limite-fila-2610152120dedb
 6cc00971631f8651a4ffb72afd614597d7f3e469 refs/importado/estado/avisos-mensagem-nova-global-261015154459e9
@@ -581,7 +581,7 @@ c84aba72e30bfa25e0e31a59f52e03cc7cc1b073 refs/importado/estado/barra-entrega-con
 96ca4ed2de8848f63be3ec0ad3a00e056c7aa461 refs/importado/estado/barra-entrega-conversa-aviso-falha-261011111273bc
 cb61d63108175c276bd3b1265ca790fada1b0bd6 refs/importado/estado/barra-entrega-conversa-aviso-falha-rebas-2610131344d98a
 36df351a4485f41f17ee01d76be02d75f20fc2a6 refs/importado/estado/base-quadro-pais-consolidar-26101602121ffc
-4b77ab59b33e6ec3e3dd04b5973191d21a3d1437 refs/importado/estado/baseline-inbox-lista-sem-piscar-26101707524612
+05431f693e3bd361d99417416f899c3c0694c66d refs/importado/estado/baseline-inbox-lista-sem-piscar-26101707524612
 9a1aa166663b6f1bdbba4989be68b637010d7c59 refs/importado/estado/baseline-usage-guard-rpc-2610130707ed92
 9630ca6d3c500ee028d12bcfe05c991ad92dde28 refs/importado/estado/batch-fetch-avatars-admin-only-2610101102eae0
 0730e93de9754f51efcb100ffd7aaea28403b676 refs/importado/estado/batch-fetch-avatars-admin-only-2610101508bd40
@@ -635,7 +635,7 @@ fe13a775656f0600c5c584cb46fcc6de9b95908e refs/importado/estado/chat-link-preview
 e3dd60d02032eb88f2d151b6fb3435fd6e712ec1 refs/importado/estado/chatbot-ia-l1-gatilho-2610151838a28d
 1715c2f5bb1f22c5020fb6883e49a432334dda26 refs/importado/estado/chaves-integracao-admin-mascaradas-26101514084702
 323964c9461d7919694e2a708d589529a6bfdb45 refs/importado/estado/cherry-pick-bafc14d48-repro-webhook-diag-2610160810b434
-b258ee8c19a05a6e5c2907079a529a258f5dc319 refs/importado/estado/cherry-pick-branch-anterior-26101706269006
+81ce4c4581c206cd15a65da3e4cf78a71c8ffb6f refs/importado/estado/cherry-pick-branch-anterior-26101706269006
 95e74d437e8e778e9e04be3a20b3ae2819c9d4fa refs/importado/estado/chip-arquivadas-statuschips-2610111129e0ce
 0c7947e3b392691eb4e6a4e9bfc86b019d6bb887 refs/importado/estado/chip-arquivadas-statuschips-26101223569ffd
 cc83f66e71baea8ea8dade6f32b1976985cefd3f refs/importado/estado/chip-arquivadas-statuschips-refazer-c338-2610111520689e
@@ -664,14 +664,14 @@ e470aefa57554d35ab2eb4c8363e76eb200d2b8e refs/importado/estado/conectar-whatsapp
 bf9b0fd57e483378613d4322e5343279e4671e3b refs/importado/estado/conexoes-aquecer-admin-reputacao-261015181892a5
 df0d45407ccdba63056626d2992270fd552a37cb refs/importado/estado/conexoes-cache-lista-26101222169e4a
 2500ed94b4dff5fae9576a92bd2f9959cc29fc04 refs/importado/estado/conexoes-cartao-responsivo-espelho-ci-26101516123ad1
-f0fe3425450ee619f15eb6e19bfc9d7001f15691 refs/importado/estado/conexoes-cartao-responsivo-estados-2610130153259a
+3dada7d65132832ef3e6a08c2fef6bcc4f466d5e refs/importado/estado/conexoes-cartao-responsivo-estados-2610130153259a
 2aa9a82b144ad9a725b6b52533c4a5bb28784f01 refs/importado/estado/conexoes-cartao-responsivo-estados-26101611321d2f
 5fc074784973789a80efa3aa9e7612e43d786137 refs/importado/estado/conexoes-cartao-responsivo-estados-refaz-26101314516c36
 de94dc072202bcbbdde6873d10688173e742c9a0 refs/importado/estado/conexoes-cartao-responsivo-estados-refaz-261013191081c5
 22f6a5777b4f791f0de9d98a83675a7f2116ab70 refs/importado/estado/conexoes-handlers-evolution-sync-26101315563116
 c63585f09ea40e7caca0390a41061d77037f2de5 refs/importado/estado/conexoes-instance-settings-dialog-26101517597e23
 cfc13c669ca8aff7d92e846d45bf81693221bad3 refs/importado/estado/conexoes-instancias-orfas-admin-26101521359ffd
-d62831c621313dcfca1db1eedffb14d0e489faf2 refs/importado/estado/conexoes-instancias-orfas-admin-2610161511c7f8
+a4d5004bb1df6f7db761b86a22c2bfcdfa50e605 refs/importado/estado/conexoes-instancias-orfas-admin-2610161511c7f8
 8edfb3869e78260a480aef4488c84dfca0f2c430 refs/importado/estado/conexoes-padrao-rpc-atomica-261013070294d0
 ef43e529718c1183b8c41bace0fae11b53ef5516 refs/importado/estado/conexoes-saude-numeros-oculta-2610152353a2f2
 b5a4360855d31e75b8958a2b49d80f1d8036cca0 refs/importado/estado/conexoes-telefone-inline-desconectar-toa-2610151857780d
@@ -686,7 +686,7 @@ bcf8ce967d9f4933c4a437133d44ab1e4c4a8364 refs/importado/estado/conexoes-testes-f
 1845bd7f12a10c880635ef047d9733c096a1dcbb refs/importado/estado/connection-alert-preferences-t-e8b312e0-26101301386029
 b2dcd0c4e8f7ba7ca422cdc07e67bfee135a661c refs/importado/estado/conquistas-reais-ranking-setas-26101300420e46
 87cd8d6a6633b267fadebc061349518470e8f11d refs/importado/estado/consent-status-guard-lgpd-2610152203edb5
-03c4301f3e5f7035090a033aadd54c76db2ac65f refs/importado/estado/consent-status-guard-lgpd-2610152203edb5-26101615138daa
+0f9010de07e3b36c54d1c71e1cf934b09d5cce7d refs/importado/estado/consent-status-guard-lgpd-2610152203edb5-26101615138daa
 bcf9649e38ee9bffb1b62849b0a0358027f101a8 refs/importado/estado/consolidar-baseline-veredito-26101210026a1f
 229890d2b52c2d54e4f562f7cedc08619ef8e4e2 refs/importado/estado/consolidar-violetas-soltos-2610101723cf6e
 0b083c2a85a3392806c3804fbb7ff3c141232efb refs/importado/estado/consultar-base-conhecimento-conversa-261012091063c1
@@ -709,7 +709,7 @@ e1c6c0d358f00ff950957b6084a50901261a3f9c refs/importado/estado/contagem-chips-co
 5e12468a9c6239cfa7f41c25e0f3887f85aee65f refs/importado/estado/contato-linha-tempo-atividades-2610152237da25
 ad8734ea5d0cc8c0af02a9a0bf7e658d2afd79f0 refs/importado/estado/contatos-conversar-funcao-unica-261012223275fe
 c8a0945cf6255b2d05b55ae62141c5562f9174aa refs/importado/estado/contatos-inbox-excluidos-telefone-duplic-261013025216fc
-d042ab189ce03c1e93d2554c9ed36db34663be93 refs/importado/estado/contatos-inbox-excluidos-telefone-duplic-261017065622dc
+796c69fb2e92e439b65ce5cf701b17d06db47ecc refs/importado/estado/contatos-inbox-excluidos-telefone-duplic-261017065622dc
 d8984e9656e815b79bc33737f238519b3ea52f79 refs/importado/estado/contatos-indicadores-rpc-261012222507f4
 fc38cea7128d1fc1a528eda8cb742b012a76be5a refs/importado/estado/contatos-modo-painel-timeline-26101302509c55
 d20f4d8e991386bd9ba6287478e3bcc9b2241cb3 refs/importado/estado/contatos-pipeline-mapa-analytics-rd086-2610130134b9c9
@@ -733,13 +733,13 @@ c6725b18f41a6b792df52c57e7f870750e864ecd refs/importado/estado/correlacao-edge-o
 98018f171aa31440770339ed1058974ee60168d4 refs/importado/estado/corrigir-cast-jsonb-smallint-window-n102-2610130850d1a4
 b4967716d32baad720c557f6e6555a4a8f0e51e6 refs/importado/estado/corrigir-causa-raiz-guarda-noturno-2610130455415c
 ca96069b10bc2ba698b4b230791f5f212764e708 refs/importado/estado/corrigir-espelho-ci-n217-t61b3a4b9-261016085186b4
-505933f3d7deb5e056371bfaffb53ebb8d61d49a refs/importado/estado/corrigir-exclusoes-sync-incremental-manu-2610170630721e
+33ad60f65bc384f7c9052b0bfeba141cc55a5960 refs/importado/estado/corrigir-exclusoes-sync-incremental-manu-2610170630721e
 dc45036180894bb82d89c6a26619b75489f6bf46 refs/importado/estado/corrigir-member-role-rpcs-refazer-3-26101600405d3c
 03f96543e9413b79fcee19f67ea40358621a28bb refs/importado/estado/corrigir-reflow-200-email-navy-261007202-26101514114012
 346d543f62febf258be1db30937e0b7548e64a6d refs/importado/estado/corrigir-selecao-artigos-search-knowledg-2610101416557c
 bd51c0552ee23471272dedeea5dc03b58ad1717e refs/importado/estado/cors-hardcoded-html-erro-provedor-261010204204ad
 97d962c8a120a3728615a660e6f65784cc97eba7 refs/importado/estado/cors-hardcoded-html-erro-provedor-26101409221591
-d5cd0db77fcd2f4e0626daac909469ee8130c665 refs/importado/estado/criar-migration-audit-admin-change-2610161458a6eb
+3d792a32c6642ae39f0651e49ae1ed19960f5a8d refs/importado/estado/criar-migration-audit-admin-change-2610161458a6eb
 abc46611d0cfd4eceda63c178048f9426dc1dcc4 refs/importado/estado/crisis-room-metrics-hook-261013161636d1
 12b0d838b6bf6ffcddbd72e18743da1e228e1544 refs/importado/estado/crisis-room-snapshot-2610131358fffb
 2ca56c459beb6c5565a257f6bc4ff2763f6f36ce refs/importado/estado/crisis-room-ui-2610132316c256
@@ -750,14 +750,14 @@ fda90f0756197d3d8509206af2fbe53652def81e refs/importado/estado/crm-auto-sync-409
 dd2bb6bd3360b196eec9ec68825f87fc09984a01 refs/importado/estado/crm-sync-outbox-cron-26101522082aa7
 aaf8d0ea03ea50fba6f6532b4ea0e3860adc66c8 refs/importado/estado/csat-auto-fechamento-2610130228bfac
 4797175625e22ea0824f2b9d8c71300267c94688 refs/importado/estado/csat-auto-send-fechamento-26101222104881
-392540a5d06cc5456ba9333e446a0ce771bf5085 refs/importado/estado/csat-erro-zero-paginacao-tendencia-26101-2610161458d029
+43f5d5e56cb9738481a2a6237ce07bea48f8a433 refs/importado/estado/csat-erro-zero-paginacao-tendencia-26101-2610161458d029
 bd2f098cd359a71df92d19b6b9b5b76dc8f9ff25 refs/importado/estado/csat-erro-zero-paginacao-tendencia-26101519556d7d
 c9b1dab90d466eb656fbf766f55c941d1fecda4d refs/importado/estado/csat-leituras-sem-nota-2610151905353a
 3820fd88a09574764c002164dbfafb3b541c9f0d refs/importado/estado/ct-003-contatos-teste-local-2610160119d6c9
 05a7acbb5c3433960366001f92e18ccf14add971 refs/importado/estado/ct-003-seed-contatos-fragmento-2610161257f5e3
 fe535646de55c61bb6899a56fad80a81aae294f8 refs/importado/estado/ct-011-contatos-busca-por-nome-do-contat-26101600410122
 e941c67f50a66dc8dcac20996638b8b360f57df0 refs/importado/estado/ct-088-remover-edicao-em-massa-261015194417ca
-7adf06993cfe29a06cf499a1686a458ca650780f refs/importado/estado/ct-088-remover-edicao-em-massa-2610161454e751
+0950573b93fbe1f5103bb6bbaf55a89f72ff6567 refs/importado/estado/ct-088-remover-edicao-em-massa-2610161454e751
 09c70a6f1768f3b0b47d5b6c465027a76522c685 refs/importado/estado/ct-091-protecao-contatos-2610151948ed95
 0669e18b1e2df867e545daa4eed4305eb3219240 refs/importado/estado/ctrl-k-paleta-unica-2610151729b48c
 f29e17fa93097cd857a7f3f4514df3e8bd9cd1d1 refs/importado/estado/ctrl-k-paleta-unica-2610161425072d
@@ -799,7 +799,7 @@ ce0df90d3b2b613dc372d9d73fd04d31abc961c7 refs/importado/estado/ditado-aviso-micr
 fa936aa3478bd7210a4726457d0e437177c8e5f7 refs/importado/estado/docs-paridade-v3-plano-r2-26101209005306
 cea56e4139001ca18a2947b8bc7f4185dae5b1aa refs/importado/estado/drain-outbox-ia-26101209535ac5
 8cc8f91e214baa22a7cbe03eb746f6d2d0121a67 refs/importado/estado/e2e-chat-interno-monitoramento-26101308383c5b
-285e8577fc12c0cb0f0ca7ca47a4aa8894f0df6b refs/importado/estado/e2e-logado-causa-raiz-browsers-2610170944667f
+61d7e6388c17abf50f128f29f432bf52d826323d refs/importado/estado/e2e-logado-causa-raiz-browsers-2610170944667f
 e116537d73b5bc39b3a0c573c142ebe8958ed432 refs/importado/estado/e2e-skins-cp8-cp9-playwright-26101523444e5c
 5906e0093ee5c8efc4cc62950aa91929e5576677 refs/importado/estado/e98-a11y-contraste-timeout-2610130451fc84
 39090f7c885fa830adff92af2d09d239f271c607 refs/importado/estado/edge-3funcoes-cron-espelho-ci-2610131045b9d8
@@ -809,7 +809,7 @@ b8eb5f3662bce5ff518162c16526111b3f52731a refs/importado/estado/edge-3funcoes-cro
 0d0390e2c93c4ceae3d57e56aa8dd734f778500b refs/importado/estado/edge-get-sip-password-refazer2-26101012404a57
 be5ee98750f11881484832b9da514b938d2755ee refs/importado/estado/edge-leitor-corpo-erro-26101304539083
 b07bcdbf1454c61c5530e1bd0bb5f92ccdea2594 refs/importado/estado/edit-message-rpc-2610111212bf47
-422a720e8e4fe11194553b11b8aec751fa8d9621 refs/importado/estado/efeitos-animados-reduzir-movimento-26101-2610161501b113
+4e40a139ffcf673305f255acfaa8095158841879 refs/importado/estado/efeitos-animados-reduzir-movimento-26101-2610161501b113
 7a6f0dd95c0ba875e4ea9fb9a158ab7a99d08ca2 refs/importado/estado/efeitos-animados-reduzir-movimento-2610152012e9ef
 9027b1bb32c3c1dab444f9a29d89fb7804cae455 refs/importado/estado/elevenlabs-tts-sts-timeout-500-26101410288c9b
 a5a32c0f0142ca02ddb84f03f6a8afb5ad1035ff refs/importado/estado/elevenlabs-tts-sts-timeout-500-2610161333f262
@@ -846,7 +846,7 @@ f5dfad1fef1a2a54007db44f277270b611b92725 refs/importado/estado/espelho-ci-reques
 b3d23696526faae318ff205c9a27c1fb188d7f18 refs/importado/estado/espelho-ci-request-password-reset-2610160025e9ae
 ac0c61a45adaecc50da8e5c0548b7d9ba36572ff refs/importado/estado/espelho-do-ci-quebra-anchor-estado-md-t--26101602342a5b
 7f0b5b65d9b4fbc92cc4448698d62b262f986a11 refs/importado/estado/estado-vazio-botao-rolar-final-inbox-26101109508cb7
-fc97f5151a7ce9c2a4863ba24ffeb4a1014f829e refs/importado/estado/estados-vazios-carregamento-5-telas-2610-2610132327f931
+5441d188ea7060988db27c3073ab8dd9f80e1e0f refs/importado/estado/estados-vazios-carregamento-5-telas-2610-2610132327f931
 f24ebc2df11dd2c7d78de8a8529ddacbf7354dfb refs/importado/estado/estados-vazios-carregamento-5-telas-2610-2610161247bcdd
 65630af573bd9528e4525a21548c1ca36c472342 refs/importado/estado/estados-vazios-carregamento-5-telas-2610101800d689
 5301bba98620cd68aee38ead632dacb06290d6ed refs/importado/estado/estados-vazios-carregamento-5-telas-2610131614116b
@@ -860,21 +860,21 @@ b7a66424fe185c35fff1fef708c254e4f741b71b refs/importado/estado/estados-vazios-ca
 d0cf4a1157abdb65dd9e642ed77d76f63132fd7d refs/importado/estado/eventos-auth-webhook-instancia-261014085-261016073649bc
 d8651879119dbc7767120538480856485dea3ffe refs/importado/estado/eventos-auth-webhook-instancia-26101408585128
 ef1936516b4d38f0864972da01bd9607545fb8db refs/importado/estado/eventos-busca-global-sem-texto-261015222826da
-2ab2e938322e540e29de0579013102e40327b76e refs/importado/estado/evolution-api-sem-segredos-26101316216bd-261017073277eb
+34f5249a3fff0157c1f091d2865c659ccc1ef545 refs/importado/estado/evolution-api-sem-segredos-26101316216bd-261017073277eb
 c3c2671dd5d0790b48867648dca9428f9e45dca7 refs/importado/estado/evolution-api-sem-segredos-26101316216bda
-ffdf92ae35b72910bef6e30e0ee8f7b1bdb9324b refs/importado/estado/evolution-breaker-ci-espelho-261017065608e5
+b9f6f5e0c3f66b5115ab1a487fb62de4cdc2f88a refs/importado/estado/evolution-breaker-ci-espelho-261017065608e5
 15c65a838f9d4e07d006359c5e14b4a2dc676fbe refs/importado/estado/evolution-breaker-instancia-26101408013aae
 3226391e1be21c80d7132d60d09be60b3816f80b refs/importado/estado/evolution-front-sem-tratador-2610152209a4e8
-a407b79f5e9d373fda07dbd988e119cfd83a8dcf refs/importado/estado/evolution-read-actions-controle-26101406530351
+f4d859ab83f792315467c0c3b059069b36abf47f refs/importado/estado/evolution-read-actions-controle-26101406530351
 74559ce72f92fac27251f840f4f192fa692f9ad2 refs/importado/estado/evolution-timeout-cancelamento-26101521530bc5
 c3546cdb788488b7979c966997ebf114ce459e0d refs/importado/estado/evolution-timeout-instance-gone-validaca-26101220111b56
 60d7135daec5863f80bbe55e72c6e3f625feb149 refs/importado/estado/evolution-timeout-instance-gone-validaca-26101601383e92
 935c813e39932a2e01fb12a883148cd3b529be43 refs/importado/estado/excluir-conexao-admin-only-26101208285a67
 8774d0bb5074731cbed6c324a48e42d9791eb9e1 refs/importado/estado/exclusao-confirmacao-automacao-ia-2610122311d0d3
-5ead6ba17242f9dcd5b48a4ed2a446fd33ae8e45 refs/importado/estado/exclusao-sem-confirmacao-automacao-26101-2610132244b1bb
+fe2457501d9b4c0e0e00096b7cde6ae17ab675f0 refs/importado/estado/exclusao-sem-confirmacao-automacao-26101-2610132244b1bb
 857f532af97b2c8c12214b23dfa6236d1e1ef420 refs/importado/estado/exclusao-sem-confirmacao-automacao-26101017535147
 ecfe6c3f7fa29bd7564f8077cd3b47b8be9b62f3 refs/importado/estado/extrair-assinatura-rpc-save-talkx-templa-26101311149985
-bcdfa538b659043c1843d19a0728d360d3cf55f7 refs/importado/estado/falha-papeis-acesso-negado-falso-2610140649f656
+e8651c0b837fe764a7971ee7b13b5b37238fb6cc refs/importado/estado/falha-papeis-acesso-negado-falso-2610140649f656
 43397b8ca0fcb2a43a3b8c3187ff2ec5385f0942 refs/importado/estado/fase0-banco-local
 30f41106445f3ca8432e4e7eb6fe7a41bc7a93e1 refs/importado/estado/favoritar-fixar-reportar-lembr-ref2-2610152117fad4
 7052d9ec816ea8cb6a0773965c0f94d9efbbc0c7 refs/importado/estado/feature-flags-rollout-26101112023c21
@@ -915,7 +915,7 @@ aca349e7e891473965a31a31efe7ced8a18e9c78 refs/importado/estado/filtros-tarefas-m
 50de9211103945a3c16182ce4d00378632ac4746 refs/importado/estado/filtros-tarefas-prazo-estado-2610111433b-2610151409cf48
 f2e8e3a4c37826fcfb5228732189a5ed21f4b986 refs/importado/estado/filtros-tarefas-prazo-estado-2610111433b-26101612031c62
 e0aea68057b0b62124565a2a5676ac5df550b3fb refs/importado/estado/filtros-tarefas-prazo-estado-2610111433b469
-f5d8acdac32d53fd123eb553e69531083e1a44bd refs/importado/estado/finalizar-suite-inbox-relato-2610170837c13b
+f20556cea632b31acc3dd0a0275fa1bbf54d3df1 refs/importado/estado/finalizar-suite-inbox-relato-2610170837c13b
 3b30778e4ef1eb324b615a897b02e1b24e76a1ea refs/importado/estado/find-status-messages-por-contato-261013100782ed
 d1c51a8d675a9733669a8922b3c8776247780be3 refs/importado/estado/fix-a11y-nomes-mode-switcher-checklist-2610152245eca1
 e7209127064b13e448303caeb2446796d31d5a3c refs/importado/estado/fix-admin-grants-visibilidade-remocao-pa-261014070826f4
@@ -931,14 +931,14 @@ f0f8820ece8f2b003d882082b0c79cbdfe231b6c refs/importado/estado/fix-chat-balao-ci
 cf27847b736b61b43d752671f5f399dee572013c refs/importado/estado/fix-chat-citacao-midia-fila-offline-abas-2610151629615e
 72cd653fc9293c67157a8bebfd789023c4275108 refs/importado/estado/fix-chat-fila-offline-usuario-261013015076aa
 3540d30c34755ebc9415a199d7e55f3b328e1bf6 refs/importado/estado/fix-chat-menu-status-admin-2610130600b2e0
-1fa6ab04440aa388774b90c4eaf91dab9454c669 refs/importado/estado/fix-chat-menu-status-admin-espelho-2610170645bd7d
+b4e03e61babacf1052655cb01d3f2bf9b7be6225 refs/importado/estado/fix-chat-menu-status-admin-espelho-2610170645bd7d
 0f3669c35c18de6bb40224cf932bc8e84a0dc843 refs/importado/estado/fix-chat-previa-link-enviadas-2610151619-26101614054f00
 355320391b8fbe6759c5e406733e061f72ba1d3e refs/importado/estado/fix-chat-previa-link-enviadas-2610151619c4ec
-5d6873574e6e3239582c01b3d3a5a2b8ede72dcd refs/importado/estado/fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467
+5d073114bb6539e38627b11ec65a7ca8440cc738 refs/importado/estado/fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467
 45c535f9ebbea2aab9a4d3fbf9a074cac893ddca refs/importado/estado/fix-ci-devops-estado-md-feature-registry-26101113290233
 de81efd24f9c6642b798fa610422679a411f2eda refs/importado/estado/fix-ci-devops-estado-md-feature-registry-26101520255c89
 625489027d0a27661e5dc889f7825dd3bde906cc refs/importado/estado/fix-conexoes-realtime-canal-unico-26101220452a8d
-5587cac1d5293e1e5ab3068de1384ee87719f931 refs/importado/estado/fix-contatos-destravar-teste-userealtime-2610170655f3ce
+a1d554f30985f493e1a0c3bbaf5566287b7d5fc9 refs/importado/estado/fix-contatos-destravar-teste-userealtime-2610170655f3ce
 fad52f60451607a7d1e818421fd57449821410c7 refs/importado/estado/fix-crm-formulario-acao-estreita-26101521363a5c
 6bdeadcb2fbcc5c64ccb7ad688063ce31d9499c6 refs/importado/estado/fix-db-reassign-open-conversations-dry-r-2610131359eaf5
 f42a4147cb4bd20aca37eaed70a1e3363551fffd refs/importado/estado/fix-db-snapshot-harness-26101009176686
@@ -951,15 +951,15 @@ dc3ff8d3be2eb68775db6c321a5a3562f15a5a95 refs/importado/estado/fix-gmail-watch-t
 c649a02b7d0b0519c832af7c7349cf5822a883f6 refs/importado/estado/fix-gmail-watch-topic-2610141028103e-2610161333d803
 1a989a1fdc04bfcc5a91730f5fbea0e67c486158 refs/importado/estado/fix-hooks-erros-leitura-uuid-26101306044d5d
 2764238911fa1d8c546b53b7e81a82ca0bfc508b refs/importado/estado/fix-ia-ultima-analise-erro-2610152113269f
-f9e3be6a0f56047534bbc957bd2095ef869ba43a refs/importado/estado/fix-ia-ultima-analise-erro-t-cf797f89-26101615040491
+3eaa751d358e27735d10b047de88f3b3d0b6d146 refs/importado/estado/fix-ia-ultima-analise-erro-t-cf797f89-26101615040491
 ee94ce9b5412cd952c1f45fc39277ecae44880d3 refs/importado/estado/fix-inbox-arquivar-lote-status-26101323400f07
 542ea7480eb01908c3aa6a41e354c3400e9fb4b8 refs/importado/estado/fix-inbox-arquivar-status-transferir-lot-2610132250f1eb
 4dff66f1959c714c2078b66fe0c3a5a10c79241d refs/importado/estado/fix-inbox-crm-remove-literal-classe-espe-261011103804b7
 b5c74e34b5f4f835c92c23aa0381c35a7a727f7a refs/importado/estado/fix-inbox-lote-marcar-lido-261015153891bf
-8536aee74e2fdd7abd123b9f746d776496384f9f refs/importado/estado/fix-incremental-limit-phantom-2610170752-26101708014b0d
+3e7e39663d3ee074101e50347764f20513d87eab refs/importado/estado/fix-incremental-limit-phantom-2610170752-26101708014b0d
 40a39e0a1375eac856475c7b08d9806119f4bd49 refs/importado/estado/fix-insert-guarda-visibilidade-conv-task-261010204597e0
 3c5944a975f9082aa63ecec87be258ced91eb6a0 refs/importado/estado/fix-lgpd-voice-agent-timeout-26101312395-261016133783a9
-4e685953d72f2d95e96c9e5fab8053cf1454f83f refs/importado/estado/fix-lgpd-voice-agent-timeout-26101312395897
+0030f0dc74e0bc2e806d5ccae59a17de205ecb87 refs/importado/estado/fix-lgpd-voice-agent-timeout-26101312395897
 fc300befaead0f2a417262aa73297518f385a940 refs/importado/estado/fix-login-403-rede-bloqueada-2610151748e397
 83db5f047fe78231f5e9ea0cd85734666d79aee2 refs/importado/estado/fix-multiplix-3-regioes-simultaneas-2610100805af51
 c1b0bbda641c26239649a7a63201677ff1f4c88a refs/importado/estado/fix-multiplix-3-regioes-simultaneas-2610101109d0e3
@@ -968,8 +968,8 @@ c1b0bbda641c26239649a7a63201677ff1f4c88a refs/importado/estado/fix-multiplix-3-r
 59474112462557b3e8f5b43d900eea784c23fbb2 refs/importado/estado/fix-painel-redefinicao-senha-resultado-r-26101219380a6a
 cb3f048d1da29c3905fd444c09fb6d8fb2a45443 refs/importado/estado/fix-prefs-localstorage-storage-bloqueado-26101517335862
 ef414544c2f448b4154a374a84516e2dfc1b857c refs/importado/estado/fix-rede-cliente-supabase-timeout-26101302457cf3
-8532e7786da0c32f6ac9011e39ac96a39ad5e565 refs/importado/estado/fix-rotas-guardas-coerentes-install-admi-2610121901d51f
-218262dc5da93b5b54f9d6cc7e2d27ef5ead883a refs/importado/estado/fix-seen-state-hydration-merge-26101708012995
+eb91f3f663031f51e587b5d0d49897b3ab85006a refs/importado/estado/fix-rotas-guardas-coerentes-install-admi-2610121901d51f
+d5f47e717b81e7145390414c97fe68c71a95ad8c refs/importado/estado/fix-seen-state-hydration-merge-26101708012995
 626236715cf18678fe1538d154f3c0641204b6a5 refs/importado/estado/fix-selftest-webhook-diagnostic-causa-ra-2610160908dd91
 4d43455b68c3a4b2c661a49978c7e8238f38ef6d refs/importado/estado/fix-sessoes-rpc-jwt-2610130711ab65
 72b9c0027f1a781fbe14338295478cb742bed1f0 refs/importado/estado/fix-sla-relatorios-bloco-nao-derruba-tel-261012155537a7
@@ -977,8 +977,8 @@ ef414544c2f448b4154a374a84516e2dfc1b857c refs/importado/estado/fix-rede-cliente-
 5e4cea59b6131e45fda34b1e932b72ae36607735 refs/importado/estado/fix-storage-dedup-de-policies-quebra-esp-26101613341a49
 d7600db8e27bd485053de25e5ea63c3408498072 refs/importado/estado/fix-team-chat-preserva-contrato-26100922-261010093733f4
 1457d7402d97533d12fd93b584eb8596e651ff33 refs/importado/estado/fix-team-chat-preserva-contrato-26101018341396
-7ee789008a68866336059d6af1b7e6692de52f71 refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f
-3c85f782c47ca6973842b7fd286d082fe1655223 refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56
+29a72a4f67bd10c3d0a16eae71e6122b9b1185cc refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f
+a6bd02f5472fd3e9c08d61f0bc6a52b7151cf4b0 refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56
 859c5ddc5e529327fe2ccfe48d3ed705bcbb6002 refs/importado/estado/fix-teclado-titulo-40px-token-hoje-espel-2610131527b4c7
 17177fb152e88caa3e1913c8aa5d29a5a6975400 refs/importado/estado/fix-tipografia-contactcard-2610102020b8af
 91e4ffb04a66992dcd2570b4435d35c0b39ed6b7 refs/importado/estado/fix-ui-primitivos-aria-busy-texto-longo-2610151729e6dc
@@ -1019,9 +1019,9 @@ db4068c81f69f53807c03dee4312cea69206eb23 refs/importado/estado/gmail-watch-renov
 d0c3594ea01d32da133689cd21d63e8cc8be3140 refs/importado/estado/gmail-write-blocks-restrictive-261010113164f0
 115d190177fb26b6148f1f67aedba21c2551a624 refs/importado/estado/grava-voz-travar-voicechanger-26101523528ce1
 f06ba36226fc191cbabe7243e582f825afd8c680 refs/importado/estado/grupos-batch-upsert-fixados-ordem-2610152113f9a5
-d58f29c582bfd15ea686aff993932195d2a9ab54 refs/importado/estado/grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6
+6b53026054a744ccfc5eacd4f995676c83797b69 refs/importado/estado/grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6
 8216303d897a39f228150d250435427a0347c873 refs/importado/estado/grupos-broadcast-enfileirar-2610152030be04
-b51c925b41be36d1931192605eb2a5ff931cfd1b refs/importado/estado/grupos-categoria-sem-like-erro-tratado-2-261016151237a9
+0d70dd465d71702341992e2946a4c4c7307c1809 refs/importado/estado/grupos-categoria-sem-like-erro-tratado-2-261016151237a9
 77cb4f2e0dd0626c7c5f37863719e99e383cdf63 refs/importado/estado/grupos-categoria-sem-like-erro-tratado-261015214435ab
 0b7cf61eb4c547dca4d5c22e74d86dac75faaeae refs/importado/estado/grupos-webhook-upsert-2610132242102a
 116832e87e4d532c2ee05e352e267995ae43bc5b refs/importado/estado/guard-isapprole-adminview-2610161132f8c5
@@ -1064,6 +1064,7 @@ bc6016b2435435ec4e4e4b7f67d5e3dd242169ed refs/importado/estado/inbox-lote-acoes-
 31486788ec65e0cde1844fa27316078bf19c9a22 refs/importado/estado/inbox-scope-permissions-261011112554be
 f39212d172f97820c3650337c90df027da4c4205 refs/importado/estado/inbox-scope-permissions-refazer-t-23a045-2610111530259e
 b66013c19ed98ba45f8da093f46aee0d61d494fd refs/importado/estado/inbox-scope-permissions-refazer-t-9c8735-2610130322434c
+4a0c23778eca8684c72aba8b83cd03440626c9cb refs/importado/estado/inbox-selecao-lote-acompanha-filtro-26101312252db7
 0a4b0d65d8a43c808064ef2bf2f9035b8c045466 refs/importado/estado/inbox-selecao-lote-acompanha-filtro-2610160222edd5
 7b4b02543fa24f1f0a55818060c9074e22981dc5 refs/importado/estado/inbox-unread-total-26101304322a08
 4d1d9457244b033f0adf065a941ad7113e15582d refs/importado/estado/inbox-unread-total-hook-2610130528c9fe
@@ -1127,11 +1128,11 @@ e19045d75fdedbed246091347bd48e7284326f24 refs/importado/estado/lista-tabela-celu
 447914e86437b62a8dfab0e3b83e4f216398cb9d refs/importado/estado/lista-tabela-celulas-prioridade-prazo-le-261013091360f6
 d225c25fee5d4265848aa02bdbfddeed7a7bad2c refs/importado/estado/lista-tabela-estrutura-grupos-tarefa-con-2610111750e6a7
 49a39f5a24563a8e4d792f1529b7a6334a736506 refs/importado/estado/lista-tabela-estrutura-grupos-tarefa-con-26101302362460
-254eb2b98ce5dec10bc641fb1fdea2ee3ea6cc52 refs/importado/estado/lista-tabela-estrutura-grupos-tarefa-con-26101308449243
+5126ea8ce13eeab1e92108c79493ee8851f7ff8c refs/importado/estado/lista-tabela-estrutura-grupos-tarefa-con-26101308449243
 0553a471d481f1e96f1c6c3a133d5d5e7042e5c4 refs/importado/estado/log-audit-event-allowlist-26101304032a5b
 22ef057536e1eba1d73277f54ef912c85c40f6ef refs/importado/estado/log-bloqueio-login-261010193886bb
 fe794c47213b9c124b0e537f8bd00f139b442847 refs/importado/estado/login-ip-pais-bloqueio-2610101932354b
-54e51f1a2abf7682179e43c0c6f60d2b93d7ccb7 refs/importado/estado/login-v3-seta-contraste-2610111302ded9
+fec884efbb17bc5a047215bda1ed779a82bf27d8 refs/importado/estado/login-v3-seta-contraste-2610111302ded9
 a45d042b92de40d6dc47c5b219d27a68db95f861 refs/importado/estado/login-v3-seta-contraste-261012212445f6
 fbef4f8471218f63f46a5812e266b882589e7c4c refs/importado/estado/login-v3-seta-contraste-2610131118f08e
 672c4838b7c63b1ae3a005e4615394a58659bbc4 refs/importado/estado/login-v3-seta-contraste-refazer2-26101305086a56
@@ -1185,7 +1186,7 @@ dc23403bf9b46648c68ad13d5842201c444e8188 refs/importado/estado/metas-seletor-per
 b7c4fccb95562728566e7f8ddc507660fd0fdc98 refs/importado/estado/midia-whatsapp-vencida-recuperar-2610140-2610161344b2ba
 3d7a05cc7d09e9604c2769f515bee6f6bd276704 refs/importado/estado/midia-whatsapp-vencida-recuperar-26101407547323
 bc549acc03f47b08e3683a47f87f65699517e918 refs/importado/estado/mini-games-xp-real-limite-diario-267-261011171911ce
-1cab897c1caf97dc2fcfa7063d65cd38cc06c557 refs/importado/estado/mini-games-xp-real-limite-diario-267-26101120112f0c
+d7e47a0b607a8fbe9cebc998be46514c978b3e55 refs/importado/estado/mini-games-xp-real-limite-diario-267-26101120112f0c
 4114c579445d7ac22d68ad1f2ec974d83d79433f refs/importado/estado/mobile-area-segura-rolagem-2610130650a743
 a9d78be607b0b0dbffd32de9e4383c4ed41cc7f2 refs/importado/estado/mobile-drawer-a11y-2610151721ea32
 aa978707c3d89b0ab8547f7b940b76db9e5bfab9 refs/importado/estado/modal-nova-tarefa-acordeao-rodape-fixo-2610161229839a
@@ -1214,7 +1215,7 @@ ae991fb9bc059f090fcc7743cc4b6d635f7f6e3e refs/importado/estado/monitoring-messag
 f81d16313bed8f4c54bc14f3a299c1730abb8d38 refs/importado/estado/multiplix-3-regioes-refazer1-26101015448da7
 395bde60ee6e9149d3e444a71c452941475e025e refs/importado/estado/multiplix-3-regioes-refazer2-t74114f23-261010193420d8
 cd50412c95c3b8cae5f03cdad560a8da01a992a9 refs/importado/estado/multiplix-audience-save-compensa-26101304112640
-8ebfc53e5d560d02c6b0712fa6a3307531189d0a refs/importado/estado/multiplix-drain-ci-espelho-261017064674b1
+d46aa4c0904d666b89fb7d8c6512e36093f4cdf8 refs/importado/estado/multiplix-drain-ci-espelho-261017064674b1
 c480c92a55b3f7bd19e06bc405ddca12f5639758 refs/importado/estado/multiplix-drain-enum-cast-261010-2610101151143d
 69f7e20c8239c1427835bc625cf110fc5bb50617 refs/importado/estado/multiplix-drain-enum-cast-refazer2-261016073870bb
 f23aa52f4b5e5c21f6af7457d74b3830bcd7309a refs/importado/estado/multiplix-e2e-3-regioes-26101016530b87
@@ -1226,7 +1227,7 @@ e38d1a1880202783396e23c2520f0e5ebcc1cb5b refs/importado/estado/multiplix-retorno
 6eaff709aa252437af237171bd505f949095af9a refs/importado/estado/my-network-status-2610152113fc5b
 40cb797e2c05029e81a882d77b9b7d4fb03c53e8 refs/importado/estado/n-009-storage-limits-26101001397530-26101012500c20
 14784748b0ac813040998933a226555c9bc8ce44 refs/importado/estado/n-009-storage-limits-26101018474b98
-f38d77376eaafc6225fbcd0745febaee535b0fb3 refs/importado/estado/n-011-storage-apagar-policies-duplicadas-2610101218fac0
+78a0e2f6aaf69955ceb9dd0ffceeff23e2444ccb refs/importado/estado/n-011-storage-apagar-policies-duplicadas-2610101218fac0
 e79d07510b9027baffbc53306dccdccc9d441778 refs/importado/estado/n-011-storage-apagar-policies-duplicadas-2610132230334b
 00714722318b7dae5cde6fa5d23f6ff8e8354487 refs/importado/estado/n-011-storage-apagar-policies-duplicadas-261016074511ca
 e1c64e470b14750a710f702f47205b587b9b10d1 refs/importado/estado/n-016-replay-db-guard-2610121133c45a
@@ -1300,13 +1301,13 @@ ac973be277054c31d531f6abbfafee42611bb335 refs/importado/estado/n091-relatorios-r
 9f9e19db591cd55bac4b18b1a91fa7937935c0ec refs/importado/estado/n091-relatorios-relato-fiel-26101522568a8a
 c1103d159de4226a4c2968b657ec4d40877f620d refs/importado/estado/n094-talkx-atributos-rls-2610100328a14b-26101014146a04
 f0c02b7de1aabb17ea79c951a4ce4a0df43a8b24 refs/importado/estado/n094-talkx-atributos-rls-26101018590b1a
-fb719c981ff969c4b90c158b1a35d29981746539 refs/importado/estado/n094-talkx-atributos-rls-retomar-2610131057cf3a
+a03b75ebb83076e537c0bfef7216c523dcc4b20f refs/importado/estado/n094-talkx-atributos-rls-retomar-2610131057cf3a
 4588ff9ef08db677fed09d91d37484a3f2b32dae refs/importado/estado/n095-talkx-campaign-recipients-page-2610-26101018546320
 5f2b0ba58ccdfcc584b948fff0a93fab9132fea3 refs/importado/estado/n095-talkx-campaign-recipients-page-26101014060cb1
 9dcaf1fe88f2167f9716ab8b774bf667da276c58 refs/importado/estado/n096-talkx-progresso-segmento-2610121152200a
 a6542e0f04ed1c3c0c695427b1cdd76845214810 refs/importado/estado/n097-talkx-banco-pre-checagem-retomada-26101014437e39
 8b9d1151ffbe5bffa7f2cbf39f9e5370f9eccd6d refs/importado/estado/n097-talkx-banco-pre-checagem-retomada-261013115268aa
-47575e83dc90a31c49b1e2965ac337d8bf06c2e4 refs/importado/estado/n097-talkx-banco-pre-checagem-retomada-26101707178adb
+080b5b1c0299305718fa5cd8fb06cb16459fcf2e refs/importado/estado/n097-talkx-banco-pre-checagem-retomada-26101707178adb
 a6da244651673f86d4c87bef8a818fd805769637 refs/importado/estado/n098-talkx-campaign-launch-checks-refaze-2610132319f852
 c8ac18c6a06939e09e63e234742949f304f0b85a refs/importado/estado/n098-talkx-campaign-launch-checks-relato-26101010198843
 4f1a42c78e729312b56170f56c785bf9a309658b refs/importado/estado/n098-talkx-campaign-launch-checks-t-cbfa-2610101442e4a2
@@ -1345,7 +1346,7 @@ f0995fd7a9f8c11b38810969712567cfff1dd3cf refs/importado/estado/n131-talkx-recipi
 489fdf476cb5422d3e980213834e9bc57729eed8 refs/importado/estado/n141-banco-policies-autenticado-2610101806b273
 5f0719a0c3d1b40a553a9251ce28cabb8aa02151 refs/importado/estado/n142-banco-leitura-reacoes-2610101117f35d
 bacc8ca60a27ff3df1179af9e4ae5cf9944bb7fe refs/importado/estado/n142-banco-leitura-reacoes-espelho-ci-2610160743bc99
-5beeecbe45b86bbd0fbb380dd035a5c1646b796c refs/importado/estado/n142-banco-leitura-reacoes-retomar-261013132915c2
+4430653b28acc6baf3430fc224ad7b77154f20a6 refs/importado/estado/n142-banco-leitura-reacoes-retomar-261013132915c2
 5ee217161ff6c3fb9ce07d2cc98db4259dd3b340 refs/importado/estado/n142-policy-user-id-profile-id-26101612065836
 66584563ed6454581f60eaedf2693d55c8d6e724 refs/importado/estado/n143-banco-evento-conversa-26101014597200
 09fb259314fafb5475c99c922ed6d0362de04342 refs/importado/estado/n145-banco-revoke-anon-truncate-26101007516ddf
@@ -1372,7 +1373,7 @@ d0493f6a329b54b9246b11858708d4c8dd6323ca refs/importado/estado/n192-detalhe-fila
 4416fbd2639ee75b3eb079e39b1eb9f959936cff refs/importado/estado/network-policy-admin-only-2610130049cc0b
 1b3b02e9883cbd5f61354cc7da698e5ac4b4fe69 refs/importado/estado/network-policy-cidr-2610140751fc7e
 44cf08d1af17120e159b80c54b32b4c12f29e742 refs/importado/estado/newconversationmodal-acessivel-26101523528078
-f053e9f0b032deea7097823f23d1f428078d9a01 refs/importado/estado/normalizar-telefone-ddi-2610130213e4d6
+a4bb117b9325e98cb7977db3ce007166d57fe1e6 refs/importado/estado/normalizar-telefone-ddi-2610130213e4d6
 02627e044c10980e27e23b8d1568e060d29d8f28 refs/importado/estado/normalize-media-url-withretry-26101306087a89
 1f2984790f9fd2cb1ab2e97f63d63832f1cc61f4 refs/importado/estado/notas-audio-ditado-26101017219a6d
 a637b09c6ec44d79785d6320f69bce0d8d6dfe70 refs/importado/estado/notas-editar-fixar-ordenar-2610122207b853
@@ -1381,7 +1382,7 @@ df8b2a2797b72b7ffd95bdbe1eea3db0cf1fb072 refs/importado/estado/notas-editar-fixa
 76a08b0693161dbf921ed14e1506badf0c3cadea refs/importado/estado/notif-cartao-alertas-conexao-2610130232acbd
 a41779787c054a0e56d29db1f6f9e0b9ceda677e refs/importado/estado/notif-cartao-alertas-conexao-refazer1-2610130844976b
 056ab20eb0865dbf9d82ef92dd710bd53f93a328 refs/importado/estado/notif-pref-alerta-conexao-2610130200d86c
-307dfd551e61a7ac7d4dde14ce20b38a387410e0 refs/importado/estado/notificacao-navegador-nao-derruba-aviso-2610161445ddf3
+1a9149681987c197b504e161086e747db0dc3507 refs/importado/estado/notificacao-navegador-nao-derruba-aviso-2610161445ddf3
 caa24c9eb61ea49f46a8c4bfb19611c0a15afeb3 refs/importado/estado/notificacao-navegador-queda-conexao-2610121904766e
 a4d07d6b12efe2f3a81a853883138b11dd797820 refs/importado/estado/notificacoes-avisos-desktop-chat-warroom-261015180839e2
 34842d1c56518e107cc947b96e9b60294b77b8ea refs/importado/estado/notificacoes-nome-sons-retomar-2610122332c670
@@ -1400,7 +1401,7 @@ e8433c8f31a30f85000caeecd65121344bce79d4 refs/importado/estado/padronizar-cabeca
 326b17c2b97d26ac32755d3db7f4a788200e27c6 refs/importado/estado/pagamentos-remover-modulo-26101016534368
 14e6975b605cc5c75f48a59bf299f44a03bd4e4c refs/importado/estado/pagamentos-remover-modulo-26101114065bee
 9f61eb8b9694538377e5fde9de1dfdc032d0ba81 refs/importado/estado/pagamentos-remover-modulo-26101123260d09
-0248f1572cfd13016ddf4aaf05988609ffee0a25 refs/importado/estado/pagamentos-remover-modulo-t-98dfa08e-26101118106c95
+c9e3c07fe2d1fde08d1bb195c6e15b75db92107e refs/importado/estado/pagamentos-remover-modulo-t-98dfa08e-26101118106c95
 d9b4768db66f1db25a615dc3217a28fc5d54ff03 refs/importado/estado/pagamentos-sem-copiar-link-sem-rota-pay--2610101412e09b
 80efe6554e45d9ab959b5b798ff51e3c2daf6318 refs/importado/estado/pageheader-admin-security-26101614154225
 bbf0ffc9527fcc6d1786490f7d6f826ae1a767b4 refs/importado/estado/painel-alertas-acl-seguranca-2610130805b04d
@@ -1416,7 +1417,7 @@ a33bfadc63302792f11df7113e1828ec5db4a320 refs/importado/estado/painel-inbox-muda
 718f5d483d8c309dcdb6789813801e42a327351a refs/importado/estado/painel-planejamento-prazo-lembrete-descr-2610111537f270
 fa850e65031605c06648434e71a6b8b8989f2e59 refs/importado/estado/painel-planejamento-prazo-lembrete-descr-2610111606ee34
 d650721a41676dcdd87b9d0ee4057de3abab9bb4 refs/importado/estado/painel-rpc-stats-resumo-2610130445e0e0
-2e16bdd8c1e4797bc33383fa6404c62dbd1c5f03 refs/importado/estado/painel-saude-conexao-credential-26101521-26101615109b69
+c0433e81590df8d8c6f737dfb526345878c473eb refs/importado/estado/painel-saude-conexao-credential-26101521-26101615109b69
 2c4a7c42cbbb65668961ca8d1b57f41e7ae7d42c refs/importado/estado/painel-saude-conexao-credential-26101521267c2e
 79d41a39778e8bc2b41e8b9611e541516c96c1ec refs/importado/estado/painel-sla-multiplas-linhas-26101515397665
 90aeeade5e6e1a8611b7e4f26a1333b0586e2a0d refs/importado/estado/painel-som-aviso-navegador-recusa-26101612447514
@@ -1451,6 +1452,7 @@ c448dcf447ad3635ee03c0b6a91ca540a184aa6c refs/importado/estado/perf-dashboard-5m
 cbcc1b448f5413901d558bb38878b906538aea22 refs/importado/estado/phone-input-mascara-dialogo-conexao-2610151624c546
 99a9e2d83d2d5c105abfd7698e4af6e1f194cc0c refs/importado/estado/plano-paridade-batch1-batch2-2610120956edee
 1ca529d783d73f07c258476f394400f1095791c8 refs/importado/estado/plano-paridade-doc10-2610130904a3b9
+c8357e9467c64ba9ab555dc88a6faa04c2383d7d refs/importado/estado/plano-sincronizacao-total-300-26101708385565
 5f9a6648abc2efbf73af6e13219dc4705f58eb9b refs/importado/estado/planos-claude-2026-10-11-261011135401e6
 c0112294fd819a1c9248e2c9cd21c64dac2c5fae refs/importado/estado/playbooks-ativos-atendente-2610151413a82-26101613376765
 b184745cedaa0af8f254b8615f99358439f1be5c refs/importado/estado/playbooks-ativos-atendente-2610151413a821
@@ -1459,12 +1461,14 @@ ff541f7aed06c4a805208bf1681d82c1a7e53430 refs/importado/estado/pontuacao-engajam
 d1d4aa5eefdc2486f82fc9c9764051ed9ac39963 refs/importado/estado/pontuacao-engajamento-contato-refazer1-261013063873a6
 9b303c53534f363a13ed4b61b706db80288ab428 refs/importado/estado/portar-schema-manifest-99ff88bf2-26101118070a33
 157dfed915973e908349c1c8c341924676dde3ca refs/importado/estado/porteiro-pos-login-google-codigo-26101312286495
+f430161bc2886905a5ee0eb24711bdd8fe0ff6fe refs/importado/estado/pr-1983-veredito-resolucao-26101712417577
+12f945d331c3a4666c5b36b9e6fedccdc5ac8b8f refs/importado/estado/pr-2036-db-migrate-36-26101713038564
 dacdf35a60e9f89a055613def0d3b04ee508021a refs/importado/estado/preparar-workspace-cherry-pick-recusados-2610130717ff40
 fef428b8cdb46357d74c345f0c315b94ab1049a9 refs/importado/estado/presenca-ausente-inatividade-2610151516ab0b
 76fdd77ff27210cced165b30ca2eee9c9dd8037a refs/importado/estado/presenca-leitura-lote-2610130320d219
 4e4572d4023c7c408dd7b8131b71c418e314e846 refs/importado/estado/presenca-online-offline-whatsapp-26101221184e65
 e920163df8eb17fd0ee71ce0416a905d610eb6a4 refs/importado/estado/presenca-somente-mudou-26101515114d90
-cc6ff2a569f44065a788fc07cf29118646f61113 refs/importado/estado/preserva-read-at-backfill-recibos-261012111484e1
+e133cec5ee6259c28276123a7fa4fdba59fea0a3 refs/importado/estado/preserva-read-at-backfill-recibos-261012111484e1
 7173605eaf3de659536ca894f2c3576169d71c25 refs/importado/estado/presets-filtro-inbox-testes-2610161209b322
 7da00a94f19737bb38e5f1ac7378a0f0d9c44743 refs/importado/estado/presets-filtro-inbox-testes-2610161209b322-extra/7da00a94f19737bb38e5f1ac7378a0f0d9c44743
 1328ef3ea50fc4d3b95917329bb393ddeab8312f refs/importado/estado/previas-voz-categorias-nba-transcricao-2610152242cfad
@@ -1592,9 +1596,9 @@ e17f726aaeefc069f1a17541aeb53756714740c1 refs/importado/estado/recon-save-talkx-
 e7f03f23ccae9abaa3a11b15500560898f57c3d1 refs/importado/estado/recorrencia-campanha-talkx-2610102014510c
 b3833c1f0ebfcdde618e3e38fbfcfab80bb10a54 refs/importado/estado/recorrencia-campanha-talkx-2610102059399f
 d5ce389c9a761582edc24652d823556699223d9c refs/importado/estado/recorrencia-campanha-talkx-26101307239dc3
-053a33933281e118a4ad47279757f9666183bdef refs/importado/estado/recover-message-media-26101113320dfd
+1ec00d7b1b3b700998c10865d7ec5176c5bda239 refs/importado/estado/recover-message-media-26101113320dfd
 1fd5794b559f49e88c3dfb62587d0b1f59db0296 refs/importado/estado/recuperacao-realtime-queda-2610111122156a
-c49a34069626f763eca9b89c2513d97f31675f9e refs/importado/estado/recuperacao-realtime-queda-refazer-t-0aa-26101115165e45
+f45cd96e5b9f245ae6b8d829204e253950fb6dd6 refs/importado/estado/recuperacao-realtime-queda-refazer-t-0aa-26101115165e45
 d52b2ed91c48d19922d792055da38769bdf330b1 refs/importado/estado/redesenhado-cartao-quadro-urgente-atrasa-26101118210995
 274570ea79276cdcbd314f24905b14e61268f2c6 refs/importado/estado/redesenho-cartao-quadro-urgente-atrasa-26101310490af5
 0e823756ce960568016355d4fa9a6244232388e4 refs/importado/estado/reduzir-movimento-automacao-ia-261010173637ab
@@ -1618,7 +1622,7 @@ bb604b53d964cab8be1f66f146570ae165c65aba refs/importado/estado/refazer-3-dispatc
 115b870dbfb7ab8c36640996091d6d5f23b96d33 refs/importado/estado/refazer-419-salvar-aguarda-escrita-2610081824175a
 6db0383357419cdf4a57272db9c00acf9789b28b refs/importado/estado/refazer-a11y-textos-2610152352b29e
 4e157d1e51983a1f4499eeff7128cef0c694b9e6 refs/importado/estado/refazer-admin-email-health-t-87520694-2610112217aa0c
-299d73d2cda4d673952e8b919725ea5df7b64634 refs/importado/estado/refazer-admin-login-attempts-t-3f767083-26101121473241
+e600a222c8a25bff57c161bb0c793c14c7f6fdd8 refs/importado/estado/refazer-admin-login-attempts-t-3f767083-26101121473241
 080e8aa428928719969394abc30e5490fd019e5f refs/importado/estado/refazer-admin-migracao-midia-testes-26101614092d37
 b10a158c7b63bf59e3f26d16b7a7c20dd5a7c004 refs/importado/estado/refazer-ai-suggest-reply-n-170-db-invent-26101117415521
 89beb879e46bd653387dcccd93aae27525c02ab7 refs/importado/estado/refazer-ai-suggest-reply-n170-espelho-2610152122a339
@@ -1641,7 +1645,7 @@ cf8290178924fd70c1a572471b64f888a21d3c7f refs/importado/estado/refazer-bitrix-ap
 fae536c54bed3068fb47ae89a1e85d838e2e2949 refs/importado/estado/refazer-campaigns-inventario-ci-espelho--26101209114df2
 7957921dcc3a26dda898a19e050e7b4ac9b4fb5f refs/importado/estado/refazer-ci-espelho-relatorios-agendados-26101611438959
 f39d7a2657e1debbcf1eb40561006fe82f867733 refs/importado/estado/refazer-ci-espelho-relatorios-agendados-26101611438959-extra/f39d7a2657e1debbcf1eb40561006fe82f867733
-6f065e57c96f4466aed34f066de56fcb849cfbef refs/importado/estado/refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e
+d4c873d9147eee8c3434073a6f35d8ef0a9d7b12 refs/importado/estado/refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e
 2eda7828158c7b73e59201d7717b3068ba5f1ae5 refs/importado/estado/refazer-classificador-audio-meme-133-t-9-2610071621ddbe
 1a252c7046726fc42e528d11c6d3b71d7007a02e refs/importado/estado/refazer-classificador-audio-meme-133-t-b-26100615589082
 2214908cca2bf06b11cd4f6ce63a686e02b55adc refs/importado/estado/refazer-classificador-audio-meme-133-t-b-26100615589082-extra/2214908cca2bf06b11cd4f6ce63a686e02b55adc
@@ -1718,12 +1722,12 @@ d1303b876252707d8d45d29258ceee91f71ea8b2 refs/importado/estado/refazer-ligar-cab
 0de7f329eb0e1ed05aafcc1a6509af8b660e28b4 refs/importado/estado/refazer-m01-miniaturas-pdf-relato-26101123571191
 b7ee020d357f81e46c91951eed2e0fd10f9e1db9 refs/importado/estado/refazer-m01-miniaturas-pdf-relato-t-7c00-261012013742bb
 a063d5a25f30ca33dda97cca1a90ad44f451fc12 refs/importado/estado/refazer-m01-miniaturas-pdf-timeout-fila-2610112045ee05
-2be077dcec425c4ae68d0fe76a14903bf37413eb refs/importado/estado/refazer-member-role-rpcs-saida-31-26101706464fcd
+4a5167155abb3b1b38e51289cee1c707fa248d96 refs/importado/estado/refazer-member-role-rpcs-saida-31-26101706464fcd
 73f3d45e3befd6a15e6e28fcdd0f920cb386a465 refs/importado/estado/refazer-menus-agentes-sem-acao-243-261007022156f0
 3d78f3351d09daf610d3df83db1aa57237a50bb3 refs/importado/estado/refazer-mitigar-pgcron-timeouts-t-87ee63-26100623497176
 ccd8ebf9c39469b2906c96b877a0a6b33c904e4f refs/importado/estado/refazer-monitor-quarentena-238-paginar-26100618480ee2
 7478b349781a13679fd101677d2ce8a8ef93dec4 refs/importado/estado/refazer-multiplix-graphify-ci-espelho-2610120902b4d1
-ef61d0894358afb2a97ffe52c2013ac5a62eb900 refs/importado/estado/refazer-multiplix-graphify-update-force--26101118384408
+6cea3a6c7d3b1c57e246e61764ac127dead68548 refs/importado/estado/refazer-multiplix-graphify-update-force--26101118384408
 07f32cece768ace879ad60671254aee77b83a95b refs/importado/estado/refazer-multiplix-graphify-update-force--26101122118240
 a6625b40b0ca5cb6749301b34f05b7c54b14d2b0 refs/importado/estado/refazer-multiplix-pausa-fila-legada-t-9a-261007130165df
 1d2d6b3a7b02e6589c76894eb003d209dac675a8 refs/importado/estado/refazer-mute-lido-escrito-162-t-2aa8f5ce-26100519208417
@@ -1846,7 +1850,7 @@ f81af2a6075b7f06b549f1b86767ad2d41c8a8bf refs/importado/estado/relat-sla-regra-u
 637379e48c3b317189e15b91985e07a1756f113c refs/importado/estado/relatorio-agendado-email-created-by-2610152357d9b7
 7b611161e33592726b64c1af662b2512bda0bc7f refs/importado/estado/relatorio-lote-fechamento-cron-2610130849deb0
 2a2627bf9982e508464fa3d6b8e2d16a0bd5b960 refs/importado/estado/relatorios-agendados-ultimo-envio-valida-261013015327c5
-288fcf5142f98ab66ef1f374bbed8a2db2e998ae refs/importado/estado/remove-codigo-morto-chat-chatheader-2610-2610111241c0d9
+05338f10ef7e4acdab6472e682c64d365338ccbb refs/importado/estado/remove-codigo-morto-chat-chatheader-2610-2610111241c0d9
 91512a92b442db78c79d394938e39399eed409c8 refs/importado/estado/remove-codigo-morto-chat-chatheader-26101109374e67
 551980ad96cf4b1d54ab6b9532def020bc107f03 refs/importado/estado/remove-codigo-morto-chat-chatheader-reto-26101111322f14
 889ab0de3a023d15a5fb77e206b75dd16baaa316 refs/importado/estado/remove-modulo-classico-campanhas-refazer-261015233593d9
@@ -1993,7 +1997,7 @@ df143e802d3ac208df2dfa41bae813896be4711a refs/importado/estado/rodar-verify-full
 bebfe8230590d2d6dbec6892af43e41f23a903b5 refs/importado/estado/rodar-verify-full-refazer-t-8d8055e5-26100910058f44
 b852f67263a25fc304ab33c7e9d25f6ae292be42 refs/importado/estado/rolenames-cargo-do-contato-26101522156b4-2610152338e7e9
 dadccc65d9c10dafba24c569559c4d20e39ddbef refs/importado/estado/rolenames-cargo-do-contato-26101522156b4e
-4291cbc244f5d2eae08c3e1c94d036f5290bcc1f refs/importado/estado/rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb
+489afdb85141ac8795f569cb7db3b82e61203463 refs/importado/estado/rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb
 c223f37db503b11d67da922f45d4570d04467984 refs/importado/estado/rollback-outbox-inbound-69-2610070513a48a
 69a335927cdafc96d987835b3d4dc8d9697834dd refs/importado/estado/roteamento-status-paused-talkxview-261016121201aa
 60cc3a7c1f2a51fdbc0ab14ef753c35c3ee69cb0 refs/importado/estado/rpc-contacts-stats-series-26101312171ccb
@@ -2028,7 +2032,7 @@ f20a82148dbe33f79680c2eef030b856cbd1a705 refs/importado/estado/sec-rls-01-residu
 dca7c65f89dcb61983b928c233d82649de4fa027 refs/importado/estado/sec-rls-02-03-oraculo-uuid-2610090248685c
 cc53f2127b99382c47c1c3687e09b027adb60cfc refs/importado/estado/sec-storage-01-posse-midia-legado-2610091320e9ea
 276d48f667451b59503ade9a916122677d796956 refs/importado/estado/sec-y25-01-insert-alvo-2610090601f8e4
-19a9c7f4946f6e9de39054668159acff32cd9630 refs/importado/estado/sec-y25-01-insert-alvo-t-0586a806-26101707511312
+f75fba9dddfc0e4ef513c17ef31bd2f0f526c349 refs/importado/estado/sec-y25-01-insert-alvo-t-0586a806-26101707511312
 22c5fd41b72fb3db6828fe164153a53e47e75e5a refs/importado/estado/sec-y25-01-insert-alvo-t-bc466fa1-26101220195707
 e739f2d19bf6256b4f8799b32a50f198589cc709 refs/importado/estado/secd-caller-check-13-refazer-261006221277ea
 8b039abd13e45827e82320f6d1ed4a0a4bb49094 refs/importado/estado/security-acl-alerts-monitor-26101306030666
@@ -2059,7 +2063,7 @@ d82e8cc157e7c05bc91b98ea0a5230a253f4db82 refs/importado/estado/settingsview-agru
 ba8d6fc8a6f98cfed166919bf5bf80d78d5908cd refs/importado/estado/settingsview-agrupar-abas-retomar-2610122326f459
 a8db758218f8a1af5c26c35b7eeb513e90d4e8ec refs/importado/estado/sidebar-favoritos-por-usuario-261015224543ea
 405b83087e7501b769d733a28f0af021f69b576b refs/importado/estado/sidebar-selo-email-nao-lido-26101210543c9a
-00ae4c88781857d9be1e897805cb8488dffd0472 refs/importado/estado/sincronizacao-canonica-20261016
+57228a2e4061dca86329ed49e11a4d1ac9280568 refs/importado/estado/sincronizacao-canonica-20261016
 3a82a9133672607625fc9a05c51be8530580d4d6 refs/importado/estado/sincronizar-preferencias-ui-servidor-2610131502c845
 c71aa9b10bdbb460853aeb31573f2a1d9017898a refs/importado/estado/sincronizar-rd-083-26101612468c4e
 84421b6e2d3ae5ef1c2cf4b4337d79e6a1319e9c refs/importado/estado/sip-limpa-tentativa-cancelada-2610071223-2610120058f257
@@ -2274,7 +2278,7 @@ e8036c48a0b7a63c961bb459a59a94552ac1d97e refs/importado/estado/sla-nomes-acessiv
 3671228b8b6e3a868dcf7d978ba8ce86d575a87a refs/importado/estado/sla-notify-on-warning-2610152357a9e0
 17484f607b9f985bef20299e9b99c7c592137780 refs/importado/estado/sla-paineis-sem-dados-26101301074fd2
 f3832d84cc9951ec4299e3fb14087ae1d8bd2d0e refs/importado/estado/sla-resolve-applicable-26101222220aaa
-e9c785f33c8b0100932fd0c340f84bd9ba563929 refs/importado/estado/sla-resolve-applicable-t-81c550ae-2610170742c161
+2b2cbe579a5d3c14d2e34637cfd5625b4aa77bbc refs/importado/estado/sla-resolve-applicable-t-81c550ae-2610170742c161
 a57abd94ad218b11f34487d7fc41878374ea1b46 refs/importado/estado/sla-timeline-hierarquia-cabecalho-2610131243adbd
 f83d3a71ffeee3f1192e452a5e83ce52b016816b refs/importado/estado/sla-timeline-quem-respondeu-2610152055709a
 5ce6d882e26b477fda5d5599ed08f7e5e7e00b17 refs/importado/estado/slider-contraste-refazer2-26101216003a4c
@@ -2307,33 +2311,47 @@ de5273df2798e765f0f47a840ed45b14ee2387d2 refs/importado/estado/sussurro-audio-wh
 dc50e48662a3bc971f8ed7e0e6dc26fbd62ba52e refs/importado/estado/sussurro-compositor-dados-envio-refazer2-2610130259a416
 6744ade2790574ec7a3e3c453072e1ced6d2462b refs/importado/estado/sussurro-painel-destino-erro-26101112318b79
 aa200545237b3b6937b9593316b7c9ae5b4d6360 refs/importado/estado/sussurro-selo-destinatario-2610152318e4db
-9a7524ae75a50d0af6ce8656f729612adb640d8b refs/importado/estado/sync-ag1-git-2610170855737f
-f61a1dfd28dbe8c28bb81de23b521bf20bd1a59f refs/importado/estado/sync-ag2-front-26101708550eb1
-45c4c662e494b795516058f1be9885971e156bbb refs/importado/estado/sync-ag3-edge-26101708555409
-27a216703e7c093be338c0207efd32ab66a37e97 refs/importado/estado/sync-ag4-banco-2610170855a3ad
-cc979db352d6ac7d765d8afb629b5189d3dd3c36 refs/importado/estado/sync-ag4b-banco-canonico-ro-2610170938704d
-d10ef334ef2db9247163dd47baa4b9f72af293dd refs/importado/estado/sync-ag5-qualidade-2610170855c187
-d74d4fb44435e787ea200275f3d98bd681fd3272 refs/importado/estado/sync20-01-ci-causa-raiz-2610170944cf50
-f207266c7ebb4ad90171fb350e2493feac2c3c51 refs/importado/estado/sync20-03-db-guard-catalogo-stale-26101709440ca2
-b3cb518ced4cb96c123c9dd1194b18013f2f9e3c refs/importado/estado/sync20-05-components-lote-1-26101709579290
-0527bd1781631784c8403dd68a203ed150182bfe refs/importado/estado/sync20-06-resgate-hooks-lib-services-2610171004d83a
-86d9610511af0b416bd18a01bcf5234970ab407e refs/importado/estado/sync20-07-front-pages-integrations-raiz-2610171005ebcb
-236ddb1cf5febc55447109badc807400fae7710e refs/importado/estado/sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf
-a22e1bf692bd0f86b249392f76657038ff6159df refs/importado/estado/sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1
-2af37853be1bf0d92b87d97f659beffc880c8ad0 refs/importado/estado/sync20-10-seguranca-banco-rls-26101709499002
-2c968f27054aa6d394195d084c26c0d3385837f1 refs/importado/estado/sync20-11-testes-contracts-e2e-origin-on-261017100048c5
-ab30674f295433fbc495570ddbf2ad378a9baa95 refs/importado/estado/sync20-12-worktrees-26101710087fba
-2c8f74eaac1c89abddda52cd833b713cd664ea88 refs/importado/estado/sync20-13-limpeza-lotes-2610171043b6a1
-6814b803e714b3a8a792810b1d3ce4ad846c2384 refs/importado/estado/sync20-14-ci-workflows-2610170955ef2c
-32becc046abf85d8e45a2f4b0ecfbc62afba3998 refs/importado/estado/sync20-15-docs-reconciliacao-registro-26101711145898
-2e4814a3807361a9b61593406e6000e786ecd951 refs/importado/estado/sync20-16-mensageria-talkx-multiplix-2610171101300d
-145f01afbbe8c7cb31d2f6fc3dd3ce433a7e8ce4 refs/importado/estado/sync20-17-ia-divergencias-2610171114c1fc
-6861abe18635b3628e3880c964f5757ad53a262c refs/importado/estado/sync20-18-ambientes-vercel-2610171114ce60
-1c622691e90a6b85b65782481bc93c9a2ff92a1d refs/importado/estado/sync20-20-performance-rituais-261017111784ba
-60ea2504913d2e8c79ab95f6d84b012ff10ac358 refs/importado/estado/sync20-23-reconciliar-153-migrations-26101711229059
-8181e21566fb94fb8959c149f1b943c046e0b1e7 refs/importado/estado/sync20-25-runbook-lote1-2610171149c18f
-1039a8466ec2fba69a7f2c7e850615673aa63631 refs/importado/estado/sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937
-0671308528190393a2c3e243f0c90cb52bad2851 refs/importado/estado/sync20-27-plano-isolamento-preview-2610171149d0fe
+6dc48c2928456c0244db6ef085d67949b4609b98 refs/importado/estado/sync-ag1-git-2610170855737f
+35d35ba536dd0b05f2e3b9a5700e8cc6b79b5a7d refs/importado/estado/sync-ag2-front-26101708550eb1
+9d1ce44bfd58db11e8904e31b64f20b1a614bc9d refs/importado/estado/sync-ag3-edge-26101708555409
+957c16bd81b5c506a2588d712ce2722f161ac836 refs/importado/estado/sync-ag4-banco-2610170855a3ad
+f9e623f46643425c8fb89cc4cdd1a508718bc6de refs/importado/estado/sync-ag4b-banco-canonico-ro-2610170938704d
+8b6ecb3988e04044be2e9e6476ef5326812c5d1d refs/importado/estado/sync-ag5-qualidade-2610170855c187
+65173f16e485c1b8d92d8226f1516e761d1acec2 refs/importado/estado/sync20-01-ci-causa-raiz-2610170944cf50
+0e48cad96596553450d5b18dc98b799f2cb65a1f refs/importado/estado/sync20-03-db-guard-catalogo-stale-26101709440ca2
+217bc0ca067225b29f3662bd4066bd238caae90b refs/importado/estado/sync20-05-components-lote-1-26101709579290
+58d5d6885e3d9aa5ef6ee23e9f078e722356d373 refs/importado/estado/sync20-06-resgate-hooks-lib-services-2610171004d83a
+46f49b7e0668dc6e3611845d2a3932d2d288aead refs/importado/estado/sync20-07-front-pages-integrations-raiz-2610171005ebcb
+8282778aefa97b980a070d3bc2d172f5c1fbb991 refs/importado/estado/sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf
+e713bc80b812d63e217603d135b607ca6e63f82e refs/importado/estado/sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1
+abbc976ad21a65549ab6fd0d55b255f8fbea891a refs/importado/estado/sync20-10-seguranca-banco-rls-26101709499002
+1da08188a5afbaf6d00c17162604295b2af1add0 refs/importado/estado/sync20-11-testes-contracts-e2e-origin-on-261017100048c5
+48725ffb836cadcb97090fa67296ec8f7b699f7a refs/importado/estado/sync20-12-worktrees-26101710087fba
+28ec574a9d83e23b0d10fc8271059f6f8734f7e3 refs/importado/estado/sync20-13-limpeza-lotes-2610171043b6a1
+eef2ef6a4ffa8d0b0b0285265edcda8f99f50813 refs/importado/estado/sync20-14-ci-workflows-2610170955ef2c
+4fcc6bed7fc90144da6311341278f91f90f36b3c refs/importado/estado/sync20-15-docs-reconciliacao-registro-26101711145898
+0a97130bb8bee79426a568aa920de626cdfc69c2 refs/importado/estado/sync20-16-mensageria-talkx-multiplix-2610171101300d
+206bd4ad476209d9aca16ad47860d20da3600d17 refs/importado/estado/sync20-17-ia-divergencias-2610171114c1fc
+e29340974da0ac99139ea33ec0f44897638222e1 refs/importado/estado/sync20-18-ambientes-vercel-2610171114ce60
+b35457cd8c1e9b54b0026ba8f0b89a5149f0505c refs/importado/estado/sync20-20-performance-rituais-261017111784ba
+7e2d7c33c3ed347798fbf8efd85f9c2fc2dfc242 refs/importado/estado/sync20-22-theirs-matriz-2610171115f82d
+aa78d08fbe442080666a6ab0110d17bf888d0413 refs/importado/estado/sync20-23-reconciliar-153-migrations-26101711229059
+fe0abba9ffcbb063b03d652b36a2afce3bc892aa refs/importado/estado/sync20-24-ag1-verificacao-inventario-261017114934c4
+b0eca591ef93c5841e9322cf10f3dbde2da5c4f0 refs/importado/estado/sync20-25-runbook-lote1-2610171149c18f
+e93df7c7cdecb102d41d356157f586b1f91777d3 refs/importado/estado/sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937
+2dead39e842024c54b820bacf44b7ac82dff4b3f refs/importado/estado/sync20-27-plano-isolamento-preview-2610171149d0fe
+0a2a91df01cdb4ce58c1a77f1a2b6c7d9c634570 refs/importado/estado/sync20-28-merge-b02-functions-37-2610171211e11c
+a81985f21bd2670023af2a9e946b19645e9db3c6 refs/importado/estado/sync20-29-merge-b01-db-6-2610171211decb
+0893db517802a27b2f9fdfdcf5b286dbea485dd3 refs/importado/estado/sync20-30-merge-b06-hooks-38-261017121250d4
+e03a75a8d14992678032282ad716b9d8c1d975d7 refs/importado/estado/sync20-31-pr1930-conflito-26101712332f2e
+5e370f1b36ee98c47ad436fdd713f099c1187f4c refs/importado/estado/sync20-32-prs-ci-conflitantes-26101712396167
+92a07170f3c317051f5ee9b7efa31ddcfeb6afbf refs/importado/estado/sync20-33-pr2003-radar-cv-051-060-2610171240b751
+a95fe252f9a54f3dfab7db07f6022af3263a1e43 refs/importado/estado/sync20-35-pr1987-veredito-2610171240d5b9
+6188f2fe23324b25021cbbdfc8f264d9e5656d54 refs/importado/estado/sync20-37-merge-b03-functions-dia-base-2610171307f300
+5bccf983f160dc52c233783b222d15f40a91dbdd refs/importado/estado/sync20-39-merge-b00-mecanico-global-2610171306b5d5
+524c151841b59625b406a133f89501c1388bace3 refs/importado/estado/sync20-40-pr1983-salvamento-47-divergent-26101713076697
+9c67afc32cad397b8bc6ac429b4f23648ab55c34 refs/importado/estado/sync20-41-ci-pin-e2e-mapa-ts-2610171307a66a
+c76bcc423dc66239d587ca84c1def0cacf281af8 refs/importado/estado/sync20-43-b02-fusao-manual-19-2610171331595e
 319d3e5ddb8c6ef49c897b5244bc3f9617f5fbe4 refs/importado/estado/t-005bd7f8-2610091646e1d1
 0ae660525b01d417d8604b3650fa4752aacd195c refs/importado/estado/t-008cd32b-26100903021634
 5aa1b58b59dd4a3b71e81fbea897f6447b3ec0cc refs/importado/estado/t-0091315a-26101012249c1b
@@ -2391,7 +2409,7 @@ b71f5dcd834fbc683663c38476a8a981cf20d145 refs/importado/estado/t-119a3fec-261009
 7dcbce302fa5d085e31d793443bb4e8c460e2f53 refs/importado/estado/t-12e853d2-26101219247999
 25a5aa4e935be8db9a002c3103c0f471b0c01230 refs/importado/estado/t-12ee5422-2610091853b9d5
 b69a7917300b514c2be56dce7bb32b1557c3779b refs/importado/estado/t-13087569-26100901241c7e
-0a6b5b2e4d92c94799fe5b2b46609fee12f67009 refs/importado/estado/t-139a0959-26101319274a70
+dfa31d9c7ede6bef070c407bd8f392d2ab4feea1 refs/importado/estado/t-139a0959-26101319274a70
 476083f4c22b3d240243ebfdedbafbe9738a2ef4 refs/importado/estado/t-13f4132b-2610090049c936
 c75a1ae049491bb3fbb34bb36d74ce8a97bc0ca0 refs/importado/estado/t-146edcc9-refazer-r2-auth-022-2610091633a260
 80b8610c57381e41ecf43c517fa6586e625ef3a3 refs/importado/estado/t-14b7bf50-2610112205838e
@@ -2417,7 +2435,7 @@ a63bac8ebffd65974cc16e48d7359a09773813f4 refs/importado/estado/t-19a179fb-261005
 b2712f0c4911222db2037ba7a7fa019211bc9e61 refs/importado/estado/t-1b5b9180-gate-dep-registry-2610052103a32f
 377200c5712084ff9576c3fe851b75fd7fb61582 refs/importado/estado/t-1b805b3b-2610090002c7ff
 6426925c54d4f11d662f4695320372b0e9a392ec refs/importado/estado/t-1bd0be10-2610071624195e
-4eabe5cc243a69b6dbbdc7d756592300548cffe2 refs/importado/estado/t-1be848fa-2610131459a5be
+d57b973df964a31767d52f0d1d82c2cc1c85a8cd refs/importado/estado/t-1be848fa-2610131459a5be
 1e2e5da0f8869b03bb5bd0163f58a19becf320ed refs/importado/estado/t-1c69164c-2610091612448c
 f265c1d8a4d794ae30fc0f41c63dcb8dea387f9d refs/importado/estado/t-1c6fb64f-261008215386ad
 2c6a814be536ea26b578505ead38980a7a37082c refs/importado/estado/t-1cb148e7-26100712356956
@@ -2465,7 +2483,7 @@ e132abe19d40b2cad045aec6eb06e1bfa4fb604f refs/importado/estado/t-2ea84e89-261007
 5ebb95a51f29d53e79c9490bd7d736c4be6251c4 refs/importado/estado/t-2eae4633-26100819361b6b
 a01f0257af18615f0e278058a32522447b7e65eb refs/importado/estado/t-2fdcf879-2610120821e72e
 b63973265c5a8d8f5af8a0c716bd0e0f0d46add0 refs/importado/estado/t-30f80060-26100711569d9e
-cae3da381c4318fc1a08ba47498298eaf7790b36 refs/importado/estado/t-313f15cd-261013000804a1
+0ede9c5b971b9e6d3ba5d7e134e498a216b8e133 refs/importado/estado/t-313f15cd-261013000804a1
 3915aec5e8bc70cab84d1faf68fe00cd07544579 refs/importado/estado/t-31d2dbf9-26101409285252
 3665ab5d28849528ebf8a7d6dcef684c1b8791eb refs/importado/estado/t-31f11211-2610120122f029
 ab960a1998ffad3d54a1f401ac3d1d638b90ce61 refs/importado/estado/t-3271425b-26100904070efd
@@ -2499,7 +2517,7 @@ e95bcb7422bc6bcc3a0fcde934ceee397e269432 refs/importado/estado/t-3e415346-261007
 19397c519e7ab18da3ac116689cc433066735ca6 refs/importado/estado/t-3e415346-prova10x-26100712362fb8
 d118cac8150c2c9074682636d522c571bc5b8379 refs/importado/estado/t-3e60424d-261012091704be
 f07f00f196b698fefac9984d4dc1a8326e3bef9f refs/importado/estado/t-3f4a969a-2610051133b8b1
-ec948331e97175b3a3b2439db620f2ca3fb83417 refs/importado/estado/t-3f8cf71b-26101615180dda
+22025158f859c16421c5f09b2e976a1b7a34c6b7 refs/importado/estado/t-3f8cf71b-26101615180dda
 eb60834c3bc9bdbae2a482d55b2c6f6bfe0586b7 refs/importado/estado/t-3faeba17-2610061343144a
 b98885364c5c83c37478b94441b08c5bbded04ff refs/importado/estado/t-3fd2ca08-261008201594b1
 1922d1f4269a91ab12203a4e4f9400e47d069e7f refs/importado/estado/t-3feb8b0b-2610160056a2bd
@@ -2534,7 +2552,7 @@ bb183ed852a616cc94a7f108f7d0adfdf871a456 refs/importado/estado/t-4ddb680a-261012
 0fa525186072e0ba9da0c20c6d41a296c60c1871 refs/importado/estado/t-4e408b27-2610051200dc5a
 abc10bb7970804df1a30ff854489d4c2d380e813 refs/importado/estado/t-4ef63373-26100616344589
 bc3923c99b718bc0612ab1db72d78b26304aa551 refs/importado/estado/t-4f82e1af-26101407542229
-700371dae70d2e12cd486fbe2d95fc5c87c08449 refs/importado/estado/t-4fa178e3-2610170647f2aa
+b3444375022878b08fe4c998e44189ec5cd55e5c refs/importado/estado/t-4fa178e3-2610170647f2aa
 21f6f7a174f789df594964292773d9b9ebb3c0e7 refs/importado/estado/t-4fc63944-261012011805c9
 7755afe8bcfa47e18a2eaea74a9962093ab85649 refs/importado/estado/t-4fce53cc-2610100921f308
 50956ca14425c711e381dd51660e03af0cf75c58 refs/importado/estado/t-5042ffc4-26101123059e01
@@ -2578,7 +2596,7 @@ d784c108c61a474863bfc5866a6275c1c3db099a refs/importado/estado/t-5c9b03b0-ai-usa
 6cab03fdb86783da5800130d32e15ae666041f4f refs/importado/estado/t-5deb4b82-2610101422cfcb
 e1f6e8525190cff424b492d9dcb4030183a66caa refs/importado/estado/t-5e2af53b-2610061120ebb2
 6fc883ca4c3188ae50ef63079047bf3de86fcc02 refs/importado/estado/t-5f321d27-2610061122748d
-1ec170fc14dab059700b0c1cd1ce90ceba95ecff refs/importado/estado/t-5f3ab2b7-26101707317fa6
+4fda5b83ad0a3360dc595470bbab58c408a66d65 refs/importado/estado/t-5f3ab2b7-26101707317fa6
 45a16518c3be10af935e8cdfebfd574aab74811e refs/importado/estado/t-5f838bec-26100711279f09
 95a142cd76b20537a6d60f2cc61fda4e20e8069e refs/importado/estado/t-604d45a5-26100915148f98
 ac990cec6093f773e2ea50d76d1a2652dc4f0e8f refs/importado/estado/t-616540b9-261008085397af
@@ -2623,7 +2641,7 @@ d9352a59db15bdb33e273a3f2b53761cb5f5f4fc refs/importado/estado/t-6d14b79a-261011
 b48b0649fa7cd2d2c20fd78e4d8cd5a224dd2d57 refs/importado/estado/t-6f0d0f9c-261009202683b3
 327137ae76ab23cd22349b4266480cb7bac6eda9 refs/importado/estado/t-6f272cea-261008235987f5
 5e57cfeca26c9f49e156a9cb78eefea1b309be4f refs/importado/estado/t-6f9b5246-26100816452a37
-0698cbc1178c6fffd1689a2ca437aa6657b1e4cf refs/importado/estado/t-6fab3edf-2610131613f552
+ee2129e4e29cb462958ceec75fbfc8a7e949b5ad refs/importado/estado/t-6fab3edf-2610131613f552
 b242fc11b4e6fa697232fda8f8fb4808351c2a01 refs/importado/estado/t-719ba821-261007200679bb
 a37d743dcdba857859463e14f27e0d915321a484 refs/importado/estado/t-720b966e-26100918181e99
 06b8ca418cdc5d37898d61cd6c41507dd88c5451 refs/importado/estado/t-720b966e-2610091821e8b7
@@ -2652,7 +2670,7 @@ d13c0a7707697415eabcd8e250b15905c0c1d58a refs/importado/estado/t-7824d66d-261006
 b4e318a432aa8bec111e14db9adaf826bc50cbc0 refs/importado/estado/t-783e1300-26100610390806
 07db10c08d1a0fb1d06c0259563d13946b823a7f refs/importado/estado/t-785d7683-2610051441bc97
 e6857c2c9f33aff25bff63b6f207409067c635d4 refs/importado/estado/t-786a013e-2610061520f9a7
-eadd718882e4aabe40e9ccbec0b5e9e12c61cb9b refs/importado/estado/t-78c8ce80-26101216027f34
+847c6985ded1e22e5b45832d770e3132876dafbd refs/importado/estado/t-78c8ce80-26101216027f34
 4a45befd3360b8269a3adbf98d1bc4d51c9e5fb1 refs/importado/estado/t-7963ca83-26100820211d4f
 fa809293c2605021ce63d9d7a42b64c95630c59f refs/importado/estado/t-796e66d2-talkx-confirm-kit-2610101622e1b3
 e0b42879736bda4de471584aa189606abe44cbef refs/importado/estado/t-79b3c384-26100901193273
@@ -2712,7 +2730,7 @@ ea830af9ca057d1da24690d9e00a86ba6853c647 refs/importado/estado/t-9365a4f2-261013
 52596c2eab9f1ae62c4b63e315e34ed35fc28ec3 refs/importado/estado/t-94d3819b-26101521570d5b
 e55774c89e51e5a188f0e615816888f4552ebc9b refs/importado/estado/t-94d3819b-26101521570d5b-extra/e55774c89e51e5a188f0e615816888f4552ebc9b
 ffcfff97c891956089cd9c13f43d307fac991f8b refs/importado/estado/t-94e2b307-2610071229efed
-64d4ee5c29a5971c3fb45306c718abc257380202 refs/importado/estado/t-94faf950-2610161519dbc6
+605f1b5f88b8b1d75522ece768ae4894d7af6686 refs/importado/estado/t-94faf950-2610161519dbc6
 22a22789f8a838efd2c00f29c003b28299cb309b refs/importado/estado/t-94fb6270-2610111944cbbc
 902c05280a4544ea8425904e0b7373b8d2d3c281 refs/importado/estado/t-956af63b-2610090350bc9b
 9043dd12a9b0d5b486c90d10007cd8580e0f8f38 refs/importado/estado/t-95caf8cf-26100905204b77
@@ -2784,7 +2802,7 @@ e69877027e812bce83842ee16e412eee733a7005 refs/importado/estado/t-b03aee05-261009
 7c5dfd4ebc6e56a81fb62698cc9da815169ad6b1 refs/importado/estado/t-b088f5ce-2610160101f762
 72b799d6feb45ab797a6f9f0fa7e144aba67e339 refs/importado/estado/t-b09c43f9-2610090222f8e5
 23ccc9863b556d0a53999e3143fdc2483036acfb refs/importado/estado/t-b0a9902e-26100614476940
-970764aad80a56b31370637e8c3bee8524614294 refs/importado/estado/t-b129dfdc-2610120043782e
+02580d88c573fed8d140901465f18e29099319a7 refs/importado/estado/t-b129dfdc-2610120043782e
 149e50c01b5bfbfec8347b70a3979cc70b9050e2 refs/importado/estado/t-b12c20c7-2610090125780c
 329681a737532f9cdc965e993cbf906a43e0ce22 refs/importado/estado/t-b21e0749-2610112042b98b
 c1c61e49b20fce0f8a34aa70cac71946a4fa7ce6 refs/importado/estado/t-b2590d02-refazer-rota-varias-conexoes-2610101536b03e
@@ -2891,7 +2909,7 @@ db275e1c481d479e909f1f6a3a5169b529de1f00 refs/importado/estado/t-d646a2a9-261005
 a971e2b5de5f02b8cf6822d50e234486ae608fd4 refs/importado/estado/t-d8d88c7b-26100906132067
 e475af316cdda10f4f3818a7874db17692e46d95 refs/importado/estado/t-d8e6a806-26100806537117
 a7429c7a06102d3f9d9d2b94a120152c58f0dd85 refs/importado/estado/t-d8f52d4e-26101209274fcd
-ba708619e22788d89580cfd967b67a31fd49b752 refs/importado/estado/t-d8fe8268-2610112017fc97
+1b4b3ae4a7f864236bac10bb0a79fe5393eb9657 refs/importado/estado/t-d8fe8268-2610112017fc97
 80fc3bdffee3b439dc04c3fba8ef726675fb6173 refs/importado/estado/t-d9be8a5c-2610090317f29f
 acfb80067d7e22da6fa0ccd7283106e4ffa4a617 refs/importado/estado/t-da213123-261009175136f7
 ecfeb7ef42be7db14c7564cf10e071cc60271861 refs/importado/estado/t-da213123-26100918244a4c
@@ -2971,7 +2989,7 @@ e45d61b6f9243b20c6efa087086d51d95d5207dc refs/importado/estado/t-f7158094-261005
 2f484b2e6d19fb3748a197e1a39fc6a53efb354c refs/importado/estado/t-f789a242-2610041646dbc7
 30a7fae0cefe322fc8ed913e74f34c880e500b5d refs/importado/estado/t-f80be752-26100917267708
 952400719d6ef5f6e50b63e38ea8675e5e0a776f refs/importado/estado/t-f84ad06c-26100900291c78
-8f82dc97055824a3f5880f83c62a57bee5ad1323 refs/importado/estado/t-f8a6790c-2610170755c344
+8209be6f8bb0c1e450cd0f6d29541fe935d4c2f7 refs/importado/estado/t-f8a6790c-2610170755c344
 d6d277b5165b7adc79eae2c3600cc26b91b166cf refs/importado/estado/t-f8fdf043-26100913417f17
 cfef58d36f616d7dd5e21a77d5b46daa8eaa560c refs/importado/estado/t-f9d5e20c-261004153870bb
 9c906f12e64a9dc46618efe1c15a55e9c3cf3a5b refs/importado/estado/t-f9ec0714-2610090257eb6e
@@ -2983,7 +3001,7 @@ eb069314174fcace641464443865cc791ab37dcc refs/importado/estado/t-fa88db12-261007
 3b483d54c82b2f2f158775aa4c39c2681a8a4303 refs/importado/estado/t-fcc3ebd9-26100902310e13
 b333eb104baa2111b82c05094d1798f6fbe1ad44 refs/importado/estado/t-fcdd4129-2610111211dd4d
 27489d694ebd59ae4c66d349d03c84a29ef960c5 refs/importado/estado/t-fd52bf49-2610090230cc2d
-fa3ccffbe01ff64c231e8ae4bcabecd0c8f9c8bb refs/importado/estado/t-fe7f27a2-2610131345e18f
+8cf541d8bf54be4071176495e25a52bc61c52ebe refs/importado/estado/t-fe7f27a2-2610131345e18f
 2aebafc340c42df72467b84000fec05a9905123a refs/importado/estado/t-fe9afd28-26100919432615
 3c243acecf6847f312cd54eaf3b3f173ae1fa7c7 refs/importado/estado/t-feffa435-261008003247f2
 28a0f5df3b77ab30446798b034ceca698a53c9ea refs/importado/estado/t298-snapshot-estado-novo-carimbo-26101312214545
@@ -3083,7 +3101,7 @@ e093fe1fa62d6dcfd01e705af82b01c07c5ec07e refs/importado/estado/talkx-retry-resol
 2c367a1049c40a1502c2cb4556db678658205a9f refs/importado/estado/talkx-salvar-variantes-26101007048689
 59fdeb5aed45a3a729850efdcf2c355443f4a809 refs/importado/estado/talkx-salvar-variantes-n110-26101015057929
 0a682b6bacc3b26fda441cd5980553b8e4f7222a refs/importado/estado/talkx-salvar-variantes-n110-2610101923c02c
-006909d24491a64a2a9ffc741a64f20b3c75a8ca refs/importado/estado/talkx-salvar-variantes-n110-261013104166e5
+69448dc3c5a87b23eba085d91fabae80bb6ba46f refs/importado/estado/talkx-salvar-variantes-n110-261013104166e5
 0d490aae83c66eff93bbc769d6d9421971374ca5 refs/importado/estado/talkx-scheduler-p-at-interface-261010123-2610110946ccb5
 c50299950e347a158bb287764d90dac8a2320271 refs/importado/estado/talkx-scheduler-p-at-interface-2610101234244a
 cc91853f4975749f57a3255995be64e1e2c0c33a refs/importado/estado/talkx-scheduler-p-at-interface-261011094-26101110552341
@@ -3099,7 +3117,7 @@ d9f190a53f15f1030bbb9c1adb33bbd9546593a9 refs/importado/estado/talkx-segmentos-c
 bdbb2332f8fa1600fb6741fa81ec993622e1097d refs/importado/estado/talkx-segmentos-inputs-por-tipo-261010132384db
 4c5612db5abd3a7c146a885d15ab404d1331fc9b refs/importado/estado/talkx-selecao-teclado-template-2610101033a744
 cf49219cea0710f0a6dfb98aee9f1fd25e203bc9 refs/importado/estado/talkx-serie-minuto-saude-26101005491c25
-8dab222b91c333797298597805bdb279f6d6b6ad refs/importado/estado/talkx-snapshot-espelho-ci-2610170646ddf9
+abcbc1c9e0fea61c923ba22cff5f92fe8a9db23d refs/importado/estado/talkx-snapshot-espelho-ci-2610170646ddf9
 c7cfc41ff79226a5cadd9c76f99ca3bbfdcfca20 refs/importado/estado/talkx-storage-purge-2610051102c709
 d51767cc50a19b6957d9acd0e804aaeb76182853 refs/importado/estado/talkx-storage-purge-2610071132eda6
 7a81389ae8333fd3ea5f0fdf1c19bdda04e383bc refs/importado/estado/talkx-suppressao-botoes-arquivo-26101523529b77
@@ -3139,7 +3157,7 @@ e64aefee532fb1138308997c6dceb74229e80679 refs/importado/estado/talkx-vinculo-crm
 cac96aa486c90cd5e8eece85b9714c6682e2dc12 refs/importado/estado/team-chat-busca-erro-antigas-261014072177c1
 7dbf24c6a5c1ff56416665b22231575916b6aa5b refs/importado/estado/team-chat-colar-imagem-canal-rascunho-me-26101522390958
 780682fa743385a97604a30871d69c4f4ce4cd29 refs/importado/estado/team-chat-realtime-canais-2610140912a22e
-a05f0b112070e41921eb5f6e2a2b678c0fc893fe refs/importado/estado/team-chat-realtime-canais-t-64581412-261017064405c0
+4fd4808854df4d72c427ee28238a88d4d8f76c08 refs/importado/estado/team-chat-realtime-canais-t-64581412-261017064405c0
 41288e5936ccfe3de6da5c02323c0c01bc7a746f refs/importado/estado/team-chat-realtime-canais-t5b4da800-26101612573869
 cad281adae9292dfcc54780026372c33143811bc refs/importado/estado/team-chat-realtime-politicas-2610140706637d
 5ce4747bad397f80a44b5de8a9f03fc558ccab90 refs/importado/estado/team-chat-realtime-politicas-ref1-ta11ce-2610152002df51
@@ -3153,7 +3171,7 @@ fdef1352d47d881db8101fc5f4ab10fc652e4c6e refs/importado/estado/team-chat-ultimo-
 692a1cd8fca1c387c3edc50675aa6af46cfd5789 refs/importado/estado/team-profiles-department-id-240-b-26100607149f01
 153adcff1f61211e6a31584be8387962a79b6e20 refs/importado/estado/team-profiles-department-id-240-b-2610061756aa17
 472ce228212b5b82de6a80394c1cab13ce872ca9 refs/importado/estado/teams-chat-presenca-a11y-carga-2610130634b50f
-b3cf38a2487492902e791c5588c852d8a8e15461 refs/importado/estado/teams-chat-settings-wiring-2610170726004a
+5a6a1ea5c03b77b60a0ae3dd66b082af00783c0f refs/importado/estado/teams-chat-settings-wiring-2610170726004a
 1080788a2c2f3adaa2df05b2d44326d635ef4629 refs/importado/estado/teams-mensagens-antigas-remetente-261013001921bf
 6db75cbceaf892d9070bcc917f0c793b67b6cb56 refs/importado/estado/tel-recording-001-hook-bytes-refazer-2610090739f474
 2c70c14270d1e22747b4a16c66aa5eece1bc00a3 refs/importado/estado/tel-recording-001-hook-bytes-refazer2-t--2610122322973b
@@ -3176,7 +3194,7 @@ da0b98ab3de101d4a2c399a020ca973df004c342 refs/importado/estado/test-auth-tela-lo
 6f9c2bb8220932c94c249af2e162d212313546a5 refs/importado/estado/test-emojis-upload-validacao-2610122321978a
 6a32b28df362f03cbf6df712880194194079d666 refs/importado/estado/test-inbox-lacunas-hooks-servicos-rls-26101303351b19
 3009ffa515b7dc5325820267850196054d3484dc refs/importado/estado/test-rede-cliente-supabase-2610130318aa79
-6293a4b6d21f35cf4badb571aae354ae7375046e refs/importado/estado/test-usebusinesshours-rpc-t-df995145-261017072003d4
+c5e7126c92b39eb73e7b14e5e2f5744fb724766a refs/importado/estado/test-usebusinesshours-rpc-t-df995145-261017072003d4
 ec336f914bc7b7c70b91cb22eebec58c7579f3c1 refs/importado/estado/teste-inbox-raiz-componentes-26101304493f8f
 2bb0eaa58907a8d9e0fc06f7abaa3b1ae1637509 refs/importado/estado/teste-lib-retry-safestorage-popup-webaut-26101306259ca5
 1f8678cae7223b87522333db61369753c2992321 refs/importado/estado/teste-lib-retry-safestorage-popup-webaut-261016005940d0
@@ -3185,12 +3203,12 @@ ec90e3185f3bc2c74e7931a7ff2565b6193b2c03 refs/importado/estado/teste-mapeamento-
 a4b960e03ac8bd10af6b2bcf408d78c70c31f993 refs/importado/estado/teste-regressao-realtime-refresh-26100416172b2b
 be029a8c685fa0d6e6d5a25835ea1402cf8d14ee refs/importado/estado/teste-responsivo-newtaskdialog-2610161356df7a
 abd6a7bd2d940fdbffb435ce65663bf4fecfc817 refs/importado/estado/testes-doc24-evolution-crm-esqueci-senha-26101522237da6
-24280450db3e580110a0e2f372dbc6746fe8d471 refs/importado/estado/testes-email-acoes-lixo-token-cron-26101-2610161512e8af
+816d71886ae9d0f7cdc99de721fafeb05c08b47a refs/importado/estado/testes-email-acoes-lixo-token-cron-26101-2610161512e8af
 c6e899013c26ef0a05a7db4d49278cffa19068da refs/importado/estado/testes-email-acoes-lixo-token-cron-2610152138016e
 b5676c1f7c19794c21166907ce5a586bc1fcf657 refs/importado/estado/testes-espelho-codigo-real-26101304248784
-b8e6a4be0e2f41fb09da76f3ae10bafc6d6fa83e refs/importado/estado/testes-prova-auditoria-papeis-reais-26101615129c06
+d3f23b6052152a89e450810fab8becec2728d3d7 refs/importado/estado/testes-prova-auditoria-papeis-reais-26101615129c06
 897970c89a3acdff27ef2e663a810efa2f0a3be6 refs/importado/estado/testes-realtime-notificacoes-chamada-sus-2610151956f734
-966a44c232d3d167668571464c889eb6c3d4fe0a refs/importado/estado/testes-replyto-citada-ausente-otimista-26101615026c64
+7ace2e279d814c15dbfb40a2d56fff66f88c2f75 refs/importado/estado/testes-replyto-citada-ausente-otimista-26101615026c64
 ac0258e420e52bf8bcafca75abb2439f1ee22d17 refs/importado/estado/testes-rls-integracao-liberacao-35-2610041554bebb
 d4870f42331ec26be76677e89067051be1bb127a refs/importado/estado/testes-rls-integracao-liberacao-35-261004161858e1
 03d98544eee3ed58b87848da493e6ac8505ead4d refs/importado/estado/testes-rls-integracao-liberacao-35-2610050725b38e
@@ -3249,7 +3267,7 @@ eeca73a52701c548da0115d5b7989f71f513dc5c refs/importado/estado/tl-054-talkx-wiza
 6a1363104b3402f59de82b24f97cb9a11bab66d7 refs/importado/estado/tl-054a-fix-schedule-validation-t-50d215-2610131903a494
 31a0305b240bb18db3c648f5f4fa46316ad6e165 refs/importado/estado/tl-054a-fix-schedule-validation-t-50d215-2610131903a494-extra/31a0305b240bb18db3c648f5f4fa46316ad6e165
 e3d993f7eeec2d832b49611b382b9298e140b8b3 refs/importado/estado/tl-054a-talkx-data-agendamento-26100908384aee
-edc492dfa3341891cc0efe55ddd4f4ac5de8294b refs/importado/estado/tl-054a-talkx-data-agendamento-26101006421abd
+b38f3bdf3e1474dcf23f5cf05ba957a8b9ce755f refs/importado/estado/tl-054a-talkx-data-agendamento-26101006421abd
 36aef4dd8225197fdbd21450198525c6196835f6 refs/importado/estado/tl-056-2610082333892e
 8e3ab09226d483f5d2c6cf5283d8162d67f1840a refs/importado/estado/tl-060-talk-x-eta-serie-sobreposicao-26100823527f5c
 0cc7415f5131d18514846e17eb7dc7fa04502e32 refs/importado/estado/tl-061-talkx-motivos-supressao-26100823538e69
@@ -3411,7 +3429,7 @@ a65090c94da9f63f327691aa2354eac3504ecea2 refs/importado/estado/transporte-canoni
 b0bef618035898731bf10313e1f6770a74694562 refs/importado/estado/tx-a11y-1-talkx-nome-e-papel-2610100611c37c
 7aa8105455019210ac0f29e0ab31d5841278d249 refs/importado/estado/tx-a11y-1-talkx-nome-e-papel-26101017104a3d
 5b6d99270c5d766465e7c092edc8b2f0d68fa29d refs/importado/estado/tx-a11y-1-talkx-nome-e-papel-26101523304686
-39ab7dedf3162ffdd6c8123968f4baf4b9f6ad46 refs/importado/estado/types-sync-causa-raiz-26101709440412
+fb9f4a7ddabea3763a7fe5b0f125384b9eb334c1 refs/importado/estado/types-sync-causa-raiz-26101709440412
 a9af0841010406013a5c329cdc3afb795d6f14d7 refs/importado/estado/types-sync-lote
 b2da868d87444cac695bf2056bd208489b36832c refs/importado/estado/typing-presence-team-chat-tema-permissoe-2610160033f86b
 0ceaec4c46ae713703b9d104ab5e068bd22b4e6f refs/importado/estado/u06-email-nao-lido-docs-261012191306cf
@@ -3420,7 +3438,7 @@ a974dc647e82388b7183a05df5f29a9c0f4a1433 refs/importado/estado/ui-overlay-testes
 05d37a115e5cbc088ee499ec19d540ff8f3ca38e refs/importado/estado/um-par-handlers-globais-erro-26101219575525
 7a0faf99655470412d010b236c18743dd69515fc refs/importado/estado/unificar-tabela-destinatarios-talkx-158-261012203525ec
 8c669c32d4a7ca758675486fae66d59f5feb5a44 refs/importado/estado/unsupported-message-bubble-261011104657be
-cd389538d55a0f55884ffed984f0fbb01e49746f refs/importado/estado/unsupported-message-bubble-refazer-2610111234928e
+317e89c53edc6f4d896c8e6b32463cb65cd9ea3d refs/importado/estado/unsupported-message-bubble-refazer-2610111234928e
 f259ada66c75668c874b901c86b0c7f7c9141040 refs/importado/estado/unsupported-message-bubble-refazer2-26101119531d80
 15b7be16e9396b04a24271719f7713504e2eb29c refs/importado/estado/unsupported-message-bubble-refazer3-t-ff-2610130200037b
 c2e0cc3eb4cea96d14d20fdf993824fa80a17d33 refs/importado/estado/unsupported-message-types-261011092221ac
@@ -3449,15 +3467,15 @@ e2e484c91acd7a0305a713c6e653487d9e8253e0 refs/importado/estado/validar-e54-risca
 5888ab72c386c4fa330564fd13e9e14818f9ce2c refs/importado/estado/validate-mutation-red-green-2610100815d383-extra/5888ab72c386c4fa330564fd13e9e14818f9ce2c
 f49debc6540b35bcbc1437f5888fc651832e6eb6 refs/importado/estado/validate-mutation-red-green-t31343b5d-261010181980ea
 ba88baba9eca3c50832c4c509aa1219db3a503a8 refs/importado/estado/validate-mutation-red-green-t31343b5d-2610102026f4a4
-a55b8b92e11420d402fc60a8652b6970bd873d8e refs/importado/estado/variacoes-ab-talkx-tl-126-2610122111d5fc
+8d629b272a4d23cfe9ef376f088392ab31e1d4c9 refs/importado/estado/variacoes-ab-talkx-tl-126-2610122111d5fc
 ac94af00cdd6b2909eecb17be5c75730c54c7c72 refs/importado/estado/variacoes-template-atendente-protocolo-26101523521fcb
 273c0165eb21ef5df4baef92534a9acc4306d050 refs/importado/estado/varredor-sending-claim-papel-2610130308e3a2
 b78638f7415416c70b743576b4f5c0bef7ce0f6c refs/importado/estado/verific-talkx-suppression-9d787fba-2610130916801d
-bfaaf99a65697fe7ad34b3f569b1fad1add245e1 refs/importado/estado/verifica-inbox-live-path-26101708271e12
+b4f02521b7ea1a15d5d323c3f7fa864796ac8e8c refs/importado/estado/verifica-inbox-live-path-26101708271e12
 111590c76ab2570838f636dfc0b94bb5304cb68f refs/importado/estado/verifica-modal-nova-tarefa-2610131406bfa3
 8cfa9f921e35272ecfd880a91ca9eaf37ec2f3cd refs/importado/estado/verifica-modal-nova-tarefa-etapas-159-16-26101602258850
 9cc2c66e6358e33dd358972b6eda873895233147 refs/importado/estado/verifica-rd083-testes-tokens-responsivo-261016140814a1
-46b080477082bbfd3cd856e2c50afabfe299840e refs/importado/estado/verifica-replyto-n1-verify-t775e45ba-26101615107516
+120342a5e2eb5c5510d353bb23ec325e71367060 refs/importado/estado/verifica-replyto-n1-verify-t775e45ba-26101615107516
 2f46a7e48aa9b639aa51e0a82bb84244ce3ffdba refs/importado/estado/verificacao-kill-switch-voz-relato-26101311474344
 16941a928127ba5fca3d2e8f2ae7e4e32e4c2664 refs/importado/estado/verificar-419-zapp-verify-full-261008110950c9
 18071172d32669a15f808416af30537872e8a1d6 refs/importado/estado/verificar-ci-espelho-den-26101614087f63
@@ -3471,7 +3489,7 @@ a40af4164e809fac42a2d615ce8634508a59a592 refs/importado/estado/verificar-fix-hoo
 a2fab00e3774ee88258186f1e9feb32a46c3959c refs/importado/estado/verificar-provas-save-talkx-template-2610132231117b
 e9bf5ccc7785841647d8a2bf513462c558b21a39 refs/importado/estado/verificar-quadro-responsivo-imagens-test-2610160804ffcf
 44d2a98911a0542979f814ec29d3b260c1cc18b0 refs/importado/estado/verificar-rebase-reset-sso-pwa-2610160724cd04
-0e13e6d570045fddf40b28a6d70b11fad1ef0c1b refs/importado/estado/verify-relato-fechar-auditoria-2610161520e528
+37cab1910f967e2856cbdd3c54882a32a4512a33 refs/importado/estado/verify-relato-fechar-auditoria-2610161520e528
 b9086fe323e19ec300b88a5cb6391796acba12dd refs/importado/estado/vip-arquivar-bloquear-tags-contato-241-2610060843ce66
 2214908cca2bf06b11cd4f6ce63a686e02b55adc refs/importado/estado/vip-arquivar-bloquear-tags-contato-241-2610060843ce66-extra/2214908cca2bf06b11cd4f6ce63a686e02b55adc
 d95bd21db0c67d30b381f30b25463e5266d209ce refs/importado/estado/vip-arquivar-bloquear-tags-contato-241-26100700334924
@@ -3502,18 +3520,18 @@ d5987839d1513f0e42144da635dd1d804d50c9d3 refs/importado/estado/voz-trocador-trat
 148ee32f162ca74a7cecdb1b3a08b4bc9afa26e0 refs/importado/estado/war-room-estados-acessiveis-2610151954b2e4
 7d3e64cbf91846b07d2b94c94ce77683fda8f55c refs/importado/estado/warroom-alerts-resolve-261011151032c6
 bb49b4f3eefcb3e54fc12d7433bcc389ebc79b26 refs/importado/estado/warroom-dismiss-alerta-realtime-26101523507cc9
-5ade9d364929cc8b1fedd9a39cb9f3d83ef4046d refs/importado/estado/warroom-estados-zero-falso-261013002023ce
-d478957b350a4a5e526c318f49613dec54bff4be refs/importado/estado/warroom-rpcs-agentes-filas-26101219463e05
+0978ea744f3938fac4ead41040d01213fa337004 refs/importado/estado/warroom-estados-zero-falso-261013002023ce
+51c51900dcbe063d97818a7ba3020369fcb189c7 refs/importado/estado/warroom-rpcs-agentes-filas-26101219463e05
 8a339cc3f03c56988633d8dec4c95d6d3f795f91 refs/importado/estado/warroom-rpcs-ci-espelho-2610130843426f
-0525129c8ee4c42e5be80a6a5cb185183075c9b5 refs/importado/estado/warroom-rpcs-hook-261012202546f0
+3a7d4e441e972cf46ba431b6455480876e4291b8 refs/importado/estado/warroom-rpcs-hook-261012202546f0
 d7ca1a2838cd244df2a38a582645c8b68e9047ea refs/importado/estado/warroom-rpcs-hook-261012202546f0-2610160004de69
 f4b77a93d6f64c3ae91a67e0b8b2f6c5de36ab78 refs/importado/estado/web-vitals-samples-261013061216d8
 bfa449e6a1eae6ba5a138494c82c374eb6c1aa37 refs/importado/estado/web-vitals-samples-26101306576626
-8bb625e9cfe1b4da23ed203374f6d0aa0d7419ea refs/importado/estado/webauthn-login-sem-email-desafio-unico-2610122306aad8
+6ade71acb6c44ea53c20fe9d3718c178a4f38e34 refs/importado/estado/webauthn-login-sem-email-desafio-unico-2610122306aad8
 abebd4367fc815aa24219566d069a11724ed7599 refs/importado/estado/webhook-digitando-canal-privado-26101303359b8d
 229cc6ca32d82907c6713e26dc663d8b289e9f2e refs/importado/estado/webhook-presenca-grupo-typing-2610130020-261016004780a9
 5040892050b461f420aa85cd0eb760c8f601bfac refs/importado/estado/whatsapp-token-acao-primaria-refazer1-26101407394aa2
-e2452ce42f00eaf5b154c05a6fac30209855b98c refs/importado/estado/whisper-audio-path-26101304547a65
+a3a13c3f5944366bfc9ad46b2c59ef17c061bb9c refs/importado/estado/whisper-audio-path-26101304547a65
 5552b4ce3189c8b8b4d2d8d66e1f5d380514b2e1 refs/importado/estado/whisper-contador-selo-hook-26101516263e5e
 f1b753c71064a92765a741c6b2d8fdb7b2f337f6 refs/importado/estado/whisper-mark-read-26101515394212
 1188ae592b014f204f6381f99f631f394ce1eadf refs/importado/estado/whisper-mark-read-policy-2610152246aabc

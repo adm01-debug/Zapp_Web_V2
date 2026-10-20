@@ -158,7 +158,7 @@
 "wt:9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa": {
 "fase": "importado",
 "ref": "refs/importado/estado/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa",
-"tree": "c48b65fe8e13eacb717fcd375a37b8ab07df55ad",
+"tree": "7acffb55d102b63c0a815ba7b9c6026d03ccc269",
 "digital": "545f6882a8e0ed779ad2da94a4bba77a53ceeaee",
 "segredos": []
 },
@@ -235,8 +235,8 @@
 "wt:a11y-nome-papel-6-pontos-26101406531182": {
 "fase": "importado",
 "ref": "refs/importado/estado/a11y-nome-papel-6-pontos-26101406531182",
-"tree": "0806bc3cceedb36406f818429457fc069233af9b",
-"digital": "5a8aa854338935837a2ea4336629f2b6a5deb8d6",
+"tree": "9f0921c207afaf2288a969fb396c263775026967",
+"digital": "77a3582dfa31db8ad7c190725459e85b8d34f26a",
 "segredos": []
 },
 "wt:a11y-textos-primitivos-ui-2610121623d000": {
@@ -501,7 +501,7 @@
 "wt:alertas-crise-globais-supervisao-2610151-26101614567373": {
 "fase": "importado",
 "ref": "refs/importado/estado/alertas-crise-globais-supervisao-2610151-26101614567373",
-"tree": "a16cfc3211d7067e7f177b46b163f2a1b53e9f5c",
+"tree": "f55fe0c4246001ce69699a476d4573920d8f4171",
 "digital": "e42f1cd7956fa657cffce85f7dfcaaaae20a9fb2",
 "segredos": []
 },
@@ -536,7 +536,7 @@
 "wt:ampliar-full-sync-gmail-inbox-sent-2610170630ab9f": {
 "fase": "importado",
 "ref": "refs/importado/estado/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f",
-"tree": "408394366502e0616ee632f6732bf353d24f58d1",
+"tree": "7b3bfa13a0b069e5bb3695974d9ddd4607c6f127",
 "digital": "0f2893dae12ebec9a0f28f4508eeca29c23e2b21",
 "segredos": []
 },
@@ -550,7 +550,7 @@
 "wt:analises-conversa-cache-query-t-fc794700-26101615025066": {
 "fase": "importado",
 "ref": "refs/importado/estado/analises-conversa-cache-query-t-fc794700-26101615025066",
-"tree": "f75e915ae8db71bef787e92512b27048ab9523bb",
+"tree": "f767af959f8a0ac51da76d415634a34a69fd721f",
 "digital": "62f2f39b185a5a05916a8b9216d1318a3645c3ef",
 "segredos": []
 },
@@ -613,14 +613,14 @@
 "wt:aplicar-base-original-outbox-inbound-69-261011193393d1": {
 "fase": "importado",
 "ref": "refs/importado/estado/aplicar-base-original-outbox-inbound-69-261011193393d1",
-"tree": "46726598d9c82c989ea36d81b2ef4abbd43aa31d",
-"digital": "5312cabed8e31dfe16c78b3e49ad92e1ab157272",
+"tree": "e7c5e1e32017f6794367056df999465c4b9dbde5",
+"digital": "db3a2cf75f1eeb2be1ddde88d36ae0dd77838ba8",
 "segredos": []
 },
 "wt:aplicar-messagedeleted-labeladded-labelr-2610170630a4d7": {
 "fase": "importado",
 "ref": "refs/importado/estado/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7",
-"tree": "27f5fdf17cf0d9f061ddb61bf6320600f697cd00",
+"tree": "b2e75510488713af1644280384ab5778a1f42d32",
 "digital": "cc7e62ed429652ce46e6ca81736efffed565041c",
 "segredos": []
 },
@@ -669,14 +669,14 @@
 "wt:arrastar-polido-quadro-teclado-rolagem-2610112015f508": {
 "fase": "importado",
 "ref": "refs/importado/estado/arrastar-polido-quadro-teclado-rolagem-2610112015f508",
-"tree": "53a2c0052c8208aff4ddaee1c9ffd350c250b5d2",
-"digital": "69220ab5445fadf4f499957e1687314ac3562946",
+"tree": "0291106404fe5b158d76a636691519de2dfc169c",
+"digital": "8fb8071f36dbd93e36e6c4d06892a8480545c39b",
 "segredos": []
 },
 "wt:arvore-integracao-merge-simulado-2610171013b714": {
 "fase": "importado",
 "ref": "refs/importado/estado/arvore-integracao-merge-simulado-2610171013b714",
-"tree": "3a3e4dac20742ea72042b364d0fec3b3af1e3932",
+"tree": "121e51f7332f6c00835d53114e467c8e52f4d123",
 "digital": "72bf22a6ebb3789d86856164e7f9a8d40ebb6794",
 "segredos": []
 },
@@ -690,8 +690,8 @@
 "wt:assume-return-conversation-refazer2-26101114573d0f": {
 "fase": "importado",
 "ref": "refs/importado/estado/assume-return-conversation-refazer2-26101114573d0f",
-"tree": "f442bcb7856781764e0aa72df481575fa4504939",
-"digital": "0dd3bc831b7bbef5309f7505db7a65f633be7e58",
+"tree": "b53b5b4fde5db865882b09de8ee7e27e2f200c0c",
+"digital": "660cc3e2600cb202eee366cccc2f5947afeddae3",
 "segredos": []
 },
 "wt:assume-return-conversation-refazer4-2610152318dab7": {
@@ -767,7 +767,7 @@
 "wt:audio-memes-storage-realtime-2610151908f-26101614551169": {
 "fase": "importado",
 "ref": "refs/importado/estado/audio-memes-storage-realtime-2610151908f-26101614551169",
-"tree": "672dd6262b95ce50c736a7c675fd30a29e445c21",
+"tree": "5ce10dcad0e22d646009c27afc3299da6da7d8d4",
 "digital": "98d02413483ab087ff71caa3f85ef86761b48869",
 "segredos": []
 },
@@ -788,7 +788,7 @@
 "wt:audio-player-a11y-2610152109114a-2610161508dc74": {
 "fase": "importado",
 "ref": "refs/importado/estado/audio-player-a11y-2610152109114a-2610161508dc74",
-"tree": "c4da568741420493ec110bbb072139e2a55a1ea4",
+"tree": "d63e07b385cfb3e7341b4679a17ee5010762b73a",
 "digital": "0e9bd037c2f2ae707d2c560cc5b9cb7591ac0a5d",
 "segredos": []
 },
@@ -809,8 +809,8 @@
 "wt:audit-admin-changes-261013012225d2": {
 "fase": "importado",
 "ref": "refs/importado/estado/audit-admin-changes-261013012225d2",
-"tree": "069fe14831aed97a16b0f86fff6457fd8af43465",
-"digital": "500d693d643a3ac6646b7f2c2240b88797160341",
+"tree": "fcc0e5aaafc18d1c7e930a23ca290bc7044b8e30",
+"digital": "0222ce9dbb150d85aa57841a873ec487de0e36b6",
 "segredos": []
 },
 "wt:audit-admin-changes-26101602537e84": {
@@ -1005,7 +1005,7 @@
 "wt:aviso-tipo-notificacao-som-recusado-2610161528a89e": {
 "fase": "importado",
 "ref": "refs/importado/estado/aviso-tipo-notificacao-som-recusado-2610161528a89e",
-"tree": "37f08224c3dca4b1e7beeaf357e541eb7876257f",
+"tree": "c5fab3daee9386dea73aceb7634528c10cdad319",
 "digital": "61d7ce41824a1a365ad413efd92f864fc29b2206",
 "segredos": []
 },
@@ -1124,7 +1124,7 @@
 "wt:baseline-inbox-lista-sem-piscar-26101707524612": {
 "fase": "importado",
 "ref": "refs/importado/estado/baseline-inbox-lista-sem-piscar-26101707524612",
-"tree": "e41faead5754b71069d5f8eeb95b3dc1a8778945",
+"tree": "5e6e401c8aa95816a75643a1fb491b7b5c15da99",
 "digital": "8a9854fbccde0813cf8026801579a56168d8d0e3",
 "segredos": []
 },
@@ -1495,7 +1495,7 @@
 "wt:cherry-pick-branch-anterior-26101706269006": {
 "fase": "importado",
 "ref": "refs/importado/estado/cherry-pick-branch-anterior-26101706269006",
-"tree": "19648bbde1585f3a5c6ea19802462a3768166830",
+"tree": "e23e8d72c535a05bdefc054efdeda55b333a316a",
 "digital": "a85282681b4a7fe9fc016d1b3d6fecae48b8c634",
 "segredos": []
 },
@@ -1684,8 +1684,8 @@
 "wt:conexoes-cartao-responsivo-estados-2610130153259a": {
 "fase": "importado",
 "ref": "refs/importado/estado/conexoes-cartao-responsivo-estados-2610130153259a",
-"tree": "7408f4616ade79f1f9654acf7c5bd05a2f5bea4c",
-"digital": "d263cc0131952e85b86e47b7a879ae10d2d84bf3",
+"tree": "e656d457bc4e5f96b268c300097ba6d41cbec891",
+"digital": "c13e7485a2db550a46e0f215b2b7b16caecf2f0c",
 "segredos": []
 },
 "wt:conexoes-cartao-responsivo-estados-26101611321d2f": {
@@ -1733,7 +1733,7 @@
 "wt:conexoes-instancias-orfas-admin-2610161511c7f8": {
 "fase": "importado",
 "ref": "refs/importado/estado/conexoes-instancias-orfas-admin-2610161511c7f8",
-"tree": "33957f18c0cdd53e43012f5a321d86f9693397d0",
+"tree": "ea00df35c633d48ff8475d919fcbc66b412b5882",
 "digital": "5c1e87e68bd081b0f1106a3df19a19746dd77cbc",
 "segredos": []
 },
@@ -1838,7 +1838,7 @@
 "wt:consent-status-guard-lgpd-2610152203edb5-26101615138daa": {
 "fase": "importado",
 "ref": "refs/importado/estado/consent-status-guard-lgpd-2610152203edb5-26101615138daa",
-"tree": "65b21452783aa1749575ad21437eac7450a8a6b0",
+"tree": "4f8f4c99e1d6a6f053aee2f5fb390be4e25abdd2",
 "digital": "3a69afdc9ec29cdf59b532826f67ef085eae96a0",
 "segredos": []
 },
@@ -1999,7 +1999,7 @@
 "wt:contatos-inbox-excluidos-telefone-duplic-261017065622dc": {
 "fase": "importado",
 "ref": "refs/importado/estado/contatos-inbox-excluidos-telefone-duplic-261017065622dc",
-"tree": "ae3ce8e9ba211f37ec7e1d7c6e5a43fdf6e9661d",
+"tree": "ad14cc11f15b8e991b62f80e2ced7a8a1bfffdd1",
 "digital": "d56c6791d5854423f843239398c5153d71ad8dc7",
 "segredos": []
 },
@@ -2167,7 +2167,7 @@
 "wt:corrigir-exclusoes-sync-incremental-manu-2610170630721e": {
 "fase": "importado",
 "ref": "refs/importado/estado/corrigir-exclusoes-sync-incremental-manu-2610170630721e",
-"tree": "bd86243c85916f0abbae0b8762ecd4842773acfe",
+"tree": "61f10c5dd4567499d2deb170d2653e96b329a057",
 "digital": "01db28a59dcb3783dce856c57b669a12f3caea39",
 "segredos": []
 },
@@ -2209,7 +2209,7 @@
 "wt:criar-migration-audit-admin-change-2610161458a6eb": {
 "fase": "importado",
 "ref": "refs/importado/estado/criar-migration-audit-admin-change-2610161458a6eb",
-"tree": "d069e75108010f8405414e0a50cbcb81963b7c83",
+"tree": "b07132bf4831d9ef7d9440bef967f4ce74817bc7",
 "digital": "f88fe44d69376319cc082381c84d1f9d667d969b",
 "segredos": []
 },
@@ -2286,7 +2286,7 @@
 "wt:csat-erro-zero-paginacao-tendencia-26101-2610161458d029": {
 "fase": "importado",
 "ref": "refs/importado/estado/csat-erro-zero-paginacao-tendencia-26101-2610161458d029",
-"tree": "6b84ba944cbb01254d3a7eae08bce46080d18405",
+"tree": "fe0ce67c5178a7ef1c325fb3dcb83fa95ca25d03",
 "digital": "0bb853411f1ff277e59ec17501338281110c5019",
 "segredos": []
 },
@@ -2335,7 +2335,7 @@
 "wt:ct-088-remover-edicao-em-massa-2610161454e751": {
 "fase": "importado",
 "ref": "refs/importado/estado/ct-088-remover-edicao-em-massa-2610161454e751",
-"tree": "a0f8f9c4cc56bdf55802234804144c17e21c5d7f",
+"tree": "82700d4814ee7591c1cc85924efd881814f07729",
 "digital": "04060668dd428518cc51611e3917f52bffa88f7a",
 "segredos": []
 },
@@ -2622,7 +2622,7 @@
 "wt:e2e-logado-causa-raiz-browsers-2610170944667f": {
 "fase": "importado",
 "ref": "refs/importado/estado/e2e-logado-causa-raiz-browsers-2610170944667f",
-"tree": "25f53910c9b6dc9e77d34652a206eb95251e0556",
+"tree": "da9e5a2cae9a341e2927a8eeeaffd8e317c714f2",
 "digital": "2927496ac62aca477a0fabd84dbb18d6e72296c5",
 "segredos": []
 },
@@ -2692,7 +2692,7 @@
 "wt:efeitos-animados-reduzir-movimento-26101-2610161501b113": {
 "fase": "importado",
 "ref": "refs/importado/estado/efeitos-animados-reduzir-movimento-26101-2610161501b113",
-"tree": "f2c67913133451804a07deb3489f7e2c6485647b",
+"tree": "6138aa5078c4335f9ce5eab5b0004f50ee9085b8",
 "digital": "73280abab0fdc3feff5b5d7171ef8925f97a0fc8",
 "segredos": []
 },
@@ -2944,8 +2944,8 @@
 "wt:estados-vazios-carregamento-5-telas-2610-2610132327f931": {
 "fase": "importado",
 "ref": "refs/importado/estado/estados-vazios-carregamento-5-telas-2610-2610132327f931",
-"tree": "d5e4d0438069bba01c6e6a0fae32cea34eb0d966",
-"digital": "91e3783256513ae7461eaa7260e63ab0d6652daa",
+"tree": "098ab22cec43eb49b1a198cd7d8494a661371799",
+"digital": "07b46f29a9105da814c7e952cf71cb4f497fdf9c",
 "segredos": []
 },
 "wt:estados-vazios-carregamento-5-telas-2610-2610161247bcdd": {
@@ -3035,7 +3035,7 @@
 "wt:evolution-api-sem-segredos-26101316216bd-261017073277eb": {
 "fase": "importado",
 "ref": "refs/importado/estado/evolution-api-sem-segredos-26101316216bd-261017073277eb",
-"tree": "0c08f255582a9e1efbaaa55869bb8aba6346349b",
+"tree": "41ba101180d738f7766e8a895c58dfc5c790a4c7",
 "digital": "e425e079d3bb25a1a83f60189d8ad934fe179541",
 "segredos": []
 },
@@ -3049,7 +3049,7 @@
 "wt:evolution-breaker-ci-espelho-261017065608e5": {
 "fase": "importado",
 "ref": "refs/importado/estado/evolution-breaker-ci-espelho-261017065608e5",
-"tree": "12687ca98e858355e5ba11fb8f37f63bb1ac6c54",
+"tree": "dde759a34bb0a84d020d49c7462c3bf1741c6337",
 "digital": "3d9209c86f1e95df66363224a4c1b5ff7ee5ae42",
 "segredos": []
 },
@@ -3070,8 +3070,8 @@
 "wt:evolution-read-actions-controle-26101406530351": {
 "fase": "importado",
 "ref": "refs/importado/estado/evolution-read-actions-controle-26101406530351",
-"tree": "1e60acb141300326fd536bd819b943a26b0e6ddb",
-"digital": "05ab2668f1da350be2f32f29fe2d16442e41d7e9",
+"tree": "d33c369d2acbfdc72f4fd70a4a44f9c198c21058",
+"digital": "9232b5b4557736794a2bdb06d84b54fac474d5f1",
 "segredos": []
 },
 "wt:evolution-timeout-cancelamento-26101521530bc5": {
@@ -3112,8 +3112,8 @@
 "wt:exclusao-sem-confirmacao-automacao-26101-2610132244b1bb": {
 "fase": "importado",
 "ref": "refs/importado/estado/exclusao-sem-confirmacao-automacao-26101-2610132244b1bb",
-"tree": "13e5c5193a563ef598605c29a6db48f8c038659a",
-"digital": "57d5cb2aa8dc20492c40e2f5773770239877f733",
+"tree": "1f65379fcf6522094223c102b91d9895b8278805",
+"digital": "916210b5246608ece0c24ef45d45408c555e382d",
 "segredos": []
 },
 "wt:exclusao-sem-confirmacao-automacao-26101017535147": {
@@ -3133,8 +3133,8 @@
 "wt:falha-papeis-acesso-negado-falso-2610140649f656": {
 "fase": "importado",
 "ref": "refs/importado/estado/falha-papeis-acesso-negado-falso-2610140649f656",
-"tree": "cace7a790a8f45074a6929b7c7c350dcaef69bf2",
-"digital": "dedd5dad74ca9be156eb5caef99f168b34805c3b",
+"tree": "004cff07d9dbb8673af3c346f0eed605d73ca740",
+"digital": "0413eccb9c6507afb8cac5f543ff3885d9e310fe",
 "segredos": []
 },
 "wt:favoritar-fixar-reportar-lembr-ref2-2610152117fad4": {
@@ -3399,7 +3399,7 @@
 "wt:finalizar-suite-inbox-relato-2610170837c13b": {
 "fase": "importado",
 "ref": "refs/importado/estado/finalizar-suite-inbox-relato-2610170837c13b",
-"tree": "16b1fbe338384f93ecdc5d3b8fe43ae33416c126",
+"tree": "2cf7d185d0df7aa0eccdf1bacbe43c874cf4c787",
 "digital": "855677c3d621263d2e5d1992e14cb2905f0ad5e3",
 "segredos": []
 },
@@ -3511,7 +3511,7 @@
 "wt:fix-chat-menu-status-admin-espelho-2610170645bd7d": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-chat-menu-status-admin-espelho-2610170645bd7d",
-"tree": "95d22c8da6c6200b7c24eb4cea2412b8d8261fd6",
+"tree": "300f6c7b45c032690810a8540d1bb2b46a652ba3",
 "digital": "accaf4562b76048d17bc654b45ad04c9e93f86ac",
 "segredos": []
 },
@@ -3532,7 +3532,7 @@
 "wt:fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467",
-"tree": "9ee068267d2bafdd958ba8f031dbef12399b90e2",
+"tree": "f7dffcaae82a255eff8ff979c76e549efd79bc7b",
 "digital": "bf98c9855423ef3eaa671c979aea665f73625bca",
 "segredos": []
 },
@@ -3560,7 +3560,7 @@
 "wt:fix-contatos-destravar-teste-userealtime-2610170655f3ce": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-contatos-destravar-teste-userealtime-2610170655f3ce",
-"tree": "84a1e881ddb0e4eb07c9a0b183c6957dee6155c6",
+"tree": "26734636adc51632c847eece95cf24530e11f0e9",
 "digital": "dae15fe9aa31f961e65fb1f66e875d226799d137",
 "segredos": []
 },
@@ -3651,7 +3651,7 @@
 "wt:fix-ia-ultima-analise-erro-t-cf797f89-26101615040491": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-ia-ultima-analise-erro-t-cf797f89-26101615040491",
-"tree": "cfd071fe42096c035f0cce687f70ffbbf718ad52",
+"tree": "efb3cca14a5f3768a4e0e68d7d5642ac5121b78f",
 "digital": "a11084bfdefd215765a3731c63b78c2b694768cf",
 "segredos": []
 },
@@ -3686,7 +3686,7 @@
 "wt:fix-incremental-limit-phantom-2610170752-26101708014b0d": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-incremental-limit-phantom-2610170752-26101708014b0d",
-"tree": "bb3f76df83da56931c6d90eb77fc7913129bd0e0",
+"tree": "3636d982b057a5836aa2fe85a7c95093d96dfe3f",
 "digital": "b6470c20be13b8c78f54a3cafb05cae8b6effaad",
 "segredos": []
 },
@@ -3707,8 +3707,8 @@
 "wt:fix-lgpd-voice-agent-timeout-26101312395897": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-lgpd-voice-agent-timeout-26101312395897",
-"tree": "9a1021f74fd655021473185a2368ce2314bc39d1",
-"digital": "1c639d5ce92655cae6a99dfa6981a6836de8cb43",
+"tree": "e1c2924e773607cbc97ba48ed8e206dfdaa380cb",
+"digital": "cb8ba252516c77e1ed61325f9a354e3a43223438",
 "segredos": []
 },
 "wt:fix-login-403-rede-bloqueada-2610151748e397": {
@@ -3770,14 +3770,14 @@
 "wt:fix-rotas-guardas-coerentes-install-admi-2610121901d51f": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-rotas-guardas-coerentes-install-admi-2610121901d51f",
-"tree": "3d64472217527210f8f0978eb919ff6e52202823",
-"digital": "8cd803ae9e1e40e5d0cb248468b4cdb9d1edb7c0",
+"tree": "1cfb81fb25ffc28beaaf0d22ca85c3bf60526016",
+"digital": "66fd877c09c167833d7c0cec5e49e40ba7d99aa1",
 "segredos": []
 },
 "wt:fix-seen-state-hydration-merge-26101708012995": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-seen-state-hydration-merge-26101708012995",
-"tree": "993dd0fc7a7048154313b30e02d3af13fa0fc121",
+"tree": "5749b0f0b08c76cfa35388c3f5f6f202c241da67",
 "digital": "eff4c4e3d465106177c490eabb801555f9471389",
 "segredos": []
 },
@@ -3833,14 +3833,14 @@
 "wt:fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f",
-"tree": "a70ea33fcbc65dacb2e752b2347484af19547ee3",
+"tree": "8079fafb58ac7b6a24f80e326a710b2d2eafdfa0",
 "digital": "7eeac4c5f0e7da2fe7d593e910a12d6291170322",
 "segredos": []
 },
 "wt:fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56": {
 "fase": "importado",
 "ref": "refs/importado/estado/fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56",
-"tree": "63d116157b4731f39a856b70a6664e1a392955cf",
+"tree": "da899534c42e3e8f7ac894092c358cb50df1e9fb",
 "digital": "a7ed8fc82016ab373443ffcf4936da85c3b16721",
 "segredos": []
 },
@@ -4127,7 +4127,7 @@
 "wt:grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6": {
 "fase": "importado",
 "ref": "refs/importado/estado/grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6",
-"tree": "f5c352f6b1ab7973ead2f08614fa506e9177f5d8",
+"tree": "909a7766fa0b17c58d16cfcfbf21297b38cc8c8d",
 "digital": "d414fd22f1d019d7058a8c1b2d75df052e7b0086",
 "segredos": []
 },
@@ -4141,7 +4141,7 @@
 "wt:grupos-categoria-sem-like-erro-tratado-2-261016151237a9": {
 "fase": "importado",
 "ref": "refs/importado/estado/grupos-categoria-sem-like-erro-tratado-2-261016151237a9",
-"tree": "e18f962337d2a557086b3cba63a527daa03de92e",
+"tree": "5d3fa63b9e2dff1338c76f24b1a6defe002605cf",
 "digital": "a7c1b2a67d69b426278a20071f194eda70d212d5",
 "segredos": []
 },
@@ -4864,8 +4864,8 @@
 "wt:lista-tabela-estrutura-grupos-tarefa-con-26101308449243": {
 "fase": "importado",
 "ref": "refs/importado/estado/lista-tabela-estrutura-grupos-tarefa-con-26101308449243",
-"tree": "155b145442bc7879d6c09f194c2cc1b8a8136c03",
-"digital": "e0c014d6345df4bbc90e36d4fd7aed95465edb59",
+"tree": "34b86474dd1a55d23f600f0e003c42c902e523af",
+"digital": "7d4aadb8bf48b0d46da2e85deb9720c13f692555",
 "segredos": []
 },
 "wt:log-audit-event-allowlist-26101304032a5b": {
@@ -4892,8 +4892,8 @@
 "wt:login-v3-seta-contraste-2610111302ded9": {
 "fase": "importado",
 "ref": "refs/importado/estado/login-v3-seta-contraste-2610111302ded9",
-"tree": "ab19a48990f38047203a01d399492da1fa727b5e",
-"digital": "64e7b1a9cd9d3be4efab0f7560061f49ad259a5b",
+"tree": "ef92485216b91b972e74986c7fedb269582f7061",
+"digital": "2a3b04555e44e94919ee65c84c81e54d4cbe920e",
 "segredos": []
 },
 "wt:login-v3-seta-contraste-261012212445f6": {
@@ -5144,8 +5144,8 @@
 "wt:mini-games-xp-real-limite-diario-267-26101120112f0c": {
 "fase": "importado",
 "ref": "refs/importado/estado/mini-games-xp-real-limite-diario-267-26101120112f0c",
-"tree": "ca9e45cd32fbf12c483dd06fd6ef57bc1f6987eb",
-"digital": "41acc10c0028170d0651b5fdf57fffe98194bbca",
+"tree": "f4f2a67ad937ff7d3eb99a3ef56be7ffbdb0612b",
+"digital": "f3f1466b8ea34823a9e38afc29e848fa2b3f5eeb",
 "segredos": []
 },
 "wt:mobile-area-segura-rolagem-2610130650a743": {
@@ -5347,7 +5347,7 @@
 "wt:multiplix-drain-ci-espelho-261017064674b1": {
 "fase": "importado",
 "ref": "refs/importado/estado/multiplix-drain-ci-espelho-261017064674b1",
-"tree": "f399aa8ffc53cc7229612c7c08f1c43932c2733d",
+"tree": "4f260a10ea39e98d33d7745c8a7eee2de04bc4d6",
 "digital": "1de9570c235a228ed1026f686b6ce2ab8de50803",
 "segredos": []
 },
@@ -5431,8 +5431,8 @@
 "wt:n-011-storage-apagar-policies-duplicadas-2610101218fac0": {
 "fase": "importado",
 "ref": "refs/importado/estado/n-011-storage-apagar-policies-duplicadas-2610101218fac0",
-"tree": "e3060b00c9126667909eb4f71e96ab8f1f6d27a3",
-"digital": "ca42061e05ac5be59ee913d93f08d197936719ac",
+"tree": "46a13ba89aa2274771f48c6b85123d0595b61892",
+"digital": "402712201ec5ea464cf333e5cce570f33b141c8c",
 "segredos": []
 },
 "wt:n-011-storage-apagar-policies-duplicadas-2610132230334b": {
@@ -5949,8 +5949,8 @@
 "wt:n094-talkx-atributos-rls-retomar-2610131057cf3a": {
 "fase": "importado",
 "ref": "refs/importado/estado/n094-talkx-atributos-rls-retomar-2610131057cf3a",
-"tree": "8684a7b2524147eea25bd089ad3a97d18ec2d2be",
-"digital": "a3e37702ddf424db4ba7f0a539477dedf2f522d7",
+"tree": "a967109f9e274614d4b23e59e2765a393cb108b6",
+"digital": "8db39269191e0e097836940aa037727677d6cd3c",
 "segredos": []
 },
 "wt:n095-talkx-campaign-recipients-page-2610-26101018546320": {
@@ -5991,7 +5991,7 @@
 "wt:n097-talkx-banco-pre-checagem-retomada-26101707178adb": {
 "fase": "importado",
 "ref": "refs/importado/estado/n097-talkx-banco-pre-checagem-retomada-26101707178adb",
-"tree": "192567bdc630fb41acf795e6333499dcab51508d",
+"tree": "3927f948b64a25f325103f82d8309d1c19fa6dcd",
 "digital": "05f2f779b4c4c26e1be6d7782364f3f72f8f334c",
 "segredos": []
 },
@@ -6264,8 +6264,8 @@
 "wt:n142-banco-leitura-reacoes-retomar-261013132915c2": {
 "fase": "importado",
 "ref": "refs/importado/estado/n142-banco-leitura-reacoes-retomar-261013132915c2",
-"tree": "fe8e0d30f191aed0194bb4d18739b88006574d11",
-"digital": "8a194f98a9982ebb4018ef91418a363fc48c6e14",
+"tree": "b18d6eb53a8c4fac6552c8c9d80f43126b9b777d",
+"digital": "c9d87fba193bb93dffad33bfaf8431722742971b",
 "segredos": []
 },
 "wt:n142-policy-user-id-profile-id-26101612065836": {
@@ -6453,8 +6453,8 @@
 "wt:normalizar-telefone-ddi-2610130213e4d6": {
 "fase": "importado",
 "ref": "refs/importado/estado/normalizar-telefone-ddi-2610130213e4d6",
-"tree": "db9987deb01824d8ececa4710e6b1cc632f9be15",
-"digital": "6841cebe5d60d35ade1c5834649a5c85b553a48b",
+"tree": "e4bcb46d251558f9f8a2b12ed2a3dea4c0549ae3",
+"digital": "3ce7c132a8c02868eaeade3a16e30def393215b4",
 "segredos": []
 },
 "wt:normalize-media-url-withretry-26101306087a89": {
@@ -6516,7 +6516,7 @@
 "wt:notificacao-navegador-nao-derruba-aviso-2610161445ddf3": {
 "fase": "importado",
 "ref": "refs/importado/estado/notificacao-navegador-nao-derruba-aviso-2610161445ddf3",
-"tree": "b622d33923aba87318c8f89d5d17c79410d019dc",
+"tree": "c5d70453fa4ecc2fcdf9a2b54a295be7ad49d130",
 "digital": "ac71d8788a8546dde301271d05ad0e0c722be858",
 "segredos": []
 },
@@ -6649,8 +6649,8 @@
 "wt:pagamentos-remover-modulo-t-98dfa08e-26101118106c95": {
 "fase": "importado",
 "ref": "refs/importado/estado/pagamentos-remover-modulo-t-98dfa08e-26101118106c95",
-"tree": "c98860b51763832c49f9c58ccb80553a0b93fc8e",
-"digital": "e0228aa2cf6225eed8f1915db9fb02282c0c8a29",
+"tree": "136e32c5dee13694f615dad3f7f99aac81698fbc",
+"digital": "12c2d2bf50247e5d975e0d5feb547fc42b5d461e",
 "segredos": []
 },
 "wt:pagamentos-sem-copiar-link-sem-rota-pay--2610101412e09b": {
@@ -6754,7 +6754,7 @@
 "wt:painel-saude-conexao-credential-26101521-26101615109b69": {
 "fase": "importado",
 "ref": "refs/importado/estado/painel-saude-conexao-credential-26101521-26101615109b69",
-"tree": "4b4dc6207e9944d8b463cdb913e86927030a0892",
+"tree": "5b7dee427a33d128d2a609f925f746a115dd20ac",
 "digital": "baf67155460e184413bb550d28bf8ddc9230913c",
 "segredos": []
 },
@@ -7090,8 +7090,8 @@
 "wt:preserva-read-at-backfill-recibos-261012111484e1": {
 "fase": "importado",
 "ref": "refs/importado/estado/preserva-read-at-backfill-recibos-261012111484e1",
-"tree": "499c5e15b2bca4b0b752039cf23a6701a6b5949d",
-"digital": "d9f048c17380c7b4f54a05eaecbd36bf1d40da49",
+"tree": "5b0f8b620f60a6465705eb854be646fde11ddad9",
+"digital": "af7a91cbe70c8297b7ee83ba70893f89b5c080f7",
 "segredos": []
 },
 "wt:presets-filtro-inbox-testes-2610161209b322": {
@@ -7972,8 +7972,8 @@
 "wt:recover-message-media-26101113320dfd": {
 "fase": "importado",
 "ref": "refs/importado/estado/recover-message-media-26101113320dfd",
-"tree": "ad98bce8c649025ac9d52369ede73b53b1e0a04e",
-"digital": "69c6d45b7d0edfaab9caa91916a8ad8fbe81f76f",
+"tree": "c155ea3260e95f25e71e29377a075c2c62fc650b",
+"digital": "65cb883c07d4e9eb83f693364ead32da297b854c",
 "segredos": []
 },
 "wt:recuperacao-realtime-queda-2610111122156a": {
@@ -7986,8 +7986,8 @@
 "wt:recuperacao-realtime-queda-refazer-t-0aa-26101115165e45": {
 "fase": "importado",
 "ref": "refs/importado/estado/recuperacao-realtime-queda-refazer-t-0aa-26101115165e45",
-"tree": "98b1b96d81990b1889643c5119852b40433b75da",
-"digital": "0f9ccde587495d751e33baa1fd85fdfbf0afe838",
+"tree": "50ca7c62156cf20530e484249e2f24780cf554ce",
+"digital": "9ba7fb756d70c3627fbe9e409e6ab980247e2b2c",
 "segredos": []
 },
 "wt:redesenhado-cartao-quadro-urgente-atrasa-26101118210995": {
@@ -8154,8 +8154,8 @@
 "wt:refazer-admin-login-attempts-t-3f767083-26101121473241": {
 "fase": "importado",
 "ref": "refs/importado/estado/refazer-admin-login-attempts-t-3f767083-26101121473241",
-"tree": "598c68f20057584dff8087ff1d3344f8612432fb",
-"digital": "deb7abe18acbba66fdaa90c2dc85c17c73a939b6",
+"tree": "f5c2833c26d19154eb5e3d7986553140e30ed369",
+"digital": "c2853e3d9e2ece8cde2ccf128127a372c981d136",
 "segredos": []
 },
 "wt:refazer-admin-migracao-midia-testes-26101614092d37": {
@@ -8308,8 +8308,8 @@
 "wt:refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e": {
 "fase": "importado",
 "ref": "refs/importado/estado/refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e",
-"tree": "a6833cf2d7e4f9a0078507c42abf5d3ef4b12514",
-"digital": "e16cc05adb0136b7c73878a2380ba38007033153",
+"tree": "50386445fe26ed2a81f1f42ce26cf13da40272be",
+"digital": "65a25d41d8f6cb775f005ff48b2f47657c9d752c",
 "segredos": []
 },
 "wt:refazer-classificador-audio-meme-133-t-9-2610071621ddbe": {
@@ -8840,7 +8840,7 @@
 "wt:refazer-member-role-rpcs-saida-31-26101706464fcd": {
 "fase": "importado",
 "ref": "refs/importado/estado/refazer-member-role-rpcs-saida-31-26101706464fcd",
-"tree": "8b6a10737a89d96910173aaef53aa5748f8b535e",
+"tree": "136ebf5d865a2eefeac9ed64a101b9ea73ba6cdd",
 "digital": "227d590c3e663be865ef706b80d4ebc7964df3e7",
 "segredos": []
 },
@@ -8875,8 +8875,8 @@
 "wt:refazer-multiplix-graphify-update-force--26101118384408": {
 "fase": "importado",
 "ref": "refs/importado/estado/refazer-multiplix-graphify-update-force--26101118384408",
-"tree": "9e079d0df39cc595cf7355ce2acdb45c8ff11303",
-"digital": "bbb19fccd1d2d7f09545536041ecf7524ea15e16",
+"tree": "ab4bcacfabaec6e63299b55dd3c30cec5f94d4d7",
+"digital": "429897864a0bb9168b3b05217c3ee47a6279bf1f",
 "segredos": []
 },
 "wt:refazer-multiplix-graphify-update-force--26101122118240": {
@@ -9736,8 +9736,8 @@
 "wt:remove-codigo-morto-chat-chatheader-2610-2610111241c0d9": {
 "fase": "importado",
 "ref": "refs/importado/estado/remove-codigo-morto-chat-chatheader-2610-2610111241c0d9",
-"tree": "15f53ff5b6ff14b1b21f70aa0117ff422bab2d64",
-"digital": "26056a5e16b518536b335993039c7eec3430f47a",
+"tree": "4336e8a59442748005ecf6897c68c2f9c58b7e30",
+"digital": "2e43bc24a06772889f3db0a4c0cc7ee641761608",
 "segredos": []
 },
 "wt:remove-codigo-morto-chat-chatheader-26101109374e67": {
@@ -10765,7 +10765,7 @@
 "wt:rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb": {
 "fase": "importado",
 "ref": "refs/importado/estado/rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb",
-"tree": "54af58914418a4a113637898a5ec767c46f3a9ca",
+"tree": "d5ef1431c36e080ed3057ea717642e71c6f0c54d",
 "digital": "c0caa8b5555bf699c3d60ffc0e815bd22cb3963e",
 "segredos": []
 },
@@ -11010,7 +11010,7 @@
 "wt:sec-y25-01-insert-alvo-t-0586a806-26101707511312": {
 "fase": "importado",
 "ref": "refs/importado/estado/sec-y25-01-insert-alvo-t-0586a806-26101707511312",
-"tree": "627ea3b1f95573b6677fa28ebe6db96750897019",
+"tree": "b4fad125703826351eb37718db63f8f7442438c7",
 "digital": "1cf71c2dc9debdd0f42a4527b55a713208cd8b3c",
 "segredos": []
 },
@@ -12725,7 +12725,7 @@
 "wt:sla-resolve-applicable-t-81c550ae-2610170742c161": {
 "fase": "importado",
 "ref": "refs/importado/estado/sla-resolve-applicable-t-81c550ae-2610170742c161",
-"tree": "f7635b5c546ab446ee531dbe95d818eddada8b97",
+"tree": "5abb366c2080f66e2649f784026f8665c928a99a",
 "digital": "f5e10dfbac3cf463bbd1bda9a20f689611d09b8d",
 "segredos": []
 },
@@ -12956,154 +12956,154 @@
 "wt:sync-ag1-git-2610170855737f": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync-ag1-git-2610170855737f",
-"tree": "7cdc64dbe5ef9a2537c1adac5b43454ebd5e0433",
+"tree": "51527325f01dc38b0cfdee361de06be5041b1400",
 "digital": "45997b12a193620aa0bf9d4098c1ecc031542868",
 "segredos": []
 },
 "wt:sync-ag2-front-26101708550eb1": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync-ag2-front-26101708550eb1",
-"tree": "1dbc09f4b6ba1e83bfc0a34e13a5fe72e5bb097e",
+"tree": "196702c6132d52a12e36cd9aff7c3032c0c8b674",
 "digital": "d4d675b809bc1f5bad63bf2d2b05d8168ff8206d",
 "segredos": []
 },
 "wt:sync-ag3-edge-26101708555409": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync-ag3-edge-26101708555409",
-"tree": "4619c0b035393d8cd979378ce3ff227b4b8da4cd",
+"tree": "5d203dabf7af9c9c8643c03da7e265c7d7658280",
 "digital": "822d6e0842ab3f45a4f6e1151f98b1df025b1b18",
 "segredos": []
 },
 "wt:sync-ag4-banco-2610170855a3ad": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync-ag4-banco-2610170855a3ad",
-"tree": "e89e5971618dab38ea0e4d0531241297d56ef08f",
+"tree": "e7a8a8b770365f3c910e5f106bbfe45c5290110b",
 "digital": "4675f743ba3600047f051b6ca8f9808e474c1751",
 "segredos": []
 },
 "wt:sync-ag4b-banco-canonico-ro-2610170938704d": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync-ag4b-banco-canonico-ro-2610170938704d",
-"tree": "72dd8a176575abc880b9dfdf8bbcace1625f76bb",
+"tree": "16e27236b61b5f7517ea5c5b7406c6411905b19a",
 "digital": "dced313aaec0417afc072c06a515569344711787",
 "segredos": []
 },
 "wt:sync-ag5-qualidade-2610170855c187": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync-ag5-qualidade-2610170855c187",
-"tree": "30480fe402bb2e216ae85bc91cd8325e0064f7f8",
+"tree": "a563bf0d95bde81e874a55e261ca66912b0a31c5",
 "digital": "2242b40b48e8df8f05452df2d785110bfa29112c",
 "segredos": []
 },
 "wt:sync20-01-ci-causa-raiz-2610170944cf50": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-01-ci-causa-raiz-2610170944cf50",
-"tree": "ac4c6d4d28f585d46d56feff4c03422477a96f26",
+"tree": "bf7961b955cb7a7c20dce7152ec7c72e1434c23e",
 "digital": "eae1c1c392812b8fdfe58c1f611c1424fcd5ae24",
 "segredos": []
 },
 "wt:sync20-03-db-guard-catalogo-stale-26101709440ca2": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-03-db-guard-catalogo-stale-26101709440ca2",
-"tree": "c2211cfadcbe0a69f8c9d9afeadb17206cb1d31a",
+"tree": "29cda098c2d2b20c14d62530acf46441cc9a0bd7",
 "digital": "146e2d4627ff3f4fae416af060d7f23c513fd0ea",
 "segredos": []
 },
 "wt:sync20-05-components-lote-1-26101709579290": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-05-components-lote-1-26101709579290",
-"tree": "7a75199f65f9b678fd6312a718c698d4431bf1f1",
+"tree": "d5fac21fbc953ddc7f69f68664613bff54c9c940",
 "digital": "6f4bc78b65eb686c4e277ad63017be14283d3096",
 "segredos": []
 },
 "wt:sync20-06-resgate-hooks-lib-services-2610171004d83a": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-06-resgate-hooks-lib-services-2610171004d83a",
-"tree": "08b6f382938766f0afd11f99c6c0627e14d67be2",
+"tree": "214aec51e95c1e85ffd0bd55fb985681dd4cd51e",
 "digital": "4e82c7984ddd3faff6dc44a84c6871cc0cf9e44c",
 "segredos": []
 },
 "wt:sync20-07-front-pages-integrations-raiz-2610171005ebcb": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-07-front-pages-integrations-raiz-2610171005ebcb",
-"tree": "92a7f4c76a4395516f4e578581b6b60c40c19db0",
+"tree": "f68d05319a2717e5578ade23ee13532d12aff057",
 "digital": "c656f51235c65bfc99da1c2e2b335e70063dd27f",
 "segredos": []
 },
 "wt:sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf",
-"tree": "08d2a6e5577e679d7f0b5f789e008e0a513e82e8",
+"tree": "4e0d1205cf2b8d32c827d7bc93ab24020ccb6427",
 "digital": "225108912bf2de43202e9115522cb7230f22a1b7",
 "segredos": []
 },
 "wt:sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1",
-"tree": "a267ff137e62d0e741b4187f05694f66127cf360",
+"tree": "b71aaf5f37b351fe7aeb25f0126d417615f94b5e",
 "digital": "c5e2dbadcb3cec9c26de49ef9b204dfb08c88eb1",
 "segredos": []
 },
 "wt:sync20-10-seguranca-banco-rls-26101709499002": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-10-seguranca-banco-rls-26101709499002",
-"tree": "7e21d87d5d6eedef90b3e190bbec6bd986b29eb1",
+"tree": "cdc9d9b62ca984adfdcf14ac461b3f9e3591f09c",
 "digital": "03bffc27732a4ba207d882851d36deb9d71c2fd3",
 "segredos": []
 },
 "wt:sync20-11-testes-contracts-e2e-origin-on-261017100048c5": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-11-testes-contracts-e2e-origin-on-261017100048c5",
-"tree": "2b7630c2e15309606dbc635525a52b0dcdd69381",
+"tree": "8f8a9ba01d2b0c00e72e8f56b059295758f11fa2",
 "digital": "32f14f39b7bf62c1fa6998e8e840169bf9077d6d",
 "segredos": []
 },
 "wt:sync20-12-worktrees-26101710087fba": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-12-worktrees-26101710087fba",
-"tree": "7915478e7967e1906e869a1d6951c17d1cc90587",
+"tree": "d9a89d16e56176b000e64e4ed92339d58c183a57",
 "digital": "bf29d16b0e39741bd100574b59c6301de489cd73",
 "segredos": []
 },
 "wt:sync20-13-limpeza-lotes-2610171043b6a1": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-13-limpeza-lotes-2610171043b6a1",
-"tree": "8247c5db1e0a89475c9e7fef7f3ff2ec3697b90c",
+"tree": "3ddb213aef9fc0ef2a8cce050d8c4dc050a9ce74",
 "digital": "612cf257e5227552bfbd39d9639c525beb73e686",
 "segredos": []
 },
 "wt:sync20-14-ci-workflows-2610170955ef2c": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-14-ci-workflows-2610170955ef2c",
-"tree": "63bc5fd5cb6102a7e4d46203eade7f00d9173f90",
+"tree": "91d80742de647c4c2987c38d91acde6bf3851103",
 "digital": "b496b0a935bc683d61ffbdaf44da1f41fd0581b5",
 "segredos": []
 },
 "wt:sync20-15-docs-reconciliacao-registro-26101711145898": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-15-docs-reconciliacao-registro-26101711145898",
-"tree": "6e7059b0fd7a2f10e2b95e8671732e8754361109",
+"tree": "c6162b1fcb30157dd1e2138d4477daf253e784c8",
 "digital": "975c405d3eae9411a9ef32a4d18832e4a8c5073b",
 "segredos": []
 },
 "wt:sync20-16-mensageria-talkx-multiplix-2610171101300d": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-16-mensageria-talkx-multiplix-2610171101300d",
-"tree": "87b348165d599f818f21e0b89bf4b3c5f871617e",
+"tree": "cfa1fac57b585d51a0a42bdfa95496ae1834618d",
 "digital": "3585501786f40224ab58aef33724b567448ff76d",
 "segredos": []
 },
 "wt:sync20-17-ia-divergencias-2610171114c1fc": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-17-ia-divergencias-2610171114c1fc",
-"tree": "46c6c2488950e72b8e68584bb3b09c5cbd7a733e",
+"tree": "36ae3bc286458698b9827a5a0011aa9c199be7fc",
 "digital": "b1658e5de595e6266e2a739bdc068f37bf053825",
 "segredos": []
 },
 "wt:sync20-18-ambientes-vercel-2610171114ce60": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-18-ambientes-vercel-2610171114ce60",
-"tree": "11ca520fb6db2fc171e68d427d2eb300f238b2d3",
+"tree": "d4aac26f43b7bd6045cbbccdd58524568dc10f15",
 "digital": "2df0ad5e024564cda3927b542a170c9f2ed7b69c",
 "segredos": [
 "/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-18-ambientes-vercel-2610171114ce60/.tmp/vlink/.env.local"
@@ -13112,35 +13112,35 @@
 "wt:sync20-20-performance-rituais-261017111784ba": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-20-performance-rituais-261017111784ba",
-"tree": "2cf46bb00b67a1c7bde3b7780a1d877210aab224",
+"tree": "ccc55dd67291be9b2e7b02bef47307c068622514",
 "digital": "2f564508a55eadd21fb099a3a533a7f779c4e7fc",
 "segredos": []
 },
 "wt:sync20-23-reconciliar-153-migrations-26101711229059": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-23-reconciliar-153-migrations-26101711229059",
-"tree": "9cbdda9b8961a23798e3743622b2339f77a1f6c3",
+"tree": "79145a0f58ece16e8b2529977bab8514e4f7a8a7",
 "digital": "ea6e0b524d408b2c6e9d9ecdc0e315286d8bcbe0",
 "segredos": []
 },
 "wt:sync20-25-runbook-lote1-2610171149c18f": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-25-runbook-lote1-2610171149c18f",
-"tree": "5a2683e687f7fa7d3ab77fb3e93d6bb6d7511663",
+"tree": "8c0406e65988901070ec61e2a5ed1ff546917775",
 "digital": "5532536becbb5a2c63ff20880bb944fe27205cb0",
 "segredos": []
 },
 "wt:sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937",
-"tree": "b9b0a6f7b858e373fc82a49efade5fa63d6b9f61",
+"tree": "67486845a94861eecbc10d0835c17e80984a70a2",
 "digital": "bbe7eba9c58fc831473f507e95dab03437b6257b",
 "segredos": []
 },
 "wt:sync20-27-plano-isolamento-preview-2610171149d0fe": {
 "fase": "importado",
 "ref": "refs/importado/estado/sync20-27-plano-isolamento-preview-2610171149d0fe",
-"tree": "b1b60927b8b2c236f0f35b3c6a09383f412cd7a8",
+"tree": "67e6a15a19dca017dda3964b116d69830fcefaf6",
 "digital": "c3e0a3b4929ec6ca03fa292ddaa41543ab40dd78",
 "segredos": []
 },
@@ -13539,8 +13539,8 @@
 "wt:t-139a0959-26101319274a70": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-139a0959-26101319274a70",
-"tree": "e4babf952e1a7c83bb3febb5ba8ae316f5cb8164",
-"digital": "c2e8d99a90187ea56a9dd3997dd0a3d094218088",
+"tree": "a133d3d2a51c8d3ffd62bd9341ddf4cf2c406240",
+"digital": "133ed833c41cf5823c2f46ef1df2d931ca756565",
 "segredos": []
 },
 "wt:t-13f4132b-2610090049c936": {
@@ -13721,8 +13721,8 @@
 "wt:t-1be848fa-2610131459a5be": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-1be848fa-2610131459a5be",
-"tree": "fd16389fa021d6a10b6b402bde3e421a03cd4a82",
-"digital": "eaff4a23462bda8737d5de1f9327aeffd9e49b37",
+"tree": "474dc9284cff75e07fbc1a61d9e4aec3d2c6608b",
+"digital": "6b36d51527da34bba68991c89a66392cf5447bd1",
 "segredos": []
 },
 "wt:t-1c69164c-2610091612448c": {
@@ -14050,8 +14050,8 @@
 "wt:t-313f15cd-261013000804a1": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-313f15cd-261013000804a1",
-"tree": "2bb9be008a208997ba98a426f717ff8053e97db0",
-"digital": "cacb229b4bd84c6b8bc0b607e120bcb1799610f3",
+"tree": "3cef662ba977e72221c9d7547acd079b35dab571",
+"digital": "52da8f53914abd8cd8cee475cf111b02e5e12b32",
 "segredos": []
 },
 "wt:t-31d2dbf9-26101409285252": {
@@ -14288,7 +14288,7 @@
 "wt:t-3f8cf71b-26101615180dda": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-3f8cf71b-26101615180dda",
-"tree": "81e5acaac0b18e77e6ec4fe48813b776ef8f2fd3",
+"tree": "da6ef7b57179a968bf5b8a6136e835e31654737e",
 "digital": "6043d4ff6d74cd3d7c0cbddb613f9646c3462415",
 "segredos": []
 },
@@ -14533,7 +14533,7 @@
 "wt:t-4fa178e3-2610170647f2aa": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-4fa178e3-2610170647f2aa",
-"tree": "6739c31e12b27585816f097a7f00a6a207dc1869",
+"tree": "8c5237d6c2af82a4bbb7933b5c86396eb838809d",
 "digital": "edd39c4acb861e4ef65744bf2eb96daaea4a7394",
 "segredos": []
 },
@@ -14841,7 +14841,7 @@
 "wt:t-5f3ab2b7-26101707317fa6": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-5f3ab2b7-26101707317fa6",
-"tree": "79735453cd2cf61d63eb68daf52b7583164b424e",
+"tree": "2909f3938090c7bf29663ae6b4a009f83fe00985",
 "digital": "02e23dcf6654a39c9592e3ea21efafb2b278bb69",
 "segredos": []
 },
@@ -15158,8 +15158,8 @@
 "wt:t-6fab3edf-2610131613f552": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-6fab3edf-2610131613f552",
-"tree": "3d267f2c2b6da3a710cd7bd8ff471a3a82f4d870",
-"digital": "18faa1e4eadf6b680ebd6acc23883bb3a8b6ddb1",
+"tree": "7eb08633893c6534e420d311887489968ae3e95e",
+"digital": "4e06cb76f3abd6ec24e2d9ac8aef97d2e83f089f",
 "segredos": []
 },
 "wt:t-719ba821-261007200679bb": {
@@ -15361,8 +15361,8 @@
 "wt:t-78c8ce80-26101216027f34": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-78c8ce80-26101216027f34",
-"tree": "2ce43b4036c2b4832baf617f7058b4aee08d2195",
-"digital": "e29234c56d98baf1dd8cdde4a8b10fc88759b5ad",
+"tree": "547304aced86c3d0030ef8f0412fe04746d50bba",
+"digital": "3a519520224f398d57445e8a649816dee3aec9d5",
 "segredos": []
 },
 "wt:t-7963ca83-26100820211d4f": {
@@ -15776,7 +15776,7 @@
 "wt:t-94faf950-2610161519dbc6": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-94faf950-2610161519dbc6",
-"tree": "e5c9a38560199145c787f746e8018f97d292ff7f",
+"tree": "186ee2f1ba30770e2dfe4a404f4b14fcd5df4a10",
 "digital": "6bae21fbf74dc13d4e14eb4697a855946eb6c82e",
 "segredos": []
 },
@@ -16284,8 +16284,8 @@
 "wt:t-b129dfdc-2610120043782e": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-b129dfdc-2610120043782e",
-"tree": "73c290b53d70001f98a0b9081adcc89444ad95b4",
-"digital": "5ffd74ece46683513b530c3c3d3e1edd0f5738a7",
+"tree": "ba58afce28d687ffeefb08c872bbd357332cff8f",
+"digital": "03cd5327298a43779ca136f55e662896dcc2ba66",
 "segredos": []
 },
 "wt:t-b12c20c7-2610090125780c": {
@@ -17019,8 +17019,8 @@
 "wt:t-d8fe8268-2610112017fc97": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-d8fe8268-2610112017fc97",
-"tree": "8706cf1f0ef8069f2ad83ed672a159ec0e5ec8df",
-"digital": "b73218caaad3a203c3487eb096f5e686a57ffc14",
+"tree": "5e66e6a9282d98e7ee5705994bfaaa481972085e",
+"digital": "addbc48ce44fb57444fc93bcac2076a308d0c4e0",
 "segredos": []
 },
 "wt:t-d9be8a5c-2610090317f29f": {
@@ -17579,7 +17579,7 @@
 "wt:t-f8a6790c-2610170755c344": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-f8a6790c-2610170755c344",
-"tree": "7302c8c2ecc17f8615cbe8a70f84415889a660dd",
+"tree": "bc66f169e186d0963ce3ffd944dc534d2607d6fa",
 "digital": "a82a66e98accb5028195b8183d699d18026028c0",
 "segredos": []
 },
@@ -17663,8 +17663,8 @@
 "wt:t-fe7f27a2-2610131345e18f": {
 "fase": "importado",
 "ref": "refs/importado/estado/t-fe7f27a2-2610131345e18f",
-"tree": "26546b32b7e4396057b1a2dfdef83104b2e11b5f",
-"digital": "42d8c8a50389cf7205551c5b617483ffd7d8b0d3",
+"tree": "bcde5df32d2f346f1523b6e2393048a15d5a8d22",
+"digital": "e0831686892c051228a6397b998de49e0d3f6f4f",
 "segredos": []
 },
 "wt:t-fe9afd28-26100919432615": {
@@ -18363,8 +18363,8 @@
 "wt:talkx-salvar-variantes-n110-261013104166e5": {
 "fase": "importado",
 "ref": "refs/importado/estado/talkx-salvar-variantes-n110-261013104166e5",
-"tree": "5f8b9b2ab6a38449440dda4853ae49d34b6edc72",
-"digital": "febcfc2eb22d1904cc5af893c04018ba2b804588",
+"tree": "2d16253eadae14e046d031ed21777a687ee357fc",
+"digital": "b4b9af4fd72d1d9d901d12fbcba99d7b25946a50",
 "segredos": []
 },
 "wt:talkx-scheduler-p-at-interface-261010123-2610110946ccb5": {
@@ -18475,7 +18475,7 @@
 "wt:talkx-snapshot-espelho-ci-2610170646ddf9": {
 "fase": "importado",
 "ref": "refs/importado/estado/talkx-snapshot-espelho-ci-2610170646ddf9",
-"tree": "f952d3bcfe7a1059c07ffff108425bc0a3df192d",
+"tree": "d3084ff6dfc440d1596d1558c491e275e48a2be9",
 "digital": "9e3815fffe2b83a6722286152a0373ea1cc1a5a6",
 "segredos": []
 },
@@ -18748,7 +18748,7 @@
 "wt:team-chat-realtime-canais-t-64581412-261017064405c0": {
 "fase": "importado",
 "ref": "refs/importado/estado/team-chat-realtime-canais-t-64581412-261017064405c0",
-"tree": "ef5b36c4283df40aedb1028546b044f8bf359d7a",
+"tree": "7547e6b90e31f9f7aced0ba5755bc0ed619fea41",
 "digital": "c97bcda31cf303cfd8c16e30f06685612b9ce3cc",
 "segredos": []
 },
@@ -18846,7 +18846,7 @@
 "wt:teams-chat-settings-wiring-2610170726004a": {
 "fase": "importado",
 "ref": "refs/importado/estado/teams-chat-settings-wiring-2610170726004a",
-"tree": "a7158ba5c23c64f5bfa69f5833c0de51862d6a97",
+"tree": "40c4b48c27134c4ec6a251f750e4ab7b57c08e39",
 "digital": "1a4396116979db6c6437e9d223fa1460c3bc9f6b",
 "segredos": []
 },
@@ -19007,7 +19007,7 @@
 "wt:test-usebusinesshours-rpc-t-df995145-261017072003d4": {
 "fase": "importado",
 "ref": "refs/importado/estado/test-usebusinesshours-rpc-t-df995145-261017072003d4",
-"tree": "9059fbe4c4e13d40249e0efe15b8a207815d72c9",
+"tree": "adbb1ac277b6517f75c27da2958d7f3b6061ec26",
 "digital": "4c2c674ebf003dfc046ad91579af069fc9a87ad1",
 "segredos": []
 },
@@ -19070,7 +19070,7 @@
 "wt:testes-email-acoes-lixo-token-cron-26101-2610161512e8af": {
 "fase": "importado",
 "ref": "refs/importado/estado/testes-email-acoes-lixo-token-cron-26101-2610161512e8af",
-"tree": "e9569d7cf5d4592d2bb6313051c42fbbebe3e5f8",
+"tree": "ae982fbb43b5668372f4efcb6ab856545d29af9a",
 "digital": "74ec21e3be8a0bcc23f5427147a66b2e4f13ca98",
 "segredos": []
 },
@@ -19091,7 +19091,7 @@
 "wt:testes-prova-auditoria-papeis-reais-26101615129c06": {
 "fase": "importado",
 "ref": "refs/importado/estado/testes-prova-auditoria-papeis-reais-26101615129c06",
-"tree": "16f87ab20d2881bf31a3ff6b11eb4e9e3a93f6a0",
+"tree": "0ba6d7afff6b52aac79de1f848bb64e52efa687e",
 "digital": "f36b227165a0efa488b17751443ddfba770e2805",
 "segredos": []
 },
@@ -19105,7 +19105,7 @@
 "wt:testes-replyto-citada-ausente-otimista-26101615026c64": {
 "fase": "importado",
 "ref": "refs/importado/estado/testes-replyto-citada-ausente-otimista-26101615026c64",
-"tree": "5637ce17519590744a8f686f08c9885d048078e5",
+"tree": "c9fb1ed98623727429ddb36657d405f9581aac83",
 "digital": "c068a12eb2a942b307fc3b56533123c2197e9bc4",
 "segredos": []
 },
@@ -19511,8 +19511,8 @@
 "wt:tl-054a-talkx-data-agendamento-26101006421abd": {
 "fase": "importado",
 "ref": "refs/importado/estado/tl-054a-talkx-data-agendamento-26101006421abd",
-"tree": "227511005c5f9a223b3491e9e4992c1f45706fbb",
-"digital": "accfcb54c6583a28f862968350cbe879c3a2769b",
+"tree": "224c3ea5256e5c5cd5d7035551f01379029bba98",
+"digital": "b37f4c9c35de4a9e037854fd47104d3eb2899672",
 "segredos": []
 },
 "wt:tl-056-2610082333892e": {
@@ -20631,7 +20631,7 @@
 "wt:types-sync-causa-raiz-26101709440412": {
 "fase": "importado",
 "ref": "refs/importado/estado/types-sync-causa-raiz-26101709440412",
-"tree": "08d9e5499681a2078bc10137b63b5f5426e4cc2a",
+"tree": "175a182fd199cafac42f7b2b8273bb8de774cd51",
 "digital": "d6101080571ae001aea1992accbd0540b86cf9d6",
 "segredos": []
 },
@@ -20687,8 +20687,8 @@
 "wt:unsupported-message-bubble-refazer-2610111234928e": {
 "fase": "importado",
 "ref": "refs/importado/estado/unsupported-message-bubble-refazer-2610111234928e",
-"tree": "78553f7be2739f38c80cab4a8d915a75afd1ebd6",
-"digital": "1853467dfc053cde1b6bc17a2c894b6a993d1939",
+"tree": "e27546b7ca8c8713fcb193c4e8f6da3049a3d9cd",
+"digital": "dacfebc993455614cd48cb7cb8c83536bfb28c73",
 "segredos": []
 },
 "wt:unsupported-message-bubble-refazer2-26101119531d80": {
@@ -20883,8 +20883,8 @@
 "wt:variacoes-ab-talkx-tl-126-2610122111d5fc": {
 "fase": "importado",
 "ref": "refs/importado/estado/variacoes-ab-talkx-tl-126-2610122111d5fc",
-"tree": "e8de1f4a1a15011a933222e835aea232a76aab16",
-"digital": "97f2885d5c2f7afd54f8190e9e5a7d73c134fbe9",
+"tree": "43371b44858485aa8c151310b6c2e7bc3e7e557d",
+"digital": "74e4dfd49b9f43ba3685be34507eec0f75518748",
 "segredos": []
 },
 "wt:variacoes-template-atendente-protocolo-26101523521fcb": {
@@ -20911,7 +20911,7 @@
 "wt:verifica-inbox-live-path-26101708271e12": {
 "fase": "importado",
 "ref": "refs/importado/estado/verifica-inbox-live-path-26101708271e12",
-"tree": "7bc0f62098830775bd70abc85ac09f1c0f374a73",
+"tree": "552d9babc496d230912796121517bd3f37a97e62",
 "digital": "76a2d0c5a56c1b48dc2124a2c68a642abc645571",
 "segredos": []
 },
@@ -20939,7 +20939,7 @@
 "wt:verifica-replyto-n1-verify-t775e45ba-26101615107516": {
 "fase": "importado",
 "ref": "refs/importado/estado/verifica-replyto-n1-verify-t775e45ba-26101615107516",
-"tree": "00f40e72f2e76e30b840f119c522abe2384166f8",
+"tree": "c4e5785cf643fa3b3ac33c1a1818cd28537701fc",
 "digital": "d9cc67c4601a7bf856ce6b4fe81f79616979bd70",
 "segredos": []
 },
@@ -21037,7 +21037,7 @@
 "wt:verify-relato-fechar-auditoria-2610161520e528": {
 "fase": "importado",
 "ref": "refs/importado/estado/verify-relato-fechar-auditoria-2610161520e528",
-"tree": "630ad239f5bb0d5a8b3c9bd0e4ad9341427f3835",
+"tree": "2beb69459777159f71c45891d5d369d7b559dd0d",
 "digital": "7e600ae99270fc6b87fc992d9607953fc5e494d5",
 "segredos": []
 },
@@ -21247,15 +21247,15 @@
 "wt:warroom-estados-zero-falso-261013002023ce": {
 "fase": "importado",
 "ref": "refs/importado/estado/warroom-estados-zero-falso-261013002023ce",
-"tree": "6e149d4a28371bf88bd41bd4c96c6e200b2bf1b6",
-"digital": "2f142d99a22deb7bb7ca8540146f21aa1388245e",
+"tree": "19359e07b3d88bfcd57172a0b31fd315612c196e",
+"digital": "885a3f82958574de05b6152e15d0006602b7d07f",
 "segredos": []
 },
 "wt:warroom-rpcs-agentes-filas-26101219463e05": {
 "fase": "importado",
 "ref": "refs/importado/estado/warroom-rpcs-agentes-filas-26101219463e05",
-"tree": "2263b819a488d19d735756edd88e3f91abf72ffa",
-"digital": "bb5cc68732e6856109a09a0b1f65066a9e5b4894",
+"tree": "8fe28c821c48370604e58aa7be54a825acc77dc2",
+"digital": "876994dbcb0a1bd75482a18dcd728d3a7eb64c20",
 "segredos": []
 },
 "wt:warroom-rpcs-ci-espelho-2610130843426f": {
@@ -21268,8 +21268,8 @@
 "wt:warroom-rpcs-hook-261012202546f0": {
 "fase": "importado",
 "ref": "refs/importado/estado/warroom-rpcs-hook-261012202546f0",
-"tree": "9b98f9281c16cd03ce9240274bb6af61993d9613",
-"digital": "94dbcc3dafa3b75b3ba9017afaebb6636d2d6d72",
+"tree": "ff1e49d9b53395627ce12195a0fe086e520f057e",
+"digital": "1f68f7995892c995b9c012fe5f7fe451e9aafa85",
 "segredos": []
 },
 "wt:warroom-rpcs-hook-261012202546f0-2610160004de69": {
@@ -21296,8 +21296,8 @@
 "wt:webauthn-login-sem-email-desafio-unico-2610122306aad8": {
 "fase": "importado",
 "ref": "refs/importado/estado/webauthn-login-sem-email-desafio-unico-2610122306aad8",
-"tree": "832d8f11c21112f36c28e45421571061223f8988",
-"digital": "9f35a6a2f460251431922c0003606d8354981c65",
+"tree": "e5707650e15259be657597be3b3056943790b0c1",
+"digital": "6324c1c34285861e1cf2598a0aa33a7894b25b31",
 "segredos": []
 },
 "wt:webhook-digitando-canal-privado-26101303359b8d": {
@@ -21324,8 +21324,8 @@
 "wt:whisper-audio-path-26101304547a65": {
 "fase": "importado",
 "ref": "refs/importado/estado/whisper-audio-path-26101304547a65",
-"tree": "7472a97b04e7f6a2ec240b07650dd87394a1b1a9",
-"digital": "3c430071e6f4cb283b69dced63a9d79eb36c3efb",
+"tree": "85b4b19f558cdb75b591010877f298128755bb54",
+"digital": "97b700849d025b7012780dbe284c09fdbb69c05a",
 "segredos": []
 },
 "wt:whisper-contador-selo-hook-26101516263e5e": {
@@ -21809,7 +21809,7 @@
 "wt:sincronizacao-canonica-20261016": {
 "fase": "importado",
 "ref": "refs/importado/estado/sincronizacao-canonica-20261016",
-"tree": "de9e107402134f52bedcc88e66deb5bc9adf813f",
+"tree": "1fc904dfd779aec278a41e133e120148f2489507",
 "digital": "0e8e904874c8de713154558c3c3674c1b6042f80",
 "segredos": []
 },
@@ -22280,5 +22280,132 @@
 "/home/joaquim_ataides/backups-sync-2026-10-17/trabalho-nao-commitado/t-1f93b947-2610060332b726/staged.patch",
 "/home/joaquim_ataides/backups-sync-2026-10-17/trabalho-nao-commitado/t-1f93b947-2610060332b726/nao-commitado.patch"
 ]
+},
+"indice_ok": true,
+"wt:inbox-selecao-lote-acompanha-filtro-26101312252db7": {
+"fase": "importado",
+"ref": "refs/importado/estado/inbox-selecao-lote-acompanha-filtro-26101312252db7",
+"tree": "71bbaa1bfd81343f5d99f361f52d5518102c680b",
+"digital": "f173d9d9f5bda5db47716c5c38ec4aceac9f7892",
+"segredos": []
+},
+"wt:plano-sincronizacao-total-300-26101708385565": {
+"fase": "importado",
+"ref": "refs/importado/estado/plano-sincronizacao-total-300-26101708385565",
+"tree": "552a9a653333a8351bdc00fb959555a0f8bf2f94",
+"digital": "743505e90c8375406cc266f415cc570a979647f2",
+"segredos": []
+},
+"wt:pr-1983-veredito-resolucao-26101712417577": {
+"fase": "importado",
+"ref": "refs/importado/estado/pr-1983-veredito-resolucao-26101712417577",
+"tree": "f4885abfeedb83099fabe8ef5dcbfeea98f04829",
+"digital": "177f504620c07a5e93f4964974402b6214544b35",
+"segredos": []
+},
+"wt:pr-2036-db-migrate-36-26101713038564": {
+"fase": "importado",
+"ref": "refs/importado/estado/pr-2036-db-migrate-36-26101713038564",
+"tree": "0b7273a912efd604745bb6313e9093f07290c648",
+"digital": "86f22ef530dea5797229b66f62a2dee1a0a53325",
+"segredos": []
+},
+"wt:sync20-22-theirs-matriz-2610171115f82d": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-22-theirs-matriz-2610171115f82d",
+"tree": "ca1d060468a3d693fa4bb76edf7ea64e1b11a1a1",
+"digital": "b274e6c19e453f0276e8012b03805f1e788b85e2",
+"segredos": []
+},
+"wt:sync20-24-ag1-verificacao-inventario-261017114934c4": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-24-ag1-verificacao-inventario-261017114934c4",
+"tree": "d9f749ba5368b51803f7f5ba811d2fa0cb8899dc",
+"digital": "35ad0e9f1a5b6015536543cc13bd4a99e0813b98",
+"segredos": []
+},
+"wt:sync20-28-merge-b02-functions-37-2610171211e11c": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-28-merge-b02-functions-37-2610171211e11c",
+"tree": "37a375a8953fa3047f0aa4cf146e1eecc969efd2",
+"digital": "d36c1837b4a8917e4764f37d05815e3448cad963",
+"segredos": []
+},
+"wt:sync20-29-merge-b01-db-6-2610171211decb": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-29-merge-b01-db-6-2610171211decb",
+"tree": "9c7055581d634225520c380561b7ed03425c32d8",
+"digital": "153b5b0017fd48765286e162d507e97e5a3d4d5c",
+"segredos": []
+},
+"wt:sync20-30-merge-b06-hooks-38-261017121250d4": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-30-merge-b06-hooks-38-261017121250d4",
+"tree": "a53520584ab8cf352c7de28bff02820077cb8b4f",
+"digital": "91b37aa177e8aebda4b9dc38f168d2be3bb0a561",
+"segredos": []
+},
+"wt:sync20-31-pr1930-conflito-26101712332f2e": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-31-pr1930-conflito-26101712332f2e",
+"tree": "c214ac5151c1ff281c1c8911875e1063b6ceaf4c",
+"digital": "25d3d8fa98da73e5fd44b6e787523ab6a2f95dca",
+"segredos": []
+},
+"wt:sync20-32-prs-ci-conflitantes-26101712396167": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-32-prs-ci-conflitantes-26101712396167",
+"tree": "21735182621e7d85b52b1d47d7a111f1f2d2f421",
+"digital": "413d7d5d3873778f5096ef1bfb731927fde6f40c",
+"segredos": []
+},
+"wt:sync20-33-pr2003-radar-cv-051-060-2610171240b751": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-33-pr2003-radar-cv-051-060-2610171240b751",
+"tree": "90450502cecb8ac04b74170a190d0f6fa8e82ef2",
+"digital": "7d0c167ce457c490e88769a7c8404ff076acc9d7",
+"segredos": []
+},
+"wt:sync20-35-pr1987-veredito-2610171240d5b9": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-35-pr1987-veredito-2610171240d5b9",
+"tree": "a98b2a4f98a0b1d67165b5f7677c702ee477b1bb",
+"digital": "5b26a251eae0b28e980568b9aa014250f90c4278",
+"segredos": []
+},
+"wt:sync20-37-merge-b03-functions-dia-base-2610171307f300": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-37-merge-b03-functions-dia-base-2610171307f300",
+"tree": "e5f35d3fa64b98d3cb262ad8f8124eab3ffd67b8",
+"digital": "fbd4bee91e919ed2cca42282800461ef82b2eedc",
+"segredos": []
+},
+"wt:sync20-39-merge-b00-mecanico-global-2610171306b5d5": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-39-merge-b00-mecanico-global-2610171306b5d5",
+"tree": "256e791ab219b682ebb4001dd5545bcb8e1667ff",
+"digital": "e502b6cc04f4d5844094658998036688828ca90f",
+"segredos": []
+},
+"wt:sync20-40-pr1983-salvamento-47-divergent-26101713076697": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-40-pr1983-salvamento-47-divergent-26101713076697",
+"tree": "c8dff126a9125d54befcb2451562362de413fec6",
+"digital": "3cc6455ea42f2e0bbcea609777035fdb657d5b55",
+"segredos": []
+},
+"wt:sync20-41-ci-pin-e2e-mapa-ts-2610171307a66a": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-41-ci-pin-e2e-mapa-ts-2610171307a66a",
+"tree": "c9ec2c034b97674e0a07cf858a6f22863e4cbf46",
+"digital": "4fc92862f910213ad5f54ab7bd3faa7cf2458824",
+"segredos": []
+},
+"wt:sync20-43-b02-fusao-manual-19-2610171331595e": {
+"fase": "importado",
+"ref": "refs/importado/estado/sync20-43-b02-fusao-manual-19-2610171331595e",
+"tree": "b7b0cd0b172309e176506f58cba8c945d54a3e6b",
+"digital": "f9cac9250ad12188f83768b3623bc0198953a86a",
+"segredos": []
 }
 }

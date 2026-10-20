@@ -60,7 +60,7 @@ def gs(repo, *a, **k):
 
 # ---------------------------------------------------------------- estado retomavel
 EST_P = os.path.join(D, 'estado.json')
-EST = json.load(open(EST_P)) if (EXE and os.path.exists(EST_P)) else {}
+EST = json.load(open(EST_P)) if ((EXE or os.environ.get('SIM_RETOMAR')) and os.path.exists(EST_P)) else {}   # SIM_RETOMAR: simula a retomada (so le)
 def salvar():
     if EXE:
         t = EST_P + '.tmp'
@@ -156,7 +156,7 @@ def repo_real(ab):
         return os.path.isdir(os.path.join(adm, 'objects'))
 
 def novo_info():
-    return dict(lixo=0, bancos=[], segredos=[], repos_dentro=[], especiais=[], grandes=[], bytes_disco=0, arquivos_disco=0)
+    return dict(lixo=0, bancos=[], segredos=[], repos_dentro=[], especiais=[], grandes=[], bytes_disco=0, arquivos_disco=0, cegos=0)
 
 def modo_de(st):
     if stat.S_ISLNK(st.st_mode):
@@ -311,6 +311,21 @@ def indice_de(admin):
         e[b'.importado-estado-git/indice/%d/' % sg + p] = (m, s)
     return e
 
+def cegos(pasta):
+    """Arquivos que o git status NAO confere no disco: assume-unchanged (letra minuscula no ls-files -v) e skip-worktree (S)."""
+    r = set()
+    for rec in git(pasta, 'ls-files', '-v', '-z').split(b'\0'):
+        if len(rec) > 2 and rec[1:2] == b' ' and (rec[0:1].islower() or rec[0:1] == b'S'):
+            r.add(rec[2:])
+    return r
+
+def difere_do_indice(ab, ms):
+    """Arquivo marcado: o disco e diferente do indice? Ausente nao difere (fica a versao do indice)."""
+    if not (os.path.islink(ab) or os.path.isfile(ab)):
+        return False
+    b, st = ler(ab)
+    return (modo_de(st), h_blob(b)) != (ms[0], ms[1])
+
 # ---------------------------------------------------------------- foto de uma pasta com git
 def foto(pasta, excl, admin, repo_objs, pular_worktrees=True, ja=frozenset()):
     info = novo_info()
@@ -329,17 +344,20 @@ def foto(pasta, excl, admin, repo_objs, pular_worktrees=True, ja=frozenset()):
         if xy == b'??': nao_rast.append(p)
         elif xy == b'!!': ign.append(p)
         else: mud[p] = xy
+    cg = cegos(pasta)
     ent_idx, disco, extras = {}, {}, {}
     for p, sts in idx.items():
         xy = mud.get(p)
-        if 0 in sts and (xy is None or xy[1:2] == b' '):
-            ent_idx[p] = sts[0]                      # disco == indice (garantido pelo git status)
+        cego_dif = p in cg and 0 in sts and difere_do_indice(os.path.join(pasta, os.fsdecode(p)), sts[0])
+        info['cegos'] += cego_dif
+        if 0 in sts and (xy is None or xy[1:2] == b' ') and not cego_dif:
+            ent_idx[p] = sts[0]                      # disco == indice (git status; os marcados assume-unchanged/skip-worktree conferidos acima)
         else:
             ab = os.path.join(pasta, os.fsdecode(p))
             if os.path.islink(ab) or os.path.isfile(ab):
                 disco[p] = ab
         for sg, (m, s) in sts.items():
-            if sg != 0 or (xy is not None and xy[0:1] != b' ' and xy[1:2] != b' '):
+            if sg != 0 or cego_dif or (xy is not None and xy[0:1] != b' ' and xy[1:2] != b' '):
                 extras[b'.importado-estado-git/indice/%d/' % sg + p] = (m, s)
     for p in nao_rast:
         ab = os.path.join(pasta, os.fsdecode(p.rstrip(b'/')))
@@ -637,6 +655,22 @@ def cwds():
             except OSError: pass
     return c
 
+def hora_reflog(f):
+    """Maior horario registrado dentro de um reflog (linha: <velho> <novo> Nome <email> <segundos> <fuso>\\t<msg>).
+    Se nao der para ler, devolve a data do arquivo (conservador: na duvida a pasta fica)."""
+    try:
+        b = open(f, 'rb').read()
+    except OSError:
+        return 0
+    m = 0
+    for l in b.splitlines():
+        x = re.match(rb'[0-9a-f]{40} [0-9a-f]{40} .*> (\d+) [-+]\d{4}', l)
+        if x: m = max(m, int(x.group(1)))
+    if not m:
+        try: return os.stat(f).st_mtime
+        except OSError: return 0
+    return m
+
 class Protecao:
     def __init__(self, caminhos_repos):
         self.ids, self.wps, self.brs, self.textos = cartoes_abertos()
@@ -646,7 +680,9 @@ class Protecao:
         log('Kanban: %d cartoes abertos' % len(self.ids))
     def motivo(self, p, branch='', admin=None, locked=False, checar_dentro=True, so_admin=False):
         m = 0
-        sinais = [admin + '/index', admin + '/HEAD', admin + '/logs/HEAD', admin + '/FETCH_HEAD'] if admin else []
+        sinais = [admin + '/index', admin + '/HEAD', admin + '/FETCH_HEAD'] if admin else []
+        if admin:
+            m = hora_reflog(admin + '/logs/HEAD')   # horario do ultimo registro, nao a data do arquivo (o git gc reescreve o arquivo)
         if not so_admin:
             sinais += [p, p + '/.tmp', p + '/.git']
         for f in sinais:
@@ -824,6 +860,7 @@ def principal():
         REFV[n] = sha or 'reservado'
         return n
     resumo = collections.Counter()
+    corrigidas = set()                       # refs de worktrees recapturadas nesta execucao (troca atomica, nao e mudanca alheia)
     TR = arvores_alcancaveis(R)
 
     # ---------- passo 1: commits e objetos soltos do proprio repositorio ganham nome (a limpeza do git nao os apaga mais)
@@ -1110,7 +1147,19 @@ def principal():
         for x in lote:
             k = 'wt:' + x['nome']
             if EST.get(k, {}).get('fase') == 'importado':
-                itens.append((x, None)); continue
+                if x['ausente']:                 # sem pasta: so o admin, conferido no reflogs/indice (nada a reler)
+                    itens.append((x, None)); continue
+                fc = foto(x['path'], caminhos_todos - {x['path']}, x['admin'], objs_r, ja=RR)
+                filtrar_existentes(R, fc, x['path'])
+                tn = arvore_do_disco(fc)
+                if tn is None:
+                    raise Pare('arquivo mudou durante a releitura de %s: rode de novo' % x['path'])
+                if tn == EST[k]['tree']:
+                    itens.append((x, None)); continue
+                log('   recapturar (o disco mudou desde a importacao%s): %s' % (
+                    ': arquivo marcado assume-unchanged/skip-worktree' if fc['info']['cegos'] else '', x['path'].replace(H, '~')))
+                x['corrigir'] = EST[k]['ref']
+                resumo['worktrees: recapturadas (disco mudou ou o git status nao conferia)'] += 1
             if x['ausente']:
                 arqs, cand, pe = ler_admin(x['admin'], True)
                 hd = (open(x['admin'] + '/HEAD').read().strip() if x['admin'] and os.path.exists(x['admin'] + '/HEAD') else '')
@@ -1138,6 +1187,8 @@ def principal():
             itens.append((x, f))
         if SIM:
             for x, f in itens:
+                if f is None:                    # ja importada (so acontece com SIM_RETOMAR)
+                    resumo['simulacao: worktrees ja importadas, nada a refazer'] += 1; continue
                 ler_tudo = amostra < AMOSTRA_SIM and bool(f['disco'])
                 amostra += ler_tudo
                 t1 = simular(f, ler_tudo)
@@ -1160,7 +1211,7 @@ def principal():
             if f is None:
                 continue
             filtrar_existentes(R, f, x['path'])
-            ref = novo_nome('refs/importado/estado/%s' % x['nome'])
+            ref = novo_nome(('refs/importado/recaptura/%s' if x.get('corrigir') else 'refs/importado/estado/%s') % x['nome'])
             try:
                 tarefa = open(x['path'] + '/.hermes-tarefa', errors='replace').read()
             except OSError:
@@ -1170,21 +1221,37 @@ def principal():
                    '\n.hermes-tarefa:\n%s\n%s\n'
                    % (x['path'], x['path'], x['branch'] or '(sem branch)', f['head'] or '-', ' '.join(f['pais'][1:]) or '-',
                       len(f['ent_idx']), len(f['disco']), f['info']['lixo'], len(f['info']['bancos']), len(f['info']['segredos']), tarefa, ASSINATURA))
+            pais_c = list(f['pais'])
+            if x.get('corrigir'):                # recaptura: a foto anterior vira o ultimo pai (nada e sobrescrito nem perdido)
+                x['velho'] = gs(R, 'rev-parse', x['corrigir']).strip(); pais_c.append(x['velho'])
+                msg += 'recaptura: o disco mudou depois da 1a foto (ou havia arquivo que o git status nao conferia); a foto anterior e o ultimo pai: %s\n' % x['velho']
             e = {}
-            fi.commit(ref, msg, f['pais'], linhas_de(f, conhecidos, e))
-            esperados[ref] = (arvore(e), f['pais'], x, f)
+            fi.commit(ref, msg, pais_c, linhas_de(f, conhecidos, e))
+            esperados[ref] = (arvore(e), pais_c, x, f)
         fi.fim()
         for ref, (tree, pais, x, f) in esperados.items():
             tg = gs(R, 'rev-parse', ref + '^{tree}').strip()
             pg = gs(R, 'rev-list', '--parents', '-n1', ref).split()[1:]
             if tg != tree or pg != pais:
                 raise Pare('conferencia byte a byte falhou em %s (arvore %s vs %s; pais %s vs %s)' % (ref, tree, tg, pais, pg))
-            EST['wt:' + x['nome']] = dict(fase='importado', ref=ref, tree=tree, digital='' if x['ausente'] else digital(f),
+            final = ref
+            if x.get('corrigir'):
+                # troca atomica: a ref antiga passa a apontar para a foto nova (so se ninguem mexeu nela) e a temporaria some
+                final = x['corrigir']
+                novo = gs(R, 'rev-parse', ref).strip(); velho = x['velho']
+                git(R, 'update-ref', '--stdin', inp=('update %s %s %s\ndelete %s %s\n' % (final, novo, velho, ref, novo)).encode())
+                dep = refs_de(R)
+                if dep.get(final) != novo or ref in dep or gs(R, 'rev-parse', final + '^{tree}').strip() != tree or \
+                        gs(R, 'rev-list', '--parents', '-n1', final).split()[-1] != velho:
+                    raise Pare('troca da ref recapturada falhou: %s' % final)
+                REFV.pop(ref, None); REFV[final] = novo; corrigidas.add(final)
+                log('   recapturada e conferida byte a byte: %s (antes %s, agora %s)' % (final, velho[:12], novo[:12]))
+            EST['wt:' + x['nome']] = dict(fase='importado', ref=final, tree=tree, digital='' if x['ausente'] else digital(f),
                                           segredos=f['info']['segredos'])
         extra = []
         for ref, (tree, pais, x, f) in esperados.items():
             for c in f['extra_commits']:
-                n2 = novo_nome('%s-extra/%s' % (ref, c), c)
+                n2 = novo_nome('%s-extra/%s' % (EST['wt:' + x['nome']]['ref'], c), c)
                 if n2: extra.append((n2, c))
         if extra:
             git(R, 'update-ref', '--stdin', inp=''.join('create %s %s\n' % (n2, c) for n2, c in extra).encode())
@@ -1288,7 +1355,7 @@ def principal():
     # ---------- passo 6: apagar as origens ja conferidas (clones e avulsos) -- so na rodada 2
     if EXE:
         depois = refs_de(R)
-        mudadas = [n for n, s in refs0.items() if depois.get(n) != s]
+        mudadas = [n for n, s in refs0.items() if depois.get(n) != s and n not in corrigidas]
         log('refs: antes %d, depois %d; refs antigas que mudaram durante a execucao (outros chats podem mexer nas branches deles): %d'
             % (len(refs0), len(depois), len(mudadas)))
         if mudadas:
@@ -1382,12 +1449,19 @@ def pendencias():
 def indice(refs0):
     """Branch importado/indice: o mapa origem -> destino, o log, o estado e o proprio script, tudo dentro do repositorio."""
     depois = refs_de(R)
-    novas = sorted((n, s) for n, s in depois.items() if n not in refs0 and (n.startswith('refs/importado/') or n.startswith('refs/heads/importado/')))
+    base = refs0
+    pa = os.path.join(D, 'refs-antes.txt')
+    if os.path.exists(pa):                   # retomada e rodada 2: lista tudo que a importacao criou desde a 1a execucao
+        base = {}
+        for l in open(pa):
+            if l.strip():
+                sh, n = l.rstrip('\n').split(' ', 1); base[n] = sh
+    novas = sorted((n, s) for n, s in depois.items() if n not in base and n != 'refs/heads/importado/indice' and (n.startswith('refs/importado/') or n.startswith('refs/heads/importado/')))
     linhas = ['# Importacao do trabalho do Zapp Web V2 espalhado no WSL', '',
               'Gerado por importar.py em %s. Rodada: %s.' % (time.strftime('%d/%m/%Y %H:%M'), '2 (conferir e apagar)' if APAGAR else '1 (importar)'), '',
               '## Como achar as coisas', '',
               '- branches `importado/<origem>/<nome original>`: branches de clones e de copias de seguranca (bundles) que o repositorio nao tinha;',
-              '- `refs/importado/estado/<worktree>`: foto completa de cada worktree (arquivos alterados, nao commitados, ignorados uteis e o estado do git em `.importado-estado-git/`); o 1o pai e o HEAD da worktree;',
+              '- `refs/importado/estado/<worktree>`: foto completa de cada worktree (arquivos alterados, nao commitados, ignorados uteis e o estado do git em `.importado-estado-git/`); o 1o pai e o HEAD da worktree; se a foto foi refeita (mensagem com `recaptura:`), o ultimo pai e a foto anterior;',
               '- `refs/importado/<clone>/estado`: foto da pasta de cada clone separado; `.../stash/NNN`, `.../soltos/<sha>`, `.../extra/<sha>`: stashes e commits sem branch;',
               '- `refs/importado/repo-soltos/<sha>`: commits do proprio repositorio que nenhuma branch apontava (a limpeza do git os apagaria);',
               '- branch `importado/arquivos-avulsos`: patches, diffs e pastas soltas, com o caminho relativo a /home/joaquim_ataides;',
