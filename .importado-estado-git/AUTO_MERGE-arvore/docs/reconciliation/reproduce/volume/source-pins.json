@@ -1,0 +1,7 @@
+{
+  "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "source_sha256": {
+    "src/lib/mediaVolumeElement.ts": "ebdbe7a1344dad43e7af1f578d321c68e640de6a9c61103d6d715f26944f5854",
+    "src/lib/mediaVolumeStore.ts": "23f88ce2d68b09f6844e4ef502b3373e6a53fb3ecafe964e9a320cad949cb7ab"
+  }
+}

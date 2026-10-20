@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-criar-usuario-edge-padrao
+ID=2610131101e11a
+BRANCH=v2/admin-criar-usuario-edge-padrao-2610131101e11a
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-2610131101e11a
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T11:01:02-03:00
+KANBAN=t_5b0e4fd4
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-2610131101e11a/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610131101e11a
+PRONTO_SHA=ef9393c734b6e7adac4706019e55902f99ed4afa

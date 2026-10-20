@@ -1,0 +1,30 @@
+[
+  {
+    "roster_index": 69,
+    "adjudication": [
+      "Lê tokens.css/accessibility.css e fontes reais, calcula razões com medidor local de luminância e testa parser em fixtures de múltiplos blocos/comentários/aninhamento. Confere warning e texto secundário em claro/escuro, remove padrões de alfa/hardcoded e mede combobox em quatro temas com vínculo textual aos componentes.",
+      "O próprio contrato preserva a decisão de não alterar a skin e declara o par destructive ainda abaixo de AA; isso não é aprovação global de contraste. As razões derivam de tokens/composição esperada, sem computed style ou navegador real. O parser exato foi introduzido para distinguir .high-contrast de .dark.high-contrast."
+    ]
+  },
+  {
+    "roster_index": 70,
+    "adjudication": [
+      "Lê tokens, acessibilidade, AudioMessagePlayer e slider; calcula contraste esperado de texto, ícones, waveform e trilha, com exigências textuais das classes. O limiar 4.4 no alto contraste está explicitamente documentado como exceção autorizada da skin, sem alegar AA pleno.",
+      "Não há renderização/computed style. O parser usa indexOf do seletor e .high-contrast também encontra .dark.high-contrast, podendo sobrepor a simulação do tema claro com tokens escuros; encaminhado a Infra para confrontar consequência/deduplicação. A exceção autorizada de limiar não foi promovida a defeito."
+    ]
+  },
+  {
+    "roster_index": 71,
+    "adjudication": [
+      "Lê uma migration, useMyWorkItems, Crm360Tab e talkx-send; exige colunas/índices parciais exatos, adição/rollback, chave no insert, 23505, memória de chaves e claim antes de evoFetch.",
+      "Esses ratchets fixam construções do contrato, sem executar SQL, concorrência, duplo submit ou efeito do provedor. if not exists não basta para demonstrar replay integral de todas as instruções, e a ordem da primeira ocorrência textual do claim não prova todos os caminhos de envio."
+    ]
+  },
+  {
+    "roster_index": 72,
+    "adjudication": [
+      "Lê chamadas de três componentes, duas do detector de objeções, quatro repasses no servidor e logs do proxy para preservar requestId e recusar os padrões explícitos de identificador derivado de contato.",
+      "O cabeçalho distingue guarda de origem de comportamento. As fatias por marcadores e verificação de palavras não demonstram correlação persistida em todas as execuções, unicidade do requestId ou ausência de outras formas de dado pessoal; o registrador é revisado separadamente."
+    ]
+  }
+]

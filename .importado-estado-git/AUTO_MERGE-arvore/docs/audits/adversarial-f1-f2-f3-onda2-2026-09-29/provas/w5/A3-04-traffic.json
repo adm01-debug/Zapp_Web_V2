@@ -1,0 +1,590 @@
+[
+  {
+    "ts": 1790711964851,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=*&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711964872,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_roles?select=role&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711964883,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/external-db-proxy",
+    "post": "{\"table\":\"media_quarantine\",\"select\":\"id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at\",\"filters\":[{\"column\":\"decision\",\"operator\":\"in\",\"value\":[\"pending\",\"deleted\"]}],\"order\":{\"column\":\"created_at\",\"ascending\":false},\"limit\":500}"
+  },
+  {
+    "ts": 1790711965216,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711965217,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711965219,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=sound_enabled%2Csound_volume%2Cquiet_hours_enabled%2Cquiet_hours_start%2Cquiet_hours_end%2Cbrowser_notifications_enabled%2Csentiment_alert_enabled%2Csentiment_alert_threshold%2Csentiment_consecutive_count%2Ctranscription_notification_enabled%2Cmessage_sound_type%2Cmention_sound_type%2Csla_sound_type%2Cgoal_sound_type%2Ctranscription_sound_type&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965219,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=*&order=name.asc",
+    "post": null
+  },
+  {
+    "ts": 1790711965219,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queues?select=id%2Cname%2Ccolor&is_active=eq.true",
+    "post": null
+  },
+  {
+    "ts": 1790711965222,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queue_members?select=queue_id%2Cprofile_id&is_active=eq.true",
+    "post": null
+  },
+  {
+    "ts": 1790711965222,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=assigned_to&assigned_to=not.is.null",
+    "post": null
+  },
+  {
+    "ts": 1790711965223,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=tags&tags=not.is.null",
+    "post": null
+  },
+  {
+    "ts": 1790711965223,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queues?select=*&order=priority.desc",
+    "post": null
+  },
+  {
+    "ts": 1790711965224,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/queue_members?select=*%2Cprofile%3Aprofiles%28id%2Cname%2Cavatar_url%2Cis_active%29",
+    "post": null
+  },
+  {
+    "ts": 1790711965224,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/feature_flags?select=key%2Cenabled%2Cdescription%2Cupdated_at&order=key.asc",
+    "post": null
+  },
+  {
+    "ts": 1790711965224,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence?select=user_id%2Cstatus%2Cupdated_at",
+    "post": null
+  },
+  {
+    "ts": 1790711965226,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965227,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965228,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/log_audit_event",
+    "post": "{\"p_action\":\"login\",\"p_details\":{\"email\":\"e2e-mock@example.invalid\"},\"p_user_agent\":\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36\"}"
+  },
+  {
+    "ts": 1790711965229,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965229,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=*%2Cconversation_sla%28first_response_at%2Cfirst_message_at%2Cfirst_response_breached%29&order=updated_at.desc&limit=500",
+    "post": null
+  },
+  {
+    "ts": 1790711965259,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965261,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965264,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence",
+    "post": "{\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"status\":\"online\",\"updated_at\":\"2026-09-29T19:59:25.258Z\"}"
+  },
+  {
+    "ts": 1790711965265,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/goals_configurations?select=*&is_active=eq.true&or=%28profile_id.eq.11111111-1111-4111-8111-111111111111%2Cprofile_id.is.null%29",
+    "post": null
+  },
+  {
+    "ts": 1790711965266,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=*&contact_id=not.is.null&order=created_at.desc&limit=1000",
+    "post": null
+  },
+  {
+    "ts": 1790711965275,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=id%2Cinstance_id%2Cphone_number%2Cstatus&status=eq.disconnected",
+    "post": null
+  },
+  {
+    "ts": 1790711965324,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711965325,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id%2Cname%2Cavatar_url",
+    "post": null
+  },
+  {
+    "ts": 1790711965326,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711965327,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T19%3A59%3A25.311Z",
+    "post": null
+  },
+  {
+    "ts": 1790711965340,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966559,
+    "method": "PATCH",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&sender=eq.contact&is_read=eq.false",
+    "post": "{\"is_read\":true}"
+  },
+  {
+    "ts": 1790711966600,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=*&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc%2Cid.desc&offset=0&limit=1000",
+    "post": null
+  },
+  {
+    "ts": 1790711966601,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/get_conversation_tab_counts",
+    "post": "{\"p_contact_id\":\"04dff4dc-c6b1-4283-ac22-bd8639804759\"}"
+  },
+  {
+    "ts": 1790711966601,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contact_purchases?select=id%2Ctitle%2Camount%2Cpurchased_at%2Cstatus&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711966602,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/sales_deals?select=id%2Ctitle%2Cvalue%2Cstatus%2Cstage_id%2Cexpected_close_date%2Cupdated_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711966603,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/sales_pipeline_stages?select=id%2Cname%2Cposition%2Cis_active&order=position.asc",
+    "post": null
+  },
+  {
+    "ts": 1790711966603,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=tags&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711966624,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_events?select=id%2Cevent_type%2Ccreated_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&event_type=in.%28transfer%2Cclose%2Creopen%29&order=created_at.desc&limit=20",
+    "post": null
+  },
+  {
+    "ts": 1790711966957,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966958,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966959,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966960,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966961,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966962,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966963,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711966963,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/messages?select=created_at%2Csender&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790711966964,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/get_team_profiles?select=id%2Cname%2Cemail%2Cavatar_url&limit=50",
+    "post": "{}"
+  },
+  {
+    "ts": 1790711966964,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/message_templates?select=*&or=%28user_id.eq.11111111-1111-4111-8111-111111111111%2Cis_global.eq.true%29&order=use_count.desc",
+    "post": null
+  },
+  {
+    "ts": 1790711966966,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/user_settings?select=*&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966967,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/scheduled_messages?select=*&order=scheduled_at.asc&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711966967,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=whatsapp_connection_id&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711966968,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=name%2Cwhatsapp_connection_id&phone=eq.551146375517",
+    "post": null
+  },
+  {
+    "ts": 1790711966969,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/contacts?select=company%2Cjob_title%2Cnickname%2Csurname%2Ccontact_type%2Cai_sentiment%2Cai_priority%2Cchannel_type&id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711966970,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/ai_conversation_tags?select=id%2Ctag_name%2Cconfidence%2Csource&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=confidence.desc",
+    "post": null
+  },
+  {
+    "ts": 1790711966970,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached%2Cresolution_breached%2Cfirst_response_at%2Cresolved_at&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&order=created_at.desc&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790711966970,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id%2Cname&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966970,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/message_reactions?select=*&message_id=eq.m0e2f5aa-0000-4000-8000-000000000001",
+    "post": null
+  },
+  {
+    "ts": 1790711966980,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=name%2Cjob_title&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966983,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966983,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966983,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966984,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966986,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966986,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711966987,
+    "method": "HEAD",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_tasks?select=id&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759&status=eq.pending",
+    "post": null
+  },
+  {
+    "ts": 1790711966989,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=instance_id&status=eq.connected&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790711966990,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/whatsapp_connections?select=id&status=eq.connected&limit=1",
+    "post": null
+  },
+  {
+    "ts": 1790711967003,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_sla?select=first_response_breached&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711967026,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711967027,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711967029,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711967029,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T19%3A59%3A27.018Z",
+    "post": null
+  },
+  {
+    "ts": 1790711967029,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711967031,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T19%3A59%3A27.019Z",
+    "post": null
+  },
+  {
+    "ts": 1790711967031,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_memory?select=pending_items%2Cpromises_made&contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759",
+    "post": null
+  },
+  {
+    "ts": 1790711967032,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711967033,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/pinned_conversations?select=contact_id&pinned_by=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711967034,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_snoozes?select=contact_id&snoozed_by=eq.11111111-1111-4111-8111-111111111111&snooze_until=gt.2026-09-29T19%3A59%3A27.024Z",
+    "post": null
+  },
+  {
+    "ts": 1790711967038,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711967039,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711967041,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/favorite_contacts?select=contact_id&user_id=eq.11111111-1111-4111-8111-111111111111",
+    "post": null
+  },
+  {
+    "ts": 1790711970145,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/user",
+    "post": null
+  },
+  {
+    "ts": 1790711970159,
+    "method": "GET",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_favorites?select=id%2Cproduct_id%2Cproduct_name%2Cproduct_sku%2Cprimary_image_url%2Ccreated_at&order=created_at.desc",
+    "post": null
+  },
+  {
+    "ts": 1790711970776,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/get-mapbox-token",
+    "post": null
+  },
+  {
+    "ts": 1790711971293,
+    "method": "GET",
+    "url": "https://api.mapbox.com/styles/v1/mapbox/streets-v12?sdk=js-3.31.0&access_token=pk.w5-fake-mapbox-token",
+    "post": null
+  },
+  {
+    "ts": 1790711971343,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/log_audit_event",
+    "post": "{\"p_action\":\"client_error\",\"p_details\":{\"source\":\"mapbox_picker\",\"kind\":\"unknown\",\"message\":\"mapbox_unknown\",\"stack\":\"Error: mapbox_unknown\\n    at L (http://127.0.0.1:4173/assets/mapboxToken-DZ_7h8eD.js:1:6692)\\n    at Map.<anonymous> (http://127.0.0.1:4173/assets/LocationPicker-C-fvhpMC.js:1:3694)\\n    at Map.fire (http://127.0.0.1:4173/assets/vendor-maps-BQzfIA44.js:1:40465)\\n    at Ho.fire (http://127.0.0.1:4173/assets/vendor-maps-BQzfIA44.js:1:40760)\\n    at http://127.0.0.1:4173/assets/vendor-maps-BQzfIA44.js:2889:114788\",\"path\":\"/\",\"buildId\":\"local-179071\",\"sessionId\":\"c2f034c3-c479-4bc4-ad17-e149ece1b930\"},\"p_user_agent\":\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36\"}"
+  },
+  {
+    "ts": 1790711971643,
+    "method": "GET",
+    "url": "https://api.mapbox.com/search/searchbox/v1/suggest?q=Avenida%20Pau&session_token=d2ea6570-7ecf-44ab-a115-3658601f0910&access_token=pk.w5-fake-mapbox-token&language=pt&country=br&limit=5&proximity=-46.6333,-23.5505",
+    "post": null
+  },
+  {
+    "ts": 1790711971645,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/count_searchbox_sessions_this_month",
+    "post": "{}"
+  },
+  {
+    "ts": 1790711971646,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/log_audit_event",
+    "post": "{\"p_action\":\"searchbox_session\",\"p_details\":{\"source\":\"picker\"},\"p_user_agent\":\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36\"}"
+  },
+  {
+    "ts": 1790711990207,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence",
+    "post": "{\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"status\":\"online\",\"updated_at\":\"2026-09-29T19:59:50.203Z\"}"
+  },
+  {
+    "ts": 1790711991130,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/rpc/log_audit_event",
+    "post": "{\"p_action\":\"client_error\",\"p_details\":{\"source\":\"mapbox_picker\",\"kind\":\"timeout\",\"message\":\"mapbox_timeout\",\"stack\":\"Error: mapbox_timeout\\n    at L (http://127.0.0.1:4173/assets/mapboxToken-DZ_7h8eD.js:1:6692)\\n    at http://127.0.0.1:4173/assets/LocationPicker-C-fvhpMC.js:1:3285\",\"path\":\"/\",\"buildId\":\"local-179071\",\"sessionId\":\"c2f034c3-c479-4bc4-ad17-e149ece1b930\"},\"p_user_agent\":\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36\"}"
+  },
+  {
+    "ts": 1790711994895,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/external-db-proxy",
+    "post": "{\"table\":\"media_quarantine\",\"select\":\"id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at\",\"filters\":[{\"column\":\"decision\",\"operator\":\"in\",\"value\":[\"pending\",\"deleted\"]}],\"order\":{\"column\":\"created_at\",\"ascending\":false},\"limit\":500}"
+  },
+  {
+    "ts": 1790712015207,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence",
+    "post": "{\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"status\":\"online\",\"updated_at\":\"2026-09-29T20:00:15.203Z\"}"
+  },
+  {
+    "ts": 1790712024901,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/external-db-proxy",
+    "post": "{\"table\":\"media_quarantine\",\"select\":\"id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at\",\"filters\":[{\"column\":\"decision\",\"operator\":\"in\",\"value\":[\"pending\",\"deleted\"]}],\"order\":{\"column\":\"created_at\",\"ascending\":false},\"limit\":500}"
+  },
+  {
+    "ts": 1790712040207,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/agent_presence",
+    "post": "{\"user_id\":\"11111111-1111-4111-8111-111111111111\",\"status\":\"online\",\"updated_at\":\"2026-09-29T20:00:40.203Z\"}"
+  },
+  {
+    "ts": 1790712052032,
+    "method": "GET",
+    "url": "https://api.mapbox.com/search/searchbox/v1/suggest?q=Avenida%20Paulist&session_token=d2ea6570-7ecf-44ab-a115-3658601f0910&access_token=pk.w5-fake-mapbox-token&language=pt&country=br&limit=5&proximity=-46.6333,-23.5505",
+    "post": null
+  },
+  {
+    "ts": 1790712054907,
+    "method": "POST",
+    "url": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/external-db-proxy",
+    "post": "{\"table\":\"media_quarantine\",\"select\":\"id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at\",\"filters\":[{\"column\":\"decision\",\"operator\":\"in\",\"value\":[\"pending\",\"deleted\"]}],\"order\":{\"column\":\"created_at\",\"ascending\":false},\"limit\":500}"
+  }
+]

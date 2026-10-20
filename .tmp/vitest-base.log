@@ -1,0 +1,193 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-criar-usuario-edge-padrao-2610131101e11a/.tmp/prova-base
+
+xxxxxxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > usa invokeEdge (sem fetch cru) e manda o corpo para create-user
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:86:16
+     84|     const ok = await cria(result);
+     85|
+     86|     expect(ok).toBe(true);
+       |                ^
+     87|     expect(fetchSpy).not.toHaveBeenCalled();
+     88|     expect(mockInvokeEdge).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > e-mail duplicado vira erro do campo email, em pt-BR, sem mostrar a mensagem crua
+AssertionError: expected undefined to deeply equal { field: 'email', …(1) }
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+{
+  "field": "email",
+  "message": "Este e-mail já está cadastrado.",
+}
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:111:46
+    109|     expect(ok).toBe(false);
+    110|     await waitFor(() =>
+    111|       expect(result.current.createUserError).toEqual({
+       |                                              ^
+    112|         field: 'email',
+    113|         message: 'Este e-mail já está cadastrado.',
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > papel inválido vira erro do campo role
+AssertionError: expected undefined to deeply equal { field: 'role', …(1) }
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+{
+  "field": "role",
+  "message": "Papel de usuário inválido.",
+}
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:138:46
+    136|     expect(ok).toBe(false);
+    137|     await waitFor(() =>
+    138|       expect(result.current.createUserError).toEqual({
+       |                                              ^
+    139|         field: 'role',
+    140|         message: 'Papel de usuário inválido.',
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > em 401 renova a sessão uma vez e repete a criação, dando certo no retry
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:154:16
+    152|     const ok = await cria(result);
+    153|
+    154|     expect(ok).toBe(true);
+       |                ^
+    155|     expect(mockRefreshSession).toHaveBeenCalledTimes(1);
+    156|     expect(mockInvokeEdge).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > em 401 cujo refresh falha não repete a chamada e devolve erro geral
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:168:28
+    166|
+    167|     expect(ok).toBe(false);
+    168|     expect(mockInvokeEdge).toHaveBeenCalledTimes(1);
+       |                            ^
+    169|     expect(result.current.createUserError).toEqual({ field: null, mess…
+    170|     expect(toast.error).toHaveBeenCalledWith('Erro ao criar usuário');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > corpo de erro não-JSON (HTML de proxy) não quebra e cai na mensagem geral
+AssertionError: expected undefined to deeply equal { field: null, …(1) }
+
+- Expected:
+{
+  "field": null,
+  "message": "Erro ao criar usuário",
+}
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:180:44
+    178|
+    179|     expect(ok).toBe(false);
+    180|     expect(result.current.createUserError).toEqual({ field: null, mess…
+       |                                            ^
+    181|     expect(toast.success).not.toHaveBeenCalled();
+    182|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > a tentativa seguinte limpa o erro por campo da anterior
+AssertionError: expected undefined to be 'email' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+"email"
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:191:71
+    189|
+    190|     await cria(result);
+    191|     await waitFor(() => expect(result.current.createUserError?.field).…
+       |                                                                       ^
+    192|
+    193|     mockInvokeEdge.mockResolvedValueOnce({ success: true });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminDataCreateUser.test.ts > useAdminData.handleCreateUser — camada de Edge padrão > mapCreateUserError classifica sem mostrar a mensagem crua do servidor
+TypeError: mapCreateUserError is not a function
+ ❯ src/components/admin/__tests__/useAdminDataCreateUser.test.ts:201:12
+    199|
+    200|   it('mapCreateUserError classifica sem mostrar a mensagem crua do ser…
+    201|     expect(mapCreateUserError('Email inválido')).toEqual({
+       |            ^
+    202|       field: 'email',
+    203|       message: 'Informe um e-mail válido.',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  11:26:03
+   Duration  16.91s (transform 551ms, setup 217ms, import 582ms, tests 15.09s, environment 808ms)
+

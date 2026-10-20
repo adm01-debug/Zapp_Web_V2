@@ -1,0 +1,294 @@
+import { readFileSync } from 'node:fs';
+import * as S from '../../supabase/functions/_shared/schemas.ts';
+
+// Harness dual (mesmo padrão dos contratos multiplix-*): este arquivo roda nos
+// DOIS runners do projeto — `bun run test:contracts` (vitest, etapa "Edge
+// Function contract tests" do ci.yml) e `deno test --config scripts/ci/deno.json`.
+// Por isso NÃO pode haver `import "https://deno.land/..."` (o ESM do Node não
+// carrega URL https e derrubava a suíte inteira no CI) nem `import 'vitest'`
+// estático (o Deno não resolve o specifier com --frozen e nodeModulesDir: none).
+// O que muda por runtime é só o REGISTRO do caso; as asserções são locais, em
+// Error puro, idênticas nos dois.
+const IS_DENO = typeof Deno !== 'undefined' && typeof (Deno as { test?: unknown }).test === 'function';
+
+type TestFn = () => void | Promise<void>;
+let registrar: (name: string, fn: TestFn) => void;
+if (IS_DENO) {
+  registrar = (name, fn) => { Deno.test(name, fn); };
+} else {
+  // Specifier não-literal: o Deno não tenta resolver 'vitest' no check/test
+  // (--frozen, sem essa dependência); sob Node o vitest resolve.
+  const spec = 'vit' + 'est';
+  const mod = (await import(spec)) as { it: (name: string, fn: TestFn) => void };
+  registrar = (name, fn) => { mod.it(name, fn); };
+}
+
+const describeStack: string[] = [];
+function describe(name: string, fn: () => void) {
+  describeStack.push(name);
+  try {
+    fn();
+  } finally {
+    describeStack.pop();
+  }
+}
+function it(name: string, fn: TestFn) {
+  registrar([...describeStack, name].join(' > '), fn);
+}
+function assert(cond: unknown, msg?: string): asserts cond {
+  if (!cond) throw new Error(msg ?? 'asserção do contrato falhou');
+}
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  return ka.length === kb.length &&
+    ka.every((k) => deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+}
+function expect<T>(actual: T) {
+  return {
+    toBe(expected: unknown) {
+      assert(Object.is(actual, expected), `esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`);
+    },
+    toEqual(expected: unknown) {
+      assert(deepEqual(actual, expected), `esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`);
+    },
+    toBeGreaterThan(expected: number) {
+      assert(typeof actual === 'number' && actual > expected, `Expected ${actual} to be greater than ${expected}`);
+    },
+    toContain(expected: unknown) {
+      assert(
+        Array.isArray(actual) && actual.some((item) => Object.is(item, expected)),
+        `esperado array contendo ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`,
+      );
+    },
+  };
+}
+
+const UUID = 'a3bb189e-8bf9-4888-9912-ace4e6543002';
+type Case = { payload: unknown; hint: string };
+type SafeParseResult = { success: boolean; error?: Parameters<typeof S.validationErrorResponse>[0] };
+type Suite = { schema: { safeParse: (d: unknown) => SafeParseResult }; valid: unknown[]; invalid: Case[] };
+
+// Tabela de contrato: TODO schema exportado tem casos de payload válido,
+// campo ausente, tipo incorreto e valor vazio (quando aplicável ao shape).
+const suites: Record<string, Suite> = {
+  UUIDSchema: { schema: S.UUIDSchema, valid: [UUID], invalid: [
+    { payload: 'not-a-uuid', hint: 'formato' }, { payload: 123, hint: 'tipo' }, { payload: '', hint: 'vazio' }] },
+  EmailSchema: { schema: S.EmailSchema, valid: ['a@b.co'], invalid: [
+    { payload: 'x', hint: 'formato' }, { payload: 5, hint: 'tipo' }, { payload: '', hint: 'vazio' }] },
+  MessageSchema: { schema: S.MessageSchema, valid: [{}, { sender: 'a', content: 'b' }], invalid: [
+    { payload: { sender: 5 }, hint: 'tipo' }, { payload: 'texto', hint: 'root não-objeto' }] },
+  AiSuggestReplySchema: { schema: S.AiSuggestReplySchema, valid: [{}, { messages: [{}], contactId: UUID }, { requestId: UUID }], invalid: [
+    { payload: { messages: 'x' }, hint: 'tipo' }, { payload: { contactId: 'x' }, hint: 'uuid' },
+    { payload: { requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiEnhanceMessageSchema: { schema: S.AiEnhanceMessageSchema, valid: [{ message: 'oi' }, { message: 'oi', requestId: UUID }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { message: 1 }, hint: 'tipo' },
+    { payload: { message: '' }, hint: 'vazio' }, { payload: { message: 'a', tone: 'x' }, hint: 'enum' },
+    { payload: { message: 'oi', requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiConversationAnalysisSchema: { schema: S.AiConversationAnalysisSchema, valid: [{ messages: [{}, {}, {}, {}, {}] }, { messages: [{}, {}, {}, {}, {}], requestId: UUID, contextVersion: '7d' }, { messages: [{}, {}, {}, {}, {}], requestId: UUID, periodKey: 'custom:2026-01-01:2026-01-31' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [{}] }, hint: 'min 5' }, { payload: { messages: {} }, hint: 'tipo' },
+    { payload: { messages: [{}, {}, {}, {}, {}], requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiConversationSummarySchema: { schema: S.AiConversationSummarySchema, valid: [{ messages: [{}, {}, {}, {}, {}] }, { messages: [{}, {}, {}, {}, {}], requestId: UUID, contextVersion: '7d' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { messages: [] }, hint: 'vazio' },
+    { payload: { messages: [{}, {}, {}, {}, {}], requestId: 'x' }, hint: 'requestId uuid' }] },
+  AiAutoTagSchema: { schema: S.AiAutoTagSchema, valid: [{}, { contactId: UUID }], invalid: [
+    { payload: { messages: 3 }, hint: 'tipo' }, { payload: { contactId: 'x' }, hint: 'uuid' }] },
+  AiChurnAnalysisSchema: { schema: S.AiChurnAnalysisSchema, valid: [{ contactIds: [UUID] }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { contactIds: [] }, hint: 'vazio' }, { payload: { contactIds: ['x'] }, hint: 'uuid' }] },
+  AiClassifyTicketsSchema: { schema: S.AiClassifyTicketsSchema, valid: [{}, { limit: 10 }], invalid: [
+    { payload: { limit: 'x' }, hint: 'tipo' }, { payload: { limit: 0 }, hint: 'faixa' }] },
+  ElevenLabsTTSSchema: { schema: S.ElevenLabsTTSSchema, valid: [{ text: 'a' }, { text: 'a', voiceId: 'EXAVITQu4vr4xnSDxMaL', modelId: 'eleven_v3' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { text: '' }, hint: 'vazio' }, { payload: { text: 1 }, hint: 'tipo' },
+    { payload: { text: 'a', voiceId: 'NAOEXISTEnaLISTA00000' }, hint: 'voiceId fora da lista' },
+    { payload: { text: 'a', modelId: 'eleven_monolingual_v1' }, hint: 'modelId fora da lista' }] },
+  ElevenLabsSFXSchema: { schema: S.ElevenLabsSFXSchema, valid: [{ prompt: 'a' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { prompt: '' }, hint: 'vazio' }, { payload: { prompt: 'a', mode: 'x' }, hint: 'enum' }] },
+  ElevenLabsDialogueSchema: { schema: S.ElevenLabsDialogueSchema, valid: [{ script: [{ voice_id: 'TY3h8ANhQUsJaa0Bga5F', text: 't' }] }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { script: [] }, hint: 'vazio' },
+    { payload: { script: [{ voice_id: 'TY3h8ANhQUsJaa0Bga5F' }] }, hint: 'nested ausente' }, { payload: { script: [{ voice_id: 'TY3h8ANhQUsJaa0Bga5F', text: '' }] }, hint: 'nested vazio' },
+    { payload: { script: [{ voice_id: 'NAOEXISTEnaLISTA00000', text: 't' }] }, hint: 'voice_id fora da lista' }] },
+  ElevenLabsVoiceDesignPreviewSchema: { schema: S.ElevenLabsVoiceDesignPreviewSchema, valid: [{ description: 'd' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { description: '' }, hint: 'vazio' }, { payload: { action: 'x', description: 'd' }, hint: 'literal' }] },
+  ElevenLabsVoiceDesignCreateSchema: { schema: S.ElevenLabsVoiceDesignCreateSchema, valid: [{ action: 'create', voice_name: 'n', generated_voice_id: 'g' }], invalid: [
+    { payload: { action: 'create', voice_name: 'n' }, hint: 'ausente' }, { payload: { action: 'create', voice_name: '', generated_voice_id: 'g' }, hint: 'vazio' }] },
+  TranscribeAudioSchema: { schema: S.TranscribeAudioSchema, valid: [{ audioUrl: 'https://x.co/a.mp3' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { audioUrl: 'x' }, hint: 'url' },
+    { payload: { audioUrl: 'https://x.co/a.mp3', languageCode: 'xx' }, hint: 'enum' }] },
+  ClassifyAudioMemeSchema: { schema: S.ClassifyAudioMemeSchema, valid: [{}, { audio_url: null }], invalid: [
+    { payload: { audio_url: 'nao-e-url' }, hint: 'url' }, { payload: { file_name: 7 }, hint: 'tipo' }] },
+  ClassifyEmojiSchema: { schema: S.ClassifyEmojiSchema, valid: [{}, { image_url: null }], invalid: [
+    { payload: { image_url: 'x' }, hint: 'url' }] },
+  ClassifyStickerSchema: { schema: S.ClassifyStickerSchema, valid: [{}], invalid: [
+    { payload: { image_url: 'x' }, hint: 'url' }] },
+  SendEmailSchema: { schema: S.SendEmailSchema, valid: [{ to: 'a@b.co', subject: 's' }, { to: ['a@b.co'], subject: 's' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { to: 'a@b.co', subject: '' }, hint: 'vazio' },
+    { payload: { to: 5, subject: 's' }, hint: 'tipo' }, { payload: { to: [], subject: 's' }, hint: 'array vazio' }] },
+  SentimentAlertSchema: { schema: S.SentimentAlertSchema, valid: [{ contactId: UUID, contactName: 'n', sentimentScore: 50, analysisId: UUID }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { contactId: UUID, contactName: 'n', sentimentScore: 'x', analysisId: UUID }, hint: 'tipo' },
+    { payload: { contactId: UUID, contactName: 'n', sentimentScore: 150, analysisId: UUID }, hint: 'faixa' }] },
+  RateLimitAlertSchema: { schema: S.RateLimitAlertSchema, valid: [{ ip_address: '1.2.3.4', endpoint: '/x', request_count: 1, blocked: true }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { ip_address: '1.2.3.4', endpoint: '/x', request_count: 'x', blocked: true }, hint: 'tipo' },
+    { payload: { ip_address: '1.2.3.4', endpoint: '/x', request_count: 1, blocked: 'yes' }, hint: 'tipo bool' }] },
+  ApprovePasswordResetSchema: { schema: S.ApprovePasswordResetSchema, valid: [{ requestId: UUID, action: 'approve' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { requestId: 'x', action: 'approve' }, hint: 'uuid' },
+    { payload: { requestId: UUID, action: 'x' }, hint: 'enum' }] },
+  ChatbotL1Schema: { schema: S.ChatbotL1Schema, valid: [{ contactId: UUID, message: 'm' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { contactId: UUID, message: '' }, hint: 'vazio' },
+    { payload: { contactId: 'x', message: 'm' }, hint: 'uuid' }] },
+  DetectNewDeviceSchema: { schema: S.DetectNewDeviceSchema, valid: [{ device_fingerprint: 'f', browser: 'b', os: 'o', device_name: 'd' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { device_fingerprint: '', browser: 'b', os: 'o', device_name: 'd' }, hint: 'vazio' }] },
+  ScheduledReportSchema: { schema: S.ScheduledReportSchema, valid: [{ reportId: UUID }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { reportId: 'x' }, hint: 'uuid' }] },
+  GmailSendActionSchema: { schema: S.GmailSendActionSchema, valid: [{ action: 'send', account_id: UUID }], invalid: [
+    { payload: { action: 'send' }, hint: 'ausente' }, { payload: { action: 'x', account_id: UUID }, hint: 'enum' },
+    { payload: { action: 'send', account_id: 'x' }, hint: 'uuid' }] },
+  GmailOAuthActionSchema: { schema: S.GmailOAuthActionSchema, valid: [{ action: 'get-auth-url' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { action: 'x' }, hint: 'enum' }] },
+  WebAuthnActionSchema: { schema: S.WebAuthnActionSchema, valid: [{ action: 'registration-options' }], invalid: [
+    { payload: { action: 'x' }, hint: 'enum' }, { payload: { action: 'registration-options', userId: 'x' }, hint: 'uuid' }] },
+  ExternalDbBridgeSchema: { schema: S.ExternalDbBridgeSchema, valid: [{ action: 'select', table: 't' }], invalid: [
+    { payload: { action: 'x' }, hint: 'enum' }, { payload: { action: 'select', limit: 0 }, hint: 'faixa' }] },
+  EvolutionWebhookEnvelopeV1Schema: { schema: S.EvolutionWebhookEnvelopeV1Schema, valid: [
+    { event: 'messages.upsert', instance: 'wpp' }, { event: 'e', instance: 'i', data: { a: 1 }, extra: true }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { event: '', instance: 'i' }, hint: 'vazio' },
+    { payload: { event: 1, instance: 'i' }, hint: 'tipo' }] },
+  EvolutionWebhookEnvelopeV2Schema: { schema: S.EvolutionWebhookEnvelopeV2Schema, valid: [
+    { event: 'e', instance: 'i', data: {} }], invalid: [
+    { payload: { event: 'e', instance: 'i' }, hint: 'data ausente' },
+    { payload: { event: 'e', instance: 'i', data: 'x' }, hint: 'data tipo' }] },
+  EvolutionMessagesUpdateStatusSchema: { schema: S.EvolutionMessagesUpdateStatusSchema, valid: [
+    'DELIVERY_ACK', ' READ '], invalid: [
+    { payload: 3, hint: 'tipo número' }, { payload: { code: 3 }, hint: 'tipo objeto' },
+    { payload: '', hint: 'vazio' }] },
+  ElevenLabsWebhookV1Schema: { schema: S.ElevenLabsWebhookV1Schema, valid: [{}, { type: 'tts.completed', extra: 1 }], invalid: [
+    { payload: { type: 123 }, hint: 'tipo' }, { payload: 'str', hint: 'root' }] },
+  ElevenLabsWebhookV2Schema: { schema: S.ElevenLabsWebhookV2Schema, valid: [{ type: 't' }, { event_type: 'e' }], invalid: [
+    { payload: {}, hint: 'identificação ausente' }] },
+  GmailCronSyncHeadersSchema: { schema: S.GmailCronSyncHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+  ConnectionHealthCheckHeadersSchema: { schema: S.ConnectionHealthCheckHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+  AvatarsRefreshHeadersSchema: { schema: S.AvatarsRefreshHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+  // E45 (SL-050): corpo de `evolution-api`. A `action` é opcional porque o
+  // formato padrão do front a manda no PATH (`evolution-api/<ação>`); quando
+  // vem no corpo, tem de ser uma ação que o handler implementa. `null` equivale
+  // a "ausente" (o corpo do cliente serializa variável nula). O payload
+  // específico da ação é passthrough (send-status/edit-message encaminham o
+  // corpo inteiro ao provedor).
+  EvolutionApiRequestSchema: { schema: S.EvolutionApiRequestSchema, valid: [
+    {}, { action: null, instanceName: null }, { action: 'list-instances' },
+    { action: 'send-text', instanceName: 'PRINCIPAL', number: '5511999999999', textoExtra: 1 }], invalid: [
+    { payload: { action: 'acao-que-nao-existe' }, hint: 'ação fora da lista' },
+    { payload: { action: 5 }, hint: 'tipo da ação' },
+    { payload: { instanceName: 5 }, hint: 'tipo da instância' },
+    { payload: ['send-text'], hint: 'root não-objeto' }] },
+};
+
+describe('cobertura de contrato por schema', () => {
+  for (const [name, suite] of Object.entries(suites)) {
+    describe(name, () => {
+      for (const [i, v] of suite.valid.entries()) {
+        it(`válido #${i + 1}`, () => { expect(suite.schema.safeParse(v).success).toBe(true); });
+      }
+      for (const c of suite.invalid) {
+        it(`inválido: ${c.hint} → resposta 422 consistente`, async () => {
+          const r = suite.schema.safeParse(c.payload);
+          assert(!r.success);
+          assert(r.error, 'safeParse inválido precisa expor erro para validationErrorResponse');
+          const res = S.validationErrorResponse(r.error);
+          expect(res.status).toBe(422);
+          const body = JSON.parse(await res.text());
+          expect(body.error.code).toBe('VALIDATION_ERROR');
+          expect(body.error.fields.length).toBeGreaterThan(0);
+          for (const f of body.error.fields) {
+            expect(typeof f.path).toBe('string');
+            expect(typeof f.message).toBe('string');
+            expect(typeof f.code).toBe('string');
+          }
+        });
+      }
+    });
+  }
+
+  it('nenhum schema exportado ficou fora da tabela', () => {
+    const exported = Object.keys(S).filter((k) => k.endsWith('Schema') && k !== 'SafeStringSchema');
+    const covered = Object.keys(suites);
+    const missing = exported.filter((k) => !covered.includes(k));
+    expect(missing).toEqual([]);
+  });
+
+  it('SafeStringSchema remove control chars e limita tamanho', () => {
+    const s = S.SafeStringSchema(10);
+    expect(s.parse('a\u0000b')).toBe('ab');
+    expect(s.safeParse('x'.repeat(11)).success).toBe(false);
+  });
+});
+
+// ─── B4/SL-008: lista fechada de vozes e modelos de TTS/STS ──────────────────
+// Antes o cliente escolhia `voiceId`/`modelId`/`voice_id` livremente (qualquer
+// texto de até 100 caracteres), então dava para acionar uma voz clonada da conta
+// compartilhada e um modelo mais caro. O contrato abaixo prova a recusa na
+// validação — antes de qualquer POST ao provedor — e que o catálogo que a
+// interface oferece cabe inteiro na lista aceita.
+describe('SL-008 — lista fechada de vozes/modelos de TTS/STS (B4)', () => {
+  const FORA_DA_LISTA = 'VozClonadaForaDaLista';
+
+  it('catálogo da interface está inteiro na lista aceita', () => {
+    const arquivos = [
+      'src/components/inbox/VoiceSelector.tsx',
+      'src/components/voice/ElevenLabsDialogue.tsx',
+    ];
+    const doCatalogo = new Set<string>();
+    for (const arquivo of arquivos) {
+      const conteudo = readFileSync(new URL(`../../${arquivo}`, import.meta.url), 'utf8');
+      for (const achado of conteudo.matchAll(/id:\s*'([A-Za-z0-9]{20})'/g)) doCatalogo.add(achado[1]);
+    }
+    expect(doCatalogo.size).toBeGreaterThan(0);
+    expect([...doCatalogo].filter((id) => !S.isAllowedElevenLabsVoiceId(id))).toEqual([]);
+  });
+
+  it('TTS aceita cada voz do catálogo e recusa voz de fora da lista', () => {
+    for (const voiceId of S.ELEVENLABS_VOICE_IDS) {
+      expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', voiceId }).success).toBe(true);
+    }
+    expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', voiceId: FORA_DA_LISTA }).success).toBe(false);
+  });
+
+  it('TTS recusa modelo de fora da lista e aceita os modelos do produto', () => {
+    expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', modelId: 'eleven_multilingual_v1' }).success).toBe(false);
+    for (const modelId of S.ELEVENLABS_TTS_MODEL_IDS) {
+      expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', modelId }).success).toBe(true);
+    }
+  });
+
+  it('diálogo recusa voice_id de fora da lista e aceita o do catálogo', () => {
+    expect(S.ElevenLabsDialogueSchema.safeParse({ script: [{ voice_id: FORA_DA_LISTA, text: 't' }] }).success).toBe(false);
+    expect(S.ElevenLabsDialogueSchema.safeParse({ script: [{ voice_id: S.ELEVENLABS_VOICE_IDS[0], text: 't' }] }).success).toBe(true);
+  });
+
+  it('STS recusa voz de fora e cai no modelo do produto quando ele não é enviado', () => {
+    expect(S.resolveElevenLabsStsInputs(FORA_DA_LISTA, undefined).ok).toBe(false);
+    expect(S.resolveElevenLabsStsInputs('EXAVITQu4vr4xnSDxMaL', null)).toEqual({
+      ok: true,
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      modelId: 'eleven_multilingual_sts_v2',
+    });
+    expect(S.resolveElevenLabsStsInputs('EXAVITQu4vr4xnSDxMaL', 'eleven_multilingual_sts_v2')).toEqual({
+      ok: true,
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      modelId: 'eleven_multilingual_sts_v2',
+    });
+    expect(S.resolveElevenLabsStsInputs('EXAVITQu4vr4xnSDxMaL', 'eleven_v3').ok).toBe(false);
+  });
+
+  it('defaults que o produto usa por conta própria estão na lista', () => {
+    expect(S.isAllowedElevenLabsVoiceId('TY3h8ANhQUsJaa0Bga5F')).toBe(true);
+    expect(S.ELEVENLABS_TTS_MODEL_IDS).toContain('eleven_v3');
+    expect(S.ELEVENLABS_TTS_MODEL_IDS).toContain('eleven_flash_v2_5');
+    expect(S.ELEVENLABS_STS_MODEL_IDS).toContain('eleven_multilingual_sts_v2');
+  });
+});
