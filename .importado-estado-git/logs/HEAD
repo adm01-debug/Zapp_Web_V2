@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791882522 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791882523 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 c6bc1607169c28c2ba6b2803c2e3c0d34dff0498 Hermes Senior <hermes-senior@promobrindes.local> 1791883021 -0300	commit: fix(a11y): nome acessivel e alvo de toque em botoes so de icone do inbox
+c6bc1607169c28c2ba6b2803c2e3c0d34dff0498 01d53830b782614c9852b6810165aaa60d7bb004 Hermes Senior <hermes-senior@promobrindes.local> 1791883066 -0300	commit: chore(relato): evidencia do cartao de acessibilidade dos botoes de icone

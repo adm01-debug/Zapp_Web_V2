@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=13-botoes-icone-nome-acessivel
+ID=26101306083e76
+BRANCH=v2/13-botoes-icone-nome-acessivel-26101306083e76
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/13-botoes-icone-nome-acessivel-26101306083e76
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T06:08:43-03:00
+KANBAN=t_a76a353e
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/13-botoes-icone-nome-acessivel-26101306083e76/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101306083e76
+PRONTO_SHA=01d53830b782614c9852b6810165aaa60d7bb004
