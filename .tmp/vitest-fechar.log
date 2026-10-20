@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb
+
+··········
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  09:06:09
+   Duration  6.29s (transform 2.17s, setup 1.20s, import 3.46s, tests 1.84s, environment 2.78s)
+

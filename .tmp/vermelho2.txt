@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb
+
+ ❯ src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx (3 tests | 1 failed) 780ms
+     × conversa direta mostra o dia e o mês do colega, nunca o ano 96ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx > Team Chat — aniversários dos colegas (HZ-28) > conversa direta mostra o dia e o mês do colega, nunca o ano
+AssertionError: expected [ <span …(1)>…(1)</span> ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx:133:50
+    131|     expect(screen.getByText('Aniversário')).toBeTruthy();
+    132|     // A data aparece no cartão do cabeçalho e na linha "Informações" …
+    133|     expect(screen.getAllByText('20 de outubro')).toHaveLength(2);
+       |                                                  ^
+    134|     expect(document.body.textContent).not.toContain('anos');
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  08:31:55
+   Duration  5.84s (transform 1.81s, setup 467ms, import 2.68s, tests 780ms, environment 1.11s)
+

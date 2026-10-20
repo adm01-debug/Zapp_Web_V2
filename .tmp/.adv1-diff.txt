@@ -1,0 +1,909 @@
+diff --git a/src/components/team-chat/TeamMemberDetails.tsx b/src/components/team-chat/TeamMemberDetails.tsx
+index 0fa28dbfc1..f202f67f54 100644
+--- a/src/components/team-chat/TeamMemberDetails.tsx
++++ b/src/components/team-chat/TeamMemberDetails.tsx
+@@ -1,6 +1,6 @@
+ import { useState } from 'react';
+ import { useAuth } from '@/hooks/auth/useAuth';
+-import { useTeamMemberDetails } from '@/hooks/team-chat/useTeamMemberDetails';
++import { useTeamMemberDetails, type MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';
+ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+ import { Badge } from '@/components/ui/badge';
+ import { Button } from '@/components/ui/button';
+@@ -12,9 +12,19 @@ import { format } from 'date-fns';
+ import { ptBR } from 'date-fns/locale';
+ import type { TeamConversation } from '@/hooks/chat/useTeamChat';
+ import {
+-  getBirthdayInfo, getRoleBadge, InfoRow,
++  getRoleBadge, InfoRow,
+   DirectProfileHeader, GroupProfileHeader,
+ } from './TeamMemberProfileHeader';
++import { getBirthdayInfo } from '@/lib/birthday';
++
++/**
++ * HZ-28: so dia e mes chegam do banco (a RPC segura nao devolve o ano) — o texto da linha
++ * "Aniversário" nunca mostra ano nem idade.
++ */
++function formatBirthdayDayMonth(birthday: MemberProfile['birthday']): string | null {
++  const info = getBirthdayInfo(birthday);
++  return info ? format(info.date, "dd 'de' MMMM", { locale: ptBR }) : null;
++}
+ 
+ function SectionHeader({ icon: Icon, label, open, onToggle }: { icon: React.ElementType; label: string; open: boolean; onToggle: () => void }) {
+   return (
+@@ -55,7 +65,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
+                 <InfoRow icon={Phone} label="Telefone" value={memberProfile.phone} />
+                 <InfoRow icon={Briefcase} label="Cargo" value={memberProfile.job_title} />
+                 <InfoRow icon={Building2} label="Departamento" value={memberProfile.department} />
+-                <InfoRow icon={Cake} label="Aniversário" value={memberProfile.birthday ? format(new Date(memberProfile.birthday), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null} />
++                <InfoRow icon={Cake} label="Aniversário" value={formatBirthdayDayMonth(memberProfile.birthday)} />
+                 <InfoRow icon={Calendar} label="Membro desde" value={format(new Date(memberProfile.created_at), 'dd/MM/yyyy', { locale: ptBR })} />
+               </div>
+             </CollapsibleContent>
+@@ -98,8 +108,10 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
+             <CollapsibleContent>
+               <div className="px-4 pb-3 space-y-2">
+                 {groupMembers
+-                  .filter(m => m.birthday)
+-                  .map(m => ({ ...m, bInfo: getBirthdayInfo(m.birthday) ?? { date: new Date(), age: 0, isToday: false, daysUntil: 365 } }))
++                  .flatMap(m => {
++                    const bInfo = getBirthdayInfo(m.birthday);
++                    return bInfo ? [{ ...m, bInfo }] : [];
++                  })
+                   .sort((a, b) => a.bInfo.daysUntil - b.bInfo.daysUntil)
+                   .slice(0, 5)
+                   .map(member => (
+diff --git a/src/components/team-chat/TeamMemberProfileHeader.tsx b/src/components/team-chat/TeamMemberProfileHeader.tsx
+index 149ecee294..71ec6c9da9 100644
+--- a/src/components/team-chat/TeamMemberProfileHeader.tsx
++++ b/src/components/team-chat/TeamMemberProfileHeader.tsx
+@@ -3,23 +3,22 @@ import { Badge } from '@/components/ui/badge';
+ import { Skeleton } from '@/components/ui/skeleton';
+ import { Cake, Shield, Users } from 'lucide-react';
+ import { cn } from '@/lib/utils';
+-import { format, differenceInYears, isSameDay, addYears } from 'date-fns';
++import { format } from 'date-fns';
+ import { ptBR } from 'date-fns/locale';
+ import type { TeamConversation } from '@/hooks/chat/useTeamChat';
+ import type { MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';
++import type { MemberBirthday } from '@/lib/birthday';
++import { getBirthdayInfo } from '@/lib/birthday';
+ 
+ export type { MemberProfile };
+ 
+-export function getBirthdayInfo(birthday: string | null) {
+-  if (!birthday) return null;
+-  const date = new Date(birthday);
+-  const today = new Date();
+-  const age = differenceInYears(today, date);
+-  let nextBirthday = new Date(today.getFullYear(), date.getMonth(), date.getDate());
+-  if (nextBirthday < today && !isSameDay(nextBirthday, today)) nextBirthday = addYears(nextBirthday, 1);
+-  const isToday = isSameDay(nextBirthday, today);
+-  const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+-  return { date, age, isToday, daysUntil };
++/**
++ * HZ-28: o front so recebe dia e mes (a RPC segura nao devolve o ano). Este e o texto do
++ * cartao do colega — "20 de outubro", sem ano e sem idade em lugar nenhum.
++ */
++function birthdayLabel(birthday: MemberBirthday | null): string | null {
++  const info = getBirthdayInfo(birthday);
++  return info ? format(info.date, "dd 'de' MMMM", { locale: ptBR }) : null;
+ }
+ 
+ export function getRoleBadge(role: string | null) {
+@@ -87,10 +86,10 @@ export function DirectProfileHeader({ memberProfile, isLoading }: DirectProfileH
+           <div className="flex items-center justify-center gap-1.5 text-xs">
+             <Cake className="w-3.5 h-3.5" />
+             {birthdayInfo.isToday ? (
+-              <span className="font-semibold text-chart-4">🎉 Aniversário hoje! {birthdayInfo.age} anos</span>
++              <span className="font-semibold text-chart-4">🎉 Aniversário hoje!</span>
+             ) : (
+               <span className="text-muted-foreground">
+-                {format(birthdayInfo.date, "dd 'de' MMMM", { locale: ptBR })} ({birthdayInfo.age} anos)
++                {birthdayLabel(memberProfile.birthday)}
+                 {birthdayInfo.daysUntil <= 30 && birthdayInfo.daysUntil > 0 && <span className="text-chart-4 ml-1">• em {birthdayInfo.daysUntil} dias</span>}
+               </span>
+             )}
+diff --git a/src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx b/src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx
+new file mode 100644
+index 0000000000..9c608e5bd2
+--- /dev/null
++++ b/src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx
+@@ -0,0 +1,136 @@
++import { fireEvent, render, screen } from '@testing-library/react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import type { MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';
++import type { TeamConversation } from '@/hooks/chat/useTeamChat';
++
++/**
++ * HZ-28 — a seção "Próximos Aniversários" do Team Chat e o bloco de aniversário do
++ * cabeçalho da conversa direta passam a mostrar os colegas de verdade.
++ *
++ * A RPC segura `get_team_birthdays` devolve SÓ dia e mês: a data e a idade do colega
++ * nunca chegam ao front. O que este teste trava:
++ *  1. grupo com dois colegas com aniversário mostra OS DOIS, ordenados pelos dias
++ *     que faltam (o mais próximo primeiro);
++ *  2. grupo sem aniversário cadastrado mostra o estado vazio;
++ *  3. nenhuma tela mostra ano de nascimento nem idade.
++ *
++ * O `today` é fixado para a ordem não depender do dia em que a suíte roda.
++ */
++
++const f = vi.hoisted(() => ({
++  groupMembers: [] as MemberProfile[],
++  memberProfile: null as MemberProfile | null,
++}));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ profile: { id: 'p-1' } }),
++}));
++
++vi.mock('@/hooks/team-chat/useTeamMemberDetails', () => ({
++  useTeamMemberDetails: () => ({
++    memberProfile: f.memberProfile,
++    isLoading: false,
++    groupMembers: f.groupMembers,
++  }),
++}));
++
++import { TeamMemberDetails } from '../TeamMemberDetails';
++
++function perfil(id: string, name: string, birthday: MemberProfile['birthday']): MemberProfile {
++  return {
++    id,
++    name,
++    email: null,
++    phone: null,
++    avatar_url: null,
++    job_title: 'Vendedor',
++    department: 'Comercial',
++    role: 'agent',
++    is_active: true,
++    created_at: '2024-01-01T00:00:00.000Z',
++    birthday,
++  };
++}
++
++const grupo = {
++  id: 'g-1',
++  type: 'group',
++  name: 'Comercial',
++  avatar_url: null,
++  created_by: null,
++  created_at: '2024-01-01T00:00:00.000Z',
++  updated_at: '2024-01-01T00:00:00.000Z',
++  members: [
++    { id: 'm-1', conversation_id: 'g-1', profile_id: 'p-1', joined_at: '', last_read_at: null, is_muted: false },
++    { id: 'm-2', conversation_id: 'g-1', profile_id: 'p-2', joined_at: '', last_read_at: null, is_muted: false },
++  ],
++} as TeamConversation;
++
++const direta = {
++  id: 'd-1',
++  type: 'direct',
++  name: null,
++  avatar_url: null,
++  created_by: null,
++  created_at: '2024-01-01T00:00:00.000Z',
++  updated_at: '2024-01-01T00:00:00.000Z',
++  members: [],
++} as TeamConversation;
++
++function abrirProximosAniversarios() {
++  render(<TeamMemberDetails conversation={grupo} onClose={() => {}} />);
++  fireEvent.click(screen.getByText('Próximos Aniversários'));
++}
++
++describe('Team Chat — aniversários dos colegas (HZ-28)', () => {
++  beforeEach(() => {
++    vi.useFakeTimers();
++    // Sexta 16/10/2026, 12h: Ana faz aniversário em 4 dias, Bruno em 81.
++    vi.setSystemTime(new Date(2026, 9, 16, 12, 0, 0));
++    f.memberProfile = null;
++    f.groupMembers = [];
++  });
++
++  afterEach(() => {
++    vi.useRealTimers();
++  });
++
++  it('mostra os dois colegas com aniversário, o mais próximo primeiro, sem ano nem idade', () => {
++    f.groupMembers = [
++      perfil('p-2', 'Bruno Lima', { day: 5, month: 1 }),
++      perfil('p-1', 'Ana Souza', { day: 20, month: 10 }),
++    ];
++
++    abrirProximosAniversarios();
++
++    expect(screen.getAllByText(/^(Ana Souza|Bruno Lima)$/).map((el) => el.textContent)).toEqual([
++      'Ana Souza',
++      'Bruno Lima',
++    ]);
++    expect(screen.getByText('20/10 (4d)')).toBeTruthy();
++    expect(screen.getByText('05/01 (81d)')).toBeTruthy();
++    expect(screen.queryByText('Nenhum aniversário cadastrado')).toBeNull();
++    expect(document.body.textContent).not.toContain('anos');
++    expect(document.body.textContent).not.toMatch(/\d{4}/);
++  });
++
++  it('grupo sem aniversário cadastrado mostra o estado vazio', () => {
++    f.groupMembers = [perfil('p-1', 'Ana Souza', null), perfil('p-2', 'Bruno Lima', null)];
++
++    abrirProximosAniversarios();
++
++    expect(screen.getByText('Nenhum aniversário cadastrado')).toBeTruthy();
++    expect(screen.queryByText(/^(Ana Souza|Bruno Lima)$/)).toBeNull();
++  });
++
++  it('conversa direta mostra o dia e o mês do colega, nunca o ano', () => {
++    f.memberProfile = perfil('p-2', 'Bruno Lima', { day: 20, month: 10 });
++
++    render(<TeamMemberDetails conversation={direta} onClose={() => {}} />);
++
++    expect(screen.getByText('Aniversário')).toBeTruthy();
++    // A data aparece no cartão do cabeçalho e na linha "Informações" — sempre sem ano.
++    expect(screen.getAllByText('20 de outubro')).toHaveLength(2);
++    expect(document.body.textContent).not.toContain('anos');
++  });
++});
+diff --git a/src/hooks/team-chat/README.md b/src/hooks/team-chat/README.md
+index bab01dc9e8..45a6073f35 100644
+--- a/src/hooks/team-chat/README.md
++++ b/src/hooks/team-chat/README.md
+@@ -50,7 +50,7 @@ Storage.
+ | `useTransferConversation`          | `useTeamChatMutations.ts`    | rpc     | `transfer_team_conversation_ownership` |
+ | `useDeleteConversation`            | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
+ | `useAddConversationMembers`        | `useTeamChatMembers.ts`      | tabela  | `team_conversation_members`            |
+-| `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_profiles`                    |
++| `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_birthdays`                   |
+ | `useTeamPerformance`               | `useTeamPerformance.ts`      | tabela  | `team_messages`                        |
+ | `useParticipantStats`              | `useParticipantStats.ts`     | tabela  | `team_messages`                        |
+ | `useActiveDepartments`             | `useActiveDepartments.ts`    | tabela  | `departments`                          |
+@@ -85,6 +85,9 @@ a fábrica sem argumento devolve a raiz (não um `undefined` no lugar do id):
+ - `queryKeys.members(conversationId, memberIds)` — o último elemento é
+   `memberIds.join(',')`, como na chave histórica.
+ - `queryKeys.memberProfile(profileId)`
++- `queryKeys.teamBirthdays()` — aniversários da equipe (RPC `get_team_birthdays`): a
++  RPC devolve a lista inteira de perfis ativos com dia/mês (nunca o ano), então a
++  conversa — direta ou grupo — filtra o que já veio em cache.
+ - `queryKeys.performance(conversationId)`
+ - `queryKeys.participantStats(conversationId)`
+ - `queryKeys.departments.list()`
+diff --git a/src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx b/src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
+index 01c6a6c085..7449345ac1 100644
+--- a/src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
++++ b/src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
+@@ -1,37 +1,42 @@
+ import { act, renderHook } from '@testing-library/react';
+ import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { queryKeys } from '@/hooks/team-chat/queryKeys';
+ import type { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
+ 
+ /**
+- * Contrato seguro dos "detalhes de colegas" do Team Chat (#240-A).
++ * Contrato seguro dos "detalhes de colegas" do Team Chat (#240-A) + aniversários (HZ-28).
+  *
+- * `useTeamMemberDetails` lia a tabela `profiles` direto, tanto no cabecalho da
++ * `useTeamMemberDetails` lia a tabela `profiles` direto, tanto no cabeçalho da
+  * conversa direta quanto na lista de membros do grupo. A leitura do perfil de
+- * OUTRO colaborador em `profiles` e bloqueada por RLS para agentes (cada usuario
+- * ve apenas o proprio perfil), entao a tela ficava sem dados. O caminho seguro ja
+- * existente e a RPC `get_team_profiles` (SECURITY DEFINER, so agentes ativos).
++ * OUTRO colaborador em `profiles` é bloqueada por RLS para agentes, então a tela
++ * ficava sem dados. O caminho seguro é a RPC `get_team_profiles`, exposta pelo
++ * hook compartilhado `useTeamProfiles` (chave única `['team-profiles-rpc']`).
+  *
+- * A RPC nao devolve `birthday`; o campo continua existindo no retorno do hook
+- * porque a tela o consome, mas sempre `null` — nada de inventar aniversario.
++ * A RPC de perfis NÃO devolve `birthday`; o aniversário vem da RPC `get_team_birthdays`
++ * (HZ-28), que devolve SÓ dia e mês — o ano nunca chega ao front, então a idade não
++ * aparece e o hook também não inventa um aniversário para quem não tem cadastro.
+  *
+- * Este teste executa as DUAS `queryFn` do hook (direta e grupo). Com a
+- * implementacao antiga ele fica vermelho: a RPC nao e chamada e `.from('profiles')`
+- * e usado como fonte.
++ * Os testes executam as funções de busca de verdade (a do hook e a da RPC de
++ * aniversário). Com a implementação antiga ficam vermelhos: ninguém chamava
++ * `get_team_birthdays` e `birthday` era sempre `null`.
+  */
+ 
+ type QueryConfig = {
+   queryKey: unknown;
+   queryFn: () => Promise<unknown>;
+   enabled?: boolean;
++  staleTime?: number;
+ };
+ 
+ const f = vi.hoisted(() => ({
+   rpc: vi.fn(),
+   from: vi.fn(),
+   queries: [] as QueryConfig[],
++  profiles: [] as unknown[],
++  birthdays: new Map<string, { day: number; month: number }>(),
+ }));
+ 
+-/** Builder chainavel para o caminho ANTIGO (`supabase.from('profiles')...`). */
++/** Builder chainável para o caminho ANTIGO (`supabase.from('profiles')...`). */
+ function legacyProfilesBuilder() {
+   const builder: Record<string, unknown> = {};
+   builder.select = () => builder;
+@@ -47,17 +52,22 @@ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: { rpc: f.rpc, from: f.from },
+ }));
+ 
++/** Hook compartilhado da RPC `get_team_profiles`: devolve a lista inteira de ativos. */
++vi.mock('@/hooks/crm/useTeamProfiles', () => ({
++  useTeamProfiles: () => ({ data: f.profiles, isLoading: false }),
++}));
++
+ vi.mock('@tanstack/react-query', () => ({
+   useQuery: (config: QueryConfig) => {
+     f.queries.push(config);
+-    return { data: undefined, isLoading: false };
++    return { data: f.birthdays, isLoading: false };
+   },
+ }));
+ 
+ import { useTeamMemberDetails } from '@/hooks/team-chat/useTeamMemberDetails';
+ 
+ /** Linhas reais da RPC `get_team_profiles` (sem `birthday` no contrato). */
+-const RPC_ROWS = [
++const PROFILE_ROWS = [
+   {
+     id: 'p-1',
+     user_id: 'u-1',
+@@ -68,7 +78,7 @@ const RPC_ROWS = [
+     is_active: true,
+     department: 'Comercial',
+     job_title: 'Vendedora',
+-    phone: '+5511999990001',
++    phone: '+551****0001',
+     max_chats: 5,
+     created_at: '2024-03-01T12:00:00.000Z',
+   },
+@@ -136,10 +146,9 @@ const groupConversation = {
+   members: [member('p-1', 'conv-group'), member('p-2', 'conv-group')],
+ } as TeamConversation;
+ 
+-function captureQueries(conversation: TeamConversation, currentProfileId: string | null) {
++function renderDetails(conversation: TeamConversation, currentProfileId: string | null) {
+   f.queries = [];
+-  renderHook(() => useTeamMemberDetails(conversation, currentProfileId));
+-  return f.queries;
++  return renderHook(() => useTeamMemberDetails(conversation, currentProfileId));
+ }
+ 
+ async function runQueryFn(config: QueryConfig) {
+@@ -154,19 +163,17 @@ describe('useTeamMemberDetails — colegas via RPC segura get_team_profiles', ()
+   beforeEach(() => {
+     vi.clearAllMocks();
+     f.from.mockImplementation(() => legacyProfilesBuilder());
+-    f.rpc.mockResolvedValue({ data: RPC_ROWS, error: null });
++    f.profiles = PROFILE_ROWS;
++    f.birthdays = new Map();
+     f.queries = [];
++    f.rpc.mockResolvedValue({ data: [], error: null });
+   });
+ 
+-  it('conversa direta carrega o colega pela RPC e nunca por .from("profiles")', async () => {
+-    const queries = captureQueries(directConversation, 'p-1');
+-    expect(queries).toHaveLength(2);
++  it('conversa direta carrega o colega pela lista compartilhada e nunca por .from("profiles")', () => {
++    const { result } = renderDetails(directConversation, 'p-1');
+ 
+-    const profile = await runQueryFn(queries[0]);
+-
+-    expect(f.rpc).toHaveBeenCalledWith('get_team_profiles');
+     expect(f.from).not.toHaveBeenCalled();
+-    expect(profile).toEqual({
++    expect(result.current.memberProfile).toEqual({
+       id: 'p-2',
+       name: 'Bruno Lima',
+       email: 'bruno@promo.test',
+@@ -181,27 +188,24 @@ describe('useTeamMemberDetails — colegas via RPC segura get_team_profiles', ()
+     });
+   });
+ 
+-  it('grupo carrega os membros pela RPC, filtrados pelos IDs da conversa', async () => {
+-    const queries = captureQueries(groupConversation, 'p-1');
+-    expect(queries).toHaveLength(2);
+-
+-    const members = (await runQueryFn(queries[1])) as Array<Record<string, unknown>>;
++  it('grupo carrega os membros filtrados pelos IDs da conversa, na ordem da lista', () => {
++    const { result } = renderDetails(groupConversation, 'p-1');
++    const members = result.current.groupMembers;
+ 
+-    expect(f.rpc).toHaveBeenCalledWith('get_team_profiles');
+     expect(f.from).not.toHaveBeenCalled();
+-    // Ordem da RPC preservada e o perfil de fora da conversa (p-9) descartado.
++    // Ordem da lista preservada e o perfil de fora da conversa (p-9) descartado.
+     expect(members.map((m) => m.id)).toEqual(['p-1', 'p-2']);
+   });
+ 
+-  it('preserva os campos da RPC e devolve birthday null (fora do contrato seguro)', async () => {
+-    const queries = captureQueries(groupConversation, 'p-1');
+-    const members = (await runQueryFn(queries[1])) as Array<Record<string, unknown>>;
++  it('preserva os campos da RPC e devolve birthday null para quem não tem cadastro', () => {
++    const { result } = renderDetails(groupConversation, 'p-1');
++    const members = result.current.groupMembers;
+ 
+     expect(members[0]).toMatchObject({
+       id: 'p-1',
+       name: 'Ana Souza',
+       email: 'ana@promo.test',
+-      phone: '+5511999990001',
++      phone: '+551****0001',
+       job_title: 'Vendedora',
+       department: 'Comercial',
+       role: 'agent',
+@@ -211,21 +215,57 @@ describe('useTeamMemberDetails — colegas via RPC segura get_team_profiles', ()
+     expect(members.every((m) => m.birthday === null)).toBe(true);
+   });
+ 
+-  it('direta: colega fora da RPC (inativo/ausente) resulta em null, sem cair para a tabela', async () => {
+-    f.rpc.mockResolvedValue({ data: [RPC_ROWS[2]], error: null });
+-    const queries = captureQueries(directConversation, 'p-1');
++  it('busca o aniversário na RPC get_team_birthdays e devolve só dia e mês (sem ano)', async () => {
++    f.rpc.mockResolvedValue({
++      data: [{ id: 'p-2', birthday_day: 5, birthday_month: 1 }],
++      error: null,
++    });
++    // O hook consome o retorno da query; aqui ele é dado como já resolvido, e a
++    // `queryFn` (que faz a chamada real) é executada logo abaixo para provar o contrato.
++    f.birthdays = new Map([['p-2', { day: 5, month: 1 }]]);
++
++    const { result } = renderDetails(groupConversation, 'p-1');
++
++    expect(f.queries).toHaveLength(1);
++    expect(f.queries[0].queryKey).toEqual(queryKeys.teamBirthdays());
++    expect(f.queries[0].queryKey).toEqual(['team-birthdays-rpc']);
++    // Alguns minutos, para a RPC da equipe inteira não repetir a cada conversa.
++    expect(f.queries[0].staleTime).toBeGreaterThanOrEqual(60_000);
++    expect(f.queries[0].enabled).toBe(true);
++
++    const porPerfil = await runQueryFn(f.queries[0]);
+ 
+-    const profile = await runQueryFn(queries[0]);
++    expect(f.rpc).toHaveBeenCalledWith('get_team_birthdays');
++    expect(porPerfil).toEqual(new Map([['p-2', { day: 5, month: 1 }]]));
+ 
+-    expect(profile).toBeNull();
++    // Nos perfis, o aniversário chega sem ano: só dia e mês.
++    expect(result.current.groupMembers.map((m) => m.birthday)).toEqual([
++      null,
++      { day: 5, month: 1 },
++    ]);
++  });
++
++  it('direta: colega fora da RPC (inativo/ausente) resulta em null, sem cair para a tabela', () => {
++    f.profiles = [PROFILE_ROWS[2]];
++    const { result } = renderDetails(directConversation, 'p-1');
++
++    expect(result.current.memberProfile).toBeNull();
+     expect(f.from).not.toHaveBeenCalled();
+   });
+ 
+-  it('propaga o erro da RPC em vez de engolir a falha', async () => {
++  it('sem perfil logado não busca aniversários (a chave fica desabilitada)', () => {
++    renderDetails(groupConversation, null);
++
++    expect(f.queries).toHaveLength(1);
++    expect(f.queries[0].enabled).toBe(false);
++  });
++
++  it('propaga o erro da RPC de aniversários em vez de engolir a falha', async () => {
+     const erro = new Error('rpc indisponivel');
+     f.rpc.mockResolvedValue({ data: null, error: erro });
+-    const queries = captureQueries(groupConversation, 'p-1');
+ 
+-    await expect(runQueryFn(queries[1])).rejects.toThrow('rpc indisponivel');
++    renderDetails(groupConversation, 'p-1');
++
++    await expect(runQueryFn(f.queries[0])).rejects.toThrow('rpc indisponivel');
+   });
+ });
+diff --git a/src/hooks/team-chat/queryKeys.ts b/src/hooks/team-chat/queryKeys.ts
+index 941ffce1e1..9f78980cff 100644
+--- a/src/hooks/team-chat/queryKeys.ts
++++ b/src/hooks/team-chat/queryKeys.ts
+@@ -31,6 +31,12 @@ export const queryKeys = {
+     memberIds.join(','),
+   ],
+   memberProfile: (profileId: string): QueryKey => ['team-member-profile', profileId],
++  /**
++   * HZ-28: aniversarios da equipe (RPC `get_team_birthdays`). Sem id de conversa de
++   * proposito — a RPC devolve a lista inteira de perfis ativos com aniversario, entao
++   * o cache e um so e a conversa (direta ou grupo) so filtra o que ja veio.
++   */
++  teamBirthdays: (): QueryKey => ['team-birthdays-rpc'],
+   performance: (conversationId: string): QueryKey => [
+     'departmentChat',
+     'performance',
+diff --git a/src/hooks/team-chat/useTeamMemberDetails.ts b/src/hooks/team-chat/useTeamMemberDetails.ts
+index 613c6a802f..e62d28649c 100644
+--- a/src/hooks/team-chat/useTeamMemberDetails.ts
++++ b/src/hooks/team-chat/useTeamMemberDetails.ts
+@@ -1,8 +1,10 @@
+ import { useMemo } from 'react';
+ import { useQuery } from '@tanstack/react-query';
+ import { supabase } from '@/integrations/supabase/client';
++import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
+ import type { Database } from '@/integrations/supabase/types';
+ import type { TeamConversation } from './teamChatTypes';
++import type { MemberBirthday } from '@/lib/birthday';
+ import { queryKeys } from './queryKeys';
+ 
+ export interface MemberProfile {
+@@ -16,7 +18,7 @@ export interface MemberProfile {
+   role: string | null;
+   is_active: boolean | null;
+   created_at: string;
+-  birthday: string | null;
++  birthday: MemberBirthday | null;
+ }
+ 
+ /**
+@@ -25,7 +27,16 @@ export interface MemberProfile {
+  */
+ type TeamProfileRow = Database['public']['Functions']['get_team_profiles']['Returns'][number];
+ 
+-function toMemberProfile(row: TeamProfileRow): MemberProfile {
++/**
++ * Linha da RPC `get_team_birthdays` (migration 20261016102337, HZ-28): apenas
++ * `id`, `birthday_day` e `birthday_month` dos perfis ativos — o ano nunca sai do banco.
++ */
++type TeamBirthdayRow = Database['public']['Functions']['get_team_birthdays']['Returns'][number];
++
++function toMemberProfile(
++  row: TeamProfileRow,
++  birthdays: Map<string, MemberBirthday>,
++): MemberProfile {
+   return {
+     id: row.id,
+     name: row.name,
+@@ -37,30 +48,29 @@ function toMemberProfile(row: TeamProfileRow): MemberProfile {
+     role: row.role ?? null,
+     is_active: row.is_active ?? null,
+     created_at: row.created_at,
+-    // `birthday` nao pertence ao contrato seguro: a RPC nao o fornece e nao ha
+-    // outra fonte permitida para ler o perfil de um colega. Mantem o campo para
+-    // o formato consumido pela tela, sempre null.
+-    birthday: null,
++    // Dia/mes vem da RPC `get_team_birthdays`; quem nao tem aniversario cadastrado
++    // (ou esta inativo, o que a RPC ja filtra) continua com `birthday: null`.
++    birthday: birthdays.get(row.id) ?? null,
+   };
+ }
+ 
+ /**
+- * Carrega colegas APENAS pela RPC `get_team_profiles`.
+- *
+- * Ler `profiles` direto para ver outro colaborador e bloqueado pelo RLS para
+- * agentes (cada usuario so ve o proprio perfil). A RPC nao aceita filtro de IDs,
+- * entao ela e chamada uma vez e o retorno e reduzido aos IDs da conversa.
++ * Aniversarios da equipe pela RPC segura: uma chamada devolve a lista inteira de perfis
++ * ativos com dia/mes — a chave de cache e uma so (`queryKeys.teamBirthdays()`).
+  */
+-async function loadConversationMembers(profileIds: string[]): Promise<MemberProfile[]> {
+-  if (profileIds.length === 0) return [];
+-  const { data, error } = await supabase.rpc('get_team_profiles');
++async function rpcTeamBirthdays(): Promise<Map<string, MemberBirthday>> {
++  const { data, error } = await supabase.rpc('get_team_birthdays');
+   if (error) throw error;
+-  const wanted = new Set(profileIds);
+-  return ((data ?? []) as TeamProfileRow[])
+-    .filter((row) => wanted.has(row.id))
+-    .map(toMemberProfile);
++  const porPerfil = new Map<string, MemberBirthday>();
++  for (const row of (data ?? []) as TeamBirthdayRow[]) {
++    porPerfil.set(row.id, { day: row.birthday_day, month: row.birthday_month });
++  }
++  return porPerfil;
+ }
+ 
++/** Identidade estavel para o caso "sem aniversarios", sem recriar o Map a cada render. */
++const SEM_ANIVERSARIOS: Map<string, MemberBirthday> = new Map();
++
+ export function useTeamMemberDetails(
+   conversation: TeamConversation,
+   currentProfileId: string | null,
+@@ -78,21 +88,35 @@ export function useTeamMemberDetails(
+     [conversation.members],
+   );
+ 
+-  const { data: memberProfile, isLoading } = useQuery({
+-    queryKey: queryKeys.memberProfile(otherMemberId || conversation.id),
+-    queryFn: async () => {
+-      if (conversation.type !== 'direct' || !otherMemberId) return null;
+-      const [found] = await loadConversationMembers([otherMemberId]);
+-      return found ?? null;
+-    },
+-    enabled: !!currentProfileId && conversation.type === 'direct' && !!otherMemberId,
+-  });
++  // Fonte unica dos colegas: `useTeamProfiles` usa a chave compartilhada
++  // `['team-profiles-rpc']`, entao conversa direta e grupo (e as outras telas que a
++  // usam) reaproveitam UMA resposta da RPC em vez de uma por chave de conversa.
++  const { data: profiles = [], isLoading } = useTeamProfiles(!!currentProfileId);
+ 
+-  const { data: groupMembers = [] } = useQuery({
+-    queryKey: queryKeys.members(conversation.id, memberIds),
+-    queryFn: () => loadConversationMembers(memberIds),
+-    enabled: !!currentProfileId && conversation.type === 'group' && memberIds.length > 0,
++  // Uma chave so para os aniversarios: a RPC devolve a equipe inteira e nao se repete
++  // a cada troca de conversa (staleTime de alguns minutos).
++  const { data: birthdays = SEM_ANIVERSARIOS } = useQuery({
++    queryKey: queryKeys.teamBirthdays(),
++    queryFn: rpcTeamBirthdays,
++    enabled: !!currentProfileId,
++    staleTime: 5 * 60_000,
+   });
+ 
+-  return { memberProfile: memberProfile ?? null, isLoading, groupMembers };
++  const team = useMemo(
++    () => profiles.map((row) => toMemberProfile(row, birthdays)),
++    [profiles, birthdays],
++  );
++
++  const memberProfile = useMemo(() => {
++    if (conversation.type !== 'direct' || !otherMemberId) return null;
++    return team.find((m) => m.id === otherMemberId) ?? null;
++  }, [team, conversation.type, otherMemberId]);
++
++  const groupMembers = useMemo(() => {
++    if (conversation.type !== 'group') return [];
++    const wanted = new Set(memberIds);
++    return team.filter((m) => wanted.has(m.id));
++  }, [team, conversation.type, memberIds]);
++
++  return { memberProfile, isLoading, groupMembers };
+ }
+diff --git a/src/integrations/supabase/types.ts b/src/integrations/supabase/types.ts
+index 6344a0e8a0..56e3e5ce77 100644
+--- a/src/integrations/supabase/types.ts
++++ b/src/integrations/supabase/types.ts
+@@ -11340,6 +11340,14 @@ export type Database = {
+           last_message_type: string
+         }[]
+       }
++      get_team_birthdays: {
++        Args: never
++        Returns: {
++          birthday_day: number
++          birthday_month: number
++          id: string
++        }[]
++      }
+       get_team_inbox: {
+         Args: never
+         Returns: {
+diff --git a/src/lib/birthday.ts b/src/lib/birthday.ts
+new file mode 100644
+index 0000000000..8ee5e4a80a
+--- /dev/null
++++ b/src/lib/birthday.ts
+@@ -0,0 +1,34 @@
++/**
++ * HZ-28 (paridade V3->V2, doc 26): a RPC segura `get_team_birthdays` devolve SO o dia e o
++ * mes do aniversario — o ano nao chega ao front. Por isso aqui se trabalha com
++ * `{ day, month }` e a idade nao existe em lugar nenhum: nao ha o que mostrar nem o que
++ * recalcular.
++ */
++export interface MemberBirthday {
++  day: number;
++  month: number;
++}
++
++export interface BirthdayInfo {
++  /** Proximo aniversario: o dia/mes do perfil no ano corrente, ou no seguinte se ja passou. */
++  date: Date;
++  day: number;
++  month: number;
++  isToday: boolean;
++  daysUntil: number;
++}
++
++/**
++ * Aniversario sem ano: devolve o proximo aniversario (data do ano corrente ou do seguinte) e
++ * quantos dias faltam. Devolve `null` quando o perfil nao tem aniversario cadastrado.
++ */
++export function getBirthdayInfo(birthday: MemberBirthday | null): BirthdayInfo | null {
++  if (!birthday) return null;
++  const today = new Date();
++  const hoje = new Date(today.getFullYear(), today.getMonth(), today.getDate());
++  let date = new Date(today.getFullYear(), birthday.month - 1, birthday.day);
++  if (date < hoje) date = new Date(today.getFullYear() + 1, birthday.month - 1, birthday.day);
++  const isToday = date.getTime() === hoje.getTime();
++  const daysUntil = Math.round((date.getTime() - hoje.getTime()) / 86_400_000);
++  return { date, day: birthday.day, month: birthday.month, isToday, daysUntil };
++}
+diff --git a/supabase/migrations/20261016102337_get_team_birthdays.sql b/supabase/migrations/20261016102337_get_team_birthdays.sql
+new file mode 100644
+index 0000000000..fa88f3a07d
+--- /dev/null
++++ b/supabase/migrations/20261016102337_get_team_birthdays.sql
+@@ -0,0 +1,39 @@
++-- get_team_birthdays
++-- Rollback: dropa a RPC nova (era o unico objeto criado); nada mais muda.
++-- Rollback (SQL executável, na ordem):
++--   drop function if exists public.get_team_birthdays();
++--
++-- AUDITORIA PARIDADE V3->V2 doc 26, achado HZ3-002 (worker sql).
++-- Problema: a RPC get_team_profiles (SECURITY DEFINER, so ativos, mascara e-mail/telefone
++-- para nao-admin) nao devolve `birthday`; o contrato fixa `birthday: null` no hook
++-- (src/hooks/team-chat/useTeamMemberDetails.ts). Consequencia: o cartao de aniversario do
++-- colega e a secao "Proximos Aniversarios" do Team Chat nunca funcionam.
++--
++-- Decisao do dono (Claude): NAO devolver a data completa. Esta RPC devolve SO dia e mes,
++-- sem o ano, para o aniversario nao expor a idade. Colunas exatas: id, birthday_day,
++-- birthday_month (integer 1..31 / 1..12). Nunca a coluna birthday nem o ano.
++--
++-- Escopo: SO a funcao nova e a ACL dela. Nao toca get_team_profiles, nenhuma policy,
++-- nenhum GRANT de objeto existente, nenhum dado. Nada para anon.
++--
++-- Sem BEGIN/COMMIT: a migration aplica numa unica transacao; qualquer erro desfaz tudo.
++
++CREATE OR REPLACE FUNCTION public.get_team_birthdays()
++RETURNS TABLE(id uuid, birthday_day integer, birthday_month integer)
++LANGUAGE sql
++STABLE SECURITY DEFINER
++SET search_path = public, pg_temp
++AS $function$
++  -- So perfis ATIVOS com aniversario cadastrado; devolve apenas dia e mes (sem ano).
++  SELECT
++    p.id,
++    extract(day FROM p.birthday)::integer AS birthday_day,
++    extract(month FROM p.birthday)::integer AS birthday_month
++  FROM public.profiles p
++  WHERE p.is_active = true
++    AND p.birthday IS NOT NULL;
++$function$;
++
++-- Funcao nova nasce com EXECUTE para PUBLIC: fecha tudo e libera so authenticated.
++REVOKE EXECUTE ON FUNCTION public.get_team_birthdays() FROM PUBLIC, anon;
++GRANT EXECUTE ON FUNCTION public.get_team_birthdays() TO authenticated;
+diff --git a/supabase/tests/get_team_birthdays.sql b/supabase/tests/get_team_birthdays.sql
+new file mode 100644
+index 0000000000..c2410c5340
+--- /dev/null
++++ b/supabase/tests/get_team_birthdays.sql
+@@ -0,0 +1,140 @@
++-- supabase/tests/get_team_birthdays.sql
++-- Prova da RPC public.get_team_birthdays() (auditoria paridade V3->V2 doc 26, achado HZ3-002).
++--
++-- Roda no banco LOCAL da tarefa com o PAPEL REAL (authenticated, anon), nunca so como postgres.
++-- Uso: zapp-db-local psql . <stack> < supabase/tests/get_team_birthdays.sql
++-- Qualquer assercao que falha => RAISE EXCEPTION => psql sai != 0 por causa do ON_ERROR_STOP.
++-- A fixture vive numa transacao unica e e desfeita no ROLLBACK final (nada fica no banco).
++\set ON_ERROR_STOP on
++
++begin;
++
++-- ---------------------------------------------------------------------------
++-- Fixture (como postgres). 3 usuarios/perfis com nome unico (busca robusta):
++--   A = ativo  com aniversario 07/03  -> deve aparecer (dia 7, mes 3)
++--   B = ativo  SEM aniversario        -> nao aparece
++--   C = inativo com aniversario 25/12 -> nao aparece
++-- session_replication_role=replica desliga gatilhos/FK apenas no DML da fixture.
++-- ---------------------------------------------------------------------------
++set local session_replication_role = replica;
++
++insert into auth.users (id) values
++  ('11111111-1111-1111-1111-111111111111'),
++  ('22222222-2222-2222-2222-222222222222'),
++  ('33333333-3333-3333-3333-333333333333');
++
++insert into public.profiles (id, user_id, name, is_active, birthday) values
++  ('aaaa1111-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111', '__HZ3_ATIVO__',   true,  date '1990-03-07'),
++  ('bbbb2222-0000-0000-0000-00000000000b', '22222222-2222-2222-2222-222222222222', '__HZ3_SEMDATA__', true,  null),
++  ('cccc3333-0000-0000-0000-00000000000c', '33333333-3333-3333-3333-333333333333', '__HZ3_INATIVO__', false, date '1985-12-25');
++
++set local session_replication_role = origin;
++
++-- ---------------------------------------------------------------------------
++-- BLOCO B (postgres, mesmo antes de qualquer role): o contrato exposto NAO tem
++-- o ano nem a data completa -- so id, birthday_day, birthday_month.
++-- ---------------------------------------------------------------------------
++do $$
++declare
++  v_cols text;
++begin
++  select string_agg(n, ',' order by ord) into v_cols
++  from unnest((select proargnames from pg_catalog.pg_proc
++               where oid = 'public.get_team_birthdays()'::regprocedure)) with ordinality as t(n, ord);
++  if v_cols is distinct from 'id,birthday_day,birthday_month' then
++    raise exception 'BLOCO B FALHOU: colunas expostas = % (esperado id,birthday_day,birthday_month)', v_cols;
++  end if;
++  raise notice 'BLOCO B OK: colunas expostas = % (sem ano, sem data completa)', v_cols;
++end $$;
++
++-- ---------------------------------------------------------------------------
++-- BLOCO D: o rollback da migration (drop da funcao nova) roda e e reversivel.
++-- ---------------------------------------------------------------------------
++savepoint rb;
++
++drop function if exists public.get_team_birthdays();
++
++do $$
++begin
++  if to_regprocedure('public.get_team_birthdays()') is not null then
++    raise exception 'BLOCO D FALHOU: rollback (drop function) nao removeu a RPC';
++  end if;
++end $$;
++
++rollback to savepoint rb;
++
++do $$
++begin
++  if to_regprocedure('public.get_team_birthdays()') is null then
++    raise exception 'BLOCO D FALHOU: a RPC nao voltou ao desfazer o savepoint';
++  end if;
++  raise notice 'BLOCO D OK: rollback (drop function) roda e o savepoint devolve a RPC';
++end $$;
++
++-- ---------------------------------------------------------------------------
++-- BLOCO A (papel real authenticated, como um agente comum do Team Chat):
++-- recebe dia/mes dos colegas ATIVOS; inativo e quem nao tem data ficam de fora.
++-- ---------------------------------------------------------------------------
++set local role authenticated;
++select set_config('request.jwt.claims',
++                   json_build_object('sub', '11111111-1111-1111-1111-111111111111')::text, true);
++
++do $$
++declare
++  v_dia int;
++  v_mes int;
++  v_inativo int;
++  v_semdata int;
++begin
++  select birthday_day, birthday_month into v_dia, v_mes
++  from public.get_team_birthdays()
++  where id = 'aaaa1111-0000-0000-0000-00000000000a';
++
++  if v_dia is null then
++    raise exception 'BLOCO A FALHOU: perfil ativo com aniversario nao apareceu';
++  end if;
++  if v_dia <> 7 or v_mes <> 3 then
++    raise exception 'BLOCO A FALHOU: esperado dia=7 mes=3, veio dia=% mes=%', v_dia, v_mes;
++  end if;
++
++  select count(*) into v_inativo
++  from public.get_team_birthdays()
++  where id = 'cccc3333-0000-0000-0000-00000000000c';
++  if v_inativo <> 0 then
++    raise exception 'BLOCO A FALHOU: perfil INATIVO apareceu na lista de aniversarios';
++  end if;
++
++  select count(*) into v_semdata
++  from public.get_team_birthdays()
++  where id = 'bbbb2222-0000-0000-0000-00000000000b';
++  if v_semdata <> 0 then
++    raise exception 'BLOCO A FALHOU: perfil ativo SEM aniversario apareceu';
++  end if;
++
++  raise notice 'BLOCO A OK: authenticated ve 07/03 do ativo; inativo e sem-data fora';
++end $$;
++
++reset role;
++
++-- ---------------------------------------------------------------------------
++-- BLOCO C (papel real anon): EXECUTE negado -- a RPC nao existe para quem nao logou.
++-- ---------------------------------------------------------------------------
++set local role anon;
++
++do $$
++begin
++  perform * from public.get_team_birthdays();
++  raise exception 'BLOCO C FALHOU: anon NAO deveria executar get_team_birthdays';
++exception
++  when insufficient_privilege then
++    raise notice 'BLOCO C OK: anon negado (insufficient_privilege)';
++end $$;
++
++reset role;
++
++-- ---------------------------------------------------------------------------
++-- Nao suja o banco: desfaz fixture e savepoints.
++-- ---------------------------------------------------------------------------
++rollback;
++
++\echo 'get_team_birthdays: SUITE COMPLETA OK (A: authenticated ativo/inativo/sem-data, B: contrato sem ano, C: anon negado, D: rollback)'

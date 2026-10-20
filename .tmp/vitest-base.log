@@ -1,0 +1,204 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb/.tmp/prova-base
+
+xxxxxxxx·x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx > Team Chat — aniversários dos colegas (HZ-28) > mostra os dois colegas com aniversário, o mais próximo primeiro, sem ano nem idade
+RangeError: Invalid time value
+ ❯ format ../../node_modules/date-fns/format.mjs:352:11
+ ❯ src/components/team-chat/TeamMemberDetails.tsx:110:65
+    108|                       <span className="truncate flex-1">{member.name}<…
+    109|                       <span className={cn('text-3xs shrink-0', member.…
+    110|                         {member.bInfo.isToday ? '🎉 Hoje!' : `${format…
+       |                                                                 ^
+    111|                       </span>
+    112|                     </div>
+ ❯ TeamMemberDetails src/components/team-chat/TeamMemberDetails.tsx:105:20
+ ❯ Object.react_stack_bottom_frame ../../node_modules/react-dom/cjs/react-dom-client.development.js:28571:20
+ ❯ renderWithHooks ../../node_modules/react-dom/cjs/react-dom-client.development.js:8030:22
+ ❯ updateFunctionComponent ../../node_modules/react-dom/cjs/react-dom-client.development.js:10569:19
+ ❯ beginWork ../../node_modules/react-dom/cjs/react-dom-client.development.js:12205:18
+ ❯ runWithFiberInDEV ../../node_modules/react-dom/cjs/react-dom-client.development.js:1048:13
+ ❯ performUnitOfWork ../../node_modules/react-dom/cjs/react-dom-client.development.js:19176:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx > Team Chat — aniversários dos colegas (HZ-28) > conversa direta mostra o dia e o mês do colega, nunca o ano
+RangeError: Invalid time value
+ ❯ format ../../node_modules/date-fns/format.mjs:352:11
+ ❯ TeamMemberDetails src/components/team-chat/TeamMemberDetails.tsx:58:90
+     56|                 <InfoRow icon={Briefcase} label="Cargo" value={memberP…
+     57|                 <InfoRow icon={Building2} label="Departamento" value={…
+     58|                 <InfoRow icon={Cake} label="Aniversário" value={member…
+       |                                                                                          ^
+     59|                 <InfoRow icon={Calendar} label="Membro desde" value={f…
+     60|               </div>
+ ❯ Object.react_stack_bottom_frame ../../node_modules/react-dom/cjs/react-dom-client.development.js:28571:20
+ ❯ renderWithHooks ../../node_modules/react-dom/cjs/react-dom-client.development.js:8030:22
+ ❯ updateFunctionComponent ../../node_modules/react-dom/cjs/react-dom-client.development.js:10569:19
+ ❯ beginWork ../../node_modules/react-dom/cjs/react-dom-client.development.js:12205:18
+ ❯ runWithFiberInDEV ../../node_modules/react-dom/cjs/react-dom-client.development.js:1048:13
+ ❯ performUnitOfWork ../../node_modules/react-dom/cjs/react-dom-client.development.js:19176:22
+ ❯ workLoopSync ../../node_modules/react-dom/cjs/react-dom-client.development.js:19004:41
+ ❯ renderRootSync ../../node_modules/react-dom/cjs/react-dom-client.development.js:18985:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > conversa direta carrega o colega pela lista compartilhada e nunca por .from("profiles")
+AssertionError: expected Map{} to deeply equal { id: 'p-2', name: 'Bruno Lima', …(9) }
+
+- Expected:
+{
+  "avatar_url": "https://cdn.promo.test/b.png",
+  "birthday": null,
+  "created_at": "2023-01-05T08:30:00.000Z",
+  "department": "Logistica",
+  "email": "bruno@promo.test",
+  "id": "p-2",
+  "is_active": true,
+  "job_title": "Supervisor",
+  "name": "Bruno Lima",
+  "phone": null,
+  "role": "supervisor",
+}
+
++ Received:
+Map {}
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:176:42
+    174|
+    175|     expect(f.from).not.toHaveBeenCalled();
+    176|     expect(result.current.memberProfile).toEqual({
+       |                                          ^
+    177|       id: 'p-2',
+    178|       name: 'Bruno Lima',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > grupo carrega os membros filtrados pelos IDs da conversa, na ordem da lista
+TypeError: members.map is not a function
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:197:20
+    195|     expect(f.from).not.toHaveBeenCalled();
+    196|     // Ordem da lista preservada e o perfil de fora da conversa (p-9) …
+    197|     expect(members.map((m) => m.id)).toEqual(['p-1', 'p-2']);
+       |                    ^
+    198|   });
+    199|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > preserva os campos da RPC e devolve birthday null para quem não tem cadastro
+AssertionError: expected undefined to match object { id: 'p-1', name: 'Ana Souza', …(7) }
+
+- Expected:
+{
+  "created_at": "2024-03-01T12:00:00.000Z",
+  "department": "Comercial",
+  "email": "ana@promo.test",
+  "id": "p-1",
+  "is_active": true,
+  "job_title": "Vendedora",
+  "name": "Ana Souza",
+  "phone": "+551****0001",
+  "role": "agent",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:204:24
+    202|     const members = result.current.groupMembers;
+    203|
+    204|     expect(members[0]).toMatchObject({
+       |                        ^
+    205|       id: 'p-1',
+    206|       name: 'Ana Souza',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > busca o aniversário na RPC get_team_birthdays e devolve só dia e mês (sem ano)
+AssertionError: expected [ { queryKey: [ …(2) ], …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:229:23
+    227|     const { result } = renderDetails(groupConversation, 'p-1');
+    228|
+    229|     expect(f.queries).toHaveLength(1);
+       |                       ^
+    230|     expect(f.queries[0].queryKey).toEqual(queryKeys.teamBirthdays());
+    231|     expect(f.queries[0].queryKey).toEqual(['team-birthdays-rpc']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > direta: colega fora da RPC (inativo/ausente) resulta em null, sem cair para a tabela
+AssertionError: expected Map{} to be null
+
+- Expected:
+null
+
++ Received:
+Map {}
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:252:42
+    250|     const { result } = renderDetails(directConversation, 'p-1');
+    251|
+    252|     expect(result.current.memberProfile).toBeNull();
+       |                                          ^
+    253|     expect(f.from).not.toHaveBeenCalled();
+    254|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > sem perfil logado não busca aniversários (a chave fica desabilitada)
+AssertionError: expected [ { queryKey: [ …(2) ], …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:259:23
+    257|     renderDetails(groupConversation, null);
+    258|
+    259|     expect(f.queries).toHaveLength(1);
+       |                       ^
+    260|     expect(f.queries[0].enabled).toBe(false);
+    261|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > propaga o erro da RPC de aniversários em vez de engolir a falha
+AssertionError: promise resolved "null" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+null
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:269:42
+    267|     renderDetails(groupConversation, 'p-1');
+    268|
+    269|     await expect(runQueryFn(f.queries[0])).rejects.toThrow('rpc indisp…
+       |                                          ^
+    270|   });
+    271| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 1 passed (10)
+   Start at  09:06:20
+   Duration  5.34s (transform 2.63s, setup 2.48s, import 2.38s, tests 599ms, environment 2.95s)
+

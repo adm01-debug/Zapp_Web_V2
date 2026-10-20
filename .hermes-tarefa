@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aniversarios-team-chat
+ID=26101607414dfb
+BRANCH=v2/aniversarios-team-chat-26101607414dfb
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T07:43:53-03:00
+KANBAN=t_1e581b6b
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-26101607414dfb
+PRONTO_SHA=d5af89e4c10ccbca23a59e10597ce818fa892693

@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx (7 tests | 1 failed) 87ms
+     × busca o aniversário na RPC get_team_birthdays e devolve só dia e mês (sem ano) 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx > useTeamMemberDetails — colegas via RPC segura get_team_profiles > busca o aniversário na RPC get_team_birthdays e devolve só dia e mês (sem ano)
+AssertionError: expected [ null, null ] to deeply equal [ null, { day: 5, month: 1 } ]
+
+- Expected
++ Received
+
+  [
+    null,
+-   {
+-     "day": 5,
+-     "month": 1,
+-   },
++   null,
+  ]
+
+ ❯ src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx:242:64
+    240|
+    241|     // Nos perfis, o aniversário chega sem ano: só dia e mês.
+    242|     expect(result.current.groupMembers.map((m) => m.birthday)).toEqual…
+       |                                                                ^
+    243|       null,
+    244|       { day: 5, month: 1 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  08:30:32
+   Duration  2.56s (transform 216ms, setup 489ms, import 157ms, tests 87ms, environment 1.53s)
+

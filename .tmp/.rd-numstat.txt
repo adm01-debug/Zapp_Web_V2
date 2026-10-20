@@ -1,0 +1,11 @@
+17	5	src/components/team-chat/TeamMemberDetails.tsx
+12	13	src/components/team-chat/TeamMemberProfileHeader.tsx
+136	0	src/components/team-chat/__tests__/TeamMemberDetails.aniversarios.test.tsx
+4	1	src/hooks/team-chat/README.md
+84	44	src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
+6	0	src/hooks/team-chat/queryKeys.ts
+56	32	src/hooks/team-chat/useTeamMemberDetails.ts
+8	0	src/integrations/supabase/types.ts
+34	0	src/lib/birthday.ts
+39	0	supabase/migrations/20261016102337_get_team_birthdays.sql
+140	0	supabase/tests/get_team_birthdays.sql

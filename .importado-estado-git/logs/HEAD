@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792147431 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792147433 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 6ba600deb386eb8f9173adce678d5319f5a81a97 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792148081 -0300	cherry-pick: feat(banco): RPC get_team_birthdays devolve dia e mes (sem ano) para o Team Chat
+6ba600deb386eb8f9173adce678d5319f5a81a97 d5af89e4c10ccbca23a59e10597ce818fa892693 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792151682 -0300	commit: fix(team-chat): aniversarios dos colegas aparecem sem ano (HZ-28)

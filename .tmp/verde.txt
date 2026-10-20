@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aniversarios-team-chat-26101607414dfb
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  158 passed (158)
+      Tests  1986 passed | 5 expected fail | 1 todo (1992)
+   Start at  08:38:28
+   Duration  221.17s (transform 26.42s, setup 137.02s, import 83.05s, tests 66.36s, environment 477.20s)
+
