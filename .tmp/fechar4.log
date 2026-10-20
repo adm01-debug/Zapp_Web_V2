@@ -1,0 +1,6 @@
+On branch v2/absent-agents-presence-26101322020396
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — checagens automáticas (as mesmas razões pelas quais o revisor recusou entregas parecidas):
+   * INVENTÁRIO DE TESTES: .test.sh novo sem passo no CI: scripts/db-audit/absent-agents-presence.test.sh. Registre em .github/workflows/db-guard.yml (o check-test-inventory do CI reprova o PR) e rode `node scripts/ci/check-test-inventory.mjs`.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.
+RC=3

@@ -1,0 +1,279 @@
+-- absent_agents_use_presence.sql
+-- Prova de contrato da RPC public.reassign_absent_agents (migration
+-- 20261014010805_absent_agents_use_presence, cartao de banco "presenca real"):
+-- a ausencia deixa de vir de user_sessions.last_activity_at e passa a vir do
+-- heartbeat em public.agent_presence.
+--
+-- Roda como postgres no banco local da tarefa:
+--   zapp-db-local psql . abspres < supabase/tests/absent_agents_use_presence.sql
+-- Tudo dentro de BEGIN...ROLLBACK: nenhuma fixture persiste.
+--
+-- O que prova:
+--   T1  ausente (sem linha em agent_presence) TEM a carteira reatribuida, com
+--       evento 'absence_reassign' gravado (from/to/inactive_minutes);
+--   T2  agente com HEARTBEAT FRESCO que NAO tem user_sessions recente NAO e
+--       reatribuido -- a regressao do bug (o criterio antigo o via como ausente);
+--   T3  heartbeat FRESCO com status 'away' tambem protege a carteira;
+--   T4  heartbeat PARADO (updated_at antigo) E ausente, mesmo com linha presente;
+--   T5a o SUBSTITUTO exige heartbeat fresco: o membro de fila com presenca parada
+--       nao recebe nada; o fresco recebe;
+--   T5b sem nenhum candidato fresco na fila, NADA e movido (nao cria sucessor);
+--   T6  guarda de papel: authenticated sem admin/supervisor recebe exception;
+--   T7  entrada invalida: inactive_minutes negativo ou nulo -> SQLSTATE 22023;
+--   T8  status 'offline' explicito com heartbeat fresco E ausente ("nao online");
+--   T9  ACL explicita: EXECUTE para authenticated/service_role, negado a anon/PUBLIC;
+--   T10 default da janela = 2 minutos.
+
+begin;
+
+-- ===== neutraliza o seed local (isolamento das contagens) ====================
+-- Da heartbeat fresco a TODO profile pre-existente, para que nenhum agente do
+-- seed entre como ausente e mova contatos alheios as fixtures.
+insert into public.agent_presence (user_id, status, updated_at)
+select p.user_id, 'online', now()
+from public.profiles p
+on conflict (user_id) do update set status = 'online', updated_at = now();
+
+-- ===== fixtures ==============================================================
+-- 8 usuarios: admin (executor), ausente1, presente, livre (substituto fresco),
+-- away, parado (presenca parada, serve so de candidato), offline-explicito e
+-- ausente2 (fila sem candidato fresco).
+insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+values
+  ('00000000-0000-0000-0000-00000000a001', 'authenticated', 'authenticated', 'admin.pr@test.local',   '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b002', 'authenticated', 'authenticated', 'absent1.pr@test.local', '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b003', 'authenticated', 'authenticated', 'present.pr@test.local', '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b004', 'authenticated', 'authenticated', 'free.pr@test.local',    '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b005', 'authenticated', 'authenticated', 'away.pr@test.local',    '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b006', 'authenticated', 'authenticated', 'stale.pr@test.local',   '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b007', 'authenticated', 'authenticated', 'offline.pr@test.local', '', now(), now(), now()),
+  ('00000000-0000-0000-0000-00000000b008', 'authenticated', 'authenticated', 'absent2.pr@test.local', '', now(), now(), now());
+
+-- handle_new_user cria o profile de cada auth.users; guardamos os ids.
+create temp table pr_ids on commit drop as
+select
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000a001') as admin_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b002') as absent1_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b003') as present_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b004') as free_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b005') as away_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b006') as stale_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b007') as offline_p,
+  (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b008') as absent2_p;
+
+insert into public.user_roles (user_id, role)
+values ('00000000-0000-0000-0000-00000000a001', 'admin');
+
+update public.profiles set is_active = true, max_chats = 10
+ where id in (select absent1_p from pr_ids union select present_p from pr_ids union select free_p from pr_ids
+              union select away_p from pr_ids union select stale_p from pr_ids union select offline_p from pr_ids
+              union select absent2_p from pr_ids);
+
+insert into public.queues (id, name, color)
+values
+  ('00000000-0000-0000-0000-00000000d001', 'Fila PR',  '#22c55e'),
+  ('00000000-0000-0000-0000-00000000d002', 'Fila PR2', '#3b82f6'),
+  ('00000000-0000-0000-0000-00000000d003', 'Fila PR3', '#f59e0b');
+
+-- Fila 1: ausente1, livre (fresco = unico candidato valido), parado e offline.
+-- Fila 2: ausente2 + parado (NENHUM candidato fresco -> T5b).
+insert into public.queue_members (queue_id, profile_id, is_active)
+values
+  ('00000000-0000-0000-0000-00000000d001', (select absent1_p from pr_ids), true),
+  ('00000000-0000-0000-0000-00000000d001', (select free_p    from pr_ids), true),
+  ('00000000-0000-0000-0000-00000000d001', (select stale_p   from pr_ids), true),
+  ('00000000-0000-0000-0000-00000000d001', (select offline_p from pr_ids), true),
+  ('00000000-0000-0000-0000-00000000d002', (select absent2_p from pr_ids), true),
+  ('00000000-0000-0000-0000-00000000d002', (select stale_p   from pr_ids), true);
+
+-- ===== presenca (a fonte nova) ==============================================
+-- ausente1 b002: SEM linha em agent_presence                        -> ausente
+-- presente b003: 'online' fresco                                    -> presente
+-- livre    b004: 'online' fresco, carga 0                          -> substituto
+-- away     b005: 'away' fresco                                      -> presente
+-- parado   b006: 'online' PARADO (10 min)                           -> ausente
+-- offline  b007: 'offline' fresco                                   -> ausente
+-- ausente2 b008: SEM linha                                          -> ausente
+insert into public.agent_presence (user_id, status, updated_at)
+values
+  ('00000000-0000-0000-0000-00000000b003', 'online',  now()),
+  ('00000000-0000-0000-0000-00000000b004', 'online',  now()),
+  ('00000000-0000-0000-0000-00000000b005', 'away',    now()),
+  ('00000000-0000-0000-0000-00000000b006', 'online',  now() - interval '10 minutes'),
+  ('00000000-0000-0000-0000-00000000b007', 'offline', now());
+
+-- ===== contatos =============================================================
+-- d001: ausente1 2, parado 1, offline 1 (todos movem para o livre).
+-- d003: presente 3, away 1 (nunca movem).
+-- d002: ausente2 2 (sem candidato fresco -> ficam).
+insert into public.contacts (id, name, phone, conversation_status, assigned_to, queue_id)
+values
+  ('00000000-0000-0000-0000-00000000c001', 'Ausente1 c01', '+551****1001', 'open', (select absent1_p from pr_ids), '00000000-0000-0000-0000-00000000d001'),
+  ('00000000-0000-0000-0000-00000000c002', 'Ausente1 c02', '+551****1002', 'open', (select absent1_p from pr_ids), '00000000-0000-0000-0000-00000000d001'),
+  ('00000000-0000-0000-0000-00000000c003', 'Presente c03', '+551****1003', 'open', (select present_p from pr_ids), '00000000-0000-0000-0000-00000000d003'),
+  ('00000000-0000-0000-0000-00000000c004', 'Presente c04', '+551****1004', 'open', (select present_p from pr_ids), '00000000-0000-0000-0000-00000000d003'),
+  ('00000000-0000-0000-0000-00000000c005', 'Presente c05', '+551****1005', 'open', (select present_p from pr_ids), '00000000-0000-0000-0000-00000000d003'),
+  ('00000000-0000-0000-0000-00000000c006', 'Away c06',     '+551****1006', 'open', (select away_p    from pr_ids), '00000000-0000-0000-0000-00000000d003'),
+  ('00000000-0000-0000-0000-00000000c007', 'Offline c07',  '+551****1007', 'open', (select offline_p from pr_ids), '00000000-0000-0000-0000-00000000d001'),
+  ('00000000-0000-0000-0000-00000000c008', 'Parado c08',   '+551****1008', 'open', (select stale_p   from pr_ids), '00000000-0000-0000-0000-00000000d001'),
+  ('00000000-0000-0000-0000-00000000c009', 'Ausente2 c09', '+551****1009', 'open', (select absent2_p from pr_ids), '00000000-0000-0000-0000-00000000d002'),
+  ('00000000-0000-0000-0000-00000000c010', 'Ausente2 c10', '+551****1010', 'open', (select absent2_p from pr_ids), '00000000-0000-0000-0000-00000000d002');
+
+-- o executor e admin (guard de papel passa)
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}';
+
+-- ===== T1/T4/T5a: sobra o coracao fresco; substituto e o unico fresco ========
+do $$
+declare
+  v_n      integer;
+  v_resto  integer;
+  v_free   integer;
+  v_stale  integer;
+  v_ev_abs integer;
+  v_ev_all integer;
+begin
+  v_n := public.reassign_absent_agents(2);
+  -- movem: ausente1 (2) + offline-explicito (1) + parado (1) = 4. Presente e away ficam.
+  if v_n <> 4 then
+    raise exception 'T1 FALHOU: esperava 4 movidos, veio %', v_n;
+  end if;
+  select count(*) into v_resto from public.contacts where assigned_to = (select absent1_p from pr_ids);
+  if v_resto <> 0 then raise exception 'T1 FALHOU: sobraram % contatos no ausente1', v_resto; end if;
+  select count(*) into v_resto from public.contacts where assigned_to = (select offline_p from pr_ids);
+  if v_resto <> 0 then raise exception 'T4/T8 FALHOU: contato do offline-explicito nao foi movido'; end if;
+  select count(*) into v_resto from public.contacts where assigned_to = (select stale_p from pr_ids);
+  if v_resto <> 0 then raise exception 'T4 FALHOU: contato de presenca parada nao foi movido'; end if;
+  select count(*) into v_stale from public.contacts where assigned_to = (select stale_p from pr_ids);
+  if v_stale <> 0 then raise exception 'T5a FALHOU: o candidato de presenca parada recebeu contato'; end if;
+  select count(*) into v_free from public.contacts where assigned_to = (select free_p from pr_ids);
+  if v_free <> 4 then
+    raise exception 'T5a FALHOU: o unico substituto fresco deveria ter recebido 4, recebeu %', v_free;
+  end if;
+  select count(*) into v_ev_abs from public.conversation_events
+   where event_type = 'absence_reassign' and from_agent_id = (select absent1_p from pr_ids)
+     and to_agent_id = (select free_p from pr_ids) and metadata->>'inactive_minutes' = '2';
+  if v_ev_abs <> 2 then
+    raise exception 'T1 FALHOU: eventos absence_reassign do ausente1 = % (esperava 2)', v_ev_abs;
+  end if;
+  select count(*) into v_ev_all from public.conversation_events where event_type = 'absence_reassign';
+  if v_ev_all < 4 then
+    raise exception 'T1 FALHOU: eventos absence_reassign insuficientes (%)', v_ev_all;
+  end if;
+  raise notice 'T1/T4/T5a OK: 4 movidos (ausente1/offline/parado) -> livre fresco; parado nao recebe';
+end $$;
+
+-- ===== T5b: fila sem candidato fresco nao mova nada ==========================
+do $$
+declare
+  v_n     integer;
+  v_aus2  integer;
+begin
+  v_n := public.reassign_absent_agents(2);
+  if v_n <> 0 then
+    raise exception 'T5b FALHOU: esperava 0 (sem candidato fresco na fila 2), veio %', v_n;
+  end if;
+  select count(*) into v_aus2 from public.contacts where assigned_to = (select absent2_p from pr_ids);
+  if v_aus2 <> 2 then
+    raise exception 'T5b FALHOU: ausente2 deveria manter 2 contatos, tem %', v_aus2;
+  end if;
+  raise notice 'T5b OK: sem candidato fresco, nada e movido (nao cria sucessor ausente)';
+end $$;
+
+-- ===== T2/T3: heartbeat fresco protege a carteira ============================
+do $$
+declare
+  v_present  integer;
+  v_away     integer;
+  v_sessions integer;
+begin
+  select count(*) into v_present from public.contacts where assigned_to = (select present_p from pr_ids);
+  select count(*) into v_away    from public.contacts where assigned_to = (select away_p from pr_ids);
+  if v_present <> 3 then
+    raise exception 'T2 FALHOU: agente com heartbeat fresco perdeu carteira (% restantes)', v_present;
+  end if;
+  if v_away <> 1 then
+    raise exception 'T3 FALHOU: agente away com heartbeat fresco perdeu carteira (% restantes)', v_away;
+  end if;
+  -- e o agente "presente" NAO tem user_sessions recente: e a prova viva do bug antigo.
+  select count(*) into v_sessions from public.user_sessions
+   where user_id = '00000000-0000-0000-0000-00000000b003' and is_active = true
+     and last_activity_at > now() - interval '2 minutes';
+  if v_sessions <> 0 then
+    raise exception 'T2 INVALIDO: o agente "presente" tem sessao recente; o teste nao prova o criterio novo';
+  end if;
+  raise notice 'T2/T3 OK: heartbeat fresco (online e away) preserva a carteira, mesmo sem user_sessions';
+end $$;
+
+-- ===== T6: guarda de papel ===================================================
+do $$
+begin
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000b004","role":"authenticated"}', true);
+  begin
+    perform public.reassign_absent_agents(2);
+    raise exception 'T6 FALHOU: agente comum conseguiu chamar a RPC';
+  exception when others then
+    if position('requer perfil admin ou supervisor' in sqlerrm) = 0 then
+      raise exception 'T6 FALHOU: exception inesperada: %', sqlerrm;
+    end if;
+  end;
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}', true);
+  raise notice 'T6 OK: authenticated sem admin/supervisor e barrado';
+end $$;
+
+-- ===== T7: entrada invalida ==================================================
+do $$
+begin
+  begin
+    perform public.reassign_absent_agents(-1);
+    raise exception 'T7 FALHOU: inactive_minutes negativo foi aceito';
+  exception when sqlstate '22023' then
+    null;
+  end;
+  begin
+    perform public.reassign_absent_agents(null);
+    raise exception 'T7 FALHOU: inactive_minutes nulo foi aceito';
+  exception when sqlstate '22023' then
+    null;
+  end;
+  raise notice 'T7 OK: inactive_minutes invalido -> SQLSTATE 22023';
+end $$;
+
+-- ===== T8: offline explicito com heartbeat fresco ============================
+do $$
+begin
+  if exists (select 1 from public.contacts where assigned_to = (select offline_p from pr_ids)) then
+    raise exception 'T8 FALHOU: agente com status offline explicito nao foi tratado como ausente';
+  end if;
+  raise notice 'T8 OK: offline explicito (com heartbeat fresco) conta como ausente';
+end $$;
+
+-- ===== T9: ACL explicita =====================================================
+do $$
+begin
+  if not has_function_privilege('authenticated', 'public.reassign_absent_agents(integer)', 'EXECUTE') then
+    raise exception 'T9 FALHOU: authenticated sem EXECUTE';
+  end if;
+  if not has_function_privilege('service_role', 'public.reassign_absent_agents(integer)', 'EXECUTE') then
+    raise exception 'T9 FALHOU: service_role sem EXECUTE';
+  end if;
+  if has_function_privilege('anon', 'public.reassign_absent_agents(integer)', 'EXECUTE') then
+    raise exception 'T9 FALHOU: anon com EXECUTE';
+  end if;
+  raise notice 'T9 OK: ACL explicita (authenticated/service_role sim; anon nao)';
+end $$;
+
+-- ===== T10: default da janela = 2 minutos ====================================
+do $$
+declare
+  v_args text;
+begin
+  select pg_get_function_arguments(p.oid) into v_args
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname = 'reassign_absent_agents';
+  if position('DEFAULT 2' in upper(v_args)) = 0 then
+    raise exception 'T10 FALHOU: default da janela nao e 2 (%)', v_args;
+  end if;
+  raise notice 'T10 OK: janela default = 2 minutos (%)', v_args;
+end $$;
+
+rollback;

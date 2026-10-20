@@ -1,0 +1,7 @@
+On branch v2/absent-agents-presence-26101322020396
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': scripts/db-audit/absent-agents-presence.test.sh. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+  *. CONFERÊNCIA: supabase/migrations/20261014010805_absent_agents_use_presence.sql: o UPDATE em `contacts` dispara o gatilho BEFORE UPDATE que regrava updated_at em TODAS as linhas tocadas (recusa real de 06/10). Desligue só esse gatilho na transação ou preserve a coluna, e prove com uma linha antes/depois.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.
+RC=3

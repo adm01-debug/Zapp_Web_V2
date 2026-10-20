@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 453e6b69f9cabf1a293492139de5520a29f576fe Hermes Senior <hermes-senior@promobrindes.local> 1791939757 -0300	
+453e6b69f9cabf1a293492139de5520a29f576fe 453e6b69f9cabf1a293492139de5520a29f576fe Hermes Senior <hermes-senior@promobrindes.local> 1791939758 -0300	reset: moving to HEAD
+453e6b69f9cabf1a293492139de5520a29f576fe 98c8817d0408fa4abc4660358a498cd28130f60c Hermes Senior <hermes-senior@promobrindes.local> 1791941017 -0300	commit: fix(banco): reatribuicao por ausencia usa heartbeat de agent_presence
+98c8817d0408fa4abc4660358a498cd28130f60c 0a4b56e424e0c843a4f87d963bbe5bbd23ccc571 Hermes Senior <hermes-senior@promobrindes.local> 1791941193 -0300	commit (amend): fix(banco): reatribuicao por ausencia usa heartbeat de agent_presence
+0a4b56e424e0c843a4f87d963bbe5bbd23ccc571 e64f3b30b0b20a339400446f41ac6c9765db82c8 Hermes Senior <hermes-senior@promobrindes.local> 1791941398 -0300	commit (amend): fix(banco): reatribuicao por ausencia usa heartbeat de agent_presence
+e64f3b30b0b20a339400446f41ac6c9765db82c8 620a9b33fbe805e9d4676caaea375942652b10b3 Hermes Senior <hermes-senior@promobrindes.local> 1791941615 -0300	commit (amend): fix(banco): reatribuicao por ausencia usa heartbeat de agent_presence
+620a9b33fbe805e9d4676caaea375942652b10b3 32ec27490097991b4d20c1b432d6973c2bcfb9ac Hermes Senior <hermes-senior@promobrindes.local> 1791941719 -0300	commit: chore(ci): registra harness de presenca no inventario de testes
+32ec27490097991b4d20c1b432d6973c2bcfb9ac c1b63cbf5eab0131de4d5470176831fe4311a9cb Hermes Senior <hermes-senior@promobrindes.local> 1792036070 -0300	commit: fix(banco): refazer 1 usa trigger real, rollback total e prova governanca do parametro

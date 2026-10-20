@@ -1,0 +1,1 @@
+fix(banco): refazer 1 usa trigger real, rollback total e prova governanca do parametro

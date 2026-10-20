@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=absent-agents-presence
+ID=26101322020396
+BRANCH=v2/absent-agents-presence-26101322020396
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/absent-agents-presence-26101322020396
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T22:02:38-03:00
+KANBAN=t_2b046874
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/absent-agents-presence-26101322020396/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101322020396
+PRONTO_SHA=32ec27490097991b4d20c1b432d6973c2bcfb9ac
