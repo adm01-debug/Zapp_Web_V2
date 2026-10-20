@@ -1,0 +1,14 @@
+PROJETO=Zapp_Web_V2
+SLUG=9-funcoes-definer-sem-pg-temp-que-quebra
+ID=2610170648ccfa
+BRANCH=v2/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-17T06:48:35-03:00
+KANBAN=t_746f4dfc
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-17
+DB_LOCAL=v2-2610170648ccfa
