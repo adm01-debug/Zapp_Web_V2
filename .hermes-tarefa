@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audio-memes-storage-realtime-2610151908f
+ID=26101614551169
+BRANCH=v2/audio-memes-storage-realtime-2610151908f-26101614551169
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-memes-storage-realtime-2610151908f-26101614551169
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T14:55:28-03:00
+KANBAN=t_56635c76
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-memes-storage-realtime-2610151908f-26101614551169/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-26101614551169
+PRONTO_SHA=305ef0a9ab2a6132d686d45a2983ee61f7485108

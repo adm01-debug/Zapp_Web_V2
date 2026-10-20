@@ -1,0 +1,26 @@
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+INSERT 0 1
+NOTICE:  policy "Auth upload voice changer tmp owned" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+NOTICE:  policy "Users can read own voice changer tmp" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+NOTICE:  policy "Users can update own voice changer tmp" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+NOTICE:  policy "Users can delete own voice changer tmp" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+CREATE FUNCTION
+COMMENT
+REVOKE
+GRANT
+DO
+DO
+DO

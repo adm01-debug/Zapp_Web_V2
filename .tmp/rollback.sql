@@ -1,0 +1,15 @@
+do $$ begin if exists (select 1 from pg_extension where extname = 'pg_cron') then perform cron.unschedule(jobid) from cron.job where jobname = 'voice-changer-tmp-purge'; end if; end $$;
+drop function if exists public.purge_voice_changer_tmp(integer, integer);
+do $$ begin if exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='audio_meme_favorites') then alter publication supabase_realtime drop table public.audio_meme_favorites; end if; end $$;
+do $$ begin if exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='audio_memes') then alter publication supabase_realtime drop table public.audio_memes; end if; end $$;
+do $$ begin perform set_config('storage.allow_delete_query','true',true); delete from storage.buckets where id = 'voice-changer-tmp' and not exists (select 1 from storage.objects where bucket_id = 'voice-changer-tmp'); end $$;
+drop policy if exists "Users can delete own voice changer tmp" on storage.objects;
+drop policy if exists "Users can update own voice changer tmp" on storage.objects;
+drop policy if exists "Users can read own voice changer tmp" on storage.objects;
+drop policy if exists "Auth upload voice changer tmp owned" on storage.objects;
+drop policy if exists "Users can delete own audio memes" on storage.objects;
+create policy "Users can delete own audio memes" on storage.objects for delete to authenticated using (bucket_id = 'audio-memes' and (storage.foldername(name))[1] = (auth.uid())::text);
+drop policy if exists "Users can update own audio memes" on storage.objects;
+create policy "Users can update own audio memes" on storage.objects for update to authenticated using (bucket_id = 'audio-memes' and (public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid())::text));
+drop policy if exists "Auth upload audio memes owned" on storage.objects;
+create policy "Auth upload audio memes owned" on storage.objects for insert to authenticated with check (bucket_id = 'audio-memes' and (public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid())::text));
