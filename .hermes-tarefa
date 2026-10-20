@@ -1,0 +1,14 @@
+PROJETO=Zapp_Web_V2
+SLUG=ajustar-relato-rebase-reset-sso-pwa
+ID=2610160807cf66
+BRANCH=v2/ajustar-relato-rebase-reset-sso-pwa-2610160807cf66
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ajustar-relato-rebase-reset-sso-pwa-2610160807cf66
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T08:08:03-03:00
+KANBAN=t_e17610d1
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ajustar-relato-rebase-reset-sso-pwa-2610160807cf66/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-2610160807cf66
