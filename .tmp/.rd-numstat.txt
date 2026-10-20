@@ -1,0 +1,4 @@
+60	1	supabase/functions/_shared/__tests__/gmail-helpers.test.ts
+56	5	supabase/functions/_shared/gmail-helpers.ts
+165	0	supabase/functions/gmail-sync/gmail-full-sync-scope.test.ts
+46	6	supabase/functions/gmail-sync/index.ts
