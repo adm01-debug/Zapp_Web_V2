@@ -1,0 +1,154 @@
+diff --git a/src/components/inbox/MessageContextActions.tsx b/src/components/inbox/MessageContextActions.tsx
+index d2bcf72a5..a551f7e41 100644
+--- a/src/components/inbox/MessageContextActions.tsx
++++ b/src/components/inbox/MessageContextActions.tsx
+@@ -3,7 +3,7 @@ import { getLogger } from '@/lib/logger';
+ 
+ const log = getLogger('MessageContextActions');
+ import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+-import { supabase } from '@/integrations/supabase/client';
++import { ChatService } from '@/services/chat.service';
+ import { Message } from '@/types/chat';
+ import { toast } from 'sonner';
+ import {
+@@ -63,13 +63,9 @@ export function MessageContextActions({
+           log.warn('WhatsApp API delete failed, marking locally only');
+         }
+       }
+-      // Always mark as deleted in local DB
+-      const { error } = await supabase
+-        .from('messages')
+-        .update({ is_deleted: true, content: '[Mensagem apagada]' })
+-        .eq('id', message.id);
+-
++      // Caminho UNICO de exclusao (PE-20): a RPC preserva o `content` original.
+       // PostgREST não lança: sem checar `error`, a UI confirmava exclusão rejeitada.
++      const { error } = await ChatService.deleteMessage(message.id);
+       if (error) {
+         log.error('Falha ao marcar mensagem como apagada localmente', { error });
+         toast.error('Erro ao deletar mensagem');
+diff --git a/src/components/inbox/chat/MessageHoverToolbar.tsx b/src/components/inbox/chat/MessageHoverToolbar.tsx
+index fb4f4cdc5..c192ce73f 100644
+--- a/src/components/inbox/chat/MessageHoverToolbar.tsx
++++ b/src/components/inbox/chat/MessageHoverToolbar.tsx
+@@ -5,7 +5,7 @@ import { Message } from '@/types/chat';
+ import { TextToSpeechButton } from '../TextToSpeechButton';
+ import { MessageSendHistorySheet } from './MessageSendHistorySheet';
+ import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+-import { supabase } from '@/integrations/supabase/client';
++import { ChatService } from '@/services/chat.service';
+ import { toast } from 'sonner';
+ import { getLogger } from '@/lib/logger';
+ import {
+@@ -63,13 +63,11 @@ export function MessageHoverToolbar({
+           log.warn('WhatsApp API delete failed, marking locally only');
+         }
+       }
+-      // PostgREST não lança: sem checar `error` a UI confirmava uma exclusão
+-      // que o banco rejeitou (R2-INB-014). O fallback local (Evolution API
+-      // fora) só é sucesso se a marcação local persistir de fato.
+-      const { error } = await supabase
+-        .from('messages')
+-        .update({ is_deleted: true, content: '[Mensagem apagada]' })
+-        .eq('id', message.id);
++      // Caminho UNICO de exclusao (PE-20): a RPC preserva o `content` original
++      // e registra o rastro. PostgREST não lança: sem checar `error` a UI
++      // confirmava uma exclusão que o banco rejeitou (R2-INB-014). O fallback
++      // local (Evolution API fora) só é sucesso se a marcação persistir.
++      const { error } = await ChatService.deleteMessage(message.id);
+ 
+       if (error) {
+         log.error('Falha ao marcar mensagem como deletada', error);
+diff --git a/src/components/inbox/tabs/FilesTab.tsx b/src/components/inbox/tabs/FilesTab.tsx
+index 1bb3f246d..975dce3a4 100644
+--- a/src/components/inbox/tabs/FilesTab.tsx
++++ b/src/components/inbox/tabs/FilesTab.tsx
+@@ -617,8 +617,9 @@ export function FilesTab({ contactId, contactName, onOpenInChat }: FilesTabProps
+           <AlertDialogHeader>
+             <AlertDialogTitle>Apagar mensagem?</AlertDialogTitle>
+             <AlertDialogDescription>
+-              A mensagem é marcada como apagada (is_deleted = true) e o conteúdo vira
+-              &quot;[Mensagem apagada]&quot;. Ela some da galeria só aqui no ZAPP — não apaga o
++              A mensagem é marcada como apagada (is_deleted = true) e passa a aparecer como
++              &quot;[Mensagem apagada]&quot; — o texto original continua guardado, sem ser
++              sobrescrito. Ela some da galeria só aqui no ZAPP — não apaga o
+               arquivo no WhatsApp do cliente, que continua vendo o que recebeu.
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+diff --git a/src/hooks/chat/useFilesActions.ts b/src/hooks/chat/useFilesActions.ts
+index af00d1227..e93c40ae1 100644
+--- a/src/hooks/chat/useFilesActions.ts
++++ b/src/hooks/chat/useFilesActions.ts
+@@ -1,19 +1,20 @@
+ import { useCallback, useState } from 'react';
+ import { useQueryClient } from '@tanstack/react-query';
+ import { toast } from 'sonner';
+-import { supabase } from '@/integrations/supabase/client';
+ import { contactMediaKey, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
+ import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
+ import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
++import { ChatService } from '@/services/chat.service';
+ 
+ /**
+  * Acoes da aba Arquivos (etapa 35).
+  *
+  * `deleteMessage` centraliza a exclusao que antes vivia duplicada no `FileActionsMenu` e no
+- * `FileDetailPanel`, cada um com o seu `window.confirm`. O efeito e fiel ao que o dialogo
+- * promete: marca a mensagem como apagada SO no ZAPP (`is_deleted = true` +
+- * `content = '[Mensagem apagada]'`); o `media_url` permanece e nada vai para o WhatsApp do
+- * cliente. Por isso a UI nao oferece "apagar no WhatsApp" — nao existe esse caminho.
++ * `FileDetailPanel`, cada um com o seu `window.confirm`. Desde PE-20 (cartao t_fef320c8) ela
++ * chama o caminho UNICO `ChatService.deleteMessage` (RPC `delete_message`, migration
++ * 20261013230001), que marca `is_deleted = true`, grava o rastro (deleted_by/deleted_at) e
++ * MANTEM o `content` original; o `media_url` permanece e nada vai para o WhatsApp do cliente.
++ * Por isso a UI nao oferece "apagar no WhatsApp" — nao existe esse caminho.
+  *
+  * Ordem do sucesso (etapa 35): `update` -> `onRemoved(item.id)` (tira da selecao) ->
+  * invalidar `contactMediaKey` e `conversationTabCountsKey`. No erro NAO se remove da
+@@ -45,10 +46,8 @@ export function useFilesActions({ contactId, onRemoved }: FilesActionsParams): F
+     async (item: ContactMediaItem): Promise<boolean> => {
+       setIsDeleting(true);
+       try {
+-        const { error } = await supabase
+-          .from('messages')
+-          .update({ is_deleted: true, content: '[Mensagem apagada]' })
+-          .eq('id', item.id);
++        // Caminho UNICO (PE-20): a RPC autoriza no banco e preserva o `content`.
++        const { error } = await ChatService.deleteMessage(item.id);
+ 
+         if (error) {
+           toast.error('Erro ao apagar mensagem');
+diff --git a/src/services/chat.service.ts b/src/services/chat.service.ts
+index 70a69d19d..94020f239 100644
+--- a/src/services/chat.service.ts
++++ b/src/services/chat.service.ts
+@@ -101,11 +101,25 @@ export class ChatService {
+     return supabase.from('messages').update({ is_read: true }).eq('id', messageId);
+   }
+ 
++  /**
++   * Caminho UNICO de exclusao de mensagem (PE-20 / cartao t_fef320c8).
++   *
++   * Antes a exclusao era um UPDATE direto a partir de 4 pontos de tela
++   * (`is_deleted = true` + `content = '[Mensagem apagada]'`): o texto original
++   * era sobrescrito (nao havia como auditar o que foi apagado) e o cliente
++   * conseguia reescrever o conteudo de uma mensagem recebida.
++   *
++   * Agora a marcacao mora na RPC `delete_message` (migration 20261013230001):
++   * ela marca `is_deleted`, grava o rastro (`deleted_by`/`deleted_at`), MANTEM
++   * o `content` original (a tela mostra o rotulo) e autoriza no banco por
++   * visibilidade do contato + posse da mensagem. O UPDATE continua acontecendo
++   * no servidor, entao o realtime segue vendo a mudanca de `is_deleted` — nao
++   * preciso empurrar estado local.
++   */
+   static async deleteMessage(messageId: string) {
+-    return supabase
+-      .from('messages')
+-      .update({ is_deleted: true, content: '[Mensagem apagada]' })
+-      .eq('id', messageId);
++    // types.ts ainda nao tem a assinatura da RPC nova (mesmo cast de
++    // mapboxCostGuard.ts / useSentimentData.ts ate o sync dos tipos).
++    return (supabase as any).rpc('delete_message', { p_message_id: messageId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (PE-20), types.ts ainda nao sincronizado
+   }
+ 
+   static async uploadAudio(contactId: string, blob: Blob) {

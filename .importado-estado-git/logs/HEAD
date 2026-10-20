@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791876967 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791876969 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 8b91eee2ddef6ebe595aad0f6b26d99024398b9e Hermes Senior <hermes-senior@promobrindes.local> 1791876999 -0300	cherry-pick: feat(db): apagar mensagem por RPC que preserva o texto original
+8b91eee2ddef6ebe595aad0f6b26d99024398b9e f5a5a897929b2f90574d5e1370a75aa3d4265b0a Hermes Senior <hermes-senior@promobrindes.local> 1791877816 -0300	commit: fix(inbox): exclusao de mensagem chama a rpc delete_message por um caminho unico
+f5a5a897929b2f90574d5e1370a75aa3d4265b0a f0930b4373f81a1932d0e3d4984cf96ed0aeda1e Hermes Senior <hermes-senior@promobrindes.local> 1791877876 -0300	commit: docs(inbox): relato do caminho unico de exclusao de mensagem
+f0930b4373f81a1932d0e3d4984cf96ed0aeda1e dbdb09c0b7e54d2d3791537efb5ce141daaa2adc Hermes Senior <hermes-senior@promobrindes.local> 1791877984 -0300	commit: docs(inbox): relato responde aos pontos do juiz (caminho unico)
+dbdb09c0b7e54d2d3791537efb5ce141daaa2adc a2a5ec4cc3564f5f6ccabd38f137a66a66b61011 Hermes Senior <hermes-senior@promobrindes.local> 1792028378 -0300	commit: fix(inbox): exclusao na aba Arquivos trata falha de rede da RPC delete_message

@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/apagar-mensagem-um-caminho-261013043659b8
+
+······················
+
+ Test Files  5 passed (5)
+      Tests  22 passed (22)
+   Start at  04:55:55
+   Duration  21.83s (transform 9.34s, setup 6.09s, import 14.67s, tests 12.54s, environment 9.84s)
+

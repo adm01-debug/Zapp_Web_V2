@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=apagar-mensagem-um-caminho
+ID=261013043659b8
+BRANCH=v2/apagar-mensagem-um-caminho-261013043659b8
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/apagar-mensagem-um-caminho-261013043659b8
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T04:36:09-03:00
+KANBAN=t_fef320c8
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/apagar-mensagem-um-caminho-261013043659b8/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013043659b8
+PRONTO_SHA=dbdb09c0b7e54d2d3791537efb5ce141daaa2adc

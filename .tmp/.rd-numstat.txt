@@ -1,0 +1,12 @@
+3	7	src/components/inbox/MessageContextActions.tsx
+31	21	src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx
+6	8	src/components/inbox/chat/MessageHoverToolbar.tsx
+26	18	src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx
+3	2	src/components/inbox/tabs/FilesTab.tsx
+23	12	src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx
+15	11	src/hooks/chat/__tests__/useFilesActions.test.tsx
+8	9	src/hooks/chat/useFilesActions.ts
+62	0	src/services/__tests__/chat.service.delete.test.ts
+18	4	src/services/chat.service.ts
+101	0	supabase/migrations/20261013230001_delete_message_rpc.sql
+421	0	supabase/tests/delete_message_rpc.sql

@@ -1,0 +1,1415 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/apagar-mensagem-um-caminho-261013043659b8/.tmp/prova-base
+
+xxxxxxxx····xx····x·xx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/services/__tests__/chat.service.delete.test.ts > ChatService.deleteMessage — caminho unico da RPC delete_message (PE-20) > chama a RPC com p_message_id e NAO escreve na tabela messages
+Error: escrita inesperada na tabela: messages
+ ❯ Object.from src/services/__tests__/chat.service.delete.test.ts:27:13
+     25|     from: (table: string) => {
+     26|       mocks.fromCalls.push(table);
+     27|       throw new Error(`escrita inesperada na tabela: ${table}`);
+       |             ^
+     28|     },
+     29|   },
+ ❯ ChatService.deleteMessage src/services/chat.service.ts:106:8
+ ❯ src/services/__tests__/chat.service.delete.test.ts:41:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/services/__tests__/chat.service.delete.test.ts > ChatService.deleteMessage — caminho unico da RPC delete_message (PE-20) > rejeicao do banco volta como { error } para a tela decidir (nao lanca)
+Error: escrita inesperada na tabela: messages
+ ❯ Object.from src/services/__tests__/chat.service.delete.test.ts:27:13
+     25|     from: (table: string) => {
+     26|       mocks.fromCalls.push(table);
+     27|       throw new Error(`escrita inesperada na tabela: ${table}`);
+       |             ^
+     28|     },
+     29|   },
+ ❯ ChatService.deleteMessage src/services/chat.service.ts:106:8
+ ❯ src/services/__tests__/chat.service.delete.test.ts:55:42
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx > MessageContextActions — R2-INB-014 exclusão rejeitada pelo banco > erro na RPC de exclusão → toast de erro, nenhum sucesso e nenhum callback
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'delete_message', …(1) ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx:123:21
+    121|       expect(toastMock.error).toHaveBeenCalled();
+    122|     });
+    123|     expect(rpcMock).toHaveBeenCalledWith('delete_message', { p_message…
+       |                     ^
+    124|     expect(fromCalls).toEqual([]);
+    125|     expect(toastMock.error).toHaveBeenCalledWith('Erro ao deletar mens…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx > MessageContextActions — R2-INB-014 exclusão rejeitada pelo banco > sucesso na RPC (error: null) → toast de sucesso e callback
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'msg-1' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-ellipsis-vertical w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2 w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 11v6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11v6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 6h18"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mApagar para todos[0m
+          [36m</button>[39m
+          [36m<hr />[39m
+          [36m<button[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-check-check w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 6 7 17l-5-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 10-7.5 7.5L13 16"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMarcar como lida[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-eye-off w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14.084 14.158a3 3 0 0 1-4.242-4.242"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m2 2 20 20"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMarcar como não lida[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx:136:32
+    134|
+    135|     await waitFor(() => {
+    136|       expect(onMessageDeleted).toHaveBeenCalledWith('msg-1');
+       |                                ^
+    137|     });
+    138|     expect(rpcMock).toHaveBeenCalledWith('delete_message', { p_message…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx > MessageContextActions — R2-INB-014 exclusão rejeitada pelo banco > falha só da Evolution API mantém o fallback local quando a RPC confirma
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'msg-1' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-ellipsis-vertical w-3.5 h-3.5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2 w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 11v6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11v6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 6h18"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mApagar para todos[0m
+          [36m</button>[39m
+          [36m<hr />[39m
+          [36m<button[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-check-check w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 6 7 17l-5-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m22 10-7.5 7.5L13 16"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMarcar como lida[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-eye-off w-4 h-4 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14.084 14.158a3 3 0 0 1-4.242-4.242"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m2 2 20 20"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMarcar como não lida[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx:151:32
+    149|
+    150|     await waitFor(() => {
+    151|       expect(onMessageDeleted).toHaveBeenCalledWith('msg-1');
+       |                                ^
+    152|     });
+    153|     expect(toastMock.success).toHaveBeenCalledWith('Mensagem deletada …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/hooks/chat/__tests__/useFilesActions.test.tsx > useFilesActions.deleteMessage (etapa 35) > sucesso: RPC fiel, sai da seleção e invalida as três chaves
+Error: escrita inesperada na tabela: messages
+ ❯ Object.from src/hooks/chat/__tests__/useFilesActions.test.tsx:23:13
+     21|     rpc: h.rpc,
+     22|     from: (table: string) => {
+     23|       throw new Error(`escrita inesperada na tabela: ${table}`);
+       |             ^
+     24|     },
+     25|   },
+ ❯ Object.deleteMessage src/hooks/chat/useFilesActions.ts:49:12
+ ❯ src/hooks/chat/__tests__/useFilesActions.test.tsx:65:60
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/chat/__tests__/useFilesActions.test.tsx:65:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/hooks/chat/__tests__/useFilesActions.test.tsx > useFilesActions.deleteMessage (etapa 35) > erro: toast de erro, NÃO sai da seleção e NÃO invalida
+Error: escrita inesperada na tabela: messages
+ ❯ Object.from src/hooks/chat/__tests__/useFilesActions.test.tsx:23:13
+     21|     rpc: h.rpc,
+     22|     from: (table: string) => {
+     23|       throw new Error(`escrita inesperada na tabela: ${table}`);
+       |             ^
+     24|     },
+     25|   },
+ ❯ Object.deleteMessage src/hooks/chat/useFilesActions.ts:49:12
+ ❯ src/hooks/chat/__tests__/useFilesActions.test.tsx:83:60
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/chat/__tests__/useFilesActions.test.tsx:83:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/hooks/chat/__tests__/useFilesActions.test.tsx > useFilesActions.deleteMessage (etapa 35) > #144/OTH-002: excluir mídia invalida os chips por tipo (contactMediaCountsKey)
+Error: escrita inesperada na tabela: messages
+ ❯ Object.from src/hooks/chat/__tests__/useFilesActions.test.tsx:23:13
+     21|     rpc: h.rpc,
+     22|     from: (table: string) => {
+     23|       throw new Error(`escrita inesperada na tabela: ${table}`);
+       |             ^
+     24|     },
+     25|   },
+ ❯ Object.deleteMessage src/hooks/chat/useFilesActions.ts:49:12
+ ❯ src/hooks/chat/__tests__/useFilesActions.test.tsx:98:50
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/hooks/chat/__tests__/useFilesActions.test.tsx:98:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx > MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014) > rejeição da RPC ({ error }) mostra erro, sem sucesso e sem callback de remoção
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'delete_message', …(1) ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 right-full mr-1.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center rounded-full bg-card/95 dark:bg-[hsl(var(--card)/0.95)] border border-border/40 shadow-lg backdrop-blur-sm overflow-hidden"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Responder"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-reply w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 18v-2a4 4 0 0 0-4-4H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 17-5-5 5-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Encaminhar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-forward w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 17 5-5-5-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 18v-2a4 4 0 0 1 4-4h12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Copiar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-copy w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"14"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"14"[39m
+                [33mx[39m=[32m"8"[39m
+                [33my[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+              [33mtitle[39m=[32m"Mais opções"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-ellipsis-vertical w-3.5 h-3.5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"5"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"19"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div>[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check-check w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 7 17l-5-5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 10-7.5 7.5L13 16"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Marcar como lida[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-eye-off w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14.084 14.158a3 3 0 0 1-4.242-4.242"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m2 2 20 20"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Marcar como não lida[0m
+              [36m</button>[39m
+              [36m<hr />[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-history w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 3v5h5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 7v5l4 2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Histórico de envio[0m
+              [36m</button>[39m
+              [36m<hr />[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2 w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10 11v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14 11v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 6h18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mApagar para todos[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx:107:25
+    105|
+    106|     await waitFor(() =>
+    107|       expect(mocks.rpc).toHaveBeenCalledWith('delete_message', { p_mes…
+       |                         ^
+    108|     );
+    109|     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx > MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014) > { error: null } mantém sucesso e callback
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'm-1' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 right-full mr-1.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center rounded-full bg-card/95 dark:bg-[hsl(var(--card)/0.95)] border border-border/40 shadow-lg backdrop-blur-sm overflow-hidden"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Responder"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-reply w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 18v-2a4 4 0 0 0-4-4H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 17-5-5 5-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Encaminhar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-forward w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 17 5-5-5-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 18v-2a4 4 0 0 1 4-4h12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Copiar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-copy w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"14"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"14"[39m
+                [33mx[39m=[32m"8"[39m
+                [33my[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+              [33mtitle[39m=[32m"Mais opções"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-ellipsis-vertical w-3.5 h-3.5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"5"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"19"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div>[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check-check w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 7 17l-5-5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 10-7.5 7.5L13 16"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Marcar como lida[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-eye-off w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14.084 14.158a3 3 0 0 1-4.242-4.242"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m2 2 20 20"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Marcar como não lida[0m
+              [36m</button>[39m
+              [36m<hr />[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-history w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 3v5h5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 7v5l4 2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Histórico de envio[0m
+              [36m</button>[39m
+              [36m<hr />[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2 w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10 11v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14 11v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 6h18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mApagar para todos[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx:135:50
+    133|     fireEvent.click(screen.getByText('Apagar para todos'));
+    134|
+    135|     await waitFor(() => expect(onMessageDeleted).toHaveBeenCalledWith(…
+       |                                                  ^
+    136|     expect(toast.success).toHaveBeenCalledWith('Mensagem deletada para…
+    137|     expect(toast.error).not.toHaveBeenCalled();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx > MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014) > preserva o fallback local quando só a Evolution API falha
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'm-1' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"absolute top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 right-full mr-1.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center rounded-full bg-card/95 dark:bg-[hsl(var(--card)/0.95)] border border-border/40 shadow-lg backdrop-blur-sm overflow-hidden"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Responder"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-reply w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 18v-2a4 4 0 0 0-4-4H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 17-5-5 5-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Encaminhar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-forward w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 17 5-5-5-5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 18v-2a4 4 0 0 1 4-4h12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+            [33mtitle[39m=[32m"Copiar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-copy w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"14"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"14"[39m
+                [33mx[39m=[32m"8"[39m
+                [33my[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"[39m
+              [33mtitle[39m=[32m"Mais opções"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-ellipsis-vertical w-3.5 h-3.5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"5"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"19"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div>[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check-check w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 7 17l-5-5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m22 10-7.5 7.5L13 16"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Marcar como lida[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-eye-off w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14.084 14.158a3 3 0 0 1-4.242-4.242"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m2 2 20 20"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Marcar como não lida[0m
+              [36m</button>[39m
+              [36m<hr />[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-history w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 3v5h5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 7v5l4 2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Histórico de envio[0m
+              [36m</button>[39m
+              [36m<hr />[39m
+              [36m<button[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2 w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10 11v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M14 11v6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 6h18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mApagar para todos[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx:147:50
+    145|     fireEvent.click(screen.getByText('Apagar para todos'));
+    146|
+    147|     await waitFor(() => expect(onMessageDeleted).toHaveBeenCalledWith(…
+       |                                                  ^
+    148|     expect(toast.success).toHaveBeenCalledWith('Mensagem deletada para…
+    149|     expect(toast.error).not.toHaveBeenCalled();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx > FilesTab fase 6 — exclusão com AlertDialog (etapa 35) > RPC rejeitada → toast de erro e o item continua na lista e na seleção
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'Erro ao apagar mensagem' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mstyle[39m=[32m""[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-3"[39m
+        [33mdata-testid[39m=[32m"files-tab"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center gap-x-3 gap-y-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg font-bold text-foreground"[39m
+            [36m>[39m
+              [0mArquivos compartilhados[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-[13px] text-muted-foreground"[39m
+              [33mdata-testid[39m=[32m"files-subtitle"[39m
+            [36m>[39m
+              [0mTodos os arquivos, mídias e documentos desta conversa.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5 bg-primary text-primary-foreground border-primary"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mTodos[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center bg-white/15"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5 bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mImagens[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center bg-muted"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5 bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mFigurinhas[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center bg-muted"[39m
+              [36m/>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5 bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mVídeos[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center bg-muted"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5 bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mÁudios[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center bg-muted"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"h-8 px-3 rounded-lg text-[13px] font-medium border inline-flex items-center gap-1.5 bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDocs[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center bg-muted"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ml-auto text-xs text-muted-foreground tabular-nums"[39m
+            [33mdata-testid[39m=[32m"files-total-count"[39m
+          [36m>[39m
+            [0m2 arquivos[0m
+          [36m</p>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+          [33mdata-testid[39m=[32m"files-toolbar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative min-w-[220px] flex-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.34-4.34"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Buscar arquivos"[39m
+              [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:te...
+ ❯ src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx:265:45
+    263|     fireEvent.click(screen.getByRole('button', { name: 'Apagar mensage…
+    264|
+    265|     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro…
+       |                                             ^
+    266|     expect(toast.success).not.toHaveBeenCalled();
+    267|     expect(screen.getByTestId('files-item-m2')).toBeInTheDocument();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx > FilesTab fase 6 — exclusão com AlertDialog (etapa 35) > RPC aceita → caminho único fiel, sucesso e o item sai da seleção (refetch via invalidação)
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'delete_message', …(1) ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx:280:19
+    278|     expect(toast.error).not.toHaveBeenCalled();
+    279|     // caminho único (PE-20): RPC `delete_message`, que preserva o `co…
+    280|     expect(h.rpc).toHaveBeenCalledWith('delete_message', { p_message_i…
+       |                   ^
+    281|     // nenhuma escrita direta na tabela `messages` a partir da tela
+    282|     expect(h.fromCalls).not.toContain('messages');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  13 failed | 9 passed (22)
+   Start at  04:56:23
+   Duration  24.05s (transform 9.42s, setup 4.76s, import 15.58s, tests 39.37s, environment 10.13s)
+
