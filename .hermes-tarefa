@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=arquivar-grava-estado-arquivada
+ID=261011121791df
+BRANCH=v2/arquivar-grava-estado-arquivada-261011121791df
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-261011121791df
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T12:17:55-03:00
+KANBAN=t_a4e3109e
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-261011121791df/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-261011121791df
+PRONTO_SHA=01b28905a4e0909aa9dddd6833cd753394b9b68e

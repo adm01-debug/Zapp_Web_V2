@@ -1,0 +1,370 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-261011121791df/.tmp/prova-base
+
+x·················xx·xxx·····xxx··················x····
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/__tests__/useBulkActions.archive-fsm.test.tsx > useBulkActions — arquivar grava o campo real (SL-071) > contacts arquiva cada contato pela RPC set_conversation_status (sem update direto)
+AssertionError: expected { tabela: 'contacts', …(1) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "payload": {
+    "conversation_status": "archived",
+    "updated_at": "2026-10-11T15:40:37.593Z",
+  },
+  "tabela": "contacts",
+}
+
+ ❯ src/hooks/__tests__/useBulkActions.archive-fsm.test.tsx:72:21
+     70|
+     71|     // Nenhuma escrita direta na tabela: o caminho é a RPC.
+     72|     expect(escrita).toBeUndefined();
+       |                     ^
+     73|     expect(h.escritas).toEqual([]);
+     74|     expect(h.rpcs).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx > ContactDetails — ações rápidas persistem (cartão #241) > "Arquivar" usa a RPC set_conversation_status (archived) e o Desfazer reabre (assigned_to intocado)
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'set_conversation_status', …(1) ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mstyle[39m=[32m""[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Detalhes do contato"[39m
+        [33mclass[39m=[32m"w-[323px] h-full min-h-0 shrink-0 bg-inbox-panel border-l border-border flex flex-col overflow-hidden"[39m
+        [33mdata-testid[39m=[32m"contact-panel"[39m
+        [33mrole[39m=[32m"complementary"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-between px-4 py-3 border-b border-border bg-inbox-panel shrink-0"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 h-5 rounded-full bg-primary"[39m
+            [36m/>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-foreground text-sm"[39m
+            [36m>[39m
+              [0mDetalhes do Contato[0m
+            [36m</h3>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Recolher painel de detalhes"[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-panel-right-close w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 3v18"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m8 9 3 3-3 3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 min-h-0 flex flex-col"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-4 border-b border-border"[39m
+            [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative shrink-0"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative inline-block"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] -rotate-90"[39m
+                    [33mviewBox[39m=[32m"0 0 108 108"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"54"[39m
+                      [33mcy[39m=[32m"54"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mopacity[39m=[32m"0.3"[39m
+                      [33mr[39m=[32m"50"[39m
+                      [33mstroke[39m=[32m"hsl(var(--muted))"[39m
+                      [33mstroke-width[39m=[32m"2.5"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"54"[39m
+                      [33mcy[39m=[32m"54"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mr[39m=[32m"50"[39m
+                      [33mstroke[39m=[32m"hsl(var(--warning))"[39m
+                      [33mstroke-dasharray[39m=[32m"314.1592653589793"[39m
+                      [33mstroke-dashoffset[39m=[32m"157.07963267948966"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2.5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"relative flex shrink-0 overflow-hidden rounded-full text-sm w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"[39m
+                    [33mdata-testid[39m=[32m"contact-avatar"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-semibold"[39m
+                    [36m>[39m
+                      [0mMS[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-3xs font-bold ring-2 ring-background"[39m
+                    [33mdata-state[39m=[32m"closed"[39m
+                    [33mstyle[39m=[32m"background-color: rgb(155, 101, 8); color: white;"[39m
+                  [36m>[39m
+                    [0m50[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 pt-0.5"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 min-w-0"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"font-bold text-lg text-foreground leading-tight truncate"[39m
+                  [36m>[39m
+                    [0mMaria[0m
+                  [36m</h4>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Favoritar contat...
+ ❯ src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx:165:21
+    163|     fireEvent.click(screen.getByText('Arquivar'));
+    164|     await waitFor(() =>
+    165|       expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {
+       |                     ^
+    166|         p_contact_id: 'c1',
+    167|         p_next: 'archived',
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/hooks/chat/__tests__/useConversationActions.test.ts > useConversationActions > archiveContact > arquiva pela RPC set_conversation_status e o desfazer reabre a conversa (assigned_to intocado)
+AssertionError: expected [] to deeply equal [ { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "args": {
+-       "p_contact_id": "contact-1",
+-       "p_next": "archived",
+-       "p_reason": "arquivada_no_chat",
+-     },
+-     "fn": "set_conversation_status",
+-   },
+- ]
++ []
+
+ ❯ src/hooks/chat/__tests__/useConversationActions.test.ts:183:24
+    181|       });
+    182|
+    183|       expect(rpcCalls).toEqual([
+       |                        ^
+    184|         {
+    185|           fn: 'set_conversation_status',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/hooks/chat/__tests__/useConversationActions.test.ts > useConversationActions > archiveContact > em erro na RPC, mostra toast de erro e não oferece desfazer
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'Erro ao arquivar conversa' ]
+
+Number of calls: 0
+
+ ❯ src/hooks/chat/__tests__/useConversationActions.test.ts:214:27
+    212|       });
+    213|
+    214|       expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conve…
+       |                           ^
+    215|       expect(undoToast).not.toHaveBeenCalled();
+    216|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/hooks/chat/__tests__/useConversationActions.test.ts > useConversationActions > archiveContact > no desfazer, se a RPC de reabertura falhar, o erro sobe para o undoToast avisar
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/hooks/chat/__tests__/useConversationActions.test.ts:227:37
+    225|       rpcResult = { error: { message: 'falhou' } };
+    226|
+    227|       await expect(undoArgs.onUndo()).rejects.toBeTruthy();
+       |                                     ^
+    228|     });
+    229|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkArchive > arquiva cada contato pela RPC (p_next archived) e o desfazer reabre só as arquivadas
+AssertionError: expected [] to deeply equal [ { …(2) }, { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "args": {
+-       "p_contact_id": "c1",
+-       "p_next": "archived",
+-       "p_reason": "arquivada_em_massa",
+-     },
+-     "fn": "set_conversation_status",
+-   },
+-   {
+-     "args": {
+-       "p_contact_id": "c2",
+-       "p_next": "archived",
+-       "p_reason": "arquivada_em_massa",
+-     },
+-     "fn": "set_conversation_status",
+-   },
+- ]
++ []
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:399:22
+    397|     });
+    398|
+    399|     expect(rpcCalls).toEqual([
+       |                      ^
+    400|       {
+    401|         fn: 'set_conversation_status',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkArchive > não dispara mais de 5 RPCs em voo ao mesmo tempo
+AssertionError: expected [] to have a length of 5 but got +0
+
+- Expected
++ Received
+
+- 5
++ 0
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:461:22
+    459|
+    460|     expect(pico).toBeLessThanOrEqual(5);
+    461|     expect(rpcCalls).toHaveLength(5);
+       |                      ^
+    462|
+    463|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkArchive > falha parcial: informa "X arquivadas, Y falharam", mantém só as que falharam e o desfazer reabre só as arquivadas
+AssertionError: expected "vi.fn()" to be called with arguments: [ '1 arquivadas, 1 falharam' ]
+
+Number of calls: 0
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:490:31
+    488|     });
+    489|
+    490|     expect(mocks.toast.error).toHaveBeenCalledWith('1 arquivadas, 1 fa…
+       |                               ^
+    491|     expect(result.current.selectedIds).toEqual(new Set(['c2']));
+    492|     expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkArchive > falha total: informa "0 arquivadas, N falharam", mantém a seleção, não recarrega e não abre desfazer
+AssertionError: expected "vi.fn()" to be called with arguments: [ '0 arquivadas, 1 falharam' ]
+
+Number of calls: 0
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:517:31
+    515|     });
+    516|
+    517|     expect(mocks.toast.error).toHaveBeenCalledWith('0 arquivadas, 1 fa…
+       |                               ^
+    518|     expect(result.current.selectedIds.has('c1')).toBe(true);
+    519|     expect(refetch).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkArchive > usa o retrato da seleção: mexer na seleção durante a janela de desfazer não troca o alvo
+AssertionError: expected [] to deeply equal [ { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "args": {
+-       "p_contact_id": "c1",
+-       "p_next": "open",
+-       "p_reason": "desfazer_arquivamento_em_massa",
+-     },
+-     "fn": "set_conversation_status",
+-   },
+- ]
++ []
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:540:31
+    538|     });
+    539|
+    540|     expect(rpcCalls.slice(1)).toEqual([
+       |                               ^
+    541|       {
+    542|         fn: 'set_conversation_status',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  10 failed | 45 passed (55)
+   Start at  12:40:36
+   Duration  8.68s (transform 1.03s, setup 867ms, import 1.88s, tests 7.25s, environment 3.40s)
+

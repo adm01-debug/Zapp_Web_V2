@@ -1,0 +1,12 @@
+0000000000000000000000000000000000000000 81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 Hermes Senior <hermes-senior@promobrindes.local> 1791731874 -0300	
+81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 Hermes Senior <hermes-senior@promobrindes.local> 1791731875 -0300	reset: moving to HEAD
+81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 Hermes Senior <hermes-senior@promobrindes.local> 1791731931 -0300	reset: moving to 81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9
+81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 87fd7f69e7c9f608d45118775af50b27f74f48bf Hermes Senior <hermes-senior@promobrindes.local> 1791731940 -0300	cherry-pick: feat(inbox): reabre conversa encerrada no inbound do contato
+87fd7f69e7c9f608d45118775af50b27f74f48bf 3335cfe7435cef37325a9d615606a18c2305302f Hermes Senior <hermes-senior@promobrindes.local> 1791732988 -0300	commit: fix(hooks): arquivar conversa grava o estado arquivada pela RPC (individual, em massa e no genérico)
+3335cfe7435cef37325a9d615606a18c2305302f 7e73ab888a53471f6c72fa734cf1cdcee7a7abf0 Hermes Senior <hermes-senior@promobrindes.local> 1791733081 -0300	commit: docs(hooks): relato do cartao de arquivamento pela RPC
+7e73ab888a53471f6c72fa734cf1cdcee7a7abf0 81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 Hermes Senior <hermes-senior@promobrindes.local> 1791733134 -0300	rebase (start): checkout 81cb6a7b0
+81cb6a7b00fb3990e61e11d3737a7a3f99ef2bf9 42a10859a58d954378ecc9587f00a0e8a93f0448 Hermes Senior <hermes-senior@promobrindes.local> 1791733134 -0300	rebase (pick): fix(hooks): arquivar conversa grava o estado arquivada pela RPC (individual, em massa e no genérico)
+42a10859a58d954378ecc9587f00a0e8a93f0448 f486a584268b40dbb1f391a88742fe3fc391ad1a Hermes Senior <hermes-senior@promobrindes.local> 1791733134 -0300	rebase (pick): docs(hooks): relato do cartao de arquivamento pela RPC
+f486a584268b40dbb1f391a88742fe3fc391ad1a f486a584268b40dbb1f391a88742fe3fc391ad1a Hermes Senior <hermes-senior@promobrindes.local> 1791733134 -0300	rebase (finish): returning to refs/heads/v2/arquivar-grava-estado-arquivada-261011121791df
+f486a584268b40dbb1f391a88742fe3fc391ad1a 1f559fac0dd155f1e8ee477565e8200ae71afaa3 Hermes Senior <hermes-senior@promobrindes.local> 1791733163 -0300	commit: docs(hooks): relato explica a migration do pai fora do diff
+1f559fac0dd155f1e8ee477565e8200ae71afaa3 01b28905a4e0909aa9dddd6833cd753394b9b68e Hermes Senior <hermes-senior@promobrindes.local> 1791733207 -0300	commit: docs(hooks): relato responde as checagens do juiz
