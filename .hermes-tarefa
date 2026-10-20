@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=agrupamento-quadro-prazo-d1
+ID=26101114536016
+BRANCH=v2/agrupamento-quadro-prazo-d1-26101114536016
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agrupamento-quadro-prazo-d1-26101114536016
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T14:53:13-03:00
+KANBAN=t_673c0a22
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agrupamento-quadro-prazo-d1-26101114536016/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-26101114536016
+PRONTO_SHA=c5384f3833a009b38978fafb632d41501cc053b5

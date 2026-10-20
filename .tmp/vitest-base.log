@@ -1,0 +1,183 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agrupamento-quadro-prazo-d1-26101114536016/.tmp/prova-base
+
+·················································xxxxxxxxxx··
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemBoardGroups.test.ts [ src/hooks/tasks/__tests__/workItemBoardGroups.test.ts ]
+Error: Failed to resolve import "../workItemBoardGroups" from "src/hooks/tasks/__tests__/workItemBoardGroups.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agrupamento-quadro-prazo-d1-26101114536016/.tmp/prova-base/src/hooks/tasks/__tests__/workItemBoardGroups.test.ts:2:63
+  1  |  import { describe, it, expect } from "vitest";
+  2  |  import { boardByDue, boardDueColumns, BOARD_DUE_COLUMNS } from "../workItemBoardGroups";
+     |                                                                  ^
+  3  |  // 03/10/2026, meio-dia LOCAL — os prazos abaixo são montados na hora local, então
+  4  |  // o teste vale em qualquer fuso (nada de string ISO com Z amarrada ao relógio).
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 21 (D13) — tempo médio da criação à conclusão > kpis mede (completed_at − created_at) e mantém o tempo de ciclo para quem já lê
+AssertionError: expected undefined to be 4 // Object.is equality
+
+- Expected:
+4
+
++ Received:
+undefined
+
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:531:31
+    529|
+    530|     expect(k.done7d).toBe(2);
+    531|     expect(k.avgLeadTimeDays).toBe(4);   // (7 + 1) / 2 dias
+       |                               ^
+    532|     expect(k.avgCycleTimeDays).toBe(1);  // só a 'longa' tem ciclo — o…
+    533|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 21 (D13) — tempo médio da criação à conclusão > concluída sem carimbo não entra em nenhum dos dois tempos médios
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:542:31
+    540|
+    541|     expect(k.done7d).toBe(1);            // continua na janela recente…
+    542|     expect(k.avgLeadTimeDays).toBeNull(); // mas não há intervalo a me…
+       |                               ^
+    543|     expect(k.avgCycleTimeDays).toBeNull();
+    544|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 21 (D13) — tempo médio da criação à conclusão > concluída fora dos 7 dias não puxa a média
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:549:31
+    547|     const k = kpis([feita('antiga', '2026-08-01T12:00:00Z', '2026-09-0…
+    548|
+    549|     expect(k.avgLeadTimeDays).toBeNull();
+       |                               ^
+    550|   });
+    551|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 21 (D13) — tempo médio da criação à conclusão > formata em pt-BR: uma casa decimal com vírgula, singular em 1 dia e "—" sem dados
+TypeError: formatLeadTime is not a function
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:553:12
+    551|
+    552|   it('formata em pt-BR: uma casa decimal com vírgula, singular em 1 di…
+    553|     expect(formatLeadTime(1.4)).toBe('1,4 dias');
+       |            ^
+    554|     expect(formatLeadTime(1)).toBe('1 dia');
+    555|     expect(formatLeadTime(0.96)).toBe('1 dia');   // arredonda para 1,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 52 — subtítulo de data pt-BR dos grupos > daySubtitle devolve o dia por extenso em hora LOCAL
+TypeError: daySubtitle is not a function
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:566:12
+    564| describe('etapa 52 — subtítulo de data pt-BR dos grupos', () => {
+    565|   it('daySubtitle devolve o dia por extenso em hora LOCAL', () => {
+    566|     expect(daySubtitle(new Date(2026, 9, 11, 12, 0))).toBe('Domingo, 1…
+       |            ^
+    567|     expect(daySubtitle(new Date(2026, 9, 12, 0, 0))).toBe('Segunda-fei…
+    568|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 52 — subtítulo de data pt-BR dos grupos > data inválida não derruba a tela: devolve string vazia
+TypeError: daySubtitle is not a function
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:571:12
+    569|
+    570|   it('data inválida não derruba a tela: devolve string vazia', () => {
+    571|     expect(daySubtitle('nao-e-data')).toBe('');
+       |            ^
+    572|   });
+    573|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapa 52 — subtítulo de data pt-BR dos grupos > groupUpcomingByDay leva subtitle e dateKey de cada dia
+AssertionError: expected undefined to be 'Segunda-feira, 5 de outubro' // Object.is equality
+
+- Expected:
+"Segunda-feira, 5 de outubro"
+
++ Received:
+undefined
+
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:581:32
+    579|
+    580|     expect(grupos.map(g => g.label)).toEqual(['Seg 05/10', 'Semana que…
+    581|     expect(grupos[0].subtitle).toBe('Segunda-feira, 5 de outubro');
+       |                                ^
+    582|     expect(grupos[1].subtitle).toBe('Segunda-feira, 12 de outubro');
+    583|     expect(grupos[0].dateKey).toBe(localDayKey('2026-10-05T09:00:00Z')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapas 112/117 — contagens por tipo no dia da Agenda > agendaDayCounts conta prazos, lembretes, sem hora e não repete quem é os dois
+TypeError: agendaDayCounts is not a function
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:603:15
+    601|     const soAlarme   = makeItem({ id: 'alarme', remind_at: hora(8) });
+    602|
+    603|     const c = agendaDayCounts({ reminders: [soAlarme, dois], dueTasks:…
+       |               ^
+    604|
+    605|     expect(c).toEqual({ prazos: 3, lembretes: 2, atrasadas: 2, semHora…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapas 112/117 — contagens por tipo no dia da Agenda > o aria-label usa a contagem real, não o número de pontos (máx. 3)
+TypeError: agendaDayCounts is not a function
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:614:12
+    612|
+    613|     expect(agendaDayDots(dia, 1)).toHaveLength(3);          // a faixa…
+    614|     expect(agendaDayCounts(dia, 1).prazos).toBe(5);         // mas o t…
+       |            ^
+    615|     expect(agendaDayAriaLabel(dia, 1)).toBe('1 atrasada, 3 lembretes, …
+    616|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/hooks/tasks/__tests__/workItemAggregates.test.ts > etapas 112/117 — contagens por tipo no dia da Agenda > aria-label no singular e no dia vazio
+TypeError: agendaDayAriaLabel is not a function
+ ❯ src/hooks/tasks/__tests__/workItemAggregates.test.ts:619:12
+    617|
+    618|   it('aria-label no singular e no dia vazio', () => {
+    619|     expect(agendaDayAriaLabel({
+       |            ^
+    620|       reminders: [makeItem({ id: 'l', remind_at: hora(8) })],
+    621|       dueTasks:  [makeItem({ id: 'p', due_date: hora(9) })],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 51 passed (61)
+   Start at  15:11:13
+   Duration  1.63s (transform 176ms, setup 418ms, import 402ms, tests 59ms, environment 1.53s)
+
