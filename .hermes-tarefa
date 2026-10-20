@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=ampliar-full-sync-gmail-inbox-sent
+ID=2610170630ab9f
+BRANCH=v2/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-17T06:30:43-03:00
+KANBAN=t_803ddeec
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-17
+DB_LOCAL=v2-2610170630ab9f
+PRONTO_SHA=cface667a342c8b1757caaa05b58e73cd0d12602

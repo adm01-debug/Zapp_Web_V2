@@ -1,0 +1,434 @@
+diff --git a/supabase/functions/_shared/__tests__/gmail-helpers.test.ts b/supabase/functions/_shared/__tests__/gmail-helpers.test.ts
+index fc2bdf7a58..0a56b1589d 100644
+--- a/supabase/functions/_shared/__tests__/gmail-helpers.test.ts
++++ b/supabase/functions/_shared/__tests__/gmail-helpers.test.ts
+@@ -1,5 +1,5 @@
+ import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
+-import { decodeBase64Url, extractAttachments, extractBody, parseGmailAddressList, runGmailFullSync, syncMessages, type GmailMessage } from "../gmail-helpers.ts";
++import { decodeBase64Url, extractAttachments, extractBody, gmailFullSyncQuery, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN, GMAIL_FULL_SYNC_WINDOW_SECONDS, parseGmailAddressList, runGmailFullSync, syncMessages, type GmailMessage } from "../gmail-helpers.ts";
+ import { Logger } from "../validation.ts";
+ 
+ function base64Url(value: string): string {
+@@ -258,3 +258,62 @@ Deno.test('extractBody e extractAttachments percorrem MIME aninhado', () => {
+   assertEquals(extractBody(payload), { text: 'texto', html: '<b>texto</b>' });
+   assertEquals(extractAttachments(payload), [{ filename: 'arquivo.pdf', mimeType: 'application/pdf', attachmentId: 'att-1', size: 123 }]);
+ });
++
++Deno.test('gmailFullSyncQuery cobre entrada e enviados dos ultimos 12 meses, sem Spam/Lixeira/Rascunhos', () => {
++  const agora = new Date('2026-10-17T00:00:00Z');
++  assertEquals(gmailFullSyncQuery(agora), 'in:inbox OR in:sent after:1760659200');
++  // 12 meses = 365 dias, em segundos.
++  assertEquals(GMAIL_FULL_SYNC_WINDOW_SECONDS, 31536000);
++  assertEquals(Math.floor(agora.getTime() / 1000) - GMAIL_FULL_SYNC_WINDOW_SECONDS, 1760659200);
++  const query = gmailFullSyncQuery(agora);
++  assertEquals(/in:spam|in:trash|in:draft|in:anywhere/.test(query), false);
++});
++
++Deno.test('runGmailFullSync para no orcamento de paginas e devolve o cursor sem gravar history_id', async () => {
++  const { urls, restore } = comFetchFake((url) => {
++    if (url.includes('/messages?')) {
++      const pagina = Number(new URL(url).searchParams.get('pageToken') ?? '0');
++      return { body: { messages: [{ id: `p${pagina}` }], nextPageToken: String(pagina + 1) } };
++    }
++    return { body: mensagemFake(url.split('/messages/')[1].split('?')[0]) };
++  });
++  const chamadas: Chamada[] = [];
++  const eventos: string[] = [];
++  try {
++    const r = await runGmailFullSync(
++      supabaseArg(chamadas, eventos), 'conta-a', 'token', new Logger('test'), undefined, 50,
++      { maxPages: 3 },
++    );
++    const listagens = urls.filter(u => u.includes('/messages?'));
++    // O teto por invocação é o do chamador (o handler `gmail-sync` passa
++    // GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN = 10, bem abaixo do teto absoluto de 100).
++    assertEquals(GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN, 10);
++    assertEquals(listagens.length, 3);
++    assertEquals(r.pages, 3);
++    assertEquals(r.has_more, true);
++    assertEquals(r.next_page_token, '3');
++    assertEquals(listagens[0].includes('pageToken='), false);
++    // Sem `history_id` e sem "synced": o cursor so avanca quando a varredura termina.
++    assertEquals(updatesDaConta(chamadas).length, 0);
++    assertEquals(eventos.includes('fetch:profile'), false);
++  } finally { restore(); }
++});
++
++Deno.test('syncMessages retoma da pagina do startPageToken e fecha sem sobra', async () => {
++  const { urls, restore } = comFetchFake((url) =>
++    url.includes('/messages?') ? { body: { messages: [] } } : { body: mensagemFake('m1') }
++  );
++  const chamadas: Chamada[] = [];
++  try {
++    const r = await syncMessages(
++      supabaseArg(chamadas), 'conta-a', 'token', new Logger('test'), 'in:inbox OR in:sent', 50,
++      { startPageToken: 'tok-retomada' },
++    );
++    const listagens = urls.filter(u => u.includes('/messages?'));
++    assertEquals(listagens.length, 1);
++    assertEquals(listagens[0].includes('pageToken=tok-retomada'), true);
++    assertEquals(r.pages, 1);
++    assertEquals(r.has_more, false);
++    assertEquals(r.next_page_token, null);
++  } finally { restore(); }
++});
+diff --git a/supabase/functions/_shared/gmail-helpers.ts b/supabase/functions/_shared/gmail-helpers.ts
+index 39b8ff4843..4e0f38b5ae 100644
+--- a/supabase/functions/_shared/gmail-helpers.ts
++++ b/supabase/functions/_shared/gmail-helpers.ts
+@@ -257,15 +257,48 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
+ 
+ const GMAIL_MESSAGES_MAX_PAGES = 100;
+ 
+-export async function syncMessages(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "", maxResults = 50) {
++// Escopo do full sync: caixa de entrada + enviados dos últimos 12 meses. Spam,
++// Lixeira e Rascunhos ficam FORA da varredura de conteúdo — deles só a contagem
++// do marcador (ver `syncLabels`), nunca o corpo da mensagem.
++export const GMAIL_FULL_SYNC_BASE_QUERY = "in:inbox OR in:sent";
++export const GMAIL_FULL_SYNC_WINDOW_SECONDS = 365 * 24 * 60 * 60;
++// Teto de páginas POR INVOCAÇÃO do full sync manual (`gmail-sync` →
++// `sync-inbox`): uma execução de Edge não varre a caixa inteira dentro do tempo
++// de parede. O que sobrar continua na invocação seguinte, pelo `nextPageToken`
++// devolvido ao chamador. Quem não passa `maxPages` mantém o teto absoluto.
++export const GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN = 10;
++
++export function gmailFullSyncQuery(now: Date = new Date()): string {
++  const corte = Math.floor(now.getTime() / 1000) - GMAIL_FULL_SYNC_WINDOW_SECONDS;
++  return `${GMAIL_FULL_SYNC_BASE_QUERY} after:${corte}`;
++}
++
++export interface GmailSyncPagingOptions {
++  /** Página em que a varredura começa (retomada da invocação anterior). */
++  startPageToken?: string;
++  /** Teto de páginas nesta invocação. Sem ele, vale o teto absoluto. */
++  maxPages?: number;
++}
++
++export async function syncMessages(
++  supabase: SupabaseClient,
++  accountId: string,
++  accessToken: string,
++  log: Logger,
++  query = "",
++  maxResults = 50,
++  paging: GmailSyncPagingOptions = {},
++) {
+   const totals = {
+     synced: 0, failed: 0,
+     failures: [] as Array<{ id: string; error: string }>,
+     messages: [] as Array<{ id: string; threadId: string; subject: string }>,
+   };
++  const pageBudget = paging.maxPages ?? GMAIL_MESSAGES_MAX_PAGES;
+   const seenPageTokens = new Set<string>();
+-  let pageToken: string | undefined;
++  let pageToken: string | undefined = paging.startPageToken;
+   let pages = 0;
++  let hasMore = false;
+   do {
+     const params = new URLSearchParams({ maxResults: String(maxResults) });
+     if (query) params.set("q", query);
+@@ -283,8 +316,11 @@ export async function syncMessages(supabase: SupabaseClient, accountId: string,
+     }
+     pageToken = listData.nextPageToken;
+     if (pageToken && pages >= GMAIL_MESSAGES_MAX_PAGES) throw new Error("Gmail messages sync exceeded the safe pagination limit");
++    // Orçamento da invocação esgotado: para com o cursor em mãos (o chamador
++    // retoma pelo `next_page_token`), em vez de varrer a caixa até o teto.
++    if (pageToken && pages >= pageBudget) { hasMore = true; break; }
+   } while (pageToken);
+-  return { ...totals, pages };
++  return { ...totals, pages, has_more: hasMore, next_page_token: hasMore ? pageToken ?? null : null };
+ }
+ 
+ export type GmailHistoryResetOutcome = "reset" | "conflict";
+@@ -302,8 +338,19 @@ export async function resetGmailHistoryCursor(supabase: SupabaseClient, accountI
+   return data && data.length > 0 ? "reset" : "conflict";
+ }
+ 
+-export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "in:inbox", maxResults = 50) {
+-  const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults);
++export async function runGmailFullSync(
++  supabase: SupabaseClient,
++  accountId: string,
++  accessToken: string,
++  log: Logger,
++  query = gmailFullSyncQuery(),
++  maxResults = 50,
++  paging: GmailSyncPagingOptions = {},
++) {
++  const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults, {
++    startPageToken: paging.startPageToken,
++    maxPages: paging.maxPages,
++  });
+   if (result.failed > 0) {
+     const { error: statusError } = await supabase.from("gmail_accounts").update({
+       sync_status: "error", last_sync_at: new Date().toISOString(),
+@@ -312,6 +359,10 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
+     if (statusError) throw new Error("Failed to record Gmail sync error state");
+     return result;
+   }
++  // Orçamento de páginas esgotado: a varredura continua na invocação seguinte
++  // (o chamador devolve `next_page_token` em `page_token`). A conta NÃO é
++  // marcada como sincronizada — `history_id` só depois de todas as páginas.
++  if (result.has_more) return result;
+   const profile = await gmailFetch<{ historyId?: string }>(accessToken, "/profile");
+   if (!profile.historyId) throw new Error("Gmail profile response missing historyId");
+   const { error } = await supabase.from("gmail_accounts").update({
+diff --git a/supabase/functions/gmail-sync/gmail-full-sync-scope.test.ts b/supabase/functions/gmail-sync/gmail-full-sync-scope.test.ts
+new file mode 100644
+index 0000000000..f86127fe19
+--- /dev/null
++++ b/supabase/functions/gmail-sync/gmail-full-sync-scope.test.ts
+@@ -0,0 +1,165 @@
++/**
++ * Teste do full sync ampliado (caixa de entrada + enviados, 12 meses) da
++ * `gmail-sync`.
++ *
++ * Cobre, sem banco nem rede de verdade:
++ *   - a consulta padrão do full sync vai à API do Gmail com `in:inbox OR
++ *     in:sent` e a janela de 12 meses, e o handler devolve o cursor quando o
++ *     orçamento de páginas da invocação acaba (`has_more`/`next_page_token`);
++ *   - a invocação seguinte retoma pelo `page_token` recebido;
++ *   - consulta que pede conteúdo de Spam, Lixeira ou Rascunhos é recusada no
++ *     schema (400) SEM chamar o Gmail.
++ */
++import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
++import { GmailSyncActionSchema, gmailQueryTermosForaDeEscopo, handleGmailSync } from "./index.ts";
++import { gmailFullSyncQuery, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN } from "../_shared/gmail-helpers.ts";
++
++const CONTA = "11111111-1111-4111-8111-111111111111";
++const DONO = "22222222-2222-4222-8222-222222222222";
++
++Deno.test("schema recusa consulta que traria conteudo de Spam, Lixeira ou Rascunhos", () => {
++  for (const query of ["in:spam", "in:inbox OR in:trash", "is:draft", "in:anywhere", "label:spam", "label:trash"]) {
++    const r = GmailSyncActionSchema.safeParse({ action: "sync-inbox", account_id: CONTA, query });
++    assertEquals(r.success, false, `deveria recusar: ${query}`);
++    if (!r.success) assertEquals(r.error.issues.some(i => i.message.includes("fora do escopo")), true, query);
++  }
++  // O escopo aprovado (o padrão do handler) passa e nada é marcado como fora.
++  assertEquals(gmailQueryTermosForaDeEscopo("in:inbox OR in:sent after:1760659200"), []);
++  assertEquals(GmailSyncActionSchema.safeParse({
++    action: "sync-inbox", account_id: CONTA, query: "in:inbox OR in:sent after:1760659200",
++  }).success, true);
++  // Cursor de continuação: alfabeto seguro passa, lixo de controle não.
++  assertEquals(GmailSyncActionSchema.safeParse({
++    action: "sync-inbox", account_id: CONTA, page_token: "tok-1.abc_==+-/XYZ",
++  }).success, true);
++  assertEquals(GmailSyncActionSchema.safeParse({
++    action: "sync-inbox", account_id: CONTA, page_token: "tok 1\n",
++  }).success, false);
++});
++
++/** Supabase falso em HTTP: responde conta/tokens e registra os pedidos. */
++function servidorFalso() {
++  const pedidos: string[] = [];
++  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
++    const u = new URL(req.url);
++    pedidos.push(`${req.method} ${u.pathname}${u.search}`);
++    const json = (body: unknown, status = 200) =>
++      new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
++    if (u.pathname === "/auth/v1/user") {
++      return json({ id: DONO, aud: "authenticated", role: "authenticated", email: "sintetico@example.invalid" });
++    }
++    if (u.pathname === "/rest/v1/rpc/get_gmail_tokens") {
++      return json([{ access_token: "token-gmail", refresh_token: "refresh-gmail" }]);
++    }
++    if (u.pathname === "/rest/v1/gmail_accounts") {
++      if (req.method !== "GET") return new Response(null, { status: 204 });
++      return json({
++        id: CONTA, user_id: DONO, email_address: "sintetico@example.invalid", is_active: true,
++        sync_status: "idle", token_expires_at: new Date(Date.now() + 3_600_000).toISOString(),
++        history_id: null,
++      });
++    }
++    if (req.method !== "GET") return new Response(null, { status: 204 });
++    return json([]);
++  });
++  const addr = server.addr;
++  if (addr.transport !== "tcp") throw new Error("duplo: esperado listener TCP");
++  return { url: `http://127.0.0.1:${addr.port}`, pedidos, fechar: () => server.shutdown() };
++}
++
++/** Gmail falso: devolve uma página vazia com `nextPageToken` e registra as URLs. */
++function comGmailFalso() {
++  const urls: string[] = [];
++  const anterior = globalThis.fetch;
++  let pagina = 0;
++  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
++    const url = String(input);
++    // Só a API do Gmail é falsa; o resto (Supabase falso, em HTTP) passa reto.
++    if (!url.includes("gmail.googleapis.com")) return anterior(input, init);
++    urls.push(url);
++    const body = url.includes("/messages?")
++      ? { messages: [], nextPageToken: `tok-${++pagina}` }
++      : { historyId: "777" };
++    return Promise.resolve(new Response(JSON.stringify(body), {
++      status: 200, headers: { "Content-Type": "application/json" },
++    }));
++  }) as typeof fetch;
++  return { urls, restore: () => { globalThis.fetch = anterior; } };
++}
++
++async function chamarSyncInbox(corpo: Record<string, unknown>) {
++  const req = new Request("https://edge.local/functions/v1/gmail-sync", {
++    method: "POST",
++    headers: { Authorization: "Bearer token-do-chamador", "Content-Type": "application/json" },
++    body: JSON.stringify({ action: "sync-inbox", account_id: CONTA, ...corpo }),
++  });
++  return await handleGmailSync(req);
++}
++
++async function comAmbiente(fn: (svc: { url: string; pedidos: string[] }) => Promise<void>) {
++  const svc = servidorFalso();
++  const anterior = {
++    url: Deno.env.get("SUPABASE_URL"),
++    svc: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
++    anon: Deno.env.get("SUPABASE_ANON_KEY"),
++  };
++  Deno.env.set("SUPABASE_URL", svc.url);
++  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-role-teste");
++  Deno.env.set("SUPABASE_ANON_KEY", "anon-teste");
++  try {
++    await fn(svc);
++  } finally {
++    if (anterior.url === undefined) Deno.env.delete("SUPABASE_URL"); else Deno.env.set("SUPABASE_URL", anterior.url);
++    if (anterior.svc === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY"); else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", anterior.svc);
++    if (anterior.anon === undefined) Deno.env.delete("SUPABASE_ANON_KEY"); else Deno.env.set("SUPABASE_ANON_KEY", anterior.anon);
++    await svc.fechar();
++  }
++}
++
++Deno.test("sync-inbox usa a consulta ampliada, devolve o cursor e retoma pelo page_token", async () => {
++  await comAmbiente(async (svc) => {
++    const gmail = comGmailFalso();
++    try {
++      const res = await chamarSyncInbox({});
++      assertEquals(res.status, 200, JSON.stringify(await res.clone().json()));
++      const corpo = await res.json() as Record<string, unknown>;
++      assertEquals(corpo.success, true);
++      assertEquals(corpo.has_more, true);
++      assertEquals(corpo.next_page_token, "tok-10");
++      assertEquals(corpo.query, gmailFullSyncQuery());
++      // A conta entra em "syncing" (varredura incompleta) e segue assim.
++      assert(svc.pedidos.some(p => p.startsWith("PATCH /rest/v1/gmail_accounts")));
++
++      // Uma invocação = no máximo o orçamento de páginas (a caixa inteira NUNCA
++      // é varrida numa Edge só), e o cursor da última página volta ao chamador.
++      const listagens = gmail.urls.filter(u => u.includes("/messages?"));
++      assertEquals(listagens.length, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN);
++      const params = new URL(listagens[0]).searchParams;
++      assertEquals(params.get("q")?.startsWith("in:inbox OR in:sent after:"), true, listagens[0]);
++      assertEquals(params.get("maxResults"), "50");
++      assertEquals(listagens[0].includes("pageToken="), false);
++      // Orçamento esgotado = varredura incompleta: nada de /profile (que só
++      // avança o `history_id` quando todas as páginas foram consumidas).
++      assertEquals(gmail.urls.some(u => u.includes("/profile")), false);
++
++      // Segunda invocação: retoma exatamente da página devolvida.
++      const res2 = await chamarSyncInbox({ page_token: "tok-10" });
++      assertEquals(res2.status, 200);
++      const listagens2 = gmail.urls.filter(u => u.includes("/messages?"));
++      assertEquals(listagens2.length, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN * 2);
++      assertEquals(new URL(listagens2[GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN]).searchParams.get("pageToken"), "tok-10");
++    } finally { gmail.restore(); }
++  });
++});
++
++Deno.test("sync-inbox recusa consulta fora do escopo sem chamar o Gmail", async () => {
++  await comAmbiente(async () => {
++    const gmail = comGmailFalso();
++    try {
++      const res = await chamarSyncInbox({ query: "in:spam" });
++      assertEquals(res.status, 400);
++      await res.text();
++      assertEquals(gmail.urls.filter(u => u.includes("gmail.googleapis.com")).length, 0);
++    } finally { gmail.restore(); }
++  });
++});
+diff --git a/supabase/functions/gmail-sync/index.ts b/supabase/functions/gmail-sync/index.ts
+index 3b6fec71af..281772cb61 100644
+--- a/supabase/functions/gmail-sync/index.ts
++++ b/supabase/functions/gmail-sync/index.ts
+@@ -3,9 +3,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+ import { z } from "https://esm.sh/zod@3.23.8";
+ import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
+-import { ensureValidToken, gmailFetch, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
++import { ensureValidToken, gmailFetch, gmailFullSyncQuery, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+ 
+ const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
++// O `pageToken` do Gmail é opaco: só garantimos tamanho e um alfabeto seguro
++// antes de devolvê-lo à API (nada de espaço, quebra de linha ou controle).
++const GMAIL_PAGE_TOKEN_RE = /^[0-9A-Za-z_.=+/-]{1,512}$/;
++// Rótulos cujo CONTEÚDO não entra no Zapp: de Spam, Lixeira e Rascunhos só a
++// contagem do marcador (`syncLabels`). Consulta que peça essas pastas é
++// recusada antes de qualquer chamada ao Gmail.
++const GMAIL_QUERY_TERMOS_FORA_DE_ESCOPO = [
++  "in:spam", "in:trash", "in:draft", "in:drafts", "is:draft", "in:anywhere",
++  "label:spam", "label:trash",
++];
++
++export function gmailQueryTermosForaDeEscopo(query: string): string[] {
++  const normalizada = query.toLowerCase();
++  return GMAIL_QUERY_TERMOS_FORA_DE_ESCOPO.filter(termo => new RegExp(`\\b${termo}\\b`).test(normalizada));
++}
++
+ // Cor de marcador do Gmail: o schema só garante o formato hex; a paleta exata é
+ // validada pela própria API do Gmail (erro explícito devolvido ao chamador).
+ const GMAIL_LABEL_HEX_RE = /^#[0-9a-fA-F]{6}$/;
+@@ -24,6 +40,8 @@ export const GmailSyncActionSchema = z.object({
+   account_id: z.string().uuid("account_id must be a valid UUID"),
+   query: z.string().max(500).optional(),
+   maxResults: z.number().int().min(1).max(200).optional(),
++  // Retomada da invocação anterior do full sync (`next_page_token` da resposta).
++  page_token: z.string().regex(GMAIL_PAGE_TOKEN_RE, "page_token inválido").optional(),
+   thread_id: z.string().max(200).regex(GMAIL_RESOURCE_ID_RE).optional(),
+   topic_name: z.string().max(500).optional(),
+   // Gerenciamento de marcadores do Gmail (create/update/delete-label).
+@@ -33,6 +51,18 @@ export const GmailSyncActionSchema = z.object({
+   label_list_visibility: z.enum(['labelShow', 'labelShowIfUnread', 'labelHide']).optional(),
+   message_list_visibility: z.enum(['show', 'hide']).optional(),
+ }).superRefine((value, ctx) => {
++  // LGPD: conteúdo de Spam, Lixeira e Rascunhos não entra no Zapp. Consulta que
++  // peça essas pastas é recusada aqui, antes de qualquer chamada ao Gmail.
++  if (value.action === 'sync-inbox' && value.query !== undefined) {
++    const foraDeEscopo = gmailQueryTermosForaDeEscopo(value.query);
++    if (foraDeEscopo.length > 0) {
++      ctx.addIssue({
++        code: z.ZodIssueCode.custom,
++        path: ['query'],
++        message: `query fora do escopo (Spam, Lixeira e Rascunhos só têm a contagem do marcador): ${foraDeEscopo.join(', ')}`,
++      });
++    }
++  }
+   if (value.action === 'create-label') {
+     if (!value.name || value.name.trim().length === 0) {
+       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name é obrigatório para criar um marcador' });
+@@ -314,13 +344,23 @@ export async function handleGmailSync(req: Request): Promise<Response> {
+       case "sync-inbox": {
+         await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
+         try {
+-          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50);
++          // Escopo ampliado: caixa de entrada + enviados dos últimos 12 meses.
++          // Sem `query` do chamador, o padrão é essa consulta — Spam, Lixeira e
++          // Rascunhos nunca entram (o schema recusa quem pedir).
++          const query = body.query?.trim() ? body.query.trim() : gmailFullSyncQuery();
++          const result = await runGmailFullSync(
++            supabase, account.id, accessToken, log, query, body.maxResults || 50,
++            { startPageToken: body.page_token, maxPages: GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN },
++          );
++          const payload = {
++            ...result, query, has_more: result.has_more, next_page_token: result.next_page_token,
++          };
+           if (result.failed > 0) {
+-            log.done(207, { synced: result.synced, failed: result.failed });
+-            return jsonResponse({ success: false, ...result }, 207, req);
++            log.done(207, { synced: result.synced, failed: result.failed, hasMore: result.has_more });
++            return jsonResponse({ success: false, ...payload }, 207, req);
+           }
+-          log.done(200, { synced: result.synced });
+-          return jsonResponse({ success: true, ...result }, 200, req);
++          log.done(200, { synced: result.synced, hasMore: result.has_more });
++          return jsonResponse({ success: true, ...payload }, 200, req);
+         } catch (err: unknown) {
+           await supabase.from("gmail_accounts").update({
+             sync_status: "error", last_error: err instanceof Error ? err.message : String(err),
