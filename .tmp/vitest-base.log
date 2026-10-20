@@ -1,0 +1,2930 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-261011192359f6/.tmp/prova-base
+
+·······stderr | src/components/tasks/__tests__/TasksModule.test.tsx > TasksModule — etapa 57 (QuickAdd da Agenda) > na Agenda existe um único QuickAdd, já apontando para o dia selecionado
+In HTML, <li> cannot be a descendant of <li>.
+This will cause a hydration error.
+
+  ...
+    <QueryClientProvider client={{}}>
+      <TasksModule>
+        <div data-testid="tasks-module" className="flex flex-...">
+          <div>
+          <PageHeader variant="plain" title="Tarefas" subtitle="0 abertas ..." breadcrumbs={[...]}>
+            <header className="flex flex-...">
+              <div className="flex items...">
+                <Breadcrumb>
+                  <nav ref={null} aria-label="breadcrumb">
+                    <BreadcrumbList>
+                      <ol ref={null} className="flex flex-...">
+                        <BreadcrumbItem>
+                        <BreadcrumbItem>
+>                         <li ref={null} className="inline-flex items-center gap-1.5">
+                            <BreadcrumbSeparator>
+>                             <li role="presentation" aria-hidden="true" className={"[&>svg]:size-3.5"}>
+                            ...
+              ...
+          ...
+
+<li> cannot contain a nested <li>.
+See this log for the ancestor stack trace.
+
+xx········x·xNot implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+···········Not implemented: Window's scrollTo() method
+··x··xxxx··xx··············xstderr | src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 091 — captura só na Caixa de entrada > Enter no campo cria a tarefa na Caixa de entrada
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(QuickAdd) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+···x·xxxx···········stderr | src/components/tasks/__tests__/TasksModule.test.tsx > TasksModule — etapas 77/78 (atalhos do registry + aria-live) > mover pelo kebab anuncia "Movida para {coluna} (n de limite)"
+An update to ForwardRef(MenuItemImpl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(MenuItemImpl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(MenuContentImpl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xx··········
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/tasks/__tests__/WorkItemCard.test.tsx [ src/components/tasks/__tests__/WorkItemCard.test.tsx ]
+Error: Failed to resolve import "@/components/tasks/shared/TasksUiContext" from "src/components/tasks/__tests__/WorkItemCard.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-261011192359f6/.tmp/prova-base/src/components/tasks/__tests__/WorkItemCard.test.tsx:21:32
+  17 |  import { makeTaskRow } from "@/test/mocks/tarefas";
+  18 |  import { WorkItemCard } from "@/components/tasks/shared/WorkItemCard";
+  19 |  import { TasksUiProvider } from "@/components/tasks/shared/TasksUiContext";
+     |                                   ^
+  20 |  import { useTasksUi } from "@/components/tasks/shared/tasksUi";
+  21 |  var _jsxFileName = "/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-261011...
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx [ src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx ]
+Error: Failed to resolve import "@/components/tasks/board/boardInteracao" from "src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-261011192359f6/.tmp/prova-base/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx:20:0
+  31 |  const __vi_import_2__ = await import("@/components/tasks/board/TasksBoardMode");
+  32 |  const __vi_import_3__ = await import("@/components/ui/tooltip");
+  33 |  const __vi_import_4__ = await import("@/components/tasks/board/boardInteracao");
+     |                                       ^
+  34 |  const __vi_import_5__ = await import("react/jsx-dev-runtime");
+  35 |  import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/tasks/__tests__/TasksListMode.test.tsx > TasksListMode — etapa 86 (seções, vazios e portas do card) > o checkbox conclui sem abrir o card (onToggleDone sem onOpen)
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name "Concluir tarefa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Concluir tarefa":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Concluir tarefa"[39m
+    [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_21_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<article[39m
+  [33maria-label[39m=[32m"Concluir sem abrir, todo"[39m
+  [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+  [33mdata-item-id[39m=[32m"k1"[39m
+  [33mdata-mode[39m=[32m"list"[39m
+  [33mdata-testid[39m=[32m"work-item-card"[39m
+  [33mrole[39m=[32m"article"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Concluir tarefa"[39m
+      [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m/>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+    [36m>[39m
+      [0mConcluir sem abrir[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+      [33mtitle[39m=[32m"Prioridade: Média"[39m
+    [36m>[39m
+      [0mM[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33maria-haspopup[39m=[32m"menu"[39m
+      [33maria-label[39m=[32m"Mais opções"[39m
+      [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mid[39m=[32m"radix-_r_21_"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"12"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"5"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"19"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+  [36m/>[39m
+[36m</article>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/TasksListMode.test.tsx:156:34
+    154|
+    155|     const card = screen.getByRole('article');
+    156|     fireEvent.click(within(card).getByRole('checkbox', { name: 'Conclu…
+       |                                  ^
+    157|
+    158|     expect(onToggleDone).toHaveBeenCalledWith(alvo);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+ FAIL  src/components/tasks/__tests__/TasksListMode.test.tsx > TasksListMode — etapa 86 (seções, vazios e portas do card) > na seção "Concluídas" o checkbox é o de reabrir e desfaz pelo onToggleDone
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name "Reabrir tarefa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Reabrir tarefa":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Reabrir tarefa"[39m
+    [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_28_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<article[39m
+  [33maria-label[39m=[32m"Já foi, done"[39m
+  [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/40 opacity-60"[39m
+  [33mdata-item-id[39m=[32m"c1"[39m
+  [33mdata-mode[39m=[32m"list"[39m
+  [33mdata-testid[39m=[32m"work-item-card"[39m
+  [33mrole[39m=[32m"article"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Reabrir tarefa"[39m
+      [33mclass[39m=[32m"mt-0.5 h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"block h-2.5 w-2.5 rounded-sm bg-primary"[39m
+      [36m/>[39m
+    [36m</button>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate line-through text-muted-foreground"[39m
+    [36m>[39m
+      [0mJá foi[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+      [33mtitle[39m=[32m"Prioridade: Média"[39m
+    [36m>[39m
+      [0mM[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33maria-haspopup[39m=[32m"menu"[39m
+      [33maria-label[39m=[32m"Mais opções"[39m
+      [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mid[39m=[32m"radix-_r_28_"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"12"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"5"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"12"[39m
+          [33mcy[39m=[32m"19"[39m
+          [33mr[39m=[32m"1"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+  [36m/>[39m
+[36m</article>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/TasksListMode.test.tsx:168:34
+    166|     fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    167|     const card = screen.getByRole('article');
+    168|     fireEvent.click(within(card).getByRole('checkbox', { name: 'Reabri…
+       |                                  ^
+    169|
+    170|     expect(onToggleDone).toHaveBeenCalledWith(feita);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  src/components/tasks/__tests__/TasksModule.test.tsx > TasksModule — etapa 45 (barra de filtros) > esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-column-empty"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col h-full gap-4"[39m
+      [33mdata-testid[39m=[32m"tasks-module"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-atomic[39m=[32m"true"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"sr-only"[39m
+        [33mdata-testid[39m=[32m"tasks-live"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m/>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"flex flex-col gap-2 px-0 pt-0 pb-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-between gap-3 flex-wrap sm:h-14"[39m
+        [36m>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"breadcrumb"[39m
+          [36m>[39m
+            [36m<ol[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+              [36m>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"[39m
+                  [33mhref[39m=[32m"/"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-house w-3.5 h-3.5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span>[39m
+                    [0mInício[0m
+                  [36m</span>[39m
+                [36m</a>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"[&>svg]:size-3.5"[39m
+                  [33mrole[39m=[32m"presentation"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</li>[39m
+                [36m<span[39m
+                  [33maria-current[39m=[32m"page"[39m
+                  [33maria-disabled[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"font-semibold text-foreground"[39m
+                  [33mrole[39m=[32m"link"[39m
+                [36m>[39m
+                  [0mTarefas[0m
+                [36m</span>[39m
+              [36m</li>[39m
+            [36m</ol>[39m
+          [36m</nav>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col sm:flex-row sm:items-center justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3 min-w-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"font-extrabold tracking-[-0.02em] leading-none text-foreground truncate"[39m
+              [36m>[39m
+                [0mTarefas[0m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-lg text-muted-foreground mt-2 truncate"[39m
+              [36m>[39m
+                [0m1 aberta · 0 para hoje[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"[39m
+        [33mdata-testid[39m=[32m"tasks-kpi-strip"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"h-[88px] rounded-[14px] border border-border/70 bg-card px-3 flex items-center gap-3"[39m
+          [33mdata-testid[39m=[32m"kpi-card"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-kpi-yellow"[39m
+            [33mdata-testid[39m=[32m"kpi-tile"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert h-5 w-5 text-kpi-yellow-fg"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+           ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/components/tasks/__tests__/TasksModule.test.tsx:129:19
+    127|     // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: ass…
+    128|     // 4 das 5 colunas ficam vazias (backlog, fazendo, aguardando e co…
+    129|     expect(screen.getAllByTestId('board-column-empty')).toHaveLength(4…
+       |                   ^
+    130|     expect(window.location.search).toContain('done=0');
+    131|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  src/components/tasks/__tests__/agendaGroups.test.tsx > TasksAgendaMode — etapa 55 > o card da Agenda é uma linha só de 44px, com checkbox e sem motivo de espera (etapa 56)
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name "Concluir tarefa"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Concluir tarefa":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Concluir tarefa"[39m
+    [33mclass[39m=[32m" h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "11:00":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33mclass[39m=[32m"inline-flex items-center gap-1 text-xs font-medium text-destructive"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mdata-testid[39m=[32m"remind-chip"[39m
+    [33mtitle[39m=[32m"Lembrete: dom., 11/10 11:00"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m" h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_1a_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<article[39m
+  [33maria-label[39m=[32m"Aguardando retorno, waiting"[39m
+  [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-row h-11 items-center gap-2 rounded-xl px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+  [33mdata-item-id[39m=[32m"i5"[39m
+  [33mdata-mode[39m=[32m"agenda"[39m
+  [33mdata-testid[39m=[32m"work-item-card"[39m
+  [33mrole[39m=[32m"article"[39m
+  [33mtabindex[39m=[32m"0"[39m
+[36m>[39m
+  [36m<button[39m
+    [33maria-label[39m=[32m"Concluir tarefa"[39m
+    [33mclass[39m=[32m" h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+  [36m<span[39m
+    [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+  [36m>[39m
+    [0mAguardando retorno[0m
+  [36m</span>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"ml-auto flex shrink-0 items-center gap-1.5 min-w-0 overflow-hidden"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+      [33mtitle[39m=[32m"Prioridade: Média"[39m
+    [36m>[39m
+      [0mM[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33maria-haspopup[39m=[32m"dialog"[39m
+      [33mclass[39m=[32m"inline-flex items-center gap-1 text-xs font-medium text-destructive"[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mdata-testid[39m=[32m"remind-chip"[39m
+      [33mtitle[39m=[32m"Lembrete: dom., 11/10 11:00"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-bell-ring h-3 w-3"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M10.268 21a2 2 0 0 0 3.464 0"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M22 8c0-2.3-.8-4.3-2-6"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M4 2C2.8 3.7 2 5.7 2 8"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m11:00[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m" h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_1a_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<circle[39m
+        [33mcx[39m=[32m"12"[39m
+        [33mcy[39m=[32m"12"[39m
+        [33mr[39m=[32m"1"[39m
+      [36m/>[39m
+      [36m<circle[39m
+        [33mcx[39m=[32m"12"[39m
+        [33mcy[39m=[32m"5"[39m
+        [33mr[39m=[32m"1"[39m
+      [36m/>[39m
+      [36m<circle[39m
+        [33mcx[39m=[32m"12"[39m
+        [33mcy[39m=[32m"19"[39m
+        [33mr[39m=[32m"1"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+  [36m</button>[39m
+[36m</article>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/agendaGroups.test.tsx:179:25
+    177|     expect(card.className).toContain('flex-row');
+    178|     // checkbox presente na Agenda (na Lista ele já era; no Quadro não)
+    179|     expect(within(card).getByRole('checkbox', { name: 'Concluir tarefa…
+       |                         ^
+    180|     // nada de motivo de espera na linha
+    181|     expect(screen.queryByText('cliente vai responder')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 091 — captura só na Caixa de entrada > mostra o cartão tracejado no FIM da Caixa de entrada, com a dica e o QuickAdd compacto
+TestingLibraryElementError: Unable to find an element by: [data-testid="capture-card"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx:63:28
+     61|     renderQuadro();
+     62|
+     63|     const cartoes = screen.getAllByTestId('capture-card');
+       |                            ^
+     64|     expect(cartoes, 'só a Caixa de entrada captura (D19)').toHaveLengt…
+     65|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 092 — a coluna Concluído marca o cartão e tem o rodapé da janela > cada cartão concluído leva o check verde e a data da conclusão
+TestingLibraryElementError: Unable to find an element by: [data-testid="done-stamp"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_0_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_d_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_q_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx:106:29
+    104|     });
+    105|
+    106|     const carimbos = screen.getAllByTestId('done-stamp');
+       |                             ^
+    107|     expect(carimbos).toHaveLength(1);
+    108|     expect(carimbos[0].closest('[data-board-column]')?.getAttribute('d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 092 — a coluna Concluído marca o cartão e tem o rodapé da janela > o "Ver até 30 dias →" é o rodapé da coluna Concluído e revela a janela
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-done-older"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_0_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_d_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_q_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_17_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide luci...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx:121:26
+    119|     });
+    120|
+    121|     const botao = screen.getByTestId('board-done-older');
+       |                          ^
+    122|     expect(botao.textContent).toBe('Ver até 30 dias →');
+    123|     expect(botao.closest('[data-board-column]')?.getAttribute('data-bo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 093 — toggle "Concluídas" e o ⁙ que recolhe a coluna > nasce ligado com as 5 colunas e, desligado, tira a coluna Concluído do trilho
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-done-toggle"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_0_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_d_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_q_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_17_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_1n_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx:136:27
+    134|   it('nasce ligado com as 5 colunas e, desligado, tira a coluna Conclu…
+    135|     renderQuadro();
+    136|     const toggle = screen.getByTestId('board-done-toggle');
+       |                           ^
+    137|     expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    138|     expect(toggle.textContent).toBe('Concluídas');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 093 — toggle "Concluídas" e o ⁙ que recolhe a coluna > o ⁙ do cabeçalho recolhe a coluna (só o cabeçalho fica) e expande de volta
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-collapse-done"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_0_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_d_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_q_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_17_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_1n_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_27_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx:158:29
+    156|     });
+    157|
+    158|     const recolher = screen.getByTestId('board-collapse-done');
+       |                             ^
+    159|     expect(recolher.getAttribute('aria-expanded')).toBe('true');
+    160|     expect(screen.getByText('Feita hoje')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯
+
+ FAIL  src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx > etapa 103 — esqueleto e vazio por coluna > toda coluna vazia mostra a microcopy única e a sua política
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-column-empty"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_0_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_d_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_q_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_17_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_1n_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_27_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-atomic[39m=[32m"true"[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mid[39m=[32m"rfd-announcement-_r_2k_"[39m
+    [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%);"[39m
+  [36m/>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"qu...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx:178:19
+    176|     renderQuadro();
+    177|
+    178|     expect(screen.getAllByTestId('board-column-empty')).toHaveLength(5…
+       |                   ^
+    179|     expect(screen.getAllByText('Nada aqui. Arraste uma tarefa ou captu…
+    180|     // a política sai da KANBAN_COLUMNS (mesmo texto do tooltip do cab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯
+
+ FAIL  src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > etapa 51 (B5): a coluna Concluído mostra 7 dias e "Ver até 30 dias →" revela o resto
+TestingLibraryElementError: Unable to find an element with the text: Ver até 30 dias →. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/taskComponents.test.tsx:298:28
+    296|     expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
+    297|
+    298|     fireEvent.click(screen.getByText('Ver até 30 dias →'));
+       |                            ^
+    299|     expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
+    300|     expect(screen.getByText('Ver menos')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+
+ FAIL  src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO fica vazia
+TestingLibraryElementError: Unable to find an element with the text: Ver até 30 dias →. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/__tests__/taskComponents.test.tsx:325:19
+    323|     // A coluna TEM conteúdo (atrás do rodapé): antes ela dizia "Colun…
+    324|     // oferecia "Ver mais antigas (30 dias)" ao mesmo tempo — contradi…
+    325|     expect(screen.getByText('Ver até 30 dias →')).toBeTruthy();
+       |                   ^
+    326|     expect(screen.getAllByTestId('board-column-empty')).toHaveLength(4…
+    327|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+
+ FAIL  src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > etapa 53: coluna vazia mostra a política da coluna
+TestingLibraryElementError: Unable to find an element by: [data-testid="board-column-empty"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex w-full min-w-0 flex-col h-full min-h-0 gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+          [33mdata-board-column[39m=[32m"backlog"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+            [36m>[39m
+              [0mCaixa de entrada[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Política da coluna"[39m
+              [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"10"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 16v-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 8h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"px-2 pt-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+              [33mdata-testid[39m=[32m"quick-add"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-col gap-2 md:flex-row md:items-center"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 border-border"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-plus h-4 w-4 shrink-0 text-muted-foreground"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 12h14"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5v14"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Adicionar tarefa"[39m
+                    [33mclass[39m=[32m"flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"[39m
+                    [33mdata-testid[39m=[32m"quick-add-input"[39m
+                    [33mplaceholder[39m=[32m"Capturar tarefa…"[39m
+                    [33mtitle[39m=[32m"Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"dialog"[39m
+                  [33maria-label[39m=[32m"Mais opções"[39m
+                  [33mclass[39m=[32m"chip-btn shrink-0 self-start md:self-auto"[39m
+                  [33mdata-state[39m=[32m"closed"[39m
+                  [33mdata-testid[39m=[32m"quick-add-more"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-ellipsis h-4 w-4"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"19"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"5"[39m
+                      [33mcy[39m=[32m"12"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/components/tasks/__tests__/taskComponents.test.tsx:446:19
+    444|     );
+    445|
+    446|     expect(screen.getAllByTestId('board-column-empty')).toHaveLength(5…
+       |                   ^
+    447|     // a microcopy do vazio por coluna (etapa 103)
+    448|     expect(screen.getAllByText('Nada aqui. Arraste uma tarefa ou captu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯
+
+ FAIL  src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx > Etapa 080 — subtítulo curto nas colunas e política longa no tooltip > cada coluna mostra o próprio subtítulo e o rótulo continua o primeiro span do cabeçalho
+TestingLibraryElementError: Unable to find an element with the text: A organizar. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+      [33mdata-board-column[39m=[32m"backlog"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+        [36m>[39m
+          [0mCaixa de entrada[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-xs font-bold tabular-nums "[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Política da coluna"[39m
+          [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+          [33mdata-state[39m=[32m"closed"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 16v-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 8h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] "[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<article[39m
+            [33maria-label[39m=[32m"Ligar para o cliente, backlog"[39m
+            [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+            [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+            [33mdata-item-id[39m=[32m"backlog-1"[39m
+            [33mdata-mode[39m=[32m"board"[39m
+            [33mdata-testid[39m=[32m"work-item-card"[39m
+            [33mrole[39m=[32m"article"[39m
+            [33mtabindex[39m=[32m"0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+              [36m>[39m
+                [0mLigar para o cliente[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+                [33mtitle[39m=[32m"Prioridade: Média"[39m
+              [36m>[39m
+                [0mM[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Mais opções"[39m
+                [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+                [33mdata-state[39m=[32m"closed"[39m
+                [33mid[39m=[32m"radix-_r_1_"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+            [36m/>[39m
+          [36m</article>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+      [33mdata-board-column[39m=[32m"todo"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+        [36m>[39m
+          [0mA fazer[0m
+...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx:97:21
+     95|
+     96|     for (const texto of SUBTITULOS) {
+     97|       expect(screen.getByText(texto), `subtítulo "${texto}"`).toBeTrut…
+       |                     ^
+     98|     }
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯
+
+ FAIL  src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx > Etapa 080 — subtítulo curto nas colunas e política longa no tooltip > a política longa NÃO vira texto do cabeçalho — ela fica no tooltip do botão ⓘ
+Error: It looks like undefined was passed instead of a matcher. Did you do something like getByText(undefined)?
+ ❯ assertNotNullOrUndefined ../../node_modules/@testing-library/dom/dist/matches.js:12:11
+ ❯ matches ../../node_modules/@testing-library/dom/dist/matches.js:35:3
+ ❯ ../../node_modules/@testing-library/dom/dist/queries/text.js:31:68
+ ❯ queryAllByText ../../node_modules/@testing-library/dom/dist/queries/text.js:31:53
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:74:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx:117:19
+    115|
+    116|     // Com a coluna COM cards a política não é impressa como corpo de …
+    117|     expect(screen.getByText(todo.subtitle)).toBeTruthy();
+       |                   ^
+    118|     expect(screen.queryByText(todo.policy, { exact: false })).toBeNull…
+    119|     // …e continua alcançável pelo botão que o leitor de tela lê.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯
+
+ FAIL  src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx > Etapa 082 — limite de Fazendo: contador, barra segmentada e rodapé > cheio (3/3): contador, 3 segmentos destrutivos e o rodapé do limite
+TestingLibraryElementError: Unable to find an accessible element with the role "progressbar" and name "Limite de Fazendo"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Política da coluna":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Política da coluna"[39m
+    [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_j_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_l_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_n_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  article:
+
+  Name "Ligar para o cliente, doing":
+  [36m<article[39m
+    [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+    [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+    [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+    [33mdata-item-id[39m=[32m"f1"[39m
+    [33mdata-mode[39m=[32m"board"[39m
+    [33mdata-testid[39m=[32m"work-item-card"[39m
+    [33mrole[39m=[32m"article"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  Name "Ligar para o cliente, doing":
+  [36m<article[39m
+    [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+    [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+    [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+    [33mdata-item-id[39m=[32m"f2"[39m
+    [33mdata-mode[39m=[32m"board"[39m
+    [33mdata-testid[39m=[32m"work-item-card"[39m
+    [33mrole[39m=[32m"article"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  Name "Ligar para o cliente, doing":
+  [36m<article[39m
+    [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+    [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+    [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+    [33mdata-item-id[39m=[32m"f3"[39m
+    [33mdata-mode[39m=[32m"board"[39m
+    [33mdata-testid[39m=[32m"work-item-card"[39m
+    [33mrole[39m=[32m"article"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+      [33mdata-board-column[39m=[32m"doing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-destructive ring-1 ring-destructive/40"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+        [36m>[39m
+          [0mFazendo[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-xs font-bold tabular-nums text-destructive"[39m
+        [36m>[39m
+          [0m3/3[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Política da coluna"[39m
+          [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+          [33mdata-state[39m=[32m"closed"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 16v-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 8h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] "[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<article[39m
+            [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+            [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+            [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+            [33mdata-item-id[39m=[32m"f1"[39m
+            [33mdata-mode[39m=[32m"board"[39m
+            [33mdata-testid[39m=[32m"work-item-card"[39m
+            [33mrole[39m=[32m"article"[39m
+            [33mtabindex[39m=[32m"0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+              [36m>[39m
+                [0mLigar para o cliente[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+                [33mtitle[39m=[32m"Prioridade: Média"[39m
+              [36m>[39m
+                [0mM[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Mais opções"[39m
+                [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+                [33mdata-state[39m=[32m"closed"[39m
+                [33mid[39m=[32m"radix-_r_j_"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1 text-2xs font-medium text-destructive"[39m
+                [33mtitle[39m=[32m"12 dias nesta coluna"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"inline-block h-1.5 w-1.5 rounded-full bg-destructive"[39m
+                [36m/>[39m
+                [0m12d[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</article>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<article[39m
+            [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+            [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+            [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+            [33mdata-item-id[39m=[32m"f2"[39m
+            [33mdata-mode[39m=[32m"board"[39m
+            [33mdata-testid[39m=[32m"work-item-card"[39m
+            [33mrole[39m=[32m"article"[39m
+            [33mtabindex[39m=[32m"0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+              [36m>[39m
+                [0mLigar para o cliente[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+                [33mtitle[39m=[32m"Prioridade: Média"[39m
+              [36m>[39m
+                [0mM[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Mais opções"[39m
+                [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+                [33mdata-state[39m=[32m"closed"[39m
+                [33mid[39m=[32m"radix-_r_l_"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1 text-2xs font-medium text-destructive"[39m
+                [33mtitle[39m=[32m"12 dias nesta coluna"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"inline-block h-1.5 w-1.5 rounded-full bg-destructive"[39m
+                [36m/>[39m
+                [0m12d[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</article>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<article[39m
+            [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+            [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+            [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+            [33mdata-item-id[39m=[32m"f3"[39m
+            [33mdata-mode[39m=[32m"board"[39m
+            [33mdata-testid[39m=[32m"work-item-card"[39m
+            [33mrole[39m=[32m"article"[39m
+            [33mtabindex[39m=[32m"0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+              [36m>[39m
+                [0mLigar para o cliente[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+                [33mtitle[39m=[32m"Prioridade: Média"[39m
+              [36m>[39m
+                [0mM[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Mais opções"[39m
+                [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+                [33mdata-state[39m=[32m"closed"[39m
+                [33mid[39m=[32m"radix-_r_n_"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1 text-2xs font-medium text-destructive"[39m
+                [33mtitle[39m=[32m"12 dias nesta coluna"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"inline-block h-1.5 w-1.5 rounded-full bg-destructive"[39m
+                [36m/>[39m
+                [0m12d[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</article>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx:138:26
+    136|     expect(screen.getByText('3/3')).toBeTruthy();
+    137|
+    138|     const barra = screen.getByRole('progressbar', { name: 'Limite de F…
+       |                          ^
+    139|     expect(barra.getAttribute('aria-valuenow')).toBe('3');
+    140|     expect(barra.getAttribute('aria-valuemax')).toBe('3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯
+
+ FAIL  src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx > Etapa 082 — limite de Fazendo: contador, barra segmentada e rodapé > parcial (1/3): um segmento primário e dois vazios — a barra segue azul, não destrutiva
+TestingLibraryElementError: Unable to find an accessible element with the role "progressbar" and name "Limite de Fazendo"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Política da coluna":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Política da coluna"[39m
+    [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Mais opções":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"menu"[39m
+    [33maria-label[39m=[32m"Mais opções"[39m
+    [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+    [33mdata-state[39m=[32m"closed"[39m
+    [33mid[39m=[32m"radix-_r_q_"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  article:
+
+  Name "Ligar para o cliente, doing":
+  [36m<article[39m
+    [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+    [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+    [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+    [33mdata-item-id[39m=[32m"f1"[39m
+    [33mdata-mode[39m=[32m"board"[39m
+    [33mdata-testid[39m=[32m"work-item-card"[39m
+    [33mrole[39m=[32m"article"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"[39m
+      [33mdata-board-column[39m=[32m"doing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur text-foreground "[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"flex-1 min-w-0 truncate text-[13px] font-semibold"[39m
+        [36m>[39m
+          [0mFazendo[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-xs font-bold tabular-nums "[39m
+        [36m>[39m
+          [0m1/3[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Política da coluna"[39m
+          [33mclass[39m=[32m"min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted"[39m
+          [33mdata-state[39m=[32m"closed"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-info h-3.5 w-3.5 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 16v-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 8h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] "[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<article[39m
+            [33maria-label[39m=[32m"Ligar para o cliente, doing"[39m
+            [33maria-roledescription[39m=[32m"tarefa arrastável"[39m
+            [33mclass[39m=[32m"group relative border bg-card cursor-pointer flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[border-color,box-shadow,transform] duration-150 border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]"[39m
+            [33mdata-item-id[39m=[32m"f1"[39m
+            [33mdata-mode[39m=[32m"board"[39m
+            [33mdata-testid[39m=[32m"work-item-card"[39m
+            [33mrole[39m=[32m"article"[39m
+            [33mtabindex[39m=[32m"0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 text-sm font-semibold leading-snug truncate text-foreground"[39m
+              [36m>[39m
+                [0mLigar para o cliente[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none bg-primary/15 text-primary border-primary/30"[39m
+                [33mtitle[39m=[32m"Prioridade: Média"[39m
+              [36m>[39m
+                [0mM[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Mais opções"[39m
+                [33mclass[39m=[32m"opacity-0 group-hover:opacity-100 focus-visible:opacity-100 h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center"[39m
+                [33mdata-state[39m=[32m"closed"[39m
+                [33mid[39m=[32m"radix-_r_q_"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical h-3.5 w-3.5 text-muted-foreground"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1 text-2xs font-medium text-destructive"[39m
+                [33mtitle[39m=[32m"12 dias nesta coluna"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"inline-block h-1.5 w-1.5 rounded-full bg-destructive"[39m
+                [36m/>[39m
+                [0m12d[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</article>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx:160:41
+    158|
+    159|     expect(screen.getByText('1/3')).toBeTruthy();
+    160|     const segmentos = Array.from(screen.getByRole('progressbar', { nam…
+       |                                         ^
+    161|     expect(segmentos).toHaveLength(3);
+    162|     expect(segmentos[0].className).toContain('bg-primary');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/21]⎯
+
+ FAIL  src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx > Etapa 083 — soltar em Fazendo cheio treme a coluna, avisa e devolve o card > treme (só a borda garante o aviso em movimento reduzido), avisa e NÃO move o card
+AssertionError: expected 'flex flex-col flex-1 min-w-[200px] h-…' to contain 'motion-safe:animate-wiggle'
+
+Expected: "motion-safe:animate-wiggle"
+Received: "flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"
+
+ ❯ src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx:224:39
+    222|     // A coluna de destino leva o tranco: o que a anima é `motion-safe…
+    223|     // movimento reduzido) e a borda destrutiva permanece.
+    224|     expect(coluna('doing').className).toContain('motion-safe:animate-w…
+       |                                       ^
+    225|     expect(coluna('doing').className).toContain('border-destructive');
+    226|     expect(toastError).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/21]⎯
+
+ FAIL  src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx > Etapa 083 — soltar em Fazendo cheio treme a coluna, avisa e devolve o card > o tranco é curto: depois do tempo a coluna volta ao normal
+AssertionError: expected 'flex flex-col flex-1 min-w-[200px] h-…' to contain 'border-destructive'
+
+Expected: "border-destructive"
+Received: "flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"
+
+ ❯ src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx:237:39
+    235|
+    236|     act(() => { dnd.onDragEnd?.(drop('t1', 'todo', 0, 'doing', 0)); });
+    237|     expect(coluna('doing').className).toContain('border-destructive');
+       |                                       ^
+    238|
+    239|     act(() => { vi.advanceTimersByTime(700); });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/21]⎯
+
+
+ Test Files  8 failed (8)
+      Tests  19 failed | 72 passed (91)
+   Start at  19:47:37
+   Duration  12.63s (transform 2.64s, setup 3.03s, import 12.45s, tests 15.62s, environment 9.99s)
+
