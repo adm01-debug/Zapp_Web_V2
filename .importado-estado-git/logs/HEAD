@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792162938 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792162939 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 a1dd3f6f8420b9267e7d2177c728670765c37bf2 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792163505 -0300	commit (cherry-pick): fix(hooks): arquivar conversa grava o estado arquivada pela RPC (individual, em massa e no genérico)
+a1dd3f6f8420b9267e7d2177c728670765c37bf2 a1dd3f6f8420b9267e7d2177c728670765c37bf2 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792163548 -0300	reset: moving to a1dd3f6f8420b9267e7d2177c728670765c37bf2
+a1dd3f6f8420b9267e7d2177c728670765c37bf2 a1dd3f6f8420b9267e7d2177c728670765c37bf2 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792163559 -0300	reset: moving to a1dd3f6f8420b9267e7d2177c728670765c37bf2
+a1dd3f6f8420b9267e7d2177c728670765c37bf2 f7f3ef924db39427e83c1053873ebd772b858c2b Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792164631 -0300	commit (amend): fix(hooks): arquivar conversa grava o estado arquivada pela RPC (individual, em massa e no genérico)
+f7f3ef924db39427e83c1053873ebd772b858c2b 89bb541cbe32e2a0fef546e0f8979511b6b5d475 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792165601 -0300	commit: fix(inbox): slash /archive grava o estado arquivada pela RPC set_conversation_status

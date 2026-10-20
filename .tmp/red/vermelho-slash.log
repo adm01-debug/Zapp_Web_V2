@@ -1,0 +1,49 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-rebase-261016120219fd
+
+ ❯ src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx (10 tests | 2 failed) 146ms
+     × /archive arquiva pela RPC set_conversation_status (archived), sem escrita direta em contacts 35ms
+     × /archive em erro na RPC avisa e NÃO anuncia "Conversa Arquivada" 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx > comandos de barra — nunca terminam em silêncio > /archive arquiva pela RPC set_conversation_status (archived), sem escrita direta em contacts
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'set_conversation_status', { …(3) } ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx:301:20
+    299|     });
+    300|
+    301|     expect(db.rpc).toHaveBeenCalledWith('set_conversation_status', {
+       |                    ^
+    302|       p_contact_id: 'contact-1',
+    303|       p_next: 'archived',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx > comandos de barra — nunca terminam em silêncio > /archive em erro na RPC avisa e NÃO anuncia "Conversa Arquivada"
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx:320:73
+    318|     });
+    319|
+    320|     expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))…
+       |                                                                         ^
+    321|     expect(toastsDestrutivos().length).toBeGreaterThan(0);
+    322|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  12:44:53
+   Duration  3.18s (transform 852ms, setup 688ms, import 798ms, tests 146ms, environment 1.27s)
+

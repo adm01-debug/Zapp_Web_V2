@@ -1,0 +1,9 @@
+OK      db_guard        0s
+FALHOU  tipos         196s  (ver /home/joaquim_ataides/.local/state/zapp-verify/ad40ed26957d/tipos.log)
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 60s
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 121s
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 180s
+tc-rapido: erro sem diagnóstico reconhecível
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro.
+VERIFY: VERMELHO em tipos (196s)

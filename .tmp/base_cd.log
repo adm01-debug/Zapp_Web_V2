@@ -1,0 +1,199 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-rebase-261016120219fd
+
+ ❯ src/components/inbox/__tests__/tmp-base-cd.test.tsx (4 tests | 1 failed) 6628ms
+     × "Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real 5936ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/tmp-base-cd.test.tsx > ContactDetails — ações rápidas persistem (cartão #241) > "Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real
+AssertionError: expected "vi.fn()" to be called with arguments: [ { assigned_to: null } ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mstyle[39m=[32m""[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Detalhes do contato"[39m
+        [33mclass[39m=[32m"w-full md:w-[323px] h-full min-h-0 shrink-0 bg-inbox-panel border-l border-border flex flex-col overflow-hidden"[39m
+        [33mdata-testid[39m=[32m"contact-panel"[39m
+        [33mrole[39m=[32m"complementary"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-between px-4 py-3 border-b border-border bg-inbox-panel shrink-0"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-1 h-5 rounded-full bg-primary"[39m
+            [36m/>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-foreground text-sm"[39m
+            [36m>[39m
+              [0mDetalhes do Contato[0m
+            [36m</h3>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Recolher painel de detalhes"[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"[39m
+              [33mdata-state[39m=[32m"closed"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-panel-right-close w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 3v18"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m8 9 3 3-3 3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 min-h-0 flex flex-col"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-4 border-b border-border"[39m
+            [33mdata-testid[39m=[32m"contact-header-section"[39m
+            [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative shrink-0"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative inline-block"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] -rotate-90"[39m
+                    [33mviewBox[39m=[32m"0 0 108 108"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"54"[39m
+                      [33mcy[39m=[32m"54"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mopacity[39m=[32m"0.3"[39m
+                      [33mr[39m=[32m"50"[39m
+                      [33mstroke[39m=[32m"hsl(var(--muted))"[39m
+                      [33mstroke-width[39m=[32m"2.5"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"54"[39m
+                      [33mcy[39m=[32m"54"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mr[39m=[32m"50"[39m
+                      [33mstroke[39m=[32m"hsl(var(--warning))"[39m
+                      [33mstroke-dasharray[39m=[32m"314.1592653589793"[39m
+                      [33mstroke-dashoffset[39m=[32m"157.07963267948966"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2.5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"relative flex shrink-0 overflow-hidden rounded-full text-sm w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"[39m
+                    [33mdata-testid[39m=[32m"contact-avatar"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-semibold"[39m
+                      [33mdata-testid[39m=[32m"contact-avatar-initials"[39m
+                    [36m>[39m
+                      [0mMS[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-3xs font-bold ring-2 ring-background"[39m
+                    [33mdata-state[39m=[32m"closed"[39m
+                    [33mstyle[39m=[32m"background-color: rgb(155, 101, 8); color: white;"[39m
+                  [36m>[39m
+                    [0m50[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 pt-0.5"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5 min-w-0"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"font-bold text-lg text-foreground leading-tight truncate"[39m
+                  [36m>[39m
+        ...
+ ❯ src/components/inbox/__tests__/tmp-base-cd.test.tsx:125:42
+    123|     openMais();
+    124|     fireEvent.click(screen.getByText('Arquivar'));
+    125|     await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assign…
+       |                                          ^
+    126|     // A segunda implementação paralela está proibida: nunca escreve s…
+    127|     expect(h.update).not.toHaveBeenCalledWith(
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: supabase.rpc is not a function
+ ❯ src/hooks/chat/useConversationActions.ts:253:38
+    251|     // grava conversation_status = 'archived' e NÃO toca assigned_to —…
+    252|     // marca; ao reabrir, a conversa volta para o mesmo responsável.
+    253|     const { error } = await supabase.rpc('set_conversation_status', {
+       |                                      ^
+    254|       p_contact_id: contactId,
+    255|       p_next: 'archived',
+ ❯ handleQuickAction src/components/inbox/ContactDetails.tsx:75:28
+ ❯ onClick src/components/inbox/contact-details/ContactActionButtons.tsx:219:46
+ ❯ handleEvent ../node_modules/@radix-ui/primitive/dist/index.mjs:8:27
+ ❯ executeDispatch ../node_modules/react-dom/cjs/react-dom-client.development.js:20804:9
+ ❯ runWithFiberInDEV ../node_modules/react-dom/cjs/react-dom-client.development.js:1048:13
+ ❯ processDispatchQueue ../node_modules/react-dom/cjs/react-dom-client.development.js:20854:19
+ ❯ ../node_modules/react-dom/cjs/react-dom-client.development.js:21423:9
+ ❯ batchedUpdates$1 ../node_modules/react-dom/cjs/react-dom-client.development.js:3437:40
+ ❯ dispatchEventForPluginEventSystem ../node_modules/react-dom/cjs/react-dom-client.development.js:21008:7
+
+This error originated in "src/components/inbox/__tests__/tmp-base-cd.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is ""Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+     Errors  1 error
+   Start at  12:29:13
+   Duration  18.44s (transform 2.63s, setup 1.00s, import 6.34s, tests 6.63s, environment 3.59s)
+

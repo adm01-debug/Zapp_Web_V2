@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-rebase-261016120219fd
+
+
+ Test Files  4 passed (4)
+      Tests  64 passed (64)
+   Start at  12:46:21
+   Duration  9.50s (transform 8.18s, setup 2.45s, import 12.89s, tests 3.47s, environment 6.59s)
+

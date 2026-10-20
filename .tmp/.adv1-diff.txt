@@ -1,0 +1,721 @@
+diff --git a/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx b/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+index 1b14f44010..b5947934e5 100644
+--- a/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
++++ b/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+@@ -28,18 +28,21 @@ const h = vi.hoisted(() => {
+     state.invokeError
+       ? { data: null, error: state.invokeError }
+       : { data: { ok: true }, error: null });
++  // ADR-005: arquivar conversa passa pela RPC set_conversation_status.
++  const rpc = vi.fn(async (_fn: string, _args: Record<string, unknown>) => ({ error: null }));
+   const toast = Object.assign(vi.fn(), {
+     success: vi.fn(),
+     error: vi.fn(),
+     info: vi.fn(),
+     warning: vi.fn(),
+   });
+-  return { state, eq, update, select, from, invoke, toast };
++  return { state, eq, update, select, from, invoke, rpc, toast };
+ });
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+     from: h.from,
++    rpc: h.rpc,
+     functions: { invoke: h.invoke },
+     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
+   },
+@@ -118,24 +121,29 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
+     };
+   });
+ 
+-  it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
++  it('"Arquivar" usa a RPC set_conversation_status (archived) e o Desfazer reabre (assigned_to intocado)', async () => {
+     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
+     openMais();
+     fireEvent.click(screen.getByText('Arquivar'));
+-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
+-    // A segunda implementação paralela está proibida: nunca escreve status.
+-    expect(h.update).not.toHaveBeenCalledWith(
+-      expect.objectContaining({ conversation_status: expect.anything() }),
++    await waitFor(() =>
++      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {
++        p_contact_id: 'c1',
++        p_next: 'archived',
++        p_reason: 'arquivada_no_chat',
++      }),
+     );
++    // A implementação paralela de escrita direta está proibida.
++    expect(h.update).not.toHaveBeenCalled();
+ 
+     await clickUndo();
+-    // Restaura o assigned_to lido antes da escrita — não força 'open'.
+     await waitFor(() =>
+-      expect(h.update).toHaveBeenLastCalledWith({ assigned_to: 'agent-9' }),
+-    );
+-    expect(h.update).not.toHaveBeenCalledWith(
+-      expect.objectContaining({ conversation_status: expect.anything() }),
++      expect(h.rpc).toHaveBeenLastCalledWith('set_conversation_status', {
++        p_contact_id: 'c1',
++        p_next: 'open',
++        p_reason: 'desfazer_arquivamento',
++      }),
+     );
++    expect(h.update).not.toHaveBeenCalled();
+   });
+ 
+   it('"Bloquear" impede novas mensagens pelo fluxo real (update-block-status na edge) e grava a tag', async () => {
+diff --git a/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx b/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+index 839c782b34..59c18b6019 100644
+--- a/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
++++ b/src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+@@ -11,7 +11,10 @@
+  *     o HEAD só olhava `error` e anunciava êxito.
+  *  4. CÓPIA: `writeText` rejeitado (permissão/contexto) mas o HEAD dizia "Copiado!".
+  *  5. Comandos de barra sem argumento (`/snooze`, `/priority`) terminavam em silêncio.
+- *  6. `/archive` gravava `assigned_to = null` (devolvia à fila) e dizia "Conversa Arquivada".
++ *  6. `/archive` gravava `assigned_to = null` (devolvia à fila) e dizia "Conversa Arquivada";
++ *     depois passou a escrever `conversation_status = 'archived'` direto em `contacts`, uma
++ *     terceira implementação paralela da transição. Agora transiciona pela RPC
++ *     `set_conversation_status` (ADR-005), como o arquivamento individual e o em massa.
+  */
+ import { act, renderHook } from '@testing-library/react';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+@@ -22,6 +25,9 @@ const db = vi.hoisted(() => ({
+   snoozeConversation: vi.fn(),
+   favoriteContact: vi.fn(),
+   unfavoriteContact: vi.fn(),
++  // ADR-005: /archive transiciona pela RPC set_conversation_status, como o arquivamento
++  // individual e o em massa — não há mais escrita direta em `contacts` nesse caminho.
++  rpc: vi.fn(async () => ({ error: null as unknown })),
+   updates: [] as {
+     table: string;
+     payload: Record<string, unknown>;
+@@ -33,14 +39,14 @@ const db = vi.hoisted(() => ({
+ 
+ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
++    rpc: db.rpc,
+     from: (table: string) => ({
+       update: (payload: Record<string, unknown>) => ({
+         eq: (column: string, value: unknown) => {
+           db.updates.push({ table, payload, filter: { column, value } });
+           const result = table === 'contacts' ? db.contactsResult : db.messagesResult;
+           return {
+-            // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável"
+-            // porque o ramo /archive aguarda o retorno de `.eq(...)` direto.
++            // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável".
+             select: () => Promise.resolve(result),
+             then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
+           };
+@@ -284,7 +290,7 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
+     expect(informativos[0].variant).toBeUndefined();
+   });
+ 
+-  it('/archive grava o estado de FSM (conversation_status), não assigned_to', async () => {
++  it('/archive arquiva pela RPC set_conversation_status (archived), sem escrita direta em contacts', async () => {
+     const utils = montar();
+ 
+     await act(async () => {
+@@ -292,9 +298,26 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
+       await Promise.resolve();
+     });
+ 
+-    const archive = db.updates.find((u) => u.table === 'contacts');
+-    expect(archive?.payload).toMatchObject({ conversation_status: 'archived' });
+-    expect(archive?.payload.assigned_to).toBeUndefined();
++    expect(db.rpc).toHaveBeenCalledWith('set_conversation_status', {
++      p_contact_id: 'contact-1',
++      p_next: 'archived',
++      p_reason: 'arquivada_no_chat',
++    });
++    // A transição passa por um único caminho (ADR-005): nada de UPDATE paralelo em contacts.
++    expect(db.updates.filter((u) => u.table === 'contacts')).toHaveLength(0);
+     expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(true);
+   });
++
++  it('/archive em erro na RPC avisa e NÃO anuncia "Conversa Arquivada"', async () => {
++    db.rpc.mockResolvedValueOnce({ error: { message: 'sem permissao' } });
++    const utils = montar();
++
++    await act(async () => {
++      utils.result.current.handleSlashCommand({ id: 'archive', label: 'Arquivar', description: '' } as never);
++      await Promise.resolve();
++    });
++
++    expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(false);
++    expect(toastsDestrutivos().length).toBeGreaterThan(0);
++  });
+ });
+diff --git a/src/components/inbox/chat/useChatPanelHandlers.ts b/src/components/inbox/chat/useChatPanelHandlers.ts
+index 4a113cab79..668b8e75ab 100644
+--- a/src/components/inbox/chat/useChatPanelHandlers.ts
++++ b/src/components/inbox/chat/useChatPanelHandlers.ts
+@@ -526,13 +526,17 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
+       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
+       case 'archive': {
+         void (async () => {
+-          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
+-          // o arquivamento em massa usa. `assigned_to = null` devolvia à fila e não arquivava,
+-          // então o aviso "Conversa Arquivada" era falso.
+-          const { error } = await supabase
+-            .from('contacts')
+-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
+-            .eq('id', contactId);
++          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO
++          // caminho do arquivamento individual e do em massa, que passam SEMPRE pela RPC
++          // set_conversation_status (SECURITY DEFINER: valida papel/transição e registra o
++          // evento). `assigned_to = null` devolvia à fila e não arquivava, então o aviso
++          // "Conversa Arquivada" era falso; escrita direta em `contacts` era a terceira
++          // implementação paralela da transição.
++          const { error } = await supabase.rpc('set_conversation_status', {
++            p_contact_id: contactId,
++            p_next: 'archived',
++            p_reason: 'arquivada_no_chat',
++          });
+           if (error) {
+             log.error('Failed to archive contact:', error);
+             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+diff --git a/src/hooks/chat/__tests__/useConversationActions.test.ts b/src/hooks/chat/__tests__/useConversationActions.test.ts
+index f5c78aa471..adedd3fa5c 100644
+--- a/src/hooks/chat/__tests__/useConversationActions.test.ts
++++ b/src/hooks/chat/__tests__/useConversationActions.test.ts
+@@ -33,6 +33,10 @@ const eventsInsertCalls: Record<string, unknown>[] = [];
+ let transferRpcResult: Record<string, unknown> = { data: 'event-rpc-id', error: null };
+ const transferRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+ 
++// RPCs (ADR-005: set_conversation_status). Registrado para provar o caminho.
++let rpcResult: Record<string, unknown> = { error: null };
++const rpcCalls: Array<{ fn: string; args: unknown }> = [];
++
+ // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
+ // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
+ // do hook). Sem refletir o estado real aqui, esse refetch sempre lia []
+@@ -44,9 +48,12 @@ vi.mock('@/integrations/supabase/client', () => ({
+   supabase: {
+     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+     rpc: vi.fn((name: string, args: Record<string, unknown>) => {
+-      transferRpcCalls.push({ name, args });
+-      if (name === 'transfer_conversation') return Promise.resolve(transferRpcResult);
+-      return Promise.resolve({ data: null, error: null });
++      rpcCalls.push({ fn: name, args });
++      if (name === 'transfer_conversation') {
++        transferRpcCalls.push({ name, args });
++        return Promise.resolve(transferRpcResult);
++      }
++      return Promise.resolve(rpcResult);
+     }),
+     from: vi.fn((table: string) => {
+       if (table === 'profiles') {
+@@ -165,6 +172,8 @@ describe('useConversationActions', () => {
+     eventsInsertCalls.length = 0;
+     transferRpcResult = { data: 'event-rpc-id', error: null };
+     transferRpcCalls.length = 0;
++    rpcResult = { error: null };
++    rpcCalls.length = 0;
+   });
+ 
+   afterEach(() => {
+@@ -174,14 +183,21 @@ describe('useConversationActions', () => {
+   });
+ 
+   describe('archiveContact', () => {
+-    it('desatribui o contato e oferece desfazer que restaura o assigned_to original', async () => {
++    it('arquiva pela RPC set_conversation_status e o desfazer reabre a conversa (assigned_to intocado)', async () => {
+       const { result } = await withProfileReady();
+ 
+       await act(async () => {
+         await result.current.archiveContact('contact-1');
+       });
+ 
+-      expect(contactsUpdateCalls).toEqual([{ assigned_to: null }]);
++      expect(rpcCalls).toEqual([
++        {
++          fn: 'set_conversation_status',
++          args: { p_contact_id: 'contact-1', p_next: 'archived', p_reason: 'arquivada_no_chat' },
++        },
++      ]);
++      // Arquivar NÃO escreve assigned_to (ADR-005: o estado é a marca).
++      expect(contactsUpdateCalls).toEqual([]);
+       expect(undoToast).toHaveBeenCalledTimes(1);
+       const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+       expect(undoArgs.message).toBe('Conversa arquivada');
+@@ -190,14 +206,15 @@ describe('useConversationActions', () => {
+         await undoArgs.onUndo();
+       });
+ 
+-      expect(contactsUpdateCalls).toEqual([
+-        { assigned_to: null },
+-        { assigned_to: 'agent-original' },
+-      ]);
++      expect(rpcCalls[1]).toEqual({
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'contact-1', p_next: 'open', p_reason: 'desfazer_arquivamento' },
++      });
++      expect(contactsUpdateCalls).toEqual([]);
+     });
+ 
+-    it('em erro no update, mostra toast de erro e não oferece desfazer', async () => {
+-      contactsUpdateResult = { error: { message: 'falhou' } };
++    it('em erro na RPC, mostra toast de erro e não oferece desfazer', async () => {
++      rpcResult = { error: { message: 'falhou' } };
+       const { result } = await withProfileReady();
+ 
+       await act(async () => {
+@@ -207,6 +224,18 @@ describe('useConversationActions', () => {
+       expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conversa');
+       expect(undoToast).not.toHaveBeenCalled();
+     });
++
++    it('no desfazer, se a RPC de reabertura falhar, o erro sobe para o undoToast avisar', async () => {
++      const { result } = await withProfileReady();
++
++      await act(async () => {
++        await result.current.archiveContact('contact-1');
++      });
++      const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
++      rpcResult = { error: { message: 'falhou' } };
++
++      await expect(undoArgs.onUndo()).rejects.toBeTruthy();
++    });
+   });
+ 
+   describe('transferContact', () => {
+diff --git a/src/hooks/chat/useConversationActions.ts b/src/hooks/chat/useConversationActions.ts
+index 3c552524e6..f0042b6687 100644
+--- a/src/hooks/chat/useConversationActions.ts
++++ b/src/hooks/chat/useConversationActions.ts
+@@ -246,14 +246,28 @@ export function useConversationActions() {
+   }, [profileId]);
+ 
+   const archiveContact = useCallback(async (contactId: string) => {
+-    const { data: original } = await supabase.from('contacts').select('assigned_to').eq('id', contactId).single();
+-    const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
++    // ADR-005: a transição de estado da conversa passa SEMPRE pela RPC
++    // set_conversation_status (SECURITY DEFINER: valida papel e transição). Arquivar
++    // grava conversation_status = 'archived' e NÃO toca assigned_to — o estado é a
++    // marca; ao reabrir, a conversa volta para o mesmo responsável.
++    const { error } = await supabase.rpc('set_conversation_status', {
++      p_contact_id: contactId,
++      p_next: 'archived',
++      p_reason: 'arquivada_no_chat',
++    });
+     if (error) { toast.error('Erro ao arquivar conversa'); return; }
+     undoToast({
+       message: 'Conversa arquivada',
+       icon: '📦',
+       onUndo: async () => {
+-        await supabase.from('contacts').update({ assigned_to: original?.assigned_to ?? null }).eq('id', contactId);
++        // Na tabela de transições do ADR, 'archived' só volta para 'open'. Se a RPC
++        // falhar, o erro sobe para o undoToast avisar e reoferecer o Desfazer.
++        const { error: undoError } = await supabase.rpc('set_conversation_status', {
++          p_contact_id: contactId,
++          p_next: 'open',
++          p_reason: 'desfazer_arquivamento',
++        });
++        if (undoError) throw undoError;
+       },
+     });
+   }, []);
+diff --git a/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts b/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+index e9a15be296..6d11f02ecb 100644
+--- a/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
++++ b/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+@@ -68,10 +68,13 @@ let selectQueue: DbResult[] = [];
+ let recorded: RecordedCall[] = [];
+ let updateGate: Promise<void> | null = null;
+ let lastUndo: UndoOptions | null = null;
+-// Estado da RPC de transferência: cada `p_contact_id` pode falhar de forma
+-// independente, então o mapa abaixo permite provar o caminho de sucesso PARCIAL.
++// Estado da RPC: cada `p_contact_id` pode falhar de forma independente
++// (rpcFailures, ex.: transferência parcial) ou por fila, na ordem das chamadas
++// (rpcQueue, ex.: arquivamento em massa com falha parcial). `rpcCalls` registra
++// toda chamada (nome da função + argumentos) para os dois fluxos.
+ let rpcFailures: Record<string, unknown> = {};
+-let rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
++let rpcQueue: DbResult[] = [];
++let rpcCalls: { fn: string; args: Record<string, unknown> }[] = [];
+ 
+ function buildChain(
+   call: RecordedCall,
+@@ -142,6 +145,7 @@ beforeEach(() => {
+   updateGate = null;
+   lastUndo = null;
+   rpcFailures = {};
++  rpcQueue = [];
+   rpcCalls = [];
+ 
+   mocks.execute.mockImplementation(async (options: UndoOptions) => {
+@@ -150,7 +154,13 @@ beforeEach(() => {
+   });
+   mocks.invoke.mockResolvedValue({ data: { updated: 0, processed: 0 }, error: null });
+   mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
+-    rpcCalls.push({ name, args });
++    rpcCalls.push({ fn: name, args });
++    // Fila explícita tem prioridade (arquivamento em massa com falha parcial);
++    // esgotada, cai no mapa por contato (transferência parcial).
++    if (rpcQueue.length > 0) {
++      const result = rpcQueue.shift() as DbResult;
++      return { data: result.data ?? null, error: result.error ?? null };
++    }
+     const failure = rpcFailures[args.p_contact_id as string];
+     if (failure) return { data: null, error: failure };
+     return { data: `event-${args.p_contact_id as string}`, error: null };
+@@ -350,7 +360,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
+       await result.current.bulkTransfer('agent', 'ag-2');
+     });
+ 
+-    expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversation', 'transfer_conversation']);
++    expect(rpcCalls.map((c) => c.fn)).toEqual(['transfer_conversation', 'transfer_conversation']);
+     expect(rpcCalls.map((c) => c.args)).toEqual([
+       { p_contact_id: 'c1', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+       { p_contact_id: 'c2', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+@@ -452,14 +462,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
+ });
+ 
+ describe('useInboxBulkActions — bulkArchive', () => {
+-  it('lê o assigned_to dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato', async () => {
+-    selectQueue.push({
+-      data: [
+-        { id: 'c1', assigned_to: 'ag-1' },
+-        { id: 'c2', assigned_to: null },
+-      ],
+-      error: null,
+-    });
++  it('arquiva cada contato pela RPC (p_next archived) e o desfazer reabre só as arquivadas', async () => {
+     const { result, refetch } = renderInbox();
+     selectIds(result, ['c1', 'c2']);
+ 
+@@ -467,19 +470,21 @@ describe('useInboxBulkActions — bulkArchive', () => {
+       await result.current.bulkArchive();
+     });
+ 
+-    expect(recorded[0]).toMatchObject({
+-      table: 'contacts',
+-      op: 'select',
+-      columns: 'id, assigned_to',
+-      filters: { id: ['c1', 'c2'] },
+-    });
++    expect(rpcCalls).toEqual([
++      {
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'c1', p_next: 'archived', p_reason: 'arquivada_em_massa' },
++      },
++      {
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'c2', p_next: 'archived', p_reason: 'arquivada_em_massa' },
++      },
++    ]);
++    // Nada de update direto em contacts (ADR-005: o estado é a marca, assigned_to fica).
++    expect(contactUpdates()).toEqual([]);
+     expect(mocks.execute).toHaveBeenCalledTimes(1);
+     expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
+     expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
+-    expect(contactUpdates()[0]).toMatchObject({
+-      payload: { assigned_to: null },
+-      filters: { id: ['c1', 'c2'] },
+-    });
+     expect(result.current.selectedIds.size).toBe(0);
+     expect(refetch).toHaveBeenCalledTimes(1);
+ 
+@@ -487,89 +492,131 @@ describe('useInboxBulkActions — bulkArchive', () => {
+       await lastUndo?.undoAction();
+     });
+ 
+-    const restores = contactUpdates().slice(1);
+-    expect(restores).toHaveLength(2);
+-    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: 'c1' } });
+-    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: 'c2' } });
++    expect(rpcCalls.slice(2)).toEqual([
++      {
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
++      },
++      {
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'c2', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
++      },
++    ]);
+     expect(refetch).toHaveBeenCalledTimes(2);
+   });
+ 
+-  it('sem seleção não lê nem arquiva nada', async () => {
++  it('não dispara mais de 5 RPCs em voo ao mesmo tempo', async () => {
++    let emVoo = 0;
++    let pico = 0;
++    let release: (() => void) | undefined;
++    const barreira = new Promise<void>((resolve) => {
++      release = resolve;
++    });
++    mocks.rpc.mockImplementation((fn: string, args: Record<string, unknown>) => {
++      rpcCalls.push({ fn, args });
++      emVoo += 1;
++      pico = Math.max(pico, emVoo);
++      return barreira.then(() => {
++        emVoo -= 1;
++        return { data: null, error: null };
++      });
++    });
++
+     const { result } = renderInbox();
++    selectIds(result, ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7']);
+ 
++    let pendente: Promise<void> | undefined;
+     await act(async () => {
+-      await result.current.bulkArchive();
++      pendente = result.current.bulkArchive();
++      await Promise.resolve();
+     });
+ 
+-    expect(recorded).toEqual([]);
+-    expect(mocks.execute).not.toHaveBeenCalled();
++    expect(pico).toBeLessThanOrEqual(5);
++    expect(rpcCalls).toHaveLength(5);
++
++    await act(async () => {
++      release?.();
++      await pendente;
++    });
++    expect(rpcCalls).toHaveLength(7);
+   });
+ 
+-  it('erro no UPDATE do arquivamento: avisa, não recarrega e mantém a seleção', async () => {
+-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
+-    updateQueue.push({ error: { message: 'rls update' } });
+-    const { result, refetch } = renderInbox();
+-    selectIds(result, ['c1']);
++  it('sem seleção não arquiva nada', async () => {
++    const { result } = renderInbox();
+ 
+     await act(async () => {
+       await result.current.bulkArchive();
+     });
+ 
+-    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
+-    expect(refetch).not.toHaveBeenCalled();
+-    expect(result.current.selectedIds.has('c1')).toBe(true);
+-    expect(result.current.bulkLoading).toBe(false);
++    expect(rpcCalls).toEqual([]);
++    expect(mocks.execute).not.toHaveBeenCalled();
+   });
+ 
+-  it('usa o retrato da seleção do momento da chamada: mudar a seleção durante a janela de desfazer não troca o alvo', async () => {
+-    // A ação fica pendente de propósito (o desfazer só existe depois que ela roda).
+-    mocks.execute.mockImplementation(async (options: UndoOptions) => {
+-      lastUndo = options;
+-    });
+-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
++  it('falha parcial: informa "X arquivadas, Y falharam", mantém só as que falharam e o desfazer reabre só as arquivadas', async () => {
++    rpcQueue = [{ error: null }, { error: { message: 'rls' } }];
++    const { result, refetch } = renderInbox();
++    selectIds(result, ['c1', 'c2']);
+ 
+-    const { result } = renderInbox();
+-    selectIds(result, ['c1']);
+     await act(async () => {
+       await result.current.bulkArchive();
+     });
+-    expect(recorded[0].filters.id).toEqual(['c1']);
+ 
+-    // Durante a janela de 5 s o operador mexe na seleção — o alvo já está congelado.
+-    act(() => result.current.toggleSelection('c2'));
+-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
++    expect(mocks.toast.error).toHaveBeenCalledWith('1 arquivadas, 1 falharam');
++    expect(result.current.selectedIds).toEqual(new Set(['c2']));
++    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
++    expect(refetch).toHaveBeenCalledTimes(1);
+ 
+     await act(async () => {
+-      await lastUndo?.action();
++      await lastUndo?.undoAction();
+     });
+ 
+-    const archiveUpdate = contactUpdates().find(
+-      (call) => (call.payload as { assigned_to?: unknown })?.assigned_to === null,
+-    );
+-    expect(archiveUpdate?.filters.id).toEqual(['c1']);
++    // Só c1 (a que foi arquivada de verdade) é reaberta; c2 nunca mudou de estado.
++    expect(rpcCalls.slice(2)).toEqual([
++      {
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
++      },
++    ]);
+   });
+ 
+-  // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
+-  // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue
+-  // arquivando: o botão "Desfazer" aparece, anuncia "Arquivamento desfeito" e não
+-  // restaura nada. Se o SELECT lançar, `bulkLoading` fica preso em true.
+-  // Ver relato: useInboxBulkActions.ts:102-105, :120-130.
+-  it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {
+-    selectQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
+-    const { result } = renderInbox();
++  it('falha total: informa "0 arquivadas, N falharam", mantém a seleção, não recarrega e não abre desfazer', async () => {
++    rpcQueue = [{ error: { message: 'rls' } }];
++    const { result, refetch } = renderInbox();
+     selectIds(result, ['c1']);
+ 
+     await act(async () => {
+       await result.current.bulkArchive();
+     });
+ 
+-    const antesDoDesfazer = contactUpdates().length;
++    expect(mocks.toast.error).toHaveBeenCalledWith('0 arquivadas, 1 falharam');
++    expect(result.current.selectedIds.has('c1')).toBe(true);
++    expect(refetch).not.toHaveBeenCalled();
++    expect(mocks.execute).not.toHaveBeenCalled();
++    expect(contactUpdates()).toEqual([]);
++    expect(result.current.bulkLoading).toBe(false);
++  });
++
++  it('usa o retrato da seleção: mexer na seleção durante a janela de desfazer não troca o alvo', async () => {
++    const { result } = renderInbox();
++    selectIds(result, ['c1']);
++    await act(async () => {
++      await result.current.bulkArchive();
++    });
++
++    // Durante a janela de 5 s o operador mexe na seleção — o alvo já está congelado.
++    act(() => result.current.toggleSelection('c2'));
++    expect(result.current.selectedIds).toEqual(new Set(['c2']));
++
+     await act(async () => {
+       await lastUndo?.undoAction();
+     });
+ 
+-    // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original).
+-    expect(contactUpdates().length).toBeGreaterThan(antesDoDesfazer);
++    expect(rpcCalls.slice(1)).toEqual([
++      {
++        fn: 'set_conversation_status',
++        args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
++      },
++    ]);
+   });
+ });
+ 
+diff --git a/src/hooks/inbox/useInboxBulkActions.ts b/src/hooks/inbox/useInboxBulkActions.ts
+index a725c54e8a..c7da2fbef8 100644
+--- a/src/hooks/inbox/useInboxBulkActions.ts
++++ b/src/hooks/inbox/useInboxBulkActions.ts
+@@ -9,6 +9,34 @@ interface UseInboxBulkActionsProps {
+   filteredConversations: ConversationWithMessages[];
+ }
+ 
++/** Quantas RPCs de arquivamento ficam em voo ao mesmo tempo (evita disparar todas de uma vez). */
++const BULK_ARCHIVE_CONCURRENCY = 5;
++
++/**
++ * Roda `fn` sobre os ids com no máximo `limite` chamadas em voo e devolve os ids que
++ * FALHARAM. Uma falha isolada não aborta o restante do lote.
++ */
++async function executarComConcorrencia(
++  ids: string[],
++  limite: number,
++  fn: (id: string) => Promise<void>,
++): Promise<string[]> {
++  const falhas: string[] = [];
++  let proximo = 0;
++  const trabalhadores = Array.from({ length: Math.min(limite, ids.length) }, async () => {
++    while (proximo < ids.length) {
++      const id = ids[proximo++];
++      try {
++        await fn(id);
++      } catch {
++        falhas.push(id);
++      }
++    }
++  });
++  await Promise.all(trabalhadores);
++  return falhas;
++}
++
+ export function useInboxBulkActions({ refetch, filteredConversations }: UseInboxBulkActionsProps) {
+   const [selectionMode, setSelectionMode] = useState(false);
+   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+@@ -151,38 +179,55 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
+     if (selectedIds.size === 0) return;
+     setBulkLoading(true);
+     const contactIds = Array.from(selectedIds);
+-
+-    const { data: originalContacts } = await supabase
+-      .from('contacts')
+-      .select('id, assigned_to')
+-      .in('id', contactIds);
++    // ADR-005: cada contato transiciona pela RPC set_conversation_status (valida papel e
++    // transição), com no máximo BULK_ARCHIVE_CONCURRENCY em voo. Arquivar NÃO toca
++    // assigned_to. O desfazer reabre só as que foram arquivadas de verdade.
++    const arquivadas: string[] = [];
+ 
+     try {
+-      await executeUndoable({
+-        successMessage: `${contactIds.length} contato(s) arquivado(s)`,
+-        undoMessage: 'Arquivamento desfeito',
+-        action: async () => {
+-          const { error } = await supabase
+-            .from('contacts')
+-            .update({ assigned_to: null })
+-            .in('id', contactIds);
+-          if (error) throw error;
+-          clearSelection();
+-          refetch();
+-        },
+-        undoAction: async () => {
+-          if (originalContacts) {
+-            for (const contact of originalContacts) {
+-              await supabase
+-                .from('contacts')
+-                .update({ assigned_to: contact.assigned_to })
+-                .eq('id', contact.id);
+-            }
+-          }
+-          refetch();
+-        },
+-        onCommit: () => {},
++      const falhas = await executarComConcorrencia(contactIds, BULK_ARCHIVE_CONCURRENCY, async (id) => {
++        const { error } = await supabase.rpc('set_conversation_status', {
++          p_contact_id: id,
++          p_next: 'archived',
++          p_reason: 'arquivada_em_massa',
++        });
++        if (error) throw error;
++        arquivadas.push(id);
+       });
++
++      if (falhas.length === 0) {
++        clearSelection();
++      } else {
++        // Só quem falhou continua selecionado, para nova tentativa.
++        setSelectedIds(new Set(falhas));
++        toast.error(`${arquivadas.length} arquivadas, ${falhas.length} falharam`);
++      }
++      // Nada arquivado (falha total) = nada mudou na lista.
++      if (arquivadas.length > 0) refetch();
++
++      if (arquivadas.length > 0) {
++        // A gravação já aconteceu acima (com falha parcial isolada): aqui o
++        // executeUndoable só abre a janela de Desfazer — o aviso encerra o anterior e o
++        // undo reabre exatamente as que foram arquivadas.
++        await executeUndoable({
++          successMessage: `${arquivadas.length} contato(s) arquivado(s)`,
++          undoMessage: 'Arquivamento desfeito',
++          action: async () => {},
++          undoAction: async () => {
++            const ids = [...arquivadas];
++            await executarComConcorrencia(ids, BULK_ARCHIVE_CONCURRENCY, async (id) => {
++              const { error } = await supabase.rpc('set_conversation_status', {
++                p_contact_id: id,
++                p_next: 'open',
++                p_reason: 'desfazer_arquivamento_em_massa',
++              });
++              if (error) throw error;
++            });
++            refetch();
++          },
++          onCommit: () => {},
++        });
++      }
+     } catch {
+       toast.error('Erro ao arquivar contatos');
+     } finally {

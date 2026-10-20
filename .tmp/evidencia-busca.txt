@@ -1,0 +1,43 @@
+== comandos: git grep -n (base f7f3ef924d) ==
+--- caminhos que chamam archiveContact / bulkArchive ---
+src/components/inbox/ContactDetails.tsx:75:      case 'archive': void archiveContact(contact.id); break;
+src/components/inbox/ConversationListSidebar.tsx:202:    await conversationActions.archiveContact(contactId);
+src/components/inbox/ConversationListSidebar.tsx:286:        onArchive={bulkActions.bulkArchive}
+src/components/inbox/RealtimeInboxView.tsx:194:      if ((e.key === 'Delete' || e.key === 'Backspace') && bulkActions.selectionMode && bulkActions.selectedIds.size > 0) { e.preventDefault(); bulkActions.bulkArchive(); }
+src/components/inbox/RealtimeInboxView.tsx:371:                        conversationActions.archiveContact(inbox.legacyConversation.contact.id);
+src/hooks/inbox/useInboxBulkActions.ts:178:  const bulkArchive = useCallback(async () => {
+src/hooks/inbox/useInboxBulkActions.ts:264:    bulkArchive,
+--- case 'archive' / slash / menu ---
+src/components/inbox/ContactDetails.tsx:75:      case 'archive': void archiveContact(contact.id); break;
+src/components/inbox/chat/useChatPanelHandlers.ts:527:      case 'archive': {
+src/components/inbox/contact-details/ContactActionButtons.tsx:219:            <DropdownMenuItem onClick={() => onQuickAction?.('archive')} className="gap-2 text-xs">
+src/components/inbox/slash-commands/slashCommandsData.ts:31:  { id: 'archive', command: '/archive', label: 'Arquivar', description: 'Arquivar esta conversa', icon: Archive, category: 'actions', color: 'text-muted-foreground', shortcut: 'Q' },
+src/components/inbox/tabs/fileDisplay.ts:38:export type DocumentFamily = 'pdf' | 'sheet' | 'doc' | 'ppt' | 'archive' | 'generic';
+src/components/inbox/tabs/fileDisplay.ts:45:  zip: 'archive', rar: 'archive',
+src/components/talkx/TalkXSegments.tsx:262:              <GhostButton size="sm" icon={Archive} onClick={() => void runBulk('archive')}>Arquivar</GhostButton>
+src/hooks/integrations/useTalkXSegments.ts:429:export type TalkXSegmentBulkAction = 'draft' | 'activate' | 'deactivate' | 'archive' | 'tag';
+--- quem ainda grava conversation_status direto no front ---
+src/components/inbox/CRMAutoSync.tsx:57:  // ADR-005 (passo 3): o estado persistido em `contacts.conversation_status` é a
+src/components/inbox/CRMAutoSync.tsx:61:  const effectiveStatus = conversation.contact.conversation_status ?? conversation.status;
+src/components/inbox/CloseConversationDialog.tsx:105:      if (error || data?.length !== 1 || data[0]?.conversation_status !== 'resolved') {
+src/components/inbox/CloseConversationDialog.tsx:134:  // Arquivar/desarquivar usam a RPC set_conversation_status (a mesma da FSM de
+src/components/inbox/CloseConversationDialog.tsx:141:      const { error } = await supabase.rpc('set_conversation_status', {
+src/components/inbox/VirtualizedRealtimeList.tsx:277:// Estado da conversa (contacts.conversation_status) em pt-BR, para a
+src/components/inbox/VirtualizedRealtimeList.tsx:410:  const conversationStatusLabel = CONVERSATION_STATUS_LABEL[conversation.contact.conversation_status];
+src/components/inbox/chat/useChatPanelHandlers.ts:529:          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
+src/components/inbox/chat/useChatPanelHandlers.ts:534:            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
+src/components/inbox/conversation-list/StatusChips.tsx:37:    // contacts.conversation_status ('archived'), não no proxy "sem mensagens".
+src/components/inbox/conversation-list/StatusChips.tsx:39:      c => c.messages.length > 0 && c.contact.conversation_status !== 'archived'
+src/components/inbox/conversation-list/StatusChips.tsx:49:    const archived = conversations.filter(c => c.contact.conversation_status === 'archived');
+src/components/inbox/tabs/Crm360Tab.tsx:109:          { icon: Circle, label: 'Status', value: STATUS_LABEL[conversation.contact.conversation_status ?? ''] ?? '—', tone: 'green' },
+src/components/omnichannel/OmnichannelInbox.tsx:68:// Rótulos de `contacts.conversation_status` (mesma tabela usada na aba Canais do CRM).
+src/components/omnichannel/OmnichannelInbox.tsx:427:                        const statusLabel = CONVERSATION_STATUS_LABEL[rowContact.conversation_status ?? ''] ?? null;
+src/components/omnichannel/OmnichannelInbox.tsx:428:                        const showStatus = Boolean(statusLabel) && rowContact.conversation_status !== 'open';
+src/components/settings/SkillBasedRoutingSettings.tsx:141:        .not('conversation_status', 'in', '(resolved,archived)')
+src/components/talkx/TalkXAudienceFilters.tsx:50:  { key: 'contact_status', label: 'Status do contato', field: 'conversation_status' },
+src/components/talkx/TalkXAudienceFilters.tsx:83:const CONTROLLED_FIELDS: RuleField[] = ['tags', 'conversation_status', 'company', 'assigned_to', 'state', 'city'];
+src/components/talkx/segments/RuleValueInput.tsx:60:  conversation_status: { open: 'Aberta', pending: 'Pendente', waiting: 'Aguardando', resolved: 'Resolvida', closed: 'Fechada', archived: 'Arquivada' },
+--- useBulkActions.ts (item 3) ---
+--- confirmacao: zero escrita direta de assigned_to no arquivamento ---
+src/hooks/chat/useConversationActions.ts:251:    // grava conversation_status = 'archived' e NÃO toca assigned_to — o estado é a
+src/hooks/inbox/useInboxBulkActions.ts:184:    // assigned_to. O desfazer reabre só as que foram arquivadas de verdade.

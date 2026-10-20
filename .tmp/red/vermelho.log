@@ -1,0 +1,45 @@
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:591:31
+    589|     });
+    590|
+    591|     expect(mocks.toast.error).toHaveBeenCalledWith('0 arquivadas, 1 fa…
+       |                               ^
+    592|     expect(result.current.selectedIds.has('c1')).toBe(true);
+    593|     expect(refetch).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts > useInboxBulkActions — bulkArchive > usa o retrato da seleção: mexer na seleção durante a janela de desfazer não troca o alvo
+AssertionError: expected [] to deeply equal [ { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "args": {
+-       "p_contact_id": "c1",
+-       "p_next": "open",
+-       "p_reason": "desfazer_arquivamento_em_massa",
+-     },
+-     "fn": "set_conversation_status",
+-   },
+- ]
++ []
+
+ ❯ src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:614:31
+    612|     });
+    613|
+    614|     expect(rpcCalls.slice(1)).toEqual([
+       |                               ^
+    615|       {
+    616|         fn: 'set_conversation_status',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  10 failed | 44 passed (54)
+   Start at  12:15:22
+   Duration  21.64s (transform 5.85s, setup 3.41s, import 9.05s, tests 13.13s, environment 7.58s)
+
