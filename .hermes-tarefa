@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-ferramentas-ia-conversa
+ID=26101223323305
+BRANCH=v2/a11y-ferramentas-ia-conversa-26101223323305
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-ferramentas-ia-conversa-26101223323305
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T23:32:34-03:00
+KANBAN=t_91f842e7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-ferramentas-ia-conversa-26101223323305/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-26101223323305
+PRONTO_SHA=e004b388f2b61e49db001e3d558acb605a226d65

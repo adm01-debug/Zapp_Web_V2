@@ -1,0 +1,12 @@
+3	3	src/components/inbox/AIConversationAssistant.tsx
+2	2	src/components/inbox/ConversationSummary.tsx
+5	5	src/components/inbox/ObjectionDetector.tsx
+4	1	src/components/inbox/UniversityHelp.tsx
+207	0	src/components/inbox/__tests__/ferramentas-ia.anuncio-estado.test.tsx
+4	4	src/components/inbox/ai-tools/HistoryTab.tsx
+43	36	src/components/inbox/ai-tools/PeriodFilterSelector.tsx
+3	1	src/components/inbox/ai-tools/SentimentTab.tsx
+59	3	src/components/inbox/ai-tools/ToolPanel.tsx
+2	0	src/components/inbox/ai-tools/VisionIcon.tsx
+204	0	src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx
+1	1	src/components/inbox/summary/SummaryResult.tsx

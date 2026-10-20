@@ -1,0 +1,47 @@
+- Verificação rápida (zapp-verify --rapido) no fechar: OK db_guard 0s;OK tipos 122s;OK lint 6s;OK migrations 0s
+
+## FATOS MEDIDOS PELO FECHAR (13/10 00:02, gerados por máquina: valem mais que números escritos à mão)
+```
+ .tmp/relato.md                                     |  30 +--
+ src/components/inbox/AIConversationAssistant.tsx   |   6 +-
+ src/components/inbox/ConversationSummary.tsx       |   4 +-
+ src/components/inbox/ObjectionDetector.tsx         |  10 +-
+ src/components/inbox/UniversityHelp.tsx            |   5 +-
+ .../ferramentas-ia.anuncio-estado.test.tsx         | 207 +++++++++++++++++++++
+ src/components/inbox/ai-tools/HistoryTab.tsx       |   8 +-
+ .../inbox/ai-tools/PeriodFilterSelector.tsx        |  79 ++++----
+ src/components/inbox/ai-tools/SentimentTab.tsx     |   4 +-
+ src/components/inbox/ai-tools/ToolPanel.tsx        |  62 +++++-
+ src/components/inbox/ai-tools/VisionIcon.tsx       |   2 +
+ .../__tests__/a11y-ferramentas-ia.test.tsx         | 204 ++++++++++++++++++++
+ src/components/inbox/summary/SummaryResult.tsx     |   2 +-
+ 13 files changed, 555 insertions(+), 68 deletions(-)
+```
+- Testes alterados neste cartão (2 arquivo[s]) rodados AGORA no seu commit: Test Files 2 passed (2);Tests 19 passed (19)
+- Prova vermelho→verde dos testes alterados: falham na base e passam no seu commit (vermelho → verde)
+- Portão do integrador (mesmo Jev da fila) simulado no fechar: revisar — Jev inseguro sobre o relato; relato sem evidência limpa de verificação
+
+Especialista: Íris (area-front-componentes)
+
+## O que mudou e por quê
+- `src/components/inbox/ai-tools/ToolPanel.tsx`: o painel flutuante passou a se comportar como diálogo modal — `role="dialog"`, `aria-modal="true"`, `aria-labelledby` apontando para o `<h3>` do título, fechar no Esc e foco preso (Tab/Shift+Tab), devolvido ao gatilho ao fechar. Não usei o `Dialog` do Radix: o painel é um modal ANINHADO no corpo da conversa (posicionado com `absolute` dentro do chat), e o Portal do Radix o moveria para o viewport inteiro, mudando o layout; `role`/`aria-modal`/Esc/foco foram implementados no próprio painel.
+- `src/components/inbox/ai-tools/PeriodFilterSelector.tsx`: o "remover filtro" era um `<span role="button">` DENTRO do `<button>` gatilho (controle interativo aninhado, fora do alcance do teclado); virou um `<button type="button">` irmão do gatilho, com `aria-label="Remover filtro de data"`. Os atalhos de período e o "Limpar datas" ganharam `type="button"`. Removida a escala `scale-[0.7]` (que encolhia caixa, texto e alvos de toque); a coluna de atalhos virou `w-40` e os alvos de toque, `min-h-11` (44px).
+- `src/components/inbox/ai-tools/VisionIcon.tsx`: `svg` decorativo com `aria-hidden="true"` e `focusable="false"`.
+- `src/components/inbox/summary/SummaryResult.tsx`: o botão só-ícone de ouvir ganhou `aria-label={label}`.
+- `src/components/inbox/ObjectionDetector.tsx`: botões só-ícone Copiar/Reescrever/Reanalisar com `aria-label`; estado de carregamento com `role="status" aria-live="polite"` e estado de erro com `role="alert"`.
+- `src/components/inbox/UniversityHelp.tsx`: erro com `role="alert"` e região `role="status" aria-live="polite"` que anuncia "Gerando resposta...".
+- `src/components/inbox/ConversationSummary.tsx` e `src/components/inbox/AIConversationAssistant.tsx`: bloco de carregamento com `role="status" aria-live="polite" aria-atomic="true"`; botão X do aviso de áudio com `aria-label="Dispensar aviso de áudio"` e ícone `aria-hidden`. No bloco de carregamento do resumo o pulso virou `motion-safe:animate-pulse` (respeita quem pediu movimento reduzido — apontado pela checagem determinística do fechar).
+- `src/components/inbox/ai-tools/HistoryTab.tsx`: quando `sentiment_score`/`message_count` vêm `null`, a tela mostra "—" em vez de "%" e "msgs" soltos; o histórico não propaga mais `null` para o resumo (`?? undefined`).
+- `src/components/inbox/ai-tools/SentimentTab.tsx`: o cast de `agentPerformance` para `[string, number][]` virou filtro em tempo de execução — valor que não é número finito não é renderizado (não quebra a barra de desempenho).
+
+Estados conferidos nas telas alteradas: carregando e erro (Objeções, Ajuda dos Universitários, Resumo, Visão) e vazio (Objeções sem resultado, histórico sem análises), todos com papel/`aria-live` corretos.
+
+## Prova
+- vermelho antes: `bash .tmp/prova-vermelho.sh` (fontes revertidos para `HEAD~1`, sem stash) → `Test Files 2 failed (2); Tests 17 failed | 2 passed (19)`
+- verde depois: `npx vitest run <2 arquivos novos + 7 de regressão>` → `Test Files 9 passed (9); Tests 51 passed (51)`
+- tipos: `npx tsc -b --force` → sem saída, exit 0
+- lint do commit: ratchet "baseline=12, atual=12, novas=0"
+
+## O que NÃO fiz e por quê
+- Não usei o `Dialog` do Radix no `ToolPanel` (motivo acima, no primeiro item). O cartão dizia "se couber" — não coube sem mudar o layout do modal aninhado.
+- Nenhum arquivo fora de `src/components/inbox/**` foi tocado.

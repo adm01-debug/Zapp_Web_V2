@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791858753 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791858754 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 b5f70e4fa502075c3349ba70fb9be8b2da90752d Hermes Senior <hermes-senior@promobrindes.local> 1791860049 -0300	commit: fix(inbox): acessibilidade das ferramentas de IA da conversa
+b5f70e4fa502075c3349ba70fb9be8b2da90752d e38907c33437bf08c3a657b5d6464c60ebd2f8c4 Hermes Senior <hermes-senior@promobrindes.local> 1791860206 -0300	commit: chore(inbox): relato da acessibilidade das ferramentas de IA
+e38907c33437bf08c3a657b5d6464c60ebd2f8c4 e004b388f2b61e49db001e3d558acb605a226d65 Hermes Senior <hermes-senior@promobrindes.local> 1791860490 -0300	commit: fix(inbox): respeita movimento reduzido no carregamento do resumo
