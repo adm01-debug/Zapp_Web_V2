@@ -1,0 +1,419 @@
+diff --git a/src/components/inbox/AudioMessagePlayer.tsx b/src/components/inbox/AudioMessagePlayer.tsx
+index 4184c39cde..b02a064020 100644
+--- a/src/components/inbox/AudioMessagePlayer.tsx
++++ b/src/components/inbox/AudioMessagePlayer.tsx
+@@ -1,4 +1,4 @@
+-import { useState, useEffect, useRef } from 'react';
++import { useState, useEffect, useRef, useMemo } from 'react';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { Play, Pause, Loader2, FileText, Volume2, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+ import { Button } from '@/components/ui/button';
+@@ -10,6 +10,17 @@ import { log } from '@/lib/logger';
+ import { useAudioPlayer } from '@/hooks/communication/useAudioPlayer';
+ import { MediaVolumeControl } from './MediaVolumeControl';
+ 
++/**
++ * E17 — preferência de movimento do sistema (`prefers-reduced-motion`). Lida uma
++ * vez por montagem, direto do navegador: o player não mantém estado para isso e
++ * não precisa reagir a troca de preferência no meio da reprodução.
++ */
++function prefereReduzirMovimento(): boolean {
++  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
++    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
++    : false;
++}
++
+ interface AudioMessagePlayerProps {
+   audioUrl: string;
+   messageId: string;
+@@ -20,13 +31,20 @@ interface AudioMessagePlayerProps {
+ 
+ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTranscription, transcriptionStatus: initialStatus }: AudioMessagePlayerProps) {
+   const [transcription, setTranscription] = useState<string | null>(existingTranscription || null);
+-  const [transcriptionStatus, setTranscriptionStatus] = useState<string>(initialStatus || 'pending');
++  // A prop `transcriptionStatus` chega do pai (MessageBubble repassa o da
++  // mensagem) e pode mudar depois do mount, quando a lista atualiza; o estado
++  // local (realtime, transcrição pedida aqui) vale enquanto existir.
++  const [statusLocal, setStatusLocal] = useState<string | null>(null);
++  const transcriptionStatus = statusLocal ?? initialStatus ?? 'pending';
+   const [isTranscribing, setIsTranscribing] = useState(false);
+   const [showTranscription, setShowTranscription] = useState(!!existingTranscription);
+   const isMountedRef = useRef(true);
+   // E16 — escopo dos atalhos: ↑/↓ e `M` valem com o foco em qualquer parte do player
+   // (botão de play, barra de progresso, ...), não só no botão do volume.
+   const playerRef = useRef<HTMLDivElement>(null);
++  // E17 — quem pediu "reduzir movimento" no sistema não recebe animação contínua
++  // (as 30 barras do waveform param de pulsar); o estado final é o mesmo.
++  const reduzirMovimento = useMemo(() => prefereReduzirMovimento(), []);
+ 
+   useEffect(() => {
+     isMountedRef.current = true;
+@@ -47,7 +65,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `id=eq.${messageId}` },
+         (payload) => {
+           const newData = payload.new as { transcription_status?: string; transcription?: string };
+-          if (newData.transcription_status) setTranscriptionStatus(newData.transcription_status);
++          if (newData.transcription_status) setStatusLocal(newData.transcription_status);
+           if (newData.transcription) { setTranscription(newData.transcription); setShowTranscription(true); }
+         }
+       ).subscribe();
+@@ -56,7 +74,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+ 
+   const handleTranscribe = async () => {
+     if (isTranscribing || transcriptionStatus === 'processing') return;
+-    setIsTranscribing(true); setTranscriptionStatus('processing'); setShowTranscription(true);
++    setIsTranscribing(true); setStatusLocal('processing'); setShowTranscription(true);
+     try {
+       const freshUrl = await resolveAudioUrl(audioUrl);
+       // PE-55/PD-64: o servidor é a ÚNICA fonte. A Edge `ai-transcribe-audio` grava
+@@ -67,28 +85,52 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+       if (error) throw error;
+       if (!isMountedRef.current) return;
+       if (data?.fallback) {
+-        setTranscriptionStatus('failed');
++        setStatusLocal('failed');
+         toast({ title: 'Áudio não suportado', description: data.errorMessage || 'Não foi possível transcrever.', variant: 'destructive' });
+         return;
+       }
+       const text = typeof data?.transcription === 'string' ? data.transcription.trim() : '';
+       if (text) {
+         setTranscription(text);
+-        setTranscriptionStatus('completed');
++        setStatusLocal('completed');
+       } else {
+         // Resposta sem erro e sem texto não é sucesso silencioso: sem isto o player
+         // ficaria preso em "Transcrevendo..." para sempre. Falha visível.
+-        setTranscriptionStatus('failed');
++        setStatusLocal('failed');
+         toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
+       }
+     } catch (error) {
+       log.error('Transcription error:', error);
+       // Uma nova falha não apaga a transcrição já conhecida (estado verdadeiro).
+-      if (isMountedRef.current) setTranscriptionStatus('failed');
++      if (isMountedRef.current) setStatusLocal('failed');
+       toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
+     } finally { if (isMountedRef.current) setIsTranscribing(false); }
+   };
+ 
++  // E17 — a barra de posição é um slider de verdade: ←/→ andam 5 s (o clique já
++  // existia), Home/End vão ao começo/fim. ↑/↓ NÃO entram aqui de propósito: o
++  // atalho de volume do player (E16, `useVolumeRocker`) vale com o foco em
++  // qualquer parte do player, inclusive neste slider, e o listener nativo dele
++  // no container roda antes do `onKeyDown` do React — tratar ↑/↓ aqui também
++  // moveria posição E volume na mesma tecla. O alvo é o MESMO elemento <audio>
++  // que o clique move, então o tempo mostrado é o do áudio, não uma cópia do
++  // componente.
++  const SEEK_STEP_SECONDS = 5;
++  const handleSeekKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
++    const audio = audioRef.current;
++    if (!audio || !duration) return;
++    let destino: number | null = null;
++    switch (event.key) {
++      case 'ArrowRight': destino = Math.min(duration, audio.currentTime + SEEK_STEP_SECONDS); break;
++      case 'ArrowLeft': destino = Math.max(0, audio.currentTime - SEEK_STEP_SECONDS); break;
++      case 'Home': destino = 0; break;
++      case 'End': destino = duration; break;
++      default: return;
++    }
++    event.preventDefault();
++    audio.currentTime = destino;
++  };
++
+   const isProcessing = transcriptionStatus === 'processing' || isTranscribing;
+ 
+   const getStatusIndicator = () => {
+@@ -108,9 +150,9 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+         ) : null;
+       case 'failed':
+         return (
+-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')} onClick={handleTranscribe}>
++          <button type="button" onClick={handleTranscribe} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')}>
+             <AlertCircle className="w-3 h-3" /><span>Falhou - Tentar novamente</span>
+-          </motion.div>
++          </button>
+         );
+       default: return null;
+     }
+@@ -121,18 +163,29 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+       <audio ref={audioRef} src={resolvedUrl || undefined} preload="metadata" crossOrigin="anonymous" />
+       <div className={cn('flex items-center gap-3 p-2 rounded-lg min-w-[200px]', isSent ? 'bg-primary-foreground' : 'bg-muted/50')}>
+         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+-          <Button variant="ghost" size="icon" className={cn('w-10 h-10 rounded-full', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
++          <Button variant="ghost" size="icon" aria-label={hasError ? 'Recarregar áudio' : isPlaying ? 'Pausar áudio' : 'Reproduzir áudio'} className={cn('w-10 h-10 rounded-full', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
+             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : hasError ? <RefreshCw className="w-5 h-5" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+           </Button>
+         </motion.div>
+         <div className="flex-1 space-y-1">
+-          <div className="relative h-8 cursor-pointer" onClick={handleSeek}>
++          <div
++            role="slider"
++            tabIndex={0}
++            aria-label="Posição do áudio"
++            aria-valuemin={0}
++            aria-valuemax={Math.round(duration)}
++            aria-valuenow={Math.round(currentTime)}
++            aria-valuetext={`${formatTime(currentTime)} de ${duration ? formatTime(duration) : '--:--'}`}
++            className="relative h-8 cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
++            onClick={handleSeek}
++            onKeyDown={handleSeekKeyDown}
++          >
+             <div className="absolute inset-y-0 left-0 right-0 flex items-center gap-[2px]">
+               {waveformHeights.map((height, i) => {
+                 const isActive = (i / 30) * 100 <= progress;
+                 return (
+-                  <motion.div key={i} initial={{ scaleY: 0.5 }} animate={{ scaleY: isPlaying && isActive ? [0.6, 1, 0.6] : 1 }}
+-                    transition={{ duration: 0.5, repeat: isPlaying && isActive ? Infinity : 0, delay: i * 0.02 }}
++                  <motion.div key={i} initial={{ scaleY: 0.5 }} animate={{ scaleY: isPlaying && isActive && !reduzirMovimento ? [0.6, 1, 0.6] : 1 }}
++                    transition={{ duration: 0.5, repeat: isPlaying && isActive && !reduzirMovimento ? Infinity : 0, delay: i * 0.02 }}
+                     className={cn('flex-1 rounded-full transition-colors', hasError ? 'bg-destructive/30' : isActive ? 'bg-primary' : (isSent ? 'bg-primary/60' : 'bg-muted-foreground/30'))}
+                     style={{ height: `${height}%` }} />
+                 );
+@@ -144,7 +197,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+           </div>
+         </div>
+         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+-          <button onClick={cycleSpeed} className={cn('h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
++          <button onClick={cycleSpeed} aria-label={`Velocidade de reprodução: ${playbackRate}x`} className={cn('h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors', playbackRate < 1 ? 'bg-destructive/20 hover:bg-destructive/30 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} title="Velocidade">{playbackRate}x</button>
+         </motion.div>
+         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+           {/* E14 — volume das mídias entre a velocidade e a transcrição; as cores seguem
+@@ -156,7 +209,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+           />
+         </motion.div>
+         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+-          <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? 'text-primary' : (isSent ? 'text-primary' : 'text-muted-foreground'))}
++          <Button variant="ghost" size="icon" aria-label={transcription ? (showTranscription ? 'Ocultar transcrição' : 'Mostrar transcrição') : 'Transcrever áudio'} className={cn('w-8 h-8 relative', showTranscription && transcription ? 'text-primary' : (isSent ? 'text-primary' : 'text-muted-foreground'))}
+             onClick={() => { if (!transcription && !isProcessing) void handleTranscribe(); else setShowTranscription(!showTranscription); }} disabled={isProcessing} title={transcription ? 'Mostrar/ocultar transcrição' : 'Transcrever áudio'}>
+             {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+             {transcription && !showTranscription && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-success" />}
+@@ -164,11 +217,16 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
+         </motion.div>
+       </div>
+ 
+-      <AnimatePresence>
+-        {(transcriptionStatus === 'processing' || transcriptionStatus === 'failed') && (
+-          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}>{getStatusIndicator()}</motion.div>
+-        )}
+-      </AnimatePresence>
++      {/* E17 — a live region nasce junto com o player e fica sempre montada: uma
++          região `role="status"` inserida já com o texto costuma não ser anunciada.
++          O indicador entra e sai dentro dela. */}
++      <div role="status">
++        <AnimatePresence>
++          {(transcriptionStatus === 'processing' || transcriptionStatus === 'failed') && (
++            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}>{getStatusIndicator()}</motion.div>
++          )}
++        </AnimatePresence>
++      </div>
+ 
+       <AnimatePresence>
+         {showTranscription && (
+diff --git a/src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx b/src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx
+new file mode 100644
+index 0000000000..0c081f9adb
+--- /dev/null
++++ b/src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx
+@@ -0,0 +1,202 @@
++/**
++ * E17 — acessibilidade do player de áudio (`AudioMessagePlayer.tsx`).
++ *
++ * O defeito: o botão play/pausa/recarregar só tinha ícone (violação
++ * `button-name`), a barra de posição era `<div onClick>` (invisível para o
++ * teclado e para o leitor de tela — sem `role="slider"`/`aria-valuenow`), o
++ * selo "Falhou - Tentar novamente" era `motion.div onClick` (não era botão),
++ * o botão de transcrição só tinha `title`, o status da transcrição não era
++ * anunciado (`aria-live`) e as 30 barras do waveform animavam sempre.
++ *
++ * A prova renderiza o componente REAL e afirma o que o DOM expõe. Os mocks são
++ * os mesmos dos testes vizinhos do player (`AudioMessagePlayer.transcricao.test.tsx`):
++ * `framer-motion` e o cliente supabase. O mock de `motion.div` só copia as props
++ * de animação para `data-*` (não injeta estado) — é o que permite afirmar, no
++ * caso de "reduzir movimento", que o pedido de animação infinita desapareceu.
++ */
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
++import React from 'react';
++import { axe } from 'vitest-axe';
++
++const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
++    removeChannel: vi.fn(),
++    storage: {
++      from: vi.fn(() => ({
++        createSignedUrl: vi.fn(() => Promise.resolve({ data: { signedUrl: 'https://test.com/audio.webm' } })),
++      })),
++    },
++    functions: { invoke: invokeMock },
++    from: vi.fn(),
++  },
++}));
++
++vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
++
++vi.mock('@/lib/logger', () => ({
++  log: { error: vi.fn(), info: vi.fn(), debug: vi.fn() },
++}));
++
++vi.mock('framer-motion', () => ({
++  motion: {
++    div: (props: Record<string, unknown>) => {
++      const { children, animate, transition, initial, exit, whileHover, whileTap, variants, ...rest } =
++        props as {
++          children?: React.ReactNode;
++          animate?: unknown;
++          transition?: { repeat?: unknown };
++          initial?: unknown;
++          exit?: unknown;
++          whileHover?: unknown;
++          whileTap?: unknown;
++          variants?: unknown;
++        } & Record<string, unknown>;
++      void initial; void exit; void whileHover; void whileTap; void variants;
++      return React.createElement('div', {
++        ...rest,
++        'data-animate': animate ? JSON.stringify(animate) : undefined,
++        'data-repeat': transition && transition.repeat !== undefined ? String(transition.repeat) : undefined,
++      }, children);
++    },
++  },
++  AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
++}));
++
++import { AudioMessagePlayer } from '../AudioMessagePlayer';
++import { setVolume as setVolumeStore } from '@/lib/mediaVolumeStore';
++
++const PROPS = { audioUrl: 'https://test.com/audio.webm', messageId: 'msg-a11y', isSent: false };
++
++function renderPlayer(overrides: Partial<React.ComponentProps<typeof AudioMessagePlayer>> = {}) {
++  return render(<AudioMessagePlayer {...PROPS} {...overrides} />);
++}
++
++/** Preferência de movimento do sistema, como o navegador entrega ao hook. */
++function definirReduzirMovimento(ativo: boolean) {
++  window.matchMedia = ((query: string) => ({
++    matches: ativo,
++    media: query,
++    onchange: null,
++    addListener: () => {},
++    removeListener: () => {},
++    addEventListener: () => {},
++    removeEventListener: () => {},
++    dispatchEvent: () => false,
++  })) as unknown as typeof window.matchMedia;
++}
++
++describe('AudioMessagePlayer — acessibilidade dos controles (E17)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    invokeMock.mockResolvedValue({ data: { transcription: 'texto', messageId: 'msg-a11y' }, error: null });
++    definirReduzirMovimento(false);
++  });
++
++  afterEach(cleanup);
++
++  it('os botões de ícone têm nome acessível (não só ícone)', () => {
++    renderPlayer();
++    expect(screen.getByRole('button', { name: 'Reproduzir áudio' })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Velocidade de reprodução: 1x' })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Transcrever áudio' })).toBeInTheDocument();
++  });
++
++  it('axe não acusa violação séria nem crítica', async () => {
++    const { container } = renderPlayer();
++    const resultado = await axe(container);
++    const serias = resultado.violations
++      .filter((v) => v.impact === 'critical' || v.impact === 'serious')
++      .map((v) => `${v.id}: ${v.nodes.length} nó(s)`);
++    expect(serias).toEqual([]);
++  });
++
++  it('a barra de posição é um slider com valores e atalhos de teclado', () => {
++    const { container } = renderPlayer();
++    const audio = container.querySelector('audio') as HTMLAudioElement;
++    // jsdom não decodifica mídia: o áudio de verdade tem duração, então o teste
++    // entrega a duração que o navegador entregaria no `loadedmetadata`.
++    Object.defineProperty(audio, 'duration', { value: 120, configurable: true });
++    fireEvent.loadedMetadata(audio);
++
++    const barra = screen.getByRole('slider', { name: 'Posição do áudio' });
++    expect(barra).toHaveAttribute('aria-valuemin', '0');
++    expect(barra).toHaveAttribute('aria-valuemax', '120');
++    expect(barra).toHaveAttribute('aria-valuenow', '0');
++    expect(barra).toHaveAttribute('aria-valuetext', '0:00 de 2:00');
++    expect(barra).toHaveAttribute('tabindex', '0');
++
++    // ←/→/Home/End movem a posição; ↑/↓ são do volume (E16) e NÃO movem o seek.
++    fireEvent.keyDown(barra, { key: 'ArrowRight' });
++    expect(audio.currentTime).toBe(5);
++    fireEvent.keyDown(barra, { key: 'ArrowLeft' });
++    expect(audio.currentTime).toBe(0);
++    fireEvent.keyDown(barra, { key: 'End' });
++    expect(audio.currentTime).toBe(120);
++    fireEvent.keyDown(barra, { key: 'Home' });
++    expect(audio.currentTime).toBe(0);
++  });
++
++  it('↑/↓ com foco no slider movem só o volume, nunca a posição (E16 × E17)', () => {
++    // Ponto 1 da recusa, caminho (b): ↑/↓ ficam com o volume. O listener nativo
++    // do volume no container roda antes do `onKeyDown` do React, então tratar
++    // ↑/↓ no slider também moveria as duas coisas na mesma tecla.
++    setVolumeStore(50);
++    const { container } = renderPlayer();
++    const audio = container.querySelector('audio') as HTMLAudioElement;
++    Object.defineProperty(audio, 'duration', { value: 120, configurable: true });
++    fireEvent.loadedMetadata(audio);
++
++    const barra = screen.getByRole('slider', { name: 'Posição do áudio' });
++    const posicaoAntes = audio.currentTime;
++    const volumeAntes = audio.volume;
++
++    fireEvent.keyDown(barra, { key: 'ArrowUp' });
++    expect(audio.currentTime).toBe(posicaoAntes);
++    expect(audio.volume).not.toBe(volumeAntes);
++
++    const volumeDepoisDeSubir = audio.volume;
++    fireEvent.keyDown(barra, { key: 'ArrowDown' });
++    expect(audio.currentTime).toBe(posicaoAntes);
++    expect(audio.volume).not.toBe(volumeDepoisDeSubir);
++  });
++
++  it('o selo "Falhou - Tentar novamente" é botão de verdade e chama a transcrição', async () => {
++    renderPlayer({ transcriptionStatus: 'failed' });
++    const selo = screen.getByRole('button', { name: 'Falhou - Tentar novamente' });
++    expect(selo.tagName).toBe('BUTTON');
++    fireEvent.click(selo);
++    await waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
++  });
++
++  it('o status da transcrição é anunciado numa live region sempre montada', () => {
++    // Ponto 2 da recusa: a região `role="status"` nasce com o player (vazia) e o
++    // indicador entra dentro dela — live region inserida já com o texto costuma
++    // não ser anunciada.
++    const { rerender } = renderPlayer();
++    expect(screen.getByRole('status')).toBeInTheDocument();
++    expect(screen.getByRole('status')).toBeEmptyDOMElement();
++    rerender(<AudioMessagePlayer {...PROPS} transcriptionStatus="processing" />);
++    expect(screen.getByRole('status')).toHaveTextContent('Transcrevendo...');
++  });
++
++  it('com movimento normal o waveform pulsa enquanto a bolha toca', () => {
++    const { container } = renderPlayer();
++    fireEvent.play(container.querySelector('audio') as HTMLAudioElement);
++    const repetições = Array.from(container.querySelectorAll('[data-repeat]')).map((n) => n.getAttribute('data-repeat'));
++    expect(repetições).toHaveLength(30);
++    expect(repetições).toContain('Infinity');
++  });
++
++  it('com "reduzir movimento" o waveform não pede animação infinita', () => {
++    definirReduzirMovimento(true);
++    const { container } = renderPlayer();
++    fireEvent.play(container.querySelector('audio') as HTMLAudioElement);
++    const repetições = Array.from(container.querySelectorAll('[data-repeat]')).map((n) => n.getAttribute('data-repeat'));
++    expect(repetições).toHaveLength(30);
++    expect(repetições.every((r) => r === '0')).toBe(true);
++  });
++});

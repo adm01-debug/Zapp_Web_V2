@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Senior <hermes-senior@promobrindes.local> 1792174136 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Senior <hermes-senior@promobrindes.local> 1792174137 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 fd9da466c236736f5ba873768996f39d55996368 Hermes Senior <hermes-senior@promobrindes.local> 1792174349 -0300	commit: fix(inbox): resolve colisao de atalhos e live region do player de audio (refazer 1 E17)
+fd9da466c236736f5ba873768996f39d55996368 f9bce1e990b92e96ee9ea95f746f0c6b50654d05 Hermes Senior <hermes-senior@promobrindes.local> 1792174611 -0300	commit: fix(inbox): status de transcricao derivado da prop sem setState em efeito

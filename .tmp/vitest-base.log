@@ -1,0 +1,1012 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-player-a11y-2610152109114a-2610161508dc74/.tmp/prova-base
+
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+xNot implemented: HTMLMediaElement's pause() method
+xNot implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+xxNot implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+xx·Not implemented: HTMLMediaElement's pause() method
+x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > os botões de ícone têm nome acessível (não só ícone)
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reproduzir áudio"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+  [36m/>[39m
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Velocidade"[39m
+  [36m/>[39m
+
+  Name "Volume dos áudios e vídeos: 80%":
+  [36m<button[39m
+    [33maria-disabled[39m=[32m"false"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Volume dos áudios e vídeos: 80%"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-6 w-6 rounded-md hover:bg-foreground/10"[39m
+    [33mtitle[39m=[32m"Volume dos áudios e vídeos: 80%"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ajustar volume das mídias":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Ajustar volume das mídias"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-4 w-4 hover:bg-foreground/10"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Transcrever áudio":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8 relative text-muted-foreground"[39m
+    [33mtitle[39m=[32m"Transcrever áudio"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-2"[39m
+    [36m>[39m
+      [36m<audio[39m
+        [33mcrossorigin[39m=[32m"anonymous"[39m
+        [33mpreload[39m=[32m"metadata"[39m
+        [33msrc[39m=[32m"https://test.com/audio.webm"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 p-2 rounded-lg min-w-[200px] bg-muted/50"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-play w-5 h-5 ml-0.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 space-y-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative h-8 cursor-pointer"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"absolute inset-y-0 left-0 right-0 flex items-center gap-[2px]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-primary"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 29%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 26%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 62%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 38%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 70%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 33%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 28%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 50%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 20%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 54%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 45%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+           ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:103:19
+    101|   it('os botões de ícone têm nome acessível (não só ícone)', () => {
+    102|     renderPlayer();
+    103|     expect(screen.getByRole('button', { name: 'Reproduzir áudio' })).t…
+       |                   ^
+    104|     expect(screen.getByRole('button', { name: 'Velocidade de reproduçã…
+    105|     expect(screen.getByRole('button', { name: 'Transcrever áudio' })).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > axe não acusa violação séria nem crítica
+AssertionError: expected [ 'button-name: 1 nó(s)' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "button-name: 1 nó(s)",
++ ]
+
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:114:20
+    112|       .filter((v) => v.impact === 'critical' || v.impact === 'serious')
+    113|       .map((v) => `${v.id}: ${v.nodes.length} nó(s)`);
+    114|     expect(serias).toEqual([]);
+       |                    ^
+    115|   });
+    116|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > a barra de posição é um slider com valores e atalhos de teclado
+TestingLibraryElementError: Unable to find an accessible element with the role "slider" and name "Posição do áudio"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+  [36m/>[39m
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Velocidade"[39m
+  [36m/>[39m
+
+  Name "Volume dos áudios e vídeos: 80%":
+  [36m<button[39m
+    [33maria-disabled[39m=[32m"false"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Volume dos áudios e vídeos: 80%"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-6 w-6 rounded-md hover:bg-foreground/10"[39m
+    [33mtitle[39m=[32m"Volume dos áudios e vídeos: 80%"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ajustar volume das mídias":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Ajustar volume das mídias"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-4 w-4 hover:bg-foreground/10"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Transcrever áudio":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8 relative text-muted-foreground"[39m
+    [33mtitle[39m=[32m"Transcrever áudio"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-2"[39m
+    [36m>[39m
+      [36m<audio[39m
+        [33mcrossorigin[39m=[32m"anonymous"[39m
+        [33mpreload[39m=[32m"metadata"[39m
+        [33msrc[39m=[32m"https://test.com/audio.webm"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 p-2 rounded-lg min-w-[200px] bg-muted/50"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-play w-5 h-5 ml-0.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 space-y-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative h-8 cursor-pointer"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"absolute inset-y-0 left-0 right-0 flex items-center gap-[2px]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-primary"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 29%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 26%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 62%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 38%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 70%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 33%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 28%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 50%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 20%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 54%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 45%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+           ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:125:26
+    123|     fireEvent.loadedMetadata(audio);
+    124|
+    125|     const barra = screen.getByRole('slider', { name: 'Posição do áudio…
+       |                          ^
+    126|     expect(barra).toHaveAttribute('aria-valuemin', '0');
+    127|     expect(barra).toHaveAttribute('aria-valuemax', '120');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > ↑/↓ com foco no slider movem só o volume, nunca a posição (E16 × E17)
+TestingLibraryElementError: Unable to find an accessible element with the role "slider" and name "Posição do áudio"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+  [36m/>[39m
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Velocidade"[39m
+  [36m/>[39m
+
+  Name "Volume dos áudios e vídeos: 50%":
+  [36m<button[39m
+    [33maria-disabled[39m=[32m"false"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Volume dos áudios e vídeos: 50%"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-6 w-6 rounded-md hover:bg-foreground/10"[39m
+    [33mtitle[39m=[32m"Volume dos áudios e vídeos: 50%"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ajustar volume das mídias":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Ajustar volume das mídias"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-4 w-4 hover:bg-foreground/10"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Transcrever áudio":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8 relative text-muted-foreground"[39m
+    [33mtitle[39m=[32m"Transcrever áudio"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-2"[39m
+    [36m>[39m
+      [36m<audio[39m
+        [33mcrossorigin[39m=[32m"anonymous"[39m
+        [33mpreload[39m=[32m"metadata"[39m
+        [33msrc[39m=[32m"https://test.com/audio.webm"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 p-2 rounded-lg min-w-[200px] bg-muted/50"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-play w-5 h-5 ml-0.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 space-y-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative h-8 cursor-pointer"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"absolute inset-y-0 left-0 right-0 flex items-center gap-[2px]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-primary"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 29%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 26%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 62%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 38%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 70%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 33%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 28%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 50%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 20%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 54%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 45%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+           ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:153:26
+    151|     fireEvent.loadedMetadata(audio);
+    152|
+    153|     const barra = screen.getByRole('slider', { name: 'Posição do áudio…
+       |                          ^
+    154|     const posicaoAntes = audio.currentTime;
+    155|     const volumeAntes = audio.volume;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > o selo "Falhou - Tentar novamente" é botão de verdade e chama a transcrição
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Falhou - Tentar novamente"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+  [36m/>[39m
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Velocidade"[39m
+  [36m/>[39m
+
+  Name "Volume dos áudios e vídeos: 50%":
+  [36m<button[39m
+    [33maria-disabled[39m=[32m"false"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Volume dos áudios e vídeos: 50%"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-6 w-6 rounded-md hover:bg-foreground/10"[39m
+    [33mtitle[39m=[32m"Volume dos áudios e vídeos: 50%"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ajustar volume das mídias":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Ajustar volume das mídias"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-4 w-4 hover:bg-foreground/10"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Transcrever áudio":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8 relative text-muted-foreground"[39m
+    [33mtitle[39m=[32m"Transcrever áudio"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-2"[39m
+    [36m>[39m
+      [36m<audio[39m
+        [33mcrossorigin[39m=[32m"anonymous"[39m
+        [33mpreload[39m=[32m"metadata"[39m
+        [33msrc[39m=[32m"https://test.com/audio.webm"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 p-2 rounded-lg min-w-[200px] bg-muted/50"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-play w-5 h-5 ml-0.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 space-y-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative h-8 cursor-pointer"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"absolute inset-y-0 left-0 right-0 flex items-center gap-[2px]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-primary"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 29%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 26%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 62%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 38%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 70%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 33%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 28%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 50%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 20%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 54%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 45%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+           ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:169:25
+    167|   it('o selo "Falhou - Tentar novamente" é botão de verdade e chama a …
+    168|     renderPlayer({ transcriptionStatus: 'failed' });
+    169|     const selo = screen.getByRole('button', { name: 'Falhou - Tentar n…
+       |                         ^
+    170|     expect(selo.tagName).toBe('BUTTON');
+    171|     fireEvent.click(selo);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > o status da transcrição é anunciado numa live region sempre montada
+TestingLibraryElementError: Unable to find an accessible element with the role "status"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+  [36m/>[39m
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"h-6 px-1.5 rounded-full text-3xs font-semibold transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Velocidade"[39m
+  [36m/>[39m
+
+  Name "Volume dos áudios e vídeos: 50%":
+  [36m<button[39m
+    [33maria-disabled[39m=[32m"false"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Volume dos áudios e vídeos: 50%"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-6 w-6 rounded-md hover:bg-foreground/10"[39m
+    [33mtitle[39m=[32m"Volume dos áudios e vídeos: 50%"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Ajustar volume das mídias":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-haspopup[39m=[32m"dialog"[39m
+    [33maria-label[39m=[32m"Ajustar volume das mídias"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-4 w-4 hover:bg-foreground/10"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Transcrever áudio":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm w-8 h-8 relative text-muted-foreground"[39m
+    [33mtitle[39m=[32m"Transcrever áudio"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-2"[39m
+    [36m>[39m
+      [36m<audio[39m
+        [33mcrossorigin[39m=[32m"anonymous"[39m
+        [33mpreload[39m=[32m"metadata"[39m
+        [33msrc[39m=[32m"https://test.com/audio.webm"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 p-2 rounded-lg min-w-[200px] bg-muted/50"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:text-accent-foreground hover:shadow-glow-accent-sm w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-play w-5 h-5 ml-0.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 space-y-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative h-8 cursor-pointer"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"absolute inset-y-0 left-0 right-0 flex items-center gap-[2px]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-primary"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 29%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 26%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 62%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 21%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 38%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 70%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 33%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 28%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 50%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 20%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 54%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+                [33mstyle[39m=[32m"height: 45%;"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 rounded-full transition-colors bg-muted-foreground/30"[39m
+                [33mdata-animate[39m=[32m"{\"scaleY\":1}"[39m
+                [33mdata-repeat[39m=[32m"0"[39m
+           ...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:180:19
+    178|     // não ser anunciada.
+    179|     const { rerender } = renderPlayer();
+    180|     expect(screen.getByRole('status')).toBeInTheDocument();
+       |                   ^
+    181|     expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    182|     rerender(<AudioMessagePlayer {...PROPS} transcriptionStatus="proce…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx > AudioMessagePlayer — acessibilidade dos controles (E17) > com "reduzir movimento" o waveform não pede animação infinita
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/inbox/__tests__/AudioMessagePlayer.a11y.test.tsx:200:48
+    198|     const repetições = Array.from(container.querySelectorAll('[data-re…
+    199|     expect(repetições).toHaveLength(30);
+    200|     expect(repetições.every((r) => r === '0')).toBe(true);
+       |                                                ^
+    201|   });
+    202| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  15:18:07
+   Duration  2.32s (transform 280ms, setup 177ms, import 596ms, tests 831ms, environment 577ms)
+
