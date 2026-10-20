@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aviso-tipo-notificacao-som-recusado
+ID=2610161528a89e
+BRANCH=v2/aviso-tipo-notificacao-som-recusado-2610161528a89e
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-tipo-notificacao-som-recusado-2610161528a89e
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T15:28:02-03:00
+KANBAN=t_0be31284
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-tipo-notificacao-som-recusado-2610161528a89e/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-2610161528a89e
+PRONTO_SHA=a23b9af3ef5f94c67aa31e36febe33b38e123502
