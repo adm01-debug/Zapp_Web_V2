@@ -56,6 +56,14 @@ test('E64 (F-11): editar o .sql entre o dry-run e o apply invalida a confirmacao
   assert.equal(runtimeDoDryRun, runtimeDoDryRun);
 });
 
+test('GA04: validate-runtime-proof imprime o hash SOZINHO no stdout (captura do bash) e a descricao no stderr', () => {
+  assert.match(preflight, /process\.stderr\.write\(modHash\.descreverConfirmacao/, 'descricao vai para o stderr, nao contamina a captura');
+  assert.ok(preflight.includes('process.stdout.write(confirmacao'), 'hash vai para o stdout');
+  const saidasStdout = preflight.split('\n').filter((l) => l.includes('process.stdout.write'));
+  assert.equal(saidasStdout.length, 1, 'stdout carrega exatamente uma linha: o hash');
+  assert.match(preflight, /process\.stderr\.write\('Contrato generico/, 'log informativo do contrato generico vai para o stderr');
+});
+
 test('E64: componente fora de forma e erro de programacao, nao mismatch silencioso', () => {
   assert.throws(() => comporHashConfirmacao({ runtimeSha256: 'curto', arquivoSha256: ARQUIVO, commitSha: COMMIT }), /runtimeSha256/);
   assert.throws(() => comporHashConfirmacao({ runtimeSha256: RUNTIME, arquivoSha256: '', commitSha: COMMIT }), /arquivoSha256/);

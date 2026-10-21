@@ -99,10 +99,17 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
   // 2. Inserir mensagem fresca para garantir que o contato apareça na inbox
   //    (InboxFilters exige messages.length > 0; janela de 1000 msgs pode deixar
   //    mensagens antigas de fora quando o volume diário ultrapassa esse limite).
-  //    A policy INSERT de messages não tem WITH CHECK — authenticated pode inserir.
-  const msgResponse = await page.request.post(
-    `${SUPABASE_URL}/rest/v1/messages`,
-    {
+  //    GA11: a insercao vai pela RPC `e2e_fixture_message` (SECURITY DEFINER,
+  //    restrita ao usuario de teste e ao contato fixo) — o INSERT direto por
+  //    REST viola o trigger `guard_message_provenance_fields` (403
+  //    message_sender_forbidden desde 06/10). Fallback legado enquanto a DDL
+  //    nao e aplicada (GA07).
+  const fixtureRpcResponse = await page.request.post(`${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`, {
+    headers,
+    data: { p_op: 'insert' },
+  });
+  if (!fixtureRpcResponse.ok()) {
+    const msgResponse = await page.request.post(`${SUPABASE_URL}/rest/v1/messages`, {
       headers: { ...headers, Prefer: 'return=minimal' },
       data: {
         contact_id: E2E_FIXTURE_CONTACT_ID,
@@ -110,13 +117,13 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
         content: '[E2E fixture setup]',
         message_type: 'text',
       },
+    });
+    if (!msgResponse.ok()) {
+      throw new Error(
+        `Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ` +
+          (await msgResponse.text().catch(() => ''))
+      );
     }
-  );
-  if (!msgResponse.ok()) {
-    throw new Error(
-      `Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ` +
-        (await msgResponse.text().catch(() => ''))
-    );
   }
 }
 
@@ -129,10 +136,18 @@ export async function cleanupFixtureMessages(page: Page): Promise<void> {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   };
-  await page.request.delete(
-    `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&content=eq.[E2E%20fixture%20setup]`,
-    { headers }
-  );
+  // GA11: limpeza pela mesma RPC (escopo travado no contato+conteudo do
+  // fixture); fallback legado enquanto a DDL nao e aplicada (GA07).
+  const rpcResponse = await page.request.post(`${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`, {
+    headers,
+    data: { p_op: 'cleanup' },
+  });
+  if (!rpcResponse.ok()) {
+    await page.request.delete(
+      `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&content=eq.[E2E%20fixture%20setup]`,
+      { headers }
+    );
+  }
 }
 
 // Perfil do usuario de teste NO CI (e2e.zapp@promobrindes.com.br). Mantido so como

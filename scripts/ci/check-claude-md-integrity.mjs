@@ -6,44 +6,51 @@
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
-const REQUIRED_SECTIONS = [
-  '## 0. Onde se trabalha',
-  '## 1. Banco de dados OFICIAL',
-  '## 2. Evolution GO',
-  '## 3. Repo e escrita',
+// GA02 (plano GitHub Actions, fase 0): trava anti-apagao do CLAUDE.md.
+// Reprova se perder 'Banco de dados OFICIAL', 'Perimetro do GitHub'
+// ou a disciplina de CI sem desperdicio ('um PR por lote', R6), ou se
+// encolher mais de 30% numa PR (wipe tipo o commit placeholder de 15/10).
+export const REQUIRED_SECTIONS = [
+  'Banco de dados OFICIAL',
+  'Perímetro do GitHub',
+  'um PR por lote',
 ];
-const SHRINK_THRESHOLD = 0.30;
+export const SHRINK_THRESHOLD = 0.30;
 
-let content;
-try {
-  content = readFileSync('CLAUDE.md', 'utf8');
-} catch {
-  console.error('::error::CLAUDE.md nao encontrado. Outra sessao pode ter apagado o arquivo.');
-  process.exitCode = 1;
-  process.exit();
+export function avaliarClaudeMd(content, headContent) {
+  const c = String(content ?? '');
+  const missing = REQUIRED_SECTIONS.filter((s) => !c.includes(s));
+  if (missing.length > 0) return { ok: false, motivo: 'secao obrigatoria ausente: ' + missing.join(', ') };
+  if (headContent) {
+    const ratio = c.length / headContent.length;
+    if (ratio < (1 - SHRINK_THRESHOLD)) {
+      return { ok: false, motivo: 'encolheu mais de 30% vs HEAD. Possivel wipe por sessao paralela.' };
+    }
+  }
+  return { ok: true };
 }
 
-const missing = REQUIRED_SECTIONS.filter((s) => !content.includes(s));
-if (missing.length > 0) {
-  for (const s of missing) console.error(`::error::CLAUDE.md: secao obrigatoria ausente: ${s}`);
-  process.exitCode = 1;
-  process.exit();
-}
-
-let headContent;
-try {
-  headContent = execSync('git show HEAD:CLAUDE.md', { encoding: 'utf8' });
-} catch {
-  headContent = null;
-}
-
-if (headContent) {
-  const ratio = content.length / headContent.length;
-  if (ratio < (1 - SHRINK_THRESHOLD)) {
-    console.error(`::error::CLAUDE.md encolheu ${Math.round((1 - ratio) * 100)}% vs HEAD (atual: ${content.length} bytes, HEAD: ${headContent.length} bytes). Possivel wipe por sessao paralela.`);
+if (import.meta.url.endsWith(process.argv[1]?.split('/').pop() ?? '')) {
+  let content;
+  try {
+    content = readFileSync('CLAUDE.md', 'utf8');
+  } catch {
+    console.error('::error::CLAUDE.md nao encontrado. Outra sessao pode ter apagado o arquivo.');
     process.exitCode = 1;
-    process.exit();
+  }
+  if (process.exitCode !== 1) {
+    let headContent;
+    try {
+      headContent = execSync('git show HEAD:CLAUDE.md', { encoding: 'utf8' });
+    } catch {
+      headContent = null;
+    }
+    const veredito = avaliarClaudeMd(content, headContent);
+    if (!veredito.ok) {
+      console.error('::error::CLAUDE.md: ' + veredito.motivo);
+      process.exitCode = 1;
+    } else {
+      console.log('CLAUDE.md OK: ' + REQUIRED_SECTIONS.length + ' secoes presentes, ' + content.length + ' bytes.');
+    }
   }
 }
-
-console.log(`CLAUDE.md OK: ${REQUIRED_SECTIONS.length} secoes presentes, ${content.length} bytes.`);

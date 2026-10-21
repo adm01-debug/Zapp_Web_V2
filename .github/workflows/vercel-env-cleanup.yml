@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch manual
+#   prova: lista vars do Vercel e remove as perigosas/mortas
+#   falha: DRY_RUN=0 sem aprovacao ou API do Vercel fora
+#   avisa: resumo no Job Summary do run
 name: V043-V065 Vercel Env Cleanup
 
 on:
