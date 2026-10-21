@@ -283,7 +283,9 @@ Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com 
     });
     const res = await handleRevokeAuthSessions(req);
     if (res.status !== 429) fail(`esperado 429, veio ${res.status}`);
-    if (res.headers.get("Retry-After") === null) fail("o 429 deve trazer Retry-After");
+    if (res.headers.get("Retry-After") !== "60") {
+      fail(`o 429 deve trazer Retry-After: 60, veio ${res.headers.get("Retry-After")}`);
+    }
     if (!seen.some((u) => u.includes("/rest/v1/rpc/consume_rate_limit"))) {
       fail(`deveria consultar o limiter persistente: ${seen.join(",")}`);
     }
@@ -333,6 +335,9 @@ Deno.test("rate limit (IP) nega antes de ler o corpo e antes de autenticar", asy
     },
   });
   if (res.status !== 429) fail(`esperado 429, veio ${res.status}`);
+  if (res.headers.get("Retry-After") !== "60") {
+    fail(`o 429 deve trazer Retry-After: 60, veio ${res.headers.get("Retry-After")}`);
+  }
   if (keys.length !== 1 || keys[0] !== "revoke-auth-sessions:9.9.9.9") fail(`chaves: ${JSON.stringify(keys)}`);
 });
 
@@ -347,6 +352,9 @@ Deno.test("rate limit por USUARIO pos-auth: conta comprometida trocando de IP ->
     },
   });
   if (res.status !== 429) fail(`esperado 429, veio ${res.status}`);
+  if (res.headers.get("Retry-After") !== "60") {
+    fail(`o 429 deve trazer Retry-After: 60, veio ${res.headers.get("Retry-After")}`);
+  }
   const esperado = [`revoke-auth-sessions:9.9.9.9`, `revoke-auth-sessions:user:${A}`];
   if (JSON.stringify(keys) !== JSON.stringify(esperado)) fail(`chaves: ${JSON.stringify(keys)}`);
 });

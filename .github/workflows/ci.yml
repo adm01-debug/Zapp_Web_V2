@@ -139,8 +139,8 @@ jobs:
 
   coverage:
     name: 📊 Coverage
-    # E72: o artifact só existe na main. PR não paga esta suíte.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # A suíte roda em todo evento do CI (PR inclusive). E72 limita só o artifact:
+    # o upload abaixo continua exclusivo de push na main.
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
