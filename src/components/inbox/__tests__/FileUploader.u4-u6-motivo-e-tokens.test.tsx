@@ -26,7 +26,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { storage: { from: vi.fn() }, from: vi.fn() },
 }));
 vi.mock('@/services/outbound-message.service', () => ({ sendOutboundMessage: vi.fn() }));
-vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() } 
+vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/components/inbox/useFileUploadLogic', () => ({ useFileUploadLogic: vi.fn() }));

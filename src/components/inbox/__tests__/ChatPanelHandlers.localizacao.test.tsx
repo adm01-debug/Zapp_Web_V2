@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   logError: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: mocks.logError } 
+vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: mocks.logError },
   getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));

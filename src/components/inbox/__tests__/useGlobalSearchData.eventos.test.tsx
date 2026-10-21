@@ -78,7 +78,7 @@ const h = vi.hoisted(() => {
 });
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: h.supabase }));
-vi.mock('@/lib/logger', () => ({ log: h.logger, getLogger: () => h.logger 
+vi.mock('@/lib/logger', () => ({ log: h.logger, getLogger: () => h.logger,
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false, roles: [] }) }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
