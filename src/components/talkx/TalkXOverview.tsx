@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3, Loader2,
+  FileText, Bookmark, MessageSquare, BarChart3, Loader2, ChevronDown,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -78,6 +78,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // usa a matriz de ações atual, mas delega ciclo de vida ao hook único.
   const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
+  // TL-115: o bloco de rascunhos nasce recolhido e abre no clique do cabeçalho.
+  const [rascunhosAbertos, setRascunhosAbertos] = useState(false);
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
   const [channel, setChannel] = useState<string>(() => saved?.channel ?? 'all');
@@ -255,13 +257,23 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           if (drafts.length === 0) return null;
           return (
             <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              {/* TL-115: o cabeçalho é o gatilho do bloco (recolhido por padrão); o
+                  nome acessível sai como "Rascunhos pendentes(N)". */}
+              <button
+                type="button"
+                onClick={() => setRascunhosAbertos((v) => !v)}
+                aria-expanded={rascunhosAbertos}
+                aria-label={`Rascunhos pendentes(${drafts.length})`}
+                className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between text-left hover:bg-muted/20 transition-colors"
+              >
+                <span className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-dash-amber" />
-                  <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
+                  <span className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</span>
                   <span className="text-2xs text-muted-foreground">({drafts.length})</span>
-                </div>
-              </div>
+                </span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${rascunhosAbertos ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {rascunhosAbertos && (
               <div className="divide-y divide-border/50">
                 {drafts.slice(0, 5).map((c) => (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
@@ -284,6 +296,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                   </div>
                 ))}
               </div>
+              )}
             </section>
           );
         })()}
@@ -368,7 +381,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         <Td className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label="Ações">
+                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label={`Ações de ${c.name}`}>
                                 {rowActions.pendingId === c.id
                                   ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
                                   : <MoreVertical className="w-4 h-4" />}

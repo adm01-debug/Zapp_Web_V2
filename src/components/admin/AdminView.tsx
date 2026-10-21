@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { motion } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -59,7 +59,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
+  const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -89,6 +89,13 @@ export function AdminView() {
 
   // Indica se a aba atual carrega dados de usuários (controla o indicador de loading).
   const usaDadosDeUsuario = activeTab === 'users';
+
+  // N-064: os dados de usuário só são buscados na aba que os usa — entrar em
+  // Usuários (inclusive no primeiro render) refaz a consulta; as abas que não a
+  // usam não disparam busca nenhuma.
+  useEffect(() => {
+    if (activeTab === 'users') void fetchData();
+  }, [activeTab, fetchData]);
 
   // A URL do avatar é criada ao escolher o arquivo e revogada quando o arquivo muda,
   // o diálogo fecha ou a tela desmonta — antes era criada a cada render e nunca liberada.
@@ -192,6 +199,22 @@ export function AdminView() {
     ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
   ];
 
+  // Navegação por teclado do tablist (padrão WAI-ARIA): as setas movem o foco e a
+  // aba ativa; Home/End vão para a primeira/última.
+  const focarAba = (index: number) => {
+    const destino = abas[Math.max(0, Math.min(abas.length - 1, index))];
+    if (!destino) return;
+    setActiveTab(destino[0]);
+    tabsRef.current[destino[0]]?.focus();
+  };
+
+  const onTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'ArrowRight') { event.preventDefault(); focarAba(index + 1); }
+    else if (event.key === 'ArrowLeft') { event.preventDefault(); focarAba(index - 1); }
+    else if (event.key === 'Home') { event.preventDefault(); focarAba(0); }
+    else if (event.key === 'End') { event.preventDefault(); focarAba(abas.length - 1); }
+  };
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
@@ -208,10 +231,22 @@ export function AdminView() {
         </div>
       </motion.div>
 
-      <div className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
-          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
-            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
+      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
+        {abas.map(([tab, Icon, label], index) => (
+          <Button
+            key={tab}
+            ref={(el) => { tabsRef.current[tab] = el; }}
+            role="tab"
+            id={`tab-${tab}`}
+            aria-selected={activeTab === tab}
+            aria-controls="admin-tabpanel"
+            tabIndex={activeTab === tab ? 0 : -1}
+            variant={activeTab === tab ? 'default' : 'outline'}
+            onClick={() => setActiveTab(tab)}
+            onKeyDown={(e) => onTabKeyDown(e, index)}
+            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''}
+            size="sm"
+          >
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}

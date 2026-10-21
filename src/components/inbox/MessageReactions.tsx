@@ -102,6 +102,8 @@ export function MessageReactions({
               <button
                 data-testid="reaction-badge"
                 data-emoji={reaction.emoji}
+                aria-label={`Reação ${reaction.emoji}: ${reaction.count} ${reaction.count === 1 ? 'reação' : 'reações'}`}
+                aria-pressed={reaction.hasCurrentUser}
                 disabled={isReacting}
                 onClick={() => handleReact(reaction.emoji)}
                 className={cn(
@@ -138,6 +140,7 @@ export function MessageReactions({
         <PopoverTrigger asChild>
           <button
             data-testid="reaction-add-button"
+            aria-label="Adicionar reação"
             disabled={isReacting}
             className={cn(
               'p-1 rounded-full transition-all hover:scale-110 active:scale-90',
@@ -152,17 +155,20 @@ export function MessageReactions({
           </button>
         </PopoverTrigger>
         <PopoverContent
+          aria-label="Reações"
           className="w-auto p-2 bg-popover"
           align={isSent ? 'end' : 'start'}
           sideOffset={4}
         >
-          <div className="flex flex-wrap items-center gap-1 max-w-[200px]">
+          <div role="group" aria-label="Escolha uma reação" className="flex flex-wrap items-center gap-1 max-w-[200px]">
             {availableReactions.map((emoji) => {
               const userHasReacted = hasReacted(emoji);
 
               return (
                 <motion.button
                   key={emoji}
+                  aria-label={`Reagir com ${emoji}`}
+                  aria-pressed={userHasReacted}
                   whileHover={{ scale: 1.25 }}
                   whileTap={{ scale: 0.9 }}
                   disabled={isReacting}
@@ -263,6 +269,8 @@ export function QuickReactionBar({
             key={emoji}
             data-testid="quick-reaction-emoji"
             data-emoji={emoji}
+            aria-label={`Reagir com ${emoji}`}
+            aria-pressed={hasReacted(emoji)}
             disabled={isReacting}
             onClick={() => handleReact(emoji)}
             className={cn(
@@ -286,14 +294,17 @@ export function QuickReactionBar({
             </button>
           </PopoverTrigger>
           <PopoverContent
+            aria-label="Reações"
             className="w-auto p-2 bg-popover"
             align={isSent ? 'end' : 'start'}
             sideOffset={4}
           >
-            <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
+            <div role="group" aria-label="Escolha uma reação" className="flex flex-wrap items-center gap-1 max-w-[220px]">
               {EXTENDED_REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
+                  aria-label={`Reagir com ${emoji}`}
+                  aria-pressed={hasReacted(emoji)}
                   onClick={() => handleReact(emoji)}
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-muted transition-all hover:scale-110',
