@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: workflow_dispatch
+#   prova: lista ou remove vars mortas do projeto Vercel (V043-V065)
+#   falha: nenhuma var e alterada; o script sai com erro
+#   avisa: quem disparou o workflow
 name: V043-V065 Vercel Env Cleanup
 
 on:
@@ -10,6 +15,10 @@ on:
         type: choice
         options: ['1', '0']
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 jobs:
   cleanup:
     name: Remove vars perigosas/mortas do Vercel
@@ -17,11 +26,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Setup Node 20
+      - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Limpar vars Vercel (V043-V065)
         env:

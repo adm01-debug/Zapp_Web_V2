@@ -79,6 +79,7 @@ function pinnedEvidence({
     ledger_name: 'create_demo',
     ledger_statements_sha256: statementsHash(statements),
     ledger_sql_sha256: fixtureSqlHash(ledgerTable),
+    'sql-sha256': statementsHash(statements),
     kind: 'ledger-divergence/pinned-replay',
     reason,
     related_migration,

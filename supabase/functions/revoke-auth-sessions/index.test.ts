@@ -1,4 +1,14 @@
-import { handleRevokeAuthSessions, planRevocation, decodeJwtClaims } from "./index.ts";
+import {
+  handleRevokeAuthSessions,
+  planRevocation,
+  decodeJwtClaims,
+  buildRevocationAudit,
+  recordRevocationAudit,
+  decideThirdPartyRevocation,
+  normalizeRole,
+  resolveEffectiveRole,
+} from "./index.ts";
+import { resetRateLimitServiceClient } from "../_shared/validation.ts";
 
 const A = "00000000-0000-4000-8000-000000000001";
 const B = "00000000-0000-4000-8000-000000000002";
@@ -252,9 +262,9 @@ Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com 
   globalThis.fetch = ((input: RequestInfo | URL) => {
     const url = typeof input === "string"
       ? input
-      : input instanceof URL
-      ? input.toString()
-      : (input as Request).url;
+      : input instanceof Request
+      ? input.url
+      : input.href;
     seen.push(url);
     if (url.includes("/rest/v1/rpc/consume_rate_limit")) {
       return Promise.resolve(new Response(JSON.stringify([{ allowed: false, remaining: 0 }]), {

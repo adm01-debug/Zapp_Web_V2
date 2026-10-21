@@ -56,13 +56,16 @@ function get(): Request {
 function fakeAdmin(
   policy: { data: unknown; error: unknown },
   extra: Record<string, { data: unknown; error: unknown }> = {},
-  profiles: { data: { is_active: boolean | null } | null; error: unknown } = { data: { is_active: true }, error: null },
+  profiles: { data: { is_active: boolean | null } | null; error: unknown } | null = { data: { is_active: true }, error: null },
+  signOutError: { message?: string } | null = null,
 ) {
   const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const fromCalls: Array<{ table: string; columns: string; column: string; value: string }> = [];
+  const signOuts: Array<{ jwt: string; scope: string }> = [];
   return {
     calls,
     fromCalls,
+    signOuts,
     rpc(fn: string, args: Record<string, unknown>) {
       calls.push({ fn, args });
       if (fn === "resolve_network_policy") return Promise.resolve(policy);
@@ -88,6 +91,14 @@ function fakeAdmin(
         },
       };
       return { select: (c: string) => { columns = c; return filter; } };
+    },
+    auth: {
+      admin: {
+        signOut(jwt: string, scope: "global" | "local" | "others") {
+          signOuts.push({ jwt, scope });
+          return Promise.resolve({ error: signOutError });
+        },
+      },
     },
   };
 }
@@ -119,6 +130,15 @@ function fakeAnonReject(err: Error) {
         calls.push(creds);
         return Promise.reject(err);
       },
+    },
+  };
+}
+
+/** Limiter injetável: por padrão permite. Os testes de indisponibilidade passam o próprio. */
+function fakeRateLimit(result: { allowed: boolean; unavailable?: boolean } = { allowed: true }) {
+  return {
+    enforceRateLimit(_key: string, _max: number, _windowMs: number) {
+      return Promise.resolve(result);
     },
   };
 }
@@ -158,9 +178,6 @@ Deno.test("negação por IP (403) responde ANTES de body/credenciais/efeitos", a
   // Só as RPCs de política e de registro do bloqueio foram chamadas — nada de
   // consultar usuário, gravar tentativa de senha ou consumir rate limit.
   assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
-
-  // Só a RPC de política foi chamada — nada de gate, consultar usuário ou gravar tentativa.
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
   assertEquals(anon.calls.length, 0);
 });
 
@@ -180,9 +197,6 @@ Deno.test("negação por país (403) não chama autenticação nem grava tentati
   // registrado (log_login_block) para o painel de auditoria.
   assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
-
-  // consume_login_gate, record_failed_login e signInWithPassword NUNCA foram chamados.
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
   assertEquals(anon.calls.length, 0);
 });
 
@@ -583,6 +597,7 @@ function allowedVerifyAdmin(
       clear_login_attempts: { data: null, error: null },
       ...extra,
     },
+    { data: { is_active: true }, error: null },
     signOutError,
   );
 }
@@ -667,7 +682,7 @@ Deno.test("verify: rede negada responde 403 antes de qualquer efeito", async () 
   });
 
   assertEquals(res.status, 403);
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
   assertEquals(anon.calls.length, 0);
   assertEquals(admin.signOuts.length, 0);
 });
@@ -724,6 +739,7 @@ const ALLOWED_POLICY = {
   error: null,
 };
 const INACTIVE_EXTRA = {
+  consume_login_gate: GATE_OK,
   is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
   record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 3 }], error: null },
   revoke_auth_sessions: { data: null, error: null },
@@ -834,6 +850,7 @@ Deno.test("perfil ativo (is_active true) entra: 200 com sessão e sem revogaçã
   const admin = fakeAdmin(
     ALLOWED_POLICY,
     {
+      consume_login_gate: GATE_OK,
       is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
       clear_login_attempts: { data: null, error: null },
     },

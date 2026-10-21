@@ -126,19 +126,6 @@ export async function ensureValidToken(supabase: SupabaseClient, account: GmailA
   const storedTokens = await getTokens(supabase, account.id);
   if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;
   log.info("Refreshing Gmail token");
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ refresh_token: storedTokens.refresh_token, client_id: requireEnv("GOOGLE_CLIENT_ID"), client_secret: requireEnv("GOOGLE_CLIENT_SECRET"), grant_type: "refresh_token" }),
-  });
-  if (!response.ok) {
-    // O corpo do Google distingue token revogado/expirado (invalid_grant) de
-    // falha transitória — sem ele a conta cairia em "error" mudo. O corpo do
-    // erro do refresh nunca carrega token.
-    const detail = await response.text();
-    throw new Error(`Gmail token refresh rejected (${response.status}): ${detail}`);
-  }
-  const tokens = await response.json() as { access_token: string; refresh_token?: string; expires_in: number };
-
   const tokens = await requestGmailTokenRefresh(storedTokens.refresh_token, requireEnv("GOOGLE_CLIENT_ID"), requireEnv("GOOGLE_CLIENT_SECRET"));
   const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
   await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
@@ -364,6 +351,13 @@ export type GmailAccountFailure = "reauth_required" | "error";
 
 export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a conta";
 
+/** 409: o app abre a reconexão em vez de mostrar um 500 genérico de envio. */
+export const GMAIL_REAUTH_HTTP_STATUS = 409;
+
+export function gmailReauthErrorPayload(): { error: string; code: "reauth_required" } {
+  return { error: GMAIL_REAUTH_MESSAGE, code: "reauth_required" };
+}
+
 const GMAIL_REAUTH_MARKERS = ["invalid_grant", "unauthorized_client", "expired or revoked", "revoked"];
 
 export function isGmailReauthError(error: unknown): boolean {
@@ -391,9 +385,40 @@ export async function recordGmailAccountFailure(
     ? GMAIL_REAUTH_MESSAGE
     : `${Math.max(1, attempts)} tentativa(s) de sincronização falharam`;
   const lastError = detail && !base.includes(detail) ? `${base}: ${detail}` : base;
+  const update: Record<string, unknown> = { sync_status: status, last_error: lastError };
+  // Espera crescente só na falha transitória. reauth_required exige reconectar —
+  // o cron nem tenta de novo, então não agenda next_attempt_at.
+  if (status === "error") {
+    const n = Math.max(1, attempts);
+    update.error_count = n;
+    update.next_attempt_at = gmailNextAttemptAt(n);
+  }
   const { error: updateError } = await supabase.from("gmail_accounts")
-    .update({ sync_status: status, last_error: lastError })
+    .update(update)
     .eq("id", accountId);
   if (updateError) throw new Error("Failed to record Gmail account failure state");
   return status;
+}
+
+/** Contas que o cron pode tentar agora: pula reauth e a espera ainda não vencida. */
+export function selectGmailAccountsDue<T extends { sync_status?: string | null; next_attempt_at?: string | null }>(
+  accounts: readonly T[],
+  nowMs = Date.now(),
+): T[] {
+  return accounts.filter((account) => {
+    if (account.sync_status === "reauth_required") return false;
+    if (typeof account.next_attempt_at === "string" && account.next_attempt_at.length > 0) {
+      const due = Date.parse(account.next_attempt_at);
+      if (Number.isFinite(due) && due > nowMs) return false;
+    }
+    return true;
+  });
+}
+
+// 1 min, 2 min, 4 min… teto de 6 h. `attempts` é o número de falhas seguidas
+// DEPOIS de contar a que acabou de acontecer.
+function gmailNextAttemptAt(attempts: number, nowMs = Date.now()): string {
+  const exp = Math.min(Math.max(1, attempts), 9);
+  const delayMs = Math.min(6 * 60 * 60 * 1000, 60_000 * 2 ** (exp - 1));
+  return new Date(nowMs + delayMs).toISOString();
 }

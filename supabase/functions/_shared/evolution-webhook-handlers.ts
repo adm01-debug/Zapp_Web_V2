@@ -209,71 +209,66 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
 // Diferente de grupo (`@g.us`), o JID de difusão (`@broadcast`, inclui
 // `status@broadcast`) NÃO é contato: era a brecha por onde o broadcast público
 // vazava; agora é descartado antes de qualquer acesso ao banco.
+function presenceValues(presenceData: Record<string, unknown>): string[] {
+  const estados: string[] = [];
+  const raw = presenceData.presences;
+  if (isRecord(raw) && Object.keys(raw).length > 0) {
+    for (const pState of Object.values(raw)) {
+      if (!isRecord(pState)) continue;
+      const valor = pState.lastKnownPresence ?? pState.status;
+      if (typeof valor === 'string' && valor) estados.push(valor.toLowerCase());
+    }
+    return estados;
+  }
+  const direto = presenceData.status ?? presenceData.lastKnownPresence;
+  if (typeof direto === 'string' && direto) estados.push(direto.toLowerCase());
+  return estados;
+}
+
+/** Autor de grupo identificável: JID real, não a chave sintética "1" nem broadcast. */
+function identifiableAuthor(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const v = value.trim();
+  if (!v || v === '1') return null;
+  if (v.includes('@')) {
+    if (v.endsWith('@broadcast') || v.endsWith('@g.us')) return null;
+    return v;
+  }
+  const digits = v.replace(/\D/g, '');
+  return digits.length >= 8 && digits.length <= 15 ? v : null;
+}
+
+function groupAuthor(presenceData: Record<string, unknown>): string | null {
+  const direct = identifiableAuthor(presenceData.participant) ?? identifiableAuthor(presenceData.participantJid);
+  if (direct) return direct;
+  const raw = presenceData.presences;
+  if (!isRecord(raw)) return null;
+  for (const key of Object.keys(raw)) {
+    const author = identifiableAuthor(key);
+    if (author) return author;
+  }
+  return null;
+}
+
 // deno-lint-ignore no-explicit-any
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
   const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
+  if (!jid) return;
 
-  if (jid && !jid.endsWith('@g.us')) {
-    // O GO entrega dois envelopes aqui: ChatPresence {presences:{jid:{lastKnownPresence}}}
-    // com composing/paused, e Presence {status} com online/offline (às vezes
-    // available/unavailable). Antes só 'composing' era aproveitado. Colhemos
-    // TODOS os estados do evento e derivamos digitando e presença real.
-    const estados: string[] = [];
-    if (presences) {
-      for (const [, pState] of Object.entries(presences)) {
-        const valor = pState?.lastKnownPresence ?? pState?.status;
-        if (typeof valor === 'string') estados.push(valor.toLowerCase());
-      }
-    } else {
-      const direto = presenceData.status ?? presenceData.lastKnownPresence;
-      if (typeof direto === 'string') estados.push(direto.toLowerCase());
-    }
+  // JID de difusão (`@broadcast`, inclui `status@broadcast`) não é contato.
+  if (jid.endsWith('@broadcast')) return;
 
-    const isComposing = estados.includes('composing');
-    const online = estados.some((e) => e === 'online' || e === 'available');
-    const offline = estados.some((e) => e === 'offline' || e === 'unavailable');
+  const isGroup = jid.endsWith('@g.us');
+  // Grupo sem autor identificável: degrada explícito, sem broadcast e sem banco.
+  // A chave sintética "1" (envelope 1:1 reaproveitado) não conta como autor.
+  const participant = isGroup ? groupAuthor(presenceData) : null;
+  if (isGroup && !participant) return;
 
-    const phone = normalizePhone(jid);
-    if (phone) {
-      const connection = await getConnectionByInstance(supabase, instance);
-      if (connection) {
-        const contact = await getContactByPhone(supabase, phone, connection.id);
-        if (contact) {
-          // 'digitando' inalterado: todo evento de presença ainda avisa o front.
-          const channel = supabase.channel(`typing:${contact.id}`);
-          await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-          supabase.removeChannel(channel);
-
-          // Presença ONLINE/OFFLINE real do contato (R2-INB-030 removia o que era
-          // falso; o real vindo do WhatsApp é permitido). Grava só o estado e os
-          // horários — nada além disso.
-          if (online || offline) {
-            const agora = new Date().toISOString();
-            const updateData: Record<string, unknown> = {
-              presence_status: online ? 'online' : 'offline',
-              presence_updated_at: agora,
-            };
-            if (offline) {
-              // "Visto por último" só avança na TRANSIÇÃO online -> offline:
-              // um contato que o WhatsApp já mandava como offline não reescreve
-              // (nem inventa) esse horário.
-              const { data: atual } = await supabase
-                .from('contacts')
-                .select('presence_status')
-                .eq('id', contact.id)
-                .maybeSingle();
-              if (atual?.presence_status === 'online') updateData.last_seen_at = agora;
-            }
-            await supabase.from('contacts').update(updateData).eq('id', contact.id);
-          }
-        }
-      }
-    }
-  } else {
-    const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-    isComposing = directStatus === 'composing';
-  }
+  const estados = presenceValues(presenceData);
+  const isComposing = estados.includes('composing');
+  const online = estados.some((e) => e === 'online' || e === 'available');
+  const offline = estados.some((e) => e === 'offline' || e === 'unavailable');
 
   const phone = normalizePhone(jid);
   if (!phone) return;
@@ -284,9 +279,43 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
   const contact = await getContactByPhone(supabase, phone, connection.id);
   if (!contact) return;
 
+  // Canal PRIVADO: a RLS de realtime.messages decide quem lê e quem envia.
   const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
-  await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
+  const payload: Record<string, unknown> = {
+    isTyping: isComposing,
+    contactId: contact.id,
+    timestamp: new Date().toISOString(),
+  };
+  if (isGroup && participant) {
+    payload.typing = isComposing;
+    payload.participant = participant;
+  }
+  await channel.send({
+    type: 'broadcast',
+    event: 'contact_typing',
+    payload,
+  });
   supabase.removeChannel(channel);
+
+  // Presença ONLINE/OFFLINE só no 1:1. Grupo não grava presence_status do chat.
+  if (!isGroup && (online || offline)) {
+    const agora = new Date().toISOString();
+    const updateData: Record<string, unknown> = {
+      presence_status: online ? 'online' : 'offline',
+      presence_updated_at: agora,
+    };
+    if (offline) {
+      // "Visto por último" só avança na TRANSIÇÃO online -> offline.
+      const { data: atual } = await supabase
+        .from('contacts')
+        .select('presence_status')
+        .eq('id', contact.id)
+        .maybeSingle();
+      const atualStatus = isRecord(atual) ? atual.presence_status : (atual as { presence_status?: unknown } | null)?.presence_status;
+      if (atualStatus === 'online') updateData.last_seen_at = agora;
+    }
+    await supabase.from('contacts').update(updateData).eq('id', contact.id);
+  }
 }
 
 // deno-lint-ignore no-explicit-any

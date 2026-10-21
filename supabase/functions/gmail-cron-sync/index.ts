@@ -1,9 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger, requireEnv, internalErrorResponse } from "../_shared/validation.ts";
-import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, selectGmailAccountsDue, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
+
+interface GmailCronAccount {
+  id: string;
+  token_expires_at: string;
+  history_id: string | null;
+  sync_status?: string | null;
+  error_count?: number | null;
+  next_attempt_at?: string | null;
+}
 
 // R2-API-011B — avanço de cursor incremental por compare-and-swap: o UPDATE só
 // grava se o history_id da linha ainda for o lido no início da tentativa
@@ -57,16 +66,17 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
     if (error || !accounts?.length) { log.info("No active accounts"); return new Response(JSON.stringify({ success: true, synced: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     // Pula as contas que exigem ação humana (reauth_required) e as que ainda
     // estão na espera crescente de uma falha transitória — não bate no Google de novo.
-    const dueAccounts = selectGmailAccountsDue(accounts);
+    const dueAccounts = selectGmailAccountsDue((accounts ?? []) as GmailCronAccount[]);
     const skipped = accounts.length - dueAccounts.length;
     if (!dueAccounts.length) { log.info("No accounts due", { skipped }); return new Response(JSON.stringify({ success: true, synced: 0, skipped }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     const results: Array<{ id: string; synced?: number; error?: string; cursor_advanced?: boolean }> = [];
     for (let i = 0; i < dueAccounts.length; i += BATCH) {
       const batch = dueAccounts.slice(i, i + BATCH);
-      const batchResults = await Promise.allSettled(batch.map(async (account) => {
+      const batchResults = await Promise.allSettled(batch.map(async (account: GmailCronAccount) => {
         try {
           const accessToken = await ensureValidToken(supabase, account, log);
-          if (!account.history_id) {
+          const historyId = account.history_id;
+          if (!historyId) {
             // conta sem history_id: full sync (todas as páginas; cursor só no fim, sem falhas)
             await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
             const result = await runGmailFullSync(supabase, account.id, accessToken, log, "in:inbox", 50);
@@ -74,14 +84,16 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
             return { id: account.id, synced: result.synced };
           } else {
             // sync incremental: aplica só os IDs do histórico; cursor avança só sem falhas e via CAS
-            const r = await runGmailCronIncrementalSync(supabase, account, accessToken, log);
+            const r = await runGmailCronIncrementalSync(supabase, { id: account.id, history_id: historyId }, accessToken, log);
             return { id: account.id, synced: r.synced, cursor_advanced: r.cursor_advanced };
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           try {
             // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
+            // error_count conta falhas SEGUIDAS (a coluna já tem as anteriores).
+            const attempts = (typeof account.error_count === "number" ? account.error_count : 0) + 1;
+            await recordGmailAccountFailure(supabase, account.id, err, attempts);
           } catch (recordErr) {
             log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
           }
