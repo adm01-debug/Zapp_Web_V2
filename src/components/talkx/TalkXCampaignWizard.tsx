@@ -715,14 +715,24 @@ function WizardRail({ ed }: { ed: WizardState }) {
     }
     return values;
   }, [sampleCustomFields]);
+  // X131: numeros do rail vindos do servidor; sem recorte mostra falha fechada.
+  const railManual = ed.audienceSource === "contacts" ? ed.selectedContacts.length : 0;
+  const railServerOn = (ed.audienceSource === "segment" && ed.segmentIds.length > 0) || (ed.audienceSource === "contacts" && ed.railHasRules);
+  const railShowServer = railServerOn && !!ed.railSummary && !ed.railSummaryError && !(ed.audienceSource === "contacts" && railManual > 0);
+  const railShowLocal = ed.audienceSource === "contacts" && !ed.railHasRules && railManual > 0;
+  const railPending = railServerOn && ed.railSummaryPending && !ed.railSummary;
+  const railTotal = railShowServer ? fmtInt(ed.railSummary?.total ?? 0) : railShowLocal ? fmtInt(railManual) : railPending ? "…" : "—";
+  const railEleg = railShowServer ? fmtInt(ed.railSummary?.eligible ?? 0) : railPending ? "…" : "—";
+  const railSupp = railShowServer ? fmtInt(ed.railSummary?.suppressed ?? 0) : railPending ? "…" : "—";
+  const railSub = (n: number) => (railShowServer && (ed.railSummary?.total ?? 0) > 0 ? fmtPct(n, ed.railSummary?.total ?? 0) : undefined);
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
   return (
     <div className="space-y-4 min-w-0">
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={railTotal} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={railEleg} sub={railSub(ed.railSummary?.eligible ?? 0)} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={railSupp} sub={railSub(ed.railSummary?.suppressed ?? 0)} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />

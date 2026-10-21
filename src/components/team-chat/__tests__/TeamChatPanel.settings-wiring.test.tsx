@@ -16,7 +16,8 @@ const h = vi.hoisted(() => {
     messages: [],
     filteredMessages: [],
     isSearching: false,
-    searchError: null as string | null,
+    searchError: false,
+    searchErrorMessage: null as string | null,
     isLoading: false,
     isMuted: false,
     isFetchingOlder: false,
@@ -89,7 +90,8 @@ describe('TeamChatPanel — estados visuais da busca (SL-082)', () => {
     h.panel.showSearch = false;
     h.panel.searchQuery = '';
     h.panel.isSearching = false;
-    h.panel.searchError = null;
+    h.panel.searchError = false;
+    h.panel.searchErrorMessage = null;
     h.panel.filteredMessages = [];
     h.panel.hasOlderMessages = false;
     h.panel.isFetchingOlder = false;
@@ -141,7 +143,8 @@ describe('TeamChatPanel — estados visuais da busca (SL-082)', () => {
   it('falha da busca aparece como aviso de erro, não como "Nenhuma mensagem encontrada"', () => {
     h.panel.showSearch = true;
     h.panel.searchQuery = 'contrato';
-    h.panel.searchError = 'Não foi possível buscar as mensagens. Tente novamente.';
+    h.panel.searchError = true;
+    h.panel.searchErrorMessage = 'Não foi possível buscar as mensagens. Tente novamente.';
     renderPanel();
 
     expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível buscar as mensagens. Tente novamente.');

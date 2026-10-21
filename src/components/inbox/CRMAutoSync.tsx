@@ -158,6 +158,7 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
           variant="outline"
           size="icon"
           onClick={handleSync}
+          aria-label={tooltipText} title={tooltipText}
           disabled={isSyncing}
           aria-label={tooltipText}
           data-testid="crm-sync-button"

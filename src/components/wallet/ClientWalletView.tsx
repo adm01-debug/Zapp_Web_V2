@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion } from '@/components/ui/motion';
+import { MotionConfig, useReducedMotion } from "framer-motion";
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,10 +19,16 @@ import { useClientWallet } from '@/hooks/business/useClientWallet';
 export function ClientWalletView() {
   const w = useClientWallet();
 
+  // Movimento reduzido (preferência do sistema): os fundos decorativos (aurora e partículas)
+  // têm laço infinito de opacidade — o `reducedMotion` do framer-motion não os corta, então
+  // eles só entram quando não há preferência. O `MotionConfig` cobre as demais animações.
+  const reduzido = useReducedMotion() ?? false;
+
   return (
+    <MotionConfig reducedMotion="user">
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis />
-      <FloatingParticles />
+      {!reduzido && <AuroraBorealis />}
+      {!reduzido && <FloatingParticles />}
 
       <PageHeader
         title="Carteira de Clientes"
@@ -131,5 +138,6 @@ export function ClientWalletView() {
         </CardContent>
       </Card>
     </div>
+    </MotionConfig>
   );
 }
