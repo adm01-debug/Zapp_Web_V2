@@ -1,47 +1,68 @@
-import type { toast as SonnerToast } from 'sonner';
+import type { ReactNode } from 'react';
 
 /**
  * t_fd52bf49 — `toast` do sonner SEM colocar a lib no bundle inicial.
  *
  * A pilha de sessão de telefonia (`CallSessionProvider` → `useSipClient` →
  * `useSipConnection`, `sipProvisioning`, `useMicrophoneGuard`,
- * `useCallEngineSink`) é montada no boot e importava `toast` de 'sonner'
- * estaticamente: só isso já punha o chunk da lib (~9 KB gzip) no modulepreload
- * do `index.html` (medido pelo `bundle-budget.mjs` em 09/10/2026).
+ * `useCallEngineSink`) é montada no boot e PRECISA avisar por toast — mas
+ * nenhum módulo do grafo estático do entry pode referenciar o `sonner`
+ * (nem `import` estático, nem `import()` dinâmico: o helper de preload do
+ * Vite/Rolldown vira import estático do chunk da lib e o
+ * `bundle-inicial.bundle.test.ts` reprova).
  *
- * Esta fachada tem a MESMA chamada (`toast.error(msg)` etc.) e pede a lib por
- * `import()` assim que o módulo é avaliado — logo depois do entry, fora do
- * caminho do first paint. Com a lib carregada (o caso normal: estes toasts só
- * saem depois de login, provisionamento ou chamada), a chamada é síncrona,
- * como antes. Se alguém chamar antes de a lib chegar, a chamada espera o
- * `import()` e sai em seguida — nada se perde (o sonner também guarda o toast
- * até o <Toaster> lazy montar). Falha ao carregar a lib vira `console.warn`,
- * nunca exceção no meio da telefonia.
+ * Por isso esta fachada NÃO importa o `sonner`: quem carrega a lib é o
+ * viewport lazy (`@/components/ui/sonner`, montado no boot pelos
+ * `DeferredProviders`), que REGISTRA o `toast` real aqui na avaliação do
+ * módulo (`registrarToast`). Chamadas feitas antes do registro ficam na fila
+ * e saem em seguida — nada se perde. Com a lib carregada (o caso normal:
+ * estes toasts só saem depois de login, provisionamento ou chamada), a
+ * chamada é síncrona, como antes.
+ *
+ * Esta fachada tem a MESMA chamada (`toast.error(msg)` etc.).
  */
-type Toast = typeof SonnerToast;
-type Tipo = 'success' | 'error' | 'info' | 'warning';
-type Args = Parameters<Toast['error']>;
 
-let carregado: Toast | null = null;
-
-const carregando: Promise<Toast> = import('sonner').then((modulo) => {
-  carregado = modulo.toast;
-  return modulo.toast;
-});
-// A falha é tratada em cada chamada; aqui só não deixa a rejeição solta.
-carregando.catch(() => {});
-
-function disparar(tipo: Tipo, args: Args): void {
-  if (carregado) {
-    carregado[tipo](...args);
-    return;
-  }
-  void carregando
-    .then((toast) => { toast[tipo](...args); })
-    .catch((erro) => console.warn('[toast] não disparou:', erro));
+export interface LazyToastOptions {
+  description?: ReactNode;
+  duration?: number;
+  action?: { label: string; onClick: () => void };
+  cancel?: { label: string; onClick: () => void };
+  icon?: ReactNode;
+  [chave: string]: unknown;
 }
 
-export const toast = {
+export type LazyToastFn = (message: string, options?: LazyToastOptions) => void;
+
+export interface ToastLike {
+  success: LazyToastFn;
+  error: LazyToastFn;
+  info: LazyToastFn;
+  warning: LazyToastFn;
+}
+
+let pronto: ToastLike | null = null;
+const fila: Array<() => void> = [];
+
+/** Chamado pelo viewport lazy quando a lib chega (avaliação do módulo). */
+export function registrarToast(impl: ToastLike): void {
+  pronto = impl;
+  while (fila.length) fila.shift()?.();
+}
+
+type Tipo = keyof ToastLike;
+type Args = [message: string, options?: LazyToastOptions];
+
+function disparar(tipo: Tipo, args: Args): void {
+  if (pronto) {
+    pronto[tipo](...args);
+    return;
+  }
+  fila.push(() => {
+    pronto?.[tipo](...args);
+  });
+}
+
+export const toast: ToastLike = {
   success: (...args: Args) => disparar('success', args),
   error: (...args: Args) => disparar('error', args),
   info: (...args: Args) => disparar('info', args),
