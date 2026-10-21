@@ -392,16 +392,18 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = false;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo', email: 'novo@test.com', password: 'abcdefgh', role: 'agent', avatarFile: file,
       });
     });
 
     expect(ok).toBe(true);
     expect(upload).toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain('create-user');
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
+    // A Edge e chamada pela camada padrao de invoke (nao por `fetch` cru).
+    const edgeInvoke = supabase.functions.invoke as unknown as ReturnType<typeof vi.fn>;
+    expect(edgeInvoke).toHaveBeenCalledTimes(1);
+    const [fnName, opts] = edgeInvoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
+    expect(fnName).toBe('create-user');
+    expect(opts.body.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
     expect(getPublicUrl).not.toHaveBeenCalled();
   });
 
@@ -413,12 +415,12 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = true;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo', email: 'novo@test.com', password: 'abcdefgh', role: 'agent', avatarFile: file,
       });
     });
 
     expect(ok).toBe(false);
     expect(toast.error).toHaveBeenCalledWith('Erro ao fazer upload da foto');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(supabase.functions.invoke).not.toHaveBeenCalled();
   });
 });

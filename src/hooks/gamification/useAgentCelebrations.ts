@@ -96,6 +96,10 @@ export function useAgentCelebrations(
   const conquistasConhecidas = useRef<Set<string>>(new Set());
   // Nível conhecido do perfil: só aumento vira celebração.
   const nivelConhecido = useRef<number | null>(null);
+  // Ultima contagem de conquistas vista em `agent_stats`: o AUMENTO dela e o
+  // sinal publicado de que existe conquista nova para reler (a tabela
+  // `agent_achievements` nao esta na publicacao do Realtime).
+  const contagemConhecida = useRef<number | null>(null);
   // Último estado de conexão do canal, para detectar a reconexão.
   const estadoCanal = useRef<string | null>(null);
 
@@ -162,6 +166,10 @@ export function useAgentCelebrations(
     let vivo = true;
     conquistasConhecidas.current = new Set();
     nivelConhecido.current = null;
+    // Marco da semeadura: o que foi gravado DEPOIS deste instante nasceu com a
+    // tela ja aberta (insert comitado antes do SELECT responder) e vira festa; o
+    // que ja existia fica so como semente.
+    const marco = Date.now();
 
     void (async () => {
       const [conquistas, stats] = await Promise.all([
@@ -176,17 +184,45 @@ export function useAgentCelebrations(
       if (!vivo) return;
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
-        if (linha?.id) conquistasConhecidas.current.add(String(linha.id));
+        const id = linha?.id ? String(linha.id) : null;
+        if (!id || conquistasConhecidas.current.has(id)) continue;
+        const nasceu = linha?.earned_at ? Date.parse(String(linha.earned_at)) : NaN;
+        if (Number.isFinite(nasceu) && nasceu > marco) celebrarConquista(linha);
+        else conquistasConhecidas.current.add(id);
       }
       if (stats.error) log.warn('Falha ao carregar stats do perfil', stats.error);
       const statsLinha = stats.data as AgentStats | null;
-      if (statsLinha) nivelConhecido.current = Number(statsLinha.level);
+      if (statsLinha) {
+        nivelConhecido.current = Number(statsLinha.level);
+        contagemConhecida.current = Number(statsLinha.achievements_count ?? 0);
+      }
     })();
 
     return () => {
       vivo = false;
     };
-  }, [enabled, profileId]);
+  }, [enabled, profileId, celebrarConquista]);
+
+  // Releitura da janela disparada pelo sinal da contagem: celebra so o id novo
+  // (o insert da conquista e o aumento de `achievements_count` saem na mesma
+  // transacao no servidor).
+  const relerConquistasNovas = useCallback(async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('agent_achievements')
+        .select('*')
+        .eq('profile_id', id)
+        .order('earned_at', { ascending: false })
+        .limit(JANELA_CONQUISTAS);
+      if (error) {
+        log.warn('Falha ao reler conquistas do perfil', error);
+        return;
+      }
+      for (const linha of (data ?? []) as Achievement[]) celebrarConquista(linha);
+    } catch (erro) {
+      log.warn('Releitura de conquistas falhou', erro);
+    }
+  }, [celebrarConquista]);
 
   // Ressincronização: o que chegou durante a queda volta pelo banco — e o que já
   // foi celebrado cai no mesmo filtro de ids, então não repete.
@@ -206,7 +242,10 @@ export function useAgentCelebrations(
         for (const linha of (conquistas.data ?? []) as Achievement[]) celebrarConquista(linha);
         if (stats.error) log.warn('Falha ao ressincronizar stats', stats.error);
         const statsLinha = stats.data as AgentStats | null;
-        if (statsLinha) celebrarNivel(statsLinha.level, statsLinha.xp);
+        if (statsLinha) {
+          celebrarNivel(statsLinha.level, statsLinha.xp);
+          contagemConhecida.current = Number(statsLinha.achievements_count ?? contagemConhecida.current ?? 0);
+        }
       } catch (erro) {
         log.warn('Ressincronização de celebrações falhou', erro);
       }
@@ -223,16 +262,6 @@ export function useAgentCelebrations(
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'agent_achievements',
-          filter: `profile_id=eq.${profileId}`,
-        },
-        (payload) => celebrarConquista(payload.new as unknown as Achievement),
-      )
-      .on(
-        'postgres_changes',
-        {
           event: '*',
           schema: 'public',
           table: 'agent_stats',
@@ -240,7 +269,14 @@ export function useAgentCelebrations(
         },
         (payload) => {
           const linha = payload.new as unknown as AgentStats | null;
-          if (linha) celebrarNivel(linha.level, linha.xp);
+          if (!linha) return;
+          const contagem = Number(linha.achievements_count);
+          const anterior = contagemConhecida.current;
+          if (Number.isFinite(contagem) && (anterior === null || contagem > anterior)) {
+            contagemConhecida.current = contagem;
+            void relerConquistasNovas(profileId);
+          }
+          celebrarNivel(linha.level, linha.xp);
         },
       )
       .subscribe((status) => {
@@ -256,7 +292,7 @@ export function useAgentCelebrations(
     return () => {
       void supabase.removeChannel(canal);
     };
-  }, [enabled, profileId, celebrarConquista, celebrarNivel, ressincronizar]);
+  }, [enabled, profileId, celebrarConquista, celebrarNivel, ressincronizar, relerConquistasNovas]);
 
   const celebrations = fila.perfil === profileId ? fila.itens : [];
 

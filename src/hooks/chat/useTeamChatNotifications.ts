@@ -6,6 +6,7 @@ import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 
 const log = getLogger('TeamChatNotifications');
 
@@ -203,7 +204,15 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
         // `notifSettings.browserNotifications`.
-        if (permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
+        // HZ3-001 + PE-75: quem decide o aviso e a permissao REAL do navegador.
+        // O `permission` do `usePushNotifications` fica em 'default' quando o
+        // Service Worker de aplicacao esta desligado (o caso deste projeto),
+        // entao exigi-lo aqui silenciava o alerta de quem ja autorizou o
+        // navegador.
+        const permissaoDoHook = permission === 'granted';
+        const permissaoDoNavegador =
+          'Notification' in window && Notification.permission === 'granted';
+        if ((permissaoDoHook || permissaoDoNavegador) && notifSettings.browserNotifications && !isQuietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -221,17 +230,30 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          await showNotification({
-            title: `💬 Teams: ${senderName}`,
-            body,
-            tag: `team-msg-${msg.conversation_id}`,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
-            requireInteraction: false,
-          });
+          const titulo = `💬 Teams: ${senderName}`;
+          // Caminho exclusivo: a inscricao do service worker quando o hook de
+          // push a confirma (permissao concedida COM Service Worker de
+          // aplicacao); fora disso o aviso sai pela API `Notification` direta,
+          // que e o que este projeto entrega hoje — `SERVICE_WORKER_ENABLED`
+          // esta desligado e o `showNotification` devolveria false em silencio.
+          if (permissaoDoHook) {
+            await showNotification({
+              title: titulo,
+              body,
+              tag: `team-msg-${msg.conversation_id}`,
+              data: {
+                type: 'team_chat',
+                conversationId: msg.conversation_id,
+                messageId: msg.id,
+              },
+              requireInteraction: false,
+            });
+          } else {
+            showBrowserNotification(titulo, body, {
+              tag: `team-msg-${msg.conversation_id}`,
+              onClick: () => navigateToView('team-chat'),
+            });
+          }
 
           log.debug('Team chat notification sent for message:', msg.id);
         }
