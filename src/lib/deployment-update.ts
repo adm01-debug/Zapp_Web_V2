@@ -1,4 +1,5 @@
 import { getLogger } from '@/lib/logger';
+import { toast } from '@/lib/lazyToast';
 import { haBloqueioRecarga, observarBloqueiosRecarga } from '@/lib/reload-blockers';
 
 declare const __ZAPP_BUILD_ID__: string;
@@ -93,7 +94,8 @@ async function checkForDeploymentUpdate() {
     desarmarObservadorBloqueios();
     pararObservadorBloqueios = observarBloqueiosRecarga(aoTransicionarBloqueios);
 
-    const { toast } = await import('sonner');
+    // t_fd52bf49 — o aviso sai pela fachada: o sonner continua fora do bundle
+    // inicial (a fachada bufferiza até a lib carregar) e o toast não se perde.
     toast.info('Uma nova versão do Zapp está disponível', {
       description: 'Atualize para evitar usar conexões ou URLs temporárias de uma versão antiga.',
       duration: Infinity,

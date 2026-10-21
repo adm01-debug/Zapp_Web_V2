@@ -74,7 +74,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:590` |
 | `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:252` · `src/components/settings/media-library/AIGenerateDialog.tsx:59` |
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` |
-| `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:328` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
+| `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:329` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/connections/ConnectionsView.tsx:141` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `create-user` | A | `src/components/admin/useAdminData.ts:471` · `src/components/admin/useAdminData.ts:478` |
@@ -106,7 +106,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
-| `message-delivery` | A | `src/services/outbound-message.service.ts:456` · `src/lib/invokeEdge.ts:24` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/services/outbound-message.service.ts:468` · `src/lib/invokeEdge.ts:24` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:158` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
@@ -132,7 +132,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:509` · `src/hooks/integrations/useTalkX.ts:525` · `src/hooks/integrations/useTalkX.ts:534` · `src/hooks/integrations/useTalkX.ts:543` · `src/hooks/integrations/useTalkXTemplates.ts:196` · `supabase/functions/talkx-scheduler/index.ts:341` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
 | `talkx-storage-purge` | E | — sem chamador no repositório — |
 | `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
-| `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:246` |
+| `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:255` |
 | `voice-copilot-action` | E | — sem chamador no repositório — |
 | `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |

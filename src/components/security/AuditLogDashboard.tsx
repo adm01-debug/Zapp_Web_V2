@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from "lucide-react";
@@ -9,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuditLogDashboard, type AuditLogRow } from "@/hooks/security/useAuditLogDashboard";
+
 
 // Contrato compartilhado de acoes e entidades de papel.
 export const ROLE_ACTION_PREFIX = "role_";
@@ -65,8 +67,10 @@ export function AuditLogDashboard() {
 
   const { stats, logs, nomesPorUsuario, loading, error } = useAuditLogDashboard({ actionLike, actionEq, entityTypes });
 
+
   
   const truncated = !loading && !error && logs.length >= LOGS_PAGE_LIMIT;
+
 
   const filteredLogs = logs.filter((log: AuditLogRow) => {
     if (!search) return true;
@@ -105,10 +109,12 @@ export function AuditLogDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
+
           { label: "Total de Logs", value: (error || !stats) ? "—" : stats.total, icon: FileText, color: "text-primary" },
-          { label: "Hoje", value: (error || !stats) ? "—" : stats.ultimas24h, icon: Calendar, color: "text-success" },
-          { label: "Ações Sensíveis", value: (error || !stats) ? "—" : stats.sensiveis24h, icon: AlertTriangle, color: "text-destructive" },
+          { label: "Hoje", value: (error || !stats) ? "—" : stats.ultimas24h, icon: Calendar, color: "text-success", hint: "últimas 24 h" },
+          { label: "Ações Sensíveis", value: (error || !stats) ? "—" : stats.sensiveis24h, icon: AlertTriangle, color: "text-destructive", hint: "últimas 24 h" },
           { label: "Usuários Únicos", value: (error || !stats) ? "—" : stats.usuariosUnicos7d, icon: User, color: "text-info" },
+
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -117,6 +123,9 @@ export function AuditLogDashboard() {
                 <div>
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  {'hint' in stat && stat.hint ? (
+                    <p className="text-[11px] text-muted-foreground/80">{stat.hint}</p>
+                  ) : null}
                 </div>
               </div>
             </CardContent>

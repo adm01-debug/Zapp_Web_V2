@@ -6,10 +6,11 @@ import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { VOLUME_CONTROL_ATTRIBUTE } from '@/hooks/ui/useVolumeRocker';
 
-// Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: o `import('sonner')`
-// do módulo mantém a lib (~9 KB gzip) fora do modulepreload do index.html
-// (bundle-budget, t_fd52bf49) e, com a lib já carregada — o caso de qualquer
-// atalho depois do boot —, a chamada é síncrona, como era com o import estático.
+// Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: ela NÃO referencia
+// o sonner (o viewport lazy registra a lib no boot) e mantém a lib (~9 KB gzip)
+// fora do modulepreload do index.html (bundle-budget, t_fd52bf49). Com a lib já
+// registrada — o caso de qualquer atalho depois do boot —, a chamada é síncrona,
+// como era com o import estático.
 
 interface GlobalShortcutAction {
   id: string;

@@ -10,6 +10,54 @@ import { useMessageReactions } from '@/hooks/chat/useMessageReactions';
 const WHATSAPP_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 const EXTENDED_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '👏', '💯', '✅', '❌'];
 
+/**
+ * Uma reação por autor por mensagem: tocar em outro emoji remove a antiga ANTES
+ * de gravar a nova, tocar no mesmo só remove. A tela é otimista (atualiza na
+ * hora) e volta ao estado anterior se a gravação falhar (rollback).
+ */
+function useReacaoUnica(
+  reactions: Array<{ id: string; user_id: string; emoji: string; user_name?: string | null }>,
+  currentProfileId: string | undefined,
+  addReaction: (emoji: string) => Promise<unknown>,
+  removeReaction: (emoji: string) => Promise<unknown>,
+) {
+  const [otimista, setOtimista] = useState<typeof reactions | null>(null);
+  const visiveis = otimista ?? reactions;
+  const minha = visiveis.find((r) => r.user_id === currentProfileId);
+  const jaReagi = (emoji: string) =>
+    visiveis.some((r) => r.user_id === currentProfileId && r.emoji === emoji);
+
+  const reagir = async (emoji: string): Promise<boolean> => {
+    if (minha && minha.emoji === emoji) {
+      setOtimista(visiveis.filter((r) => r.id !== minha.id));
+      try {
+        await removeReaction(emoji);
+        return true;
+      } catch {
+        setOtimista(null);
+        return false;
+      }
+    }
+    const semMinha = minha ? visiveis.filter((r) => r.id !== minha.id) : visiveis;
+    setOtimista([
+      ...semMinha,
+      { id: `otimista-${emoji}`, user_id: currentProfileId ?? '', emoji, user_name: minha?.user_name ?? '' },
+    ]);
+    try {
+      // A antiga sai ANTES da nova entrar: sem isso a mensagem fica com duas
+      // reações do mesmo autor até o realtime reconciliar.
+      if (minha) await removeReaction(minha.emoji);
+      await addReaction(emoji);
+      return true;
+    } catch {
+      setOtimista(null);
+      return false;
+    }
+  };
+
+  return { visiveis, jaReagi, reagir };
+}
+
 interface MessageReactionsProps {
   messageId: string;
   isSent?: boolean;
@@ -38,7 +86,6 @@ export function MessageReactions({
     reactions,
     addReaction,
     removeReaction,
-    hasReacted,
     isReacting,
     currentProfileId,
   } = useMessageReactions(messageId, {
@@ -49,8 +96,11 @@ export function MessageReactions({
     refreshKey,
     disableRealtime,
   });
+  const { visiveis, jaReagi, reagir } = useReacaoUnica(
+    reactions, currentProfileId ?? undefined, addReaction, removeReaction,
+  );
 
-  const groupedReactions = reactions.reduce((acc, reaction) => {
+  const groupedReactions = visiveis.reduce((acc, reaction) => {
     if (!acc[reaction.emoji]) {
       acc[reaction.emoji] = {
         emoji: reaction.emoji,
@@ -75,13 +125,7 @@ export function MessageReactions({
 
   const handleReact = async (emoji: string) => {
     try {
-      if (hasReacted(emoji)) {
-        await removeReaction(emoji);
-      } else {
-        await addReaction(emoji);
-      }
-
-      setIsOpen(false);
+      if (await reagir(emoji)) setIsOpen(false);
     } catch {
       // A rejeição já vira toast pt-BR no hook (`useReactionMutations`); aqui só
       // impedimos a promessa solta e o seletor fica aberto para tentar de novo.
@@ -162,7 +206,7 @@ export function MessageReactions({
         >
           <div role="group" aria-label="Escolha uma reação" className="flex flex-wrap items-center gap-1 max-w-[200px]">
             {availableReactions.map((emoji) => {
-              const userHasReacted = hasReacted(emoji);
+              const userHasReacted = jaReagi(emoji);
 
               return (
                 <motion.button
@@ -223,7 +267,7 @@ export function QuickReactionBar({
   disableRealtime,
 }: QuickReactionBarProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const { addReaction, removeReaction, hasReacted, isReacting, currentProfileId } = useMessageReactions(messageId, {
+  const { reactions, addReaction, removeReaction, isReacting, currentProfileId } = useMessageReactions(messageId, {
     instanceName,
     contactJid,
     externalId,
@@ -231,15 +275,13 @@ export function QuickReactionBar({
     refreshKey,
     disableRealtime,
   });
+  const { jaReagi, reagir } = useReacaoUnica(
+    reactions, currentProfileId ?? undefined, addReaction, removeReaction,
+  );
 
   const handleReact = async (emoji: string) => {
     try {
-      if (hasReacted(emoji)) {
-        await removeReaction(emoji);
-      } else {
-        await addReaction(emoji);
-      }
-      setShowPicker(false);
+      if (await reagir(emoji)) setShowPicker(false);
     } catch {
       // A rejeição já vira toast pt-BR no hook (`useReactionMutations`); aqui só
       // impedimos a promessa solta e o seletor fica aberto para tentar de novo.
@@ -270,13 +312,13 @@ export function QuickReactionBar({
             data-testid="quick-reaction-emoji"
             data-emoji={emoji}
             aria-label={`Reagir com ${emoji}`}
-            aria-pressed={hasReacted(emoji)}
+            aria-pressed={jaReagi(emoji)}
             disabled={isReacting}
             onClick={() => handleReact(emoji)}
             className={cn(
               'w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 hover:scale-125 transition-all text-base',
               isReacting && 'opacity-50 cursor-not-allowed',
-              hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
+              jaReagi(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
             )}
           >
             {emoji}
@@ -304,11 +346,11 @@ export function QuickReactionBar({
                 <button
                   key={emoji}
                   aria-label={`Reagir com ${emoji}`}
-                  aria-pressed={hasReacted(emoji)}
+                  aria-pressed={jaReagi(emoji)}
                   onClick={() => handleReact(emoji)}
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-muted transition-all hover:scale-110',
-                    hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
+                    jaReagi(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
                   )}
                 >
                   {emoji}

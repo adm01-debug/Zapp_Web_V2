@@ -9,6 +9,7 @@ import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 import { clearTeamChatDraftSessions } from '@/lib/teamChatDraftSession';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 interface AuthContextType {
   user: User | null;
@@ -160,6 +161,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
+        // A fila de envio offline é do usuário que saiu: esvazia junto, senão o
+        // texto parado no disco drenaria como o próximo atendente que logasse.
+        void offlineSendQueue.clear();
       }
     });
 
@@ -232,8 +236,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        clearInboxDraftSessions();
        // HZ2-016: idem para o rascunho do Chat de Equipe.
        clearTeamChatDraftSessions();
-     }
-   };
+       // A fila de envio offline é do usuário que saiu (ver SIGNED_OUT acima).
+       void offlineSendQueue.clear();
+       }
+       };
 
   return (
     <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>

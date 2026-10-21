@@ -29,13 +29,16 @@ const h = vi.hoisted(() => {
     state.invokeError
       ? { data: null, error: state.invokeError }
       : { data: { ok: true }, error: null });
+  // `set_conversation_status` (arquivar/reabrir) e `delivery_stats` (seção
+  // "Entrega de mensagens") passam por aqui; o teste filtra pelo nome.
+  const rpc = vi.fn(async () => ({ data: null, error: null }));
   const toast = Object.assign(vi.fn(), {
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
     warning: vi.fn(),
   });
-  return { state, eq, update, select, from, invoke, toast };
+  return { state, eq, update, select, from, invoke, rpc, toast };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -45,7 +48,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
     // A seção "Entrega de mensagens" (16/10/2026) consulta a RPC no mount;
     // aqui ela responde vazio — este teste não mede entrega.
-    rpc: vi.fn(async () => ({ data: null, error: null })),
+    rpc: h.rpc,
   },
 }));
 vi.mock('sonner', () => ({ toast: h.toast }));
@@ -136,24 +139,29 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     };
   });
 
-  it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
+  it('"Arquivar" usa a semântica do archiveContact (RPC set_conversation_status); Desfazer reabre pela mesma RPC', async () => {
     renderPainel();
     openMais();
     fireEvent.click(screen.getByText('Arquivar'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
-    // A segunda implementação paralela está proibida: nunca escreve status.
-    expect(h.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_status: expect.anything() }),
+    // Arquivar é mudar o ESTADO pela RPC canônica (a mesma do diálogo de
+    // encerrar e do chip "Arquivadas"): `assigned_to` (o responsável) fica intacto.
+    await waitFor(() =>
+      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {
+        p_contact_id: 'c1',
+        p_next: 'archived',
+      }),
     );
+    expect(h.update).not.toHaveBeenCalled();
 
     await clickUndo();
-    // Restaura o assigned_to lido antes da escrita — não força 'open'.
+    // Reabre pela mesma RPC — sem reabrir nada o toast de desfazer mentiria.
     await waitFor(() =>
-      expect(h.update).toHaveBeenLastCalledWith({ assigned_to: 'agent-9' }),
+      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {
+        p_contact_id: 'c1',
+        p_next: 'open',
+      }),
     );
-    expect(h.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_status: expect.anything() }),
-    );
+    expect(h.update).not.toHaveBeenCalled();
   });
 
   it('"Bloquear" impede novas mensagens pelo fluxo real (update-block-status na edge) e grava a tag', async () => {
