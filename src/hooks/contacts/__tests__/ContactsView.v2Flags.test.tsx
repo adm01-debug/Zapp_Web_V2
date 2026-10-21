@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -305,10 +305,10 @@ describe('ContactsView — contrato do cabeçalho removido', () => {
 
     expect(container.querySelector('header')).toBeNull();
 
-    const titulos = Array.from(container.querySelectorAll('h1'));
+    // Um único anúncio de "Contatos", nível 1 e fora do fluxo visual.
+    const titulos = screen.getAllByRole('heading', { name: 'Contatos' });
     expect(titulos).toHaveLength(1);
-    expect(titulos[0].textContent).toBe('Contatos');
-    expect(titulos[0].className).toContain('sr-only');
+    expect(screen.getByRole('heading', { level: 1, name: 'Contatos' }).className).toContain('sr-only');
   });
 
   it('os indicadores vêm antes de categorias e toolbar', async () => {
@@ -318,14 +318,18 @@ describe('ContactsView — contrato do cabeçalho removido', () => {
     const areas = areasNaTela(container);
     expect(areas[0]).toBe('area-dialogs');
     expect(areas[1]).toBe('area-merge');
-    expect(areas.indexOf('area-stats')).toBeLessThan(areas.indexOf('area-tabs'));
-    expect(areas.indexOf('area-stats')).toBeLessThan(areas.indexOf('area-toolbar'));
+    // Bloco contíguo: nada entra entre indicadores e categorias, e a ordem
+    // categorias→toolbar é fixa.
+    const i = areas.indexOf('area-stats');
+    expect(areas.slice(i, i + 3)).toEqual(['area-stats', 'area-tabs', 'area-toolbar']);
   });
 
   it('mantém uma única instância dos diálogos com os callbacks do CRUD', async () => {
-    render(<ContactsView />, { wrapper: createWrapper() });
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
 
     await waitFor(() => expect(h.areas.dialogs).toHaveBeenCalledTimes(1));
+    // Conta o DOM, não só o mock: duplicação por outro módulo não o chama.
+    expect(container.querySelectorAll('[data-testid="area-dialogs"]')).toHaveLength(1);
     expect(h.areas.dialogs).toHaveBeenCalledWith(
       expect.objectContaining({
         isAddDialogOpen: false,
@@ -333,5 +337,11 @@ describe('ContactsView — contrato do cabeçalho removido', () => {
         handleDeleteContact: expect.any(Function),
       }),
     );
+  });
+
+  it('não puxa o PageHeader por nenhum caminho de import direto', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+    await montarModulo(container, []);
+    expect(container.querySelector('[data-testid="guarda-pageheader"]')).toBeNull();
   });
 });
