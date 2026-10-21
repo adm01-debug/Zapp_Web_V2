@@ -7,6 +7,7 @@ import {
   Logger,
   getClientIP,
   sanitizeString,
+  enforceRateLimit,
 } from "../_shared/validation.ts";
 import {
   resolveNetworkPolicy,
@@ -95,14 +96,29 @@ export type ProfileLookup = (
   userId: string,
 ) => PromiseLike<{ data: { is_active: boolean | null } | null; error: unknown }>;
 
+export interface LoginAdminClient extends NetworkPolicyRpcClient {
+  auth: {
+    admin: {
+      signOut: (
+        jwt: string,
+        scope: "global" | "local" | "others",
+      ) => PromiseLike<{ error: { message?: string } | null }>;
+    };
+  };
+}
+
 export interface AuthLoginDeps {
   admin: LoginAdminClient;
   anon: LoginAnonClient;
-  enforceRateLimit: (
+  // Opcional: o gate `consume_login_gate` já aplica IP+e-mail. Quando injetado
+  // (produção usa `enforceRateLimit`), uma indisponibilidade do contador
+  // persistente falha FECHADO antes do gate — o contador em memória zera no
+  // cold start e não pode ser a única guarda por conta.
+  enforceRateLimit?: (
     key: string,
     maxRequests: number,
     windowMs: number,
-  ) => PromiseLike<{ allowed: boolean }>;
+  ) => PromiseLike<{ allowed: boolean; unavailable?: boolean }>;
   // Injetável para o teste; o default de produção é `profileLookupFrom(admin)`.
   getProfileActive?: ProfileLookup;
 }
@@ -112,6 +128,7 @@ const IP_LIMIT_DEFAULT_MAX = 10; // requisições por IP
 const IP_LIMIT_DEFAULT_WINDOW_SECONDS = 60; // 60_000 ms
 const EMAIL_LIMIT_MAX = 20; // requisições por e-mail (guarda de lockout por conta)
 const EMAIL_LIMIT_WINDOW_SECONDS = 60;
+const EMAIL_LIMIT_WINDOW_MS = EMAIL_LIMIT_WINDOW_SECONDS * 1000;
 
 // R2-AUTH-021: tentativa so conta quando ha PROVA de recusa de credenciais —
 // erro 4xx que nao seja 429. Todo o resto (5xx, 429, status ausente/0,
@@ -261,6 +278,39 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     if (!invalidBody && (!password || password.length > 256)) invalidBody = "invalid password";
     const userAgent = sanitizeString(rec.userAgent ?? req.headers.get("user-agent"), 512) ?? null;
 
+    // Guarda extra do contador persistente, ANTES do gate: se o RPC de rate
+    // limit não respondeu, o login por e-mail não pode seguir só com o contador
+    // em memória. Testes offline que não injetam o limiter ficam no gate único.
+    const limit = deps.enforceRateLimit;
+    if (limit) {
+      const ipRl = await limit(
+        `auth-login:${ip}`,
+        policy.rateLimitMaxRequests,
+        policy.rateLimitWindowSeconds * 1000,
+      );
+      if (ipRl.unavailable) {
+        log.error("rate limit persistente indisponivel; negando login por IP");
+        log.done(503, { reason: "rate_limit_unavailable" });
+        return errorResponse("Serviço de autenticação indisponível", 503, req);
+      }
+      if (!ipRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+
+      if (email) {
+        const emailRl = await limit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
+        // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu
+        // (RPC fora do ar ou contrato invalido), o limite por e-mail passaria apenas com
+        // o contador em memoria, que zera a cada cold start. Num login isso e a guarda de
+        // forca bruta por conta — na duvida, nega com indisponibilidade (503) em vez de
+        // aceitar. O login legitimo segue normal quando o banco responde.
+        if (emailRl.unavailable) {
+          log.error("rate limit persistente indisponivel; negando login por e-mail");
+          log.done(503, { reason: "rate_limit_unavailable" });
+          return errorResponse("Serviço de autenticação indisponível", 503, req);
+        }
+        if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+      }
+    }
+
     // Uma ida ao banco: a RPC decide bloqueio da conta ANTES de consumir
     // contadores, depois aplica o teto de IP e o de e-mail na mesma transação.
     // O limite configurável de `auth-login` prevalece; os defaults passados à
@@ -278,24 +328,6 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       return errorResponse("Internal error", 500, req);
     }
 
-    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
-    // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu
-    // (RPC fora do ar ou contrato invalido), o limite por e-mail passaria apenas com
-    // o contador em memoria, que zera a cada cold start. Num login isso e a guarda de
-    // forca bruta por conta — na duvida, nega com indisponibilidade (503) em vez de
-    // aceitar. O login legitimo segue normal quando o banco responde.
-    if (emailRl.unavailable) {
-      log.error("rate limit persistente indisponivel; negando login por e-mail");
-      log.done(503, { reason: "rate_limit_unavailable" });
-      return errorResponse("Serviço de autenticação indisponível", 503, req);
-    }
-    if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-
-    const { data: lockData, error: lockError } = await deps.admin.rpc("is_account_locked", { check_email: email });
-    if (lockError) {
-      log.error("is_account_locked failed", { code: rpcErrorCode(lockError) });
-      return errorResponse("Internal error", 500, req);
-    }
     const gateRow = (Array.isArray(gateData) ? gateData[0] : gateData) as GateRow | null;
     if (!gateRow || typeof gateRow.allowed !== "boolean") {
       log.error("consume_login_gate returned no row");
@@ -415,6 +447,6 @@ if (import.meta.main) {
     const anon = createClient(supabaseUrl, requireEnv("SUPABASE_ANON_KEY"), {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    return handleLogin(req, { admin, anon });
+    return handleLogin(req, { admin, anon, enforceRateLimit });
   });
 }

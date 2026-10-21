@@ -134,6 +134,53 @@ jobs:
         env:
           CI: true
 
+      - name: 🧩 Run ignore-build proof
+        run: node scripts/vercel/ignore-build.unit.mjs
+
+  coverage:
+    name: 📊 Coverage
+    # A suíte roda em todo evento do CI (PR inclusive). E72 limita só o artifact:
+    # o upload abaixo continua exclusivo de push na main.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧪 Run Vitest coverage
+        run: bun run test:coverage
+        env:
+          CI: true
+
+      # E72 (G-32): cobertura só na main, inclusive quando a suíte falha,
+      # para diagnosticar. PR e dispatch não publicam artifact.
+      # Sem if-no-files-found: ignore — artifact vazio não pode passar.
+      - name: 📊 Upload coverage report
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: error
+
   build:
     name: 🏗️ Build
     runs-on: ubuntu-24.04
@@ -213,6 +260,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -261,6 +315,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -276,25 +337,24 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         # Só em cache miss. Versao exata resolvida no bun.lock (SonarCloud
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # E88: auth.spec.ts no PR roda só no projeto chromium. firefox-auth e
+      # webkit-auth continuam no e2e-logado.yml (depois do merge), deslogados,
+      # sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
@@ -302,7 +362,7 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
@@ -364,6 +424,14 @@ jobs:
           fi
           # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
           git fetch origin "${BASE_REF}" --depth=50 --quiet
+          # Run 39595253173: histórico reescrito → `origin/${BASE_REF}...HEAD` sai 128
+          # (fatal: no merge base) e o job continue-on-error pinta o check de vermelho.
+          # Não falha aberto: map_changed=true rodaria a suíte em todo PR sem ancestral.
+          if ! git merge-base "origin/${BASE_REF}" HEAD >/dev/null 2>&1; then
+            echo "::warning::sem merge-base entre origin/${BASE_REF} e HEAD; map_changed=false"
+            echo "map_changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
@@ -377,6 +445,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'

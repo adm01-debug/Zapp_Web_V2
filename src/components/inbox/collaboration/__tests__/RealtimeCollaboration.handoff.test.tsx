@@ -141,8 +141,8 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
         args: {
           p_contact_id: CONTACT_ID,
           p_to_agent_id: 'agent-1',
-          p_to_queue_id: null,
-          p_note: null,
+          p_to_queue_id: undefined,
+          p_note: undefined,
         },
       },
     ]);

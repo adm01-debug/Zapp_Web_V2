@@ -277,8 +277,8 @@ describe('useConversationActions', () => {
           args: {
             p_contact_id: 'contact-1',
             p_to_agent_id: 'agent-2',
-            p_to_queue_id: null,
-            p_note: null,
+            p_to_queue_id: undefined,
+            p_note: undefined,
           },
         },
       ]);
@@ -299,9 +299,9 @@ describe('useConversationActions', () => {
           name: 'transfer_conversation',
           args: {
             p_contact_id: 'contact-1',
-            p_to_agent_id: null,
+            p_to_agent_id: undefined,
             p_to_queue_id: 'queue-2',
-            p_note: null,
+            p_note: undefined,
           },
         },
       ]);
@@ -321,7 +321,7 @@ describe('useConversationActions', () => {
         name: 'transfer_conversation',
         args: {
           p_contact_id: 'contact-1',
-          p_to_agent_id: null,
+          p_to_agent_id: undefined,
           p_to_queue_id: 'queue-2',
           p_note: 'cliente pediu retorno',
         },
@@ -330,7 +330,7 @@ describe('useConversationActions', () => {
       expect(eventsInsertCalls).toEqual([]);
     });
 
-    it('nota vazia ou só espaços vira p_note null', async () => {
+    it('nota vazia ou só espaços vira p_note indefinido', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -339,8 +339,8 @@ describe('useConversationActions', () => {
 
       expect(transferRpcCalls[0].args).toMatchObject({
         p_to_agent_id: 'agent-2',
-        p_to_queue_id: null,
-        p_note: null,
+        p_to_queue_id: undefined,
+        p_note: undefined,
       });
       expect(eventsInsertCalls).toEqual([]);
     });

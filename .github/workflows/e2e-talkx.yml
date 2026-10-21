@@ -84,15 +84,15 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-c-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium
+        run: bunx playwright@1.64.1 install --with-deps chromium
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium
+        run: bunx playwright@1.64.1 install-deps chromium
 
       - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
         run: bun run test:e2e -- --project=chromium

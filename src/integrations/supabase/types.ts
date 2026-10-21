@@ -619,6 +619,24 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       audio_meme_favorites: {
         Row: {
           created_at: string
@@ -10393,6 +10411,16 @@ export type Database = {
         }
         Relationships: []
       }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
+        }
+        Relationships: []
+      }
       whatsapp_connections_agent: {
         Row: {
           id: string | null
@@ -12354,6 +12382,10 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_default_whatsapp_connection: {
+        Args: { p_connection_id: string }
+        Returns: string
+      }
       set_department_whatsapp_config: {
         Args: {
           p_api_key?: string
@@ -12647,6 +12679,16 @@ export type Database = {
       toggle_team_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
+      }
+      transfer_conversation: {
+        Args: {
+          p_contact_id: string
+          p_expected_agent_id?: string
+          p_note?: string
+          p_to_agent_id?: string
+          p_to_queue_id?: string
+        }
+        Returns: string
       }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }

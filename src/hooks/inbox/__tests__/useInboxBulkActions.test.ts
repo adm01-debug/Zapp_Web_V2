@@ -428,8 +428,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
     expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversation', 'transfer_conversation']);
     expect(rpcCalls.map((c) => c.args)).toEqual([
-      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
-      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },
+      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },
     ]);
     // Nada de UPDATE solto em contacts: o único caminho é a RPC atômica.
     expect(recorded).toEqual([]);
@@ -438,7 +438,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('fila: manda p_to_queue_id e deixa p_to_agent_id nulo', async () => {
+  it('fila: manda p_to_queue_id e deixa p_to_agent_id indefinido', async () => {
     const { result } = renderInbox();
     selectIds(result, [c1]);
 
@@ -449,13 +449,13 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(rpcCalls).toHaveLength(1);
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: c1,
-      p_to_agent_id: null,
+      p_to_agent_id: undefined,
       p_to_queue_id: 'q-7',
-      p_note: null,
+      p_note: undefined,
     });
   });
 
-  it('a mensagem opcional NÃO é persistida (p_note vai nulo)', async () => {
+  it('a mensagem opcional NÃO é persistida (p_note fica indefinido)', async () => {
     const { result } = renderInbox();
     selectIds(result, [c1]);
 
@@ -466,8 +466,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: c1,
       p_to_agent_id: 'ag-2',
-      p_to_queue_id: null,
-      p_note: null,
+      p_to_queue_id: undefined,
+      p_note: undefined,
     });
   });
 

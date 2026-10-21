@@ -58,6 +58,7 @@ export function marcadorDe(nomes) {
  * generico nos demais casos.
  */
 export function tituloDe(nomes, { tituloBase = '[e2e-logado] Suíte logada quebrada na main' } = {}) {
+  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
   const lista = normalizar(nomes);
   if (lista.length > 0 && lista.every((n) => n.startsWith('auth.setup.ts-') || n.startsWith('auth.setup-'))) {
     return '[e2e-logado] auth.setup falhou na main';
@@ -90,14 +91,5 @@ export function eLoginFalhou(nomes) {
   const lista = normalizar(nomes);
   if (lista.length === 0) return false;
   return lista.every((n) => n.startsWith('auth.setup.ts-') || n.startsWith('setup-auth'));
-}
-
-/**
- * Título da issue de acordo com a causa detectada.
- * Prefixo "[e2e-logado]" é mantido para que o workflow de fechamento ache a issue pelo título.
- */
-export function tituloDe(nomes) {
-  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
-  return '[e2e-logado] Suíte logada quebrada na main';
 }
 

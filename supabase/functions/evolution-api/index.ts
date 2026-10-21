@@ -28,6 +28,97 @@ export interface EvolutionApiDeps {
   anonKey?: string;
 }
 
+export type PairingFlavor = "go" | "v2";
+
+export interface PairingRoute {
+  method: "POST" | "GET";
+  path: string;
+  auth: "instance" | "global";
+  body?: {
+    phone: string;
+    subscribe: string[];
+    immediate: boolean;
+    webhookUrl?: string;
+  };
+}
+
+function pairingDigits(phone: string): string {
+  return phone.replace(/\D/g, "");
+}
+
+/** Rota de pareamento por número: GO manda o phone no corpo; v2 na query. */
+export function resolvePairingRoute(
+  flavor: PairingFlavor,
+  instance: string,
+  phone: string,
+  webhookUrl?: string,
+): PairingRoute {
+  const digits = pairingDigits(phone);
+  if (flavor === "go") {
+    const body: NonNullable<PairingRoute["body"]> = {
+      phone: digits,
+      subscribe: ["ALL"],
+      immediate: true,
+    };
+    if (webhookUrl) body.webhookUrl = webhookUrl;
+    return { method: "POST", path: "/instance/connect", auth: "instance", body };
+  }
+  return {
+    method: "GET",
+    path: `/instance/connect/${instance}?number=${digits}`,
+    auth: "global",
+  };
+}
+
+function readPairingCandidate(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim();
+  // Payload cru de QR ("2@...") não é código de pareamento.
+  if (!code || code.startsWith("2@")) return null;
+  return code;
+}
+
+/** Extrai o código cru do envelope do flavor. Não formata. */
+export function pairingCodeFromResponse(flavor: PairingFlavor, payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const rec = payload as Record<string, unknown>;
+  const data = rec.data && typeof rec.data === "object" ? rec.data as Record<string, unknown> : null;
+  const candidates = flavor === "go"
+    ? [data?.pairingCode, data?.code]
+    : [rec.pairingCode, rec.code];
+  for (const candidate of candidates) {
+    const code = readPairingCandidate(candidate);
+    if (code) return code;
+  }
+  return null;
+}
+
+/** "12345678" / "abcd efgh" → "1234-5678" / "ABCD-EFGH". Fora de 8 caracteres, null. */
+export function formatPairingCode(raw: string | null): string | null {
+  if (!raw) return null;
+  const compact = raw.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  if (compact.length !== 8) return null;
+  return `${compact.slice(0, 4)}-${compact.slice(4)}`;
+}
+
+/**
+ * Validade do código: o provedor manda segundos (ou ms se >= 1000). Sem pista,
+ * 60s. Piso 15s, teto 300s.
+ */
+export function pairingValidity(payload: unknown, nowMs: number): { expiresInSeconds: number; expiresAt: string } {
+  const rec = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+  const data = rec.data && typeof rec.data === "object" ? rec.data as Record<string, unknown> : {};
+  const raw = data.expiresIn ?? data.validity ?? rec.expiresIn ?? rec.expires_in;
+  let seconds = 60;
+  const numeric = typeof raw === "number" ? raw : (typeof raw === "string" && raw.trim() ? Number(raw) : NaN);
+  if (Number.isFinite(numeric)) seconds = numeric >= 1000 ? Math.round(numeric / 1000) : numeric;
+  const expiresInSeconds = Math.min(300, Math.max(15, seconds));
+  return {
+    expiresInSeconds,
+    expiresAt: new Date(nowMs + expiresInSeconds * 1000).toISOString(),
+  };
+}
+
 export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiDeps): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
