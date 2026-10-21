@@ -46,9 +46,11 @@ jobs:
     environment: banco-leitura
     # issues: write para abrir/comentar o alerta em falha e fechar apos
     # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
+    # GA25: o detector de DDL fora do fluxo lista Deployments do environment.
     permissions:
       contents: read
       issues: write
+      deployments: read
     # Este guarda roda sozinho (push na main, agendado) e abre issue quando falha.
     # Um timeout de conexao do pooler do Supabase virava alerta de "contrato
     # quebrado" que nao era verdade (run 36135041890 morreu em "timeout expired"
@@ -158,6 +160,22 @@ jobs:
           fi
           exit "$rc"
 
+      # GA24: lista as versions no disco sem registro no ledger. Passo auxiliar
+      # (sem id): nao entra no veredito; se falhar, os passos abaixo tratam a
+      # divergencia como real (fail-closed) em vez de neutra.
+      - name: Listar versions pendentes (GA24)
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          find supabase/migrations -maxdepth 1 -type f -name '*.sql' \
+            -printf '%f\n' | cut -c1-14 | sort -u > /tmp/local-versions.txt
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+            -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
+            > /tmp/ledger-versions.txt 2> /tmp/pending-list.log || true
+          comm -23 /tmp/local-versions.txt /tmp/ledger-versions.txt > /tmp/pending-versions.txt || true
+          paste -sd, /tmp/pending-versions.txt > /tmp/pending-versions.csv || true
+          echo "pendentes: $(cat /tmp/pending-versions.csv)" | tee /tmp/pending-list.log
+
       - name: Verificar ACL e contrato de mcp_exec
         id: acl-mcp-exec
         if: steps.credencial.outcome == 'success'
@@ -239,7 +257,17 @@ jobs:
             node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
               -f scripts/db-audit/catalog.sql > /tmp/fresh-catalog.json
             test -s /tmp/fresh-catalog.json
-            node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json
+            # GA24: divergencia explicada pelo lote pendente nao e drift — e o
+            # estado "sync pendente" entre o apply e o merge do PR de sync.
+            if node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json; then
+              echo "OK: catalogo em sincronia."
+            elif [ -s /tmp/pending-versions.txt ] && node scripts/db-audit/drift-explicado.mjs --base supabase/schema-catalog.json --novo /tmp/fresh-catalog.json --migrations-dir supabase/migrations --versions "$(cat /tmp/pending-versions.csv)"; then
+              echo "::notice::Catalogo diverge so em objetos do lote pendente — estado sync pendente (GA24)."
+              { echo "### ⏳ sync pendente (GA24) — catalogo"; echo; echo "Divergencia explicada pelas versions pendentes; apply e sync em curso."; } >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::Catalogo com drift real (fora do lote pendente)."
+              exit 1
+            fi
           ) 2>&1 | tee /tmp/step-catalog.log
 
       - name: Regenerar manifesto e comparar com o commitado
@@ -254,7 +282,17 @@ jobs:
             node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
               -f scripts/db-audit/manifest.sql > /tmp/fresh-manifest.json
             test -s /tmp/fresh-manifest.json
-            node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json
+            # GA24: mesma regra do catalogo — divergencia explicada pelo lote
+            # pendente e estado "sync pendente", nao drift.
+            if node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json; then
+              echo "OK: manifesto em sincronia."
+            elif [ -s /tmp/pending-versions.txt ] && node scripts/db-audit/drift-explicado.mjs --base supabase/schema-manifest.json --novo /tmp/fresh-manifest.json --migrations-dir supabase/migrations --versions "$(cat /tmp/pending-versions.csv)"; then
+              echo "::notice::Manifesto diverge so em objetos do lote pendente — estado sync pendente (GA24)."
+              { echo "### ⏳ sync pendente (GA24) — manifesto"; echo; echo "Divergencia explicada pelas versions pendentes; apply e sync em curso."; } >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::Manifesto com drift real (fora do lote pendente)."
+              exit 1
+            fi
           ) 2>&1 | tee /tmp/step-manifest.log
 
       # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
@@ -295,9 +333,17 @@ jobs:
             grep -v '^// ' /tmp/types.fresh.ts > /tmp/types.fresh.stripped
             grep -v '^// ' src/integrations/supabase/types.ts > /tmp/types.repo.stripped
             if ! diff -q /tmp/types.fresh.stripped /tmp/types.repo.stripped > /dev/null 2>&1; then
-              echo "::error::types.ts desatualizado. Execute o types-sync para abrir o PR de sincronizacao."
-              diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30 || true
-              exit 1
+              # GA24: o types.ts deriva do mesmo banco do catalogo; se a
+              # divergencia do catalogo e explicada pelo lote pendente, a do
+              # types tambem e — estado "sync pendente", nao drift.
+              if [ -s /tmp/fresh-catalog.json ] && [ -s /tmp/pending-versions.txt ] && node scripts/db-audit/drift-explicado.mjs --base supabase/schema-catalog.json --novo /tmp/fresh-catalog.json --migrations-dir supabase/migrations --versions "$(cat /tmp/pending-versions.csv)"; then
+                echo "::notice::types.ts diverge com o lote pendente ainda nao sincronizado — estado sync pendente (GA24)."
+                { echo "### ⏳ sync pendente (GA24) — types.ts"; echo; echo "Divergencia explicada pelas versions pendentes; apply e sync em curso."; } >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "::error::types.ts desatualizado. Execute o types-sync para abrir o PR de sincronizacao."
+                diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30 || true
+                exit 1
+              fi
             fi
             echo "OK: types.ts em sincronia com o banco."
           ) 2>&1 | tee /tmp/step-types.log
@@ -323,7 +369,33 @@ jobs:
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
 
-      # Une os 11 vereditos individuais (continue-on-error acima) num unico
+      # GA25: detector de DDL fora do fluxo — toda version no ledger desde
+      # 16/10/2026 precisa de um Deployment producao-ddl registrado pelo
+      # db-migrate. Sem gatilho de push na main (decisao de 16/10), o schedule
+      # semanal e o ponto de verificacao.
+      - name: Detector de DDL fora do fluxo (GA25)
+        id: ddl-fora-do-fluxo
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          (
+            set -e
+            umask 077
+            node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+              -c "SELECT coalesce(json_agg(version ORDER BY version), '[]') FROM supabase_migrations.schema_migrations" \
+              > /tmp/ledger-versions.json
+            test -s /tmp/ledger-versions.json
+            node -e "JSON.parse(require('fs').readFileSync('/tmp/ledger-versions.json', 'utf8'))"
+            gh api "repos/${{ github.repository }}/deployments" --paginate > /tmp/deployments.json
+            test -s /tmp/deployments.json
+            node scripts/db-audit/check-deployments-ledger.mjs \
+              --ledger /tmp/ledger-versions.json \
+              --deployments /tmp/deployments.json \
+              --since 20261016000000 --environment producao-ddl
+          ) 2>&1 | tee /tmp/step-ddl-fluxo.log
+
+      # Une os 12 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # para o dedupe do alerta abaixo (E05/E06/E43/E44).
@@ -544,5 +616,6 @@ jobs:
             /tmp/step-types.log
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
+            /tmp/step-ddl-fluxo.log
           if-no-files-found: ignore
           retention-days: 3

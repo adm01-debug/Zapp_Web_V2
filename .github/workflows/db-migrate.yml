@@ -77,6 +77,11 @@ jobs:
     # E66 (auditoria de 01/10/2026): 25 min nao cobriam preflight + dry-run +
     # apply + as validacoes de ledger/runtime do file completo.
     timeout-minutes: 45
+    # GA25: o apply registra um Deployment producao-ddl com as versions
+    # aplicadas; o db-live-guard acusa version no ledger sem Deployment.
+    permissions:
+      contents: read
+      deployments: write
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -1481,3 +1486,49 @@ jobs:
       - name: Provar paridade integral apos aplicacao
         if: inputs.apply == true
         run: node scripts/db-audit/check-migration-drift.mjs
+
+      # GA25: coleta as versions que este apply inseriu no ledger (interseccao
+      # do que faltava no preflight com o ledger final; a concurrency do job
+      # impede outro apply concorrente).
+      - name: Coletar versions aplicadas no ledger (GA25)
+        id: aplicadas
+        if: inputs.apply == true
+        run: |
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+            -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
+            > /tmp/ledger-final.txt
+          comm -12 /tmp/missing-versions /tmp/ledger-final.txt > /tmp/applied-versions.txt || true
+          test -s /tmp/applied-versions.txt
+          cat /tmp/applied-versions.txt
+
+      # GA25: registra o Deployment producao-ddl com as versions aplicadas —
+      # o db-live-guard acusa version no ledger sem Deployment desde 16/10.
+      - name: Registrar Deployment producao-ddl das versions aplicadas (GA25)
+        if: success() && inputs.apply == true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const versions = fs.readFileSync('/tmp/applied-versions.txt', 'utf8')
+              .split('\n').map((s) => s.trim()).filter(Boolean);
+            if (versions.length === 0) {
+              core.warning('Nenhuma version aplicada nesta execucao; Deployment nao registrado.');
+              return;
+            }
+            const { data: deployment } = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'producao-ddl',
+              auto_merge: false,
+              required_contexts: [],
+              description: 'DDL aplicado pelo db-migrate: ' + versions.join(','),
+            });
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.id,
+              state: 'success',
+              environment_url: 'https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId,
+              description: 'Apply concluido e validado no ledger',
+            });
