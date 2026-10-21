@@ -34,7 +34,7 @@ aparece como run vermelho, não como comportamento silencioso.
 | `perimetro-leitura` | só branch policy (sem revisor, sem wait timer) | `protected_branches` (`main`) | `SETTINGS_GUARD_TOKEN` (criado 15/10 11:13 UTC por uma sessão de agente; **valor e escopo desconhecidos**, ver W11) | `settings-guard.yml` › `guard` |
 | `banco-leitura` | só branch policy | `protected_branches` | — | `db-live-guard.yml` › `live-contract`, `types-sync.yml` › `sync` |
 | `producao-edge-functions` | só branch policy | `protected_branches` | — | `deploy-functions.yml` › `deploy`, `crm-sync-worker.yml` › `drain` |
-| `producao-ddl` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `db-migrate.yml` › `migrate` |
+| `producao-ddl` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `db-migrate.yml` › `apply` (GA13) |
 | `db-ledger-evidence` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `targeted-ledger-evidence.yml` › `export-encrypted-evidence` |
 | `legacy-import-destrutivo` | revisor obrigatório + branch policy | `protected_branches` | — | nenhum desde 15/10 (`supabase-sync.yml` removido). **Não** recebe `DESTINO_URL` |
 
@@ -236,8 +236,9 @@ declara. A W64 (role `ci_readonly` + `DESTINO_URL_RO` em `banco-leitura`) é dec
 | Consumidor (job) | Environment | Revisor | Como verificar |
 |---|---|---|---|
 | `db-live-guard.yml` › `live-contract` | `banco-leitura` | não | `gh workflow run db-live-guard.yml --ref main --repo "$R"` (só leitura) |
+| `db-migrate.yml` › `preflight` | `banco-leitura` | não | GA13: só leitura (ledger + dry-run + runtime); sem revisor/wait, o dry-run conclui sem `Waiting` |
 | `types-sync.yml` › `sync` | `banco-leitura` | não | coberto pelo mesmo environment; o próximo agendado (segunda, 05:49 UTC) confirma |
-| `db-migrate.yml` › `migrate` | `producao-ddl` | **sim** | o dry-run (`apply=false`) do próximo lote; ele pausa para sua aprovação |
+| `db-migrate.yml` › `apply` | `producao-ddl` | **sim** | o dry-run (`apply=false`) do próximo lote; ele pausa para sua aprovação |
 | `targeted-ledger-evidence.yml` › `export-encrypted-evidence` | `db-ledger-evidence` | **sim** | dispatch com uma version qualquer e chave descartável (abaixo) |
 
 **Onde pegar o valor:** Supabase → projeto `tnnnlkbymytvtqngbbqh` → Connect → URI do pooler. O dashboard

@@ -72,9 +72,13 @@ function consumidores(nomeSecret) {
 // W63: DESTINO_URL (URL de escrita do banco de producao). O mapa e fechado: consumidor
 // novo precisa entrar aqui E ganhar o secret no environment dele (runbook, passo W63).
 // O supabase-sync.yml foi removido em 15/10 e deixou de consumir.
+// GA13 (plano de 15/10/2026): o job unico `migrate` virou dois - `preflight`
+// (`banco-leitura`: so leitura, sem revisor nem wait, logo o dry-run conclui
+// sem "Waiting") e `apply` (`producao-ddl`).
 const DESTINO_URL_POR_JOB = {
   'db-live-guard.yml:live-contract': 'banco-leitura',
-  'db-migrate.yml:migrate': 'producao-ddl',
+  'db-migrate.yml:apply': 'producao-ddl',
+  'db-migrate.yml:preflight': 'banco-leitura',
   'targeted-ledger-evidence.yml:export-encrypted-evidence': 'db-ledger-evidence',
   'types-sync.yml:sync': 'banco-leitura',
 };

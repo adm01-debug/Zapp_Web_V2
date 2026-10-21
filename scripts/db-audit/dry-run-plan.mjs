@@ -148,6 +148,8 @@ export function avaliarPlanoDoDryRunApplyAll({ texto, esperados }) {
 }
 
 // --- CLI (usado pelo passo do workflow) -----------------------------------
+// GA14: modo lote `--apply-all --esperados v1,v2,...` (uma saida por linha do
+// dry-run precisa corresponder EXATAMENTE ao conjunto esperado, em ordem).
 if (process.argv[1]?.endsWith('dry-run-plan.mjs')) {
   const args = process.argv.slice(2);
   const valor = (nome) => {
@@ -157,11 +159,16 @@ if (process.argv[1]?.endsWith('dry-run-plan.mjs')) {
   const arquivo = valor('--arquivo');
   const esperado = valor('--esperado');
   const permitirBundle = args.includes('--bundle');
-  if (!arquivo || !/^\d{14}$/.test(String(esperado ?? ''))) {
+  const applyAll = args.includes('--apply-all');
+  const esperados = (valor('--esperados') ?? '').split(',').filter(Boolean);
+  if (!arquivo || (applyAll ? esperados.length === 0 : !/^\d{14}$/.test(String(esperado ?? '')))) {
     console.error('uso: node scripts/db-audit/dry-run-plan.mjs --arquivo <saida-do-dry-run> --esperado <version> [--bundle]');
+    console.error('     node scripts/db-audit/dry-run-plan.mjs --arquivo <saida-do-dry-run> --apply-all --esperados <v1,v2,...>');
     process.exit(2);
   }
-  const resultado = avaliarPlanoDoDryRun({ texto: readFileSync(arquivo, 'utf8'), esperado, permitirBundle });
+  const resultado = applyAll
+    ? avaliarPlanoDoDryRunApplyAll({ texto: readFileSync(arquivo, 'utf8'), esperados })
+    : avaliarPlanoDoDryRun({ texto: readFileSync(arquivo, 'utf8'), esperado, permitirBundle });
   if (!resultado.ok) {
     console.error(`::error::Dry-run recusado: ${resultado.motivo}`);
     process.exit(1);
