@@ -290,7 +290,10 @@ export function useDiagnosticsData() {
     if (messagesCountError) throw messagesCountError;
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
+    // A contagem faz parte da sonda de banco: falhar aqui é banco fora do ar ou
+    // sem permissão, nunca "0 conexões" saudável. Antes o throw abortava a
+    // sonda inteira e a tela ficava sem status nenhum.
+    if (connectionsCountError) dbError = connectionsCountError;
 
     const realtime = await probeRealtime();
 

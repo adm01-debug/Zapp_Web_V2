@@ -93,6 +93,9 @@ export function useUserSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  // Leitura falha não pode passar por "configuração gravada": sem este sinal a
+  // tela mostra os padrões como se fossem os do usuário e o Salvar grava por cima.
+  const [isError, setIsError] = useState(false);
 
   // Escolha feita na tela nesta sessão. Sem isso, um fetch que responde atrasado
   // (login lento, troca de usuário) aplica o valor do banco por cima do que o
@@ -133,8 +136,16 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
+          setIsError(true);
+          toast({
+            title: 'Não foi possível carregar as configurações',
+            description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
+            variant: 'destructive',
+          });
           return;
         }
+
+        setIsError(false);
 
         if (data) {
           const doBanco: UserSettings = {
@@ -292,6 +303,7 @@ export function useUserSettings() {
   return {
     settings,
     isLoading,
+    isError,
     isSaving,
     updateSettings,
     saveSettings,

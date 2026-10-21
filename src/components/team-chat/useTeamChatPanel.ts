@@ -5,7 +5,7 @@ import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
 import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
-import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
+import { useTeamMessages, type TeamChatRealtimeEvent } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +47,12 @@ export function resolveAudioUploadFormat(blob: Blob): { extension: string; conte
   return AUDIO_UPLOAD_FORMATS[mime] ?? { extension: 'webm', contentType: 'audio/webm' };
 }
 
+// SL-016 — a busca server-side tem mínimo e teto: abaixo de 2 caracteres o
+// servidor nem é consultado (a lista carregada continua na tela) e o teto da
+// RPC (100) vira o "+" da contagem.
+const SEARCH_MIN_CHARS = 2;
+const SEARCH_LIMIT = 100;
+
 export function useTeamChatPanel(conversation: TeamConversation) {
   const { profile } = useAuth();
   const [text, setText] = useState('');
@@ -65,6 +71,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+  // SL-016 — a falha de paginação é estado próprio (não some em silêncio nem
+  // vira "sem mais mensagens"): a tela mantém o botão e tenta de novo.
+  const [olderError, setOlderError] = useState(false);
 
   // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
   // conversa, então o reset acontece no render (mesmo padrão de
@@ -82,7 +91,36 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  // SL-016 — edição/exclusão que chega pelo realtime também vale para as
+  // mensagens antigas (paginadas): sem este ouvinte, o texto velho ficava na
+  // tela porque a invalidação só refazia o trecho mais novo.
+  const handleRealtimeEvent = useCallback((event: TeamChatRealtimeEvent) => {
+    if (event.type === 'update') {
+      setOlderMessages(prev => prev.map(m =>
+        m.id === event.id
+          ? {
+            ...m,
+            content: event.content ?? m.content,
+            is_edited: event.is_edited ?? m.is_edited,
+            updated_at: event.updated_at ?? m.updated_at,
+          }
+          : m,
+      ));
+    } else if (event.type === 'delete') {
+      setOlderMessages(prev => prev.filter(m => m.id !== event.id));
+    }
+  }, []);
+
+  const {
+    messages: newestMessages,
+    isLoading,
+    isError: messagesQueryError,
+    refetch: refetchNewest,
+  } = useTeamMessages(conversation.id, handleRealtimeEvent);
+  // SL-016 — a falha de leitura do trecho novo e o refetch são expostos: antes
+  // a tela caía no "Envie a primeira mensagem!" como se a conversa estivesse vazia.
+  const messagesError = !!messagesQueryError;
+  const refetchMessages = useCallback(() => { void refetchNewest?.(); }, [refetchNewest]);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -164,6 +202,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setOlderMessages([]);
     setOldestCursor(null);
     setHasOlderMessages(true);
+    setOlderError(false);
     setShowStats(false);
     setShowTransferDialog(false);
     setShowGroupManagement(false);
@@ -192,6 +231,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     const el = scrollRef.current;
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
+    setOlderError(false);
     try {
       // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
       // mensagens que empatam no mesmo instante: o lote seguinte trazia
@@ -223,6 +263,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       }
     } catch (err) {
       log.error('Erro ao carregar mensagens anteriores', err);
+      setOlderError(true);
     } finally {
       setIsFetchingOlder(false);
     }
@@ -236,11 +277,15 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
   // inteira) e a lista exibida durante a busca é o resultado dela.
   const searchTerm = debouncedSearchQuery.trim();
+  // Abaixo do mínimo não há busca aplicada: o servidor nem é consultado e a
+  // lista carregada continua na tela (sem spinner nem "nada encontrado").
+  const searchApplied = searchTerm.length >= SEARCH_MIN_CHARS;
+  const searchBelowMinChars = searchTerm.length > 0 && !searchApplied;
   // O recorte salvo carrega a CONVERSA a que pertence, não só o termo: o painel é
   // o MESMO componente quando o atendente troca de conversa (não tem `key`) e o
   // termo digitado continua, então um registro só vale para a tela se a conversa
   // e o termo atuais forem os que o produziram.
-  const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; results: TeamMessage[] } | null>(null);
+  const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; capped: boolean; results: TeamMessage[] } | null>(null);
   // SL-082 (refazer) — a falha da RPC ficava guardada como `results: []`, ou seja,
   // o mesmo estado de "a busca não achou nada": a tela anunciava "Nenhuma
   // mensagem encontrada" quando na verdade o servidor falhou. O erro é um estado
@@ -249,9 +294,13 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // a falha da conversa A não pode aparecer na conversa B enquanto a busca de B
   // ainda estava em voo.
   const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
+  // SL-016 — o "Tentar novamente" refaz a consulta sem exigir que o termo
+  // mude: o nonce re-dispara o efeito com o termo atual.
+  const [searchAttempt, setSearchAttempt] = useState(0);
+  const retrySearch = useCallback(() => { setSearchAttempt(n => n + 1); }, []);
 
   useEffect(() => {
-    if (!searchTerm) return;
+    if (!searchApplied) return;
     // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
     // que diz se a resposta ainda interessa ao que está na tela.
     const conversationId = conversation.id;
@@ -260,7 +309,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       const { data, error } = await supabase.rpc('search_team_messages', {
         p_conversation_id: conversationId,
         p_query: searchTerm,
-        p_limit: 50,
+        p_limit: SEARCH_LIMIT,
       });
       if (cancelado) return;
       if (error) {
@@ -285,6 +334,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       setServerSearch({
         conversationId,
         term: searchTerm,
+        // O servidor devolve no máximo o teto: lote cheio significa "100+".
+        capped: rows.length >= SEARCH_LIMIT,
         results: rows.map(row => ({
           id: row.id,
           conversation_id: conversationId,
@@ -303,9 +354,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       });
     })();
     return () => { cancelado = true; };
-  }, [searchTerm, conversation.id]);
+  }, [searchTerm, searchApplied, conversation.id, searchAttempt]);
 
-  const searchActive = searchTerm.length > 0;
   // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
   // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
   // anunciar um resultado que ainda não existe.
@@ -317,18 +367,23 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // busca dela ainda está pendente.
   const serverSearchMatches = serverSearch?.conversationId === conversation.id
     && serverSearch?.term === searchTerm;
-  const searchError = searchActive
+  // SL-016 — o erro é booleano (a mensagem vai em `searchErrorMessage`): a tela
+  // decide entre aviso, spinner e lista sem comparar texto.
+  const searchErrorMessage = searchApplied
     && serverSearchError?.conversationId === conversation.id
     && serverSearchError.term === searchTerm
     ? serverSearchError.message
     : null;
-  const isSearching = searchActive && !searchError && !serverSearchMatches;
+  const searchError = searchErrorMessage !== null;
+  const isSearching = searchApplied && !searchError && !serverSearchMatches;
+  const isSearchingMessages = isSearching;
+  const searchIsCapped = searchApplied && !!serverSearchMatches && !!serverSearch?.capped;
 
   const filteredMessages = useMemo(() => {
-    if (!searchActive) return messages;
+    if (!searchApplied) return messages;
     if (!serverSearchMatches || !serverSearch) return [];
     return serverSearch.results;
-  }, [messages, searchActive, serverSearchMatches, serverSearch]);
+  }, [messages, searchApplied, serverSearchMatches, serverSearch]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -486,7 +541,14 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     messages,
     filteredMessages,
     isSearching,
+    isSearchingMessages,
     searchError,
+    searchErrorMessage,
+    searchBelowMinChars,
+    searchIsCapped,
+    retrySearch,
+    messagesError,
+    refetchMessages,
     isLoading,
     isMuted,
     canTransfer,
@@ -494,6 +556,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isGroupCreator,
     isFetchingOlder,
     hasOlderMessages,
+    olderError,
     fetchOlderMessages,
     showStats,
     setShowStats,

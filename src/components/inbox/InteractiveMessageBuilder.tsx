@@ -195,17 +195,22 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                   return (
                     <motion.div key={sectionIndex} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="rounded-lg border border-border bg-muted/30 overflow-hidden">
                       <Collapsible open={isExpanded} onOpenChange={() => toggleSection(sectionId)}>
-                        <CollapsibleTrigger className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                          <div className="flex items-center gap-2">
-                            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
-                            <Badge variant="outline" className="gap-1"><List className="w-3 h-3" />Seção {sectionIndex + 1}</Badge>
-                            {section.title && <span className="text-sm text-muted-foreground truncate max-w-[150px]">{section.title}</span>}
-                            <Badge variant="secondary" className="text-3xs">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
-                          </div>
-                          <Button type="button" variant="ghost" size="icon" aria-label={`Remover seção ${sectionIndex + 1}`} className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeSection(sectionIndex); }}>
+                        <div className="flex items-center gap-1 pr-1">
+                          <CollapsibleTrigger
+                            aria-label={`Seção ${sectionIndex + 1}${section.title ? `: ${section.title}` : ''}`}
+                            className="flex-1 min-w-0 p-3 flex items-center hover:bg-muted/50 transition-colors text-left"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform shrink-0", isExpanded && "rotate-180")} />
+                              <Badge variant="outline" className="gap-1"><List className="w-3 h-3" />Seção {sectionIndex + 1}</Badge>
+                              {section.title && <span className="text-sm text-muted-foreground truncate max-w-[150px]">{section.title}</span>}
+                              <Badge variant="secondary" className="text-3xs">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
+                            </div>
+                          </CollapsibleTrigger>
+                          <Button type="button" variant="ghost" size="icon" aria-label={`Remover seção ${sectionIndex + 1}`} className="h-7 w-7 text-destructive hover:text-destructive shrink-0" onClick={() => removeSection(sectionIndex)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </CollapsibleTrigger>
+                        </div>
                         <CollapsibleContent>
                           <div className="p-3 pt-0 space-y-3 border-t border-border/50">
                             <div className="space-y-1">

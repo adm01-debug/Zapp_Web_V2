@@ -44,10 +44,51 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+export type TeamChatRealtimeEvent =
+  | { type: 'insert'; id: string; content: string | null; created_at: string }
+  | { type: 'update'; id: string; content?: string | null; is_edited?: boolean; updated_at?: string }
+  | { type: 'delete'; id: string };
+
+function normalizarEventoRealtime(payload: {
+  eventType: string;
+  new?: Record<string, unknown>;
+  old?: Record<string, unknown>;
+}): TeamChatRealtimeEvent | null {
+  if (payload.eventType === 'DELETE') {
+    const id = payload.old?.['id'];
+    return typeof id === 'string' ? { type: 'delete', id } : null;
+  }
+  const linha = payload.new;
+  const id = linha?.['id'];
+  if (typeof id !== 'string') return null;
+  if (payload.eventType === 'UPDATE') {
+    const evento: TeamChatRealtimeEvent = { type: 'update', id };
+    if (typeof linha?.['content'] === 'string' || linha?.['content'] === null) {
+      evento.content = linha?.['content'] as string | null;
+    }
+    if (typeof linha?.['is_edited'] === 'boolean') evento.is_edited = linha?.['is_edited'];
+    if (typeof linha?.['updated_at'] === 'string') evento.updated_at = linha?.['updated_at'];
+    return evento;
+  }
+  if (payload.eventType === 'INSERT') {
+    return {
+      type: 'insert',
+      id,
+      content: typeof linha?.['content'] === 'string' ? (linha?.['content'] as string) : null,
+      created_at: typeof linha?.['created_at'] === 'string' ? (linha?.['created_at'] as string) : '',
+    };
+  }
+  return null;
+}
+
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: TeamChatRealtimeEvent) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  const onEventRef = useRef(onEvent);
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -108,7 +149,14 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        revalidar();
+        // SL-016 — o painel reconcilia as mensagens antigas sem refazer a
+        // paginação: o evento normalizado (update/delete/insert) vai ao
+        // ouvinte quando ele existe.
+        const evento = normalizarEventoRealtime(payload as { eventType: string });
+        if (evento) onEventRef.current?.(evento);
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -166,5 +214,10 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return {
+    messages,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: () => { void query.refetch(); },
+  };
 }
