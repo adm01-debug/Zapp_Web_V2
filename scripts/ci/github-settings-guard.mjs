@@ -270,8 +270,8 @@ async function checarWorkflowPermissions() {
 async function checarSelectedActions() {
   const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
   const divergencias = [];
-  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
@@ -296,8 +296,8 @@ async function checarRulesets() {
 
 async function checarEnvironments() {
   const dados = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
-  const encontrados = (dados?.environments ?? []).map((e) => e.name).sort();
-  const esperados = [...baseline.environments].sort();
+  const encontrados = (dados?.environments ?? []).map((e) => e.name).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const esperados = [...baseline.environments].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const prefixosVercel = (baseline.environments_vercel_managed?.prefixos ?? []);
   const faltando = esperados.filter((e) => !encontrados.includes(e));
   // W13: environments extras — podem ser gerenciados pela Vercel ou inesperados.

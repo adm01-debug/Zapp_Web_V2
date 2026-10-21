@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main e dispatch sobre main
+#   gatilho: fim do CI na main (workflow_run) e dispatch manual
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
@@ -23,8 +23,13 @@
 name: E2E logado
 
 on:
-  push:
+  # W71/GA08: dispara apos o CI/CD Pipeline concluir na main (nao a cada push —
+  # so quando o codigo ja passou nos checks) ou por dispatch manual. Sem
+  # pull_request de proposito: este workflow usa secrets de login.
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    workflows: ['CI/CD Pipeline']
     branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 defaults:
@@ -34,21 +39,26 @@ defaults:
 permissions:
   contents: read
 
-# cancel-in-progress: false (em vez de so em push) enfileira ao inves de matar
-# uma run que ja esta rodando. Levantamento de 2026-09-26: 18/40 (45%) das runs
-# de push eram canceladas por push seguinte, varias delas a segundos de
-# terminar (suite roda em ~40-60s, bem abaixo do timeout de 15min). Com
-# cancel-in-progress:false o GitHub Actions enfileira e, se varios pushes
-# chegarem enquanto a run atual roda, so o mais recente pendente roda em
-# seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
-# commit mais novo", sem desperdicar runs quase completas.
+# GA09: grupo FIXO "e2e-logado" serializa as runs — a nova aguarda em vez de
+# cancelar a atual. Com workflow_run o E2E ja e posterior ao CI; cancelar uma
+# run quase pronta geraria falso negativo. Grupo com ref/sha permitiria 2 runs
+# concorrentes do mesmo suite contra a mesma producao.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
+    # GA08: dispatch manual ou workflow_run de push na main do proprio repo com
+    # CI verde. Sem as 3 condicoes, um fork com branch main dispara o E2E com
+    # os secrets do repo (Scorecard #40 Dangerous-Workflow).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run

@@ -121,7 +121,7 @@ jobs:
           if (erros.length) process.exit(1);
           const destinoSeguro = tls.connectionString;
           console.log(`::add-mask::${destinoSeguro}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${destinoSeguro}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
           console.log('OK: endpoint oficial comprovado; TLS verify-full e CA Supabase pinada.');
           NODE
@@ -138,6 +138,8 @@ jobs:
       # artifact db-live-evidence-*.
 
       - name: Comparar migrations com schema_migrations
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: migrations
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -159,6 +161,8 @@ jobs:
           exit "$rc"
 
       - name: Verificar ACL e contrato de mcp_exec
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: acl-mcp-exec
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -168,6 +172,8 @@ jobs:
             -f scripts/db-audit/check-mcp-exec-acl.sql 2>&1 | tee /tmp/step-acl-mcp-exec.log
 
       - name: Verificar ACL da dead-letter queue de webhooks
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: acl-webhook
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -181,6 +187,8 @@ jobs:
       # foi assim que 20260922130000 desfez o fix de 20260916170000 e passou a
       # expor metrica de campanha de outros agentes a qualquer autenticado.
       - name: Verificar security_invoker da view de metricas Talk X
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: acl-talkx-metrics
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -198,6 +206,8 @@ jobs:
       # NAO e um .test.sh de proposito: esse caminho nao existe neste workflow, e teste
       # que ninguem executa da sensacao de cobertura sem cobrir nada.
       - name: Fixtures de E2E em producao (E85)
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: e2e-fixtures
         # W07 (14/10/2026): era o unico dos 11 sub-checks sem esta guarda. Hoje o
         # efeito e nulo (`credencial` nao tem continue-on-error, entao a falha dele ja
@@ -219,6 +229,8 @@ jobs:
       # cobra 'scheduled' no CHECK de talkx_campaigns.status, que o front grava
       # ao agendar.
       - name: Verificar contrato de transicao de campanha do Talk X
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: contract-talkx-transition
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -228,6 +240,8 @@ jobs:
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
       - name: Regenerar catalogo e comparar com o commitado
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: catalog
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -243,6 +257,8 @@ jobs:
           ) 2>&1 | tee /tmp/step-catalog.log
 
       - name: Regenerar manifesto e comparar com o commitado
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: manifest
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -272,7 +288,7 @@ jobs:
       - name: Pre-pull postgres-meta via ghcr.io (evita rate-limit do ECR public)
         continue-on-error: true
         run: |
-          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0"
+          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0@sha256:cef71ba901751dcc242cc685cf13786935ea8926820fb342f23bb0fbef77de5a"
           ECR_IMG="public.ecr.aws/supabase/postgres-meta:v0.98.0"
           if docker pull "$GHCR_IMG" 2>&1; then
             docker tag "$GHCR_IMG" "$ECR_IMG"
@@ -282,6 +298,8 @@ jobs:
           fi
 
       - name: Verificar frescor do types.ts
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: types
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -306,6 +324,8 @@ jobs:
       # de edges × diretorios e frescor do grants-baseline num unico gate.
       # Complementa (nao substitui) os passos acima — ver §1.9 do CLAUDE.md.
       - name: Paridade tripla (migrations, edges, grants)
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: triple-parity
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
@@ -316,6 +336,8 @@ jobs:
           node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations 2>&1 | tee /tmp/step-triple-parity.log
 
       - name: Auditar configuracao runtime sem dados de clientes
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         id: runtime-config
         if: steps.credencial.outcome == 'success'
         continue-on-error: true

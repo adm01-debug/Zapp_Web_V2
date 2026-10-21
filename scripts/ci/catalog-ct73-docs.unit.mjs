@@ -64,7 +64,7 @@ function acharNovaMedicao(texto) {
     if (!posteriorAoBaseline) continue;
     for (const m of oracao.matchAll(/([<≤]=?)?\s*(\d{1,3}(?:[.,]\d+)?)\s*KB/gi)) {
       if (m[1]) continue; // `< 30 KB` / `≤ 30 KB` e o teto, nao uma medicao
-      const kb = parseFloat(m[2].replace(',', '.'));
+      const kb = Number.parseFloat(m[2].replace(',', '.'));
       if (kb < TETO_KB) return { data: datas[0][0], kb };
     }
   }

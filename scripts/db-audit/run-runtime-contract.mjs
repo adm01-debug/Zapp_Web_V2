@@ -218,7 +218,7 @@ export function extrairInvocacoes(texto, versaoDoArquivo, origem = '<contrato>')
 export function invocacoesDosContratos(dir = CONTRATOS) {
   const mapa = new Map();
   let generico = null;
-  const arquivos = readdirSync(dir).filter((f) => /^\d{14}\.sql$/.test(f)).sort();
+  const arquivos = readdirSync(dir).filter((f) => /^\d{14}\.sql$/.test(f)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   if (arquivos.length === 0) throw new Error(`nenhum contrato de runtime em ${dir}`);
 
   for (const arquivo of arquivos) {

@@ -135,7 +135,7 @@ export function linhasSaida(resultado) {
   if (resultado.falhas.length === 0) return ['causa=', 'falhas_lista='];
   return [
     `causa=${resultado.causa}`,
-    `falhas_lista=${[...resultado.nomes].sort().join(',')}`,
+    `falhas_lista=${[...resultado.nomes].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join(',')}`,
     'logs_falhas<<EOF_LOGS_FALHAS_DB_LIVE_GUARD',
     JSON.stringify(resultado.logs),
     'EOF_LOGS_FALHAS_DB_LIVE_GUARD',

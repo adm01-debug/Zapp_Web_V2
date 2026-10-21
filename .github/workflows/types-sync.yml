@@ -148,6 +148,7 @@ jobs:
       # o contrato E98 em scripts/ci/workflow-contracts.unit.mjs exige o
       # endurecimento de TLS em todos eles.
       - name: Exigir credencial do banco oficial
+        id: credencial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -172,14 +173,18 @@ jobs:
           if (erros.length) process.exit(1);
           const destinoSeguro = tls.connectionString;
           console.log(`::add-mask::${destinoSeguro}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
+          // GA21: o DSN endurecido sai por outputs do passo, NUNCA pelo
+          // GITHUB_ENV (o arquivo do GITHUB_ENV e lido por todos os passos
+          // seguintes, incluindo actions de terceiros). Cada passo que precisa
+          // do banco declara `env: DESTINO_URL: ${{ steps.credencial.outputs.destino }}`.
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${destinoSeguro}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
           console.log('OK: endpoint do banco oficial comprovado por fingerprint; TLS verify-full e CA Supabase pinada.');
           NODE
 
-      # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV
-      # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria
-      # com o secret cru sem TLS.
+      # PGSSLMODE vem do GITHUB_ENV gravado pelo passo anterior. O DSN (ja
+      # endurecido com TLS) chega por env: proprio a partir do output do passo
+      # de credencial — sem redeclarar o secret cru, que perderia o TLS.
       # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
       # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
       - name: ghcr.io login (previne rate-limit no gen-types)
@@ -197,7 +202,7 @@ jobs:
       - name: Pre-pull postgres-meta via ghcr.io (evita rate-limit do ECR public)
         continue-on-error: true
         run: |
-          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0"
+          GHCR_IMG="ghcr.io/supabase/postgres-meta:v0.98.0@sha256:cef71ba901751dcc242cc685cf13786935ea8926820fb342f23bb0fbef77de5a"
           ECR_IMG="public.ecr.aws/supabase/postgres-meta:v0.98.0"
           if docker pull "$GHCR_IMG" 2>&1; then
             docker tag "$GHCR_IMG" "$ECR_IMG"
@@ -207,6 +212,8 @@ jobs:
           fi
 
       - name: Gerar candidatos em diretorio temporario
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
@@ -255,10 +262,12 @@ jobs:
 
       # Contrato dos checkers: 0=igual, 1=drift valido, 2=erro/identidade.
       # Apenas exit 1 pode virar proposta de atualizacao.
-      # DESTINO_URL (endurecido) vem do GITHUB_ENV do 1o passo — sem env:
-      # proprio aqui pela mesma razao do passo "Gerar candidatos" acima.
+      # O DSN chega por env: proprio (output do passo de credencial) — a mesma
+      # razao do passo "Gerar candidatos" acima.
       - name: Classificar drift com identidade comprovada
         id: diff
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         run: |
           grep -v '^// ' /tmp/types.new.ts > /tmp/types.new.stripped
           grep -v '^// ' src/integrations/supabase/types.ts > /tmp/types.old.stripped
@@ -386,7 +395,7 @@ jobs:
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
         env:
-          DESTINO_URL: ${{ env.DESTINO_URL }}
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
           PGSSLMODE: ${{ env.PGSSLMODE }}
         run: |
           set +e
@@ -430,10 +439,15 @@ jobs:
         id: gate3
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
         run: |
-          # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
-          # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
+          # GA20: o passo "Aplicar candidatos" copiou o novo por cima do antigo
+          # ANTES deste gate — comparar supabase/schema-catalog.json seria
+          # comparar o arquivo com ele mesmo (um DROP passaria). O antigo vem
+          # do git HEAD (checkout tem o commit; fetch-depth 1 basta).
+          # F-01: pipefail como nos Gates 1 e 2 — sem ele o tee sai 0 e o gate
+          # passa mesmo com o script bloqueando.
           set -o pipefail
-          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
+          git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs /tmp/catalog.old.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"

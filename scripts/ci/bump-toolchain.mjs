@@ -42,8 +42,8 @@ function semver(v) {
 
 /** Compara versões simples: retorna true se remota > local. */
 function maisNova(local, remota) {
-  const lp = semver(local).split('.').map((x) => parseInt(x, 10) || 0);
-  const rp = semver(remota).split('.').map((x) => parseInt(x, 10) || 0);
+  const lp = semver(local).split('.').map((x) => Number.parseInt(x, 10) || 0);
+  const rp = semver(remota).split('.').map((x) => Number.parseInt(x, 10) || 0);
   for (let i = 0; i < Math.max(lp.length, rp.length); i++) {
     const l = lp[i] ?? 0;
     const r = rp[i] ?? 0;

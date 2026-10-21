@@ -21,8 +21,8 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--project-ref') args.projectRef = argv[++i];
     else if (argv[i] === '--scope') args.scope = argv[++i];
-    else if (argv[i] === '--threshold') args.threshold = parseFloat(argv[++i]);
-    else if (argv[i] === '--wait-ms') args.waitMs = parseInt(argv[++i], 10);
+    else if (argv[i] === '--threshold') args.threshold = Number.parseFloat(argv[++i]);
+    else if (argv[i] === '--wait-ms') args.waitMs = Number.parseInt(argv[++i], 10);
     else if (argv[i] === '--no-wait') args.waitMs = 0;
     else if (argv[i] === '--dry-run') args.dryRun = true;
     else if (argv[i] === '--manifest') args.manifestPath = argv[++i];
