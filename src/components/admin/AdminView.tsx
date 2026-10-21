@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { motion } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -23,6 +23,7 @@ import { useAdminData, accessLevelConfig, AUDIT_PAGE_SIZE, MIN_PASSWORD_LENGTH, 
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { VoipRamalField } from './VoipRamalField';
+import { CronJobsTab } from './CronJobsTab';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
@@ -59,7 +60,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
+  const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -192,6 +193,22 @@ export function AdminView() {
     ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
   ];
 
+  // Teclado do tablist (padrão ARIA): setas movem a seleção e o foco, Home/End vão
+  // para as pontas. Só a aba ativa é alcançável pelo Tab (tabIndex móvel).
+  const onTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
+    const alvos = abas.map(([t]) => t);
+    const atual = alvos.indexOf(tab);
+    let destino: AdminTab | null = null;
+    if (event.key === 'ArrowRight') destino = alvos[(atual + 1) % alvos.length];
+    else if (event.key === 'ArrowLeft') destino = alvos[(atual - 1 + alvos.length) % alvos.length];
+    else if (event.key === 'Home') destino = alvos[0];
+    else if (event.key === 'End') destino = alvos[alvos.length - 1];
+    if (!destino) return;
+    event.preventDefault();
+    setActiveTab(destino);
+    tabsRef.current[destino]?.focus();
+  };
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
@@ -208,13 +225,26 @@ export function AdminView() {
         </div>
       </motion.div>
 
-      <div className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
-          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
-            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
-            <Icon className="w-4 h-4 mr-2" /> {label}
-          </Button>
-        ))}
+      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
+        {abas.map(([tab, Icon, label]) => {
+          const selecionada = activeTab === tab;
+          return (
+            <Button
+              key={tab}
+              ref={(el) => { tabsRef.current[tab] = el; }}
+              role="tab"
+              id={`tab-${tab}`}
+              aria-selected={selecionada}
+              tabIndex={selecionada ? 0 : -1}
+              variant={selecionada ? 'default' : 'outline'}
+              onClick={() => setActiveTab(tab)}
+              onKeyDown={(e) => onTabKeyDown(e, tab)}
+              className={selecionada ? 'bg-primary hover:bg-primary/90' : ''}
+              size="sm">
+              <Icon className="w-4 h-4 mr-2" /> {label}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Busca: só nas abas em que o termo de fato filtra a lista carregada. */}
@@ -467,6 +497,10 @@ export function AdminView() {
       ) : activeTab === 'crm' ? (
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
+        </SectionErrorBoundary>
+      ) : activeTab === 'cron' ? (
+        <SectionErrorBoundary key="cron" sectionName="Tarefas agendadas">
+          <CronJobsTab />
         </SectionErrorBoundary>
       ) : null}
       </div>

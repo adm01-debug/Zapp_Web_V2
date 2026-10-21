@@ -53,6 +53,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 // O gatilho do Select (Radix) chama `hasPointerCapture` no pointerdown que o abre
 // (o jsdom não implementa captura de ponteiro).
@@ -150,7 +151,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
   });
 
   it('mostra o mês por extenso e os dias da semana em português com inicial maiúscula', () => {
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     expect(screen.getByText('Outubro de 2026')).toBeTruthy();
     // Os SETE cabeçalhos, incluindo o sábado acentuado — o defeito era justamente
@@ -169,7 +170,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
     expect(new Date('2026-10-09T23:30:00.000Z').getHours()).toBe(20);
     vi.setSystemTime(new Date('2026-10-09T23:30:00.000Z'));
     h.state.campaigns = [{ ...BASE_CAMPAIGN, schedule_timezone: 'Europe/London' }];
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     expect(dayButton('9').disabled).toBe(true);
     expect(dayButton('10').disabled).toBe(false);
@@ -182,7 +183,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
       // 21/10 03:30 UTC = 20/10 23:30 em Manaus (UTC-4).
       scheduled_at: '2026-10-21T03:30:00.000Z',
     }];
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     expect(dayButton('20').getAttribute('aria-selected')).toBe('true');
     expect(dayButton('21').getAttribute('aria-selected')).not.toBe('true');
@@ -191,7 +192,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
   });
 
   it('A11: mudar a hora em edição move o marco "Início dos envios"', () => {
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     // gravado: 20/10 09:00 em São Paulo (12:00 UTC)
     expect(milestone('start').textContent).toContain('20/10/2026 • 09:00');
@@ -204,7 +205,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
   });
 
   it('A11: trocar o fuso sem salvar não desloca o marco em relação ao editor', () => {
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     const timeInput = () => (document.getElementById('talkx-schedule-time') as HTMLInputElement).value;
     // gravado: 20/10 09:00 em São Paulo
@@ -228,7 +229,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
       send_window_start: '09:00:00',
       send_window_end: '18:00:00',
     }];
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     expect(milestone('window').textContent).toContain('Janela de envio ativa');
 
@@ -239,7 +240,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
 
   it('A12: sem scheduled_at gravado, a linha do tempo ainda deduz um marco da edição', () => {
     h.state.campaigns = [{ ...BASE_CAMPAIGN, scheduled_at: null }];
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     expect(document.querySelector('[data-talkx-milestone="start"]')).toBeNull();
 
