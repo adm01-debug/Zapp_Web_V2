@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 import { useCustomShortcuts } from '@/hooks/ui/useCustomShortcuts';
 import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
@@ -21,8 +22,20 @@ import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
  */
 const INBOX_EMPTY_SHORTCUT_IDS = ['prev-conversation', 'next-conversation', 'global-search'];
 
-export function InboxEmptyChat() {
+interface InboxEmptyChatProps {
+  /** Números REAIS da lista (o mesmo `chipCounts` que a `RealtimeInboxView` usa) — o vazio não recalcula. */
+  waitingCount?: number;
+  unreadCount?: number;
+  /** Abre o modal de nova conversa; o modal mora na view, que é quem monta este estado vazio. */
+  onNewConversation?: () => void;
+}
+
+export function InboxEmptyChat({ waitingCount = 0, unreadCount = 0, onNewConversation }: InboxEmptyChatProps = {}) {
   const { shortcuts, formatShortcut } = useCustomShortcuts();
+  // O jsdom não resolve `motion-safe:`; a entrada discreta é aplicada (ou não) aqui.
+  const reduzirMovimento = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const atalhos = useMemo(
     () => listarAtalhosEditaveis(shortcuts).filter((shortcut) => INBOX_EMPTY_SHORTCUT_IDS.includes(shortcut.id)),
@@ -36,7 +49,28 @@ export function InboxEmptyChat() {
       description="Escolha uma conversa na lista ao lado para visualizar e responder mensagens"
       className="bg-inbox-panel overflow-hidden"
       action={
-        atalhos.length > 0 ? (
+        <div
+          data-testid="inbox-empty-actions"
+          className={`flex flex-col items-center gap-4 ${reduzirMovimento ? '' : 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2'}`}
+        >
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <span data-testid="inbox-empty-waiting" className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground-secondary">
+              {waitingCount} aguardando
+            </span>
+            <span data-testid="inbox-empty-unread" className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground-secondary">
+              {unreadCount} {unreadCount === 1 ? 'não lida' : 'não lidas'}
+            </span>
+          </div>
+          {onNewConversation && (
+            <Button
+              onClick={onNewConversation}
+              className="gap-2 bg-whatsapp text-primary-foreground hover:bg-whatsapp-dark"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Nova conversa
+            </Button>
+          )}
+          {atalhos.length > 0 && (
           <div
             data-testid="inbox-empty-shortcuts"
             className="flex flex-col items-center gap-2"
@@ -63,7 +97,8 @@ export function InboxEmptyChat() {
               })}
             </div>
           </div>
-        ) : undefined
+          )}
+        </div>
       }
     />
   );

@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
 import { TalkXQueryBoundary } from './kit/states';
+import { ModuleBreadcrumb } from './talkxShared';
 import {
   useTalkXTemplateLibraryStats,
   useTalkXTemplateStats,
@@ -512,6 +513,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
+        {/* X094 — o editor é uma tela interna do módulo: a trilha diz onde a pessoa está. */}
+        <ModuleBreadcrumb items={['Talk X', 'Campanhas', 'Templates']} />
         {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
@@ -595,6 +598,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* X094 — a descrição existia no estado, ia no payload do save e entrava no
+              dirty-check, mas não tinha campo: aqui é onde ela é escrita. */}
+          <div>
+            <Label htmlFor="template-descricao" className="text-xs text-foreground-secondary">Descrição</Label>
+            <Input id="template-descricao" value={eDesc} onChange={(e) => setEDesc(e.target.value)} placeholder="Uma linha que resume o template" className="mt-1.5 h-10 bg-input/40 border-border/70" />
           </div>
 
           {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}

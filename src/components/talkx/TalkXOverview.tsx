@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Users, Play, CheckCircle2, Target, Send, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, BarChart3,
+
+  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
+  FileText, Bookmark, MessageSquare, BarChart3, Loader2, ChevronDown,
+
 } from 'lucide-react';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -77,6 +79,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // usa a matriz de ações atual, mas delega ciclo de vida ao hook único.
   const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
+  // TL-115: o bloco de rascunhos nasce recolhido e abre no clique do cabeçalho.
+  const [rascunhosAbertos, setRascunhosAbertos] = useState(false);
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
   const [channel, setChannel] = useState<string>(() => saved?.channel ?? 'all');
@@ -91,7 +95,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // X079 — ordenação da tabela (cliente, por Campanha) e blocos N35 recolhidos.
   const [sort, setSort] = useState<TalkXSort | null>(null);
-  const [draftsOpen, setDraftsOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
 
   // X080 — as ações de linha (matriz por status + confirmação das ações que
@@ -346,17 +349,26 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           if (drafts.length === 0) return null;
           return (
             <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
+
+              {/* TL-115: o cabeçalho é o gatilho do bloco (recolhido por padrão); o
+                  nome acessível sai como "Rascunhos pendentes(N)". */}
               <button
                 type="button"
-                aria-expanded={draftsOpen}
-                onClick={() => setDraftsOpen((o) => !o)}
-                className="w-full px-4 py-3 flex items-center gap-2 text-left hover:bg-muted/20 transition-colors"
+                onClick={() => setRascunhosAbertos((v) => !v)}
+                aria-expanded={rascunhosAbertos}
+                aria-label={`Rascunhos pendentes(${drafts.length})`}
+                className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between text-left hover:bg-muted/20 transition-colors"
               >
-                <FileText className="w-4 h-4 text-dash-amber" />
-                <span className="text-[13px] font-semibold text-foreground">{`Rascunhos pendentes(${drafts.length})`}</span>
+                <span className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-dash-amber" />
+                  <span className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</span>
+                  <span className="text-2xs text-muted-foreground">({drafts.length})</span>
+                </span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${rascunhosAbertos ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
-              {draftsOpen && (
-              <div className="divide-y divide-border/50 border-t border-border/50">
+              {rascunhosAbertos && (
+              <div className="divide-y divide-border/50">
+
                 {drafts.slice(0, 5).map((c) => (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
@@ -410,6 +422,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
             )}
           </section>
         )}
+
+
       </div>
 
       {/* Rail */}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  Archive, AlertTriangle, PowerOff, Tag,
+  Archive, AlertTriangle, PowerOff, Tag, RefreshCw,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
+import { ModuleHeader } from './talkxShared';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import { SegmentSideList } from './segments/SegmentSideList';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -25,9 +26,22 @@ interface Props {
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
+/**
+ * Abas superiores da tela 03 (X111). Só "Segmentos" existe: as outras são as
+ * abas do desenho ainda sem conteúdo e ficam desabilitadas — um botão que não
+ * faz nada seria pior que um botão que diz que ainda não faz nada.
+ */
+const ABAS_TELA_03: ReadonlyArray<{ label: string; ativa?: boolean }> = [
+  { label: 'Segmentos', ativa: true },
+  { label: 'Regras Avançadas' },
+  { label: 'Audiências' },
+  { label: 'Modelos' },
+  { label: 'Insights com IA' },
+];
+
 export function TalkXSegments({ onUseCampaign }: Props) {
   const {
-    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
+    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
     // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
     // injetam um hook mínimo: o hook real sempre devolve os seis.
@@ -253,13 +267,37 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   if (activeEditing) {
     return (
       <div className="w-full min-w-0 space-y-4">
-        {/* X111 — trilha da tela 03, no mesmo desenho do wizard: o construtor é uma tela interna do módulo. */}
-        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
-          <span>Talk X</span>
-          <span className="text-border">›</span>
-          <span>Campanhas</span>
-          <span className="text-border">›</span>
-          <span className="text-foreground font-medium">Segmentos</span>
+        {/* X111 — cabeçalho da tela 03: trilha do módulo, título, subtítulo e o ↻
+            que refaz a lista e as estimativas de uma vez. */}
+        <ModuleHeader
+          icon={Bookmark}
+          color="violet"
+          title="Segmentos"
+          subtitle="Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X."
+          breadcrumb={['Talk X', 'Campanhas', 'Segmentos']}
+          right={
+            <GhostButton icon={RefreshCw} onClick={() => { refetch(); refreshEstimates?.mutate(segments); }}>
+              Atualizar
+            </GhostButton>
+          }
+        />
+        <nav aria-label="Abas superiores de segmentos" className="flex items-center gap-1 flex-wrap">
+          {ABAS_TELA_03.map(({ label, ativa }) => (
+            <button
+              key={label}
+              type="button"
+              aria-current={ativa ? 'page' : undefined}
+              disabled={!ativa}
+              className={cn(
+                'h-8 px-3 rounded-lg border text-xs font-medium transition-colors',
+                ativa
+                  ? 'border-primary/30 bg-primary/10 text-primary'
+                  : 'border-transparent text-muted-foreground disabled:opacity-50'
+              )}
+            >
+              {label}
+            </button>
+          ))}
         </nav>
         {/* TL-134 (X099): SEM `key` de propósito — a troca de segmento repõe o
             rascunho pela ação `reset` do reducer, num `useEffect [initial]`. */}
