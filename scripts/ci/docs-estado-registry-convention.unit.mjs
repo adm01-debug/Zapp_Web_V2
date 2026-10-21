@@ -59,7 +59,7 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
 
 // `invoke(` = chamada direta do supabase-js; `invokeEdge(` = wrapper central do front
 // (src/lib/invokeEdge.ts) que injeta o id de correlacao — mesmo chamador de front, grupo A.
-const invoca = (n) => new RegExp(`invoke(?:Edge)?\\(\\s*['"\`]${n}['"\`]`);
+const invoca = (n) => new RegExp(`invoke(?:Edge)?(?:<[^>]*>)?\\(\\s*['"\`]${n}['"\`]`);
 const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
 const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
 
@@ -223,9 +223,8 @@ for (const m of blocoEspeciais[0].matchAll(/'([\w-]+)':/g)) {
   viewsReais.push({ view: m[1], componente: componente ? componente[1] : '?' });
 }
 
-const usaBanco = (texto) => /\.from\(|\.rpc\(|\binvoke\(/.test(texto);
-const hooksImportados = (texto) =>
-  [...texto.matchAll(/from '@\/(hooks|services|lib)\/([\w/.-]+)'/g)].map((m) => `src/${m[1]}/${m[2]}`);
+const usaBanco = (texto) => /(?<!Array)\.from\(|\.rpc\(|\binvoke\(/.test(texto);
+const hooksImportados = (texto) => [...texto.matchAll(/from ['"]@\/(hooks|services|lib)\/([\w/.-]+)['"]/g)].map((m) => `src/${m[1]}/${m[2]}`);
 const acharArquivo = (base) => {
   for (const c of [base, base + '.tsx', base + '.ts', base + '/index.ts', base + '/index.tsx']) {
     if (base && fs.existsSync(path.join(raiz, c)) && fs.statSync(path.join(raiz, c)).isFile()) return c;
