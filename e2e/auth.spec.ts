@@ -14,7 +14,9 @@ test.describe('Auth flows', () => {
     // mounts. "a@b" passes the browser and fails loginSchema → "Email inválido".
     await page.getByRole('textbox', { name: /e-?mail/i }).fill('a@b');
     await page.getByRole('button', { name: /^entrar$/i }).click();
-    await expect(page.getByRole('alert', { name: 'Email inválido' })).toBeVisible();
+    // Playwright 1.64 não tira nome acessível do conteúdo de role=alert
+    // (allowsNameFromContent). O texto existe; o name fica vazio.
+    await expect(page.getByRole('alert').filter({ hasText: 'Email inválido' })).toBeVisible();
   });
 
   test('login email input respects maxLength', async ({ page }) => {

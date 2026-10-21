@@ -354,19 +354,23 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  const toolchain = JSON.parse(await readFile(join(RAIZ, '.github/toolchain.json'), 'utf8'));
+  const pw = toolchain.playwright;
+  assert.match(pw, /^\d+\.\d+\.\d+$/);
+  const pin = `playwright@${pw}`;
+  assert.ok(lock.includes(pin), `bun.lock deve resolver ${pin}`);
+  assert.ok(lock.includes(`playwright-core@${pw}`));
+  assert.ok(lock.includes(`@playwright/test@${pw}`));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes(pin), `${f} deve pinar ${pin}`);
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.ok(e76.linha.includes(pw), `E76 deve citar ${pw}`);
   assert.match(e76.linha, /não há mismatch/i);
 });
 

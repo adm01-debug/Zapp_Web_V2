@@ -245,7 +245,11 @@ export async function handleRevokeAuthSessions(
     // Pre-auth: chave por IP, contador persistente (nao zera a cada isolate).
     const ip = getClientIP(req);
     const rl = await rateLimit(`revoke-auth-sessions:${ip}`, 20, 60_000);
-    if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+    if (!rl.allowed) {
+      const limited = errorResponse("Rate limit exceeded", 429, req);
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return errorResponse("Unauthorized", 401, req);
@@ -264,7 +268,11 @@ export async function handleRevokeAuthSessions(
 
     // Pos-auth: chave por USUARIO — segura uma conta comprometida mesmo trocando de IP.
     const userRl = await rateLimit(`revoke-auth-sessions:user:${user.id}`, 20, 60_000);
-    if (!userRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+    if (!userRl.allowed) {
+      const limited = errorResponse("Rate limit exceeded", 429, req);
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
 
     let body: unknown;
     try {

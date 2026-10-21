@@ -216,8 +216,6 @@ export const ALLOWLIST_NODE = new Set([
   'scripts/talkx/gen-estados.unit.mjs',
   'scripts/talkx/lado-a-lado.unit.mjs',
   'scripts/talkx/v4-status.unit.mjs',
-  // V077: prova ignore-build.sh com git falso (tmpdir), sem passo de workflow.
-  'scripts/vercel/ignore-build.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

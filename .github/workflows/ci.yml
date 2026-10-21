@@ -134,8 +134,44 @@ jobs:
         env:
           CI: true
 
+      - name: 🧩 Run ignore-build proof
+        run: node scripts/vercel/ignore-build.unit.mjs
+
+  coverage:
+    name: 📊 Coverage
+    # E72: o artifact só existe na main. PR não paga esta suíte.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧪 Run Vitest coverage
+        run: bun run test:coverage
+        env:
+          CI: true
+
       # E72 (G-32): cobertura só na main, inclusive quando a suíte falha,
       # para diagnosticar. PR e dispatch não publicam artifact.
+      # Sem if-no-files-found: ignore — artifact vazio não pode passar.
       - name: 📊 Upload coverage report
         if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -143,7 +179,7 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   build:
     name: 🏗️ Build
