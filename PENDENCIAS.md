@@ -74,5 +74,78 @@ O dispatch foi feito com `TARGET_VERSION: 20261020190001`, mas esse valor está 
 
 ---
 
-*Documento gerado pela sessão de correção de CI — 2026-10-21.*
+## 4. Contrato DB offline — DASH-091/092 (`sanitize_reset_request()`)
+
+**Workflow:** `db-guard.yml` — job `Contrato DB offline`
+**Check runs com falha confirmados:**
+- SHA `b0585a58` — run [39683115745](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39683115745), job 119510528339
+- SHA `7a8c74e6` — run [39686676218](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676218), job 119522392829
+
+### Passo que falha
+
+Passo 41 — **"Simular fronteira RLS das RPCs do Dashboard (DASH-091/092)"**
+
+### Erro exato
+
+```
+ERROR:  record "new" has no field "reset_token"
+CONTEXT:  PL/pgSQL assignment "NEW.reset_token := NULL"
+          PL/pgSQL function sanitize_reset_request() line 4 at assignment
+STATEMENT: SET ROLE authenticated;
+           SELECT set_config('request.jwt.claims', '{"sub":"...","role":"authenticated"}', false);
+           INSERT INTO public.password_reset_requests (user_id, email)
+           VALUES ('11111111-1111-1111-1111-111111111111','ti.existente@example.com');
+```
+
+### Causa raiz
+
+A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_token` (linha 4), mas a tabela `password_reset_requests` não possui essa coluna. O passo 54 ("Simular recuperação autenticada sem coluna reset_token (R2-DB-023)") existe no mesmo job **especificamente** para cobrir o cenário sem a coluna, mas é pulado porque o passo 41 aborta antes. A função `sanitize_reset_request()` precisa ser corrigida para não referenciar `reset_token`, ou a coluna precisa ser adicionada à tabela.
+
+**Pré-existente:** presente nos 3 commits desta PR (`9bff4c5a`, `b0585a58`, `7a8c74e6`) e em todas as runs históricas do `db-guard`.
+
+### O que o Joaquim precisa fazer
+
+1. Verificar o estado atual da tabela em produção:
+   ```sql
+   SELECT column_name FROM information_schema.columns
+   WHERE table_name = 'password_reset_requests';
+   ```
+2. Verificar o corpo real da função `sanitize_reset_request()` em produção:
+   ```sql
+   SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'sanitize_reset_request';
+   ```
+3. Se a coluna `reset_token` nunca foi criada: corrigir a função removendo a atribuição `NEW.reset_token := NULL`, criar migration versionada com o fix, abrir PR.
+4. Se a coluna deveria existir mas foi dropada: recriar a coluna, criar migration versionada, abrir PR.
+
+---
+
+## 5. Unit Tests flaky — ChatMessagesArea e MessageBubble (timing async)
+
+**Workflow:** `ci.yml` — job `🧪 Unit Tests` (shards 1/3, 2/3, 3/3)
+**Run com falha:** [39686676025](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676025)
+**Status:** flaky pré-existente — commit anterior `b0585a58` passou no CI (run 39684123752) e falhou no DB Guard (run 39683115745, motivo diferente: DASH-091/092).
+
+### Arquivos que falham
+
+| Shard | Arquivo | Linha | Erro |
+|-------|---------|-------|------|
+| 1/3 | `ChatMessagesArea.agrupar-envio.test.tsx` | 149, 164, 191 | `Unable to find element [data-testid="bubble"]` |
+| 1/3 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Unable to find element [data-testid="bubble"]` |
+| 2/3 | `ChatMessagesArea.*` (shard 2) | — | `Unable to find element [data-testid="bubble"]` |
+| 2/3 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `expected "vi.fn()" to be called 1 times, but got 0 times` |
+| 3/3 | `ChatMessagesArea.loop.test.tsx` | 121, 138 | `Unable to find element [data-testid="bubble"]` |
+
+### Causa raiz
+
+Falhas de timing em testes assíncronos: `waitFor(() => getByTestId("bubble"))` expira porque o componente virtualizado de chat (`react-virtual`) ainda não renderizou os itens no momento do `waitFor`. Nenhum dos arquivos acima foi alterado nesta sessão (confirmado via `git diff --name-only HEAD~1 HEAD`). O padrão é idêntico ao dos runs flaky em `main`.
+
+### O que o Joaquim precisa fazer
+
+1. Confirmar re-run limpo: re-disparar o workflow CI neste SHA para ver se os testes passam numa segunda tentativa.
+2. Se confirmar flake: adicionar `waitForTimeout` ou `findAllBy` com retry explícito nos assertivos dessas specs.
+3. Se o re-run falhar novamente: investigar se mudanças recentes no componente `ChatMessagesArea` quebraram a lógica de renderização virtual.
+
+---
+
+*Documento atualizado em 2026-10-21.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*

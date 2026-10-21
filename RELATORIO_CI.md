@@ -9,7 +9,7 @@
 
 | Workflows com falha (baseline) | Corrigidos nesta sessão | Pendentes (ver PENDENCIAS.md) |
 |-------------------------------|------------------------|-------------------------------|
-| 5 categorias distintas | 4 categorias | 3 itens documentados |
+| 5 categorias distintas | 4 categorias | 5 itens documentados |
 
 ---
 
@@ -86,6 +86,8 @@ O job "Validar gerador e manifesto de deployment" detectou o manifesto desatuali
 |--------|-----------|
 | (anterior à sessão) | fix(ci): remove workflows alienígenas + atualiza mocks de logger + exceção migration-evidence |
 | `4e4f744` | fix(ci): regenera manifesto de deploy das edge functions |
+| `7a8c74e` | fix(ci): corrige vírgula faltando nos mocks de logger + regenera baseline ESLint |
+| `0ec8caf` | docs(ci): documenta pendências DASH-091/092 e unit tests flaky |
 
 ---
 
@@ -96,6 +98,8 @@ Ver arquivo `PENDENCIAS.md` para detalhes completos de:
 1. **E2E logado** — 4 testes pré-existentes de mapa/geolocalização (`chromium-mapa`, E71–E74)
 2. **talkx-status-regen** — Run 39600726711 com 0 jobs (falha histórica/transitória)
 3. **db-migrate** — Run 39596763483 com `TARGET_VERSION` inválido (erro operacional humano)
+4. **Contrato DB offline** — DASH-091/092: `sanitize_reset_request()` referencia coluna `reset_token` inexistente
+5. **Unit Tests flaky** — `ChatMessagesArea.*` e `MessageBubble.interactive-list-item.test.tsx` (timing async)
 
 ---
 
@@ -104,6 +108,7 @@ Ver arquivo `PENDENCIAS.md` para detalhes completos de:
 1. Aguardar os 6 checks obrigatórios passarem no PR #2182
 2. Mergear PR #2182 via squash (política do repositório)
 3. Investigar os 4 testes E2E de mapa (ver PENDENCIAS.md item 1)
+4. Corrigir `sanitize_reset_request()` em PR separado (ver PENDENCIAS.md item 4)
 
 ---
 
