@@ -320,9 +320,7 @@ mexer no parsing de `LEDGER_RETRY_DELAYS_MS`: `Number("")` é `0`, não `NaN`, e
 precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry imediato em vez de
 nenhum.
 
-**Agendamentos sem colisão:** types-sync `49 5 * * 1` (semanal), db-live-guard `13 6 * * *` (**diário**;
-não depende do types-sync para rodar), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1` e settings-guard
-`15 */6 * * *`. Os dois primeiros da lista original rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
+**Agendamentos sem colisão (medidos nos YAMLs em 2026-10-21):** types-sync `49 5 * * 1` (seg), db-live-guard `13 6 * * 1` (seg; push na `main` também dispara — não depende do types-sync para rodar), talkx-status-regen `45 7 * * 1` (seg), branch-hygiene `56 7 * * 1` (seg), codeql `30 9 * * 1` (seg). `settings-guard.yml` não existe mais no repo — sem schedule ativo. Os dois primeiros da lista original rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
@@ -491,6 +489,8 @@ Aplicado assim hoje: `20260926120600` (`DROP INDEX idx_talkx_template_versions_t
 índice duplicado da unique `(template_id, version_number)`; 0 linhas e 0 `idx_scan` na tabela
 antes do drop). O arquivo estava em `main` desde a manhã sem nunca ter sido aplicado.
 
+**Retificação 2026-10-07 (decisão do Joaquim): o parágrafo abaixo descreve 28/08–07/10. Desde 07/10 o deploy voltou a ser AUTOMÁTICO no push na `main` filtrado por pasta (`supabase/functions/**`, `supabase/config.toml`); dispatch manual segue para rollback/uma função. O front (Vercel) sempre foi automático.**
+
 **Merge em `main` NÃO deploya edge function.** O front é Vercel e sobe sozinho; as edge functions
 sobem **só** por `workflow_dispatch` do `deploy-functions.yml` (é deliberado — ver cabeçalho do
 workflow), e o job ainda pausa em `Waiting` no environment `producao-edge-functions`. Ou seja:
@@ -547,22 +547,16 @@ como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.l
 
 O shim intercepta os comandos Docker e os roteia para o container compartilhado.
 Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
-(isso causa passthrough para o Docker real). Os 11 passos com essa exceção hoje são:
-
-1. `catalog-manifest.test.sh` — usa `docker logs` para aguardar readiness
-2. `inbox-contact-authorization.test.sh` — idem
-3. `cron-secret-l5-contract.test.sh` — idem
-4. `talkx-template-history-behavior.test.sh` — idem
-5. `talkx-transition-overload-postgrest.test.sh` — depende de PostgREST
-6. `message-delivery-phase1-behavior.test.sh` — idem
-7. `notification-delivery-atomicity.test.sh` — idem
-8. `generic-migration-runtime.test.sh` — idem
-9. `runtime-config.test.sh` — idem
-10. `psql-environment.integration.mjs` — idem
-11. `l11-departments-acl-escrita.test.sh` — idem
+(isso causa passthrough para o Docker real). Eram 11 em 02/10; em 2026-10-21 são **58** passos
+(medir com `grep 'SKIP_DOCKER_SHIM' .github/workflows/db-guard.yml | grep -v '#' | wc -l` —
+só linhas de `env:`, sem comentário). A lista fechada de nomes foi superada: vale o critério,
+não a lista. Inclui `talkx-current-template-version.test.sh` (passo próprio desde GA98).
+(lista removida em GA98: os 11 nomes estavam defasados — 58 passos medidos em 21/10; vale o critério acima, não a lista.)
 
 Ao adicionar novo passo em `db-guard.yml`, verificar se o script usa `docker logs` para readiness
-ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: "1"`.
+ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: "1"`. (A lista de 11 nomes que
+ficava aqui foi removida em GA98 por estar defasada — 16 passos no plano de 15/10, 58 medidos
+em 21/10.)
 
 ## Talk X / Campanhas
 Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`

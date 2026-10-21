@@ -6,9 +6,9 @@
 # ==========================================
 
 # ===================
-# DEFAULT OWNER
+# DEFAULT OWNER (roteamento de revisão; review obrigatório: nenhum — deliberado,
+# vários agentes com auto-merge; ver CLAUDE.md seção 0 e perímetro do GitHub)
 # ===================
-# Todas as mudanças requerem aprovação do admin
 * @adm01-debug
 
 # ===================
