@@ -31,16 +31,29 @@ describe('ContactDialogs — botão flutuante recebe toque na caixa inteira', ()
   })();
 
   it('cobre a caixa toda com ::after (cantos clicáveis)', () => {
+    // Geometria real: sem `absolute` o `inset-0` não cobre nada.
+    expect(fab).toContain('after:absolute');
     expect(fab).toContain('after:inset-0');
     expect(fab).toContain("after:content-['']");
+    // O overlay precisa receber o hit, não ser fantasma.
+    expect(fab).not.toContain('pointer-events-none');
+    expect(fab).not.toMatch(/after:(hidden|invisible|content-none)/);
   });
 
   it('não sobe acima do backdrop do menu móvel (z-30)', () => {
     expect(fab).toContain('z-20');
-    expect(fab).not.toMatch(/\bz-(?:3[0-9]|[4-9][0-9])\b/);
+    // Teto numérico: cobre `z-100+`, arbitrary `z-[40]` e `style zIndex`.
+    const camadas = [...fab.matchAll(/[:\s"']z-(?:\[(\d+)\]|(\d+))/g)].map((m) =>
+      Number(m[1] ?? m[2]),
+    );
+    const inline = [...fab.matchAll(/zIndex['"]?\s*[:=]\s*['"]?(\d+)/g)].map((m) => Number(m[1]));
+    const todas = [...camadas, ...inline];
+    expect(todas.length).toBeGreaterThan(0);
+    expect(Math.max(...todas)).toBeLessThan(30);
   });
 
-  it('continua portal, fora do scroller que recortaria o fixed', () => {
+  it('continua portal no document.body, fora do scroller que recortaria o fixed', () => {
     expect(fonte).toMatch(/createPortal\(\s*<Tooltip>/);
+    expect(fonte).toMatch(/createPortal\([\s\S]*?,\s*document\.body\s*,?\s*\)/);
   });
 });
