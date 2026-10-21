@@ -30,6 +30,9 @@ import path from 'node:path';
 // passo grava com `tee` (convencao E43: /tmp/step-<id>.log).
 export const PASSOS = [
   { id: 'migrations', nome: 'Comparar migrations com schema_migrations', log: '/tmp/step-migrations.log' },
+  // GA25: version no ledger desde 16/10/2026 sem Deployment producao-ddl e
+  // DDL fora do fluxo (o apply do db-migrate registra o Deployment).
+  { id: 'ddl-fora-do-fluxo', nome: 'Detector de DDL fora do fluxo (GA25)', log: '/tmp/step-ddl-fluxo.log' },
   { id: 'acl-mcp-exec', nome: 'Verificar ACL e contrato de mcp_exec', log: '/tmp/step-acl-mcp-exec.log' },
   { id: 'acl-webhook', nome: 'Verificar ACL da dead-letter queue de webhooks', log: '/tmp/step-acl-webhook.log' },
   { id: 'acl-talkx-metrics', nome: 'Verificar security_invoker da view de metricas Talk X', log: '/tmp/step-acl-talkx-metrics.log' },
@@ -53,6 +56,7 @@ export const PASSOS = [
 // outro drift (migration, reset de ambiente), e a raiz deve apontar o estrutural.
 export const ORDEM_CAUSA = [
   'migrations',
+  'ddl-fora-do-fluxo',
   'catalog',
   'manifest',
   'types',
