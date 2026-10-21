@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -27,6 +27,7 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { useTalkXConfirm } from './kit/useTalkXConfirm';
+import type { TalkXTemplateTab } from './talkxTemplateRoute';
 import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -57,13 +58,23 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  /** X047 — estado da consulta do PAI (a mesma que alimenta a biblioteca). Quando
+   * presente, tem precedência: o erro interno do hook não derruba biblioteca já
+   * carregada. Ausente = o editor usa a própria consulta do hook. */
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+  /** X092 — sub-aba inicial (sugestão A/B abre direto nas variações). */
+  initialTtab?: TalkXTemplateTab;
+  /** X094 — a troca de template feita DENTRO do editor espelha no endereço. */
+  onActiveTemplateChange?: (templateId: string) => void;
   editing: TalkXTemplate | null;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError: isErrorProp, error: errorProp, onRetry: onRetryProp, initialTtab, onActiveTemplateChange, editing, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -72,6 +83,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     // falhando, caía no vazio ("Nenhum template") como se a base estivesse vazia.
     isError: templatesIsError, error: templatesError, refetch: refetchTemplates,
   } = useTalkXTemplates();
+  // X047 — o pai manda o estado da consulta dele; o `??` só usa o hook quando o
+  // pai não mandou nada (pai com `isError: false` explícito não herda erro do hook).
+  const libIsError = isErrorProp ?? templatesIsError;
+  const libError = errorProp ?? templatesError;
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
   const { confirmar, dialogo } = useTalkXConfirm();
 
@@ -104,7 +119,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -216,6 +231,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
     activateTemplate(t.id);
+    onActiveTemplateChange?.(t.id);
     versionsTemplateIdRef.current = null;
     // R2-MOD-024: trocar de template zera o loading do historico. Sem isto, uma
     // resposta pendente de A descartada na troca para B prendia `loadingVersions`.
@@ -282,6 +298,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     if (!isActiveOrigin(templateId)) return;
     setVariants(vs);
   };
+
+  // X092 — sugestão A/B abre o editor já nas variações: carrega ao montar.
+  // (O editor remonta por template via `key`, então o efeito só de montagem basta.)
+  useEffect(() => {
+    if (initialTtab === 'ab' && editing?.id) { void loadVariants(editing.id); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- montagem por template (key)
+  }, []);
 
   const removeVariant = async (variant: TemplateVariant) => {
     const templateId = variant.template_id;
@@ -477,9 +500,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              query={{ isLoading, isError: libIsError, error: libError }}
               entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
+              onRetry={() => { if (onRetryProp) onRetryProp(); else void refetchTemplates(); }}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}

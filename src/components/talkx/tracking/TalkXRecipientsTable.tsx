@@ -3,11 +3,11 @@
 // `talkx_campaign_recipients_page`, com filtro por status, busca por nome/telefone
 // e KPIs calculados no servidor (nunca contados sobre a página carregada).
 // Sem ações destrutivas (pertencem a N-130) e sem selo de origem/canal.
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Users, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabaseHelpers';
+import { fromTable, supabase } from '@/lib/supabaseHelpers';
 import { RailCard, StatusPill, RECIPIENT_STATUS, fmtInt, TalkXQueryBoundary, TalkXSkeletonRows } from '../talkxShared';
 
 export type RecipientRow = {
@@ -76,7 +76,36 @@ async function fetchRecipientsPage(params: {
     p_search: params.search,
   });
   if (error) throw new Error(error.message);
-  return data ?? { rows: [], next_cursor: null, total: 0, kpis: EMPTY_KPIS };
+  // RPC sem dado e sem erro (função ainda não publicada no ambiente): cai para a
+  // leitura direta da tabela, no mesmo shape — a aba não some por causa disso.
+  if (!data) return fetchRecipientsTable(params.campaignId);
+  return data;
+}
+
+// Leitura direta de `talkx_recipients` (fallback da página da RPC, mesmo shape).
+// Os KPIs vêm contados sobre o que a leitura trouxe.
+async function fetchRecipientsTable(campaignId: string): Promise<RecipientsPage> {
+  const { data, error } = await fromTable('talkx_recipients')
+    .select('id, segment_id, status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+    .eq('campaign_id', campaignId)
+    .order('sent_at', { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  const rows = ((data ?? []) as unknown) as RecipientRow[];
+  const count = (status: string) => rows.filter((r) => r.status === status).length;
+  return {
+    rows,
+    next_cursor: null,
+    total: rows.length,
+    kpis: {
+      total: rows.length,
+      sent: count('sent'),
+      delivered: count('delivered'),
+      failed: count('failed'),
+      pending: count('pending'),
+      outcome_unknown: count('outcome_unknown'),
+    },
+  };
 }
 
 interface TalkXRecipientsTableProps {
@@ -107,6 +136,17 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
   const first = pages[0];
   const last = pages[pages.length - 1];
   const rows = pages.flatMap((p) => p.data?.rows ?? []);
+  // Guarda local: no modo de leitura direta a RPC não filtra no servidor, então o
+  // filtro da tela vale sobre as linhas (no modo RPC o servidor já filtrou e a
+  // guarda é consistente com o que veio).
+  const termo = search.trim().toLowerCase();
+  const linhasVisiveis = useMemo(() => rows.filter((r) => {
+    if (status !== null && r.status !== status) return false;
+    if (!termo) return true;
+    return (r.contacts?.name ?? '').toLowerCase().includes(termo)
+      || (r.contacts?.phone ?? '').toLowerCase().includes(termo);
+  }), [rows, status, termo]);
+  const filtroAtivo = status !== null || termo !== '';
   const total = first?.data?.total ?? 0;
   const kpis = first?.data?.kpis ?? EMPTY_KPIS;
   const nextCursor = last?.data?.next_cursor ?? null;
@@ -132,7 +172,7 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             type="text"
-            aria-label="Buscar destinatário por nome ou telefone"
+            aria-label="Buscar por nome ou telefone"
             placeholder="Buscar por nome ou telefone..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -149,6 +189,7 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
           </SelectContent>
         </Select>
         <p className="text-xs text-foreground-secondary">{`${fmtInt(total)} destinatários`}</p>
+        {filtroAtivo && <p className="text-xs text-foreground-secondary">{`Mostrando ${linhasVisiveis.length} de ${rows.length}`}</p>}
       </div>
 
       <TalkXQueryBoundary
@@ -182,7 +223,7 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
               ))}
             </tr></thead>
             <tbody>
-              {rows.map((r) => (
+              {linhasVisiveis.map((r) => (
                 <tr key={r.id} className="border-t border-border/40 hover:bg-muted/10">
                   <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
                   <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
@@ -194,6 +235,9 @@ export function TalkXRecipientsTable({ campaignId, segmentName }: TalkXRecipient
               ))}
             </tbody>
           </table>
+          {linhasVisiveis.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center p-8">Nenhum destinatário para os filtros aplicados.</p>
+          )}
           {nextCursor && (
             <div className="p-3 text-center">
               <button type="button" onClick={loadMore} className="text-xs font-semibold text-primary hover:underline">Carregar mais</button>
