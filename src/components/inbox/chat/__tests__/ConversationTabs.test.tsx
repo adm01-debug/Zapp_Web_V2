@@ -107,12 +107,26 @@ describe('ConversationTabs', () => {
     }
   });
 
-  it('mantém a ação do canto direito fora da semântica de abas', () => {
+  it('mantém a ação no extremo direito sem deslocar abas nem contadores', () => {
     const action = <button type="button">TALK ME</button>;
-    render(<ConversationTabs activeTab="chat" onTabChange={vi.fn()} counts={ZERO} trailingAction={action} />);
+    render(
+      <ConversationTabs
+        activeTab="chat"
+        onTabChange={vi.fn()}
+        counts={{ ...ZERO, tasksOpen: 7 }}
+        trailingAction={action}
+      />,
+    );
 
-    expect(screen.getByRole('button', { name: 'TALK ME' })).toBeInTheDocument();
-    expect(within(screen.getByRole('tablist')).queryByRole('button', { name: 'TALK ME' })).not.toBeInTheDocument();
+    const barra = screen.getByTestId('conversation-tabs');
+    const tablist = screen.getByRole('tablist');
+    const trailing = screen.getByTestId('conversation-tabs-trailing-action');
+    expect(trailing).toContainElement(screen.getByRole('button', { name: 'TALK ME' }));
+    expect(barra.lastElementChild).toBe(trailing);
+    expect(trailing).toHaveClass('shrink-0');
+    expect(tablist).toHaveClass('min-w-0', 'flex-1', 'overflow-x-auto');
+    expect(within(tablist).queryByRole('button', { name: 'TALK ME' })).not.toBeInTheDocument();
+    expect(within(tablist).getByTestId('conversation-tab-count-tasks')).toHaveTextContent('7');
     expect(screen.getAllByRole('tab')).toHaveLength(8);
   });
 });
