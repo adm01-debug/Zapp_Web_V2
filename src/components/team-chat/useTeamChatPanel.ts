@@ -10,7 +10,7 @@ import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactio
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { uploadTeamMedia, TEAM_CHAT_FILES_BUCKET } from '@/hooks/team-chat/uploadTeamMedia';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 
 const log = getLogger('TeamChatPanel');
 
@@ -66,10 +66,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
 
-  // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
-  // conversa, então o reset acontece no render (mesmo padrão de
-  // useFilesViewState). Sem isso o texto de uma conversa aparece na outra e o
-  // autosave do rascunho grava na chave errada — idem para o reply_to.
   const [conversationScopeId, setConversationScopeId] = useState(conversation.id);
   if (conversationScopeId !== conversation.id) {
     setConversationScopeId(conversation.id);
@@ -94,9 +90,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const reactions = useTeamMessageReactions(conversation.id);
 
   const { settings, isLoading: settingsLoading } = useUserSettings();
-  // TC-007: a fonte única do mute é a membership (`team_conversation_members.is_muted`) —
-  // exatamente onde `useToggleMuteConversation` grava. Antes a leitura vinha de
-  // `user_settings.muted_conversations`, então o estado exibido não refletia o banco.
   const isMuted = useMemo(() => {
     const me = conversation.members?.find(m => m.profile_id === profile?.id);
     return !!me?.is_muted;
@@ -107,10 +100,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return r === 'admin' || r === 'supervisor';
   }, [profile]);
 
-  // Cartão "transferir conversa de departamento": o vínculo da conversa é o
-  // próprio departamento, então só faz sentido oferecer o seletor para quem já
-  // pode transferir (`canTransfer`, a única regra de papel) E numa conversa de
-  // departamento. A tela de componentes lê este flag para montar o seletor.
   const canTransferDepartment = useMemo(
     () => canTransfer && conversation.type === 'department',
     [canTransfer, conversation.type],
@@ -154,11 +143,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return combined;
   }, [olderMessages, newestMessages]);
 
-  // TC-006 — o reset por conversa roda ANTES do init do cursor: se rodasse
-  // depois (como estava), o `setOldestCursor(null)` do reset apagava o cursor
-  // que o efeito de init tinha acabado de gravar (ambos disparam no mesmo
-  // commit de montagem/troca), e a paginação nunca começava — as mensagens
-  // antigas ficavam inalcançáveis.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderMessages([]);
@@ -193,14 +177,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
     try {
-      // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
-      // mensagens que empatam no mesmo instante: o lote seguinte trazia
-      // `created_at < cursor` e as empatadas com o instante do cursor ficavam
-      // de fora. O `id` desempata de forma estável e casa com o
-      // `order by created_at desc, id desc` das consultas. As aspas no
-      // timestamptz são obrigatórias (o valor serializado traz ':' e '+', que o
-      // parser de filtro do PostgREST leria como separadores) — mesmo padrão de
-      // `useCSAT`.
       const ts = `"${oldestCursor.createdAt}"`;
       const { data, error } = await supabase
         .from('team_messages')
@@ -230,30 +206,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
-  // SL-082 (F69) — a busca filtrava SÓ o que já estava carregado (as mensagens
-  // mais novas + as páginas abertas): um termo que existia numa mensagem antiga
-  // nunca era achado, e o contador contava só o subconjunto local. Agora o termo
-  // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
-  // inteira) e a lista exibida durante a busca é o resultado dela.
   const searchTerm = debouncedSearchQuery.trim();
-  // O recorte salvo carrega a CONVERSA a que pertence, não só o termo: o painel é
-  // o MESMO componente quando o atendente troca de conversa (não tem `key`) e o
-  // termo digitado continua, então um registro só vale para a tela se a conversa
-  // e o termo atuais forem os que o produziram.
   const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; results: TeamMessage[] } | null>(null);
-  // SL-082 (refazer) — a falha da RPC ficava guardada como `results: []`, ou seja,
-  // o mesmo estado de "a busca não achou nada": a tela anunciava "Nenhuma
-  // mensagem encontrada" quando na verdade o servidor falhou. O erro é um estado
-  // SEPARADO (e preso ao termo que o produziu), para a tela poder dizer a verdade.
-  // A falha também é presa à conversa que a produziu: com o mesmo termo digitado,
-  // a falha da conversa A não pode aparecer na conversa B enquanto a busca de B
-  // ainda estava em voo.
   const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
 
   useEffect(() => {
     if (!searchTerm) return;
-    // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
-    // que diz se a resposta ainda interessa ao que está na tela.
     const conversationId = conversation.id;
     let cancelado = false;
     void (async () => {
@@ -265,20 +223,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       if (cancelado) return;
       if (error) {
         log.error('Erro ao buscar mensagens no servidor', error);
-        // Nada de `results: []` aqui: lista vazia é resultado de busca legítimo,
-        // falha do servidor não. Limpar o resultado anterior evita que ele seja
-        // exibido como se fosse a resposta deste termo.
         setServerSearch(null);
         setServerSearchError({ conversationId, term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
         return;
       }
-      // Busca que deu certo limpa o erro anterior: o painel é o MESMO componente
-      // quando o atendente troca de conversa (o termo digitado continua), então o
-      // aviso de falha não pode ficar na tela por cima do resultado que chegou.
       setServerSearchError(null);
-      // A RPC devolve o recorte de busca (id, remetente, conteúdo, data): o
-      // TeamMessageItem compõe a linha a partir daqui, sem mídia/recibo — a
-      // mensagem de resultado é texto puro.
       const rows = (data ?? []) as {
         id: string; sender_id: string; content: string; created_at: string; sender_name: string | null;
       }[];
@@ -306,15 +255,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   }, [searchTerm, conversation.id]);
 
   const searchActive = searchTerm.length > 0;
-  // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
-  // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
-  // anunciar um resultado que ainda não existe.
-  // A falha do servidor tem precedência: com erro não se está mais "buscando" (a
-  // resposta chegou) e o que a tela mostra é a falha, não um resultado.
-  // Registro de OUTRA conversa (ou de outro termo) não vale para o que está na
-  // tela: com o mesmo termo digitado, o aviso e os resultados que a busca da
-  // conversa anterior deixou não podem aparecer na conversa atual enquanto a
-  // busca dela ainda está pendente.
   const serverSearchMatches = serverSearch?.conversationId === conversation.id
     && serverSearch?.term === searchTerm;
   const searchError = searchActive
@@ -360,10 +300,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     } catch (err) {
       log.error('Erro ao enviar mensagem', err);
       toast.error('Erro ao enviar mensagem');
-      // TC-010: o campo era limpo ANTES do await e nada voltava no erro — uma
-      // falha de rede/RLS apagava o rascunho e a resposta sem recuperação.
-      // Devolve o que foi enviado, mas nunca sobrescreve o que o usuário já
-      // digitou enquanto o envio estava em voo (só restaura se ainda vazio).
       setText(prev => (prev.length === 0 ? content : prev));
       setReplyTo(prev => (prev === null ? reply : prev));
     }
@@ -405,15 +341,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     void navigator.clipboard.writeText(content).then(() => toast.success('Copiado!'));
   }, []);
 
-  // R2-INB-058 (#350-B): o chamador precisa saber se o áudio foi enviado.
-  // `undefined` era lido como sucesso pelo TextToAudioButton, que descartava a
-  // prévia. Agora todo caminho devolve boolean: `true` SÓ após a mutação confirmar;
-  // quando `handleAudioSend` devolve `false` ou rejeita, o TextToAudioButton PRESERVA
-  // a prévia do áudio gerado e só a descarta no envio confirmado com `true`.
   const handleAudioSend = useCallback(async (blob: Blob): Promise<boolean> => {
     if (!profile?.id) return false;
-    // SL-072: o formato do upload vem do blob real — webm no Chrome, mp4/m4a no
-    // Safari (e mp3 no TTS). Antes ia webm fixo e o Safari não tocava o áudio.
     const { extension, contentType } = resolveAudioUploadFormat(blob);
     try {
       const locator = await uploadTeamMedia({
