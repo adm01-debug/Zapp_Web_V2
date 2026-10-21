@@ -90,12 +90,12 @@ test('N-022: o pin do Playwright nos workflows é a versão do bun.lock', async 
 test('N-022: aponta o pin divergente e ignora o que não é pin do Playwright', () => {
   const texto = [
     '        run: bunx playwright@1.62.0 install --with-deps chromium', // divergente
-    '        run: bunx playwright@1.63.0 install-deps chromium', // ok
+    '        run: bunx playwright@1.64.1 install-deps chromium', // ok
     '        run: bun i playwright-core', // dependência, não é pin
     '        uses: microsoft/playwright-github-action@v1', // ação, não é pin
   ].join('\n');
-  assert.deepEqual(pinsDivergentes(texto, 'e2e-talkx.yml', '1.63.0'), [
-    { nome: 'e2e-talkx.yml', linha: 1, pinado: '1.62.0', esperado: '1.63.0' },
+  assert.deepEqual(pinsDivergentes(texto, 'e2e-talkx.yml', '1.64.1'), [
+    { nome: 'e2e-talkx.yml', linha: 1, pinado: '1.62.0', esperado: '1.64.1' },
   ]);
 });
 

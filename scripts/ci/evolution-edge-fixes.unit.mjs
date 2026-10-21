@@ -276,10 +276,11 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
   );
 });
 
-test("rotas sem equivalente na GO foram removidas do handler (SL-075 E43)", () => {
-  // E43: as rotas sem equivalente na GO sairam do handler (404 antes de I/O).
+test("rotas legadas da Evolution V2 permanecem explícitas no handler", () => {
+  // A implantação V2 ainda sustenta estas rotas; a flavor GO responde com a
+  // mensagem de incompatibilidade quando necessário. O contrato aqui impede
+  // que elas desapareçam silenciosamente sem uma decisão de compatibilidade.
   for (const action of [
-    "find-messages", "find-status-messages", "find-chats", "set-presence",
     "set-settings", "get-settings", "get-webhook", "send-template",
     "mark-unread", "invite-info", "toggle-ephemeral", "offer-call",
     "set-chatwoot", "get-chatwoot", "delete-chatwoot", "set-typebot",
@@ -294,9 +295,9 @@ test("rotas sem equivalente na GO foram removidas do handler (SL-075 E43)", () =
     "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher",
     "get-pusher",
   ]) {
-    assert.equal(
+    assert.notEqual(
       apiSrc.indexOf(`if (action === '${action}')`), -1,
-      `action ${action} devia ter sido removida (a GO nao tem a rota)`,
+      `action ${action} precisa continuar explícita para a flavor V2`,
     );
   }
 });

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -153,7 +153,8 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
   }
 
   return (
-    <div className="space-y-4">
+    <MotionConfig reducedMotion="user">
+      <div className="space-y-4">
       <PageHeader
         title="Agendamentos"
         subtitle="Mensagens agendadas organizadas por data"
@@ -335,6 +336,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
           </ScrollArea>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </MotionConfig>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';

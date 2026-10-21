@@ -228,14 +228,14 @@ const TAREFA_E76 = { id: 'E76', status: 'IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE',
 const TAREFA_E62 = { id: 'E62', status: 'PARTIAL', documentation: { original_claim: 'UNCHECKED' } };
 
 const PLANO_ANTES = [
-  '- [x] **E76** - `bunx playwright@1.63.0` -> `bunx playwright`.',
+  '- [x] **E76** - `bunx playwright@1.64.1` -> `bunx playwright`.',
   '- [ ] **E62** - Destino do `db-migrate.yml`.',
 ].join('\n');
 
 const PLANO_DEPOIS = [
-  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.63.0 entre lock e workflows).',
+  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.64.1 entre lock e workflows).',
   '- [~] **E62** - PARCIAL (12 contratos extraidos).',
-  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.63.0) | nao ha mismatch; remover o pin e opcao da E75 |',
+  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.64.1) | nao ha mismatch; remover o pin e opcao da E75 |',
   '| **E62** | `[~]` PARCIAL | PR #1778 | guardas de DB preservadas |',
 ].join('\n');
 
@@ -291,11 +291,11 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 15 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 15);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*15 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
@@ -354,19 +354,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 

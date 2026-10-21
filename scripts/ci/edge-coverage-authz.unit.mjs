@@ -66,6 +66,8 @@ export const TEST_FILES = [
 export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-auth-service-path.test.ts',
   'ai-audio-authz-runtime.test.ts',
+  'gmail-reauth-required.test.ts',
+  'require-auth-profile-active.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
 ];

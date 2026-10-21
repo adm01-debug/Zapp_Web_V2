@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { motion } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -14,7 +14,7 @@ import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
   UserPlus, Building, Eye, Loader2,
-  Brain, CalendarClock, AlertTriangle, ChevronLeft, ChevronRight,
+  AlertTriangle, ChevronLeft, ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
@@ -43,7 +43,7 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis' | 'cron';
+type AdminTab = 'users' | 'audit' | 'crm';
 
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
@@ -59,7 +59,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
+  const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -178,19 +178,27 @@ export function AdminView() {
     );
   }
 
-  // A aba "Tarefas agendadas" é SÓ de admin: as RPCs que ela usa
-  // (`admin_list_cron_jobs`/`admin_toggle_cron_job`) recusam quem não é admin — um
-  // supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado).
   const abas: ReadonlyArray<readonly [AdminTab, LucideIcon, string]> = [
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
-    ['playbooks', Shield, 'Playbooks'],
-    ['copilot', Brain, 'Copilot IA'],
-    ['training', Users, 'Treinamento'],
-    ['crisis', Shield, 'Sala de Crise'],
-    ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
   ];
+
+  const navegarNasAbas = (event: KeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
+    const indice = abas.findIndex(([id]) => id === tab);
+    if (indice < 0) return;
+    let proximo = indice;
+    if (event.key === 'ArrowRight') proximo = (indice + 1) % abas.length;
+    else if (event.key === 'ArrowLeft') proximo = (indice - 1 + abas.length) % abas.length;
+    else if (event.key === 'Home') proximo = 0;
+    else if (event.key === 'End') proximo = abas.length - 1;
+    else return;
+
+    event.preventDefault();
+    const proximaAba = abas[proximo][0];
+    setActiveTab(proximaAba);
+    tabsRef.current[proximaAba]?.focus();
+  };
 
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
@@ -208,10 +216,22 @@ export function AdminView() {
         </div>
       </motion.div>
 
-      <div className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
-          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
-            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
+      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
+        {abas.map(([tab, Icon, label]) => (
+          <Button
+            key={tab}
+            id={`tab-${tab}`}
+            role="tab"
+            aria-selected={activeTab === tab}
+            aria-controls="admin-tabpanel"
+            tabIndex={activeTab === tab ? 0 : -1}
+            ref={(element) => { tabsRef.current[tab] = element; }}
+            onClick={() => setActiveTab(tab)}
+            onKeyDown={(event) => navegarNasAbas(event, tab)}
+            variant={activeTab === tab ? 'default' : 'outline'}
+            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''}
+            size="sm"
+          >
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}

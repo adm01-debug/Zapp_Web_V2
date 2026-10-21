@@ -381,7 +381,7 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
     assert.ok(doc.includes(trecho), `TESTING_CONVENTION.md não cita o passo real da CI: \`${trecho}\``);
   }
   const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs');
-  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]+)`/);
+  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]*)`/);
   assert.ok(comandoNodeDoc, 'TESTING_CONVENTION.md não cita o comando node:test da CI');
   assert.equal(
     normalizaEspacos(comandoNodeDoc[1]),

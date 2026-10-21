@@ -75,7 +75,13 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: UID } }, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }) }),
+    select: () => {
+      const query = {
+        order: () => query,
+        range: () => Promise.resolve({ data: [emoji()], error: null }),
+      };
+      return query;
+    },
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
       return Promise.resolve({ error: null });
