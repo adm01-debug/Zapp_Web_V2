@@ -29,7 +29,7 @@ const h = vi.hoisted(() => {
     id: string,
     status: string,
     instanceId: string | null = `inst-${id}`,
-    extra: Partial<Conexao> = {},
+    extra: Partial<Conexao> = {}
   ): Conexao => ({
     id,
     name: `Conexão ${id}`,
@@ -94,7 +94,12 @@ vi.mock('@/hooks/crm/useAgents', () => ({
 }));
 
 vi.mock('@/hooks/agents/useAgentPendingCounts', () => ({
-  useAgentPendingCounts: () => ({ pendingCounts: {}, isLoading: false, error: null, refetch: vi.fn() }),
+  useAgentPendingCounts: () => ({
+    pendingCounts: {},
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
 }));
 
 vi.mock('@/hooks/agents/useAgentRecentSends', () => ({
@@ -103,6 +108,13 @@ vi.mock('@/hooks/agents/useAgentRecentSends', () => ({
 
 vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
+}));
+
+// AgentsView monta o InviteAgentDialog (sempre no DOM, mesmo fechado), que lê
+// o papel via useUserRole -> useAuth. Sem AuthProvider no teste, dubla o papel
+// direto — mesmo padrão já usado em AgentsView.capacidade/.pendencias.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
 }));
 
 import { AgentsView } from '@/components/agents/AgentsView';
@@ -114,7 +126,7 @@ function renderView() {
       <QueryClientProvider client={qc}>
         <AgentsView />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -192,7 +204,7 @@ describe('AgentsView — cabeçalho de conexões do WhatsApp (t_b35c23b0)', () =
 
     const cabecalho = screen.getByRole('region', { name: 'Saúde das conexões do WhatsApp' });
     expect(
-      within(cabecalho).getByText('Não foi possível carregar as conexões do WhatsApp.'),
+      within(cabecalho).getByText('Não foi possível carregar as conexões do WhatsApp.')
     ).toBeInTheDocument();
     expect(within(cabecalho).queryByText('Nenhuma conexão de WhatsApp cadastrada.')).toBeNull();
   });
@@ -203,7 +215,7 @@ describe('AgentsView — cabeçalho de conexões do WhatsApp (t_b35c23b0)', () =
 
     const cabecalho = screen.getByRole('region', { name: 'Saúde das conexões do WhatsApp' });
     expect(
-      within(cabecalho).getByText('Nenhuma conexão de WhatsApp cadastrada.'),
+      within(cabecalho).getByText('Nenhuma conexão de WhatsApp cadastrada.')
     ).toBeInTheDocument();
   });
 });

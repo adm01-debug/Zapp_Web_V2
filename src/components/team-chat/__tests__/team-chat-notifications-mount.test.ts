@@ -13,6 +13,19 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+}));
+// @/providers/AppProviders é dublado abaixo como passthrough (sem contexto
+// real); DeferredProviders (App.tsx) chama useAuth() direto — dubla também,
+// senão quebra com "useAuth must be used within an AuthProvider".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null, user: null, session: null, loading: false }),
+}));
+// Dependência real de DeferredProviders (useGlobalIncomingMessageAlerts ->
+// useSupabaseRealtime -> supabase.channel): o assunto aqui é só o listener do
+// Team Chat (TC-007), então essa cadeia vira no-op, como os outros overlays.
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
@@ -54,17 +67,23 @@ vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
   useActiveTeamChatConversation: h.publishActiveConversation,
   useTeamChatNotifications: vi.fn(),
 }));
-vi.mock('@/components/team-chat/TeamConversationList', () => ({ TeamConversationList: () => null }));
+vi.mock('@/components/team-chat/TeamConversationList', () => ({
+  TeamConversationList: () => null,
+}));
 vi.mock('@/components/team-chat/TeamChatPanel', () => ({ TeamChatPanel: () => null }));
 vi.mock('@/components/team-chat/TeamMemberDetails', () => ({ TeamMemberDetails: () => null }));
-vi.mock('@/components/team-chat/NewConversationDialog', () => ({ NewConversationDialog: () => null }));
+vi.mock('@/components/team-chat/NewConversationDialog', () => ({
+  NewConversationDialog: () => null,
+}));
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
+  Button: ({ children }: { children: React.ReactNode }) =>
+    React.createElement('button', null, children),
 }));
 vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
+    div: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
   },
 }));
 
