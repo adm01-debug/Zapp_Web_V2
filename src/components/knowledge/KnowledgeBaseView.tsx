@@ -41,6 +41,8 @@ export function KnowledgeBaseView() {
   // Excluir é destrutivo e sem volta: o clique na linha só abre o diálogo; a
   // exclusão só sai na confirmação. Guardamos o botão de origem para devolver o foco.
   const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
+  // Excluir artigo também é destrutivo: mesmo desenho do arquivo, diálogo próprio.
+  const [articleToDelete, setArticleToDelete] = useState<{ id: string; title: string } | null>(null);
   const deleteOriginRef = useRef<HTMLButtonElement | null>(null);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -98,6 +100,13 @@ export function KnowledgeBaseView() {
     if (fileToDelete) void handleDeleteFile(fileToDelete.id);
   };
 
+  const confirmDeleteArticle = () => {
+    if (articleToDelete) {
+      void deleteArticle(articleToDelete.id);
+      setArticleToDelete(null);
+    }
+  };
+
   const filteredArticles = articles.filter(a => {
     const matchesSearch = !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.content.toLowerCase().includes(search.toLowerCase());
     return matchesSearch && (selectedCategory === 'all' || a.category === selectedCategory);
@@ -141,7 +150,7 @@ export function KnowledgeBaseView() {
                     <div className="flex items-center gap-2">{statusIcon(article.embedding_status)}<Badge variant="outline" className="text-3xs">{CATEGORY_LABELS[article.category] || article.category}</Badge></div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`Editar artigo: ${article.title}`} onClick={() => openEdit(article)}><Edit className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label={`Excluir artigo: ${article.title}`} onClick={() => deleteArticle(article.id)}><Trash2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label={`Excluir artigo: ${article.title}`} onClick={(e) => { deleteOriginRef.current = e.currentTarget; setArticleToDelete({ id: article.id, title: article.title }); }}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </div>
                   <h2 className="font-semibold text-sm text-foreground mb-1">{article.title}</h2>
@@ -235,6 +244,30 @@ export function KnowledgeBaseView() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmDeleteFile}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excluir artigo é destrutivo: o clique na linha só abre este diálogo. */}
+      <AlertDialog open={articleToDelete !== null} onOpenChange={(next) => { if (!next) setArticleToDelete(null); }}>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const origem = deleteOriginRef.current;
+            if (origem && origem.isConnected) origem.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir artigo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O artigo <strong>{articleToDelete?.title}</strong> sai da base de conhecimento. Não pode ser desfeito.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmDeleteArticle}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

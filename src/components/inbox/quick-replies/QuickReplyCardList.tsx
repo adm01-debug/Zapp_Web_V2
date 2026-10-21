@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Star, Trash2, Edit2, Copy, Clock, TrendingUp, Sparkles,
 } from 'lucide-react';
@@ -28,6 +33,9 @@ export function QuickReplyCardList({
   templates, groupedByCategory, isLoading, activeTab, searchQuery,
   isFavorite, onSelect, onToggleFavorite, onCopy, onEdit, onDelete, onShowCreate,
 }: QuickReplyCardListProps) {
+  // Excluir resposta rápida é destrutivo: o clique na lixeira só abre a
+  // confirmação; a exclusão sai no "Excluir" do diálogo.
+  const [pendingDelete, setPendingDelete] = useState<QuickReplyTemplate | null>(null);
   if (isLoading) {
     return (
       <ScrollArea className="h-[400px] pr-4">
@@ -99,7 +107,7 @@ export function QuickReplyCardList({
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onEdit(template); }}>
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" aria-label={`Excluir resposta rápida: ${template.title}`} onClick={(e) => { e.stopPropagation(); setPendingDelete(template); }}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -111,6 +119,25 @@ export function QuickReplyCardList({
           </div>
         ))}
       </div>
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(next) => { if (!next) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? `"${pendingDelete.title}" será excluída da lista. Esta ação não pode ser desfeita.` : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={() => { if (pendingDelete) onDelete(pendingDelete.id); setPendingDelete(null); }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ScrollArea>
   );
 }

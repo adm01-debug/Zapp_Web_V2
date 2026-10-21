@@ -8,6 +8,7 @@ import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2, AlertCircle } from '
 import { toast } from 'sonner';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { createStorageObjectId, requireUserStoragePath } from '@/lib/storage_object_upload';
 import { zappTransition } from '@/lib/motion';
 
 /** Aviso único quando o navegador recusa a reprodução por gesto/autoplay. */
@@ -65,11 +66,19 @@ interface VoiceChangerPickerProps {
    * Pode ser síncrono ou assíncrono; devolver `false` ou rejeitar conta como
    * falha e preserva a prévia (regressão #350).
    */
-  onSendAudioBlob: (blob: Blob) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;
+  onSendAudioBlob?: (blob: Blob) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;
+  /**
+   * PK-17 — a voz transformada é dado pessoal: quando presente, o picker sobe o
+   * mp3 para o bucket privado `voice-changer-tmp` na pasta do usuário
+   * (`<uid>/voice_<ts>_<uuid>.mp3`, expurgo por TTL de 24 h) e entrega a URL
+   * assinada do objeto (bucket privado não tem URL pública). Sem sessão não há
+   * upload nem envio.
+   */
+  onSendAudio?: (signedUrl: string) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;
   disabled?: boolean;
 }
 
-export function VoiceChangerPicker({ onSendAudioBlob, disabled }: VoiceChangerPickerProps) {
+export function VoiceChangerPicker({ onSendAudioBlob, onSendAudio, disabled }: VoiceChangerPickerProps) {
   const [open, setOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('grave');
@@ -315,13 +324,39 @@ export function VoiceChangerPicker({ onSendAudioBlob, disabled }: VoiceChangerPi
     try {
       const response = await fetch(transformedUrl);
       const blob = await response.blob();
+      // PK-17: com `onSendAudio`, a voz transformada sobe para o temporário do
+      // usuário e o envio leva a URL assinada do MESMO objeto.
+      if (onSendAudio) {
+        const { data: { user } } = await supabase.auth.getUser();
+        let caminho: string;
+        try {
+          caminho = requireUserStoragePath(user?.id, `voice_${Date.now()}_${createStorageObjectId()}.mp3`);
+        } catch {
+          toast.error('Sessão expirada: entre de novo para enviar a voz transformada');
+          return;
+        }
+        const { error: uploadError } = await supabase.storage
+          .from('voice-changer-tmp')
+          .upload(caminho, blob);
+        if (uploadError) throw uploadError;
+        const { data: assinada, error: assinaturaError } = await supabase.storage
+          .from('voice-changer-tmp')
+          .createSignedUrl(caminho, 3600);
+        if (assinaturaError || !assinada?.signedUrl) throw assinaturaError ?? new Error('Não foi possível gerar a URL assinada');
+        const resultado = await onSendAudio(assinada.signedUrl);
+        if (resultado === false) throw new Error('Envio de áudio não confirmado');
+        setOpen(false);
+        cleanup();
+        toast.success('Áudio enviado! 🎤');
+        return;
+      }
       // O upload é do caminho do áudio gravado (bucket privado, pasta do
       // contato/conversa) e fica com quem conhece essa pasta — o picker só
       // entrega o Blob. O envio da mensagem pode ser síncrono ou assíncrono e
       // pode falhar (`false` ou rejeição). Só fecha o popover e limpa a prévia
       // DEPOIS da confirmação de sucesso — assim uma falha preserva
       // `transformedUrl` para o usuário tentar de novo (#350).
-      const resultado = await onSendAudioBlob(blob);
+      const resultado = onSendAudioBlob ? await onSendAudioBlob(blob) : undefined;
       if (resultado === false) throw new Error('Envio de áudio não confirmado');
       setOpen(false);
       cleanup();
@@ -331,7 +366,7 @@ export function VoiceChangerPicker({ onSendAudioBlob, disabled }: VoiceChangerPi
     } finally {
       setIsSending(false);
     }
-  }, [transformedUrl, isSending, onSendAudioBlob, cleanup]);
+  }, [transformedUrl, isSending, onSendAudioBlob, onSendAudio, cleanup]);
 
   return (
     <Tooltip>
