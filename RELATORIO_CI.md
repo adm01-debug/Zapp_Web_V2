@@ -80,10 +80,64 @@ O job "Validar gerador e manifesto de deployment" detectou o manifesto desatuali
 
 ---
 
+## Baseline local (pré-push, branch `claude/kind-gates-87mwoe`)
+
+Executado via pre-push hook antes do envio ao GitHub (saída dos ratchets):
+
+| Verificação | Resultado |
+|------------|-----------|
+| TypeCheck ratchet | baseline=93, atual=89, removidas=4, **novas=0** ✅ |
+| Lint ratchet | baseline=819, atual=819, mantidas=819, removidas=0, **novas=0** ✅ |
+| Migrations estrutura | 1051 arquivos válidos ✅ |
+| Build (CI) | ✅ success — [run 39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) |
+
+> Nota: `tsc -b` direto no container falha por OOM (heap 2 GB insuficiente para 93 k arquivos). O ratchet usa `tsc --incremental` com `--max-old-space-size=4096` e passa; o CI usa o mesmo parâmetro e confirmou `conclusion=success` para `🔎 TypeCheck`.
+
+---
+
+## Prova de conclusão — SHA `de94df9e` (PR #2182)
+
+> Atualizado em 2026-10-21 ~23:02 UTC. Checks ainda em andamento são marcados ⏳.
+
+### Checks obrigatórios (6)
+
+| Check obrigatório | Link | Conclusão |
+|------------------|------|-----------|
+| `🔍 Lint & TypeCheck` (`🔎 TypeCheck`) | [job 119534504708](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504708) | ✅ success |
+| `🧪 Unit Tests (1/3)` | [job 119534504746](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504746) | ⏳ in_progress |
+| `🧪 Unit Tests (2/3)` | [job 119534504560](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504560) | ⏳ in_progress |
+| `🧪 Unit Tests (3/3)` | [job 119534504618](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504618) | ⏳ in_progress |
+| `🏗️ Build` | [run 39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) | ⏳ in_progress |
+| `🔒 Security Audit` | [job 119534504268](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504268) | ✅ success |
+| `Contrato DB offline` | [job 119534281473](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218191/job/119534281473) | ❌ failure — DASH-091/092 (PENDENCIAS.md §4) |
+| `🎭 E2E Tests (Playwright)` | [job 119534504637](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504637) | ⏳ in_progress |
+
+### Checks não-obrigatórios
+
+| Check | Link | Conclusão |
+|-------|------|-----------|
+| `🧩 Node CI Scripts` | [job 119534504674](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504674) | ⏳ in_progress |
+| `Replay local das migrations` | [job 119534281860](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218191/job/119534281860) | ✅ success |
+| `🧬 Mutação do mapa (não bloqueante)` | [job 119534504724](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504724) | ❌ failure (não bloqueante — nome do check) |
+| `Vercel Preview Comments` | [run 119534302210](https://github.com/adm01-debug/Zapp_Web_V2/runs/119534302210) | ✅ success |
+
+### Comparação baseline × final (typecheck / lint)
+
+| Métrica | Baseline (pré-sessão) | Final (pré-push) | Variação |
+|---------|----------------------|-----------------|----------|
+| Erros TypeScript | 93 | 89 | −4 (melhora) ✅ |
+| Dívida ESLint | 819 | 819 | 0 ✅ |
+| Novas dívidas TypeScript | — | 0 | ✅ |
+| Novas dívidas ESLint | — | 0 | ✅ |
+
+> Checks em ⏳ serão atualizados quando o check-in de 23:09 UTC disparar.
+
+---
+
 ## Commits desta sessão (branch `claude/kind-gates-87mwoe`)
 
 | Commit | Descrição |
-|--------|----------|
+|--------|-----------|
 | (anterior à sessão) | fix(ci): remove workflows alienígenas + atualiza mocks de logger + exceção migration-evidence |
 | `4e4f744` | fix(ci): regenera manifesto de deploy das edge functions |
 | `7a8c74e` | fix(ci): corrige vírgula faltando nos mocks de logger + regenera baseline ESLint |
