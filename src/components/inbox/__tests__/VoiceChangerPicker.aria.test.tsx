@@ -33,6 +33,8 @@ vi.mock('framer-motion', () => {
   return {
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    // O componente lê a preferência de movimento reduzido do sistema.
+    useReducedMotion: () => false,
   };
 });
 

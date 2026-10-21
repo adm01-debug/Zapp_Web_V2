@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { formatoDeUpload } from '@/lib/audio/gravacaoFormato';
 import type { Message } from '@/types/chat';
 
 export type { Message };
@@ -58,10 +59,13 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    // SL-072: extensão e Content-Type saem do mime REAL do blob (Safari grava
+    // mp4/m4a, Firefox ogg) — antes todo objeto era rotulado como webm.
+    const { extensao, contentType } = formatoDeUpload(blob.type);
+    const fileName = `${contactId}/${Date.now()}.${extensao}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType });
 
     if (uploadError) throw uploadError;
 
