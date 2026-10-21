@@ -601,3 +601,31 @@ test('W99: todo upload-artifact declara retention-days', async () => {
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
 });
+
+test('GA21: DESTINO_URL nao aparece escrito no GITHUB_ENV em types-sync.yml', () => {
+  const ts = wf['types-sync.yml'];
+  assert.ok(ts, 'types-sync.yml nao encontrado');
+  const linhasVazamento = ts
+    .split('\n')
+    .filter((l) => !l.trimStart().startsWith('#'))
+    .filter((l) => /DESTINO_URL/.test(l) && /GITHUB_ENV/.test(l));
+  assert.strictEqual(
+    linhasVazamento.length,
+    0,
+    `GA21: DESTINO_URL voltou ao GITHUB_ENV em types-sync.yml — expoe credencial do banco a instalacao de deps e actions de terceiros:\n${linhasVazamento.join('\n')}`,
+  );
+});
+
+test('GA20: Gate 3 de types-sync.yml usa git show para obter catalogo antigo', () => {
+  const ts = wf['types-sync.yml'];
+  assert.ok(ts, 'types-sync.yml nao encontrado');
+  assert.ok(
+    /git show HEAD:supabase\/schema-catalog\.json/.test(ts),
+    'GA20: Gate 3 nao usa git show para recuperar o catalogo antigo — compara catalogo novo consigo mesmo',
+  );
+  const gate3Match = ts.match(/check-remocoes-destrutivas\.mjs\s+(\S+)\s+\/tmp\/catalog\.new\.json/);
+  assert.ok(
+    gate3Match && gate3Match[1] === '/tmp/catalog.old.json',
+    `GA20: Gate 3 ainda passa supabase/schema-catalog.json (ja sobrescrito) para check-remocoes-destrutivas.mjs; argumento encontrado: ${gate3Match ? gate3Match[1] : '(nao encontrado)'}`,
+  );
+});
