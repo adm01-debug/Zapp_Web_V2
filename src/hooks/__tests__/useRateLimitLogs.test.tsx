@@ -24,22 +24,29 @@ const mockLogs = [
   { id: '3', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 30, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-02' },
 ];
 
-function queryResult(data: typeof mockLogs | null, error: Error | null = null) {
-  const result = Promise.resolve({ data, error });
-  return Object.assign(result, { abortSignal: vi.fn(() => result) });
+// O hook pagina no servidor (`range` + `count: 'exact'`) e busca a estatística
+// numa segunda consulta (`.limit(100)`); o duplo aceita o encadeamento todo e
+// resolve as duas consultas com o mesmo lote.
+function stubQuery(data: typeof mockLogs | null, error: Error | null = null) {
+  const response = { data, error, count: Array.isArray(data) ? data.length : 0 };
+  const builder: Record<string, unknown> = {};
+  builder.select = vi.fn(() => builder);
+  builder.ilike = vi.fn(() => builder);
+  builder.eq = vi.fn(() => builder);
+  builder.order = vi.fn(() => builder);
+  builder.range = vi.fn(() => builder);
+  builder.limit = vi.fn(() => builder);
+  builder.abortSignal = vi.fn(() => Promise.resolve(response));
+  builder.then = (onF: (v: unknown) => unknown, onR: (e: unknown) => unknown) =>
+    Promise.resolve(response).then(onF, onR);
+  return builder;
 }
 
 describe('useRateLimitLogs', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
-        }),
-      }),
-    });
+    mockFrom.mockReturnValue(stubQuery(mockLogs));
   });
 
   it('fetches logs on mount', async () => {
@@ -81,13 +88,7 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles empty logs', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult([])),
-        }),
-      }),
-    });
+    mockFrom.mockReturnValue(stubQuery([]));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -97,13 +98,7 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles fetch error', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
-        }),
-      }),
-    });
+    mockFrom.mockReturnValue(stubQuery(null, new Error('fail')));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -114,9 +109,9 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(result.current.loading).toBe(false);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
-    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(mockFrom).toHaveBeenCalledTimes(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(mockFrom).toHaveBeenCalledTimes(4);
     expect(mockChannel).not.toHaveBeenCalled();
   });
 
@@ -126,7 +121,7 @@ describe('useRateLimitLogs', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     unmount();
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockFrom).toHaveBeenCalledTimes(2);
   });
 
   it('updates statistics together with refreshed rows', async () => {
@@ -134,7 +129,7 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     const updated = [{ ...mockLogs[0], request_count: 900, blocked: true }];
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)) })) })) });
+    mockFrom.mockReturnValue(stubQuery(updated));
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(result.current.logs).toEqual(updated);
     expect(result.current.stats?.totalRequests).toBe(900);
