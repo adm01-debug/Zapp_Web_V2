@@ -15,6 +15,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 vi.mock('@/hooks/ui/use-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },

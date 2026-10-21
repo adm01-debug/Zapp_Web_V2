@@ -43,13 +43,6 @@
       "snippet": "<Button size=\"icon\" className=\"w-14 h-14 rounded-full bg-destructive hover:bg-destructive/90\" onClick={handleEnd} >"
     },
     {
-      "file": "src/components/catalog/ExternalProductManagement.tsx",
-      "line": 849,
-      "column": 13,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7\" onClick={() => dispatch({ type: 'search', value: '' })}>"
-    },
-    {
       "file": "src/components/cognitive/FeatureSpotlight.tsx",
       "line": 45,
       "column": 11,
@@ -92,13 +85,6 @@
       "snippet": "<Button variant=\"outline\" size=\"icon\" onClick={fetchData} disabled={loading}>"
     },
     {
-      "file": "src/components/dashboard/war-room/WarRoomAlertRow.tsx",
-      "line": 35,
-      "column": 7,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"shrink-0 h-6 w-6\" onClick={onDismiss}>"
-    },
-    {
       "file": "src/components/dashboard/WarRoomDashboard.tsx",
       "line": 76,
       "column": 44,
@@ -118,27 +104,6 @@
       "column": 44,
       "tag": "Button",
       "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={toggleFullscreen}>"
-    },
-    {
-      "file": "src/components/leaderboard/Leaderboard.tsx",
-      "line": 37,
-      "column": 13,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={handleRefresh} disabled={isRefreshing} className=\"h-8 w-8\">"
-    },
-    {
-      "file": "src/components/queues/QueuesComparisonDashboard.tsx",
-      "line": 113,
-      "column": 11,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={() => navigate('/')} className=\"hover:bg-muted/30\" >"
-    },
-    {
-      "file": "src/components/queues/QueuesComparisonDashboard.tsx",
-      "line": 273,
-      "column": 31,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"w-8 h-8\" onClick={() => navigate(`/queue/${queue.id}`)} >"
     },
     {
       "file": "src/components/reports/ScheduledReportConfigs.tsx",

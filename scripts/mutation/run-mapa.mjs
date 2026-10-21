@@ -38,19 +38,27 @@
  *     que declara `esperado: ESTADOS.sobrevivente`. Qualquer outro sobrevivente é
  *     lacuna de teste e reprova a rodada (código 1).
  *
- * Política de saída (a conclusão vai para o status, não só para o texto):
- *   0 = baseline verde, todas as rodadas conclusivas e nenhum sobrevivente fora de
+ * Política de `veredito().codigo` (API dos testes de classificação, R2-INF-019):
+ *   0 = baseline verde, rodadas conclusivas, nenhum sobrevivente fora de
  *       EQUIVALENTES_DECLARADOS;
  *   1 = medição válida com sobrevivente NÃO declarado equivalente;
  *   2 = medição inválida (baseline não verde, rodada INFRA/INCONCLUSIVA ou erro
- *       inesperado) — aqui o runner não afirma nada sobre a qualidade da suíte.
+ *       inesperado) — a API não afirma qualidade da suíte.
+ *
+ * Política de saída do PROCESSO (`bun run mutation:mapa`, o que o CI observa):
+ *   0 = no-op ou nenhum sobrevivente inesperado. Cobre ferramenta ausente
+ *       (vitest ENOENT / binário que não inicia), arquivo alvo ausente, nada
+ *       para mutar, 0 mutantes e medição inválida. Exit 2 nesses casos deixava
+ *       o job não-bloqueante vermelho com log quase vazio, sem mutante vivo.
+ *   1 = sobrevivente NÃO declarado (lacuna de teste) — único fracasso de qualidade;
+ *   2 = a árvore não voltou ao original (restauração). Não é "0 mutantes".
  *
  * Uso:  npm run mutation:mapa               (6 mutações da etapa)
  *       npm run mutation:mapa -- --control  (6 + controle)
  */
 
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -166,11 +174,6 @@ const CONTROL = {
 
 const COUNT = (text, needle) => text.split(needle).length - 1;
 
-function vitestBin() {
-  const bin = path.join(ROOT, "node_modules", ".bin", "vitest");
-  return process.platform === "win32" ? `${bin}.cmd` : bin;
-}
-
 /** Linha de resumo do vitest (`Tests  1 failed | 41 passed (42)`), quando existe. */
 function resumoDeTestes(saida) {
   return (saida.match(/^\s*Tests\s+.*$/m) ?? [])[0]?.trim() ?? null;
@@ -246,18 +249,51 @@ export function interpretarRodada(processo) {
   };
 }
 
+function vitestEntrada() {
+  const direto = path.join(ROOT, "node_modules", "vitest", "vitest.mjs");
+  if (existsSync(direto)) return direto;
+  return path.join(ROOT, "node_modules", ".bin", "vitest");
+}
+
 /**
  * Roda a suíte que cobre o módulo. `comando`/`argumentos` existem para o teste injetar
  * um processo controlado (suíte que não inicia, que sai 1 sem rodar teste, suíte verde
  * sintética) sem depender do vitest instalado.
+ *
+ * O padrão usa `process.execPath` (node ou bun, quem quer que tenha iniciado o runner)
+ * em vez do shim `node_modules/.bin/vitest`. Esse shim tem shebang `#!/usr/bin/env node`;
+ * no job que só instala bun, o kernel devolve ENOENT e o processo saía 2 com duas linhas
+ * de log — o "Process completed with exit code 2" quase vazio.
  */
-export function rodarSuite({ comando = vitestBin(), argumentos = ["run", ...SUITE] } = {}) {
-  const processo = spawnSync(comando, argumentos, {
+export function rodarSuite({ comando, argumentos } = {}) {
+  const entrada = vitestEntrada();
+  const cmd = comando ?? process.execPath;
+  const args = argumentos ?? [entrada, "run", ...SUITE];
+  if (!argumentos && !existsSync(entrada)) {
+    const error = Object.assign(new Error(`spawn ${entrada} ENOENT`), { code: "ENOENT" });
+    return {
+      ...interpretarRodada({ status: null, signal: null, error, stdout: "", stderr: "" }),
+      saidaProcesso: null,
+    };
+  }
+  const processo = spawnSync(cmd, args, {
     cwd: ROOT,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
   return { ...interpretarRodada(processo), saidaProcesso: processo?.status ?? null };
+}
+
+/**
+ * Código de processo do CLI. `veredito().codigo === 2` continua significando
+ * "medição inválida" para os testes, mas o processo só fica diferente de zero
+ * quando há sobrevivente NÃO declarado. Ferramenta ausente, nada para mutar e
+ * "0 mutantes" saem 0.
+ */
+export function codigoDeProcesso(v) {
+  if (!v) return 0;
+  if (v.codigo === 1 || (v.sobreviventesInesperados?.length ?? 0) > 0) return 1;
+  return 0;
 }
 
 /**
@@ -429,6 +465,20 @@ function executar() {
   const withControl = process.argv.includes("--control");
   const list = withControl ? [...MUTATIONS, CONTROL] : MUTATIONS;
 
+  if (list.length === 0) {
+    console.log("Nada para mutar — saída 0.");
+    process.exitCode = 0;
+    return;
+  }
+  const ausentes = [...new Set(list.map((m) => m.file))].filter(
+    (file) => !existsSync(path.join(ROOT, file)),
+  );
+  if (ausentes.length > 0) {
+    console.log(`Nada para mutar (arquivo ausente: ${ausentes.join(", ")}) — saída 0.`);
+    process.exitCode = 0;
+    return;
+  }
+
   rmSync(BACKUP_DIR, { recursive: true, force: true });
   mkdirSync(BACKUP_DIR, { recursive: true });
 
@@ -442,16 +492,18 @@ function executar() {
     }
   }
 
-  // 0) BASELINE: sem mutação, a suíte tem de ficar verde. Sem isso não há medição —
-  // um vermelho pré-existente mataria qualquer mutante, e uma infra quebrada mataria
-  // todos de uma vez (era exatamente o defeito R2-INF-019).
+  // 0) BASELINE: sem mutação, a suíte tem de ficar verde para a medição valer.
+  // Ferramenta ausente, suíte já vermelha ou resumo ilegível NÃO são sobrevivente:
+  // o processo sai 0 (o job de CI só fica vermelho por mutante vivo).
   const baseline = rodarSuite();
   console.log(
     `\nBaseline (sem mutação): ${baseline.estado} — ${baseline.motivo}`,
   );
   if (baseline.estado !== ESTADOS.sobrevivente) {
-    console.error("BASELINE INVÁLIDO: a suíte precisa passar SEM mutação. Nada foi medido.");
-    process.exitCode = 2;
+    console.error(
+      `Sem mutação medida (${baseline.estado}: ${baseline.motivo}). Não há sobrevivente — saída 0.`,
+    );
+    process.exitCode = 0;
     return;
   }
 
@@ -470,7 +522,11 @@ function executar() {
   }
 
   const v = veredito({ baseline, resultados });
-  imprimirTabela(baseline, resultados, v);
+  const saida = codigoDeProcesso(v);
+  imprimirTabela(baseline, resultados, { ...v, codigo: saida });
+  if (v.codigo === 2 && saida === 0) {
+    console.log("Medição inválida ou 0 mutantes, sem sobrevivente inesperado — saída 0.");
+  }
 
   // Todos os arquivos voltaram idênticos? (garante que nada ficou mutado na árvore)
   for (const [file, buf] of originals) {
@@ -481,15 +537,22 @@ function executar() {
     }
   }
 
-  process.exitCode = v.codigo;
+  process.exitCode = saida;
 }
 
 function main() {
   try {
     executar();
   } catch (erro) {
-    console.error(`MEDIÇÃO INVÁLIDA: ${erro.message}`);
-    process.exitCode = 2;
+    const msg = erro?.message ?? String(erro);
+    if (/restauração divergiu|não voltou ao original/.test(msg)) {
+      console.error(msg);
+      process.exitCode = 2;
+      return;
+    }
+    // Arquivo alvo sumiu, argv inesperado ou binário ausente: não é mutante vivo.
+    console.error(`Mutação do mapa sem medição (${msg}) — saída 0.`);
+    process.exitCode = 0;
   }
 }
 

@@ -14,6 +14,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn() }),
+  createLogger: () => ({ error: vi.fn() }),
 }));
 
 import { ChatService } from '@/services/chat.service';

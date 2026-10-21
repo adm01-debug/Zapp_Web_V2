@@ -9,7 +9,7 @@ const mockFrom = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: (...args: unknown[]) => mockFrom(...args) },
 }));
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }));
 
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 

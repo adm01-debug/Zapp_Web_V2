@@ -79,6 +79,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
   useTypingPresence: () => ({ isContactTyping: false, typingUsers: [], handleTypingStart: vi.fn(), handleTypingStop: vi.fn() }),

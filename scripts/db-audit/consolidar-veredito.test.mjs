@@ -165,7 +165,15 @@ test('o CLI real escreve resumo e outputs e sai vermelho com o fixture faltando'
   let codigo = 0;
   let stderr = '';
   try {
-    execFileSync(process.execPath, [script], { cwd: RAIZ, env, encoding: 'utf8' });
+    execFileSync(process.execPath, [script], {
+      cwd: RAIZ,
+      env,
+      encoding: 'utf8',
+      // stderr do CLI carrega `::error::`. Sem pipe o token vaza para o log do
+      // passo e o runner anota "Fixtures de E2E em producao (E85)" mesmo quando
+      // este teste PASSA — a falha simulada nao e fixture ausente no repo.
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
   } catch (erro) {
     codigo = erro.status;
     stderr = erro.stderr ?? '';

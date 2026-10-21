@@ -37,7 +37,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...a: unknown[]) => h.toast(...a) }));
-vi.mock('@/lib/logger', () => ({ log: h.log }));
+vi.mock('@/lib/logger', () => ({ log: h.log, createLogger: () => h.log }));
 vi.mock('@/lib/clipboard', () => ({ avisarCopia: vi.fn(), copiarTexto: vi.fn() }));
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
   useEvolutionApi: () => ({

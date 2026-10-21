@@ -57,7 +57,7 @@ vi.mock('@/components/settings/FollowUpExecutionsHistory', () => ({
   FollowUpExecutionsHistory: () => null,
 }));
 
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }));
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

@@ -57,6 +57,7 @@ vi.mock('@/integrations/supabase/client', () => {
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useCalls, isValidUUID } from '../communication/useCalls';

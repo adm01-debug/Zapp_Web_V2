@@ -36,12 +36,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
-  group: talkx-regen-${{ github.ref }}
-  cancel-in-progress: true
-
-concurrency:
-  group: talkx-status-regen
+  # Uma única chave: o parser do Actions recusa `concurrency` duplicado e o
+  # run morre sem jobs (failure imediato). cancel-in-progress fica false
+  # porque o gatilho é push na main — cancelar o run antigo mata o placar
+  # no meio (E98).
+  group: talkx-status-regen-${{ github.ref }}
   cancel-in-progress: false
 
 defaults:

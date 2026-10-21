@@ -47,6 +47,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: mocks.logWarn, error: mocks.logError },
+  createLogger: () => ({ debug: vi.fn(), warn: mocks.logWarn, error: mocks.logError }),
 }));
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));

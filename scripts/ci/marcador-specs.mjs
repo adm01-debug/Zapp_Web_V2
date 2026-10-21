@@ -54,18 +54,14 @@ export function marcadorDe(nomes) {
 }
 
 /**
- * Titulo da issue: especifico quando so falhou o auth.setup (nao ha spec real quebrado),
- * generico nos demais casos.
+ * Título da issue de acordo com a causa detectada.
+ * Prefixo "[e2e-logado]" é mantido para que o workflow de fechamento ache a issue pelo título.
+ * `tituloBase` existe para o chamador do workflow sobrescrever o título genérico.
  */
 export function tituloDe(nomes, { tituloBase = '[e2e-logado] Suíte logada quebrada na main' } = {}) {
-  const lista = normalizar(nomes);
-  if (lista.length > 0 && lista.every((n) => n.startsWith('auth.setup.ts-') || n.startsWith('auth.setup-'))) {
-    return '[e2e-logado] auth.setup falhou na main';
-  }
+  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
   return tituloBase;
 }
-
-/** Lista legivel para o corpo da issue. */
 export function corpoDe(nomes) {
   const lista = normalizar(nomes);
   if (lista.length === 0) {
@@ -90,14 +86,5 @@ export function eLoginFalhou(nomes) {
   const lista = normalizar(nomes);
   if (lista.length === 0) return false;
   return lista.every((n) => n.startsWith('auth.setup.ts-') || n.startsWith('setup-auth'));
-}
-
-/**
- * Título da issue de acordo com a causa detectada.
- * Prefixo "[e2e-logado]" é mantido para que o workflow de fechamento ache a issue pelo título.
- */
-export function tituloDe(nomes) {
-  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
-  return '[e2e-logado] Suíte logada quebrada na main';
 }
 

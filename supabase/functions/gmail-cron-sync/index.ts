@@ -5,6 +5,24 @@ import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitize
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
+type GmailCronAccount = {
+  id: string;
+  history_id?: string | null;
+  token_expires_at?: string | null;
+  sync_status?: string | null;
+  next_attempt_at?: string | null;
+};
+
+/** Pula conta que exige reconexão humana ou que ainda está na espera da falha transitória. */
+function selectGmailAccountsDue(accounts: GmailCronAccount[]): GmailCronAccount[] {
+  const now = Date.now();
+  return accounts.filter((account) => {
+    if (account.sync_status === "reauth_required") return false;
+    if (account.next_attempt_at && Date.parse(account.next_attempt_at) > now) return false;
+    return true;
+  });
+}
+
 // R2-API-011B — avanço de cursor incremental por compare-and-swap: o UPDATE só
 // grava se o history_id da linha ainda for o lido no início da tentativa
 // (account.history_id). 0 linhas = outro fluxo já moveu o cursor → conflito:
@@ -57,7 +75,7 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
     if (error || !accounts?.length) { log.info("No active accounts"); return new Response(JSON.stringify({ success: true, synced: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     // Pula as contas que exigem ação humana (reauth_required) e as que ainda
     // estão na espera crescente de uma falha transitória — não bate no Google de novo.
-    const dueAccounts = selectGmailAccountsDue(accounts);
+    const dueAccounts = selectGmailAccountsDue((accounts ?? []) as GmailCronAccount[]);
     const skipped = accounts.length - dueAccounts.length;
     if (!dueAccounts.length) { log.info("No accounts due", { skipped }); return new Response(JSON.stringify({ success: true, synced: 0, skipped }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     const results: Array<{ id: string; synced?: number; error?: string; cursor_advanced?: boolean }> = [];
@@ -65,7 +83,8 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
       const batch = dueAccounts.slice(i, i + BATCH);
       const batchResults = await Promise.allSettled(batch.map(async (account) => {
         try {
-          const accessToken = await ensureValidToken(supabase, account, log);
+          if (!account.token_expires_at) throw new Error("Gmail account missing token_expires_at");
+          const accessToken = await ensureValidToken(supabase, { id: account.id, token_expires_at: account.token_expires_at }, log);
           if (!account.history_id) {
             // conta sem history_id: full sync (todas as páginas; cursor só no fim, sem falhas)
             await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
@@ -74,7 +93,7 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
             return { id: account.id, synced: result.synced };
           } else {
             // sync incremental: aplica só os IDs do histórico; cursor avança só sem falhas e via CAS
-            const r = await runGmailCronIncrementalSync(supabase, account, accessToken, log);
+            const r = await runGmailCronIncrementalSync(supabase, { id: account.id, history_id: account.history_id }, accessToken, log);
             return { id: account.id, synced: r.synced, cursor_advanced: r.cursor_advanced };
           }
         } catch (err) {

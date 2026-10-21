@@ -258,6 +258,10 @@ jobs:
           # Fail-closed: versao sem contrato aborta com exit 2 -- nunca vira "nada a verificar".
           RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs "$TARGET_VERSION")
           printf '%s\n' "$RUNTIME"
+          # W28: validate-runtime-proof.mjs concentra a validacao do proof e o
+          # hash COMPOSTO (runtime + arquivo + commit). O heredoc abaixo mantem
+          # a comparacao do apply (E62) com a mesma regra.
+          RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs >/tmp/confirmation-hash.txt
           RUNTIME_JSON="$RUNTIME" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RUNTIME_JSON);
           const common = proof.server_major === 17

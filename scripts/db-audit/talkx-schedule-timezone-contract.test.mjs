@@ -73,7 +73,8 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   // política -> deliveryWindowStatus — em vez do import direto, que deixou de
   // existir. O que ela protege é o mesmo: a janela não pode ser reimplementada
   // em elo nenhum (a política decide por deliveryWindowStatus, não por conta
-  // própria, e nenhum dos dois elos calcula hora local à mão).
+  // própria, e nenhum dos dois elos calcula hora local à mão). A política fica
+  // em _shared/, ao lado de talkx-window.ts, então o import é "./talkx-window.ts".
   assert.match(scheduler, /import \{ AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns \} from "\.\.\/\_shared\/talkx-resume-policy\.ts"/);
   assert.match(scheduler, /schedule_timezone, send_window_start/);
   assert.match(scheduler, /selectResumableCampaigns\(/);
@@ -86,7 +87,7 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   assert.doesNotMatch(scheduler, /connectionStatusById\.get\(/);
   assert.match(resumePolicy, /export function connectionStatusResolver\(/);
   assert.match(resumePolicy, /if \(typeof connectionId !== "string"\) return null;/);
-  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\.\/talkx-window\.ts"/);
+  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\/talkx-window\.ts"/);
   assert.match(resumePolicy, /deliveryWindowStatus\(campaign, now\)\.allowed/);
   assert.doesNotMatch(resumePolicy, /nowBR|hmBR|isWithinSendWindow|Intl\.DateTimeFormat/);
 });

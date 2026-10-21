@@ -7,6 +7,7 @@ import {
   Logger,
   getClientIP,
   sanitizeString,
+  enforceRateLimit,
 } from "../_shared/validation.ts";
 import {
   resolveNetworkPolicy,
@@ -95,6 +96,14 @@ export type ProfileLookup = (
   userId: string,
 ) => PromiseLike<{ data: { is_active: boolean | null } | null; error: unknown }>;
 
+export interface LoginAdminClient extends NetworkPolicyRpcClient {
+  auth: {
+    admin: {
+      signOut: (accessToken: string, scope: "local" | "global" | "others") => PromiseLike<{ error: unknown }>;
+    };
+  };
+}
+
 export interface AuthLoginDeps {
   admin: LoginAdminClient;
   anon: LoginAnonClient;
@@ -102,7 +111,7 @@ export interface AuthLoginDeps {
     key: string,
     maxRequests: number,
     windowMs: number,
-  ) => PromiseLike<{ allowed: boolean }>;
+  ) => PromiseLike<{ allowed: boolean; unavailable?: boolean }>;
   // Injetável para o teste; o default de produção é `profileLookupFrom(admin)`.
   getProfileActive?: ProfileLookup;
 }
@@ -278,7 +287,7 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       return errorResponse("Internal error", 500, req);
     }
 
-    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
+    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_SECONDS * 1000);
     // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu
     // (RPC fora do ar ou contrato invalido), o limite por e-mail passaria apenas com
     // o contador em memoria, que zera a cada cold start. Num login isso e a guarda de
@@ -415,6 +424,10 @@ if (import.meta.main) {
     const anon = createClient(supabaseUrl, requireEnv("SUPABASE_ANON_KEY"), {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    return handleLogin(req, { admin, anon });
+    return handleLogin(req, {
+      admin: admin as unknown as LoginAdminClient,
+      anon: anon as unknown as LoginAnonClient,
+      enforceRateLimit,
+    });
   });
 }

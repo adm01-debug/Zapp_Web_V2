@@ -111,6 +111,7 @@ vi.mock('@/utils/notificationSounds', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
 }));
 
 import { useGoalNotifications } from '@/hooks/analytics/useGoalNotifications';

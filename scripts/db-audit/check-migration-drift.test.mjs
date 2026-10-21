@@ -79,6 +79,9 @@ function pinnedEvidence({
     ledger_name: 'create_demo',
     ledger_statements_sha256: statementsHash(statements),
     ledger_sql_sha256: fixtureSqlHash(ledgerTable),
+    // O manifesto real (schema exato do pinned-replay) exige esta chave.
+    // Nos 51 registros commitados ela repete ledger_statements_sha256.
+    'sql-sha256': statementsHash(statements),
     kind: 'ledger-divergence/pinned-replay',
     reason,
     related_migration,

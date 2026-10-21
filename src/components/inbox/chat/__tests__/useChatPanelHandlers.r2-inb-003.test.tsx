@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
   sendOutboundMessage: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }) }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 vi.mock('@/lib/undoToast', () => ({ undoToast: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({

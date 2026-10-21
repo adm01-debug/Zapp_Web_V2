@@ -46,6 +46,7 @@ vi.mock('@/lib/logger', () => ({
   // (src/components/catalog/useSendProduct), cujo grafo importa o logger
   // nomeado — o mock precisa do export real.
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useSentimentAlerts } from '@/hooks/inbox/useSentimentAlerts';

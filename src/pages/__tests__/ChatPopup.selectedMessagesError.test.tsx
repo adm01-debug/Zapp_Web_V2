@@ -65,6 +65,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 // O alvo do cartão é o ramo escolhido pelo popup ANTES de montar o painel do chat; o
 // ChatPanel (lazy) entra como marcador para observar se ele foi montado ou não.

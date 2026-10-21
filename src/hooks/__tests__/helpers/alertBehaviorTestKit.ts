@@ -138,7 +138,7 @@ export function authMock() {
 }
 
 export function loggerMock() {
-  return { getLogger: () => loggerSpies, log: loggerSpies };
+  return { getLogger: () => loggerSpies, log: loggerSpies, createLogger: () => loggerSpies };
 }
 
 export function toastMock() {

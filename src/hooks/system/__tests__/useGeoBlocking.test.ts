@@ -56,6 +56,12 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     warn: vi.fn(),
   },
+  createLogger: () => ({
+    error: (...args: unknown[]) => mocks.logError(...args),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }),
 }));
 
 import { useGeoBlocking } from '@/hooks/system/useGeoBlocking';

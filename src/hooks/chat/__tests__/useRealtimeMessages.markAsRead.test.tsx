@@ -54,6 +54,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: h.logError, debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
   log: { error: h.logError, debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ error: h.logError, debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock('sonner', () => ({

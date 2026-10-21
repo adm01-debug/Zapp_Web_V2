@@ -22,6 +22,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: { storage: { from: 
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
 }));
 
 vi.mock('sonner', () => ({

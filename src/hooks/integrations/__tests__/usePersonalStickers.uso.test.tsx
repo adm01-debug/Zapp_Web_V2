@@ -130,6 +130,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: mocks.logWarn, error: mocks.logError },
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: mocks.logWarn, error: mocks.logError }),
 }));
 
 vi.mock('sonner', () => ({

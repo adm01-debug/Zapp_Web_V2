@@ -213,6 +213,7 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
   const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
+  let isComposing = false;
 
   if (jid && !jid.endsWith('@g.us')) {
     // O GO entrega dois envelopes aqui: ChatPresence {presences:{jid:{lastKnownPresence}}}
@@ -220,9 +221,12 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
     // available/unavailable). Antes só 'composing' era aproveitado. Colhemos
     // TODOS os estados do evento e derivamos digitando e presença real.
     const estados: string[] = [];
+    const presences = isRecord(presenceData.presences) ? presenceData.presences : null;
     if (presences) {
       for (const [, pState] of Object.entries(presences)) {
-        const valor = pState?.lastKnownPresence ?? pState?.status;
+        const state = isRecord(pState) ? pState : {};
+        const bruto = state.lastKnownPresence ?? state.status;
+        const valor = typeof bruto === 'string' ? bruto : null;
         if (typeof valor === 'string') estados.push(valor.toLowerCase());
       }
     } else {
@@ -230,7 +234,8 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
       if (typeof direto === 'string') estados.push(direto.toLowerCase());
     }
 
-    const isComposing = estados.includes('composing');
+    const isComposingNow = estados.includes('composing');
+    isComposing = isComposingNow;
     const online = estados.some((e) => e === 'online' || e === 'available');
     const offline = estados.some((e) => e === 'offline' || e === 'unavailable');
 

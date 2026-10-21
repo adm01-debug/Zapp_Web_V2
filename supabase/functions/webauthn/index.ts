@@ -291,7 +291,7 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
         // Ação PÚBLICA (roda antes do login, sem sessão): rate limit por IP ANTES de
         // qualquer consulta. O oráculo de enumeração de conta só é útil repetido e a
         // anon key é pública — não pode virar oráculo de graça.
-        const rl = await limiter(`webauthn:auth-options:${getClientIP(req)}`, 10, 60_000);
+        const rl = await enforceRateLimit(`webauthn:auth-options:${getClientIP(req)}`, 10, 60_000);
         if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
         const challenge = generateChallenge();
