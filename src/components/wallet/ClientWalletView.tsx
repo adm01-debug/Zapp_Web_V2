@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion } from '@/components/ui/motion';
+import { MotionConfig, useReducedMotion } from "framer-motion";
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
