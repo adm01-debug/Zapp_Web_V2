@@ -198,7 +198,7 @@ export function ContactsView() {
       />
       </div>
 
-      <div className="space-y-3 mt-3">
+      <div className="space-y-3 mt-3 pb-[calc(160px+env(safe-area-inset-bottom,0px))]">
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}
