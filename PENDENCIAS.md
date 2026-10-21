@@ -147,5 +147,63 @@ Falhas de timing em testes assíncronos: `waitFor(() => getByTestId("bubble"))` 
 
 ---
 
+## 6. `🧬 Mutação do mapa (não bloqueante)` — baseline inválido
+
+**Workflow:** `ci.yml` — job `🧬 Mutação do mapa (não bloqueante)`
+**Run:** [39690838199](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199), job [119536574289](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574289)
+**Status:** ❌ failure (não bloqueante — nome do check indica isso)
+**Conclusão confirmada:** `conclusion=failure`, `completed_at=2026-10-21T23:04:23Z`
+
+### Erro exato
+
+```
+BASELINE INVÁLIDO: a suíte precisa passar SEM mutação. Nada foi medido.
+```
+
+### Causa raiz
+
+O script de teste de mutação do módulo `mapa` falha ao coletar/executar a suíte base (sem mutações). O teste de mutação nunca chega a medir a taxa de sobrevivência porque a suíte base em si retorna exit code ≠ 0. O nome do check confirma que é intencionalmente não-bloqueante.
+
+**Pré-existente:** presente em todas as runs do branch (confirmado pela run anterior sob SHA `7a8c74e6`).
+
+### O que o Joaquim precisa fazer
+
+1. Investigar por que os testes do módulo `mapa` não produzem output de resumo `Tests ...` no ambiente de CI.
+2. Corrigir a suíte base para que passe sem mutações antes de medir a taxa de sobrevivência.
+3. Ou, se o módulo de mapa não tem cobertura de teste planejada, remover o job de mutação ou marcar com `continue-on-error: true` explicitamente e documentar.
+
+---
+
+## 7. `copilot-pull-request-reviewer` — quota de Copilot esgotada
+
+**Workflow:** `copilot-reviewer.yml` (ou integrado ao `ci.yml`)
+**Run:** [39690848555](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690848555), job [119536370336](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536370336)
+**Status:** ❌ failure (não é required check — não bloqueia merge)
+**Conclusão confirmada:** `conclusion=failure`, `completed_at=2026-10-21T23:10:12Z`
+
+### Erro exato
+
+```
+SessionModelError: You've reached your additional usage limit for your plan.
+Go to https://github.com/settings/copilot/features for more details.
+(Request ID: FC41:386F8C:14FDB:18E58:6AD9464E)
+statusCode: 402
+errorCode: "quota"
+```
+
+### Causa raiz
+
+Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta usar o modelo Copilot para revisar o PR e recebe HTTP 402 (Payment Required) ao fazer a chamada de API.
+
+**Não é bug de código** — é limitação de billing/plano.
+
+### O que o Joaquim precisa fazer
+
+1. Acessar https://github.com/settings/copilot/features para verificar e adicionar créditos ou upgrade de plano.
+2. Após recarregar créditos, o check passará automaticamente na próxima run.
+3. Enquanto a quota estiver esgotada, o check continuará falhando — mas não bloqueia merge pois não é required check.
+
+---
+
 *Documento atualizado em 2026-10-21.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*

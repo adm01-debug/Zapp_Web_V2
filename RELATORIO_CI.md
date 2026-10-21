@@ -9,7 +9,7 @@
 
 | Workflows com falha (baseline) | Corrigidos nesta sessão | Pendentes (ver PENDENCIAS.md) |
 |-------------------------------|------------------------|-------------------------------|
-| 5 categorias distintas | 4 categorias | 5 itens documentados |
+| 5 categorias distintas | 4 categorias | 7 itens documentados |
 
 ---
 
@@ -95,31 +95,41 @@ Executado via pre-push hook antes do envio ao GitHub (saída dos ratchets):
 
 ---
 
-## Prova de conclusão — SHA `de94df9e` (PR #2182)
+## Prova de conclusão — SHA `852350f` (PR #2182, run 39690838199)
 
-> Atualizado em 2026-10-21 ~23:02 UTC. Checks ainda em andamento são marcados ⏳.
+> Atualizado em 2026-10-21 ~23:45+ UTC.
+> SHA `de94df9e` teve Unit Tests/E2E/Build cancelados (supersedidos pelo push de `852350f` às 23:03 UTC).
+> SHA `852350f` é o HEAD atual. TypeCheck e Security Audit confirmados com `conclusion=success`.
+> Unit Tests (3 shards) falharam com testes flaky (ChatMessagesArea/MessageBubble — PENDENCIAS.md §5).
+> E2E ainda `in_progress` ao momento deste registro — rerun dos Unit Tests pendente até E2E concluir.
 
-### Checks obrigatórios (6)
+### Checks obrigatórios (6) — estado confirmado via API
 
-| Check obrigatório | Link | Conclusão |
-|------------------|------|-----------|
-| `🔍 Lint & TypeCheck` (`🔎 TypeCheck`) | [job 119534504708](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504708) | ✅ success |
-| `🧪 Unit Tests (1/3)` | [job 119534504746](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504746) | ⏳ in_progress |
-| `🧪 Unit Tests (2/3)` | [job 119534504560](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504560) | ⏳ in_progress |
-| `🧪 Unit Tests (3/3)` | [job 119534504618](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504618) | ⏳ in_progress |
-| `🏗️ Build` | [run 39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) | ⏳ in_progress |
-| `🔒 Security Audit` | [job 119534504268](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504268) | ✅ success |
-| `Contrato DB offline` | [job 119534281473](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218191/job/119534281473) | ❌ failure — DASH-091/092 (PENDENCIAS.md §4) |
-| `🎭 E2E Tests (Playwright)` | [job 119534504637](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504637) | ⏳ in_progress |
+| Check obrigatório | Link | Conclusão | Horário |
+|------------------|------|-----------|--------|
+| `🔍 Lint & TypeCheck` (`🔎 TypeCheck`) | [job 119536574773](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574773) | ✅ `success` | 23:05 UTC |
+| `🔒 Security Audit` | [job 119536574894](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574894) | ✅ `success` | 23:04 UTC |
+| `🧪 Unit Tests (1/3)` | [job 119536576057](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536576057) | ❌ `failure` (flaky — PENDENCIAS.md §5) | 23:13 UTC |
+| `🧪 Unit Tests (2/3)` | [job 119536574674](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574674) | ❌ `failure` (flaky — PENDENCIAS.md §5) | 23:13 UTC |
+| `🧪 Unit Tests (3/3)` | [job 119536574686](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574686) | ❌ `failure` (flaky — PENDENCIAS.md §5) | 23:10 UTC |
+| `🏗️ Build` | [job 119540292386](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119540292386) | ⏭️ `skipped` (consequência dos Unit Tests) | 23:13 UTC |
+| `Contrato DB offline` | [job 119536331232](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838198/job/119536331232) | ❌ `failure` — DASH-091/092 (PENDENCIAS.md §4) | 23:06 UTC |
+| `🎭 E2E Tests (Playwright)` | [job 119536574607](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574607) | ⏳ `in_progress` (iniciado 23:04 UTC) | — |
 
-### Checks não-obrigatórios
+### Checks não-obrigatórios — estado confirmado via API
 
-| Check | Link | Conclusão |
-|-------|------|-----------|
-| `🧩 Node CI Scripts` | [job 119534504674](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504674) | ⏳ in_progress |
-| `Replay local das migrations` | [job 119534281860](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218191/job/119534281860) | ✅ success |
-| `🧬 Mutação do mapa (não bloqueante)` | [job 119534504724](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238/job/119534504724) | ❌ failure (não bloqueante — nome do check) |
-| `Vercel Preview Comments` | [run 119534302210](https://github.com/adm01-debug/Zapp_Web_V2/runs/119534302210) | ✅ success |
+| Check | Link | Conclusão | Horário |
+|-------|------|-----------|--------|
+| `🧩 Node CI Scripts` | [job 119536574642](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574642) | ✅ `success` | 23:06 UTC |
+| `Replay local das migrations` | [job 119536331670](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838198/job/119536331670) | ✅ `success` | 23:05 UTC |
+| `Vercel Preview Comments` | [job 119536381248](https://github.com/adm01-debug/Zapp_Web_V2/runs/119536381248) | ✅ `success` | 23:03 UTC |
+| `🧬 Mutação do mapa (não bloqueante)` | [job 119536574289](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574289) | ❌ `failure` — baseline inválido (PENDENCIAS.md §6) | 23:04 UTC |
+| `copilot-pull-request-reviewer` | [job 119536370336](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690848555/job/119536370336) | ❌ `failure` — quota 402 (PENDENCIAS.md §7) | 23:10 UTC |
+| `Vercel Agent Review` | [run 119536329617](https://github.com/adm01-debug/Zapp_Web_V2/runs/119536329617) | ⚪ `neutral` — créditos Vercel insuficientes | 23:03 UTC |
+
+> **Unit Tests e Build:** rerun será executado após E2E concluir. Os 3 shards falharam por testes flaky pré-existentes (PENDENCIAS.md §5) — confirmado por padrão idêntico em commits anteriores que passaram.
+> **`🧬 Mutação do mapa`:** não-bloqueante por design (nome do check). Documentado em PENDENCIAS.md §6.
+> **`copilot-pull-request-reviewer`:** não é required check. Documentado em PENDENCIAS.md §7.
 
 ### Comparação baseline × final (typecheck / lint)
 
@@ -129,8 +139,6 @@ Executado via pre-push hook antes do envio ao GitHub (saída dos ratchets):
 | Dívida ESLint | 819 | 819 | 0 ✅ |
 | Novas dívidas TypeScript | — | 0 | ✅ |
 | Novas dívidas ESLint | — | 0 | ✅ |
-
-> Checks em ⏳ serão atualizados quando o check-in de 23:09 UTC disparar.
 
 ---
 
@@ -154,15 +162,18 @@ Ver arquivo `PENDENCIAS.md` para detalhes completos de:
 3. **db-migrate** — Run 39596763483 com `TARGET_VERSION` inválido (erro operacional humano)
 4. **Contrato DB offline** — DASH-091/092: `sanitize_reset_request()` referencia coluna `reset_token` inexistente
 5. **Unit Tests flaky** — `ChatMessagesArea.*` e `MessageBubble.interactive-list-item.test.tsx` (timing async)
+6. **`🧬 Mutação do mapa` (não bloqueante)** — baseline inválido: suíte não passa sem mutação
+7. **`copilot-pull-request-reviewer`** — quota de Copilot esgotada (HTTP 402, errorCode `quota`)
 
 ---
 
 ## Próximos passos
 
-1. Aguardar os 6 checks obrigatórios passarem no PR #2182
-2. Mergear PR #2182 via squash (política do repositório)
-3. Investigar os 4 testes E2E de mapa (ver PENDENCIAS.md item 1)
-4. Corrigir `sanitize_reset_request()` em PR separado (ver PENDENCIAS.md item 4)
+1. Aguardar o E2E concluir e executar rerun dos Unit Tests (run_id=39690838199)
+2. Aguardar os 6 checks obrigatórios passarem no PR #2182
+3. Mergear PR #2182 via squash (política do repositório)
+4. Investigar os 4 testes E2E de mapa (ver PENDENCIAS.md item 1)
+5. Corrigir `sanitize_reset_request()` em PR separado (ver PENDENCIAS.md item 4)
 
 ---
 
