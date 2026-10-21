@@ -3,19 +3,19 @@
 -- Decisão confirmada em auditoria de 16/10/2026:
 --
 --   • INSERT policy já existe ("Users can register their own search events")
---     — usuários autenticados podem apenas gravar seus próprios eventos.
+--     — usuários autenticados podem apenas gravar eventos com seu próprio user_id.
 --
---   • Nenhum hook de frontend faz SELECT direto na tabela.
---     Leituras de analytics são exclusivamente via RPC admin
---     (ex: search_insights_summary, purge_old_search_events) que rodam
---     como SECURITY DEFINER, sem precisar de policy SELECT para o cliente.
+--   • Nenhum hook de frontend faz SELECT direto na tabela. A RPC de leitura
+--     canônica é public.search_insights(p_days), que retorna contagens, média
+--     do tamanho e agregados por tipo; ela não retorna termos pesquisados.
 --
---   • A tabela não armazena o termo completo (sem PII): apenas term_length,
---     had_results, result_kind, clicked — agregados sem identificação.
+--   • A tabela não armazena o termo digitado nem seu hash. O evento NÃO é
+--     anônimo: user_id e created_at permitem atribuí-lo a um usuário e horário.
+--     A RPC expõe apenas agregados a admin/supervisor.
 --
---   • Sem SELECT policy, qualquer tentativa de SELECT via PostgREST retorna
---     vazio (RLS bloqueia silenciosamente) — comportamento desejado para
---     dados de telemetria que não devem ser expostos ao cliente.
+--   • Além de não haver policy SELECT, a migration revoga o privilégio SELECT
+--     de anon/authenticated. A leitura direta não deve ser descrita como retorno
+--     de linhas vazio: pode falhar por privilégio antes de a RLS ser avaliada.
 --
 -- NÃO adicionar SELECT policy a menos que um hook de frontend precise
 -- exibir o histórico de busca do próprio usuário (caso de uso novo).

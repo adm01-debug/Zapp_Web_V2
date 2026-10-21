@@ -19,6 +19,7 @@ const arquivos = (await readdir(DIR)).filter((f) => f.endsWith('.yml'));
 
 const wf = {};
 for (const f of arquivos) wf[f] = await readFile(new URL(f, DIR), 'utf8');
+const toolchain = JSON.parse(await readFile(new URL('../../.github/toolchain.json', import.meta.url), 'utf8'));
 
 const nomes = Object.keys(wf);
 
@@ -280,6 +281,9 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
       problemas.push(`${nome}: chave '${chave}' não nomeia o conjunto de browsers (esperado pw-<cfw>-)`);
     } else if ([...conjunto].sort().join('') !== instalados) {
       problemas.push(`${nome}: chave diz '${conjunto}' mas o job instala '${instalados}'`);
+    }
+    if (conjunto && !chave.startsWith(`pw-${conjunto}-${toolchain.playwright}-`)) {
+      problemas.push(`${nome}: chave não inclui a versão Playwright ${toolchain.playwright}; cache antigo pode esconder browsers incompatíveis`);
     }
 
     const miss = blocos.find(
@@ -562,6 +566,8 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+});
+
 // W99: novos invariantes de segurança de workflow
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {

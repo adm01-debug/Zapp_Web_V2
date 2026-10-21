@@ -30,6 +30,13 @@ const f = vi.hoisted(() => ({
     if (segmentIds && segmentIds.length === 2) return 7; // união deduplicada (5+5 com 3 repetidos)
     return 5;
   }),
+  summarizeAudience: vi.fn(async (_rules: unknown, segmentIds?: string[]) => ({
+    matched: segmentIds?.length === 2 ? 7 : 5,
+    eligible: segmentIds?.length === 2 ? 7 : 5,
+    suppressed: 0,
+    invalid_phone: 0,
+    legacy_or_deleted: 0,
+  })),
   fetchVersionHistory: vi.fn(async () => [] as { id: string; version_number: number }[]),
   contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
@@ -75,6 +82,7 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
     useTalkXSegments: () => ({ segments: f.segments }),
     resolveAudience: f.resolveAudience,
     countAudience: f.countAudience,
+    summarizeAudience: f.summarizeAudience,
   };
 });
 
@@ -118,7 +126,13 @@ vi.mock('@tanstack/react-query', () => ({
     const key = String(options.queryKey?.[0]);
     // União dedupada pelo servidor (p_segment_ids com a lista completa):
     // 5 + 5 com 3 contatos repetidos = 7, NUNCA 10.
-    const data = key === 'talkx-wizard-segment-union-total' ? 7
+    const data = key === 'talkx-wizard-segment-union-total' ? {
+      matched: 7,
+      eligible: 7,
+      suppressed: 0,
+      invalid_phone: 0,
+      legacy_or_deleted: 0,
+    }
       : key === 'talkx-wizard-segment-counts' ? { 'seg-a': 5, 'seg-b': 5 }
       : key === 'wa-connections-talkx' ? f.connections
       : key === 'talkx-audience-contacts' ? f.contacts
@@ -153,17 +167,18 @@ function unionQuery() {
 }
 
 describe('Talk X multi-segmentos — união, payload e lista (N-113)', () => {
-  it('o total é a união via UMA chamada countAudience(null, ids) — não a soma (5+5=10)', async () => {
+  it('o total é a união via UMA chamada summarizeAudience(null, ids) — não a soma (5+5=10)', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn(), { segmentIds: ['seg-a'] }));
     act(() => { result.current.toggleSegmentId('seg-b'); });
 
-    // A consulta da união existe e chama o RPC UMA vez com a lista completa.
+    // A consulta da união existe e chama o RPC UMA vez com a lista completa,
+    // preservando também a decomposição de elegíveis/suprimidos.
     const union = unionQuery();
     expect(union?.queryFn).toBeDefined();
-    f.countAudience.mockClear();
+    f.summarizeAudience.mockClear();
     await act(async () => { await union?.queryFn?.({ signal: new AbortController().signal }); });
-    expect(f.countAudience).toHaveBeenCalledTimes(1);
-    expect(f.countAudience).toHaveBeenCalledWith(null, ['seg-a', 'seg-b']);
+    expect(f.summarizeAudience).toHaveBeenCalledTimes(1);
+    expect(f.summarizeAudience).toHaveBeenCalledWith(null, ['seg-a', 'seg-b']);
 
     // O total exibido é a união (7), não a soma das individuais (10).
     expect(result.current.audienceTotal).toBe(7);

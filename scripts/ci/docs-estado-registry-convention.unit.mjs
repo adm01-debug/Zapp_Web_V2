@@ -142,21 +142,26 @@ test('ESTADO.md lista exatamente as edges que existem no repositório', () => {
 });
 
 test('ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge', () => {
+  const violações = [];
   for (const linha of tabelaDoEstado()) {
     if (linha.ancora.includes(LACUNA_ORFA)) continue;
     const ancoras = [...linha.ancora.matchAll(/`([^`]+:\d+)`/g)].map((m) => m[1]);
-    assert.ok(ancoras.length > 0, `\`${linha.edge}\` (grupo ${linha.grupo}) não tem âncora nem declara órfã`);
+    if (ancoras.length === 0) {
+      violações.push(`\`${linha.edge}\` (grupo ${linha.grupo}) não tem âncora nem declara órfã`);
+      continue;
+    }
     for (const ancora of ancoras) {
       const [arquivo, numero] = ancora.split(/:(?=\d+$)/);
       const caminho = path.join(raiz, arquivo);
-      assert.ok(fs.existsSync(caminho), `ESTADO.md cita \`${ancora}\` para \`${linha.edge}\`, arquivo que não existe`);
+      if (!fs.existsSync(caminho)) {
+        violações.push(`\`${ancora}\` para \`${linha.edge}\`: arquivo inexistente`);
+        continue;
+      }
       const conteudo = linhasDe(caminho)[Number(numero) - 1] || '';
-      assert.ok(
-        conteudo.includes(linha.edge),
-        `âncora desatualizada: ${ancora} não cita \`${linha.edge}\``,
-      );
+      if (!conteudo.includes(linha.edge)) violações.push(`âncora desatualizada: ${ancora} não cita \`${linha.edge}\``);
     }
   }
+  assert.deepEqual(violações, [], `ESTADO.md tem âncoras inválidas:\n${violações.join('\n')}`);
 });
 
 test('edge marcada como órfã (grupo E) realmente não tem chamador no repositório', () => {
@@ -288,6 +293,9 @@ test('FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais',
   );
   assert.ok(!doc.includes('FallbackView'), 'FEATURE_REGISTRY.md não pode dizer que a guarda procura FallbackView');
   const linhasRegistro = tabelaDoRegistro();
+  const totalDeclarado = Number(doc.match(/^\| \*\*total\*\* \| \*\*(\d+)\*\* \|$/m)?.[1]);
+  assert.equal(totalDeclarado, viewsReais.length, 'o total publicado deve acompanhar o ViewRouter');
+  assert.equal(linhasRegistro.length, totalDeclarado, 'o total publicado deve acompanhar as linhas da tabela');
   for (const linha of linhasRegistro) {
     const real = viewsReais.find((v) => v.view === linha.view);
     assert.ok(real, `\`${linha.view}\` está no registro mas não no ViewRouter`);
@@ -325,11 +333,17 @@ test('TESTING_CONVENTION.md aponta só para caminhos que existem', () => {
 
 function comandoFoldedDaCi(ci, primeiraLinha) {
   const linhas = ci.split('\n');
-  const indice = linhas.findIndex((l) => l.trim().startsWith(primeiraLinha));
+  const indice = linhas.findIndex((l) => {
+    const texto = l.trim();
+    return texto.startsWith(primeiraLinha) || texto.startsWith(`run: ${primeiraLinha}`);
+  });
   assert.notEqual(indice, -1, `ci.yml não tem mais o comando iniciado por \`${primeiraLinha}\``);
-  let run = indice - 1;
+  let run = linhas[indice].trim().startsWith('run:') ? indice : indice - 1;
   while (run >= 0 && !linhas[run].trim().startsWith('run:')) run--;
-  assert.ok(run >= 0 && linhas[run].includes('>-'), `comando \`${primeiraLinha}\` não está em bloco run: >-`);
+  assert.ok(run >= 0, `comando \`${primeiraLinha}\` perdeu seu passo run:`);
+  const inline = linhas[run].trim().match(/^run:\s*(\S.*)$/);
+  if (inline && !/^[>|]/.test(inline[1])) return normalizaEspacos(inline[1]);
+  assert.ok(linhas[run].includes('>-'), `comando \`${primeiraLinha}\` não está em bloco run: >-`);
   const indentacao = linhas[indice].match(/^\s*/)[0].length;
   const partes = [];
   for (let i = indice; i < linhas.length; i++) {
@@ -372,16 +386,19 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   assert.equal(pacote.scripts.test, 'vitest run');
   assert.equal(pacote.scripts['test:e2e'], 'playwright test');
 
-  // 4. os comandos de CI citados precisam estar no ci.yml, incluindo a linha completa de node:test.
-  for (const trecho of [
-    "deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1",
-    "deno check --config scripts/ci/deno.json --frozen",
-  ]) {
-    assert.ok(ci.includes(trecho), `ci.yml não tem mais o passo \`${trecho}\``);
-    assert.ok(doc.includes(trecho), `TESTING_CONVENTION.md não cita o passo real da CI: \`${trecho}\``);
-  }
-  const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs');
-  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]+)`/);
+  // 4. a CI mínima roda node:test; a régua de autorização usa Deno como subprocesso,
+  // mas não declara a suíte Deno completa nem deno check como gates.
+  assert.ok(ci.includes('uses: denoland/setup-deno@'), 'Node CI Scripts precisa instalar Deno para a régua de cobertura');
+  assert.ok(ci.includes("deno-version: '2.9.5'"), 'Node CI Scripts precisa fixar a versão canônica do Deno');
+  assert.ok(doc.includes('scripts/ci/edge-coverage-authz.unit.mjs'), 'TESTING_CONVENTION.md não descreve a régua Deno que a CI executa');
+  assert.ok(doc.includes('não executa todos os testes de Edge nem `deno check`'), 'TESTING_CONVENTION.md afirma incorretamente que a CI executa a suíte Deno completa');
+  const edgeCoverage = ler('scripts/ci/edge-coverage-authz.unit.mjs');
+  assert.ok(edgeCoverage.includes("spawnSync('deno'"), 'a régua de cobertura deixou de invocar Deno');
+  assert.ok(doc.includes('deno test --config scripts/ci/deno.json'), 'TESTING_CONVENTION.md perdeu o comando manual da suíte Deno');
+
+  // O comando publicado precisa ser exatamente o que a CI executa.
+  const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs scripts/vercel/*.unit.mjs');
+  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs scripts\/vercel\/\*\.unit\.mjs)`/);
   assert.ok(comandoNodeDoc, 'TESTING_CONVENTION.md não cita o comando node:test da CI');
   assert.equal(
     normalizaEspacos(comandoNodeDoc[1]),
@@ -390,11 +407,10 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   );
   assert.ok(
     !doc.includes('a CI só varre `*.unit.mjs` em\n  `scripts/ci/`'),
-    'TESTING_CONVENTION.md não pode reduzir a varredura da CI a scripts/ci/*.unit.mjs',
+    'TESTING_CONVENTION.md não pode reduzir a varredura da CI aos testes de scripts/ci',
   );
 
-  // 5. a camada Deno das edges: o doc precisa citar o glob de teste das edges que a CI usa
-  assert.ok(ci.includes("git ls-files 'supabase/functions/**/*.test.ts'"), 'a CI perdeu o glob dos testes Deno');
+  // 5. a camada Deno das edges: o glob é para execução manual, não para o CI mínimo.
   assert.ok(doc.includes('supabase/functions/**/*.test.ts'), 'TESTING_CONVENTION.md não cita os testes Deno das edges');
 
   // 6. a convenção de nome do diretório de contratos vale para todos os arquivos de lá

@@ -65,6 +65,8 @@ interface Props {
   toggleContact: (id: string) => void;
   selectAll: () => void;
   clearFilters: () => void;
+  isLoading?: boolean;
+  hasError?: boolean;
 }
 
 export const TalkXContactSelector: React.FC<Props> = ({
@@ -72,6 +74,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
   contactSearch, setContactSearch, companyFilter, setCompanyFilter,
   companies,
   toggleContact, selectAll, clearFilters,
+  isLoading = false, hasError = false,
 }) => {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const crmContacts = React.useMemo(
@@ -160,7 +163,9 @@ export const TalkXContactSelector: React.FC<Props> = ({
       </CardHeader>
       <CardContent ref={scrollRef} className="flex-1 overflow-auto min-h-0">
         {filteredContacts.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">{contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}</p>
+          <p role={isLoading ? 'status' : undefined} className="text-sm text-muted-foreground text-center py-8">
+            {isLoading ? 'Carregando contatos…' : hasError ? 'Não foi possível carregar contatos. Tente novamente.' : contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}
+          </p>
         ) : (
           <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {

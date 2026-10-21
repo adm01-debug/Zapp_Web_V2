@@ -96,5 +96,10 @@ test('W80: tituloDe retorna titulo de login quando so setup falhou', () => {
     '[e2e-logado] Suíte logada quebrada na main',
     'vazio (sem test-results) e suite quebrada, nao login',
   );
+  assert.equal(
+    tituloDe(['some-spec-chromium'], { tituloBase: '[e2e-logado] falha customizada' }),
+    '[e2e-logado] falha customizada',
+    'preserva o titulo-base customizavel para falhas fora do login',
+  );
 });
 

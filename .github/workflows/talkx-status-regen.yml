@@ -36,11 +36,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
-  group: talkx-regen-${{ github.ref }}
-  cancel-in-progress: true
-
-concurrency:
+  # Não cancelar uma regeneração em andamento: push para main não é interruptível
+  # com segurança enquanto a PR automática está sendo preparada/atualizada.
   group: talkx-status-regen
   cancel-in-progress: false
 
@@ -53,6 +50,9 @@ permissions:
 
 jobs:
   regen:
+    # workflow_dispatch permite escolher qualquer ref; os passos seguintes usam
+    # contents/pull-requests/actions:write e devem executar apenas com código main.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write

@@ -36,22 +36,28 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 * Moram dentro da pasta da edge (`supabase/functions/<edge>/index.test.ts`) e importam o
   handler direto.
 * Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio.
-* Comando (CI, passo "Run executable Edge handler contracts"):
+* Execução manual da suíte completa (não é um gate do CI mínimo atual):
   `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')`.
-  O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`
-  roda antes, no mesmo job.
+* No CI mínimo, o job `Node CI Scripts` instala Deno 2.9.5 e executa
+  `node --test scripts/ci/*.unit.mjs scripts/vercel/*.unit.mjs`. A guarda
+  `scripts/ci/edge-coverage-authz.unit.mjs` invoca Deno para testar somente os cinco
+  arquivos de autorização listados nela e recalcular a régua de cobertura. O CI mínimo
+  não executa todos os testes de Edge nem `deno check`.
 
 ## 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`
 
-* Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
-  (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).
+* Moram em `scripts/ci/`, `scripts/vercel/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
+  (as suites extras seguem padrão próprio; em `db-audit` há também contratos `.test.mjs`).
 * Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`, mas a CI
-  também roda contratos `.test.mjs` de `scripts/db-audit/`.
-* Comando (CI, passo "Test CI and Edge deployment guards"):
-  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
+  mínima **não** roda os contratos `.test.mjs` de `scripts/db-audit/`.
+* CI mínima, job "Node CI Scripts":
+  `node --test scripts/ci/*.unit.mjs scripts/vercel/*.unit.mjs`.
+* CI do banco, workflow `db-guard.yml`: roda
+  `node --test scripts/db-audit/*.test.mjs` e os testes SQL/Docker declarados
+  individualmente nesse workflow. Não confundir os dois gates.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
-* Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
+* Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs` ou `node --test scripts/vercel/<arquivo>.unit.mjs`.
 
 ## 5. E2E no navegador — `e2e/`
 
@@ -78,8 +84,8 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 
 * Nome do arquivo diz o que ele é: `.test.ts`/`.spec.ts` = suíte de código;
   `.unit.mjs` = guarda executável de CI. Em scripts, o passo da CI varre
-  `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/talkx/*.unit.mjs`
-  e os dois contratos `.test.mjs` de `scripts/db-audit/`.
+  `scripts/ci/*.unit.mjs` e `scripts/vercel/*.unit.mjs` no gate mínimo; os gates
+  de deploy e banco têm comandos próprios, declarados nos workflows correspondentes.
 * Teste que prova correção de defeito nasce **vermelho** e fica verde com a correção; teste
   que não falha sem a correção não prova nada.
 * Nada de produção: nenhuma camada acima aponta para banco, edge ou segredo de produção.
@@ -92,5 +98,6 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 sem `--rapido` — `bun run test` e `bun run build`. `zapp-verify . --rapido` é a checagem a
 cada edição; ele **pula** unidade e build, então não substitui a suíte completa.
 
-As camadas 3, 4 e 5 **não** entram no `zapp-verify`: rodam na CI (`.github/workflows/ci.yml`)
-e, no caso do E2E, pelo job próprio com banco local.
+As camadas 3, 4 e 5 **não** entram no `zapp-verify`. O CI mínimo (`.github/workflows/ci.yml`)
+roda as guardas Node, incluindo a medição Deno restrita de autorização; não executa a suíte
+Deno completa. O E2E tem job próprio, com os projetos e ambiente definidos no workflow.

@@ -236,21 +236,22 @@ Estado dos achados após re-auditoria de 2026-09-17:
   disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
   com GitHub Enterprise Cloud para repositórios privados.
 
-## Perímetro do GitHub — estado canônico (2026-10-03)
+## Perímetro do GitHub — último baseline disponível (2026-10-16)
 
 **Regra:** qualquer mudança nos campos abaixo atualiza **esta tabela** e `scripts/ci/github-settings-baseline.json`
-**no mesmo PR** — o `settings-guard` compara a realidade com o baseline e divergência é regressão. Fonte: API do
-GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
+**no mesmo PR**. Os valores são os do baseline local medido em 16/10/2026; não foram reconsultados ao vivo nesta
+auditoria. O `settings-guard` compara a realidade com o baseline, mas seu token não consegue ler branch protection
+(403 administrativo); portanto, não tratar o baseline como prova do estado remoto atual.
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
-| Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
-| Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
-| Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
+| Branch protection — required checks | **6 no baseline**: `🔎 TypeCheck` · `🧪 Unit Tests (1/3)` · `🧪 Unit Tests (2/3)` · `🧪 Unit Tests (3/3)` · `🏗️ Build` · `🧩 Node CI Scripts` | baseline `2026-10-16`; remoto não verificado nesta auditoria |
+| Branch protection — `strict` | `true` no baseline `2026-10-16`; remoto não verificado nesta auditoria | baseline local |
+| Branch protection — `enforce_admins` | `true` no baseline `2026-10-16`; remoto não verificado nesta auditoria | baseline local |
+| Branch protection — review obrigatório | `0` no baseline `2026-10-16`; remoto não verificado nesta auditoria | baseline local |
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
-| Environments | **7**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
+| Environments | **6 no baseline**: `banco-leitura` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `producao-ddl` · `producao-edge-functions` | baseline `2026-10-16`; remoto não verificado nesta auditoria |
 | Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |
 | Actions — `sha_pinning_required` | `true` | `check-workflow-pins` |
@@ -262,8 +263,10 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
-valer (confira antes de propor mudança de CI, para não refazer o que já existe):
+Inventário atual medido em 2026-10-21: **15** arquivos em `.github/workflows/` + **3** dinâmicos = **18**; `docs/ci/README.md` é a fonte gerada de nomes e contagem.
+
+O registro abaixo contém auditorias históricas. Consulte o inventário gerado e o baseline datado antes de assumir que
+uma configuração remota ainda está vigente.
 
 **Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
@@ -275,11 +278,10 @@ total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
-**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
-`🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
-(não bloqueia merge).
+**Medição histórica dos required checks da `main`** (25/09; não representa evidência remota atual): `🔍 Lint & TypeCheck`,
+`🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e `🎭 E2E Tests (Playwright)`. O baseline local
+posterior de 16/10 registra nomes diferentes, descritos na tabela acima; o estado remoto atual precisa de leitura com
+permissão administrativa. Não inferir required checks a partir dos jobs existentes no YAML.
 
 **Environments com gate de aprovação** (branch policy restrita a branches protegidas) — os quatro já
 criados no repo; os dois primeiros passam a ser exigidos pelos workflows quando a PR #687 mergear:

@@ -314,7 +314,7 @@ function SectionCard({ icon, title, subtitle, right, children }: { icon: React.E
 function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { icon: React.ElementType; title: string; desc: string; active: boolean; onClick: () => void; disabled?: boolean; badge?: string }) {
   const Icon = icon;
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
+    <button type="button" onClick={onClick} disabled={disabled} aria-pressed={active} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
       <IconTile icon={Icon as never} size={40} color="blue" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
@@ -348,8 +348,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
           <div>
-            <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
-            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            <Label htmlFor="talkx-campaign-name" className="text-xs text-foreground-secondary">Nome da campanha</Label>
+            <Input id="talkx-campaign-name" value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
             {nameTooShort && (
               <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos {CAMPAIGN_NAME_MIN_LENGTH} caracteres</p>
             )}
@@ -395,10 +395,19 @@ function StepAudience({ ed }: { ed: WizardState }) {
                 {(ed.connections ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.phone_number || 'sem número'})</SelectItem>)}
               </SelectContent>
             </Select>
+          {ed.connectionQueryError && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <p role="alert" className="text-2xs text-dash-red">Não foi possível validar as conexões ativas: {ed.connectionQueryError.message}</p>
+              <button type="button" className="shrink-0 text-2xs underline" onClick={() => void ed.refetchConnections()}>Tentar novamente</button>
+            </div>
+          )}
+          {!ed.connectionQueryError && ed.connectionQueryLoading && (
+            <p role="status" className="mt-1.5 text-2xs text-muted-foreground">Validando conexões ativas…</p>
+          )}
           </div>
         </div>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
-          <div><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div><Label htmlFor="talkx-campaign-description" className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input id="talkx-campaign-description" value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div>
             <Label className="text-xs text-foreground-secondary">Responsável</Label>
             <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
@@ -418,7 +427,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             </Select>
           </div>
         </div>
-        {(ed.connections ?? []).length === 0 && (
+        {(ed.connections ?? []).length === 0 && !ed.connectionQueryLoading && !ed.connectionQueryError && (
           <div className="mt-3">
             <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
           </div>
@@ -426,6 +435,15 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       <SectionCard icon={Users} title="Origem do público" subtitle="Escolha de onde virão os contatos para esta campanha.">
+        {ed.audienceQueryError && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <p role="alert" className="text-xs text-dash-red">Não foi possível validar a audiência: {ed.audienceQueryError.message}</p>
+            {!ed.hasUnsupportedAudienceRules && <button type="button" className="text-xs underline" onClick={() => void ed.refetchAudience()}>Tentar novamente</button>}
+          </div>
+        )}
+        {!ed.audienceQueryError && ed.audienceQueryLoading && (
+          <p role="status" className="mb-3 text-xs text-muted-foreground">Validando filtros e tamanho do público…</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <SourceCard icon={Users} title="Contatos ZAPP" desc="Use seus contatos da plataforma com filtros avançados." active={ed.audienceSource === 'contacts'} onClick={() => ed.setAudienceSource('contacts')} />
           <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={activeSegments.length === 0} badge={activeSegments.length === 0 ? 'Nenhum segmento salvo' : `${activeSegments.length} segmentos`} />
@@ -440,7 +458,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             <div className="mt-2 flex flex-wrap gap-2">
               {filteredSegments.map((s) => {
                 const active = ed.segmentIds.includes(s.id);
-                const perSegment = ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? null;
+                const perSegment = ed.segmentEstimates?.[s.id] ?? null;
                 return (
                   <button key={s.id} type="button" onClick={() => ed.toggleSegmentId(s.id)} aria-pressed={active} className={cn('inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all', active ? 'border-primary bg-primary/10 text-primary' : 'border-border/70 bg-input/30 text-foreground hover:border-primary/40')}>
                     {s.name}
@@ -450,8 +468,11 @@ function StepAudience({ ed }: { ed: WizardState }) {
                 );
               })}
             </div>
-            {filteredSegments.length === 0 && (
+            {filteredSegments.length === 0 && !ed.audienceQueryLoading && !ed.audienceQueryError && (
               <p className="mt-3 text-xs text-muted-foreground">Nenhum segmento encontrado.</p>
+            )}
+            {filteredSegments.length === 0 && !ed.audienceQueryError && ed.audienceQueryLoading && (
+              <p role="status" className="mt-3 text-xs text-muted-foreground">Carregando segmentos e estimativa…</p>
             )}
             {ed.selectedSegments.length > 0 && (
               <div className="mt-3">
@@ -475,7 +496,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
 
       {ed.audienceSource === 'contacts' && (
         <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos."
-          right={<span className="text-3xs text-muted-foreground">{typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}</span>}>
+          right={<span className="text-3xs text-muted-foreground">{ed.audienceQueryError ? 'Contagem indisponível' : typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}</span>}>
           <TalkXAudienceFilters
             rules={ed.audienceRules}
             onChange={ed.setAudienceRules}
@@ -498,6 +519,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
             toggleContact={ed.toggleContact}
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}
+            isLoading={ed.audienceQueryLoading}
+            hasError={Boolean(ed.audienceQueryError)}
           />
           </div>
         </SectionCard>
@@ -720,14 +743,15 @@ function WizardRail({ ed }: { ed: WizardState }) {
     <div className="space-y-4 min-w-0">
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={ed.audienceMetricsKnown ? fmtInt(ed.audienceTotal) : ed.audienceSummaryLoading ? '…' : '—'} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={ed.audienceBreakdownKnown ? fmtInt(ed.eligibleCount) : ed.audienceSummaryLoading ? '…' : '—'} sub={ed.audienceBreakdownKnown && ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={ed.audienceBreakdownKnown ? fmtInt(ed.suppressedCount) : ed.audienceSummaryLoading ? '…' : '—'} sub={ed.audienceBreakdownKnown && ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
         </div>
       </RailCard>
+      {ed.audienceQueryError && ed.step !== 1 && <p role="alert" className="text-xs text-dash-red">Estimativa indisponível: {ed.audienceQueryError.message}</p>}
       <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
         <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
       </RailCard>

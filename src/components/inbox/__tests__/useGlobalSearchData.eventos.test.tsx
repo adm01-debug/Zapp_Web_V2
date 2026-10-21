@@ -2,10 +2,11 @@
  * Busca global — registro do evento de uso via RPC `log_search_event`.
  *
  * A trilha de banco (cartão pai `t_d15d3a92`,
- * `supabase/migrations/20261016112552_search_events.sql`) fecha a tabela
+ * `supabase/migrations/20261026100000_search_event_rpc.sql`) complementa a tabela
  * `search_events` para o cliente (RLS ligada, zero policy, REVOKE de
  * anon/authenticated) e expõe UM caminho de escrita:
- * `log_search_event(p_term, p_result_count, p_clicked)`. O termo vai NORMALIZADO
+ * `log_search_event(p_term, p_result_count, p_clicked, p_event_id, p_result_kind)`.
+ * O termo é descartado na RPC; o ID permite atualizar o mesmo evento no clique.
  * pela RPC — o cliente só faz um filtro LEVE (telefone/e-mail/token nem saem
  * daqui).
  *
@@ -13,8 +14,7 @@
  *   1. toda busca que termina (termo com 3+ caracteres), em segundo plano;
  *   2. o clique no resultado (`p_clicked = true`), por mouse ou teclado.
  *
- * Vermelho antes: zero chamadas à RPC. Verde depois: uma chamada por busca e
- * uma por clique, sem nunca derrubar a busca.
+ * Uma busca e seu clique usam o mesmo identificador para contar como um evento.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, renderHook } from '@testing-library/react';
@@ -111,14 +111,15 @@ describe('useGlobalSearchData — evento de uso da busca (RPC log_search_event)'
     h.logger.error.mockClear();
   });
 
-  it('busca com 3+ caracteres registra UMA chamada, com o termo e a contagem', async () => {
+  it('busca com 3+ caracteres registra UMA chamada com id estável e a contagem', async () => {
     await performSearch('objeto');
 
     await waitFor(() => expect(h.state.rpcCalls).toHaveLength(1));
-    expect(h.state.rpcCalls[0]).toEqual({
-      fn: 'log_search_event',
-      args: { p_term: 'objeto', p_result_count: 1, p_clicked: false },
+    expect(h.state.rpcCalls[0].fn).toBe('log_search_event');
+    expect(h.state.rpcCalls[0].args).toMatchObject({
+      p_term: 'objeto', p_result_count: 1, p_clicked: false, p_result_kind: null,
     });
+    expect(h.state.rpcCalls[0].args.p_event_id).toEqual(expect.stringMatching(/^[0-9a-f-]{36}$/i));
   });
 
   it('busca sem resultado registra a contagem zero', async () => {
@@ -127,7 +128,9 @@ describe('useGlobalSearchData — evento de uso da busca (RPC log_search_event)'
     await performSearch('vazio');
 
     await waitFor(() => expect(h.state.rpcCalls).toHaveLength(1));
-    expect(h.state.rpcCalls[0].args).toEqual({ p_term: 'vazio', p_result_count: 0, p_clicked: false });
+    expect(h.state.rpcCalls[0].args).toMatchObject({
+      p_term: 'vazio', p_result_count: 0, p_clicked: false, p_result_kind: null,
+    });
   });
 
   it('termo curto (menos de 3 caracteres) não chama a RPC', async () => {
@@ -160,6 +163,28 @@ describe('useGlobalSearchData — evento de uso da busca (RPC log_search_event)'
     });
 
     expect(h.state.rpcCalls).toHaveLength(1);
+  });
+
+  it('busca curta não marca evento anterior e a busca retomada recebe novo ID', async () => {
+    const hook = await performSearch('objeto');
+    const primeiroId = h.state.rpcCalls[0].args.p_event_id;
+
+    await act(async () => {
+      await hook.result.current.performSearch('ab', TYPES, 'all', []);
+    });
+    act(() => hook.result.current.registerResultClick('message'));
+    expect(h.state.rpcCalls).toHaveLength(1);
+
+    await act(async () => {
+      await hook.result.current.performSearch('objeto', TYPES, 'all', []);
+    });
+    expect(h.state.rpcCalls).toHaveLength(2);
+    const segundoId = h.state.rpcCalls[1].args.p_event_id;
+    expect(segundoId).not.toBe(primeiroId);
+
+    act(() => hook.result.current.registerResultClick('message'));
+    await waitFor(() => expect(h.state.rpcCalls).toHaveLength(3));
+    expect(h.state.rpcCalls[2].args.p_event_id).toBe(segundoId);
   });
 
   it('erro da RPC não derruba a busca: o resultado fica e o erro vai ao log', async () => {
@@ -195,8 +220,11 @@ describe('GlobalSearch — clique no resultado registra p_clicked', () => {
       const clique = h.state.rpcCalls.find((call) => call.args.p_clicked === true);
       expect(clique).toEqual({
         fn: 'log_search_event',
-        args: { p_term: 'zzzz', p_result_count: 1, p_clicked: true },
+        args: expect.objectContaining({
+          p_term: 'zzzz', p_result_count: 1, p_clicked: true, p_result_kind: 'message',
+        }),
       });
+      expect(clique?.args.p_event_id).toBe(h.state.rpcCalls[0].args.p_event_id);
     });
   });
 });

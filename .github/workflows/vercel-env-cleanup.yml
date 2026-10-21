@@ -1,3 +1,9 @@
+# docs:
+#   gatilho: workflow_dispatch com modo dry-run por padrão
+#   prova: lista variáveis Vercel allowlisted sem imprimir seus valores
+#   falha: execução vermelha e nenhuma variável removida antes da seleção explícita de apply
+#   avisa: operador que disparou pelo log e status do workflow
+
 name: V043-V065 Vercel Env Cleanup
 
 on:
@@ -10,21 +16,42 @@ on:
         type: choice
         options: ['1', '0']
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 jobs:
   cleanup:
     name: Remove vars perigosas/mortas do Vercel
+    # workflow_dispatch pode escolher uma branch arbitrária; nunca execute código
+    # dela com credenciais que alcançam o projeto Vercel.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Setup Node 20
+      - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '24'
+
+      - name: Apply exige token Vercel de escrita explícito
+        if: inputs.dry_run == '0'
+        env:
+          VERCEL_WRITE_TOKEN: ${{ secrets.VERCEL_WRITE_TOKEN }}
+        run: |
+          if [[ -z "$VERCEL_WRITE_TOKEN" ]]; then
+            echo '::error::Apply bloqueado: configure VERCEL_WRITE_TOKEN com escopo de escrita.'
+            exit 1
+          fi
 
       - name: Limpar vars Vercel (V043-V065)
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_READONLY_TOKEN }}
+          VERCEL_TOKEN: ${{ inputs.dry_run == '0' && secrets.VERCEL_WRITE_TOKEN || secrets.VERCEL_READONLY_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: node scripts/ci/vercel-env-cleanup.mjs

@@ -1,16 +1,15 @@
 /**
  * SearchInsightsView — HZ1-06
  *
- * Tela de admin com os KPIs da busca global (RPC `get_search_insights`):
- * total de buscas, taxa de clique, buscas sem resultado, top 10 consultas e
- * top 10 termos sem resultado. Leitura apenas — esta tela NÃO exporta, não
- * imprime, não copia e não baixa nada (a informação não sai do sistema).
+ * Tela de admin com os agregados da busca global (RPC `search_insights`):
+ * total, média de tamanho, cliques, buscas sem resultado e tipos clicados.
+ * O termo não é persistido; a tela não tenta reconstruir nem expor consultas.
  *
  * Acesso: a própria RPC nega quem não é admin/supervisor (42501); a rota é
  * gated pelo item de menu em NavigationService (STAFF_ROLES).
  *
- * Sem PII: os termos vêm normalizados pela RPC (`term_normalized`), nunca de
- * contato, telefone ou conversa.
+ * Privacidade: eventos têm user_id e data/hora, mas nunca armazenam texto livre.
+ * O acesso aos agregados é restrito à própria RPC para admin/supervisor.
  */
 import { useState } from 'react';
 import { SearchCheck, MousePointerClick, SearchX, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -30,7 +29,6 @@ import {
   DEFAULT_SEARCH_INSIGHTS_PERIOD,
   SEARCH_INSIGHTS_PERIODS,
   useSearchInsights,
-  type SearchInsightTerm,
   type SearchInsightsPeriod,
 } from '@/hooks/admin/useSearchInsights';
 
@@ -52,52 +50,6 @@ function formatRate(value: number): string {
   })}%`;
 }
 
-function TermTable({
-  title,
-  emptyMessage,
-  rows,
-  tone,
-}: {
-  title: string;
-  emptyMessage: string;
-  rows: SearchInsightTerm[];
-  tone: 'default' | 'warning';
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {rows.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Termo</TableHead>
-                <TableHead className="w-24 text-right">Buscas</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.term}>
-                  <TableCell className={tone === 'warning' ? 'text-warning' : undefined}>
-                    {row.term}
-                  </TableCell>
-                  <TableCell className="text-right font-medium text-foreground">
-                    {formatNumber(row.count)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function SearchInsightsView() {
   const [days, setDays] = useState<SearchInsightsPeriod>(DEFAULT_SEARCH_INSIGHTS_PERIOD);
   const { data, isLoading, isError, error, refetch } = useSearchInsights(days);
@@ -117,7 +69,7 @@ export function SearchInsightsView() {
             Insights de Busca
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            O que as pessoas procuram, o que não encontram e o que clicam — apenas termos normalizados, sem dados pessoais.
+            Visão agregada de uso; o texto digitado não é armazenado.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -157,8 +109,8 @@ export function SearchInsightsView() {
       )}
 
       {isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-busy="true">
-          {[0, 1, 2].map((i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
             <Card key={i}>
               <CardContent className="space-y-2 pt-4 pb-3">
                 <Skeleton className="h-3 w-24" delay={i * 80} />
@@ -172,13 +124,22 @@ export function SearchInsightsView() {
 
       {!isLoading && !isError && data && (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                   <SearchCheck className="h-3.5 w-3.5" aria-hidden="true" /> Buscas
                 </div>
                 <p className="mt-1 text-2xl font-bold text-foreground">{formatNumber(data.total)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <SearchCheck className="h-3.5 w-3.5" aria-hidden="true" /> Tamanho médio do termo
+                </div>
+                <p className="mt-1 text-2xl font-bold text-foreground">{data.averageTermLength.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</p>
+                <p className="text-xs text-muted-foreground">caracteres por busca</p>
               </CardContent>
             </Card>
             <Card>
@@ -207,35 +168,43 @@ export function SearchInsightsView() {
           <p className="flex items-start gap-2 text-xs text-muted-foreground">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden="true" />
             <span>
-              Termos sem resultado são lacunas de conteúdo: a busca aconteceu e nada apareceu — nenhum clique
-              podia acontecer. Use a lista abaixo para decidir o que cadastrar ou documentar.
+              A coleta não guarda os termos pesquisados nem permite listar buscas individuais. As métricas abaixo
+              são agregadas; os tipos indicam apenas resultados que receberam clique.
             </span>
           </p>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <TermTable
-              title="Mais buscadas"
-              emptyMessage={
-                data.total === 0
-                  ? 'Nenhuma busca registrada no período.'
-                  : 'Nenhum termo registrado no período.'
-              }
-              rows={data.topQueries}
-              tone="default"
-            />
-            <TermTable
-              title="Sem resultado"
-              emptyMessage="Nenhum termo sem resultado no período."
-              rows={data.noResultTerms}
-              tone="warning"
-            />
-          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Cliques por tipo de resultado</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(data.searchesByKind).length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  {data.total === 0 ? 'Nenhuma busca registrada no período.' : 'Nenhum clique por tipo registrado no período.'}
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow><TableHead>Tipo de resultado</TableHead><TableHead className="w-24 text-right">Cliques</TableHead></TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(data.searchesByKind).sort(([a], [b]) => a.localeCompare(b)).map(([kind, count]) => (
+                      <TableRow key={kind}>
+                        <TableCell>{kind}</TableCell>
+                        <TableCell className="text-right font-medium text-foreground">{formatNumber(count)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
           <p className="sr-only">
             {`Resumo do período de ${data.days} dia(s): ${formatNumber(data.total)} busca(s), ` +
               `${formatRate(data.clickRate)} de taxa de clique, ${formatNumber(data.noResults)} sem resultado ` +
-              `(${formatRate(noResultRate)}), ${data.topQueries.length} termo(s) no topo das buscas e ` +
-              `${data.noResultTerms.length} termo(s) sem resultado.`}
+              `(${formatRate(noResultRate)}), tamanho médio de ${data.averageTermLength} caracteres; ` +
+              `nenhum termo individual é armazenado.`}
           </p>
         </>
       )}

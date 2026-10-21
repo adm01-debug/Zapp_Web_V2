@@ -85,7 +85,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
   const handleSelect = useCallback((result: SearchResult) => {
     // O clique é registrado ANTES de a busca ser limpa: o evento pertence à busca
     // que produziu o resultado. Mouse e Enter (teclado) passam por aqui.
-    registerResultClick();
+    registerResultClick(result.type);
     onSelectResult(result);
     onOpenChange(false);
     handleSearch('');

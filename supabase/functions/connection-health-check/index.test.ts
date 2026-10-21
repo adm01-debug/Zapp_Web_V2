@@ -60,6 +60,8 @@ interface Fake {
   lastInbound: Array<{ created_at: string }>;
   /** admins para o e-mail de queda (opt-in desliga quando vazio) */
   adminProfiles: Array<Record<string, unknown>>;
+  /** preferências de notificação por usuário (sem opt-in não há push/e-mail) */
+  alertPreferences: Array<Record<string, unknown>>;
   /** pushes gravados em notifications */
   pushNotifications: Array<unknown>;
   /** deletes no warroom (testemunha do auto-resolve) */
@@ -89,6 +91,7 @@ function baseFake(): Fake {
     bodies: [],
     lastInbound: [],
     adminProfiles: [],
+    alertPreferences: [],
     pushNotifications: [],
     alertDeletes: [],
     withinHours: false,
@@ -146,8 +149,13 @@ function result(
   }
   if (table === 'warroom_alerts' && op === 'insert' && pending) {
     fake.insertTables.push(table);
-    fake.alerts.push(pending);
-    return { data: null, error: null };
+    const dedupeKey = pending.dedupe_key;
+    if (typeof dedupeKey === 'string' && fake.alerts.some((alert) => alert.dedupe_key === dedupeKey)) {
+      return { data: null, error: { code: '23505', message: 'duplicate dedupe_key' } };
+    }
+    const inserted = { id: `alert-${fake.alerts.length + 1}`, ...pending };
+    fake.alerts.push(inserted);
+    return { data: [inserted], error: null };
   }
   if (table === 'warroom_alerts' && op === 'delete') {
     fake.alertDeletes.push(filters);
@@ -158,6 +166,9 @@ function result(
   }
   if (table === 'profiles' && op === 'select') {
     return { data: fake.adminProfiles, error: null };
+  }
+  if (table === 'connection_alert_preferences' && op === 'select') {
+    return { data: fake.alertPreferences, error: null };
   }
   if (table === 'notifications' && op === 'insert' && pending) {
     fake.insertTables.push(table);
@@ -172,11 +183,12 @@ function result(
     // `.eq('instance_id', ...)` do alvo único é aplicado aqui (o handler filtra
     // pela instância pedida).
     const instanceFilter = filters.find(([c]) => c === 'instance_id')?.[1];
-    return {
-      data: fake.rows
+    const data = fake.rows
         .filter((r) => r.instance_id !== 'E2E_FIXTURE')
         .filter((r) => instanceFilter === undefined || r.instance_id === instanceFilter)
-        .map((r) => ({ ...r, status: fake.statusById[r.id] ?? null })),
+        .map((r) => ({ ...r, status: fake.statusById[r.id] ?? null }));
+    return {
+      data,
       error: null,
     };
   }
@@ -408,6 +420,46 @@ Deno.test('E25: GO logada SEM socket (Connected:false, LoggedIn:true) → degrad
   );
 });
 
+Deno.test('webhook parado: alerta mesmo com status já connected e notifica só na primeira gravação', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.withinHours = true;
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 31 * 60 * 1000).toISOString() }];
+  fake.alertPreferences = [{
+    user_id: 'opted-in-user',
+    push_enabled: true,
+    email_enabled: false,
+    alert_on_degraded: true,
+    alert_on_disconnected: false,
+  }];
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  const primeira = await run(fake);
+  const segunda = await run(fake);
+  const payloadPrimeira = await primeira.json() as { alerts_created: number };
+  const payloadSegunda = await segunda.json() as { alerts_created: number };
+
+  const alertaDeWebhook = fake.alerts.filter((alert) =>
+    typeof alert.dedupe_key === 'string' && alert.dedupe_key.startsWith('conn-degraded:v1:')
+  );
+  assert(alertaDeWebhook.length === 1, `esperava um único alerta persistido: ${JSON.stringify(fake.alerts)}`);
+  assert(alertaDeWebhook[0].alert_type === 'warning', `degradação deve ser warning: ${JSON.stringify(alertaDeWebhook[0])}`);
+  assert(
+    String(alertaDeWebhook[0].message).includes('webhook parado'),
+    `o motivo deve ser identificável: ${JSON.stringify(alertaDeWebhook[0])}`,
+  );
+  const pushes = fake.pushNotifications.flatMap((batch) => Array.isArray(batch) ? batch : [batch]);
+  assert(pushes.length === 1, `alerta duplicado não pode repetir push: ${JSON.stringify(fake.pushNotifications)}`);
+  assert(payloadPrimeira.alerts_created === 1, `primeira gravação deve contar um alerta: ${JSON.stringify(payloadPrimeira)}`);
+  assert(payloadSegunda.alerts_created === 0, `duplicata idempotente não é um alerta novo: ${JSON.stringify(payloadSegunda)}`);
+  assert(
+    !fake.connUpdates.some((update) => 'status' in update),
+    `degradação do webhook não deve reescrever status conectado: ${JSON.stringify(fake.connUpdates)}`,
+  );
+});
+
 // ─────────────────────────────── E26 ───────────────────────────────────────
 
 Deno.test('E26: duas detecções iguais da mesma queda produzem UM único alerta', async () => {
@@ -415,6 +467,13 @@ Deno.test('E26: duas detecções iguais da mesma queda produzem UM único alerta
   fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
   fake.statusById = { c1: 'connected' };
   fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.alertPreferences = [{
+    user_id: 'opted-in-user',
+    push_enabled: true,
+    email_enabled: false,
+    alert_on_degraded: true,
+    alert_on_disconnected: true,
+  }];
   fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
 
   await run(fake);
@@ -422,6 +481,13 @@ Deno.test('E26: duas detecções iguais da mesma queda produzem UM único alerta
 
   const alertas = fake.alerts.filter((a) => a.source === 'connection-health-check');
   assert(alertas.length === 1, `esperado 1 alerta para uma única queda, recebido ${alertas.length}`);
+  assert(alertas[0].alert_type === 'critical', `queda precisa ser crítica: ${JSON.stringify(alertas[0])}`);
+  assert(alertas[0].title === 'WhatsApp padrao desconectado', `título ausente/incorreto: ${JSON.stringify(alertas[0])}`);
+  assert(typeof alertas[0].message === 'string' && alertas[0].message !== '', `mensagem ausente: ${JSON.stringify(alertas[0])}`);
+  const pushes = fake.pushNotifications.flatMap((batch) => Array.isArray(batch) ? batch : [batch]);
+  assert(pushes.length === 1, `opt-in de push precisa notificar uma vez: ${JSON.stringify(fake.pushNotifications)}`);
+  const push = pushes[0] as Record<string, unknown>;
+  assert(push.user_id === 'opted-in-user', `push foi para destinatário incorreto: ${JSON.stringify(push)}`);
   const paraDisconnected = fake.connUpdates.filter((u) => u.status === 'disconnected');
   assert(
     paraDisconnected.length === 1,

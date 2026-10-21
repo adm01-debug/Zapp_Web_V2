@@ -1,11 +1,11 @@
 -- search_events — prova do registro de eventos da busca global SEM texto livre
--- (cartão t_a86eec01, migration 20261016013134_search_events.sql).
+-- (cartão t_a86eec01, migration base 20261016013134_search_events.sql e RPC
+-- 20261026100000_search_event_rpc.sql).
 --
 -- O QUE PROVA (critério do cartão):
---   T1) o agente registra a PRÓPRIA busca; registrar em nome de outro é negado
---       pela RLS (não é privilégio, é WITH CHECK);
---   T2) ninguém lê a tabela direto: não existe policy de SELECT e o papel
---       authenticated não tem SELECT (senão a RLS seria decorativa);
+--   T1) o agente só registra pela RPC autenticada, que não aceita identidade
+--       informada pelo cliente;
+--   T2) não há escrita nem leitura direta na tabela por papéis de cliente;
 --   T3) só admin/supervisor leem o agregado: agent e anon são negados na RPC
 --       search_insights (42501 / sem EXECUTE);
 --   T4) o agregado bate: total, buscas sem resultado, cliques, tipo do clique,
@@ -18,6 +18,8 @@
 --       tipo fora do vocabulário, clique sem tipo e tipo sem clique);
 --   T8) o rollback do cabeçalho da migration é executável: roda dentro de um
 --       SAVEPOINT e desfaz tabela + funções; o savepoint restaura tudo.
+--   T9) log_search_event descarta PII, registra uma busca uma vez, e correlaciona
+--       clique/replay pelo mesmo ID opaco e tipo real sem inflar a contagem.
 --
 -- COMO RODA (banco LOCAL do cartão, nunca produção):
 --   zapp-db-local psql . v2-<id> < supabase/tests/search_events.sql
@@ -74,9 +76,6 @@ DECLARE
   v_cols     text[];
   v_int_cols text[];
   v_rls      boolean;
-  v_pol      integer;
-  v_pol_cmd  text;
-  v_pol_roles text[];
   v_n        integer;
 BEGIN
   -- T5: a lista de colunas é EXATAMENTE esta — nada de `term`, `query`, `search`.
@@ -91,7 +90,7 @@ BEGIN
     RAISE EXCEPTION 'T5 FALHOU: tabela public.search_events não existe (migration não aplicada)';
   END IF;
 
-  IF v_cols <> ARRAY['id','user_id','term_length','had_results','result_kind','clicked','created_at'] THEN
+  IF v_cols <> ARRAY['id','user_id','term_length','had_results','result_kind','clicked','created_at','client_event_id'] THEN
     RAISE EXCEPTION 'T5 FALHOU: colunas de search_events = % (esperado o conjunto sem texto livre)', v_cols;
   END IF;
 
@@ -109,7 +108,7 @@ BEGIN
     RAISE EXCEPTION 'T5 FALHOU: colunas de texto = % (só result_kind é esperada; o termo não pode ter onde morar)', v_int_cols;
   END IF;
 
-  -- T1-estrutura: RLS ligada e UMA única policy, de INSERT para authenticated.
+  -- T1-estrutura: RLS ligada e nenhuma policy; somente a RPC SECURITY DEFINER escreve.
   SELECT c.relrowsecurity INTO v_rls
     FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relname = 'search_events';
@@ -117,18 +116,15 @@ BEGIN
     RAISE EXCEPTION 'T1 FALHOU: search_events sem RLS ligada';
   END IF;
 
-  SELECT count(*), min(polcmd), min(polroles::text) INTO v_n, v_pol_cmd, v_pol_roles
+  SELECT count(*) INTO v_n
     FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
     JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relname = 'search_events';
-  IF v_n <> 1 THEN
-    RAISE EXCEPTION 'T1 FALHOU: search_events tem % policies (esperado 1, de INSERT)', v_n;
-  END IF;
-  IF v_pol_cmd <> 'a' THEN
-    RAISE EXCEPTION 'T1 FALHOU: policy de search_events tem comando % (esperado INSERT/''a'')', v_pol_cmd;
+  IF v_n <> 0 THEN
+    RAISE EXCEPTION 'T1 FALHOU: search_events tem % policies (esperado 0; escrita somente pela RPC)', v_n;
   END IF;
 
-  RAISE NOTICE 'T1/T5 OK: colunas=%, RLS=on, 1 policy de INSERT para authenticated', v_cols;
+  RAISE NOTICE 'T1/T5 OK: colunas=%, RLS=on, sem policies de cliente', v_cols;
 END $$;
 
 -- ============ T1/T2: o agente insere o seu e não lê a tabela ============
@@ -140,9 +136,9 @@ DECLARE
   v_depois bigint;
   v_public_sel boolean;
 BEGIN
-  -- ACL: authenticated só tem INSERT (e nenhum SELECT/UPDATE/DELETE).
-  IF NOT has_table_privilege('authenticated', 'public.search_events', 'INSERT') THEN
-    RAISE EXCEPTION 'T2 FALHOU: authenticated não tem INSERT em search_events';
+  -- ACL: authenticated não escreve nem lê diretamente (a RPC é o único caminho).
+  IF has_table_privilege('authenticated', 'public.search_events', 'INSERT') THEN
+    RAISE EXCEPTION 'T2 FALHOU: authenticated tem INSERT direto em search_events';
   END IF;
   IF has_table_privilege('authenticated', 'public.search_events', 'SELECT') THEN
     RAISE EXCEPTION 'T2 FALHOU: authenticated tem SELECT em search_events (a RLS viraria decoração)';
@@ -160,33 +156,33 @@ BEGIN
 
   SELECT count(*) INTO v_antes FROM public.search_events;
 
-  -- insert do PRÓPRIO evento, como o agente autenticado
+  -- Até a própria linha é negada por INSERT direto.
   PERFORM set_config('request.jwt.claims',
                      json_build_object('sub', v_agente, 'role', 'authenticated')::text, true);
-  SET LOCAL ROLE authenticated;
-  INSERT INTO public.search_events (user_id, term_length, had_results, result_kind, clicked)
-    VALUES (v_agente, 7, true, 'message', true);
-  RESET ROLE;
+  BEGIN
+    SET LOCAL ROLE authenticated;
+    INSERT INTO public.search_events (user_id, term_length, had_results)
+      VALUES (v_agente, 7, true);
+    RESET ROLE;
+    RAISE EXCEPTION 'T2 FALHOU: agente inseriu diretamente a própria linha';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RESET ROLE;
+  END;
 
-  SELECT count(*) INTO v_depois FROM public.search_events;
-  IF v_depois <> v_antes + 1 THEN
-    RAISE EXCEPTION 'T1 FALHOU: insert do próprio evento não entrou (antes=% depois=%)', v_antes, v_depois;
-  END IF;
-
-  -- insert em nome de OUTRO usuário: a RLS tem de negar (42501) e nada entra
+  -- Também não pode escolher outro user_id.
   BEGIN
     SET LOCAL ROLE authenticated;
     INSERT INTO public.search_events (user_id, term_length, had_results)
       VALUES (v_outro, 9, true);
     RESET ROLE;
-    RAISE EXCEPTION 'T1 FALHOU: agente conseguiu registrar evento em nome de outro usuário';
+    RAISE EXCEPTION 'T2 FALHOU: agente inseriu diretamente em nome de outro usuário';
   EXCEPTION WHEN insufficient_privilege THEN
     RESET ROLE;
   END;
 
   SELECT count(*) INTO v_depois FROM public.search_events;
-  IF v_depois <> v_antes + 1 THEN
-    RAISE EXCEPTION 'T1 FALHOU: linha indevida entrou (depois=% esperado=%)', v_depois, v_antes + 1;
+  IF v_depois <> v_antes THEN
+    RAISE EXCEPTION 'T2 FALHOU: INSERT direto alterou a tabela (antes=% depois=%)', v_antes, v_depois;
   END IF;
 
   -- leitura direta pelo agente: negada pelo ACL
@@ -199,7 +195,117 @@ BEGIN
     RESET ROLE;
   END;
 
-  RAISE NOTICE 'T1/T2 OK: insert próprio entrou, insert alheio negado, leitura direta negada';
+  RAISE NOTICE 'T1/T2 OK: INSERT próprio/alheio e leitura direta negados; escrita passa pela RPC';
+END $$;
+
+-- ============ T9: RPC segura, idempotente e sem texto persistido ============
+DO $$
+DECLARE
+  v_agente uuid := 'a1aaaaaa-0000-0000-0000-000000000003';
+  v_evento uuid := 'e9000000-0000-0000-0000-000000000001';
+  v_evento_sem_resultado uuid := 'e9000000-0000-0000-0000-000000000002';
+  v_contagem integer;
+  v_clicked boolean;
+  v_kind text;
+  v_inicio bigint;
+  v_final bigint;
+BEGIN
+  IF to_regprocedure('public.log_search_event(text,integer,boolean,uuid,text)') IS NULL THEN
+    RAISE EXCEPTION 'T9 FALHOU: RPC log_search_event ausente';
+  END IF;
+  IF NOT has_function_privilege('authenticated', 'public.log_search_event(text,integer,boolean,uuid,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'T9 FALHOU: authenticated sem EXECUTE em log_search_event';
+  END IF;
+  IF has_function_privilege('anon', 'public.log_search_event(text,integer,boolean,uuid,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'T9 FALHOU: anon tem EXECUTE em log_search_event';
+  END IF;
+  IF has_function_privilege('service_role', 'public.log_search_event(text,integer,boolean,uuid,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'T9 FALHOU: service_role tem EXECUTE em log_search_event';
+  END IF;
+
+  -- Mesmo o papel authenticated sem subject (auth.uid() NULL) deve falhar fechado.
+  PERFORM set_config('request.jwt.claims', '{"role":"authenticated"}', true);
+  BEGIN
+    SET LOCAL ROLE authenticated;
+    PERFORM public.log_search_event('consulta segura', 1, false, gen_random_uuid(), null);
+    RESET ROLE;
+    RAISE EXCEPTION 'T9 FALHOU: RPC aceitou sessão authenticated sem auth.uid()';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RESET ROLE;
+  END;
+
+  PERFORM set_config('request.jwt.claims',
+                     json_build_object('sub', v_agente, 'role', 'authenticated')::text, true);
+  SELECT count(*) INTO v_inicio FROM public.search_events;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM public.log_search_event('consulta segura', 2, false, v_evento, null);
+  PERFORM public.log_search_event('consulta segura', 2, false, v_evento, null);
+  RESET ROLE;
+
+  SELECT count(*), bool_or(clicked), min(result_kind)
+    INTO v_contagem, v_clicked, v_kind
+    FROM public.search_events
+   WHERE user_id = v_agente AND client_event_id = v_evento;
+  IF v_contagem <> 1 OR v_clicked IS DISTINCT FROM false OR v_kind IS NOT NULL THEN
+    RAISE EXCEPTION 'T9 FALHOU: busca repetida criou/alterou linhas (n=%, clicked=%, kind=%)',
+      v_contagem, v_clicked, v_kind;
+  END IF;
+
+  SET LOCAL ROLE authenticated;
+  PERFORM public.log_search_event('consulta segura', 2, true, v_evento, 'message');
+  PERFORM public.log_search_event('consulta segura', 2, true, v_evento, 'message');
+  PERFORM public.log_search_event('consulta segura', 2, false, v_evento, null);
+  -- Reutilizar o ID com outra busca não pode converter o clique/categoria.
+  PERFORM public.log_search_event('outra consulta', 2, true, v_evento, 'contact');
+  RESET ROLE;
+
+  SELECT count(*), bool_or(clicked), min(result_kind)
+    INTO v_contagem, v_clicked, v_kind
+    FROM public.search_events
+   WHERE user_id = v_agente AND client_event_id = v_evento;
+  IF v_contagem <> 1 OR v_clicked IS DISTINCT FROM true OR v_kind IS DISTINCT FROM 'message' THEN
+    RAISE EXCEPTION 'T9 FALHOU: clique/replay não atualizou o mesmo evento (n=%, clicked=%, kind=%)',
+      v_contagem, v_clicked, v_kind;
+  END IF;
+
+  -- Busca sem resultado não pode virar clique nem quebrar a constraint de coerência.
+  SET LOCAL ROLE authenticated;
+  PERFORM public.log_search_event('sem retorno', 0, false, v_evento_sem_resultado, null);
+  PERFORM public.log_search_event('sem retorno', 0, true, v_evento_sem_resultado, 'message');
+  -- Barreira server-side: PII e tokens não geram linha mesmo se o cliente chamar a RPC.
+  PERFORM public.log_search_event('ana@example.com', 1, false, gen_random_uuid(), null);
+  PERFORM public.log_search_event('11987654321', 1, false, gen_random_uuid(), null);
+  PERFORM public.log_search_event(repeat('a', 32), 1, false, gen_random_uuid(), null);
+  -- Entradas inválidas não criam linhas nem violam constraints.
+  PERFORM public.log_search_event('ab', 1, false, gen_random_uuid(), null);
+  PERFORM public.log_search_event(repeat('x', 201), 1, false, gen_random_uuid(), null);
+  PERFORM public.log_search_event('consulta segura', -1, false, gen_random_uuid(), null);
+  PERFORM public.log_search_event('consulta segura', null, false, gen_random_uuid(), null);
+  -- Compatibilidade com clientes antigos: parâmetros opcionais geram ID no servidor.
+  PERFORM public.log_search_event('consulta compat', 1, false);
+  RESET ROLE;
+
+  SELECT count(*) INTO v_contagem
+    FROM public.search_events
+   WHERE user_id = v_agente AND client_event_id = v_evento_sem_resultado AND clicked;
+  IF v_contagem <> 0 THEN
+    RAISE EXCEPTION 'T9 FALHOU: busca sem resultado foi marcada como clique';
+  END IF;
+  SELECT count(*) INTO v_contagem
+    FROM public.search_events
+   WHERE user_id = v_agente AND term_length = 15 AND had_results
+     AND NOT clicked AND client_event_id IS NOT NULL;
+  IF v_contagem <> 1 THEN
+    RAISE EXCEPTION 'T9 FALHOU: chamada antiga sem ID não ganhou ID do servidor (n=%)', v_contagem;
+  END IF;
+  SELECT count(*) INTO v_final FROM public.search_events;
+  IF v_final <> v_inicio + 3 THEN
+    RAISE EXCEPTION 'T9 FALHOU: filtro de PII/idempotência alterou contagem indevidamente (início=%, fim=%)',
+      v_inicio, v_final;
+  END IF;
+
+  RAISE NOTICE 'T9 OK: RPC autenticada, sem PII, limites, categoria, compatibilidade, idempotência e clique correlacionado';
 END $$;
 
 -- ============ T3/T4: agregado só para admin/supervisor, e bate ============
@@ -223,25 +329,25 @@ BEGIN
   END IF;
 
   -- admin: janela de 30 dias (o evento de 100 dias fica fora).
-  -- Massa em 30 dias: 5 fixtures (5,12,8,3) + 1 evento que o T1 acabou de
-  -- registrar como agente (7, com clique) = conta com 5 buscas.
+  -- Massa em 30 dias: 4 fixtures recentes (5,12,8,3) + 3 RPCs do T9
+  -- (15 com clique, 11 sem resultado, 15 compatibilidade) = 7 buscas, média 9.9.
   PERFORM set_config('request.jwt.claims',
                      json_build_object('sub', v_admin, 'role', 'authenticated')::text, true);
   SET LOCAL ROLE authenticated;
   SELECT * INTO v_total, v_sem, v_cli, v_med, v_kinds FROM public.search_insights(30);
   RESET ROLE;
 
-  IF v_total <> 5 THEN
-    RAISE EXCEPTION 'T4 FALHOU: total em 30 dias = % (esperado 5)', v_total;
+  IF v_total <> 7 THEN
+    RAISE EXCEPTION 'T4 FALHOU: total em 30 dias = % (esperado 7)', v_total;
   END IF;
-  IF v_sem <> 2 THEN
-    RAISE EXCEPTION 'T4 FALHOU: buscas sem resultado = % (esperado 2)', v_sem;
+  IF v_sem <> 3 THEN
+    RAISE EXCEPTION 'T4 FALHOU: buscas sem resultado = % (esperado 3)', v_sem;
   END IF;
   IF v_cli <> 3 THEN
     RAISE EXCEPTION 'T4 FALHOU: buscas com clique = % (esperado 3)', v_cli;
   END IF;
-  IF v_med <> 7.0 THEN
-    RAISE EXCEPTION 'T4 FALHOU: média do comprimento = % (esperado 7.0)', v_med;
+  IF v_med <> 9.9 THEN
+    RAISE EXCEPTION 'T4 FALHOU: média do comprimento = % (esperado 9.9)', v_med;
   END IF;
   IF v_kinds <> '{"contact": 1, "message": 2}'::jsonb THEN
     RAISE EXCEPTION 'T4 FALHOU: cliques por tipo = % (esperado {"contact":1,"message":2})', v_kinds;
@@ -253,8 +359,8 @@ BEGIN
   SET LOCAL ROLE authenticated;
   SELECT * INTO v_total, v_sem, v_cli, v_med, v_kinds FROM public.search_insights();
   RESET ROLE;
-  IF v_total <> 5 THEN
-    RAISE EXCEPTION 'T4 FALHOU: total sem argumento = % (esperado o padrão de 30 dias: 5)', v_total;
+  IF v_total <> 7 THEN
+    RAISE EXCEPTION 'T4 FALHOU: total sem argumento = % (esperado o padrão de 30 dias: 7)', v_total;
   END IF;
 
   PERFORM set_config('request.jwt.claims',
@@ -262,8 +368,8 @@ BEGIN
   SET LOCAL ROLE authenticated;
   SELECT * INTO v_total, v_sem, v_cli, v_med, v_kinds FROM public.search_insights(365);
   RESET ROLE;
-  IF v_total <> 6 THEN
-    RAISE EXCEPTION 'T4 FALHOU: total em 365 dias = % (esperado 6)', v_total;
+  IF v_total <> 8 THEN
+    RAISE EXCEPTION 'T4 FALHOU: total em 365 dias = % (esperado 8)', v_total;
   END IF;
 
   -- supervisor também lê
@@ -272,7 +378,7 @@ BEGIN
   SET LOCAL ROLE authenticated;
   SELECT * INTO v_total, v_sem, v_cli, v_med, v_kinds FROM public.search_insights(30);
   RESET ROLE;
-  IF v_total <> 5 THEN
+  IF v_total <> 7 THEN
     RAISE EXCEPTION 'T3 FALHOU: supervisor não leu o agregado (total=%)', v_total;
   END IF;
 
@@ -288,7 +394,7 @@ BEGIN
     RESET ROLE;
   END;
 
-  RAISE NOTICE 'T3/T4 OK: admin/supervisor leem (5 em 30 d, 2 sem resultado, 3 cliques, média 7.0), agente negado';
+  RAISE NOTICE 'T3/T4 OK: admin/supervisor leem (7 em 30 d, 3 sem resultado, 3 cliques, média 9.9), agente negado';
 END $$;
 
 -- ============ T7: entradas inválidas são recusadas pelas constraints ============
@@ -394,10 +500,65 @@ BEGIN
   RAISE NOTICE 'T6 OK: retenção de 90 dias (1 removida, 0 na 2ª rodada), anon/authenticated negados, service_role permitido';
 END $$;
 
--- ============ T8: o rollback do cabeçalho da migration roda mesmo ============
--- Mesmas instruções do bloco "-- Rollback (SQL executavel, na ordem):" do
--- cabeçalho, dentro de um SAVEPOINT, para não derrubar o resto do teste.
-SAVEPOINT antes_do_rollback;
+-- ============ T8: rollback isolado da RPC e da tabela base ================
+-- Primeiro prova o rollback desta migration mantendo a tabela base e suas linhas.
+SAVEPOINT antes_do_rollback_rpc;
+drop function if exists public.log_search_event(text, integer, boolean, uuid, text);
+drop index if exists public.search_events_user_event_id_key;
+alter table public.search_events drop column if exists client_event_id;
+create policy "Users can register their own search events"
+  on public.search_events for insert to authenticated
+  with check (user_id = (select auth.uid()));
+grant insert on table public.search_events to authenticated;
+
+DO $$
+DECLARE
+  v_n integer;
+  v_column boolean;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1 FROM pg_attribute
+     WHERE attrelid = 'public.search_events'::regclass
+       AND attname = 'client_event_id' AND NOT attisdropped
+  ) INTO v_column;
+  IF v_column THEN
+    RAISE EXCEPTION 'T8 FALHOU: rollback da RPC deixou client_event_id';
+  END IF;
+  IF to_regprocedure('public.log_search_event(text,integer,boolean,uuid,text)') IS NOT NULL THEN
+    RAISE EXCEPTION 'T8 FALHOU: rollback da RPC deixou log_search_event';
+  END IF;
+  SELECT count(*) INTO v_n FROM pg_class WHERE relname = 'search_events_user_event_id_key';
+  IF v_n <> 0 THEN
+    RAISE EXCEPTION 'T8 FALHOU: rollback da RPC deixou o índice de client_event_id';
+  END IF;
+  IF has_table_privilege('authenticated', 'public.search_events', 'INSERT') IS NOT TRUE THEN
+    RAISE EXCEPTION 'T8 FALHOU: rollback da RPC não restaurou o INSERT da migration base';
+  END IF;
+  SELECT count(*) INTO v_n
+    FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'search_events';
+  IF v_n <> 1 THEN
+    RAISE EXCEPTION 'T8 FALHOU: rollback da RPC deixou % policies (esperado 1)', v_n;
+  END IF;
+  SELECT count(*) INTO v_n
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'search_events';
+  IF v_n <> 1 THEN
+    RAISE EXCEPTION 'T8 FALHOU: rollback da RPC removeu a tabela base';
+  END IF;
+  RAISE NOTICE 'T8 OK: rollback RPC remove coluna/índice/função e restaura policy/grant base';
+END $$;
+
+ROLLBACK TO SAVEPOINT antes_do_rollback_rpc;
+
+-- Em seguida, testa a remoção da migration base dentro de outro savepoint.
+SAVEPOINT antes_do_rollback_base;
+drop function if exists public.log_search_event(text, integer, boolean, uuid, text);
+drop index if exists public.search_events_user_event_id_key;
+alter table public.search_events drop column if exists client_event_id;
+drop policy if exists "Users can register their own search events" on public.search_events;
+revoke insert on table public.search_events from authenticated;
 do $$ begin if exists (select 1 from pg_extension where extname = 'pg_cron') then perform cron.unschedule(jobid) from cron.job where jobname = 'search-events-retention'; end if; end $$;
 drop function if exists public.search_insights(integer);
 drop function if exists public.purge_old_search_events();
@@ -411,18 +572,18 @@ BEGIN
     FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relname = 'search_events';
   IF v_n <> 0 THEN
-    RAISE EXCEPTION 'T8 FALHOU: rollback não removeu a tabela';
+    RAISE EXCEPTION 'T8 FALHOU: rollback base não removeu a tabela';
   END IF;
 
   SELECT count(*) INTO v_n FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname = 'public' AND p.proname IN ('search_insights','purge_old_search_events');
   IF v_n <> 0 THEN
-    RAISE EXCEPTION 'T8 FALHOU: rollback deixou % funções para trás', v_n;
+    RAISE EXCEPTION 'T8 FALHOU: rollback base deixou % funções para trás', v_n;
   END IF;
-  RAISE NOTICE 'T8 OK: rollback do cabeçalho remove tabela e funções';
+  RAISE NOTICE 'T8 OK: rollback base remove tabela e funções';
 END $$;
 
-ROLLBACK TO SAVEPOINT antes_do_rollback;
+ROLLBACK TO SAVEPOINT antes_do_rollback_base;
 
 DO $$
 DECLARE
@@ -432,9 +593,12 @@ BEGIN
     FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relname = 'search_events';
   IF v_n <> 1 THEN
-    RAISE EXCEPTION 'T8 FALHOU: a tabela não voltou depois do ROLLBACK TO SAVEPOINT';
+    RAISE EXCEPTION 'T8 FALHOU: savepoint não restaurou a tabela base';
   END IF;
-  RAISE NOTICE 'T8 OK: savepoint restaurou a tabela (o rollback é executável e isolado)';
+  IF to_regprocedure('public.log_search_event(text,integer,boolean,uuid,text)') IS NULL THEN
+    RAISE EXCEPTION 'T8 FALHOU: savepoint não restaurou log_search_event';
+  END IF;
+  RAISE NOTICE 'T8 OK: savepoints restauraram tabela e RPC após os dois rollbacks';
 END $$;
 
 ROLLBACK;

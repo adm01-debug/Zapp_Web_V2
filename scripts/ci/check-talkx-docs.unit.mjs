@@ -51,6 +51,7 @@ export const DOCS_CORRENTES = [
   'OPERACAO.md',
   'PARIDADE.md',
   'CHANGELOG_TALKX.md',
+  'ESTADOS.md',
   'CONVERSOES.md',
   'DIAGNOSTICO-rulevalueinput-instavel-2026-10-13.md',
   'v4/README.md',

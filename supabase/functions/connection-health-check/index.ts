@@ -156,10 +156,17 @@ interface AlertToCreate {
   reason: string | null;
 }
 
-/** Preferência de canal: opt-in explícito por tipo de alerta ('all' vale para todos). */
-function prefMatchesKind(pref: Record<string, unknown>, kind: 'disconnected' | 'degraded'): boolean {
-  const t = pref['alert_type'];
-  return t === 'all' || t === kind;
+interface ConnectionAlertPreference {
+  user_id: string;
+  push_enabled: boolean;
+  email_enabled: boolean;
+  alert_on_degraded: boolean;
+  alert_on_disconnected: boolean;
+}
+
+/** Opt-in explícito para a categoria da preferência armazenada pelo próprio usuário. */
+function prefMatchesKind(pref: ConnectionAlertPreference, kind: 'disconnected' | 'degraded'): boolean {
+  return kind === 'disconnected' ? pref.alert_on_disconnected : pref.alert_on_degraded;
 }
 
 /**
@@ -231,12 +238,12 @@ async function syncInboxSilenceAlert(
 async function notifyOptedIn(
   supabase: SupabaseClient,
   log: Logger,
-  args: { alert: AlertToCreate; prefs: Array<Record<string, unknown>>; resendKey: string | undefined },
+  args: { alert: AlertToCreate; prefs: ConnectionAlertPreference[]; resendKey: string | undefined },
 ): Promise<void> {
   const { alert, prefs, resendKey } = args;
   const opted = prefs.filter((p) => prefMatchesKind(p, alert.kind));
-  const pushUserIds = opted.filter((p) => p['channel'] === 'push').map((p) => p['user_id'] as string).filter(Boolean);
-  const emailUserIds = opted.filter((p) => p['channel'] === 'email').map((p) => p['user_id'] as string).filter(Boolean);
+  const pushUserIds = opted.filter((p) => p.push_enabled).map((p) => p.user_id).filter(Boolean);
+  const emailUserIds = opted.filter((p) => p.email_enabled).map((p) => p.user_id).filter(Boolean);
 
   // Push: notifications é a tabela REAL de push/in-app do V2 (mesmo shape que a
   // entrega original esperava em app_notifications, que não existe no banco).
@@ -617,16 +624,23 @@ export async function handleConnectionHealthCheck(
                     newStatus: dbStatus,
                   });
                   if (dbStatus === 'disconnected' && conn.status === 'connected') {
-                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                    alertsToCreate.push({
+                      connection_id: conn.id,
+                      instance_id: conn.instance_id,
+                      phone: conn.phone_number,
+                      kind: 'disconnected',
+                      reason: openReason,
+                    });
                   }
                 }
               }
-              // Degradação pelo socket (webhook parado): entra no funil de alerta
-              // com o próprio tipo — o warroom registra 'warning' e o push/e-mail
-              // respeitam o opt-in de 'degraded'.
-              if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
-                alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
-              }
+            }
+            // Degradação pelo socket (webhook parado) independe de transição
+            // persistida do status: a linha pode continuar `connected` enquanto
+            // o health estiver `degraded`. Enfileirar dentro do bloco de mudança
+            // de status omitia justamente o caso normal (connected -> connected).
+            if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
+              alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
             }
           } else {
             // E24/E28: 401/403 = a instancia nao autentica com a credencial que
@@ -654,6 +668,8 @@ export async function handleConnectionHealthCheck(
 
       results[index] = { instance_id: conn.instance_id, status: healthStatus, response_time_ms: responseTime, error: errorMessage, reason: openReason };
     };
+
+    await runWithConcurrency(connections, HEALTH_CHECK_CONCURRENCY, checkConnection);
 
     // Trilha de auditoria das transições automáticas de status. Mesmo formato do
     // helper compartilhado dos cartões de conexão (`writeConnectionAuditLog`):
@@ -683,34 +699,48 @@ export async function handleConnectionHealthCheck(
       }
     }
 
-    for (const alert of alertsToCreate) {
+    const newAlerts = dedupeAlerts(alertsToCreate);
+    const persistedAlerts: AlertToCreate[] = [];
+    for (const alert of newAlerts) {
       // Schema real de warroom_alerts: alert_type/title/message/source
       // (severity/description/metadata nao existem — o insert antigo falhava
       // com PGRST204 e o alerta critico nunca era gravado).
-      await supabase.from('warroom_alerts').insert({
+      const reasonLabel = alert.reason ? REASON_LABEL[alert.reason] : null;
+      const title = alert.kind === 'disconnected'
+        ? `WhatsApp ${alert.instance_id} desconectado`
+        : `Conexão ${alert.instance_id} degradada`;
+      const message = alert.kind === 'disconnected'
+        ? `A instância ${alert.instance_id} perdeu conexão com o WhatsApp${reasonLabel ? ` (${reasonLabel})` : ''}.`
+        : `A instância ${alert.instance_id}: ${reasonLabel ?? 'conexão degradada'}.`;
+      const { error } = await supabase.from('warroom_alerts').insert({
         alert_type: alert.kind === 'disconnected' ? 'critical' : 'warning',
         title,
         message,
         source: 'connection-health-check',
         dedupe_key: alertDedupeKey(alert),
-      }).then(({ error }) => {
-        // 23505 = episódio já registrado (idempotente); outro erro só loga.
-        if (error && (error as { code?: string }).code !== '23505') {
-          log.warn('Failed to create warroom alert', { error: error.message });
-        }
       });
+      // A notificação externa acompanha somente um alerta realmente persistido.
+      // 23505 é uma repetição idempotente: não cria linha nem reenvia push/e-mail.
+      if (!error) {
+        persistedAlerts.push(alert);
+      } else if ((error as { code?: string }).code !== '23505') {
+        log.warn('Failed to create warroom alert', { error: error.message });
+      }
     }
 
     // warroom_alerts só aparece para quem está com o painel aberto. O alerta tem
     // que sair do app: push (notifications) e e-mail (Resend) SÓ para quem optou.
-    // A tabela de preferências (connection_alert_preferences) ainda NÃO existe no
-    // banco do V2 (não está no schema-catalog nem nas migrations) — referenciá-la
-    // aqui quebra o guard de espelho do CI. Até o cartão de SQL criá-la, a lista de
-    // opt-ins é vazia e a notificação falha fechada: o episódio fica registrado no
-    // warroom, mas nenhum push/e-mail dispara. Nunca volta a mandar para todos.
-    const prefs: Array<Record<string, unknown>> = [];
+    // Falha/ausência de preferências continua fail-closed: registra o alerta no
+    // War Room, mas não envia notificações para usuários não comprovadamente opt-in.
+    const { data: preferenceRows, error: preferencesError } = await supabase
+      .from('connection_alert_preferences')
+      .select('user_id, push_enabled, email_enabled, alert_on_degraded, alert_on_disconnected');
+    if (preferencesError) {
+      log.warn('Falha ao ler preferências de alerta; notificações externas suprimidas', { error: preferencesError.message });
+    }
+    const prefs: ConnectionAlertPreference[] = preferencesError ? [] : (preferenceRows ?? []);
     const resendKey = Deno.env.get('RESEND_API_KEY');
-    for (const alert of newAlerts) {
+    for (const alert of persistedAlerts) {
       await notifyOptedIn(supabase, log, { alert, prefs, resendKey });
     }
 
@@ -719,10 +749,10 @@ export async function handleConnectionHealthCheck(
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     await supabase.from('connection_health_logs').delete().lt('checked_at', sevenDaysAgo);
 
-    log.done(200, { checked: results.length, alerts: alertsToCreate.length });
+    log.done(200, { checked: results.length, alerts: persistedAlerts.length });
     return jsonResponse({
       success: true, checked_at: new Date().toISOString(),
-      connections: results, alerts_created: alertsToCreate.length,
+      connections: results, alerts_created: persistedAlerts.length,
     }, 200, req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

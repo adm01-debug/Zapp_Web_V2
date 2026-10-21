@@ -75,9 +75,9 @@ os checkboxes deste plano não tinham relação explícita com entregas, alterna
 e o texto herdava a contagem antiga de workflows. Esta seção é a **camada de reconciliação**: o checkbox é só um
 marcador — a evidência de cada etapa é o que está aqui.
 
-**Inventário atual (medido, não herdado do texto de 01/10):** **16** arquivos YAML em `.github/workflows/`, mais os
+**Inventário atual (medido em 2026-10-21):** **15** arquivos YAML em `.github/workflows/`, mais os
 **3** workflows dinâmicos sem arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) —
-**19** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
+**18** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs`, conferido por `--check`), não as listas manuais das seções antigas deste
 documento. Os números "14 arquivos" / "17 no total" das seções de 01/10 são do baseline `7d3117c` e ficam
 registrados como **históricos**, não como inventário vigente.
@@ -101,14 +101,14 @@ vigente de `required_status_checks` é **`strict=true`** (E15(b), 02/10); a inst
 | Etapa | Estado reconciliado | Evidência verificável | Limitação declarada |
 |---|---|---|---|
 | **E01** restaurar `strict=false` | `[!]` **REVOGADA** | PR #1714 (mergeado em 02/10) e `scripts/ci/github-settings-baseline.json` (`"strict": true`) | A instrução de `strict=false` foi **revogada** por E15(b) em 02/10: reaplicá-la deixaria o `settings-guard` e o `CLAUDE.md` em conflito permanente. **Não reexecutar.** |
-| **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | `CLAUDE.md` (contagem 16/19, `strict` único, `required_reviewers`, cadência do guarda vivo) + `scripts/ci/ci-docs-baseline.unit.mjs` | `required_reviewers` é campo **administrativo**: com o `GITHUB_TOKEN` de workflow a API devolve 403. Fica registrado como intenção declarada, não como cobertura medida. |
+| **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | Snapshot histórico de 03/10: `CLAUDE.md` (contagem então 16/19, `strict` único, `required_reviewers`, cadência do guarda vivo) + `scripts/ci/ci-docs-baseline.unit.mjs` | `required_reviewers` é campo **administrativo**: com o `GITHUB_TOKEN` de workflow a API devolve 403. A contagem 16/19 não é o inventário atual. |
 | **E55** `timeout-minutes` da atestação | `[x]` **CONCLUÍDA** | PR #1757 — `.github/workflows/deploy-functions.yml` - `scripts/edge-deploy/stable-inventory.unit.mjs` | A prova é o teste do `lastReason`; **não** houve nova execução remota nesta reconciliação. |
 | **E56** regressão do log ANSI (`collect-remote.mjs`) | `[x]` **CONCLUÍDA** | PR #1754 — `scripts/edge-deploy/stable-inventory.unit.mjs` | Usa o log real do run 36852598923 já coletado; nenhum run novo foi disparado. |
-| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workflows/db-migrate.yml` tem **1479 linhas** | A meta literal de ~150 linhas **não** se atinge e não pode justificar remover as validações pós-apply: as guardas de DB ficam. O alvo é organizar o contrato, não encolher por estética. |
-| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.63.0`, `playwright-core@1.63.0` e `@playwright/test@1.63.0`; os **três** workflows pinam a mesma versão (`ci.yml:367`, `e2e-logado.yml:77`, `e2e-talkx.yml:74`) | **Não há mismatch** entre lock e workflows: a paridade 1.63.0 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
+| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workflows/db-migrate.yml` tem **1483 linhas** | A meta literal de ~150 linhas **não** se atinge e não pode justificar remover as validações pós-apply: as guardas de DB ficam. O alvo é organizar o contrato, não encolher por estética. |
+| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.64.1`, `playwright-core@1.64.1` e `@playwright/test@1.64.1`; os **três** workflows pinam a mesma versão (`ci.yml`, `e2e-logado.yml`, `e2e-talkx.yml`) | **Não há mismatch** entre lock e workflows: a paridade 1.64.1 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
 | **E93** settings de merge do repo | `[x]` **CONCLUÍDA** | `scripts/ci/github-settings-baseline.json` (`allow_merge_commit=false`, `allow_rebase_merge=false`, squash `PR_BODY`/`PR_TITLE`) | Medição por API do GitHub; o checkbox original vazio é que estava desatualizado. |
 | **E95** tabela canônica no `CLAUDE.md` | `[x]` **CONCLUÍDA** | Seção "Perímetro do GitHub — estado canônico" no `CLAUDE.md` + `docs/audits/e95-perimetro-github-2026-10-03.md` | Os campos de branch protection exigem `administration: read`: o guard recebe **403** e marca "NÃO VERIFICÁVEL". 403 é limite de evidência, **não** confirmação de configuração errada. |
-| **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; README declara **16 workflows** e `--check` é verde | O `--check` prova que o doc acompanha os YAML; ele não prova runtime nenhum. |
+| **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; o README entregue em 03/10 declarava **16 workflows** | Contagem histórica da entrega; em 21/10 o inventário atual é 15 YAMLs (18 fluxos incluindo 3 dinâmicos). `--check` prova sincronização documental, não runtime. |
 
 ### Demais discrepâncias do estado atual
 
@@ -853,9 +853,10 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E87** · C · G-05 · Quarentena formal: `e2e/quarantine.json` com spec, motivo, issue e prazo; `playwright.config`
   lê e marca `fixme`; `check-test-inventory.mjs` (E48) falha se um item passar do prazo. Verificação: item vencido →
   CI ❌.
-- [ ] **E88** · B · G-35 · `ci.yml` job `e2e`: `--project=chromium` é o único deslogado que exercita `auth.spec.ts` com
-  Chromium; `firefox-auth`/`webkit-auth` só valem em `main` → mover para `e2e-logado` (que já instala os 3 engines) e
-  deixar o PR só com Chromium. Verificação: job `e2e` de PR < 90 s com cache (E68).
+- [ ] **E88** · B · G-35 · **NÃO IMPLEMENTADA**: a configuração atual do `ci.yml` executa
+  `firefox-auth` e `webkit-auth` também no PR, e `e2e-logado.yml` mantém a cobertura autenticada
+  dedicada; isso não equivale a mover a cobertura para fora do PR. Manter pendente até medir custo e
+  duração e decidir explicitamente se a cobertura deve sair do `ci.yml`.
 
 ### Fase 7 — Governança, observabilidade e documentação (E89–E100)
 

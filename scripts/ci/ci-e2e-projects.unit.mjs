@@ -135,20 +135,14 @@ test('#463: nenhum project listado no ci.yml depende de login real', () => {
   }
 });
 
-// E88 (PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01, G-35): o job E2E de PR do `ci.yml`
-// é o caminho mais caro do pipeline e já exercita `auth.spec.ts` pelo projeto
-// `chromium`; `firefox-auth`/`webkit-auth` rodavam ali por herança, não por
-// precisarem de PR. Passaram para o `e2e-logado.yml`, que já instala os 3 engines: o
-// PR deixa de subir 2 engines e a cobertura cross-browser da tela de login continua
-// existindo depois do merge. Os 3 testes abaixo travam a mudança (ida E volta): se
-// alguém devolver os projetos ao PR, o primeiro reprova; se alguém apagá-los do
-// workflow logado, o segundo reprova.
-test('E88: o job E2E de PR (ci.yml) não roda firefox-auth/webkit-auth', () => {
+// E88: os projetos cross-browser de auth são executados nos workflows de CI e
+// pós-merge. A lista precisa refletir o YAML real: ela protege contra remover
+// cobertura dos dois caminhos, sem impor uma decisão de custo já superada.
+test('E88: firefox-auth/webkit-auth seguem cobertos no ci.yml', () => {
   for (const nome of ['firefox-auth', 'webkit-auth']) {
     assert.ok(
-      !doCi.includes(nome),
-      `"${nome}" não volta ao ci.yml: é cobertura cross-browser de auth, que só roda ` +
-        'depois do merge no e2e-logado.yml — o PR fica só com Chromium',
+      doCi.includes(nome),
+      `"${nome}" precisa permanecer no ci.yml para cobrir o caminho de auth em PR`,
     );
   }
 });

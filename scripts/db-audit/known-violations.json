@@ -4,7 +4,6 @@
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
     "rpc:log_search_event:src/components/inbox/useGlobalSearchData.ts",
-    "rpc:get_search_insights:src/hooks/admin/useSearchInsights.ts",
     "rpc:talkx_campaign_resume_precheck:src/hooks/integrations/useTalkXServerResumePrecheck.ts",
     "rpc:should_send_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
     "rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -36,6 +35,7 @@
     "from:talkx_test_sends:supabase/functions/talkx-send/index.ts"
   ],
   "_resolvido": {
+    "rpc:get_search_insights:src/hooks/admin/useSearchInsights.ts (2026-10-21)": "O hook foi alinhado ao RPC agregado real public.search_insights, presente no catalogo; get_search_insights nao existe no schema canonico e a antiga excecao do ratchet ficou obsoleta.",
     "from:department_whatsapp_configs (SL-144)": "A tabela department_whatsapp_configs nao existe no schema (ela nao esta em schema-catalog.json nem em nenhuma migration) e useSaveDepartmentWhatsApp era o unico consumidor. O acesso direto saiu em 2026-10-08: a gravacao passou para public.set_department_whatsapp_config (migration 20261006213734), que esta no catalogo — o guard nao acusa violacao e a entrada do baseline ficou obsoleta.",
     "talkx-rpcs-parcial (X010/X012)": "RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) removidos do baseline — já estão no schema-catalog.json. kick_talkx_campaign (PR #1535/X012) removido no types-sync de 2026-10-02 (run 37001256206), quando o catálogo passou a incluí-la.",
     "multiplix_confirm_dispatch": "RPC criado no banco (grant anon_execute em grants-baseline.json PR #1513). Entrada obsoleta removida em 2026-10-02.",

@@ -227,6 +227,17 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
+      # INV-LIVE: verifica somente catálogos (RLS, views, grants e funções). O SQL
+      # é read-only e falha fechado se o alvo não parecer o banco oficial.
+      - name: Verificar invariantes gerais do banco vivo
+        id: live-invariants
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-live-invariants.sql 2>&1 | tee /tmp/step-live-invariants.log
+
       - name: Regenerar catalogo e comparar com o commitado
         id: catalog
         if: steps.credencial.outcome == 'success'
@@ -539,6 +550,7 @@ jobs:
             /tmp/step-acl-talkx-metrics.log
             /tmp/step-e2e-fixtures.log
             /tmp/step-contract-talkx-transition.log
+            /tmp/step-live-invariants.log
             /tmp/step-catalog.log
             /tmp/step-manifest.log
             /tmp/step-types.log

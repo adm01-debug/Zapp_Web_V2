@@ -46,18 +46,31 @@ export function isLoggableSearchTerm(term: string): boolean {
   return true;
 }
 
+/** UUID aleatório estável também em browsers sem `crypto.randomUUID`. */
+function createSearchEventId(): string | null {
+  const cryptoApi = globalThis.crypto;
+  if (typeof cryptoApi?.randomUUID === 'function') return cryptoApi.randomUUID();
+  if (typeof cryptoApi?.getRandomValues !== 'function') return null;
+
+  const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 interface LogSearchEventArgs {
   p_term: string;
   p_result_count: number;
   p_clicked: boolean;
+  p_event_id: string;
+  p_result_kind: SearchResult['type'] | null;
 }
 
 /**
- * `log_search_event(text, integer, boolean)` nasce na migration desta trilha
- * (`supabase/migrations/20261016112552_search_events.sql`) e ainda NÃO está em
- * `src/integrations/supabase/types.ts` — arquivo GERADO pelo types-sync, que não
- * é deste cartão. O cliente tipado recusaria o nome da função, então a chamada
- * passa por este facade estreito.
+ * A função é versionada por migration, mas ainda não está em
+ * `src/integrations/supabase/types.ts` (arquivo gerado pelo types-sync). O
+ * cliente tipado recusaria o nome da RPC, então a chamada passa por este facade.
  */
 const searchEventsRpc = supabase as unknown as {
   rpc(fn: 'log_search_event', args: LogSearchEventArgs):
@@ -96,7 +109,7 @@ export function useGlobalSearchData(open: boolean) {
    * Termo da última busca CONCLUÍDA: o clique reusa o MESMO termo e a contagem
    * de resultados daquela busca (o evento de clique não é uma busca nova).
    */
-  const lastSearchEvent = useRef<{ term: string; resultCount: number; clicked: boolean } | null>(null);
+  const lastSearchEvent = useRef<{ term: string; resultCount: number; eventId: string; clicked: boolean } | null>(null);
   /** Último termo já registrado: uma chamada por termo, não por tecla nem por filtro. */
   const lastLoggedTerm = useRef<string | null>(null);
 
@@ -105,13 +118,21 @@ export function useGlobalSearchData(open: boolean) {
    * Telemetria NUNCA atrapalha a busca: erro é registrado no log e nada mais —
    * sem toast, sem mexer no resultado na tela e sem o termo no console.
    */
-  const logSearchEvent = useCallback(async (term: string, resultCount: number, clicked: boolean) => {
+  const logSearchEvent = useCallback(async (
+    term: string,
+    resultCount: number,
+    eventId: string,
+    clicked: boolean,
+    resultKind: SearchResult['type'] | null = null,
+  ) => {
     if (!isLoggableSearchTerm(term)) return;
     try {
       const { error } = await searchEventsRpc.rpc('log_search_event', {
         p_term: term,
         p_result_count: resultCount,
         p_clicked: clicked,
+        p_event_id: eventId,
+        p_result_kind: resultKind,
       });
       if (error) throw error;
     } catch (error) {
@@ -123,11 +144,11 @@ export function useGlobalSearchData(open: boolean) {
    * Clique num resultado: mouse e teclado passam pelo mesmo `handleSelect` do
    * host (`GlobalSearch`), então o Enter conta igual ao clique.
    */
-  const registerResultClick = useCallback(() => {
+  const registerResultClick = useCallback((resultKind: SearchResult['type']) => {
     const last = lastSearchEvent.current;
     if (!last || last.clicked) return;
     last.clicked = true;
-    void logSearchEvent(last.term, last.resultCount, true);
+    void logSearchEvent(last.term, last.resultCount, last.eventId, true, resultKind);
   }, [logSearchEvent]);
 
   useEffect(() => {
@@ -319,10 +340,22 @@ export function useGlobalSearchData(open: boolean) {
       // Telemetria da trilha de busca: o resultado já está na tela quando a RPC
       // sai (`void`). Uma vez por termo — mudar um filtro reexecuta a busca, mas
       // o mesmo termo não conta duas vezes.
-      if (cleanQuery.length >= MIN_SEARCH_EVENT_TERM_LENGTH && cleanQuery !== lastLoggedTerm.current) {
-        lastLoggedTerm.current = cleanQuery;
-        lastSearchEvent.current = { term: cleanQuery, resultCount: searchResults.length, clicked: false };
-        void logSearchEvent(cleanQuery, searchResults.length, false);
+      if (cleanQuery.length < MIN_SEARCH_EVENT_TERM_LENGTH) {
+        // Uma busca curta pode mostrar resultados, mas não pertence à telemetria
+        // da busca anterior; evita atribuir a ela um clique antigo.
+        lastSearchEvent.current = null;
+        lastLoggedTerm.current = null;
+      } else if (cleanQuery !== lastLoggedTerm.current) {
+        // O mesmo UUID torna o clique um update idempotente do evento da busca,
+        // em vez de inflar a métrica como se fosse uma segunda busca.
+        const eventId = createSearchEventId();
+        if (eventId) {
+          lastLoggedTerm.current = cleanQuery;
+          lastSearchEvent.current = { term: cleanQuery, resultCount: searchResults.length, eventId, clicked: false };
+          void logSearchEvent(cleanQuery, searchResults.length, eventId, false);
+        } else {
+          lastSearchEvent.current = null;
+        }
       }
     } catch (error) {
       log.error('Search error:', error);

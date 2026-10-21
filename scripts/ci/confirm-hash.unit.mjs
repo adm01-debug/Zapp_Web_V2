@@ -72,8 +72,11 @@ test('E64: sha256DeTexto e a primitiva esperada', () => {
 });
 
 test('E64: o workflow compara o hash COMPOSTO, nao o runtime cru (pin do F-11)', () => {
-  // W28: a composicao vive em validate-runtime-proof.mjs; o workflow invoca o script externo.
-  assert.match(workflow, /validate-runtime-proof\.mjs/, 'o workflow precisa invocar o script de validacao externo');
+  // W28: a validação roda inline no workflow e importa a mesma primitiva testada abaixo.
+  assert.match(workflow, /confirm-hash\.mjs/, 'o workflow precisa importar a primitiva de composição');
+  assert.match(workflow, /comporHashConfirmacao\(/, 'o workflow precisa comparar a confirmação composta');
+  assert.match(workflow, /commitSha: process\.env\.GITHUB_SHA/);
+  assert.match(workflow, /confirmacao !== process\.env\.CONFIRM_RUNTIME_SHA256/);
   assert.match(preflight, /comporHashConfirmacao|descreverConfirmacao/, 'o preflight precisa usar a composicao');
   assert.doesNotMatch(
     workflow,

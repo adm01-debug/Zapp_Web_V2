@@ -126,8 +126,9 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
     expect(byField.group_category.options).toEqual(['orcamentos', 'aprovacao', 'os', 'acerto']);
   });
 
-  it('lead_origin, lead_score e risk_score ficam "em breve": nada grava/calcula essas colunas e o filtro seria morto', () => {
-    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'risk_score']);
+  it('lead_origin é suportado pela coluna/RPC; lead_score e risk_score continuam indisponíveis', () => {
+    expect(RULE_FIELDS.find((field) => field.value === 'lead_origin')?.comingSoon).not.toBe(true);
+    expect(RULE_FIELDS.filter((field) => field.comingSoon).map((field) => field.value).sort()).toEqual(['lead_score', 'real_sector', 'real_uf', 'risk_score']);
   });
 
   it('nao oferece "contem" para uuid: ilike em coluna uuid e erro do Postgres', () => {
@@ -139,17 +140,15 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
   });
 });
 
-// Ponte Singu (recon t_0ed9b4f1): setor de atividade REAL (companies.ramo_atividade) e UF REAL
-// (company_addresses.estado is_primary) entram no catalogo como kind enum com igualdade EXATA.
-// O valor gravado e a string crua que a Edge leva ao Singu — por isso o campo NAO traz `options`
-// (a lista de ramos/UFs vem da RPC, nao de uma constante do front) e a UI cai na caixa de texto.
-// company/city/state continuam sendo texto livre: os segmentos ja salvos dependem deles.
+// A ponte Singu consulta empresas/endereços fora de contacts e a RPC de audiência
+// não recebe p_contact_ids nem aceita esses campos. Mantê-los no catálogo como
+// comingSoon evita oferecer filtros que virariam uma audiência mais ampla.
 describe('RULE_FIELDS — setor e UF reais (ponte Singu)', () => {
   const byField = Object.fromEntries(RULE_FIELDS.map((f) => [f.value, f]));
 
   it('expoe real_sector e real_uf como kind enum na categoria basico', () => {
-    expect(byField.real_sector).toMatchObject({ kind: 'enum', category: 'basico' });
-    expect(byField.real_uf).toMatchObject({ kind: 'enum', category: 'basico' });
+    expect(byField.real_sector).toMatchObject({ kind: 'enum', category: 'basico', comingSoon: true });
+    expect(byField.real_uf).toMatchObject({ kind: 'enum', category: 'basico', comingSoon: true });
     expect(byField.real_sector.label.length).toBeGreaterThan(0);
     expect(byField.real_uf.label.length).toBeGreaterThan(0);
   });
@@ -169,6 +168,14 @@ describe('RULE_FIELDS — setor e UF reais (ponte Singu)', () => {
     expect(byField.company).toMatchObject({ label: 'Empresa', kind: 'text', category: 'basico' });
     expect(byField.city).toMatchObject({ label: 'Cidade', kind: 'text', category: 'basico' });
     expect(byField.state).toMatchObject({ label: 'UF', kind: 'text', category: 'basico' });
+  });
+
+  it('não converte essas regras em filtro parcial nem envia RPC sem pré-resolução', async () => {
+    const rules = { groups: [{ id: 'g', match: 'and' as const, rules: [regra('real_sector', 'eq', 'varejo')] }] };
+    vi.mocked(supabase.rpc).mockClear();
+    expect(splitRules(rules).incompleteCount).toBe(1);
+    await expect(countAudience(rules)).rejects.toThrow('pré-resolução em p_contact_ids');
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });
 
@@ -234,24 +241,23 @@ describe('isRuleComplete — por tipo de campo', () => {
     expect(rulesToPostgrest(complete)).toBeNull();
   });
 
-  // t_bbe423a7 — contacts.lead_origin: nenhum fluxo de criação do Zapp grava a coluna (o contato
-  // derivado do WhatsApp carrega a origem só na projeção em memória, não na linha do banco) e o
-  // Zapp não edita contatos em massa. Filtrar por origem devolveria sempre vazio → fica "em breve".
-  it('lead_origin fica "em breve": regra completa mas fora da estimativa/PostgREST (falha fechada)', () => {
-    expect(RULE_FIELDS.find((f) => f.value === 'lead_origin')?.comingSoon).toBe(true);
+  // A coluna contacts.lead_origin existe e a RPC de audiência a aceita; manter
+  // o filtro é necessário para que a prévia não conte público mais amplo.
+  it('lead_origin usa a coluna/RPC na estimativa e no PostgREST', () => {
+    expect(RULE_FIELDS.find((f) => f.value === 'lead_origin')?.comingSoon).not.toBe(true);
     expect(isRuleComplete(regra('lead_origin', 'eq', 'whatsapp'))).toBe(true);
-    expect(() => rulesToPostgrest({
+    expect(rulesToPostgrest({
       groups: [{ id: 'g', match: 'and', rules: [
         { id: 'r1', field: 'lead_origin', op: 'eq', value: 'whatsapp' },
       ] }],
-    } as never)).toThrow('Regra de segmento inválida');
+    })).toBe('lead_origin.eq."whatsapp"');
     const { complete, incompleteCount } = splitRules({
       groups: [{ id: 'g', match: 'and', rules: [
         { id: 'r1', field: 'lead_origin', op: 'eq', value: 'whatsapp' },
       ] }],
     });
-    expect(incompleteCount).toBe(1);
-    expect(rulesToPostgrest(complete)).toBeNull();
+    expect(incompleteCount).toBe(0);
+    expect(rulesToPostgrest(complete)).toBe('lead_origin.eq."whatsapp"');
   });
 });
 
@@ -348,7 +354,7 @@ describe('real_sector/real_uf (ponte Singu): resolução falha fechada', () => {
     }
   });
 
-  it('real_* continua regra completa na estimativa (splitRules não a descarta)', () => {
+  it('real_* fica fora da estimativa até a pré-resolução existir', () => {
     const { complete, incompleteCount } = splitRules({
       groups: [{ id: 'g', match: 'and', rules: [
         { id: 'r1', field: 'real_sector', op: 'eq', value: 'Varejo' },
@@ -356,8 +362,8 @@ describe('real_sector/real_uf (ponte Singu): resolução falha fechada', () => {
         { id: 'r3', field: 'city', op: 'eq', value: '' },
       ] }],
     } as never);
-    expect(incompleteCount).toBe(1);
-    expect(complete.groups[0].rules.map((r) => r.field)).toEqual(['real_sector', 'real_uf']);
+    expect(incompleteCount).toBe(3);
+    expect(complete.groups.every((group) => group.rules.length === 0)).toBe(true);
   });
 
   it('countAudience rejeita real_sector e não manda regra nenhuma ao motor', async () => {

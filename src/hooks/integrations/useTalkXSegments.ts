@@ -67,15 +67,11 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'company', label: 'Empresa', kind: 'text', category: 'basico' },
   { value: 'city', label: 'Cidade', kind: 'text', category: 'basico' },
   { value: 'state', label: 'UF', kind: 'text', category: 'basico' },
-  // Setor de atividade e UF REAIS (ponte Singu): o valor vive em
-  // companies.ramo_atividade / company_addresses.estado (is_primary) e nao em
-  // public.contacts, entao nao vem de texto livre digitado no Zapp. kind enum
-  // com igualdade exata (eq/neq/is_empty); sem `options` fixas — a lista de
-  // ramos/UFs vem da RPC do Singu, e uma constante local ofereceria valor que a
-  // ponte pode recusar. Sem `category` nova: entram no grupo básico junto de
-  // Empresa/Cidade/UF. company/city/state seguem intactos (segmentos salvos).
-  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico' },
-  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico' },
+  // Setor/UF reais vivem na ponte Singu, não em contacts nem na whitelist da
+  // RPC de audiência. Permanecem indisponíveis até a pré-resolução gerar
+  // p_contact_ids; oferecer o filtro agora produziria falha, nunca uma estimativa.
+  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', comingSoon: true },
+  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', comingSoon: true },
   // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
   // para a regra nunca oferecer categoria que o banco não guarda.
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
@@ -164,7 +160,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
-        // "Em breve" (lead_score/risk_score): a regra é completa e bem descrita
+        // "Em breve" (lead_score/risk_score/real_sector/real_uf): a regra é completa e bem descrita
         // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
         // calculada — então fica fora da estimativa/PostgREST e barra a
         // publicação via validateSegment, sem quebrar o catálogo v2.
@@ -198,6 +194,9 @@ function ruleToFilter(r: SegmentRule): string | null {
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  // Estes campos vivem na ponte Singu, não em contacts; até serem traduzidos
+  // para p_contact_ids, não podem virar filtros PostgREST nem regras da RPC.
+  if (r.field === 'real_sector' || r.field === 'real_uf') return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -267,6 +266,22 @@ function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups:
   return { groups: rules?.groups ?? [] };
 }
 
+/**
+ * Os campos reais de Singu não são colunas de `contacts`. Até existir a
+ * pré-resolução que produza `p_contact_ids`, enviá-los como regras comuns faria
+ * a RPC interpretar um filtro incompleto e poderia ampliar o público. Falha
+ * antes da rede em vez de descartar ou repassar silenciosamente a regra.
+ */
+function validarRegrasDeAudiencia(rules: SegmentRules | null | undefined): void {
+  for (const group of rules?.groups ?? []) {
+    for (const rule of group.rules) {
+      if (rule.field === 'real_sector' || rule.field === 'real_uf') {
+        throw new Error(`Regra ${rule.field} requer pré-resolução em p_contact_ids`);
+      }
+    }
+  }
+}
+
 type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise<{
   data: unknown;
   error: { message: string } | null;
@@ -275,14 +290,43 @@ type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise
 /** Teto de uma página da RPC de audiência (X016). */
 const AUDIENCE_RPC_PAGE_LIMIT = 1000;
 
-/**
- * X017 — a contagem do público é decidida no servidor pela RPC
- * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do
- * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
- * PostgREST filtrando só `phone not null`, o que superestimava o público.
- */
-export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+export interface AudienceSummary {
+  matched: number;
+  eligible: number;
+  suppressed: number;
+  invalid_phone: number;
+  legacy_or_deleted: number;
+}
+
+function audienceSummaryFromRpc(value: unknown): AudienceSummary {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Resposta inválida da consulta de audiência.');
+  }
+  const raw = value as Record<string, unknown>;
+  if (raw.mode !== undefined && raw.mode !== 'count') {
+    throw new Error('Modo inválido na resposta da consulta de audiência.');
+  }
+  const rawMatched = raw.matched ?? (Number(raw.eligible ?? NaN) + Number(raw.suppressed ?? 0));
+  const count = (key: keyof AudienceSummary): number => {
+    const parsed = Number(key === 'matched' ? rawMatched : raw[key] ?? (key === 'eligible' ? NaN : 0));
+    if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+      throw new Error(`Contagem inválida (${key}) na resposta da audiência.`);
+    }
+    return parsed;
+  };
+  return {
+    matched: count('matched'),
+    eligible: count('eligible'),
+    suppressed: count('suppressed'),
+    invalid_phone: count('invalid_phone'),
+    legacy_or_deleted: count('legacy_or_deleted'),
+  };
+}
+
+/** Busca no servidor a decomposição da audiência usada no resumo do wizard. */
+export async function summarizeAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<AudienceSummary> {
+  validarRegrasDeAudiencia(rules);
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -291,8 +335,18 @@ export async function countAudience(rules: SegmentRules | null | undefined, segm
     p_after: null,
   });
   if (error) throw new Error(error.message);
-  const result = data as { eligible?: number } | null;
-  return Number(result?.eligible ?? 0);
+  return audienceSummaryFromRpc(data);
+}
+
+/**
+ * X017 — a contagem do público é decidida no servidor pela RPC
+ * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do
+ * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
+ * PostgREST filtrando só `phone not null`, o que superestimava o público.
+ */
+export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+  const summary = await summarizeAudience(rules, segmentIds);
+  return summary.eligible;
 }
 
 export interface AudienceContact { id: string; name: string; nickname: string | null; phone: string; company: string | null; avatar_url: string | null; tags: string[] | null }
@@ -303,7 +357,8 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  validarRegrasDeAudiencia(rules);
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;

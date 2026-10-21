@@ -666,6 +666,19 @@ test('aceita pinned-replay somente quando todas as dimensoes estao fixadas', () 
   assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
+test('pinned-replay rejeita sql-sha256 redundante no manifesto', () => {
+  const statements = [OTHER_SQL.trim()];
+  const result = runGuard({
+    destino: false,
+    evidence: [pinnedEvidence({
+      statements,
+      overrides: { 'sql-sha256': statementsHash(statements) },
+    })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /campos ausentes ou desconhecidos/);
+});
+
 test('pinned-replay falha para adulteracao independente de arquivo e SQL local', () => {
   const statements = [OTHER_SQL.trim()];
   const changedBytes = runGuard({

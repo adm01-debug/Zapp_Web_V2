@@ -5,7 +5,7 @@
  * O que o plano pede (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md,
  * item E72; docs/plans/PLANO_SEGUNDA_LEVA_CARTOES_2026-10-08.md, SL-100):
  *   - `dist`              -> so em `workflow_dispatch` (a Vercel builda sozinha);
- *   - `coverage-report`   -> so na main (push), com 7 dias de retencao;
+ *   - cobertura            -> fora do CI minimo (nao publica artifact);
  *   - `playwright-report` -> so `if: failure()`.
  * E a verificacao que o plano escreve: "PR verde cria 0 artifacts".
  * Motivo medido: 2.333 artifacts acumulados em 01/10/2026 porque TODO PR
@@ -197,17 +197,8 @@ test('E72: `dist` so sai em workflow_dispatch', () => {
   assert.equal(retencao(bloco), 3);
 });
 
-test('E72: `coverage-report` so na main (push), com 7 dias', () => {
-  const { expr, rodaEm, bloco } = upload('Upload coverage report');
-  assert.equal(rodaEm(CENARIOS.prVerde), false, `PR nao consome cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.prVermelho), false, `PR vermelho tambem nao publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushOutraBranch), false, `so a main publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.dispatch), false, `dispatch tem de continuar sem artifact (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushMain), true, `a main publica a cobertura (if: ${expr})`);
-  // `always()` combinado com os filtros mantem o upload quando a suite falha na
-  // main — que e' justamente quando a cobertura serve para diagnosticar.
-  assert.equal(rodaEm(CENARIOS.pushMainVermelho), true, `suite vermelha na main ainda publica (if: ${expr})`);
-  assert.equal(retencao(bloco), 7);
+test('E72: cobertura nao publica artifact no CI minimo', () => {
+  assert.ok(!todosOsUploads().some(({ nome }) => /coverage-report/i.test(nome)), 'coverage-report foi removido do CI minimo');
 });
 
 test('E72: `playwright-report` so quando o E2E falha', () => {
@@ -223,7 +214,11 @@ test('E72: `playwright-report` so quando o E2E falha', () => {
 
 test('E72: PR verde cria 0 artifacts (a verificacao escrita no plano)', () => {
   const uploads = todosOsUploads();
-  assert.ok(uploads.length >= 3, `esperava os 3 uploads do ci.yml, achei ${uploads.length}`);
+  assert.deepEqual(
+    uploads.map(({ nome }) => nome).sort(),
+    ['📦 Upload build artifacts', '📊 Upload Playwright report'].sort(),
+    'o CI minimo publica somente dist sob dispatch e relatório Playwright em falha',
+  );
   const ligados = uploads.filter(({ expr }) => avaliar(expr, CENARIOS.prVerde));
   assert.deepEqual(
     ligados.map(({ nome }) => nome),

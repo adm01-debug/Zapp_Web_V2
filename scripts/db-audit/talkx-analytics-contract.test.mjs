@@ -93,9 +93,14 @@ test('Talk X não rotula tamanho de audiência como "Desempenho"', () => {
   assert.match(segments, /<Th>Público relativo<\/Th>/);
 });
 
-test('Talk X não rotula uso de template como "Mais convertidos"', () => {
-  assert.doesNotMatch(templates, /Mais convertidos/);
-  assert.match(templates, /Mais usados/);
+test('Talk X ranqueia "Mais convertidos" por taxa de resposta, nunca por uso', () => {
+  const ranking = templates.match(/const topConverted = useMemo\([\s\S]*?\n  \);/)?.[0] ?? '';
+  assert.match(ranking, /conversion\.ranking\?\.items/);
+  assert.match(ranking, /\.slice\(0, 3\)/);
+  assert.doesNotMatch(ranking, /use_count/);
+  assert.match(templates, /title="Mais convertidos"/);
+  assert.match(templates, /Templates com melhor taxa de resposta\./);
+  assert.match(templates, /formatReplyRate\(item\.replyRatePct\)/);
 });
 
 // X185: o KPI "Conversão por segmento" passou a existir de fato — mas o número
