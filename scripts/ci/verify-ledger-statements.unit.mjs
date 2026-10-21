@@ -86,7 +86,7 @@ test('a consulta do ledger devolve null textual em vez de linha vazia', () => {
 test('o passo do db-migrate exige NOT NULL e array_length antes de comparar', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
   const inicio = workflow.indexOf('- name: Validar registro no ledger');
-  const fim = workflow.indexOf('- name: Validar ledger completo do bundle de entrega atomica');
+  const fim = workflow.indexOf('- name: Validar contratos historicos pos-apply');
   assert.ok(inicio > 0 && fim > inicio, 'passo precisa existir e vir antes do proximo');
   const passo = workflow.slice(inicio, fim);
   assert.match(passo, /AND statements IS NOT NULL/);

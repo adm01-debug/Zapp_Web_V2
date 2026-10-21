@@ -115,20 +115,21 @@ test('runtime SQL is exercised on disposable PostgreSQL in PRs', () => {
 });
 test('production migration has fail-closed preflight and postflight for notification atomicity', () => {
   const workflow = read('../../.github/workflows/db-migrate.yml');
-  // E62: o braco do `case` virou arquivo de contrato. O que se prende agora e que o
-  // alvo 20260922220000 continue com o contrato de runtime disponivel e que a
-  // verificacao do apply continue exigindo as contagens exatas.
+  // E62: o braco do `case` virou arquivo de contrato. GA16: os contratos sairam
+  // do YAML para o dispatcher scripts/db-audit/contracts/post-apply.sh. O que se
+  // prende agora e a cadeia inteira: workflow -> dispatcher -> contrato de
+  // runtime do alvo 20260922220000, com as contagens exatas exigidas no apply.
   assert.ok(
     fs.existsSync(new URL('../db-audit/contracts/20260922220000.sql', import.meta.url)),
     'o contrato de runtime do alvo 20260922220000 tem de existir',
   );
-  assert.ok(
-    (workflow.match(/notification-delivery-atomicity-runtime\.sql/g) || []).length >= 1,
-    'o workflow tem de continuar referenciando o contrato de atomicidade',
-  );
-  assert.match(workflow, /inputs\.migration_version == '20260922220000'/);
-  assert.match(workflow, /proof\.service_execute_count === 2/);
-  assert.match(workflow, /proof\.authenticated_execute_count === 0/);
+  assert.match(workflow, /contracts\/post-apply\.sh/,
+    'o workflow tem de chamar o dispatcher de contratos');
+  const dispatcher = read('../../scripts/db-audit/contracts/post-apply.sh');
+  assert.match(dispatcher, /notification-delivery-atomicity-runtime\.sql/,
+    'o dispatcher tem de referenciar o contrato de atomicidade');
+  assert.match(dispatcher, /proof\.service_execute_count === 2/);
+  assert.match(dispatcher, /proof\.authenticated_execute_count === 0/);
 });
 test('DB guard installs the pinned AST dependency before checking Realtime subscriptions', () => {
   const workflow = read('../../.github/workflows/db-guard.yml');

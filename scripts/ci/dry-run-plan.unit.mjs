@@ -106,11 +106,12 @@ test('E63: bundle autorizado exige ordem estrita e presenca do alvo', () => {
 test('E63: o passo do workflow le a saida do dry-run (pin)', () => {
   const passo = workflow.slice(
     workflow.indexOf('- name: Dry-run oficial do Supabase CLI'),
-    workflow.indexOf('- name: Aplicar alvo unico ou bundle ordenado autorizado'),
+    workflow.indexOf('- name: Aplicar lote autorizado'),
   );
   assert.match(passo, /dry-run-plan\.mjs/, 'o parser tem de ser chamado');
   assert.match(passo, /tee /, 'a saida do CLI precisa ir para arquivo, senao nao ha o que conferir');
   assert.match(passo, /set -euo pipefail/, 'e o pipe com tee exige pipefail (F-02)');
+  assert.match(passo, /--apply-all --esperados/, 'modo lote liga avaliarPlanoDoDryRunApplyAll (GA14)');
 });
 
 // W58: fixtures do modo apply_all_missing (W27) — lista ordenada, 1 faltando, 1 a mais.
@@ -156,4 +157,30 @@ test('W58: apply_all_missing com 1 arquivo a mais no dry-run recusa', () => {
   assert.equal(r.ok, false);
   assert.match(r.motivo, /extra/, 'o motivo aponta o que sobrou');
   assert.match(r.motivo, /20261010115000/, 'nomeia a versao extra');
+});
+
+// GA14: o CLI --apply-all e o que o preflight invoca no modo lote.
+test('GA14: CLI --apply-all aceita o conjunto exato e recusa divergencia', async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+  const { spawnSync } = await import('node:child_process');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'ga14-cli-'));
+  try {
+    const raiz = new URL('../../', import.meta.url).pathname;
+    const arq = join(dir, 'dry.out');
+    writeFileSync(arq, SAIDA_APPLY_ALL);
+    const roda = (extra) =>
+      spawnSync(process.execPath, ['scripts/db-audit/dry-run-plan.mjs', '--arquivo', arq, ...extra], {
+        cwd: raiz,
+        encoding: 'utf8',
+      });
+    assert.equal(roda(['--apply-all', '--esperados', ESPERADOS_W58.join(',')]).status, 0);
+    const faltando = roda(['--apply-all', '--esperados', '20261010100000,20261010120000,20261010130000']);
+    assert.equal(faltando.status, 1);
+    assert.match(faltando.stderr, /Dry-run recusado/);
+    assert.equal(roda(['--apply-all', '--esperados', '']).status, 2, 'sem esperados o uso e invalido');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

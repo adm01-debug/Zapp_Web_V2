@@ -26,7 +26,10 @@ test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco 
     false,
     'nao pode sobrar braco de versao do case dentro do workflow',
   );
-  assert.match(y, /run-runtime-contract\.mjs/, 'o passo tem de chamar o executor generico');
+  // GA16: o workflow prova o lote via provar-lote.sh, que chama o executor generico.
+  assert.match(y, /provar-lote\.sh/, 'o workflow prova o lote pelo script dedicado');
+  const provar = ler('scripts/db-audit/provar-lote.sh');
+  assert.match(provar, /run-runtime-contract\.mjs/, 'o script tem de chamar o executor generico');
   // o guard continua: a comparacao com o sha confirmado (composicao da E64) sobreviveu
   assert.match(y, /confirmacao !== process\.env\.CONFIRM_RUNTIME_SHA256/, 'a comparacao do sha tem de continuar');
   assert.match(y, /if \(process\.env\.APPLY === 'true'/, 'e continuar condicionada ao apply');
