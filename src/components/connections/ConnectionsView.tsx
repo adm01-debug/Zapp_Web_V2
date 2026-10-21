@@ -82,8 +82,11 @@ export function ConnectionsView() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const telefoneValido = (v: string) => {
     const valor = v.trim();
-    if (!valor.startsWith('+')) return false;
-    return valor.replace(/\D/g, '').length >= 7;
+    const mais = '+';
+    if (!valor.startsWith(mais)) return false;
+    const digitos = valor.replace(/\D/g, '');
+    if (digitos.startsWith('55')) return digitos.length >= 12;
+    return digitos.length >= 7;
   };
   const handleCreateConnection = () => {
     if (!telefoneValido(newConnection.phone_number)) {
@@ -157,9 +160,8 @@ export function ConnectionsView() {
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
-<<<<<<< HEAD
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(formatted) => { clearAddConnectionError(); setNewConnection({ ...newConnection, phone_number: formatted }); }} disabled={isCreating} /></div>
+                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError?.(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(formatted) => { clearAddConnectionError?.(); if (phoneError && telefoneValido(formatted)) setPhoneError(null); setNewConnection({ ...newConnection, phone_number: formatted }); }} disabled={isCreating} />{phoneError && <p role="alert" className="text-xs text-destructive">{phoneError}</p>}</div>
                 {addConnectionError && (
                   <p role="alert" data-testid="add-connection-error" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                     {addConnectionError}
@@ -167,14 +169,8 @@ export function ConnectionsView() {
                 )}
                 <div className="flex justify-end gap-2 pt-4">
                   <Button variant="outline" onClick={() => handleAddDialogOpenChange(false)} disabled={isCreating}>Cancelar</Button>
-                  <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
-=======
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => { const v = e.target.value; setNewConnection({ ...newConnection, phone_number: v }); if (phoneError && telefoneValido(v)) setPhoneError(null); }} />{phoneError && <p role="alert" className="text-xs text-destructive">{phoneError}</p>}</div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
                   <Button onClick={handleCreateConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
->>>>>>> claude/ga-fa4-elementos-261020-2100
+
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
                 </div>
