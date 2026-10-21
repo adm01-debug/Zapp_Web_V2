@@ -20,7 +20,7 @@ TMP=$(mktemp -d)
 trap 'rm -rf -- "$TMP"' EXIT
 falhou=0
 checa() { # <descricao> <esperado> <obtido>
-  if [ "$2" = "$3" ]; then echo "  ok  : $1"; else echo "  FALHA: $1 (esperado '$2', obtido '$3')"; falhou=1; fi
+  if [[ "$2" = "$3" ]]; then echo "  ok  : $1"; else echo "  FALHA: $1 (esperado '$2', obtido '$3')"; falhou=1; fi
 }
 contem() { # <descricao> <padrao> <arquivo>
   if grep -q "$2" "$3" 2>/dev/null; then echo "  ok  : $1"; else echo "  FALHA: $1 (nao achei '$2' em $3)"; falhou=1; fi
@@ -39,8 +39,8 @@ case "${1:-}" in
     shift
     name=""; label=""; prev=""
     for a in "$@"; do
-      [ "$prev" = "--name" ] && name="$a"
-      [ "$prev" = "--label" ] && label="$a"
+      [[ "$prev" = "--name" ]] && name="$a"
+      [[ "$prev" = "--label" ]] && label="$a"
       case "$a" in --name=*) name="${a#--name=}" ;; --label=*) label="${a#--label=}" ;; esac
       prev="$a"
     done
@@ -58,27 +58,27 @@ case "${1:-}" in
     ;;
   inspect)
     last="${@: -1}"
-    [ -f "$STUB_LOG/labels/$last" ] && cat "$STUB_LOG/labels/$last"
+    [[ -f "$STUB_LOG/labels/$last" ]] && cat "$STUB_LOG/labels/$last"
     ;;
   exec)
     psql=0; pgready=0; grepq=0; sh=0; hasc=0
     for a in "$@"; do
       case "$a" in pg_isready) pgready=1 ;; psql) psql=1 ;; grep) grepq=1 ;; sh) sh=1 ;; -c) hasc=1 ;; esac
     done
-    [ "$pgready" = 1 ] && { [ "${STUB_NUNCA_PRONTO:-0}" = 1 ] && exit 1; exit 0; }
-    [ "$grepq" = 1 ] && exit 0
-    [ "$sh" = 1 ] && exit 0
-    if [ "$psql" = 1 ]; then
-      [ "$hasc" = 1 ] && exit 0            # alter system do agendador: sem stdin
+    [[ "$pgready" = 1 ]] && { [[ "${STUB_NUNCA_PRONTO:-0}" = 1 ]] && exit 1; exit 0; }
+    [[ "$grepq" = 1 ]] && exit 0
+    [[ "$sh" = 1 ]] && exit 0
+    if [[ "$psql" = 1 ]]; then
+      [[ "$hasc" = 1 ]] && exit 0            # alter system do agendador: sem stdin
       sql=$(cat)                            # heredoc do bootstrap OU arquivo de migration
       case "$sql" in
         *"create schema if not exists storage"*)
           printf "%s\n" "$*" >> "$STUB_LOG/bootstrap-argv.log"
-          if [ "${STUB_FALHA_BOOTSTRAP:-0}" = 1 ]; then echo "ERROR: bootstrap falhou (stub)" >&2; exit 1; fi
+          if [[ "${STUB_FALHA_BOOTSTRAP:-0}" = 1 ]]; then echo "ERROR: bootstrap falhou (stub)" >&2; exit 1; fi
           exit 0 ;;
         *)
           printf "%s\n" "$sql" >> "$STUB_LOG/migrations.log"
-          if [ -n "${STUB_FALHA_MIGRACAO:-}" ]; then
+          if [[ -n "${STUB_FALHA_MIGRACAO:-}" ]]; then
             case "$sql" in
               *"$STUB_FALHA_MIGRACAO"*) echo "ERROR: falha simulada (stub)" >&2; exit 1 ;;
             esac
@@ -115,7 +115,7 @@ case "$NOME_A" in
   hermes-e24-replay-*|hermes-e24-replay_*) echo "  ok  : A: nome unico por run ($NOME_A)" ;;
   *) echo "  FALHA: A: nome nao e unico por run (obtido '$NOME_A')"; falhou=1 ;;
 esac
-if [ "$NOME_A" = "hermes-e24-replay" ]; then echo "  FALHA: A: reusa o nome fixo"; falhou=1; fi
+if [[ "$NOME_A" = "hermes-e24-replay" ]]; then echo "  FALHA: A: reusa o nome fixo"; falhou=1; fi
 checa "A: rotulo de posse com o id do run" "hermes.e24.replay=$NOME_A" "$(cat "$CA/log/run-labels.log")"
 contem "A: imagem fixada por digest" "@sha256:" "$CA/log/run-images.log"
 nao_contem "A: NAO remove o container alheio de nome fixo" "hermes-e24-replay" "$CA/log/rm.log"
@@ -147,7 +147,7 @@ sleep 3
 kill -TERM "$PID_C" 2>/dev/null
 wait "$PID_C"; RC_C=$?
 NOME_C=$(cat "$CC/log/run-names.log" 2>/dev/null)
-if [ "$RC_C" -ne 0 ]; then echo "  ok  : C: SIGTERM termina com codigo diferente de zero ($RC_C)"
+if [[ "$RC_C" -ne 0 ]]; then echo "  ok  : C: SIGTERM termina com codigo diferente de zero ($RC_C)"
 else echo "  FALHA: C: SIGTERM terminou com 0"; falhou=1; fi
 contem "C: trap remove o proprio container sob SIGTERM" "^$NOME_C$" "$CC/log/rm.log"
 # ...e a remocao tem de ser DEPOIS da criacao deste run: o `rm` do TOPO do script antigo
@@ -155,7 +155,7 @@ contem "C: trap remove o proprio container sob SIGTERM" "^$NOME_C$" "$CC/log/rm.
 ORDEM="$CC/log/order.log"
 LINHA_RUN=$(grep -n "^RUN $NOME_C\$" "$ORDEM" 2>/dev/null | cut -d: -f1)
 LINHA_RM=$(grep -n "^RM $NOME_C\$" "$ORDEM" 2>/dev/null | cut -d: -f1)
-if [ -n "$NOME_C" ] && [ -n "$LINHA_RUN" ] && [ -n "$LINHA_RM" ] && [ "$LINHA_RM" -gt "$LINHA_RUN" ]; then
+if [[ -n "$NOME_C" ]] && [[ -n "$LINHA_RUN" ]] && [[ -n "$LINHA_RM" ]] && [[ "$LINHA_RM" -gt "$LINHA_RUN" ]]; then
   echo "  ok  : C: o rm vem DEPOIS do run (cleanup do proprio container, nao o rm do topo)"
 else
   echo "  FALHA: C: rm (linha '$LINHA_RM') nao veio depois do run (linha '$LINHA_RUN')"; falhou=1
@@ -177,7 +177,7 @@ contem "D: o classificador marca VERMELHO" "REPLAY=VERMELHO" "$TMP/d.out"
 # No run verde a secao de culpadas NAO pode aparecer (senao vira ruido em todo PR).
 nao_contem "A: run verde NAO imprime secao de culpadas" "--- MIGRATION(S) CULPADA(S): falha fora do allowlist ---" "$TMP/a.out"
 
-if [ "$falhou" -eq 0 ]; then
+if [[ "$falhou" -eq 0 ]]; then
   echo "PASSOU: replay-local.sh usa nome unico + rotulo, fixa digest, honra o bootstrap, so remove o proprio container (normal, erro e sinal) e NOMEIA a migration culpada"
 else
   echo "REPROVOU"

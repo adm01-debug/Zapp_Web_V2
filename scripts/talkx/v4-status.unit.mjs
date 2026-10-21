@@ -129,7 +129,7 @@ test('verifiedDoneSteps: só DONE_VERIFIED conta como concluída', () => {
     ['X005', 'DONE_VERIFIED'],
   ]);
   assert.equal(STATUS_CONCLUIDO, 'DONE_VERIFIED');
-  assert.deepEqual([...verifiedDoneSteps(av)].sort(), ['X001', 'X005']);
+  assert.deepEqual([...verifiedDoneSteps(av)].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), ['X001', 'X005']);
 });
 
 test('verifiedDoneSteps: PARTIAL/IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE/VALIDATED_FAIL seguem abertas mesmo com marcador histórico', () => {
@@ -252,7 +252,7 @@ test('dados reais: P046.json casa 1:1 com etapas.json e o placar conta só DONE_
 
   const s = computeStatus(etapas, elementos, done);
   assert.equal(s.doneCount, done.size);
-  assert.deepEqual([...done].sort(), ['X001', 'X005']);
+  assert.deepEqual([...done].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), ['X001', 'X005']);
 
   assert.equal(elementos.length, 1135);
   assert.equal(elementos.filter((e) => e.hoje === 'OK').length, 217);

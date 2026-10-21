@@ -104,6 +104,9 @@ def main() -> None:
     plan_path = Path(sys.argv[1])
     if not plan_path.is_absolute():
         plan_path = ROOT / plan_path
+    plan_path = plan_path.resolve()
+    if ROOT.resolve() not in plan_path.parents and plan_path != ROOT.resolve():
+        fail(f"plano fora do repositorio: {plan_path}")
     if not plan_path.is_file():
         fail(f"plano não encontrado: {plan_path}")
     plan = plan_path.read_text(encoding="utf-8")

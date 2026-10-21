@@ -172,14 +172,14 @@ export function verifiedDoneSteps(avaliacoes) {
 
 /** IDs com marcador histórico (commit `(X<NNN>)`) que NÃO estão `DONE_VERIFIED`. */
 export function historicoDivergente(historicoIds, doneSet) {
-  return [...historicoIds].filter((id) => !doneSet.has(id)).sort();
+  return [...historicoIds].filter((id) => !doneSet.has(id)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 /** Carrega os elementos `T<tela>-<seq>` dos inventários A–G: [{id, tela, hoje}]. */
 export function loadElementos(invDir = INVENTARIO_DIR) {
   const files = readdirSync(invDir)
     .filter((f) => /^[A-G]_.*\.md$/.test(f))
-    .sort();
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const elementos = [];
   const seen = new Set();
   for (const f of files) {

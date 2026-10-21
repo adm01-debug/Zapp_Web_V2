@@ -36,6 +36,10 @@ const ANTIGO = process.argv[2] || path.join(ROOT, 'supabase/schema-catalog.json'
 const NOVO = process.argv[3] || '/tmp/catalog.new.json';
 
 function ler(arquivo) {
+  if (String(arquivo).split(/[\\/]/).includes('..')) {
+    console.error('ERRO: caminho com segmento .. recusado: ' + arquivo);
+    process.exit(2);
+  }
   if (!fs.existsSync(arquivo)) {
     console.error('ERRO: catalogo nao encontrado: ' + arquivo);
     process.exit(2);
@@ -84,9 +88,9 @@ function main() {
   const novo = objetos(ler(NOVO));
 
   const removidas = [
-    ['tabela/view', 'relacao', [...antigo.relacoes].filter((n) => !novo.relacoes.has(n)).sort()],
-    ['funcao', 'funcao', [...antigo.funcoes].filter((n) => !novo.funcoes.has(n)).sort()],
-    ['enum', 'enum', [...antigo.enums].filter((n) => !novo.enums.has(n)).sort()],
+    ['tabela/view', 'relacao', [...antigo.relacoes].filter((n) => !novo.relacoes.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))],
+    ['funcao', 'funcao', [...antigo.funcoes].filter((n) => !novo.funcoes.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))],
+    ['enum', 'enum', [...antigo.enums].filter((n) => !novo.enums.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))],
   ];
 
   const consumidores = scan();

@@ -31,7 +31,7 @@ function listarArquivosNoDisco(relDir) {
   const base = join(root, relDir);
   const out = [];
   function visitar(abs, rel) {
-    for (const nome of readdirSync(abs).sort()) {
+    for (const nome of readdirSync(abs).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {
       const filhoAbs = join(abs, nome);
       const filhoRel = rel ? `${rel}/${nome}` : nome;
       const st = statSync(filhoAbs);
@@ -265,7 +265,7 @@ export function padroesNodeDeWorkflow(yaml) {
     }
     for (const padrao of bloco.join('\n').match(CAMINHO_SUITE_NODE) ?? []) padroes.add(padrao);
   }
-  return [...padroes].sort();
+  return [...padroes].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 /** Casa um caminho com um glob simples: `*` não atravessa `/`, `**` atravessa. */

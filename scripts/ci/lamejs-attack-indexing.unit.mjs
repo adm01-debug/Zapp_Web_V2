@@ -174,6 +174,6 @@ test('#436: no encoder real, o grupo com ordinal 2/3 acende e ya nao guarda chav
   }
   const ordinais = new Set(sandbox.__OBS.flatMap((frame) => frame.ta.split(',')).filter((v) => v !== '0'));
   assert.ok(ordinais.has('2') || ordinais.has('3'),
-    `nenhum frame acendeu ataque com ordinal 2 ou 3 (so' ${[...ordinais].sort().join(',') || 'nenhum'}): `
+    `nenhum frame acendeu ataque com ordinal 2 ou 3 (so' ${[...ordinais].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join(',') || 'nenhum'}): `
     + 'e exatamente o que o indice fracionario escondia');
 });

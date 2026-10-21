@@ -23,7 +23,7 @@ const run = (nome, minutos, conclusao, diasAtras = 0) => ({
 
 // Le' o `page` de verdade da URL: `caminho.includes('page=1')` casaria com
 // `per_page=100` e faria o fake devolver a mesma pagina para sempre.
-const paginaDe = (caminho) => Number(new URL(caminho, 'http://x').searchParams.get('page'));
+const paginaDe = (caminho) => Number(new URL(caminho, 'https://x').searchParams.get('page'));
 
 test('E79: agregar conta runs, cancelados, falhas e minutos por workflow', () => {
   const linhas = agregar(
@@ -165,7 +165,7 @@ test('#365: coletarJobs pagina um run com mais de 100 jobs', async () => {
     started_at: '2026-10-03T10:00:00Z',
     completed_at: '2026-10-03T10:01:00Z',
   }));
-  const paginaDeJobs = (caminho) => Number(new URL(caminho, 'http://x').searchParams.get('page'));
+  const paginaDeJobs = (caminho) => Number(new URL(caminho, 'https://x').searchParams.get('page'));
   const pedirFake = async (caminho) => {
     const pagina = paginaDeJobs(caminho);
     if (pagina === 1) return { jobs: cheia };

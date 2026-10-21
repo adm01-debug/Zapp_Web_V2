@@ -59,6 +59,7 @@ jobs:
         run: bash scripts/ci/install-postgresql-client.sh
 
       - name: Exigir banco oficial e TLS autenticado
+        id: credencial
         env:
           DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
         run: |
@@ -82,13 +83,14 @@ jobs:
           for (const erro of erros) console.error('ERRO: ' + erro);
           if (erros.length) process.exit(1);
           console.log(`::add-mask::${tls.connectionString}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${tls.connectionString}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
           console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
 
       - name: Consultar em read-only e cifrar antes de persistir
         env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
           TARGET_VERSIONS: ${{ inputs.versions }}
           LEDGER_EVIDENCE_PUBLIC_KEY_BASE64: ${{ inputs.public_key_base64 }}
           LEDGER_EVIDENCE_OUTPUT: /tmp/targeted-ledger-evidence.json

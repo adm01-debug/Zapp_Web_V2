@@ -120,6 +120,7 @@ jobs:
         run: bash scripts/ci/install-postgresql-client.sh
 
       - name: Provar identidade, TLS e validar confirmacoes
+        id: credencial
         env:
           DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
@@ -159,13 +160,13 @@ jobs:
           for (const erro of erros) console.error('ERRO: ' + erro);
           if (erros.length) process.exit(1);
           console.log(`::add-mask::${tls.connectionString}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${tls.connectionString}\n`);
           // R2-INF-003: o CLI do Supabase le SUPABASE_DB_URL, que nao entra na
-          // lista de PG* tratada pelo withPsqlEnvironment. O `env:` dos passos
-          // redeclarava DESTINO_URL a partir do secret bruto e sobrescrevia o
-          // DSN endurecido do GITHUB_ENV; agora o mesmo DSN endurecido (ja
-          // mascarado) sai no GITHUB_ENV tambem como SUPABASE_DB_URL.
-          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
+          // lista de PG* tratada pelo withPsqlEnvironment. GA21: nenhum passo
+          // redeclara o secret e nenhum DSN vai para o GITHUB_ENV — o mesmo
+          // DSN endurecido (ja mascarado) sai nos outputs deste passo como
+          // destino= e supabase_db_url=; cada passo declara env proprio.
+          appendFileSync(process.env.GITHUB_OUTPUT, `supabase_db_url=${tls.connectionString}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
           console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
@@ -176,6 +177,7 @@ jobs:
         # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
         # push seria reaplicar DDL.
         env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
           PSQL_CONNECT_RETRIES: '2'
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY: ${{ inputs.apply }}
@@ -239,12 +241,15 @@ jobs:
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
       - name: Provar paridade integral quando a versao ja existe
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: steps.preflight.outputs.needs_apply == 'false'
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Provar estado runtime antes do push
         id: runtime
         env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
           TARGET_VERSION: ${{ inputs.migration_version }}
@@ -897,6 +902,7 @@ jobs:
       - name: Dry-run oficial do Supabase CLI
         if: steps.preflight.outputs.needs_apply == 'true'
         env:
+          SUPABASE_DB_URL: ${{ steps.credencial.outputs.supabase_db_url }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
@@ -909,6 +915,8 @@ jobs:
           fi
 
       - name: Aplicar alvo unico ou bundle ordenado autorizado
+        env:
+          SUPABASE_DB_URL: ${{ steps.credencial.outputs.supabase_db_url }}
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         run: >-
           supabase db push --include-all
@@ -917,6 +925,7 @@ jobs:
       - name: Validar registro no ledger
         if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
         env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
         run: |
@@ -941,6 +950,8 @@ jobs:
           node scripts/db-audit/verify-ledger-statements.mjs "$LANCAMENTO"
 
       - name: Validar ledger completo do bundle de entrega atomica
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909270000'
@@ -955,6 +966,8 @@ jobs:
           echo "OK: ledger possui todas as tres migrations do contrato atomico."
 
       - name: Validar ledger completo do bundle de recuperacao Talk X
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
@@ -974,6 +987,8 @@ jobs:
           echo "OK: ledger possui as 11 migrations ordenadas da recuperacao Talk X."
 
       - name: Validar runtime atomico de chamadas e sentimento
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260922220000'
@@ -1007,6 +1022,8 @@ jobs:
           NODE
 
       - name: Validar runtime completo do bundle Talk X
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
@@ -1045,6 +1062,8 @@ jobs:
           NODE
 
       - name: Validar policy restritiva da blacklist Talk X
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260910100000'
@@ -1068,6 +1087,8 @@ jobs:
           NODE
 
       - name: Validar comportamento de get_team_profiles
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260830170000'
@@ -1091,6 +1112,8 @@ jobs:
           NODE
 
       - name: Validar ACL de webhook_failures
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260831120000'
@@ -1099,6 +1122,8 @@ jobs:
           -f scripts/db-audit/check-webhook-failures-acl.sql
 
       - name: Validar remocao de URLs assinadas persistidas
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260831150000'
@@ -1120,6 +1145,8 @@ jobs:
           echo "OK: nenhuma credencial temporaria de Storage permanece nas tabelas alvo."
 
       - name: Validar estrutura e privilegios da outbox CRM
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260908180000'
@@ -1156,6 +1183,8 @@ jobs:
           NODE
 
       - name: Validar fencing e maquina de estados da outbox CRM
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260908220000'
@@ -1195,6 +1224,8 @@ jobs:
           NODE
 
       - name: Validar rollout seguro, ACL e funcoes atomicas do CRM
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909120000'
@@ -1280,6 +1311,8 @@ jobs:
           NODE
 
       - name: Validar kill switch persistente da API publica
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909180000'
@@ -1306,6 +1339,8 @@ jobs:
           NODE
 
       - name: Validar autorizacao canonica do Inbox
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909200000'
@@ -1340,6 +1375,8 @@ jobs:
           NODE
 
       - name: Validar primitivas atomicas de mensagens e encerramento
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260909220000'
@@ -1392,6 +1429,8 @@ jobs:
           NODE
 
       - name: Validar entrega atomica de enquetes e contatos
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909270000'
@@ -1418,6 +1457,8 @@ jobs:
           NODE
 
       - name: Validar histórico canônico de templates Talk X
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260909210000'
@@ -1479,5 +1520,7 @@ jobs:
           NODE
 
       - name: Provar paridade integral apos aplicacao
+        env:
+          DESTINO_URL: ${{ steps.credencial.outputs.destino }}
         if: inputs.apply == true
         run: node scripts/db-audit/check-migration-drift.mjs

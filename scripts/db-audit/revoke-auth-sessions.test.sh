@@ -19,7 +19,7 @@ PSQL=(docker exec -i "$CNAME" psql -v ON_ERROR_STOP=1 -q -U postgres -d postgres
 cleanup() { docker rm -f "$CNAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
-[ -f "$MIGRATION" ] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
+[[ -f "$MIGRATION" ]] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
 
 docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
 
@@ -97,11 +97,11 @@ insert into public.user_sessions (user_id, auth_session_id) values
 SQL
 
 GLOBAL_COUNT="$("${PSQL[@]}" -Atc "select public.revoke_auth_sessions('global', null, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, null)")"
-[ "$GLOBAL_COUNT" = "2" ] || { echo "[FALHOU] global deveria revogar 2 sessoes, revogou $GLOBAL_COUNT"; exit 1; }
+[[ "$GLOBAL_COUNT" = "2" ]] || { echo "[FALHOU] global deveria revogar 2 sessoes, revogou $GLOBAL_COUNT"; exit 1; }
 B_REMAIN="$("${PSQL[@]}" -Atc "select count(*) from auth.sessions where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'")"
-[ "$B_REMAIN" = "1" ] || { echo "[FALHOU] global do A nao deveria tocar as sessoes do B"; exit 1; }
+[[ "$B_REMAIN" = "1" ]] || { echo "[FALHOU] global do A nao deveria tocar as sessoes do B"; exit 1; }
 INV_ACTIVE="$("${PSQL[@]}" -Atc "select count(*) from public.user_sessions where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and is_active = false")"
-[ "$INV_ACTIVE" = "2" ] || { echo "[FALHOU] inventário público do A não ficou coerente (is_active=false)"; exit 1; }
+[[ "$INV_ACTIVE" = "2" ]] || { echo "[FALHOU] inventário público do A não ficou coerente (is_active=false)"; exit 1; }
 echo "[OK] GREEN: global revoga as duas sessões de A, preserva B e marca o inventário inativo"
 
 # cenário local: só a sessão alvo (reseta o estado entre cenários)
@@ -115,9 +115,9 @@ insert into public.user_sessions (user_id, auth_session_id) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '22222222-2222-4222-8222-222222222222');
 SQL
 LOCAL_COUNT="$("${PSQL[@]}" -Atc "select public.revoke_auth_sessions('local', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, '11111111-1111-4111-8111-111111111111', null)")"
-[ "$LOCAL_COUNT" = "1" ] || { echo "[FALHOU] local deveria revogar 1 sessao, revogou $LOCAL_COUNT"; exit 1; }
+[[ "$LOCAL_COUNT" = "1" ]] || { echo "[FALHOU] local deveria revogar 1 sessao, revogou $LOCAL_COUNT"; exit 1; }
 S2_REMAIN="$("${PSQL[@]}" -Atc "select count(*) from auth.sessions where id = '22222222-2222-4222-8222-222222222222'")"
-[ "$S2_REMAIN" = "1" ] || { echo "[FALHOU] local deveria preservar a sessão não-alvo"; exit 1; }
+[[ "$S2_REMAIN" = "1" ]] || { echo "[FALHOU] local deveria preservar a sessão não-alvo"; exit 1; }
 echo "[OK] GREEN: local revoga só a sessão alvo"
 
 # cenário others: preserva a indicada (reseta o estado entre cenários)
@@ -131,9 +131,9 @@ insert into public.user_sessions (user_id, auth_session_id) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '22222222-2222-4222-8222-222222222222');
 SQL
 OTHERS_COUNT="$("${PSQL[@]}" -Atc "select public.revoke_auth_sessions('others', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, null, '11111111-1111-4111-8111-111111111111')")"
-[ "$OTHERS_COUNT" = "1" ] || { echo "[FALHOU] others deveria revogar 1 sessao (a não preservada), revogou $OTHERS_COUNT"; exit 1; }
+[[ "$OTHERS_COUNT" = "1" ]] || { echo "[FALHOU] others deveria revogar 1 sessao (a não preservada), revogou $OTHERS_COUNT"; exit 1; }
 PRESERVED="$("${PSQL[@]}" -Atc "select count(*) from auth.sessions where id = '11111111-1111-4111-8111-111111111111'")"
-[ "$PRESERVED" = "1" ] || { echo "[FALHOU] others deveria preservar a sessão indicada"; exit 1; }
+[[ "$PRESERVED" = "1" ]] || { echo "[FALHOU] others deveria preservar a sessão indicada"; exit 1; }
 echo "[OK] GREEN: others preserva a sessão indicada"
 
 # ---- privilégio: authenticated/anon não executam (acceptance 4)
@@ -155,10 +155,10 @@ insert into auth.sessions (id, user_id) values
 SQL
 "${PSQL[@]}" -q -c "update public.profiles set is_active = false where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'"
 AFTER_DEACT="$("${PSQL[@]}" -Atc "select count(*) from auth.sessions where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'")"
-[ "$AFTER_DEACT" = "0" ] || { echo "[FALHOU] desativar perfil deveria revogar todas as sessões (sobraram $AFTER_DEACT)"; exit 1; }
+[[ "$AFTER_DEACT" = "0" ]] || { echo "[FALHOU] desativar perfil deveria revogar todas as sessões (sobraram $AFTER_DEACT)"; exit 1; }
 "${PSQL[@]}" -q -c "update public.profiles set is_active = true where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'"
 AFTER_REACT="$("${PSQL[@]}" -Atc "select count(*) from auth.sessions where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'")"
-[ "$AFTER_REACT" = "0" ] || { echo "[FALHOU] reativar perfil não deveria criar sessão (existem $AFTER_REACT)"; exit 1; }
+[[ "$AFTER_REACT" = "0" ]] || { echo "[FALHOU] reativar perfil não deveria criar sessão (existem $AFTER_REACT)"; exit 1; }
 echo "[OK] GREEN: desativar perfil revoga as sessões; reativar não cria"
 
 # ---- rollback (acceptance 6): a linha -- rollback: reverte
@@ -167,7 +167,7 @@ if "${PSQL[@]}" -c "select public.revoke_auth_sessions('global', null, 'aaaaaaaa
   echo "[FALHOU] rollback nao removeu revoke_auth_sessions"; exit 1
 fi
 COL_AFTER_RB="$("${PSQL[@]}" -Atc "select count(*) from information_schema.columns where table_name='user_sessions' and column_name='auth_session_id'")"
-[ "$COL_AFTER_RB" = "0" ] || { echo "[FALHOU] rollback nao removeu a coluna auth_session_id"; exit 1; }
+[[ "$COL_AFTER_RB" = "0" ]] || { echo "[FALHOU] rollback nao removeu a coluna auth_session_id"; exit 1; }
 echo "[OK] GREEN: rollback remove função e coluna (volta ao estado medido)"
 
 echo "[OK] revoke_auth_sessions — migration aplica em PostgreSQL descartável: global/local/others, privilégio e trigger provados (${CNAME})"

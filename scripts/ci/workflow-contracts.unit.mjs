@@ -274,11 +274,11 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const instalados = Object.keys(LETRA)
       .filter((b) => new RegExp(`install --with-deps[^\n]*\\b${b}\\b`).test(texto))
       .map((b) => LETRA[b])
-      .sort()
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       .join('');
     if (!conjunto) {
       problemas.push(`${nome}: chave '${chave}' não nomeia o conjunto de browsers (esperado pw-<cfw>-)`);
-    } else if ([...conjunto].sort().join('') !== instalados) {
+    } else if ([...conjunto].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join('') !== instalados) {
       problemas.push(`${nome}: chave diz '${conjunto}' mas o job instala '${instalados}'`);
     }
 
@@ -306,12 +306,12 @@ test('W60: contents:write só onde há git push / tag', () => {
   // repositório. Workflows que a declaram sem escrita real entregam capacidade
   // extra desnecessariamente — blast radius de qualquer comprometimento do job.
   //
-  // Indicadores de escrita legítima:
-  //   - `git push` / `git tag` num run:
-  //   - `gh api.*update-branch` (atualiza branch de PR via API)
-  //   - `peter-evans/create-pull-request` (cria commit + push internamente)
-  //   - createRef / createTag / update-ref (chamadas à API de refs)
-  const ESCRITA_RUN = /\bgit\s+(?:push|tag)\b|gh\s+api.*update-branch|createRef|createTag|update-ref/;
+  // Indicadores de escrita legítima (sem `.*` — S8786: `gh\s+api.*update-branch`
+  // tem desempenho super-linear; dois testes de substring disjuntos equivalem).
+  const escritaRun = (l) =>
+    /\bgit\s+(?:push|tag)\b/.test(l) ||
+    (l.includes('gh ') && l.includes('update-branch')) ||
+    /createRef|createTag|update-ref/.test(l);
   const ESCRITA_USES = /peter-evans\/create-pull-request@/;
 
   const infratores = [];
@@ -320,7 +320,7 @@ test('W60: contents:write só onde há git push / tag', () => {
     // Só verifica arquivos que declaram contents: write em nível de job/workflow
     if (!/^\s+contents:\s+write\s*$/m.test(texto)) continue;
     // Escrita em run: ou via action de criação de PR
-    const execRun = linhasExecutaveis(texto).some((l) => ESCRITA_RUN.test(l));
+    const execRun = linhasExecutaveis(texto).some(escritaRun);
     const execUses = ESCRITA_USES.test(texto);
     if (!execRun && !execUses) {
       infratores.push(nome);
@@ -562,6 +562,8 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+});
+
 // W99: novos invariantes de segurança de workflow
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {
@@ -600,4 +602,177 @@ test('W99: todo upload-artifact declara retention-days', async () => {
     }
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
+});
+
+// GA99 (plano de 15/10/2026): contrato anti-regressão deste plano. Cada teste
+// trava o estado final de uma etapa — se o YAML regredir, o contrato quebra
+// antes do merge. Texto do plano não impede regressão; teste, sim.
+
+test('GA99: notifica monitora só nomes de workflow que existem', () => {
+  // Um nome renomeado/removido sem atualizar o notifica = falha na main sem
+  // issue (a etapa que avisa o Joaquim deixa de avisar em silêncio).
+  const texto = wf['notifica-falha-main.yml'];
+  const bloco = /^(\s+)workflows:\s*\n((?:\1\s+-\s+.*\n?)+)/m.exec(texto);
+  assert.ok(bloco, 'bloco workflows: sumiu do notifica-falha-main.yml');
+  const monitorados = [...bloco[2].matchAll(/-\s*(.+?)\s*$/gm)].map((m) => m[1]);
+  assert.ok(monitorados.length >= 7, `notifica monitora poucos workflows: ${monitorados.length}`);
+  const declarados = new Set(
+    nomes.map((n) => /^name:\s*(.+?)\s*$/m.exec(wf[n])?.[1]).filter(Boolean),
+  );
+  const faltando = monitorados.filter((m) => !declarados.has(m));
+  assert.deepEqual(faltando, [], `notifica monitora workflow inexistente: ${faltando.join(', ')}`);
+});
+
+test('GA99: e2e-logado exige o if de GA08 e o grupo fixo de GA09', () => {
+  const texto = wf['e2e-logado.yml'];
+  // if: no JOB (não no step): dispatch manual ou workflow_run de push na main
+  // do próprio repo com CI verde. Sem as 3 condições, um fork com branch main
+  // dispara o E2E com os secrets do repo (Scorecard #40 Dangerous-Workflow).
+  const jobIf = /^  e2e-logado:\n(?:.*\n){0,10}?\s+if:\s*>-\s*\n((?:\s+.*\n?)+)/m.exec(texto);
+  assert.ok(jobIf, 'job e2e-logado perdeu o if: de GA08');
+  for (const cond of [
+    "github.event_name == 'workflow_dispatch'",
+    'github.event.workflow_run.conclusion',
+    'github.event.workflow_run.event',
+    'github.event.workflow_run.head_repository.full_name == github.repository',
+  ]) {
+    assert.ok(jobIf[1].includes(cond), `e2e-logado perdeu a condição GA08: ${cond}`);
+  }
+  assert.ok(jobIf[1].includes("'success'"), 'e2e-logado: conclusion success sumiu do if');
+  // GA09: grupo fixo serializa (cancel-in-progress: false enfileira em vez de
+  // matar a run atual). Grupo com ref/sha permite 2 runs concorrentes.
+  assert.match(texto, /^  group: e2e-logado$/m, 'GA09: grupo de concorrência deixou de ser fixo');
+  assert.match(texto, /^  cancel-in-progress: false$/m, 'GA09: cancel-in-progress deixou de ser false');
+  // O gatilho é o fim do CI (workflow_run) + dispatch — nunca push direto
+  // (duplicaria a suite a cada commit) nem pull_request (secret em fork).
+  assert.match(texto, /^  workflow_run:\s*(#.*)?$/m, 'e2e-logado perdeu o gatilho workflow_run');
+  assert.doesNotMatch(texto, /^  push:\s*$/m, 'e2e-logado voltou a disparar em push direto');
+  assert.doesNotMatch(texto, /^  pull_request(_target)?:\s*$/m, 'e2e-logado com gatilho de PR expõe secret a fork');
+});
+
+test('GA99: Gate 3 compara contra o catálogo do HEAD, não o arquivo sobrescrito', () => {
+  // GA20: o passo "Aplicar candidatos" copia o novo por cima do antigo ANTES
+  // do Gate 3 — comparar supabase/schema-catalog.json com /tmp/catalog.new.json
+  // é comparar o arquivo com ele mesmo (um DROP passa). O antigo vem do git.
+  const texto = wf['types-sync.yml'];
+  const ini = texto.indexOf('Gate 3 — remocoes destrutivas');
+  assert.ok(ini > 0, 'Gate 3 sumiu do types-sync.yml');
+  const gate3 = texto.slice(ini, ini + 2000);
+  assert.ok(
+    gate3.includes('git show HEAD:supabase/schema-catalog.json'),
+    'Gate 3 precisa ler o catálogo antigo do git HEAD',
+  );
+  assert.doesNotMatch(
+    gate3,
+    /check-remocoes-destrutivas\.mjs\s+supabase\/schema-catalog\.json/,
+    'Gate 3 voltou a comparar o arquivo com ele mesmo',
+  );
+  assert.match(
+    gate3,
+    /check-remocoes-destrutivas\.mjs\s+\S*catalog\.old\.json\s+\S*catalog\.new\.json/,
+    'Gate 3 precisa comparar antigo (HEAD) x novo (candidato)',
+  );
+});
+
+test('GA99: stdout do hash sai limpo (GA04)', async () => {
+  // O db-migrate captura o stdout em $(...) e faz JSON.parse — uma linha de
+  // log no stdout contamina o hash e o apply nunca acontece (lote parado
+  // desde 05/10). Logs vão para stderr; stdout carrega só a prova.
+  const runRuntime = await readFile(
+    new URL('../db-audit/run-runtime-contract.mjs', import.meta.url), 'utf8',
+  );
+  const prova = await readFile(
+    new URL('../db-audit/validate-runtime-proof.mjs', import.meta.url), 'utf8',
+  );
+  for (const [nome, src] of [['run-runtime-contract.mjs', runRuntime], ['validate-runtime-proof.mjs', prova]]) {
+    const exec = src.split('\n').filter((l) => !l.trimStart().startsWith('//')).join('\n');
+    assert.doesNotMatch(exec, /console\.log\(/, `${nome} com console.log polui o stdout capturado`);
+    assert.equal(
+      (exec.match(/process\.stdout\.write\(/g) ?? []).length, 1,
+      `${nome} precisa de exatamente 1 escrita no stdout`,
+    );
+  }
+  assert.match(prova, /process\.stdout\.write\(confirmacao/, 'o stdout da prova precisa ser o hash de confirmação');
+  assert.match(
+    wf['db-migrate.yml'],
+    /JSON\.parse\(process\.env\.RUNTIME_JSON\)/,
+    'db-migrate precisa consumir a prova como JSON puro do stdout',
+  );
+});
+
+test('GA99: DESTINO_URL fora do GITHUB_ENV (GA21)', () => {
+  // O arquivo do GITHUB_ENV é lido por TODOS os passos seguintes, incluindo
+  // actions de terceiros — o DSN endurecido sai por outputs do passo de
+  // credencial e cada passo que precisa do banco declara env próprio.
+  const comDsn = ['db-migrate.yml', 'db-live-guard.yml', 'types-sync.yml', 'targeted-ledger-evidence.yml'];
+  for (const nome of comDsn) {
+    const texto = wf[nome];
+    assert.ok(texto.includes('id: credencial'), `${nome} perdeu o passo de credencial`);
+    assert.match(
+      texto,
+      /GITHUB_OUTPUT[^;]*?destino=/,
+      `${nome}: o DSN endurecido precisa sair por outputs (destino=)`,
+    );
+    assert.ok(
+      texto.includes('steps.credencial.outputs.destino'),
+      `${nome}: passos do banco precisam declarar env a partir de steps.credencial.outputs.destino`,
+    );
+  }
+  const vazando = [];
+  for (const nome of nomes) {
+    const exec = wf[nome]
+      .split('\n')
+      .filter((l) => { const t = l.trimStart(); return !t.startsWith('#') && !t.startsWith('//'); })
+      .join('\n');
+    if (/GITHUB_ENV[^`\n]*`(DESTINO_URL|SUPABASE_DB_URL)\s*=/.test(exec)) vazando.push(nome);
+  }
+  assert.deepEqual(vazando, [], `DSN no GITHUB_ENV em: ${vazando.join(', ')}`);
+});
+
+test('GA99: job com needs reuso exige !cancelled() (GA55)', () => {
+  // Sem !cancelled(), um run cancelado vira 'skipped' no agregador e o check
+  // obrigatório pinta verde sem ter rodado. Hoje nenhum job usa needs reuso
+  // (arquitetura R2 revertida) — o teste trava o retorno do padrão.
+  const blocos = wf['ci.yml'].split(/(?=^  [A-Za-z0-9_-]+:\s*$)/m).slice(1);
+  for (const b of blocos) {
+    if (!/needs:[^\n]*\breuso\b/.test(b) && !/-\s*reuso\s*$/m.test(b)) continue;
+    const job = /^  ([A-Za-z0-9_-]+):/.exec(b)?.[1];
+    assert.match(b, /^\s+if:[^\n]*!cancelled\(\)/m, `job ${job} com needs reuso sem !cancelled()`);
+  }
+  for (const nome of nomes) {
+    const blocosWf = wf[nome].split(/(?=^  [A-Za-z0-9_-]+:\s*$)/m).slice(1);
+    for (const b of blocosWf) {
+      if (!/needs:[^\n]*\breuso\b/.test(b) && !/-\s*reuso\s*$/m.test(b)) continue;
+      const job = /^  ([A-Za-z0-9_-]+):/.exec(b)?.[1];
+      assert.match(b, /^\s+if:[^\n]*!cancelled\(\)/m, `${nome}: job ${job} com needs reuso sem !cancelled()`);
+    }
+  }
+});
+
+test('GA99: nenhuma imagem sem digest', async () => {
+  // Tag mutável hoje pode ser outra imagem amanhã — o digest trava o bytes.
+  const semDigest = [];
+  for (const nome of nomes) {
+    for (const m of wf[nome].matchAll(/^\s*image:\s*(\S+)\s*$/gm)) {
+      if (!m[1].includes('@sha256:')) semDigest.push(`${nome}: ${m[1]}`);
+    }
+    for (const m of wf[nome].matchAll(/GHCR_IMG="([^"]+)"/g)) {
+      if (!m[1].includes('@sha256:')) semDigest.push(`${nome}: ${m[1]}`);
+    }
+  }
+  assert.deepEqual(semDigest, [], `imagem sem digest: ${semDigest.join(', ')}`);
+  const dockerfile = await readFile(
+    new URL('../../infrastructure/preview-egress-proxy/Dockerfile', import.meta.url), 'utf8',
+  );
+  for (const m of dockerfile.matchAll(/^FROM\s+(\S+)/gm)) {
+    assert.ok(m[1].includes('@sha256:'), `FROM sem digest: ${m[1]}`);
+  }
+  const replay = await readFile(
+    new URL('../db-audit/replay-local.sh', import.meta.url), 'utf8',
+  );
+  assert.match(
+    replay,
+    /public\.ecr\.aws\/supabase\/postgres:[0-9.]+@sha256:[a-f0-9]{64}/,
+    'replay-local.sh precisa fixar a imagem do replay por digest',
+  );
 });

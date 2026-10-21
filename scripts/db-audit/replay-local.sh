@@ -49,7 +49,7 @@ ERROS="$PWD/replay-erros.tsv"
 remover_nosso() {
   local dono
   dono=$(docker inspect --format "{{ index .Config.Labels \"$ROTULO_CHAVE\" }}" "$NOME" 2>/dev/null || true)
-  if [ "$dono" = "$ROTULO_VALOR" ]; then
+  if [[ "$dono" = "$ROTULO_VALOR" ]]; then
     docker rm -f "$NOME" >/dev/null 2>&1 || true
   fi
 }
@@ -73,7 +73,7 @@ for i in $(seq 1 90); do
   fi
   sleep 1
 done
-if [ "$PRONTO" -ne 1 ]; then
+if [[ "$PRONTO" -ne 1 ]]; then
   echo "FALHA: postgres nao ficou pronto em 90s; abortando sem aplicar migrations" | tee -a "$LOG"
   exit 2
 fi
@@ -119,7 +119,7 @@ SQL
 )
 RC_BOOTSTRAP=$?
 printf '%s\n' "$SAIDA_BOOTSTRAP" >>"$LOG"
-if [ "$RC_BOOTSTRAP" -ne 0 ]; then
+if [[ "$RC_BOOTSTRAP" -ne 0 ]]; then
   echo "FALHA: bootstrap falhou (ON_ERROR_STOP); abortando antes das migrations" | tee -a "$LOG"
   exit 2
 fi
@@ -143,7 +143,7 @@ echo "aplicando $TOTAL migrations" | tee -a "$LOG"
 OK=0; FALHA=0
 for f in $(ls supabase/migrations/*.sql | sort); do
   SAIDA=$(docker exec -i "$NOME" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -q < "$f" 2>&1)
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     OK=$((OK+1))
   else
     FALHA=$((FALHA+1))
@@ -164,12 +164,12 @@ printf '%s\n' "$CLASSIFICACAO" | tee -a "$LOG"
 # Falha clara (pedido do cartao): quando ha drift novo, nomeia CADA migration culpada com o erro
 # que ela mediu, ANTES de sair. Sem isso o revisor so ve "REPLAY=VERMELHO" e precisa cruzar o TSV
 # a mao para achar o arquivo do PR. A lista sai do proprio classificador - mesma fonte da decisao.
-if [ "$RC" -eq 1 ]; then
+if [[ "$RC" -eq 1 ]]; then
   echo "--- MIGRATION(S) CULPADA(S): falha fora do allowlist ---" | tee -a "$LOG"
   printf '%s\n' "$CLASSIFICACAO" \
     | sed -n 's/^[[:space:]]*INESPERADA (drift novo, investigar): //p' \
     | while IFS= read -r arq; do
-        [ -n "$arq" ] || continue
+        [[ -n "$arq" ]] || continue
         erro=$(awk -F'\t' -v a="$arq" '$1==a {print $2; exit}' "$ERROS")
         printf 'MIGRATION CULPADA: %s -> %s\n' "$arq" "${erro:-sem linha ERROR}"
       done | tee -a "$LOG"

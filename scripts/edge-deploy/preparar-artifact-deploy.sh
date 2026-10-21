@@ -28,14 +28,14 @@ REDATOR="${REDATOR_LOG:-$(cd "$(dirname "$0")" && pwd)/redigir-log.mjs}"
 mkdir -p "$DESTINO"
 
 # Copia em massa: TUDO, menos o log bruto. Ele so' chega ao destino redigido.
-if [ -d "$ORIGEM" ]; then
+if [[ -d "$ORIGEM" ]]; then
   find "$ORIGEM" -mindepth 1 -maxdepth 1 ! -name 'deploy-output.log' -exec cp -a {} "$DESTINO/" \;
 fi
 
-if [ -f "$ORIGEM/deploy-output.log" ]; then
+if [[ -f "$ORIGEM/deploy-output.log" ]]; then
   cp "$ORIGEM/deploy-output.log" "$STAGING"
   node "$REDATOR" "$STAGING" --segredo-env=SUPABASE_ACCESS_TOKEN
-  if [ -n "${SUPABASE_ACCESS_TOKEN:-}" ] && grep -qF -- "$SUPABASE_ACCESS_TOKEN" "$STAGING"; then
+  if [[ -n "${SUPABASE_ACCESS_TOKEN:-}" ]] && grep -qF -- "$SUPABASE_ACCESS_TOKEN" "$STAGING"; then
     echo "::error::valor do token ainda presente no log sanitizado; artifact bloqueado." >&2
     exit 1
   fi
