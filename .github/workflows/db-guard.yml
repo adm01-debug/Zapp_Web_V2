@@ -209,11 +209,11 @@ jobs:
 
       - name: Testar comparadores de catalogo, manifesto e migrations
         run: |
-          mapfile -t testes_db < <(
-            rg --files scripts/db-audit -g '*.test.mjs' \
-              | sort \
-              | rg -v '^scripts/db-audit/talkx-engine-window-contract\.test\.mjs$'
-          )
+          testes_db=()
+          for teste_db in scripts/db-audit/*.test.mjs; do
+            [[ "$teste_db" == "scripts/db-audit/talkx-engine-window-contract.test.mjs" ]] && continue
+            testes_db+=("$teste_db")
+          done
           node --test "${testes_db[@]}"
 
       # O contrato Talk X sobe seu proprio PostgreSQL. Em paralelo com a suite
