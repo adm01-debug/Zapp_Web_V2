@@ -291,11 +291,11 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 15 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 15);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*15 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 

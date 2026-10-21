@@ -135,11 +135,18 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧩 Run Node CI scripts tests
-        run: |
+        run: >-
           node --test scripts/ci/*.unit.mjs
-          node scripts/vercel/ignore-build.unit.mjs
         env:
           CI: true
+
+      - name: 🧪 Test Vercel ignore-build guard
+        run: node scripts/vercel/ignore-build.unit.mjs
+
+      - name: 🦕 Test Edge handlers
+        run: |
+          deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')
 
   build:
     name: 🏗️ Build

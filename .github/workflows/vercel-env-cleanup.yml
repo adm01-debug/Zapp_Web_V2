@@ -1,3 +1,9 @@
+# docs:
+#   gatilho: dispatch manual com dry-run por padrão
+#   prova: remove variáveis Vercel perigosas ou mortas conforme o inventário
+#   falha: o script aborta antes de alterar variáveis e informa a causa
+#   avisa: operador que disparou o workflow
+
 name: V043-V065 Vercel Env Cleanup
 
 defaults:
