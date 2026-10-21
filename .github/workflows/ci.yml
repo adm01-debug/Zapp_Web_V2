@@ -141,6 +141,11 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
       - name: 🧩 Run Node CI scripts tests
         run: node --test scripts/ci/*.unit.mjs
         env:
