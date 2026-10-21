@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useCustomShortcuts } from '@/hooks/ui/useCustomShortcuts';

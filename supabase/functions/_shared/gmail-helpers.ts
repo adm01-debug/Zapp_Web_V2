@@ -126,19 +126,6 @@ export async function ensureValidToken(supabase: SupabaseClient, account: GmailA
   const storedTokens = await getTokens(supabase, account.id);
   if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;
   log.info("Refreshing Gmail token");
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ refresh_token: storedTokens.refresh_token, client_id: requireEnv("GOOGLE_CLIENT_ID"), client_secret: requireEnv("GOOGLE_CLIENT_SECRET"), grant_type: "refresh_token" }),
-  });
-  if (!response.ok) {
-    // O corpo do Google distingue token revogado/expirado (invalid_grant) de
-    // falha transitória — sem ele a conta cairia em "error" mudo. O corpo do
-    // erro do refresh nunca carrega token.
-    const detail = await response.text();
-    throw new Error(`Gmail token refresh rejected (${response.status}): ${detail}`);
-  }
-  const tokens = await response.json() as { access_token: string; refresh_token?: string; expires_in: number };
-
   const tokens = await requestGmailTokenRefresh(storedTokens.refresh_token, requireEnv("GOOGLE_CLIENT_ID"), requireEnv("GOOGLE_CLIENT_SECRET"));
   const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
   await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
@@ -363,6 +350,11 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
 export type GmailAccountFailure = "reauth_required" | "error";
 
 export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a conta";
+export const GMAIL_REAUTH_HTTP_STATUS = 409;
+
+export function gmailReauthErrorPayload(): { code: "reauth_required"; error: string } {
+  return { code: "reauth_required", error: GMAIL_REAUTH_MESSAGE };
+}
 
 const GMAIL_REAUTH_MARKERS = ["invalid_grant", "unauthorized_client", "expired or revoked", "revoked"];
 

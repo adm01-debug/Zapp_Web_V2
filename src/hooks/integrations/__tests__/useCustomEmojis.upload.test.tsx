@@ -74,15 +74,25 @@ beforeEach(() => {
   inserted = [];
   mocks.getUser.mockResolvedValue({ data: { user: { id: UID } }, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
-  mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }) }),
-    insert: (payload: Record<string, unknown>) => {
-      inserted.push(payload);
-      return Promise.resolve({ error: null });
-    },
-    update: () => ({ eq: () => Promise.resolve({ error: null }) }),
-    delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
-  }));
+  mocks.tableFrom.mockImplementation(() => {
+    // fetchEmojis/loadMore: .select().order().order().range() — the query is
+    // thenable and every .order() returns the same chain (second .order exists).
+    const resolved = Promise.resolve({ data: [emoji()], error: null });
+    const query: Record<string, unknown> = {};
+    query.order = () => query;
+    query.range = () => resolved;
+    query.limit = () => resolved;
+    query.then = resolved.then.bind(resolved);
+    return {
+      select: () => query,
+      insert: (payload: Record<string, unknown>) => {
+        inserted.push(payload);
+        return Promise.resolve({ error: null });
+      },
+      update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+      delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
+    };
+  });
   mocks.storageFrom.mockImplementation((bucket: string) => ({
     upload: (path: string, file: unknown, opts: unknown) => mocks.storageUpload(bucket, path, file, opts),
     remove: (paths: string[]) => mocks.storageRemove(bucket, paths),

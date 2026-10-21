@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch manual (dry_run=1 por padrao)
+#   prova: lista ou remove vars perigosas/mortas do projeto Vercel (V043-V065)
+#   falha: nada e apagado no dry-run; o apply aborta sem token
+#   avisa: operador que disparou
 name: V043-V065 Vercel Env Cleanup
 
 on:
@@ -10,18 +15,28 @@ on:
         type: choice
         options: ['1', '0']
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
 jobs:
   cleanup:
     name: Remove vars perigosas/mortas do Vercel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Setup Node 20
+      - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Limpar vars Vercel (V043-V065)
         env:

@@ -61,11 +61,14 @@ export const TEST_FILES = [
 /**
  * Testes `*auth*` que existem no disco e ficam FORA da medição de propósito.
  * `ai-auth-service-path.test.ts` exercita o mesmo `ai-auth.ts` da régua e
- * contaminaria a conta; os demais cobrem outros módulos (webhook, runtime).
+ * contaminaria a conta; os demais cobrem outros módulos (webhook, gmail,
+ * requireAuth em validation.ts, runtime).
  */
 export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-auth-service-path.test.ts',
   'ai-audio-authz-runtime.test.ts',
+  'gmail-reauth-required.test.ts',
+  'require-auth-profile-active.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
 ];
@@ -365,7 +368,17 @@ function medicaoUmaVez() {
   return medicaoCompartilhada;
 }
 
-test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () => {
+/** A medição fresca prova o deno de verdade. Sem o binário (job Node CI Scripts
+ * instala 2.9.5) não dá para forjar o número: o teste é pulado, não aprovado. */
+function pularSemDeno() {
+  const probe = spawnSync('deno', ['--version'], { encoding: 'utf8' });
+  if (probe.error || probe.status !== 0) {
+    return 'deno ausente: medição fresca só roda onde o binário existe (setup-deno 2.9.5 no job Node CI Scripts)';
+  }
+  return false;
+}
+
+test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', { skip: pularSemDeno() }, () => {
   const { resumo, statusTestes, saidaTestes } = medicaoUmaVez();
   const falhasStatus = avaliarStatusTestes(statusTestes, saidaTestes);
   assert.deepEqual(falhasStatus, [], `teste vermelho invalida a medição: ${falhasStatus.join('; ')}`);
@@ -377,7 +390,7 @@ test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () 
   }
 });
 
-test('N217: docs bate com medição fresca e segunda execução é idêntica', () => {
+test('N217: docs bate com medição fresca e segunda execução é idêntica', { skip: pularSemDeno() }, () => {
   const fresca = medirDoZero();
   const relatorio = renderRelatorio(fresca.resumo);
   assert.equal(

@@ -12,7 +12,7 @@ test.describe('Auth flows', () => {
   test('login form validates email format', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('textbox', { name: /e-?mail/i }).fill('notanemail');
-    await page.getByRole('button', { name: /entrar|login/i }).click();
+    await page.getByRole('button', { name: /^entrar$/i }).click();
     await expect(page.getByText(/e-?mail inv|e-?mail obr/i)).toBeVisible();
   });
 

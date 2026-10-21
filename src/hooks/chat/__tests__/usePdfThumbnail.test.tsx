@@ -30,6 +30,7 @@ vi.mock('@/lib/pdfThumbnail', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 import { PDF_THUMBNAIL_LARGURA, usePdfThumbnail } from '@/hooks/chat/usePdfThumbnail';

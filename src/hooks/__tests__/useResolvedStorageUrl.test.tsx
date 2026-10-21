@@ -12,6 +12,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { warn: vi.fn() },
+  createLogger: () => ({ warn: vi.fn() }),
 }));
 
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';

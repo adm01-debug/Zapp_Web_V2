@@ -617,7 +617,13 @@ export async function handleConnectionHealthCheck(
                     newStatus: dbStatus,
                   });
                   if (dbStatus === 'disconnected' && conn.status === 'connected') {
-                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                    alertsToCreate.push({
+                      connection_id: conn.id,
+                      instance_id: conn.instance_id,
+                      phone: conn.phone_number,
+                      kind: 'disconnected',
+                      reason: null,
+                    });
                   }
                 }
               }
@@ -683,10 +689,17 @@ export async function handleConnectionHealthCheck(
       }
     }
 
-    for (const alert of alertsToCreate) {
+    const newAlerts = dedupeAlerts(alertsToCreate);
+    for (const alert of newAlerts) {
       // Schema real de warroom_alerts: alert_type/title/message/source
       // (severity/description/metadata nao existem — o insert antigo falhava
       // com PGRST204 e o alerta critico nunca era gravado).
+      const title = alert.kind === 'disconnected'
+        ? `WhatsApp ${alert.instance_id} desconectado`
+        : `Conexão ${alert.instance_id} degradada`;
+      const message = alert.kind === 'disconnected'
+        ? `A instância ${alert.instance_id} perdeu conexão com o WhatsApp.`
+        : `A instância ${alert.instance_id}: ${REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada'}.`;
       await supabase.from('warroom_alerts').insert({
         alert_type: alert.kind === 'disconnected' ? 'critical' : 'warning',
         title,

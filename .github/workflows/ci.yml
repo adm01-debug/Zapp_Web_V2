@@ -102,7 +102,7 @@ jobs:
   node-scripts:
     name: 🧩 Node CI Scripts
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -129,10 +129,36 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🧩 Run Node CI scripts tests
-        run: node --test scripts/ci/*.unit.mjs
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🔎 Typecheck edge handlers
+        run: deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
+
+      - name: 🧪 Run executable Edge handler contracts
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')
+
+      - name: 🧩 Test CI and Edge deployment guards
+        run: >-
+          node --test scripts/ci/*.unit.mjs
+          scripts/edge-deploy/*.unit.mjs
+          scripts/db-audit/crm-sync-outbox-contract.test.mjs
+          scripts/db-audit/types-sync-psql-buffer.test.mjs
+          scripts/talkx/*.unit.mjs
         env:
           CI: true
+
+      - name: 📊 Upload coverage report
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
 
   build:
     name: 🏗️ Build
@@ -213,6 +239,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -261,6 +294,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -276,25 +316,26 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         # Só em cache miss. Versao exata resolvida no bun.lock (SonarCloud
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # Projetos deslogados do ci.yml. firefox-auth e webkit-auth ficam só no
+      # e2e-logado.yml (E88): o PR exercita auth.spec.ts pelo Chromium e não sobe
+      # os outros dois engines. Workflows de PR não podem referenciar
+      # E2E_TEST_EMAIL/E2E_TEST_PASSWORD (scripts/ci/check-pr-workflow-secrets.mjs),
+      # então o login real roda em .github/workflows/e2e-logado.yml, depois do merge.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
@@ -302,7 +343,7 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
@@ -378,10 +419,31 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧬 Rodar mutação do mapa (E69)
         if: steps.paths.outputs.map_changed == 'true'
-        run: bun run mutation:mapa
+        run: |
+          # O job só instala bun. `node` do script pode não estar no PATH
+          # (imagem sem Node, ou shebang do vitest). Sem binário, no-op sai 0.
+          # Sobrevivente inesperado continua saindo 1 dentro do runner.
+          if ! command -v bun >/dev/null 2>&1; then
+            echo "bun ausente; mutação do mapa é no-op (saída 0)"
+            exit 0
+          fi
+          if command -v node >/dev/null 2>&1; then
+            bun run mutation:mapa
+          else
+            echo "node ausente no PATH; rodando o runner com bun"
+            bun scripts/mutation/run-mapa.mjs
+          fi

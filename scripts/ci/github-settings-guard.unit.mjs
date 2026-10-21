@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assinaturaDe } from './github-settings-guard.mjs';
@@ -357,12 +358,11 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 
 // W13: environments extras (Vercel-managed vs inesperados)
 function rodarComEnvsExtra(extras) {
-  // Injeta o stub de environments com os itens do baseline + os extras recebidos.
-  const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
-    'producao-ddl', 'producao-edge-functions', 'Production',
-    ...extras,
-  ];
+  // O baseline vigente (E94 apagou copilot/Preview/Production crus) mais os extras
+  // do caso. Sem isto o stub ainda injetava a lista antiga e a divergencia nao era
+  // "so Vercel-managed".
+  const baseline = JSON.parse(readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'));
+  const todos = [...baseline.environments, ...extras];
   const envsStub =
     'send({ environments: [' +
     todos.map((n) => `{ name: ${JSON.stringify(n)} }`).join(',') +

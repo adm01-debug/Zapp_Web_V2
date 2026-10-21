@@ -31,6 +31,7 @@ vi.mock('@/services/outbound-message.service', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
 function pdf(name: string) {

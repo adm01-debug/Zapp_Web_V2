@@ -53,6 +53,7 @@ export const DOCS_CORRENTES = [
   'CHANGELOG_TALKX.md',
   'CONVERSOES.md',
   'DIAGNOSTICO-rulevalueinput-instavel-2026-10-13.md',
+  'ESTADOS.md',
   'v4/README.md',
   'v4/STATUS.md',
   'v4/DECISOES.md',

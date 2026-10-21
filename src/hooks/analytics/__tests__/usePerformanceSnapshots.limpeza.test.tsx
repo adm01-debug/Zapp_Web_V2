@@ -19,6 +19,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => h.log,
+  createLogger: () => h.log,
 }));
 
 vi.mock('sonner', () => ({

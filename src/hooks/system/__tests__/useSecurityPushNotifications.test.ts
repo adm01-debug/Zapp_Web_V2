@@ -76,6 +76,12 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     warn: vi.fn(),
   },
+  createLogger: () => ({
+    debug: (...args: unknown[]) => mocks.logDebug(...args),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }),
 }));
 
 import { useSecurityPushNotifications } from '@/hooks/system/useSecurityPushNotifications';

@@ -21,6 +21,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { info: (...args: unknown[]) => mockLogInfo(...args) },
+  createLogger: () => ({ info: (...args: unknown[]) => mockLogInfo(...args) }),
 }));
 
 const { useIncomingCallListener } = await import('@/hooks/communication/useIncomingCallListener');

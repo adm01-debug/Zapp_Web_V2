@@ -17,6 +17,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: vi.fn() },

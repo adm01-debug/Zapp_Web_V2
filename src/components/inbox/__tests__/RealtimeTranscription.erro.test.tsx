@@ -15,6 +15,7 @@ const { scribe } = vi.hoisted(() => ({ scribe: { conectado: false, parcial: '' }
 vi.mock('sonner', () => ({ toast: { error: toastErro, success: vi.fn(), info: vi.fn() } }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { functions: { invoke: (...args: unknown[]) => invoke(...args) } },

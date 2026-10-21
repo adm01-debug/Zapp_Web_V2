@@ -94,8 +94,12 @@ test('Talk X não rotula tamanho de audiência como "Desempenho"', () => {
 });
 
 test('Talk X não rotula uso de template como "Mais convertidos"', () => {
-  assert.doesNotMatch(templates, /Mais convertidos/);
-  assert.match(templates, /Mais usados/);
+  // O KPI de volume continua "Mais usados". "Mais convertidos" (T04-039) só pode
+  // nomear o trilho de taxa de resposta — nunca o ranking por use_count.
+  assert.match(templates, /label="Mais usados"/);
+  assert.match(templates, /title="Mais convertidos"/);
+  assert.match(templates, /formatReplyRate\(item\.replyRatePct\)/);
+  assert.match(templates, /NUNCA é `use_count` sob este título/);
 });
 
 // X185: o KPI "Conversão por segmento" passou a existir de fato — mas o número

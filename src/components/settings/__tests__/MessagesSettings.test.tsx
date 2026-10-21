@@ -149,6 +149,7 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 import { MessagesSettings } from '../MessagesSettings';

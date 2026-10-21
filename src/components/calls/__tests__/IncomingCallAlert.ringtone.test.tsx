@@ -133,6 +133,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
 }));
 
 // O alerta assina a sessão de chamada no realtime (`useTerminoRemoto` →

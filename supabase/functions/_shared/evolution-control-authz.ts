@@ -52,8 +52,6 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'delete-instance',
   'restart-instance',
   'disconnect',
-  'set-presence',
-  'set-settings',
   'set-webhook',
   // perfil da conta
   'update-profile-name',
@@ -71,12 +69,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'accept-invite',
   'leave-group',
   'update-group-picture',
-  'toggle-ephemeral',
   // etiquetas / templates / bloqueio
   'handle-label',
   'update-block-status',
-  'create-template',
-  'delete-template',
   // mensagens — editar/apagar conteúdo (inclusive "para todos") destrói ou
   // reescreve a trilha de mensagens: restrito a admin/supervisor.
   'delete-message',
@@ -84,35 +79,19 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'edit-message',
   'delete-for-everyone',
   // integrações (set/delete configuram o provedor) e gatilhos de automação
-  'set-chatwoot', 'delete-chatwoot',
-  'set-typebot', 'delete-typebot', 'typebot-change-status', 'start-typebot',
-  'set-openai', 'delete-openai',
-  'set-dify', 'delete-dify',
-  'set-flowise', 'delete-flowise',
-  'set-evolution-bot', 'delete-evolution-bot',
-  'set-rabbitmq', 'set-sqs', 'set-proxy',
-  'set-evoai', 'delete-evoai',
-  'set-n8n', 'delete-n8n',
-  'set-kafka', 'set-nats', 'set-pusher',
   // R2EXT-AGENDA: leituras de dado instance-wide (fora da visibilidade do
   // agente) e de configuração/credencial do provedor passam a exigir
   // admin/supervisor. Diferente de `send`, não há alvo de conversa único para
   // resolver visibilidade (find-chats/find-contacts/find-messages devolvem a
   // instância inteira — ADR R1EXT-F3) e nenhuma tela da V2 as chama.
-  'find-chats', 'find-contacts', 'find-messages', 'find-status-messages',
+   'find-contacts',  
   'get-media-base64',
   // configuração da instância/conexão
-  'get-settings', 'get-webhook',
   // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
   'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
   // etiquetas/templates e integrações do provedor (config/credenciais)
-  'find-labels', 'find-templates',
-  'get-chatwoot', 'get-typebot', 'typebot-sessions',
-  'get-openai', 'get-dify', 'get-flowise', 'get-evolution-bot',
-  'get-rabbitmq', 'get-sqs', 'get-proxy', 'get-evoai', 'get-n8n',
-  'get-kafka', 'get-nats', 'get-pusher',
+  'find-labels', 
   // catálogo de loja (configuração comercial)
-  'get-catalog', 'get-collections',
   // R2EXT-STATUS: publicar Status/Story (send-status) NÃO tem contato-alvo — o
   // status vai para toda a base da conexão. Enquanto estava em `send`, a
   // ausência de alvo fazia o gate negar não-admin por acidente, mas a ação
@@ -140,15 +119,12 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-poll',
   'send-list',
   'send-buttons',
-  'send-template',
   'send-ptv',
   'send-reaction',
-  'offer-call',
   'send-chat-presence',
   // mutações de estado da conversa no provedor (não entregam conteúdo, mas
   // seguem o mesmo escopo: o contato da conversa)
   'mark-read',
-  'mark-unread',
   'archive-chat',
 ]);
 
@@ -174,7 +150,6 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   'group-info',
   'group-participants',
   'group-invite-code',
-  'invite-info',
 ]);
 
 /**

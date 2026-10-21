@@ -48,6 +48,7 @@ vi.mock('@/services/auth.service', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 vi.mock('@/lib/audit', () => ({
   logAudit: vi.fn(async () => {}),

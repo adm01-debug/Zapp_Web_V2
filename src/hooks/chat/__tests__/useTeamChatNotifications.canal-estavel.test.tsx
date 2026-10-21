@@ -75,6 +75,12 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
   }),
+  createLogger: () => ({
+    error: vi.fn(),
+    warn: (...args: unknown[]) => h.logWarn(...args),
+    debug: vi.fn(),
+    info: vi.fn(),
+  }),
 }));
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';

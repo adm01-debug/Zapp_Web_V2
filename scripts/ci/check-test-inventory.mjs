@@ -216,6 +216,9 @@ export const ALLOWLIST_NODE = new Set([
   'scripts/talkx/gen-estados.unit.mjs',
   'scripts/talkx/lado-a-lado.unit.mjs',
   'scripts/talkx/v4-status.unit.mjs',
+  // V077: prova o ignore-build da Vercel com git sintético. Não há job de CI
+  // que o execute — o script roda no build da Vercel, não num workflow.
+  'scripts/vercel/ignore-build.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

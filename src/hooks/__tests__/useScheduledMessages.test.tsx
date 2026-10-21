@@ -47,6 +47,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),
 }));
 
 import { useScheduledMessages } from '@/hooks/chat/useScheduledMessages';

@@ -48,6 +48,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 
 vi.mock('@/lib/logger', () => ({
   log: { error: mocks.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ error: mocks.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 import { useForwardMessage, type UseForwardMessageOptions } from '@/hooks/chat/useForwardMessage';

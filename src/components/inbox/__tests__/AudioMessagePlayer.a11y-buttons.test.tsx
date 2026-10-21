@@ -18,7 +18,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }) }));
 vi.mock('@/components/inbox/MediaVolumeControl', () => ({ MediaVolumeControl: () => null }));
 
 vi.mock('@/hooks/communication/useAudioPlayer', () => ({

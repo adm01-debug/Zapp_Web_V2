@@ -32,6 +32,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 vi.mock('framer-motion', () => ({

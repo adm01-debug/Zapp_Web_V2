@@ -451,7 +451,10 @@ jobs:
           deno-version: '2.9.5'
 
       - name: Typecheck das edge functions (deno check)
-        run: deno check supabase/functions/**/index.ts
+        # Sem --config o Deno sobe pelo package.json da raiz, exige node_modules
+        # e morre com "Could not find @types/node". O deno.json das functions
+        # declara nodeModulesDir=none e o lock congelado.
+        run: deno check --config supabase/functions/deno.json supabase/functions/**/index.ts
 
       - name: Deploy
         if: inputs.dry_run != true

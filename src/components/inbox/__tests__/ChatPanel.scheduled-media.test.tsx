@@ -36,6 +36,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
 vi.mock('@/hooks/chat/useTypingPresence', () => ({

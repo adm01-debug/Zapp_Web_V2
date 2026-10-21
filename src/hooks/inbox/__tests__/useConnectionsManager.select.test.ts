@@ -49,6 +49,7 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';

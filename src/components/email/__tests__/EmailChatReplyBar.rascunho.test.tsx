@@ -23,7 +23,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('@/lib/logger', () => ({ getLogger: () => ({ error: vi.fn() }) }));
+vi.mock('@/lib/logger', () => ({ getLogger: () => ({ error: vi.fn() }), createLogger: () => ({ error: vi.fn() }) }));
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => <>{children}</>,

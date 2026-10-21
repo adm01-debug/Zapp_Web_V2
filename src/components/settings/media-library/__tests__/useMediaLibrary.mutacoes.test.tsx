@@ -105,6 +105,7 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
 import { useMediaLibrary, type MediaItem } from '../useMediaLibrary';

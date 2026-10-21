@@ -36,6 +36,12 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     warn: vi.fn(),
   },
+  createLogger: () => ({
+    error: (...args: unknown[]) => mocks.logError(...args),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }),
 }));
 
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({

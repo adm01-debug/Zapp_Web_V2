@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 52 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-21`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
@@ -23,10 +23,10 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 
 | Estado | Views |
 |---|---|
-| Full | 41 |
-| Partial | 11 |
+| Full | 45 |
+| Partial | 10 |
 | Suggested | 0 |
-| **total** | **52** |
+| **total** | **55** |
 
 ## Tabela
 
@@ -42,10 +42,11 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `wallet` | `ClientWalletView` | `src/components/wallet/ClientWalletView.tsx` | Full | `src/hooks/business/useClientWallet.ts` |
 | `catalog` | `ProductManagement` | `src/components/catalog/ExternalProductManagement.tsx` | Full | `src/hooks/integrations/useExternalCatalog.ts` |
 | `transcriptions` | `TranscriptionsHistoryView` | `src/components/transcriptions/TranscriptionsHistoryView.tsx` | Full | `src/components/transcriptions/TranscriptionsHistoryView.tsx` |
-| `admin` | `AdminView` | `src/components/admin/AdminView.tsx` | Partial | `src/components/admin/AdminView.tsx` |
+| `admin` | `AdminView` | `src/components/admin/AdminView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
+| `supervisao` | `SupervisaoView` | `src/components/admin/SupervisaoView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `sentiment` | `SentimentAlertsDashboard` | `src/components/dashboard/SentimentAlertsDashboard.tsx` | Partial | `src/components/dashboard/SentimentAlertsDashboard.tsx` |
 | `reports` | `AdvancedReportsView` | `src/components/reports/AdvancedReportsView.tsx` | Partial | `src/components/reports/AdvancedReportsView.tsx` |
-| `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useSecurityPushNotifications.ts` |
+| `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `settings` | `SettingsView` | `src/components/settings/SettingsView.tsx` | Full | `src/components/settings/SettingsView.tsx` |
 | `docs` | `SystemFeaturesView` | `src/components/docs/SystemFeaturesView.tsx` | Partial | `src/components/docs/SystemFeaturesView.tsx` |
 | `chatbot` | `ChatbotFlowsView` | `src/components/chatbot/ChatbotFlowsView.tsx` | Full | `src/hooks/integrations/useChatbotFlows.ts` |
@@ -77,10 +78,12 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `public-api` | `PublicApiDashboard` | `src/components/admin/PublicApiDashboard.tsx` | Partial | `src/components/admin/PublicApiDashboard.tsx` |
 | `gmail-webhook` | `GmailWebhookMonitor` | `src/components/admin/GmailWebhookMonitor.tsx` | Full | `src/components/admin/GmailWebhookMonitor.tsx` |
 | `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/components/admin/MediaMigrationTool.tsx` |
-| `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Partial | `src/components/crm360/CRM360ExplorerView.tsx` |
+| `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `ai-usage` | `AIUsageDashboard` | `src/components/admin/AIUsageDashboard.tsx` | Full | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `search-insights` | `SearchInsightsView` | `src/components/admin/SearchInsightsView.tsx` | Full | `src/hooks/admin/useSearchInsights.ts` |
 | `sla` | `SLADashboardView` | `src/components/queues/SLADashboard.tsx` | Full | `src/hooks/sla/useSLAMetrics.ts` |
 | `talkx` | `TalkXView` | `src/components/talkx/TalkXView.tsx` | Full | `src/hooks/integrations/useTalkX.ts` |
+| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |
 | `multiplix` | `MultiplixView` | `src/components/multiplix/MultiplixView.tsx` | Full | `src/components/multiplix/MultiplixView.tsx` |
 | `evolution-monitor` | `EvolutionMonitoringDashboard` | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | Partial | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` |
 | `achievements` | `AchievementsSystemLazy` | `src/components/gamification/AchievementsSystem.tsx` | Full | `src/hooks/gamification/useAgentGamification.ts` |

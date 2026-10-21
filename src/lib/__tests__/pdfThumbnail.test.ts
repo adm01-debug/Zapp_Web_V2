@@ -36,6 +36,7 @@ vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 import {
