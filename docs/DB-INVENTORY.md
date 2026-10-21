@@ -44,8 +44,8 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 | Tabelas (`tables`) | 171 |
 | Views (`views`) | 13 |
 | Colunas (`columns`) | 1995 |
-| Funções (`functions`) | 279 |
-| Assinaturas de função (`function_signatures`) | 280 |
+| Funções (`functions`) | 281 |
+| Assinaturas de função (`function_signatures`) | 282 |
 | Funções de gatilho (`trigger_functions`) | 72 |
 | Restrições de verificação (`check_constraints`) | 168 |
 

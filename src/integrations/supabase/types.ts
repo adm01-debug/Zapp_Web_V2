@@ -12382,6 +12382,10 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_default_whatsapp_connection: {
+        Args: { p_connection_id: string }
+        Returns: string
+      }
       set_department_whatsapp_config: {
         Args: {
           p_api_key?: string
@@ -12675,6 +12679,16 @@ export type Database = {
       toggle_team_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
+      }
+      transfer_conversation: {
+        Args: {
+          p_contact_id: string
+          p_expected_agent_id?: string | null
+          p_note?: string | null
+          p_to_agent_id?: string | null
+          p_to_queue_id?: string | null
+        }
+        Returns: string
       }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }
