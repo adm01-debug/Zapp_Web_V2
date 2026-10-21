@@ -121,6 +121,63 @@ export function corpoDoKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), tit
   ].join('\n');
 }
 
+// GA93: percentil de duracoes (p50/p95 por workflow, em minutos).
+export function percentil(valores, p) {
+  const xs = [...(valores ?? [])].filter(Number.isFinite).sort((a, b) => a - b);
+  if (!xs.length) return 0;
+  const pos = Math.min(xs.length - 1, Math.floor((p / 100) * xs.length));
+  return Math.round(xs[pos] * 10) / 10;
+}
+
+// GA93: monta o kpi.json por arquivo de workflow (chave = nome do .yml, que e o
+// que o render-workflow-docs le). `mapaNomeArquivo` traduz `run.name` (nome
+// amigavel do workflow) para o arquivo .yml — construido lendo o `name:` de cada
+// YAML. Campos por arquivo: custo_semana_min, taxa_falha_7d (lidos pelo render),
+// cancelados_precoces (cancelado com < 1 min, nem comecou), minutos_desperdicados
+// (soma dos cancelados), p50_min/p95_min e causas (contagem por conclusion).
+export function montarKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), mapaNomeArquivo = {} } = {}) {
+  const naJanela = runsNaJanela(runs, { janelaDias, agora });
+  const porArquivo = new Map();
+  const paraArquivo = (nome) => mapaNomeArquivo[nome] ?? nome;
+  for (const run of naJanela) {
+    const arq = paraArquivo(run.name || run.workflow_id || '(sem nome)');
+    if (!porArquivo.has(arq)) {
+      porArquivo.set(arq, { runs: [], conclusoes: {}, canceladosPrecoces: 0, minutosDesperdicados: 0 });
+    }
+    const e = porArquivo.get(arq);
+    e.runs.push(run);
+    const c = run.conclusion ?? 'desconhecida';
+    e.conclusoes[c] = (e.conclusoes[c] ?? 0) + 1;
+    const min = duracaoMinutos(run);
+    if (CANCELADOS.has(run.conclusion)) {
+      e.minutosDesperdicados = Math.round((e.minutosDesperdicados + min) * 10) / 10;
+      if (min < 1) e.canceladosPrecoces += 1;
+    }
+  }
+  const saidas = {};
+  for (const [arq, e] of porArquivo) {
+    const duracoes = e.runs.map(duracaoMinutos);
+    const falhas = e.runs.filter((r) => FALHAS.has(r.conclusion)).length;
+    saidas[arq] = {
+      custo_semana_min: Math.round(duracoes.reduce((a, b) => a + b, 0) * 10) / 10,
+      taxa_falha_7d: e.runs.length ? Math.round((falhas / e.runs.length) * 1000) / 10 : 0,
+      cancelados_precoces: e.canceladosPrecoces,
+      minutos_desperdicados: e.minutosDesperdicados,
+      p50_min: percentil(duracoes, 50),
+      p95_min: percentil(duracoes, 95),
+      causas: e.conclusoes,
+    };
+  }
+  return saidas;
+}
+
+export async function gravarKpi(caminho, kpi) {
+  const { writeFileSync, mkdirSync } = await import('node:fs');
+  const { dirname } = await import('node:path');
+  mkdirSync(dirname(caminho), { recursive: true });
+  writeFileSync(caminho, `${JSON.stringify(kpi, null, 2)}\n`);
+}
+
 // ---------------------------------------------------------------- CLI
 const API = process.env.GITHUB_API_URL || 'https://api.github.com';
 const CABECALHOS = (token) => ({
@@ -170,12 +227,23 @@ export async function coletarRuns({
 
 // Busca os jobs de cada run (paginando o proprio run, que tambem corta em 100) e
 // preenche `workflow_name` com o nome do run quando o endpoint de jobs nao o traz.
+// GA92: 1 GET por run estourava o limite de 1.000/h do GITHUB_TOKEN (1.014 runs em
+// 7 d). Agora so coleta jobs de runs com falha/cancelamento (o ranking "mais lentos"
+// e o p50/p95 importam onde doi) com teto de runs — fixture com 1.500 runs gera
+// < 300 chamadas.
+const COM_FALHA = new Set([...FALHAS, ...CANCELADOS]);
 export async function coletarJobs(
   runs,
-  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},
+  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, maxRuns = 200, pedir: buscar = pedir } = {},
 ) {
+  const alvos = (runs ?? []).filter((r) => COM_FALHA.has(r.conclusion)).slice(0, maxRuns);
+  if ((runs ?? []).length > alvos.length) {
+    console.error(
+      `::notice::coletarJobs: ${alvos.length} de ${runs.length} runs (so falha/cancelamento, teto ${maxRuns})`,
+    );
+  }
   const jobs = [];
-  for (const run of runs ?? []) {
+  for (const run of alvos) {
     const id = run.id ?? run.run_id;
     if (id === undefined || id === null) continue;
     for (let pagina = 1; pagina <= maxPaginas; pagina += 1) {
@@ -224,6 +292,26 @@ async function principal() {
   const janela = Number(process.env.JANELA_DIAS ?? 7);
   const runs = await coletarRuns({ repo, token, janelaDias: janela });
   const jobs = await coletarJobs(runsNaJanela(runs, { janelaDias: janela }), { repo, token });
+  // GA93: mapa nome-amigavel -> arquivo .yml (o render indexa por arquivo).
+  const mapaNomeArquivo = {};
+  try {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { join, dirname: dir } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const dirWf = join(dir(fileURLToPath(import.meta.url)), '..', '..', '.github', 'workflows');
+    for (const arq of readdirSync(dirWf).filter((f) => f.endsWith('.yml'))) {
+      const texto = readFileSync(join(dirWf, arq), 'utf8');
+      const m = /^name:\s*(.+?)\s*$/m.exec(texto);
+      if (m) mapaNomeArquivo[m[1]] = arq;
+    }
+  } catch {
+    // fora do repo (teste): chaves ficam com o nome amigavel.
+  }
+  const kpi = montarKpi(runs, jobs, { janelaDias: janela, mapaNomeArquivo });
+  if (process.env.KPI_JSON_PATH) {
+    await gravarKpi(process.env.KPI_JSON_PATH, kpi);
+    console.log(`kpi.json gravado em ${process.env.KPI_JSON_PATH}`);
+  }
   const corpo = corpoDoKpi(runs, jobs, { janelaDias: janela });
   console.log(corpo);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, corpo + '\n');

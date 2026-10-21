@@ -79,6 +79,9 @@ updates:
           - "supabase/setup-cli*"
           - "peter-evans/create-pull-request*"
           - "gitleaks/gitleaks-action*"
+          # GA88: scorecard-action isolado abria PR propria a cada bump; no grupo
+          # de actions ela anda junto sem quebrar o Scorecard agendado.
+          - "ossf/scorecard-action*"
 
   # E73 (auditoria de GitHub Actions, 2026-09-26): infrastructure/preview-egress-proxy
   # tem go.mod e roda `go test ./...` no job Lint & TypeCheck do ci.yml, mas

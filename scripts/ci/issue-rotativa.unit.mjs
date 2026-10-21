@@ -168,3 +168,95 @@ test("fecharSeAberta: fecha com mensagem personalizada", async () => {
   await fecharSeAberta(gh, "o", "r", "L", "T", "Tudo OK.");
   assert.equal(calls[0], "Tudo OK.");
 });
+
+// --- GA78: rotacao fecha como not_planned + dedupe por marcador ---
+
+test("GA78: issue rotacionada fecha como not_planned (nao completed)", async () => {
+  const issue = { number: 7, title: "T" };
+  const calls = [];
+  const gh = mkGh({
+    "GET /repos/o/r/issues": () => [issue],
+    "GET /repos/o/r/issues/7/comments": () => Array(21).fill({}),
+    "POST /repos/o/r/issues/7/comments": (body) => { calls.push({ op: "resumo", body }); return {}; },
+    "PATCH /repos/o/r/issues/7": (body) => { calls.push({ op: "fechar", body }); return {}; },
+    "POST /repos/o/r/labels": () => ({}),
+    "POST /repos/o/r/issues": (body) => { calls.push({ op: "nova", body }); return { number: 99 }; },
+  });
+  await abrirOuRotacionar({ gh, owner: "o", repo: "r", label: "L", title: "T", body: "ALERTA" });
+  const fechar = calls.find((c) => c.op === "fechar");
+  assert.equal(fechar.body.state, "closed");
+  assert.equal(fechar.body.state_reason, "not_planned");
+});
+
+function mkDedupeGh(comentarios, calls) {
+  const issue = { number: 42, title: "T", comments: comentarios.length };
+  return mkGh({
+    "GET /repos/o/r/issues": () => [issue],
+    "GET /repos/o/r/issues/42/comments": () => comentarios,
+    "POST /repos/o/r/issues/42/comments": (body) => { calls.push(body); return {}; },
+    "POST /repos/o/r/labels": () => ({}),
+    "POST /repos/o/r/issues": () => ({ number: 43 }),
+  });
+}
+
+const AGORA = Date.now();
+const iso = (ms) => new Date(ms).toISOString();
+
+test("GA78: dedupe suprime comentario com mesma causa dentro da janela", async () => {
+  const calls = [];
+  const gh = mkDedupeGh(
+    [{ body: "<!-- causa:abc--> alerta", created_at: iso(AGORA - 60_000), user: { login: "guard" } }],
+    calls,
+  );
+  const r = await abrirOuRotacionar({
+    gh, owner: "o", repo: "r", label: "L", title: "T", body: "novo",
+    marcador: "<!-- causa:abc-->", janelaMs: 6 * 3600_000, autor: "guard", detalhar: true,
+  });
+  assert.deepEqual(r, { numero: 42, suprimido: true });
+  assert.equal(calls.length, 0);
+});
+
+test("GA78: dedupe volta a comentar apos a janela", async () => {
+  const calls = [];
+  const gh = mkDedupeGh(
+    [{ body: "<!-- causa:abc--> alerta", created_at: iso(AGORA - 8 * 3600_000), user: { login: "guard" } }],
+    calls,
+  );
+  const r = await abrirOuRotacionar({
+    gh, owner: "o", repo: "r", label: "L", title: "T", body: "novo",
+    marcador: "<!-- causa:abc-->", janelaMs: 6 * 3600_000, autor: "guard", detalhar: true,
+  });
+  assert.deepEqual(r, { numero: 42, suprimido: false });
+  assert.equal(calls.length, 1);
+});
+
+test("GA78: dedupe ignora marcador colado por outro autor", async () => {
+  const calls = [];
+  const gh = mkDedupeGh(
+    [{ body: "<!-- causa:abc--> forjado", created_at: iso(AGORA - 60_000), user: { login: "curioso" } }],
+    calls,
+  );
+  const r = await abrirOuRotacionar({
+    gh, owner: "o", repo: "r", label: "L", title: "T", body: "novo",
+    marcador: "<!-- causa:abc-->", janelaMs: 6 * 3600_000, autor: "guard", detalhar: true,
+  });
+  assert.deepEqual(r, { numero: 42, suprimido: false });
+  assert.equal(calls.length, 1);
+});
+
+test("GA78: comentario alheio depois do marcador nao zera o dedupe", async () => {
+  const calls = [];
+  const gh = mkDedupeGh(
+    [
+      { body: "<!-- causa:abc--> alerta", created_at: iso(AGORA - 60_000), user: { login: "guard" } },
+      { body: "humano comentou depois", created_at: iso(AGORA - 30_000), user: { login: "humano" } },
+    ],
+    calls,
+  );
+  const r = await abrirOuRotacionar({
+    gh, owner: "o", repo: "r", label: "L", title: "T", body: "novo",
+    marcador: "<!-- causa:abc-->", janelaMs: 6 * 3600_000, autor: "guard", detalhar: true,
+  });
+  assert.deepEqual(r, { numero: 42, suprimido: true });
+  assert.equal(calls.length, 0);
+});

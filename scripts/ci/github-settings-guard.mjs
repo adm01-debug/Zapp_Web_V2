@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 /**
  * E13/E14 + E95: confere o perimetro do GitHub contra o baseline versionado
- * (`github-settings-baseline.json`) e restaura o que sabe restaurar.
+ * (`github-settings-baseline.json`) e abre/atualiza a issue de alerta.
+ * GA77: o guard NAO restaura nada sozinho — PATCH (manual ou automatico) fora
+ * de script versionado e proibido (CLAUDE.md, secao 0). Divergencia vira alerta
+ * para gente; a aplicacao do perimetro vive em `scripts/ci/aplicar-perimetro.mjs`
+ * (GA80) e exige aprovacao.
  *
  * Política esperada (baseline):
  *   - branch protection da main: strict=true, enforce_admins=true
  *   - repo: allow_auto_merge=true, squash-only, delete_branch_on_merge
  *   - actions: allowed_actions=selected, sha_pinning_required=true
  *
- * Regressão: restaura via PATCH (o que suporta) e abre/atualiza a issue
- * [settings-guard]. Tudo OK: fecha a issue se estiver aberta.
+ * Divergência: abre/atualiza a issue [settings-guard] (sem PATCH automatico).
+ * Tudo OK: fecha a issue se estiver aberta.
  *
  * E95 — o que mudou, e por quê: a versão anterior fazia
  * `GET /branches/main/protection` e deixava o erro subir. O `GITHUB_TOKEN` de
@@ -37,6 +41,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+// GA78: rotina unica de issue de alerta (dedupe + rotacao E51/W91).
+import { abrirOuRotacionar, encontrarIssue, fecharSeAberta } from './issue-rotativa.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -61,7 +67,6 @@ const BRANCH = 'main';
 // checagem, silenciar o alerta por 6 h / 7 dias (achado do Codex na PR #1920). O GITHUB_TOKEN
 // de workflow comenta como `github-actions[bot]`; outro autor so via variavel explicita.
 const AUTOR_DO_GUARD = process.env.SETTINGS_GUARD_AUTOR ?? 'github-actions[bot]';
-const escritoPeloGuard = (registro) => registro?.user?.login === AUTOR_DO_GUARD;
 
 const baseline = JSON.parse(
   readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),
@@ -122,7 +127,7 @@ async function gh(method, path, body, overrideToken) {
   return res.json().catch(() => null);
 }
 // W11/W12: leituras administrativas usam o PAT fine-grained (administration:read);
-// escritas (issues, PATCH de restauracao) continuam com o GITHUB_TOKEN.
+// escritas (issues) continuam com o GITHUB_TOKEN. GA77: sem PATCH de restauracao.
 // PAT recusado (401: expirou os 90 dias, foi revogado) nao derruba o guard: o resto do
 // run volta ao GITHUB_TOKEN — os campos administrativos reaparecem como NAO VERIFICAVEL,
 // que e o comportamento de antes do W12 — e o aviso pede a rotacao.
@@ -147,9 +152,76 @@ function fonteDaLeituraAdmin() {
   return 'GITHUB_TOKEN (SETTINGS_GUARD_TOKEN ausente — W11 pendente)';
 }
 
+// GA76: leitura via GraphQL (repository.autoMergeAllowed e irmaos). O REST
+// `GET /repos` omite os campos de merge para tokens sem permissao push/admin;
+// o GraphQL expos os mesmos campos sob outro conjunto de permissoes, entao o
+// guard tenta os dois antes de declarar ponto cego.
+async function ghGraphQL(query, variables) {
+  const corpo = JSON.stringify({ query, variables });
+  const tentar = async (tok) => {
+    const res = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tok}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'settings-guard/2.0',
+        'Content-Type': 'application/json',
+      },
+      body: corpo,
+    });
+    if (res.status === 401) throw new TokenRecusado('/graphql');
+    if (res.status === 403 || res.status === 404) {
+      const text = await res.text().catch(() => '');
+      throw new NaoVerificavel('/graphql', res.status, text.slice(0, 200));
+    }
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`GitHub API POST /graphql → ${res.status}: ${text}`);
+    }
+    return res.json().catch(() => null);
+  };
+  try {
+    return await tentar(adminToken);
+  } catch (e) {
+    if (!(e instanceof TokenRecusado) || adminToken === TOKEN) throw e;
+    adminRejeitado = true;
+    adminToken = TOKEN;
+    console.log(
+      `::warning::SETTINGS_GUARD_TOKEN recusado (401) — expirado ou revogado. Leituras administrativas voltam ao GITHUB_TOKEN neste run; rotacionar conforme ${RUNBOOK_SEGREDOS}.`,
+    );
+    return tentar(adminToken);
+  }
+}
+
+// GA76: campos de merge legiveis por GraphQL (os dois `squash_merge_commit_*`
+// so existem no REST e continuam por la).
+const GRAPHQL_MERGE = {
+  allow_auto_merge: 'autoMergeAllowed',
+  allow_squash_merge: 'squashMergeAllowed',
+  allow_merge_commit: 'mergeCommitAllowed',
+  allow_rebase_merge: 'rebaseMergeAllowed',
+  delete_branch_on_merge: 'deleteBranchOnMerge',
+};
+
+async function lerMergeViaGraphQL() {
+  const query = `query($owner:String!,$name:String!){repository(owner:$owner,name:$name){autoMergeAllowed squashMergeAllowed mergeCommitAllowed rebaseMergeAllowed deleteBranchOnMerge}}`;
+  const dados = await ghGraphQL(query, { owner: OWNER, name: REPO_NAME });
+  if (dados?.errors?.length) {
+    throw new NaoVerificavel('/graphql', 200, dados.errors.map((e) => e.message).join('; ').slice(0, 200));
+  }
+  const no = dados?.data?.repository ?? null;
+  if (!no || typeof no !== 'object') return null;
+  const saida = {};
+  for (const gql of Object.values(GRAPHQL_MERGE)) {
+    if (no[gql] !== null && no[gql] !== undefined) saida[gql] = no[gql];
+  }
+  return saida;
+}
+
 // ---------------------------------------------------------------- checagens
 // Cada checagem devolve { campo, esperado, encontrado } ou lança NaoVerificavel.
-// `restauravel` diz se o guard sabe desfazer a divergência sozinho.
+// GA77: `restauravel` e sempre false — o guard so relata, nunca desfaz.
 
 async function checarBranchProtection() {
   const protection = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
@@ -172,8 +244,7 @@ async function checarBranchProtection() {
       campo: 'branch_protection_main.strict',
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
-      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
-      restauravel: !checksDesligados,
+      restauravel: false,
     });
   }
 
@@ -207,6 +278,15 @@ async function checarBranchProtection() {
 }
 
 async function checarRepo() {
+  // GA76: tenta GraphQL primeiro; o que nem o GraphQL exposer cai para o REST;
+  // o que nenhum dos dois exposer e ponto cego declarado (nunca divergencia).
+  let gql = null;
+  try {
+    gql = await lerMergeViaGraphQL();
+  } catch (e) {
+    if (!(e instanceof NaoVerificavel)) throw e;
+    console.log(`::warning::merge/repo (GraphQL): NAO VERIFICAVEL — ${e.message}`);
+  }
   const repo = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);
   const divergencias = [];
   const ausentes = [];
@@ -214,29 +294,47 @@ async function checarRepo() {
     // W04: o GET /repos so devolve os campos de merge para quem tem permissao
     // push/admin. Com GITHUB_TOKEN eles simplesmente NAO vem — `null`/ausente
     // aqui e "nao consegui ler", nunca "esta diferente".
-    if (!repo || typeof repo !== 'object' || !Object.hasOwn(repo, campo) || repo[campo] === null) {
+    let encontrado;
+    let legivel = false;
+    if (repo && typeof repo === 'object' && Object.hasOwn(repo, campo) && repo[campo] !== null) {
+      encontrado = repo[campo];
+      legivel = true;
+    } else if (gql && GRAPHQL_MERGE[campo] && Object.hasOwn(gql, GRAPHQL_MERGE[campo])) {
+      encontrado = gql[GRAPHQL_MERGE[campo]];
+      legivel = true;
+    }
+    if (!legivel) {
       ausentes.push(campo);
       continue;
     }
-    const encontrado = repo[campo];
     if (encontrado !== esperado) {
-      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });
+      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
     }
   }
-  if (ausentes.length === Object.keys(baseline.merge).length) {
-    throw new NaoVerificavel(`/repos (merge.*)`, 200, 'resposta sem os campos de merge: o token nao tem permissao push/admin para le-los');
-  }
-  if (ausentes.length > 0) {
-    return { divergencias, cego: `200 — campos nao expostos ao token: ${ausentes.join(', ')}`, campos: ausentes };
-  }
-  // W14: security_and_analysis (secret_scanning*)
+  // W14: security_and_analysis (secret_scanning*) — avaliado mesmo com cegueira
+  // parcial nos campos de merge (antes, o `return` antecipado pulava este bloco).
+  // Chave ausente na resposta = ilegivel para o token (ponto cego), nunca
+  // divergencia: so acusa quando a API devolveu o campo com outro valor.
   const blSec = baseline.security_and_analysis ?? {};
+  const secCegos = [];
   for (const [chave, valorEsperado] of Object.entries(blSec)) {
     if (chave.startsWith('_')) continue; // skip JSON comment fields
-    const encontrado = repo?.security_and_analysis?.[chave]?.status ?? null;
+    const no = repo?.security_and_analysis?.[chave];
+    if (no === undefined || no === null) {
+      secCegos.push(`security_and_analysis.${chave}`);
+      continue;
+    }
+    const encontrado = no?.status ?? null;
     if (encontrado !== valorEsperado) {
       divergencias.push({ campo: `security_and_analysis.${chave}`, esperado: valorEsperado, encontrado, restauravel: false });
     }
+  }
+  if (ausentes.length === Object.keys(baseline.merge).length) {
+    throw new NaoVerificavel(`/repos+graphql (merge.*)`, 200, 'nem REST nem GraphQL expuseram os campos de merge: o token nao tem permissao para le-los');
+  }
+  const cegos = [...ausentes.map((a) => `merge.${a}`), ...secCegos];
+  if (cegos.length > 0) {
+    return { divergencias, cego: `200 — campos nao expostos ao token (REST nem GraphQL): ${ausentes.join(', ')}${secCegos.length ? `; security: ${secCegos.join(', ')}` : ''}`, campos: cegos };
   }
   return divergencias;
 }
@@ -268,10 +366,15 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
-  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+    // GA75: o endpoint correto e `/actions/permissions/selected-actions` — o
+  // caminho curto `/actions/selected-actions` devolve 404 (ponto cego eterno).
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
-  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  // GA75: o GitHub normaliza `owner/repo` para `owner/repo@*` na leitura; o
+  // sufixo `@*` e ignorado nos dois lados antes de comparar.
+  const normalizar = (p) => String(p).replace(/@\*$/, '');
+  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].map(normalizar).sort(porCodigo);
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].map(normalizar).sort(porCodigo);
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
@@ -281,6 +384,26 @@ async function checarSelectedActions() {
     });
   }
   return divergencias;
+}
+
+// GA79: retencao de artifacts e logs 90 → 14 dias (o W47 nao pegou ou regrediu).
+// Endpoint de repo; parse tolerante a variacoes de formato da API.
+async function checarRetencao() {
+  const dados = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/artifact-and-log-retention`);
+  const esperado = baseline.artifact_and_log_retention_days ?? 14;
+  const encontrado =
+    dados?.retention_days ??
+    dados?.retention_period_in_days ??
+    dados?.artifacts?.retention_days ??
+    dados?.artifacts?.retention_period_in_days ??
+    dados?.data?.artifacts?.retention_days ??
+    dados?.data?.artifacts?.retention_period_in_days ??
+    dados?.data?.retention_days ??
+    null;
+  if (encontrado !== esperado) {
+    return [{ campo: 'artifact_and_log_retention_days', esperado, encontrado, restauravel: false }];
+  }
+  return [];
 }
 
 async function checarRulesets() {
@@ -330,30 +453,14 @@ async function checarEnvironments() {
   return divergencias;
 }
 
-// ---------------------------------------------------------------- restauração
-
-async function restaurar(campo) {
-  if (campo === 'branch_protection_main.strict') {
-    const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
-    const contexts = protection?.required_status_checks?.contexts ?? [];
-    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection/required_status_checks`, {
-      strict: true,
-      contexts,
-    });
-    return '`branch_protection_main.strict` restaurado para `true`';
-  }
-  if (campo === 'merge.allow_auto_merge') {
-    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}`, { allow_auto_merge: true });
-    return '`merge.allow_auto_merge` restaurado para `true`';
-  }
-  return null;
-}
+// GA77: sem bloco de restauracao — o guard relata, nao aplica PATCH.
+// A aplicacao do perimetro vive em `scripts/ci/aplicar-perimetro.mjs` (GA80).
 
 // ---------------------------------------------------------------- issue
 
 async function findIssue() {
-  const issues = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/issues?labels=${ISSUE_LABEL}&state=open&per_page=10`);
-  return Array.isArray(issues) ? issues.find((i) => i.title === ISSUE_TITLE) ?? null : null;
+  // GA78: delega a rotina unica (encontrarIssue).
+  return encontrarIssue(gh, OWNER, REPO_NAME, ISSUE_LABEL, ISSUE_TITLE);
 }
 
 /**
@@ -375,78 +482,31 @@ const MARCADOR = (assinatura) => `<!-- causa:${assinatura} -->`;
 const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
 const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * Registro MAIS RECENTE da issue que carrega o marcador desta causa (comentario ou o
- * proprio corpo), escrito PELO GUARD. Olha as 2 ultimas paginas (ate 200 comentarios): um
- * comentario humano ou de outro bot depois do marcador nao pode zerar o dedupe, e um
- * marcador colado por terceiros nao pode acioná-lo (achados do Codex na PR #1920).
- * Devolve null quando a causa nunca foi registrada.
- */
-async function registroMaisRecenteCom(issue, marcador) {
-  const total = Number(issue.comments ?? 0);
-  if (total > 0) {
-    const ultimaPagina = Math.max(1, Math.ceil(total / 100));
-    for (const pagina of [ultimaPagina, ultimaPagina - 1]) {
-      if (pagina < 1) continue;
-      const comentarios = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/issues/${issue.number}/comments?per_page=100&page=${pagina}`);
-      if (!Array.isArray(comentarios)) continue;
-      for (let i = comentarios.length - 1; i >= 0; i -= 1) {
-        const c = comentarios[i];
-        if (escritoPeloGuard(c) && (c.body ?? '').includes(marcador)) return { body: c.body, created_at: c.created_at };
-      }
-    }
-  }
-  if (escritoPeloGuard(issue) && (issue.body ?? '').includes(marcador)) return { body: issue.body, created_at: issue.created_at };
-  return null;
-}
 
 /**
  * W05: dedupe por causa. Comenta de novo so se esta causa ainda nao foi registrada
- * na janela (6 h com divergencia real, 7 dias so com ponto cego) ou se houve
- * restauracao EFETIVA (que precisa ficar registrada sempre; tentativa que falhou
- * nao forca — senao um PATCH 403 recorrente comentaria a cada 6 h).
+ * na janela (6 h com divergencia real, 7 dias so com ponto cego). GA77: sem
+ * excecao para "restauracao efetiva" — o guard nao restaura mais nada.
  */
-async function abrirOuAtualizarIssue(body, { assinatura, janelaMs, forcar = false } = {}) {
-  const existing = await findIssue();
-  if (existing) {
-    if (assinatura && !forcar) {
-      const registro = await registroMaisRecenteCom(existing, MARCADOR(assinatura));
-      const idadeMs = registro?.created_at ? Date.now() - new Date(registro.created_at).getTime() : Infinity;
-      if (registro && idadeMs < janelaMs) {
-        console.log(`Dedupe: mesma causa (${assinatura}) ha menos de ${Math.round(janelaMs / 3600000)} h; comentario suprimido (issue #${semQuebra(existing.number)}).`);
-        return existing.number;
-      }
-    }
-    await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, { body });
-    console.log(`Issue #${semQuebra(existing.number)} atualizada com novo comentario.`);
-    return existing.number;
-  }
-  await gh('POST', `/repos/${OWNER}/${REPO_NAME}/labels`, {
-    name: ISSUE_LABEL,
-    color: 'e11d48',
-    description: 'Perimeter regression detected by settings-guard',
-  }).catch(() => {});
-  const issue = await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues`, {
+async function abrirOuAtualizarIssue(body, { assinatura, janelaMs } = {}) {
+  // GA78: rotina unica de issue de alerta — dedupe por marcador + rotacao E51.
+  // O marcador da causa ja abre o corpo (MARCADOR(assinatura), primeira linha).
+  return abrirOuRotacionar({
+    gh,
+    owner: OWNER,
+    repo: REPO_NAME,
+    label: ISSUE_LABEL,
     title: ISSUE_TITLE,
     body,
-    labels: [ISSUE_LABEL],
+    marcador: assinatura ? MARCADOR(assinatura) : null,
+    janelaMs,
+    autor: AUTOR_DO_GUARD,
   });
-  console.log(`Issue #${semQuebra(issue.number)} aberta.`);
-  return issue.number;
-
 }
 
 async function fecharIssue() {
-  const existing = await findIssue();
-  if (!existing) return;
-  await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}`, {
-    state: 'closed',
-    state_reason: 'completed',
-  });
-  await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, {
-    body: '✅ Perimetro conferido contra o baseline — fechando automaticamente.',
-  });
-  console.log(`Issue #${existing.number} fechada.`);
+  // GA78: delega a rotina unica (fecha como completed: perimetro voltou a OK).
+  await fecharSeAberta(gh, OWNER, REPO_NAME, ISSUE_LABEL, ISSUE_TITLE, '✅ Perimetro conferido contra o baseline — fechando automaticamente.');
 }
 
 // ---------------------------------------------------------------- principal
@@ -463,6 +523,7 @@ async function main() {
     ['actions', checarActions],
     ['workflow permissions', checarWorkflowPermissions],
     ['selected actions', checarSelectedActions],
+    ['retencao artifacts/logs', checarRetencao],
     ['rulesets', checarRulesets],
     ['environments', checarEnvironments],
   ];
@@ -514,23 +575,7 @@ async function main() {
     return;
   }
 
-  // Restaura só o que o guard sabe restaurar; o resto vira alerta. Sucesso e falha
-  // ficam em listas separadas: so o sucesso forca comentario (Devin, PR #1920).
-  const restaurados = [];
-  const restauracoesEfetivas = [];
-  for (const d of divergencias.filter((x) => x.restauravel)) {
-    try {
-      const feito = await restaurar(d.campo);
-      if (feito) {
-        restaurados.push(feito);
-        restauracoesEfetivas.push(d.campo);
-        console.log(`Restaurado: ${semQuebra(d.campo)}`);
-      }
-    } catch (e) {
-      restaurados.push(`⚠️ falhou ao restaurar \`${d.campo}\`: ${e.message.split(':')[0]}`);
-    }
-  }
-
+  // GA77: sem restauracao automatica — divergencia vira alerta, sempre.
   const soCegos = divergencias.length === 0;
   const assinatura = assinaturaDe(divergencias, naoVerificaveis);
   const linhas = [
@@ -571,10 +616,6 @@ async function main() {
     );
   }
 
-  if (restaurados.length > 0) {
-    linhas.push('### Restaurações aplicadas', '', ...restaurados.map((r) => `- ${r}`), '');
-  }
-
   linhas.push(
     `Run: https://github.com/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID ?? 'manual'}`,
     `Timestamp: ${new Date().toISOString()}`,
@@ -583,7 +624,6 @@ async function main() {
   await abrirOuAtualizarIssue(linhas.join('\n'), {
     assinatura,
     janelaMs: soCegos ? SETE_DIAS_MS : SEIS_HORAS_MS,
-    forcar: restauracoesEfetivas.length > 0,
   });
 
   if (soCegos) {

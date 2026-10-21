@@ -57,12 +57,28 @@ jobs:
         # Summary e mantem uma issue aberta `[kpi-actions]` atualizada a cada semana.
         # A duracao sai de `run_started_at`/`updated_at`: o endpoint de faturamento
         # devolve `billable: {}` em repositorio publico (medido em 03/10/2026).
+        # GA92: continue-on-error — o KPI (1.014 runs em 7 d) estourava o limite de
+        # 1.000 requisicoes/h do GITHUB_TOKEN e abortava o hygiene de segunda
+        # (19/10). Junto com a amostragem no coletarJobs, o job nunca trava por
+        # causa do KPI. GA93: grava docs/ci/kpi.json no workspace; o job
+        # `publicar-kpi` abre/atualiza a PR `automation/kpi` com o arquivo.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           JANELA_DIAS: '7'
+          KPI_JSON_PATH: ${{ runner.temp }}/kpi.json
         run: |
           set -euo pipefail
           node scripts/ci/actions-kpi.mjs
+
+      - name: Arquivar kpi.json
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: kpi-json-${{ github.run_id }}
+          path: ${{ runner.temp }}/kpi.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Gerar relatorio
         env:
@@ -154,3 +170,55 @@ jobs:
             echo "issue criada"
           fi
           rm -f "$RELATORIO"
+
+  # GA93: publica o kpi.json real (cancelados precoces, minutos desperdicados,
+  # p50/p95, causas por conclusion) numa PR `automation/kpi`. Merge MANUAL —
+  # sem auto-merge: dado semanal pequeno, revisao humana de 1 min. Depois do
+  # merge, o render-workflow-docs preenche as colunas de custo/falha do README
+  # (antes ficavam em "—"). Job separado do `audit` para ele continuar
+  # somente-leitura (contents:read).
+  publicar-kpi:
+    name: 📊 Publicar kpi.json
+    needs: [audit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write # push do branch automation/kpi
+      pull-requests: write # abrir/atualizar a PR
+      actions: read # listar os runs (KPI)
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: 📊 Gerar docs/ci/kpi.json
+        # GA92: continue-on-error aqui tambem — sem KPI nao ha PR, sem drama.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JANELA_DIAS: '7'
+          KPI_JSON_PATH: docs/ci/kpi.json
+        run: |
+          set -euo pipefail
+          node scripts/ci/actions-kpi.mjs
+
+      - name: 📬 Abrir ou atualizar PR automation/kpi
+        if: hashFiles('docs/ci/kpi.json') != ''
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/kpi
+          delete-branch: true
+          commit-message: 'chore(ci): atualiza docs/ci/kpi.json (KPI semanal) [auto]'
+          title: 'chore(ci): atualiza docs/ci/kpi.json (KPI semanal)'
+          body: |
+            KPI semanal do GitHub Actions (`docs/ci/kpi.json`), gerado pelo job
+            `publicar-kpi` do Branch Hygiene Audit.
+
+            - Merge **manual** (sem auto-merge): dado pequeno, revisao de 1 min.
+            - Depois do merge, `render-workflow-docs` preenche as colunas de
+              custo/falha do `docs/ci/README.md` (antes ficavam em "—").
+          add-paths: |
+            docs/ci/kpi.json

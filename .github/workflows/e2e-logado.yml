@@ -119,12 +119,15 @@ jobs:
       # E68: cache dos browsers (ver ci.yml para o racional completo). Chave com o
       # hash do bun.lock e o conjunto de browsers, para não herdar um cache com
       # menos engines do que este job precisa.
-      - name: 💾 Cache dos browsers Playwright
+      # GA89: restore em todo run, save só na main (comentario completo no ci.yml).
+      - name: 💾 Restaura cache dos browsers Playwright
         id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         if: steps.pw-cache.outputs.cache-hit != 'true'
@@ -133,6 +136,15 @@ jobs:
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+
+      # GA89: salva o cache UMA vez por estado novo do lock — só em push na
+      # main (este workflow roda pós-merge; o dispatch manual nao salva).
+      - name: 💾 Salva cache dos browsers Playwright (só push na main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}
 
       # E83: cada job da matriz invoca o Playwright com os projetos do SEU grupo
       # via variavel de matriz (cada token ja leva o prefixo de projeto,

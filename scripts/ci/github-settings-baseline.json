@@ -46,21 +46,22 @@
   },
   "rulesets_count": 0,
   "selected_actions_patterns": [
-    "oven-sh/setup-bun",
-    "denoland/setup-deno",
-    "supabase/setup-cli",
-    "peter-evans/create-pull-request",
-    "gitleaks/gitleaks-action",
     "actions/cache",
+    "actions/cache/restore",
+    "actions/cache/save",
     "actions/checkout",
+    "actions/dependency-review-action",
     "actions/github-script",
     "actions/setup-go",
     "actions/setup-node",
     "actions/upload-artifact",
+    "denoland/setup-deno",
     "github/codeql-action",
-    "actions/dependency-review-action",
+    "gitleaks/gitleaks-action",
     "ossf/scorecard-action",
-    "step-security/harden-runner"
+    "oven-sh/setup-bun",
+    "peter-evans/create-pull-request",
+    "supabase/setup-cli"
   ],
   "environments": [
     "banco-leitura",
@@ -76,11 +77,10 @@
   },
   "environments_vercel_managed": {
     "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
-    "prefixos": ["Preview – ", "Production – "]
-  },
-  "environments_vercel_managed": {
-    "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
-    "prefixos": ["Preview – ", "Production – "]
+    "prefixos": [
+      "Preview – ",
+      "Production – "
+    ]
   },
   "nao_verificavel_automaticamente": {
     "_comentario": [
@@ -91,5 +91,6 @@
     ],
     "branch_protection": "exige administration: read — o guard recebe 403",
     "github_apps_instalados": "o token da sessao nao lista instalacoes (E89 decide)"
-  }
+  },
+  "artifact_and_log_retention_days": 14
 }

@@ -194,6 +194,22 @@ jobs:
           echo "CSS Files:"
           find dist -name "*.css" -exec du -h {} \;
 
+  # GA87: a imagem do preview-egress-proxy e construida (sem push) no CI —
+  # decide a #1956 (golang 1.24 → 1.27 sem a imagem ser construida em lugar
+  # nenhum). Nao e required check: so prova que o Dockerfile + go.mod compilam.
+  egress-image:
+    name: 🐳 Egress proxy image (build, sem push)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🐳 Build da imagem (sem push)
+        run: docker build --file infrastructure/preview-egress-proxy/Dockerfile infrastructure/preview-egress-proxy
+
   # ===========================================
   # JOB 4: Security Audit
   # ===========================================
@@ -271,12 +287,19 @@ jobs:
       # devDependency e a versão está no lock) e o CONJUNTO de browsers: um cache
       # salvo por job que instala só Chromium não pode satisfazer este, que
       # precisa dos três.
-      - name: 💾 Cache dos browsers Playwright
+      # GA89: restore em todo run, SAVE só em push na main. O `actions/cache`
+      # (restore+save juntos) salvava em PR e prendia um cache por
+      # `refs/pull/N/merge` (~2,6 GB em 9 caches); agora PR só restaura (do
+      # cache da main via restore-keys) e só a main salva. O sufixo run_id no
+      # save evita o erro "cache already exists" (a chave exata nunca repete).
+      - name: 💾 Restaura cache dos browsers Playwright
         id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         # Só em cache miss. Versao exata resolvida no bun.lock (SonarCloud
@@ -290,6 +313,16 @@ jobs:
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+
+      # GA89: salva o cache UMA vez por estado novo do lock — só em push na
+      # main. PRs nunca salvam (antes cada PR prendia um cache em
+      # `refs/pull/N/merge`). Chave com run_id: nunca colide com save anterior.
+      - name: 💾 Salva cache dos browsers Playwright (só push na main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
