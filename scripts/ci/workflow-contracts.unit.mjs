@@ -601,3 +601,27 @@ test('W99: todo upload-artifact declara retention-days', async () => {
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
 });
+
+test('GA10: todos os nomes em notifica-falha-main.yml existem como name: em algum workflow', () => {
+  const texto = wf['notifica-falha-main.yml'];
+  assert.ok(texto, 'notifica-falha-main.yml nao encontrado');
+
+  const m = texto.match(/^\s{4}workflows:\n((?:\s{6}-\s.+\n)+)/m);
+  assert.ok(m, 'notifica-falha-main.yml nao tem bloco workflows: sob workflow_run');
+
+  const nomesMonitorados = m[1]
+    .split('\n')
+    .map((l) => l.replace(/^\s+-\s+/, '').trim())
+    .filter(Boolean);
+
+  const nomesReais = Object.values(wf)
+    .map((t) => { const m2 = t.match(/^name:\s*(.+)$/m); return m2 ? m2[1].trim() : null; })
+    .filter(Boolean);
+
+  for (const nome of nomesMonitorados) {
+    assert.ok(
+      nomesReais.includes(nome),
+      `notifica-falha-main.yml monitora "${nome}" mas nenhum workflow tem esse name: — renomeou sem atualizar?`,
+    );
+  }
+});
