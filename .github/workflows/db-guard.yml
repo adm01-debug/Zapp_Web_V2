@@ -208,7 +208,22 @@ jobs:
         run: node scripts/db-audit/check-realtime-subscriptions.mjs
 
       - name: Testar comparadores de catalogo, manifesto e migrations
-        run: node --test scripts/db-audit/*.test.mjs
+        run: |
+          mapfile -t testes_db < <(
+            rg --files scripts/db-audit -g '*.test.mjs' \
+              | sort \
+              | rg -v '^scripts/db-audit/talkx-engine-window-contract\.test\.mjs$'
+          )
+          node --test "${testes_db[@]}"
+
+      # O contrato Talk X sobe seu proprio PostgreSQL. Em paralelo com a suite
+      # acima, outros contratos tambem iniciam containers e podem derrubar o
+      # socket durante o bootstrap; rode-o isolado e repita somente falhas de
+      # bootstrap, nunca erros SQL/assertions.
+      - name: Provar contrato Talk X de janela de envio em PostgreSQL descartavel
+        env:
+          TALKX_WINDOW_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/talkx-engine-window-contract.test.mjs
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
