@@ -83,11 +83,11 @@ O job "Validar gerador e manifesto de deployment" detectou o manifesto desatuali
 ## Commits desta sessão (branch `claude/kind-gates-87mwoe`)
 
 | Commit | Descrição |
-|--------|-----------|
+|--------|----------|
 | (anterior à sessão) | fix(ci): remove workflows alienígenas + atualiza mocks de logger + exceção migration-evidence |
 | `4e4f744` | fix(ci): regenera manifesto de deploy das edge functions |
 | `7a8c74e` | fix(ci): corrige vírgula faltando nos mocks de logger + regenera baseline ESLint |
-| `0ec8caf` | docs(ci): documenta pendências DASH-091/092 e unit tests flaky |
+| `5b89e1a` | docs(ci): documenta pendências DASH-091/092 e unit tests flaky |
 
 ---
 
