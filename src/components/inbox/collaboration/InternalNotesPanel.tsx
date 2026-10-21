@@ -15,12 +15,16 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { contactNotesKey } from '@/hooks/crm/useContactNotes';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
+import { useMentionableProfileNames } from '@/hooks/inbox/useMentionableProfiles';
+import { splitMentionText } from '@/lib/mentionText';
+
 import { MentionInput } from './MentionInput';
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const [newNote, setNewNote] = useState('');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: mentionableNames } = useMentionableProfileNames();
 
   const { data: notes, isLoading, error, refetch } = useQuery({
     queryKey: ['internal-notes', contactId],
@@ -59,14 +63,27 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
     onError: () => toast.error('Erro ao adicionar nota'),
   });
 
+  // O selo é montado a partir dos nomes ativos (não de uma regex de palavra):
+  // assim `@Ana Maria` vira um selo inteiro em vez de só `@Ana`.
+  // Enquanto a lista está indisponível (carregando ou erro), cai no
+  // comportamento anterior (`@palavra` vira selo) para a nota não perder o selo.
   const renderNoteContent = (content: string) => {
-    const parts = content.split(/(@\w+)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('@')) {
-        return <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>;
-      }
-      return <span key={i}>{part}</span>;
-    });
+    if (mentionableNames === undefined) {
+      return content.split(/(@\w+)/g).map((part, i) =>
+        part.startsWith('@') ? (
+          <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      );
+    }
+    return splitMentionText(content, mentionableNames).map((part, i) =>
+      part.isMention ? (
+        <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part.text}</Badge>
+      ) : (
+        <span key={i}>{part.text}</span>
+      ),
+    );
   };
 
   return (

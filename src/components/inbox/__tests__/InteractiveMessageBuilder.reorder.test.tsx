@@ -25,7 +25,9 @@ function comporListaComDuasLinhas() {
   fireEvent.mouseDown(screen.getByRole('tab', { name: /lista/i }));
   fireEvent.click(screen.getByRole('button', { name: /^seção$/i }));
   // A seção nasce recolhida: abre pelo cabeçalho para os itens aparecerem.
-  fireEvent.click(screen.getByRole('button', { name: /seção 1/i }));
+  // Ancorado: o gatilho da seção é nomeado "Seção 1"; o botão de remover
+  // (a11y, UK-13) também diz "seção 1" no meio do rótulo e o regex solto casava os dois.
+  fireEvent.click(screen.getByRole('button', { name: /^seção 1\b/i }));
 
   fireEvent.click(screen.getByRole('button', { name: /^item$/i }));
   fireEvent.click(screen.getByRole('button', { name: /^item$/i }));

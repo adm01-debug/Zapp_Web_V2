@@ -61,6 +61,29 @@ export function ConnectionsView() {
   const [queuesDialog, setQueuesDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [settingsDialog, setSettingsDialog] = useState({ open: false, instanceName: '', connectionName: '' });
 
+  // Subtextos dos cartões de estatística: singular/plural no total e estado
+  // pleno nas colunas ("Recebendo mensagens" / "Tudo funcionando" / ...).
+  const onlineCount = connections.filter(c => c.status === 'connected').length;
+  const offlineCount = connections.length - onlineCount;
+  const totalSub = `${connections.length} instância${connections.length === 1 ? '' : 's'} configurada${connections.length === 1 ? '' : 's'}`;
+
+  // Validação do telefone antes de criar: aceita E.164 (começa com '+',
+  // qualquer DDI) e barra o resto com erro inline acessível, sem criar.
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const telefoneValido = (v: string) => {
+    const valor = v.trim();
+    if (!valor.startsWith('+')) return false;
+    return valor.replace(/\D/g, '').length >= 7;
+  };
+  const handleCreateConnection = () => {
+    if (!telefoneValido(newConnection.phone_number)) {
+      setPhoneError('Informe o número com DDI 55, ex.: +55 11 99999-0000 (ou E.164 com outro DDI).');
+      return;
+    }
+    setPhoneError(null);
+    handleAddConnection();
+  };
+
   // A Evolution GO recusa o histórico (200 com `notSupported`). Quando isso
   // acontece, escondemos a ação em todos os cartões até a página recarregar.
   const [historyNotSupported, setHistoryNotSupported] = useState(false);
@@ -125,10 +148,10 @@ export function ConnectionsView() {
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => setNewConnection({ ...newConnection, phone_number: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => { const v = e.target.value; setNewConnection({ ...newConnection, phone_number: v }); if (phoneError && telefoneValido(v)) setPhoneError(null); }} />{phoneError && <p role="alert" className="text-xs text-destructive">{phoneError}</p>}</div>
                 <div className="flex justify-end gap-2 pt-4">
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
-                  <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
+                  <Button onClick={handleCreateConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
                 </div>
@@ -187,12 +210,12 @@ export function ConnectionsView() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total de Conexões', value: connections.length, color: 'text-primary' },
-          { label: 'Conectadas', value: connections.filter(c => c.status === 'connected').length, color: 'text-status-online' },
-          { label: 'Desconectadas', value: connections.filter(c => c.status !== 'connected').length, color: 'text-status-offline' },
+          { label: 'Total de Conexões', value: connections.length, color: 'text-primary', sub: totalSub },
+          { label: 'Conectadas', value: onlineCount, color: 'text-status-online', sub: onlineCount > 0 ? 'Recebendo mensagens' : 'Nenhuma conectada' },
+          { label: 'Desconectadas', value: offlineCount, color: 'text-status-offline', sub: offlineCount > 0 ? 'Precisam reconectar' : 'Tudo funcionando' },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p></CardContent></Card>
+            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p><p className="text-xs text-muted-foreground mt-1">{stat.sub}</p></CardContent></Card>
           </motion.div>
         ))}
       </div>

@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense, type MouseEventHandler } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
 import { resolverAbaAtiva, type TabState } from '@/components/inbox/resolveActiveTab';
 import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
+import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { ConversationListSidebar } from './ConversationListSidebar';
 import { chipDoStatusReaberto } from './conversation-list/reopenChip';
@@ -13,7 +14,7 @@ import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
-import { WifiOff, RefreshCw, Loader2, MessageSquarePlus } from 'lucide-react';
+import { WifiOff, RefreshCw, Loader2, MessageSquarePlus, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -57,27 +58,53 @@ interface SearchResult {
 interface TalkMeHeaderButtonProps {
   testId: string;
   count: number | null;
+  countUnavailable: boolean;
   loading: boolean;
   queueName?: string;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 }
 
-function TalkMeHeaderButton({ testId, count, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
+function TalkMeHeaderButton({ testId, count, countUnavailable, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
   const queueSuffix = queueName ? ` em ${queueName}` : '';
-  const countLabel = count === null ? '' : `: ${count} atendimentos aguardando`;
+  const waitingLabel = count === null
+    ? ''
+    : `${count} ${count === 1 ? 'atendimento aguardando' : 'atendimentos aguardando'}`;
+  const statusLabel = countUnavailable ? 'contagem de atendimentos indisponível' : waitingLabel;
+  const accessibleStatus = statusLabel ? `: ${statusLabel}` : '';
+  const titleStatus = statusLabel ? ` — ${statusLabel}` : '';
 
   return (
     <LiquidMetalButton
       data-testid={testId}
+      data-talkme-trigger="1"
       label="TALK ME"
       count={count}
       loading={loading}
       compact
-      aria-label={`TALK ME${countLabel}${queueSuffix}`}
-      title={`Abrir atendimentos aguardando${queueSuffix}`}
+      aria-label={`TALK ME${accessibleStatus}${queueSuffix}`}
+      title={`Abrir TALK ME${titleStatus}${queueSuffix}`}
       onClick={onClick}
     />
   );
+}
+
+function isVisibleTalkMeTrigger(element: HTMLButtonElement): boolean {
+  if (!element.isConnected || element.disabled) return false;
+
+  let current: HTMLElement | null = element;
+  while (current) {
+    const style = window.getComputedStyle(current);
+    if (
+      current.hidden
+      || current.getAttribute('aria-hidden') === 'true'
+      || current.classList.contains('hidden')
+      || style.display === 'none'
+      || style.visibility === 'hidden'
+    ) return false;
+    current = current.parentElement;
+  }
+
+  return true;
 }
 
 /**
@@ -123,9 +150,32 @@ export function RealtimeInboxView() {
   });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const [talkMeOpen, setTalkMeOpen] = useState(false);
+  const talkMeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
   const talkMeCount = talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null);
+  const handleOpenTalkMe = useCallback<MouseEventHandler<HTMLButtonElement>>((event) => {
+    talkMeTriggerRef.current = event.currentTarget;
+    setTalkMeOpen(true);
+  }, []);
+  const handleTalkMeOpenChange = useCallback((open: boolean) => {
+    setTalkMeOpen(open);
+    if (open) return;
+
+    const openingTrigger = talkMeTriggerRef.current;
+    window.requestAnimationFrame(() => {
+      const firstAvailableTrigger = document.querySelector<HTMLButtonElement>(
+        '[data-talkme-trigger]:not([disabled])',
+      );
+      const availableTriggers = document.querySelectorAll<HTMLButtonElement>(
+        '[data-talkme-trigger]:not([disabled])',
+      );
+      const trigger = [openingTrigger, firstAvailableTrigger, ...availableTriggers]
+        .find((candidate): candidate is HTMLButtonElement =>
+          candidate !== null && isVisibleTalkMeTrigger(candidate));
+      trigger?.focus();
+    });
+  }, []);
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
@@ -312,7 +362,7 @@ export function RealtimeInboxView() {
       {talkMeEnabled && (
         <TalkMeView
           open={talkMeOpen}
-          onOpenChange={setTalkMeOpen}
+          onOpenChange={handleTalkMeOpenChange}
           controller={talkMe}
           onAccepted={async (contactId) => {
             await inbox.refetch();
@@ -348,8 +398,9 @@ export function RealtimeInboxView() {
         bulkActions={bulkActions}
         pullToRefresh={pullToRefresh}
         conversationActions={conversationActions}
-        onOpenTalkMe={() => setTalkMeOpen(true)}
+        onOpenTalkMe={handleOpenTalkMe}
         talkMeCount={talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null)}
+        talkMeCountUnavailable={Boolean(talkMe.queuesError)}
         talkMeLoading={talkMe.queuesLoading}
         talkMeQueueName={talkMe.selectedQueue?.name}
         talkMeEnabled={talkMeEnabled}
@@ -370,9 +421,10 @@ export function RealtimeInboxView() {
                     <TalkMeHeaderButton
                       testId="talk-me-button"
                       count={talkMeCount}
+                      countUnavailable={Boolean(talkMe.queuesError)}
                       loading={talkMe.queuesLoading}
                       queueName={talkMe.selectedQueue?.name}
-                      onClick={() => setTalkMeOpen(true)}
+                      onClick={handleOpenTalkMe}
                     />
                   ) : null}
                 />
@@ -467,17 +519,39 @@ export function RealtimeInboxView() {
                 <TalkMeHeaderButton
                   testId="talk-me-button-empty"
                   count={talkMeCount}
+                  countUnavailable={Boolean(talkMe.queuesError)}
                   loading={talkMe.queuesLoading}
                   queueName={talkMe.selectedQueue?.name}
-                  onClick={() => setTalkMeOpen(true)}
+                  onClick={handleOpenTalkMe}
                 />
               </div>
             )}
-            <InboxEmptyChat
-              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
-              unreadCount={inboxFilters.chipCounts?.unread ?? 0}
-              onNewConversation={() => inbox.setShowNewConversation(true)}
-            />
+            {inbox.selectedContactId && inbox.selectedContactFallbackStatus === 'loading' ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 aria-hidden="true" className="w-6 h-6 text-primary motion-safe:animate-spin" />
+              </div>
+            ) : inbox.selectedContactId && (inbox.selectedContactFallbackStatus === 'not-found' || inbox.selectedContactFallbackStatus === 'error') ? (
+              // Link/notificação/busca abriram um contato que não veio na lista e não
+              // pôde ser carregado: mostra o motivo em vez de uma área de chat muda.
+              <ConversationEmptyState
+                icon={inbox.selectedContactFallbackStatus === 'not-found' ? UserX : WifiOff}
+                title={inbox.selectedContactFallbackStatus === 'not-found' ? 'Conversa não encontrada' : 'Não foi possível abrir a conversa'}
+                description={
+                  inbox.selectedContactFallbackStatus === 'not-found'
+                    ? 'O link é inválido ou você não tem acesso a este contato.'
+                    : (inbox.selectedContactFallbackError ?? 'Houve uma falha ao carregar o contato.')
+                }
+                action={<Button variant="outline" onClick={() => inbox.setSelectedContactId(null)}>Voltar à lista</Button>}
+                className="bg-inbox-panel overflow-hidden"
+              />
+            ) : (
+              <InboxEmptyChat
+                waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
+                unreadCount={inboxFilters.chipCounts?.unread ?? 0}
+                onNewConversation={() => inbox.setShowNewConversation(true)}
+              />
+            )}
+
           </div>
         )}
       </div>
