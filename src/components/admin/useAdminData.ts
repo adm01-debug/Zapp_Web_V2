@@ -1,12 +1,16 @@
 import { useState, useCallback, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/integrations/supabase/client';
+// Camada padrao de Edge (PE-43): `invokeEdge` de supabaseHelpers anexa o token
+// da sessao atual e LANCA o erro HTTP — e o `supabase` desta camada e o mesmo
+// cliente reexportado ali.
+import { invokeEdge, supabase } from '@/lib/supabaseHelpers';
 import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
-import { invokeEdge, readEdgeError } from '@/lib/invokeEdge';
+import { readEdgeError } from '@/lib/invokeEdge';
 
 const log = getLogger('useAdminData');
 
@@ -124,7 +128,7 @@ export const AUDIT_PAGE_SIZE = 50;
 /** Erro por campo devolvido por `mapCreateUserError`. */
 export interface CreateUserFieldError {
   /** Campo que originou o erro (`null` = erro geral, sem campo específico). */
-  field: 'email' | 'password' | 'name' | null;
+  field: 'email' | 'password' | 'name' | 'role' | null;
   /** Mensagem amigável sem expor detalhes internos do servidor. */
   message: string;
 }
@@ -136,6 +140,15 @@ export interface CreateUserFieldError {
 export function mapCreateUserError(rawMessage: string | undefined): CreateUserFieldError {
   if (!rawMessage) return { field: null, message: 'Erro ao criar usuário' };
   const msg = rawMessage.toLowerCase();
+  // Duplicidade ANTES da checagem genérica de e-mail: "…email address has
+  // already been registered" contém 'email' e cairia em "e-mail inválido",
+  // escondendo o motivo real.
+  if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('já está cadastrado')) {
+    return { field: 'email', message: 'Este e-mail já está cadastrado.' };
+  }
+  if (msg.includes('invalid enum value') || msg.includes('papel') || msg.includes('role')) {
+    return { field: 'role', message: 'Papel de usuário inválido.' };
+  }
   if (msg.includes('email') || msg.includes('e-mail')) return { field: 'email', message: 'Informe um e-mail válido.' };
   if (msg.includes('senha') || msg.includes('password')) return { field: 'password', message: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.` };
   if (msg.includes('nome') || msg.includes('name')) return { field: 'name', message: 'Informe o nome do usuário.' };
@@ -222,7 +235,17 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
           role: (userRole?.role || 'agent') as AppRole,
         };
       });
-      setUsers(usersWithRoles);
+      // Bucket privado: o banco guarda o CAMINHO do objeto e a tela assina sob
+      // demanda. URL http de outra origem (ou de outro bucket) vira null — nunca
+      // e exibida nem regravada em profiles.avatar_url.
+      const comAvatarAssinado = await Promise.all(usersWithRoles.map(async (user) => {
+        const path = avatarObjectPath(user.avatar_url);
+        if (!path) return { ...user, avatar_url: path };
+        const { data: assinada } = await supabase.storage.from(AVATAR_BUCKET)
+          .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
+        return { ...user, avatar_url: assinada?.signedUrl ?? path };
+      }));
+      setUsers(comAvatarAssinado);
     } else if (activeTab === 'audit') {
       const start = (auditPage - 1) * auditPageSize;
 
@@ -445,14 +468,14 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
       // `Bearer ${session?.access_token}` à mão (podia virar 'Bearer undefined')
       // e lia o corpo do erro sem guarda.
       try {
-        await invokeEdge('create-user', { body });
+        await invokeEdge('create-user', body);
       } catch (firstError) {
         const { status } = await readEdgeError(firstError);
         if (status !== 401) throw firstError;
         // Sessão expirada: renova UMA vez e repete antes de desistir.
         const { error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError) throw firstError;
-        await invokeEdge('create-user', { body });
+        await invokeEdge('create-user', body);
       }
 
       toast.success('Usuário criado com sucesso!');
