@@ -91,6 +91,13 @@ function extrairNaoEBug(texto) {
       itens.push({ chave: m[1], descricao: m[2] });
       continue;
     }
+    // Continuacao de item de varias linhas: `#     <texto>` (indentado além do `-`)
+    // compoe a descricao do item anterior em vez de encerrar o bloco (GA98).
+    const cont = /^#\s{5,}(\S.*?)\s*$/.exec(linha);
+    if (cont && itens.length > 0) {
+      itens[itens.length - 1].descricao += ' ' + cont[1];
+      continue;
+    }
     // Linha de comentário vazia continua; qualquer outra coisa (inclusive docs:) encerra.
     if (/^#\s*$/.test(linha)) continue;
     break;
@@ -105,6 +112,10 @@ function nomeDe(texto, arquivo) {
   return m ? m[1] : arquivo.replace(/\.yml$/, '');
 }
 
+export { extrairDocs, extrairNaoEBug };
+
+// Fluxo executável (só quando rodado direto; importável para testes — GA98).
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // KPI: tenta carregar docs/ci/kpi.json; ignora silenciosamente se não existir.
 let kpi = {};
 try {
@@ -194,7 +205,7 @@ if (naoEBugGlobal.length > 0) {
 
 const conteudo = linhas.join('\n');
 
-if (process.argv.includes('--check')) {
+if (process.argv[1] === fileURLToPath(import.meta.url) && process.argv.includes('--check')) {
   let atual = '';
   try {
     atual = await readFile(README, 'utf8');
@@ -211,6 +222,9 @@ if (process.argv.includes('--check')) {
   process.exit(0);
 }
 
-await mkdir(dirname(README), { recursive: true });
-await writeFile(README, conteudo, 'utf8');
-console.log(`docs/ci/README.md gerado a partir de ${docs.length} workflows.`);
+{
+  await mkdir(dirname(README), { recursive: true });
+  await writeFile(README, conteudo, 'utf8');
+  console.log(`docs/ci/README.md gerado a partir de ${docs.length} workflows.`);
+}
+} // fim do fluxo executável (só roda direto)

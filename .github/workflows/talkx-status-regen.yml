@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main; schedule semanal (seg 07:45 UTC); dispatch
+#   gatilho: push na main filtrado (docs/talkx/**, scripts/talkx/**); schedule semanal (seg 07:45 UTC); dispatch
 #   prova: o placar do Talk X regenerado a partir dos dados atuais
 #   falha: o job fica vermelho e o placar nao e atualizado
 #   avisa: autor do push
@@ -29,6 +29,11 @@ name: Talk X V4 placar regen (push + semanal)
 on:
   push:
     branches: [main]
+    # GA96: sem filtro cada push na main gerava run — 21 runs desde 13/10 sem
+    # nenhuma mudança no placar. O placar deriva de docs/talkx + scripts/talkx.
+    paths:
+      - 'docs/talkx/**'
+      - 'scripts/talkx/**'
   schedule:
     # W92: regen semanal — seg 07:45 UTC (agendamento sem colisão com branch-hygiene
     # 07:56 e types-sync 05:49; jitter de 15 min antes das 08:00).
@@ -37,12 +42,8 @@ on:
 
 concurrency:
   # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
-  group: talkx-regen-${{ github.ref }}
-  cancel-in-progress: true
-
-concurrency:
   group: talkx-status-regen
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -54,6 +55,10 @@ permissions:
 jobs:
   regen:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # GA96: escrita confinada aos passos do PR abaixo (create-pull-request +
+    # destravar checks); checkout e regen só leem (o Actions não permite
+    # `permissions:` por step — o confinamento é não ter nenhum outro passo de escrita).
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
@@ -66,6 +71,9 @@ jobs:
       # GITHUB_TOKEN. Sem isto o PR fica parado esperando aprovacao manual.
       actions: write
     steps:
+      # GA96 (MECA 21/10): fetch-depth: 1 do plano é inválido aqui — o regen
+      # lê `git log origin/main` (v4-status.mjs detectDoneSteps) e precisa do
+      # histórico de títulos. Mantido 0, com `git fetch origin main` no passo seguinte.
       - name: Checkout (histórico completo)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -98,7 +106,7 @@ jobs:
             - main de origem: `${{ github.sha }}`
             - arquivo: `docs/talkx/v4/STATUS.md`
 
-            Revisão humana e checks da PR continuam obrigatórios.
+            Auto-merge (squash) ligado no passo abaixo: mergeia sozinho quando os checks passam.
           add-paths: |
             docs/talkx/v4/STATUS.md
 

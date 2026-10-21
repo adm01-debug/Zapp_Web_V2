@@ -578,6 +578,15 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-second-update-snapshot.test.sh
 
+      # GA98: o teste existia em scripts/db-audit mas nenhum passo o rodava (orfao).
+      # Usa `docker logs` para readiness e um container por caso (RED/GREEN/dentes) —
+      # criterio E47: SKIP_DOCKER_SHIM=1.
+      - name: Simular ponteiro da versao corrente de template Talk X
+        env:
+          TALKX_CTV_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-current-template-version.test.sh
+
       - name: Simular correção forward-only da FK saved_by do Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

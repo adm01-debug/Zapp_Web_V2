@@ -34,10 +34,10 @@
 
 ## 🗄️ Banco e Edge (se aplicável)
 
-<!-- Estes dois têm passo obrigatório DEPOIS do merge; marcar só o que se aplica -->
+<!-- Migration tem passo obrigatório DEPOIS do merge; edge alterada dispara deploy sozinho no push; marcar só o que se aplica -->
 
 - [ ] **Migration?** → arquivo versionado em `supabase/migrations/` + registro no ledger + catálogo de migrations atualizado
-- [ ] **Edge?** → disparar `deploy-functions` após o merge (a função não sobe sozinha)
+- [ ] **Edge?** → push na `main` dispara `deploy-functions` sozinho (só `supabase/functions/**`, `config.toml`); dispatch manual só para rollback/uma função
 - [ ] Nenhum dos dois
 
 ## ✅ Checklist

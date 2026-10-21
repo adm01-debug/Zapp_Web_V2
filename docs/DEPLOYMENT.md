@@ -53,7 +53,7 @@ O deploy do **frontend** é automático via Vercel (projeto `zapp_web_v2`, team 
 1. **Merge de PR na `main`** → Rebuild automático (push direto na `main` é proibido)
 2. **Assets** → CDN global
 
-> ⚠️ **Edge Functions NÃO sobem automaticamente.** Ver seção [Edge Functions](#edge-functions).
+> **Edge Functions sobem automaticamente** no push na `main` (filtrado por pasta — ver [Edge Functions](#edge-functions)). O front (Vercel) também é automático.
 
 ### Tempo médio de deploy
 - Build Vercel: ~2–3 minutos
@@ -78,18 +78,20 @@ bun run build
 bun run preview
 ```
 
-### 2. Deploy de Edge Functions (manual, via workflow)
+### 2. Deploy de Edge Functions (automático no push + manual para rollback)
 
-Edge Functions são deployadas **somente** via `workflow_dispatch` do workflow
-`deploy-functions.yml` na aba Actions do GitHub. O job pausa em `Waiting` no
-environment `producao-edge-functions` até aprovação humana.
+Desde 07/10/2026 (decisão do Joaquim) o push na `main` que toca `supabase/functions/**`
+ou `supabase/config.toml` dispara `deploy-functions.yml` sozinho — só a função cujo bundle
+divergiu do publicado é republicada. O `workflow_dispatch` manual segue para rollback
+(`source_ref`), uma função só (`function_name`), dry-run e rotação de secrets.
 
 ```
-GitHub Actions → deploy-functions.yml → Run workflow → Aguardar aprovação em producao-edge-functions
+Push na main (edge alterada) → deploy-functions.yml dispara sozinho
+GitHub Actions → deploy-functions.yml → Run workflow (só para rollback/uma função)
 ```
 
-> **Não use `supabase functions deploy` direto em produção** — bypass o gate de aprovação.
-> Isso é deliberado: ver CLAUDE.md "merge ≠ deploy".
+> **Não use `supabase functions deploy` direto em produção** — bypassa o gate do CI obrigatório e a comparação de digest local × remoto.
+> As edge functions publicadas precisam bater com o repo (ver cabeçalho do `deploy-functions.yml`).
 
 ### 3. Aplicar migrations
 
@@ -138,13 +140,15 @@ db-migrate.yml (apply=false, dry-run) → aprovação em producao-ddl → apply=
 
 ## Edge Functions
 
-### Deploy (obrigatório via workflow)
+### Deploy (automático no push; manual só para rollback)
 
-O deploy de Edge Functions em produção **exige** aprovação humana no environment
-`producao-edge-functions`. Nenhum agente dispara esse workflow de forma autônoma.
+O push na `main` com alteração em edge dispara o deploy sozinho (filtrado por pasta).
+O dispatch manual (`workflow_dispatch`) serve para rollback, função única, dry-run e
+rotação de secrets. Nenhum agente dispara esse workflow de forma autônoma fora do push.
 
 ```
-GitHub → Actions → deploy-functions.yml → Run workflow → aprovar em producao-edge-functions
+Push na main (edge alterada) → deploy automático
+GitHub → Actions → deploy-functions.yml → Run workflow (só rollback/uma função)
 ```
 
 ### Lista de funções
@@ -301,7 +305,7 @@ Não há rollback automático. Crie uma nova migration de reversão seguindo o f
 ### Pós-merge (produção)
 - [ ] Vercel rebuild concluído (automático)
 - [ ] Se há migration nova: `db-migrate.yml` (dry-run → aprovar → apply)
-- [ ] Se há edge function nova/alterada: `deploy-functions.yml` (aprovar)
+- [ ] Se há edge function nova/alterada: `deploy-functions.yml` dispara sozinho no push (só confirmar o run verde)
 - [ ] Se houve migration: `types-sync.yml` disparado (ou aguardar auto-dispatch W33)
 - [ ] Verificar logs após deploy
 - [ ] Testar fluxos críticos em produção
