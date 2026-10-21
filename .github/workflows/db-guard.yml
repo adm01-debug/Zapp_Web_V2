@@ -223,6 +223,7 @@ jobs:
       - name: Provar contrato Talk X de janela de envio em PostgreSQL descartavel
         env:
           TALKX_WINDOW_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          POSTGREST_TEST_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/talkx-engine-window-contract.test.mjs
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.

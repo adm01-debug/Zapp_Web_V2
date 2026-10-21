@@ -94,8 +94,9 @@ CREATE TRIGGER trg_multiplix_audiences_validate_shared_roles
   BEFORE INSERT OR UPDATE ON public.multiplix_audiences
   FOR EACH ROW EXECUTE FUNCTION public.multiplix_audiences_validate_shared_roles();
 
--- Policy de leitura existente no bucket privado + canonicas dos outros buckets.
-CREATE POLICY "avatars authenticated read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+-- Par de SELECT real da migration: a policy canonica fica, a redundante deve cair.
+CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
 CREATE POLICY "Anyone can view stickers" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'stickers');
 CREATE POLICY "Public read audio memes" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'audio-memes');
 CREATE POLICY "Public read for custom emojis" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'custom-emojis');
@@ -118,7 +119,7 @@ sel_emoji="SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND table
 exec_role() { printf "SELECT has_function_privilege('%s','public.multiplix_audiences_validate_shared_roles()','EXECUTE')" "$1"; }
 
 echo '── BLOCO A: ANTES (bucket privado + DELETE redundante) ───────────────────────────'
-expect_value 'A1 avatars SELECT autenticada (1)' '1' "$sel_avatars"
+expect_value 'A1 avatars SELECT duplicado (2)' '2' "$sel_avatars"
 expect_value 'A2 avatars DELETE duplicado (2)' '2' "$del_avatars"
 expect_value 'A3 PUBLIC executa a funcao' 't' "$(exec_role anon)"
 expect_value 'A4 authenticated executa a funcao' 't' "$(exec_role authenticated)"
@@ -130,7 +131,7 @@ psql_file "$migration"
 echo
 echo '── BLOCO B: DEPOIS (higiene aplicada) ────────────────────────────────────────────'
 expect_value 'B1 avatars SELECT = 1 (so a canonica)' '1' "$sel_avatars"
-expect_value 'B2 SELECT autenticada mantida' 'avatars authenticated read' \
+expect_value 'B2 SELECT canonica mantida e policy publica redundante removida' 'Anyone can view avatars' \
   "SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='SELECT' AND qual LIKE '%bucket_id = ''avatars''%'"
 expect_value 'B3 avatars DELETE = 1 (so a canonica)' '1' "$del_avatars"
 expect_value 'B4 a canonica mantida e "Users can delete their own avatar"' 'Users can delete their own avatar' \
