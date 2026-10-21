@@ -41,9 +41,9 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 167 |
-| Views (`views`) | 12 |
-| Colunas (`columns`) | 1954 |
+| Tabelas (`tables`) | 171 |
+| Views (`views`) | 13 |
+| Colunas (`columns`) | 1995 |
 | Funções (`functions`) | 252 |
 | Assinaturas de função (`function_signatures`) | 254 |
 | Funções de gatilho (`trigger_functions`) | 64 |
@@ -72,6 +72,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `ai_providers` | Fornecedores de IA cadastrados (endpoint, modelo e referência do segredo) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/settings/ai-providers/__tests__/remocao-provedor-fallback.test.tsx`, `src/components/settings/ai-providers/useAIProviders.ts` … |
 | `ai_usage_logs` | Log de uso de IA por chamada (tokens, modelo e função) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/inbox/AIConversationAssistant.tsx`, `src/components/settings/ai-providers/AIProviderHealthPanel.tsx` … |
 | `allowed_countries` | Países liberados no bloqueio geográfico | ativo | `src/hooks/system/useGeoBlocking.ts`, `scripts/db-audit/network-policy-rpc.test.sh` |
+| `app_settings` | Configuração chave/valor lida pelo banco, como os domínios confiáveis | roadmap | — |
 | `audio_meme_favorites` | Áudios e memes favoritados por usuário | ativo | `src/hooks/communication/useAudioMemes.ts` |
 | `audio_memes` | Biblioteca de áudios e memes disponíveis no chat | ativo | `src/components/settings/MediaLibraryAdmin.tsx`, `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx`, `src/components/settings/media-library/AIGenerateDialog.tsx` … |
 | `audit_logs` | Trilha de auditoria de ações do sistema (usuário, ação, entidade) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/admin/useAdminData.ts`, `src/components/dashboard/useSentimentData.ts` … |

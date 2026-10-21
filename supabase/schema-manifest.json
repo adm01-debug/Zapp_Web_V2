@@ -167,7 +167,8 @@
         "team_conversation_members": "215c2d45b491f5c815ace782ce450fdf",
         "link_preview_cache_metrics": "215c2d45b491f5c815ace782ce450fdf",
         "multiplix_audience_members": "fe2e7aa3a94b94b876d7713f1517686d",
-        "whatsapp_connection_queues": "215c2d45b491f5c815ace782ce450fdf"
+        "whatsapp_connection_queues": "215c2d45b491f5c815ace782ce450fdf",
+        "app_settings": "215c2d45b491f5c815ace782ce450fdf"
     },
     "types": {
         "e:app_role": "5fe9cb65299844e7f830bf9cfe2974ce",
@@ -193,7 +194,8 @@
         "v:whatsapp_connections_safe": "19152b9b2014fec4e032bc031abe072b",
         "v:whatsapp_connections_agent": "cd6c4947bc480eafff83a25cf290f29d",
         "v:whatsapp_connections_public": "af569ca06e365ec8a2faf2a1015b8b6f",
-        "v:password_reset_requests_safe": "a1d75e75ae761d68676b8c3e3eef1c52"
+        "v:password_reset_requests_safe": "a1d75e75ae761d68676b8c3e3eef1c52",
+        "v:team_message_read_state": "47c93e51ae100610f6cfc0c5b817a8a4"
     },
     "columns": {
         "calls.id": "9eb0988535c3822cb67934be7c6886ed",
@@ -2165,7 +2167,15 @@
         "user_settings.transcription_notification_enabled": "0b8a4c2dd7ae7c1d7a8d17095021caf6",
         "multiplix_recipients.provider_dispatch_started_at": "5acc3145d7627a563843e137480b1cbf",
         "whatsapp_connection_queues.whatsapp_connection_id": "9eb0988535c3822cb67934be7c6886ed",
-        "multiplix_delivery_items.provider_dispatch_started_at": "5acc3145d7627a563843e137480b1cbf"
+        "multiplix_delivery_items.provider_dispatch_started_at": "5acc3145d7627a563843e137480b1cbf",
+        "app_settings.key": "39c66b4057962691166304f428d0a1a2",
+        "app_settings.updated_at": "2ee64b1d53e1f8dc8df73647e8fba382",
+        "app_settings.value": "39c66b4057962691166304f428d0a1a2",
+        "team_message_read_state.all_read": "0b8a4c2dd7ae7c1d7a8d17095021caf6",
+        "team_message_read_state.conversation_id": "56a86446063b2ee9feb224bd26659238",
+        "team_message_read_state.member_count": "a377cd7f1e54fcadbfe714e7001f6053",
+        "team_message_read_state.message_id": "56a86446063b2ee9feb224bd26659238",
+        "team_message_read_state.read_count": "a377cd7f1e54fcadbfe714e7001f6053"
     },
     "indexes": {
         "calls.calls_pkey": "3917170efcea0e8dce43cd2339aa807e",
@@ -2796,7 +2806,8 @@
         "whatsapp_connection_queues.idx_whatsapp_connection_queues_whatsapp_connection_id": "18263e4346f00e3a31ddc5620fb3a863",
         "team_conversation_members.team_conversation_members_conversation_id_profile_id_key": "44c310485410a5d1f76db4baa739a174",
         "sicoob_contact_mapping.sicoob_contact_mapping_sicoob_user_id_sicoob_singular_id_key": "2652fd4fe234758a722391e724b2ead9",
-        "whatsapp_connection_queues.whatsapp_connection_queues_whatsapp_connection_id_queue_id_key": "700dd6c769cbb2953185c9be34cf5452"
+        "whatsapp_connection_queues.whatsapp_connection_queues_whatsapp_connection_id_queue_id_key": "700dd6c769cbb2953185c9be34cf5452",
+        "app_settings.app_settings_pkey": "329a9cd20db4a2186dea40ffda3f34d7"
     },
     "defaults": {
         "calls.id": "f3b72bb359a50b640590970a2ab8e514",
@@ -3694,7 +3705,8 @@
         "link_preview_cache_metrics.table_size_bytes": "cfcd208495d565ef66e7dff9f98764da",
         "multiplix_recipients.delivery_attempt_count": "cfcd208495d565ef66e7dff9f98764da",
         "user_settings.browser_notifications_enabled": "b326b5062b2f0e69046810717534cb09",
-        "user_settings.transcription_notification_enabled": "b326b5062b2f0e69046810717534cb09"
+        "user_settings.transcription_notification_enabled": "b326b5062b2f0e69046810717534cb09",
+        "app_settings.updated_at": "75230039beb12ce952f24927f2bfa2f2"
     },
     "policies": {
         "calls.\"Users can insert calls\"": "f10634fa183ccf41ab4a6e5d1d8ba86d",
@@ -4144,7 +4156,8 @@
         "contact_custom_fields.\"Users can insert custom fields for assigned contacts\"": "5eb86144ca6f1a0760d8caa25fcfc47d",
         "agent_visibility_grants.\"Admins and supervisors can manage visibility grants\"": "04f5b11e1ea6bda9d5b313ad3b3582db",
         "password_reset_requests.\"Admins can update reset requests without token access\"": "6bb769b20bce4c722cd1631653c7c25e",
-        "multiplix_delivery_items.\"Users can view delivery items of accessible dispatches\"": "2f37aa6a64a73a7137d989eb459d6837"
+        "multiplix_delivery_items.\"Users can view delivery items of accessible dispatches\"": "2f37aa6a64a73a7137d989eb459d6837",
+        "app_settings.app_settings_admin_all": "faa065330b8a23858a019725f8d6cecb"
     },
     "triggers": {
         "user_roles.sync_profile_role": "0d5bab3bf9da9bb29ac29b54b7e73d12",
@@ -5257,7 +5270,8 @@
         "relation:whatsapp_connection_queues.whatsapp_connection_queues_whatsapp_connection_id_fkey": "1e5b4190839b7d84443d613b1a9f16e9",
         "relation:team_conversation_members.team_conversation_members_conversation_id_profile_id_key": "3d42a27314d19977d58dfc5fbce619fc",
         "relation:sicoob_contact_mapping.sicoob_contact_mapping_sicoob_user_id_sicoob_singular_id_key": "35f192b98674215a89260d39515b5e18",
-        "relation:whatsapp_connection_queues.whatsapp_connection_queues_whatsapp_connection_id_queue_id_key": "1ee156734b2540bb0cc394affe87ae4b"
+        "relation:whatsapp_connection_queues.whatsapp_connection_queues_whatsapp_connection_id_queue_id_key": "1ee156734b2540bb0cc394affe87ae4b",
+        "relation:app_settings.app_settings_pkey": "a3ae63c6835b10eb4eba778c78ebca67"
     },
     "type_grants": {
         "e:public.app_role|PUBLIC|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -11118,7 +11132,55 @@
         "v:public.whatsapp_connections_public|service_role|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "v:public.password_reset_requests_safe|service_role|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "v:public.whatsapp_connections_public|authenticated|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "v:public.password_reset_requests_safe|authenticated|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327"
+        "v:public.password_reset_requests_safe|authenticated|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|TRIGGER|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|TRIGGER|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|postgres|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|TRIGGER|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.app_settings|service_role|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|TRIGGER|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|TRIGGER|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|postgres|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|DELETE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|MAINTAIN|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|REFERENCES|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|TRIGGER|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|TRUNCATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "v:public.team_message_read_state|service_role|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
     "database_identity": {
         "schema": "public",

@@ -619,6 +619,24 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       audio_meme_favorites: {
         Row: {
           created_at: string
@@ -10390,6 +10408,16 @@ export type Database = {
           recipient_id: string | null
           return_message: string | null
           status: string | null
+        }
+        Relationships: []
+      }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
         }
         Relationships: []
       }
