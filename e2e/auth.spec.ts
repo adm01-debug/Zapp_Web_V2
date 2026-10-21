@@ -7,7 +7,7 @@ test.describe('Auth flows (public, sem login real)', () => {
     await expect(page.getByRole('main', { name: /acesso à plataforma/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'ZAPP Web', exact: true })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
-    await expect(page.getByLabel('Senha')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Senha' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeVisible();
     await expect(page.getByText(/peça ao administrador da sua equipe/i)).toBeVisible();
   });
@@ -30,7 +30,7 @@ test.describe('Auth flows (public, sem login real)', () => {
 
   test('password input respects maxLength', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByLabel('Senha')).toHaveAttribute('maxlength', '200');
+    await expect(page.getByRole('textbox', { name: 'Senha' })).toHaveAttribute('maxlength', '200');
   });
 
   test('public signup is absent and access is administrator-managed', async ({ page }) => {

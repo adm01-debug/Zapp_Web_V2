@@ -1,7 +1,8 @@
 -- n011_storage_drop_duplicate_avatar_policies
--- Rollback: SELECT 1;
--- Rollback intencionalmente sem efeito sobre policies: elas já foram removidas por
--- migrations de segurança anteriores em replay limpo. Recriá-las ampliaria acesso.
+-- Rollback: CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING ((bucket_id = 'avatars'::text)); CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated USING (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text)));
+-- Rollback (SQL executável, na ordem):
+--   CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING ((bucket_id = 'avatars'::text));
+--   CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated USING (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text)));
 -- N-011 (P2 · banco, inventario A4): dedup de policies de leitura e exclusao em
 -- storage.objects para o bucket avatars. A migration de origem
 -- 20260511233306 cria DOIS pares com USING identico: no DELETE, a singular

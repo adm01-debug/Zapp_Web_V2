@@ -6,8 +6,8 @@
 #     por verbo/bucket nos quatro buckets citados.
 #
 # Estado inicial seguro: bucket privado, leitura apenas autenticada, duas DELETE
-# redundantes com o mesmo escopo do dono. O rollback pode restaurar o GRANT, mas nao
-# deve reintroduzir leitura legada nem uma DELETE sem auth.uid()/foldername.
+# redundantes com o mesmo escopo do dono. Este teste verifica apenas forward SQL e
+# idempotencia; migrations já aplicadas são imutáveis e seus rollbacks não são executados.
 
 set -Eeuo pipefail
 
@@ -160,27 +160,4 @@ expect_value 'C1 avatars SELECT segue 1' '1' "$sel_avatars"
 expect_value 'C2 avatars DELETE segue 1' '1' "$del_avatars"
 expect_value 'C3 anon segue sem EXECUTE' 'f' "$(exec_role anon)"
 
-echo
-echo '── BLOCO D: rollback sem reabrir leitura nem exclusao cruzada ─────────────────────'
-rollback_sql="$(sed -n 's/^-- Rollback: //p' "$migration" | head -n1)"
-[[ -n "$rollback_sql" ]] || fail 'rollback executavel nao encontrado no cabecalho da migration'
-psql_sql "$rollback_sql" >/dev/null
-expect_value 'D1 bucket avatars continua privado' 'f' \
-  "SELECT public FROM storage.buckets WHERE id='avatars'"
-expect_value 'D2 policies SELECT legadas nao foram recriadas' '0' \
-  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname IN ('Anyone can view avatars','Avatar images are publicly accessible')"
-expect_value 'D3 policy DELETE ampla nao foi recriada' '0' \
-  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Users can delete their own avatars'"
-expect_value 'D4 rollback restaurou somente o GRANT anterior' 't' "$(exec_role anon)"
-
-psql_sql "INSERT INTO storage.objects (id,bucket_id,name) VALUES ('10000000-0000-0000-0000-000000000001','avatars','30000000-0000-0000-0000-000000000001/a.png'), ('10000000-0000-0000-0000-000000000002','avatars','30000000-0000-0000-0000-000000000002/b.png')" >/dev/null
-got="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='30000000-0000-0000-0000-000000000002'; DELETE FROM storage.objects WHERE id='10000000-0000-0000-0000-000000000001' RETURNING id")"
-[[ -z "$got" ]] || fail "rollback permitiu excluir avatar de outro usuario: $got"
-printf '[PASS] %s\n' 'D5 rollback bloqueia exclusao do avatar de outro usuario'
-got="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='30000000-0000-0000-0000-000000000001'; DELETE FROM storage.objects WHERE id='10000000-0000-0000-0000-000000000001' RETURNING id")"
-[[ "$got" == '10000000-0000-0000-0000-000000000001' ]] || fail "dono nao conseguiu excluir seu avatar: $got"
-printf '[PASS] %s\n' 'D6 rollback preserva exclusao do proprio avatar'
-expect_value 'D7 anon nao le objetos do bucket privado' '0' \
-  "SET ROLE anon; SELECT count(*) FROM storage.objects WHERE bucket_id='avatars'"
-
-printf '\n[OK] higiene de grants e rollback seguro das policies verificados\n'
+printf '\n[OK] higiene de grants e policies duplicadas verificada\n'

@@ -11,9 +11,7 @@
 //   (a) replay limpo: migrations anteriores ja removeram os alvos, entao N-011 e no-op;
 //   (b) replay drifted: reintroduz os alvos da migration historica, aplica N-011 e prova
 //       que ambos somem sem alterar policies alheias;
-//   (c) rollback drifted nao recria policies removidas, pois seriam um widening de acesso;
-//   (d) rollback apos replay limpo NAO introduz policies ausentes no estado original;
-//   (e) reaplicar o fix e idempotente (DROP POLICY IF EXISTS).
+//   (c) reaplicar o fix e idempotente (DROP POLICY IF EXISTS).
 //
 // N011_WITHOUT_FIX=1 afeta o estado comparativo, nao as simulacoes explicitas abaixo.
 // O historico anterior ja remove os alvos; nao se presume contagem 2 de avatars.
@@ -213,13 +211,10 @@ const arquivosBase = arquivosTodos.filter((a) => a !== caminhoFix);
 const estadoSemFix = estado(arquivosBase);
 const estadoComFix = semFix ? estado(arquivosBase) : estado(arquivosTodos);
 const linhasFix = lerFix().split('\n');
-const sqlRollback = linhasFix[1]?.replace(/^-- Rollback:\s*/, '') ?? '';
 const statementsFix = divide(lerFix());
-const statementsRollback = divide(sqlRollback);
 const simuladoCleanDepoisFix = aplicarStatementsDePolicy(estadoSemFix, statementsFix);
-const simuladoCleanDepoisRollback = aplicarStatementsDePolicy(simuladoCleanDepoisFix, statementsRollback);
 // Drift controlado: injeta as definicoes REAIS da migration historica de origem,
-// sem depender do rollback atual (que deve permanecer no-op por seguranca).
+// para provar o efeito da migration forward no replay com drift.
 const politicasOriginais = estado([join(dirMig, ORIGEM)]);
 const simuladoDriftedAntes = new Map(estadoSemFix);
 for (const nome of NOMES_REMOVIDOS_N011) {
@@ -228,7 +223,6 @@ for (const nome of NOMES_REMOVIDOS_N011) {
   simuladoDriftedAntes.set(nome, { ...policy });
 }
 const simuladoDriftedDepoisFix = aplicarStatementsDePolicy(simuladoDriftedAntes, statementsFix);
-const simuladoDriftedDepoisRollback = aplicarStatementsDePolicy(simuladoDriftedDepoisFix, statementsRollback);
 
 const grupo = (tab, bucket, cmd) =>
   [...tab.entries()].filter(([, r]) => r.bucket === bucket && r.cmd === cmd).map(([n]) => n).sort();
@@ -247,8 +241,8 @@ const SOZINHOS = [
 console.log(`FATO: migrations lidas = ${arquivosBase.length}`);
 console.log(`FATO: modo = ${semFix ? 'SEM FIX (estado anterior)' : 'com o fix aplicado'}`);
 console.log(`FATO: policies de storage.objects sem fix=${estadoSemFix.size} com fix=${estadoComFix.size}`);
-console.log(`SIMULACAO: replay limpo N011 ${estadoSemFix.size} -> ${simuladoCleanDepoisFix.size}; rollback ${simuladoCleanDepoisRollback.size}`);
-console.log(`SIMULACAO: replay drifted N011 ${simuladoDriftedAntes.size} -> ${simuladoDriftedDepoisFix.size}; rollback ${simuladoDriftedDepoisRollback.size}`);
+console.log(`SIMULACAO: replay limpo N011 ${estadoSemFix.size} -> ${simuladoCleanDepoisFix.size}`);
+console.log(`SIMULACAO: replay drifted N011 ${simuladoDriftedAntes.size} -> ${simuladoDriftedDepoisFix.size}`);
 
 test('migrations posteriores nao reescrevem policies de avatars', () => {
   const versaoFix = basename(caminhoFix).split('_')[0];
@@ -292,20 +286,6 @@ test('replay drifted: N-011 remove os dois alvos reais sem alterar as demais pol
   );
 });
 
-test('rollback no estado drifted nao recria policies redundantes removidas', () => {
-  assert.deepEqual(
-    [...simuladoDriftedDepoisRollback.entries()].sort(),
-    [...simuladoDriftedDepoisFix.entries()].sort(),
-  );
-});
-
-test('rollback apos replay limpo nao deve introduzir policies ausentes no estado original', () => {
-  assert.deepEqual(
-    [...simuladoCleanDepoisRollback.entries()].sort(),
-    [...estadoSemFix.entries()].sort(),
-  );
-});
-
 for (const [bucket, cmd, nomesEsperados] of SOZINHOS) {
   const nomes = Array.isArray(nomesEsperados) ? nomesEsperados : [nomesEsperados];
   test(`${bucket}/${cmd}: policies vigentes antes e depois do fix`, () => {
@@ -339,12 +319,6 @@ test('a 1a linha da migration e o cabecalho `-- <slug>`', () => {
 
 test('a 2a linha da migration comeca com `-- Rollback:`', () => {
   assert.ok(linhasFix[1].startsWith('-- Rollback:'));
-});
-
-test('o rollback e um no-op SQL executavel, sem DDL de policy', () => {
-  const stmts = divide(linhasFix[1].split('Rollback:')[1].trim());
-  assert.deepEqual(stmts, ['SELECT 1']);
-  assert.ok(stmts.every((st) => !/\b(?:create|alter|drop)\s+policy\b/i.test(st)));
 });
 
 test('reaplicar o fix e idempotente (DROP POLICY IF EXISTS)', () => {

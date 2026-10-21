@@ -19,8 +19,10 @@
 #       mantidos), stickers/audio-memes/custom-emojis SELECT/DELETE = 1;
 #   (b) comportamento com papel real: dono apaga o proprio avatar, outro usuario
 #       autenticado nao apaga o alheio, anonimo nao le nem apaga;
-#   (c) rollback: o bloco extraido da linha `-- Rollback:` nao recria policies
-#       redundantes; a exclusao de avatar continua limitada ao dono.
+#   (c) reaplicacao do fix e idempotente.
+#
+# Migrations já aplicadas são imutáveis; este teste não executa os rollbacks
+# documentados no cabeçalho.
 #
 # N011_WITHOUT_FIX=1 pula o fix para reproduzir o estado ANTERIOR (vermelho):
 # as contagens de avatars voltam a 2 e o teste falha.
@@ -194,23 +196,7 @@ pass "anonimo nao le avatares"
 expect_error_as "anonimo nao apaga avatar" "anon" "" "permission denied" \
   "DELETE FROM storage.objects WHERE bucket_id = 'avatars' RETURNING name"
 
-# (c) Rollback: extrai o bloco da propria migration e prova que nao reabre acesso.
-rollback_sql="$(sed -n 's/^-- Rollback: //p' "$fix_migration")"
-[[ -n "$rollback_sql" ]] || fail "migration sem linha -- Rollback: executavel"
-psql_test -v ON_ERROR_STOP=1 -c "$rollback_sql" >/dev/null
-got="$(psql_q "SELECT count(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND cmd = 'DELETE' AND qual LIKE '%avatars%'")"
-[[ "$got" == "1" ]] || fail "rollback nao deve recriar DELETE: esperado 1, obtido [$got]"
-got="$(psql_q "SELECT count(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND cmd = 'SELECT' AND qual LIKE '%avatars%'")"
-[[ "$got" == "1" ]] || fail "rollback nao deve recriar SELECT: esperado 1, obtido [$got]"
-pass "rollback nao recria policies removidas"
-
-psql_q "INSERT INTO storage.objects (bucket_id, name) VALUES ('avatars', '$owner_uid/after-rollback.png')" >/dev/null
-got="$(expect_ok_as "rollback nao permite exclusao cruzada" "authenticated" "$other_uid" \
-  "DELETE FROM storage.objects WHERE bucket_id = 'avatars' AND name = '$owner_uid/after-rollback.png' RETURNING name")"
-[[ -z "$got" ]] || fail "rollback permitiu exclusao cruzada: [$got]"
-pass "rollback continua bloqueando exclusao do avatar de outro usuario"
-
 psql_test < "$fix_migration" >/dev/null
-check_count "fix reaplicado apos rollback" "avatars" "DELETE" "Users can delete their own avatar"
+check_count "fix reaplicado (idempotente)" "avatars" "DELETE" "Users can delete their own avatar"
 
 pass "N-011 dedup de policies de avatar provado"

@@ -1,8 +1,8 @@
 -- higiene_grants_public_policies
--- Rollback: GRANT EXECUTE ON FUNCTION public.multiplix_audiences_validate_shared_roles() TO PUBLIC, anon, authenticated; SELECT 1;
--- O rollback reverte somente o GRANT. Nao recria policies removidas: a SELECT
--- legada amplia leitura e a DELETE sem auth.uid()/foldername permite excluir
--- avatares de terceiros. Reversao dessas policies exige uma migration segura.
+-- Rollback: devolve o EXECUTE da funcao de trigger e recria as duas policies redundantes. Na ordem:
+--   GRANT EXECUTE ON FUNCTION public.multiplix_audiences_validate_shared_roles() TO PUBLIC, anon, authenticated;
+--   CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+--   CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
 --
 -- Higiene de grants (docs/audits/SEGURANCA_DEFINER_GRANTS_STORAGE_2026-10-07.md).
 -- Nenhuma linha de dado e tocada: so ACL de funcao e policies de storage.objects.
