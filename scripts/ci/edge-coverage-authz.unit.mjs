@@ -177,25 +177,68 @@ export function avaliarStatusTestes(status, saida = '') {
   return [`deno test saiu com status ${status} — medição de cobertura inválida. Testes vermelhos: ${lista}`];
 }
 
+const MAX_DIAGNOSTICO_DENO = 6_000;
+
+function sanitizarSaidaDeno(saida) {
+  let texto = String(saida ?? '')
+    .replace(/\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/gu, '')
+    .replace(/\r\n?/gu, '\n')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/gu, '')
+    .replace(/\b(Bearer\s+)[^\s"'`]+/giu, '$1[REDACTED]')
+    .replace(
+      /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sb_secret_[A-Za-z0-9_-]+|sk-[A-Za-z0-9_-]{20,})\b/gu,
+      '[REDACTED]',
+    )
+    .replace(
+      /\b([A-Z0-9_-]*(?:TOKEN|SECRET|PASSWORD|PASSWD|KEY|CREDENTIALS?|DATABASE_URL|DESTINO_URL)|token|secret|password|passwd|key|credential)(\s*[:=]\s*)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;]+)/giu,
+      '$1$2[REDACTED]',
+    )
+    .trim();
+
+  if (texto.length > MAX_DIAGNOSTICO_DENO) {
+    const metade = Math.floor(MAX_DIAGNOSTICO_DENO / 2);
+    const omitidos = texto.length - metade * 2;
+    texto = `${texto.slice(0, metade)}\n...[${omitidos} chars omitted]...\n${texto.slice(-metade)}`;
+  }
+  return texto;
+}
+
+function erroDenoTest(teste) {
+  const status = teste.status === null ? 'indisponível' : teste.status;
+  const sinal = teste.signal ? `; sinal ${teste.signal}` : '';
+  const erroExecucao = teste.error
+    ? sanitizarSaidaDeno(teste.error.message ?? teste.error)
+    : '';
+  const stdout = sanitizarSaidaDeno(teste.stdout);
+  const stderr = sanitizarSaidaDeno(teste.stderr);
+  return [
+    `deno test falhou (status ${status}${sinal}) — medição de cobertura inválida.`,
+    ...(erroExecucao ? [`erro de execução: ${erroExecucao}`] : []),
+    `stdout:\n${stdout || '(vazio)'}`,
+    `stderr:\n${stderr || '(vazio)'}`,
+  ].join('\n\n');
+}
+
 /**
  * Mede do zero: diretório fresco de cobertura, `deno test` só nos 5 testes,
  * `deno coverage --lcov`, soma só dos 5 helpers. Não reaproveita perfil.
  * Devolve também o status dos testes: teste vermelho invalida a medição e
  * quem chama tem de reprovar (não existe mais "número válido com teste quebrado").
  */
-export function medirDoZero(repoRoot = RAIZ) {
+export function medirDoZero(repoRoot = RAIZ, executar = spawnSync) {
   const dir = mkdtempSync(path.join(tmpdir(), 'edge-authz-cov-'));
   try {
-    const teste = spawnSync('deno', montarArgsDenoTest(dir, repoRoot), {
+    const teste = executar('deno', montarArgsDenoTest(dir, repoRoot), {
       cwd: repoRoot,
       encoding: 'utf8',
       timeout: 120_000,
     });
-    if (teste.error) throw new Error(`deno não executou: ${teste.error.message}`);
     const statusTestes = teste.status;
     // `deno test` detalha os vermelhos no stdout e o resumo no stderr: junto os dois.
     const saidaTestes = `${teste.stdout ?? ''}\n${teste.stderr ?? ''}`;
-    const cobertura = spawnSync('deno', ['coverage', dir, '--lcov'], {
+    if (statusTestes !== 0) throw new Error(erroDenoTest(teste));
+
+    const cobertura = executar('deno', ['coverage', dir, '--lcov'], {
       cwd: repoRoot,
       encoding: 'utf8',
       timeout: 60_000,
@@ -359,6 +402,63 @@ test('N217: HELPERS cobre exatamente os *auth*.ts de _shared', () => {
     .filter((f) => /^[^.].*auth.*\.ts$/.test(f))
     .sort();
   assert.deepEqual(emDisco, [...HELPERS].sort());
+});
+
+test('N217: falha do deno test mostra diagnóstico sanitizado e não roda coverage', () => {
+  const chamadas = [];
+  const tokenSintetico = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789ABCDEF';
+  let mensagemErro = '';
+  assert.throws(
+    () => medirDoZero(RAIZ, (_comando, args) => {
+      chamadas.push(args[0]);
+      return {
+        error: null,
+        status: 1,
+        signal: null,
+        stdout: `FAILED | 2 passed | 1 failed\nGITHUB_TOKEN=${tokenSintetico}\nSUPABASE_SERVICE_ROLE_KEY=synthetic-service-role-value`,
+        stderr: 'Type checking failed in evolution-control-authz.test.ts',
+      };
+    }),
+    (error) => {
+      mensagemErro = error.message;
+      return /deno test falhou/u.test(mensagemErro);
+    },
+  );
+
+  assert.deepEqual(chamadas, ['test'], 'deno coverage não deve rodar após deno test vermelho');
+  assert.match(mensagemErro, /FAILED \| 2 passed \| 1 failed/u);
+  assert.match(mensagemErro, /Type checking failed in evolution-control-authz\.test\.ts/u);
+  assert.match(mensagemErro, /GITHUB_TOKEN=\[REDACTED\]/u);
+  assert.match(mensagemErro, /SUPABASE_SERVICE_ROLE_KEY=\[REDACTED\]/u);
+  assert.doesNotMatch(mensagemErro, new RegExp(tokenSintetico, 'u'));
+  assert.doesNotMatch(mensagemErro, /synthetic-service-role-value/u);
+});
+
+test('N217: falha ao iniciar deno preserva o erro e não tenta coverage', () => {
+  const chamadas = [];
+  let mensagemErro = '';
+  assert.throws(
+    () => medirDoZero(RAIZ, (_comando, args) => {
+      chamadas.push(args[0]);
+      return {
+        error: new Error('spawn deno ENOENT; TOKEN=synthetic-spawn-token'),
+        status: null,
+        signal: null,
+        stdout: '',
+        stderr: '',
+      };
+    }),
+    (error) => {
+      mensagemErro = error.message;
+      return /deno test falhou/u.test(mensagemErro);
+    },
+  );
+
+  assert.deepEqual(chamadas, ['test']);
+  assert.match(mensagemErro, /status indisponível/u);
+  assert.match(mensagemErro, /spawn deno ENOENT/u);
+  assert.match(mensagemErro, /TOKEN=\[REDACTED\]/u);
+  assert.doesNotMatch(mensagemErro, /synthetic-spawn-token/u);
 });
 
 let medicaoCompartilhada = null;

@@ -1,7 +1,7 @@
 # Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)
 
 **Data:** 2026-10-01 (13:10 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD da `main` auditado:** `7d3117c`
-**Escopo:** os 14 arquivos que existiam em `.github/workflows/` no baseline (hoje são **16** — ver Reconciliação TRA-009), os 3 workflows dinâmicos (Dependabot Updates, Dependency Graph,
+**Escopo:** os 14 arquivos que existiam em `.github/workflows/` no baseline (a reconciliação TRA-009 registrou **16** naquele retrato), os 3 workflows dinâmicos (Dependabot Updates, Dependency Graph,
 Copilot reviewer), os GitHub Apps que publicam checks no repo, branch protection, environments, secrets, variáveis,
 cache, artifacts, Dependabot, Code Scanning, scripts que os workflows chamam (`scripts/ci/`, `scripts/db-audit/`,
 `scripts/edge-deploy/`) e as duas auditorias anteriores (26/09 e 27/09).
@@ -75,9 +75,9 @@ os checkboxes deste plano não tinham relação explícita com entregas, alterna
 e o texto herdava a contagem antiga de workflows. Esta seção é a **camada de reconciliação**: o checkbox é só um
 marcador — a evidência de cada etapa é o que está aqui.
 
-**Inventário atual (medido, não herdado do texto de 01/10):** **16** arquivos YAML em `.github/workflows/`, mais os
+**Inventário vigente (medido em 2026-10-20, não herdado do texto de 01/10):** **15** arquivos YAML em `.github/workflows/`, mais os
 **3** workflows dinâmicos sem arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) —
-**19** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
+**18** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs`, conferido por `--check`), não as listas manuais das seções antigas deste
 documento. Os números "14 arquivos" / "17 no total" das seções de 01/10 são do baseline `7d3117c` e ficam
 registrados como **históricos**, não como inventário vigente.
@@ -108,7 +108,7 @@ vigente de `required_status_checks` é **`strict=true`** (E15(b), 02/10); a inst
 | **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.64.1`, `playwright-core@1.64.1` e `@playwright/test@1.64.1`; os **três** workflows pinam a mesma versão (`ci.yml`, `e2e-logado.yml`, `e2e-talkx.yml`) | **Não há mismatch** entre lock e workflows: a paridade 1.64.1 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
 | **E93** settings de merge do repo | `[x]` **CONCLUÍDA** | `scripts/ci/github-settings-baseline.json` (`allow_merge_commit=false`, `allow_rebase_merge=false`, squash `PR_BODY`/`PR_TITLE`) | Medição por API do GitHub; o checkbox original vazio é que estava desatualizado. |
 | **E95** tabela canônica no `CLAUDE.md` | `[x]` **CONCLUÍDA** | Seção "Perímetro do GitHub — estado canônico" no `CLAUDE.md` + `docs/audits/e95-perimetro-github-2026-10-03.md` | Os campos de branch protection exigem `administration: read`: o guard recebe **403** e marca "NÃO VERIFICÁVEL". 403 é limite de evidência, **não** confirmação de configuração errada. |
-| **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; README declara **16 workflows** e `--check` é verde | O `--check` prova que o doc acompanha os YAML; ele não prova runtime nenhum. |
+| **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; o README declarava **16 workflows naquela entrega** e hoje declara **15**; `--check` segue verde | O `--check` prova que o doc acompanha os YAML; ele não prova runtime nenhum. |
 
 ### Demais discrepâncias do estado atual
 

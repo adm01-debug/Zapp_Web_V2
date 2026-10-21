@@ -191,7 +191,7 @@ export function ConnectionsView() {
         {[
           { label: 'Total de Conexões', value: connections.length, color: 'text-primary' },
           { label: 'Conectadas', value: connections.filter(c => c.status === 'connected').length, color: 'text-status-online' },
-          { label: 'Desconectadas', value: connections.filter(c => c.status !== 'connected').length, color: 'text-status-offline' },
+          { label: 'Desconectadas', value: connections.filter(c => c.status === 'disconnected').length, color: 'text-status-offline' },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
             <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p></CardContent></Card>

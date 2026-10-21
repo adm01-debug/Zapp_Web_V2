@@ -50,12 +50,12 @@ export function ConversationEmptyState({
           className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center"
           aria-hidden="true"
           animate={reduzido ? undefined : { rotate: 360 }}
-          transition={reduzido ? undefined : { duration: 18, repeat: Infinity, ease: 'linear' }}
+          transition={reduzido ? undefined : { duration: 18, ease: 'linear' }}
         >
           <motion.div
             className="absolute h-16 w-16 rounded-2xl bg-primary/10 ring-1 ring-primary/10"
             animate={reduzido ? undefined : { scale: [1, 1.08, 1] }}
-            transition={reduzido ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            transition={reduzido ? undefined : { duration: 3, ease: 'easeInOut' }}
           />
           <motion.div
             className="relative"
@@ -69,13 +69,13 @@ export function ConversationEmptyState({
             className="absolute left-1 top-5 h-2 w-2 rounded-full bg-primary/50"
             initial={reduzido ? false : { opacity: 0 }}
             animate={reduzido ? undefined : { opacity: [0.2, 1, 0.2] }}
-            transition={reduzido ? undefined : { duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            transition={reduzido ? undefined : { duration: 2, ease: 'easeInOut' }}
           />
           <motion.span
             className="absolute right-1 bottom-5 h-2 w-2 rounded-full bg-primary/40"
             initial={reduzido ? false : { opacity: 0 }}
             animate={reduzido ? undefined : { opacity: [0.2, 1, 0.2] }}
-            transition={reduzido ? undefined : { duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
+            transition={reduzido ? undefined : { duration: 2, ease: 'easeInOut', delay: 0.7 }}
           />
         </motion.div>
         <h2 className="text-lg font-bold tracking-tight text-foreground">{title}</h2>

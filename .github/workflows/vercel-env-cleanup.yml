@@ -23,6 +23,8 @@ on:
 jobs:
   cleanup:
     name: Remove vars perigosas/mortas do Vercel
+    # Só executa código da main quando o secret de Vercel está no ambiente.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -245,4 +245,4 @@ inventário apura hoje:
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 166.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 170.

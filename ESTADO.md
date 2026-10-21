@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 84 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -17,7 +17,7 @@ partir do código e falha quando:
 * uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
   `supabase/config.toml` (ou vice-versa).
 
-O quadro `## Totais
+## Totais
 
 | Grupo | Edges |
 |---|---|

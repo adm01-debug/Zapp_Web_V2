@@ -5,11 +5,9 @@
 #  2) policies DUPLICADAS de storage.objects (mesmo bucket+verbo) caem, ficando UMA
 #     por verbo/bucket nos quatro buckets citados.
 #
-# BLOCO A (antes): avatars tem 2 SELECT e 2 DELETE iguais; anon/authenticated
-#   podem executar a funcao de trigger.
-# BLOCO B (depois): 1 SELECT e 1 DELETE em avatars (a canonica de cada par);
-#   stickers/audio-memes/custom-emojis seguem com 1 SELECT cada; PUBLIC/anon/
-#   authenticated sem EXECUTE e service_role preservado. Reaplicar nao muda nada.
+# Estado inicial seguro: bucket privado, leitura apenas autenticada, duas DELETE
+# redundantes com o mesmo escopo do dono. O rollback pode restaurar o GRANT, mas nao
+# deve reintroduzir leitura legada nem uma DELETE sem auth.uid()/foldername.
 
 set -Eeuo pipefail
 
@@ -62,8 +60,18 @@ CREATE ROLE service_role NOLOGIN;
 
 -- storage.objects minimo (so o que as policies leem)
 CREATE SCHEMA storage;
+CREATE SCHEMA auth;
+CREATE TABLE storage.buckets (id text PRIMARY KEY, name text NOT NULL, public boolean NOT NULL);
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', false);
 CREATE TABLE storage.objects (id uuid PRIMARY KEY, bucket_id text, name text, owner uuid);
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid
+$$;
+CREATE FUNCTION storage.foldername(text) RETURNS text[] LANGUAGE sql IMMUTABLE AS $$
+  SELECT string_to_array(trim($1, '/'), '/')
+$$;
+GRANT USAGE ON SCHEMA storage, auth TO anon, authenticated;
 
 -- funcao de TRIGGER, sem argumentos (identidade real). CREATE FUNCTION ja da
 -- EXECUTE a PUBLIC; o GRANT explicito a anon/authenticated/service_role imita os
@@ -86,16 +94,18 @@ CREATE TRIGGER trg_multiplix_audiences_validate_shared_roles
   BEFORE INSERT OR UPDATE ON public.multiplix_audiences
   FOR EACH ROW EXECUTE FUNCTION public.multiplix_audiences_validate_shared_roles();
 
--- Par duplicado em avatars (SELECT) + as canonicas dos outros buckets.
-CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
-CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+-- Policy de leitura existente no bucket privado + canonicas dos outros buckets.
+CREATE POLICY "avatars authenticated read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
 CREATE POLICY "Anyone can view stickers" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'stickers');
 CREATE POLICY "Public read audio memes" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'audio-memes');
 CREATE POLICY "Public read for custom emojis" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'custom-emojis');
 
 -- Par duplicado em avatars (DELETE)
-CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
-CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+GRANT SELECT, DELETE ON storage.objects TO anon, authenticated;
 SQL
 
 psql_file "$tmp_dir/pre.sql"
@@ -107,8 +117,8 @@ sel_audio="SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND table
 sel_emoji="SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='SELECT' AND qual LIKE '%bucket_id = ''custom-emojis''%'"
 exec_role() { printf "SELECT has_function_privilege('%s','public.multiplix_audiences_validate_shared_roles()','EXECUTE')" "$1"; }
 
-echo '── BLOCO A: ANTES (defeito presente) ─────────────────────────────────────────────'
-expect_value 'A1 avatars SELECT duplicado (2)' '2' "$sel_avatars"
+echo '── BLOCO A: ANTES (bucket privado + DELETE redundante) ───────────────────────────'
+expect_value 'A1 avatars SELECT autenticada (1)' '1' "$sel_avatars"
 expect_value 'A2 avatars DELETE duplicado (2)' '2' "$del_avatars"
 expect_value 'A3 PUBLIC executa a funcao' 't' "$(exec_role anon)"
 expect_value 'A4 authenticated executa a funcao' 't' "$(exec_role authenticated)"
@@ -120,11 +130,13 @@ psql_file "$migration"
 echo
 echo '── BLOCO B: DEPOIS (higiene aplicada) ────────────────────────────────────────────'
 expect_value 'B1 avatars SELECT = 1 (so a canonica)' '1' "$sel_avatars"
-expect_value 'B2 a canonica mantida e "Anyone can view avatars"' 'Anyone can view avatars' \
+expect_value 'B2 SELECT autenticada mantida' 'avatars authenticated read' \
   "SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='SELECT' AND qual LIKE '%bucket_id = ''avatars''%'"
 expect_value 'B3 avatars DELETE = 1 (so a canonica)' '1' "$del_avatars"
 expect_value 'B4 a canonica mantida e "Users can delete their own avatar"' 'Users can delete their own avatar' \
   "SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='DELETE' AND qual LIKE '%bucket_id = ''avatars''%'"
+expect_value 'B4a DELETE canonica segue escopada ao dono' '1' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Users can delete their own avatar' AND qual ILIKE '%foldername%' AND qual ILIKE '%auth.uid%'"
 expect_value 'B5 stickers SELECT = 1 (nada removido)' '1' "$sel_stickers"
 expect_value 'B6 audio-memes SELECT = 1 (nada removido)' '1' "$sel_audio"
 expect_value 'B7 custom-emojis SELECT = 1 (nada removido)' '1' "$sel_emoji"
@@ -148,4 +160,27 @@ expect_value 'C1 avatars SELECT segue 1' '1' "$sel_avatars"
 expect_value 'C2 avatars DELETE segue 1' '1' "$del_avatars"
 expect_value 'C3 anon segue sem EXECUTE' 'f' "$(exec_role anon)"
 
-printf '\n[OK] higiene de grants (EXECUTE + policies duplicadas) verificada\n'
+echo
+echo '── BLOCO D: rollback sem reabrir leitura nem exclusao cruzada ─────────────────────'
+rollback_sql="$(sed -n 's/^-- Rollback: //p' "$migration" | head -n1)"
+[[ -n "$rollback_sql" ]] || fail 'rollback executavel nao encontrado no cabecalho da migration'
+psql_sql "$rollback_sql" >/dev/null
+expect_value 'D1 bucket avatars continua privado' 'f' \
+  "SELECT public FROM storage.buckets WHERE id='avatars'"
+expect_value 'D2 policies SELECT legadas nao foram recriadas' '0' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname IN ('Anyone can view avatars','Avatar images are publicly accessible')"
+expect_value 'D3 policy DELETE ampla nao foi recriada' '0' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Users can delete their own avatars'"
+expect_value 'D4 rollback restaurou somente o GRANT anterior' 't' "$(exec_role anon)"
+
+psql_sql "INSERT INTO storage.objects (id,bucket_id,name) VALUES ('10000000-0000-0000-0000-000000000001','avatars','30000000-0000-0000-0000-000000000001/a.png'), ('10000000-0000-0000-0000-000000000002','avatars','30000000-0000-0000-0000-000000000002/b.png')" >/dev/null
+got="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='30000000-0000-0000-0000-000000000002'; DELETE FROM storage.objects WHERE id='10000000-0000-0000-0000-000000000001' RETURNING id")"
+[[ -z "$got" ]] || fail "rollback permitiu excluir avatar de outro usuario: $got"
+printf '[PASS] %s\n' 'D5 rollback bloqueia exclusao do avatar de outro usuario'
+got="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='30000000-0000-0000-0000-000000000001'; DELETE FROM storage.objects WHERE id='10000000-0000-0000-0000-000000000001' RETURNING id")"
+[[ "$got" == '10000000-0000-0000-0000-000000000001' ]] || fail "dono nao conseguiu excluir seu avatar: $got"
+printf '[PASS] %s\n' 'D6 rollback preserva exclusao do proprio avatar'
+expect_value 'D7 anon nao le objetos do bucket privado' '0' \
+  "SET ROLE anon; SELECT count(*) FROM storage.objects WHERE bucket_id='avatars'"
+
+printf '\n[OK] higiene de grants e rollback seguro das policies verificados\n'

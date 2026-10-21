@@ -1,16 +1,9 @@
 -- avatars_bucket_private — torna o bucket `avatars` privado e restringe a escrita ao dono.
 --
--- Rollback: devolve o bucket `avatars` para público e recria as policies anteriores
--- (versões do bloco BLOCK12, últimas conhecidas antes desta migration).
--- Rollback (SQL executável, na ordem):
---   DROP POLICY IF EXISTS "avatars owner insert" ON storage.objects;
---   DROP POLICY IF EXISTS "avatars owner update" ON storage.objects;
---   DROP POLICY IF EXISTS "avatars authenticated read" ON storage.objects;
---   CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
---   CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
---   CREATE POLICY "Users can upload their own avatar" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
---   CREATE POLICY "Users can update their own avatar" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
---   UPDATE storage.buckets SET public = true WHERE id = 'avatars';
+-- Rollback: SELECT 1;
+-- Este endurecimento e deliberadamente irreversivel por rollback automatico:
+-- restaurar public=true exporia todos os objetos sem RLS. A migration de forward e
+-- idempotente; qualquer mudanca futura deve preservar o bucket privado e escopo de dono.
 
 -- 1. Bucket privado: cria se não existir e garante public = false (idempotente).
 INSERT INTO storage.buckets (id, name, public)

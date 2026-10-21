@@ -1,13 +1,14 @@
 # docs:
-#   gatilho: pull_request, push na main, merge_group e dispatch
-#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   gatilho: pull_request, push na main e dispatch
+#   prova: tipos, testes de unidade, contratos Node/Edge, build, security e E2E publico
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
-#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
+#   - merge_group ausente: este workflow declara somente push, pull_request e workflow_dispatch; a fila de merge nao esta disponivel para a conta adm01-debug (tipo User, nao Organization)
 # =================================================
-# CI minimo (16/10/2026, decisao do Joaquim): tipos + testes de unidade + build.
-# Guardas de banco, E2E, auditorias e contratos de workflow sairam do CI por PR.
+# O CI principal executa TypeCheck, Vitest, contratos Node/Edge, build, auditoria
+# de dependencias/segredos e E2E publico nos PRs. Guardas de banco que dependem
+# de servicos/credenciais de producao continuam fora do CI de PR.
 # =================================================
 
 name: CI/CD Pipeline
@@ -208,16 +209,9 @@ jobs:
           echo "CSS Files:"
           find dist -name "*.css" -exec du -h {} \;
 
-      # E72: a cobertura publicada só é útil como diagnóstico do push da main;
-      # PRs não acumulam esse artefato e o dispatch manual permanece sem upload.
-      - name: 📊 Upload coverage report
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
-          if-no-files-found: ignore
+      # Vitest roda em shards sem coletar coverage. Não tente anexar `coverage/`
+      # neste runner: ele é separado dos shards e o upload anterior era no-op.
+      # Cobertura no CI exige agregação dos shards e aplicação dos thresholds uma vez.
 
   # ===========================================
   # JOB 4: Security Audit
@@ -373,10 +367,11 @@ jobs:
   # O GitHub Actions não oferece `paths:` por job — o filtro `paths` só existe no
   # gatilho do workflow, e usá-lo aqui restringiria TODOS os jobs do ci.yml. Para
   # não alterar os jobs existentes, o filtro de caminhos roda em STEP
-  # (`git diff --name-only` contra a base do PR), a alternativa prevista na
-  # auditoria de GitHub Actions (E64).
+  # (diff entre o SHA base do evento e o merge sintético do PR), alternativa
+  # prevista na auditoria de GitHub Actions (E64).
   mutation-mapa:
     name: 🧬 Mutação do mapa (não bloqueante)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
@@ -385,24 +380,33 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # W48: checkout raso; o fetch do BASE_REF abaixo traz só o ancestral necessário.
-          fetch-depth: 1
+          # Dois níveis incluem os pais do merge sintético (base e head), sem
+          # baixar o histórico inteiro só para filtrar caminhos.
+          fetch-depth: 2
 
       # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
       - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
         id: paths
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if [ -z "${BASE_REF:-}" ]; then
-            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
-            echo "map_changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ -z "${BASE_SHA:-}" ]; then
+            echo "::error::O evento pull_request não informou o SHA da base; filtro de caminhos inconclusivo."
+            exit 1
           fi
-          # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
-          git fetch origin "${BASE_REF}" --depth=50 --quiet
-          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+
+          # fetch-depth=2 traz o merge sintético e os pais diretos. A história
+          # anterior ao SHA base não participa deste filtro.
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "::error::O SHA base '${BASE_SHA}' não está entre os pais do merge sintético."
+            exit 1
+          fi
+
+          # Em pull_request, actions/checkout usa o merge sintético do GitHub
+          # como HEAD. Comparar sua árvore com o SHA base do evento evita buscar
+          # todos os ancestrais apenas para descobrir os caminhos tocados.
+          changed="$(git diff --name-only "$BASE_SHA" HEAD)"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
