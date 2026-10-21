@@ -12683,10 +12683,10 @@ export type Database = {
       transfer_conversation: {
         Args: {
           p_contact_id: string
-          p_expected_agent_id?: string | null
-          p_note?: string | null
-          p_to_agent_id?: string | null
-          p_to_queue_id?: string | null
+          p_expected_agent_id?: string
+          p_note?: string
+          p_to_agent_id?: string
+          p_to_queue_id?: string
         }
         Returns: string
       }

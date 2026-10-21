@@ -1,8 +1,6 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
-    "anon_execute": [
-        "multiplix_audiences_validate_shared_roles()"
-    ],
+    "anon_execute": [],
     "generated_at": "2026-10-21",
     "anon_table_select": [
         "agent_achievements",
@@ -130,5 +128,5 @@
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
     "service_role_execute_count": 285,
-    "authenticated_execute_count": 153
+    "authenticated_execute_count": 152
 }

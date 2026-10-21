@@ -374,9 +374,9 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const handleTransfer = async (type: TransferTargetType, targetId: string, message?: string) => {
     const { error } = await supabase.rpc('transfer_conversation', {
       p_contact_id: conversation.contact.id,
-      p_to_agent_id: type === 'agent' ? targetId : null,
-      p_to_queue_id: type === 'queue' ? targetId : null,
-      p_note: message ?? null,
+      p_to_agent_id: type === 'agent' ? targetId : undefined,
+      p_to_queue_id: type === 'queue' ? targetId : undefined,
+      p_note: message ?? undefined,
     });
     if (error) {
       log.error('Failed to transfer conversation:', error);
