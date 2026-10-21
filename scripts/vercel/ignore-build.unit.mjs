@@ -4,7 +4,7 @@
 
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SCRIPT = new URL('../../scripts/vercel/ignore-build.sh', import.meta.url).pathname;
@@ -12,10 +12,10 @@ const SCRIPT = new URL('../../scripts/vercel/ignore-build.sh', import.meta.url).
 let passed = 0;
 let failed = 0;
 
-function run(env = {}, expectExit) {
+function run(env = {}, cwd) {
   const fullEnv = { ...process.env, VERCEL_GIT_PREVIOUS_SHA: '', ...env };
   try {
-    execSync(`sh "${SCRIPT}"`, { env: fullEnv, stdio: 'pipe' });
+    execSync(`sh "${SCRIPT}"`, { env: fullEnv, stdio: 'pipe', ...(cwd ? { cwd } : {}) });
     return 0;
   } catch (e) {
     return e.status ?? 1;
@@ -39,7 +39,7 @@ execSync('git config user.email "test@test.com"', { cwd: tmpRepo });
 execSync('git config user.name "Test"', { cwd: tmpRepo });
 writeFileSync(join(tmpRepo, 'README.md'), 'init');
 execSync('git add . && git commit -q -m "init"', { cwd: tmpRepo, shell: true });
-writeFileSync(join(tmpRepo, 'docs/note.md'.replace('docs/', '')), 'changed', { flag: 'w' });
+writeFileSync(join(tmpRepo, 'README.md'), 'changed', { flag: 'w' });
 execSync('git add . && git commit -q -m "docs change"', { cwd: tmpRepo, shell: true });
 const [head, base] = execSync('git log --format=%H -n 2', { cwd: tmpRepo }).toString().trim().split('\n');
 
@@ -48,31 +48,32 @@ console.log('\nignore-build.sh — testes unitários\n');
 // T1: VERCEL_ENV=production sempre builda.
 test(
   'T1: production sempre builda',
-  run({ VERCEL_ENV: 'production', HOME: tmpRepo }, 1),
+  run({ VERCEL_ENV: 'production' }, tmpRepo),
   1
 );
 
 // T2: Sem SHA base e sem git: fail-open (builda).
+// /tmp não é repo git → git log falha → BASE vazio → fail-open.
 test(
   'T2: sem base commit → fail-open (builda)',
-  run({ VERCEL_ENV: 'preview', HOME: '/nonexistent', PATH: '/usr/bin:/bin' }, 1),
+  run({ VERCEL_ENV: 'preview' }, '/tmp'),
   1
 );
 
 // T3: Base definido, apenas README (não-front) mudou → pula.
 test(
   'T3: somente arquivo não-front → pula',
-  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, 0, tmpRepo),
+  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, tmpRepo),
   0
 );
 
 // T4: Base definido, src/ mudou → builda.
-writeFileSync(join(tmpRepo, 'src/index.ts'), 'export {}', { recursive: true });
+mkdirSync(join(tmpRepo, 'src'), { recursive: true });
+writeFileSync(join(tmpRepo, 'src/index.ts'), 'export {}');
 execSync('git -C "' + tmpRepo + '" add . && git -C "' + tmpRepo + '" commit -q -m "src change"', { shell: true });
-const head2 = execSync('git -C "' + tmpRepo + '" log --format=%H -n 1', { shell: true }).toString().trim();
 test(
   'T4: src/ mudou → builda',
-  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, 1),
+  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, tmpRepo),
   1
 );
 

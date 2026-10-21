@@ -25,8 +25,16 @@ defaults:
 permissions:
   contents: read
 
+# GA58: grupos distintos por tipo de evento evitam que push na main cancele
+# um PR em progresso (mesmo sha), e que dispatches manuais se cancelem entre si.
+# push → sha fixo (nunca cancela outro); dispatch → run_id único; PR → número do PR.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{
+      github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number) ||
+      github.event_name == 'workflow_dispatch' && format('ci-wd-{0}', github.run_id) ||
+      format('ci-push-{0}', github.sha)
+    }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -65,6 +73,14 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      - name: 🛡️ Verificar integridade do CLAUDE.md
+        run: node scripts/ci/claude-md-guard.mjs
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+
+      - name: 🔗 Verificar nomes de workflows no notifica-falha
+        run: node scripts/ci/check-notifica-falha-names.mjs
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
@@ -95,7 +111,7 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧪 Run Vitest shard ${{ matrix.shard }}/3
-        run: bun vitest run --shard=${{ matrix.shard }}/3
+        run: timeout 11m bun vitest run --shard=${{ matrix.shard }}/3
         env:
           CI: true
 
@@ -129,16 +145,43 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Deno check edge functions
+        run: deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
+
+      - name: 🦕 Run executable Edge handler contracts
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+          $(git ls-files 'supabase/functions/**/*.test.ts')
+
       - name: 🧩 Run Node CI scripts tests
-        run: node --test scripts/ci/*.unit.mjs
+        run: >-
+          node --test scripts/ci/*.unit.mjs
+          scripts/edge-deploy/*.unit.mjs
+          scripts/db-audit/crm-sync-outbox-contract.test.mjs
+          scripts/db-audit/types-sync-psql-buffer.test.mjs
+          scripts/talkx/*.unit.mjs
         env:
           CI: true
+
+      - name: 📈 Upload coverage report
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: coverage-report/
+          retention-days: 7
 
   build:
     name: 🏗️ Build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [typecheck, unit-tests]
+    if: ${{ !cancelled() }}
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -163,8 +206,6 @@ jobs:
       - name: 🏗️ Build for production
         run: bun run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_CRM_INTEGRATION_ENABLED: 'true'
 
       # E72 (G-32): o artifact de dist/ so sai em workflow_dispatch (build manual,
@@ -212,6 +253,12 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache Bun (E67)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -261,6 +308,12 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache Bun (E67)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -271,9 +324,11 @@ jobs:
       # devDependency e a versão está no lock) e o CONJUNTO de browsers: um cache
       # salvo por job que instala só Chromium não pode satisfazer este, que
       # precisa dos três.
-      - name: 💾 Cache dos browsers Playwright
+      # GA89: restore em todos os eventos; save só em push na main para não
+      # acumular entradas presas em refs/pull/N/merge.
+      - name: 💾 Restaurar cache dos browsers Playwright
         id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
@@ -283,18 +338,24 @@ jobs:
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      - name: 💾 Salvar cache dos browsers Playwright
+        if: steps.pw-cache.outputs.cache-hit != 'true' && github.event_name == 'push'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+
+      # Projeto "chromium" (+ variantes deslogadas) exercita auth.spec.ts sem secret.
+      # firefox-auth/webkit-auth são cobertura cross-browser de auth: só rodam no
+      # e2e-logado.yml (pós-merge na main) — E88 proíbe listá-los aqui.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
@@ -302,9 +363,21 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy --project=chromium-onboarding-dispensar --project=chromium-multiplix-responsivo --project=chromium-tarefas-linha-de-base
         env:
           CI: true
+          CAPTURA_DIR: /tmp/captura
+
+      - name: 📋 Resumo de erro (error-context.md) no Step Summary
+        # GA44: surfaça o error-context.md do Playwright no Job Summary para
+        # diagnóstico imediato sem precisar baixar o artefato.
+        if: failure()
+        run: |
+          find playwright-report test-results -name "error-context.md" 2>/dev/null | while IFS= read -r f; do
+            echo "### Error context: $f"
+            cat "$f"
+            echo ""
+          done >> "$GITHUB_STEP_SUMMARY"
 
       - name: 📊 Upload Playwright report
         # E72 (G-32): o report so sobe quando o E2E falha. Num PR verde ele nao
@@ -377,6 +450,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache Bun (E67)
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'

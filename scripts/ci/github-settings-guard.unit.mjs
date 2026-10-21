@@ -15,13 +15,15 @@ const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
   "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🧩 Node CI Scripts']";
-const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
-const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+const CHECKS_OK =
+  "[{context:'🔎 TypeCheck',app_id:15368},{context:'🧪 Unit Tests (1/3)',app_id:15368},{context:'🧪 Unit Tests (2/3)',app_id:15368},{context:'🧪 Unit Tests (3/3)',app_id:15368},{context:'🏗️ Build',app_id:15368},{context:'🧩 Node CI Scripts',app_id:15368}]";
+const PROT_OK = `send({ required_status_checks: { strict: true, checks: ${CHECKS_OK}, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, checks: ${CHECKS_OK}, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
 const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'read', can_approve_pull_request_reviews: true })";
-const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action','step-security/harden-runner']";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action']";
 const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
@@ -64,7 +66,7 @@ function stub(
     semEscopo: SEM_ESCOPO,
     tokenReal: SEM_ESCOPO,
     parcial: PROT_OK,
-    injecao: "send({ required_status_checks: { strict: 'false\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })",
+    injecao: `send({ required_status_checks: { strict: 'false\\n::error::forged', checks: ${CHECKS_OK}, contexts: ['ci'] }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`,
   }[modo];
   const workflowPerms = modo === 'tokenReal' ? SEM_ESCOPO : WORKFLOW_PERMS_OK;
 
@@ -80,6 +82,13 @@ function stub(
     // Cegueira parcial: dois campos vieram, os outros cinco nao.
     parcial: "send({ id: 1, allow_auto_merge: true, delete_branch_on_merge: true })",
   }[modo] ?? REPO_OK;
+
+  // GA76: GraphQL e o caminho primario para os 7 campos de merge/repo.
+  const graphql = {
+    tokenReal: SEM_ESCOPO,
+    parcial: "send({ data: { repository: { autoMergeAllowed: true, deleteBranchOnMerge: true } } })",
+    injecao: "send({ data: { repository: { squashMergeAllowed: 'true\\\\n::error::forged3', mergeCommitAllowed: false, rebaseMergeAllowed: false, autoMergeAllowed: true, deleteBranchOnMerge: true, squashMergeCommitMessage: 'PR_BODY', squashMergeCommitTitle: 'PR_TITLE' } } })",
+  }[modo] ?? "send({ data: { repository: { squashMergeAllowed: true, mergeCommitAllowed: false, rebaseMergeAllowed: false, autoMergeAllowed: true, deleteBranchOnMerge: true, squashMergeCommitMessage: 'PR_BODY', squashMergeCommitTitle: 'PR_TITLE' } } })";
 
   const actions = modo === 'tokenReal' ? SEM_ESCOPO : ACTIONS_OK;
   const envs =
@@ -119,8 +128,8 @@ function stub(
     "  if (method === 'GET' && p.indexOf('/issues/42/comments') !== -1) return " + comentarios + ';',
     "  if (p.endsWith('/branches/main/protection')) return " + prot + ';',
     "  if (p.endsWith('/actions/permissions/workflow')) return " + workflowPerms + ';',
+    "  if (p.indexOf('/actions/permissions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (p.indexOf('/actions/permissions') !== -1) return " + actions + ';',
-    "  if (p.indexOf('/actions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (method === 'GET' && p.endsWith('/rulesets')) return send([]);",
     "  if (p.indexOf('/environments') !== -1) return " + envs + ';',
     "  if (method === 'GET' && p === '/repos/o/r') return " + repo + ';',
@@ -128,6 +137,7 @@ function stub(
     `  if (method === 'PATCH') return send({ message: 'patch' }, ${Number(patchStatus)});`,
     "  if (method === 'POST' && p.indexOf('/comments') !== -1) return send({ id: 7 });",
     "  if (method === 'POST' && p.indexOf('/issues') !== -1) return send({ number: '999\\n::error::forged2' });",
+    "  if (method === 'POST' && p === '/graphql') return " + graphql + ';',
     '  return send({});',
     '};',
     '',
@@ -175,7 +185,7 @@ describe('settings-guard: perimetro conforme o baseline', () => {
       r.out.includes('branch_protection_main.strict'),
       `nao apontou o campo divergente:\n${r.out}`,
     );
-    assert.ok(r.out.includes('Restaurado'), `nao tentou restaurar o que sabe restaurar:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
   });
 
   it('required_status_checks: null e regressao (checks apagados), nunca ponto cego', () => {
@@ -286,25 +296,27 @@ describe('settings-guard: ponto cego (E95, W04, W05)', () => {
     assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `causa nova sem comentario:\n${r.out}`);
   });
 
-  it('W05: divergencia real com restauracao EFETIVA sempre comenta (mesmo com dedupe)', () => {
+  it('W05: divergencia real dentro da janela e suprimida pelo dedupe (sem restauracao)', () => {
+    // GA77: guard nao restaura mais. Divergencia dentro de 6 h aplica dedupe normal.
     const r = rodarGuard('regressao', { issue: true, ultimoMarcador: MARCADOR_REGRESSAO, idadeMs: 60_000 });
     assert.equal(r.code, 1, r.out);
-    assert.ok(r.out.includes('Restaurado:'), `a restauracao precisa ter acontecido:\n${r.out}`);
-    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `restauracao sem registro:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
+    assert.ok(r.out.includes('Dedupe:'), `dedupe nao foi aplicado dentro da janela:\n${r.out}`);
+    assert.ok(!r.out.includes('Issue #42 atualizada'), `comentou mesmo dentro da janela:\n${r.out}`);
   });
 
-  it('W05: restauracao que FALHOU nao forca comentario — o dedupe de 6 h vale', () => {
-    // Um PATCH 403 recorrente (token sem escopo) comentaria a cada 6 h se a tentativa
-    // falha contasse como "restaurei" (Devin, PR #1920).
+  it('W05: mesma causa divergente fora da janela (> 6 h) comenta de novo', () => {
+    // Apos 6 h o guard deve renovar o comentario — sem restaurar, so registrar.
+    const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
     const r = rodarGuard('regressao', {
       issue: true,
       ultimoMarcador: MARCADOR_REGRESSAO,
-      idadeMs: 60_000,
-      patchStatus: 403,
+      idadeMs: SEIS_HORAS_MS + 1000,
     });
     assert.equal(r.code, 1, r.out);
-    assert.ok(!r.out.includes('Restaurado:'), `declarou restaurado um PATCH que falhou:\n${r.out}`);
-    assert.ok(r.out.includes('Dedupe'), `tentativa falha forcou comentario repetido:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
+    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `fora da janela e nao comentou:\n${r.out}`);
+    assert.ok(!r.out.includes('Dedupe'), `dentro da janela indevidamente:\n${r.out}`);
   });
 });
 
@@ -359,8 +371,8 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
-    'producao-ddl', 'producao-edge-functions', 'Production',
+    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura',
+    'producao-ddl', 'producao-edge-functions',
     ...extras,
   ];
   const envsStub =

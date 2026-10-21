@@ -134,7 +134,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|talkx\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -152,7 +152,7 @@ export default defineConfig({
       // para que as specs do mapa entrem EXPLICITAMENTE no `e2e-logado.yml` sem
       // arrastar a dependência do login real (etapa E75 do plano MAPA).
       name: 'chromium-mapa',
-      testMatch: [/location-picker\.spec\.ts/, /contact-address\.spec\.ts/, /contact-map-pin\.spec\.ts/],
+      testMatch: ['**/location-picker.spec.ts', '**/contact-address.spec.ts', '**/contact-map-pin.spec.ts'],
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -360,6 +360,7 @@ export default defineConfig({
       // Fixture tests exercise both sides of the runtime kill switch.  This is
       // test-server-only; production still requires the build env and the
       // feature flag.  Without it, a complete CRM fixture can never reach the
+      // panel and falsely validates only the disabled state.  Without it, a complete CRM fixture can never reach the
       // panel and falsely validates only the disabled state.
       command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,

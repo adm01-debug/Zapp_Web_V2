@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { redigir } from './redigir-log.mjs';
+import { redigir, contarRestantes } from './redigir-log.mjs';
 
 const raiz = new URL('../../', import.meta.url);
 const ler = (p) => readFileSync(new URL(p, raiz), 'utf8');
@@ -32,6 +32,28 @@ test('E74: o CLI e fail-closed quando o log nao existe', () => {
     encoding: 'utf8',
   });
   assert.equal(r.status, 2, 'log ausente tem de sair com 2');
+});
+
+test('GA38: JWT compacto e redigido (eyJ...)', () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+  const entrada = `Authorization: Bearer ${jwt}\ndebug: token=${jwt}`;
+  const saida = redigir(entrada);
+  assert.equal(saida.includes('eyJ'), false, 'JWT nao pode sobrar no log redigido');
+  assert.equal(contarRestantes(saida), 0, 'nenhum token residual apos redigir');
+});
+
+test('GA38: refresh_token e redigido como access_token', () => {
+  const entrada = 'refresh_token=sbr_abc123def456 e refresh_token ausente';
+  const saida = redigir(entrada, ['sbr_abc123def456']);
+  assert.equal(saida.includes('refresh_token'), false, 'refresh_token nao pode sobrar');
+  assert.equal(saida.includes('sbr_abc123def456'), false, 'valor nao pode sobrar');
+});
+
+test('GA38: contarRestantes e zero depois de redigir', () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.abc123def456';
+  const entrada = `access_token=tok123 refresh_token=ref456 Authorization: Bearer ${jwt}`;
+  const saida = redigir(entrada, ['tok123', 'ref456']);
+  assert.equal(contarRestantes(saida), 0);
 });
 
 test('E74: o log do deploy e redigido antes de subir e o artifact retem 14 dias', () => {

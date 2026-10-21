@@ -43,47 +43,61 @@ permissions:
 # seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
 # commit mais novo", sem desperdicar runs quase completas.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: ${{ matrix.timeout_minutes }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    # GA46: Scorecard #40 (DangerousWorkflow) dispensado — fork bloqueado no nível do job pelo `if:` acima (GA08)
+    # GA08: aceita workflow_dispatch (porta manual) ou workflow_run de push limpo (head_repository == this repo)
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
     # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
-    # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar
-    # lento, os outros terminam independentes. fail-fast: false para um grupo
-    # vermelho nao cancelar os demais. A uniao dos 3 grupos e EXATAMENTE a lista
-    # original (nem mais, nem menos) -- travado em e2e/quarantine.unit.mjs.
+    # em 4 grupos, cada um com seu proprio relogio (timeout_minutes): se um grupo
+    # ficar lento, os outros terminam independentes. fail-fast: false para um grupo
+    # vermelho nao cancelar os demais. A uniao UNICA dos 4 grupos e EXATAMENTE a
+    # lista original (nem mais, nem menos) -- travado em e2e/quarantine.unit.mjs.
+    # GA12: o grupo `authenticated` original foi dividido em `chromium-autenticado`
+    # (setup + chromium, 30 min) e `cross-browser-autenticado` (firefox/webkit, 25
+    # min). Cada grupo autentica de forma independente (setup proprio por grupo, sem
+    # compartilhamento de storageState entre jobs da matriz).
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Grupo 1: autenticados -- o `setup` gera o storageState e os 8
-          # projetos com `dependencies: ['setup']` o consomem. Rodam no MESMO
-          # job para o login real acontecer uma vez so (sem concorrencia).
-          - name: authenticated
-            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
-            # A05: este grupo carrega 205 dos 248 testes do workflow (172 deles no
-            # `chromium-authenticated`, que e' o projeto-catch-all). Com o pool padrao
-            # do CI (`workers: 1` no playwright.config.ts) a suite roda ~9,8 s por
-            # teste, ou seja ~33 min -- muito acima dos 15 min do job, e e' por isso
-            # que as runs logadas sao canceladas desde 02/10. 4 e' o numero de vCPU do
-            # runner `ubuntu-latest` e deixa a maior parte do tempo do teste em espera
-            # de browser (I/O), nao em CPU. Os 2 grupos deslogados sao pequenos
-            # (16 e 27 testes) e seguem com 1, sem mudanca de comportamento.
+          # Grupo 1: Chromium autenticado -- `setup` gera o storageState e os
+          # projetos chromium-e2e-core e chromium-authenticated o consomem.
+          # chromium-authenticated e' o projeto catch-all com 172+ testes.
+          # 30 min para acomodar o grupo mais lento com 4 workers.
+          - name: chromium-autenticado
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated
             workers: 4
-          # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
+            timeout_minutes: 30
+          # Grupo 2: Firefox e WebKit autenticados -- browsers alternativos para
+          # talkx, conversation, catalog. Cada grupo roda `setup` de forma
+          # independente (login proprio, sem compartilhar storageState cross-job).
+          - name: cross-browser-autenticado
+            projects: --project=setup --project=chromium-talkx --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            workers: 2
+            timeout_minutes: 25
+          # Grupo 3: deslogados nos browsers principais + mapa (sessao FALSA,
           # sem secrets de login).
           - name: deslogado-principal
             projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
             workers: 1
-          # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
+            timeout_minutes: 15
+          # Grupo 4: telefonia nos 3 browsers (sessao FALSA, sem secrets).
           - name: deslogado-secundario
             projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
             workers: 1
+            timeout_minutes: 15
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -91,12 +105,6 @@ jobs:
       contents: read # checkout e leitura do repo
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
-      - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
-        run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
-          exit 1
-
       - name: 📥 Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -119,20 +127,29 @@ jobs:
       # E68: cache dos browsers (ver ci.yml para o racional completo). Chave com o
       # hash do bun.lock e o conjunto de browsers, para não herdar um cache com
       # menos engines do que este job precisa.
-      - name: 💾 Cache dos browsers Playwright
+      # GA89: restore em todos os eventos; save só em push na main para não
+      # acumular entradas presas em refs/pull/N/merge.
+      - name: 💾 Restaurar cache dos browsers Playwright
         id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
+
+      - name: 💾 Salvar cache dos browsers Playwright
+        if: steps.pw-cache.outputs.cache-hit != 'true' && github.event_name == 'push'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       # E83: cada job da matriz invoca o Playwright com os projetos do SEU grupo
       # via variavel de matriz (cada token ja leva o prefixo de projeto,
@@ -216,6 +233,15 @@ jobs:
             --segredo-env=E2E_TEST_EMAIL \
             --segredo-env=E2E_TEST_PASSWORD
 
+      - name: "🔏 Redigir tokens JWT do relatório"
+        if: failure() && steps.redigir.outcome == 'success'
+        run: |
+          # GA38: redatar access_token/refresh_token em JSON e JWT bearer em qualquer campo
+          find playwright-report/ \( -name "*.json" -o -name "*.txt" \) -exec \
+            sed -i \
+              's/"access_token":"[^"]*"/"access_token":"[REDACTED]"/g; s/"refresh_token":"[^"]*"/"refresh_token":"[REDACTED]"/g; s/eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*/[JWT_REDACTED]/g; s/Authorization: Bearer [^ ]*/Authorization: Bearer [REDACTED]/g' \
+            {} \; 2>/dev/null || true
+
       - name: 📎 Arquivar relatorio do Playwright (so em falha)
         if: failure() && steps.redigir.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -239,7 +265,9 @@ jobs:
       # A URL vem do mesmo secret que o ci.yml ja entrega ao app.
       # Sem as credenciais o script e PULADO (exit 0), como no step antigo.
       - name: 🧹 E2E teardown - limpar fixture de conversation_closures
-        if: always()
+        # GA44: dispatch manual de branch que não seja main não toca produção —
+        # teardown de banco de produção só faz sentido quando o teste rodou contra ele.
+        if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
         continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -255,7 +283,7 @@ jobs:
       # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
       # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
       - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
-        if: always()
+        if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
         continue-on-error: true
         env:
           SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -272,6 +300,47 @@ jobs:
             && echo "teardown catalog_send_events OK" \
             || echo "teardown catalog_send_events falhou - nao bloqueia CI"
 
+      # GA39: revogar TODAS as sessoes ativas do usuario de teste com scope=global.
+      # Sem isso, cada CI-run acumula uma sessao aberta no Supabase Auth, que
+      # nao sao liberadas pelo logout normal (scope=local) do Playwright.
+      - name: 🔐 E2E teardown - revogar sessões globais do usuário de teste (GA39)
+        if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$E2E_TEST_EMAIL" ] || [ -z "$E2E_TEST_PASSWORD" ]; then
+            echo "Credenciais ausentes — teardown de sessao global pulado"
+            exit 0
+          fi
+          # GA43: jq -n --arg garante que caracteres especiais no email/senha
+          # não quebram o JSON nem criam injeção de shell.
+          BODY=$(jq -n --arg email "$E2E_TEST_EMAIL" --arg password "$E2E_TEST_PASSWORD" \
+            '{"email":$email,"password":$password}')
+          RESP=$(curl --proto '=https' --tlsv1.2 -sf -X POST \
+            "${SUPABASE_URL}/auth/v1/token?grant_type=password" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            || true)
+          ACCESS_TOKEN=$(printf '%s' "$RESP" | node -e \
+            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })")\
+            || ACCESS_TOKEN=""
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "::warning::Nao foi possivel obter access_token — teardown de sessao global pulado"
+            exit 0
+          fi
+          curl --proto '=https' --tlsv1.2 -sf -X POST \
+            "${SUPABASE_URL}/auth/v1/logout?scope=global" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            && echo "teardown logout global OK" \
+            || echo "::warning::teardown logout global falhou - nao bloqueia CI"
+
       # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
       # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
       # so e repetido quando ela MUDA. Sem isso, uma suite quebrada por dias geraria um
@@ -283,11 +352,11 @@ jobs:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
         with:
           script: |
-            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+            const { marcadorDe, nomesDeTestResults, corpoDe, tituloDe } = await import(
               `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
             );
-            const titulo = process.env.TITULO;
             const nomes = nomesDeTestResults('test-results');
+            const titulo = tituloDe(nomes);
             const marcador = marcadorDe(nomes);
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -324,22 +393,24 @@ jobs:
       - name: ✅ Fechar a issue quando a suite volta
         if: success()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          TITULO: "[e2e-logado] Suíte logada quebrada na main"
         with:
           script: |
-            const titulo = process.env.TITULO;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
-            const issue = abertas.find((i) => i.title === titulo);
-            if (!issue) {
+            // GA42: fechar POR PREFIXO -- pode haver issues "[e2e-logado] login E2E falhou"
+            // e "[e2e-logado] Suíte logada quebrada na main" abertas ao mesmo tempo; fechar
+            // apenas a que casa pelo titulo exato deixava a outra orfã para sempre (#1946).
+            const issues = abertas.filter((i) => i.title.startsWith('[e2e-logado]'));
+            if (!issues.length) {
               core.info('nenhuma issue aberta -- nada a fechar');
               return;
             }
-            await github.rest.issues.update({
-              owner, repo, issue_number: issue.number, state: 'closed',
-            });
-            core.info(`issue #${issue.number} fechada: a suite voltou a passar na main`);
+            for (const iss of issues) {
+              await github.rest.issues.update({
+                owner, repo, issue_number: iss.number, state: 'closed',
+              });
+              core.info(`issue #${iss.number} fechada: a suite voltou a passar na main`);
+            }

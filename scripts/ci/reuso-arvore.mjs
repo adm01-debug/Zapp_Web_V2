@@ -72,6 +72,15 @@ export async function decidirReuso({ evento, sha, repo, workflow, api }) {
   const jobs = await api(`/repos/${repo}/actions/runs/${ultimo.id}/jobs?filter=latest&per_page=100`);
   const lista = jobs?.jobs ?? [];
   if (lista.length === 0) return { reusar: false, motivo: `run ${ultimo.id} sem jobs listados: roda tudo` };
+  // GA65 (W55): se o run da PR tinha contratos pulados (docs-only), não reusar —
+  // um push pode incluir mudanças reais que a PR nunca provou.
+  const SENTINEL_W55 = '📄 Contratos pulados — apenas docs (W55)';
+  const temContratoPulado = lista.some(
+    (j) => (j.steps ?? []).some((s) => s.name === SENTINEL_W55 && s.conclusion === 'success'),
+  );
+  if (temContratoPulado) {
+    return { reusar: false, motivo: `run ${ultimo.id} tinha contratos pulados (W55): roda tudo` };
+  }
   const naoAprovados = lista.filter((j) => j.name !== JOB_REUSO && j.conclusion !== 'success' && !NAO_BLOQUEANTE.test(j.name));
   if (naoAprovados.length > 0) {
     const nomes = naoAprovados.map((j) => `${j.name}=${j.conclusion}`).join(', ');

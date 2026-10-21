@@ -71,6 +71,10 @@ updates:
       codeql-action:
         patterns:
           - "github/codeql-action*"
+      # GA88: scorecard-action isolado — o par init/scorecard precisa da mesma versão.
+      scorecard-action:
+        patterns:
+          - "ossf/scorecard-action*"
       actions-misc:
         patterns:
           - "actions/*"
@@ -99,6 +103,11 @@ updates:
       - "go"
     commit-message:
       prefix: "⬆️ go:"
+    # GA88: agrupar bumps do proxy em 1 PR semanal.
+    groups:
+      deps-proxy-go:
+        patterns:
+          - "*"
 
   # Auditoria 2026-10-15 (Scorecard PinnedDependenciesID): o Dockerfile deste
   # mesmo diretorio tem 2 imagens base (golang, distroless) sem nenhum
@@ -118,3 +127,8 @@ updates:
       - "docker"
     commit-message:
       prefix: "⬆️ docker:"
+    # GA88: agrupar imagens base do proxy em 1 PR semanal.
+    groups:
+      deps-proxy-docker:
+        patterns:
+          - "*"

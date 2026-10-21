@@ -54,12 +54,12 @@ Todo PR deve passar estes checks antes do merge:
 
 | Check | Workflow |
 |---|---|
-| `🔍 Lint & TypeCheck` | `ci.yml` |
-| `🧪 Unit Tests` | `ci.yml` |
+| `🔎 TypeCheck` | `ci.yml` |
+| `🧪 Unit Tests (1/3)` | `ci.yml` |
+| `🧪 Unit Tests (2/3)` | `ci.yml` |
+| `🧪 Unit Tests (3/3)` | `ci.yml` |
 | `🏗️ Build` | `ci.yml` |
-| `🔒 Security Audit` | `ci.yml` |
-| `Contrato DB offline` | `db-guard.yml` |
-| `🎭 E2E Tests (Playwright)` | `ci.yml` |
+| `🧩 Node CI Scripts` | `db-guard.yml` |
 
 `strict=true` está ligado: a branch do PR precisa estar atualizada com a `main` antes que os checks sejam aceitos.
 

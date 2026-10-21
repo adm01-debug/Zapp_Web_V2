@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   agregar,
+  branchesQuentes,
   coletarJobs,
   coletarRuns,
   corpoDoKpi,
@@ -152,7 +153,7 @@ test('#365: coletarJobs consulta os jobs de cada run e herda o nome do workflow'
     }
     return { jobs: [] };
   };
-  const jobs = await coletarJobs([{ id: 1, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });
+  const jobs = await coletarJobs([{ id: 1, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });
   assert.equal(jobs.length, 2);
   assert.match(chamadas[0], /\/repos\/o\/r\/actions\/runs\/1\/jobs\?per_page=100&page=1$/);
   assert.equal(jobs[0].workflow_name, 'CI', 'o run da o nome do workflow quando o job nao traz');
@@ -172,8 +173,53 @@ test('#365: coletarJobs pagina um run com mais de 100 jobs', async () => {
     if (pagina === 2) return { jobs: [cheia[0]] };
     return { jobs: [] };
   };
-  const jobs = await coletarJobs([{ id: 7, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });
+  const jobs = await coletarJobs([{ id: 7, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });
   assert.equal(jobs.length, 101, 'a segunda pagina de jobs nao pode ser ignorada');
+});
+
+test('GA54: branchesQuentes detecta branch com > 15 pushes em 24 h', () => {
+  const agora = AGORA;
+  // 20 push-runs na mesma branch nas ultimas 24 h
+  const runs20 = Array.from({ length: 20 }, (_, i) => ({
+    event: 'push',
+    head_branch: 'feat/lote',
+    run_started_at: new Date(agora - i * 60000).toISOString(), // distribuidos no ultimo 1 h
+    updated_at: new Date(agora - i * 60000 + 300000).toISOString(),
+    conclusion: 'success',
+  }));
+  // branch com apenas 5 runs (abaixo do limite)
+  const runs5 = Array.from({ length: 5 }, (_, i) => ({
+    event: 'push',
+    head_branch: 'feat/tranquila',
+    run_started_at: new Date(agora - i * 60000).toISOString(),
+    updated_at: new Date(agora - i * 60000 + 300000).toISOString(),
+    conclusion: 'success',
+  }));
+  // run de pull_request nao conta
+  const runPR = {
+    event: 'pull_request',
+    head_branch: 'feat/lote',
+    run_started_at: new Date(agora - 100000).toISOString(),
+    updated_at: new Date(agora - 100000 + 300000).toISOString(),
+    conclusion: 'success',
+  };
+  const quentes = branchesQuentes([...runs20, ...runs5, runPR], { limiteEm24h: 15, agora });
+  assert.equal(quentes.length, 1, 'so feat/lote supera o limite');
+  assert.equal(quentes[0].branch, 'feat/lote');
+  assert.equal(quentes[0].count, 20);
+});
+
+test('GA54: branchesQuentes ignora runs fora das 24 h', () => {
+  const agora = AGORA;
+  const velhos = Array.from({ length: 20 }, (_, i) => ({
+    event: 'push',
+    head_branch: 'feat/velha',
+    run_started_at: new Date(agora - 25 * 3600000 - i * 60000).toISOString(),
+    updated_at: new Date(agora - 25 * 3600000 - i * 60000 + 300000).toISOString(),
+    conclusion: 'success',
+  }));
+  const quentes = branchesQuentes(velhos, { limiteEm24h: 15, agora });
+  assert.equal(quentes.length, 0, 'runs com mais de 24 h nao contam');
 });
 
 test('#365: o corpo do KPI publica o ranking real dos jobs, nao um ranking vazio', () => {

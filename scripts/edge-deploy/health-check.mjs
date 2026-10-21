@@ -63,6 +63,33 @@ function buildLogsSql(slugs, windowMinutes) {
   ).trim();
 }
 
+// GA29: verifica se as funcoes estao listadas na Management API antes do warmup.
+// Lanca se o HTTP nao for 2xx ou se algum slug estiver ausente.
+async function checkFunctionsDeployed({ projectRef, token, slugs, fetchImpl = fetch }) {
+  const url = `${MGMT_BASE}/v1/projects/${projectRef}/functions`;
+  const res = await fetchImpl(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) {
+    throw new Error(`Management API retornou HTTP ${res.status} ao listar functions`);
+  }
+  const fns = await res.json();
+  if (!Array.isArray(fns)) {
+    throw new Error('Resposta inesperada da Management API (esperado array de functions)');
+  }
+  if (slugs.length === 0) return;
+  const deployedSlugs = new Set(fns.map((fn) => fn.slug ?? fn.name).filter(Boolean));
+  const missing = slugs.filter((s) => !deployedSlugs.has(s));
+  if (missing.length > 0) {
+    throw new Error(`Functions nao encontradas na Management API apos o deploy: ${missing.join(', ')}`);
+  }
+}
+
 // Chama a Management API de analytics do Supabase.
 // Lança se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.
 async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
@@ -78,7 +105,10 @@ async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
   });
   if (!res.ok) {
     // Não logar o corpo da resposta: pode conter detalhes de autenticação.
-    throw new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    // GA29: propaga o status HTTP para distinguir 4xx (endpoint errado) de 5xx (serviço fora).
+    const err = new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    err.httpStatus = res.status;
+    throw err;
   }
   const json = await res.json();
   // A API retorna { result: [{ total: N, errors: N }] } quando bem-sucedida.
@@ -103,6 +133,14 @@ async function main() {
     return;
   }
 
+  // GA29: confirmar que as funcoes estao listadas na Management API antes de aguardar warmup.
+  try {
+    await checkFunctionsDeployed({ projectRef: args.projectRef, token, slugs });
+    console.log(`[health-check] Functions verificadas na Management API (${slugs.length || 'todas'}).`);
+  } catch (err) {
+    console.error(`::warning::Health check nao conseguiu verificar functions: ${err.message}. Prosseguindo.`);
+  }
+
   if (args.waitMs > 0) {
     const minutos = Math.round(args.waitMs / 60_000);
     console.log(`[health-check] Aguardando ${minutos} min para os logs de pós-deploy estabilizarem…`);
@@ -118,8 +156,14 @@ async function main() {
       sql,
     });
   } catch (err) {
-    // Falha de transporte ou API indisponível → warning, não bloqueia o deploy.
-    console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
+    if (err.httpStatus >= 400 && err.httpStatus < 500) {
+      // GA29: 4xx = endpoint incorreto ou credencial recusada → falha explícita.
+      console.error(`::error::Health check: analytics retornou HTTP ${err.httpStatus} — verifique o endpoint e a credencial. ${err.message}`);
+      process.exitCode = 1;
+    } else {
+      // 5xx ou falha de transporte: serviço temporariamente indisponível → aviso, não bloqueia.
+      console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
+    }
     return;
   }
 

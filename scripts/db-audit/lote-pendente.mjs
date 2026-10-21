@@ -6,12 +6,13 @@
  * GITHUB_STEP_SUMMARY e sai com o mesmo código de saída:
  *   exit 0 — sem drift e sem apply-pendente (clean)
  *   exit 1 — drift real (arquivo em produção sem par no disco, ou vice-versa)
- *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)
+ *   exit 2 — erro de carga/autenticação (nunca "apply pendente")
+ *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)
  *
- * Cada chamador aplica sua própria política sobre exit 2:
+ * Cada chamador aplica sua própria política sobre exit 3:
  *   db-live-guard  → em push trata como neutro (exit 0); em schedule/dispatch
- *                    mantém exit 2 para abrir issue.
- *   types-sync     → usa exit 2 para setar awaiting_apply=true e pular gates.
+ *                    mantém exit 3 para abrir issue.
+ *   types-sync     → usa exit 3 para setar awaiting_apply=true e pular gates.
  *
  * Uso:
  *   node scripts/db-audit/lote-pendente.mjs [-- <args extras para check-migration-drift>]
@@ -23,7 +24,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DRIFT_SCRIPT = path.join(__dirname, 'check-migration-drift.mjs');
+// GA19: override para testes unitários (nunca definido em produção)
+const DRIFT_SCRIPT = process.env.DRIFT_SCRIPT_OVERRIDE || path.join(__dirname, 'check-migration-drift.mjs');
 
 function writeSummary(lines) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
@@ -58,8 +60,8 @@ if (!process.env.DESTINO_URL) {
       '',
       'Todas as migrations locais estão registradas no ledger do banco.',
     ]);
-  } else if (rc === 2) {
-    // W21: --classificar retorna 2 para apply-pendente (neutro)
+  } else if (rc === 3) {
+    // --classificar retorna 3 para apply-pendente (neutro); 2 reservado para erros de carga
     writeSummary([
       '### ⏳ Lote pendente — apply aguardado',
       '',

@@ -562,11 +562,12 @@ function compare(migrations, records, exceptionsByVersion) {
     }
   }
 
+  const pendingErrors = [];
   if (withoutRecord.length) {
-    errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
+    pendingErrors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
     for (const { version, fileName } of withoutRecord) {
-      errors.push(divergenceLine(version, fileName, null, 'arquivo sem registro no banco'));
-      errors.push(`  ${version}  ${fileName}`);
+      pendingErrors.push(divergenceLine(version, fileName, null, 'arquivo sem registro no banco'));
+      pendingErrors.push(`  ${version}  ${fileName}`);
     }
   }
   if (withoutFile.length) {
@@ -797,7 +798,10 @@ function compare(migrations, records, exceptionsByVersion) {
     }
   }
 
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
+  const onlyApplyPending = pendingErrors.length > 0 && errors.length === 0 && withoutFile.length === 0;
+  errors.push(...pendingErrors);
+
+  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent, onlyApplyPending };
 }
 
 function printErrors(errors) {
@@ -853,8 +857,14 @@ function main() {
     return 1;
   }
 
+  const classificar = process.argv.includes('--classificar');
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
   if (result.errors.length) {
+    if (classificar && result.onlyApplyPending) {
+      console.log('\nAPPLY PENDENTE: migrations no disco sem registro no banco (aguardando lote):');
+      printDriftErrors(result.errors);
+      return 3;
+    }
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');

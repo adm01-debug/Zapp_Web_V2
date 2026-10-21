@@ -174,7 +174,7 @@ test('E98: a lista de exceções não cresce em silêncio', () => {
   assert.equal(EXCECOES_TLS.size, 1, 'exceção de TLS mudou: confirme se o motivo ainda vale');
 });
 
-// E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell
+// E97 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo workflow com passo shell
 // roda com `-euo pipefail`. Sem isto, um `run:` multi-linha segue depois do
 // primeiro comando que falha — e o gate passa sem ter testado nada.
 //
@@ -251,8 +251,10 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
     // install) — o passo dos browsers do Playwright é o que aponta para
     // `~/.cache/ms-playwright`, não necessariamente o primeiro `actions/cache`.
+    // GA89 migrou para actions/cache/restore (restore em todos os eventos,
+    // save só em push) — ambas as variantes são aceitas.
     const cache = blocos.find(
-      (p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
+      (p) => /uses:\s*actions\/cache(?:\/restore)?@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
     );
     if (!cache) {
       problemas.push(`${nome}: sem passo actions/cache para os browsers`);
@@ -562,7 +564,72 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
-// W99: novos invariantes de segurança de workflow
+});
+
+// GA99: anti-regressão dos invariantes introduzidos pelo plano de 100 etapas.
+
+test('GA99: types-sync usa /tmp/catalog.old.json no Gate 3 (GA20)', () => {
+  const txt = wf['types-sync.yml'];
+  assert.ok(
+    /git show HEAD:supabase\/schema-catalog\.json\s*>\s*\/tmp\/catalog\.old\.json/.test(txt),
+    'GA20 regrediu: Gate 3 não salva a versão commitada do catálogo em /tmp/catalog.old.json',
+  );
+  assert.ok(
+    /check-remocoes-destrutivas\.mjs\s+\/tmp\/catalog\.old\.json/.test(txt),
+    'GA20 regrediu: Gate 3 não passa /tmp/catalog.old.json (usa o arquivo já sobrescrito)',
+  );
+});
+
+test('GA99: types-sync limpa DESTINO_URL do GITHUB_ENV após Gate 1b (GA21)', () => {
+  const txt = wf['types-sync.yml'];
+  assert.ok(
+    /printf.*DESTINO_URL=\\n.*GITHUB_ENV/.test(txt),
+    'GA21 regrediu: step de limpeza de DESTINO_URL ausente em types-sync.yml',
+  );
+});
+
+test('GA99: ci.yml build usa !cancelled() (GA55)', () => {
+  const txt = wf['ci.yml'];
+  assert.ok(
+    /if:\s*\$\{\{\s*!cancelled\(\)\s*\}\}/.test(txt),
+    'GA55 regrediu: build job perdeu a condição !cancelled()',
+  );
+});
+
+test('GA99: deploy-functions tem step deno test antes do deploy, sem continue-on-error (GA27)', () => {
+  const txt = wf['deploy-functions.yml'];
+  assert.ok(
+    /deno test/.test(txt),
+    'GA27 regrediu: step deno test ausente em deploy-functions.yml',
+  );
+  // GA27: continue-on-error: true silenciaria falhas — o deploy aconteceria mesmo
+  // que todos os testes de edge functions falhassem. Este step é um gate, não
+  // observabilidade: falha DEVE bloquear.
+  const linhas = txt.split('\n');
+  const idxDeno = linhas.findIndex((l) => /\bdeno test\b/.test(l));
+  assert.ok(idxDeno !== -1, 'GA27 regrediu: linha deno test não localizada');
+  const janela = linhas.slice(Math.max(0, idxDeno - 3), idxDeno + 4).join('\n');
+  assert.ok(
+    !/continue-on-error:\s*true/.test(janela),
+    'GA27: deno test tem continue-on-error: true — falha de teste não bloqueia o deploy',
+  );
+});
+
+test('GA99: e2e-logado redige tokens JWT do relatório (GA38)', () => {
+  const txt = wf['e2e-logado.yml'];
+  assert.ok(
+    /access_token.*REDACTED/.test(txt),
+    'GA38 regrediu: redação de tokens JWT ausente em e2e-logado.yml',
+  );
+});
+
+test('GA99: db-guard usa --health-cmd com argumento entre aspas (GA72)', () => {
+  const txt = wf['db-guard.yml'];
+  assert.ok(
+    /--health-cmd\s+"pg_isready/.test(txt) || /--health-cmd\s+'pg_isready/.test(txt),
+    'GA72 regrediu: --health-cmd pg_isready sem argumento entre aspas',
+  );
+});
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {
   const dir = new URL('../../.github/workflows/', import.meta.url);
@@ -594,10 +661,40 @@ test('W99: todo upload-artifact declara retention-days', async () => {
     for (const bloco of blocos) {
       if (!/upload-artifact@[a-f0-9]{40}/.test(bloco)) continue;
       if (/retention-days:/.test(bloco)) continue;
-      // Encontrar a linha do uses: para reportar o número aproximado
-      const match = /\n([ \t]+-?[ \t]*uses:[ \t]*actions\/upload-artifact@)/.exec(bloco);
       infratores.push(`${nome}: upload-artifact sem retention-days`);
     }
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
+});
+
+test('GA10: todos os nomes listados em notifica-falha-main.yml existem como name: nos workflows', () => {
+  const notifica = wf['notifica-falha-main.yml'];
+  assert.ok(notifica, 'notifica-falha-main.yml sumiu');
+  const nomesReais = new Set();
+  for (const [, txt] of Object.entries(wf)) {
+    const m = /^name:\s+(.+?)\s*$/m.exec(txt);
+    if (m) nomesReais.add(m[1]);
+  }
+  const linhas = notifica.split('\n');
+  let dentroWorkflows = false;
+  const nomesListados = [];
+  for (const linha of linhas) {
+    if (/^\s{4}workflows:\s*$/.test(linha)) { dentroWorkflows = true; continue; }
+    if (dentroWorkflows) {
+      const m = /^\s{6}-\s+(.+?)\s*$/.exec(linha);
+      if (m) { nomesListados.push(m[1]); continue; }
+      if (/^\s{4}\S/.test(linha)) dentroWorkflows = false;
+    }
+  }
+  assert.ok(nomesListados.length > 0, 'Nenhum nome encontrado em notifica-falha-main.yml');
+  const ausentes = nomesListados.filter((n) => !nomesReais.has(n));
+  assert.deepEqual(ausentes, [], `notifica-falha lista workflows inexistentes: ${ausentes.join(', ')}`);
+});
+
+test('GA99: e2e-logado tem o if: de GA08 (fork bloqueado, só workflow_dispatch ou workflow_run limpo)', () => {
+  const txt = wf['e2e-logado.yml'];
+  assert.ok(
+    /workflow_dispatch/.test(txt) && /workflow_run\.conclusion/.test(txt) && /head_repository\.full_name/.test(txt),
+    'GA08 regrediu: e2e-logado.yml perdeu o if: de GA08 (workflow_dispatch OR workflow_run limpo)',
+  );
 });

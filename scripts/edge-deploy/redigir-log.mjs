@@ -9,7 +9,12 @@
 import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
 import { resolve, relative, isAbsolute } from 'node:path';
 
-const CHAVE_ALVO = /access[_%-]?token/gi;
+const CHAVE_ALVO = /(?:access|refresh)[_%-]?token/gi;
+// GA38: JWT compacto (header.payload.signature), presente em logs de edge function
+// quando o Supabase inclui o Authorization no trace ou o Bearer vem de variavel de ambiente.
+const JWT_PATTERN = /eyJ[\w-]+\.[\w-]+\.[\w-]+/g;
+// GA38: cabeçalho Authorization: Bearer <token>
+const BEARER_PATTERN = /(Authorization[:\s]+Bearer\s+)[\w.-]+/gi;
 
 export function redigir(texto, segredos = []) {
   let saida = texto;
@@ -19,11 +24,24 @@ export function redigir(texto, segredos = []) {
     if (v.length < 8) continue; // valor curto demais nao e' token; evita trocar texto comum
     saida = saida.split(v).join('***');
   }
-  // 2. a chave, com o que sobrou de valor a' direita (`access_token=abc`, `&access_token: x`).
+  // 2. JWT compacto (GA38): eyJ...header.payload.signature
+  saida = saida.replace(JWT_PATTERN, '***');
+  // 3. Authorization Bearer (GA38)
+  saida = saida.replace(BEARER_PATTERN, '$1***');
+  // 4. a chave (access_token/refresh_token), com o que sobrou de valor a' direita.
   saida = saida.replace(new RegExp(`${CHAVE_ALVO.source}([=:])([^\\s"'&\\\\]*)`, 'gi'), 'token$1***');
-  // 3. o nome da chave sem valor (ex.: "campo access_token ausente").
+  // 5. o nome da chave sem valor (ex.: "campo access_token ausente").
   saida = saida.replace(CHAVE_ALVO, (m) => (m === 'token' ? m : 'token'));
   return saida;
+}
+
+/** Conta tokens residuais no texto redigido (para testes e relatório). */
+export function contarRestantes(texto) {
+  return (
+    (texto.match(JWT_PATTERN) || []).length +
+    (texto.match(BEARER_PATTERN) || []).length +
+    (texto.match(CHAVE_ALVO) || []).length
+  );
 }
 
 /**

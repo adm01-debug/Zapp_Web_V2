@@ -55,7 +55,7 @@ test('Talk X funil é proporcional ao valor medido e não inventa zero (X186)', 
   // Larguras fixas (100/80/55/35 %) não mediam a perda real entre os degraus: saem do código.
   assert.doesNotMatch(analytics, /const widths = \[100, 80, 55, 35\]/);
   assert.doesNotMatch(analytics, /'Não rastreado'/);
-  assert.match(analytics, /<AnalyticsFunnel steps=\{funnelSteps\} \/>/);
+  assert.match(analytics, /<AnalyticsFunnel steps=\{funnelSteps\} \/\>/);
   assert.match(funnel, /const TRACK_W = VIEW_W - 46/);
   assert.match(funnel, /share \* TRACK_W/);
   assert.match(funnel, /sem dados ainda/);
@@ -93,9 +93,16 @@ test('Talk X não rotula tamanho de audiência como "Desempenho"', () => {
   assert.match(segments, /<Th>Público relativo<\/Th>/);
 });
 
-test('Talk X não rotula uso de template como "Mais convertidos"', () => {
-  assert.doesNotMatch(templates, /Mais convertidos/);
+// X092/T04-039: "Mais convertidos" foi implementado como ranking por TAXA DE RESPOSTA
+// (base mínima A9), não por contagem de uso (use_count). O guard antigo proibia o
+// rótulo antes de ele existir; agora protege a SEMÂNTICA correta.
+test('Talk X "Mais convertidos" (X092) existe e é ranking por taxa de resposta, não use_count', () => {
+  // A seção deve existir — é uma feature real (X092).
+  assert.match(templates, /title="Mais convertidos"/);
+  // O card de "Mais usados" (KPI de uso por contagem) continua separado.
   assert.match(templates, /Mais usados/);
+  // O bloco deve carregar o comentário inline que confirma a semântica de taxa de resposta.
+  assert.match(templates, /TAXA DE RESPOSTA/);
 });
 
 // X185: o KPI "Conversão por segmento" passou a existir de fato — mas o número

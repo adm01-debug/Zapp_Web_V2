@@ -177,7 +177,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md e PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -225,7 +225,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
 
   **Correção de 2026-10-01 — HISTÓRICA, SUPERADA (b):** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com
   `github_get_branch_protection`. **A instrução de repetir `strict: false` está REVOGADA** (E15(b), 02/10): a
-  política vigente é `strict=true`, é ela que o `settings-guard` restaura, e nenhum agente reintroduz `false`.
+  política vigente é `strict=true`, o `settings-guard` detecta e reporta divergência (GA77: restauração automática removida), e nenhum agente reintroduz `false`.
 
   **Correção estrutural posterior de 2026-10-01:** `required_status_checks.strict` voltou a ser **`true`** como
   política permanente. O repositório agora permite auto-merge e o workflow
@@ -265,15 +265,15 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 19/10/2026:** são **17**
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
 `deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
-`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **19 no
+`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`, `vercel-env-cleanup.yml`), mais 3 workflows dinâmicos
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **20 no
 total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
-`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
+`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
@@ -321,7 +321,7 @@ precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry i
 nenhum.
 
 **Agendamentos sem colisão:** types-sync `49 5 * * 1` (semanal), db-live-guard `13 6 * * *` (**diário**;
-não depende do types-sync para rodar), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1` e settings-guard
+não depende do types-sync para rodar), branch-hygiene `56 7 * * 1`, codeql `30 9 * * *` (**diário** — GA62) e settings-guard
 `15 */6 * * *`. Os dois primeiros da lista original rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
@@ -632,3 +632,16 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Projeto legado
 
 - `zapp-web` (ID: `prj_OsErjUqsrMbwwC7S1LVfawmNgEce`) — **não é o projeto atual**. A ser pausado/deletado pelo Joaquim após confirmar que não tem tráfego real.
+
+## CI sem desperdício
+
+Princípios de custo-benefício do CI. A cada mudança de workflow, avaliar:
+
+- **Cache agressivo:** `bun.lock` → cache Bun; `postgres:17-alpine` como serviço único compartilhado (E47). Nunca `docker pull` sem cache.
+- **Sem reruns desnecessários:** `concurrency.cancel-in-progress` nos workflows de PR; `paths:` restritivos para não disparar workflow a cada push irrelevante (ex.: `'!scripts/db-audit/grants-baseline.json'` em `types-sync.yml`).
+- **Shards de teste:** Unit Tests em 3 shards paralelos; E2E por browser isolado. Nunca rodar tudo em sequência.
+- **Timeouts explícitos:** todo job tem `timeout-minutes`. Sem timeout = runner preso custa crédito.
+- **Artifacts só quando precisar:** `retention-days: 3` para artifacts de debug; `14` para candidatos de sync. Sem artifact = sem custo de armazenamento.
+- **Agendamentos escalonados:** `49 5 * * 1` (types-sync), `13 6 * * *` (db-live-guard), `30 9 * * *` (CodeQL — GA62) — nunca dois jobs pesados no mesmo minuto.
+- **`continue-on-error: true`** em passos de pré-pull e login que não bloqueiam. Falha de infra não bloqueia CI.
+- **Reaproveitar outputs de job:** `needs.ler-banco.outputs.*` em vez de reconsultar o banco duas vezes (GA21).

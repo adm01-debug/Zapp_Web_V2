@@ -29,14 +29,15 @@ export function nomesDeTestResults(dir) {
     return []; // sem test-results nao ha falha identificada -- ver o aviso em marcadorDe
   }
   return entradas
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.playwright-artifacts-'))
     .map((e) => e.name)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
-/** Nomes validos: string, nao vazia, sem repeticao, ordenados. */
+/** Nomes validos: string, nao vazia, sem repeticao, ordenados. Tira sufixo `-retryN`. */
 function normalizar(nomes) {
-  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0))]
+  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0)
+    .map((n) => n.replace(/-retry\d+$/, '')))]
     .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
@@ -51,18 +52,6 @@ export function marcadorDe(nomes) {
   const semente = lista.length === 0 ? 'sem-diretorios' : lista.join('\n');
   const hash = createHash('sha256').update(semente).digest('hex').slice(0, 16);
   return `${PREFIXO}${hash} -->`;
-}
-
-/**
- * Titulo da issue: especifico quando so falhou o auth.setup (nao ha spec real quebrado),
- * generico nos demais casos.
- */
-export function tituloDe(nomes, { tituloBase = '[e2e-logado] Suíte logada quebrada na main' } = {}) {
-  const lista = normalizar(nomes);
-  if (lista.length > 0 && lista.every((n) => n.startsWith('auth.setup.ts-') || n.startsWith('auth.setup-'))) {
-    return '[e2e-logado] auth.setup falhou na main';
-  }
-  return tituloBase;
 }
 
 /** Lista legivel para o corpo da issue. */
@@ -100,4 +89,3 @@ export function tituloDe(nomes) {
   if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
   return '[e2e-logado] Suíte logada quebrada na main';
 }
-

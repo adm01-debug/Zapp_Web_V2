@@ -291,16 +291,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 17 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 17);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*17 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -354,19 +354,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -461,12 +461,10 @@ test('W95 CONTRIBUTING.md: cita branch do lote dia/AAAA-MM-DD', async () => {
 
 test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
   const texto = await readFile(CONTRIBUTING, 'utf8');
-  assert.match(texto, /Lint.*TypeCheck|Lint & TypeCheck/);
+  assert.match(texto, /TypeCheck/);
   assert.match(texto, /Unit Tests/);
   assert.match(texto, /Build/);
-  assert.match(texto, /Security Audit/);
-  assert.match(texto, /Contrato DB offline/);
-  assert.match(texto, /E2E Tests/);
+  assert.match(texto, /Node CI Scripts/);
 });
 
 test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {

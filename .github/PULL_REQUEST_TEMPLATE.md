@@ -25,7 +25,7 @@
 
 ## 🧪 Testes Realizados
 
-<!-- Descreva como testou as mudanças -->
+<!-- Descreva como testou as mudanças -->  
 
 - [ ] Testei localmente
 - [ ] Testes unitários passam
@@ -36,8 +36,8 @@
 
 <!-- Estes dois têm passo obrigatório DEPOIS do merge; marcar só o que se aplica -->
 
-- [ ] **Migration?** → arquivo versionado em `supabase/migrations/` + registro no ledger + catálogo de migrations atualizado
-- [ ] **Edge?** → disparar `deploy-functions` após o merge (a função não sobe sozinha)
+- [ ] **Migration?** → arquivo em `supabase/migrations/` + apply no banco LOCAL + registro no ledger local + catálogo atualizado; apply em produção via `db-migrate.yml` APÓS o merge
+- [ ] **Edge?** → disparar `deploy-functions` APÓS o merge (a função não sobe sozinha; merge ≠ deploy)
 - [ ] Nenhum dos dois
 
 ## ✅ Checklist

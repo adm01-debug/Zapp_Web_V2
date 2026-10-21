@@ -45,6 +45,8 @@ export const PASSOS = [
   { id: 'types', nome: 'Verificar frescor do types.ts', log: '/tmp/step-types.log' },
   { id: 'triple-parity', nome: 'Paridade tripla (migrations, edges, grants)', log: '/tmp/step-triple-parity.log' },
   { id: 'runtime-config', nome: 'Auditar configuracao runtime sem dados de clientes', log: '/tmp/step-runtime-config.log' },
+  // GA25: toda version nova no ledger deve ter Deployment producao-ddl correspondente.
+  { id: 'ddl-fora-do-fluxo', nome: 'Detectar DDL fora do fluxo (GA25)', log: '/tmp/step-ddl-fora-do-fluxo.log' },
 ];
 
 // E44: CAUSA = sha256 do passo mais a esquerda nesta ordem canonica — hash estavel
@@ -63,6 +65,7 @@ export const ORDEM_CAUSA = [
   'live-invariants',
   'runtime-config',
   'triple-parity',
+  'ddl-fora-do-fluxo',
   'e2e-fixtures',
 ];
 

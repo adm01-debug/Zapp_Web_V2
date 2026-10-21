@@ -119,6 +119,12 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // empurrou o fim para longe — o usuario que estava no fim apareceria como
   // "lendo o historico" e a lista deixaria de acompanhar a conversa.
   const isNearBottomRef = useRef(true);
+  // GA53: permite que scrollToBottomAfterSend e scrollToMessage forcem a rolagem
+  // mesmo quando isNearBottomRef é false (o usuário pode estar no histórico ao enviar
+  // ou ao navegar para uma mensagem citada). scrollToFn intercepta TODOS os scrolls
+  // do virtualizer — internos (count++) e explícitos — e bloqueia os implícitos quando
+  // o usuário não está acompanhando a conversa.
+  const forceScrollRef = useRef(false);
   const virtualizerRef = useRef<{ cancelScroll: () => void } | null>(null);
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -145,12 +151,28 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   const estimateSize = useCallback(() => 100, []);
   const getItemKey = useCallback((index: number) => messagesRef.current[index]?.id ?? index, []);
 
+  // GA53: intercepta TODOS os scrolls gerados pelo virtualizer (internos ao incrementar
+  // count + explícitos via scrollToIndex). Scrolls implícitos (ex.: re-render ao chegar
+  // nova mensagem) só passam quando o usuário já está no final — evita arrastar quem está
+  // lendo o histórico. Scrolls explícitos (envio próprio, navegação para mensagem citada)
+  // usam forceScrollRef para contornar a guarda.
+  const scrollToFn = useCallback(
+    (offset: number) => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      if (!isNearBottomRef.current && !forceScrollRef.current) return;
+      el.scrollTop = offset;
+    },
+    [],
+  );
+
   const virtualizer = useVirtualizer({
     count: messages.length,
     getScrollElement,
     estimateSize,
     overscan: 10,
     getItemKey,
+    scrollToFn,
   });
   virtualizerRef.current = virtualizer;
 
@@ -300,7 +322,9 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       if (!scrollContainerRef.current || messages.length === 0) return;
       // Envio proprio: vai ao fim SEM consultar isNearBottomRef — o usuario pode
       // estar lendo o historico e ainda assim tem de ver o que acabou de enviar.
+      forceScrollRef.current = true;
       virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+      forceScrollRef.current = false;
       acenderSeloEnviada();
     },
     registerMessageRef: (messageId: string, el: HTMLDivElement | null) => {
@@ -309,7 +333,9 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     scrollToMessage: (messageId: string) => {
       const index = messages.findIndex(m => m.id === messageId);
       if (index !== -1) {
+        forceScrollRef.current = true;
         virtualizer.scrollToIndex(index, { align: 'center' });
+        forceScrollRef.current = false;
       }
     },
   }), [messages, virtualizer, acenderSeloEnviada]);

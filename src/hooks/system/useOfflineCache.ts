@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
-import { getLogger } from '@/lib/logger';
-
-const log = getLogger('OfflineCache');
+import { log } from '@/lib/logger';
 const CACHE_KEY = 'offline_conversations';
 const CACHE_TTL = 1000 * 60 * 30; // 30 min
 

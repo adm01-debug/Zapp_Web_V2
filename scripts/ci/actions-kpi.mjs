@@ -175,7 +175,10 @@ export async function coletarJobs(
   { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},
 ) {
   const jobs = [];
-  for (const run of runs ?? []) {
+  // GA92: buscar jobs só de runs com falha — ranking de jobs lentos só importa onde houve
+  // falha, e buscar todos os 1.000+ runs da janela esgota o rate limit de 1.000/h.
+  const runsComFalha = (runs ?? []).filter((r) => FALHAS.has(r.conclusion));
+  for (const run of runsComFalha) {
     const id = run.id ?? run.run_id;
     if (id === undefined || id === null) continue;
     for (let pagina = 1; pagina <= maxPaginas; pagina += 1) {
@@ -190,6 +193,25 @@ export async function coletarJobs(
     }
   }
   return jobs;
+}
+
+// GA54: R6 com dente — detecta branch com > 15 pushes em 24 h e avisa para usar lote.
+// Em 15/10 uma branch acumulou 96 pushes em 24 h → 414 runs; o custo e' o sinal.
+export function branchesQuentes(runs, { limiteEm24h = 15, agora = Date.now() } = {}) {
+  const corte = agora - 24 * 60 * 60 * 1000;
+  const porBranch = new Map();
+  for (const run of (runs ?? [])) {
+    if (run.event !== 'push') continue;
+    const inicio = Date.parse(run.run_started_at ?? '');
+    if (!Number.isFinite(inicio) || inicio < corte) continue;
+    const branch = run.head_branch ?? '';
+    if (!branch) continue;
+    porBranch.set(branch, (porBranch.get(branch) ?? 0) + 1);
+  }
+  return [...porBranch.entries()]
+    .filter(([, count]) => count > limiteEm24h)
+    .map(([branch, count]) => ({ branch, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export async function publicarIssue({ repo, token, marca, corpo }) {
@@ -227,6 +249,14 @@ async function principal() {
   const corpo = corpoDoKpi(runs, jobs, { janelaDias: janela });
   console.log(corpo);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, corpo + '\n');
+  // GA54: alerta de branch quente (> 15 pushes em 24 h)
+  const quentes = branchesQuentes(runs);
+  if (quentes.length) {
+    const linhas = quentes.map((b) => `- \`${b.branch}\`: **${b.count}** pushes em 24 h`).join('\n');
+    const aviso = `> ⚠️ **Branch(es) com muitos pushes em 24 h** — considere agrupar em lote para reduzir o consumo de Actions.\n\n${linhas}`;
+    console.log(aviso);
+    if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, '\n' + aviso + '\n');
+  }
   const marca = `[kpi-actions] Semana de ${new Date().toISOString().slice(0, 10)}`;
   const r = await publicarIssue({ repo, token, marca, corpo });
   console.log(`issue ${r.acao}: #${r.numero}`);

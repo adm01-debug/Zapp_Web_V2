@@ -42,20 +42,20 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
-| B | 1 |
+| A | 53 |
+| B | 2 |
 | C | 3 |
 | D | 6 |
-| E | 17 |
-| **total** | **81** |
+| E | 19 |
+| **total** | **83** |
 
 ## Tabela
 
 | Edge | Grupo | Âncora do chamador (arquivo:linha) |
 |---|---|---|
-| `ai-auto-tag` | A | `src/components/settings/AIAutoTagsConfig.tsx:55` |
+| `ai-auto-tag` | E | — sem chamador no repositório — |
 | `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:182` |
-| `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:204` |
+| `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
@@ -64,9 +64,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
+| `ai-usage-outbox-drain` | E | — sem chamador no repositório — |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:53` · `src/components/security/PasswordResetRequestsPanel.tsx:65` |
 | `auth-login` | A | `src/lib/serverLogin.ts:72` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
+| `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
 | `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:143` · `src/hooks/chat/useNewConversation.ts:107` · `src/hooks/chat/useNewConversation.ts:115` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/hooks/integrations/useBitrixApi.ts:33` · `src/components/integrations/BitrixIntegrationView.tsx:29` |
 | `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` |
@@ -93,7 +95,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:30` · `src/components/monitoring/hooks/useMonitoringActions.ts:59` · `supabase/functions/webhook-diagnostic/index.ts:131` · `supabase/functions/webhook-diagnostic/index.ts:253` · `supabase/functions/webhook-diagnostic/index.ts:263` · `supabase/functions/evolution-api/index.ts:474` · `supabase/functions/evolution-api/index.ts:540` · `supabase/functions/evolution-api/index.ts:701` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:215` · `supabase/functions/_shared/evolution-sync-actions.ts:292` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
-| `fetch-link-preview` | A | `src/services/chat.service.ts:16` · `supabase/functions/_shared/evolution-webhook-messages.ts:270` |
+| `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
 | `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:77` |
 | `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
 | `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:22` |
@@ -135,7 +137,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfãs (17) — GATE B
+## Órfãs (19) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
@@ -144,6 +146,8 @@ Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dis
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
 mantém a lista honesta.
 
+- `ai-auto-tag`
+- `ai-usage-outbox-drain`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `elevenlabs-agent-token`

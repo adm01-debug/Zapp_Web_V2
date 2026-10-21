@@ -96,25 +96,19 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
     }
   }
 
-  // 2. Inserir mensagem fresca para garantir que o contato apareça na inbox
-  //    (InboxFilters exige messages.length > 0; janela de 1000 msgs pode deixar
-  //    mensagens antigas de fora quando o volume diário ultrapassa esse limite).
-  //    A policy INSERT de messages não tem WITH CHECK — authenticated pode inserir.
+  // 2. Inserir mensagem fresca via RPC SECURITY DEFINER (GA11) para garantir que
+  //    o contato apareça na inbox sem violar o trigger de proveniência
+  //    (guard_message_provenance_fields bloqueia sender!='agent' para authenticated).
   const msgResponse = await page.request.post(
-    `${SUPABASE_URL}/rest/v1/messages`,
+    `${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`,
     {
-      headers: { ...headers, Prefer: 'return=minimal' },
-      data: {
-        contact_id: E2E_FIXTURE_CONTACT_ID,
-        sender: 'contact',
-        content: '[E2E fixture setup]',
-        message_type: 'text',
-      },
+      headers: { ...headers, Prefer: 'return=representation' },
+      data: { p_op: 'insert' },
     }
   );
   if (!msgResponse.ok()) {
     throw new Error(
-      `Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ` +
+      `Falha ao inserir mensagem de fixture (RPC): HTTP ${msgResponse.status()} ` +
         (await msgResponse.text().catch(() => ''))
     );
   }
@@ -122,6 +116,7 @@ export async function ensureFixtureConversationOpen(page: Page): Promise<void> {
 
 // Remove as mensagens "[E2E fixture setup]" inseridas por ensureFixtureConversationOpen.
 // Chamar dentro de test.afterAll para manter o histórico do contato limpo entre runs.
+// GA11: usa RPC SECURITY DEFINER em vez de DELETE direto (sem service role).
 export async function cleanupFixtureMessages(page: Page): Promise<void> {
   const accessToken = await getAccessToken(page);
   const headers = {
@@ -129,9 +124,12 @@ export async function cleanupFixtureMessages(page: Page): Promise<void> {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   };
-  await page.request.delete(
-    `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&content=eq.[E2E%20fixture%20setup]`,
-    { headers }
+  await page.request.post(
+    `${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`,
+    {
+      headers,
+      data: { p_op: 'delete' },
+    }
   );
 }
 

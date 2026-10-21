@@ -74,7 +74,7 @@ export async function abrirOuRotacionar({ gh, owner, repo, label, title, body })
       });
       await gh('PATCH', `/repos/${owner}/${repo}/issues/${existing.number}`, {
         state: 'closed',
-        state_reason: 'completed',
+        state_reason: 'not_planned',
       });
       await garantirLabel(gh, owner, repo, label);
       const nova = await gh('POST', `/repos/${owner}/${repo}/issues`, {

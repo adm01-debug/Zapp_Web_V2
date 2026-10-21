@@ -53,12 +53,20 @@ case "${1:-}" in
     db="$(_sanitize "$cname")"
     mkdir -p "$STATE"
     printf '%s' "$db" > "$STATE/$cname.db"
+    # GA70: exportar o nome do banco para GITHUB_ENV para que passos posteriores
+    # possam afirmar proof.database === 'postgres' sem ler o arquivo de estado.
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+      printf 'DOCKER_SHIM_DB=%s\n' "$db" >> "$GITHUB_ENV"
+    fi
     _svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" \
       > "$STATE/$cname.roles" 2>/dev/null || true
     # Two separate calls: psql wraps multi-statement -c in a transaction,
     # and CREATE DATABASE cannot run inside a transaction block.
     _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
-    _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null
+    # GA66: falha explícita se o banco não for criado — sem set -e, a saída 0 do printf
+    # mascarava o erro e o test-runner achava que o container tinha subido.
+    _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null \
+      || { printf 'docker-shim: CREATE DATABASE "%s" failed\n' "$db" >&2; exit 1; }
     printf 'shimid_%s\n' "$cname"
     ;;
 
@@ -141,7 +149,10 @@ case "${1:-}" in
       exec "$DOCKER_REAL" rm "${orig[@]}"
     fi
     db="$(< "$STATE/$cname.db")"
-    old="$(< "$STATE/$cname.roles" 2>/dev/null || true)"
+    # GA66: só carregar baseline de roles se o arquivo existe e não está vazio; arquivo
+    # vazio (criado quando _svc falhou no run) causaria DROP ROLE em todos os roles.
+    old=""
+    [[ -s "$STATE/$cname.roles" ]] && old="$(< "$STATE/$cname.roles")"
     # Drop database FIRST so its objects (ALTER DEFAULT PRIVILEGES grants) are
     # removed before we try to drop roles that depend on them.  If roles are
     # dropped first, service_role fails silently and leaks into the next test.

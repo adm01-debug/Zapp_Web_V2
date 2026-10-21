@@ -44,12 +44,12 @@ function jobs(texto) {
     if (!atual) continue;
     if (/^\s*#/.test(linha)) continue;
     atual.linhas.push(linha);
-    const envInline = /^ {4}environment:\s*['"]?([^'"\s#]+)['"]?\s*(?:#.*)?$/.exec(linha);
+    const envInline = /^ {4}environment:\s*['"']?([^'"\s#]+)['"']?\s*(?:#.*)?$/.exec(linha);
     if (envInline) atual.environment = envInline[1];
     if (/^ {4}environment:\s*(?:#.*)?$/.test(linha)) {
       // forma longa: environment:\n      name: X
       for (let j = i + 1; j < linhas.length && /^ {6}/.test(linhas[j]); j += 1) {
-        const nome = /^ {6}name:\s*['"]?([^'"\s#]+)['"]?/.exec(linhas[j]);
+        const nome = /^ {6}name:\s*['"']?([^'"\s#]+)['"']?/.exec(linhas[j]);
         if (nome) atual.environment = nome[1];
       }
     }
@@ -74,9 +74,12 @@ function consumidores(nomeSecret) {
 // O supabase-sync.yml foi removido em 15/10 e deixou de consumir.
 const DESTINO_URL_POR_JOB = {
   'db-live-guard.yml:live-contract': 'banco-leitura',
-  'db-migrate.yml:migrate': 'producao-ddl',
+  // GA13: preflight le do nivel repo (sem gate de environment) por design —
+  // o operador precisa ver o output do dry-run ANTES de aprovar o apply.
+  // O apply rele o DSN endurecido de needs.preflight.outputs, nao do secret.
+  'db-migrate.yml:preflight': null,
   'targeted-ledger-evidence.yml:export-encrypted-evidence': 'db-ledger-evidence',
-  'types-sync.yml:sync': 'banco-leitura',
+  'types-sync.yml:ler-banco': 'banco-leitura',
 };
 
 // W62: segredos de deploy. Todos vivem (ou vao viver) so em producao-edge-functions.
@@ -186,7 +189,7 @@ test.skip('W12: settings-guard le com o token administrativo e cai no github.tok
 
 test('environments usados por segredo existem no baseline do perimetro', () => {
   const usados = new Set([
-    ...Object.values(DESTINO_URL_POR_JOB),
+    ...Object.values(DESTINO_URL_POR_JOB).filter(Boolean),
     'producao-edge-functions',
     'perimetro-leitura',
   ]);

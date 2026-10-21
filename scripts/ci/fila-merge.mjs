@@ -28,15 +28,18 @@ const RAIZ = new URL('../../', import.meta.url);
 
 export function checksObrigatorios() {
   const baseline = JSON.parse(readFileSync(new URL('scripts/ci/github-settings-baseline.json', RAIZ), 'utf8'));
-  return baseline.branch_protection_main.required_status_checks;
+  const checks = baseline.branch_protection_main.required_status_checks;
+  return checks.map((c) => (typeof c === 'string' ? c : c.context));
 }
 
 const PASSOU = new Set(['SUCCESS', 'SKIPPED', 'NEUTRAL']);
 const FALHOU = new Set(['FAILURE', 'TIMED_OUT', 'STARTUP_FAILURE', 'ERROR']);
+const TETO_EM_VOO_MS = 45 * 60 * 1000; // GA49: PR em dia sem check em andamento há > 45 min → bloqueada
 
 // Estado de UM check obrigatório no head da PR: 'passou' | 'falhou' | 'pendente'.
-// CANCELLED e ACTION_REQUIRED contam como pendente: não são defeito do código, e
-// a próxima atualização roda o check de novo.
+// CANCELLED e ACTION_REQUIRED contam como pendente quando a PR está BEHIND: o
+// update-branch vai disparar o check de novo. Quando a PR está em dia (não BEHIND),
+// use todosChecksConcluidos() + classificar() para detectar o travamento.
 export function estadoDoCheck(rollup, nome) {
   const entradas = (rollup ?? []).filter((c) => (c.name ?? c.context) === nome);
   if (entradas.length === 0) return 'pendente';
@@ -53,10 +56,38 @@ export function estadoDoCheck(rollup, nome) {
   return 'pendente';
 }
 
+// GA49: retorna true se todos os checks obrigatórios têm status=COMPLETED (nenhum em andamento).
+// StatusContext não expõe status/COMPLETED — considera não-concluído (conservador).
+function todosChecksConcluidos(rollup, obrigatorios) {
+  return obrigatorios.every((n) => {
+    const entradas = (rollup ?? []).filter((c) => (c.name ?? c.context) === n);
+    if (entradas.length === 0) return false;
+    const atual = entradas.reduce((a, b) => (String(b.startedAt ?? '') > String(a.startedAt ?? '') ? b : a));
+    if (atual.__typename === 'StatusContext' || atual.state) return false;
+    return atual.status === 'COMPLETED';
+  });
+}
+
+// GA49 teto: retorna true se nenhum check está em andamento e o mais recente
+// completou há mais de `ms` milissegundos. Usa `completedAt` quando disponível,
+// cai para `startedAt` como aproximação.
+function tetoEmVooAtingido(rollup, ms, agora) {
+  const lista = rollup ?? [];
+  if (lista.some((c) => c.status === 'IN_PROGRESS' || c.status === 'QUEUED' || c.status === 'WAITING' || c.status === 'PENDING')) return false;
+  const timestamps = lista
+    .map((c) => new Date(c.completedAt ?? c.startedAt ?? 0).getTime())
+    .filter((t) => t > 0);
+  if (timestamps.length === 0) return false;
+  return agora - Math.max(...timestamps) > ms;
+}
+
 // 'fora' | 'em-voo' | 'aguardando' | 'bloqueada'
-export function classificar(pr, obrigatorios) {
+// `agora` (ms desde epoch) é injetável para testes; em produção usa Date.now().
+export function classificar(pr, obrigatorios, agora = Date.now()) {
   if (pr.isDraft || !pr.autoMergeRequest || (pr.baseRefName && pr.baseRefName !== 'main')) return 'fora';
   if (pr.mergeStateStatus === 'DIRTY') return 'fora'; // conflito: só o autor resolve
+  // GA50: CONFLICTING no campo `mergeable` do gh pr list = conflito pendente de cálculo.
+  if (pr.mergeable === 'CONFLICTING') return 'fora';
   const estados = obrigatorios.map((n) => estadoDoCheck(pr.statusCheckRollup, n));
   if (estados.includes('falhou')) return 'bloqueada';
   // PR de fork ATRASADA fica fora: o GITHUB_TOKEN não escreve no repositório de
@@ -64,17 +95,29 @@ export function classificar(pr, obrigatorios) {
   // continua contando como em voo (abaixo): ignorá-la deixaria outra PR ser
   // atualizada junto, e essa outra ficaria velha assim que a fork entrasse.
   if (pr.mergeStateStatus === 'BEHIND') return pr.isCrossRepository ? 'fora' : 'aguardando';
+  // GA49: PR em dia mas com todos os checks COMPLETED e algum ≠ passou
+  // (ex.: CANCELLED, ACTION_REQUIRED) → bloqueada. update-branch não resolve aqui
+  // (a PR já está em dia); mantê-la como em-voo trava a fila para sempre.
+  if (estados.includes('pendente') && todosChecksConcluidos(pr.statusCheckRollup, obrigatorios)) return 'bloqueada';
+  // GA49 teto: PR em dia sem nenhum check em andamento há > 45 min → bloqueada.
+  // Cobre estado inválido onde o GitHub não registrou checks ou não disparou auto-merge.
+  if (tetoEmVooAtingido(pr.statusCheckRollup, TETO_EM_VOO_MS, agora)) return 'bloqueada';
   // Atualizada com a main (CLEAN/BLOCKED/UNSTABLE/HAS_HOOKS/UNKNOWN): checks
   // rodando ou verde esperando o auto-merge — em ambos os casos ocupa a vez.
   return 'em-voo';
 }
 
-export function decidir(prs, obrigatorios) {
-  const classes = prs.map((pr) => ({ pr, classe: classificar(pr, obrigatorios) }));
+export function decidir(prs, obrigatorios, agora = Date.now()) {
+  const classes = prs.map((pr) => ({ pr, classe: classificar(pr, obrigatorios, agora) }));
   const emVoo = classes.filter((c) => c.classe === 'em-voo');
   const bloqueadas = classes.filter((c) => c.classe === 'bloqueada').map((c) => c.pr.number);
+  // GA50: PRs com auto-merge cujo campo `mergeable` é CONFLICTING ficam como 'fora' em
+  // classificar(), mas vale listá-las no summary para o autor saber que precisa resolver.
+  const conflitantes = prs
+    .filter((pr) => pr.mergeable === 'CONFLICTING' && pr.autoMergeRequest && !pr.isDraft)
+    .map((pr) => pr.number);
   if (emVoo.length > 0) {
-    return { acao: 'esperar', emVoo: emVoo.map((c) => c.pr.number), bloqueadas };
+    return { acao: 'esperar', emVoo: emVoo.map((c) => c.pr.number), bloqueadas, conflitantes };
   }
   const fila = classes
     .filter((c) => c.classe === 'aguardando')
@@ -84,17 +127,17 @@ export function decidir(prs, obrigatorios) {
       const eb = String(b.autoMergeRequest.enabledAt ?? '');
       return ea === eb ? a.number - b.number : ea < eb ? -1 : 1;
     });
-  if (fila.length === 0) return { acao: 'nada', bloqueadas };
+  if (fila.length === 0) return { acao: 'nada', bloqueadas, conflitantes };
   // `fila` vai inteira, em ordem: se o update-branch da primeira for recusado
   // (403/422), o workflow tenta a próxima na mesma execução em vez de travar.
-  return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas };
+  return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas, conflitantes };
 }
 
 // Depois de uma recusa 403/422, o laço do workflow só tenta o próximo candidato se uma
 // decisão recalculada AGORA ainda o autoriza: nenhuma PR em voo e ele é a PRIMEIRA da
 // fila recalculada que ainda não foi recusada nesta execução. A lista lida no início pode
 // estar velha: outra PR pode ter entrado em voo, ou uma PR mais antiga ter ficado elegível
-// e passado à frente (Codex, PRs #1950 e #1951).
+// e passado à frente (Codex, #1951).
 export function confirmarCandidato(decisao, numero, recusadas = []) {
   if (decisao.acao !== 'atualizar') return false;
   return decisao.fila.find((n) => !recusadas.includes(n)) === numero;
@@ -125,7 +168,7 @@ export async function resolverDesconhecidos(prs, behindBy) {
 async function decisaoAtual(repo) {
   const json = execFileSync(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
-    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
+    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,mergeable,statusCheckRollup',
   ], { encoding: 'utf8' });
   const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
@@ -168,6 +211,7 @@ async function main() {
     if (decisao.restantes.length) linhas.push(`Esperando a vez (sem gastar CI): #${decisao.restantes.join(', #')}.`);
   }
   if (decisao.bloqueadas.length) linhas.push(`Fora da fila até corrigir check obrigatório: #${decisao.bloqueadas.join(', #')}.`);
+  if (decisao.conflitantes?.length) linhas.push(`Conflito pendente de resolução (CONFLICTING): #${decisao.conflitantes.join(', #')}.`);
   for (const l of linhas) console.log(l);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Fila de merge\n\n${linhas.map((l) => `- ${l}`).join('\n')}\n`);
   if (process.env.GITHUB_OUTPUT && decisao.acao === 'atualizar') {

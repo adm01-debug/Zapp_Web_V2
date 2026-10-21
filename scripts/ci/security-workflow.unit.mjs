@@ -33,7 +33,8 @@ test("DESTINO_URL never appears in the CI workflow", () => {
 // O unico par de secrets exposto no ci.yml deve ser o par de chaves publicaveis
 // do Supabase (usadas so no job build, nunca em contexts privilegiados).
 test("only publishable Supabase keys are exposed as secrets in CI", () => {
-  const secretRefs = [...workflow.matchAll(/secrets\.(\w+)/gu)].map((m) => m[1]);
+  const workflowSemComentarios = workflow.split('\n').filter((l) => !l.trimStart().startsWith('#')).join('\n');
+  const secretRefs = [...workflowSemComentarios.matchAll(/secrets\.(\w+)/gu)].map((m) => m[1]);
   const permitidos = new Set(["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
   for (const s of secretRefs) {
     assert.ok(permitidos.has(s), `secret nao permitido em ci.yml: secrets.${s}`);

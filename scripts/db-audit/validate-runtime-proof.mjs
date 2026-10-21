@@ -1,8 +1,12 @@
-// W28 (2026-10-01): extrai a validacao de proof do heredoc inline do db-migrate.yml.
-// Lê RUNTIME_JSON, TARGET_VERSION, NEEDS_APPLY do env; saída:
-//   - stderr: descrição humana do hash de confirmação
-//   - stdout: o hash (CONFIRMATION_HASH) para o bash comparar com CONFIRM_RUNTIME_SHA256
-// Exit != 0 se o proof for inválido.
+// Extraído de db-migrate.yml (GA16): valida o JSON de runtime emitido por
+// run-runtime-contract.mjs antes de aplicar uma migration. Lê do env:
+//   RUNTIME_JSON            — saída de run-runtime-contract.mjs
+//   TARGET_VERSION          — versão alvo (14 dígitos)
+//   NEEDS_APPLY             — 'true' se a migration ainda não está no banco
+//   APPLY_BUNDLE            — 'true' para bundle atomico
+//   APPLY                   — 'true' para apply real (não dry-run)
+//   CONFIRM_RUNTIME_SHA256  — hash do dry-run anterior (para apply)
+//   GITHUB_SHA              — commit atual
 const proof = JSON.parse(process.env.RUNTIME_JSON);
 const common = proof.server_major === 17
   && proof.database === 'postgres'
@@ -596,9 +600,9 @@ if (process.env.TARGET_VERSION === '20260830170000') {
     && Number.isInteger(proof.policy_count) && proof.policy_count >= 0
     && Number.isInteger(proof.ledger_count) && proof.ledger_count > 0
     && /^[a-f0-9]{64}$/.test(proof.structure_sha256 || '');
-  process.stderr.write('Contrato generico: estrutura de public em '
+  console.error('Contrato generico: estrutura de public em '
     + String(proof.structure_sha256).slice(0, 12)
-    + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.\n');
+    + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.');
 }
 const ok = common && targetOk;
 if (!ok) {
@@ -610,7 +614,7 @@ if (!ok) {
 // schema, entao editar o .sql entre o dry-run e o apply passava -- o
 // banco nao muda por causa de uma edicao de arquivo. Agora o
 // confirm_runtime_sha256 e' o SHA-256 de runtime + arquivo + commit.
-const { readdirSync } = await import('node:fs');
+const { readdirSync, appendFileSync } = await import('node:fs');
 const { pathToFileURL } = await import('node:url');
 const modHash = await import(pathToFileURL(`${process.cwd()}/scripts/db-audit/confirm-hash.mjs`).href);
 const candidatos = readdirSync('supabase/migrations')
@@ -626,12 +630,19 @@ const confirmacao = modHash.comporHashConfirmacao({
   arquivoSha256,
   commitSha: process.env.GITHUB_SHA,
 });
-// W28: imprime a descricao no stderr (logs do workflow) e o hash no stdout para o
-// bash capturar como CONFIRMATION_HASH e comparar com CONFIRM_RUNTIME_SHA256.
-process.stderr.write(modHash.descreverConfirmacao({
+console.error(modHash.descreverConfirmacao({
   runtimeSha256: proof.runtime_sha256,
   arquivoSha256,
   commitSha: process.env.GITHUB_SHA,
   arquivo: arquivoAlvo,
-}) + '\n');
+}));
+if (process.env.GITHUB_OUTPUT) {
+  appendFileSync(process.env.GITHUB_OUTPUT, `confirm_runtime_sha256=${confirmacao}\n`);
+}
+// GA04: hash também vai para stdout para captura em testes e pipelines locais.
+// Qualquer mensagem diagnóstica fica em stderr; stdout é exclusivamente o hash.
 process.stdout.write(confirmacao + '\n');
+if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
+  console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
+  process.exit(1);
+}

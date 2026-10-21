@@ -302,6 +302,14 @@ export function suitesNodeOrfas() {
   return orfaosNode(suitesNodeNoDisco(), padroesNodeDosWorkflows());
 }
 
+// GA73: sentido inverso — padrões em run: que não casam com nenhum arquivo no disco.
+// Cobre suites renomeadas ou apagadas sem atualizar o YAML correspondente.
+export function padroesYamlSemArquivo() {
+  const padroes = padroesNodeDosWorkflows();
+  const suitesNoDisco = suitesNodeNoDisco();
+  return padroes.filter((padrao) => !suitesNoDisco.some((f) => casaPadrao(f, padrao)));
+}
+
 // ── 4. Detectar órfãos ────────────────────────────────────────────────────────
 
 /**
@@ -331,6 +339,11 @@ export function orfaosDoInventario() {
 
   for (const f of suitesNodeOrfas()) {
     orphans.push({ file: f, yaml: 'nenhum bloco run: de workflow' });
+  }
+
+  // GA73: sentido inverso — padrão em run: que não casa com nenhum arquivo no disco.
+  for (const padrao of padroesYamlSemArquivo()) {
+    orphans.push({ file: padrao, yaml: 'arquivo referenciado no YAML não existe no disco' });
   }
 
   return orphans;

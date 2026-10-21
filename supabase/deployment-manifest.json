@@ -221,8 +221,8 @@
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "bytes": 23108,
-      "sha256": "e72c18c139b4bd329988ba8e887a80a5aa63585ec8dd622e12900c01b5624671"
+      "bytes": 23305,
+      "sha256": "f24f7f2f0593add49a59ca6b911433ac036722870e192d80d2ff752b2b5f582b"
     },
     {
       "path": "supabase/functions/_shared/gmail-mime.ts",
@@ -586,8 +586,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 89020,
-      "sha256": "9d0b0c073889f35d5359ebaef9b05c1a9e92596674628bc7c7eaa978b611ba69"
+      "bytes": 75768,
+      "sha256": "d6c6e72e431ede6e276f63a6705a04f418fb618f47c9cca4d4448b7762e13aa1"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -836,8 +836,8 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "bytes": 21802,
-      "sha256": "0507f0be1b377cff3e3290dacb4d8d660001fbefe66d91c33a66be39ec84ee85"
+      "bytes": 21811,
+      "sha256": "46cfda41a8a1b57eeb45029626305ca0044c2abe065df0224dfff2ea3a2505dd"
     },
     {
       "path": "supabase/functions/webauthn/verify.ts",
@@ -1656,7 +1656,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ff715acb61276af69d9aa2ae47d3bacbba62fc8a1b673d57ed959e0187cebd4d",
+      "source_sha256": "3e8690472c5261e367f3c891b45c693de09e2a0dc12719a9883e52d4b845691a",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -1824,7 +1824,7 @@
       "name": "gmail-cron-sync",
       "entrypoint": "supabase/functions/gmail-cron-sync/index.ts",
       "verify_jwt": false,
-      "source_sha256": "135a039a7fd9e997a3782f6b04af3ca78a65737fa1def91b9b9f1e8890621c52",
+      "source_sha256": "4ad93eb2793f14df3f3ab475c03ca986645b904998572c031c5f3c994df3b3f8",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -1839,7 +1839,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a46ab2d7b0fe774d4d520db6acdff7fe17a960dd782af5cfd8a140da12f3a8f3",
+      "source_sha256": "2956bc9ae1ae32e0ab0e755f51ad58dd7dc344e0406460585c5ddfa0f672ebd2",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1856,7 +1856,7 @@
       "name": "gmail-send",
       "entrypoint": "supabase/functions/gmail-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3ffdb410cebf7ace819e953a83bc6e90a60eb087f7dc0f21abc32957d6866452",
+      "source_sha256": "a111b4be0acc52b31d35f9f3a0a438739df523536373bc6c79d889c23648b9d8",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1874,7 +1874,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a2cbb0b2d5931ff6d622752c301aa21adf3b0282e20e8dbb51e00bbcfa42c8b5",
+      "source_sha256": "ef9cea4aa2c02185796ddaed715b17818d2527c22d26e5e90c8bece519026b06",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -1889,7 +1889,7 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "d06a1cc42c4a48bd00d5d8560cd99a80e5f199a0040a3077a1c292aaa72d79f6",
+      "source_sha256": "696697b8ac40e92d9943b1031c7b1ca4edeb3ac0a68c80934c1c3e8d4dcc3848",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -2466,7 +2466,7 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "de33e0a8165badce5b58da697e7d7e75f46000f8fa8ba987cb5cf5fba51309b9",
+      "source_sha256": "e51fdc1e5ba877f463a9880aca2cce24a69a5633833b7c6c2593a249acd50d23",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2518,5 +2518,5 @@
       ]
     }
   ],
-  "manifest_sha256": "bb4b038b5d756cf92a8fadadfdbdb03f824dd5c9f484ba1f4ebd78f1d5950aec"
+  "manifest_sha256": "28823ffb88f80b6686d9d8c8e5380cea6e3ecdf4afb9896fbafcb9e131f284f2"
 }

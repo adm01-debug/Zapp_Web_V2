@@ -40,6 +40,9 @@ on:
       - '!supabase/functions/**/*.test.ts'
       - '!supabase/functions/**/*.md'
       - '!supabase/functions/**/fixtures/**'
+      # GA35: __fixtures__ (duplo underscore) é a convenção do Deno/Supabase CLI,
+      # diferente de fixtures/ (sem underscore) — os dois precisam ser excluídos.
+      - '!supabase/functions/**/__fixtures__/**'
   workflow_dispatch:
     inputs:
       function_name:
@@ -88,7 +91,8 @@ permissions:
 # funcao: o passo "Serializar escopo TODAS contra deploys por funcao" faz essa
 # exclusao dentro do job (a concurrency do GitHub nao a exprime).
 concurrency:
-  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}
+  # GA30: rollback usa grupo próprio para que um push automático não o cancele.
+  group: ${{ inputs.rollback_to_last_success == true && 'deploy-edge-functions-rollback' || format('deploy-edge-functions-{0}', inputs.function_name || 'all') }}
   cancel-in-progress: false
 
 env:
@@ -136,10 +140,13 @@ jobs:
             exit 1
           fi
 
-      # W66: resolve o SHA do ultimo Deployment bem-sucedido do environment
-      # producao-edge-functions quando rollback_to_last_success=true. O resultado
-      # fica em RESOLVED_SOURCE_REF e e usado no Checkout e nos passos seguintes
-      # em lugar de inputs.source_ref.
+      # GA30: resolve o SHA do ultimo Deployment bem-sucedido do environment
+      # producao-edge-functions quando rollback_to_last_success=true, pulando o
+      # SHA atual (que é o que está em produção agora — precisamos de um anterior).
+      # AVISO: rollback de edge com migration aplicada NÃO reverte o banco.
+      # Se a migration for incompatível com o código antigo, abra um PR de revert
+      # da migration ANTES de disparar o rollback.
+      # O resultado fica em RESOLVED_SOURCE_REF e é usado no Checkout seguinte.
       - name: Resolver ref para rollback automatico
         if: inputs.rollback_to_last_success == true
         env:
@@ -173,6 +180,11 @@ jobs:
             if (!stRes.ok) continue;
             const statuses = await stRes.json();
             if (statuses.some((s) => s.state === 'success')) {
+              // GA30: pular o SHA atual — rollback precisa de um commit anterior diferente.
+              if (dep.sha === process.env.GITHUB_SHA) {
+                process.stdout.write(`Pulando deployment do SHA atual (${dep.sha.slice(0, 8)}) — buscando anterior com SHA diferente...\n`);
+                continue;
+              }
               const { appendFileSync } = await import('node:fs');
               appendFileSync(process.env.GITHUB_ENV, `RESOLVED_SOURCE_REF=${dep.sha}\n`);
               process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido: ${dep.sha}\n`);
@@ -312,7 +324,11 @@ jobs:
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+              # GA32: env-file evita que o valor apareça no argv (visível em /proc).
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'CRON_SECRET=%s\n' "$CRON_SECRET" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
           # Deploy total (FN vazio) também inclui crm-integration e deve falhar
@@ -340,9 +356,17 @@ jobs:
               -H "Authorization: Bearer $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
               --data '{"p_phone":"00000000"}')
             if [ "$STATUS" != "200" ]; then
-              echo "::error::Preflight read-only do CRM falhou (HTTP $STATUS)."
-              exit 1
+              if [ -z "$FN" ]; then
+                # GA33: deploy total — 5xx no CRM só bloqueia crm-integration, não todas as funções.
+                echo "::warning::Preflight read-only do CRM falhou (HTTP $STATUS) — deploy total continua sem crm-integration."
+                echo "CRM_PREFLIGHT_FAILED=true" >> "$GITHUB_ENV"
+                CRM_PREFLIGHT_FAILED=true
+              else
+                echo "::error::Preflight read-only do CRM falhou (HTTP $STATUS)."
+                exit 1
+              fi
             fi
+            if [ "${CRM_PREFLIGHT_FAILED:-}" != "true" ]; then
             # O contexto empresarial do Email usa estas projeções específicas.
             # Consultas limitadas a uma linha provam schema + privilégio server-side
             # sem registrar nem expor conteúdo do CRM externo no log do deploy.
@@ -366,11 +390,13 @@ jobs:
           suppliers|id,company_id
           carriers|id,company_id
           CRM_EMAIL_CONTEXT_SCHEMA
-            if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
-                EXTERNAL_SUPABASE_SERVICE_ROLE_KEY="$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+            fi
+            if [ "${CRM_PREFLIGHT_FAILED:-}" != "true" ] && [ "$REESCREVER" = "true" ]; then
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'EXTERNAL_SUPABASE_URL=%s\nEXTERNAL_SUPABASE_SERVICE_ROLE_KEY=%s\n' \
+                "$EXTERNAL_SUPABASE_URL" "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
           if [ "$FN" = "promogifts-catalog" ] || [ -z "$FN" ]; then
@@ -390,10 +416,11 @@ jobs:
             node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
             echo "Setando endpoint e credencial server-side do catalogo nas edges"
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
-                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'PROMOGIFTS_SUPABASE_URL=%s\nPROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=%s\n' \
+                "$PROMOGIFTS_SUPABASE_URL" "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
           # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
@@ -418,10 +445,11 @@ jobs:
           console.log('OK: configuracao do proxy de previews validada.');
           NODE
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
-                PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
-                --project-ref "$PROJECT_REF"
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'PREVIEW_EGRESS_PROXY_URL=%s\nPREVIEW_EGRESS_SHARED_SECRET=%s\n' \
+                "$PREVIEW_EGRESS_PROXY_URL" "$PREVIEW_EGRESS_SHARED_SECRET" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
 
@@ -453,6 +481,16 @@ jobs:
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
 
+      - name: "\U0001F9EA Testes unitários das edge functions (deno test)"
+        # GA27: continue-on-error AUSENTE por design — falha de teste DEVE bloquear
+        # o deploy. Este step é um gate, não observabilidade. Não adicionar
+        # a flag continue-on-error aqui; o teste GA99 em workflow-contracts.unit.mjs
+        # detecta a regressão.
+        run: deno test --allow-all supabase/functions/
+
+      - name: Verificar env vars das edge functions (GA31)
+        run: node scripts/ci/check-edge-envs.mjs
+
       - name: Deploy
         if: inputs.dry_run != true
         env:
@@ -470,6 +508,21 @@ jobs:
           if [ -n "$FN" ]; then
             echo "Deploy da funcao: $FN"
             supabase functions deploy "$FN" --project-ref "$PROJECT_REF" 2>&1 | tee "$DEPLOY_LOG"
+          elif [ "${CRM_PREFLIGHT_FAILED:-}" = "true" ]; then
+            # GA33: preflight do CRM falhou — deploy de todas as funções exceto crm-integration.
+            echo "Deploy de TODAS as funcoes exceto crm-integration (CRM_PREFLIGHT_FAILED=true)"
+            node --input-type=module <<'NODE'
+          import { readFileSync } from 'fs';
+          import { spawnSync } from 'child_process';
+          import { join } from 'path';
+          const manifest = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, 'edge-tooling/manifest.json'), 'utf8'));
+          const fns = manifest.functions.filter(f => f !== 'crm-integration');
+          for (const fn of fns) {
+            const r = spawnSync('supabase', ['functions', 'deploy', fn, '--project-ref', process.env.PROJECT_REF], { stdio: 'inherit' });
+            if (r.status !== 0) process.exit(r.status ?? 1);
+          }
+          NODE
+            node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$DEPLOY_LOG" "$EVIDENCE_DIR/unchanged-functions.json" 2>/dev/null || true
           else
             echo "Deploy de TODAS as funcoes"
             supabase functions deploy --project-ref "$PROJECT_REF" 2>&1 | tee "$DEPLOY_LOG"
@@ -493,7 +546,7 @@ jobs:
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Capturar e validar manifesto remoto pos-deploy
-        if: inputs.dry_run != true
+        if: ${{ !cancelled() && inputs.dry_run != true }}
         # E55 (auditoria de 01/10/2026): teto proprio do passo. O job inteiro tem
         # 100 min, mas a atestacao nao pode consumir esse orcamento: se a Management
         # API nao estabilizar em 10 min, o passo falha com a ultima causa observada
@@ -538,7 +591,7 @@ jobs:
       # indisponível → ::warning:: (não bloqueia o deploy: observabilidade não
       # pode derrubar um deploy bem-sucedido). O script vive em
       # scripts/edge-deploy/health-check.mjs (W65).
-      - name: 🏥 Verificação de saúde pós-deploy (5 min)
+      - name: \U0001F3E5 Verificação de saúde pós-deploy (5 min)
         if: inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

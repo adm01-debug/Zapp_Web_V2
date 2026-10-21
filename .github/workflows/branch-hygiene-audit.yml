@@ -125,10 +125,13 @@ jobs:
           cat "$RELATORIO" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publicar na issue semanal [branch-hygiene]
+        # GA64: `if: !cancelled()` garante que o passo roda mesmo quando o anterior falha,
+        # mas nao quando o job e' cancelado (o relatorio pode estar incompleto).
         # E91: alem do Job Summary (efemero), mantem UMA issue aberta com a tabela,
         # para o historico ficar consultavel. Mesmo mecanismo do [kpi-actions] em
         # actions-kpi.mjs: procura a aberta por titulo e atualiza; se nao houver,
         # cria. Idempotente — rodar duas vezes no mesmo dia nao duplica.
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -154,3 +157,20 @@ jobs:
             echo "issue criada"
           fi
           rm -f "$RELATORIO"
+
+      - name: SLA de alertas de segurança
+        # GA64: conta só alertas CodeQL ativos (não dispensados) para garantir que o SLA
+        # de 30 dias não seja ultrapassado. Alertas Scorecard dispensados (state=dismissed)
+        # não contam — evita falso positivo após o GA46 e outros dismissals legítimos.
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TOTAL=$(gh api "repos/$REPO/code-scanning/alerts?tool_name=CodeQL&state=open&per_page=100" \
+            --jq '[.[] | select(.dismissed_at == null)] | length' 2>/dev/null || echo 0)
+          echo "Alertas CodeQL abertos (não dispensados): $TOTAL" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$TOTAL" -gt 0 ]; then
+            echo "::warning::$TOTAL alerta(s) CodeQL abertos — verificar antes de 30 dias"
+          fi

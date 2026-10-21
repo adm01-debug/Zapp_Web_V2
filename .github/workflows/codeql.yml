@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: agendado (semanal) e dispatch
+#   gatilho: agendado (diario) e dispatch
 #   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
 #   falha: alerta aparece em Security -> Code scanning
 #   avisa: aba Security
@@ -14,10 +14,10 @@
 name: CodeQL
 
 on:
-  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura semanal + dispatch.
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura diaria + dispatch.
   workflow_dispatch:
   schedule:
-    - cron: '30 9 * * 1' # segunda 06:30 BRT
+    - cron: '30 9 * * *' # diario 09:30 UTC (06:30 BRT) — GA62
 
 
 defaults:
@@ -62,13 +62,15 @@ jobs:
         with:
           category: '/language:javascript-typescript'
 
-  # Job separado de proposito: o check do job "analyze" e required na branch
-  # protection, e transformar aquele job numa matrix renomearia o check e
-  # travaria todos os merges. A linguagem "actions" analisa os .github/workflows
+  # Job separado de proposito: o check do job "analyze" NAO e required na
+  # branch protection (decisao 16/10/2026: saiu do PR; varredura diaria).
+  # Continua job separado para nao renomear o check se "analyze" virar matrix.
+  # A linguagem "actions" analisa os .github/workflows
   # em busca de injecao de expressao em run:, uso indevido de pull_request_target
   # e permissoes excessivas — 3,5k linhas de YAML que nenhum guard do repo le.
   analyze-actions:
     name: 🔬 CodeQL (actions)
+    needs: analyze
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:

@@ -1,7 +1,8 @@
 # docs:
 #   gatilho: workflow_run (conclusao dos workflows principais na main)
 #   prova: abre issue quando qualquer workflow critico falha na main
-#   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync, e2e-logado, db-guard
+#   falha: silencioso (nao tem mecanismo de auto-alerta proprio)
+#   avisa: repositorio via issue com label db-live-guard
 
 name: Notifica falha na main
 
@@ -29,7 +30,7 @@ jobs:
     name: 🔔 Notificar falha
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    if: ${{ contains(fromJSON('["failure","startup_failure"]'), github.event.workflow_run.conclusion) }}
     permissions:
       issues: write
     steps:

@@ -39,6 +39,24 @@ test('E83: nomesDeTestResults pega so diretorios, ordenados', () => {
   assert.deepEqual(nomesDeTestResults(join(tmpdir(), 'nao-existe-tr-99')), []);
 });
 
+test('GA42: nomesDeTestResults ignora diretorios .playwright-artifacts-*', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'tr-ga42-'));
+  mkdirSync(join(raiz, 'meu-spec-chromium'), { recursive: true });
+  mkdirSync(join(raiz, '.playwright-artifacts-0'), { recursive: true });
+  mkdirSync(join(raiz, '.playwright-artifacts-1'), { recursive: true });
+  assert.deepEqual(nomesDeTestResults(raiz), ['meu-spec-chromium'], 'dirs .playwright-artifacts-* nao podem entrar na contagem');
+});
+
+test('GA42: normalizar remove sufixo -retryN antes do dedupe', () => {
+  // sem retries: marcador identico ao da corrida com retries
+  const semRetry = marcadorDe(['auth.setup.ts-login-chromium']);
+  const comRetry = marcadorDe(['auth.setup.ts-login-chromium', 'auth.setup.ts-login-chromium-retry2']);
+  assert.equal(semRetry, comRetry, '-retry2 e a mesma causa que sem sufixo');
+  // dedupe real: dois retries do mesmo teste nao inflam o corpo
+  const corpo = corpoDe(['meu-spec-chromium', 'meu-spec-chromium-retry1', 'meu-spec-chromium-retry2']);
+  assert.match(corpo, /\*\*1\*\* teste\(s\)/, 'retries do mesmo teste contam como 1');
+});
+
 test('E83: o corpo da issue lista os testes e explica a falha sem test-results', () => {
   const corpo = corpoDe(['b', 'a']);
   assert.match(corpo, /\*\*2\*\* teste\(s\)/);
@@ -97,4 +115,3 @@ test('W80: tituloDe retorna titulo de login quando so setup falhou', () => {
     'vazio (sem test-results) e suite quebrada, nao login',
   );
 });
-

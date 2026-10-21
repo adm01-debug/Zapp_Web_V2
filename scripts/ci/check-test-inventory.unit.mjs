@@ -10,6 +10,7 @@ import {
   casaPadrao,
   orfaosNode,
   padroesNodeDeWorkflow,
+  padroesYamlSemArquivo,
   suitesNodeOrfas,
 } from './check-test-inventory.mjs';
 
@@ -90,6 +91,24 @@ test('R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta', () => {
   for (const arquivo of ALLOWLIST_NODE) {
     assert.ok(existsSync(join(RAIZ, arquivo)), `${arquivo} esta na ALLOWLIST_NODE mas nao existe no repositorio`);
   }
+});
+
+test('GA73: padrão exato em run: que não existe no disco é extraído corretamente', () => {
+  // run: precisa estar em linha própria (não inline com "- run:") para o regex capturar.
+  const yaml = [
+    'name: ci',
+    'jobs:',
+    '  j:',
+    '    steps:',
+    '      - name: roda suite',
+    '        run: node --test scripts/ci/suite-que-nao-existe.unit.mjs',
+  ].join('\n');
+  const padroes = padroesNodeDeWorkflow(yaml);
+  assert.deepEqual(padroes, ['scripts/ci/suite-que-nao-existe.unit.mjs']);
+});
+
+test('GA73: a arvore atual nao tem padrao run: sem arquivo no disco', () => {
+  assert.deepEqual(padroesYamlSemArquivo(), []);
 });
 
 test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', () => {
