@@ -1,0 +1,64 @@
+# docs:
+#   gatilho: agendado (a cada 6 h) e dispatch sobre main
+#   prova: perimetro do GitHub (branch protection, merge, actions, environments)
+#   falha: issue aberta ou comentada com a causa; sai 0 quando o unico problema
+#          e falta de escopo (ponto cego), para nao acumular falso-vermelho
+#   avisa: issue rotativa com label settings-guard
+# ==================================================================
+# ZAPP-WEB · Guarda do Perimetro do GitHub
+# ==================================================================
+# Compara o estado REAL do repo contra o baseline em
+# scripts/ci/github-settings-baseline.json e abre/comenta issue quando
+# diverge. Usa SETTINGS_GUARD_TOKEN (fine-grained PAT, administration:read)
+# para ler os campos administrativos; sem ele cai de volta ao GITHUB_TOKEN
+# e os campos ficam marcados como NAO VERIFICAVEL.
+# ==================================================================
+
+name: Settings Guard
+
+on:
+  schedule:
+    # 15 */6 * * * = a cada 6 horas. Horario jitterizado (nao roda na hora cheia).
+    - cron: '15 */6 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/ci/github-settings-guard.mjs'
+      - 'scripts/ci/github-settings-baseline.json'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: settings-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'dispatch' }}
+  cancel-in-progress: false
+
+jobs:
+  perimeter-check:
+    name: "🔒 Perimetro GitHub"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: perimetro-leitura
+    permissions:
+      contents: read
+      issues: write
+    env:
+      SETTINGS_GUARD_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Rodar settings-guard
+        run: node scripts/ci/github-settings-guard.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}

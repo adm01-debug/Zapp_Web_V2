@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * E13/E14 + E95: confere o perimetro do GitHub contra o baseline versionado
- * (`github-settings-baseline.json`) e restaura o que sabe restaurar.
+ * (`github-settings-baseline.json`) e reporta divergencias via issue.
  *
  * Política esperada (baseline):
  *   - branch protection da main: strict=true, enforce_admins=true
@@ -149,7 +149,7 @@ function fonteDaLeituraAdmin() {
 
 // ---------------------------------------------------------------- checagens
 // Cada checagem devolve { campo, esperado, encontrado } ou lança NaoVerificavel.
-// `restauravel` diz se o guard sabe desfazer a divergência sozinho.
+// `restauravel` mantido por compatibilidade; sempre false (GA77: restauração removida).
 
 async function checarBranchProtection() {
   const protection = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
@@ -172,8 +172,7 @@ async function checarBranchProtection() {
       campo: 'branch_protection_main.strict',
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
-      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
-      restauravel: !checksDesligados,
+      restauravel: false,
     });
   }
 
@@ -220,7 +219,7 @@ async function checarRepo() {
     }
     const encontrado = repo[campo];
     if (encontrado !== esperado) {
-      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });
+      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
     }
   }
   if (ausentes.length === Object.keys(baseline.merge).length) {
@@ -268,7 +267,7 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
-  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
   const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
@@ -328,25 +327,6 @@ async function checarEnvironments() {
     });
   }
   return divergencias;
-}
-
-// ---------------------------------------------------------------- restauração
-
-async function restaurar(campo) {
-  if (campo === 'branch_protection_main.strict') {
-    const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
-    const contexts = protection?.required_status_checks?.contexts ?? [];
-    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection/required_status_checks`, {
-      strict: true,
-      contexts,
-    });
-    return '`branch_protection_main.strict` restaurado para `true`';
-  }
-  if (campo === 'merge.allow_auto_merge') {
-    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}`, { allow_auto_merge: true });
-    return '`merge.allow_auto_merge` restaurado para `true`';
-  }
-  return null;
 }
 
 // ---------------------------------------------------------------- issue
@@ -420,6 +400,7 @@ async function abrirOuAtualizarIssue(body, { assinatura, janelaMs, forcar = fals
     await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, { body });
     console.log(`Issue #${semQuebra(existing.number)} atualizada com novo comentario.`);
     return existing.number;
+
   }
   await gh('POST', `/repos/${OWNER}/${REPO_NAME}/labels`, {
     name: ISSUE_LABEL,
@@ -514,23 +495,6 @@ async function main() {
     return;
   }
 
-  // Restaura só o que o guard sabe restaurar; o resto vira alerta. Sucesso e falha
-  // ficam em listas separadas: so o sucesso forca comentario (Devin, PR #1920).
-  const restaurados = [];
-  const restauracoesEfetivas = [];
-  for (const d of divergencias.filter((x) => x.restauravel)) {
-    try {
-      const feito = await restaurar(d.campo);
-      if (feito) {
-        restaurados.push(feito);
-        restauracoesEfetivas.push(d.campo);
-        console.log(`Restaurado: ${semQuebra(d.campo)}`);
-      }
-    } catch (e) {
-      restaurados.push(`⚠️ falhou ao restaurar \`${d.campo}\`: ${e.message.split(':')[0]}`);
-    }
-  }
-
   const soCegos = divergencias.length === 0;
   const assinatura = assinaturaDe(divergencias, naoVerificaveis);
   const linhas = [
@@ -571,10 +535,6 @@ async function main() {
     );
   }
 
-  if (restaurados.length > 0) {
-    linhas.push('### Restaurações aplicadas', '', ...restaurados.map((r) => `- ${r}`), '');
-  }
-
   linhas.push(
     `Run: https://github.com/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID ?? 'manual'}`,
     `Timestamp: ${new Date().toISOString()}`,
@@ -583,7 +543,6 @@ async function main() {
   await abrirOuAtualizarIssue(linhas.join('\n'), {
     assinatura,
     janelaMs: soCegos ? SETE_DIAS_MS : SEIS_HORAS_MS,
-    forcar: restauracoesEfetivas.length > 0,
   });
 
   if (soCegos) {

@@ -362,7 +362,7 @@ export function useTalkXSuppression() {
         phone: normalizedPhone,
         contact_id: contact_id ?? null,
         reason: reason ?? null,
-        reason_code: reason_code ?? 'manual',
+        reason_code: (reason_code ?? 'manual') as 'manual' | 'opt_out' | 'invalid_number' | 'lgpd' | 'no_commercial_permission' | 'bounce',
         origin: origin ?? 'manual',
         campaign_id: campaign_id ?? null,
         expires_at: expires_at ?? null,
