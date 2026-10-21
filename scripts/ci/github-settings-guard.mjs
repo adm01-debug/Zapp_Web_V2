@@ -268,7 +268,7 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
-  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
   const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
