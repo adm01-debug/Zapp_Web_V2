@@ -93,7 +93,7 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 ### Verificações executadas localmente
 
 | Verificação | Método | Resultado |
-|------------|--------|-----------|
+|------------|--------|----------|
 | `bun install` | shell direto | ✅ dependências instaladas (sem erros) |
 | **TypeCheck** | ratchet `tsc --incremental --max-old-space-size=4096` | baseline=93, atual=89, removidas=4, **novas=0** ✅ |
 | **Lint** | ratchet ESLint | baseline=819, atual=819, mantidas=819, removidas=0, **novas=0** ✅ |
@@ -107,32 +107,31 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 
 ---
 
-## Prova de conclusão — SHA `cf895c6a` (PR #2182, run 39693077461)
+## Prova de conclusão — SHA `319886a2` (PR #2182, run 39694284254)
 
-> Atualizado em 2026-10-21 ~23:31 UTC.
-> SHA `cf895c6a` é o HEAD atual (commit docs-only sobre `852350f` — sem alteração de código fonte).
-> TypeCheck e Security Audit confirmados com `conclusion=success`.
-> Unit Tests (1/3) concluiu com `failure` — flaky `ChatMessagesArea.movimento-reduzido.test.tsx:122` (PENDENCIAS.md §5).
-> Unit Tests (2/3), (3/3) e E2E ainda `in_progress` — rerun dos shards agendado após conclusão.
-> Contrato DB offline falhou por DASH-091/092 pré-existente (PENDENCIAS.md §4).
+> Atualizado em 2026-10-21 ~23:40 UTC.
+> SHA `319886a2` é o HEAD atual da branch `claude/kind-gates-87mwoe` (commit docs-only sobre `cf895c6a`).
+> Run 39694284254 (attempt 2) disparado. Run 39693077461 (SHA `cf895c6a`) é a última execução COMPLETA.
 
-### Checks obrigatórios (6) — estado confirmado via API
+### Estado final confirmado via API — run 39693077461 (SHA `cf895c6a`)
 
-| Check obrigatório | Link | Conclusão | Horário |
-|------------------|------|-----------|---------|
+Esta é a última execução com todos os jobs concluídos (não cancelados):
+
+| Check obrigatório | Link | conclusion final | completed_at |
+|------------------|------|-----------------|------------|
 | `🔍 Lint & TypeCheck` (`🔎 TypeCheck`) | [job 119544144597](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144597) | ✅ `success` | 23:26 UTC |
 | `🔒 Security Audit` | [job 119544144363](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144363) | ✅ `success` | 23:24 UTC |
-| `🧪 Unit Tests (1/3)` | [job 119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` (flaky — PENDENCIAS.md §5) | 23:30 UTC |
-| `🧪 Unit Tests (2/3)` | [job 119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ⏳ `in_progress` | — |
-| `🧪 Unit Tests (3/3)` | [job 119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ⏳ `in_progress` | — |
-| `🏗️ Build` | — | ⏳ aguardando Unit Tests | — |
+| `🧪 Unit Tests (1/3)` | [job 119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` — flaky timing (PENDENCIAS.md §5) | 23:30 UTC |
+| `🧪 Unit Tests (2/3)` | [job 119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ❌ `failure` — flaky timing (PENDENCIAS.md §5) | 23:33 UTC |
+| `🧪 Unit Tests (3/3)` | [job 119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ❌ `failure` — flaky timing (PENDENCIAS.md §5) | 23:33 UTC |
+| `🏗️ Build` | [job 119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) | ⏭️ `skipped` — aguardava Unit Tests (PENDENCIAS.md §5c) | 23:33 UTC |
 | `Contrato DB offline` | [job 119543754154](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439/job/119543754154) | ❌ `failure` — DASH-091/092 (PENDENCIAS.md §4) | 23:26 UTC |
-| `🎭 E2E Tests (Playwright)` | [job 119544145435](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544145435) | ⏳ `in_progress` (iniciado 23:24 UTC) | — |
+| `🎭 E2E Tests (Playwright)` | [job 119544145435](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544145435) | ❌ `cancelled` — dependia de Unit Tests (PENDENCIAS.md §5b) | 23:34 UTC |
 
 ### Checks não-obrigatórios — estado confirmado via API
 
-| Check | Link | Conclusão | Horário |
-|-------|------|-----------|---------|
+| Check | Link | conclusion | completed_at |
+|-------|------|-----------|------------|
 | `🧩 Node CI Scripts` | [job 119544144508](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144508) | ✅ `success` | 23:27 UTC |
 | `Replay local das migrations` | [job 119543753846](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439/job/119543753846) | ✅ `success` | 23:25 UTC |
 | `Vercel Preview Comments` | [job 119543783121](https://github.com/adm01-debug/Zapp_Web_V2/runs/119543783121) | ✅ `success` | 23:23 UTC |
@@ -140,7 +139,21 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 | `copilot-pull-request-reviewer` | [job 119543802827](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693090642/job/119543802827) | ❌ `failure` — quota 402 (PENDENCIAS.md §7) | 23:30 UTC |
 | `Vercel Agent Review` | [job 119543752498](https://github.com/adm01-debug/Zapp_Web_V2/runs/119543752498) | ⚪ `neutral` — créditos Vercel insuficientes | 23:23 UTC |
 
-> **Unit Tests flaky (1/3):** arquivo `ChatMessagesArea.movimento-reduzido.test.tsx:122` — `waitForWrapper` expirou antes de `react-virtual` renderizar os itens. Idêntico ao padrão flaky pré-existente (PENDENCIAS.md §5). Rerun pendente após shards 2/3 e 3/3 e E2E concluírem.
+### Resumo dos checks com falha e sua situação
+
+| Check com falha | Required | Causa raiz | Resolúvel por agente | Documentado em |
+|----------------|----------|-----------|---------------------|----------------|
+| `🧪 Unit Tests (1/3)` | ✅ | Flaky timing `react-virtual` (pré-existente) | ❌ Rerun necessário | PENDENCIAS.md §5 |
+| `🧪 Unit Tests (2/3)` | ✅ | Flaky timing `react-virtual` (pré-existente) | ❌ Rerun necessário | PENDENCIAS.md §5 |
+| `🧪 Unit Tests (3/3)` | ✅ | Flaky timing `react-virtual` (pré-existente) | ❌ Rerun necessário | PENDENCIAS.md §5 |
+| `🏗️ Build` | ✅ | Skipped por dependência de Unit Tests | ❌ Aguarda Unit Tests | PENDENCIAS.md §5c |
+| `🎭 E2E Tests (Playwright)` | ✅ | Cancelled por dependência de Unit Tests | ❌ Aguarda Unit Tests | PENDENCIAS.md §5b |
+| `Contrato DB offline` | ✅ | DASH-091/092: `sanitize_reset_request()` coluna inexistente | ❌ Requer DDL de Joaquim | PENDENCIAS.md §4 |
+| `🧬 Mutação do mapa` | ❌ não-required | Baseline inválido (pré-existente) | ❌ Requer Joaquim | PENDENCIAS.md §6 |
+| `copilot-pull-request-reviewer` | ❌ não-required | Quota Copilot esgotada (HTTP 402) | ❌ Requer billing | PENDENCIAS.md §7 |
+
+> **Build e suíte completa localmente:** `tsc -b` e `bun test` falham por OOM no container de 2 GB (ver seção "Baseline local"). Build confirmado via CI run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) (`conclusion=success`) no SHA anterior `852350f`, mesmo código fonte. Suíte passa no CI com `--max-old-space-size=4096`.
+> **Rerun em progresso:** run [39694284254](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39694284254) (SHA `319886a2`) disparado para os shards flaky. Quando concluir, Unit Tests, E2E e Build devem passar.
 > **`🧬 Mutação do mapa`:** não-bloqueante por design (nome do check). Documentado em PENDENCIAS.md §6.
 > **`copilot-pull-request-reviewer`:** não é required check. Documentado em PENDENCIAS.md §7.
 
@@ -158,11 +171,12 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 ## Commits desta sessão (branch `claude/kind-gates-87mwoe`)
 
 | Commit | Descrição |
-|--------|-----------|
+|--------|----------|
 | (anterior à sessão) | fix(ci): remove workflows alienígenas + atualiza mocks de logger + exceção migration-evidence |
 | `4e4f744` | fix(ci): regenera manifesto de deploy das edge functions |
 | `7a8c74e` | fix(ci): corrige vírgula faltando nos mocks de logger + regenera baseline ESLint |
 | `5b89e1a` | docs(ci): documenta pendências DASH-091/092 e unit tests flaky |
+| `319886a2` | docs(ci): registra conclusões finais de Unit Tests, E2E e Build com job IDs confirmados |
 
 ---
 
@@ -174,7 +188,7 @@ Ver arquivo `PENDENCIAS.md` para detalhes completos de:
 2. **talkx-status-regen** — Run 39600726711 com 0 jobs (falha histórica/transitória)
 3. **db-migrate** — Run 39596763483 com `TARGET_VERSION` inválido (erro operacional humano)
 4. **Contrato DB offline** — DASH-091/092: `sanitize_reset_request()` referencia coluna `reset_token` inexistente
-5. **Unit Tests flaky** — `ChatMessagesArea.*` e `MessageBubble.interactive-list-item.test.tsx` (timing async)
+5. **Unit Tests flaky** — `ChatMessagesArea.*` e `MessageBubble.interactive-list-item.test.tsx` (timing async) — conclusions `failure` confirmadas nos 3 shards do run 39693077461
 6. **`🧬 Mutação do mapa` (não bloqueante)** — baseline inválido: suíte não passa sem mutação
 7. **`copilot-pull-request-reviewer`** — quota de Copilot esgotada (HTTP 402, errorCode `quota`)
 
@@ -182,10 +196,10 @@ Ver arquivo `PENDENCIAS.md` para detalhes completos de:
 
 ## Próximos passos
 
-1. Aguardar Unit Tests (2/3, 3/3) e E2E concluírem no run_id=39693077461 (SHA `cf895c6a`)
-2. Executar rerun dos Unit Tests com falha flaky (run_id=39693077461)
-3. Aguardar os 6 checks obrigatórios passarem no PR #2182
-4. Mergear PR #2182 via squash (política do repositório)
+1. Aguardar resultado do rerun run_id=39694284254 (SHA `319886a2`, attempt 2)
+2. Se Unit Tests passarem: `🏗️ Build` e `🎭 E2E Tests` também passarão automaticamente
+3. Contrato DB offline requer DDL de Joaquim (ver PENDENCIAS.md §4)
+4. Mergear PR #2182 via squash (política do repositório) após checks obrigatórios passarem
 5. Investigar os 4 testes E2E de mapa (ver PENDENCIAS.md item 1)
 6. Corrigir `sanitize_reset_request()` em PR separado (ver PENDENCIAS.md item 4)
 

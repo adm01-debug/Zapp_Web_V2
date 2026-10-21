@@ -15,7 +15,7 @@
 ### Testes que falham
 
 | ID | Spec | Linha | Descrição |
-|----|------|-------|-----------|
+|----|------|-------|----------|
 | E71 | `location-picker.spec.ts` | 81 | Seletor de localização — ação primária |
 | E71 | `location-picker.spec.ts` | 148 | Seletor de localização — confirmação |
 | E73 | `contact-address.spec.ts` | 184 | Endereço do contato via mapa |
@@ -80,6 +80,7 @@ O dispatch foi feito com `TARGET_VERSION: 20261020190001`, mas esse valor está 
 **Check runs com falha confirmados:**
 - SHA `b0585a58` — run [39683115745](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39683115745), job 119510528339
 - SHA `7a8c74e6` — run [39686676218](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676218), job 119522392829
+- SHA `cf895c6a` — run [39693077439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439), job [119543754154](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439/job/119543754154) | `conclusion=failure` | 23:26 UTC
 
 ### Passo que falha
 
@@ -101,7 +102,7 @@ STATEMENT: SET ROLE authenticated;
 
 A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_token` (linha 4), mas a tabela `password_reset_requests` não possui essa coluna. O passo 54 ("Simular recuperação autenticada sem coluna reset_token (R2-DB-023)") existe no mesmo job **especificamente** para cobrir o cenário sem a coluna, mas é pulado porque o passo 41 aborta antes. A função `sanitize_reset_request()` precisa ser corrigida para não referenciar `reset_token`, ou a coluna precisa ser adicionada à tabela.
 
-**Pré-existente:** presente nos 3 commits desta PR (`9bff4c5a`, `b0585a58`, `7a8c74e6`) e em todas as runs históricas do `db-guard`.
+**Pré-existente:** presente nos commits desta PR e em todas as runs históricas do `db-guard`. Confirmado como `conclusion=failure` no job 119543754154 do run 39693077461.
 
 ### O que o Joaquim precisa fazer
 
@@ -121,29 +122,73 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 
 ## 5. Unit Tests flaky — ChatMessagesArea e MessageBubble (timing async)
 
-**Workflow:** `ci.yml` — job `🧪 Unit Tests` (shards 1/3, 2/3, 3/3)
-**Run com falha:** [39686676025](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676025)
-**Status:** flaky pré-existente — commit anterior `b0585a58` passou no CI (run 39684123752) e falhou no DB Guard (run 39683115745, motivo diferente: DASH-091/092).
+**Workflow:** `ci.yml` — jobs `🧪 Unit Tests (1/3)`, `🧪 Unit Tests (2/3)`, `🧪 Unit Tests (3/3)`
 
-### Arquivos que falham
+**Conclusões confirmadas na última tentativa completa (SHA `cf895c6a`, run [39693077461](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461)):**
+
+| Job | Job ID | conclusion | completed_at |
+|-----|--------|-----------|------------|
+| `🧪 Unit Tests (1/3)` | [119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` | 23:30 UTC |
+| `🧪 Unit Tests (2/3)` | [119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ❌ `failure` | 23:33 UTC |
+| `🧪 Unit Tests (3/3)` | [119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ❌ `failure` | 23:33 UTC |
+
+**Status:** flaky pré-existente — nenhum dos arquivos de teste foi alterado nesta sessão (`git diff --name-only HEAD~5 HEAD | grep test` = 0 arquivos). O commit anterior `b0585a58` passou no CI (run 39684123752). Rerun disparado em run [39694284254](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39694284254) (SHA `319886a2`) — aguardando conclusão.
+
+### Erros exatos confirmados nos logs
 
 | Shard | Arquivo | Linha | Erro |
 |-------|---------|-------|------|
-| 1/3 | `ChatMessagesArea.agrupar-envio.test.tsx` | 149, 164, 191 | `Unable to find element [data-testid="bubble"]` |
-| 1/3 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Unable to find element [data-testid="bubble"]` |
-| 2/3 | `ChatMessagesArea.*` (shard 2) | — | `Unable to find element [data-testid="bubble"]` |
-| 2/3 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `expected "vi.fn()" to be called 1 times, but got 0 times` |
-| 3/3 | `ChatMessagesArea.loop.test.tsx` | 121, 138 | `Unable to find element [data-testid="bubble"]` |
+| 1/3 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
+| 2/3 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` |
+| 3/3 | `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
 
 ### Causa raiz
 
-Falhas de timing em testes assíncronos: `waitFor(() => getByTestId("bubble"))` expira porque o componente virtualizado de chat (`react-virtual`) ainda não renderizou os itens no momento do `waitFor`. Nenhum dos arquivos acima foi alterado nesta sessão (confirmado via `git diff --name-only HEAD~1 HEAD`). O padrão é idêntico ao dos runs flaky em `main`.
+Falhas de timing em testes assíncronos: `waitFor(() => getByTestId("bubble"))` expira porque o componente virtualizado de chat (`react-virtual`) ainda não renderizou os itens. Padrão idêntico ao flaky em `main`.
 
 ### O que o Joaquim precisa fazer
 
-1. Confirmar re-run limpo: re-disparar o workflow CI neste SHA para ver se os testes passam numa segunda tentativa.
-2. Se confirmar flake: adicionar `waitForTimeout` ou `findAllBy` com retry explícito nos assertivos dessas specs.
-3. Se o re-run falhar novamente: investigar se mudanças recentes no componente `ChatMessagesArea` quebraram a lógica de renderização virtual.
+1. Confirmar se o rerun (run [39694284254](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39694284254)) passou.
+2. Se passou: flake confirmado, não há ação imediata.
+3. Se falhou novamente: adicionar `waitForTimeout` ou `findAllBy` com retry explícito nos assertivos ou investigar se mudanças recentes no componente `ChatMessagesArea` quebraram a lógica de renderização virtual.
+
+---
+
+## 5b. E2E Tests — cancelado por dependência dos Unit Tests
+
+**Workflow:** `ci.yml` — job `🎭 E2E Tests (Playwright)`
+
+**Conclusão confirmada (SHA `cf895c6a`, run [39693077461](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461)):**
+
+| Job | Job ID | conclusion | completed_at |
+|-----|--------|-----------|------------|
+| `🎭 E2E Tests (Playwright)` | [119544145435](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544145435) | ❌ `cancelled` | 23:34 UTC |
+
+**Causa:** O job de E2E foi cancelado automaticamente porque os Unit Tests falharam antes dele concluir. Não é falha do próprio E2E — o passo `🧪 Run Playwright E2E (PR sem autenticação)` foi interrompido com `conclusion=cancelled`.
+
+**Dependência direta:** quando Unit Tests passarem (§5), o E2E também rodará até o fim.
+
+### O que o Joaquim precisa fazer
+
+Verificar resultado do rerun (run [39694284254](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39694284254)). Se Unit Tests passaram, E2E também deve ter rodado. Se E2E falhou independentemente, investigar os logs do passo `🧪 Run Playwright E2E`.
+
+---
+
+## 5c. Build — skipped por dependência dos Unit Tests
+
+**Workflow:** `ci.yml` — job `🏗️ Build`
+
+**Conclusão confirmada (SHA `cf895c6a`, run [39693077461](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461)):**
+
+| Job | Job ID | conclusion | completed_at |
+|-----|--------|-----------|------------|
+| `🏗️ Build` | [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) | ⏭️ `skipped` | 23:33 UTC |
+
+**Causa:** O job `🏗️ Build` só inicia após todos os shards de `Unit Tests` passarem. Como os 3 shards falharam, o Build foi pulado automaticamente pelo CI.
+
+**Prova que o build funciona:** run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238), job `🏗️ Build`, `conclusion=success` no SHA `852350f` (mesmo código, sem alterações de fonte entre `852350f` e `319886a2`).
+
+**Dependência direta:** quando Unit Tests passarem (§5), o Build também rodará.
 
 ---
 
