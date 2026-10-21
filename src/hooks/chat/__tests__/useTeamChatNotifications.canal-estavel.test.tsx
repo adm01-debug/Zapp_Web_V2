@@ -34,7 +34,7 @@ vi.mock('@/integrations/supabase/client', () => {
   consulta.eq = () => consulta;
   consulta.limit = () =>
     Promise.resolve(
-      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null },
+      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null }
     );
   return {
     supabase: {
@@ -58,14 +58,6 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: h.settings, isQuietHours: () => false }),
 }));
 
-vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: (...args: unknown[]) => h.show(...args),
-    isSubscribed: true,
-    permission: 'granted',
-  }),
-}));
-
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 
 vi.mock('@/lib/logger', () => ({
@@ -79,6 +71,17 @@ vi.mock('@/lib/logger', () => ({
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
 import { queryKeys } from '@/hooks/team-chat/queryKeys';
+
+// PE-75: o aviso sai pela API `Notification` direta (`showBrowserNotification`),
+// não mais por `usePushNotifications` (exigia Service Worker de aplicação,
+// `SERVICE_WORKER_ENABLED=false`). `h.show` grava o título/options de cada
+// instância criada — mesmo papel que tinha como spy do mock antigo.
+class FakeNotification {
+  static permission: NotificationPermission = 'granted';
+  constructor(title: string, options?: NotificationOptions) {
+    h.show(title, options);
+  }
+}
 
 const mensagem = (senderId = 'outro') => ({
   new: {
@@ -115,6 +118,7 @@ beforeEach(() => {
   h.rpc.mockReset();
   h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
   h.show.mockReset();
+  Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotification });
 });
 
 afterEach(() => {
@@ -147,18 +151,24 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'eu', is_muted: false }])]);
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).not.toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(h.show).toHaveBeenCalledWith('💬 Teams: Ana', expect.anything());
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'outro', is_muted: false }])]);
+    client.setQueryData(queryKeys.inbox('eu'), [
+      conversa([{ profile_id: 'outro', is_muted: false }]),
+    ]);
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).not.toContain('team_conversation_members');
     expect(h.show).not.toHaveBeenCalled();
@@ -168,7 +178,9 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).toContain('team_conversation_members');
     expect(h.show).toHaveBeenCalled();
@@ -179,7 +191,9 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'eu', is_muted: true }])]);
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.show).not.toHaveBeenCalled();
     expect(h.fromTables).not.toContain('team_conversation_members');
@@ -190,13 +204,15 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     h.erro = 'permission denied';
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).toContain('team_conversation_members');
     expect(h.show).not.toHaveBeenCalled();
     expect(h.logWarn).toHaveBeenCalledWith(
       'Falha ao confirmar participação na conversa; sem notificação:',
-      'permission denied',
+      'permission denied'
     );
   });
 });
