@@ -11,11 +11,24 @@
 |---|---|
 | Total de PRs analisados | **30** |
 | Mergeados nesta sessão | **0** |
-| BLOQUEADOS (não podem ser mergeados por regra) | **26** |
-| AGUARDAR_CI (podem ser mergeados quando CI voltar ao verde) | **4** |
-| PRs que tocam `.github/workflows/` | **26 (87%)** |
+| BLOQUEADOS (não podem ser mergeados por regra) | **30** |
+| AGUARDAR_CI | **0** |
+| PRs que tocam `.github/workflows/` | **30 (100%)** |
 
-**Nenhum merge foi executado.** Todos os 4 candidatos válidos têm os mesmos 4 required checks falhando que já falham no HEAD da `main` — a falha é pré-existente, não introduzida pelos PRs.
+**Nenhum merge foi executado.** Todos os 30 PRs tocam `.github/workflows/`, o que os bloqueia automaticamente pela regra de negócio da sessão.
+
+### Correção em relação ao relatório anterior
+
+O relatório anterior (mesma data) classificou 4 PRs como AGUARDAR_CI sem verificar os arquivos reais tocados pelo diff de cada branch. Após `git fetch` e `git diff --name-only main..<branch>` para todos os 4 candidatos:
+
+| PR | Branch | Workflows tocados |
+|---|---|---|
+| #2149 | `claude/docs-p053-regressao-261021-0827` | 13 arquivos em `.github/workflows/` |
+| #2152 | `claude/test-toque44-seletores-261021-0853` | 13 arquivos em `.github/workflows/` |
+| #2185 | `claude/kind-gates-87mwoe` | `eslint.yml`, `static.yml` |
+| #2186 | `claude/loving-lovelace-esc3l2` | `eslint.yml`, `static.yml` |
+
+Todos os 4 são **BLOQUEADOS** pela regra: _"Toca `.github/workflows/`: qualquer PR que adicione, remova ou modifique arquivos em `.github/workflows/` é **BLOQUEADO** automaticamente, independente do conteúdo."_
 
 ---
 
@@ -34,49 +47,54 @@
 | Contrato DB offline | ❌ FALHA |
 | 🎭 E2E Tests (Playwright) | ❌ |
 
-**A main está com 4 required checks vermelhos.** Enquanto isso, nenhum PR pode ser mergeado via branch protection (`strict=true`).
+**A main está com 4 required checks vermelhos.** Com `strict=true`, qualquer PR BEHIND a main retorna "not up to date" no merge.
 
 ---
 
-## PRs AGUARDAR_CI (4)
+## Falhas pré-existentes identificadas por nome
 
-Esses PRs são válidos e podem ser mergeados assim que os required checks da main voltarem ao verde.
+Executado `bun run test` localmente no HEAD `5a4632c` (confirmado também pelos logs de CI):
 
-### #2149 — docs(reconciliation): P053
-**Branch:** `claude/docs-p053-regressao-261021-0827`
-- Tipo: Documentação pura (ledger de reconciliação)
-- Base atualizada: ✅
-- Regressão nova: ✅ Nenhuma
-- Ação: Mergear quando CI da main estiver verde
+| Arquivo de teste | Falhas |
+|---|---|
+| `useInboxBulkActions.test.ts` | 2 |
+| `useGoalsDashboard.test.tsx` | 4 |
+| `useTalkXSegments.test.ts` | 6 |
+| `outbound-message.service.test.ts` | 1 |
+| `contrasteAA.test.tsx` | 4 |
+| `useChatMediaSending.audio-meme-falha.test.ts` | 3 |
+| `AuditLogDashboard.test.tsx` | 9 |
+| `fundacaoVisual.test.tsx` | 2 |
+| `ChatPopup.pagination.test.tsx` | 1 |
+| `TalkXOverview.states.test.tsx` | 1 |
+| `TalkXA11yNomePapel.test.tsx` | 3 |
+| `adminDownloadPermission.test.ts` | 5 |
+| `ChatMessagesArea.agrupar-envio.test.tsx` (CI shard 1) | 4 |
+| `ChatMessagesArea.movimento-reduzido.test.tsx` (CI shard 1) | 1 |
+| `FilesTab.fase6.test.tsx` (CI shard 1) | 2 |
 
-### #2152 — test(e2e): spec de toque 44px
-**Branch:** `claude/test-toque44-seletores-261021-0853`
-- Tipo: Fix de teste E2E (seletor `'Close'` → `'Fechar'`, mocks de bootstrap)
-- Base atualizada: ✅
-- Regressão nova: ✅ Nenhuma
-- Ação: Mergear quando CI da main estiver verde
-
-### #2185 — docs(pendencias): §8 + §9
-**Branch:** `claude/kind-gates-87mwoe`
-- Tipo: Mix de documentação + testes + source hooks
-- Base atualizada: ❌ (BEHIND main — `61a973d` vs `5a4632c`)
-- Regressão nova: Não verificável (PR desatualizado)
-- Ação: Update da branch + aguardar CI verde; verificar se `Talk X visual` e `Mutação do mapa` passam após update
-
-### #2186 — fix(security): auditoria Supabase
-**Branch:** `claude/loving-lovelace-esc3l2`
-- Tipo: Documentação de auditoria de segurança (propostas SQL — NÃO aplicadas)
-- Base atualizada: ✅
-- Regressão nova: ✅ Nenhuma
-- Ação: Mergear quando CI da main estiver verde
+Lista completa em `analise-prs/baseline/tests.txt`.
 
 ---
 
-## PRs BLOQUEADOS (26)
+## Test Merges Executados
 
-Todos por uma única razão: **tocam `.github/workflows/`**.
+Todos os 4 candidatos foram testados com `git merge --no-commit --no-ff`:
 
-### Série "Add workflow X" (adicionam workflows de outras linguagens — irrelevantes para este projeto)
+| PR | Resultado | Conflitos |
+|---|---|---|
+| #2149 | exit 0 — sem conflitos | nenhum |
+| #2152 | exit 0 — sem conflitos | nenhum |
+| #2185 | exit 0 — sem conflitos | nenhum |
+| #2186 | exit 0 — sem conflitos | nenhum |
+
+Apesar de não haver conflitos técnicos, todos são **BLOQUEADOS** por tocar `.github/workflows/`.
+
+---
+
+## Todos os PRs BLOQUEADOS (30)
+
+### Série "Add workflow X" (adicionam workflows de outras linguagens)
 | PR | Título |
 |---|---|
 | #2157 | Add Dependency Review Action workflow |
@@ -110,29 +128,31 @@ Todos por uma única razão: **tocam `.github/workflows/`**.
 | #2155 | fix(ci): destrava workflows que falhavam antes de executar |
 | #2183 | chore(ci): remove workflows alienígenas eslint.yml e static.yml |
 
+### Candidatos reclassificados como BLOQUEADOS (tocam `.github/workflows/`)
+| PR | Título | Workflows tocados |
+|---|---|---|
+| #2149 | docs(reconciliation): P053 | 13 (ci.yml, codeql.yml, db-guard.yml, ...) |
+| #2152 | test(e2e): spec de toque 44px | 13 (mesma lista) |
+| #2185 | docs(pendencias): §8 + §9 | eslint.yml, static.yml |
+| #2186 | fix(security): auditoria Supabase | eslint.yml, static.yml |
+
 ---
 
 ## Recomendação
 
-1. **Corrigir a main primeiro:** investigar por que `🧪 Unit Tests` e `Contrato DB offline` estão falhando no HEAD. Enquanto isso não for resolvido, nenhum PR pode entrar.
+1. **Corrigir a main primeiro:** as falhas em `🧪 Unit Tests` (12+ arquivos) e `Contrato DB offline` são pré-existentes e listadas em `analise-prs/baseline/tests.txt`. Nenhum PR pode ser mergeado enquanto `strict=true` e a main estiver vermelha.
 
-2. **Limpar a série de workflows genéricos (#2157–#2181):** esses 21 PRs adicionam workflows de Python, R, Rust, PHP, Java, Deno, Docker etc. — tecnologias que não existem neste projeto TypeScript/React. São "workflows de template" sem valor e deveriam ser fechados. Se #2183 (que os remove) for considerado necessário, deve ser discutido com o Joaquim fora desta sessão.
+2. **Investigar por que os PRs legítimos (#2149, #2152, #2185, #2186) incluem modificações de workflows:** esses PRs foram criados por sessões que aparentemente fizeram rebase ou merge contra branches que continham changes nos workflows. As modificações de workflow em #2149/#2152 são idênticas entre si (13 arquivos), sugerindo herança de um ancestor comum.
 
-3. **Mergear os 4 candidatos após CI verde:** ordem sugerida por risco crescente:
-   - #2149 (docs) → mais seguro
-   - #2186 (audit docs) → seguro
-   - #2152 (e2e fix) → baixo risco
-   - #2185 (tests + source, BEHIND) → atualizar branch primeiro
+3. **Limpar a série de workflows genéricos (#2157–#2181):** 21 PRs que adicionam workflows irrelevantes (Python, R, Rust, PHP, Java, Deno, Docker, Node.js) a um projeto TypeScript/React. Deveriam ser fechados.
 
 ---
 
 ## Baseline registrado
 
-| Ferramenta | Estado no container |
+| Ferramenta | Estado após `bun install` |
 |---|---|
-| `vite build` | ❌ `vite: command not found` (exit 127) |
-| `vitest run` | ❌ `vitest: command not found` (exit 127) |
-| `eslint .` | ❌ `Cannot find package '@eslint/js'` (exit 1) |
-| `tsc -b --force` | ❌ múltiplos erros (exit 1) |
-
-O container não tem `bun install` executado — todas as ferramentas locais falham. A baseline foi gravada em `analise-prs/baseline/`. Regressão = falha **nova** que não existe na baseline ou no HEAD da main.
+| `bun run test` | ❌ 44+ falhas em 12 arquivos (pré-existentes no HEAD `5a4632c`) |
+| `vite build` | ✅ (CI Build check passa na main) |
+| `eslint` + TypeCheck | ✅ (CI Lint & TypeCheck passa na main) |
+| Contrato DB offline | ❌ (falha pré-existente na main) |

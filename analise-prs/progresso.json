@@ -1,15 +1,26 @@
 {
-  "auditoria": "2026-10-22",
+  "sessao": "session_01MEWTDAcLtXFjFH9scZXviY",
+  "data": "2026-10-22",
+  "head_main": "5a4632c87f7e233fe62e830443f8b0eddf3e1a72",
   "total_prs": 30,
   "analisados": 30,
   "mergeados": 0,
-  "bloqueados": 26,
-  "aguardar_ci": 4,
-  "status": "CONCLUIDO",
-  "motivo_zero_merges": "Todos os 4 candidatos têm falhas nos checks obrigatórios (Unit Tests 1/2/3 + Contrato DB offline) que já existiam no HEAD da main antes desta análise. Nenhum merge é possível enquanto a main não voltar ao verde.",
-  "prs_mergeados": [],
-  "prs_aguardar_ci": [2149, 2152, 2185, 2186],
-  "prs_bloqueados": [2151, 2155, 2157, 2159, 2160, 2161, 2162, 2163, 2164, 2165, 2166, 2167, 2168, 2169, 2170, 2171, 2172, 2173, 2174, 2175, 2176, 2177, 2178, 2179, 2181, 2183],
-  "main_head_sha": "5a4632c87f7e233fe62e830443f8b0eddf3e1a72",
-  "checks_falhos_na_main": ["🧪 Unit Tests (1/3)", "🧪 Unit Tests (2/3)", "🧪 Unit Tests (3/3)", "Contrato DB offline"]
+  "bloqueados": 30,
+  "aguardar_ci": 0,
+  "merge_shas": [],
+  "veredictos": {
+    "BLOQUEADO_WORKFLOWS": [2149, 2151, 2152, 2155, 2157, 2159, 2160, 2161, 2162, 2163, 2164, 2165, 2166, 2167, 2168, 2169, 2170, 2171, 2172, 2173, 2174, 2175, 2176, 2177, 2178, 2179, 2181, 2183, 2185, 2186]
+  },
+  "baseline_tests": {
+    "arquivos_com_falha": 15,
+    "testes_falhando": 46,
+    "confirmado_em": "HEAD 5a4632c (local bun run test + CI shard 1/3 job 119967797371)"
+  },
+  "test_merges": {
+    "2149": {"conflitos": false, "exit": 0},
+    "2152": {"conflitos": false, "exit": 0},
+    "2185": {"conflitos": false, "exit": 0},
+    "2186": {"conflitos": false, "exit": 0}
+  },
+  "correcao": "Relatório anterior classificou #2149, #2152, #2185, #2186 como AGUARDAR_CI sem verificar arquivos reais do diff. Após git fetch + git diff --name-only, todos tocam .github/workflows/ e são BLOQUEADOS."
 }
