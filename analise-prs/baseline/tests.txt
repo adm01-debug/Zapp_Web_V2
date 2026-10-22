@@ -1,0 +1,3 @@
+$ vitest run
+/usr/bin/bash: line 1: vitest: command not found
+error: script "test" exited with code 127
