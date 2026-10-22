@@ -170,10 +170,7 @@ ERROR:  record "new" has no field "reset_token"
 CONTEXT:  PL/pgSQL function sanitize_reset_request() line 4 at assignment
 ```
 
-**Por que agente não corrigiu:** A correção requer:
-1. Diagnóstico do schema atual de `password_reset_requests` em produção
-2. Decisão de negócio: adicionar a coluna ou remover a referência na função
-3. Migration versionada + PR + merge + apply em produção (fluxo completo da Seção 0/1 do CLAUDE.md)
+**Por que agente não corrigiu:** As migrations `20261006231105_recuperacao_gatilho_sem_coluna_removida.sql` e `20261015182400_recuperacao_anonima_pedido_reset.sql` já substituem `sanitize_reset_request()` sem a referência a `reset_token`. O Contrato DB offline falha porque roda o teste num Postgres isolado sem o histórico completo de migrations da produção — a versão da função que o CI encontra ainda tem a referência antiga. Para corrigir seria necessário identificar quais migrations o ambiente de CI aplica (e se as duas citadas acima estão sendo aplicadas em ordem correta) — decisão de infraestrutura/CI que requer o Joaquim.
 
 Confirmado em 5+ runs históricas antes desta sessão — não é regressão desta PR.
 
@@ -433,4 +430,39 @@ CI esperado idêntico ao §12 (só `useInboxFilters.ts` alterado, sem tocar test
 
 ---
 
-*Relatório atualizado em 2026-10-22 08:30 UTC: §12 completo; §13 adicionado — Qodo Findings 1 e 2 confirmados como regressões reais desta PR, corrigidos em commits `5bc7b3a` e `7de89bd`.*
+---
+
+## 14. Correção Adicional — Qodo Finding 4 (`useDiagnosticsData` latência enganosa)
+
+### 14.1 Diagnóstico
+
+**Causa raiz:** Em `fetchSystemHealth`, quando somente `connectionsCountError` é não-nulo (`dbError` é nulo), a linha:
+```typescript
+database: classifyHealth(dbError ?? connectionsCountError, dbLatency, 500, 2000),
+dbLatency,  // ← latência medida da query de contatos (que SUCEDEU)
+```
+gravava `dbLatency` com a latência da query de **contatos** (bem-sucedida), mas `database` ficava `'down'` (porque `connectionsCountError` era passado como erro para `classifyHealth`).
+
+No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência crítica: 150ms"` — sendo que 150ms foi de uma query saudável de contatos, não de uma falha de banco.
+
+### 14.2 Correção (commit desta sessão — `src/hooks/system/useDiagnosticsData.ts`)
+
+```diff
++   // Latência só é exibida quando nenhum erro de banco ocorreu. Se a query de
++   // contatos sucedeu mas a de connections falhou, a latência medida NÃO representa
++   // o estado do banco (que ficou 'down' por connectionsCountError) — exibi-la
++   // como "Latência crítica: Xms" seria enganoso (Qodo Finding 4).
++   const dbLatencyFinal = (dbError ?? connectionsCountError) ? null : dbLatency;
+    setHealth({
+-     database: classifyHealth(dbError ?? connectionsCountError, dbLatency, 500, 2000),
++     database: classifyHealth(dbError ?? connectionsCountError, dbLatencyFinal, 500, 2000),
+      ...
+-     dbLatency,
++     dbLatency: dbLatencyFinal,
+```
+
+**Comportamento após correção:** quando `connectionsCountError` força `database: 'down'`, `dbLatencyFinal` é `null` → `failureDetail('down', null, 'banco')` → exibe `"Falha de coleta no banco"` (correto), não "Latência crítica: Xms".
+
+---
+
+*Relatório atualizado em 2026-10-22 09:00 UTC: §4.1 corrigido (diagnóstico das migrations); §14 adicionado — Qodo Finding 4 corrigido em `useDiagnosticsData.ts`.*

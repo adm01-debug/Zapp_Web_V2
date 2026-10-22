@@ -330,12 +330,17 @@ export function useDiagnosticsData() {
     }
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
+    // Latência só é exibida quando nenhum erro de banco ocorreu. Se a query de
+    // contatos sucedeu mas a de connections falhou, a latência medida NÃO representa
+    // o estado do banco (que ficou 'down' por connectionsCountError) — exibi-la
+    // como "Latência crítica: Xms" seria enganoso (Qodo Finding 4).
+    const dbLatencyFinal = (dbError ?? connectionsCountError) ? null : dbLatency;
     setHealth({
-      database: classifyHealth(dbError ?? connectionsCountError, dbLatency, 500, 2000),
+      database: classifyHealth(dbError ?? connectionsCountError, dbLatencyFinal, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
-      dbLatency,
+      dbLatency: dbLatencyFinal,
       storageLatency,
       realtimeCheckedAt: realtime.checkedAt,
       lastHealthCheckAt,
