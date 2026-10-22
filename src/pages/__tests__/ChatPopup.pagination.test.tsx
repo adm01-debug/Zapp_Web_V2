@@ -103,6 +103,10 @@ vi.mock('@/integrations/supabase/client', () => ({
     storage: {
       from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
     },
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnValue({ subscribe: vi.fn().mockReturnValue({}) }),
+    }),
+    removeChannel: vi.fn().mockResolvedValue('ok'),
   },
 }));
 

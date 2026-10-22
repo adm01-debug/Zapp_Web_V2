@@ -22,6 +22,7 @@ vi.mock('@/hooks/system/useUserRole', () => ({
 }));
 
 vi.mock('../useAdminData', () => ({
+  AUDIT_PAGE_SIZE: 20,
   useAdminData: () => ({
     users: [
       {
