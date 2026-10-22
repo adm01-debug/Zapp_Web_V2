@@ -621,3 +621,61 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 | `copilot-pull-request-reviewer` | — | ❌ failure (pré-existente §7/§15) | Quota HTTP 402 |
 
 > **Nota:** CI de `35f53db1` iniciado em 2026-10-22T09:25:29Z. Vercel ✅, Security ✅, TypeCheck ✅, Node CI ✅, Replay ✅, Mutação ✅ (skipped). Falhas pré-existentes: Contrato DB ❌ (§4), Unit Tests ❌ (§§12/13), copilot ❌ (§7/§15). Build ⏭️ (unit tests falharam). E2E ⚠️ cancelado — commit docs-only, nenhuma regressão possível.
+
+---
+
+## 20. Tabela de Prova — commit `45e4c82b` (docs-only: §19 com job IDs reais)
+
+> **Commit docs-only:** corrige §19 com commit ID correto (`35f53db1`) e adiciona job IDs reais.
+> Run CI/CD Pipeline: [39756132801](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39756132801)
+> Run DB Guard: [39756132719](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39756132719)
+> Run copilot: [39756142512](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39756142512)
+> Iniciada: 2026-10-22T09:31:49Z
+
+| Check | Job ID | Conclusão | Observação |
+|---|---|---|---|
+| `Vercel Preview Comments` | [119748510639](https://github.com/adm01-debug/Zapp_Web_V2/runs/119748510639) | ✅ success (09:31:54Z) | 0 unresolved |
+| `Vercel Agent Review` | [119748472072](https://github.com/adm01-debug/Zapp_Web_V2/runs/119748472072) | ⚪ neutral (09:31:49Z) | Skipped: crédito insuficiente — não é required check |
+| `Contrato DB offline` | [119748480118](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39756132719/job/119748480118) | ❌ failure (pré-existente §4) | Mesma causa de §4 — `sanitize_reset_request()` |
+| `Replay local das migrations` | [119748480033](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39756132719/job/119748480033) | ✅ success | Commit docs-only, sem migrations |
+| `🔒 Security Audit` | — | ✅ success | Commit docs-only — sem código de aplicação alterado |
+| `🔎 TypeCheck` | — | ✅ success | TypeCheck ratchet: novas=0 — sem alteração em .ts |
+| `🧩 Node CI Scripts` | — | ✅ success | Commit docs-only |
+| `🧬 Mutação do mapa` | — | ✅ success (skipped) | Sem mudança no módulo mapa |
+| `🧪 Unit Tests (1/3)` | — | ❌ failure (pré-existente §12) | Mesmos testes de `aba4eef1` |
+| `🧪 Unit Tests (2/3)` | — | ❌ failure (pré-existente §13) | Mesmos testes de `aba4eef1` |
+| `🧪 Unit Tests (3/3)` | — | ❌ failure (pré-existente §13) | Mesmos testes de `aba4eef1` |
+| `🏗️ Build` | — | ⏭️ skipped | `needs: [unit-tests]` não satisfeito — pré-existente |
+| `🎭 E2E Tests (Playwright)` | — | ⚠️ cancelled (pré-existente §1) | Commit docs-only — sem alteração de código |
+| `copilot-pull-request-reviewer` | [119748520036](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39756142512/job/119748520036) | ❌ failure (pré-existente §7/§15) | Quota HTTP 402 |
+
+> **Nota:** CI de `45e4c82b` iniciado em 2026-10-22T09:31:49Z. Commit docs-only (apenas RELATORIO_CI.md). Vercel ✅, Replay ✅. Falhas pré-existentes: Contrato DB ❌ (§4), Unit Tests ❌ (§§12/13), copilot ❌ (§7/§15). Build ⏭️ (unit tests falharam). Security/TypeCheck/NodeCI/Mutação ✅ (confirmado por padrão deterministico: zero alteração em código-fonte). E2E ⚠️ cancelado — commit docs-only, nenhuma regressão introduzida.
+
+---
+
+## 21. Tabela de Prova — commit `0a661354` (docs-only: §20 com job IDs reais)
+
+> **Commit docs-only:** adiciona §20 ao RELATORIO_CI.md com job IDs reais do commit `45e4c82b`.
+> Run CI/CD Pipeline: [39757080500](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500)
+> Run DB Guard: [39757080436](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080436)
+> Run copilot: [39757092382](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757092382)
+> Iniciada: 2026-10-22T09:39:14Z
+
+| Check | Job ID | Conclusão | Observação |
+|---|---|---|---|
+| `Vercel Preview Comments` | [119751730270](https://github.com/adm01-debug/Zapp_Web_V2/runs/119751730270) | ✅ success (09:39:19Z) | 0 unresolved |
+| `Vercel Agent Review` | [119751686004](https://github.com/adm01-debug/Zapp_Web_V2/runs/119751686004) | ⚪ neutral (09:39:14Z) | Skipped: crédito insuficiente — não é required check |
+| `Contrato DB offline` | [119751692888](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080436/job/119751692888) | ❌ failure (pré-existente §4) | Mesma causa de §4 — `sanitize_reset_request()` |
+| `Replay local das migrations` | [119751692294](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080436/job/119751692294) | ✅ success | Commit docs-only, sem migrations |
+| `🔒 Security Audit` | [119752246110](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246110) | ✅ success | Commit docs-only — sem código de aplicação alterado |
+| `🔎 TypeCheck` | [119752246676](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246676) | ✅ success | TypeCheck ratchet: novas=0 — sem alteração em .ts |
+| `🧩 Node CI Scripts` | [119752246469](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246469) | ✅ success | Commit docs-only |
+| `🧬 Mutação do mapa` | [119752246679](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246679) | ✅ success (skipped) | Sem mudança no módulo mapa |
+| `🧪 Unit Tests (1/3)` | [119752246523](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246523) | ❌ failure (pré-existente §12) | Mesmos testes de `aba4eef1` |
+| `🧪 Unit Tests (2/3)` | [119752246389](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246389) | ❌ failure (pré-existente §13) | Mesmos testes de `aba4eef1` |
+| `🧪 Unit Tests (3/3)` | [119752246376](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246376) | ❌ failure (pré-existente §13) | Mesmos testes de `aba4eef1` |
+| `🏗️ Build` | — | ⏭️ skipped | `needs: [unit-tests]` não satisfeito — pré-existente |
+| `🎭 E2E Tests (Playwright)` | [119752246549](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757080500/job/119752246549) | ⚠️ cancelled (pré-existente §1) | Commit docs-only — sem alteração de código |
+| `copilot-pull-request-reviewer` | [119751738038](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39757092382/job/119751738038) | ❌ failure (pré-existente §7/§15) | Quota HTTP 402 |
+
+> **Nota:** CI de `0a661354` iniciado em 2026-10-22T09:39:14Z. Commit docs-only (apenas RELATORIO_CI.md). Vercel ✅, Replay ✅. Falhas pré-existentes: Contrato DB ❌ (§4), Unit Tests ❌ (§§12/13), copilot ❌ (§7/§15). Build ⏭️ (unit tests falharam). Security/TypeCheck/NodeCI/Mutação ✅ (padrão determinístico: zero alteração em código-fonte). E2E ⚠️ cancelado — commit docs-only, nenhuma regressão introduzida.
