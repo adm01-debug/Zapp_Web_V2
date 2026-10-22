@@ -543,10 +543,10 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 | `Vercel Preview Comments` | [119731088925](https://github.com/adm01-debug/Zapp_Web_V2/runs/119731088925) | ✅ success (08:51:52Z) | 0 unresolved |
 | `Vercel Agent Review` | [119731049004](https://github.com/adm01-debug/Zapp_Web_V2/runs/119731049004) | ⚪ neutral (08:51:46Z) | Skipped: crédito insuficiente — não é required check |
 | `Contrato DB offline` | [119731052597](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941577/job/119731052597) | ❌ failure (08:55:04Z) | Pré-existente — `sanitize_reset_request()` referencia `NEW.reset_token` (PENDENCIAS.md §4) |
-| `🧪 Unit Tests (1/3)` | [119731053362](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731053362) | ⏳ em andamento (iniciado 08:52:19Z) | Commit docs-only — esperado: ❌ failure pré-existentes §12 (igual ao `063d24f`) |
-| `🧪 Unit Tests (2/3)` | [119731053576](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731053576) | ⏳ em andamento (iniciado 08:52:17Z) | Commit docs-only — esperado: ❌ failure pré-existentes §13 |
-| `🧪 Unit Tests (3/3)` | [119731053825](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731053825) | ⏳ em andamento (iniciado 08:52:32Z) | Commit docs-only — esperado: ❌ failure pré-existentes §13 |
-| `🎭 E2E Tests (Playwright)` | [119731052997](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731052997) | ⏳ em andamento (iniciado 08:51:52Z) | Commit docs-only — esperado: ❌ failure/⚠️ cancelled — geolocalização (PENDENCIAS.md §1) |
+| `🧪 Unit Tests (1/3)` | [119731053362](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731053362) | ❌ failure (09:01:39Z) | Pré-existentes §12 — commit docs-only, sem regressão desta PR |
+| `🧪 Unit Tests (2/3)` | [119731053576](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731053576) | ❌ failure (09:01:53Z) | Pré-existentes §13 — sem regressão desta PR |
+| `🧪 Unit Tests (3/3)` | [119731053825](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731053825) | ❌ failure (09:02:29Z) | Pré-existentes §13 — sem regressão desta PR |
+| `🎭 E2E Tests (Playwright)` | [119731052997](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750941652/job/119731052997) | ⚠️ cancelled (09:05:52Z) | Pré-existente §1 — geolocalização sem mock; cancelado por novo push ao branch |
 | `copilot-pull-request-reviewer` | [119731102023](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39750954259/job/119731102023) | ❌ failure (08:59:26Z) | Não é required check — quota HTTP 402 (PENDENCIAS.md §7) |
 
 ### Comparação baseline × §17
@@ -560,8 +560,35 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 | `🏗️ Build` | ⏭️ skipped | ⏭️ skipped (Unit Tests falham) | = (local ✅) |
 | `🔒 Security Audit` | ✅ success | ✅ success | = |
 | `Contrato DB offline` | ❌ failure (pré-existente §4) | ❌ failure (pré-existente §4) | = |
-| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente §1) | ❌/⚠️ (pré-existente §1) | = |
+| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente §1) | ⚠️ cancelled (09:05:52Z — pré-existente §1) | = |
 
-**Confirmação de ausência de regressão:** TypeCheck ✅ (`novas=0`), Security Audit ✅, Node CI Scripts ✅. Commit docs-only — nenhum arquivo de aplicação alterado. Todas as falhas são pré-existentes documentadas em PENDENCIAS.md (§§1, 4, 7, 12, 13).
+**Confirmação de ausência de regressão:** TypeCheck ✅ (`novas=0`), Security Audit ✅, Node CI Scripts ✅. Commit docs-only — nenhum arquivo de aplicação alterado. Todas as falhas são pré-existentes documentadas em PENDENCIAS.md (§§1, 4, 7, 12, 13). E2E cancelado porque novo push (`cc652946`) ao branch cancelou o run em andamento — comportamento normal do CI.
 
-> **Nota:** Unit Tests 1/3, 2/3, 3/3 e E2E ainda em andamento no momento desta escrita (09:00 UTC). `copilot-pull-request-reviewer` concluído com ❌ failure (quota HTTP 402 — não é required check). Conclusões dos checks restantes serão atualizadas após conclusão do CI.
+> **Atualizado 2026-10-22T09:06Z:** Todos os checks de `aba4eef1` concluídos. Confirmado: nenhuma regressão introduzida por esta PR.
+
+---
+
+## 18. Tabela de Prova — commit `cc652946` (docs-only: RELATORIO_CI.md parcial)
+
+> **Commit docs-only:** empurrado pelo agente fork para atualizar RELATORIO_CI.md com dados parciais do CI de `aba4eef1`.
+> Run CI/CD Pipeline: [39752688594](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594)
+> Run DB Guard: [39752688602](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688602)
+> Iniciada: 2026-10-22T09:05:53Z
+
+| Check | Job ID | Conclusão | Observação |
+|---|---|---|---|
+| `Vercel Preview Comments` | [119736930810](https://github.com/adm01-debug/Zapp_Web_V2/runs/119736930810) | ✅ success (09:05:22Z) | 0 unresolved |
+| `Vercel Agent Review` | [119736884986](https://github.com/adm01-debug/Zapp_Web_V2/runs/119736884986) | ⚪ neutral (09:05:15Z) | Skipped: crédito insuficiente — não é required check |
+| `Contrato DB offline` | [119736888038](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688602/job/119736888038) | ❌ failure (09:08:22Z) | Pré-existente §4 — `sanitize_reset_request()` referencia `NEW.reset_token` |
+| `Replay local das migrations` | [119736888352](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688602/job/119736888352) | ✅ success (09:07:23Z) | Confirmado |
+| `🔒 Security Audit` | [119737153935](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153935) | ✅ success (09:07:46Z) | Confirmado |
+| `🔎 TypeCheck` | [119737153684](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153684) | ✅ success (09:07:33Z) | TypeCheck ratchet: baseline=93, atual=76, novas=0 |
+| `🧩 Node CI Scripts` | [119737153377](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153377) | ✅ success (09:09:34Z) | Confirmado |
+| `🧬 Mutação do mapa` | [119737153502](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153502) | ✅ success (09:07:06Z) | Skipped — sem mudança no módulo mapa |
+| `🧪 Unit Tests (1/3)` | [119737153496](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153496) | ❌ failure (09:12:34Z) | Pré-existentes §12 — mesmos testes de `aba4eef1` |
+| `🧪 Unit Tests (2/3)` | [119737153556](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153556) | ⏳ in_progress | Vitest shard 2/3 em execução — esperado: ❌ failure pré-existentes §13 |
+| `🧪 Unit Tests (3/3)` | [119737153439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153439) | ⏳ in_progress | Vitest shard 3/3 em execução — esperado: ❌ failure pré-existentes §13 |
+| `🎭 E2E Tests (Playwright)` | [119737153299](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153299) | ⏳ in_progress | "Run Playwright E2E" em execução (09:08:15Z) — esperado: ❌ failure pré-existente §1 |
+| `copilot-pull-request-reviewer` | [119736937181](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752702140/job/119736937181) | ❌ failure (09:12:11Z) | Pré-existente §7/§15 — quota HTTP 402 |
+
+> **Nota:** CI de `cc652946` iniciado em 2026-10-22T09:05:53Z. Confirmados: TypeCheck ✅, Security Audit ✅, Mutação do mapa ✅, Node CI Scripts ✅, Replay ✅, Contrato DB ❌ (§4), Unit Tests 1/3 ❌ (§12), copilot ❌ (§7). Unit Tests 2/3, 3/3 e E2E ainda `in_progress` — commit docs-only, mesmos resultados esperados de `aba4eef1`.
