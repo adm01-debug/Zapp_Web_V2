@@ -648,6 +648,32 @@ describe('useInboxBulkActions — bulkArchive', () => {
     // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original).
     expect(contactUpdates().length).toBeGreaterThan(antesDoDesfazer);
   });
+
+  it('conversation_status="waiting" fora de VALID_FROM_ARCHIVED: desfazer restaura para "open" (fallback)', async () => {
+    selectQueue.push({
+      data: [{ id: c3, conversation_status: 'waiting' }],
+      error: null,
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c3]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    // 'waiting' não está em VALID_FROM_ARCHIVED → fallback para 'open'
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({
+      payload: expect.objectContaining({ conversation_status: 'open' }),
+      filters: { id: [c3] },
+    });
+    expect(refetch).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('useInboxBulkActions — handleBatchFetchAvatars', () => {
