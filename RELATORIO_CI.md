@@ -1,6 +1,6 @@
 # RELATÓRIO CI — Baseline × Final
 
-> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 09:00 UTC.
+> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 09:30 UTC.
 > Branch de trabalho: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
 > Esta sessão corrigiu uma regressão introduzida pela PR #2182 e documentou falhas pré-existentes.
 
@@ -11,7 +11,7 @@
 Executado no contêiner de desenvolvimento antes de qualquer edição nesta sessão.
 
 | Comando | Resultado | Observação |
-|---------|-----------|-----------|
+|---------|-----------|----------|
 | `bun install` | ✅ success | 675 pacotes, sem alterações |
 | `bun run lint` | ✅ success | exit 0, sem erros |
 | `bun run typecheck` (local) | ❌ SIGABRT (OOM) | `tsc -b` sem `--max-old-space-size` → kernel mata o processo. CI usa `typecheck-ratchet.mjs` com `--max-old-space-size=4096` (commit `4604a5a`, PR #2182) |
@@ -286,7 +286,7 @@ Para completênza, as 4 correções aplicadas na PR #2182 (já na `main`):
 
 Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeight`/`clientWidth`, `workItemFormat` timezone, `useUserSettings` isError, `useInboxFilters` setSearchParams, conectionsCountError, messagesCountError).
 
-**Sem novas regressões introduzidas.** Todas as falhas remanescentes existiam antes desta PR e estão documentadas em PENDENCIAS.md com causa raiz e ação do Joaquim.
+**Sem novas regressões introduzidas.** Todas as falhas remanescentes existiam antes desta PR e estão documentadas em PENDENCIAS.md com causa raiz e ação necessária do Joaquim.
 
 ---
 
@@ -473,5 +473,52 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 
 ---
 
+## 16. Tabela de Prova — commit `063d24f` (HEAD atual)
+
+**Run CI:** [39747021624](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624)
+**Run DB Guard:** [39747021712](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021712)
+**Commit:** `063d24fbbaf22ad1ae4975bc792cc8ab6c1d2f0b`
+**Branch:** `claude/kind-gates-87mwoe` | **PR:** [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
+
+### Required checks
+
+| Required check | Job ID | Conclusão | Observação |
+|---|---|---|---|
+| `🔍 Lint & TypeCheck` | `119718522711` (`🔎 TypeCheck`) | ✅ success | — |
+| `🧪 Unit Tests (1/3)` | [119718523041](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624/job/119718523041) | ❌ failure | Falhas pré-existentes — `useTeamMessages.canal-e-reconexao` (linhas 82, 97: `expected 2 to be 1`), `a11y-ferramentas-ia` (linha 156: `Unable to find button "Ouvir resumo"`) — confirmadas como pré-existentes com `setup.ts` da `main` (ver §12) |
+| `🧪 Unit Tests (2/3)` | [119718522868](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624/job/119718522868) | ❌ failure | Falhas pré-existentes — ver §13 |
+| `🧪 Unit Tests (3/3)` | [119718522539](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624/job/119718522539) | ❌ failure | Falhas pré-existentes — ver §13 |
+| `🏗️ Build` | [119722636448](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624/job/119722636448) | ⏭️ skipped | Dependência de Unit Tests — pré-existente na `main` (§9) |
+| `🔒 Security Audit` | [119718522806](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624/job/119718522806) | ✅ success | — |
+| `Contrato DB offline` | [119717916594](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021712/job/119717916594) | ❌ failure | Pré-existente — `sanitize_reset_request()` referencia `NEW.reset_token` (§4) |
+| `🎭 E2E Tests (Playwright)` | [119718522263](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39747021624/job/119718522263) | ⚠️ cancelled | Cancelado após Unit Tests falharem — pré-existente §1 |
+
+### Outros checks
+
+| Check | Conclusão | Observação |
+|---|---|---|
+| `Replay local das migrations` | ✅ success | — |
+| `🧬 Mutação do mapa (não bloqueante)` | ✅ success | — |
+| `🧩 Node CI Scripts` | ✅ success | — |
+| `copilot-pull-request-reviewer` | ❌ failure | Não é required check |
+| `Vercel Preview Comments` | ✅ success | — |
+
+### Resumo — falhas desta PR vs baseline
+
+| Categoria | Esta PR (`063d24f`) | Baseline (`main` `61a973da`) |
+|---|---|---|
+| Unit Tests (todas as shards) | ❌ failure — falhas **pré-existentes** | ❌ failure — regressão de `FilesTab.fase6` (§10) |
+| Contrato DB offline | ❌ failure — **pré-existente** (§4) | ❌ failure — mesmo erro |
+| E2E | ⚠️ cancelled | ❌ failure — geolocalização (§1) |
+| Build | ⏭️ skipped | ⏭️ skipped |
+| Security Audit | ✅ success | ✅ success |
+| TypeCheck / Lint | ✅ success | ✅ success |
+
+**Conclusão:** nenhuma regressão nova introduzida por esta PR. As falhas de Unit Tests expõem erros pré-existentes que existiam na `main` mascarados pela regressão `FilesTab.fase6` de §10. Todas as falhas estão documentadas em PENDENCIAS.md com causa raiz e ação necessária do Joaquim.
+
+---
+
+*Relatório atualizado em 2026-10-22 02:30 UTC: gerado inicialmente.*
 *Relatório atualizado em 2026-10-22 09:00 UTC: §4.1 corrigido (diagnóstico das migrations); §14 adicionado — Qodo Finding 4 corrigido em `useDiagnosticsData.ts`.*
 *Relatório atualizado em 2026-10-22 (sessão atual): §15 adicionado — Qodo MEDIUM (useUserSettings toast ausente no catch) e HIGH (PENDENCIAS.md §14 gates vs flags) corrigidos.*
+*Relatório atualizado em 2026-10-22 (sessão pós-compactação): §16 adicionado — Tabela de Prova do commit `063d24f`; E2E atualizado para `cancelled` (job 119718522263 cancelado após Unit Tests falharem).*

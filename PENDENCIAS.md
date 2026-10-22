@@ -475,7 +475,7 @@ documentação) tem relação com os testes que agora falham.
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 82 | `expected 2 to be 1` — `h.subs.length` = 2 | React StrictMode double-mount registra 2 subscrições |
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 97 | `expected 2 to be 1` — mesmo motivo | Idem |
 | `useTalkXSegments.test.ts` | 398 | `expected Error{…} received 7` | Erro assíncrono não propagado corretamente |
-| (TTS — arquivo não identificado no log) | — | `Unable to find button "Ouvir resumo"` | Botão renomeado no componente (aria-label diferente do esperado no teste) |
+| `src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx` | 156 | `Unable to find role="button" and name "Ouvir resumo"` | Botão renomeado no componente — aria-label atual no DOM: `"Ouvir Tudo — ouvir o resumo completo em voz alta"` ou `"Ouvir o resumo em voz alta"` |
 
 ### Por que não são regressões desta PR
 
@@ -499,7 +499,7 @@ ou o componente TTS que usa botão "Ouvir resumo".
    montagem (ex.: `Date.now()` ou `Math.random()`), ou ajustar o mock de teste para StrictMode.
 3. **`useTalkXSegments.test.ts:398`:** Investigar por que o erro assíncrono não é propagado
    como `Error` — verificar `fetchTalkXSegmentActivity` ou equivalente.
-4. **Botão TTS "Ouvir resumo":** Atualizar o teste para o aria-label atual do botão (ex.: `"Ouvir o resumo em voz alta"`).
+4. **`a11y-ferramentas-ia.test.tsx:156` (botão TTS "Ouvir resumo"):** Atualizar `screen.getByRole('button', { name: 'Ouvir resumo' })` para o aria-label atual do componente. Confirmado localmente: o componente renderiza `"Ouvir Tudo — ouvir o resumo completo em voz alta"`, `"Ouvir o resumo em voz alta"` e `"Ouvir os pontos-chave em voz alta"` — nenhum deles corresponde ao nome `"Ouvir resumo"` que o teste procura. Confirmado como pré-existente: falha tanto com `setup.ts` da `main` quanto com o desta PR.
 
 ---
 
@@ -629,5 +629,6 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 
 ---
 
-*Documento atualizado em 2026-10-22 06:46 UTC.*
+*Documento atualizado em 2026-10-22 09:30 UTC.*
 *§15 cobre: copilot-pull-request-reviewer runs 39732366255 (commit `a37acb42`) e 39734682829 (commit `d3d11741`, docs-only) — mesma causa: quota Copilot HTTP 402.*
+*§12: TTS failure identificado como `a11y-ferramentas-ia.test.tsx:156` — botão "Ouvir resumo" renomeado no componente; confirmado pré-existente na main.*
