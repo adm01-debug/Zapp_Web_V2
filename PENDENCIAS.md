@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 01:40 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
+> Atualizado em 2026-10-22 02:30 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
 > **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
@@ -306,7 +306,7 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 **Commits empurrados:**
 
 | Commit | Descrição |
-|--------|----------|
+|--------|-----------|
 | `ca80a91` | fix(types): restaura types.ts correto (13045 linhas) com view team_message_read_state |
 | `a997734` | docs(pendencias): documenta bloqueio de git push por auto mode |
 | `a4dfd16` | fix(tests): adiciona mock getBoundingClientRect para @tanstack/react-virtual no jsdom |
@@ -314,46 +314,88 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 **O bloqueio anterior** (`[Auto-Mode Bypass]` em `git push`) foi contornado adicionando `--max-old-space-size=4096` ao `spawnSync` em `scripts/ci/typecheck-ratchet.mjs`, o que resolveu o OOM no hook husky pre-push — permitindo o push pelo hook.
 
-**Nenhuma ação necessária do Joaquim** — push já realizado; PR #2182 mergeado em 2026-10-22T02:01:37Z.
+**Nenhuma ação necessária do Joaquim** — push já realizado.
 
 ---
 
-## 9. Inventário de workflows na `main` (SHA `4f9e1ee`) — estado em 2026-10-22
+## 9. Inventário de workflows na `main` (SHA `61a973d`) — estado após merge PR #2182
 
-**Fonte:** run [39679218182](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39679218182) (CI/CD Pipeline — `main` em `4f9e1ee`).
+**Fonte:** run na `main` após merge da PR #2182 em 2026-10-22T02:01:37Z.
 
-### Workflows com `conclusion=success` na main
+### Required checks da `main` — estado pós-merge PR #2182
 
-| Workflow / job | Run/Job | Conclusão |
-|---|---|---|
-| `🔒 Security Audit` | [run 39679218182](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39679218182) | ✅ success |
-| `🔍 Lint & TypeCheck` | [run 39679218182](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39679218182) | ✅ success |
-
-### Workflows com falha na main — causa e responsável
-
-| Workflow / job | Erro principal | Causa | Responsável |
+| Required check | Estado na main | Causa | Responsável |
 |---|---|---|---|
-| `🧪 Unit Tests` (ci.yml) | `No "createLogger" export defined on "@/lib/logger" mock` | Mock de logger incompleto em `alertMocks.ts`/`alertBehaviorTestKit.ts` | ✅ Corrigido pela PR #2182 |
-| `🏗️ Build` (ci.yml) | Skipped — dependência de Unit Tests | Unit Tests falharam antes | ✅ Corrigido indiretamente pela PR #2182 |
-| `🎭 E2E Tests (Playwright)` (ci.yml) | Timeout | Geolocalização sem mock (§1) + timeout de 12 min | Pendente — §1 |
-| `Contrato DB offline` (db-guard.yml) | `record "new" has no field "reset_token"` em `sanitize_reset_request()` | Função trigger referencia coluna inexistente | Pendente — §4 |
-| `🧬 Mutação do mapa` (ci.yml) | `BASELINE INVÁLIDO` | Suíte base falha antes de medir mutações | Pendente — §6 |
-| `Node CI Scripts` (ci.yml) | `deepStrictEqual(['eslint.yml'], [])` | `eslint.yml` adicionado à main indevidamente | ✅ Corrigido pela PR #2182 |
-| `types-sync` | Falha (types.ts corrompido) | `types.ts` gravado com conteúdo binário (5 linhas) | ✅ Corrigido pela PR #2182 |
-| `deploy-functions.yml` | Pausa em `Waiting` no environment `producao-edge-functions` | Requer aprovação humana de Joaquim | Pendente — ação de Joaquim |
-| `Deploy static content to Pages` | `startup_failure` | Infraestrutura do runner / configuração de Pages | Pendente — investigar |
+| `🔍 Lint & TypeCheck` | ✅ success | — | — |
+| `🧪 Unit Tests` | ❌ failure | Mock `getBoundingClientRect` em `HTMLElement.prototype` (PR #2182, commit `a4dfd16`) bloqueia `vi.spyOn(Element.prototype, …)` em FilesTab.fase6 — **regressão corrigida em §10** | ⚠️ Regressão — corrigida nesta PR (#2185) |
+| `🏗️ Build` | ⏭️ skipped | Dependência de Unit Tests | ⚠️ Depende de §10 |
+| `🔒 Security Audit` | ✅ success | — | — |
+| `Contrato DB offline` | ❌ failure | `sanitize_reset_request()` referencia `NEW.reset_token` (coluna inexistente) | Pendente — §4 |
+| `🎭 E2E Tests (Playwright)` | ❌ failure/timeout | Geolocalização sem mock (§1) | Pendente — §1 |
+
+### Outros workflows com falha na main
+
+| Workflow | Erro | Causa | Responsável |
+|---|---|---|---|
+| `🧬 Mutação do mapa` | `BASELINE INVÁLIDO` | Suíte base falha antes de medir mutações | Pendente — §6 |
+| `copilot-pull-request-reviewer` | HTTP 402 quota esgotada | Billing — não é required check | Pendente — §7 |
+| `deploy-functions.yml` | Pausa em `Waiting` | Requer aprovação humana | Pendente — ação de Joaquim |
 | `e2e-logado.yml` | Geolocation failures | Mesmos 4 specs de §1 | Pendente — §1 |
-| `ESLint` (github-actions-lint) | `startup_failure` | Configuração do runner | Pendente — investigar |
+
+### Workflows ✅ success na main
+
+| Workflow | Notas |
+|---|---|
+| `🔒 Security Audit` | Required check — verde |
+| `🔍 Lint & TypeCheck` | Required check — verde |
+| `auto-update-pr-branch.yml` | Roda em push na main |
+| `settings-guard.yml` | Roda a cada 6h |
+| `branch-hygiene-audit.yml` | Semanal |
+| `db-live-guard.yml` | Diário |
+| `codeql.yml` | Semanal |
 
 ### Conclusão do inventário
 
-Os únicos required checks que falhavam na main por causa de código (não por problemas pré-existentes) foram corrigidos pela PR #2182:
-- `Unit Tests` → corrigido (logger mock completo + `getBoundingClientRect` mock)
-- `Node CI Scripts` → corrigido (remoção de `eslint.yml`)
+Required checks com falha pré-existente (não introduzida por esta sessão):
+- `Contrato DB offline` → §4 (trigger `sanitize_reset_request` referencia coluna inexistente)
+- `🎭 E2E Tests` → §1 (geolocalização sem mock)
 
-Required checks que falham por causas pré-existentes, não relacionadas a esta PR:
-- `Contrato DB offline` → §4 (pré-existente, requer DDL fix)
-- `🎭 E2E Tests` → §1 (geolocalização, pré-existente)
+Required check com regressão introduzida em PR #2182 e corrigida nesta PR (#2185):
+- `Unit Tests` → mock `getBoundingClientRect` em `HTMLElement.prototype` bloqueia spies de FilesTab.fase6
+
+---
+
+## 10. Regressão em `src/test/setup.ts` — mock `getBoundingClientRect` em prototype errado
+
+**Introduzida em:** PR #2182, commit `a4dfd16`
+**Detectada por:** Qodo code review (finding HIGH priority) + CI failure (jobs `119592726420`, `119592726456`, `119592726490`)
+**Status:** ✅ Corrigida neste branch (`claude/kind-gates-87mwoe`, recriado de `main` em `61a973d`)
+
+### Problema
+
+O commit `a4dfd16` instalou o mock global de `getBoundingClientRect` em `HTMLElement.prototype`:
+
+```typescript
+// ERRADO (commit a4dfd16):
+Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', { … });
+```
+
+No jsdom, a cadeia de protótipos é `HTMLDivElement → HTMLElement → Element`. Um `vi.spyOn(Element.prototype, 'getBoundingClientRect')` instalado pelos testes de `FilesTab.fase6` (**linhas 102–153**) nunca é atingido porque `HTMLElement.prototype` é encontrado antes na cadeia. O spy devolve 800px em vez de 959px/1474px → grid fica em 4 colunas em vez de 5/8.
+
+**Falhas CI:**
+- `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx:137` — `expected 'grid-cols-4' to contain 'grid-cols-5'`
+- `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx:152` — `expected 'grid-cols-4' to contain 'grid-cols-8'`
+
+### Correção aplicada
+
+```typescript
+// CORRETO (este commit):
+Object.defineProperty(Element.prototype, 'getBoundingClientRect', { … });
+```
+
+Instalando em `Element.prototype`, o spy de `vi.spyOn(Element.prototype, …)` fica no mesmo nível e pode sobrescrever o valor — sem interferir com o fallback global (800×600) para testes que não instalam spy.
+
+**Nenhuma ação necessária do Joaquim.**
 
 ---
 
