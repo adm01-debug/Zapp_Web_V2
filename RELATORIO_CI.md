@@ -53,6 +53,40 @@ Instalando em `Element.prototype`, o spy de `vi.spyOn(Element.prototype, 'getBou
 
 **Causa raiz:** `spawnSync` em `scripts/ci/typecheck-ratchet.mjs` executava `tsc -b --force` sem `--max-old-space-size`, causando OOM no pre-push (saiu com `exit null`, matado pelo kernel). Commit [`4604a5a`](https://github.com/adm01-debug/Zapp_Web_V2/commit/4604a5a) (PR #2182) adicionou `--max-old-space-size=4096`.
 
+### 2.3 ChatMessagesArea — virtualizer renderiza 0 itens (`data-testid="bubble"` não encontrado)
+
+**Causa raiz identificada:** `@tanstack/react-virtual` ≥ 3.x usa `element.clientWidth`/`element.clientHeight` (via `getRect()` em `virtual-core/dist/esm/index.js` linhas 6-8) — **não** `getBoundingClientRect` — para calcular quantos itens são visíveis. No jsdom, `clientHeight` é sempre `0`, então o virtualizer calcula 0 itens visíveis e não monta nenhum elemento.
+
+**Erro recorrente em 4 arquivos de teste:**
+- `ChatMessagesArea.loop.test.tsx` — `Unable to find an element by: [data-testid="bubble"]`
+- `ChatMessagesArea.agrupar-envio.test.tsx` — idem
+- `ChatMessagesArea.movimento-reduzido.test.tsx` — idem
+- `ChatMessagesArea.pagination.test.tsx` — idem
+
+**Correção aplicada (commit [`945198e`](https://github.com/adm01-debug/Zapp_Web_V2/commit/945198e11602cfa85f98884499d9970689ea2ac7)):** adicionado mock de `clientHeight`/`clientWidth` em `Element.prototype` em `src/test/setup.ts`:
+
+```diff
++ Object.defineProperty(Element.prototype, 'clientHeight', {
++   configurable: true,
++   get: function () { return 600; },
++ });
++ Object.defineProperty(Element.prototype, 'clientWidth', {
++   configurable: true,
++   get: function () { return 800; },
++ });
+```
+
+Além disso, os 4 arquivos de teste `ChatMessagesArea` foram atualizados para registrar o `ResizeObserverMock` em **ambos** `window` e `globalThis` no `beforeAll`:
+
+```typescript
+beforeAll(() => {
+  (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+});
+```
+
+**Validação local:** 11 testes de 4 arquivos passam; FilesTab.fase6 continua passando (sem regressão).
+
 ---
 
 ## 3. Estado Final — PR #2185
@@ -62,22 +96,26 @@ Instalando em `Element.prototype`, o spy de `vi.spyOn(Element.prototype, 'getBou
 |--------|---------|----------|
 | `1ce17b04` | `src/test/setup.ts` | Fix: mock `getBoundingClientRect` em `Element.prototype` (não `HTMLElement.prototype`) |
 | `d9104710` | `PENDENCIAS.md` | Docs: §8 RESOLVIDO, §9 inventário, §10 documentação da regressão |
-| `e_atual` | `RELATORIO_CI.md` | Docs: este relatório |
+| `0d48b04f` | `RELATORIO_CI.md` | Docs: relatório baseline × final |
+| `945198e` | `src/test/setup.ts`, 4 testes `ChatMessagesArea`, `PENDENCIAS.md` | Fix §2.3: mock `clientHeight`/`clientWidth` em `Element.prototype`; `globalThis.ResizeObserver` nos 4 arquivos de teste; todos 11 testes ChatMessagesArea passam |
+| `7b18ebf` | `PENDENCIAS.md` | Docs: §5 RESOLVIDO (clientHeight/clientWidth), §9 inventário atualizado |
 
-### 3.1 Required checks — PR #2185 (run [39710295180](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39710295180))
+### 3.1 Required checks — PR #2185
 
-| Required check | Baseline | Estado Atual | Δ |
+| Required check | Baseline (main `61a973da`) | Estado após §2.3 (commit `945198e`) | Δ |
 |---|---|---|---|
-| `🔍 Lint & TypeCheck` | ✅ success | ⏳ aguardando CI | — |
-| `🧪 Unit Tests (1/3)` | ❌ failure | ⏳ aguardando CI | ↑ esperado success |
-| `🧪 Unit Tests (2/3)` | ❌ failure | ⏳ aguardando CI | ↑ esperado success |
-| `🧪 Unit Tests (3/3)` | ❌ failure | ⏳ aguardando CI | ↑ esperado success |
-| `🏗️ Build` | ⏭️ skipped | ⏳ aguardando CI | ↑ esperado success |
-| `🔒 Security Audit` | ✅ success | ⏳ aguardando CI | — |
+| `🔍 Lint & TypeCheck` | ✅ success | ✅ success (02:42 UTC) | = |
+| `🧪 Unit Tests (1/3)` | ❌ failure (regressão §2.1) | ⏳ in_progress | ↑ esperado success |
+| `🧪 Unit Tests (2/3)` | ❌ failure (regressão §2.1) | ⏳ in_progress | ↑ esperado success |
+| `🧪 Unit Tests (3/3)` | ❌ failure (regressão §2.1) | ⏳ in_progress | ↑ esperado success |
+| `🏗️ Build` | ⏭️ skipped | ⏳ aguardando Unit Tests | ↑ esperado success |
+| `🔒 Security Audit` | ✅ success | ⚠️ flake 503 npm registry — re-run pendente | = (infra, não código) |
 | `Contrato DB offline` | ❌ failure (pré-existente) | ❌ failure (pré-existente) | = pendente §4 |
-| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente) | ❌ failure (pré-existente) | = pendente §1 |
+| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente) | ⏳ in_progress | = pendente §1 |
 
-> **Nota:** CI em progresso no momento da geração deste documento. Tabela será atualizada após conclusão.
+> **Security Audit:** `bun audit` falhou com `error: POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk - 503` (erro de infra do npm registry, não regressão de código). Re-run necessário após conclusão dos Unit Tests (tentativa anterior retornou 403 "workflow already running").
+>
+> **Nota:** Tabela parcialmente atualizada (Unit Tests ainda em andamento às 02:47 UTC). Atualizar após conclusão dos runs.
 
 ---
 
@@ -128,11 +166,10 @@ Para completênza, as 4 correções aplicadas na PR #2182 (já na `main`):
 
 | Gap | Risco | Ação sugerida |
 |-----|-------|---------------|
-| `ChatMessagesArea` flaky (`data-testid="bubble"` não encontrado) | Baixo (pré-existente) | Investigar dependência de timing do virtualizador; considerar `waitForElement` com timeout maior |
 | `Mutação do mapa` baseline inválido | Baixo (não bloqueante) | Corrigir suíte base do módulo `mapa` |
 | Copilot reviewer quota esgotada | Baixo (não required) | Recarregar créditos Copilot |
 
 ---
 
-*Relatório gerado automaticamente em 2026-10-22 02:30 UTC.*
-*Atualizar a tabela §3.1 após conclusão do CI do run [39710295180](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39710295180).*
+*Relatório atualizado em 2026-10-22 02:47 UTC: TypeCheck ✅, Security Audit 503-flake (re-run pendente), Unit Tests in_progress.*
+*Atualizar a tabela §3.1 após conclusão dos Unit Tests e do re-run da Security Audit.*
