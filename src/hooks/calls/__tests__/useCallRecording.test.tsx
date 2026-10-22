@@ -59,6 +59,7 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
     });
     fetchDaEdge.mockReset().mockImplementation(() => Promise.resolve(respostaDeAudio('audio/mpeg')));
     vi.stubGlobal('fetch', fetchDaEdge);
+    vi.stubGlobal('Blob', globalThis.Blob);
   });
 
   it('nao chama a Edge nem a sessao quando a chamada nao tem gravacao', () => {
@@ -79,7 +80,7 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
 
       await waitFor(() => expect(result.current.disponivel).toBe(true));
 
-      expect(result.current.blob).toBeInstanceOf(Blob);
+      expect(result.current.blob?.constructor.name).toBe('Blob');
       expect(result.current.blob?.size).toBe(BYTES_DE_AUDIO.byteLength);
       const bytesDoBlob = new Uint8Array(await result.current.blob!.arrayBuffer());
       expect(Array.from(bytesDoBlob)).toEqual(Array.from(BYTES_DE_AUDIO));
