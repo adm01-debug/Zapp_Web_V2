@@ -9,11 +9,16 @@
  *  3. o contrato do componente: título/descrição sempre, CTA só quando passado.
  */
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageSquare } from 'lucide-react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+const motionPreference = vi.hoisted(() => ({ reduced: false }));
+
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => motionPreference.reduced };
+});
 
 // ── Email: hooks pesados que não são o alvo ──────────────────────────────
 vi.mock('@/hooks/integrations/useGmail', () => ({
@@ -63,6 +68,8 @@ function semAnimacaoContinua(container: HTMLElement) {
 }
 
 describe('ConversationEmptyState — contrato do componente', () => {
+  beforeEach(() => { motionPreference.reduced = false; });
+
   it('renderiza ícone (decorativo), título e descrição', () => {
     const { container } = render(
       <ConversationEmptyState icon={MessageSquare} title="Selecione uma conversa" description="Escolha na lista ao lado" />,
@@ -81,6 +88,16 @@ describe('ConversationEmptyState — contrato do componente', () => {
   it('renderiza o CTA quando uma ação é passada', () => {
     render(<ConversationEmptyState icon={MessageSquare} title="T" description="D" action={<button type="button">Nova conversa</button>} />);
     expect(screen.getByRole('button', { name: 'Nova conversa' })).toBeInTheDocument();
+  });
+
+  it('mantém título e descrição visíveis com movimento reduzido', () => {
+    motionPreference.reduced = true;
+    const { container } = render(
+      <ConversationEmptyState icon={MessageSquare} title="Selecione uma conversa" description="Escolha na lista ao lado" />,
+    );
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Selecione uma conversa');
+    expect(screen.getByText('Escolha na lista ao lado')).toBeInTheDocument();
+    semAnimacaoContinua(container);
   });
 });
 

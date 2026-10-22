@@ -185,7 +185,7 @@ function loadEvidence(filePath) {
         ? [
           'file_sha256', 'file_sql_sha256', 'filename', 'justification', 'kind',
           'ledger_name', 'ledger_sql_sha256', 'ledger_statements_sha256',
-          'reason', 'related_migration', 'version',
+          'reason', 'related_migration', 'sql-sha256', 'version',
         ]
         : null;
     if (!expectedKeys) {
@@ -348,7 +348,7 @@ function loadMigrations(dir, evidence) {
     const rawHash = sha256(buffer);
     const hasCode = hasSqlCode(content);
     const blank = content.replace(/^﻿/, '').trim() === '';
-    const commentOnly = !hasCode && !blank && /--|\/\*/u.test(content);
+    const commentOnly = !hasCode && !blank && /--|\/*\*/u.test(content);
     if (buffer.includes(0)) errors.push(`arquivo contem byte NUL: ${entry.name}`);
     if (!hasCode && !commentOnly) errors.push(`arquivo vazio ou sem SQL: ${entry.name}`);
 

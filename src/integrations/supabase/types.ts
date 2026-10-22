@@ -1885,6 +1885,39 @@ export type Database = {
           },
         ]
       }
+      connection_alert_preferences: {
+        Row: {
+          alert_on_degraded: boolean
+          alert_on_disconnected: boolean
+          created_at: string
+          email_enabled: boolean
+          id: string
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_on_degraded?: boolean
+          alert_on_disconnected?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_on_degraded?: boolean
+          alert_on_disconnected?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       connection_health_logs: {
         Row: {
           checked_at: string
@@ -10357,6 +10390,16 @@ export type Database = {
           recipient_id: string | null
           return_message: string | null
           status: string | null
+        }
+        Relationships: []
+      }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
         }
         Relationships: []
       }

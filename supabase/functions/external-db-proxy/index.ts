@@ -129,6 +129,10 @@ export async function handleExternalDbProxy(req: Request): Promise<Response> {
     if (typeof select !== 'undefined' && typeof select !== 'string') {
       return json({ error: 'Invalid select parameter' }, 400, corsHeaders)
     }
+    // Z018: rejeitar `select` com `(` previne injeção de função PostgREST.
+    if (typeof select === 'string' && select.includes('(')) {
+      return json({ error: 'Invalid select parameter' }, 400, corsHeaders)
+    }
     if (typeof countMode !== 'undefined' && !['exact', 'planned', 'estimated'].includes(String(countMode))) {
       return json({ error: 'Invalid count mode' }, 400, corsHeaders)
     }
