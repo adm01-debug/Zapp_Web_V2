@@ -158,8 +158,8 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
+    setSearchParams(() => {
+      const params = new URLSearchParams(window.location.search);
       if (value && value !== 'all') {
         params.set('type', value);
       } else {

@@ -119,6 +119,7 @@ export function useUserSettings() {
     let ativo = true;
     // Usuário novo: o que está no banco volta a mandar sobre o cache local.
     escolhaLocalRef.current = false;
+    setIsError(false);
 
     const fetchSettings = async () => {
       setIsLoading(true);
@@ -183,6 +184,10 @@ export function useUserSettings() {
         }
       } catch (err) {
         log.error('Error in fetchSettings:', err);
+        if (ativo) {
+          setIsError(true);
+          toast({ title: 'Erro', description: 'Não foi possível carregar as configurações.', variant: 'destructive' });
+        }
       } finally {
         if (ativo) setIsLoading(false);
       }
