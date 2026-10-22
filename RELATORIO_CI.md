@@ -857,3 +857,47 @@ a âncora `:245`, causando falha do teste `docs-estado-registry-convention.unit.
 |-------|---------|
 | `🧩 Node CI Scripts` | ✅ success |
 | Demais required checks | Sem regressão (somente `ESTADO.md` e `RELATORIO_CI.md` alterados) |
+
+---
+
+## 27. Fixes Unit Tests — `useInboxBulkActions` e `useInboxFilters` isolamento localStorage
+
+> Branch: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
+> 2026-10-22 UTC — commit a ser gerado
+
+### Contexto
+
+Run `39783044774` (commit `855be30`) mostrou 2 regressões de teste introduzidas por commits
+anteriores desta PR:
+
+1. **`useInboxBulkActions.test.ts:569`** — `expect(restores).toHaveLength(2)` recebia 1.
+   Causa: c2 usava `conversation_status: 'waiting'`; o `VALID_FROM_ARCHIVED` mapeia `'waiting'`→`'open'`,
+   colocando c1 e c2 no mesmo grupo → apenas 1 update → 1 restore.
+   Fix: c2 alterado para `'pending'` (status diferente de c1=`'open'`) → 2 grupos → 2 restores.
+
+2. **`useInboxFilters.type-url.test.tsx:101`** — `expect(selectedContactType).toBeNull()` recebia `'grupo'`.
+   Causa: `beforeEach` não limpava localStorage; test 2 (`?type=grupo`) salvava `contactType:'grupo'` via
+   `applyPrefs`; test 3 lia esse valor stale pelo fallback `storedPrefs?.contactType`.
+   Fix: `localStorage.clear()` adicionado no `beforeEach`.
+
+3. **Falhas pré-existentes documentadas em §18–20 (não regressões desta PR):**
+   - `useKnowledgeBase.erro.test.tsx` (shard 1/3, linhas 50/65/79)
+   - `useAgentCelebrations.test.tsx` (shard 2/3, linhas 196/256/321)
+   - `chipCounts.test.ts` (shard 3/3, linha 275)
+
+### Arquivos alterados
+
+| Arquivo | Mudança |
+|---------|--------|
+| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | c2 `'waiting'` → `'pending'`; asserção restores[1] para `'pending'` |
+| `src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx` | `localStorage.clear()` no `beforeEach` |
+| `PENDENCIAS.md` | §17 corrigido; §18–20 adicionados (pré-existentes) |
+| `RELATORIO_CI.md` | §27 (este) |
+
+### Checks esperados após este commit
+
+| Check | Esperado |
+|-------|---------|
+| `🧪 Unit Tests` shard 2/3 | ✅ success (`useInboxBulkActions.test.ts:569` e `useInboxFilters.type-url.test.tsx:101` corrigidos) |
+| `🧪 Unit Tests` shards 1/3 e 3/3 | ❌ falha pré-existente (§18, §20 — não regressão desta PR) |
+| Demais required checks | Sem regressão |
