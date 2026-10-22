@@ -133,7 +133,10 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   }, [storedPrefs, searchParams]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
-  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
+  const { chipTab, mainTab, subTab, queueId: selectedQueueId } = prefs;
+  // URL tem precedência sobre o draft: deep-links e back/forward funcionam mesmo
+  // com draft ativo (R2-INB-031). Quando não há ?type= na URL cai no draft/storage.
+  const selectedContactType = normalizeContactType(searchParams.get('type')) ?? prefs.contactType;
 
   /**
    * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
