@@ -84,12 +84,15 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBe(1));
+    // React 19 dev mode re-executa o efeito (setup → cleanup → setup), então
+    // pode haver mais de 1 sub; a última é a sub ativa.
+    await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
+    const sub = h.subs.at(-1)!;
 
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => sub('SUBSCRIBED'));
     expect(invalidar).not.toHaveBeenCalled();
 
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => sub('SUBSCRIBED'));
     const chaves = invalidar.mock.calls.map((c) => c[0]?.queryKey);
     expect(chaves).toContainEqual(['team-messages', 'conv-1']);
     expect(invalidar).toHaveBeenCalledTimes(2);
@@ -99,11 +102,12 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBe(1));
+    await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
+    const sub = h.subs.at(-1)!;
 
-    act(() => h.subs[0]('SUBSCRIBED'));
-    act(() => h.subs[0]('CHANNEL_ERROR'));
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => sub('SUBSCRIBED'));
+    act(() => sub('CHANNEL_ERROR'));
+    act(() => sub('SUBSCRIBED'));
 
     expect(invalidar).toHaveBeenCalled();
   });

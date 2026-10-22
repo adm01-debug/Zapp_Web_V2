@@ -193,7 +193,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\\"]/, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\\"]/,(c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
@@ -309,7 +309,7 @@ function assertNoSinguFields(rules: SegmentRules | null | undefined): void {
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
   assertNoSinguFields(rules);
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -331,7 +331,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
   assertNoSinguFields(rules);
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;
