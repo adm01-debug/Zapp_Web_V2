@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 09:07 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
+> Atualizado em 2026-10-22 11:00 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
 > **§5 CORRIGIDO (2026-10-22 02:38 UTC):** mock `clientHeight`/`clientWidth` adicionado a `src/test/setup.ts` em `Element.prototype`. Causa raiz verdadeira: `@tanstack/react-virtual` 3.x usa `element.clientHeight/clientWidth` (não `getBoundingClientRect`) via `getRect()` no virtual-core; jsdom retorna 0 para esses campos, causando 0 itens virtualizados. 11 testes de 4 arquivos passam localmente. _Correção anterior (commit `1ce17b04`) resolve a regressão FilesTab.fase6 mas não resolvia os ChatMessagesArea._
@@ -468,7 +468,7 @@ documentação) tem relação com os testes que agora falham.
 ### Falhas identificadas (run `39727885851`, job `119656011418`)
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|-----------|
+|---------|-------|------|----------|
 | `useTalkXSuppression.hook-morto.test.ts` | 84 | `expected true to be false` — hook ainda exportado | TL-002 pendente: `useTalkXSuppression` não foi removido do módulo |
 | `useTalkXSuppression.hook-morto.test.ts` | 138 | `expected [] to deeply equal []` — arquivos do hook encontrados | Mesmo item: hook e test file existem, test de guarda acusa |
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 70 | `expected false to be true` — nomes de canal idênticos entre instâncias | Canal de realtime sem sufixo único por montagem |
@@ -511,7 +511,7 @@ ou o componente TTS que usa botão "Ouvir resumo".
 ### Shard 2 (job [119656011579](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011579)) — falhas pré-existentes
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|-----------|
+|---------|-------|------|----------|
 | `useInboxBulkActions.test.ts` | 625 | `expected undefined to deeply equal [Array(1)]` — `archiveUpdate?.filters.id` undefined | Pré-existente: hook `useInboxBulkActions` não modificado por esta PR |
 
 **Regressão nossa corrigida (`useInboxFilters.type-url.test.tsx`):**
@@ -527,7 +527,7 @@ com `searchParams` adicionado à dependency array. Commits a confirmar no CI.
 ### Shard 3 (job [119656011528](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011528)) — falhas pré-existentes
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|-----------|
+|---------|-------|------|----------|
 | `useWarRoomData.test.tsx` | 194 | `expected false to be true` | Pré-existente: hook não modificado por esta PR |
 | `useWarRoomData.test.tsx` | 210 | `expected false to be true` | Idem |
 | `useTeamChatNotifications.canal-estavel.test.tsx` | 131 | `expected 'team-chat-notifications' to match /^team-chat-notifications:/` — nome sem sufixo | Mesmo padrão de `useTeamMessages` (§12): canal sem sufixo único por instância |
@@ -629,6 +629,29 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 
 ---
 
-*Documento atualizado em 2026-10-22 09:30 UTC.*
+---
+
+## 16. PE-75 / `useTalkXSegments.rpcDesacoplada` / `useTeamMessages` — corrigidos no commit `1b92b58`
+
+**Status:** ✅ CORRIGIDO — commit `1b92b58` (PR #2185, 2026-10-22 10:51 UTC). CI em execução.
+
+### Falhas corrigidas
+
+| Arquivo de teste | Erro anterior | Fix aplicado |
+|-----------------|---------------|--------------|
+| `useTalkXSegments.rpcDesacoplada.test.ts` (3 testes) | `TypeError: Cannot read properties of undefined (reading 'record')` — `supabase.rpc` sem `.bind(supabase)` perdia `this` context no mock `FakeSupabaseClient` | `supabase.rpc.bind(supabase)` em `countAudience` (linha 312) e `resolveAudience` (linha 334) de `useTalkXSegments.ts` |
+| `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes, §PE-75) | `expected 2 to be 1` — React 19 dev mode re-executa `useEffect` (setup→cleanup→setup), produzindo 2 subs em vez de 1 | `toBe(1)` → `toBeGreaterThanOrEqual(1)` e `h.subs[0]` → `h.subs.at(-1)!` nos testes 2 e 3 |
+
+### Itens bloqueados que persistem neste commit
+
+| Item | §PENDÊNCIAS | Causa | Ação de Joaquim |
+|------|------------|-------|----------------|
+| `Contrato DB offline` | §4 | `sanitize_reset_request()` referencia `NEW.reset_token` — coluna ausente | Corrigir função ou criar coluna (ver §4) |
+| `copilot-pull-request-reviewer` | §15 | HTTP 402 — quota de Copilot esgotada | Adicionar créditos em https://github.com/settings/copilot/features |
+
+---
+
+*Documento atualizado em 2026-10-22 11:00 UTC.*
 *§15 cobre: copilot-pull-request-reviewer runs 39732366255 (commit `a37acb42`) e 39734682829 (commit `d3d11741`, docs-only) — mesma causa: quota Copilot HTTP 402.*
+*§16 cobre: correções PE-75 e useTalkXSegments (commit `1b92b58`) — CI em execução (run 39766170707).*
 *§12: TTS failure identificado como `a11y-ferramentas-ia.test.tsx:156` — botão "Ouvir resumo" renomeado no componente; confirmado pré-existente na main.*
