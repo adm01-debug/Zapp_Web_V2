@@ -342,20 +342,29 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 
 ---
 
-## 12. Tabela de Prova — PR #2185 (commit `62c9b3c`, HEAD atual)
+## 12. Tabela de Prova — PR #2185 (commit `62c9b3c`)
 
-> **Commit docs-only:** altera apenas `RELATORIO_CI.md` (§§11–12).
+> **Commit docs-only:** altera apenas `RELATORIO_CI.md` (§11 com E2E=cancelled, Build=skipped confirmados).
 >
-> Run CI/CD Pipeline: [39736607183](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183) — em andamento
-> Run DB Guard (offline): [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013) — em andamento
+> Run CI/CD Pipeline: [39736607183](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183)
+> Run DB Guard (offline): [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013)
 > Iniciada: 2026-10-22T06:51:39Z
 
 | Check | Job ID | Conclusion | Observação |
 |---|---|---|---|
-| *(todos os jobs)* | — | ⏳ in_progress / queued | Run iniciado; aguardando conclusão |
+| `🔒 Security Audit` | [119684026238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026238) | ✅ success (06:54:07Z) | Confirmado |
+| `🧬 Mutação do mapa` | [119684026364](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026364) | ✅ success (06:54:15Z) | Confirmado — sem mudança módulo mapa |
+| `🔎 TypeCheck` | [119684026071](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026071) | ✅ success (06:55:11Z) | Confirmado |
+| `🧩 Node CI Scripts` | [119684026221](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026221) | ⏳ in_progress | Em andamento (06:54:27Z step 9/10) |
+| `🧪 Unit Tests (1/3)` | [119684026270](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026270) | ⏳ in_progress | Em andamento (vitest 06:53:55Z) |
+| `🧪 Unit Tests (2/3)` | [119684026551](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026551) | ⏳ in_progress | Em andamento (vitest 06:54:24Z) |
+| `🧪 Unit Tests (3/3)` | [119684026418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026418) | ⏳ in_progress | Em andamento (vitest 06:54:24Z) |
+| `🎭 E2E Tests (Playwright)` | [119684026280](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026280) | ⏳ in_progress | Instalando Playwright (06:54:17Z) |
+| `Contrato DB offline` | [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013) | ⏳ in_progress | Aguardando conclusão |
+| `🏗️ Build` | — | ⏳ aguardando | Depende de Unit Tests |
 
-> Run verificado logo após o push — jobs ainda em fila/andamento. Conclusões serão registradas em atualização subsequente.
+> **Commit docs-only** — sem alterações de código; Unit Tests/E2E esperados ❌ pré-existentes (§§1, 12, 13). Atualizar quando jobs concluírem.
 
 ---
 
-*Relatório atualizado em 2026-10-22 07:45 UTC: §11 completo (E2E=cancelled, Build=skipped, todos os 9 jobs confirmados). §12 criado para commit `62c9b3c` (CI em andamento).*
+*Relatório atualizado em 2026-10-22 07:50 UTC: §11 completo (todos 9 jobs de 39734675483 confirmados). §12 criado para commit `62c9b3c` (run 39736607183 em andamento — 3 jobs confirmados ✅).*
