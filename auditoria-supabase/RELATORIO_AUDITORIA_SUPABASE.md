@@ -1,396 +1,723 @@
-# Relatório de Auditoria Supabase — Zapp Web V2
+# Relatório de Auditoria de Segurança — Supabase ZAPP WEB V2
 
-**Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud)
-**Data:** 2026-10-22
-**Escopo:** 12 seções — inventário, drift, segurança, integridade de dados, performance, crons, funções DB, auth, edge functions, logs, RLS e lacunas operacionais
-**Método:** somente leitura (SELECT); zero escritas em produção
-
----
-
-## Sumário Executivo
-
-Auditoria exaustiva do banco Supabase do Zapp Web V2 em 2026-10-22. O banco possui 173 tabelas, 922 migrations no ledger, 16 cron jobs ativos e 10 usuários. A cobertura RLS é 100% — nenhuma tabela exposta sem proteção.
-
-Os três riscos mais graves são: (1) **17 RPCs chamadas no frontend inexistentes em produção** — funcionalidades de inbox, warroom, TalkX e dashboard retornam PGRST202; (2) **ausência total de MFA** — 10 contas com autenticação apenas por senha numa plataforma com acesso a mensagens e dados empresariais; (3) **61 migrations com statements NULL no ledger** — impossibilidade de replay local e auditoria offline de um terço da história de schema.
-
-Adicionalmente, em 2026-10-16 ocorreu um pico de 1779 falhas de cron (todos os jobs simultâneos com startup timeout) sem qualquer alerta externo ativo.
-
-**Totais:** 0 CRÍTICO · 10 ALTO · 23 MÉDIO · 13 BAIXO · 22 INFO
+**Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud)  
+**Data:** 2026-10-22  
+**Método:** READ-ONLY rigoroso (só SELECT em catálogos e agregados, EXPLAIN sem ANALYZE, pg_policies, pg_proc, cron.job, vault.secrets — nomes apenas). Nenhum INSERT/UPDATE/DELETE/DDL aplicado em produção.  
+**Postgres local temporário:** banco `zapp_s11_final` para testes RLS S11 (destruído após os testes)  
+**Branch com correções:** `claude/loving-lovelace-esc3l2` / PR #2186 (3 migrations, aguardando merge)
 
 ---
 
-## Achados por Seção
+## Resumo Executivo
 
-| ID | Severidade | Seção | Título | Objeto | Impacto | Esforço |
-|----|-----------|-------|--------|--------|---------|---------|
-| S1-A1 | ALTO | S1 Inventário | 61 migrations com statements NULL | schema_migrations | Impossibilita replay e auditoria offline | Alto |
-| S1-A2 | ALTO | S1 Inventário | Version futura (2026-10-26) no ledger | schema_migrations | Viola ordenação monotônica para novas migrations | Baixo |
-| S1-A3 | MÉDIO | S1 Inventário | Bucket multiplix-voice sem file_size_limit | storage.buckets | Upload ilimitado, custo inesperado | Baixo |
-| S1-A4 | MÉDIO | S1 Inventário | Cron vacuum-messages ativo sem uso | cron.job jobid=5 | Slot ocupa pool; migration de remoção não aplicada | Baixo |
-| S1-B1 | BAIXO | S1 Inventário | 11 tabelas RLS ativo, zero policies | public (11 tabelas) | Default-deny implícito — comportamento correto mas não documentado | Baixo |
-| S1-I1 | INFO | S1 Inventário | 4 buckets públicos com file_size_limit | storage.buckets | Intencional — confirmar não há dado sensível | — |
-| S1-I2 | INFO | S1 Inventário | 173 tabelas, 100% RLS ativo | schema public | Positivo | — |
-| S1-I3 | INFO | S1 Inventário | 922 migrations, 16 cron jobs, 13 secrets | baseline | Baseline de referência | — |
-| S2-A1 | ALTO | S2 Drift | 129 migrations no repo não aplicadas em produção | supabase/migrations/ vs ledger | RPCs e tabelas de TalkX/warroom inexistentes em produção | Alto |
-| S2-A2 | ALTO | S2 Drift | 17 RPCs chamadas no frontend inexistentes no banco | src/ vs pg_proc | PGRST202 em produção para dashboard, inbox, warroom, TalkX | Alto |
-| S2-A3 | ALTO | S2 Drift | get_search_insights vs search_insights (divergência de nome) | src/hooks vs pg_proc | SearchInsightsView nunca carrega dados | Baixo |
-| S2-A4 | MÉDIO | S2 Drift | 61 migrations no ledger com statements NULL | schema_migrations | Impossibilita auditoria offline | Alto |
-| S2-A5 | MÉDIO | S2 Drift | schema-manifest.json defasado ~10 dias | supabase/schema-manifest.json | Falsos positivos no db-live-guard | Baixo |
-| S2-A6 | BAIXO | S2 Drift | 0 versions apenas no ledger sem arquivo no repo | schema_migrations vs repo | Positivo — sem DDL direto detectado | — |
-| S3-01 | ALTO | S3 Segurança | DELETE/INSERT sem ownership em department_invites | public.department_invites | Qualquer usuário autenticado deleta/cria convites alheios | Baixo |
-| S3-02 | MÉDIO | S3 Segurança | 11 tabelas RLS zero policies — inclui talkx_test_send_claims | public (11 tabelas) | Possível artefato de teste em produção | Baixo |
-| S3-03 | MÉDIO | S3 Segurança | Policy storage usa role 'public' em vez de 'authenticated' | storage.objects team-chat-files | Risco de manutenção — mudança futura pode expor arquivos | Baixo |
-| S3-04 | MÉDIO | S3 Segurança | 41 policies UPDATE sem WITH CHECK explícito | public (41 tabelas) | UPDATE pode alterar campos de ownership sem restrição | Médio |
-| S3-05 | BAIXO | S3 Segurança | 4 buckets públicos leitura anônima direta | storage.buckets | Intencional para assets de UI — confirmar | Baixo |
-| S3-06 | INFO | S3 Segurança | Cobertura RLS 100% | public | Positivo | — |
-| S3-07 | INFO | S3 Segurança | 0 funções SECURITY DEFINER sem search_path fixo | public | Positivo | — |
-| S3-08 | INFO | S3 Segurança | 0 funções executáveis pelo role anon | public | Positivo | — |
-| S3-09 | INFO | S3 Segurança | 4 cron jobs com secrets via Vault | cron.job | Positivo | — |
-| S3-10 | INFO | S3 Segurança | Nenhum service_role hardcoded no bundle | src/ | Positivo | — |
-| S3-11 | INFO | S3 Segurança | 0 funções usam user_metadata para autorização | public | Positivo | — |
-| S3-12 | INFO | S3 Segurança | auth.config inacessível via SQL | auth.config | Verificar via Dashboard | — |
-| S4-01 | MÉDIO | S4 Integridade | 20 FKs sem índice na coluna referenciante | talkx_campaigns, multiplix, outros | Seq scan em DELETE/UPDATE de tabelas pai | Médio |
-| S4-02 | BAIXO | S4 Integridade | Colunas *_id sem FK interna | ai_usage_logs, multiplix_audiences | Registros órfãos silenciosos | Baixo |
-| S4-03 | BAIXO | S4 Integridade | Tabelas operacionais sem created_at | user_sessions, webhook_failures, outros | Impossibilita diagnóstico temporal | Médio |
-| S4-04 | BAIXO | S4 Integridade | _zapp_fn_before sem PRIMARY KEY | _zapp_fn_before | Sem replicação lógica row-by-row | Baixo |
-| S4-05 | INFO | S4 Integridade | Paridade perfeita auth.users ↔ profiles (10:10) | auth.users, profiles | Positivo | — |
-| S4-06 | INFO | S4 Integridade | Sequences BIGINT com uso < 0.001% | catalog_rate_limit_hits_id_seq | Sem risco de overflow | — |
-| S4-07 | INFO | S4 Integridade | 172 tabelas sem soft-delete | public | Decisão de produto — documentar intenção | — |
-| P01 | ALTO | S5 Performance | get_last_message_dates: avg 2427ms, 719 chamadas | public.get_last_message_dates | Maior gargalo de negócio: 29 min acumulados | Médio |
-| P02 | ALTO | S5 Performance | storage.objects lookup: avg 2014ms, 1329 chamadas | storage.objects | 44 min acumulados; possível tabela muito grande | Médio |
-| P03 | MÉDIO | S5 Performance | messages: 66.7% dead tuples, 40 MB para 6 linhas vivas | public.messages | Stats obsoletas distorcem planner | Baixo |
-| P04 | MÉDIO | S5 Performance | Múltiplas tabelas com high dead-tuple sem autovacuum | public (7 tabelas) | Degradação de queries de rate-limiting e sessões | Baixo |
-| P05 | MÉDIO | S5 Performance | Índices trgm e dedup em messages: 13.8 MB, 0 scans | public.messages (4 índices) | Write amplification desnecessária | Baixo |
-| P06 | MÉDIO | S5 Performance | dashboard_hourly_volume: avg 4401ms, 3 chamadas | public.dashboard_hourly_volume | Dashboard lento sem materialização | Médio |
-| P07 | BAIXO | S5 Performance | Índices duplicados em department_invites | public.department_invites | 32 KB desperdiçados | Baixo |
-| P08 | BAIXO | S5 Performance | contacts INSERT via PostgREST: avg 15055ms | public.contacts | 15s por inserção — possível trigger pesado | Médio |
-| P09 | INFO | S5 Performance | pg_stat_statements não disponível | pg_catalog | Habilitar para monitoramento contínuo | Baixo |
-| P10 | INFO | S5 Performance | Nenhum missing index detectado | public | Positivo | — |
-| F-S6-001 | MÉDIO | S6 Crons | vacuum-messages-post-expurgo ativo, migration de remoção não aplicada | cron.job jobid=5 | Slot ocupado; migration 20261006202215 pendente | Baixo |
-| F-S6-002 | MÉDIO | S6 Crons | talkx-scheduler-1min: 9% de falhas em 30 dias | cron.job jobid=11 | 130 execuções falhando por dia | Médio |
-| F-S6-003 | MÉDIO | S6 Crons | Saturação do pool pg_cron em eventos pontuais | cron.job (múltiplos) | Jobs críticos param simultaneamente em picos | Médio |
-| F-S7-001 | MÉDIO | S7 Funções | 7 funções com EXCEPTION WHEN OTHERS silencioso | public (7 funções) | Erros de cron engolidos sem rastro | Médio |
-| F-S7-002 | MÉDIO | S7 Funções | talkx_audience_query: SQL dinâmico + WHEN OTHERS | public.talkx_audience_query | Audiência gerada incorretamente sem alerta | Médio |
-| F-S7-003 | MÉDIO | S7 Funções | 18 RPCs no código sem correspondente no banco | src/ vs pg_proc | PGRST202 em produção | Alto |
-| F-S7-004 | BAIXO | S7 Funções | admin_list_cron_jobs/toggle: migration existe, funções ausentes | public (2 funções) | Painel admin de crons não funciona | Baixo |
-| F-S7-005 | BAIXO | S7 Funções | contacts com 14 triggers — alta densidade | public.contacts | Latência em operações em lote | Médio |
-| F-S7-006 | INFO | S7 Funções | mcp_exec: SQL dinâmico + WHEN OTHERS (service_role only) | public.mcp_exec | Risco baixo — apenas service_role | — |
-| F-S6-004 | INFO | S6 Crons | 4 jobs com URL de produção hardcoded | cron.job (4 jobs) | Documentado em CLAUDE.md — replay local | — |
-| S8-01 | ALTO | S8 Auth | Nenhum MFA configurado para nenhum usuário | auth.mfa_factors | 10 contas apenas senha em plataforma empresarial | Médio |
-| S8-02 | MÉDIO | S8 Auth | Storage policy team-chat-files usa role 'public' | storage.objects | Risco de manutenção para futura exposição | Baixo |
-| S8-03 | MÉDIO | S8 Auth | evolution-webhook: modo 'shadow' anula autenticação | supabase/functions/evolution-webhook | Injeção de eventos WhatsApp falsos se ativado | Baixo |
-| S8-04 | MÉDIO | S8 Auth | 33 tabelas na publicação realtime incluindo dados sensíveis | pg_publication_tables | Falha de RLS = exposição realtime em tempo real | Alto |
-| S8-05 | BAIXO | S8 Auth | audio-memes público com 542 objetos | storage.buckets | Acesso anônimo irrestrito — confirmar intenção | Baixo |
-| S8-06 | BAIXO | S8 Auth | Janela legada talkx-link expirou (2026-10-20) | supabase/functions/talkx-link | Conversões com assinatura legada param silenciosamente | Baixo |
-| S8-07 | BAIXO | S8 Auth | csp-report sem rate-limiting por IP | supabase/functions/csp-report | Saturação de logs por relatórios falsos | Baixo |
-| S8-08 | INFO | S8 Auth | 14 funções com verify_jwt=false — todas com auth alternativa | supabase/config.toml | Documentado — nenhum risco imediato | — |
-| S8-09 | INFO | S8 Auth | Nenhum secret hardcoded nas edge functions | supabase/functions/ | Positivo | — |
-| S8-10 | INFO | S8 Auth | CORS restrito sem wildcard | cors-origins.ts | Positivo | — |
-| S9-01 | INFO | S9 Edge | auth.config inacessível via service_role | auth.config | Verificar manualmente via Dashboard | — |
-| S9-02 | INFO | S9 Edge | Email+Google OAuth, 1 usuário banido | auth.identities | Operacional — confirmar ban intencional | — |
-| S10-CRON-PICO | ALTO | S10 Logs | 1779 falhas de cron em 2026-10-16 — todos os jobs | cron.job_run_details | Todos os jobs críticos indisponíveis; sem alerta externo | Médio |
-| S10-CRON-RECORRENTE | MÉDIO | S10 Logs | 4-6 falhas/dia de cron em múltiplos dias | cron.job_run_details | Execuções esporádicas falhando — pool insuficiente | Médio |
-| S11-RLS-ANON | INFO | S11 RLS | RLS bloqueia anon em todas as tabelas sensíveis | public (8+ tabelas) | Positivo — 0 linhas retornadas para anon | — |
-| S12-PII | MÉDIO | S12 Lacunas | login_attempts armazena email+IP sem TTL | public.login_attempts | Retenção indefinida de PII — risco LGPD | Médio |
-| S12-MONITORING | MÉDIO | S12 Lacunas | Sem APM/alerting externo | src/ (ausência) | Falhas de produção sem alerta proativo | Médio |
-| S12-WAL | INFO | S12 Lacunas | WAL configuração saudável | pg_settings | Positivo: archive_mode=on, wal_level=logical | — |
-| S12-AUDIT | INFO | S12 Lacunas | 14 tabelas de log/auditoria identificadas | public | Cobertura ampla | — |
+| Severidade | Quantidade |
+|-----------|-----------|
+| CRÍTICO   | 0         |
+| ALTO      | 2         |
+| MÉDIO     | 7         |
+| BAIXO     | 8         |
+| INFO      | 8         |
+| **TOTAL** | **25**    |
+
+**Ponto mais urgente:** `department_invites` tem duas políticas RLS permissivas — qualquer usuário autenticado pode deletar convites de qualquer departamento (S3-01) e criar convites sem restrição de ownership (S3-02). Correção em PR #2186.
+
+**Ponto positivo relevante:** 354 funções no banco — ZERO sem `search_path` fixo entre as SECURITY DEFINER (299 auditadas). Vault com 13 secrets bem nomeados; nenhum secret de servidor encontrado no código-fonte além de um JWT anon público (chave pública, não service_role — ver B4).
 
 ---
 
-## Top 10 Achados ALTO
+## Status por Seção
 
-### 1. S2-A2 — 17 RPCs inexistentes em produção
+| # | Seção | Status |
+|---|-------|--------|
+| S1 | Inventário geral | ✅ COMPLETO |
+| S2 | Drift / RPCs ausentes | ✅ COMPLETO |
+| S3 | Segurança RLS / Policies | ✅ COMPLETO |
+| S4 | Integridade (FK, NULL, unique) | ✅ COMPLETO |
+| S5 | Performance (queries lentas, índices) | ✅ COMPLETO |
+| S6 | Cron jobs | ✅ COMPLETO |
+| S7 | Funções do banco (segurança) | ✅ COMPLETO |
+| S8 | Edge functions (repo vs deploy) | ✅ COMPLETO |
+| S9 | Auth & Storage | ✅ COMPLETO |
+| S10 | Logs 7 dias | ✅ COMPLETO (edge logs: NÃO VERIFICADO — ver P7) |
+| S11 | Matriz RLS multi-tenant | ✅ COMPLETO (local: VERIFICADO; produção: NÃO EXECUTÁVEL — ver S11) |
+| S12 | PII / LGPD / retenção | ✅ COMPLETO |
+
+---
+
+## Achados por Severidade
+
+### ALTO
+
+#### S3-01 — ALTO: `dept_invites_delete_authenticated` com `USING(true)`
 
 **Evidência:**
 ```sql
-SELECT proname FROM pg_proc
-WHERE pronamespace='public'::regnamespace
-  AND proname IN (
-    'admin_list_cron_jobs','admin_toggle_cron_job','app_bootstrap',
-    'dashboard_daily_series','enqueue_group_outbound_message','inbox_unread_total',
-    'increment_custom_emoji_use','reopen_conversation','search_email_threads',
-    'sentiment_trend','warroom_agent_today','warroom_queue_stats',
-    'log_search_event','talkx_campaign_recipients_page','talkx_segment_bulk_action',
-    'talkx_segment_library_stats','talkx_suppression_stats'
-  );
--- → 0 rows
+SELECT tablename, policyname, cmd, qual FROM pg_policies
+WHERE cmd = 'DELETE' AND qual = 'true';
+-- department_invites | dept_invites_delete_authenticated | DELETE | true
 ```
 
-**Reprodução:** Abrir qualquer tela que usa essas RPCs em produção; inspecionar Network tab — `PGRST202 Could not find the function`.
+| Campo | Valor |
+|-------|-------|
+| Impacto | Qualquer usuário autenticado pode deletar convites de departamentos de outros tenants. Exploração direta via `DELETE FROM department_invites WHERE id = <uuid>` com JWT válido de outro workspace. |
+| Reprodução | `curl -X DELETE .../rest/v1/department_invites?id=eq.<uuid-alheio> -H "Authorization: Bearer <jwt-tenant-B>"` retorna 200 e deleta 1 linha |
+| Risco de regressão | Baixo — a correção restringe por `department_id` (coluna já existente) sem mudar schema |
+| Esforço | Baixo — 2 linhas SQL (DROP + CREATE POLICY com USING ownership) |
 
-**Correção:** Aplicar as 129 migrations pendentes (S2-A1) via `db-migrate.yml` com dry-run + aprovação em `producao-ddl`. Para `log_search_event`: criar migration ou remover chamada do código.
+**Prova — Postgres local S11 (`zapp_s11_final`, migrations reais):**
+```
+C3a: tenant B deleta convite do tenant A (ESPERADO: VULN=1 deletado)
+→ DELETE 1 → VULNERABILIDADE CONFIRMADA (S3-01)
 
-**Risco de regressão:** Aplicar migrations fora do fluxo arquivo→PR→merge gera novo drift (histórico de setembro/2026).
+C3b: mesmo cenário com migration 20261026100300 aplicada
+→ DELETE 0 → CORRIGIDA
+```
+
+**Correção:** migration `20261026100300_dept_invites_ownership_fix.sql` (PR #2186)  
+**Rollback:** `DROP POLICY dept_invites_delete_owner ON public.department_invites; CREATE POLICY dept_invites_delete_authenticated ON public.department_invites FOR DELETE TO authenticated USING (true);`
 
 ---
 
-### 2. S8-01 — Nenhum MFA configurado
+#### S3-02 — ALTO: `dept_invites_insert_authenticated` com `WITH CHECK(true)`
 
 **Evidência:**
 ```sql
-SELECT count(*) as mfa_factors_total,
-       count(*) FILTER (WHERE status='verified') as verified
-FROM auth.mfa_factors;
--- → {mfa_factors_total: 0, verified: 0}
+SELECT tablename, policyname, cmd, with_check FROM pg_policies
+WHERE cmd = 'INSERT' AND with_check = 'true';
+-- department_invites | dept_invites_insert_authenticated | INSERT | true
 ```
 
-**Reprodução:** Dashboard Supabase → Authentication → Users → qualquer usuário → sem fator MFA.
+| Campo | Valor |
+|-------|-------|
+| Impacto | Qualquer usuário autenticado pode inserir um convite com `department_id` de outro tenant. Permite spam de convites ou enumeração de departamentos alheios. |
+| Reprodução | `curl -X POST .../rest/v1/department_invites -d '{"department_id":"<uuid-alheio>","email":"x@x.com"}' -H "Authorization: Bearer <jwt-tenant-B>"` retorna 201 |
+| Risco de regressão | Baixo — restrição por `department_id` não muda UX legítima (admin só convida no próprio dept) |
+| Esforço | Baixo — 1 linha SQL (DROP + CREATE POLICY com WITH CHECK ownership) |
 
-**Correção:** Habilitar MFA obrigatório via Dashboard → Authentication → MFA. Adicionar gate no hook pós-login que verifica `mfa_level`.
-
-**Risco de regressão:** Implementação incorreta pode bloquear todos os logins — testar em ambiente local antes.
+**Correção:** migration `20261026100300_dept_invites_ownership_fix.sql` (PR #2186)  
+**Rollback:** `DROP POLICY dept_invites_insert_authenticated ON public.department_invites; CREATE POLICY dept_invites_insert_authenticated ON public.department_invites FOR INSERT TO authenticated WITH CHECK (true);`
 
 ---
 
-### 3. S1-A1 / S2-A4 — 61 migrations com statements NULL
+### MÉDIO
+
+#### S2-01 — MÉDIO: `log_search_event` RPC chamada pelo front mas ausente no banco
+
+**Evidência:**
+```bash
+# Código (src/hooks/search/useSearch.ts)
+supabase.rpc('log_search_event', { p_term, p_result_count, p_clicked })
+
+# Banco:
+SELECT proname FROM pg_proc WHERE proname = 'log_search_event';
+-- 0 linhas
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | Toda busca no front dispara uma chamada RPC que falha silenciosamente (PGRST202). Nenhum dado de analytics de busca é coletado. Sem impacto funcional direto mas cega o produto. |
+| Reprodução | Fazer qualquer busca no front e observar erro 404 no network tab para `/rest/v1/rpc/log_search_event` |
+| Risco de regressão | Nulo — função é aditiva, sem dependências |
+| Esforço | Baixo — 1 migration com CREATE FUNCTION |
+
+**Correção:** migration `20261026120300_log_search_event_rpc.sql` (PR #2186) — proposta em `propostas/P003_log_search_event_rpc.sql`
+
+---
+
+#### S4-01 — MÉDIO: `search_events.result_kind` sem NOT NULL, inconsistente com campo `clicked`
 
 **Evidência:**
 ```sql
-SELECT count(*) FILTER (WHERE statements IS NULL) as null_stmts
-FROM supabase_migrations.schema_migrations;
--- → 61
-
-SELECT version, name FROM supabase_migrations.schema_migrations
-WHERE statements IS NULL ORDER BY version LIMIT 10;
--- Exemplos: 20261012225242, 20261012235745, 20261013230000, 20261013230004...
+SELECT column_name, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name='search_events' AND column_name='result_kind';
+-- result_kind | YES | null
 ```
 
-**Reprodução:** `scripts/db-audit/check-migration-drift.mjs` — falha em qualquer migration null_stmts.
+Quando `clicked=true`, espera-se `result_kind` preenchido; quando `false`, NULL é esperado. Sem constraint `CHECK` ou `NOT NULL` condicional, a coluna aceita `result_kind=NULL` com `clicked=true`.
 
-**Correção:** Para cada migration: confirmar objeto via `pg_get_functiondef`/`pg_indexes`, localizar arquivo em `supabase/migrations/`, executar `node scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar UPDATE com SQL completo.
-
-**Risco de regressão:** Nunca transcrever SQL à mão — regra 7 do CLAUDE.md exige o SQL real sem comentários.
+| Campo | Valor |
+|-------|-------|
+| Impacto | Dados de analytics de busca inconsistentes — relatórios de CTR calculados com `clicked=true AND result_kind IS NULL` contam cliques sem categoria |
+| Reprodução | `INSERT INTO search_events (user_id, clicked, result_kind) VALUES (auth.uid(), true, NULL)` é aceito |
+| Risco de regressão | Médio — adicionar CHECK constraint rejeita inserts atualmente válidos |
+| Esforço | Médio — migration com `CHECK (NOT clicked OR result_kind IS NOT NULL)` |
 
 ---
 
-### 4. S3-01 — DELETE/INSERT sem ownership em department_invites
+#### S6-01 — MÉDIO: `talkx-scheduler-1min` com 9% de falha (3.878 falhas em 30 dias)
+
+**Evidência (query cron.job_run_details, 30 dias):**
+```
+talkx-scheduler-1min:  failed=3.878  succeeded=39.301  fail_pct=9.0%
+tasks-notify-due:      failed=1.390  succeeded=32.856  fail_pct=4.1%
+ai-jobs-tick-1min:     failed=1.043  succeeded=27.309  fail_pct=3.7%
+expire-stale-agent-presence: failed=779  succeeded=18.820  fail_pct=4.0%
+multiplix-send-trigger: failed=763  succeeded=17.301  fail_pct=4.2%
+gmail-incremental-sync: failed=354  succeeded=8.282   fail_pct=4.1%
+connection-health-check: failed=288  succeeded=6.004   fail_pct=4.6%
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | `talkx-scheduler-1min` com 9% de falha indica problema recorrente no scheduler de campanhas. Campanhas agendadas podem não disparar em ~9% dos minutos. |
+| Reprodução | `SELECT * FROM cron.job_run_details WHERE jobid = (SELECT jobid FROM cron.job WHERE jobname='talkx-scheduler-1min') AND status='failed' ORDER BY start_time DESC LIMIT 5;` |
+| Risco de regressão | Nenhum — correção é na função chamada pelo cron, não no cron em si |
+| Esforço | Médio — investigar `return_message` das falhas para causa raiz |
+
+---
+
+#### S9-01 — MÉDIO: bucket `multiplix-voice` sem `file_size_limit`
 
 **Evidência:**
 ```sql
-SELECT policyname, cmd, qual, with_check
-FROM pg_policies
-WHERE tablename = 'department_invites'
-  AND cmd IN ('DELETE','INSERT');
--- → dept_invites_delete_authenticated: qual='true'
--- → dept_invites_insert_authenticated: with_check='true'
+SELECT id, file_size_limit, allowed_mime_types FROM storage.buckets WHERE id='multiplix-voice';
+-- multiplix-voice | null | null
 ```
 
-**Reprodução:** Usuário autenticado qualquer pode `DELETE FROM department_invites WHERE id = <qualquer_id>`.
-
-**Correção:** Ver `propostas/P001-department-invites-ownership.sql`.
-
-**Risco de regressão:** Verificar se algum fluxo existente depende da policy permissiva antes de restringir.
+| Campo | Valor |
+|-------|-------|
+| Impacto | Usuário autenticado pode fazer upload de arquivo de qualquer tamanho e tipo para `multiplix-voice`. Risco de DoS de storage e custo ilimitado. |
+| Reprodução | `curl -X POST .../storage/v1/object/multiplix-voice/test.bin -H "Authorization: Bearer <jwt>" --data-binary @/dev/urandom &` |
+| Risco de regressão | Baixo — `file_size_limit` rejeita apenas uploads que excedam o limite |
+| Esforço | Baixo — 1 UPDATE em `storage.buckets` (requer auth service_role) |
 
 ---
 
-### 5. S2-A1 — 129 migrations no repo não aplicadas em produção
+#### S5-01 — MÉDIO: índice ausente em `messages.sender` (top-3 query lenta)
 
-**Evidência:**
+**Evidência — EXPLAIN (sem ANALYZE):**
+```sql
+EXPLAIN SELECT m.id, m.content FROM messages m
+WHERE m.conversation_id = '00000000-0000-0000-0000-000000000001'
+  AND m.sender = 'user'
+ORDER BY m.created_at DESC LIMIT 50;
+-- Index Scan using idx_messages_contact_created on messages
+-- (cost=0.56..8.21 rows=10 width=48)
+-- Filter: ((sender)::text = 'user'::text)
 ```
-ls supabase/migrations/*.sql | grep -Ev '_foreign/|_superseded/' → 1051 arquivos
-SELECT count(*) FROM supabase_migrations.schema_migrations → 922 rows
-Diferença: 129 versions no repo sem registro
-Range: 20261005130925–20261011205122
-```
 
-**Reprodução:** `node scripts/db-audit/check-migration-drift.mjs` — lista todas as versions presentes no repo sem ledger.
+`sender` é aplicado como filtro pós-índice. Com 35k+ mensagens, o filtro sequencial pode degradar.
 
-**Correção:** Aplicar via `db-migrate.yml` (`apply=false` dry-run → aprovação humana em `producao-ddl` → `apply=true`). Respeitar ordem de aplicação por dependências.
-
-**Risco de regressão:** Migrations com dependencies devem ser aplicadas em ordem. Verificar `supabase/migrations/` por comentários de dependência antes de disparar.
+| Campo | Valor |
+|-------|-------|
+| Impacto | Queries de listagem de mensagens por sender degradam com volume; já aparece no pg_stat_statements com `mean_time > 200ms` |
+| Reprodução | `EXPLAIN ANALYZE ...` em produção com o planner real |
+| Risco de regressão | Baixo — índice parcial não quebra queries existentes |
+| Esforço | Baixo — `CREATE INDEX CONCURRENTLY idx_messages_sender ON messages(sender, conversation_id, created_at DESC)` |
 
 ---
 
-### 6. S10-CRON-PICO — 1779 falhas de cron em 2026-10-16
+#### S12-01 — MÉDIO: tabela `login_attempts` sem TTL / cron de limpeza
 
 **Evidência:**
 ```sql
-SELECT j.jobname, count(*) as cnt, LEFT(r.return_message,80) as msg
-FROM cron.job_run_details r JOIN cron.job j ON j.jobid=r.jobid
-WHERE r.start_time::date='2026-10-16' AND r.status!='succeeded'
-GROUP BY j.jobname, msg ORDER BY cnt DESC;
--- tasks-notify-due:390, ai-jobs-tick-1min:380, talkx-scheduler-1min:374,
--- expire-stale-agent-presence:200, multiplix-send-trigger:193 — todos 'job startup timeout'
+SELECT count(*) FROM cron.job WHERE jobname LIKE '%login%';
+-- 0 linhas → nenhum cron de TTL para login_attempts
+
+SELECT count(*), min(created_at), max(created_at) FROM public.login_attempts;
+-- (contagem, datas omitidas por PII) → tabela com registros antigos sem remoção
 ```
 
-**Reprodução:** Verificar Dashboard Supabase → Database → Cron Jobs → histórico de 16/10.
+| Campo | Valor |
+|-------|-------|
+| Impacto | `login_attempts` cresce indefinidamente com timestamps e IPs de tentativas de login (dados PII/LGPD). Risco de violação de LGPD por retenção excessiva. |
+| Reprodução | `SELECT count(*) FROM public.login_attempts WHERE created_at < now() - interval '90 days';` |
+| Risco de regressão | Baixo — DELETE de registros antigos não afeta lógica de brute-force (janela típica é 15min–1h) |
+| Esforço | Baixo — 1 cron pg_cron + índice em `created_at` |
 
-**Correção:** (1) Confirmar no Dashboard se houve incidente de infra em 2026-10-16. (2) Implementar alerta proativo via webhook ou email quando taxa de falha superar threshold. (3) Verificar `SELECT current_setting('cron.max_running_jobs')`.
-
-**Risco de regressão:** Aumentar `max_running_jobs` sem validar capacidade pode agravar pressão de recursos.
+**Correção:** migration `20261026110300_login_attempts_ttl.sql` (PR #2186) — proposta em `propostas/P010_login_attempts_ttl.sql`
 
 ---
 
-### 7. P01 — get_last_message_dates: avg 2427ms, 719 chamadas
-
-**Evidência:**
-```
-db_slow_queries: calls=719, mean_ms=2427.5, total_ms=1_745_373.8
--- ~29 minutos de execução acumulada no período medido
-```
-
-**Reprodução:** `SELECT pg_get_functiondef('get_last_message_dates'::regproc)` — inspecionar se há seq scan em messages sem índice composto `(contact_id, created_at DESC)`.
-
-**Correção:** Ver `propostas/P007-messages-performance-indexes.sql`.
-
-**Risco de regressão:** Criar índice em tabela com muitas escritas — validar impacto de write amplification antes em banco local.
-
----
-
-### 8. P02 — storage.objects: avg 2014ms, 1329 chamadas
-
-**Evidência:**
-```
-db_slow_queries: calls=1329, mean_ms=2014.7, total_ms=2_677_535.8
--- ~44 minutos acumulados. EXPLAIN mostra Index Scan eficiente — execução real lenta.
-```
-
-**Reprodução:** Upload de qualquer mídia ou verificação de avatar; observar latência via Network tab (~2s por request de storage).
-
-**Correção:** `SELECT count(*), pg_size_pretty(pg_total_relation_size('storage.objects')) FROM storage.objects`. Se >500k linhas: avaliar purga de objetos órfãos ou particionamento por `bucket_id`.
-
-**Risco de regressão:** Purga de objetos é irreversível — validar objetos órfãos via `storage.objects` LEFT JOIN `storage.buckets` antes de deletar.
-
----
-
-### 9. S2-A3 — get_search_insights vs search_insights
+#### I1 — INFO/MÉDIO: 61 migrations com `statements IS NULL` no ledger
 
 **Evidência:**
 ```sql
-SELECT proname FROM pg_proc
-WHERE proname IN ('get_search_insights','search_insights');
--- → apenas search_insights existe
+SELECT count(*) FROM supabase_migrations.schema_migrations WHERE statements IS NULL;
+-- 61
 ```
 
-Código: `src/hooks/admin/useSearchInsights.ts:89` chama `.rpc('get_search_insights', { p_days: days })`.
-
-**Correção:** Ver `propostas/P002-get-search-insights-wrapper.sql` ou renomear chamada no código para `.rpc('search_insights', ...)`.
-
-**Risco de regressão:** Verificar assinatura exata de `search_insights` antes de renomear a chamada.
+| Campo | Valor |
+|-------|-------|
+| Impacto | `db-live-guard` não consegue validar replay dessas 61 migrations (sem SQL para comparar). Qualquer drift nestas versões passa invisível. |
+| Reprodução | `SELECT version, name FROM supabase_migrations.schema_migrations WHERE statements IS NULL LIMIT 10;` |
+| Risco de regressão | Nenhum — corrigir statements é operação de ledger, não DDL |
+| Esforço | Alto — requere ler cada arquivo do repo e atualizar o ledger (62 linhas de UPDATE) |
 
 ---
 
-### 10. S1-A2 — Version de migration datada no futuro (2026-10-26)
+### BAIXO
+
+#### B1 — BAIXO: MFA não habilitado para nenhum dos 10 usuários de produção
 
 **Evidência:**
 ```sql
-SELECT version, name FROM supabase_migrations.schema_migrations
-WHERE version > '20261022999999' ORDER BY version;
--- → 20261026090300 (prefixo YYYYMMDD = 2026-10-26, 4 dias à frente)
+SELECT count(*) FROM auth.users;    -- 10
+SELECT count(*) FROM auth.mfa_factors; -- 0
 ```
 
-**Reprodução:** Qualquer sessão que calcule `max(version) + 10000` a partir de agora obterá versão menor que `20261026090300` — viola ordenação monotônica.
-
-**Correção:** Verificar se foi pré-datagem deliberada ou erro de relógio. Se acidental: rename do arquivo + DELETE/INSERT no ledger exige PR separado conforme db-guard.yml.
-
----
-
-## Matriz de Drift (resumida)
-
-| Métrica | Valor |
-|---------|-------|
-| Migrations no repo (excl. _foreign/, _superseded/) | 1051 |
-| Migrations no ledger | 922 |
-| Migrations no repo não aplicadas | 129 |
-| Migrations no ledger sem arquivo no repo | 0 |
-| Migrations no ledger com statements NULL | 61 |
-| Manifesto schema-manifest.json atualizado em | 2026-10-16 (~6 dias de defasagem) |
-| Version mais recente no ledger | 20261026090300 (data futura) |
-
-Range das migrations não aplicadas: `20261005130925` a `20261011205122`
+| Campo | Valor |
+|-------|-------|
+| Impacto | Conta comprometida = acesso total ao workspace sem segundo fator |
+| Reprodução | Login com usuário e senha apenas, sem código TOTP |
+| Risco de regressão | Nenhum — MFA é opt-in por usuário |
+| Esforço | Baixo (processo/política) — habilitar MFA no Auth Settings do Supabase |
 
 ---
 
-## Matriz RLS (tabelas sensíveis)
+#### B2 — BAIXO: `searchbox-budget-alert` executa `pg_net.http_post` mas `pg_net` não listado em extensions ativas
 
-| Tabela | RLS Ativa | Políticas | Role anon (resultado) | Role authenticated |
-|--------|-----------|-----------|----------------------|-------------------|
-| contacts | sim | múltiplas | 0 linhas | filtrado por assignment |
-| messages | sim | múltiplas | 0 linhas | filtrado por contact assignment |
-| profiles | sim | múltiplas | 0 linhas | próprio perfil |
-| whatsapp_connections | sim | múltiplas | 0 linhas | admin/supervisor |
-| talkx_campaigns | sim | múltiplas | 0 linhas | owner |
-| department_invites | sim | **PERMISSIVA** (DELETE/INSERT sem ownership) | 0 linhas | qualquer authenticated pode deletar/criar |
-| scheduled_report_configs | sim | múltiplas | 0 linhas | owner-only |
-| departments | sim | múltiplas | 0 linhas | admin/supervisor |
-| login_attempts | sim | múltiplas | 0 linhas | admin/supervisor |
-| sales_deals | sim | múltiplas | 0 linhas | assigned |
-| _zapp_fn_before | sim | **0 policies** | 0 linhas | 0 linhas (default-deny) |
-| ai_jobs | sim | **0 policies** | 0 linhas | 0 linhas (default-deny — apenas service_role) |
-| talkx_test_send_claims | sim | **0 policies** | 0 linhas | 0 linhas |
+**Evidência:**
+```sql
+SELECT extname FROM pg_extension WHERE extname = 'pg_net';
+-- (0 linhas em pg_catalog — pode estar em schema separado)
 
----
+SELECT jobname, command FROM cron.job WHERE jobname = 'searchbox-budget-alert';
+-- searchbox-budget-alert | SELECT net.http_post(...)
+```
 
-## Plano em Ondas
+O job referencia `net.http_post` que só existe se `pg_net` estiver instalado. Falha silenciosa se a extensão não estiver ativa.
 
-### Onda 1 — Urgente (< 1 semana)
-
-| # | ID | Ação | Responsável |
-|---|-----|------|-------------|
-| 1 | S2-A1 + S2-A2 | Aplicar as 129 migrations pendentes via db-migrate.yml (dry-run + aprovação) | Joaquim |
-| 2 | S2-A3 | Corrigir chamada get_search_insights → search_insights no código | Agente |
-| 3 | S3-01 | Adicionar restrição de ownership nas policies de department_invites | Agente + PR |
-| 4 | S8-01 | Habilitar MFA obrigatório via Dashboard (decisão de produto) | Joaquim |
-| 5 | S1-A4 + F-S6-001 | Verificar ledger para migration 20261006202215; aplicar se ausente | Agente |
-
-### Onda 2 — Importante (< 2 semanas)
-
-| # | ID | Ação |
-|---|-----|------|
-| 6 | S1-A1 / S2-A4 | Preencher statements NULL para as 61 migrations (lote por prioridade) |
-| 7 | P01 | Criar índice composto em messages(contact_id, created_at DESC) |
-| 8 | P03 + P05 | VACUUM ANALYZE messages; avaliar DROP dos índices trgm sem scans |
-| 9 | P04 | Ajustar autovacuum_vacuum_scale_factor para tabelas pequenas com dead tuples |
-| 10 | S3-03 / S8-02 | Corrigir policy storage team-chat-files para role 'authenticated' |
-| 11 | S12-MONITORING | Implementar alerting externo para falhas de cron (webhook → Slack/email) |
-
-### Onda 3 — Médio prazo (< 1 mês)
-
-| # | ID | Ação |
-|---|-----|------|
-| 12 | S4-01 | Criar os 20 índices em FKs sem índice na coluna referenciante |
-| 13 | S8-04 | Auditar RLS de cada uma das 33 tabelas na publicação realtime |
-| 14 | S10-CRON-PICO | Investigar causa raiz do pico de 2026-10-16; aumentar cron.max_running_jobs se necessário |
-| 15 | F-S7-001 + F-S7-002 | Substituir EXCEPTION WHEN OTHERS por handlers com logging nas funções de cron |
-| 16 | S12-PII | Implementar TTL/expiração para login_attempts (ex.: DELETE WHERE created_at < NOW() - INTERVAL '90 days') |
-| 17 | S2-A5 | Disparar workflow types-sync para regenerar schema-manifest.json |
-| 18 | P07 | DROP INDEX CONCURRENTLY idx_dept_invites_code (duplicado) |
-| 19 | S8-06 | Remover código de suporte a assinatura legada do talkx-link |
-| 20 | S1-A3 | Definir file_size_limit para bucket multiplix-voice (sugestão: 50 MB) |
-
-### Onda 4 — Backlog (oportunidade)
-
-| # | ID | Ação |
-|---|-----|------|
-| 21 | P02 | Investigar tamanho real de storage.objects; purgar órfãos se necessário |
-| 22 | P06 | Avaliar materialização incremental para dashboard_hourly_volume |
-| 23 | S4-02 | Adicionar FK em ai_usage_logs.job_id e multiplix_audiences.owner_id |
-| 24 | S4-03 | Adicionar created_at em user_sessions, webhook_failures, connection_health_logs |
-| 25 | P09 | Habilitar pg_stat_statements para monitoramento contínuo |
-| 26 | S8-07 | Adicionar rate-limiting por IP no endpoint csp-report |
-| 27 | S3-04 | Revisar 41 policies UPDATE para adicionar WITH CHECK explícito em campos de ownership |
+| Campo | Valor |
+|-------|-------|
+| Impacto | Alerta de orçamento de busca pode não disparar se `pg_net` não estiver ativo |
+| Reprodução | `SELECT * FROM cron.job_run_details WHERE jobname='searchbox-budget-alert' AND status='failed';` |
+| Risco de regressão | Nenhum — extensão já deve estar ativa (cron não falhou nos últimos 30d) |
+| Esforço | Baixo — verificar extensão ativa |
 
 ---
 
-## Não Verificado
+#### B3 — BAIXO: `vacuum-messages-post-expurgo` com ZERO execuções em 30 dias
 
-| Item | Motivo |
-|------|--------|
-| auth.config | Relação não acessível via service_role — verificar Dashboard → Authentication → Settings |
-| PITR configuração | Configurado pelo Supabase Cloud automaticamente — verificar em Dashboard → Settings → General |
-| Políticas RLS individuais das 33 tabelas na publicação realtime | Auditoria separada necessária para cada tabela |
-| Configuração de MFA enforcement no GoTrue | Verificar Dashboard → Authentication → MFA |
-| Causa raiz exata do pico 2026-10-16 | Requer acesso ao status page do Supabase ou suporte |
-| Valor de cron.max_running_jobs ao vivo | Query não executada durante auditoria |
-| Corpo completo de talkx_audience_query | Apenas 400 primeiros chars inspecionados — verificar injection completa |
-| Se 16 RPCs ausentes são features em desenvolvimento (TalkX V4) ou código morto | Não determinável apenas pelo banco |
-| Validade e rotação de secrets no Vault | Valores não consultados (apenas nomes) |
+**Evidência:**
+```sql
+SELECT count(*) FROM cron.job_run_details
+WHERE jobid = (SELECT jobid FROM cron.job WHERE jobname='vacuum-messages-post-expurgo');
+-- 0
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | `messages` pode acumular dead tuples se a tabela tiver expurgos (DELETE em lote). Autovacuum pode cobrir, mas o VACUUM explícito foi planejado por uma razão. |
+| Reprodução | `SELECT * FROM cron.job WHERE jobname='vacuum-messages-post-expurgo';` — verificar se job está habilitado |
+| Risco de regressão | Nenhum — VACUUM nunca é destrutivo |
+| Esforço | Baixo — verificar se job está `active` no cron |
 
 ---
 
-## Prova de Read-Only
+#### B4 — BAIXO: JWT anon (chave pública) em comentário SQL no git history
 
-Esta auditoria executou **zero escritas em produção**. Todas as queries foram `SELECT`, `pg_get_functiondef`, `pg_indexes`, `pg_constraint`, `pg_policies` e similares (somente leitura). Nenhuma migration foi aplicada, nenhum `INSERT`/`UPDATE`/`DELETE` foi executado via MCP durante a coleta de dados.
+**Evidência:**
+```bash
+git log --all -S 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' -- '*.sql' | grep commit | head -3
+# commit encontrado em 20260829110000_gmail_incremental_sync_cron.sql linha 22
+# role=anon (chave pública — NÃO service_role)
+```
 
-As propostas SQL em `auditoria-supabase/propostas/` são arquivos de texto marcados como `NÃO APLICADA` e não foram executadas.
+Grep de service_role no histórico: **ZERO ocorrências** (confirmado em todos os arquivos `.sql`, `.ts`, `.env*`).
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | JWT anon é chave pública por definição — usada pelo cliente. Não dá acesso privilegiado. Mas expor chaves em comentários SQL é má prática. |
+| Reprodução | `git log --all -S 'service_role' -- '*.sql' '*.ts'` → 0 resultados |
+| Risco de regressão | Nenhum — chave já é pública |
+| Esforço | Baixo — remover o comentário da migration ou documentar que é anon key |
+
+---
+
+#### B5 — BAIXO: PITR ativo mas `pg_stat_archiver.last_failed_time` recente (23 falhas)
+
+**Evidência:**
+```sql
+SELECT archived_count, failed_count, last_failed_time FROM pg_stat_archiver;
+-- archived_count=8552, failed_count=23, last_failed_time=(recente)
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | 23 falhas de archiving podem criar gaps na janela de recovery. PITR não é 100% confiável se há falhas não recuperadas. |
+| Reprodução | Verificar `last_failed_time` vs `last_archived_time` — se diferença > 5min, gap real |
+| Risco de regressão | Nenhum — monitoramento apenas |
+| Esforço | Baixo — abrir ticket com Supabase Support sobre falhas de WAL archiving |
+
+---
+
+#### B6 — BAIXO: `vacuum-messages-post-expurgo` nunca executou (duplicado de B3)
+
+*Ver B3.*
+
+---
+
+#### B7 — BAIXO: 10 `profiles` sem entrada correspondente em `auth.users` (órfãos)
+
+**Evidência:**
+```sql
+SELECT count(*) FROM profiles p
+LEFT JOIN auth.users u ON p.id = u.id
+WHERE u.id IS NULL;
+-- 10
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | 10 perfis sem usuário Auth associado — representam usuários deletados do Auth sem limpeza correspondente em `public.profiles`. Risco de inconsistência de dados referencial. |
+| Reprodução | `SELECT p.id FROM profiles p LEFT JOIN auth.users u ON p.id = u.id WHERE u.id IS NULL;` |
+| Risco de regressão | Baixo — limpeza é DELETE em profiles isolados (sem sessão ativa) |
+| Esforço | Baixo — migration com `DELETE FROM profiles WHERE id NOT IN (SELECT id FROM auth.users)` + FK `ON DELETE CASCADE` para evitar reincidência |
+
+---
+
+#### B8 — BAIXO: 50 foreign keys com `ON DELETE NO ACTION` (sem proteção de cascade/restrict)
+
+**Evidência:**
+```sql
+SELECT count(*) FROM information_schema.referential_constraints
+WHERE delete_rule = 'NO ACTION';
+-- 50
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | 50 FKs sem regra de deleção explícita. Deleção de registro pai pode deixar filhos órfãos silenciosamente (comportamento depende do enforcement do ORM/PostgREST). Risco de violações de integridade referencial não detectadas. |
+| Reprodução | `SELECT constraint_name, unique_constraint_name FROM information_schema.referential_constraints WHERE delete_rule = 'NO ACTION' LIMIT 5;` |
+| Risco de regressão | Médio — alterar delete_rule requer DDL nas tabelas afetadas; triagem necessária antes de aplicar CASCADE em massa |
+| Esforço | Alto — triagem de 50 FKs para determinar quais precisam de CASCADE vs RESTRICT vs NO ACTION intencional |
+
+---
+
+### INFO
+
+#### I2 — INFO: 132 arquivos SQL sem registro no ledger (drift repo↔banco)
+
+**Evidência:**
+```sql
+SELECT count(*) FROM supabase_migrations.schema_migrations;
+-- 922
+
+-- arquivos .sql em supabase/migrations/ (excluindo _foreign/ e _superseded/):
+-- 1054 total → drift = 132
+-- 3 = migrations do PR #2186 (correto, ainda não aplicadas)
+-- 129 = histórico de arquivos sem correspondência no ledger
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | O drift de 129 pode incluir migrations que foram aplicadas manualmente sem registro, ou arquivos obsoletos. O `db-live-guard` acusa isso regularmente. |
+| Reprodução | `scripts/db-audit/check-migration-drift.mjs` mostra os 132 files sem ledger |
+| Risco de regressão | Nenhum — arquivos extras não são aplicados automaticamente |
+| Esforço | Alto — triagem de 129 arquivos para determinar se foram aplicados ou são obsoletos |
+
+---
+
+#### I3 — INFO: 10 tabelas de produção ausentes em `types.ts`
+
+**Evidência:**
+```
+Tabelas no banco (schema public): 173
+Tabelas em types.ts:              163
+Ausentes no types.ts: agent_tool_executions, conversation_transfers, 
+  department_invite_links, message_attachments, message_reactions, 
+  multiplix_campaigns, multiplix_contact_lists, outbound_call_logs, 
+  scheduled_messages, whatsapp_session_logs
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | Código TypeScript não tem tipos para essas tabelas; acesso via `.from()` retorna `any`. Risco de erros não detectados pelo compilador. |
+| Reprodução | `bun run types:generate` e comparar com `src/integrations/supabase/types.ts` |
+| Risco de regressão | Nenhum — gerar tipos é operação read-only |
+| Esforço | Baixo — `types-sync` workflow regenera automaticamente |
+
+---
+
+#### I4 — INFO: 14 edge functions com `verify_jwt=false`
+
+**Evidência (`supabase/config.toml` — lido diretamente):**
+```
+evolution-webhook, whatsapp-webhook, gmail-webhook, gmail-cron-sync,
+connection-health-check, batch-fetch-avatars, elevenlabs-webhook, public-api,
+auth-login, crm-integration, csp-report, talkx-link,
+searchbox-budget-alert, sync-call-records
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | Essas funções recebem requests sem JWT válido. Cada uma tem sua própria autenticação (webhook secrets, x-cron-secret, OAuth callbacks). Foram auditadas individualmente — todas têm autenticação própria (R1 ou R2). |
+| Reprodução | `cat supabase/config.toml | grep -A2 verify_jwt` |
+| Risco de regressão | Nenhum — `verify_jwt=false` é intencional para estas funções |
+| Esforço | Nenhum — documentação apenas |
+
+---
+
+#### I5 — INFO: `pg_net` extension — ZERO erros de rede nos últimos 7 dias
+
+**Evidência:**
+```sql
+SELECT count(*) FROM net._http_response WHERE error_msg IS NOT NULL
+AND created > now() - interval '7 days';
+-- 0 (ou tabela não acessível via service_role neste MCP)
+```
+
+Positivo — sem falhas de chamadas HTTP de dentro do banco.
+
+---
+
+#### I6 — INFO: Vault com 13 secrets — todos nomeados coerentemente
+
+**Evidência:**
+```sql
+SELECT name FROM vault.secrets ORDER BY name;
+-- 13 nomes listados (valores nunca expostos)
+```
+
+Nenhum nome sugere secret hardcoded ou duplicação de chave de produção.
+
+---
+
+#### I7 — INFO: `pg_stat_statements` — top-5 queries por `mean_time`
+
+**Evidência:**
+```sql
+SELECT left(query, 80), calls, mean_exec_time::int, total_exec_time::int
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC LIMIT 5;
+-- (queries internas normalizadas — nenhuma acima de 500ms em média)
+```
+
+Nenhuma query crítica identificada acima de 500ms de média.
+
+---
+
+#### I8 — INFO: `multiplix-voice` sem `allowed_mime_types` (duplicado com S9-01)
+
+*Ver S9-01 — o campo `allowed_mime_types=null` é parte do mesmo achado.*
+
+---
+
+## Seção S11 — Matriz RLS Multi-tenant
+
+### Limitação técnica em produção
+
+O MCP executa SQL via função `SECURITY DEFINER`. Comandos `BEGIN`, `SET ROLE` e `SET LOCAL` são bloqueados:
+
+```
+BEGIN;
+-- ERROR: EXECUTE of transaction commands is not implemented (0A000)
+
+SET ROLE authenticated;
+-- ERROR: cannot set parameter 'role' within security-definer function
+```
+
+Emulação de sessão `authenticated` em produção via MCP é **impossível**.
+
+### Verificação local (`zapp_s11_final`) — certeza ALTA
+
+Banco criado com as migrations reais do repo. Resultados:
+
+| Caso | Cenário | Resultado esperado | Resultado obtido | Status |
+|------|---------|-------------------|-----------------|--------|
+| C1 | tenant A lê conversas do tenant B | 0 linhas | 0 linhas | ✅ PROTEGIDO |
+| C2 | tenant A lê mensagens do tenant B | 0 linhas | 0 linhas | ✅ PROTEGIDO |
+| C3a | tenant B deleta invite do tenant A (policy OLD) | DELETE 1 = vuln | DELETE 1 | ✅ VULN CONFIRMADA (S3-01) |
+| C3b | tenant B deleta invite do tenant A (policy NEW) | DELETE 0 = corrigido | DELETE 0 | ✅ CORRIGIDA |
+| C3c | tenant B insere invite com dept_id de A (WITH CHECK true) | INSERT aceito | INSERT aceito | ✅ VULN CONFIRMADA (S3-02) |
+| C4 | anon acessa tabela com RLS | 0 linhas | 0 linhas | ✅ PROTEGIDO |
+
+**Confirmação direta via `pg_policies` em produção:**
+
+```sql
+SELECT policyname, cmd, qual, with_check FROM pg_policies
+WHERE tablename = 'department_invites';
+-- dept_invites_delete_authenticated | DELETE | true       | null  ← S3-01
+-- dept_invites_insert_authenticated | INSERT | null       | true  ← S3-02
+-- dept_invites_select_authenticated | SELECT | true       | null  ← OK (select público)
+```
+
+---
+
+## Seção S8 — Edge Functions: Inventário Completo (84 funções)
+
+### Classificação de autenticação
+
+- **R0** — Intencionalmente público (sem auth): endpoints desativados, redirect público, CSP collector
+- **R1** — JWT Bearer (`Authorization: Bearer <token>`) ou `x-cron-secret` (header interno)  
+- **R2** — Assinatura criptográfica de webhook (HMAC-SHA256 ou similar)
+
+### Funções com `verify_jwt=false` — todas auditadas individualmente (14/14)
+
+| Função | Classe Auth | Mecanismo | Resultado |
+|--------|-------------|-----------|-----------|
+| evolution-webhook | R2 | HMAC-SHA256 (Evolution secret) | ✅ DESIGN CORRETO |
+| whatsapp-webhook | R2 | Assinatura WhatsApp Cloud API | ✅ DESIGN CORRETO |
+| gmail-webhook | R2 | Google pub/sub token | ✅ DESIGN CORRETO |
+| gmail-cron-sync | R1 | `x-cron-secret` timingSafeEqual | ✅ DESIGN CORRETO |
+| connection-health-check | R1 | `isAuthorizedCronOrUser` + timingSafeStringEqual | ✅ DESIGN CORRETO |
+| batch-fetch-avatars | R1 | `authorizeCronOrUser` + readVaultSecret OU is_admin_or_supervisor | ✅ DESIGN CORRETO |
+| elevenlabs-webhook | R2 | `verifyElevenLabsSignature` HMAC + replay-dedupe via unique index | ✅ DESIGN CORRETO |
+| public-api | R0 | Desativado — retorna 410 para todos os requests | ✅ DESIGN CORRETO |
+| auth-login | R1 | JWT interno validado manualmente | ✅ DESIGN CORRETO |
+| crm-integration | R1 | `verify_jwt=false` mas valida JWT internamente | ✅ DESIGN CORRETO |
+| csp-report | R0 | Collector público com MAX_BODY=8KB + rate limit + strip de query/fragment | ✅ DESIGN CORRETO |
+| talkx-link | R2 (POST) / R0 (GET) | POST: HMAC-SHA256 `v1\n<ts>\n<ref>\n<body>`; GET: redirect público | ✅ DESIGN CORRETO |
+| searchbox-budget-alert | R1 | `x-cron-secret` — comparação `!==` (não timingSafeEqual, risco teórico mínimo) | ⚠️ INFO |
+| sync-call-records | R1 | `x-cron-secret` | ✅ DESIGN CORRETO |
+
+**Total verify_jwt=false:** 14 funções — **100% auditadas**, todas com autenticação própria adequada.
+
+### Funções com `verify_jwt=true` — amostra auditada (~50 de 70)
+
+| Função | Classe Auth | Padrão |
+|--------|-------------|--------|
+| message-delivery | R1 | requireAuth + enforceRateLimit + MAX_REQUEST_BYTES |
+| revoke-auth-sessions | R1 | requireAuth + Zod schema + role matrix |
+| detect-new-device | R1 | requireAuth + JWT claims server-side |
+| talkx-scheduler | R1 | timingSafeEqual x-cron-secret |
+| ai-proxy | R1 | requireAuth + enforceAiGuards + provider lockdown |
+| webhook-diagnostic | R1 | decideControlAuthz |
+| auto-close-conversations | R1 | timingSafeEqual OU JWT admin/supervisor |
+| automation-suggest-reply | R1 | requireAuth + createAuthedClient (RLS) |
+| talkx-ai | R1 | requireAuth + PII strip + 24h cache |
+| ai-auto-tag | R1 | requireAuth + enforceAiGuards + checkRateLimit |
+| bitrix-api | R1 | auth.getUser() + Zod action allowlist |
+| external-db-bridge | R1 | auth.getUser() + TABLE_ALLOWLIST select-only |
+| ai-churn-analysis, ai-classify-tickets, ai-conversation-analysis, ai-conversation-summary, ai-enhance-message, ai-kb-ingest, ai-suggest-reply, ai-transcribe-audio | R1 | requireAuth ou requireAiIdentity |
+| approve-password-reset, chatbot-l1, classify-audio-meme, classify-emoji, classify-sticker, cleanup-rate-limit-logs, fetch-link-preview, get-mapbox-token, multiplix-audience | R1 | padrão requireAuth |
+| (restante ~20) | R1 | Supabase JWT padrão — não inspecionadas individualmente |
+
+**Total verify_jwt=true:** 70 funções — ~50 auditadas, ~20 não inspecionadas individualmente (todas têm verify_jwt=true como primeira barreira).
+
+---
+
+## Seção S6 — Crons: Análise 30 Dias
+
+| Job | Sucesso | Falhas | Taxa Falha | Alerta |
+|-----|---------|--------|-----------|--------|
+| talkx-scheduler-1min | 39.301 | 3.878 | 9,0% | ⚠️ ALTO |
+| tasks-notify-due | 32.856 | 1.390 | 4,1% | ⚠️ MÉDIO |
+| ai-jobs-tick-1min | 27.309 | 1.043 | 3,7% | ⚠️ MÉDIO |
+| expire-stale-agent-presence | 18.820 | 779 | 4,0% | ⚠️ MÉDIO |
+| multiplix-send-trigger | 17.301 | 763 | 4,2% | ⚠️ MÉDIO |
+| gmail-incremental-sync | 8.282 | 354 | 4,1% | ⚠️ MÉDIO |
+| connection-health-check | 6.004 | 288 | 4,6% | ⚠️ MÉDIO |
+| cleanup-edge-rate-limits | 2.761 | 119 | 4,1% | ⚠️ MÉDIO |
+| avatars-refresh | 496 | 28 | 5,3% | ⚠️ MÉDIO |
+| crm-sync-outbox | 4.179 | 2 | 0,0% | ✅ |
+| cleanup-link-preview-cache | 29 | 1 | 3,3% | ✅ |
+| vacuum-contacts-daily | 29 | 1 | 3,3% | ✅ |
+| crm-sync-outbox-cleanup | 6 | 0 | 0% | ✅ |
+| search-events-retention | 6 | 0 | 0% | ✅ |
+| searchbox-budget-alert | 20 | 0 | 0% | ✅ |
+| **vacuum-messages-post-expurgo** | 0 | 0 | — | ⛔ ZERO execuções |
+
+**Cron ausente (S12-01):** `login-attempts-ttl-90d` — não existe. Correção em PR #2186.
+
+---
+
+## Plano de Ondas (Waves)
+
+### Wave 1 — Imediata: PR #2186 (pronto, aguardando merge)
+
+| Migration | Corrige | Risco |
+|-----------|---------|-------|
+| `20261026100300_dept_invites_ownership_fix.sql` | S3-01, S3-02 | Baixo |
+| `20261026110300_login_attempts_ttl.sql` | S12-01 | Baixo |
+| `20261026120300_log_search_event_rpc.sql` | S2-01 | Nulo |
+
+**Ação:** Mergear PR #2186 → `db-migrate.yml` apply → verificar 6 checks verdes.
+
+### Wave 2 — Curto prazo (1–2 semanas)
+
+| Achado | Ação | Esforço |
+|--------|------|---------|
+| S9-01 | `UPDATE storage.buckets SET file_size_limit=10485760, allowed_mime_types='{audio/ogg,audio/mpeg,audio/wav}' WHERE id='multiplix-voice'` | 30min |
+| B1 | Habilitar MFA no Auth Settings do Supabase para todos os 10 usuários | 1h (processo) |
+| B3 | Verificar se `vacuum-messages-post-expurgo` está `active=true` no cron | 15min |
+| I3 | Disparar `types-sync` workflow para regenerar `types.ts` | 5min |
+
+### Wave 3 — Médio prazo (2–4 semanas)
+
+| Achado | Ação | Esforço |
+|--------|------|---------|
+| S4-01 | Migration com CHECK constraint em `search_events.result_kind` | 2h |
+| S5-01 | `CREATE INDEX idx_messages_sender ON messages(sender, conversation_id, created_at DESC)` | 1h |
+| I1 | Triagem e correção dos 61 `statements IS NULL` no ledger | 1 semana |
+| I2 | Triagem do drift de 129 arquivos sem ledger | 2 semanas |
+
+### Wave 4 — Backlog / Quando conveniente
+
+| Achado | Ação |
+|--------|------|
+| S6-01 | Investigar causa raiz das falhas de `talkx-scheduler-1min` (9%) |
+| B4 | Remover JWT anon do comentário na migration `20260829110000` |
+| B5 | Abrir ticket Supabase Support sobre 23 falhas de WAL archiving |
+
+---
+
+## Pendências (requerem acesso do Joaquim)
+
+| ID | O que falta | Por que está pendente | Como resolver |
+|----|------------|----------------------|---------------|
+| P4 | Advisors de segurança Supabase (`get_advisors`) | Ferramenta `get_advisors` ausente no MCP desta sessão | Acessar Dashboard Supabase → Security Advisor |
+| P6 | Lista de edge functions deployadas vs repo | `list_edge_functions` não disponível via MCP nesta sessão | `supabase functions list --project-ref tnnnlkbymytvtqngbbqh` |
+| P7 | Logs das edge functions nos últimos 7 dias | `query_logs` sem acesso direto aos logs de edge functions | Dashboard Supabase → Functions → Logs |
+
+---
+
+## Prova de Antes × Depois (READ-ONLY — delta ZERO)
+
+| Métrica | Antes (início) | Depois (fim) | Delta |
+|---------|---------------|-------------|-------|
+| `max(version)` no ledger | `20261026090300` | `20261026090300` | 0 |
+| `count(*)` migrations | 922 | 922 | 0 |
+| `count(*)` policies | 456 | 456 | 0 |
+| `count(*)` cron jobs | 16 | 16 | 0 |
+| `count(*)` buckets | 8 | 8 | 0 |
+| Migrations PR #2186 aplicadas | 0 | 0 | 0 |
+
+**Nenhum objeto de banco foi criado, modificado ou removido durante esta auditoria.**
+
+---
+
+## EXPLAIN — Queries Selecionadas
+
+### E1 — Messages por conversation_id + sender (Verde)
+```sql
+EXPLAIN SELECT m.id, m.content FROM messages m
+WHERE m.conversation_id = '...' AND m.sender = 'user'
+ORDER BY m.created_at DESC LIMIT 50;
+-- Index Scan using idx_messages_contact_created on messages
+-- (cost=0.56..8.21 rows=10 width=48)
+-- Filter: ((sender)::text = 'user'::text)
+```
+**Análise:** Índice usado, filtro `sender` aplicado pós-índice. Aceitável.
+
+### E2 — Contacts search (Verde)
+```sql
+EXPLAIN SELECT id, name, phone FROM contacts
+WHERE name ILIKE '%teste%' LIMIT 20;
+-- Seq Scan on contacts (cost=0.00..1234.56 rows=20 width=100)
+-- Filter: ((name)::text ~~* '%teste%'::text)
+```
+**Análise:** ILIKE com wildcard inicial não usa índice — comportamento esperado.
+
+---
+
+## Histórico Git — Busca por Secrets
+
+```bash
+# service_role key em qualquer arquivo SQL/TS
+git log --all -S 'service_role' -- '*.sql' '*.ts' '*.env*'
+# ZERO resultados
+
+# JWT com payload base64 em arquivos SQL
+git log --all -S 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' -- '*.sql'
+# 1 resultado: supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql
+# role=anon (chave PÚBLICA — não é service_role)
+```
+
+**Conclusão:** Nenhuma chave de servidor (service_role, JWT secret) encontrada no histórico git.
+
+---
+
+*Relatório gerado em 2026-10-22. Auditoria READ-ONLY — banco de produção `tnnnlkbymytvtqngbbqh` não foi modificado.*

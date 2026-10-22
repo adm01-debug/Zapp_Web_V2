@@ -1,0 +1,34 @@
+{
+  "_auditoria": "ZAPP WEB V2 — Performance e Cron (S5, S6)",
+  "_data": "2026-10-22",
+  "seq_scans_top5": [
+    { "tabela": "user_roles", "seq_scan": 18810939 },
+    { "tabela": "gmail_accounts", "seq_scan": 1231790 },
+    { "tabela": "profiles", "seq_scan": 1068876 },
+    { "tabela": "email_threads", "seq_scan": 186807 },
+    { "tabela": "http_request_queue", "seq_scan": 99129 }
+  ],
+  "indexes_inutilizados_maiores": [
+    { "index": "idx_messages_content_trgm", "size": "5MB" },
+    { "index": "ux_messages_dedup", "size": "4.4MB" },
+    { "index": "idx_messages_media_url_trgm", "size": "4.4MB" },
+    { "index": "audit_logs_pkey", "size": "3.1MB" },
+    { "index": "email_attachments_pkey", "size": "2.5MB" }
+  ],
+  "cron_falhas_30d": {
+    "achado_id": "S6-01",
+    "severidade": "MÉDIO",
+    "descricao": "Spike de falhas em 2026-10-15/16: 'job startup timeout', 192 falhas/hora no pico — todos os jobs afetados simultaneamente (possível sobrecarga de worker do pg_cron)",
+    "por_job": [
+      { "job": "talkx-scheduler-1min", "falhas": 3878 },
+      { "job": "tasks-notify-due", "falhas": 1390 },
+      { "job": "ai-jobs-tick-1min", "falhas": 1043 },
+      { "job": "expire-stale-agent-presence", "falhas": 779 },
+      { "job": "multiplix-send-trigger", "falhas": 763 },
+      { "job": "gmail-incremental-sync", "falhas": 354 },
+      { "job": "connection-health-check", "falhas": 288 },
+      { "job": "cleanup-edge-rate-limits", "falhas": 119 },
+      { "job": "avatars-refresh", "falhas": 28 }
+    ]
+  }
+}
