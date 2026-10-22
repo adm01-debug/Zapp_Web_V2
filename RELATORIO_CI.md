@@ -740,7 +740,7 @@ Dois grupos de falhas foram identificados nos Unit Tests da PR #2185 após o pus
 |---------|-------|-----|
 | `src/hooks/integrations/useTalkXSegments.ts` | 312 | `supabase.rpc.bind(supabase)` em `countAudience` |
 | `src/hooks/integrations/useTalkXSegments.ts` | 334 | `supabase.rpc.bind(supabase)` em `resolveAudience` |
-| `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 89-98 | `toBe(1)` → `toBeGreaterThanOrEqual(1)`, `h.subs[0]` → `h.subs.at(-1)!` |
+| `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 89-98 | `toBe(1)` → `toBeGreaterThanOrEqual(1)`, `h.subs[0]` → `h.subs[h.subs.length - 1]` |
 | `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 105-113 | Mesma correção para teste 3 |
 
 ### Estado do CI — commit `1b92b58` (run 39766170707)
