@@ -209,12 +209,15 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           refetch();
         },
         undoAction: async () => {
-          // Restaura por contato (eq individual), devolvendo o conversation_status original.
+          // A trigger enforce_conversation_status_transition só permite archived → open|pending.
+          // Estados que não fazem essa transição (waiting, resolved, closed) voltam para 'open'.
+          const VALID_FROM_ARCHIVED = new Set(['open', 'pending']);
           for (const id of targetIds) {
             const prev = previousStatus.get(id);
+            const restoreStatus = prev && VALID_FROM_ARCHIVED.has(prev) ? prev : 'open';
             const { error } = await supabase
               .from('contacts')
-              .update({ conversation_status: prev ?? 'open', updated_at: new Date().toISOString() })
+              .update({ conversation_status: restoreStatus, updated_at: new Date().toISOString() })
               .eq('id', id);
             if (error) throw error;
           }

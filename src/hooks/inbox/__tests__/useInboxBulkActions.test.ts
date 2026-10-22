@@ -565,8 +565,60 @@ describe('useInboxBulkActions — bulkArchive', () => {
 
     const restores = contactUpdates().slice(1);
     expect(restores).toHaveLength(2);
+    // c1 era 'open' → válido desde archived, restaura para 'open'
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c1 } });
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: c2 } });
+    // c2 era 'waiting' → inválido desde archived (trigger só aceita open|pending), restaura para 'open'
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c2 } });
+    expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('desfazer de contato com status inválido desde archived (waiting/resolved/closed) restaura para open', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'resolved' },
+        { id: c2, conversation_status: 'closed' },
+      ],
+      error: null,
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(2);
+    // resolved e closed não são transições válidas desde archived → ambos voltam para 'open'
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c1 } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c2 } });
+    expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('desfazer de contato com status pending restaura para pending (válido desde archived)', async () => {
+    selectQueue.push({
+      data: [{ id: c1, conversation_status: 'pending' }],
+      error: null,
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(1);
+    // pending é transição válida desde archived → restaura para pending
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: c1 } });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
