@@ -640,7 +640,7 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 | Arquivo de teste | Erro anterior | Fix aplicado |
 |-----------------|---------------|--------------|
 | `useTalkXSegments.rpcDesacoplada.test.ts` (3 testes) | `TypeError: Cannot read properties of undefined (reading 'record')` — `supabase.rpc` sem `.bind(supabase)` perdia `this` context no mock `FakeSupabaseClient` | `supabase.rpc.bind(supabase)` em `countAudience` (linha 312) e `resolveAudience` (linha 334) de `useTalkXSegments.ts` |
-| `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes, §PE-75) | `expected 2 to be 1` — React 19 dev mode re-executa `useEffect` (setup→cleanup→setup), produzindo 2 subs em vez de 1 | `toBe(1)` → `toBeGreaterThanOrEqual(1)` e `h.subs[0]` → `h.subs.at(-1)!` nos testes 2 e 3 |
+| `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes, §PE-75) | `expected 2 to be 1` — React 19 dev mode re-executa `useEffect` (setup→cleanup→setup), produzindo 2 subs em vez de 1 | `toBe(1)` → `toBeGreaterThanOrEqual(1)` e `h.subs[0]` → `h.subs[h.subs.length - 1]` nos testes 2 e 3 |
 
 ### Itens bloqueados que persistem neste commit
 
