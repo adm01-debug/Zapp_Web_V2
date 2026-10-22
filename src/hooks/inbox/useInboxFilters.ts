@@ -108,13 +108,16 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     const typeParam = searchParams.get('type');
-    const contactType = normalizeContactType(typeParam);
+    // Se a URL tem ?type= explícito (mesmo valor inválido), não cai no stored pref —
+    // a intenção do deep-link prevalece e um tipo inválido vira null, não o último usado.
+    const contactType = typeParam !== null
+      ? normalizeContactType(typeParam)
+      : storedPrefs?.contactType ?? null;
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
-      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: contactType ?? storedPrefs?.contactType ?? null,
+      contactType,
     };
   }, [storedPrefs, searchParams]);
 
