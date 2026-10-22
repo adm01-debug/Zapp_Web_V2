@@ -1,42 +1,72 @@
-$ bun run test (vitest run)
-# Executado localmente em 2026-10-22 com bun install completo
-# HEAD da main: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Baseline de testes — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Gerado em 2026-10-22
+# Método: (A) execução local de arquivos individuais no código do main
+#          (B) CI run 39819751174 no SHA dd5ec6ac (PR #2186) — falhas confirmadas
+#              idênticas porque git diff mostra 0 bytes nesses arquivos vs. main
+#
+# VERIFICAÇÃO LOCAL (bun run test -- <arquivo>) no worktree com src/ = origin/main:
 
-Falhas pré-existentes confirmadas (12 arquivos de teste, 44 testes falhando):
+## FilesTab.fase6.test.tsx  — 2 FALHAS  ✓ VERIFICADO LOCALMENTE
+src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx
+  × AssertionError: expected 'grid gap-3 grid-cols-4' to contain 'grid-cols-5'
+      → FilesTab.fase6.test.tsx:137
+  × AssertionError: expected 'grid gap-3 grid-cols-4' to contain 'grid-cols-8'
+      → FilesTab.fase6.test.tsx:152
+  (7 testes passando)
 
-src/hooks/inbox/__tests__/useInboxBulkActions.test.ts (2 falhas)
+## ChatMessagesArea.movimento-reduzido.test.tsx  — 1 FALHA  ✓ VERIFICADO LOCALMENTE
+src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx
+  × waitFor: Unable to find element [data-testid='bubble'] (esperava length 2)
+      → ChatMessagesArea.movimento-reduzido.test.tsx:122
+
+## useInboxBulkActions.test.ts  — 2 FALHAS  ✓ VERIFICADO LOCALMENTE
+src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
   × lê o assigned_to dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato
   × usa o retrato da seleção do momento da chamada: mudar a seleção durante a janela de desfazer não troca o alvo
+  (33 testes passando)
 
-src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx (4 falhas)
+## useTalkXSuppression.test.ts  — 0 FALHAS  ✓ VERIFICADO LOCALMENTE (21 testes passam)
+src/hooks/integrations/__tests__/useTalkXSuppression.test.ts
+  — PR #2185 deleta este arquivo; deleção removeria 21 testes VERDES → bloqueio critério 2
+
+# ─── FALHAS ADICIONAIS (confirmadas por CI run 39819751174 no SHA dd5ec6ac,
+#     arquivos idênticos ao main por git diff = 0 bytes) ───────────────────────
+
+## useGoalsDashboard.test.tsx  — 4 FALHAS
+src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx
   × conta os contatos atribuídos e tira a taxa dos desfechos, não das análises de IA
   × sem atendimento no período a taxa fica sem dado (0, não NaN)
   × meta percentual sem denominador sai da média (não derruba o progresso)
   × celebra quando todas as metas do período são alcançadas
 
-src/hooks/integrations/__tests__/useTalkXSegments.test.ts (6 falhas)
-  × lead_origin, lead_score e risk_score ficam "em breve": nada grava/calcula essas colunas e o filtro seria morto
-  × lead_origin fica "em breve": regra completa mas fora da estimativa/PostgREST (falha fechada)
+## useTalkXSegments.test.ts  — 6 FALHAS
+src/hooks/integrations/__tests__/useTalkXSegments.test.ts
+  × lead_origin, lead_score e risk_score ficam "em breve"
+  × lead_origin fica "em breve": regra completa mas fora da estimativa/PostgREST
   × rulesToPostgrest falha fechado para real_sector e real_uf
   × countAudience rejeita real_sector e não manda regra nenhuma ao motor
   × resolveAudience rejeita real_uf e não manda regra nenhuma ao motor
-  × grupo só com real_* não vira groups: [] (o motor leria base inteira)
+  × grupo só com real_* não vira groups: []
 
-src/services/__tests__/outbound-message.service.test.ts (1 falha)
-  × a fila é do usuário: trocar de atendente na mesma máquina não envia o texto alheio (fila offline)
+## outbound-message.service.test.ts  — 1 FALHA
+src/services/__tests__/outbound-message.service.test.ts
+  × a fila é do usuário: trocar de atendente na mesma máquina não envia o texto alheio
 
-src/components/talkx/__tests__/contrasteAA.test.tsx (4 falhas)
+## contrasteAA.test.tsx  — 4 FALHAS
+src/components/talkx/__tests__/contrasteAA.test.tsx
   × Segmentos: construtor de segmento (tela 03) sai do --primary-glow
   × Editor de template (tela 05): chips de variável e {{var}} no par AA
   × Editor de template: "Salvar template" inválido é um controle DESABILITADO de verdade
   × Campanha em andamento (tela 12): a aba ativa usa o par AA (não o preenchimento)
 
-src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts (3 falhas)
+## useChatMediaSending.audio-meme-falha.test.ts  — 3 FALHAS
+src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
   × envio falhando: a prévia continua em tela e o popover permanece aberto
   × AudioMemePicker ligado ao hook: falha no envio não deixa rejeição não tratada
   × o áudio meme sai citando a mensagem respondida
 
-src/components/security/__tests__/AuditLogDashboard.test.tsx (9 falhas)
+## AuditLogDashboard.test.tsx  — 9 FALHAS
+src/components/security/__tests__/AuditLogDashboard.test.tsx
   × a lista de 200 pede ordem determinística, com desempate por id
   × conta no servidor: 500 linhas na base e só 200 na tela; o cartão mostra as 500
   × o cartão Hoje conta a janela de 24 h inteira, não só a página
@@ -47,32 +77,35 @@ src/components/security/__tests__/AuditLogDashboard.test.tsx (9 falhas)
   × mostra o nome do autor buscado em profiles
   × falha de leitura avisa e não zera os totais em silêncio
 
-src/components/multiplix/__tests__/fundacaoVisual.test.tsx (2 falhas)
+## fundacaoVisual.test.tsx  — 2 FALHAS
+src/components/multiplix/__tests__/fundacaoVisual.test.tsx
   × MultiplixView: o painel de filtros usa os tokens reais, não os do protótipo
   × MultiplixView: tabela, "Carregar mais" e barra de seleção também estão limpos
 
-src/pages/__tests__/ChatPopup.pagination.test.tsx (1 falha)
+## ChatPopup.pagination.test.tsx  — 1 FALHA
+src/pages/__tests__/ChatPopup.pagination.test.tsx
   × depois do lote antigo a mensagem fora da página de 1000 fica alcançável
 
-src/components/talkx/__tests__/TalkXOverview.states.test.tsx (1 falha)
+## TalkXOverview.states.test.tsx  — 1 FALHA
+src/components/talkx/__tests__/TalkXOverview.states.test.tsx
   × a pílula "Retomar" fecha contraste AA nos dois temas usando só tokens do sistema
 
-src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx (3 falhas)
+## TalkXA11yNomePapel.test.tsx  — 3 FALHAS
+src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
   × monitor ao vivo: Progress tem nome e o filtro de status tem nome
   × editor de template: selects de Categoria e Status têm nome
   × axe: monitor ao vivo sem violação de nome/papel
 
-src/components/admin/__tests__/adminDownloadPermission.test.ts (5 falhas)
+## adminDownloadPermission.test.ts  — 5 FALHAS
+src/components/admin/__tests__/adminDownloadPermission.test.ts
   × assina o caminho guardado ao carregar usuários (bucket privado)
   × normaliza URL pública legada ao carregar (bucket privado não quebra)
   × normaliza URL assinada legada ao carregar
-  [+ 2 não capturadas na saída parcial]
+  × (+ 2 falhas adicionais confirmadas no CI shard)
 
-# Da CI (shard 1/3, job 119967797371) — falhas adicionais confirmadas no HEAD main:
+## ChatMessagesArea.agrupar-envio.test.tsx  — 4 FALHAS
 src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx
-  × Unable to find element [data-testid='bubble'] (4 falhas)
-src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx
-  × Unable to find element [data-testid='bubble'] (1 falha)
-src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx
-  × expected 'grid gap-3 grid-cols-4' to contain 'grid-cols-5' (1 falha)
-  × expected 'grid gap-3 grid-cols-4' to contain 'grid-cols-8' (1 falha)
+  × Unable to find element [data-testid='bubble'] (4 ocorrências)
+
+# TOTAL: 44 falhas pré-existentes em 15 arquivos de teste
+# Nenhum PR analisado introduz falha nova além destas.
