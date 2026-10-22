@@ -538,7 +538,8 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca 13 arquivos em .github/workflows/ (idêntico a #2149). Regra da sessão: BLOQUEADO automaticamente."
+    "motivo": "Toca 13 arquivos em .github/workflows/ (idêntico a #2149). Regra da sessão: BLOQUEADO automaticamente.",
+    "motivo_bloqueio": "Toca .github/workflows/ (13 arquivos de CI)"
   },
   {
     "numero": 2151,
@@ -580,6 +581,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca 13 arquivos em .github/workflows/ (ci.yml, codeql.yml, db-guard.yml, db-live-guard.yml, db-migrate.yml, deploy-functions.yml, e2e-logado.yml, e2e-talkx.yml, eslint.yml, notifica-falha-main.yml, static.yml, talkx-status-regen.yml, vercel-env-cleanup.yml). Regra da sessão: BLOQUEADO automaticamente."
+    "motivo": "Toca 13 arquivos em .github/workflows/ (ci.yml, codeql.yml, db-guard.yml, db-live-guard.yml, db-migrate.yml, deploy-functions.yml, e2e-logado.yml, e2e-talkx.yml, eslint.yml, notifica-falha-main.yml, static.yml, talkx-status-regen.yml, vercel-env-cleanup.yml). Regra da sessão: BLOQUEADO automaticamente.",
+    "motivo_bloqueio": "Toca .github/workflows/ (13 arquivos de CI)"
   }
 ]

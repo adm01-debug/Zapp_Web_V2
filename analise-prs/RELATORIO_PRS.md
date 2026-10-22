@@ -127,3 +127,38 @@ Os **templates de workflow** (14 PRs) podem ser fechados sem perda de conteúdo 
 Os **PRs com conteúdo de valor** (#2185, #2186, #2149, #2152) poderiam ser aproveitados se rebaseados sem os arquivos de workflow. Essa operação está fora do escopo desta sessão (requer push/força no branch do PR).
 
 O PR **#2183** (remove alien workflows) seria o mais simples de desbloquear se a regra fosse relaxada para esse caso específico.
+
+---
+
+## Avaliação completa dos 4 critérios por PR (2026-10-22)
+
+Todos os 30 dossiês foram completados com evidência explícita para cada um dos 4 critérios. Resumo:
+
+| PR | Válida? | Regressão? | Já em main? | RN correta? | Veredicto |
+|---|---|---|---|---|---|
+| #2149 | PARCIAL | SIM (ci.yml degrada Edge CI) | SIM (migrations) / NÃO (docs) | PARCIAL | BLOQUEADO |
+| #2151 | SIM | NÃO CONFIRMADO | NÃO (Talk-Me) | SIM | BLOQUEADO |
+| #2152 | SIM | NÃO | NÃO (seletor) | SIM | BLOQUEADO |
+| #2155 | SIM | NÃO | NÃO (manifest) | SIM | BLOQUEADO |
+| #2157 | NÃO | SIM (histórico) | NÃO | PARCIAL | BLOQUEADO |
+| #2159–#2165 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2166 | NÃO (stack errada) | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2167 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2168 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2169 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2170 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2171 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2172 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2173 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2174 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2175 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2176 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2177 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2178 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2179 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2181 | NÃO | NÃO | NÃO | NÃO | BLOQUEADO |
+| #2183 | NÃO (obsoleto) | NÃO | SIM (já removido) | SIM | BLOQUEADO |
+| #2185 | SIM | NÃO CONFIRMADO | NÃO | SIM | BLOQUEADO |
+| #2186 | PARCIAL | NÃO | SIM (migrations) / NÃO (docs) | SIM | BLOQUEADO |
+
+Evidências completas em `analise-prs/dossies/PR-<n>.md`. Nenhuma PR foi mergeada.
