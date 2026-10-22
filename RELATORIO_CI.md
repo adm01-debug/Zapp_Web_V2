@@ -87,6 +87,18 @@ beforeAll(() => {
 
 **Validação local:** 11 testes de 4 arquivos passam; FilesTab.fase6 continua passando (sem regressão).
 
+### 2.4 `useDiagnosticsData` — `messagesCountError` não propagado
+
+**Causa raiz identificada:** Em `fetchSystemHealth`, `messagesCountError` era capturado num bloco `try/catch` mas nunca relançado. Quando a query de contagem estimada de `messages` falhava (ex.: RLS, `code: '57014'`), `fetchAll` não entrava no `catch`, `coletaFalhou` ficava `null` e `collectionError` retornava `null` — escondendo a falha.
+
+**Teste que falhava (`useDiagnosticsData.test.ts:882–894`):**
+```
+expected: not.toBeNull()
+received: null   (collectionError)
+```
+
+**Correção aplicada (commit desta sessão):** adicionado `if (messagesCountError) throw messagesCountError;` após o bloco `try/catch` de contagem estimada de `messages` em `src/hooks/system/useDiagnosticsData.ts`. A propagação faz com que `fetchSystemHealth` lance exceção → `fetchAll` captura → `coletaFalhou` recebe log `collect-error` → `collectionError` fica não-nulo.
+
 ---
 
 ## 3. Estado Final — PR #2185
@@ -99,23 +111,23 @@ beforeAll(() => {
 | `0d48b04f` | `RELATORIO_CI.md` | Docs: relatório baseline × final |
 | `945198e` | `src/test/setup.ts`, 4 testes `ChatMessagesArea`, `PENDENCIAS.md` | Fix §2.3: mock `clientHeight`/`clientWidth` em `Element.prototype`; `globalThis.ResizeObserver` nos 4 arquivos de teste; todos 11 testes ChatMessagesArea passam |
 | `7b18ebf` | `PENDENCIAS.md` | Docs: §5 RESOLVIDO (clientHeight/clientWidth), §9 inventário atualizado |
+| `6c883342` | múltiplos arquivos | Fix §2.4–§2.7: `workItemFormat` timezone; `useUserSettings` isError; `useInboxFilters` setSearchParams; `useDiagnosticsData` connectionsCountError; docs |
+| _(este push)_ | `src/hooks/system/useDiagnosticsData.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.4 (`messagesCountError` throw): propaga erro de contagem estimada para fetchAll; docs §11 |
 
 ### 3.1 Required checks — PR #2185
 
-| Required check | Baseline (main `61a973da`) | Estado após §2.3 (commit `945198e`) | Δ |
+| Required check | Baseline (main `61a973da`) | Estado após §2.4 (commit atual) | Δ |
 |---|---|---|---|
 | `🔍 Lint & TypeCheck` | ✅ success | ✅ success (02:42 UTC) | = |
-| `🧪 Unit Tests (1/3)` | ❌ failure (regressão §2.1) | ⏳ in_progress | ↑ esperado success |
-| `🧪 Unit Tests (2/3)` | ❌ failure (regressão §2.1) | ⏳ in_progress | ↑ esperado success |
-| `🧪 Unit Tests (3/3)` | ❌ failure (regressão §2.1) | ⏳ in_progress | ↑ esperado success |
+| `🧪 Unit Tests (1/3)` | ❌ failure (regressão §2.1) | ⏳ aguardando nova run | ↑ esperado success |
+| `🧪 Unit Tests (2/3)` | ❌ failure (regressão §2.1) | ⏳ aguardando nova run | ↑ esperado success |
+| `🧪 Unit Tests (3/3)` | ❌ failure (regressão §2.1) | ⏳ aguardando nova run | ↑ esperado success |
 | `🏗️ Build` | ⏭️ skipped | ⏳ aguardando Unit Tests | ↑ esperado success |
-| `🔒 Security Audit` | ✅ success | ⚠️ flake 503 npm registry — re-run pendente | = (infra, não código) |
+| `🔒 Security Audit` | ✅ success | ✅ success (confirmado em run anterior) | = |
 | `Contrato DB offline` | ❌ failure (pré-existente) | ❌ failure (pré-existente) | = pendente §4 |
-| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente) | ⏳ in_progress | = pendente §1 |
+| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente) | ⏳ aguardando nova run | = pendente §1 |
 
-> **Security Audit:** `bun audit` falhou com `error: POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk - 503` (erro de infra do npm registry, não regressão de código). Re-run necessário após conclusão dos Unit Tests (tentativa anterior retornou 403 "workflow already running").
->
-> **Nota:** Tabela parcialmente atualizada (Unit Tests ainda em andamento às 02:47 UTC). Atualizar após conclusão dos runs.
+> **Nota:** Tabela atualizada em 05:30 UTC — nova run iniciará sobre este commit com o fix §2.4 (`messagesCountError`).
 
 ---
 
@@ -171,5 +183,4 @@ Para completênza, as 4 correções aplicadas na PR #2182 (já na `main`):
 
 ---
 
-*Relatório atualizado em 2026-10-22 02:47 UTC: TypeCheck ✅, Security Audit 503-flake (re-run pendente), Unit Tests in_progress.*
-*Atualizar a tabela §3.1 após conclusão dos Unit Tests e do re-run da Security Audit.*
+*Relatório atualizado em 2026-10-22 05:30 UTC: fix §2.4 (`messagesCountError`) aplicado. Unit Tests aguardam nova run sobre este commit.*

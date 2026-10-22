@@ -295,6 +295,9 @@ export function useDiagnosticsData() {
     } catch (err) {
       messagesCountError = err as ProbeError;
     }
+    // Falha de contagem estimada não pode passar em branco — propaga para o
+    // bloco catch de fetchAll, que a torna visível via coletaFalhou.
+    if (messagesCountError) throw messagesCountError;
 
     let connectionsCount: number | null = null;
     let connectionsCountError: ProbeError | null = null;
