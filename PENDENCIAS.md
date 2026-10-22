@@ -1,9 +1,9 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 02:30 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
+> Atualizado em 2026-10-22 02:38 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
-> **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
+> **§5 CORRIGIDO (2026-10-22 02:38 UTC):** mock `clientHeight`/`clientWidth` adicionado a `src/test/setup.ts` em `Element.prototype`. Causa raiz verdadeira: `@tanstack/react-virtual` 3.x usa `element.clientHeight/clientWidth` (não `getBoundingClientRect`) via `getRect()` no virtual-core; jsdom retorna 0 para esses campos, causando 0 itens virtualizados. 11 testes de 4 arquivos passam localmente. _Correção anterior (commit `1ce17b04`) resolve a regressão FilesTab.fase6 mas não resolvia os ChatMessagesArea._
 > **§5b atualizado:** E2E cancelled (passo 9 cancelado por timeout às 23:59 UTC).
 > **§5c atualizado:** Build skipped confirmado no run 39695347415 (job 119555036010).
 
@@ -144,7 +144,7 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 | `🧪 Unit Tests (2/3)` | [119551484995](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484995) | ❌ `failure` | 23:53 UTC |
 | `🧪 Unit Tests (3/3)` | [119551484800](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484800) | ❌ `failure` | 23:55 UTC |
 
-**Status:** todos os 3 shards falharam em dois runs consecutivos por flaky de timing (`ChatMessagesArea` / `react-virtual`). Os erros adicionais nos shards 2/3 e 3/3 foram **corrigidos neste push** (ver RELATORIO_CI.md §5–§8). O flaky de timing do `ChatMessagesArea` permanece pendente.
+**Status:** todos os 3 shards falharam em dois runs consecutivos por flaky de timing (`ChatMessagesArea` / `react-virtual`). Os erros adicionais nos shards 2/3 e 3/3 foram **corrigidos neste push** (ver RELATORIO_CI.md §5–§8). ✅ **A causa raiz do `ChatMessagesArea` foi identificada e corrigida nesta sessão** — ver §5 "Causa raiz" abaixo.
 
 ### Erros exatos — run 39693077461 (SHA `cf895c6a`) — referência histórica
 
@@ -165,15 +165,15 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 
 | Arquivo | Linha | Erro | Situação |
 |---------|-------|------|----------|
-| `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
+| `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | ✅ **CORRIGIDO** — mock `clientHeight/clientWidth` em `Element.prototype` (§5 causa raiz) |
 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` | ✅ **CORRIGIDO** — prop `onInteractiveListItemClick` adicionada a `MessageBubble.tsx` (RELATORIO_CI.md §5) |
 
 ### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — histórico
 
 | Arquivo | Linha | Erro | Situação |
 |---------|-------|------|----------|
-| `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
-| `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
+| `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | ✅ **CORRIGIDO** — mock `clientHeight/clientWidth` (§5) |
+| `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | ✅ **CORRIGIDO** — mock `clientHeight/clientWidth` (§5) |
 | `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts` | ✅ **CORRIGIDO** — view adicionada a `types.ts` (RELATORIO_CI.md §6) |
 | `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | Asserção de `logWarn` não chamado quando esperado | ✅ **CORRIGIDO** — hook trata `membershipError`; testes ajustados (RELATORIO_CI.md §8) |
 | `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Asserção de argumento errado | ✅ **CORRIGIDO** — mesma correção (RELATORIO_CI.md §8) |
@@ -182,20 +182,21 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 
 ### Causa raiz (identificada e corrigida)
 
-`@tanstack/react-virtual@3.14.21` mede a altura do contêiner de scroll por `getBoundingClientRect()`.
-No jsdom, `getBoundingClientRect()` retorna zeros por padrão → `getVirtualItems()` devolve `[]`
-→ nenhum `data-testid="bubble"` é renderizado → `waitFor(() => getByTestId("bubble"))` expira.
+`@tanstack/react-virtual@3.x` mede o contêiner de scroll via `getRect()` em `virtual-core`, que usa
+`element.clientWidth`/`element.clientHeight` — **não** `getBoundingClientRect()`. No jsdom,
+`clientHeight` é sempre `0` → o virtualizer calcula 0 itens visíveis → nenhum `data-testid="bubble"`
+é montado → `waitFor(() => getByTestId("bubble"))` expira.
 
-**✅ CORRIGIDO em commit `a4dfd16`**: adicionado mock global em `src/test/setup.ts` que retorna
-`{width: 800, height: 600, ...}` para todos os `HTMLElement`. Testes que precisam de valores
-específicos continuam usando `vi.spyOn(Element.prototype, 'getBoundingClientRect')` e sobrescrevem
-o mock global.
+**✅ CORRIGIDO em commit desta sessão (PR #2185):** adicionado mock de `clientHeight`/`clientWidth`
+em `Element.prototype` em `src/test/setup.ts`. Os dois mocks têm `configurable: true` e podem ser
+sobrescritos por testes que precisam de valores específicos.
+
+**Validação local (11 testes, 4 arquivos):** todos passam. FilesTab.fase6 continua passando (sem regressão).
 
 ### Situação atual
 
-Os arquivos de teste (`ChatMessagesArea.{loop,agrupar-envio,movimento-reduzido}.test.tsx`) são
-idênticos ao `main` — nenhuma alteração desta PR. A correção é no setup global, beneficiando
-todos os testes que dependem de layout no jsdom.
+✅ **CORRIGIDO** — fix em `src/test/setup.ts` + 4 arquivos `ChatMessagesArea.*.test.tsx` (adição de
+`globalThis.ResizeObserver` no `beforeAll`). CI aguardando para confirmar.
 
 ---
 
@@ -306,7 +307,7 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 **Commits empurrados:**
 
 | Commit | Descrição |
-|--------|-----------|
+|--------|----------|
 | `ca80a91` | fix(types): restaura types.ts correto (13045 linhas) com view team_message_read_state |
 | `a997734` | docs(pendencias): documenta bloqueio de git push por auto mode |
 | `a4dfd16` | fix(tests): adiciona mock getBoundingClientRect para @tanstack/react-virtual no jsdom |
@@ -344,15 +345,19 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ### Workflows ✅ success na main
 
+_Inventário limitado a workflows com execução observada após o merge do PR #2182 (SHA `61a973d`).
+Workflows schedule/manual (`crm-sync-worker.yml`, `db-migrate.yml`, `targeted-ledger-evidence.yml`,
+`types-sync.yml`, `talkx-status-regen.yml`, `notifica-falha-main.yml`, `vercel-env-cleanup.yml`)
+não têm execução recente observável neste retrato._
+
 | Workflow | Notas |
 |---|---|
 | `🔒 Security Audit` | Required check — verde |
 | `🔍 Lint & TypeCheck` | Required check — verde |
-| `auto-update-pr-branch.yml` | Roda em push na main |
-| `settings-guard.yml` | Roda a cada 6h |
 | `branch-hygiene-audit.yml` | Semanal |
 | `db-live-guard.yml` | Diário |
 | `codeql.yml` | Semanal |
+| `db-guard.yml` | Roda em PR |
 
 ### Conclusão do inventário
 
@@ -399,5 +404,5 @@ Instalando em `Element.prototype`, o spy de `vi.spyOn(Element.prototype, …)` f
 
 ---
 
-*Documento atualizado em 2026-10-22 02:30 UTC.*
+*Documento atualizado em 2026-10-22 02:40 UTC.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
