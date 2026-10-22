@@ -87,7 +87,7 @@ export function MediaMigrationTool() {
 
       setHistory(logs as AuditEntry[]);
 
-      const userIds = [...new Set(logs.map((l: AuditEntry) => l.user_id).filter(Boolean))] as string[];
+      const userIds = [...new Set((logs as AuditEntry[]).map((l) => l.user_id).filter(Boolean))] as string[];
       if (userIds.length > 0) {
         const { data: profs } = await supabase
           .from('profiles')
