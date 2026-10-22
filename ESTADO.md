@@ -84,7 +84,7 @@ partir do cÃ³digo e falha quando:
 | `gmail-sync` | E | â€” sem chamador no repositÃ³rio â€” |
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` Â· `supabase/config.toml:14` |
 | `health` | E | â€” sem chamador no repositÃ³rio â€” |
-| `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` Â· `supabase/config.toml:89` |
+| `invite-user` | A | `src/components/admin/InviteAgentDialog.tsx:48` Â· `supabase/config.toml:89` |
 | `message-delivery` | A | `src/lib/invokeEdge.ts:24` Â· `src/services/outbound-message.service.ts:456` Â· `supabase/config.toml:49` |
 | `metrics` | E | â€” sem chamador no repositÃ³rio â€” |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
@@ -121,4 +121,28 @@ partir do cÃ³digo e falha quando:
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositÃ³rio a dispara: nÃ£o hÃ¡
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
-ÍÕÁ…‰…Í”½µ¥É…Ñ¥½¹Ì½€°¹•´•¹ÑÉ…‘„•´ÍÕÁ…‰…Í”½½¹™¥œ¹Ñ½µ±€¸%ÍÍ¼»¼ÅÕ•È‘¥é•È€‰µ½ÉÑ„ˆƒŠP¼¡…µ…‘½ÈÁ½‘”Í•È•áÑ•É¹¼(¡8á8°É½¸‘¼ÁÉ½Ù•‘½È°½Á•É‡Ÿ¼µ…¹Õ…°¤ƒŠPÅÕ•È‘¥é•È€¨©»¼½µÁÉ½Ù…‘„¹¼É•Á½Í¥ÓÍÉ¥¼¨¨¸)Ì…Õ‘¥Ñ½É¥…Ì‘”µ¥É‡Ÿ¼‘”€ÈÀÈØ´Àà«„…Á½¹Ñ…Ù…´Á…ÉÑ”‘•ÍÑ•Ì¹½µ•Ìì„Õ…É‘„…½É„)µ…¹Ó¥´„±¥ÍÑ„¡½¹•ÍÑ„¸((´…¤µ…ÕÑ¼µÑ…€(´…¤µÕÍ…”µ½ÕÑ‰½àµ‘É…¥¹€(´…ÕÑ¼µ±½Í”µ½¹Ù•ÉÍ…Ñ¥½¹Í€(´±•…¹ÕÀµÉ…Ñ”µ±¥µ¥Ğµ±½Í€(´•±•Ù•¹±…‰Ìµ…•¹ĞµÑ½­•¹€(´•áÑ•É¹…°µ‘ˆµ‰É¥‘•€(´µ…¥°µÍ•¹‘€(´µ…¥°µÍå¹€(´¡•…±Ñ¡€(´µ•ÑÉ¥Í€(´µÕ±Ñ¥Á±¥àµÙ½¥•Í€(´É•½Ù•Èµ½ÉÉÕÁÑ•µ…Õ‘¥½Í€(´É•½Ù•Èµµ•ÍÍ…”µµ•‘¥…€(´Í•¹µ•µ…¥±€(´Í•¹µÉ…Ñ”µ±¥µ¥Ğµ…±•ÉÑ€(´ÍÑ…ÑÕÍ€(´Ñ…±­àµÉ•Á½ÉÑ€(´Ñ…±­àµÍ¡•‘Õ±•É€(´Ñ…±­àµÍÑ½É…”µÁÕÉ•€(´Ù½¥”µ½Á¥±½Ğµ…Ñ¥½¹€(
+`supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso nÃ£o quer dizer "morta" â€” o chamador pode ser externo
+(N8N, cron do provedor, operaÃ§Ã£o manual) â€” quer dizer **nÃ£o comprovada no repositÃ³rio**.
+As auditorias de migraÃ§Ã£o de 2026-08 jÃ¡ apontavam parte destes nomes; a guarda agora
+mantÃ©m a lista honesta.
+
+- `ai-auto-tag`
+- `ai-usage-outbox-drain`
+- `auto-close-conversations`
+- `cleanup-rate-limit-logs`
+- `elevenlabs-agent-token`
+- `external-db-bridge`
+- `gmail-send`
+- `gmail-sync`
+- `health`
+- `metrics`
+- `multiplix-voices`
+- `recover-corrupted-audios`
+- `recover-message-media`
+- `send-email`
+- `send-rate-limit-alert`
+- `status`
+- `talkx-report`
+- `talkx-scheduler`
+- `talkx-storage-purge`
+- `voice-copilot-action`
