@@ -147,6 +147,25 @@ Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
 });
 
 // ==========================================================================
+// MOCK clientHeight / clientWidth — @tanstack/react-virtual 3.x no jsdom.
+//
+// A partir da versão 3.x, o virtual-core mede o contêiner via getRect(), que
+// usa `element.clientWidth` / `element.clientHeight` — NÃO getBoundingClientRect.
+// No jsdom esses campos são sempre 0, então o virtualizador calcula 0 itens
+// visíveis e nenhum <div data-testid="bubble"> é montado. O getter abaixo
+// retorna dimensões não-nulas para qualquer Element e é sobrescrito quando
+// um teste precisa de tamanhos específicos (configurable: true).
+// ==========================================================================
+Object.defineProperty(Element.prototype, 'clientHeight', {
+  configurable: true,
+  get: function () { return 600; },
+});
+Object.defineProperty(Element.prototype, 'clientWidth', {
+  configurable: true,
+  get: function () { return 800; },
+});
+
+// ==========================================================================
 // TETO DE ESPERA DAS CONSULTAS ASSINCRONAS — determinismo sob carga.
 //
 // `findBy*`/`waitFor` do Testing Library esperam por condicao, mas com um teto
