@@ -828,6 +828,15 @@
       "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/comment-only",
       "justification": "DDL aplicado diretamente em 16/10/2026 e revertido em 20261016130000; o stub fecha a paridade sem reintroduzir a regressao (PR #2014)."
+    },
+    {
+      "version": "20261016240000",
+      "filename": "20261016240000_search_events_rls_decision.sql",
+      "file_sha256": "65d54fca860da5150347b97c28c27d1865ece494baef8e3be6b48288181cf472",
+      "ledger_name": "search_events_rls_decision",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "kind": "ledger-only/comment-only",
+      "justification": "Arquivo de documentacao arquitetural: a ausencia de SELECT policy em search_events e intencional (decisao D-SearchRLS, 16/10/2026). Nenhuma DDL e executada; o registro no ledger preserva a decisao sem alterar o schema."
     }
   ]
 }
