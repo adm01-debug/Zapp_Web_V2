@@ -468,7 +468,7 @@ documentação) tem relação com os testes que agora falham.
 ### Falhas identificadas (run `39727885851`, job `119656011418`)
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|----------|
+|---------|-------|------|-----------|
 | `useTalkXSuppression.hook-morto.test.ts` | 84 | `expected true to be false` — hook ainda exportado | TL-002 pendente: `useTalkXSuppression` não foi removido do módulo |
 | `useTalkXSuppression.hook-morto.test.ts` | 138 | `expected [] to deeply equal []` — arquivos do hook encontrados | Mesmo item: hook e test file existem, test de guarda acusa |
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 70 | `expected false to be true` — nomes de canal idênticos entre instâncias | Canal de realtime sem sufixo único por montagem |
@@ -509,7 +509,7 @@ ou o componente TTS que usa botão "Ouvir resumo".
 ### Shard 2 (job [119656011579](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011579)) — falhas pré-existentes
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|----------|
+|---------|-------|------|-----------|
 | `useInboxBulkActions.test.ts` | 625 | `expected undefined to deeply equal [Array(1)]` — `archiveUpdate?.filters.id` undefined | Pré-existente: hook `useInboxBulkActions` não modificado por esta PR |
 
 **Regressão nossa corrigida (`useInboxFilters.type-url.test.tsx`):**
@@ -525,7 +525,7 @@ com `searchParams` adicionado à dependency array. Commits a confirmar no CI.
 ### Shard 3 (job [119656011528](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011528)) — falhas pré-existentes
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|----------|
+|---------|-------|------|-----------|
 | `useWarRoomData.test.tsx` | 194 | `expected false to be true` | Pré-existente: hook não modificado por esta PR |
 | `useWarRoomData.test.tsx` | 210 | `expected false to be true` | Idem |
 | `useTeamChatNotifications.canal-estavel.test.tsx` | 131 | `expected 'team-chat-notifications' to match /^team-chat-notifications:/` — nome sem sufixo | Mesmo padrão de `useTeamMessages` (§12): canal sem sufixo único por instância |
@@ -622,5 +622,5 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 
 ---
 
-*Documento atualizado em 2026-10-22 06:25 UTC.*
-*Correções aplicadas nesta sessão: ver RELATORIO_CI.md. §15 adicionado: copilot-pull-request-reviewer run 39732366255.*
+*Documento atualizado em 2026-10-22 06:46 UTC.*
+*§15 cobre: copilot-pull-request-reviewer runs 39732366255 (commit `a37acb42`) e 39734682829 (commit `d3d11741`, docs-only) — mesma causa: quota Copilot HTTP 402.*

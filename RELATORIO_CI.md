@@ -11,7 +11,7 @@
 Executado no contêiner de desenvolvimento antes de qualquer edição nesta sessão.
 
 | Comando | Resultado | Observação |
-|---------|-----------|----------|
+|---------|-----------|-----------|
 | `bun install` | ✅ success | 675 pacotes, sem alterações |
 | `bun run lint` | ✅ success | exit 0, sem erros |
 | `bun run typecheck` (local) | ❌ SIGABRT (OOM) | `tsc -b` sem `--max-old-space-size` → kernel mata o processo. CI usa `typecheck-ratchet.mjs` com `--max-old-space-size=4096` (commit `4604a5a`, PR #2182) |
@@ -315,4 +315,30 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 
 ---
 
-*Relatório atualizado em 2026-10-22 07:00 UTC: §9 (tabela de prova final commit `a37acb42`) e §10 (comparação baseline × final) adicionados.*
+---
+
+## 11. Tabela de Prova — PR #2185 (commit `d3d11741`, HEAD atual)
+
+> **Commit docs-only:** este commit altera apenas `PENDENCIAS.md` e `RELATORIO_CI.md` — nenhum arquivo `.ts`/`.tsx`/`.js`/`.css` foi modificado. As conclusions de CI espelham o run anterior (`a37acb42`, §9).
+>
+> Run CI/CD Pipeline: [39734675483](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483)
+> Run DB Guard (offline): [39734675330](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675330)
+> Iniciada: 2026-10-22T06:33:24Z
+
+| Check | Job ID | Conclusion | Observação |
+|---|---|---|---|
+| `🔒 Security Audit` | [119677969036](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677969036) | ✅ success (06:35:16Z) | Confirmado |
+| `🧬 Mutação do mapa` | [119677969032](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677969032) | ✅ success/skipped (06:35:04Z) | Confirmado — sem mudança no módulo mapa |
+| `🔎 TypeCheck` | [119677968929](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968929) | ✅ success (06:36:30Z) | Confirmado |
+| `🧩 Node CI Scripts` | [119677968998](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968998) | ✅ success (06:37:25Z) | Confirmado |
+| `Contrato DB offline` | [39734675330](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675330) | ❌ failure (pré-existente §4) | `sanitize_reset_request()` referencia `NEW.reset_token` — pendente Joaquim |
+| `🧪 Unit Tests (1/3)` | [119677968943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968943) | ❌ failure (pré-existente §12) | Commit docs-only: idêntico ao `a37acb42` (falhas §12) |
+| `🧪 Unit Tests (2/3)` | [119677969246](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677969246) | ❌ failure (pré-existente §13) | Commit docs-only: idêntico ao `a37acb42` (falhas §13) |
+| `🧪 Unit Tests (3/3)` | [119677969242](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677969242) | ❌ failure (pré-existente §13) | Commit docs-only: idêntico ao `a37acb42` (falhas §13) |
+| `🎭 E2E Tests (Playwright)` | [119677968666](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968666) | ❌ failure (pré-existente §1) | 4 specs geolocalização — pendente Joaquim |
+
+> **Sem regressões:** os dois jobs confirmados (Security Audit ✅, Mutação do mapa ✅) e a ausência de mudanças de código garantem que nenhuma regressão foi introduzida. As falhas são todas pré-existentes e estão documentadas em PENDENCIAS.md (§§1, 4, 12, 13, 15).
+
+---
+
+*Relatório atualizado em 2026-10-22 07:15 UTC: §11 atualizado — TypeCheck e Node CI Scripts confirmados ✅ (jobs 119677968929, 119677968998).*
