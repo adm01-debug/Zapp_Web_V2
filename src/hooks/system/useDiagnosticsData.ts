@@ -285,30 +285,12 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
-    let messagesCount: number | null = null;
-    let messagesCountError: ProbeError | null = null;
-    try {
-      const { count, error } = await supabase
-        .from('messages').select('id', { count: 'estimated', head: true });
-      messagesCount = count ?? null;
-      messagesCountError = error ?? null;
-    } catch (err) {
-      messagesCountError = err as ProbeError;
-    }
-    // Falha de contagem estimada não pode passar em branco — propaga para o
-    // bloco catch de fetchAll, que a torna visível via coletaFalhou.
+    const { count: messagesCount, error: messagesCountError } = await supabase
+      .from('messages').select('id', { count: 'estimated', head: true });
     if (messagesCountError) throw messagesCountError;
-
-    let connectionsCount: number | null = null;
-    let connectionsCountError: ProbeError | null = null;
-    try {
-      const { count, error } = await supabase
-        .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-      connectionsCount = count ?? null;
-      connectionsCountError = error ?? null;
-    } catch (err) {
-      connectionsCountError = err as ProbeError;
-    }
+    const { count: connectionsCount, error: connectionsCountError } = await supabase
+      .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
+    if (connectionsCountError) throw connectionsCountError;
 
     const realtime = await probeRealtime();
 
@@ -330,24 +312,19 @@ export function useDiagnosticsData() {
     }
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
-    // Latência só é exibida quando nenhum erro de banco ocorreu. Se a query de
-    // contatos sucedeu mas a de connections falhou, a latência medida NÃO representa
-    // o estado do banco (que ficou 'down' por connectionsCountError) — exibi-la
-    // como "Latência crítica: Xms" seria enganoso (Qodo Finding 4).
-    const dbLatencyFinal = (dbError ?? connectionsCountError) ? null : dbLatency;
     setHealth({
-      database: classifyHealth(dbError ?? connectionsCountError, dbLatencyFinal, 500, 2000),
+      database: classifyHealth(dbError, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
-      dbLatency: dbLatencyFinal,
+      dbLatency,
       storageLatency,
       realtimeCheckedAt: realtime.checkedAt,
       lastHealthCheckAt,
       healthCheckLogs,
-      contactsCount: contactsCount ?? 0,
-      messagesCount: messagesCount ?? 0,
-      connectionsCount: connectionsCount ?? 0,
+      contactsCount: contactsCount || 0,
+      messagesCount: messagesCount || 0,
+      connectionsCount: connectionsCount || 0,
     });
   };
 

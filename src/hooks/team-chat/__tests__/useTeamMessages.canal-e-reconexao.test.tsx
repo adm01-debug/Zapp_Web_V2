@@ -44,11 +44,6 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
-  deriveOwnMessageStatus: vi.fn(() => 'sent' as const),
-  useTeamReadState: vi.fn(() => ({ readStates: {}, isLoading: false })),
-}));
-
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
 function render(conversationId = 'conv-1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
@@ -84,16 +79,12 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    // React 18+ strict-mode executa setup→cleanup→setup: há 1 ou 2 subs.
-    // Mais de 2 = canal duplicado real (regressão detectável).
-    await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
-    expect(h.subs.length).toBeLessThanOrEqual(2);
-    const sub = h.subs[h.subs.length - 1];
+    await waitFor(() => expect(h.subs.length).toBe(1));
 
-    act(() => sub('SUBSCRIBED'));
+    act(() => h.subs[0]('SUBSCRIBED'));
     expect(invalidar).not.toHaveBeenCalled();
 
-    act(() => sub('SUBSCRIBED'));
+    act(() => h.subs[0]('SUBSCRIBED'));
     const chaves = invalidar.mock.calls.map((c) => c[0]?.queryKey);
     expect(chaves).toContainEqual(['team-messages', 'conv-1']);
     expect(invalidar).toHaveBeenCalledTimes(2);
@@ -103,12 +94,11 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
-    const sub = h.subs[h.subs.length - 1];
+    await waitFor(() => expect(h.subs.length).toBe(1));
 
-    act(() => sub('SUBSCRIBED'));
-    act(() => sub('CHANNEL_ERROR'));
-    act(() => sub('SUBSCRIBED'));
+    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => h.subs[0]('CHANNEL_ERROR'));
+    act(() => h.subs[0]('SUBSCRIBED'));
 
     expect(invalidar).toHaveBeenCalled();
   });
