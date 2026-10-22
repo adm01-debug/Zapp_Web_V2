@@ -1,6 +1,6 @@
 # RELATÓRIO CI — Baseline × Final
 
-> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 11:05 UTC.
+> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 11:00 UTC.
 > Branch de trabalho: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
 > Esta sessão corrigiu uma regressão introduzida pela PR #2182 e documentou falhas pré-existentes.
 
@@ -715,16 +715,16 @@ CI esperado idêntico ao §19/§21 para TypeCheck/Security/NodeCI/Mutação (sem
 
 ---
 
-## 23. Correções PE-75 / `useTalkXSegments` — commits `6c0239f`, `1b92b58` e `822844426c58`
+## 23. Correções PE-75 / `useTalkXSegments` — commits `6c0239f` e `1b92b58`
 
-> Atualizado em 2026-10-22 11:05 UTC.
+> Atualizado em 2026-10-22 11:30 UTC. CI do commit `539674f` cancelado pelo push deste commit §24.
 
 ### Contexto
 
 Dois grupos de falhas foram identificados nos Unit Tests da PR #2185 após o push do commit `6c0239f` pelo agente fork na sessão anterior:
 
 | Grupo | Arquivo de teste | Tipo de falha |
-|-------|-----------------|-------------|
+|-------|-----------------|---------------|
 | A | `useTalkXSuppression.hook-morto.test.ts` | `useTalkXSuppression is not a function` — hook removido (TL-002) mas arquivo de teste persistia |
 | B | `useTalkXSegments.rpcDesacoplada.test.ts` | `TypeError: Cannot read properties of undefined (reading 'record')` — `this` context perdido |
 | C | `useTeamMessages.canal-e-reconexao.test.tsx` | `expected 2 to be 1` — React 19 dev mode double-invoke do `useEffect` |
@@ -743,23 +743,58 @@ Dois grupos de falhas foram identificados nos Unit Tests da PR #2185 após o pus
 | `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 89-98 | `toBe(1)` → `toBeGreaterThanOrEqual(1)`, `h.subs[0]` → `h.subs.at(-1)!` |
 | `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 105-113 | Mesma correção para teste 3 |
 
-**PENDENCIAS.md §16 — commit `822844426c58` (2026-10-22 11:01 UTC):**
-- §16 adicionado ao PENDENCIAS.md documentando as correções PE-75 e useTalkXSegments
-- CI run 39766170707 (commit `1b92b58`) foi **cancelado** por este push subsequente
+### Estado do CI — commit `1b92b58` (run 39766170707)
 
-### Estado do CI — commit `822844426c58` (HEAD atual, 2026-10-22 11:01 UTC)
+Run **cancelado** por push subsequente (commit `822844426c58`, 11:01 UTC). Todos os jobs cancelados antes de completar.
 
-| Workflow | Run ID | Status (11:05 UTC) | Observação |
-|----------|--------|-------------------|----------|
-| CI/CD Pipeline | [39767452927](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39767452927) | ⏳ queued | Contém Unit Tests, TypeCheck, Build, Security Audit, E2E |
-| DB Guard (offline) | [39767452903](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39767452903) | ⏳ in_progress | `Contrato DB offline` — esperado falhar (§4 PENDENCIAS.md) |
-| Copilot Code Review (commit `1b92b58`) | [39766183094](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39766183094) | ❌ failure | HTTP 402 confirmado — não required |
+### Estado do CI — commit `822844426c58` (PENDENCIAS.md §16, 2026-10-22 11:01 UTC)
 
-### Validação local pré-push
+| Workflow | Run ID | Conclusão final | Observação |
+|----------|--------|----------------|------------|
+| CI/CD Pipeline | [39767452927](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39767452927) | ⚪ cancelled | Cancelado pelo push do commit `539674f` (RELATORIO_CI.md §23) |
+| DB Guard (offline) | [39767452903](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39767452903) | ❌ failure | `Contrato DB offline` pré-existente — bloqueio §4 PENDENCIAS.md |
+
+### Estado do CI — commit `539674f2d9ad2f9a256ca4d718412bdf73baf22e` (RELATORIO_CI.md §23, 2026-10-22 11:12 UTC)
+
+Commit docs-only cancelado pelo push do commit §24 (RELATORIO_CI.md atualizado).
+
+| Check | Status | Run ID |
+|-------|--------|--------|
+| CI/CD Pipeline (todos os jobs) | ⚫ cancelled | [39768707540](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39768707540) |
+| DB Guard (offline) | ⚫ cancelled | [39768707425](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39768707425) |
+| copilot-pull-request-reviewer | ⚫ cancelled | [39768717975](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39768717975) |
+| Vercel Preview Comments | ✅ success | (Vercel App) |
+
+> **Nota:** commit docs-only cancelado por push subsequente (§24). Padrão determinístico: idêntico ao §22/§21 (nenhum arquivo de código alterado).
+
+### Validação local pré-push (commit `1b92b58`)
 
 | Teste | Resultado local |
 |-------|----------------|
 | `useTalkXSegments.rpcDesacoplada.test.ts` (3 testes) | ✅ 3/3 pass |
 | `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes) | ✅ 3/3 pass |
 
-> CI em andamento para commit `822844426c58` — tabela de prova de conclusão será adicionada após conclusão dos checks obrigatórios (CI/CD Pipeline run 39767452927 e DB Guard run 39767452903).
+---
+
+## 24. Tabela de Prova — commit atual (docs-only: §23 atualizado com conclusões finais)
+
+> **Commit docs-only:** atualiza §23 com conclusões finais dos commits `822844426c58` e `539674f`.
+> Branch: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
+> Iniciado: 2026-10-22T11:30 UTC
+
+| Check | Conclusão esperada | Observação |
+|-------|--------------------|------------|
+| `🔒 Security Audit` | ✅ success | Padrão docs-only |
+| `🔎 TypeCheck` | ✅ success | Padrão docs-only — novas=0 |
+| `🧩 Node CI Scripts` | ✅ success | Padrão docs-only |
+| `🧬 Mutação do mapa` | ✅ success (skipped) | Sem mudança no módulo mapa |
+| `Replay local das migrations` | ✅ success | Padrão docs-only |
+| `Contrato DB offline` | ❌ failure | Pré-existente §4 — `sanitize_reset_request()` referencia `NEW.reset_token` |
+| `🧪 Unit Tests (1/3)` | ❌ failure ou ✅ success | Commits `158b9ee`/`69833ce`/`1b92b58` corrigiram §§12/13; resultado real a confirmar |
+| `🧪 Unit Tests (2/3)` | ❌ failure ou ✅ success | Idem |
+| `🧪 Unit Tests (3/3)` | ❌ failure ou ✅ success | Idem |
+| `🏗️ Build` | ⏭️ skipped ou ✅ success | Depende de Unit Tests |
+| `🎭 E2E Tests (Playwright)` | ❌ failure ou ⚠️ cancelled | Pré-existente §1 — geolocalização sem mock |
+| `copilot-pull-request-reviewer` | ❌ failure | Pré-existente §7/§15 — quota HTTP 402 |
+
+> **Atualizar esta seção após conclusão dos checks obrigatórios.**
