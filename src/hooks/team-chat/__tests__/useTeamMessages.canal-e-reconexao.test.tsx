@@ -87,7 +87,7 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     // React 19 dev mode re-executa o efeito (setup → cleanup → setup), então
     // pode haver mais de 1 sub; a última é a sub ativa.
     await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
-    const sub = h.subs.at(-1)!;
+    const sub = h.subs[h.subs.length - 1];
 
     act(() => sub('SUBSCRIBED'));
     expect(invalidar).not.toHaveBeenCalled();
@@ -103,7 +103,7 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
     await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
-    const sub = h.subs.at(-1)!;
+    const sub = h.subs[h.subs.length - 1];
 
     act(() => sub('SUBSCRIBED'));
     act(() => sub('CHANNEL_ERROR'));
