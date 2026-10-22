@@ -18,8 +18,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 2 FALHA: migration 20261026100300_dept_invites_ownership_fix.sql usa DROP POLICY IF EXISTS x2. Regra: migration só se aditiva e não destrutiva (sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa). O fix de useDepartmentManagement.ts (profile.id vs user.id) é legítimo mas não pode ser separado da migration destrutiva."
+    "veredicto": "CI-FALHA",
+    "motivo": "Unit Tests + Contrato DB offline: failure (SHA dd5ec6a)",
+    "pode_mergear": false
   },
   {
     "numero": 2185,
@@ -42,8 +43,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 2 FALHA: deleta src/hooks/integrations/__tests__/useTalkXSuppression.test.ts (371 linhas). Regra: proibido apagar, pular ou enfraquecer testes. useTalkXSuppression() é usada em TalkXSuppression.tsx e tem cobertura de testes."
+    "veredicto": "CI-FALHA",
+    "motivo": "Unit Tests + Contrato DB offline: failure (SHA 63b6e66)",
+    "pode_mergear": false
   },
   {
     "numero": 2183,
@@ -61,8 +63,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 3 FALHA: eslint.yml e static.yml já foram removidos da main (SHA 5a4632c). ls .github/workflows/ confirma ausência. O PR só deleta arquivos que não existem mais — mudança é noop."
+    "veredicto": "REJEITAR",
+    "motivo": "eslint.yml/static.yml já não existem em main (inventário 15 workflows confirmado no SHA 5a4632c)",
+    "pode_mergear": false
   },
   {
     "numero": 2181,
@@ -80,8 +83,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Next.js deployment workflow é para projetos Next.js. Projeto usa Vite/React (não Next.js). Framework detection seria falso positivo. Workflow genérico para framework incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "nextjs.yml: projeto usa Vite/React, não Next.js",
+    "pode_mergear": false
   },
   {
     "numero": 2179,
@@ -99,8 +103,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Workflow de saudação (greeting) é workflow de boas-vindas para issues/PRs de novos contribuidores. Projeto não tem contribuidores externos — repositório privado de produto. Sem SHA pinning."
+    "veredicto": "REJEITAR",
+    "motivo": "Greeting workflow: sem valor de negócio (hello world template)",
+    "pode_mergear": false
   },
   {
     "numero": 2178,
@@ -118,8 +123,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: GitHub Super Linter executa dezenas de linters para múltiplas linguagens (Ruby, Python, Go, etc.) irrelevantes para este projeto TypeScript. Duplica lint já configurado em ci.yml."
+    "veredicto": "REJEITAR",
+    "motivo": "GitHub Super Linter: template genérico; conflita com CI existente; não SHA-pinned",
+    "pode_mergear": false
   },
   {
     "numero": 2177,
@@ -137,8 +143,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Python package workflow é para Python. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
+    "veredicto": "REJEITAR",
+    "motivo": "Python package: sem Python no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2176,
@@ -156,8 +163,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Django CI é para Python/Django. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
+    "veredicto": "REJEITAR",
+    "motivo": "Django CI: sem Django/Python no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2175,
@@ -175,8 +183,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Python + Conda é para Python. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
+    "veredicto": "REJEITAR",
+    "motivo": "Python+Conda: sem Python no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2174,
@@ -194,8 +203,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Python package publishing é para Python. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
+    "veredicto": "REJEITAR",
+    "motivo": "Python package publishing: sem Python no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2173,
@@ -213,8 +223,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: npm publish é para publicar pacotes npm. Este é um app web privado, não uma biblioteca pública. Sem SHA pinning (actions/setup-node@v4)."
+    "veredicto": "REJEITAR",
+    "motivo": "npm publishing: projeto não é pacote npm",
+    "pode_mergear": false
   },
   {
     "numero": 2172,
@@ -232,8 +243,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Docker Image CI é para build de imagens Docker. Projeto não usa Docker no deploy (usa Vercel + Supabase edge functions). Sem Dockerfile no repositório."
+    "veredicto": "REJEITAR",
+    "motivo": "Docker Image CI: sem Dockerfile no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2171,
@@ -251,8 +263,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Docker publish é para publicar imagens Docker. Projeto não usa Docker no deploy (usa Vercel + Supabase edge functions). Sem Dockerfile no repositório."
+    "veredicto": "REJEITAR",
+    "motivo": "Docker publish: sem Dockerfile no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2170,
@@ -270,8 +283,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: npm publish é para publicar pacotes npm. Este é um app web privado, não uma biblioteca pública. Workflow genérico para tipo de projeto incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "npm package publishing: projeto não é pacote npm",
+    "pode_mergear": false
   },
   {
     "numero": 2169,
@@ -289,8 +303,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Workflow Node.js CI duplica o que ci.yml já faz, com runner diferente (ubuntu-latest vs configurado). Sem SHA pinning (actions/setup-node@v4). Tech stack parcialmente incorreto (npm em vez de bun)."
+    "veredicto": "REJEITAR",
+    "motivo": "Node.js CI com npm: projeto usa Bun, não npm",
+    "pode_mergear": false
   },
   {
     "numero": 2168,
@@ -308,8 +323,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: SLSA generic generator é para publicação de pacotes npm/PyPI. Este é um app web, não uma biblioteca publicável. Workflow genérico para tipo de projeto incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "SLSA generic generator: sem relevância para o projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2167,
@@ -327,8 +343,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Webpack não é o bundler do projeto — usa Vite (configurado em vite.config.ts). Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "Node.js+Webpack: projeto usa Bun/Vite, não npm/Webpack",
+    "pode_mergear": false
   },
   {
     "numero": 2166,
@@ -346,8 +363,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 1 FALHA: Deno não é runtime do app principal (usa Bun). scripts/ci/deno.json existe para edge functions Supabase, não para CI do app. Workflow genérico para scope incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "deno.yml: projeto usa Bun, não Deno (package.json, bun.lockb)",
+    "pode_mergear": false
   },
   {
     "numero": 2165,
@@ -365,8 +383,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: PMD é para linguagem Java. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "pmd.yml: sem Java (referencia src/main/java); sem Java no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2164,
@@ -384,8 +403,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: rust-clippy é para linguagem Rust. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "rust-clippy.yml: sem código Rust no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2163,
@@ -403,8 +423,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: lintr é para linguagem R. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "lintr.yml: sem código R no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2162,
@@ -422,8 +443,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: PHPMD é para linguagem PHP. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "phpmd.yml: sem PHP no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2161,
@@ -441,8 +463,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: puppet-lint é para linguagem Puppet. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "puppet-lint.yml: sem Puppet no projeto",
+    "pode_mergear": false
   },
   {
     "numero": 2160,
@@ -460,8 +483,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Hadolint é linter de Dockerfile. Projeto não tem Dockerfile. Workflow genérico para stack incorreto."
+    "veredicto": "REJEITAR",
+    "motivo": "hadolint.yml: sem Dockerfile no projeto (TypeScript/Bun/Vite)",
+    "pode_mergear": false
   },
   {
     "numero": 2159,
@@ -479,8 +503,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: Bearer SAST é workflow genérico de template GitHub. Projeto usa TypeScript/Bun, não precisa de Bearer. Ações sem SHA pinning (bearer/bearer-action@v1.x.x)."
+    "veredicto": "REJEITAR",
+    "motivo": "bearer.yml: secret BEARER_TOKEN inexistente",
+    "pode_mergear": false
   },
   {
     "numero": 2157,
@@ -498,8 +523,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: actions sem SHA pinning (actions/checkout@v4, actions/dependency-review-action@v4 — repo exige sha_pinning_required:true conforme CLAUDE.md). Tech stack incorreto: usa package-lock.json/yarn.lock, projeto usa bun.lockb."
+    "veredicto": "REJEITAR",
+    "motivo": "sha_pinning_required=true: refs não-SHA (actions/checkout@v4, dependency-review-action@v4)",
+    "pode_mergear": false
   },
   {
     "numero": 2155,
@@ -517,8 +543,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: ancestor compartilha ci.yml que remove Deno do CI (linhas 118-150: denoland/setup-deno + deno check + deno test para 201 arquivos .test.ts em supabase/functions/). O merge eliminaria testes de edge functions."
+    "veredicto": "CI-FALHA",
+    "motivo": "Build: skipped; padrão idêntico #2149/#2151/#2152 — ancestry comum remove Deno do CI (SHA 64934014)",
+    "pode_mergear": false
   },
   {
     "numero": 2152,
@@ -537,8 +564,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: (1) remove Deno do CI — ci.yml sem step denoland/setup-deno elimina 201 testes de supabase/functions/; (2) downgrade Playwright 1.64.1→1.63.0 sem justificativa (ci.yml linhas 319,325)."
+    "veredicto": "CI-FALHA",
+    "motivo": "Unit Tests (x3) + Contrato DB offline + E2E Tests: failure (SHA 3eca130)",
+    "pode_mergear": false
   },
   {
     "numero": 2151,
@@ -556,8 +584,9 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: ancestor compartilha ci.yml que remove Deno do CI (linhas 118-150: denoland/setup-deno + deno check + deno test para 201 arquivos .test.ts em supabase/functions/). O merge eliminaria testes de edge functions."
+    "veredicto": "CI-FALHA",
+    "motivo": "Unit Tests (x3) + Contrato DB offline: failure, E2E: cancelled (SHA 0770f6b)",
+    "pode_mergear": false
   },
   {
     "numero": 2149,
@@ -579,7 +608,8 @@
     "regra_negocio_ok": null,
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
-    "veredicto": "BLOQUEADO",
-    "motivo": "Critério 4 FALHA: ancestor compartilha ci.yml que remove Deno do CI (linhas 118-150: denoland/setup-deno + deno check + deno test para 201 arquivos .test.ts em supabase/functions/). O merge eliminaria testes de edge functions."
+    "veredicto": "CI-FALHA",
+    "motivo": "Unit Tests (x3) + Contrato DB offline + E2E Tests: failure (SHA d78360c)",
+    "pode_mergear": false
   }
 ]

@@ -1,37 +1,15 @@
 {
   "total_prs": 30,
   "analisados": 30,
-  "bloqueados": 30,
   "mergeados": 0,
-  "pendentes": 0,
-  "criterios_avaliados": true,
-  "data_conclusao": "2026-10-22",
-  "metodologia": "Test merges em worktree local (/tmp/wt-mergetest), leitura de 100% dos diffs de workflow, avaliação dos 4 critérios com evidência por arquivo:linha ou saída de comando.",
-  "grupos": {
-    "remove_deno_ci": {
-      "prs": [2149, 2151, 2152, 2155],
-      "criterio_falho": "Critério 4",
-      "razao": "Ancestor compartilha ci.yml que remove denoland/setup-deno + deno test (linhas 118-150). Eliminaria 201 testes de supabase/functions/."
-    },
-    "workflows_template_alien": {
-      "prs": [2157, 2159, 2160, 2161, 2162, 2163, 2164, 2165, 2166, 2167, 2168, 2169, 2170, 2171, 2172, 2173, 2174, 2175, 2176, 2177, 2178, 2179, 2181],
-      "criterio_falho": "Critério 4",
-      "razao": "Workflows de template GitHub para stacks/linguagens erradas (R, Rust, Java, PHP, Puppet, Python, Docker, Next.js, etc.) ou sem SHA pinning conforme sha_pinning_required:true."
-    },
-    "ja_implementado": {
-      "prs": [2183],
-      "criterio_falho": "Critério 3",
-      "razao": "eslint.yml e static.yml já removidos da main SHA 5a4632c. Mudança é noop."
-    },
-    "deleta_teste": {
-      "prs": [2185],
-      "criterio_falho": "Critério 2",
-      "razao": "Deleta useTalkXSuppression.test.ts (371 linhas). Regra: proibido apagar testes."
-    },
-    "migration_destrutiva": {
-      "prs": [2186],
-      "criterio_falho": "Critério 2",
-      "razao": "20261026100300 usa DROP POLICY IF EXISTS x2. Regra: sem DROP em migrations."
-    }
-  }
+  "rejeitados": 24,
+  "ci_falha": 6,
+  "bloqueados": 0,
+  "detalhe": {
+    "REJEITAR": [2157, 2159, 2160, 2161, 2162, 2163, 2164, 2165, 2166, 2167, 2168, 2169, 2170, 2171, 2172, 2173, 2174, 2175, 2176, 2177, 2178, 2179, 2181, 2183],
+    "CI-FALHA": [2149, 2151, 2152, 2155, 2185, 2186],
+    "MERGEADO": []
+  },
+  "main_sha_baseline": "5a4632c87f7e233fe62e830443f8b0eddf3e1a72",
+  "data_analise": "2026-10-22"
 }
