@@ -19,7 +19,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca 2 arquivos em .github/workflows/ (eslint.yml, static.yml). Regra da sessão: BLOQUEADO automaticamente. Contém 3 migrations novas e documentação de auditoria de segurança Supabase."
+    "motivo": "Critério 2 FALHA: migration 20261026100300_dept_invites_ownership_fix.sql usa DROP POLICY IF EXISTS x2. Regra: migration só se aditiva e não destrutiva (sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa). O fix de useDepartmentManagement.ts (profile.id vs user.id) é legítimo mas não pode ser separado da migration destrutiva."
   },
   {
     "numero": 2185,
@@ -43,7 +43,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca 2 arquivos em .github/workflows/ (eslint.yml, static.yml). Regra da sessão: BLOQUEADO automaticamente. Conteúdo seria valioso (fixes de testes ChatMessagesArea + react-virtual) mas não pode ser mergeado com alterações de workflow."
+    "motivo": "Critério 2 FALHA: deleta src/hooks/integrations/__tests__/useTalkXSuppression.test.ts (371 linhas). Regra: proibido apagar, pular ou enfraquecer testes. useTalkXSuppression() é usada em TalkXSuppression.tsx e tem cobertura de testes."
   },
   {
     "numero": 2183,
@@ -62,7 +62,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 3 FALHA: eslint.yml e static.yml já foram removidos da main (SHA 5a4632c). ls .github/workflows/ confirma ausência. O PR só deleta arquivos que não existem mais — mudança é noop."
   },
   {
     "numero": 2181,
@@ -81,7 +81,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Next.js deployment workflow é para projetos Next.js. Projeto usa Vite/React (não Next.js). Framework detection seria falso positivo. Workflow genérico para framework incorreto."
   },
   {
     "numero": 2179,
@@ -100,7 +100,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Workflow de saudação (greeting) é workflow de boas-vindas para issues/PRs de novos contribuidores. Projeto não tem contribuidores externos — repositório privado de produto. Sem SHA pinning."
   },
   {
     "numero": 2178,
@@ -119,7 +119,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: GitHub Super Linter executa dezenas de linters para múltiplas linguagens (Ruby, Python, Go, etc.) irrelevantes para este projeto TypeScript. Duplica lint já configurado em ci.yml."
   },
   {
     "numero": 2177,
@@ -138,7 +138,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Python package workflow é para Python. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
   },
   {
     "numero": 2176,
@@ -157,7 +157,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Django CI é para Python/Django. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
   },
   {
     "numero": 2175,
@@ -176,7 +176,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Python + Conda é para Python. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
   },
   {
     "numero": 2174,
@@ -195,7 +195,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Python package publishing é para Python. Projeto é TypeScript/React/Bun. Workflow genérico para linguagem incorreta."
   },
   {
     "numero": 2173,
@@ -214,7 +214,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: npm publish é para publicar pacotes npm. Este é um app web privado, não uma biblioteca pública. Sem SHA pinning (actions/setup-node@v4)."
   },
   {
     "numero": 2172,
@@ -233,7 +233,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Docker Image CI é para build de imagens Docker. Projeto não usa Docker no deploy (usa Vercel + Supabase edge functions). Sem Dockerfile no repositório."
   },
   {
     "numero": 2171,
@@ -252,7 +252,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Docker publish é para publicar imagens Docker. Projeto não usa Docker no deploy (usa Vercel + Supabase edge functions). Sem Dockerfile no repositório."
   },
   {
     "numero": 2170,
@@ -271,7 +271,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: npm publish é para publicar pacotes npm. Este é um app web privado, não uma biblioteca pública. Workflow genérico para tipo de projeto incorreto."
   },
   {
     "numero": 2169,
@@ -290,7 +290,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Workflow Node.js CI duplica o que ci.yml já faz, com runner diferente (ubuntu-latest vs configurado). Sem SHA pinning (actions/setup-node@v4). Tech stack parcialmente incorreto (npm em vez de bun)."
   },
   {
     "numero": 2168,
@@ -309,7 +309,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: SLSA generic generator é para publicação de pacotes npm/PyPI. Este é um app web, não uma biblioteca publicável. Workflow genérico para tipo de projeto incorreto."
   },
   {
     "numero": 2167,
@@ -328,7 +328,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Webpack não é o bundler do projeto — usa Vite (configurado em vite.config.ts). Workflow genérico para stack incorreto."
   },
   {
     "numero": 2166,
@@ -347,7 +347,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 1 FALHA: Deno não é runtime do app principal (usa Bun). scripts/ci/deno.json existe para edge functions Supabase, não para CI do app. Workflow genérico para scope incorreto."
   },
   {
     "numero": 2165,
@@ -366,7 +366,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: PMD é para linguagem Java. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
   },
   {
     "numero": 2164,
@@ -385,7 +385,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: rust-clippy é para linguagem Rust. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
   },
   {
     "numero": 2163,
@@ -404,7 +404,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: lintr é para linguagem R. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
   },
   {
     "numero": 2162,
@@ -423,7 +423,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: PHPMD é para linguagem PHP. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
   },
   {
     "numero": 2161,
@@ -442,7 +442,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: puppet-lint é para linguagem Puppet. Projeto é TypeScript/React/Bun. Workflow genérico para stack incorreto."
   },
   {
     "numero": 2160,
@@ -461,7 +461,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Hadolint é linter de Dockerfile. Projeto não tem Dockerfile. Workflow genérico para stack incorreto."
   },
   {
     "numero": 2159,
@@ -480,7 +480,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: Bearer SAST é workflow genérico de template GitHub. Projeto usa TypeScript/Bun, não precisa de Bearer. Ações sem SHA pinning (bearer/bearer-action@v1.x.x)."
   },
   {
     "numero": 2157,
@@ -499,7 +499,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: actions sem SHA pinning (actions/checkout@v4, actions/dependency-review-action@v4 — repo exige sha_pinning_required:true conforme CLAUDE.md). Tech stack incorreto: usa package-lock.json/yarn.lock, projeto usa bun.lockb."
   },
   {
     "numero": 2155,
@@ -518,7 +518,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: ancestor compartilha ci.yml que remove Deno do CI (linhas 118-150: denoland/setup-deno + deno check + deno test para 201 arquivos .test.ts em supabase/functions/). O merge eliminaria testes de edge functions."
   },
   {
     "numero": 2152,
@@ -538,8 +538,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca 13 arquivos em .github/workflows/ (idêntico a #2149). Regra da sessão: BLOQUEADO automaticamente.",
-    "motivo_bloqueio": "Toca .github/workflows/ (13 arquivos de CI)"
+    "motivo": "Critério 4 FALHA: (1) remove Deno do CI — ci.yml sem step denoland/setup-deno elimina 201 testes de supabase/functions/; (2) downgrade Playwright 1.64.1→1.63.0 sem justificativa (ci.yml linhas 319,325)."
   },
   {
     "numero": 2151,
@@ -558,7 +557,7 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca .github/workflows/ — bloqueio imediato por regra operacional."
+    "motivo": "Critério 4 FALHA: ancestor compartilha ci.yml que remove Deno do CI (linhas 118-150: denoland/setup-deno + deno check + deno test para 201 arquivos .test.ts em supabase/functions/). O merge eliminaria testes de edge functions."
   },
   {
     "numero": 2149,
@@ -581,7 +580,6 @@
     "ci_falha_nova": null,
     "ci_falha_preexistente": null,
     "veredicto": "BLOQUEADO",
-    "motivo": "Toca 13 arquivos em .github/workflows/ (ci.yml, codeql.yml, db-guard.yml, db-live-guard.yml, db-migrate.yml, deploy-functions.yml, e2e-logado.yml, e2e-talkx.yml, eslint.yml, notifica-falha-main.yml, static.yml, talkx-status-regen.yml, vercel-env-cleanup.yml). Regra da sessão: BLOQUEADO automaticamente.",
-    "motivo_bloqueio": "Toca .github/workflows/ (13 arquivos de CI)"
+    "motivo": "Critério 4 FALHA: ancestor compartilha ci.yml que remove Deno do CI (linhas 118-150: denoland/setup-deno + deno check + deno test para 201 arquivos .test.ts em supabase/functions/). O merge eliminaria testes de edge functions."
   }
 ]
