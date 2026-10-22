@@ -1,7 +1,11 @@
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   ensureValidToken,
+  gmailNextAttemptAt,
+  gmailRetryDelayMs,
+  GMAIL_SYNC_CLAIM_STALE_MS,
   GMAIL_REAUTH_MESSAGE,
+  selectGmailAccountsDue,
   isGmailReauthError,
   recordGmailAccountFailure,
   sanitizeGmailErrorMessage,
@@ -42,6 +46,7 @@ Deno.test("token revogado (invalid_grant) vira reauth_required sem vazar e-mail 
   assertEquals(status, "reauth_required");
   assertEquals(updates.length, 1);
   assertEquals(updates[0].valores.sync_status, "reauth_required");
+  assertEquals(updates[0].valores.next_attempt_at, null, "reauth não deve ficar agendado para retry automático");
   assertEquals(updates[0].eq, [["id", "conta-1"]]);
   const lastError = String(updates[0].valores.last_error);
   assertEquals(lastError.startsWith(GMAIL_REAUTH_MESSAGE), true);
@@ -61,7 +66,16 @@ Deno.test("falha transitória fica em error com a contagem de tentativas", async
 
   assertEquals(status, "error");
   assertEquals(updates[0].valores.sync_status, "error");
+  assertEquals(updates[0].valores.error_count, 3);
+  assertEquals(new Date(String(updates[0].valores.next_attempt_at)).getTime() > Date.now(), true);
   assertEquals(String(updates[0].valores.last_error).startsWith("3 tentativa(s) de sincronização falharam"), true);
+});
+
+Deno.test("backoff do Gmail cresce exponencialmente, tem teto e agenda com relógio injetável", () => {
+  assertEquals([1, 2, 3, 4, 20].map(gmailRetryDelayMs), [60_000, 120_000, 240_000, 480_000, 3_600_000]);
+  const now = Date.parse("2026-10-21T12:00:00.000Z");
+  assertEquals(gmailNextAttemptAt(3, now), "2026-10-21T12:04:00.000Z");
+  assertEquals(gmailRetryDelayMs(0), 60_000, "entrada zerada ou inválida não pode desativar o retry");
 });
 
 Deno.test("isGmailReauthError reconhece token revogado e não confunde falha transitória", () => {
@@ -70,6 +84,30 @@ Deno.test("isGmailReauthError reconhece token revogado e não confunde falha tra
   assertEquals(isGmailReauthError(new Error("unauthorized_client")), true);
   assertEquals(isGmailReauthError(new Error("Gmail API error (503): upstream")), false);
   assertEquals(isGmailReauthError(undefined), false);
+});
+
+Deno.test("selectGmailAccountsDue exclui reauth/inativas e respeita o próximo retry", () => {
+  const now = Date.parse("2026-10-21T12:00:00.000Z");
+  const accounts = [
+    { id: "due", is_active: true, sync_status: "error", next_attempt_at: "2026-10-21T11:59:59.000Z" },
+    { id: "no-retry", is_active: true, sync_status: "pending", next_attempt_at: null },
+    { id: "future", is_active: true, sync_status: "error", next_attempt_at: "2026-10-21T12:00:01.000Z" },
+    { id: "revoked", is_active: true, sync_status: "reauth_required", next_attempt_at: null },
+    { id: "inactive", is_active: false, sync_status: "pending", next_attempt_at: null },
+    { id: "bad-date", is_active: true, sync_status: "error", next_attempt_at: "not-a-date" },
+  ];
+
+  assertEquals(selectGmailAccountsDue(accounts, now).map((account) => account.id), ["due", "no-retry", "bad-date"]);
+});
+
+Deno.test("selectGmailAccountsDue só recupera claim syncing após expiração comprovada", () => {
+  const now = Date.parse("2026-10-21T12:00:00.000Z");
+  const accounts = [
+    { id: "fresh-claim", is_active: true, sync_status: "syncing", updated_at: new Date(now - GMAIL_SYNC_CLAIM_STALE_MS + 1).toISOString() },
+    { id: "stale-claim", is_active: true, sync_status: "syncing", updated_at: new Date(now - GMAIL_SYNC_CLAIM_STALE_MS).toISOString() },
+    { id: "unknown-claim", is_active: true, sync_status: "syncing", updated_at: "invalid-date" },
+  ];
+  assertEquals(selectGmailAccountsDue(accounts, now).map((account) => account.id), ["stale-claim"]);
 });
 
 Deno.test("sanitizeGmailErrorMessage mascara e-mail/token e limita o tamanho", () => {

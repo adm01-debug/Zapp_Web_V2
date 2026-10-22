@@ -38,9 +38,14 @@ test('so roda (as etapas caras) quando o PR toca uma migration', () => {
   assert.equal(guardas.length, 2, 'o pull da imagem e o replay sao as etapas caras; cada uma precisa do guard');
 });
 
-test('nao usa o docker-shim (ele FINJE o docker e nao aplica migration)', () => {
-  assert.doesNotMatch(job, /docker-shim/u);
-  assert.doesNotMatch(job, /SKIP_DOCKER_SHIM/u);
+test('o passo de replay nao usa o docker-shim (ele FINJE o docker e nao aplica migration)', () => {
+  // Outros passos do job podem ter SKIP_DOCKER_SHIM: "1" legitimamente (precisam do Docker real).
+  // O que nao pode e o passo que invoca replay-local.sh usar o shim — ele precisa do Docker real.
+  const passos = job.split(/\n      - /u);
+  const passoReplay = passos.find(p => /run:\s*bash scripts\/db-audit\/replay-local\.sh/.test(p));
+  assert.ok(passoReplay, 'passo run: bash scripts/db-audit/replay-local.sh nao encontrado no job');
+  assert.doesNotMatch(passoReplay, /docker-shim/u);
+  assert.doesNotMatch(passoReplay, /SKIP_DOCKER_SHIM/u);
 });
 
 test('a imagem fixada por digest vive num lugar SO (o script), nao no job', () => {

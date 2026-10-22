@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, enforceRateLimit, getClientIP, internalErrorResponse } from "../_shared/validation.ts";
 import {
   isRecord, normalizeEventName, toEventRecords,
   handleReactionEvent,
@@ -104,15 +104,15 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
 
   // C9: rate-limit per IP before body is read (200 req/min covers GO burst traffic)
   const ip = getClientIP(req);
-  const rl = await enforceRateLimit(`evowh:${ip}`, 200, 60_000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Too many requests' }), {
-      status: 429,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
-    });
-  }
 
   try {
+    const rl = await enforceRateLimit(`evowh:${ip}`, 200, 60_000);
+    if (!rl.allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
+    }
     const enforceMode = evolutionEnforceMode();
 
     // -----------------------------------------------------------------------
@@ -327,11 +327,7 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
-    console.error('Evolution webhook error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return internalErrorResponse(error, req);
   }
 }
 

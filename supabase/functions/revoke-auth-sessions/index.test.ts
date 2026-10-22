@@ -1,4 +1,14 @@
-import { handleRevokeAuthSessions, planRevocation, decodeJwtClaims } from "./index.ts";
+import {
+  buildRevocationAudit,
+  decodeJwtClaims,
+  decideThirdPartyRevocation,
+  handleRevokeAuthSessions,
+  normalizeRole,
+  planRevocation,
+  recordRevocationAudit,
+  resolveEffectiveRole,
+} from "./index.ts";
+import { resetRateLimitServiceClient } from "../_shared/validation.ts";
 
 const A = "00000000-0000-4000-8000-000000000001";
 const B = "00000000-0000-4000-8000-000000000002";
@@ -238,9 +248,9 @@ Deno.test("resolveEffectiveRole lê effective_role e nega em erro", async () => 
 });
 
 // O limite vive FORA do isolate (RPC service_role `consume_rate_limit`). Prova:
-// com o decisor persistente negando, a função responde 429 + Retry-After ANTES de
-// qualquer auth — e o RPC foi de fato consultado.
-Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com Retry-After", async () => {
+// com o decisor persistente negando, a função responde 429 sem prometer um reset
+// que a RPC não retorna — e o RPC foi de fato consultado.
+Deno.test("rate limit persistente: consulta RPC e responde 429 sem reset inventado", async () => {
   const savedUrl = Deno.env.get("SUPABASE_URL");
   const savedSrv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
@@ -273,7 +283,7 @@ Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com 
     });
     const res = await handleRevokeAuthSessions(req);
     if (res.status !== 429) fail(`esperado 429, veio ${res.status}`);
-    if (res.headers.get("Retry-After") === null) fail("o 429 deve trazer Retry-After");
+    if (res.headers.get("Retry-After") !== null) fail("não deve inventar Retry-After sem reset conhecido");
     if (!seen.some((u) => u.includes("/rest/v1/rpc/consume_rate_limit"))) {
       fail(`deveria consultar o limiter persistente: ${seen.join(",")}`);
     }
@@ -289,10 +299,10 @@ Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com 
 
 // ─── Rate limit do handler: persistente, chave por IP antes e por USUARIO depois ───
 
-const URL = "https://example.supabase.co/functions/v1/revoke-auth-sessions";
+const ENDPOINT_URL = "https://example.supabase.co/functions/v1/revoke-auth-sessions";
 
 function post(headers: Record<string, string> = {}): Request {
-  return new Request(URL, {
+  return new Request(ENDPOINT_URL, {
     method: "POST",
     headers: { ...headers, "content-type": "application/json" },
     body: JSON.stringify({ scope: "global" }),
@@ -306,9 +316,9 @@ const env = (name: string): string => {
   fail(`env inesperado: ${name}`);
 };
 
-function fakeCaller(id: string) {
+function fakeCaller(id: string | null) {
   return {
-    auth: { getUser: () => Promise.resolve({ data: { user: { id } }, error: null }) },
+    auth: { getUser: () => Promise.resolve({ data: { user: id === null ? null : { id } }, error: null }) },
     rpc: () => Promise.resolve({ data: null, error: null }),
   };
 }
@@ -344,6 +354,7 @@ Deno.test("rate limit por USUARIO pos-auth: conta comprometida trocando de IP ->
 Deno.test("sem Authorization responde 401 depois do gate por IP", async () => {
   const res = await handleRevokeAuthSessions(post({ "x-forwarded-for": "9.9.9.9" }), {
     env,
+    caller: fakeCaller(null),
     enforceRateLimit: () => Promise.resolve({ allowed: true }),
   });
   if (res.status !== 401) fail(`esperado 401, veio ${res.status}`);

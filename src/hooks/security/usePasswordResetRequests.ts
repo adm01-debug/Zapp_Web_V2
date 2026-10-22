@@ -24,8 +24,7 @@ export function usePasswordResetRequests() {
   const fetchRequests = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('password_reset_requests_safe' as any)
+        .from('password_reset_requests_safe')
         .select('id, email, reason, status, reviewed_at, rejection_reason, ip_address, created_at')
         .order('created_at', { ascending: false });
       if (error) throw error;

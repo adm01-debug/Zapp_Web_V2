@@ -18,7 +18,7 @@ Cada entrada lista a tela, o efeito e o risco quando a chave está ativa.
 | Busca global — filtros | `src/components/inbox/search/GlobalSearchFilters.tsx` | Exibe o toggle de filtro CRM na barra de filtros de busca global | Se o toggle aparecer mas a API do CRM falhar, o filtro retorna resultados inconsistentes |
 | Detalhes do contato — ações | `src/components/inbox/contact-details/ContactActionButtons.tsx` | Mostra o item de menu "Sincronizar com CRM" no dropdown de ações | Se a sincronização falhar, o contato pode ficar inconsistente entre Zapp e CRM |
 | Detalhes do contato — cabeçalho | `src/components/inbox/contact-details/ContactHeaderSection.tsx` | Busca dados CRM para exibir informações adicionais no cabeçalho do contato | Se a API do CRM falhar, o cabeçalho mostra dados incompletos |
-| Detalhes do contato — painel de inteligência | `src/components/inbox/contact-details/ContactIntelligencePanel.tsx` | Exibe o painel de inteligência do contato com dados CRM | Se o CRM falhar, o painel fica vazio mas não quebra a UI |
+| Detalhes do contato — inteligência | `src/components/inbox/contact-details/ContactIntelligencePanel.tsx` | Exibe painel com dados de inteligência do contato (risco de churn, melhores horários) vindos do CRM | Se o CRM retornar dados incompletos ou falhar, o painel exibe informações imprecisas |
 
 ## Hooks (camada de dados)
 

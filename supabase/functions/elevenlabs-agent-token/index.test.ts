@@ -67,6 +67,10 @@ const ROTA_NETWORK_POLICY: Route = {
   make: () =>
     jsonResp([{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }]),
 };
+const ROTA_PROFILE: Route = {
+  match: "/rest/v1/profiles",
+  make: () => jsonResp({ is_active: true }),
+};
 const ROTA_PROVIDER: Route = {
   match: PROVIDER,
   make: () => jsonResp({ token: "conv-token-de-teste" }),
@@ -129,7 +133,7 @@ function callsTo(calls: Call[], match: string): Call[] {
 
 Deno.test("IA-009: flag de voz desligada -> 503 AI_DISABLED e ZERO chamada ao provedor pago", async () => {
   await withEnv(ENV_OK, async () => {
-    const stub = withFetch([ROTA_AUTH, ROTA_NETWORK_POLICY, ROTA_RATE_LIMIT, ROTA_PROVIDER, ROTA_FLAG_OFF]);
+    const stub = withFetch([ROTA_AUTH, ROTA_NETWORK_POLICY, ROTA_PROFILE, ROTA_RATE_LIMIT, ROTA_PROVIDER, ROTA_FLAG_OFF]);
     try {
       const res = await handleElevenLabsAgentToken(tokenRequest());
 
@@ -155,7 +159,7 @@ Deno.test("IA-009: flag de voz desligada -> 503 AI_DISABLED e ZERO chamada ao pr
 
 Deno.test("IA-009: flag de voz ligada -> 200 com token e o provedor é chamado (o gate não barra o caminho feliz)", async () => {
   await withEnv(ENV_OK, async () => {
-    const stub = withFetch([ROTA_AUTH, ROTA_NETWORK_POLICY, ROTA_RATE_LIMIT, ROTA_PROVIDER, ROTA_FLAG_ON]);
+    const stub = withFetch([ROTA_AUTH, ROTA_NETWORK_POLICY, ROTA_PROFILE, ROTA_RATE_LIMIT, ROTA_PROVIDER, ROTA_FLAG_ON]);
     try {
       const res = await handleElevenLabsAgentToken(tokenRequest());
 
