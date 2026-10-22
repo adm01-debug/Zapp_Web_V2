@@ -120,7 +120,7 @@ partir do código e falha quando:
 ## Órfãs (20) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
-`invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador eym
+`invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
 `supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso não quer dizer "morta" — o chamador pode ser externo
 (N8N, cron do provedor, operação manual) — quer dizer **não comprovada no repositório**.
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora

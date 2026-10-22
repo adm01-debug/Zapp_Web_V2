@@ -6,7 +6,7 @@ import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
-import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { uniqueRealtimeTopic } from '../../lib/realtimeTopic';
 
 const log = getLogger('TeamChatNotifications');
 

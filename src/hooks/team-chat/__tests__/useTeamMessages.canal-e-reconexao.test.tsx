@@ -84,9 +84,10 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    // React 19 dev mode re-executa o efeito (setup → cleanup → setup), então
-    // pode haver mais de 1 sub; a última é a sub ativa.
+    // React 18+ strict-mode executa setup→cleanup→setup: há 1 ou 2 subs.
+    // Mais de 2 = canal duplicado real (regressão detectável).
     await waitFor(() => expect(h.subs.length).toBeGreaterThanOrEqual(1));
+    expect(h.subs.length).toBeLessThanOrEqual(2);
     const sub = h.subs[h.subs.length - 1];
 
     act(() => sub('SUBSCRIBED'));
