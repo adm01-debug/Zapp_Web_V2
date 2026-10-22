@@ -479,10 +479,12 @@ documentação) tem relação com os testes que agora falham.
 
 ### Por que não são regressões desta PR
 
-Nossa PR altera apenas:
+Nossa PR altera os seguintes arquivos de código:
 - `src/test/setup.ts`: adiciona mocks `getBoundingClientRect`/`clientHeight`/`clientWidth`
 - 4 arquivos `ChatMessagesArea.*.test.tsx`: adiciona `globalThis.ResizeObserver`
 - `src/hooks/system/useDiagnosticsData.ts`: propaga `messagesCountError`
+- `src/hooks/system/useUserSettings.ts`: adiciona `isError` flag (commit `6c883342`); bugs de reset e rejeição corrigidos nos commits subsequentes
+- `src/hooks/inbox/useInboxFilters.ts`: regressões de `contactTypeFromUrl`/`setSearchParams`/draft-shadowing corrigidas nos commits `5bc7b3a` e `7de89bd`
 - Documentação (`PENDENCIAS.md`, `RELATORIO_CI.md`)
 
 Nenhum desses arquivos tem relação com `useTalkXSuppression`, `useTeamMessages`, `useTalkXSegments`

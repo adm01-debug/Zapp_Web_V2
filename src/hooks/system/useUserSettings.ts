@@ -122,6 +122,7 @@ export function useUserSettings() {
 
     const fetchSettings = async () => {
       setIsLoading(true);
+      setIsError(false);
       try {
         const { data, error } = await supabase
           .from('user_settings')
@@ -185,6 +186,7 @@ export function useUserSettings() {
         }
       } catch (err) {
         log.error('Error in fetchSettings:', err);
+        if (ativo) setIsError(true);
       } finally {
         if (ativo) setIsLoading(false);
       }
