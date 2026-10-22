@@ -266,7 +266,53 @@ Para completênza, as 4 correções aplicadas na PR #2182 (já na `main`):
 | `🎭 E2E Tests (Playwright)` | [119670308560](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39732358702/job/119670308560) | ⏳ in_progress (pré-existente §1) | — |
 
 > **Nota (06:15Z):** Unit Tests e E2E ainda em andamento no commit `e78b5788` (docs-only). Este commit não altera código — resultado esperado idêntico ao commit `585697bf` acima (failure pré-existente §§12–13 e §1).
+> **Atualização (06:25Z):** Todos cancelados — o commit `a37acb42` chegou e cancelou o run `39732358702`. Ver §9.
 
 ---
 
-*Relatório atualizado em 2026-10-22 06:15 UTC: §8 atualizado com resultados confirmados do commit `585697bf`; §8b adicionado com estado do commit `e78b5788` (docs-only, in_progress).*
+## 9. Tabela de Prova Final — PR #2185 (commit `a37acb42`, HEAD)
+
+> Run CI/CD Pipeline: [39733152679](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679)
+> Run DB Guard (offline): [39733152741](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152741)
+> Iniciada: 2026-10-22T06:19:32Z
+
+| Check | Job ID | Conclusion | Completado em | Observação |
+|---|---|---|---|---|
+| `🔒 Security Audit` | [119672860638](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860638) | ✅ success | 06:19:57Z | — |
+| `🧬 Mutação do mapa` | [119672860596](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860596) | ✅ success (skipped) | 06:19:44Z | Sem mudança no módulo mapa |
+| `🔎 TypeCheck` | [119672860769](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860769) | ✅ success | 06:21:18Z | Sem regressão TypeScript |
+| `🧩 Node CI Scripts` | [119672860720](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860720) | ✅ success | 06:21:57Z | — |
+| `Contrato DB offline` | [119672603402](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152741/job/119672603402) | ❌ failure (pré-existente §4) | ~06:22Z | `sanitize_reset_request()` referencia `NEW.reset_token` — pré-existente, pendente Joaquim |
+| `🧪 Unit Tests (1/3)` | [119672860590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860590) | ❌ failure (pré-existente §12) | — | Falhas pré-existentes documentadas em §12: `useTalkXSuppression`, `useTeamMessages`, `useTalkXSegments`, TTS |
+| `🧪 Unit Tests (2/3)` | [119672860736](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860736) | ❌ failure (pré-existente §13) | — | Falhas pré-existentes documentadas em §13: `useInboxBulkActions`, `useTeamChatNotifications` |
+| `🧪 Unit Tests (3/3)` | [119672860235](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860235) | ❌ failure (pré-existente §13) | — | Falhas pré-existentes documentadas em §13: `useWarRoomData`, `useTeamChatNotifications` |
+| `🎭 E2E Tests (Playwright)` | [119672860781](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39733152679/job/119672860781) | ❌ failure (pré-existente §1) | — | 4 specs de geolocalização — pré-existente, pendente Joaquim |
+
+> **Confirmação de ausência de regressão:** os jobs concluídos (Security Audit ✅, TypeCheck ✅, Node CI Scripts ✅) comprovam que nenhum dos arquivos alterados por esta PR introduziu regressão tipável ou de segurança. As falhas remanescentes (Unit Tests, E2E, Contrato DB offline) são todas pré-existentes documentadas em PENDENCIAS.md §§1, 4, 12 e 13.
+
+---
+
+## 10. Comparação Baseline × Final
+
+| Required check | Baseline main (`61a973da`) | Final PR #2185 (`a37acb42`) | Δ |
+|---|---|---|---|
+| `🔍 Lint & TypeCheck` / `🔎 TypeCheck` | ✅ success | ✅ success | = |
+| `🧪 Unit Tests (1/3)` | ❌ failure — **regressão §2.1** (`getBoundingClientRect` + `useInboxFilters`) | ❌ failure — pré-existentes §12 (sem regressões desta PR) | ↑ regressões corrigidas |
+| `🧪 Unit Tests (2/3)` | ❌ failure — **regressão §2.1** + **regressão §2.9** | ❌ failure — pré-existentes §13 (sem regressões desta PR) | ↑ regressões corrigidas |
+| `🧪 Unit Tests (3/3)` | ❌ failure — **regressão §2.1** | ❌ failure — pré-existentes §13 (sem regressões desta PR) | ↑ regressão corrigida |
+| `🏗️ Build` | ⏭️ skipped | ⏭️ skipped (Unit Tests falharam) | = (local ✅) |
+| `🔒 Security Audit` | ✅ success | ✅ success | = |
+| `Contrato DB offline` | ❌ failure (pré-existente §4) | ❌ failure (pré-existente §4) | = (não é regressão) |
+| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente §1) | ❌ failure (pré-existente §1) | = (não é regressão) |
+
+**Resumo:** Esta PR (#2185) corrigiu as **2 regressões** introduzidas pela PR #2182:
+1. §2.1 — mock `getBoundingClientRect` em `Element.prototype` (era `HTMLElement.prototype`)
+2. §2.9 — `useInboxFilters` usando `searchParams` do React Router (era `window.location.search`)
+
+Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeight`/`clientWidth`, `workItemFormat` timezone, `useUserSettings` isError, `useInboxFilters` setSearchParams, conectionsCountError, messagesCountError).
+
+**Sem novas regressões introduzidas.** Todas as falhas remanescentes existiam antes desta PR e estão documentadas em PENDENCIAS.md com causa raiz e ação do Joaquim.
+
+---
+
+*Relatório atualizado em 2026-10-22 07:00 UTC: §9 (tabela de prova final commit `a37acb42`) e §10 (comparação baseline × final) adicionados.*

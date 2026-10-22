@@ -594,5 +594,33 @@ PR #2185. A falha é na `main` após o merge da PR #2182 e é independente desta
 
 ---
 
-*Documento atualizado em 2026-10-22 08:00 UTC.*
-*Correções aplicadas nesta sessão: ver RELATORIO_CI.md. Regressão `useInboxFilters` corrigida neste push.*
+---
+
+## 15. `copilot-pull-request-reviewer` — nova instância de falha por quota (run `39732366255`)
+
+**Workflow:** `copilot-pull-request-reviewer` (check integrado ao CI/CD, não required)
+**Run:** [39732366255](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39732366255), job [119670091035](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39732366255/job/119670091035)
+**Commit:** `a37acb42` (PR #2185)
+**Status:** ❌ `conclusion=failure` (não é required check — não bloqueia merge)
+
+### Causa raiz
+
+Idêntica ao §7: quota de Copilot esgotada na conta `adm01-debug`.
+
+```
+SessionModelError: You've reached your additional usage limit for your plan.
+statusCode: 402
+errorCode: "quota"
+```
+
+**Não é regressão desta PR** — é limitação de billing/plano recorrente.
+
+### O que o Joaquim precisa fazer
+
+Ver §7 — mesma ação: acessar https://github.com/settings/copilot/features para verificar
+e adicionar créditos. Após recarregar, o check passará automaticamente na próxima run.
+
+---
+
+*Documento atualizado em 2026-10-22 06:25 UTC.*
+*Correções aplicadas nesta sessão: ver RELATORIO_CI.md. §15 adicionado: copilot-pull-request-reviewer run 39732366255.*
