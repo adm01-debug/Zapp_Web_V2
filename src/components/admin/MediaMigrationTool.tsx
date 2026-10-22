@@ -56,6 +56,7 @@ export function MediaMigrationTool() {
   const [result, setResult] = useState<MigrationResult | null>(null);
   const [edgeError, setEdgeError] = useState<EdgeError | null>(null);
   const [history, setHistory] = useState<AuditEntry[]>([]);
+  const [historyError, setHistoryError] = useState(false);
   const [profiles, setProfiles] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -76,12 +77,17 @@ export function MediaMigrationTool() {
     }
 
     async function loadHistory() {
-      const { data: logs } = await supabase
+      const { data: logs, error: logsError } = await supabase
         .from('audit_logs')
         .select('id, user_id, created_at, details')
         .eq('action', 'media_migration')
         .order('created_at', { ascending: false })
         .limit(10);
+
+      if (logsError) {
+        setHistoryError(true);
+        return;
+      }
 
       if (!logs || logs.length === 0) return;
 
@@ -116,6 +122,11 @@ export function MediaMigrationTool() {
         const err = error as EdgeError;
         setEdgeError(err);
         toast.error(err.message ?? 'Erro ao executar migração');
+        return;
+      }
+
+      if (!data) {
+        toast.info('Nenhuma mídia para migrar');
         return;
       }
 
@@ -277,21 +288,28 @@ export function MediaMigrationTool() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {history.length === 0 ? (
+          {historyError ? (
+            <p className="text-sm text-destructive">Erro ao carregar histórico de migrações.</p>
+          ) : history.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma migração registrada.</p>
           ) : (
             <div className="space-y-2">
               {history.map((entry) => {
                 const d = entry.details;
                 const author = entry.user_id ? (profiles.get(entry.user_id) ?? entry.user_id) : 'Sistema';
+                const when = new Date(entry.created_at).toLocaleString('pt-BR');
                 return (
                   <div key={entry.id} className="flex flex-wrap items-center gap-3 p-2 rounded border text-xs">
                     <span className="font-medium">{author}</span>
+                    <span className="text-muted-foreground">{when}</span>
                     {d && (
                       <>
                         <span>{d.processed} processados</span>
                         <span className="text-success">{d.migrated} migrados</span>
                         {d.failed > 0 && <span className="text-destructive">{d.failed} falhas</span>}
+                        {d.ignored != null && d.ignored > 0 && (
+                          <span className="text-muted-foreground">{d.ignored} ignorados</span>
+                        )}
                       </>
                     )}
                   </div>
