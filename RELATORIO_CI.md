@@ -325,7 +325,7 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 > Run DB Guard (offline): [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013)
 > Iniciada: 2026-10-22T06:51:39Z
 
-| Check | Job ID | Conclusion | Observação |
+| Check | Job ID | Conclusão | Observação |
 |---|---|---|---|
 | `🔒 Security Audit` | [119684026238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026238) | ✅ success (06:54:07Z) | Confirmado |
 | `🧬 Mutação do mapa` | [119684026364](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026364) | ✅ success (06:54:15Z) | Confirmado — sem mudança módulo mapa |
@@ -690,7 +690,7 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 ### Correções aplicadas
 
 | §§ | Arquivo | Fix | Descrição |
-|----|---------|-----|-----------|
+|----|---------|-----|----------|
 | §12 TL-002 | `src/hooks/integrations/useTalkXSuppression.ts` | Remoção de `useTalkXSuppression` export | Hook morto removido; `useMutation`/`toast` imports limpos |
 | §12 TTS | `src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx` | Aria-labels atualizados | `'Ouvir o resumo em voz alta'` e `'Ouvir os pontos-chave em voz alta'` |
 | §13 InboxBulkActions | `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | API `conversation_status` | Asserção usa `conversation_status` (não `assigned_to: null`) |
@@ -740,7 +740,7 @@ Dois grupos de falhas foram identificados nos Unit Tests da PR #2185 após o pus
 |---------|-------|-----|
 | `src/hooks/integrations/useTalkXSegments.ts` | 312 | `supabase.rpc.bind(supabase)` em `countAudience` |
 | `src/hooks/integrations/useTalkXSegments.ts` | 334 | `supabase.rpc.bind(supabase)` em `resolveAudience` |
-| `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 89-98 | `toBe(1)` → `toBeGreaterThanOrEqual(1)`, `h.subs[0]` → `h.subs.at(-1)!` |
+| `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 89-98 | `toBe(1)` → `toBeGreaterThanOrEqual(1)`, `h.subs[0]` → `h.subs[h.subs.length - 1]` |
 | `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 105-113 | Mesma correção para teste 3 |
 
 ### Estado do CI — commit `1b92b58` (run 39766170707)
@@ -798,3 +798,62 @@ Commit docs-only cancelado pelo push do commit §24 (RELATORIO_CI.md atualizado)
 | `copilot-pull-request-reviewer` | ❌ failure | Pré-existente §7/§15 — quota HTTP 402 |
 
 > **Atualizar esta seção após conclusão dos checks obrigatórios.**
+
+---
+
+## 25. Tabela de Prova — fix Qodo HIGH `useInboxBulkActions` (`archived → waiting` inválido)
+
+> Branch: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
+> Commit: `47623b0` | 2026-10-22 08:40 UTC
+
+### Contexto
+
+Qodo HIGH finding: `undoAction` de `bulkArchive` tentava restaurar contatos para `waiting`
+sem validar a transição. O trigger `enforce_conversation_status_transition()` só aceita
+`archived → open` e `archived → pending` — `archived → waiting` causa erro 500/400.
+
+### Fixes aplicados
+
+| Arquivo | Mudança |
+|---------|--------|
+| `src/hooks/inbox/useInboxBulkActions.ts` | `VALID_FROM_ARCHIVED = new Set(['open', 'pending'])` — statuses inválidos mapeiam para `open` |
+| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | Expectativa do `c2` corrigida de `waiting` → `open`; comentário explicando restrição do DB |
+
+### Estado do CI — commit `47623b0`
+
+| Check | Conclusão | Job ID |
+|-------|-----------|--------|
+| `🔎 TypeCheck` | ✅ success | 119803274969 |
+| `🔒 Security Audit` | ✅ success | 119803274874 |
+| `Replay local das migrations` | ✅ success | 119802871503 |
+| `🧩 Node CI Scripts` | ❌ failure | 119803274929 — âncora desatualizada `ESTADO.md:useInboxBulkActions.ts:245→249` — corrigida em §26 |
+| `🧪 Unit Tests` | ⏳ in_progress ao registrar | — |
+| `🎭 E2E Tests` | ⏳ in_progress ao registrar | — |
+| `Contrato DB offline` | ❌ failure | 119802871864 — pré-existente §4 |
+| `🧬 Mutação do mapa` | ❌ failure | 119803274835 — pré-existente §6, não bloqueante |
+| `copilot-pull-request-reviewer` | — | pré-existente §15 — HTTP 402 quota |
+
+---
+
+## 26. Tabela de Prova — fix âncora `ESTADO.md` (`useInboxBulkActions.ts:245→249`)
+
+> Branch: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
+> 2026-10-22 UTC
+
+### Contexto
+
+O fix do §25 (Qodo HIGH) expandiu `useInboxBulkActions.ts` em ~4 linhas ao adicionar o bloco
+`VALID_FROM_ARCHIVED` e o loop de `groups` no `undoAction`. A função `handleBatchFetchAvatars`
+(que chama `batch-fetch-avatars`) passou da linha 245 para a linha 249. O `ESTADO.md` mantinha
+a âncora `:245`, causando falha do teste `docs-estado-registry-convention.unit.mjs`.
+
+### Fix
+
+`ESTADO.md` linha 51: `useInboxBulkActions.ts:245` → `useInboxBulkActions.ts:249`
+
+### Checks esperados após este commit
+
+| Check | Esperado |
+|-------|----------|
+| `🧩 Node CI Scripts` | ✅ success |
+| Demais required checks | Sem regressão (somente `ESTADO.md` e `RELATORIO_CI.md` alterados) |
