@@ -2,17 +2,9 @@
   "total_prs": 30,
   "analisados": 30,
   "bloqueados": 30,
-  "aguardar_ci": 0,
-  "aprovados": 0,
   "mergeados": 0,
-  "merge_shas": [],
-  "motivo_bloqueio_universal": "Todos os 30 PRs abertos tocam arquivos em .github/workflows/ — regra operacional da sessão bloqueia automaticamente qualquer PR que toque este diretório.",
-  "distribuicao_bloqueios": {
-    "template_workflows_github": 14,
-    "remove_alien_workflows": 1,
-    "fix_ci_workflows": 3,
-    "docs_com_workflows_herdados": 5,
-    "outros_com_workflows": 7
-  },
-  "atualizado_em": "2026-10-22T18:30:00Z"
+  "pendentes": 0,
+  "criterios_avaliados": true,
+  "data_conclusao": "2026-10-22",
+  "nota": "Todas as 30 PRs tocam .github/workflows/ e foram bloqueadas pela regra operacional. Critérios 1-4 avaliados com evidência em cada dossiê."
 }
