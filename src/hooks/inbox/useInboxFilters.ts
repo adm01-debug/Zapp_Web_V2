@@ -108,7 +108,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     const typeParam = searchParams.get('type');
-    const contactType = typeParam && typeParam !== 'all' ? typeParam : null;
+    const contactType = normalizeContactType(typeParam);
     return {
       chipTab,
       ...tabsForChip(chipTab),
@@ -158,8 +158,8 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    setSearchParams(() => {
-      const params = new URLSearchParams(window.location.search);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
       if (value && value !== 'all') {
         params.set('type', value);
       } else {
