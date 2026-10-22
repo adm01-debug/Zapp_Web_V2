@@ -1,615 +1,596 @@
 [
   {
-    "numero": 2186,
-    "titulo": "fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD",
-    "branch": "claude/loving-lovelace-esc3l2",
-    "sha": "dd5ec6ac739588e1ef965b4435911b0113e10936",
-    "base_atual": true,
-    "tipo": "docs/audit",
-    "arquivos_principais": [
-      "PENDENCIAS.md",
-      "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
-      "auditoria-supabase/inventario/*.md",
-      "auditoria-supabase/propostas/*.sql"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
+    "numero": 2149,
+    "titulo": "docs(reconciliation): P053",
+    "branch": "claude/docs-p053-regressao-261021-0827",
+    "sha": "d78360c437f7621d9cf75aed0fec813e9f96906d",
+    "grupo": "A",
+    "valido": true,
+    "sem_regressao": false,
+    "ja_no_main": false,
+    "regra_ok": false,
     "veredicto": "CI-FALHA",
-    "motivo": "Unit Tests + Contrato DB offline: failure (SHA dd5ec6a)",
-    "pode_mergear": false
+    "pode_mergear": false,
+    "criterio_falha": [4],
+    "motivo_bloqueio": "Ancestor remove denoland/setup-deno do ci.yml, eliminando deno check + deno test sobre 201 arquivos .test.ts em supabase/functions/",
+    "evidencia": {
+      "arquivos_tocados_pr": ["docs/reconciliation/MASTER_LEDGER.json", "docs/reconciliation/PLAN_REGISTRY.json", "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json", "docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz", "docs/reconciliation/tasks/P053.json"],
+      "ci_yml_diff_removido": [
+        "-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5",
+        "-          deno-version: '2.9.5'",
+        "-          deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts",
+        "-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')"
+      ],
+      "fonte_evidencia": "git diff main..origin/claude/docs-p053-regressao-261021-0827 -- .github/workflows/ci.yml",
+      "deno_test_files": 201
+    }
+  },
+  {
+    "numero": 2151,
+    "titulo": "fix(ci): destravar workflows que falhavam antes de executar",
+    "branch": "fix/ci-workflows-vermelhos",
+    "sha": "0770f6b5ef",
+    "grupo": "A",
+    "valido": true,
+    "sem_regressao": false,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "CI-FALHA",
+    "pode_mergear": false,
+    "criterio_falha": [4],
+    "motivo_bloqueio": "Mesmo ancestor Deno que #2149 — remove denoland/setup-deno + deno test (201 arquivos supabase/functions/)",
+    "evidencia": {
+      "fonte_evidencia": "git diff --name-only main..origin/fix/ci-workflows-vermelhos (ci.yml aparece na lista)",
+      "deno_test_files": 201
+    }
+  },
+  {
+    "numero": 2152,
+    "titulo": "test(e2e): spec de toque 44px",
+    "branch": "claude/test-toque44-seletores-261021-0853",
+    "sha": "3eca130737",
+    "grupo": "A",
+    "valido": true,
+    "sem_regressao": false,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "CI-FALHA",
+    "pode_mergear": false,
+    "criterio_falha": [2, 4],
+    "motivo_bloqueio": "Remoção Deno (mesmo ancestor) + downgrade Playwright 1.64.1→1.63.0",
+    "evidencia": {
+      "fonte_evidencia": "git diff --name-only main..origin/claude/test-toque44-seletores-261021-0853 (ci.yml presente)",
+      "deno_test_files": 201
+    }
+  },
+  {
+    "numero": 2155,
+    "titulo": "fix(ci): destrava workflows que falhavam antes de executar",
+    "branch": "fix/ci-verde-261021",
+    "sha": "6493401",
+    "grupo": "A",
+    "valido": true,
+    "sem_regressao": false,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "CI-FALHA",
+    "pode_mergear": false,
+    "criterio_falha": [4],
+    "motivo_bloqueio": "Mesmo ancestor Deno — remove denoland/setup-deno do ci.yml (201 arquivos .test.ts)",
+    "evidencia": {
+      "ci_yml_diff_removido": [
+        "-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5",
+        "-          deno-version: '2.9.5'",
+        "-          deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts",
+        "-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')"
+      ],
+      "fonte_evidencia": "git diff main..origin/fix/ci-verde-261021 -- .github/workflows/ci.yml",
+      "deno_test_files": 201,
+      "eslint_yml_na_branch": true,
+      "static_yml_na_branch": true,
+      "nota": "eslint.yml e static.yml nao existem na main (SHA 5a4632c) — heranca de ancestor anterior"
+    }
+  },
+  {
+    "numero": 2157,
+    "titulo": "Add Dependency Review Action workflow",
+    "branch": "adm01-debug-patch-1-2",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1, 4],
+    "motivo_bloqueio": "Workflow para stack nao usada + SHA pinning ausente",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/dependency-review.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2157"
+    }
+  },
+  {
+    "numero": 2159,
+    "titulo": "Add Bearer workflow for code scanning",
+    "branch": "adm01-debug-patch-1-3",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1, 4],
+    "motivo_bloqueio": "Bearer para PHP/Go — stack errada; secret BEARER_TOKEN inexistente",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/bearer.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2159"
+    }
+  },
+  {
+    "numero": 2160,
+    "titulo": "Add Hadolint workflow for Dockerfile linting",
+    "branch": "adm01-debug-patch-1-4",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Docker/Hadolint — projeto nao usa Docker; ./Dockerfile inexistente",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/hadolint.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2160"
+    }
+  },
+  {
+    "numero": 2161,
+    "titulo": "Add puppet-lint GitHub Actions workflow",
+    "branch": "adm01-debug-patch-1-5",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Puppet/Ruby — nao existe neste projeto TypeScript/Bun",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/puppet-lint.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2161"
+    }
+  },
+  {
+    "numero": 2162,
+    "titulo": "Add PHPMD workflow for PHP code analysis",
+    "branch": "adm01-debug-patch-1-6",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "PHP/PHPMD — projeto e TypeScript/Bun, sem PHP",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/phpmd.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2162"
+    }
+  },
+  {
+    "numero": 2163,
+    "titulo": "Add lintr workflow for R code analysis",
+    "branch": "adm01-debug-patch-1-7",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "R/lintr — projeto e TypeScript/Bun, sem R",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/lintr.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2163"
+    }
+  },
+  {
+    "numero": 2164,
+    "titulo": "Add GitHub Actions workflow for rust-clippy",
+    "branch": "adm01-debug-patch-1-8",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Rust/clippy — projeto e TypeScript/Bun, sem Rust",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/rust-clippy.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2164"
+    }
+  },
+  {
+    "numero": 2165,
+    "titulo": "Add PMD code scanning workflow",
+    "branch": "adm01-debug-patch-1-9",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Java/PMD — projeto e TypeScript/Bun, sem Java",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/pmd.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2165"
+    }
+  },
+  {
+    "numero": 2166,
+    "titulo": "Add GitHub Actions workflow for Deno",
+    "branch": "adm01-debug-patch-2",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Deno como runtime de app — projeto usa Bun 1.4.2, nao Deno",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/deno.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2166"
+    }
+  },
+  {
+    "numero": 2167,
+    "titulo": "Add GitHub Actions workflow for Node.js with Webpack",
+    "branch": "adm01-debug-patch-2-1",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Node.js/Webpack — projeto usa Bun/Vite, nao Node/Webpack",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/node.js.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2167"
+    }
+  },
+  {
+    "numero": 2168,
+    "titulo": "Add SLSA generic generator workflow",
+    "branch": "adm01-debug-patch-2-2",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "SLSA supply chain framework — nao configurado/aplicavel neste projeto",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/slsa-generic-generator.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2168"
+    }
+  },
+  {
+    "numero": 2169,
+    "titulo": "Add Node.js CI workflow for testing",
+    "branch": "adm01-debug-patch-2-3",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1, 3],
+    "motivo_bloqueio": "CI ja existe em ci.yml com Bun/Vitest; duplicata com stack errada",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/node.js.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2169"
+    }
+  },
+  {
+    "numero": 2170,
+    "titulo": "Add GitHub Actions workflow for npm package publishing",
+    "branch": "adm01-debug-patch-2-4",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Projeto nao publica pacote npm — e app front/edge, nao biblioteca",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/npm-publish.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2170"
+    }
+  },
+  {
+    "numero": 2171,
+    "titulo": "Add Docker publish workflow configuration",
+    "branch": "adm01-debug-patch-2-5",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Docker publish — projeto nao usa Docker para build de app",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/docker-publish.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2171"
+    }
+  },
+  {
+    "numero": 2172,
+    "titulo": "Add Docker Image CI workflow",
+    "branch": "adm01-debug-patch-2-6",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Docker Image CI — projeto nao usa Docker",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/docker-image.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2172"
+    }
+  },
+  {
+    "numero": 2173,
+    "titulo": "Add GitHub Actions workflow for npm publishing",
+    "branch": "adm01-debug-patch-2-7",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "npm publishing — projeto nao publica no npm",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/npm-publish.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2173"
+    }
+  },
+  {
+    "numero": 2174,
+    "titulo": "Add GitHub Actions workflow for Python package",
+    "branch": "adm01-debug-patch-2-8",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Python/pip — projeto e TypeScript/Bun, sem Python",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/python-package.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2174"
+    }
+  },
+  {
+    "numero": 2175,
+    "titulo": "Add GitHub Actions workflow for Python package with Conda",
+    "branch": "adm01-debug-patch-2-9",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Python/Conda — projeto e TypeScript/Bun, sem Python",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/python-package-conda.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2175"
+    }
+  },
+  {
+    "numero": 2176,
+    "titulo": "Add Django CI workflow",
+    "branch": "adm01-debug-patch-2-10",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Django/Python — projeto e TypeScript/Bun/React, sem Django",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/django.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2176"
+    }
+  },
+  {
+    "numero": 2177,
+    "titulo": "Add GitHub Actions workflow for Python package",
+    "branch": "adm01-debug-patch-2-11",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Python/pip — projeto e TypeScript/Bun, sem Python",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/python-publish.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2177"
+    }
+  },
+  {
+    "numero": 2178,
+    "titulo": "Add GitHub Super Linter workflow",
+    "branch": "adm01-debug-patch-2-12",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1, 3],
+    "motivo_bloqueio": "Super Linter generico duplica lint ja existente em ci.yml",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/super-linter.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2178"
+    }
+  },
+  {
+    "numero": 2179,
+    "titulo": "Add manual workflow for greeting",
+    "branch": "adm01-debug-patch-3",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Workflow demo/greeting sem valor para o projeto",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/manual.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2179"
+    }
+  },
+  {
+    "numero": 2181,
+    "titulo": "Create nextjs.yml",
+    "branch": "adm01-debug-patch-3-2",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [1],
+    "motivo_bloqueio": "Next.js — projeto usa Vite/React, nao Next.js",
+    "evidencia": {
+      "arquivo_tocado": ".github/workflows/nextjs.yml",
+      "fonte_evidencia": "github_list_pr_files PR #2181"
+    }
+  },
+  {
+    "numero": 2183,
+    "titulo": "chore(ci): remove workflows alienígenas",
+    "branch": "chore/remove-alien-workflows",
+    "sha": "",
+    "grupo": "B",
+    "valido": false,
+    "sem_regressao": true,
+    "ja_no_main": false,
+    "regra_ok": false,
+    "veredicto": "REJEITAR",
+    "pode_mergear": false,
+    "criterio_falha": [3],
+    "motivo_bloqueio": "Tenta deletar eslint.yml e static.yml que ja NAO existem na main (SHA 5a4632c87f7e) — PR sem efeito real",
+    "evidencia": {
+      "verificacao": "git ls-tree main .github/workflows/ — eslint.yml e static.yml ausentes",
+      "fonte_evidencia": "regras-de-negocio.md secao 3 + git ls-tree"
+    }
   },
   {
     "numero": 2185,
     "titulo": "docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main",
     "branch": "claude/kind-gates-87mwoe",
     "sha": "63b6e666bbe6e3d523df8de12ae5c268693569da",
-    "base_atual": false,
-    "tipo": "tests+source",
-    "arquivos_principais": [
-      "ESTADO.md",
-      "PENDENCIAS.md",
-      "RELATORIO_CI.md",
-      "src/hooks/**/*.ts",
-      "src/test/setup.ts",
-      "src/**/__tests__/*.test.ts(x)"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
+    "grupo": "C",
+    "valido": true,
+    "sem_regressao": false,
+    "ja_no_main": false,
+    "regra_ok": false,
     "veredicto": "CI-FALHA",
-    "motivo": "Unit Tests + Contrato DB offline: failure (SHA 63b6e66)",
-    "pode_mergear": false
+    "pode_mergear": false,
+    "criterio_falha": [2],
+    "motivo_bloqueio": "Apaga src/hooks/integrations/__tests__/useTalkXSuppression.test.ts (371 linhas, 21 testes VERDES verificados localmente)",
+    "evidencia": {
+      "arquivo_deletado": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+      "linhas": 371,
+      "testes_verdes": 21,
+      "verificacao_local": "bun run test -- src/hooks/integrations/__tests__/useTalkXSuppression.test.ts → 21 passed",
+      "fonte_evidencia": "analise-prs/baseline/tests.txt linha 28-30"
+    }
   },
   {
-    "numero": 2183,
-    "titulo": "chore(ci): remove workflows alienígenas eslint.yml e static.yml",
-    "branch": "chore/remove-alien-workflows",
-    "sha": "4c8172e07f1c9c01e2676bfcafa44bd42446428c",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "eslint.yml/static.yml já não existem em main (inventário 15 workflows confirmado no SHA 5a4632c)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2181,
-    "titulo": "Create nextjs.yml",
-    "branch": "adm01-debug-patch-3-2",
-    "sha": "193c25a3e11652c273c6fe47ab98a47c33733698",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/nextjs.yml"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "nextjs.yml: projeto usa Vite/React, não Next.js",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2179,
-    "titulo": "Add manual workflow for greeting",
-    "branch": "adm01-debug-patch-3",
-    "sha": "c97406b805718037e139e6539cdc2725257f6264",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Greeting workflow: sem valor de negócio (hello world template)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2178,
-    "titulo": "Add GitHub Super Linter workflow",
-    "branch": "adm01-debug-patch-2-12",
-    "sha": "de69811641a8d08745ed81ada69035306749f374",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "GitHub Super Linter: template genérico; conflita com CI existente; não SHA-pinned",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2177,
-    "titulo": "Add GitHub Actions workflow for Python package",
-    "branch": "adm01-debug-patch-2-11",
-    "sha": "ebbb1149d84fde2e4ae98f9b316da83a445e7c69",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Python package: sem Python no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2176,
-    "titulo": "Add Django CI workflow for testing on multiple Python versions",
-    "branch": "adm01-debug-patch-2-10",
-    "sha": "8258afa1bc8dac27c6ae2dc53c2f42964d48fcae",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Django CI: sem Django/Python no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2175,
-    "titulo": "Add GitHub Actions workflow for Python package with Conda",
-    "branch": "adm01-debug-patch-2-9",
-    "sha": "6ff158b84de24591abcd8a60079ae958cc3b8f3c",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Python+Conda: sem Python no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2174,
-    "titulo": "Add GitHub Actions workflow for Python package publishing",
-    "branch": "adm01-debug-patch-2-8",
-    "sha": "e6d3a6e5c4a61a946f3be7182c50b37ef89113a5",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Python package publishing: sem Python no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2173,
-    "titulo": "Add GitHub Actions workflow for npm publishing",
-    "branch": "adm01-debug-patch-2-7",
-    "sha": "4bbb6dc8c574d1842bf819bdd94fa4497ad1c011",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "npm publishing: projeto não é pacote npm",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2172,
-    "titulo": "Add Docker Image CI workflow",
-    "branch": "adm01-debug-patch-2-6",
-    "sha": "82799384d1e9c317faec26b55c20d86a0fdff938",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Docker Image CI: sem Dockerfile no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2171,
-    "titulo": "Add Docker publish workflow configuration",
-    "branch": "adm01-debug-patch-2-5",
-    "sha": "31e1479d84f319f0b22a897280fd5b6014bfff75",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Docker publish: sem Dockerfile no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2170,
-    "titulo": "Add GitHub Actions workflow for npm package publishing",
-    "branch": "adm01-debug-patch-2-4",
-    "sha": "91c0b026c57f7035b8803ec03bb01d6c807071f0",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "npm package publishing: projeto não é pacote npm",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2169,
-    "titulo": "Add Node.js CI workflow for testing",
-    "branch": "adm01-debug-patch-2-3",
-    "sha": "7041c6420636d3f374b720376e934afea89f1998",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Node.js CI com npm: projeto usa Bun, não npm",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2168,
-    "titulo": "Add SLSA generic generator workflow",
-    "branch": "adm01-debug-patch-2-2",
-    "sha": "3f1203ce8155d818eecff09b6fda601adcb3d912",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "SLSA generic generator: sem relevância para o projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2167,
-    "titulo": "Add GitHub Actions workflow for Node.js with Webpack",
-    "branch": "adm01-debug-patch-2-1",
-    "sha": "f7db833cb103dded89301641f00726faacbd9bde",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "Node.js+Webpack: projeto usa Bun/Vite, não npm/Webpack",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2166,
-    "titulo": "Add GitHub Actions workflow for Deno",
-    "branch": "adm01-debug-patch-2",
-    "sha": "c4679415819b41548ab15bd0d8f5c1c3e47c4ca3",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "deno.yml: projeto usa Bun, não Deno (package.json, bun.lockb)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2165,
-    "titulo": "Add PMD code scanning workflow",
-    "branch": "adm01-debug-patch-1-8",
-    "sha": "421fbb4859589deb4e44fa804539642cb2cb495a",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "pmd.yml: sem Java (referencia src/main/java); sem Java no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2164,
-    "titulo": "Add GitHub Actions workflow for rust-clippy analysis",
-    "branch": "adm01-debug-patch-1-7",
-    "sha": "69d4cbf37c9130a729959d7f620abc991447fa6f",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "rust-clippy.yml: sem código Rust no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2163,
-    "titulo": "Add lintr workflow for R code analysis",
-    "branch": "adm01-debug-patch-1-6",
-    "sha": "7c0100ba95363cba44d65865645bf8a6d6bf1c5f",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "lintr.yml: sem código R no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2162,
-    "titulo": "Add PHPMD workflow for PHP code analysis",
-    "branch": "adm01-debug-patch-1-5",
-    "sha": "6cd723f6fd9813ad38bbdf50cde4645edd87dd0e",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "phpmd.yml: sem PHP no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2161,
-    "titulo": "Add puppet-lint GitHub Actions workflow",
-    "branch": "adm01-debug-patch-1-4",
-    "sha": "d5b253d025518e4b500961b0219b9214112df164",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "puppet-lint.yml: sem Puppet no projeto",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2160,
-    "titulo": "Add Hadolint workflow for Dockerfile linting",
-    "branch": "adm01-debug-patch-1-3",
-    "sha": "c0109c4fccd6717795c8143936e62d4f06fe5523",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "hadolint.yml: sem Dockerfile no projeto (TypeScript/Bun/Vite)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2159,
-    "titulo": "Add Bearer workflow for code scanning",
-    "branch": "adm01-debug-patch-1-2",
-    "sha": "254cf575cc31c288ad406ead14391f273a6934b4",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "bearer.yml: secret BEARER_TOKEN inexistente",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2157,
-    "titulo": "Add Dependency Review Action workflow",
-    "branch": "adm01-debug-patch-1",
-    "sha": "3ad95d829b5605d1ff4e6978c4b2de537f17240d",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "REJEITAR",
-    "motivo": "sha_pinning_required=true: refs não-SHA (actions/checkout@v4, dependency-review-action@v4)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2155,
-    "titulo": "fix(ci): destrava workflows que falhavam antes de executar",
-    "branch": "fix/ci-verde-261021",
-    "sha": "64934014e107190fc83f304c291a2faf35308b7b",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
+    "numero": 2186,
+    "titulo": "fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD",
+    "branch": "claude/loving-lovelace-esc3l2",
+    "sha": "dd5ec6ac739588e1ef965b4435911b0113e10936",
+    "grupo": "D",
+    "valido": true,
+    "sem_regressao": false,
+    "ja_no_main": false,
+    "regra_ok": false,
     "veredicto": "CI-FALHA",
-    "motivo": "Build: skipped; padrão idêntico #2149/#2151/#2152 — ancestry comum remove Deno do CI (SHA 64934014)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2152,
-    "titulo": "test(e2e): spec de toque 44px volta ao verde com seletores do app real",
-    "branch": "claude/test-toque44-seletores-261021-0853",
-    "sha": "3eca130737aa49024286ab3a96be626897da6e35",
-    "base_atual": null,
-    "tipo": "e2e-test",
-    "arquivos_principais": [
-      "e2e/a11y-toque-44px.spec.ts",
-      "e2e/fixtures/mapa-mocks.ts"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "CI-FALHA",
-    "motivo": "Unit Tests (x3) + Contrato DB offline + E2E Tests: failure (SHA 3eca130)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2151,
-    "titulo": "fix(ci): destravar workflows que falhavam antes de executar",
-    "branch": "fix/ci-workflows-vermelhos",
-    "sha": "0770f6b5ef6f1f0df653ffe5c9dd479955673848",
-    "base_atual": null,
-    "tipo": "workflows",
-    "arquivos_principais": [
-      ".github/workflows/"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "CI-FALHA",
-    "motivo": "Unit Tests (x3) + Contrato DB offline: failure, E2E: cancelled (SHA 0770f6b)",
-    "pode_mergear": false
-  },
-  {
-    "numero": 2149,
-    "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)",
-    "branch": "claude/docs-p053-regressao-261021-0827",
-    "sha": "d78360c437f7621d9cf75aed0fec813e9f96906d",
-    "base_atual": null,
-    "tipo": "docs",
-    "arquivos_principais": [
-      "docs/reconciliation/MASTER_LEDGER.json",
-      "docs/reconciliation/PLAN_REGISTRY.json",
-      "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json",
-      "docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz",
-      "docs/reconciliation/tasks/P053.json"
-    ],
-    "toca_workflows": true,
-    "ddl_destrutivo": false,
-    "valido": null,
-    "regra_negocio_ok": null,
-    "ci_falha_nova": null,
-    "ci_falha_preexistente": null,
-    "veredicto": "CI-FALHA",
-    "motivo": "Unit Tests (x3) + Contrato DB offline + E2E Tests: failure (SHA d78360c)",
-    "pode_mergear": false
+    "pode_mergear": false,
+    "criterio_falha": [2],
+    "motivo_bloqueio": "Migration 20261026100300_dept_invites_ownership_fix.sql contem DROP POLICY IF EXISTS x2 — DDL destrutivo proibido",
+    "evidencia": {
+      "arquivo_migration": "supabase/migrations/20261026100300_dept_invites_ownership_fix.sql",
+      "ddl_destrutivo": [
+        "DROP POLICY IF EXISTS \"Users can view their own department invites\" ON department_invites",
+        "DROP POLICY IF EXISTS \"Admins can manage department invites\" ON department_invites"
+      ],
+      "ultima_migration_main": "20261026090300_revoke_multiplix_anon_public_execute.sql",
+      "fonte_evidencia": "github_get_pr_diff PR #2186 — supabase/migrations/20261026100300"
+    }
   }
 ]
