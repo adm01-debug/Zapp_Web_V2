@@ -214,10 +214,14 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         undoAction: async () => {
           // Agrupado por valor anterior: um update por status distinto, não um
           // laço de um update por contato.
+          // archived → somente open/pending são transições válidas no DB.
+          // waiting/resolved/closed mapeiam para open para preservar a transição.
+          const VALID_FROM_ARCHIVED = new Set(['open', 'pending']);
           const groups = new Map<string, string[]>();
           for (const id of targetIds) {
-            const status = previousStatus.get(id);
-            if (status === undefined) continue;
+            const raw = previousStatus.get(id);
+            if (raw === undefined) continue;
+            const status = VALID_FROM_ARCHIVED.has(raw) ? raw : 'open';
             const ids = groups.get(status) ?? [];
             ids.push(id);
             groups.set(status, ids);

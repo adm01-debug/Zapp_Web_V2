@@ -81,7 +81,10 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  // contacts.lead_origin nunca é gravada pelos fluxos do Zapp (a origem fica
+  // só na projeção em memória, não na linha do banco) → filtrar por ela devolve
+  // sempre vazio; fica "em breve" até existir escrita real.
+  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico', comingSoon: true },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
@@ -198,6 +201,11 @@ function ruleToFilter(r: SegmentRule): string | null {
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  // Campos da ponte Singu: o valor vive em companies/company_addresses, não em
+  // public.contacts — não existem como coluna PostgREST e chegam ao motor via
+  // p_contact_ids pré-resolvidos. Falha fechada até o front implementar a
+  // pré-resolução; sem null aqui, um filtro inválido chegaria ao servidor.
+  if (r.field === 'real_sector' || r.field === 'real_uf') return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -258,7 +266,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})` ));
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
@@ -276,13 +284,32 @@ type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise
 const AUDIENCE_RPC_PAGE_LIMIT = 1000;
 
 /**
+ * Campos que vivem na ponte Singu e chegam ao motor via `p_contact_ids`
+ * pré-resolvidos — não podem ser enviados diretamente na regra porque não
+ * existem como coluna em `public.contacts`.
+ * Enquanto o front não implementar a pré-resolução, ambas as funções de
+ * audiência rejeitam de forma explícita para não enviar um payload sem essas
+ * regras (o que devolveria MAIS contatos do que o pedido).
+ */
+function assertNoSinguFields(rules: SegmentRules | null | undefined): void {
+  for (const group of (rules?.groups ?? [])) {
+    for (const rule of group.rules) {
+      if (rule.field === 'real_sector' || rule.field === 'real_uf') {
+        throw new Error(`${rule.field} requer pré-resolução via p_contact_ids antes de chamar o motor`);
+      }
+    }
+  }
+}
+
+/**
  * X017 — a contagem do público é decidida no servidor pela RPC
  * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do
  * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  assertNoSinguFields(rules);
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -303,7 +330,8 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  assertNoSinguFields(rules);
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;

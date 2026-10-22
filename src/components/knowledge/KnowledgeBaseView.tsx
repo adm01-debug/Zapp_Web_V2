@@ -30,7 +30,7 @@ const MOTIVO_FALHA = 'Falha no processamento: não foi possível extrair o texto
 export function KnowledgeBaseView() {
   // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
   const prefersReducedMotion = useReducedMotion();
-  const { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
+  const { articles, files, loading, error, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
   // Trava por arquivo: o `ref` barra o segundo clique no MESMO botão antes do
   // re-render (dois cliques no mesmo tick); o estado só pinta o `aria-busy`.
   // Linhas diferentes seguem livres — a ação é por arquivo.
@@ -102,6 +102,24 @@ export function KnowledgeBaseView() {
     const matchesSearch = !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.content.toLowerCase().includes(search.toLowerCase());
     return matchesSearch && (selectedCategory === 'all' || a.category === selectedCategory);
   });
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full w-full min-w-0">
+        <PageHeader title="Base de Conhecimento" subtitle="Treine a IA com documentos e artigos da sua empresa" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+          <AlertCircle className="w-10 h-10 text-destructive opacity-70" />
+          <div className="text-center">
+            <p className="font-semibold text-sm text-foreground">Falha ao carregar a base de conhecimento</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm">{error}</p>
+          </div>
+          <Button variant="outline" className="gap-2" onClick={() => void fetchData()}>
+            <RefreshCw className="w-4 h-4" /> Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full w-full min-w-0">
