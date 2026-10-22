@@ -292,5 +292,36 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
-*Documento atualizado em 2026-10-21.*
+---
+
+## 8. `git push` bloqueado pelo auto mode — commit `ca80a91` pendente
+
+**Contexto:** o commit `ca80a91` está pronto localmente com as correções de CI desta sessão:
+- `src/integrations/supabase/types.ts` — restaurado com 13.045 linhas e view `team_message_read_state` (corrige falha de TypeCheck em `contratosModulo.test.ts`)
+- `RELATORIO_CI.md` — atualizado com evidências dos runs
+- `PENDENCIAS.md` — este arquivo
+
+**Bloqueio:** o auto mode da sessão Claude Cloud bloqueia `git push` com erro:
+```
+Permission denied. Reason: [Auto-Mode Bypass]
+```
+
+**O que o Joaquim precisa fazer:**
+
+```bash
+# Na WSL, dentro do repo:
+git push -u origin claude/kind-gates-87mwoe
+```
+
+Isso vai empurrar o commit `ca80a91` para o GitHub e disparar novo CI. O `types.ts` correto (399 KB) não pode ser enviado pelo MCP `github_push_files` porque a ferramenta requer o conteúdo inline e o limite de leitura do Read tool é 256 KB.
+
+**Depois do push:**
+- TypeCheck deve passar (view `team_message_read_state` presente)
+- Unit Tests — flaky `ChatMessagesArea` permanece (§5, pré-existente)
+- Contrato DB offline — DASH-091/092 permanece (§4, pré-existente)
+- E2E — geolocalização permanece (§1, pré-existente)
+
+---
+
+*Documento atualizado em 2026-10-22.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
