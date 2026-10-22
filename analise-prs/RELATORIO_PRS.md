@@ -2,8 +2,37 @@
 
 **Data:** 2026-10-22  
 **Main SHA:** `5a4632c87f7e233fe62e830443f8b0eddf3e1a72`  
-**Branch de trabalho:** `claude/busy-cannon-40szm9` (commit `679c451ee`)  
+**Branch de trabalho:** `claude/busy-cannon-40szm9` (commit `c68a8e590`)  
 **Analista:** Claude Sonnet 4.6 — sessão `3677075d`
+
+---
+
+## META — RESUMO DE ENTREGA
+
+| Métrica | Valor |
+|---|---|
+| **Total de PRs abertas** | 30 |
+| **Total analisadas** | 30 |
+| **CI-FALHA** (válidas, bloqueadas por CI vermelho na main) | 6 |
+| **REJEITAR** (conteúdo inválido para este projeto) | 24 |
+| **MERGEADAS nesta sessão** | **0** |
+
+**Por que 0 merges:** O bloqueio é estrutural e pré-existente — ver seção "BLOQUEIO ESTRUTURAL" abaixo. Nenhuma das 30 PRs causou as falhas na main; elas existem desde pelo menos 2026-10-17 conforme logs de CI.
+
+**Worktrees:** nenhum criado nesta sessão (`git worktree list` = apenas `/home/user/Zapp_Web_V2`).
+
+**Outras escritas no GitHub:** nenhuma (zero push em main, zero fechar/comentar/labeling de PR, zero mudança de configuração).
+
+**Arquivos entregues:**
+- `analise-prs/baseline/build.txt` — baseline build da main
+- `analise-prs/baseline/lint.txt` — baseline lint da main
+- `analise-prs/baseline/typecheck.txt` — baseline typecheck da main
+- `analise-prs/baseline/tests.txt` — 86 arquivos de teste com falha nos 3 shards (jobs 119760268054/267990/268115)
+- `analise-prs/regras-de-negocio.md` — 9 regras extraídas de CLAUDE.md e branch protection
+- `analise-prs/prs.json` — 30 PRs com veredito, critérios e motivo de bloqueio
+- `analise-prs/prs.csv` — 30 linhas CSV com mesmo conteúdo
+- `analise-prs/progresso.json` — progresso por PR
+- `analise-prs/dossies/PR-2149.md` ... `PR-2186.md` — 30 dossiês com diff 100% lido, merge test local, análise dos 4 critérios e veredito
 
 ---
 
