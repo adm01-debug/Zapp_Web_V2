@@ -8,10 +8,10 @@
       "CRITICO": 0,
       "ALTO": 2,
       "MEDIO": 7,
-      "BAIXO": 8,
+      "BAIXO": 9,
       "INFO": 8,
-      "TOTAL": 25,
-      "nota": "contagem consolidada no RELATORIO (achados agrupados por achado principal); progresso.json rastreia 33 sub-achados internamente"
+      "TOTAL": 26,
+      "nota": "contagem consolidada no RELATORIO (achados agrupados por achado principal); progresso.json rastreia 34 sub-achados internamente"
     },
     "evidence_rerun": "2026-10-22T16:18 — 12 queries E1-E10+S5-01+integridade reexecutadas ao vivo",
     "pr_correcoes": "#2186",
@@ -131,7 +131,7 @@
     "descricao": "Vault, FKs sem indice, indices sem uso, indices duplicados",
     "evidencia": {
       "vault_secrets": 13,
-      "fks_sem_indice": 21,
+      "fks_sem_indice": 20,
       "indices_sem_uso": 20,
       "tabela_mais_fks": "talkx_campaigns (7 FKs sem indice)",
       "espaco_indices_sem_uso": "~9MB",
@@ -141,7 +141,7 @@
       "advisors_bloat_acima_threshold": "connection_health_logs 9.2%, email_threads 6.2% — abaixo de 20%"
     },
     "achados": [
-      {"id": "S4-01", "severidade": "MEDIO", "descricao": "21 FKs sem indice (talkx_campaigns=7 FKs)"},
+      {"id": "S4-01", "severidade": "MEDIO", "descricao": "20 FKs sem indice (talkx_campaigns=7 FKs; live 2026-10-22 — lista completa em inventario/tabelas-producao.md)"},
       {"id": "S4-02", "severidade": "BAIXO", "descricao": "1 indice duplicado: department_invites (code_key vs idx_dept_invites_code)"},
       {"id": "I2", "severidade": "INFO", "descricao": "20 indices nunca usados, ~9MB total (idx_messages_content_trgm 5MB maior)"}
     ]
@@ -392,16 +392,32 @@
       "secao": "integridade",
       "descricao": "50 FKs com ON DELETE NO ACTION (silencia violações de integridade referencial em vez de proteger): CASCADE=121, SET NULL=88, NO ACTION=50, RESTRICT=4",
       "evidencia": "SELECT c.confdeltype, COUNT(*) FROM pg_constraint c WHERE c.contype='f' AND c.connamespace='public'::regnamespace GROUP BY c.confdeltype — CASCADE:121, SET NULL:88, NO ACTION:50, RESTRICT:4"
+    },
+    {
+      "id": "B9",
+      "severidade": "BAIXO",
+      "secao": "S6/S8",
+      "descricao": "searchbox_alert_cron_secret referenciado no cron job searchbox-budget-alert mas ausente do Vault",
+      "evidencia": "SELECT count(*) FROM vault.secrets WHERE name = 'searchbox_alert_cron_secret' — 0; SELECT command FROM cron.job WHERE jobname='searchbox-budget-alert' confirma uso de decrypted_secrets",
+      "impacto": "cron envia x-cron-secret=NULL para edge searchbox-budget-alert; alerta de budget Searchbox nunca dispara"
     }
   ],
-  "evidence_rerun_timestamp": "2026-10-22T16:18 — 12 queries reexecutadas ao vivo nesta sessao (E1-E10 + S5-01-prosrc + novos achados integridade)",
+  "evidence_rerun_timestamp": "2026-10-22T16:18 — 12 queries reexecutadas ao vivo + B9 adicionado (searchbox_alert_cron_secret ausente do vault confirmado)",
+  "nao_verificados": [
+    {"id": "NV-01", "secao": "S11", "item": "Matriz RLS producao (tenant A x B)", "motivo": "BEGIN bloqueado pelo MCP (0A000)", "como_verificar": "Banco local com migrations + SET ROLE"},
+    {"id": "NV-02", "secao": "S10", "item": "Logs das edge functions 7 dias", "motivo": "query_logs nao expoe logs de edge functions via MCP", "como_verificar": "Dashboard Supabase -> Functions -> Logs"},
+    {"id": "NV-03", "secao": "S2-04", "item": "Edge functions deployadas x repo (78 dirs)", "motivo": "list_edge_functions indisponivel via MCP", "como_verificar": "supabase functions list --project-ref tnnnlkbymytvtqngbbqh"},
+    {"id": "NV-04", "secao": "S2-05", "item": "Replay de migrations do zero", "motivo": "Requer Postgres local com supabase start + replay completo", "como_verificar": "scripts/db-audit/replay-local.sh"},
+    {"id": "NV-05", "secao": "S8", "item": "VERIFICADO 2026-10-22", "motivo": "78 de 78 edge functions lidas (63 sessoes anteriores + 15 esta sessao: invite-user, create-user, revoke-auth-sessions, approve-password-reset, detect-new-device, talkx-scheduler, external-db-proxy, external-db-bridge, webauthn, ai-proxy, multiplix-send, talkx-send, gmail-send, send-scheduled-report, migrate-media-storage)", "como_verificar": "N/A — todas verificadas; nenhum achado novo"},
+    {"id": "NV-06", "secao": "S6", "item": "VERIFICADO 2026-10-22", "motivo": "causa_raiz = job startup timeout (infraestrutura Supabase) — todas as falhas agrupam nos mesmos timestamps: 11:45 em 21/10, 15:54 em 18/10, 19:15 em 17/10; nao e bug de codigo", "como_verificar": "N/A — causa confirmada via SELECT last_fail_msg FROM cron.job"}
+  ],
   "contagem_final_severidades_completa": {
     "CRITICO": 0,
     "ALTO": 2,
     "MEDIO": 8,
-    "BAIXO": 12,
+    "BAIXO": 13,
     "INFO": 11,
-    "TOTAL": 33,
+    "TOTAL": 34,
     "detalhe": {
       "ALTO": [
         "S3-01 (dept_invites DELETE USING true — E1 reexecutado: qual=true CONFIRMADO)",
@@ -426,6 +442,7 @@
         "B6 (vacuum-messages-post-expurgo 0 runs — schedule anual 2 set, ESPERADO)",
         "B7 (NOVO: 10 profiles sem auth.users, 5 mais de 30d, mais_antigo=2026-08-26)",
         "B8 (NOVO: 50 FKs ON DELETE NO ACTION — CASCADE:121, SET NULL:88, NO ACTION:50, RESTRICT:4)",
+        "B9 (NOVO: searchbox_alert_cron_secret ausente do vault — cron envia NULL para edge)",
         "S4-02 (indice duplicado department_invites)",
         "S2-03 (avatars ausente no schema public)",
         "S8-01 (zero usuarios com MFA)",

@@ -82,10 +82,42 @@ rate_limit_configs, saved_filters, scheduled_messages, sla_configurations, sla_r
 calls, campaign_ab_variants, campaign_contacts, campaigns, crm_sync_outbox,
 sicoob_contact_mapping
 
-## FKs sem índice (S4 — 10 no schema public)
+## FKs sem índice (S4 — 20 no schema public, live 2026-10-22)
+
+Query de referência:
+```sql
+SELECT c.conrelid::regclass AS tabela, a.attname AS coluna_fk
+FROM pg_constraint c
+JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+WHERE c.contype = 'f'
+  AND c.conrelid::regclass::text NOT LIKE 'pg_%'
+  AND NOT EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid = c.conrelid AND a.attnum = ANY(i.indkey))
+  AND c.conrelid::regclass::text IN (SELECT tablename::text FROM pg_tables WHERE schemaname = 'public')
+ORDER BY 1, 2;
+-- 20 linhas em 2026-10-22
+```
+
 | Tabela | FK |
 |--------|-----|
+| ai_model_prices | provider_id |
 | contacts | ai_projection_analysis_id |
-| team_conversations | direct_member_b |
-| talkx_campaigns | cancelled_by, consent_confirmed_by, launched_by, owner, paused_by, responsible_id |
-| conversation_events | (2 FKs — ver P003-fk-indexes-sem-indice.sql) |
+| conversation_events | from_queue_id |
+| conversation_events | to_queue_id |
+| department_invitations | used_by |
+| multiplix_delivery_items | block_id |
+| multiplix_delivery_items | recipient_id |
+| multiplix_delivery_items | voice_asset_id |
+| multiplix_dispatches | whatsapp_connection_id |
+| reminders | migrated_task_id |
+| talkx_campaigns | cancelled_by |
+| talkx_campaigns | consent_confirmed_by |
+| talkx_campaigns | launched_by |
+| talkx_campaigns | owner |
+| talkx_campaigns | paused_by |
+| talkx_campaigns | responsible_id |
+| talkx_campaigns | template_version_id |
+| talkx_links | created_by |
+| talkx_optout_keywords | created_by |
+| talkx_templates | current_version_id |
+
+**Nota histórica:** inventário anterior dizia 10 (stale). Contagem no ledger progresso.json dizia 21 (query anterior). Live em 2026-10-22 = **20** (query acima).
