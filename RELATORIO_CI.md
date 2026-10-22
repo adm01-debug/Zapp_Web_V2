@@ -1,4 +1,4 @@
-# RELATÓRIO DE CORREÇÃO DE CI — 2026-10-21
+# RELATÓRIO DE CORREÇÃO DE CI — 2026-10-21/22
 
 > Branch: `claude/kind-gates-87mwoe`
 > Sessão: https://claude.ai/code/session_0126osKYxzQ4gqSkMmm1KYRc
@@ -9,7 +9,7 @@
 
 | Workflows com falha (baseline) | Corrigidos nesta sessão | Pendentes (ver PENDENCIAS.md) |
 |-------------------------------|------------------------|-------------------------------|
-| 5 categorias distintas | 4 categorias | 7 itens documentados |
+| 5 categorias distintas | 5 categorias | 7 itens documentados |
 
 ---
 
@@ -86,13 +86,41 @@ O job "Validar gerador e manifesto de deployment" detectou o manifesto desatuali
 
 **Causa raiz:** O hook `useKnowledgeBase` não expunha estado `error`. O teste pré-existente adicionado à `main` em commit `025d025` esperava `result.current.error` ser uma string de erro ou `null`, mas recebia `undefined`.
 
-**Correção (commit `c92d5e1`):**
+**Correção (commit `81e38a27d`):**
 - Adicionado `const [error, setError] = useState<string | null>(null)` ao hook
 - `fetchData` chama `setError(null)` no início e `setError(error.message)` em caso de falha de RLS/rede
 - `error` incluído no return do hook
 - Erros de artigos/arquivos não mais silenciados como "base vazia"
 
 **Validação:** teste `useKnowledgeBase.erro.test.tsx` passa com o estado `error` agora exposto.
+
+---
+
+### 6. `🧩 Node CI Scripts` — Âncoras ESTADO.md desatualizadas (regressão introduzida por §5)
+
+**Causa raiz:** O fix do `useKnowledgeBase.ts` (commit `81e38a27d`) adicionou 13 linhas ao hook:
+- 1× `useState<string | null>(null)`
+- 1× `setError(null)` em `fetchData`
+- 5× bloco `articlesRes.error`
+- 5× bloco `filesRes.error`
+- 1× comentário `// t_1944d290`
+
+Isso deslocou as duas invocações de `ai-kb-ingest` no arquivo:
+- Linha `:126` → `:139` (primeiro invoke em `uploadFile`)
+- Linha `:197` → `:210` (segundo invoke em `reprocessFile`)
+
+O script `docs-estado-registry-convention.unit.mjs` (linha 154) verifica que cada âncora em `ESTADO.md` ainda cita o nome da edge naquela linha exata. Após o deslocamento, `:126` apontava para `}` (chave de fechamento), causando:
+```
+AssertionError [ERR_ASSERTION]: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:126 não cita `ai-kb-ingest`
+```
+
+**Correção (commit `d9e219ab`):**
+```diff
+-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
++| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:139` · `src/hooks/integrations/useKnowledgeBase.ts:210` |
+```
+
+**CI pendente:** run `39870329728` em fila no SHA `d9e219ab` (iniciado 2026-10-22T23:13:12Z).
 
 ---
 
@@ -109,17 +137,13 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 ### Verificações executadas localmente
 
 | Verificação | Método | Resultado |
-|------------|--------|-----------|
+|------------|--------|----------|
 | `bun install` | shell direto | ✅ dependências instaladas (sem erros) |
 | **TypeCheck** | ratchet `tsc --incremental --max-old-space-size=4096` | baseline=93, atual=89, removidas=4, **novas=0** ✅ |
 | **Lint** | ratchet ESLint | baseline=819, atual=819, mantidas=819, removidas=0, **novas=0** ✅ |
 | Migrations estrutura | `check-migration-drift.mjs` (estrutura local) | 1051 arquivos válidos ✅ |
-| **Build** | não executável localmente por OOM — confirmado via CI | ✅ job [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) `conclusion=success` no run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) (SHA `852350f`); mesmo código-fonte; confirmação adicional aguardada no run 39695347415 |
-| **Suíte completa** | não executável localmente por OOM — confirmada via CI com `--max-old-space-size=4096` | aguardando conclusão do run [39695347415](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415) (ver tabela abaixo) |
-
-> **Build evidência anterior:** run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238), job `🏗️ Build`, `conclusion=success` no SHA `852350f`. O mesmo código fonte está nos commits desta PR (nenhum arquivo de `src/` ou `supabase/functions/` foi alterado entre `852350f` e `43dd766` — apenas mocks de teste, migration-evidence.json, manifesto de deploy e documentação).
->
-> **Suíte completa via CI:** run 39695347415 disparado para SHA `43dd766`. Os 3 shards de Unit Tests estão em progresso com `--max-old-space-size=4096`. Conclusão aguardada (ver tabela abaixo).
+| **Build** | não executável localmente por OOM — confirmado via CI | ✅ job [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) `conclusion=success` no run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) (SHA `852350f`) |
+| **Suíte completa** | não executável localmente por OOM — confirmada via CI | ver tabela abaixo |
 
 ---
 
@@ -150,34 +174,15 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 
 ---
 
-## Prova de conclusão — SHA `cf895c6a` (run 39693077461) — referência histórica
+## CI pendente — SHA `d9e219ab` (run 39870329728)
 
-> Esta era a última execução COMPLETA antes do SHA `43dd766`. Mantida como referência.
-> TypeCheck e Security já verificados como `success` em ambos os runs.
+Run iniciado em 2026-10-22T23:13:12Z com a correção das âncoras ESTADO.md.
 
-| Check obrigatório | Link | conclusion final | completed_at |
-|------------------|------|-----------------|-------------|
-| `🔍 Lint & TypeCheck` (`🔎 TypeCheck`) | [job 119544144597](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144597) | ✅ `success` | 23:26 UTC |
-| `🔒 Security Audit` | [job 119544144363](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144363) | ✅ `success` | 23:24 UTC |
-| `🧪 Unit Tests (1/3)` | [job 119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` — flaky timing (PENDENCIAS.md §5) | 23:30 UTC |
-| `🧪 Unit Tests (2/3)` | [job 119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ❌ `failure` — flaky timing (PENDENCIAS.md §5) | 23:33 UTC |
-| `🧪 Unit Tests (3/3)` | [job 119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ❌ `failure` — flaky timing (PENDENCIAS.md §5) | 23:33 UTC |
-| `🏗️ Build` | [job 119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) | ⏭️ `skipped` — aguardava Unit Tests (PENDENCIAS.md §5c) | 23:33 UTC |
-| `Contrato DB offline` | [job 119543754154](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439/job/119543754154) | ❌ `failure` — DASH-091/092 (PENDENCIAS.md §4) | 23:26 UTC |
-| `🎭 E2E Tests (Playwright)` | [job 119544145435](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544145435) | ❌ `cancelled` — dependia de Unit Tests (PENDENCIAS.md §5b) | 23:34 UTC |
-
----
-
-## Checks não-obrigatórios — run 39693077461
-
-| Check | Link | conclusion | completed_at |
-|-------|------|-----------|-------------|
-| `🧩 Node CI Scripts` | [job 119544144508](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144508) | ✅ `success` | 23:27 UTC |
-| `Replay local das migrations` | [job 119543753846](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439/job/119543753846) | ✅ `success` | 23:25 UTC |
-| `Vercel Preview Comments` | [job 119543783121](https://github.com/adm01-debug/Zapp_Web_V2/runs/119543783121) | ✅ `success` | 23:23 UTC |
-| `🧬 Mutação do mapa (não bloqueante)` | [job 119544144624](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144624) | ❌ `failure` — baseline inválido (PENDENCIAS.md §6) | 23:24 UTC |
-| `copilot-pull-request-reviewer` | [job 119543802827](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693090642/job/119543802827) | ❌ `failure` — quota 402 (PENDENCIAS.md §7) | 23:30 UTC |
-| `Vercel Agent Review` | [job 119543752498](https://github.com/adm01-debug/Zapp_Web_V2/runs/119543752498) | ⚪ `neutral` — créditos Vercel insuficientes | 23:23 UTC |
+**Expectativa com base no commit:**
+- `🧩 Node CI Scripts` → ✅ âncoras `:126`/`:197` corrigidas para `:139`/`:210`
+- `🧪 Unit Tests` → ❌ mesmas falhas pré-existentes (código não alterado)
+- `Contrato DB offline` → ❌ mesma falha pré-existente (DASH-091/092)
+- `🏗️ Build` → depende de Unit Tests; falhas pré-existentes são bloqueantes
 
 ---
 
@@ -185,27 +190,14 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 
 | Check com falha | Required | Causa raiz | Resolúvel por agente | Documentado em |
 |----------------|----------|-----------|---------------------|----------------|
-| `🧪 Unit Tests (1/3)` | ✅ | Flaky timing `react-virtual` — **2ª falha consecutiva confirmada** shard 1/3: `ChatMessagesArea.agrupar-envio.test.tsx:191`, `ChatMessagesArea.movimento-reduzido.test.tsx:122` → `[data-testid="bubble"]` não encontrado | ❌ Flaky confirmado — Requer Joaquim | PENDENCIAS.md §5 |
-| `🧪 Unit Tests (2/3)` | ✅ | Flaky timing + `MessageBubble.interactive-list-item.test.tsx:110` → `vi.fn()` chamado 0 vezes (esperava 1) — pré-existente em `cf895c6a` | ❌ Flaky pré-existente — Requer Joaquim | PENDENCIAS.md §5 |
-| `🧪 Unit Tests (3/3)` | ✅ | Flaky timing `ChatMessagesArea.loop` + 3 erros **pré-existentes confirmados**: `contratosModulo.test.ts:87` (`team_message_read_state` ausente de `types.ts` em main e na branch), `useRealtimeInbox.sendAudio.test.tsx:177,185` (arquivo não alterado, impl. já tinha 7 args em main), `useTeamChatNotifications.canal-estavel.test.tsx:185,198` (falha mascarada em main exposta pela correção do mock) | ❌ Flaky pré-existente + falhas pré-existentes confirmadas — Requer Joaquim | PENDENCIAS.md §5 |
-| `🏗️ Build` | ✅ | **Skipped** — Unit Tests falharam; evidência anterior: job [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) `success` no SHA `852350f` | ❌ Skipped neste run — Requer Joaquim | PENDENCIAS.md §5c |
-| `🎭 E2E Tests (Playwright)` | ✅ | **Cancelled** — passo 9 cancelado por timeout (geolocalização pré-existente PENDENCIAS.md §1 ou timeout de runner) | ❌ Cancelled — Requer Joaquim | PENDENCIAS.md §5b |
-| `Contrato DB offline` | ✅ | DASH-091/092: `sanitize_reset_request()` referencia `NEW.reset_token` ausente em `password_reset_requests` | ❌ Requer DDL de Joaquim | PENDENCIAS.md §4 |
+| `🧪 Unit Tests (1/3)` | ✅ | Flaky timing `react-virtual` + `ChatMessagesArea.*` → `[data-testid="bubble"]` não encontrado | ❌ Flaky pré-existente — Requer Joaquim | PENDENCIAS.md §5 |
+| `🧪 Unit Tests (2/3)` | ✅ | Flaky timing + `MessageBubble.interactive-list-item.test.tsx:110` — pré-existente | ❌ Flaky pré-existente — Requer Joaquim | PENDENCIAS.md §5 |
+| `🧪 Unit Tests (3/3)` | ✅ | Flaky timing + `contratosModulo:87`, `useRealtimeInbox.sendAudio:177,185`, `useTeamChatNotifications:185,198` — pré-existentes confirmados | ❌ Flaky pré-existente — Requer Joaquim | PENDENCIAS.md §5 |
+| `🏗️ Build` | ✅ | Skipped — Unit Tests falharam | ❌ Skipped — Requer Joaquim | PENDENCIAS.md §5c |
+| `🎭 E2E Tests (Playwright)` | ✅ | Cancelled — timeout passo 9 (geolocalização pré-existente) | ❌ Cancelled — Requer Joaquim | PENDENCIAS.md §5b |
+| `Contrato DB offline` | ✅ | DASH-091/092: `sanitize_reset_request()` referencia `NEW.reset_token` ausente | ❌ Requer DDL de Joaquim | PENDENCIAS.md §4 |
 | `🧬 Mutação do mapa` | ❌ não-required | Baseline inválido (pré-existente) | ❌ Requer Joaquim | PENDENCIAS.md §6 |
 | `copilot-pull-request-reviewer` | ❌ não-required | Quota Copilot esgotada (HTTP 402) | ❌ Requer billing | PENDENCIAS.md §7 |
-
-> **ATUALIZAÇÃO FINAL (2026-10-22 — classificação definitiva):** Todos os 9 jobs do run 39695347415 terminaram. Shards 2/3 e 3/3 falharam. Os 3 erros do shard 3/3 que antes constavam como "potencialmente novos" foram investigados e **confirmados como pré-existentes**: (1) `contratosModulo.test.ts:87` — `team_message_read_state` ausente de `types.ts` em main e na branch; (2) `useRealtimeInbox.sendAudio.test.tsx:177,185` — arquivo não alterado por esta PR, implementação já tinha 7 args em main; (3) `useTeamChatNotifications.canal-estavel.test.tsx:185,198` — falha mascarada em main por mock incompleto, exposta pela correção do strict-mode. E2E cancelado por timeout. Build skipped. **Todos os checks documentados em PENDENCIAS.md §5.**
-
----
-
-## Comparação baseline × final (typecheck / lint)
-
-| Métrica | Baseline (pré-sessão) | Final (pré-push) | Variação |
-|---------|----------------------|-----------------|---------|
-| Erros TypeScript | 93 | 89 | −4 (melhora) ✅ |
-| Dívida ESLint | 819 | 819 | 0 ✅ |
-| Novas dívidas TypeScript | — | 0 | ✅ |
-| Novas dívidas ESLint | — | 0 | ✅ |
 
 ---
 
@@ -213,7 +205,7 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 
 | Commit | Descrição |
 |--------|-----------|
-| (anterior à sessão) | fix(ci): remove workflows alienígenas + atualiza mocks de logger + exceção migration-evidence |
+| (anteriores à sessão) | fix(ci): remove workflows alienígenas + atualiza mocks de logger + exceção migration-evidence |
 | `4e4f744` | fix(ci): regenera manifesto de deploy das edge functions |
 | `7a8c74e` | fix(ci): corrige vírgula faltando nos mocks de logger + regenera baseline ESLint |
 | `5b89e1a` | docs(ci): documenta pendências DASH-091/092 e unit tests flaky |
@@ -223,7 +215,19 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 | `4c57f90` | fix(ci): corrige âncora ESTADO.md classify-sticker :328 → :329 |
 | `f042a4a` | fix(tests,docs): corrige handleSendAudio replyTo e atualiza docs CI |
 | `e4333fd` | fix(qodo): typo ESTADO.md, import relativo useTeamChatNotifications, upper-bound canal-e-reconexao |
-| `c92d5e1` | fix(knowledge-base): expõe error de RLS/rede no hook useKnowledgeBase (t_1944d290) |
+| `81e38a27d` | fix(knowledge-base): expõe error de RLS/rede no hook useKnowledgeBase (t_1944d290) |
+| `d9e219ab` | fix(ci): atualiza âncoras useKnowledgeBase.ts em ESTADO.md (:126→:139, :197→:210) |
+
+---
+
+## Comparação baseline × final (typecheck / lint)
+
+| Métrica | Baseline (pré-sessão) | Final (pré-push) | Variação |
+|---------|----------------------|-----------------|----------|
+| Erros TypeScript | 93 | 89 | −4 (melhora) ✅ |
+| Dívida ESLint | 819 | 819 | 0 ✅ |
+| Novas dívidas TypeScript | — | 0 | ✅ |
+| Novas dívidas ESLint | — | 0 | ✅ |
 
 ---
 
@@ -235,20 +239,10 @@ Ver arquivo `PENDENCIAS.md` para detalhes completos de:
 2. **talkx-status-regen** — Run 39600726711 com 0 jobs (falha histórica/transitória)
 3. **db-migrate** — Run 39596763483 com `TARGET_VERSION` inválido (erro operacional humano)
 4. **Contrato DB offline** — DASH-091/092: `sanitize_reset_request()` referencia coluna `reset_token` inexistente
-5. **Unit Tests flaky** — todos os 3 shards falharam em 2 runs consecutivos. Além do flaky de timing, shard 3/3 tem erros **pré-existentes confirmados** (`contratosModulo.test.ts:87`, `useRealtimeInbox.sendAudio`, `useTeamChatNotifications`) — ver PENDENCIAS.md §5 para evidências
+5. **Unit Tests flaky** — todos os 3 shards falharam em 2 runs consecutivos (flaky pré-existente de timing + erros pré-existentes confirmados)
 6. **`🧬 Mutação do mapa` (não bloqueante)** — baseline inválido: suíte não passa sem mutação
 7. **`copilot-pull-request-reviewer`** — quota de Copilot esgotada (HTTP 402, errorCode `quota`)
 
 ---
 
-## Próximos passos
-
-1. **Concluído:** Run 39695347415 completamente documentado — todos os 9 jobs com conclusion final registrada
-2. **Concluído:** Shards 2/3 e 3/3 documentados com erros exatos (PENDENCIAS.md §5)
-3. **Concluído:** E2E cancelled e Build skipped documentados (PENDENCIAS.md §5b, §5c)
-4. **Pendente (Joaquim):** Corrigir `sanitize_reset_request()` — DDL na tabela `password_reset_requests` (PENDENCIAS.md §4)
-5. **Pendente (Joaquim):** Corrigir erros **pré-existentes confirmados** no shard 3/3: (a) `contratosModulo.test.ts:87` → executar `types-sync` para adicionar `team_message_read_state` a `types.ts`; (b) `useRealtimeInbox.sendAudio.test.tsx:177,185` → atualizar expectativas do teste para 7 args (incluindo `null` + UUID); (c) `useTeamChatNotifications.canal-estavel.test.tsx:185,198` → corrigir comportamento pré-existente do hook exposto pela correção do mock
-
----
-
-*Relatório atualizado em 2026-10-22 — classificação definitiva: todos os erros do shard 3/3 confirmados como pré-existentes com evidências de `git diff` e `grep`.*
+*Relatório atualizado em 2026-10-22 — correção de âncoras ESTADO.md (commit `d9e219ab`); CI pendente no run 39870329728.*
