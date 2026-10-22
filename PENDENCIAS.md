@@ -449,5 +449,96 @@ seta `coletaFalhou` com id `collect-error`, e `collectionError` passa a ser não
 
 ---
 
-*Documento atualizado em 2026-10-22 05:30 UTC.*
-*Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
+## 12. `🧪 Unit Tests (1/3)` — falhas pré-existentes expostas após §2.1 (PENDENTE — Joaquim)
+
+**Workflow:** `ci.yml` — job `🧪 Unit Tests (1/3)`
+**Run:** [39727885851](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851), job [119656011418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011418)
+**Status:** ❌ falhas pré-existentes — mascaradas pelo bug `getBoundingClientRect` (§10) no baseline
+
+### O que são
+
+Após a correção da regressão §10 (`getBoundingClientRect`), o shard 1 passou a terminar mais
+testes antes de falhar, expondo falhas que já existiam mas eram invisíveis atrás da falha de
+`FilesTab.fase6`. Nenhuma delas é regressão introduzida por esta PR (#2185) — nenhum arquivo que
+nossa PR modifica (`src/test/setup.ts`, 4 arquivos `ChatMessagesArea`, `useDiagnosticsData.ts`,
+documentação) tem relação com os testes que agora falham.
+
+### Falhas identificadas (run `39727885851`, job `119656011418`)
+
+| Arquivo | Linha | Erro | Causa raiz |
+|---------|-------|------|-----------|
+| `useTalkXSuppression.hook-morto.test.ts` | 84 | `expected true to be false` — hook ainda exportado | TL-002 pendente: `useTalkXSuppression` não foi removido do módulo |
+| `useTalkXSuppression.hook-morto.test.ts` | 138 | `expected [] to deeply equal []` — arquivos do hook encontrados | Mesmo item: hook e test file existem, test de guarda acusa |
+| `useTeamMessages.canal-e-reconexao.test.tsx` | 70 | `expected false to be true` — nomes de canal idênticos entre instâncias | Canal de realtime sem sufixo único por montagem |
+| `useTeamMessages.canal-e-reconexao.test.tsx` | 82 | `expected 2 to be 1` — `h.subs.length` = 2 | React StrictMode double-mount registra 2 subscrições |
+| `useTeamMessages.canal-e-reconexao.test.tsx` | 97 | `expected 2 to be 1` — mesmo motivo | Idem |
+| `useTalkXSegments.test.ts` | 398 | `expected Error{…} received 7` | Erro assíncrono não propagado corretamente |
+| (TTS — arquivo não identificado no log) | — | `Unable to find button "Ouvir resumo"` | Botão renomeado no componente (aria-label diferente do esperado no teste) |
+
+### Por que não são regressões desta PR
+
+Nossa PR altera apenas:
+- `src/test/setup.ts`: adiciona mocks `getBoundingClientRect`/`clientHeight`/`clientWidth`
+- 4 arquivos `ChatMessagesArea.*.test.tsx`: adiciona `globalThis.ResizeObserver`
+- `src/hooks/system/useDiagnosticsData.ts`: propaga `messagesCountError`
+- Documentação (`PENDENCIAS.md`, `RELATORIO_CI.md`)
+
+Nenhum desses arquivos tem relação com `useTalkXSuppression`, `useTeamMessages`, `useTalkXSegments`
+ou o componente TTS que usa botão "Ouvir resumo".
+
+### O que o Joaquim precisa fazer
+
+1. **TL-002 (`useTalkXSuppression.hook-morto.test.ts`):** Concluir a remoção do hook morto
+   `useTalkXSuppression` do módulo `src/hooks/integrations/useTalkXSuppression.ts` (ou desativar
+   o guarda se a remoção foi adiada intencionalmente).
+2. **`useTeamMessages` (PE-75):** Corrigir o hook para gerar nome de canal com sufixo único por
+   montagem (ex.: `Date.now()` ou `Math.random()`), ou ajustar o mock de teste para StrictMode.
+3. **`useTalkXSegments.test.ts:398`:** Investigar por que o erro assíncrono não é propagado
+   como `Error` — verificar `fetchTalkXSegmentActivity` ou equivalente.
+4. **Botão TTS "Ouvir resumo":** Atualizar o teste para o aria-label atual do botão (ex.: `"Ouvir o resumo em voz alta"`).
+
+---
+
+## 13. `🧪 Unit Tests (2/3)` e `🧪 Unit Tests (3/3)` — falhas pré-existentes e regressão corrigida (run `39727885851`)
+
+**Workflow:** `ci.yml` — jobs `🧪 Unit Tests (2/3)` e `🧪 Unit Tests (3/3)`
+**Run:** [39727885851](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851)
+
+### Shard 2 (job [119656011579](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011579)) — falhas pré-existentes
+
+| Arquivo | Linha | Erro | Causa raiz |
+|---------|-------|------|-----------|
+| `useInboxBulkActions.test.ts` | 625 | `expected undefined to deeply equal [Array(1)]` — `archiveUpdate?.filters.id` undefined | Pré-existente: hook `useInboxBulkActions` não modificado por esta PR |
+
+**Regressão nossa corrigida (`useInboxFilters.type-url.test.tsx`):**
+
+A PR #2185 mudou `useInboxFilters.ts` (commit `6c883342`) para usar `setSearchParams` do React Router
+ao gravar `?type=`. Mas a leitura inicial em `basePrefs` ainda usava `contactTypeFromUrl()`, que lê
+`window.location.search` — não afetado por `MemoryRouter` em testes.
+
+**Correção aplicada nesta sessão:** `contactTypeFromUrl()` substituída por
+`normalizeContactType(searchParams.get('type'))` (React Router `useSearchParams`) em `basePrefs`,
+com `searchParams` adicionado à dependency array. Commits a confirmar no CI.
+
+### Shard 3 (job [119656011528](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011528)) — falhas pré-existentes
+
+| Arquivo | Linha | Erro | Causa raiz |
+|---------|-------|------|-----------|
+| `useWarRoomData.test.tsx` | 194 | `expected false to be true` | Pré-existente: hook não modificado por esta PR |
+| `useWarRoomData.test.tsx` | 210 | `expected false to be true` | Idem |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 131 | `expected 'team-chat-notifications' to match /^team-chat-notifications:/` — nome sem sufixo | Mesmo padrão de `useTeamMessages` (§12): canal sem sufixo único por instância |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 143 | `expected 3 to be 1` — 3 subscrições em vez de 1 | React StrictMode double-mount |
+
+### O que o Joaquim precisa fazer
+
+1. **`useInboxBulkActions.test.ts:625`:** Investigar por que `archiveUpdate?.filters.id` fica
+   `undefined` — provavelmente a asserção não encontra a chamada de `update` do tipo `archive`.
+2. **`useWarRoomData.test.tsx:194,210`:** Investigar `expected false to be true` — possivelmente
+   dado assíncrono não carregado na asserção.
+3. **`useTeamChatNotifications` (canal-estavel):** Corrigir canal para incluir sufixo único por
+   montagem (mesmo fix planejado para `useTeamMessages` em §12, item 2).
+
+---
+
+*Documento atualizado em 2026-10-22 07:30 UTC.*
+*Correções aplicadas nesta sessão: ver RELATORIO_CI.md. Regressão `useInboxFilters` (hook ordering + React Router searchParams) corrigida neste push.*

@@ -115,6 +115,10 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   // troca de conta no mesmo navegador não reaproveita o estado do anterior.
   const [draft, setDraft] = useState<Record<string, InboxFilterPrefs>>({});
 
+  // searchParams precisa ser declarado antes de basePrefs para que o useMemo
+  // abaixo possa ler searchParams.get('type') sem violar a ordem dos hooks.
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     return {
@@ -122,9 +126,11 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: contactTypeFromUrl() ?? storedPrefs?.contactType ?? null,
+      // Usa searchParams (React Router) em vez de window.location para funcionar
+      // em MemoryRouter (testes) e manter sincronismo com o estado do roteador.
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
-  }, [storedPrefs]);
+  }, [storedPrefs, searchParams]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
   const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
@@ -152,7 +158,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const [showAll, setShowAll] = useState(false);
 
   const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
-  const [, setSearchParams] = useSearchParams();
 
   // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
   // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
