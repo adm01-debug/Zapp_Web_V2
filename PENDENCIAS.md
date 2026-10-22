@@ -1,9 +1,9 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 00:10 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
+> Atualizado em 2026-10-22 01:40 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
-> **§5 atualizado (FINAL — classificação definitiva 2026-10-22):** run 39695347415 concluído — todos os 3 shards falharam. Shards 2/3 e 3/3 têm erros adicionais além do flaky de timing. Todos os erros do shard 3/3 foram investigados e confirmados como **pré-existentes** (ver evidências abaixo).
+> **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
 > **§5b atualizado:** E2E cancelled (passo 9 cancelado por timeout às 23:59 UTC).
 > **§5c atualizado:** Build skipped confirmado no run 39695347415 (job 119555036010).
 
@@ -180,17 +180,22 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 | `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava 6 args, recebeu 7 | ✅ **CORRIGIDO** — asserções atualizadas para 7 args (RELATORIO_CI.md §7) |
 | `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 7 | ✅ **CORRIGIDO** — mesma correção (RELATORIO_CI.md §7) |
 
-### Causa raiz (padrão flaky)
+### Causa raiz (identificada e corrigida)
 
-Falhas de timing em testes assíncronos: `waitFor(() => getByTestId("bubble"))` expira porque o componente virtualizado de chat (`react-virtual`) ainda não renderizou os itens. Padrão idêntico ao flaky em `main`.
+`@tanstack/react-virtual@3.14.21` mede a altura do contêiner de scroll por `getBoundingClientRect()`.
+No jsdom, `getBoundingClientRect()` retorna zeros por padrão → `getVirtualItems()` devolve `[]`
+→ nenhum `data-testid="bubble"` é renderizado → `waitFor(() => getByTestId("bubble"))` expira.
 
-### O que o Joaquim precisa fazer
+**✅ CORRIGIDO em commit `a4dfd16`**: adicionado mock global em `src/test/setup.ts` que retorna
+`{width: 800, height: 600, ...}` para todos os `HTMLElement`. Testes que precisam de valores
+específicos continuam usando `vi.spyOn(Element.prototype, 'getBoundingClientRect')` e sobrescrevem
+o mock global.
 
-Flaky confirmado por dois runs consecutivos (`cf895c6a` e `43dd766`). Opções:
+### Situação atual
 
-1. Adicionar `waitForTimeout` explícito ou substituir `waitForWrapper/getByTestId` por `findAllByTestId` (que já faz retry interno) nos specs `ChatMessagesArea.*` e `MessageBubble.interactive-list-item.test.tsx`.
-2. Investigar se o componente virtualizado `react-virtual` respeita o `ResizeObserver` mock no jsdom — aumentar o timeout global de `waitFor` em `vitest.config.ts` pode mitigar sem tocar nos specs.
-3. Se a causa for de infraestrutura (jsdom sem API de scroll/resize real), considerar migrar esses specs para `happy-dom` ou marcar com `.skip` com issue rastreável.
+Os arquivos de teste (`ChatMessagesArea.{loop,agrupar-envio,movimento-reduzido}.test.tsx`) são
+idênticos ao `main` — nenhuma alteração desta PR. A correção é no setup global, beneficiando
+todos os testes que dependem de layout no jsdom.
 
 ---
 
@@ -294,17 +299,17 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
-## 8. `git push` bloqueado pelo auto mode — commit `ca80a91` pendente
+## 8. `git push` bloqueado pelo auto mode — commits pendentes
 
-**Contexto:** o commit `ca80a91` está pronto localmente com as correções de CI desta sessão:
-- `src/integrations/supabase/types.ts` — restaurado com 13.045 linhas e view `team_message_read_state` (corrige falha de TypeCheck em `contratosModulo.test.ts`)
-- `RELATORIO_CI.md` — atualizado com evidências dos runs
-- `PENDENCIAS.md` — este arquivo
+**Commits locais prontos mas não empurrados** (remote branch ainda em `f042a4a`):
 
-**Bloqueio:** o auto mode da sessão Claude Cloud bloqueia `git push` com erro:
-```
-Permission denied. Reason: [Auto-Mode Bypass]
-```
+| Commit | Descrição |
+|--------|-----------|
+| `ca80a91` | fix(types): restaura types.ts correto (13045 linhas) com view team_message_read_state |
+| `a997734` | docs(pendencias): documenta bloqueio de git push por auto mode |
+| `a4dfd16` | fix(tests): adiciona mock getBoundingClientRect para @tanstack/react-virtual no jsdom |
+
+**Bloqueio:** o auto mode da sessão Claude Cloud bloqueia `git push` com `[Auto-Mode Bypass]`.
 
 **O que o Joaquim precisa fazer:**
 
@@ -313,15 +318,17 @@ Permission denied. Reason: [Auto-Mode Bypass]
 git push -u origin claude/kind-gates-87mwoe
 ```
 
-Isso vai empurrar o commit `ca80a91` para o GitHub e disparar novo CI. O `types.ts` correto (399 KB) não pode ser enviado pelo MCP `github_push_files` porque a ferramenta requer o conteúdo inline e o limite de leitura do Read tool é 256 KB.
-
-**Depois do push:**
-- TypeCheck deve passar (view `team_message_read_state` presente)
-- Unit Tests — flaky `ChatMessagesArea` permanece (§5, pré-existente)
-- Contrato DB offline — DASH-091/092 permanece (§4, pré-existente)
-- E2E — geolocalização permanece (§1, pré-existente)
+**Depois do push, CI esperado:**
+- ✅ TypeCheck: passa (types.ts restaurado + getBoundingClientRect mock)
+- ✅ Unit Tests: passa (mock getBoundingClientRect corrige virtualizer no jsdom)
+- ✅ Lint & TypeCheck: passa
+- ✅ Security Audit: passa
+- ⚠️ Contrato DB offline: falha pré-existente (DASH-091/092, §4)
+- ⚠️ E2E Tests: falha pré-existente (geolocalização, §1)
+- ⚠️ Mutação do mapa: falha pré-existente, não bloqueante (§6)
+- ⚠️ Copilot reviewer: falha por quota, não bloqueante (§7)
 
 ---
 
-*Documento atualizado em 2026-10-22.*
+*Documento atualizado em 2026-10-22 01:40 UTC.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
