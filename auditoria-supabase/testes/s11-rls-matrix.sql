@@ -53,11 +53,11 @@ BEGIN
     ('aaaaaaaa-0000-4000-a000-aaaaaaaaaaaa', v_dept_a, 'TESTCODE1', v_profile_a, now() + interval '7 days', now())
   ON CONFLICT DO NOTHING;
 
-  -- Inserir contato atribuído a profile_a (tenant A)
-  -- Isolação de contacts é via assigned_to → profiles.user_id, não via organization_id
+  -- Inserir contatos para cada tenant (isolação via assigned_to → profiles.user_id)
   INSERT INTO contacts (id, name, phone, assigned_to, conversation_status, is_lid_legacy, created_at, updated_at)
   VALUES
-    ('cccccccc-0000-4000-a000-aaaaaaaaaaaa', 'Contato Teste A', '11999990001', v_profile_a, 'open', false, now(), now())
+    ('cccccccc-0000-4000-a000-aaaaaaaaaaaa', 'Contato Teste A', '11999990001', v_profile_a, 'open', false, now(), now()),
+    ('cccccccc-0000-4000-b000-bbbbbbbbbbbb', 'Contato Teste B', '11999990002', v_profile_b, 'open', false, now(), now())
   ON CONFLICT DO NOTHING;
 
   RAISE NOTICE 'Setup: org_a=%, org_b=%, user_a=%, user_b=%, profile_a=%, profile_b=%, dept_a=%, dept_b=%',
@@ -211,7 +211,7 @@ BEGIN
       GET DIAGNOSTICS v_inserted = ROW_COUNT;
 
       IF v_inserted = 0 THEN
-        RAISE NOTICE 'C3b (dept_invites INSERT cross-tenant): OK — INSERT rejeitado (PROTEGIDO)';
+        RAISE NOTICE 'C3b (dept_invites INSERT cross-tenant): OK — INSERT rejeitado silenciosamente (PROTEGIDO)';
       ELSE
         RAISE NOTICE 'C3b (dept_invites INSERT cross-tenant): VULN — user_b inseriu em dept de tenant A';
       END IF;
@@ -341,27 +341,34 @@ BEGIN
 END;
 $c7$;
 
--- C8: Tenant A lê os próprios dados (controle positivo) → esperado >= 0 linhas (NÃO bloqueado)
+-- C8: Tenant A lê os próprios dados (controle positivo) → esperado >= 1 linha (NÃO bloqueado)
+-- O contato 'cccccccc-0000-4000-a000-aaaaaaaaaaaa' foi seedado para profile_a no setup.
+-- Isolação é via assigned_to → profiles.user_id, não via organization_id.
 DO $c8$
 DECLARE
-  v_user_a  uuid := '11111111-1111-4000-a000-aaaaaaaaaaaa';
-  v_org_a   uuid := '00000000-0000-4000-a000-aaaaaaaaaaaa';
-  v_count   int;
-  v_jwt     json;
+  v_user_a    uuid := '11111111-1111-4000-a000-aaaaaaaaaaaa';
+  v_profile_a uuid := '55555555-5555-4000-a000-aaaaaaaaaaaa';
+  v_contact_a uuid := 'cccccccc-0000-4000-a000-aaaaaaaaaaaa';
+  v_count     int;
+  v_jwt       json;
 BEGIN
   v_jwt := json_build_object(
     'sub', v_user_a::text,
     'role', 'authenticated',
-    'app_metadata', json_build_object('organization_id', v_org_a::text)
+    'app_metadata', json_build_object('organization_id', '00000000-0000-4000-a000-aaaaaaaaaaaa')
   );
 
   BEGIN
     PERFORM set_config('request.jwt.claims', v_jwt::text, true);
     PERFORM set_config('role', 'authenticated', true);
 
-    SELECT count(*) INTO v_count FROM contacts WHERE organization_id = v_org_a;
+    SELECT count(*) INTO v_count FROM contacts WHERE id = v_contact_a;
 
-    RAISE NOTICE 'C8 (contacts SELECT mesmo tenant): CONTROLE — user_a vê % contatos do próprio tenant', v_count;
+    IF v_count >= 1 THEN
+      RAISE NOTICE 'C8 (contacts SELECT próprio): OK — user_a vê % contato(s) atribuído(s) a si (ACESSO CORRETO)', v_count;
+    ELSE
+      RAISE NOTICE 'C8 (contacts SELECT próprio): FALHA — user_a não vê contato seedado para seu profile (RLS muito restritivo ou seed não aplicado)';
+    END IF;
 
     ROLLBACK;
   END;
