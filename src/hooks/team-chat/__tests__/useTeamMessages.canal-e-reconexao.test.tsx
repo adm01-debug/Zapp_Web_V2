@@ -26,6 +26,10 @@ vi.mock('@/lib/logger', () => ({
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  useTeamReadState: () => ({ readStates: {} }),
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: (...args: unknown[]) => h.rpc(...args),
