@@ -564,9 +564,11 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
+    // c1 (open) restaura para open; c2 (waiting) mapeia para open porque
+    // archived → waiting é transição inválida no DB (só open/pending são válidos).
     expect(restores).toHaveLength(2);
     expect(restores[0]).toMatchObject({ payload: expect.objectContaining({ conversation_status: 'open' }), filters: { id: [c1] } });
-    expect(restores[1]).toMatchObject({ payload: expect.objectContaining({ conversation_status: 'waiting' }), filters: { id: [c2] } });
+    expect(restores[1]).toMatchObject({ payload: expect.objectContaining({ conversation_status: 'open' }), filters: { id: [c2] } });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 

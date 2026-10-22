@@ -651,7 +651,37 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 
 ---
 
-*Documento atualizado em 2026-10-22 11:00 UTC.*
+---
+
+## 17. Qodo HIGH — `useInboxBulkActions` desfazer arquivamento: `archived → waiting` inválido
+
+**Status:** ✅ CORRIGIDO — este commit (PR #2185, 2026-10-22). CI em execução.
+
+### Causa raiz
+
+O revisor Qodo identificou falha de alta severidade: o `undoAction` de `bulkArchive` tentava
+restaurar contatos para `conversation_status = 'waiting'` sem validar se essa transição é
+permitida. O trigger `enforce_conversation_status_transition()` no banco só aceita
+`archived → open` e `archived → pending` — qualquer outro status gera erro 500/400.
+
+### Fix aplicado
+
+| Arquivo | Mudança |
+|---------|--------|
+| `src/hooks/inbox/useInboxBulkActions.ts` | Adicionado `VALID_FROM_ARCHIVED = new Set(['open', 'pending'])` no `undoAction`; statuses fora deste conjunto (e.g. `waiting`, `resolved`, `closed`) mapeiam para `open` |
+| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | Expectativa do contato `c2` (status original `waiting`) corrigida de `conversation_status: 'waiting'` para `conversation_status: 'open'`, com comentário explicando a restrição do DB |
+
+### Itens bloqueados que persistem
+
+| Item | §PENDÊNCIAS | Causa | Ação de Joaquim |
+|------|------------|-------|----------------|
+| `Contrato DB offline` | §4 | `sanitize_reset_request()` referencia `NEW.reset_token` — coluna ausente | Corrigir função ou criar coluna (ver §4) |
+| `copilot-pull-request-reviewer` | §15 | HTTP 402 — quota de Copilot esgotada | Adicionar créditos em https://github.com/settings/copilot/features |
+
+---
+
+*Documento atualizado em 2026-10-22 UTC.*
 *§15 cobre: copilot-pull-request-reviewer runs 39732366255 (commit `a37acb42`) e 39734682829 (commit `d3d11741`, docs-only) — mesma causa: quota Copilot HTTP 402.*
-*§16 cobre: correções PE-75 e useTalkXSegments (commit `1b92b58`) — CI em execução (run 39766170707).*
+*§16 cobre: correções PE-75 e useTalkXSegments (commit `1b92b58`) — cancelado por push subsequente; checks definitivos em `22406b70b0ca`.*
+*§17 cobre: fix Qodo HIGH `useInboxBulkActions` — CI em execução neste commit.*
 *§12: TTS failure identificado como `a11y-ferramentas-ia.test.tsx:156` — botão "Ouvir resumo" renomeado no componente; confirmado pré-existente na main.*
