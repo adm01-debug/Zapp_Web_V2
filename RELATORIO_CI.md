@@ -325,7 +325,7 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 > Run DB Guard (offline): [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013)
 > Iniciada: 2026-10-22T06:51:39Z
 
-| Check | Job ID | Conclusion | Observação |
+| Check | Job ID | Conclusão | Observação |
 |---|---|---|---|
 | `🔒 Security Audit` | [119684026238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026238) | ✅ success (06:54:07Z) | Confirmado |
 | `🧬 Mutação do mapa` | [119684026364](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026364) | ✅ success (06:54:15Z) | Confirmado — sem mudança módulo mapa |
@@ -690,7 +690,7 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 ### Correções aplicadas
 
 | §§ | Arquivo | Fix | Descrição |
-|----|---------|-----|-----------|
+|----|---------|-----|----------|
 | §12 TL-002 | `src/hooks/integrations/useTalkXSuppression.ts` | Remoção de `useTalkXSuppression` export | Hook morto removido; `useMutation`/`toast` imports limpos |
 | §12 TTS | `src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx` | Aria-labels atualizados | `'Ouvir o resumo em voz alta'` e `'Ouvir os pontos-chave em voz alta'` |
 | §13 InboxBulkActions | `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | API `conversation_status` | Asserção usa `conversation_status` (não `assigned_to: null`) |
@@ -863,7 +863,7 @@ a âncora `:245`, causando falha do teste `docs-estado-registry-convention.unit.
 ## 27. Fixes Unit Tests — `useInboxBulkActions` e `useInboxFilters` isolamento localStorage
 
 > Branch: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
-> 2026-10-22 UTC — commit a ser gerado
+> 2026-10-22 UTC — commit `82dd047`
 
 ### Contexto
 

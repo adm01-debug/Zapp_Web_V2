@@ -13,8 +13,8 @@ partir do código e falha quando:
 
 * aparece uma edge nova que não está aqui (ou uma linha aponta para edge que não existe);
 * uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador removido;
-* o grupo publicado deixa de ser o primeiro chamador real na ordem A → B → C → D;
-* uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
+* o grupo publicado deixa de ser o primeiro chamador na ordem A → B → C → D;
+ * uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
   `supabase/config.toml` (ou vice-versa).
 
 ## Totais
@@ -120,7 +120,7 @@ partir do código e falha quando:
 ## Órfãs (20) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
-`invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
+`invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador eym
 `supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso não quer dizer "morta" — o chamador pode ser externo
 (N8N, cron do provedor, operação manual) — quer dizer **não comprovada no repositório**.
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
