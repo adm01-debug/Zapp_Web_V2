@@ -286,7 +286,7 @@ Para completênza, as 4 correções aplicadas na PR #2182 (já na `main`):
 
 Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeight`/`clientWidth`, `workItemFormat` timezone, `useUserSettings` isError, `useInboxFilters` setSearchParams, conectionsCountError, messagesCountError).
 
-**Sem novas regressões introduzidas.** Todas as falhas remanescentes existiam antes desta PR e estão documentadas em PENDENCIAS.md com causa raiz e ação do Joaquim.
+**Sem novas regressões introduzidas.** Todas as falhas remanescentes existiam antes desta PR e estão documentadas em PENDENCIAS.md com causa raiz e ação necessária do Joaquim.
 
 ---
 
@@ -586,9 +586,10 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 | `🧩 Node CI Scripts` | [119737153377](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153377) | ✅ success (09:09:34Z) | Confirmado |
 | `🧬 Mutação do mapa` | [119737153502](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153502) | ✅ success (09:07:06Z) | Skipped — sem mudança no módulo mapa |
 | `🧪 Unit Tests (1/3)` | [119737153496](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153496) | ❌ failure (09:12:34Z) | Pré-existentes §12 — mesmos testes de `aba4eef1` |
-| `🧪 Unit Tests (2/3)` | [119737153556](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153556) | ⏳ in_progress | Vitest shard 2/3 em execução — esperado: ❌ failure pré-existentes §13 |
-| `🧪 Unit Tests (3/3)` | [119737153439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153439) | ⏳ in_progress | Vitest shard 3/3 em execução — esperado: ❌ failure pré-existentes §13 |
-| `🎭 E2E Tests (Playwright)` | [119737153299](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153299) | ⏳ in_progress | "Run Playwright E2E" em execução (09:08:15Z) — esperado: ❌ failure pré-existente §1 |
+| `🧪 Unit Tests (2/3)` | [119737153556](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153556) | ❌ failure (09:15:51Z) | Pré-existentes §13 — mesmos testes de `aba4eef1` |
+| `🧪 Unit Tests (3/3)` | [119737153439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153439) | ❌ failure (09:14:10Z) | Pré-existentes §13 — mesmos testes de `aba4eef1` |
+| `🏗️ Build` | [119741494246](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119741494246) | ⏭️ skipped (09:15:51Z) | `needs: [unit-tests]` não satisfeito — pré-existente |
+| `🎭 E2E Tests (Playwright)` | [119737153299](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752688594/job/119737153299) | ⏳ in_progress | "Run Playwright E2E" em execução (09:08:15Z) — esperado: ❌/⚠️ pré-existente §1 |
 | `copilot-pull-request-reviewer` | [119736937181](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39752702140/job/119736937181) | ❌ failure (09:12:11Z) | Pré-existente §7/§15 — quota HTTP 402 |
 
-> **Nota:** CI de `cc652946` iniciado em 2026-10-22T09:05:53Z. Confirmados: TypeCheck ✅, Security Audit ✅, Mutação do mapa ✅, Node CI Scripts ✅, Replay ✅, Contrato DB ❌ (§4), Unit Tests 1/3 ❌ (§12), copilot ❌ (§7). Unit Tests 2/3, 3/3 e E2E ainda `in_progress` — commit docs-only, mesmos resultados esperados de `aba4eef1`.
+> **Nota:** CI de `cc652946` iniciado em 2026-10-22T09:05:53Z. Confirmados: TypeCheck ✅, Security Audit ✅, Mutação do mapa ✅, Node CI Scripts ✅, Replay ✅, Build ⏭️ skipped, Contrato DB ❌ (§4), Unit Tests 1/3 ❌ (§12), Unit Tests 2/3 ❌ (§13), Unit Tests 3/3 ❌ (§13), copilot ❌ (§7). E2E ainda `in_progress` — commit docs-only, mesmos resultados esperados de `aba4eef1`.
