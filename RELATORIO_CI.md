@@ -1,6 +1,6 @@
 # RELATÓRIO DE CORREÇÃO DE CI — 2026-10-21
 
-> Branch: `claude/kind-gates-87mwoe` | PR: #2182
+> Branch: `claude/kind-gates-87mwoe`
 > Sessão: https://claude.ai/code/session_0126osKYxzQ4gqSkMmm1KYRc
 
 ---
@@ -79,6 +79,20 @@ O job "Validar gerador e manifesto de deployment" detectou o manifesto desatuali
 - 105 linhas alteradas (hashes e tamanhos dos 3 arquivos modificados)
 
 **Validação esperada:** `deploy-functions.yml` passa na validação do manifesto.
+
+---
+
+### 5. `🧪 Unit Tests` — `useKnowledgeBase.erro.test.tsx` (t_1944d290)
+
+**Causa raiz:** O hook `useKnowledgeBase` não expunha estado `error`. O teste pré-existente adicionado à `main` em commit `025d025` esperava `result.current.error` ser uma string de erro ou `null`, mas recebia `undefined`.
+
+**Correção (commit `c92d5e1`):**
+- Adicionado `const [error, setError] = useState<string | null>(null)` ao hook
+- `fetchData` chama `setError(null)` no início e `setError(error.message)` em caso de falha de RLS/rede
+- `error` incluído no return do hook
+- Erros de artigos/arquivos não mais silenciados como "base vazia"
+
+**Validação:** teste `useKnowledgeBase.erro.test.tsx` passa com o estado `error` agora exposto.
 
 ---
 
@@ -208,7 +222,8 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 | `044ba09` | fix(types): adiciona view team_message_read_state a types.ts (corrige shard 3/3 contratosModulo.test.ts:87) |
 | `4c57f90` | fix(ci): corrige âncora ESTADO.md classify-sticker :328 → :329 |
 | `f042a4a` | fix(tests,docs): corrige handleSendAudio replyTo e atualiza docs CI |
-| (este push) | fix(types): restaura types.ts correto (13045 linhas); remove workflows alienígenas eslint.yml e static.yml |
+| `e4333fd` | fix(qodo): typo ESTADO.md, import relativo useTeamChatNotifications, upper-bound canal-e-reconexao |
+| `c92d5e1` | fix(knowledge-base): expõe error de RLS/rede no hook useKnowledgeBase (t_1944d290) |
 
 ---
 

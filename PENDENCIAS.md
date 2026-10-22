@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 01:40 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
+> Atualizado em 2026-10-22 — sessão em continuação. Branch de trabalho: `claude/kind-gates-87mwoe`.
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
 > **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
@@ -299,36 +299,29 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
-## 8. `git push` bloqueado pelo auto mode — commits pendentes
+## 8. `🏗️ Build` — bundle budget excedido (359.5 KB > 300 KB)
 
-**Commits locais prontos mas não empurrados** (remote branch ainda em `f042a4a`):
+**Workflow:** `ci.yml` — job `🏗️ Build`
+**Status:** falha por `performance-budget.json` (`initial-js: maxKB: 300`). 
+**Discovered:** ao corrigir o bug do build skipped (PR anterior adicionou `if: ${{ !cancelled() }}`), o Build passou a rodar e falha porque o bundle já excedia 300 KB antes desta PR.
 
-| Commit | Descrição |
-|--------|-----------|
-| `ca80a91` | fix(types): restaura types.ts correto (13045 linhas) com view team_message_read_state |
-| `a997734` | docs(pendencias): documenta bloqueio de git push por auto mode |
-| `a4dfd16` | fix(tests): adiciona mock getBoundingClientRect para @tanstack/react-virtual no jsdom |
+### Causa raiz
 
-**Bloqueio:** o auto mode da sessão Claude Cloud bloqueia `git push` com `[Auto-Mode Bypass]`.
+O script `scripts/ci/bundle-budget.mjs` verifica `dist/stats.json` após `bun run build`. O último valor documentado era **292.3 KB gzip em 2026-10-12** (`performance-budget.json`). Múltiplos PRs mergeados desde então aumentaram o bundle. O CI reporta **359.5 KB**, acima do limite de 300 KB.
 
-**O que o Joaquim precisa fazer:**
+**Pré-existente na `main`:** esta PR não adiciona imports novos ao bundle inicial. A falha seria reproduzível em qualquer PR após 2026-10-12 que rodasse o build.
 
-```bash
-# Na WSL, dentro do repo:
-git push -u origin claude/kind-gates-87mwoe
-```
+### O que o Joaquim precisa fazer
 
-**Depois do push, CI esperado:**
-- ✅ TypeCheck: passa (types.ts restaurado + getBoundingClientRect mock)
-- ✅ Unit Tests: passa (mock getBoundingClientRect corrige virtualizer no jsdom)
-- ✅ Lint & TypeCheck: passa
-- ✅ Security Audit: passa
-- ⚠️ Contrato DB offline: falha pré-existente (DASH-091/092, §4)
-- ⚠️ E2E Tests: falha pré-existente (geolocalização, §1)
-- ⚠️ Mutação do mapa: falha pré-existente, não bloqueante (§6)
-- ⚠️ Copilot reviewer: falha por quota, não bloqueante (§7)
+1. Verificar o bundle atual da `main`:
+   ```bash
+   bun run build && cat dist/stats.json | jq '.assets[] | select(.name | test("index.*\\.js")) | .gzipSize'
+   ```
+2. Identificar quais dependências/features aumentaram o bundle entre out/12 e hoje.
+3. Opções: (a) aplicar code-splitting / dynamic imports para reduzir o JS inicial; (b) atualizar o budget em `performance-budget.json` se o aumento for justificável.
+4. Esta PR não pode ser mergeada enquanto `🏗️ Build` for required check — o fix do budget é necessário antes.
 
 ---
 
-*Documento atualizado em 2026-10-22 01:40 UTC.*
+*Documento atualizado em 2026-10-22 — fix useKnowledgeBase (t_1944d290) empurrado nesta sessão.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
