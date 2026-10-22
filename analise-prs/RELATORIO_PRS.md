@@ -12,16 +12,16 @@
 
 | PR | Decisão necessária |
 |---|---|
-| [#2149](https://github.com/adm01-debug/Zapp_Web_V2/pull/2149) | Cherry-pick do conteúdo legítimo (docs + migrations) em branch nova, excluindo o commit que toca ci.yml |
-| [#2151](https://github.com/adm01-debug/Zapp_Web_V2/pull/2151) | Idem — 431 arquivos; avaliar quais commits têm valor real vs. ancestor Deno |
-| [#2152](https://github.com/adm01-debug/Zapp_Web_V2/pull/2152) | Idem + investigar downgrade proposital de Playwright 1.64.1→1.63.0 |
-| [#2155](https://github.com/adm01-debug/Zapp_Web_V2/pull/2155) | Idem — 135 arquivos de correção CI |
+| [#2149](https://github.com/adm01-debug/Zapp_Web_V2/pull/2149) | Nenhuma ação de conteúdo necessária — passa todos os 4 critérios. Bloqueio: CI vermelho por 44 falhas pré-existentes na main (verificado por `list_pr_files`: PR toca apenas 5 arquivos `docs/`) |
+| [#2151](https://github.com/adm01-debug/Zapp_Web_V2/pull/2151) | Nenhuma ação de conteúdo necessária — passa todos os 4 critérios. Bloqueio: CI vermelho por 44 falhas pré-existentes na main |
+| [#2152](https://github.com/adm01-debug/Zapp_Web_V2/pull/2152) | Nenhuma ação de conteúdo necessária — passa todos os 4 critérios. Bloqueio: CI vermelho por 44 falhas pré-existentes na main (verificado por `list_pr_files`: PR toca apenas 2 arquivos `e2e/`) |
+| [#2155](https://github.com/adm01-debug/Zapp_Web_V2/pull/2155) | Nenhuma ação de conteúdo necessária — passa todos os 4 critérios. Bloqueio: CI vermelho por 44 falhas pré-existentes na main |
 | [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185) | Restaurar `useTalkXSuppression.test.ts` (371 linhas) antes do merge |
 | [#2186](https://github.com/adm01-debug/Zapp_Web_V2/pull/2186) | Reescrever migration `20261026100300` como aditiva: `ALTER POLICY` em vez de `DROP POLICY` + `CREATE POLICY` |
 
 ## ⚠️ Riscos identificados
 
-1. **Perda de cobertura Deno (PRs #2149–#2155):** Se mergeados no estado atual, 201 arquivos `.test.ts` em `supabase/functions/` perderiam cobertura de CI permanentemente — step `denoland/setup-deno` removido pelo ancestor compartilhado que toca `ci.yml` linhas 118-150.
+1. **CI vermelho por 44 falhas pré-existentes (PRs #2149, #2151, #2152, #2155):** Esses 4 PRs têm CI vermelho exclusivamente por falhas já presentes na main (baseline SHA `5a4632c`). Nenhum deles introduz regressão. O bloqueio é físico: `strict=true` + 6 required checks impedem merge com CI vermelho.
 2. **Testes verdes apagados (#2185):** `useTalkXSuppression.test.ts` (21 testes VERDES verificados localmente por `bun test`) seria removido sem motivo técnico.
 3. **Drift de RLS (#2186):** `DROP POLICY` de políticas ativas poderia deixar janela de segurança desprotegida entre o deploy do código e a migration ser aplicada em produção.
 4. **Propagação de templates alien (#2157–#2183):** Workflows para Python/PHP/R/Rust/Java/Docker/Next.js/Deno em projeto TypeScript/Bun/Vite adicionariam ruído de CI e dependências de stacks não usadas.
@@ -54,24 +54,26 @@ Regras adicionais aplicadas:
 
 ---
 
-## Grupo A — PRs com herança Deno-removal (CI-FALHA)
+## Grupo A — PRs com conteúdo legítimo bloqueados por CI pré-existente (CI-FALHA)
 
-Ancestor compartilhado modifica `.github/workflows/ci.yml` removendo o step `🦕 Setup Deno` (linhas 118–150 do `ci.yml` da main), que executa `deno check` e `deno test` sobre 201 arquivos `.test.ts` em `supabase/functions/`. Critério 4 FALHA em todos os 4.
+O CI desses 4 PRs está vermelho **exclusivamente por 44 falhas pré-existentes na main** (baseline SHA `5a4632c`). Nenhum deles introduz regressão. Todos os 4 critérios passam. O bloqueio é físico: `strict=true` + 6 required checks impedem merge com CI vermelho.
 
-**Evidência de diff:** `git diff HEAD..origin/<branch> -- .github/workflows/ci.yml` mostra remoção das linhas contendo `denoland/setup-deno`, `deno check`, `deno test` em todos os 4 branches.
+**Evidência:** CI run 39819751174 (SHA `dd5ec6ac`, que tem `git diff` de 0 bytes vs main nesses arquivos de teste) confirma as mesmas 44 falhas. Os 4 PRs foram verificados via `mcp__GITHUB_-_MCP_-_FOREVER__github_list_pr_files` para confirmar quais arquivos cada um toca.
 
 ### PR #2149 — `docs(reconciliation): P053`
 
 **Branch:** `claude/docs-p053-regressao-261021-0827` | **SHA:** `d78360c437`
 
+**Arquivos tocados (list_pr_files):** 5 arquivos — `docs/reconciliation/MASTER_LEDGER.json`, `docs/reconciliation/PLAN_REGISTRY.json`, `docs/reconciliation/evidence/ARTIFACT_MANIFEST.json`, `docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz`, `docs/reconciliation/tasks/P053.json` — **zero arquivos `.github/workflows/`**.
+
 | Critério | Resultado | Evidência |
 |---|---|---|
-| **1. Válida?** | SIM (parcialmente) | Docs de reconciliação P053 têm valor; migrations são duplicatas do main |
-| **2. Regressão?** | NÃO (conteúdo não-workflow) | Conteúdo não-workflow é só documentação; merge limpo exit 0 |
-| **3. Já em main?** | NÃO (docs) / SIM (4 migrations) | `git diff main..origin/branch -- supabase/migrations/` retorna diff vazio para 4 das migrations |
-| **4. Regra correta?** | **FALHA** | `ci.yml` neste branch remove step `denoland/setup-deno` + `deno check` + `deno test` (linhas 118-150 do main) via ancestor compartilhado |
+| **1. Válida?** | SIM | Docs de reconciliação P053 têm valor; migrations referenciadas já estão em main |
+| **2. Regressão?** | SIM (sem regressão) | PR toca só 5 arquivos de documentação; zero código-fonte ou testes alterados |
+| **3. Já em main?** | NÃO (docs são novos) / SIM (migrations já em main) | `list_pr_files` confirma zero migrations novas |
+| **4. Regra correta?** | SIM | Sem workflow alterado; sem DDL destrutivo |
 
-**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure \| `Contrato DB offline`: failure \| `🎭 E2E Tests`: failure.
+**Bloqueio físico:** CI vermelho por 44 falhas pré-existentes na main — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure \| `Contrato DB offline`: failure \| `🎭 E2E Tests`: failure.
 
 ---
 
@@ -79,14 +81,16 @@ Ancestor compartilhado modifica `.github/workflows/ci.yml` removendo o step `�
 
 **Branch:** `fix/ci-workflows-vermelhos` | **SHA:** `0770f6b5ef`
 
+**Arquivos tocados (list_pr_files):** ci.yml **ADICIONA** step `denoland/setup-deno` + `deno check` + `deno test` (não remove). Também inclui outros fixes de CI e arquivos E2E.
+
 | Critério | Resultado | Evidência |
 |---|---|---|
-| **1. Válida?** | SIM | Objetivo legítimo (destrava CI); 431 arquivos modificados |
-| **2. Regressão?** | NÃO | 5 migrations já em main; E2E/scripts não introduzem regressão conhecida |
-| **3. Já em main?** | NÃO (correções CI) / SIM (migrations) | `git diff` mostra migrations já presentes |
-| **4. Regra correta?** | **FALHA** | Mesmo ancestry: `ci.yml` remove Deno (201 arquivos `.test.ts` em `supabase/functions/` perderiam cobertura) |
+| **1. Válida?** | SIM | Objetivo legítimo — adiciona cobertura Deno ao CI da main |
+| **2. Regressão?** | SIM (sem regressão) | Adiciona cobertura; migrations já em main; E2E/scripts não introduzem regressão |
+| **3. Já em main?** | NÃO (adição de Deno ao CI) / SIM (migrations) | `list_pr_files` confirma que ci.yml tem adição de step |
+| **4. Regra correta?** | SIM | Adicionar cobertura Deno ao CI é melhoria válida |
 
-**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure \| `Contrato DB offline`: failure \| `🎭 E2E Tests`: cancelled.
+**Bloqueio físico:** CI vermelho por 44 falhas pré-existentes na main — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure \| `Contrato DB offline`: failure \| `🎭 E2E Tests`: cancelled.
 
 ---
 
@@ -94,29 +98,33 @@ Ancestor compartilhado modifica `.github/workflows/ci.yml` removendo o step `�
 
 **Branch:** `claude/test-toque44-seletores-261021-0853` | **SHA:** `3eca130737`
 
+**Arquivos tocados (list_pr_files):** 2 arquivos — `e2e/a11y-toque-44px.spec.ts` e `e2e/fixtures/mapa-mocks.ts` — **zero arquivos `.github/workflows/`**.
+
 | Critério | Resultado | Evidência |
 |---|---|---|
 | **1. Válida?** | SIM | Corrige seletor `'Close'` → `'Fechar'` em spec E2E de acessibilidade |
-| **2. Regressão?** | **FALHA** | (a) Remove Deno; (b) downgrade Playwright 1.64.1 → 1.63.0 sem justificativa — `git diff HEAD..origin/branch -- .github/workflows/ci.yml` |
-| **3. Já em main?** | NÃO (fix seletor) / SIM (4 migrations) | `git diff` mostra migrations já presentes |
-| **4. Regra correta?** | **FALHA** | `ci.yml` remove Deno + downgrade de Playwright |
+| **2. Regressão?** | SIM (sem regressão) | PR toca só 2 arquivos de teste E2E; sem alteração em ci.yml; sem downgrade de Playwright |
+| **3. Já em main?** | NÃO | Fix de seletor não está em main |
+| **4. Regra correta?** | SIM | Sem workflow alterado; sem DDL destrutivo |
 
-**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure \| `Contrato DB offline`: failure \| `🎭 E2E Tests`: failure.
+**Bloqueio físico:** CI vermelho por 44 falhas pré-existentes na main — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure \| `Contrato DB offline`: failure \| `🎭 E2E Tests`: failure.
 
 ---
 
 ### PR #2155 — `fix(ci): destrava workflows que falhavam antes de executar`
 
-**Branch:** `fix/ci-verde-261021` | **SHA:** `6493401`
+**Branch:** `fix/ci-verde-261021` | **SHA:** `64934014`
+
+**Arquivos tocados (list_pr_files):** ci.yml **ADICIONA** job `coverage` + step `denoland/setup-deno` + `deno test`. Também inclui outros fixes de CI (Bun cache, upgrade de Playwright para 1.64.1).
 
 | Critério | Resultado | Evidência |
 |---|---|---|
-| **1. Válida?** | SIM | Objetivo legítimo idêntico ao #2151; 135 arquivos |
-| **2. Regressão?** | NÃO | Sem migrations novas; conteúdo E2E/scripts/docs não altera código de produção |
-| **3. Já em main?** | NÃO | Correções CI não estão em main |
-| **4. Regra correta?** | **FALHA** | Mesmo ancestry: `ci.yml` remove Deno do CI |
+| **1. Válida?** | SIM | Adiciona job coverage e Deno ao CI — objetivo legítimo |
+| **2. Regressão?** | SIM (sem regressão) | Adiciona cobertura; sem migrations novas; E2E/scripts não alteram código de produção |
+| **3. Já em main?** | NÃO | Job coverage + Deno não estão em main |
+| **4. Regra correta?** | SIM | Sem DDL destrutivo; melhoria de CI é válida |
 
-**Bloqueio físico:** CI vermelho — `🏗️ Build`: skipped \| `🧪 Unit Tests` + `Contrato DB offline`: failure.
+**Bloqueio físico:** CI vermelho por 44 falhas pré-existentes na main — `🏗️ Build`: skipped \| `🧪 Unit Tests` + `Contrato DB offline`: failure.
 
 ---
 
@@ -201,9 +209,7 @@ Estas 24 PRs foram criadas pela conta `adm01-debug` usando templates genéricos 
 Fechar. Não têm valor para o projeto.
 
 ### Grupo A — PRs #2149, #2151, #2152, #2155
-1. Criar branch nova a partir de `main`
-2. Cherry-pick apenas commits com conteúdo relevante (excluindo commits que tocam `ci.yml`)
-3. Abrir novo PR
+O único bloqueio é o CI vermelho da main (44 falhas pré-existentes). Corrigir as falhas em main (os 15 arquivos listados em `analise-prs/baseline/tests.txt`) desbloquearia esses 4 PRs sem nenhuma alteração de conteúdo necessária.
 
 ### Grupo C — PR #2185
 Restaurar `useTalkXSuppression.test.ts` (371 linhas, SHA do arquivo em main: `git show origin/main:src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`) antes do merge.
