@@ -6,15 +6,20 @@
     "sha": "dd5ec6ac739588e1ef965b4435911b0113e10936",
     "base_atual": true,
     "tipo": "docs/audit",
-    "arquivos_principais": ["PENDENCIAS.md", "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md", "auditoria-supabase/inventario/*.md", "auditoria-supabase/propostas/*.sql"],
-    "toca_workflows": false,
+    "arquivos_principais": [
+      "PENDENCIAS.md",
+      "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+      "auditoria-supabase/inventario/*.md",
+      "auditoria-supabase/propostas/*.sql"
+    ],
+    "toca_workflows": true,
     "ddl_destrutivo": false,
-    "valido": true,
-    "regra_negocio_ok": true,
-    "ci_falha_nova": false,
-    "ci_falha_preexistente": true,
-    "veredicto": "AGUARDAR_CI",
-    "motivo": "Base atualizada. Conteúdo é documentação e propostas SQL (não aplicadas). CI falha nos mesmos checks que já falham na main (Unit Tests 1/2/3 + Contrato DB). Aguarda main voltar ao verde."
+    "valido": null,
+    "regra_negocio_ok": null,
+    "ci_falha_nova": null,
+    "ci_falha_preexistente": null,
+    "veredicto": "BLOQUEADO",
+    "motivo": "Toca 2 arquivos em .github/workflows/ (eslint.yml, static.yml). Regra da sessão: BLOQUEADO automaticamente. Contém 3 migrations novas e documentação de auditoria de segurança Supabase."
   },
   {
     "numero": 2185,
@@ -23,15 +28,22 @@
     "sha": "63b6e666bbe6e3d523df8de12ae5c268693569da",
     "base_atual": false,
     "tipo": "tests+source",
-    "arquivos_principais": ["ESTADO.md", "PENDENCIAS.md", "RELATORIO_CI.md", "src/hooks/**/*.ts", "src/test/setup.ts", "src/**/__tests__/*.test.ts(x)"],
-    "toca_workflows": false,
+    "arquivos_principais": [
+      "ESTADO.md",
+      "PENDENCIAS.md",
+      "RELATORIO_CI.md",
+      "src/hooks/**/*.ts",
+      "src/test/setup.ts",
+      "src/**/__tests__/*.test.ts(x)"
+    ],
+    "toca_workflows": true,
     "ddl_destrutivo": false,
-    "valido": true,
-    "regra_negocio_ok": true,
-    "ci_falha_nova": false,
-    "ci_falha_preexistente": true,
-    "veredicto": "AGUARDAR_CI",
-    "motivo": "PR está BEHIND main (base SHA 61a973d ≠ main HEAD 5a4632c). Inclui fixes de testes e source hooks. CI falha nos mesmos checks que já falham na main. Precisa de update da branch + main voltar ao verde."
+    "valido": null,
+    "regra_negocio_ok": null,
+    "ci_falha_nova": null,
+    "ci_falha_preexistente": null,
+    "veredicto": "BLOQUEADO",
+    "motivo": "Toca 2 arquivos em .github/workflows/ (eslint.yml, static.yml). Regra da sessão: BLOQUEADO automaticamente. Conteúdo seria valioso (fixes de testes ChatMessagesArea + react-virtual) mas não pode ser mergeado com alterações de workflow."
   },
   {
     "numero": 2183,
@@ -40,7 +52,9 @@
     "sha": "4c8172e07f1c9c01e2676bfcafa44bd42446428c",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -57,7 +71,9 @@
     "sha": "193c25a3e11652c273c6fe47ab98a47c33733698",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/nextjs.yml"],
+    "arquivos_principais": [
+      ".github/workflows/nextjs.yml"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -74,7 +90,9 @@
     "sha": "c97406b805718037e139e6539cdc2725257f6264",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -91,7 +109,9 @@
     "sha": "de69811641a8d08745ed81ada69035306749f374",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -108,7 +128,9 @@
     "sha": "ebbb1149d84fde2e4ae98f9b316da83a445e7c69",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -125,7 +147,9 @@
     "sha": "8258afa1bc8dac27c6ae2dc53c2f42964d48fcae",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -142,7 +166,9 @@
     "sha": "6ff158b84de24591abcd8a60079ae958cc3b8f3c",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -159,7 +185,9 @@
     "sha": "e6d3a6e5c4a61a946f3be7182c50b37ef89113a5",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -176,7 +204,9 @@
     "sha": "4bbb6dc8c574d1842bf819bdd94fa4497ad1c011",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -193,7 +223,9 @@
     "sha": "82799384d1e9c317faec26b55c20d86a0fdff938",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -210,7 +242,9 @@
     "sha": "31e1479d84f319f0b22a897280fd5b6014bfff75",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -227,7 +261,9 @@
     "sha": "91c0b026c57f7035b8803ec03bb01d6c807071f0",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -244,7 +280,9 @@
     "sha": "7041c6420636d3f374b720376e934afea89f1998",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -261,7 +299,9 @@
     "sha": "3f1203ce8155d818eecff09b6fda601adcb3d912",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -278,7 +318,9 @@
     "sha": "f7db833cb103dded89301641f00726faacbd9bde",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -295,7 +337,9 @@
     "sha": "c4679415819b41548ab15bd0d8f5c1c3e47c4ca3",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -312,7 +356,9 @@
     "sha": "421fbb4859589deb4e44fa804539642cb2cb495a",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -329,7 +375,9 @@
     "sha": "69d4cbf37c9130a729959d7f620abc991447fa6f",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -346,7 +394,9 @@
     "sha": "7c0100ba95363cba44d65865645bf8a6d6bf1c5f",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -363,7 +413,9 @@
     "sha": "6cd723f6fd9813ad38bbdf50cde4645edd87dd0e",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -380,7 +432,9 @@
     "sha": "d5b253d025518e4b500961b0219b9214112df164",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -397,7 +451,9 @@
     "sha": "c0109c4fccd6717795c8143936e62d4f06fe5523",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -414,7 +470,9 @@
     "sha": "254cf575cc31c288ad406ead14391f273a6934b4",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -431,7 +489,9 @@
     "sha": "3ad95d829b5605d1ff4e6978c4b2de537f17240d",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -448,7 +508,9 @@
     "sha": "64934014e107190fc83f304c291a2faf35308b7b",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -463,17 +525,20 @@
     "titulo": "test(e2e): spec de toque 44px volta ao verde com seletores do app real",
     "branch": "claude/test-toque44-seletores-261021-0853",
     "sha": "3eca130737aa49024286ab3a96be626897da6e35",
-    "base_atual": true,
+    "base_atual": null,
     "tipo": "e2e-test",
-    "arquivos_principais": ["e2e/a11y-toque-44px.spec.ts", "e2e/fixtures/mapa-mocks.ts"],
-    "toca_workflows": false,
+    "arquivos_principais": [
+      "e2e/a11y-toque-44px.spec.ts",
+      "e2e/fixtures/mapa-mocks.ts"
+    ],
+    "toca_workflows": true,
     "ddl_destrutivo": false,
-    "valido": true,
-    "regra_negocio_ok": true,
-    "ci_falha_nova": false,
-    "ci_falha_preexistente": true,
-    "veredicto": "AGUARDAR_CI",
-    "motivo": "Base atualizada. Corrige seletor 'Close'→'Fechar' (i18n real do app) e adiciona mock de RPC bootstrap nos fixtures. Sem regressão nova. CI falha nos mesmos checks que já falham na main. Aguarda main voltar ao verde."
+    "valido": null,
+    "regra_negocio_ok": null,
+    "ci_falha_nova": null,
+    "ci_falha_preexistente": null,
+    "veredicto": "BLOQUEADO",
+    "motivo": "Toca 13 arquivos em .github/workflows/ (idêntico a #2149). Regra da sessão: BLOQUEADO automaticamente."
   },
   {
     "numero": 2151,
@@ -482,7 +547,9 @@
     "sha": "0770f6b5ef6f1f0df653ffe5c9dd479955673848",
     "base_atual": null,
     "tipo": "workflows",
-    "arquivos_principais": [".github/workflows/"],
+    "arquivos_principais": [
+      ".github/workflows/"
+    ],
     "toca_workflows": true,
     "ddl_destrutivo": false,
     "valido": null,
@@ -497,16 +564,22 @@
     "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)",
     "branch": "claude/docs-p053-regressao-261021-0827",
     "sha": "d78360c437f7621d9cf75aed0fec813e9f96906d",
-    "base_atual": true,
+    "base_atual": null,
     "tipo": "docs",
-    "arquivos_principais": ["docs/reconciliation/MASTER_LEDGER.json", "docs/reconciliation/PLAN_REGISTRY.json", "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json", "docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz", "docs/reconciliation/tasks/P053.json"],
-    "toca_workflows": false,
+    "arquivos_principais": [
+      "docs/reconciliation/MASTER_LEDGER.json",
+      "docs/reconciliation/PLAN_REGISTRY.json",
+      "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json",
+      "docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz",
+      "docs/reconciliation/tasks/P053.json"
+    ],
+    "toca_workflows": true,
     "ddl_destrutivo": false,
-    "valido": true,
-    "regra_negocio_ok": true,
-    "ci_falha_nova": false,
-    "ci_falha_preexistente": true,
-    "veredicto": "AGUARDAR_CI",
-    "motivo": "Base atualizada. Documentação pura — atualiza ledger de reconciliação, nenhum código ou DDL. CI falha nos mesmos checks que já falham na main. Aguarda main voltar ao verde."
+    "valido": null,
+    "regra_negocio_ok": null,
+    "ci_falha_nova": null,
+    "ci_falha_preexistente": null,
+    "veredicto": "BLOQUEADO",
+    "motivo": "Toca 13 arquivos em .github/workflows/ (ci.yml, codeql.yml, db-guard.yml, db-live-guard.yml, db-migrate.yml, deploy-functions.yml, e2e-logado.yml, e2e-talkx.yml, eslint.yml, notifica-falha-main.yml, static.yml, talkx-status-regen.yml, vercel-env-cleanup.yml). Regra da sessão: BLOQUEADO automaticamente."
   }
 ]
