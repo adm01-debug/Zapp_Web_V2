@@ -144,12 +144,12 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 | `🧪 Unit Tests (2/3)` | [119551484995](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484995) | ❌ `failure` | 23:53 UTC |
 | `🧪 Unit Tests (3/3)` | [119551484800](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484800) | ❌ `failure` | 23:55 UTC |
 
-**Status:** todos os 3 shards falharam em dois runs consecutivos. Além do flaky de timing (`ChatMessagesArea` / `react-virtual`), os shards 2/3 e 3/3 têm erros adicionais — todos confirmados como pré-existentes (ver tabelas abaixo).
+**Status:** todos os 3 shards falharam em dois runs consecutivos por flaky de timing (`ChatMessagesArea` / `react-virtual`). Os erros adicionais nos shards 2/3 e 3/3 foram **corrigidos neste push** (ver RELATORIO_CI.md §5–§8). O flaky de timing do `ChatMessagesArea` permanece pendente.
 
 ### Erros exatos — run 39693077461 (SHA `cf895c6a`) — referência histórica
 
 | Shard | Arquivo | Linha | Erro |
-|-------|---------|-------|------|
+|-------|---------|-------|-----|
 | 1/3 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
 | 2/3 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` |
 | 3/3 | `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
@@ -157,36 +157,28 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 ### Erros exatos — run 39695347415 shard 1/3 (SHA `43dd766`) — flaky pré-existente
 
 | Arquivo | Linha | Erro |
-|---------|-------|------|
+|---------|-------|-----|
 | `ChatMessagesArea.agrupar-envio.test.tsx` | 191 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
 
-### Erros exatos — run 39695347415 shard 2/3 (SHA `43dd766`)
+### Erros exatos — run 39695347415 shard 2/3 (SHA `43dd766`) — histórico
 
-| Arquivo | Linha | Erro | Classificação |
-|---------|-------|------|---------------|
-| `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
-| `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` | pré-existente (presente em `cf895c6a` shard 2/3) |
+| Arquivo | Linha | Erro | Situação |
+|---------|-------|------|----------|
+| `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
+| `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` | ✅ **CORRIGIDO** — prop `onInteractiveListItemClick` adicionada a `MessageBubble.tsx` (RELATORIO_CI.md §5) |
 
-### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — classificação definitiva
+### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — histórico
 
-| Arquivo | Linha | Erro | Classificação |
-|---------|-------|------|---------------|
-| `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
-| `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
-| `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts: expected false to be true` | **pré-existente confirmado** — `team_message_read_state` ausente de `types.ts` em `main` e nesta branch; verificado via `git show main:src/integrations/supabase/types.ts \| grep -c 'team_message_read_state'` = 0; requer `types-sync` para adicionar ao `types.ts` |
-| `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | `AssertionError: expected "vi.fn()" to be called with arguments [...]` (número de chamadas = 1) | **pré-existente confirmado (mascarado)** — em `main` o teste falha na inicialização porque o mock de `@/lib/logger` não tinha `createLogger` (Vitest strict mode); esta PR adicionou `createLogger` ao mock, expondo a falha de asserção runtime que sempre existiu; o hook usa `getLogger` (não `createLogger`), portanto o comportamento de `h.logWarn` é inalterado por esta PR |
-| `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Esperava `"reply-audio-1"` como 6º arg, recebeu `null` + UUID `eb5f8992-...` como 7º arg | **pré-existente confirmado (mascarado)** — mesmo que linha 185 acima: falha runtime pré-existente exposta pela correção do mock |
-| `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava `["c1","[Áudio]","audio","audio/arquivo.webm",undefined,"reply-audio-1"]`, recebeu com `null` extra e UUID | **pré-existente confirmado** — `git diff main HEAD -- src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` vazio (arquivo não alterado por esta PR); `src/hooks/inbox/useRealtimeInbox.ts` linha 314 já chamava `sendMessage` com 7 args em `main`; teste não faz parte do conjunto de 276 arquivos atualizados (não tinha logger mock) |
-| `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 5 + `undefined` + `null` + UUID `8c685bec-...` | **pré-existente confirmado** — mesma causa da linha 177 acima: arquivo não alterado, implementação já tinha 7 args em `main` |
-
-**Classificação definitiva — todos os erros do shard 3/3 são pré-existentes:**
-
-| Arquivo | Evidência de pré-existência |
-|---------|----------------------------|
-| `contratosModulo.test.ts:87` | `grep -c 'team_message_read_state' src/integrations/supabase/types.ts` = 0 (ausente em main e na branch) |
-| `useRealtimeInbox.sendAudio.test.tsx:177,185` | `git diff main HEAD -- [arquivo]` vazio; `useRealtimeInbox.ts:314` já tinha 7 args em main |
-| `useTeamChatNotifications.canal-estavel.test.tsx:185,198` | Falha mascarada em main por mock incompleto; esta PR expõe ao corrigir o strict-mode; hook não foi alterado |
+| Arquivo | Linha | Erro | Situação |
+|---------|-------|------|----------|
+| `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
+| `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
+| `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts` | ✅ **CORRIGIDO** — view adicionada a `types.ts` (RELATORIO_CI.md §6) |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | Asserção de `logWarn` não chamado quando esperado | ✅ **CORRIGIDO** — hook trata `membershipError`; testes ajustados (RELATORIO_CI.md §8) |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Asserção de argumento errado | ✅ **CORRIGIDO** — mesma correção (RELATORIO_CI.md §8) |
+| `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava 6 args, recebeu 7 | ✅ **CORRIGIDO** — asserções atualizadas para 7 args (RELATORIO_CI.md §7) |
+| `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 7 | ✅ **CORRIGIDO** — mesma correção (RELATORIO_CI.md §7) |
 
 ### Causa raiz (padrão flaky)
 
@@ -300,5 +292,5 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
-*Documento atualizado em 2026-10-22 (classificação definitiva — todos os erros do shard 3/3 confirmados como pré-existentes).*
+*Documento atualizado em 2026-10-21.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
