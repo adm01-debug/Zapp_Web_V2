@@ -1,140 +1,187 @@
-# Relatório de Análise de PRs — adm01-debug/Zapp_Web_V2
+# Relatório de Análise de PRs Abertas — adm01-debug/Zapp_Web_V2
 
 **Data:** 2026-10-22  
-**Main SHA baseline:** `5a4632c87f7e233fe62e830443f8b0eddf3e1a72`  
-**Branch de trabalho:** `claude/busy-cannon-40szm9`  
-**PRs analisadas:** 30 (todas as abertas no momento da análise)  
-**PRs mergeadas:** 0
+**Baseline main:** `5a4632c87f7e233fe62e830443f8b0eddf3e1a72`  
+**PRs abertas analisadas:** 30  
+**PRs mergeadas nesta sessão:** 0  
+**PR fora do escopo:** #2158 (já estava mergeada quando a análise começou)
 
 ---
 
-## Resumo Executivo
+## Resumo executivo
 
-| Veredicto | Quantidade | PRs |
-|-----------|-----------|-----|
-| **MERGEADO** | 0 | — |
-| **CI-FALHA** | 6 | #2149, #2151, #2152, #2155, #2185, #2186 |
-| **REJEITAR** | 24 | #2157–#2183 (exceto CI-FALHA) |
+**Nenhuma PR pode ser mergeada.** As 30 PRs abertas estão bloqueadas por ao menos um dos critérios abaixo:
 
-Nenhuma PR pôde ser mergeada:
-- **6 PRs** têm CI falhando em checks obrigatórios (Unit Tests e/ou Contrato DB offline)
-- **24 PRs** são templates de GitHub Actions para stacks incorretas ou configurações inválidas
+| Categoria de bloqueio | Quantidade |
+|---|---|
+| Template de workflow para stack errada (Python, PHP, Deno, Docker, R, Rust, etc.) | 24 |
+| CI com checks obrigatórios falhando | 6 |
+| **Total** | **30** |
 
 ---
 
-## PRs CI-FALHA (não mergeáveis — 6 required checks exigem CI verde)
+## Critérios aplicados
 
-### PR #2149 — docs(reconciliation): P053
-- **Branch:** `claude/docs-p053-regressao-261021-0827`
-- **SHA:** `d78360c437f7621d9cf75aed0fec813e9f96906d`
-- **CI:** 🧪 Unit Tests (x3): failure | Contrato DB offline: failure | 🎭 E2E: failure
-- **Critério 4:** ci.yml remove Deno do CI (main L118-150 usa deno check+test para 201 supabase/functions/ .test.ts)
-- **Conclusão:** Não pode mergear — CI falha + regressão em ci.yml
+1. **Válida?** — O PR resolve um problema real do projeto?
+2. **Regressão?** — O merge introduziria nova falha em código ou testes?
+3. **Já em main?** — O conteúdo já existe na `main`?
+4. **Regra de negócio correta?** — O conteúdo é tecnicamente coerente com o stack (TypeScript/React/Bun/Vite/Supabase)?
 
-### PR #2151 — fix(ci): destravar workflows que falhavam antes de executar
-- **Branch:** `fix/ci-workflows-vermelhos`
-- **SHA:** `0770f6b5ef6f1f0df653ffe5c9dd479955673848`
-- **CI:** 🧪 Unit Tests (x3): failure | Contrato DB offline: failure | 🎭 E2E: cancelled
-- **Critério 4:** ci.yml (ancestry comum com #2149) remove Deno do CI
-- **Conclusão:** Não pode mergear — CI falha + regressão em ci.yml
-
-### PR #2152 — test(e2e): spec de toque 44px
-- **Branch:** `claude/test-toque44-seletores-261021-0853`
-- **SHA:** `3eca130737aa49024286ab3a96be626897da6e35`
-- **CI:** 🧪 Unit Tests (x3): failure | Contrato DB offline: failure | 🎭 E2E: failure
-- **Critério 4:** ci.yml remove Deno do CI + downgrade Playwright 1.64.1→1.63.0
-- **Conclusão:** Não pode mergear — CI falha + regressões em ci.yml
-
-### PR #2155 — fix(ci): destrava workflows que falhavam antes de executar
-- **Branch:** `fix/ci-verde-261021`
-- **SHA:** `64934014e107190fc83f304c291a2faf35308b7b`
-- **CI:** 🏗️ Build: skipped (padrão idêntico #2149/#2151/#2152)
-- **Critério 4:** ci.yml remove Deno do CI (ancestry comum)
-- **Conclusão:** Não pode mergear — CI falha + regressão em ci.yml
-
-### PR #2185 — docs(pendencias): §8 + §9
-- **Branch:** `claude/kind-gates-87mwoe`
-- **SHA:** `63b6e666bbe6e3d523df8de12ae5c268693569da`
-- **CI:** 🧪 Unit Tests: failure | Contrato DB offline: failure
-- **Conclusão:** Não pode mergear — CI falha (2 required checks)
-
-### PR #2186 — fix(security): auditoria Supabase
-- **Branch:** `claude/loving-lovelace-esc3l2`
-- **SHA:** `dd5ec6ac739588e1ef965b4435911b0113e10936`
-- **CI:** 🧪 Unit Tests: failure | Contrato DB offline: failure
-- **Conclusão:** Não pode mergear — CI falha (2 required checks)
+Regras adicionais aplicadas:
+- Migration destrutiva (DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa) → bloqueio imediato
+- Testes deletados ou enfraquecidos → bloqueio imediato
+- Branch protection: `strict=true` + 6 checks required → merge físico impossível com CI vermelho
 
 ---
 
-## PRs REJEITAR (24 templates GitHub Actions para stacks incorretas)
+## Grupo 1 — Templates de workflow para stack errada (REJEITAR)
 
-### Grupo A — Stack Totalmente Errada
+Estas 24 PRs foram criadas pela conta `adm01-debug` usando templates genéricos do GitHub, para stacks que **não fazem parte deste projeto** (Deno, Python, PHP, R, Rust, Docker, Node.js/Webpack, npm, SLSA, Hadolint, puppet-lint, PMD, Bearer, Dependency Review, Super Linter, Next.js). O projeto usa TypeScript/React/Bun/Vite — nenhum desses workflows tem relevância.
 
-| PR | Título | Motivo |
-|----|--------|--------|
-| #2160 | hadolint (Dockerfile linter) | Sem Dockerfile no projeto |
-| #2161 | puppet-lint | Sem Puppet no projeto |
-| #2162 | phpmd (PHP) | Sem PHP no projeto |
-| #2163 | lintr (R) | Sem R no projeto |
-| #2164 | rust-clippy (Rust) | Sem Rust no projeto |
-| #2165 | pmd (Java) | Sem Java no projeto |
-| #2166 | deno.yml | Projeto usa Bun, não Deno |
-| #2167 | Node.js + Webpack | Projeto usa Bun/Vite |
-| #2168 | SLSA generator | Sem relevância para o projeto |
-| #2169 | Node.js CI (npm) | Projeto usa Bun, não npm |
-| #2170 | npm package publishing | Projeto não é pacote npm |
-| #2171 | Docker publish | Sem Dockerfile |
-| #2172 | Docker Image CI | Sem Dockerfile |
-| #2173 | npm publishing | Projeto não é pacote npm |
-| #2174 | Python package publishing | Sem Python no projeto |
-| #2175 | Python + Conda | Sem Python no projeto |
-| #2176 | Django CI | Sem Django/Python |
-| #2177 | Python package | Sem Python no projeto |
-| #2178 | GitHub Super Linter | Template genérico; conflita com CI existente; não SHA-pinned |
-| #2179 | Greeting workflow | Sem valor de negócio (hello world) |
-| #2181 | nextjs.yml | Projeto usa Vite/React, não Next.js |
+| PR | Título | Branch | Critério 1 |
+|---|---|---|---|
+| [#2157](https://github.com/adm01-debug/Zapp_Web_V2/pull/2157) | Add Dependency Review Action workflow | `adm01-debug-patch-1-2` | FALHA — stack errada |
+| [#2159](https://github.com/adm01-debug/Zapp_Web_V2/pull/2159) | Add Bearer workflow for code scanning | `adm01-debug-patch-1-3` | FALHA — stack errada |
+| [#2160](https://github.com/adm01-debug/Zapp_Web_V2/pull/2160) | Add Hadolint workflow for Dockerfile linting | `adm01-debug-patch-1-4` | FALHA — sem Docker neste projeto |
+| [#2161](https://github.com/adm01-debug/Zapp_Web_V2/pull/2161) | Add puppet-lint GitHub Actions workflow | `adm01-debug-patch-1-5` | FALHA — Puppet não existe neste projeto |
+| [#2162](https://github.com/adm01-debug/Zapp_Web_V2/pull/2162) | Add PHPMD workflow for PHP code analysis | `adm01-debug-patch-1-6` | FALHA — PHP não existe neste projeto |
+| [#2163](https://github.com/adm01-debug/Zapp_Web_V2/pull/2163) | Add lintr workflow for R code analysis | `adm01-debug-patch-1-7` | FALHA — R não existe neste projeto |
+| [#2164](https://github.com/adm01-debug/Zapp_Web_V2/pull/2164) | Add GitHub Actions workflow for rust-clippy | `adm01-debug-patch-1-8` | FALHA — Rust não existe neste projeto |
+| [#2165](https://github.com/adm01-debug/Zapp_Web_V2/pull/2165) | Add PMD code scanning workflow | `adm01-debug-patch-1-9` | FALHA — PMD/Java não existe neste projeto |
+| [#2166](https://github.com/adm01-debug/Zapp_Web_V2/pull/2166) | Add GitHub Actions workflow for Deno | `adm01-debug-patch-2` | FALHA — app usa Bun, não Deno |
+| [#2167](https://github.com/adm01-debug/Zapp_Web_V2/pull/2167) | Add GitHub Actions workflow for Node.js with Webpack | `adm01-debug-patch-2-1` | FALHA — usa Bun/Vite, não Webpack |
+| [#2168](https://github.com/adm01-debug/Zapp_Web_V2/pull/2168) | Add SLSA generic generator workflow | `adm01-debug-patch-2-2` | FALHA — SLSA não aplicável a este projeto |
+| [#2169](https://github.com/adm01-debug/Zapp_Web_V2/pull/2169) | Add Node.js CI workflow for testing | `adm01-debug-patch-2-3` | FALHA — CI já existe com Bun/Vitest |
+| [#2170](https://github.com/adm01-debug/Zapp_Web_V2/pull/2170) | Add GitHub Actions workflow for npm package publishing | `adm01-debug-patch-2-4` | FALHA — projeto não publica pacote npm |
+| [#2171](https://github.com/adm01-debug/Zapp_Web_V2/pull/2171) | Add Docker publish workflow configuration | `adm01-debug-patch-2-5` | FALHA — sem Docker neste projeto |
+| [#2172](https://github.com/adm01-debug/Zapp_Web_V2/pull/2172) | Add Docker Image CI workflow | `adm01-debug-patch-2-6` | FALHA — sem Docker neste projeto |
+| [#2173](https://github.com/adm01-debug/Zapp_Web_V2/pull/2173) | Add GitHub Actions workflow for npm publishing | `adm01-debug-patch-2-7` | FALHA — projeto não publica pacote npm |
+| [#2174](https://github.com/adm01-debug/Zapp_Web_V2/pull/2174) | Add GitHub Actions workflow for Python package | `adm01-debug-patch-2-8` | FALHA — Python não existe neste projeto |
+| [#2175](https://github.com/adm01-debug/Zapp_Web_V2/pull/2175) | Add GitHub Actions workflow for Python package with Conda | `adm01-debug-patch-2-9` | FALHA — Python não existe neste projeto |
+| [#2176](https://github.com/adm01-debug/Zapp_Web_V2/pull/2176) | Add Django CI workflow | `adm01-debug-patch-2-10` | FALHA — Django não existe neste projeto |
+| [#2177](https://github.com/adm01-debug/Zapp_Web_V2/pull/2177) | Add GitHub Actions workflow for Python package | `adm01-debug-patch-2-11` | FALHA — Python não existe neste projeto |
+| [#2178](https://github.com/adm01-debug/Zapp_Web_V2/pull/2178) | Add GitHub Super Linter workflow | `adm01-debug-patch-2-12` | FALHA — duplica lint já configurado |
+| [#2179](https://github.com/adm01-debug/Zapp_Web_V2/pull/2179) | Add manual workflow for greeting | `adm01-debug-patch-3` | FALHA — demo/teste sem valor |
+| [#2181](https://github.com/adm01-debug/Zapp_Web_V2/pull/2181) | Create nextjs.yml | `adm01-debug-patch-3-2` | FALHA — usa Vite, não Next.js |
+| [#2183](https://github.com/adm01-debug/Zapp_Web_V2/pull/2183) | chore(ci): remove workflows alienígenas | `chore/remove-alien-workflows` | FALHA — `eslint.yml`/`static.yml` já não existem em main |
 
-### Grupo B — Configuração Inválida
-
-| PR | Título | Motivo |
-|----|--------|--------|
-| #2157 | dependency-review.yml | sha_pinning_required=true: usa @v4 (tag flutuante, não SHA) |
-| #2159 | bearer.yml | Secret BEARER_TOKEN inexistente no repositório |
-
-### Grupo C — Já implementado / No-op
-
-| PR | Título | Motivo |
-|----|--------|--------|
-| #2183 | Remove eslint.yml/static.yml | Esses arquivos já NÃO existem em main (inventário confirmado: 15 workflows, SHA 5a4632c) |
+**Evidência comum:** `package.json` define scripts Bun; `bun.lockb` é o lockfile; nenhum arquivo Python/PHP/R/Rust/Dockerfile existe no repo. A branch `main` tem 15 workflows legítimos; `eslint.yml` e `static.yml` **não existem** em main — o PR #2183 pretende remover arquivos que já não estão lá.
 
 ---
 
-## Metodologia
+## Grupo 2 — PRs com conteúdo legítimo mas CI falhando (CI-FALHA)
 
-Cada PR foi avaliada contra 4 critérios:
+### PR #2149 — `docs(reconciliation): P053`
 
-1. **Ainda é válida?** — O problema que resolve ainda existe?
-2. **Traz regressão?** — Alguma mudança quebra código existente ou reduz cobertura de testes?
-3. **Já está implementada no main?** — A funcionalidade já existe?
-4. **A regra de negócio está correta?** — O código implementa a lógica certa para este projeto?
+**Branch:** `claude/docs-p053-regressao-261021-0827` | **SHA:** `d78360c437`
 
-**Evidências coletadas:**
-- Diff completo lido via `github_get_pr_diff` para PRs substantivos
-- CI check runs verificados via `github_list_check_runs` (SHAs dos HEADs das branches)
-- Baseline de 44 falhas pré-existentes em main (`analise-prs/baseline/tests.txt`)
-- Inventário de 15 workflows legítimos em main confirmado via `ls .github/workflows/` no SHA `5a4632c`
-- `git merge --no-commit --no-ff` em worktree isolado para verificação de conflitos
+- **Critério 1:** SIM (parcialmente) — documentação de reconciliação P053 tem valor; migrations são duplicatas do main
+- **Critério 2:** NÃO — merge limpo (exit 0); conteúdo não-workflow é só documentação
+- **Critério 3:** NÃO (documentação) / SIM (migrations — 4 migrations já em main)
+- **Critério 4:** FALHA — `ci.yml` neste branch (ancestor compartilhado) remove o step `🦕 Setup Deno` que roda `deno check`/`deno test` em 201 arquivos `.test.ts` de `supabase/functions/`
 
-**Limitação:** PRs com CI falhando não puderam ser mergeadas por branch protection (6 required checks obrigatórios, `strict=true`, `enforce_admins=true`). O problema raiz das falhas de CI (#2149, #2151, #2152, #2155) é que o ci.yml nessas branches remove o bloco Deno (L118-150 em main) que roda `deno check` + `deno test` em 201 arquivos `.test.ts` de `supabase/functions/`.
+**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure | `Contrato DB offline`: failure | `🎭 E2E Tests`: failure. Branch protection (`strict=true` + 6 required checks) impede merge.
 
 ---
 
-## Próximos Passos (para Joaquim)
+### PR #2151 — `fix(ci): destravar workflows que falhavam antes de executar`
 
-Para as PRs CI-FALHA substantivas (#2149, #2151, #2152, #2155):
-- O ci.yml nessas branches removeu o bloco Deno do CI
-- Para mergear, seria necessário corrigir o ci.yml preservando o bloco Deno (L118-150 de main)
-- Depois disso, as PRs #2149 (docs P053) e #2155 (fix CI) ainda precisariam passar em todos os 6 required checks
+**Branch:** `fix/ci-workflows-vermelhos` | **SHA:** `0770f6b5ef`
 
-Para as PRs #2185 e #2186:
-- Verificar quais testes unitários estão falhando e corrigir antes de tentar novo merge
+- **Critério 1:** SIM — objetivo legítimo (destrava CI); 431 arquivos modificados
+- **Critério 2:** NÃO — 5 migrations do PR já estão em main; conteúdo E2E/scripts não introduz regressão conhecida
+- **Critério 3:** NÃO (correções de CI) / SIM (migrations)
+- **Critério 4:** FALHA — mesmo ancestry do #2149: `ci.yml` remove Deno do CI (201 test files de edge functions perderiam cobertura)
+
+**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure | `Contrato DB offline`: failure | `🎭 E2E Tests`: cancelled.
+
+---
+
+### PR #2152 — `test(e2e): spec de toque 44px`
+
+**Branch:** `claude/test-toque44-seletores-261021-0853` | **SHA:** `3eca130737`
+
+- **Critério 1:** SIM — corrige seletor `'Close'` → `'Fechar'` em spec E2E de acessibilidade
+- **Critério 2:** FALHA — além de remover Deno (mesmo ancestry), faz downgrade de Playwright 1.64.1 → 1.63.0 sem justificativa (evidência: `git diff HEAD..test-pr-2152 -- .github/workflows/ci.yml`)
+- **Critério 3:** NÃO (fix do seletor) / SIM (4 migrations já em main)
+- **Critério 4:** FALHA — `ci.yml` remove Deno + downgrade de Playwright
+
+**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure | `Contrato DB offline`: failure | `🎭 E2E Tests`: failure.
+
+---
+
+### PR #2155 — `fix(ci): destrava workflows que falhavam antes de executar`
+
+**Branch:** `fix/ci-verde-261021` | **SHA:** `6493401`
+
+- **Critério 1:** SIM — objetivo legítimo idêntico ao #2151; 135 arquivos
+- **Critério 2:** NÃO — sem migrations novas; conteúdo E2E/scripts/docs não altera código de produção
+- **Critério 3:** NÃO (correções CI)
+- **Critério 4:** FALHA — mesmo ancestry: `ci.yml` remove Deno do CI
+
+**Bloqueio físico:** CI vermelho — `🏗️ Build`: skipped | `🧪 Unit Tests` + `Contrato DB offline`: failure. Padrão idêntico aos PRs #2149/#2151/#2152.
+
+---
+
+### PR #2185 — `docs(pendencias): §8 + §9`
+
+**Branch:** `claude/kind-gates-87mwoe` | **SHA:** `63b6e666bb`
+
+- **Critério 1:** SIM — documentação de pendências + fix de OOM no typecheck (`--max-old-space-size=4096`)
+- **Critério 2:** FALHA — deleta `src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` (371 linhas). Regra: "Proibido apagar, pular ou enfraquecer testes". Evidência: `git diff --name-status` lista o arquivo como `D` (deleted)
+- **Critério 3:** NÃO — flag `--max-old-space-size=4096` e seções §8/§9 não estão em main
+- **Critério 4:** SIM (para o que não deleta)
+
+**Bloqueio físico:** CI vermelho — `🧪 Unit Tests`: failure | `Contrato DB offline`: failure.
+
+---
+
+### PR #2186 — `fix(security): auditoria Supabase`
+
+**Branch:** `claude/loving-lovelace-esc3l2` | **SHA:** `dd5ec6ac73`
+
+- **Critério 1:** SIM — auditoria de segurança Supabase tem valor; 338 arquivos incluindo docs e testes
+- **Critério 2:** FALHA (migration destrutiva) — `supabase/migrations/20261026100300_dept_invites_ownership_fix.sql` contém:
+  ```sql
+  DROP POLICY IF EXISTS "dept_invites_delete_authenticated" ON public.department_invites;
+  DROP POLICY IF EXISTS "dept_invites_insert_authenticated" ON public.department_invites;
+  ```
+  Regra: "migration só se for aditiva e não destrutiva (sem DROP...)". Este arquivo **não está em main** (última migration em main: `20261026090300`).
+- **Critério 3:** NÃO — as 3 migrations do PR (`20261026100300`, `20261026110300`, `20261026120300`) **não estão em main**. Confirmado: `git show origin/main:supabase/migrations/202610261*` retorna vazio.
+- **Critério 4:** FALHA — DROP POLICY viola a regra de migration aditiva
+
+**Bloqueio físico:** CI vermelho — `🧪 Unit Tests` (1/3, 2/3, 3/3): failure | `Contrato DB offline`: failure (run 39819751174, jobs 119967797371/119967796924/119967797048/119967575518). As falhas de unit test são **pré-existentes** (arquivos `FilesTab.fase6.test.tsx` e `ChatMessagesArea.movimento-reduzido.test.tsx` são idênticos em main e no branch — `git diff` retorna 0 bytes), mas o CI vermelho + DROP POLICY juntos bloqueiam o merge.
+
+---
+
+## O que pode ser feito para desbloquear
+
+### PRs do Grupo 1 (templates)
+Fechar. Não têm valor para o projeto.
+
+### PRs #2149, #2151, #2152, #2155 (ancestry com Deno removido)
+O bloqueio raiz está em um ancestor compartilhado que modificou `ci.yml` removendo o step Deno. Para criar um PR mergeável com o conteúdo legítimo dessas branches, seria necessário:
+1. Criar uma branch nova a partir de `main`
+2. Cherry-pick apenas os commits com o conteúdo relevante (excluindo o commit que toca `ci.yml`)
+3. Abrir novo PR
+
+### PR #2185 (deleta teste)
+Restaurar `useTalkXSuppression.test.ts` (371 linhas) antes do merge.
+
+### PR #2186 (DROP POLICY)
+Reescrever `20261026100300_dept_invites_ownership_fix.sql` como migration aditiva: em vez de `DROP POLICY` + `CREATE POLICY`, usar `ALTER POLICY` ou criar as políticas novas com nomes diferentes, deixando as existentes até que o código que as referencia seja atualizado.
+
+---
+
+## Correção de dado anterior
+
+O dossier `PR-2186.md` gerado em sessão anterior afirmava incorretamente que as migrations `20261026110300` e `20261026120300` "já existiam em main". **Isso estava errado.** Verificação desta sessão:
+```
+git ls-tree -r --name-only origin/main | grep "supabase/migrations/202610"
+→ última migration em main: 20261026090300_revoke_multiplix_anon_public_execute.sql
+```
+As migrations `20261026100300`, `20261026110300` e `20261026120300` existem apenas no branch `claude/loving-lovelace-esc3l2`.
+
+---
+
+*Gerado em 2026-10-22. Dossiers individuais em `analise-prs/dossies/PR-XXXX.md`.*
