@@ -48,7 +48,7 @@ partir do cÃ³digo e falha quando:
 | `auth-login` | A | `src/lib/serverLogin.ts:149` Â· `supabase/config.toml:39` |
 | `auto-close-conversations` | E | â€” sem chamador no repositÃ³rio â€” |
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
-| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` Â· `src/hooks/chat/useNewConversation.ts:151` Â· `src/hooks/inbox/useInboxBulkActions.ts:245` Â· `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` Â· `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` Â· `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` Â· `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` Â· `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` Â· `supabase/config.toml:26` |
+| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` Â· `src/hooks/chat/useNewConversation.ts:151` Â· `src/hooks/inbox/useInboxBulkActions.ts:249` Â· `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` Â· `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` Â· `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` Â· `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` Â· `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` Â· `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/components/integrations/BitrixIntegrationView.tsx:29` Â· `src/hooks/integrations/useBitrixApi.ts:33` |
 | `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` Â· `supabase/functions/_shared/evolution-webhook-messages.ts:590` |
 | `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` Â· `src/hooks/communication/useAudioMemes.ts:243` |
@@ -121,28 +121,4 @@ partir do cÃ³digo e falha quando:
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositÃ³rio a dispara: nÃ£o hÃ¡
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
-`supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso nÃ£o quer dizer "morta" â€” o chamador pode ser externo
-(N8N, cron do provedor, operaÃ§Ã£o manual) â€” quer dizer **nÃ£o comprovada no repositÃ³rio**.
-As auditorias de migraÃ§Ã£o de 2026-08 jÃ¡ apontavam parte destes nomes; a guarda agora
-mantÃ©m a lista honesta.
-
-- `ai-auto-tag`
-- `ai-usage-outbox-drain`
-- `auto-close-conversations`
-- `cleanup-rate-limit-logs`
-- `elevenlabs-agent-token`
-- `external-db-bridge`
-- `gmail-send`
-- `gmail-sync`
-- `health`
-- `metrics`
-- `multiplix-voices`
-- `recover-corrupted-audios`
-- `recover-message-media`
-- `send-email`
-- `send-rate-limit-alert`
-- `status`
-- `talkx-report`
-- `talkx-scheduler`
-- `talkx-storage-purge`
-- `voice-copilot-action`
+ÍÕÁ…‰…Í”½µ¥É…Ñ¥½¹Ì½€°¹•´•¹ÑÉ…‘„•´ÍÕÁ…‰…Í”½½¹™¥œ¹Ñ½µ±€¸%ÍÍ¼»¼ÅÕ•È‘¥é•È€‰µ½ÉÑ„ˆƒŠP¼¡…µ…‘½ÈÁ½‘”Í•È•áÑ•É¹¼(¡8á8°É½¸‘¼ÁÉ½Ù•‘½È°½Á•É‡Ÿ¼µ…¹Õ…°¤ƒŠPÅÕ•È‘¥é•È€¨©»¼½µÁÉ½Ù…‘„¹¼É•Á½Í¥ÓÍÉ¥¼¨¨¸)Ì…Õ‘¥Ñ½É¥…Ì‘”µ¥É‡Ÿ¼‘”€ÈÀÈØ´Àà«„…Á½¹Ñ…Ù…´Á…ÉÑ”‘•ÍÑ•Ì¹½µ•Ìì„Õ…É‘„…½É„)µ…¹Ó¥´„±¥ÍÑ„¡½¹•ÍÑ„¸((´…¤µ…ÕÑ¼µÑ…€(´…¤µÕÍ…”µ½ÕÑ‰½àµ‘É…¥¹€(´…ÕÑ¼µ±½Í”µ½¹Ù•ÉÍ…Ñ¥½¹Í€(´±•…¹ÕÀµÉ…Ñ”µ±¥µ¥Ğµ±½Í€(´•±•Ù•¹±…‰Ìµ…•¹ĞµÑ½­•¹€(´•áÑ•É¹…°µ‘ˆµ‰É¥‘•€(´µ…¥°µÍ•¹‘€(´µ…¥°µÍå¹€(´¡•…±Ñ¡€(´µ•ÑÉ¥Í€(´µÕ±Ñ¥Á±¥àµÙ½¥•Í€(´É•½Ù•Èµ½ÉÉÕÁÑ•µ…Õ‘¥½Í€(´É•½Ù•Èµµ•ÍÍ…”µµ•‘¥…€(´Í•¹µ•µ…¥±€(´Í•¹µÉ…Ñ”µ±¥µ¥Ğµ…±•ÉÑ€(´ÍÑ…ÑÕÍ€(´Ñ…±­àµÉ•Á½ÉÑ€(´Ñ…±­àµÍ¡•‘Õ±•É€(´Ñ…±­àµÍÑ½É…”µÁÕÉ•€(´Ù½¥”µ½Á¥±½Ğµ…Ñ¥½¹€(
