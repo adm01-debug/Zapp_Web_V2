@@ -8,7 +8,7 @@
 
 | Regra | Descrição |
 |---|---|
-| **workflows** | Qualquer PR que adicione, modifique ou remova arquivos em `.github/workflows/` é **BLOQUEADO automaticamente**, independente do conteúdo |
+| **experimentos** | Experimentos de Claude são só em git worktree local; Claude não toca `.github/workflows/` nos seus próprios commits — isso NÃO bloqueia automaticamente PRs que toquem workflows |
 | **push-direto** | Proibido push direto na main, force-push, fechar/editar/comentar PR, labels, deletar branch, mudar configurações |
 | **singu** | SINGU é somente leitura — PR que escreva nele não é mergeado |
 | **ddl-destrutivo** | Migration só se aditiva e não-destrutiva (sem DROP table, RENAME, ALTER TYPE, DELETE/UPDATE em massa), idempotente |
@@ -33,7 +33,7 @@ targeted-ledger-evidence.yml  types-sync.yml    vercel-env-cleanup.yml
 ```
 
 **Arquivos ausentes no main** (mas presentes em várias branches abertas):
-- `eslint.yml` — NÃO existe na main; provável herança de ancestor comum (presente em 26 de 30 PRs como adição)
+- `eslint.yml` — NÃO existe na main; provável herança de ancestor comum
 - `static.yml` — idem
 - `auto-update-pr-branch.yml` — presente em PRs de reconciliação; foi removido da main em revisão anterior
 - `settings-guard.yml` — idem
@@ -90,16 +90,16 @@ Para cada PR, 4 perguntas:
 | **3. Já no main?** | A mudança já foi incorporada na main? | `git diff main..origin/<branch> -- <files>` |
 | **4. Regra correta?** | A implementação está tecnicamente correta? | Análise do diff, migrations, testes |
 
-## 7. Classificação dos 30 PRs abertos
+## 7. Classificação dos 30 PRs abertos — motivo real do bloqueio
 
-| Categoria | Contagem | Exemplos |
-|---|---|---|
-| Templates de workflow GitHub (alien) | 20 | PRs #2157–#2178 |
-| Fixes de CI/workflow | 3 | #2151, #2155, #2183 |
-| PRs de conteúdo legítimo c/ herança de workflows | 4 | #2149, #2152, #2185, #2186 |
-| Outros workflows | 3 | #2179, #2181 + resto |
+| Grupo | PRs | Critério que falha | Motivo |
+|---|---|---|---|
+| Templates alien (stack errada) | #2157, #2159–#2179, #2181, #2183 | 1 e/ou 4 | Workflows para Python, PHP, R, Rust, Java, Docker, Deno, Next.js, SLSA etc. — stack do projeto é TypeScript/Bun/Vite; SHA pinning ausente |
+| Herança Deno-removal | #2149, #2151, #2152, #2155 | 4 | Ancestor compartilhado modifica `ci.yml` removendo `denoland/setup-deno` + `deno test` (linhas 118-150 de `ci.yml`), eliminando cobertura de 201 arquivos `.test.ts` em `supabase/functions/` |
+| Deleta teste | #2185 | 2 | Remove `src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` (371 linhas) |
+| Migration destrutiva | #2186 | 2 | `20261026100300_dept_invites_ownership_fix.sql` contém `DROP POLICY IF EXISTS` × 2 |
 
-**Veredicto único**: todos os 30 BLOQUEADOS por tocar `.github/workflows/`.
+**Resultado**: 0 PRs mergeadas; 30 bloqueadas — nenhuma por "tocar `.github/workflows/`" como regra automática, mas por falha em um dos 4 critérios técnicos acima.
 
 ## 8. Fontes consultadas
 
