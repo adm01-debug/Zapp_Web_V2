@@ -64,8 +64,9 @@ export function formatWorkItemDay(
 
 /**
  * Extrai HH:mm directamente da string ISO quando ela carrega offset explícito
- * (ex.: `17:00:00-03:00`). Evita a conversão para o fuso do sistema, preservando
- * a hora tal como gravada pelo banco.
+ * (ex.: `17:00:00-03:00`). Preserva a hora tal como gravada pelo banco,
+ * independente do fuso do navegador — por isso é correto para strings com
+ * offset. Para strings Z (UTC) ou objetos Date, usa getHours() local abaixo.
  */
 function extractTimeFromISOOffset(s: string): string | null {
   const m = s.match(/T(\d{2}):(\d{2})(?::\d{2})?[+-]\d{2}:\d{2}$/);
