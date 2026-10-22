@@ -1,8 +1,24 @@
 # RELATÓRIO CI — Baseline × Final
 
-> Gerado em 2026-10-22 02:30 UTC.
+> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 07:00 UTC.
 > Branch de trabalho: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
 > Esta sessão corrigiu uma regressão introduzida pela PR #2182 e documentou falhas pré-existentes.
+
+---
+
+## 0. Baseline local (antes de alterar qualquer arquivo)
+
+Executado no contêiner de desenvolvimento antes de qualquer edição nesta sessão.
+
+| Comando | Resultado | Observação |
+|---------|-----------|-----------|
+| `bun install` | ✅ success | 675 pacotes, sem alterações |
+| `bun run lint` | ✅ success | exit 0, sem erros |
+| `bun run typecheck` (local) | ❌ SIGABRT (OOM) | `tsc -b` sem `--max-old-space-size` → kernel mata o processo. CI usa `typecheck-ratchet.mjs` com `--max-old-space-size=4096` (commit `4604a5a`, PR #2182) |
+| `bun run build` | ✅ success | 18.90s, sem erros |
+| `bun run test` (full suite local) | ❌ timeout (143) | Suite completa > 300s local; CI usa 3 shards paralelos |
+
+> **Nota:** `bun run typecheck` local falha por OOM em todo ambiente sem 4 GB de memória para o Node; o CI usa `typecheck-ratchet.mjs` que adiciona `--max-old-space-size=4096` via `spawnSync`. Build e lint passam sem restrições.
 
 ---
 
@@ -99,6 +115,18 @@ received: null   (collectionError)
 
 **Correção aplicada (commit desta sessão):** adicionado `if (messagesCountError) throw messagesCountError;` após o bloco `try/catch` de contagem estimada de `messages` em `src/hooks/system/useDiagnosticsData.ts`. A propagação faz com que `fetchSystemHealth` lance exceção → `fetchAll` captura → `coletaFalhou` recebe log `collect-error` → `collectionError` fica não-nulo.
 
+### 2.9 `useInboxFilters` — regressão de hook ordering e leitura via React Router
+
+**Causa raiz identificada:** commit `6c883342` substituiu a escrita do `type` na URL via `setSearchParams`, mas manteve a leitura via `contactTypeFromUrl()` que usa `window.location.search`. Em MemoryRouter (testes com jsdom), `window.location.search` é sempre `''` — o parâmetro `?type=` passado via `initialEntries` nunca é lido. Além disso, o `useSearchParams()` estava declarado **depois** do `useMemo` de `basePrefs` que já o referenciava, criando referência antes de inicialização (`const` em TDZ).
+
+**Testes que falhavam:**
+- `useInboxFilters.type-url.test.tsx` — `selectedContactType` sempre `null` mesmo com `?type=whatsapp` em `initialEntries`
+
+**Correção aplicada (commit [`f4da921`](https://github.com/adm01-debug/Zapp_Web_V2/commit/f4da921250817647c62538ce8b78e96a1bc2e04a)):**
+1. `useSearchParams()` movido para antes de `basePrefs` (após `draft` state, antes do `useMemo`)
+2. `contactTypeFromUrl()` substituída por `normalizeContactType(searchParams.get('type'))` dentro de `basePrefs`
+3. Declaração duplicada de `useSearchParams` removida
+
 ---
 
 ## 3. Estado Final — PR #2185
@@ -112,22 +140,32 @@ received: null   (collectionError)
 | `945198e` | `src/test/setup.ts`, 4 testes `ChatMessagesArea`, `PENDENCIAS.md` | Fix §2.3: mock `clientHeight`/`clientWidth` em `Element.prototype`; `globalThis.ResizeObserver` nos 4 arquivos de teste; todos 11 testes ChatMessagesArea passam |
 | `7b18ebf` | `PENDENCIAS.md` | Docs: §5 RESOLVIDO (clientHeight/clientWidth), §9 inventário atualizado |
 | `6c883342` | múltiplos arquivos | Fix §2.4–§2.7: `workItemFormat` timezone; `useUserSettings` isError; `useInboxFilters` setSearchParams; `useDiagnosticsData` connectionsCountError; docs |
-| _(este push)_ | `src/hooks/system/useDiagnosticsData.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.4 (`messagesCountError` throw): propaga erro de contagem estimada para fetchAll; docs §11 |
+| `2dd6c92` | `src/hooks/system/useDiagnosticsData.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.8: propaga `messagesCountError` via throw em `fetchSystemHealth`; docs §11 |
+| `f4da921` | `src/hooks/inbox/useInboxFilters.ts`, `PENDENCIAS.md` | Fix §2.9 (regressão `useInboxFilters`): `contactTypeFromUrl()` substituída por `normalizeContactType(searchParams.get('type'))` (React Router); `useSearchParams` movido para antes de `basePrefs` (ordem de hooks); docs §13 |
+| _(este push)_ | `RELATORIO_CI.md` | Docs: §2.9 adicionado, §3.1 E2E atualizado, timestamp |
 
-### 3.1 Required checks — PR #2185
+### 3.1 Required checks — run [39727885851](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851) (commit `1e44e21`)
 
-| Required check | Baseline (main `61a973da`) | Estado após §2.4 (commit atual) | Δ |
+| Required check | Baseline (main `61a973da`) | Estado em `1e44e21` | Δ |
 |---|---|---|---|
-| `🔍 Lint & TypeCheck` | ✅ success | ✅ success (02:42 UTC) | = |
-| `🧪 Unit Tests (1/3)` | ❌ failure (regressão §2.1) | ⏳ aguardando nova run | ↑ esperado success |
-| `🧪 Unit Tests (2/3)` | ❌ failure (regressão §2.1) | ⏳ aguardando nova run | ↑ esperado success |
-| `🧪 Unit Tests (3/3)` | ❌ failure (regressão §2.1) | ⏳ aguardando nova run | ↑ esperado success |
-| `🏗️ Build` | ⏭️ skipped | ⏳ aguardando Unit Tests | ↑ esperado success |
-| `🔒 Security Audit` | ✅ success | ✅ success (confirmado em run anterior) | = |
+| `🔍 Lint & TypeCheck` | ✅ success | ✅ success (05:26:45 UTC) | = |
+| `🧪 Unit Tests (1/3)` | ❌ failure (regressão §2.1) | ❌ failure — falhas pré-existentes §12 (05:31:24 UTC) | ↑ regressão §2.1 corrigida; novas: pré-existentes |
+| `🧪 Unit Tests (2/3)` | ❌ failure (regressão §2.1) | ❌ failure — `useInboxFilters` + pré-existentes §13 (05:34:55 UTC) | ↑ regressão §2.1 corrigida; `useInboxFilters` fix em `f4da921` |
+| `🧪 Unit Tests (3/3)` | ❌ failure (regressão §2.1) | ❌ failure — falhas pré-existentes §13 (05:35:08 UTC) | ↑ regressão §2.1 corrigida; novas: pré-existentes |
+| `🏗️ Build` | ⏭️ skipped | ⏭️ skipped (Unit Tests falharam) | = local ✅ 18.90s |
+| `🔒 Security Audit` | ✅ success | ✅ success (05:25:37 UTC) | ✅ flake 503 anterior não repetiu |
 | `Contrato DB offline` | ❌ failure (pré-existente) | ❌ failure (pré-existente) | = pendente §4 |
-| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente) | ⏳ aguardando nova run | = pendente §1 |
+| `🎭 E2E Tests (Playwright)` | ❌ failure (pré-existente) | ❌ failure (pré-existente) | = pendente §1 |
 
-> **Nota:** Tabela atualizada em 05:30 UTC — nova run iniciará sobre este commit com o fix §2.4 (`messagesCountError`).
+> **Unit Tests:** A regressão original de `getBoundingClientRect` (§2.1) foi corrigida. Os shards agora
+> falham por motivos pré-existentes (documentados em §§12–13) **e** por uma regressão de `useInboxFilters`
+> introduzida por esta PR (commit `6c883342`), corrigida em `f4da921` (§2.9). CI sobre `f4da921` aguardado.
+>
+> **Security Audit:** O flake 503 do npm registry na run anterior **não se repetiu** — check passou ✅.
+>
+> **Build:** Skipped por dependência de Unit Tests no workflow; execução local confirma ✅ (18.90s, sem erros).
+>
+> **E2E Tests:** Falha esperada por geolocalização sem mock (§1, pré-existente).
 
 ---
 
@@ -183,4 +221,4 @@ Para completênza, as 4 correções aplicadas na PR #2182 (já na `main`):
 
 ---
 
-*Relatório atualizado em 2026-10-22 05:30 UTC: fix §2.4 (`messagesCountError`) aplicado. Unit Tests aguardam nova run sobre este commit.*
+*Relatório atualizado em 2026-10-22 08:00 UTC: §2.9 documentado (useInboxFilters hook ordering + React Router searchParams); §3.1 E2E confirmado como pré-existente; commit f4da921 corrige regressão useInboxFilters — CI aguardado.*
