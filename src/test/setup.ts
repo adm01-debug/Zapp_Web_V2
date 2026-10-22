@@ -134,9 +134,12 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // de calcular quais itens são visíveis. O jsdom retorna zeros por padrão, então
 // getVirtualItems() retorna [] e nenhum item é renderizado (nem data-testid).
 // Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes.
-// Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
+// Instalado em Element.prototype (não HTMLElement.prototype) para que spies
+// de vi.spyOn(Element.prototype, 'getBoundingClientRect') no mesmo nível
+// possam sobrescrever com larguras específicas (ex.: testes do grid de arquivos
+// em FilesTab.fase6.test.tsx que simulam 959px/1474px para contar colunas).
 // ==========================================================================
-Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
   value: function () {
     return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
