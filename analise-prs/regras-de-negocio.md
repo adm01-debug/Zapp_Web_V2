@@ -1,115 +1,132 @@
-# Regras de Negócio — Análise de PRs (2026-10-22)
+# Regras de Negócio — Critérios de Merge de PRs
 
-> Documento reconstruído em 2026-10-22 com fontes diretas do codebase.
+> Extraídas de `CLAUDE.md`, branch protection da API do GitHub, e da convenção vigente do projeto.
+> Data: 2026-10-22 · main SHA: `5a4632c87f7e233fe62e830443f8b0eddf3e1a72`
 
 ---
 
-## 1. Regras operacionais desta sessão (fonte: prompt do /goal)
+## 1. Stack tecnológica do projeto
 
-| Regra | Descrição |
-|---|---|
-| **experimentos** | Experimentos de Claude são só em git worktree local; Claude não toca `.github/workflows/` nos seus próprios commits — isso NÃO bloqueia automaticamente PRs que toquem workflows |
-| **push-direto** | Proibido push direto na main, force-push, fechar/editar/comentar PR, labels, deletar branch, mudar configurações |
-| **singu** | SINGU é somente leitura — PR que escreva nele não é mergeado |
-| **ddl-destrutivo** | Migration só se aditiva e não-destrutiva (sem DROP table, RENAME, ALTER TYPE, DELETE/UPDATE em massa), idempotente |
-| **evidência** | Toda afirmação com evidência (arquivo:linha, SHA, PR ou saída de comando) |
+- **Runtime**: Bun (não Node, não Deno)
+- **Bundler**: Vite (não Webpack, não Next.js)
+- **Linguagem**: TypeScript/React (não PHP, Python, Java, Rust, R, Go, Puppet)
+- **Containerização**: nenhuma — sem Dockerfile, sem Docker Compose neste repositório
+- **Banco**: Supabase Postgres 17 (`tnnnlkbymytvtqngbbqh`)
+- **Deploy front**: Vercel automático na `main`
+- **Deploy edge functions**: manual via `deploy-functions.yml` + aprovação
 
-## 2. Branch protection da `main` (fonte: CLAUDE.md §Perímetro do GitHub)
+PR que adiciona workflow para tecnologia ausente neste projeto **é inválida** (critério 1 falha).
 
-- `strict=true` (PR deve estar atualizado com main antes de mergear)
-- `enforce_admins=true`
-- **6 required checks**: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
-- Squash merge obrigatório (`allow_squash_merge=true`, outros desligados)
+---
 
-## 3. Workflows legítimos da main (fonte: `ls .github/workflows/`)
+## 2. GitHub Actions — SHA pinning obrigatório
 
-Inventário atual (15 arquivos em `main` em 2026-10-22, SHA `5a4632c`):
+`sha_pinning_required = true` (verificado em CLAUDE.md, seção "Perímetro do GitHub").
+
+Toda referência a action **deve** usar SHA completo de 40 caracteres, não tag semântica:
+
+```yaml
+# ERRADO
+uses: actions/checkout@v4
+
+# CORRETO
+uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 ```
-branch-hygiene-audit.yml  ci.yml                codeql.yml
-crm-sync-worker.yml       db-guard.yml          db-live-guard.yml
-db-migrate.yml            deploy-functions.yml  e2e-logado.yml
-e2e-talkx.yml             notifica-falha-main.yml  talkx-status-regen.yml
-targeted-ledger-evidence.yml  types-sync.yml    vercel-env-cleanup.yml
-```
 
-**Arquivos ausentes no main** (mas presentes em várias branches abertas):
-- `eslint.yml` — NÃO existe na main; provável herança de ancestor comum
-- `static.yml` — idem
-- `auto-update-pr-branch.yml` — presente em PRs de reconciliação; foi removido da main em revisão anterior
-- `settings-guard.yml` — idem
+PR que adiciona workflow com `@vN` ou `@latest` viola esta regra e **é rejeitada**.
 
-## 4. Tech stack do projeto (fonte: package.json, tsconfig.json, vite.config.ts)
+---
 
-- **Linguagem**: TypeScript + React
-- **Bundler**: Vite
-- **Runtime**: Bun 1.4.2
-- **Banco**: Supabase PostgreSQL 17.6
-- **Testes**: Vitest (unit), Playwright (e2e)
-- **Deploy**: Vercel (front), Supabase Cloud (edge functions)
+## 3. Proteção de branch `main`
 
-**Tecnologias NÃO usadas neste projeto** (relevante para os 20 PRs de templates):
-- Python, Django, Conda, Pip
-- Java, Maven, PMD
-- PHP, PHPMD, Composer
-- R, lintr
-- Rust, Cargo, clippy
-- Docker (não para builds de app)
-- Deno
-- Next.js (usa Vite/React, não Next.js)
-- SLSA (supply chain security framework — não configurado)
-
-## 5. Falhas pré-existentes na main (fonte: `analise-prs/baseline/tests.txt`, CI job 119967797371)
-
-HEAD da main em 2026-10-22: `5a4632c87f7e233fe62e830443f8b0eddf3e1a72`
-
-**44 testes falhando em 15 arquivos** (pré-existentes, não regressão de nenhum PR):
-- `useInboxBulkActions.test.ts` (2 falhas)
-- `useGoalsDashboard.test.tsx` (4 falhas)
-- `useTalkXSegments.test.ts` (6 falhas)
-- `outbound-message.service.test.ts` (1 falha)
-- `contrasteAA.test.tsx` (4 falhas)
-- `useChatMediaSending.audio-meme-falha.test.ts` (3 falhas)
-- `AuditLogDashboard.test.tsx` (9 falhas)
-- `fundacaoVisual.test.tsx` (2 falhas)
-- `ChatPopup.pagination.test.tsx` (1 falha)
-- `TalkXOverview.states.test.tsx` (1 falha)
-- `TalkXA11yNomePapel.test.tsx` (3 falhas)
-- `adminDownloadPermission.test.ts` (5 falhas)
-- `ChatMessagesArea.agrupar-envio.test.tsx` (4 falhas — CI shard 1)
-- `ChatMessagesArea.movimento-reduzido.test.tsx` (1 falha — CI shard 1)
-- `FilesTab.fase6.test.tsx` (2 falhas — CI shard 1)
-
-## 6. Critérios de avaliação por PR
-
-Para cada PR, 4 perguntas:
-
-| Critério | Pergunta | Evidência requerida |
-|---|---|---|
-| **1. Válida?** | O PR ainda resolve um problema real ou traz valor? | Descrição do PR + contexto do projeto |
-| **2. Regressão?** | O PR introduz novas falhas de teste vs. baseline? | `bun run test` ou comparação de erros com baseline |
-| **3. Já no main?** | A mudança já foi incorporada na main? | `git diff main..origin/<branch> -- <files>` |
-| **4. Regra correta?** | A implementação está tecnicamente correta? | Análise do diff, migrations, testes |
-
-## 7. Classificação dos 30 PRs abertos — motivo real do bloqueio
-
-| Grupo | PRs | Critério que falha | Motivo |
-|---|---|---|---|
-| Templates alien (stack errada) | #2157, #2159–#2179, #2181, #2183 | 1 e/ou 4 | Workflows para Python, PHP, R, Rust, Java, Docker, Deno, Next.js, SLSA etc. — stack do projeto é TypeScript/Bun/Vite; SHA pinning ausente |
-| Herança Deno-removal | #2149, #2151, #2152, #2155 | 4 | Ancestor compartilhado modifica `ci.yml` removendo `denoland/setup-deno` + `deno test` (linhas 118-150 de `ci.yml`), eliminando cobertura de 201 arquivos `.test.ts` em `supabase/functions/` |
-| Deleta teste | #2185 | 2 | Remove `src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` (371 linhas) |
-| Migration destrutiva | #2186 | 2 | `20261026100300_dept_invites_ownership_fix.sql` contém `DROP POLICY IF EXISTS` × 2 |
-
-**Resultado**: 0 PRs mergeadas; 30 bloqueadas — nenhuma por "tocar `.github/workflows/`" como regra automática, mas por falha em um dos 4 critérios técnicos acima.
-
-## 8. Fontes consultadas
-
-| Fonte | O que fornece |
+| Campo | Valor |
 |---|---|
-| `CLAUDE.md` | Regras operacionais, perímetro do GitHub, tech stack |
-| `TESTING_CONVENTION.md` | Convenções de teste |
-| `analise-prs/baseline/tests.txt` | Falhas pré-existentes na main |
-| `git diff --name-only main..origin/<branch>` | Arquivos tocados por cada PR |
-| `git diff main..origin/<branch>` | Conteúdo completo das mudanças |
-| `.github/workflows/` | Inventário de workflows legítimos |
-| `package.json` | Tech stack confirmado (Bun, Vite, React, Vitest) |
-| CI run #119967797371 (shard 1/3) | Falhas confirmadas da main em CI |
+| `strict` | `true` (PR deve estar atualizada com a `main`) |
+| `enforce_admins` | `true` |
+| `required_status_checks` | 6 checks obrigatórios |
+| `required_pull_request_reviews` | nenhum (deliberado) |
+| Método de merge | squash only |
+| `delete_branch_on_merge` | `true` |
+
+### 6 required checks
+
+1. `🔍 Lint & TypeCheck`
+2. `🧪 Unit Tests`
+3. `🏗️ Build`
+4. `🔒 Security Audit`
+5. `Contrato DB offline`
+6. `🎭 E2E Tests (Playwright)`
+
+PR não pode ser mergeada enquanto qualquer required check falhar, **mesmo que a falha seja pré-existente na `main`**.
+
+---
+
+## 4. Migrations de banco de dados
+
+Somente migrations **aditivas e não destrutivas** são aceitas:
+
+| Operação | Permitida? |
+|---|---|
+| `CREATE TABLE` | ✅ |
+| `CREATE INDEX` | ✅ (não CONCURRENTLY — falha no gateway) |
+| `ALTER TABLE ADD COLUMN NULL` | ✅ |
+| `CREATE FUNCTION` / `CREATE OR REPLACE FUNCTION` | ✅ |
+| `CREATE POLICY` (nova) | ✅ |
+| `DROP POLICY` / `DROP TABLE` / `DROP FUNCTION` | ❌ |
+| `RENAME` (tabela, coluna, função) | ❌ |
+| `ALTER TYPE` | ❌ |
+| `DELETE ... WHERE` em massa | ❌ |
+| `UPDATE ... WHERE` em massa | ❌ |
+
+Migration com `DROP POLICY IF EXISTS` viola esta regra mesmo que seja seguida de `CREATE POLICY`.
+
+---
+
+## 5. Testes — zero regressão
+
+**Proibido:**
+- Apagar arquivo de teste existente
+- Pular (`test.skip`) ou enfraquecer asserções
+- Atualizar snapshots sem justificativa explícita
+- Usar `|| true`, `continue-on-error`, `@ts-ignore` para esconder erros
+
+PR que deleta arquivo de teste **é rejeitada**, independente do motivo alegado.
+
+---
+
+## 6. SINGU — somente leitura
+
+O sistema SINGU é externo e read-only neste contexto. PR que tente **escrever** no SINGU não é mergeada.
+
+---
+
+## 7. Workflows existentes — não duplicar
+
+O `ci.yml` já cobre: lint, typecheck, unit tests (Bun/Vitest), build (Vite), security audit, E2E (Playwright), DB contract.
+
+PR que adiciona workflow que duplica funcionalidade já existente **é rejeitada** (critério 3: já implementado).
+
+---
+
+## 8. Critérios de análise (4 perguntas)
+
+Para cada PR, 4 critérios devem ser verdadeiros para o merge ser permitido:
+
+1. **Válida?** — A mudança tem valor real para este projeto?
+2. **Sem regressão?** — Nenhum teste é apagado, nenhuma funcionalidade existente é removida?
+3. **Não já implementada?** — O conteúdo não está já na `main`?
+4. **Regra de negócio correta?** — A mudança está alinhada com as decisões de produto?
+
+Qualquer critério falso → PR **não é mergeada**.
+
+---
+
+## 9. CI vermelho na main — impacto
+
+Os checks `🧪 Unit Tests` (×3) e `Contrato DB offline` **já falham na `main` SHA `5a4632c`** com 44 testes pré-existentes e falha de conexão de banco respectivamente.
+
+Com `strict=true`, mesmo PRs que passem os critérios 1–4 **não podem ser mergeadas** enquanto o CI da `main` estiver vermelho, pois o required check `🧪 Unit Tests` sempre falhará no SHA da PR.
+
+---
+
+*Fonte: `CLAUDE.md` (seções 0–3), `scripts/ci/github-settings-baseline.json`, API GitHub branch protection.*
