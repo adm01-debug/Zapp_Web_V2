@@ -1,31 +1,31 @@
-numero,titulo,branch,sha,veredicto,motivo
-2149,docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28),claude/docs-p053-regressao-261021-0827,d78360c437f7621d9cf75aed0fec813e9f96906d,CI-FALHA,Unit Tests (x3) + Contrato DB offline + E2E Tests: failure (SHA d78360c)
-2151,fix(ci): destravar workflows que falhavam antes de executar,fix/ci-workflows-vermelhos,0770f6b5ef6f1f0df653ffe5c9dd479955673848,CI-FALHA,"Unit Tests (x3) + Contrato DB offline: failure, E2E: cancelled (SHA 0770f6b)"
-2152,test(e2e): spec de toque 44px volta ao verde com seletores do app real,claude/test-toque44-seletores-261021-0853,3eca130737aa49024286ab3a96be626897da6e35,CI-FALHA,Unit Tests (x3) + Contrato DB offline + E2E Tests: failure (SHA 3eca130)
-2155,fix(ci): destrava workflows que falhavam antes de executar,fix/ci-verde-261021,64934014e107190fc83f304c291a2faf35308b7b,CI-FALHA,Build: skipped; padrão idêntico #2149/#2151/#2152 — ancestry comum remove Deno do CI (SHA 64934014)
-2157,Add Dependency Review Action workflow,adm01-debug-patch-1,3ad95d829b5605d1ff4e6978c4b2de537f17240d,REJEITAR,"sha_pinning_required=true: refs não-SHA (actions/checkout@v4, dependency-review-action@v4)"
-2159,Add Bearer workflow for code scanning,adm01-debug-patch-1-2,254cf575cc31c288ad406ead14391f273a6934b4,REJEITAR,bearer.yml: secret BEARER_TOKEN inexistente
-2160,Add Hadolint workflow for Dockerfile linting,adm01-debug-patch-1-3,c0109c4fccd6717795c8143936e62d4f06fe5523,REJEITAR,hadolint.yml: sem Dockerfile no projeto (TypeScript/Bun/Vite)
-2161,Add puppet-lint GitHub Actions workflow,adm01-debug-patch-1-4,d5b253d025518e4b500961b0219b9214112df164,REJEITAR,puppet-lint.yml: sem Puppet no projeto
-2162,Add PHPMD workflow for PHP code analysis,adm01-debug-patch-1-5,6cd723f6fd9813ad38bbdf50cde4645edd87dd0e,REJEITAR,phpmd.yml: sem PHP no projeto
-2163,Add lintr workflow for R code analysis,adm01-debug-patch-1-6,7c0100ba95363cba44d65865645bf8a6d6bf1c5f,REJEITAR,lintr.yml: sem código R no projeto
-2164,Add GitHub Actions workflow for rust-clippy analysis,adm01-debug-patch-1-7,69d4cbf37c9130a729959d7f620abc991447fa6f,REJEITAR,rust-clippy.yml: sem código Rust no projeto
-2165,Add PMD code scanning workflow,adm01-debug-patch-1-8,421fbb4859589deb4e44fa804539642cb2cb495a,REJEITAR,pmd.yml: sem Java (referencia src/main/java); sem Java no projeto
-2166,Add GitHub Actions workflow for Deno,adm01-debug-patch-2,c4679415819b41548ab15bd0d8f5c1c3e47c4ca3,REJEITAR,"deno.yml: projeto usa Bun, não Deno (package.json, bun.lockb)"
-2167,Add GitHub Actions workflow for Node.js with Webpack,adm01-debug-patch-2-1,f7db833cb103dded89301641f00726faacbd9bde,REJEITAR,"Node.js+Webpack: projeto usa Bun/Vite, não npm/Webpack"
-2168,Add SLSA generic generator workflow,adm01-debug-patch-2-2,3f1203ce8155d818eecff09b6fda601adcb3d912,REJEITAR,SLSA generic generator: sem relevância para o projeto
-2169,Add Node.js CI workflow for testing,adm01-debug-patch-2-3,7041c6420636d3f374b720376e934afea89f1998,REJEITAR,"Node.js CI com npm: projeto usa Bun, não npm"
-2170,Add GitHub Actions workflow for npm package publishing,adm01-debug-patch-2-4,91c0b026c57f7035b8803ec03bb01d6c807071f0,REJEITAR,npm package publishing: projeto não é pacote npm
-2171,Add Docker publish workflow configuration,adm01-debug-patch-2-5,31e1479d84f319f0b22a897280fd5b6014bfff75,REJEITAR,Docker publish: sem Dockerfile no projeto
-2172,Add Docker Image CI workflow,adm01-debug-patch-2-6,82799384d1e9c317faec26b55c20d86a0fdff938,REJEITAR,Docker Image CI: sem Dockerfile no projeto
-2173,Add GitHub Actions workflow for npm publishing,adm01-debug-patch-2-7,4bbb6dc8c574d1842bf819bdd94fa4497ad1c011,REJEITAR,npm publishing: projeto não é pacote npm
-2174,Add GitHub Actions workflow for Python package publishing,adm01-debug-patch-2-8,e6d3a6e5c4a61a946f3be7182c50b37ef89113a5,REJEITAR,Python package publishing: sem Python no projeto
-2175,Add GitHub Actions workflow for Python package with Conda,adm01-debug-patch-2-9,6ff158b84de24591abcd8a60079ae958cc3b8f3c,REJEITAR,Python+Conda: sem Python no projeto
-2176,Add Django CI workflow for testing on multiple Python versions,adm01-debug-patch-2-10,8258afa1bc8dac27c6ae2dc53c2f42964d48fcae,REJEITAR,Django CI: sem Django/Python no projeto
-2177,Add GitHub Actions workflow for Python package,adm01-debug-patch-2-11,ebbb1149d84fde2e4ae98f9b316da83a445e7c69,REJEITAR,Python package: sem Python no projeto
-2178,Add GitHub Super Linter workflow,adm01-debug-patch-2-12,de69811641a8d08745ed81ada69035306749f374,REJEITAR,GitHub Super Linter: template genérico; conflita com CI existente; não SHA-pinned
-2179,Add manual workflow for greeting,adm01-debug-patch-3,c97406b805718037e139e6539cdc2725257f6264,REJEITAR,Greeting workflow: sem valor de negócio (hello world template)
-2181,Create nextjs.yml,adm01-debug-patch-3-2,193c25a3e11652c273c6fe47ab98a47c33733698,REJEITAR,"nextjs.yml: projeto usa Vite/React, não Next.js"
-2183,chore(ci): remove workflows alienígenas eslint.yml e static.yml,chore/remove-alien-workflows,4c8172e07f1c9c01e2676bfcafa44bd42446428c,REJEITAR,eslint.yml/static.yml já não existem em main (inventário 15 workflows confirmado no SHA 5a4632c)
-2185,docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main,claude/kind-gates-87mwoe,63b6e666bbe6e3d523df8de12ae5c268693569da,CI-FALHA,Unit Tests + Contrato DB offline: failure (SHA 63b6e66)
-2186,fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD,claude/loving-lovelace-esc3l2,dd5ec6ac739588e1ef965b4435911b0113e10936,CI-FALHA,Unit Tests + Contrato DB offline: failure (SHA dd5ec6a)
+PR,Titulo,Branch,SHA,Grupo,Veredito,Criterio_Falha,Merge_Ready,Motivo_Bloqueio
+2149,"docs(reconciliation): P053","claude/docs-p053-regressao-261021-0827","d78360c437","A","CI-FALHA","4","false","ci.yml ancestor remove denoland/setup-deno (201 arquivos .test.ts)"
+2151,"fix(ci): destravar workflows que falhavam antes de executar","fix/ci-workflows-vermelhos","0770f6b5ef","A","CI-FALHA","4","false","Mesmo ancestor Deno que #2149 — 431 arquivos"
+2152,"test(e2e): spec de toque 44px","claude/test-toque44-seletores-261021-0853","3eca130737","A","CI-FALHA","2,4","false","Remoção Deno + downgrade Playwright 1.64.1->1.63.0"
+2155,"fix(ci): destrava workflows que falhavam antes de executar","fix/ci-verde-261021","6493401","A","CI-FALHA","4","false","Mesmo ancestor Deno — 135 arquivos"
+2157,"Add Dependency Review Action workflow","adm01-debug-patch-1-2","","B","REJEITAR","1,4","false","Stack errada + SHA pinning ausente"
+2159,"Add Bearer workflow for code scanning","adm01-debug-patch-1-3","","B","REJEITAR","1,4","false","Bearer para PHP/Go — stack errada + secret BEARER_TOKEN ausente"
+2160,"Add Hadolint workflow for Dockerfile linting","adm01-debug-patch-1-4","","B","REJEITAR","1","false","Sem Docker neste projeto — ./Dockerfile inexistente"
+2161,"Add puppet-lint GitHub Actions workflow","adm01-debug-patch-1-5","","B","REJEITAR","1","false","Puppet não existe neste projeto"
+2162,"Add PHPMD workflow for PHP code analysis","adm01-debug-patch-1-6","","B","REJEITAR","1","false","PHP não existe neste projeto"
+2163,"Add lintr workflow for R code analysis","adm01-debug-patch-1-7","","B","REJEITAR","1","false","R não existe neste projeto"
+2164,"Add GitHub Actions workflow for rust-clippy","adm01-debug-patch-1-8","","B","REJEITAR","1","false","Rust não existe neste projeto"
+2165,"Add PMD code scanning workflow","adm01-debug-patch-1-9","","B","REJEITAR","1","false","Java/PMD não existe neste projeto"
+2166,"Add GitHub Actions workflow for Deno","adm01-debug-patch-2","","B","REJEITAR","1","false","App usa Bun não Deno como runtime"
+2167,"Add GitHub Actions workflow for Node.js with Webpack","adm01-debug-patch-2-1","","B","REJEITAR","1","false","Usa Bun/Vite não Node/Webpack"
+2168,"Add SLSA generic generator workflow","adm01-debug-patch-2-2","","B","REJEITAR","1","false","SLSA não aplicável a este projeto"
+2169,"Add Node.js CI workflow for testing","adm01-debug-patch-2-3","","B","REJEITAR","1,3","false","CI já existe com Bun/Vitest"
+2170,"Add GitHub Actions workflow for npm package publishing","adm01-debug-patch-2-4","","B","REJEITAR","1","false","Projeto não publica pacote npm"
+2171,"Add Docker publish workflow configuration","adm01-debug-patch-2-5","","B","REJEITAR","1","false","Sem Docker neste projeto"
+2172,"Add Docker Image CI workflow","adm01-debug-patch-2-6","","B","REJEITAR","1","false","Sem Docker neste projeto"
+2173,"Add GitHub Actions workflow for npm publishing","adm01-debug-patch-2-7","","B","REJEITAR","1","false","Projeto não publica pacote npm"
+2174,"Add GitHub Actions workflow for Python package","adm01-debug-patch-2-8","","B","REJEITAR","1","false","Python não existe neste projeto"
+2175,"Add GitHub Actions workflow for Python package with Conda","adm01-debug-patch-2-9","","B","REJEITAR","1","false","Python/Conda não existe neste projeto"
+2176,"Add Django CI workflow","adm01-debug-patch-2-10","","B","REJEITAR","1","false","Django não existe neste projeto"
+2177,"Add GitHub Actions workflow for Python package","adm01-debug-patch-2-11","","B","REJEITAR","1","false","Python não existe neste projeto"
+2178,"Add GitHub Super Linter workflow","adm01-debug-patch-2-12","","B","REJEITAR","1,3","false","Duplica lint existente em ci.yml"
+2179,"Add manual workflow for greeting","adm01-debug-patch-3","","B","REJEITAR","1","false","Demo sem valor"
+2181,"Create nextjs.yml","adm01-debug-patch-3-2","","B","REJEITAR","1","false","Usa Vite não Next.js"
+2183,"chore(ci): remove workflows alienígenas","chore/remove-alien-workflows","","B","REJEITAR","3","false","eslint.yml e static.yml já não existem na main SHA 5a4632c"
+2185,"docs(pendencias): §8 + §9","claude/kind-gates-87mwoe","63b6e666bb","C","CI-FALHA","2","false","Apaga useTalkXSuppression.test.ts (21 testes VERDES)"
+2186,"fix(security): auditoria Supabase","claude/loving-lovelace-esc3l2","dd5ec6ac73","D","CI-FALHA","2","false","Migration 20261026100300 contém DROP POLICY IF EXISTS x2"
