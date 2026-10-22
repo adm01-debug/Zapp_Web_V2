@@ -13,7 +13,7 @@ const DEFAULT_TTS_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
 const DEFAULT_TTS_SPEED = 1.0;
 
 // O banco guarda o tema como texto livre: aceita só os valores que o `useTheme`
-// entende, para um valor estranho ('' ou antigo) nunca derrubar a interface.
+// entende, para um valor stranho ('' ou antigo) nunca derrubar a interface.
 const normalizeTheme = (value: unknown): Theme =>
   value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
 
@@ -101,7 +101,7 @@ export function useUserSettings() {
   const escolhaLocalRef = useRef(false);
 
   // Hidratação: leva para a interface (tema) e para o i18n (idioma) o que o banco
-  // tem. Sem isto, salvar 'Escuro' em um computador não mudava nada no outro.
+  tem. Sem isto, salvar 'Escuro' em um computador não mudava nada no outro.
   const aplicarPreferencias = useCallback((theme: unknown, language: unknown) => {
     if (escolhaLocalRef.current) return;
 
@@ -133,7 +133,7 @@ export function useUserSettings() {
         if (!ativo) return;
 
         if (error && error.code !== 'PGRST116') {
-          // PGRST116 = no rows returned
+          // PGRST1 16 = no rows returned
           log.error('Error fetching settings:', error);
           setIsError(true);
           toast({
@@ -186,7 +186,14 @@ export function useUserSettings() {
         }
       } catch (err) {
         log.error('Error in fetchSettings:', err);
-        if (ativo) setIsError(true);
+        if (ativo) {
+          setIsError(true);
+          toast({
+            title: 'Não foi possível carregar as configurações',
+            description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
+            variant: 'destructive',
+          });
+        }
       } finally {
         if (ativo) setIsLoading(false);
       }
@@ -230,17 +237,17 @@ export function useUserSettings() {
     setIsSaving(true);
     try {
       // Payload do upsert de `user_settings`: só os campos que continuam sendo POSSE deste hook.
-      // Horário e Mensagens são POR CONEXÃO (`business_hours`/`away_messages`);
+      // Horário e Mensagens são POR COMExÃO!o (`business_hours`/`away_messages`);
       // Automação é GLOBAL (`global_settings` / `auto_close_config`).
       const settingsData = {
         user_id: user.id,
-        // `browser_notifications_enabled` NÃO entra: é a mesma coluna que o hook
+        // `browser_notifications_enabled` NÁO entra: é a mesma coluna que o hook
         // canônico useNotificationSettings grava na hora em que o interruptor é
         // mexido. Gravá-la aqui, a partir da cópia lida no mount, DESFAZIA o que
         // o usuário acabou de escolher ao clicar em "Salvar Alterações".
         // As preferências de som (sound_enabled, quiet_hours_enabled,
         // quiet_hours_start, quiet_hours_end) pertencem ao mesmo hook canônico
-        // useNotificationSettings — NÃO gravá-las aqui de novo. Como há várias
+        // useNotificationSettings — NÁO gravá-las aqui de novo. Como há várias
         // instâncias deste hook na sessão, um upsert com o valor lido no mount
         // sobrescreve o que o hook de notificações acabou de salvar e o botão
         // "Salvar Alterações" passa a desfazer a configuração de alertas.
