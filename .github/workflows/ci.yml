@@ -149,28 +149,6 @@ jobs:
           deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
           deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')
 
-  security:
-    name: 🔒 Security Audit
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - run: echo "stub"
-
-  e2e:
-    name: 🎭 E2E Tests (Playwright)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    # playwright@1.64.1 — versao pinada nos workflows de E2E (e2e-logado.yml, e2e-talkx.yml)
-    steps:
-      - run: echo "stub"
-
-  mutation-mapa:
-    name: 🗺️ Mutation Mapa
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - run: echo "stub"
-
   build:
     name: 🏗️ Build
     runs-on: ubuntu-24.04
