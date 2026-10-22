@@ -50,7 +50,7 @@
     },
     {
       "path": "src/components/admin/MediaMigrationTool.tsx",
-      "sha256": "77ac45f8a807b8ededd4eae2719a37b850a6e442e2f8bdad294fbeb31dbe5ac8"
+      "sha256": "eb52ad413c0e9b54b7e33a6624b1e46704eca8b6d7472fdbd95431fef5f25d44"
     },
     {
       "path": "src/components/admin/PlaybooksManager.tsx",
@@ -422,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "b26c3697607a48af8aadd4bb9042f54df7ec9683290d9607261c05a779a0eabb"
+      "sha256": "06dd5b7a7b5ce40b1dd9c3c6e7a0d47a31e71d2aa0b3665c842433023c313963"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -1950,9 +1950,9 @@
     },
     {
       "file": "src/components/admin/MediaMigrationTool.tsx",
-      "line": 7,
+      "line": 17,
       "column": 1,
-      "endLine": 7,
+      "endLine": 17,
       "endColumn": 59,
       "severity": 1,
       "ruleId": "no-restricted-imports",
@@ -1960,7 +1960,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "d3107f3b0e47a1a6c0adbdce4c13bb3ad1af69f0ba267c2a16a8dde59a28cb38"
+      "contextHash": "6b19cc93ba76cc0cf8c9c86c84bb548ab01d95fe4c7cb42d6a0962313aa29ddb"
     },
     {
       "file": "src/components/admin/PlaybooksManager.tsx",
