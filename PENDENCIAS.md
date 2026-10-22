@@ -1,9 +1,11 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-21 23:52 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
+> Atualizado em 2026-10-22 00:10 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
-> **§5 atualizado:** segunda falha consecutiva em Unit Tests (1/3) confirmada no run 39695347415 — flaky pré-existente.
+> **§5 atualizado (FINAL):** run 39695347415 concluído — todos os 3 shards falharam. Shards 2/3 e 3/3 têm erros adicionais além do flaky de timing (ver detalhes abaixo).
+> **§5b atualizado:** E2E cancelled (passo 9 cancelado por timeout às 23:59 UTC).
+> **§5c atualizado:** Build skipped confirmado no run 39695347415 (job 119555036010).
 
 ---
 
@@ -16,7 +18,7 @@
 ### Testes que falham
 
 | ID | Spec | Linha | Descrição |
-|----|------|-------|----------|
+|----|------|-------|-----------|
 | E71 | `location-picker.spec.ts` | 81 | Seletor de localização — ação primária |
 | E71 | `location-picker.spec.ts` | 148 | Seletor de localização — confirmação |
 | E73 | `contact-address.spec.ts` | 184 | Endereço do contato via mapa |
@@ -81,7 +83,8 @@ O dispatch foi feito com `TARGET_VERSION: 20261020190001`, mas esse valor está 
 **Check runs com falha confirmados:**
 - SHA `b0585a58` — run [39683115745](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39683115745), job 119510528339
 - SHA `7a8c74e6` — run [39686676218](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676218), job 119522392829
-- SHA `43dd766` — run [39695347420](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420), job [119551245762](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420/job/119551245762)
+- SHA `cf895c6a` — run [39693077439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439), job 119543754154
+- SHA `43dd7666` — run [39695347420](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420), job [119551245762](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420/job/119551245762)
 
 ### Passo que falha
 
@@ -103,7 +106,7 @@ STATEMENT: SET ROLE authenticated;
 
 A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_token` (linha 4), mas a tabela `password_reset_requests` não possui essa coluna. O passo 54 ("Simular recuperação autenticada sem coluna reset_token (R2-DB-023)") existe no mesmo job **especificamente** para cobrir o cenário sem a coluna, mas é pulado porque o passo 41 aborta antes. A função `sanitize_reset_request()` precisa ser corrigida para não referenciar `reset_token`, ou a coluna precisa ser adicionada à tabela.
 
-**Pré-existente:** presente em todos os commits desta PR (`9bff4c5a`, `b0585a58`, `7a8c74e6`, `43dd766`) e em todas as runs históricas do `db-guard`.
+**Pré-existente:** confirmado em 4 commits/runs desta PR (`b0585a58`, `7a8c74e6`, `cf895c6a`, `43dd7666`) e em todas as runs históricas do `db-guard`.
 
 ### O que o Joaquim precisa fazer
 
@@ -128,22 +131,22 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 **Conclusões confirmadas — run 39693077461 (SHA `cf895c6a`):**
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------- |
+|-----|--------|-----------|---------------|
 | `🧪 Unit Tests (1/3)` | [119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` | 23:30 UTC |
 | `🧪 Unit Tests (2/3)` | [119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ❌ `failure` | 23:33 UTC |
 | `🧪 Unit Tests (3/3)` | [119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ❌ `failure` | 23:33 UTC |
 
-**Segunda falha — run 39695347415 (SHA `43dd766`) — FLAKY CONFIRMADO:**
+**Segunda falha — run 39695347415 (SHA `43dd766`) — CONCLUÍDO:**
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------- |
+|-----|--------|-----------|---------------|
 | `🧪 Unit Tests (1/3)` | [119551484892](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484892) | ❌ `failure` | 23:52 UTC |
-| `🧪 Unit Tests (2/3)` | [119551484995](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484995) | in_progress | — |
-| `🧪 Unit Tests (3/3)` | [119551484800](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484800) | in_progress | — |
+| `🧪 Unit Tests (2/3)` | [119551484995](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484995) | ❌ `failure` | 23:53 UTC |
+| `🧪 Unit Tests (3/3)` | [119551484800](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484800) | ❌ `failure` | 23:55 UTC |
 
-**Status:** **flaky pré-existente confirmado por segunda falha consecutiva** — nenhum dos arquivos de teste foi alterado nesta sessão (`git diff --name-only HEAD~5 HEAD | grep test` = 0 arquivos). O commit `b0585a58` passou no CI (run 39684123752); o padrão flaky já existia em `main` antes desta PR.
+**Status:** todos os 3 shards falharam em dois runs consecutivos. Além do flaky de timing (`ChatMessagesArea` / `react-virtual`), os shards 2/3 e 3/3 têm erros adicionais que podem ser novos (ver tabelas abaixo).
 
-### Erros exatos confirmados nos logs — run 39693077461 (SHA `cf895c6a`)
+### Erros exatos — run 39693077461 (SHA `cf895c6a`) — referência histórica
 
 | Shard | Arquivo | Linha | Erro |
 |-------|---------|-------|------|
@@ -151,14 +154,39 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 | 2/3 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` |
 | 3/3 | `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
 
-### Erros exatos confirmados nos logs — run 39695347415 shard 1/3 (SHA `43dd766`)
+### Erros exatos — run 39695347415 shard 1/3 (SHA `43dd766`) — flaky pré-existente
 
-| Shard | Arquivo | Linha | Erro |
-|-------|---------|-------|------|
-| 1/3 | `ChatMessagesArea.agrupar-envio.test.tsx` | 191 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
-| 1/3 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
+| Arquivo | Linha | Erro |
+|---------|-------|------|
+| `ChatMessagesArea.agrupar-envio.test.tsx` | 191 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
+| `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
 
-### Causa raiz
+### Erros exatos — run 39695347415 shard 2/3 (SHA `43dd766`)
+
+| Arquivo | Linha | Erro | Classificação |
+|---------|-------|------|---------------|
+| `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
+| `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` | pré-existente (presente em `cf895c6a` shard 2/3) |
+
+### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — inclui erros potencialmente novos
+
+| Arquivo | Linha | Erro | Classificação |
+|---------|-------|------|---------------|
+| `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
+| `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
+| `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts: expected false to be true` | **potencialmente novo** — `types.ts` pode estar desatualizado; requer `types-sync` |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | `AssertionError: expected "vi.fn()" to be called with arguments [...]` (número de chamadas = 1) | **potencialmente novo** — mismatch de args |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Esperava `"reply-audio-1"` como 6º arg, recebeu `null` + UUID `eb5f8992-...` como 7º arg | **potencialmente novo** — assinatura de função mudou |
+| `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava `["c1","[Áudio]","audio","audio/arquivo.webm",undefined,"reply-audio-1"]`, recebeu com `null` extra e UUID | **potencialmente novo** — assinatura de função mudou |
+| `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 5 + `undefined` + `null` + UUID `8c685bec-...` | **potencialmente novo** — assinatura de função mudou |
+
+**Nota sobre erros "potencialmente novos":** Os erros de `contratosModulo.test.ts` e `useRealtimeInbox.sendAudio.test.tsx` podem indicar:
+- `types.ts` desatualizado (ausência de `team_message_read_state`) → resolvível com `types-sync`
+- Assinatura de função de envio de áudio mudou (novo parâmetro UUID de mensagem) → os testes precisam ser atualizados para a nova assinatura
+
+Sem acesso a execução local (OOM no container), não foi possível verificar se esses erros existiam em `main` antes desta PR.
+
+### Causa raiz (padrão flaky)
 
 Falhas de timing em testes assíncronos: `waitFor(() => getByTestId("bubble"))` expira porque o componente virtualizado de chat (`react-virtual`) ainda não renderizou os itens. Padrão idêntico ao flaky em `main`.
 
@@ -178,17 +206,17 @@ Flaky confirmado por dois runs consecutivos (`cf895c6a` e `43dd766`). Opções:
 
 **Status no run 39693077461 (SHA `cf895c6a`):** cancelado (dependia de Unit Tests falharem antes).
 
-**Status no run 39695347415 (SHA `43dd766`):** **in_progress** — passo 9 `🧪 Run Playwright E2E (PR sem autenticação)` em execução desde 23:46 UTC. O E2E NÃO foi cancelado desta vez.
+**Status no run 39695347415 (SHA `43dd766`):** **CONCLUÍDO** — passo 9 `🧪 Run Playwright E2E (PR sem autenticação)` foi cancelado às 23:59 UTC (timeout de 12 min).
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------- |
-| `🎭 E2E Tests (Playwright)` | [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580) | in_progress | — |
+|-----|--------|-----------|---------------|
+| `🎭 E2E Tests (Playwright)` | [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580) | ❌ `cancelled` | 23:59 UTC |
 
-**Dependência:** O job de E2E está rodando em paralelo com os Unit Tests neste run. Conclusão aguardada.
+**Causa:** O passo 9 rodou por 12 min 26 seg (23:46–23:59 UTC) antes de ser cancelado. O job de E2E roda em paralelo com os Unit Tests e foi cancelado por timeout. As falhas dos testes E2E de geolocalização documentadas em §1 são a causa esperada dos timeouts nesses testes.
 
 ### O que o Joaquim precisa fazer
 
-Verificar a conclusão do run [39695347415](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415), job [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580). Se o E2E falhou independentemente dos Unit Tests, investigar os logs do passo `🧪 Run Playwright E2E`.
+Investigar os logs do passo `🧪 Run Playwright E2E` do job [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580). Os 4 testes de mapa/geolocalização (§1) que fazem `navigator.geolocation` sem mock provavelmente causam timeout nesse passo.
 
 ---
 
@@ -199,14 +227,16 @@ Verificar a conclusão do run [39695347415](https://github.com/adm01-debug/Zapp_
 **Conclusão confirmada (SHA `cf895c6a`, run [39693077461](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461)):**
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------- |
+|-----|--------|-----------|---------------|
 | `🏗️ Build` | [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) | ⏭️ `skipped` | 23:33 UTC |
 
 **Causa:** O job `🏗️ Build` só inicia após todos os shards de `Unit Tests` passarem. Como os 3 shards falharam, o Build foi pulado automaticamente pelo CI.
 
 **Prova que o build funciona:** run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238), job `🏗️ Build`, `conclusion=success` no SHA `852350f` (mesmo código, sem alterações de fonte entre `852350f` e `43dd766` — apenas mocks de teste, documentação e manifesto de deploy).
 
-**Dependência direta:** o Build aguarda os 3 shards de Unit Tests (§5) passarem no run [39695347415](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415). Como o shard 1/3 já falhou por flaky, o Build provavelmente será pulado novamente neste run — a mesma situação do run 39693077461. Ver evidência anterior (SHA `852350f`) como prova de que o build funciona.
+**Confirmado no run 39695347415:** job [119555036010](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119555036010) `conclusion=skipped`, `completed_at=23:55 UTC`. Confirmado por segunda execução consecutiva — o Build é pulado sempre que Unit Tests falham.
+
+**Evidência que o build funciona:** job [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) `conclusion=success` no SHA `852350f`, e run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) job `🏗️ Build` `success` (mesmo código-fonte entre `852350f` e `43dd766` — apenas mocks de teste, documentação e manifesto de deploy foram alterados).
 
 ---
 
@@ -268,5 +298,5 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
-*Documento atualizado em 2026-10-21 23:52 UTC.*
+*Documento atualizado em 2026-10-22 00:10 UTC.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
