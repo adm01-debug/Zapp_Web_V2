@@ -174,7 +174,7 @@ test('E98: a lista de exceções não cresce em silêncio', () => {
   assert.equal(EXCECOES_TLS.size, 1, 'exceção de TLS mudou: confirme se o motivo ainda vale');
 });
 
-// E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell
+// E97 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo workflow com passo shell
 // roda com `-euo pipefail`. Sem isto, um `run:` multi-linha segue depois do
 // primeiro comando que falha — e o gate passa sem ter testado nada.
 //
@@ -547,7 +547,7 @@ function ancestrais(grafo, job) {
 
 test('E69: test/node-scripts não esperam o lint-and-typecheck (rodam em paralelo)', () => {
   const grafo = grafoDeNeeds(wf['ci.yml']);
-  for (const job of ['test', 'node-scripts']) {
+  for (const job of ['unit-tests', 'node-scripts']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
     const anc = [...ancestrais(grafo, job)];
     assert.deepEqual(
@@ -560,8 +560,8 @@ test('E69: test/node-scripts não esperam o lint-and-typecheck (rodam em paralel
 
 test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
-  assert.ok(anc.has('lint-and-typecheck'), 'build deixou de esperar o lint');
-  assert.ok(anc.has('test'), 'build deixou de esperar o test');
+  assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
+  assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
 });
 
 // W99: novos invariantes de segurança de workflow
