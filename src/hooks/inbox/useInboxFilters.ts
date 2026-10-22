@@ -172,15 +172,16 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (value && value !== 'all') {
-        params.set('type', value);
-      } else {
-        params.delete('type');
-      }
-      return params;
-    }, { replace: true });
+    // Usa window.location.search (URL viva) como base, não o snapshot do React
+    // Router, porque setViewParam/useNavigationHistory usam window.history.pushState
+    // diretamente e o snapshot pode não conter view=inbox.
+    const params = new URLSearchParams(window.location.search);
+    if (value && value !== 'all') {
+      params.set('type', value);
+    } else {
+      params.delete('type');
+    }
+    setSearchParams(params, { replace: true });
   }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
