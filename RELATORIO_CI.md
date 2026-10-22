@@ -335,10 +335,27 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 | `🧪 Unit Tests (1/3)` | [119677968943](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968943) | ❌ failure (pré-existente §12) | Commit docs-only: idêntico ao `a37acb42` (falhas §12) |
 | `🧪 Unit Tests (2/3)` | [119677969246](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677969246) | ❌ failure (pré-existente §13) | Commit docs-only: idêntico ao `a37acb42` (falhas §13) |
 | `🧪 Unit Tests (3/3)` | [119677969242](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677969242) | ❌ failure (pré-existente §13) | Commit docs-only: idêntico ao `a37acb42` (falhas §13) |
-| `🎭 E2E Tests (Playwright)` | [119677968666](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968666) | ❌ failure (pré-existente §1) | 4 specs geolocalização — pendente Joaquim |
+| `🎭 E2E Tests (Playwright)` | [119677968666](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119677968666) | ⚠️ cancelled (06:52:43Z) | Cancelado pelo runner após Unit Tests falharem — não é falha nova; pré-existente §1 |
+| `🏗️ Build` | [119681347570](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39734675483/job/119681347570) | ⏭️ skipped (06:44:54Z) | `needs: [unit-tests]` não satisfeito (Unit Tests 1/3–3/3 falharam) |
 
-> **Sem regressões:** os dois jobs confirmados (Security Audit ✅, Mutação do mapa ✅) e a ausência de mudanças de código garantem que nenhuma regressão foi introduzida. As falhas são todas pré-existentes e estão documentadas em PENDENCIAS.md (§§1, 4, 12, 13, 15).
+> **Sem regressões:** este commit docs-only (`PENDENCIAS.md` + `RELATORIO_CI.md`) não altera nenhum arquivo `.ts`/`.tsx`/`.js`/`.css`. As conclusões espelham o run anterior (`a37acb42`, §9). Todas as falhas/cancels são pré-existentes e documentadas em PENDENCIAS.md (§§1, 4, 12, 13, 15).
 
 ---
 
-*Relatório atualizado em 2026-10-22 07:15 UTC: §11 atualizado — TypeCheck e Node CI Scripts confirmados ✅ (jobs 119677968929, 119677968998).*
+## 12. Tabela de Prova — PR #2185 (commit `62c9b3c`, HEAD atual)
+
+> **Commit docs-only:** altera apenas `RELATORIO_CI.md` (§§11–12).
+>
+> Run CI/CD Pipeline: [39736607183](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183) — em andamento
+> Run DB Guard (offline): [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013) — em andamento
+> Iniciada: 2026-10-22T06:51:39Z
+
+| Check | Job ID | Conclusion | Observação |
+|---|---|---|---|
+| *(todos os jobs)* | — | ⏳ in_progress / queued | Run iniciado; aguardando conclusão |
+
+> Run verificado logo após o push — jobs ainda em fila/andamento. Conclusões serão registradas em atualização subsequente.
+
+---
+
+*Relatório atualizado em 2026-10-22 07:45 UTC: §11 completo (E2E=cancelled, Build=skipped, todos os 9 jobs confirmados). §12 criado para commit `62c9b3c` (CI em andamento).*
