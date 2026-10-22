@@ -204,6 +204,11 @@ Ambos são substituídos por alternativas equivalentes documentadas abaixo.
 | `7a8c74e` | fix(ci): corrige vírgula faltando nos mocks de logger + regenera baseline ESLint |
 | `5b89e1a` | docs(ci): documenta pendências DASH-091/092 e unit tests flaky |
 | `43dd766` | docs(ci): atualiza RELATORIO_CI e PENDENCIAS com estado final confirmado via API |
+| `cb31d90` | fix(tests): corrige props, mocks, asserções e tratamento de erro nos testes de unidade |
+| `044ba09` | fix(types): adiciona view team_message_read_state a types.ts (corrige shard 3/3 contratosModulo.test.ts:87) |
+| `4c57f90` | fix(ci): corrige âncora ESTADO.md classify-sticker :328 → :329 |
+| `f042a4a` | fix(tests,docs): corrige handleSendAudio replyTo e atualiza docs CI |
+| (este push) | fix(types): restaura types.ts correto (13045 linhas); remove workflows alienígenas eslint.yml e static.yml |
 
 ---
 
