@@ -629,5 +629,6 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 
 ---
 
-*Documento atualizado em 2026-10-22 06:46 UTC.*
+*Documento atualizado em 2026-10-22 09:30 UTC.*
 *§15 cobre: copilot-pull-request-reviewer runs 39732366255 (commit `a37acb42`) e 39734682829 (commit `d3d11741`, docs-only) — mesma causa: quota Copilot HTTP 402.*
+*§12: TTS failure identificado como `a11y-ferramentas-ia.test.tsx:156` — botão "Ouvir resumo" renomeado no componente; confirmado pré-existente na main.*
