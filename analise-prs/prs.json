@@ -6,61 +6,55 @@
     "sha": "d78360c437f7621d9cf75aed0fec813e9f96906d",
     "grupo": "A",
     "valido": true,
-    "sem_regressao": false,
+    "sem_regressao": true,
     "ja_no_main": false,
-    "regra_ok": false,
+    "regra_ok": true,
     "veredicto": "CI-FALHA",
     "pode_mergear": false,
-    "criterio_falha": [4],
-    "motivo_bloqueio": "Ancestor remove denoland/setup-deno do ci.yml, eliminando deno check + deno test sobre 201 arquivos .test.ts em supabase/functions/",
+    "criterio_falha": [],
+    "motivo_bloqueio": "CI vermelho por falhas pré-existentes da main (Unit Tests x3 + Contrato DB + E2E) + branch atrás do main (strict=true). PR toca apenas 5 arquivos docs/reconciliation/ — sem ci.yml, sem workflows.",
     "evidencia": {
-      "arquivos_tocados_pr": ["docs/reconciliation/MASTER_LEDGER.json", "docs/reconciliation/PLAN_REGISTRY.json", "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json", "docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz", "docs/reconciliation/tasks/P053.json"],
-      "ci_yml_diff_removido": [
-        "-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5",
-        "-          deno-version: '2.9.5'",
-        "-          deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts",
-        "-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')"
-      ],
-      "fonte_evidencia": "git diff main..origin/claude/docs-p053-regressao-261021-0827 -- .github/workflows/ci.yml",
-      "deno_test_files": 201
+      "arquivos_tocados_pr": ["docs/reconciliation/MASTER_LEDGER.json", "docs/reconciliation/PLAN_REGISTRY.json", "docs/reconciliation/ARTIFACT_MANIFEST.json", "docs/reconciliation/TASK_LEDGER_FULL.json.gz", "docs/reconciliation/tasks/P053.json"],
+      "fonte_evidencia": "list_pr_files PR#2149 via mcp__GITHUB_-_MCP_-_FOREVER__github_list_pr_files: 5 arquivos, todos docs/reconciliation/. Nenhum arquivo em .github/workflows/. O git diff --name-only main..origin/<branch> mostrava 130 arquivos por comparar contra HEAD atual da main, não contra a merge base; list_pr_files é a fonte correta."
     }
   },
   {
     "numero": 2151,
     "titulo": "fix(ci): destravar workflows que falhavam antes de executar",
     "branch": "fix/ci-workflows-vermelhos",
-    "sha": "0770f6b5ef",
+    "sha": "0770f6b5ef6f1f0df653ffe5c9dd479955673848",
     "grupo": "A",
     "valido": true,
-    "sem_regressao": false,
+    "sem_regressao": true,
     "ja_no_main": false,
-    "regra_ok": false,
+    "regra_ok": true,
     "veredicto": "CI-FALHA",
     "pode_mergear": false,
-    "criterio_falha": [4],
-    "motivo_bloqueio": "Mesmo ancestor Deno que #2149 — remove denoland/setup-deno + deno test (201 arquivos supabase/functions/)",
+    "criterio_falha": [],
+    "motivo_bloqueio": "CI vermelho por falhas pré-existentes da main (Unit Tests x3 + Contrato DB + E2E cancelado) + branch muito atrás do main (~100 arquivos). ci.yml nesta branch MANTÉM Deno — não é remoção.",
     "evidencia": {
-      "fonte_evidencia": "git diff --name-only main..origin/fix/ci-workflows-vermelhos (ci.yml aparece na lista)",
-      "deno_test_files": 201
+      "arquivos_tocados_pr_count": "~100 (incluindo .github/workflows/ci.yml)",
+      "ci_yml_deno_mantido": true,
+      "fonte_evidencia": "list_pr_files PR#2151: ~100 arquivos incluindo .github/workflows/ci.yml; github_get_content branch fix/ci-workflows-vermelhos SHA 82f50f05 (18150 bytes): ci.yml CONTÉM step '🦕 Setup Deno' com denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5 e deno test ativo. Narrativa 'ancestor Deno-removal' NÃO se aplica a #2151."
     }
   },
   {
     "numero": 2152,
-    "titulo": "test(e2e): spec de toque 44px",
+    "titulo": "test(e2e): spec de toque 44px volta ao verde com seletores do app real",
     "branch": "claude/test-toque44-seletores-261021-0853",
-    "sha": "3eca130737",
+    "sha": "3eca130737aa49024286ab3a96be626897da6e35",
     "grupo": "A",
     "valido": true,
-    "sem_regressao": false,
+    "sem_regressao": true,
     "ja_no_main": false,
-    "regra_ok": false,
+    "regra_ok": true,
     "veredicto": "CI-FALHA",
     "pode_mergear": false,
-    "criterio_falha": [2, 4],
-    "motivo_bloqueio": "Remoção Deno (mesmo ancestor) + downgrade Playwright 1.64.1→1.63.0",
+    "criterio_falha": [],
+    "motivo_bloqueio": "CI vermelho por falhas pré-existentes da main (Unit Tests x3 + Contrato DB + E2E) + branch atrás do main (strict=true). PR toca apenas 2 arquivos e2e/ — sem ci.yml, sem workflows.",
     "evidencia": {
-      "fonte_evidencia": "git diff --name-only main..origin/claude/test-toque44-seletores-261021-0853 (ci.yml presente)",
-      "deno_test_files": 201
+      "arquivos_tocados_pr": ["e2e/a11y-toque-44px.spec.ts", "e2e/fixtures/mapa-mocks.ts"],
+      "fonte_evidencia": "list_pr_files PR#2152 via mcp__GITHUB_-_MCP_-_FOREVER__github_list_pr_files: 2 arquivos e2e/. Nenhum arquivo em .github/workflows/. Alegação anterior de 'ci.yml presente' e 'remoção Deno + downgrade Playwright' era baseada em git diff contra HEAD atual da main, não contra a merge base; list_pr_files é a fonte correta."
     }
   },
   {
