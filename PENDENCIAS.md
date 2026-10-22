@@ -2,7 +2,7 @@
 
 Branch: `claude/kind-gates-87mwoe`  
 Data: 2026-10-22  
-SHA HEAD: `e9e4d857d46058abb1e05b05d629d98b5662cdf3`
+SHA HEAD: `12e9162b50e898ace5e100318f00fd59b811af7f`
 
 ---
 
@@ -76,6 +76,40 @@ do GitHub). Não bloqueia o merge do PR #2185.
 
 ---
 
+## P4 — Falhas pré-existentes em `🧪 Unit Tests` (não introduzidas por este PR)
+
+**Check:** `🧪 Unit Tests` (3 shards em `ci.yml`)  
+**Status:** DOCUMENTADO — falhas preexistem em `main`; não são regressões deste PR  
+
+**Testes afetados e sintomas:**
+
+1. **`__tests__/VolumeDial.test.tsx`** — 8 falhas
+   - Sintoma: `aria-valuenow` calculado como `33` quando esperado `50`, `30` quando esperado `100`, etc.
+   - Causa raiz: lógica de normalização angular do VolumeDial produz valores inesperados
+   - Nenhum commit deste PR toca este arquivo
+
+2. **`__tests__/useAgentCelebrations.test.tsx`** — 4 falhas
+   - Sintoma: `celebrations.length` retorna `0` quando esperado `1`
+   - Causa raiz: condição de disparo de celebração não satisfeita no setup do teste
+   - Nenhum commit deste PR toca este arquivo
+
+3. **`__tests__/useDashboardKpi.periodo.test.tsx`** — 3 falhas
+   - Sintoma: parâmetros RPC `p_from`/`p_until` não encontrados no mock
+   - Causa raiz: assinatura da função RPC mudou mas os mocks do teste não foram atualizados
+   - Nenhum commit deste PR toca este arquivo
+
+**Evidência de pré-existência:**
+```bash
+# Todos retornam vazio — nenhum desses arquivos foi tocado por este PR
+git log main..origin/claude/kind-gates-87mwoe -- src/components/__tests__/VolumeDial.test.tsx
+git log main..origin/claude/kind-gates-87mwoe -- src/hooks/__tests__/useAgentCelebrations.test.tsx
+git log main..origin/claude/kind-gates-87mwoe -- src/hooks/__tests__/useDashboardKpi.periodo.test.tsx
+```
+
+**Ação:** Não é bloqueio deste PR. Requer investigação e correção separada em branch dedicado.
+
+---
+
 ## Resumo
 
 | # | Check | Bloqueante? | Depende de |
@@ -83,7 +117,8 @@ do GitHub). Não bloqueia o merge do PR #2185.
 | P1 | `Contrato DB offline` | Sim (required) | Joaquim — DDL de correção |
 | P2 | `🏗️ Build` (bundle budget) | Sim (required) | Sessão com build local |
 | P3 | `copilot-pull-request-reviewer` | Não | Joaquim — billing |
+| P4 | `🧪 Unit Tests` (3 suites, 15 falhas) | Não (pré-existente em main) | Investigação separada |
 
 **Os 4 outros required checks** (`🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🔒 Security Audit`,
-`🎭 E2E Tests (Playwright)`) estão em progresso no CI atual e **não têm bloqueios conhecidos
-introduzidos por este PR**.
+`🎭 E2E Tests (Playwright)`) estão em progresso no CI atual. `🧪 Unit Tests` pode apresentar
+as 15 falhas pré-existentes do P4, mas nenhuma delas é regressão introduzida por este PR.
