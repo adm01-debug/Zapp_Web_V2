@@ -24,11 +24,13 @@ DECLARE
   v_uid      uuid;
   v_len      integer;
 BEGIN
-  v_uid := auth.uid();
-  IF v_uid IS NULL THEN
+  -- anon não pode registrar eventos; service_role pode (v_uid fica NULL).
+  -- authenticated deve ter UID.
+  IF current_setting('role', true) = 'anon' THEN
     RAISE EXCEPTION 'not authenticated'
       USING errcode = '42501';
   END IF;
+  v_uid := auth.uid();
 
   v_len := length(p_term);
 

@@ -14,10 +14,10 @@
 |-----------|-----------|
 | CRÍTICO   | 0         |
 | ALTO      | 2         |
-| MÉDIO     | 7         |
-| BAIXO     | 8         |
-| INFO      | 8         |
-| **TOTAL** | **25**    |
+| MÉDIO     | 6         |
+| BAIXO     | 9         |
+| INFO      | 9         |
+| **TOTAL** | **26**    |
 
 **Ponto mais urgente:** `department_invites` tem duas políticas RLS permissivas — qualquer usuário autenticado pode deletar convites de qualquer departamento (S3-01) e criar convites sem restrição de ownership (S3-02). Correção em PR #2186.
 
@@ -184,27 +184,38 @@ SELECT id, file_size_limit, allowed_mime_types FROM storage.buckets WHERE id='mu
 
 ---
 
-#### S5-01 — MÉDIO: índice ausente em `messages.sender` (top-3 query lenta)
+#### S5-01 — INFO: `search_contacts` usa ILIKE sem FTS / trigram + 3 subcalls por linha
 
-**Evidência — EXPLAIN (sem ANALYZE):**
+> **Correção de auditoria (2026-10-22):** o achado original desta entrada usou `WHERE m.conversation_id = ...` no EXPLAIN — coluna que **não existe** em `messages` (a coluna real é `contact_id`). Quando re-executado com a coluna correta, o planner usa `idx_messages_contact_read_sender (contact_id, sender)` como **Index Cond em ambas as condições**, não como Filter. O achado "índice ausente em messages.sender" era, portanto, **inválido** e foi removido. O achado real da seção S5 é `search_contacts` abaixo.
+
+**Evidência — EXPLAIN corrigido (sem ANALYZE):**
 ```sql
 EXPLAIN SELECT m.id, m.content FROM messages m
-WHERE m.conversation_id = '00000000-0000-0000-0000-000000000001'
+WHERE m.contact_id = '00000000-0000-0000-0000-000000000001'
   AND m.sender = 'user'
 ORDER BY m.created_at DESC LIMIT 50;
--- Index Scan using idx_messages_contact_created on messages
--- (cost=0.56..8.21 rows=10 width=48)
--- Filter: ((sender)::text = 'user'::text)
+-- Index Scan using idx_messages_contact_read_sender on messages
+--   Index Cond: ((contact_id = '...') AND ((sender)::text = 'user'::text))
+-- → índice cobre ambas as condições; sender NÃO é Filter
 ```
 
-`sender` é aplicado como filtro pós-índice. Com 35k+ mensagens, o filtro sequencial pode degradar.
+**Evidência — `search_contacts` (pg_proc.prosrc):**
+```sql
+-- Lido via pg_proc.prosrc: condição principal é
+-- c.name ILIKE '%'||v_search||'%' OR c.nickname ILIKE '%'||v_search||'%' OR ...
+-- AND public.can_edit_contact(...,
+--   (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v),
+--   (SELECT public.get_profile_id_for_user(auth.uid())),
+--   (SELECT public.is_admin_or_supervisor(auth.uid())))
+-- → 3 sub-calls por linha, O(n) com o número de contatos
+```
 
 | Campo | Valor |
 |-------|-------|
-| Impacto | Queries de listagem de mensagens por sender degradam com volume; já aparece no pg_stat_statements com `mean_time > 200ms` |
-| Reprodução | `EXPLAIN ANALYZE ...` em produção com o planner real |
-| Risco de regressão | Baixo — índice parcial não quebra queries existentes |
-| Esforço | Baixo — `CREATE INDEX CONCURRENTLY idx_messages_sender ON messages(sender, conversation_id, created_at DESC)` |
+| Impacto | `ILIKE '%termo%'` não usa índice B-tree; sem trigram/GIN o Postgres faz seq scan nos nomes. Com 10k+ contatos a latência cresce linearmente. Os 3 sub-calls (`can_edit_contact`, `get_visible_agent_ids`, `is_admin_or_supervisor`) multiplicam o custo. |
+| Reprodução | `EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM search_contacts('teste')` em produção com > 5k contatos |
+| Risco de regressão | Baixo — FTS/trigram index é aditivo, não muda schema existente |
+| Esforço | Médio — adicionar `pg_trgm` + `CREATE INDEX CONCURRENTLY idx_contacts_name_trgm ON contacts USING GIN(name gin_trgm_ops)` e rever sub-calls com CTE único |
 
 ---
 
@@ -386,6 +397,30 @@ WHERE delete_rule = 'NO ACTION';
 
 ---
 
+#### B9 — BAIXO: `searchbox_alert_cron_secret` referenciado no cron mas ausente do Vault
+
+**Evidência:**
+```sql
+-- Cron referencia o secret:
+SELECT command FROM cron.job WHERE jobname = 'searchbox-budget-alert';
+-- ... 'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='searchbox_alert_cron_secret') ...
+
+-- Secret NÃO existe no Vault:
+SELECT count(*) FROM vault.secrets WHERE name = 'searchbox_alert_cron_secret';
+-- 0
+```
+
+| Campo | Valor |
+|-------|-------|
+| Impacto | O cron `searchbox-budget-alert` envia `x-cron-secret=NULL` para a edge function, bloqueando o caminho de e-mail/webhook externo do alerta. A notificação **in-app** (criada por `notify_searchbox_budget()` antes da chamada HTTP) continua disparando normalmente. Sem impacto de segurança; apenas o canal externo fica silencioso. |
+| Reprodução | Verificar `cron.job_run_details` para o job — status `failed` ou retorno 401 da edge function |
+| Risco de regressão | Nenhum — criar o secret não muda DDL |
+| Esforço | Baixo — criar secret `searchbox_alert_cron_secret` no Vault com o mesmo valor configurado na edge function `searchbox-budget-alert` |
+
+**Nota:** 13 secrets no Vault presentes, todos referenciados corretamente. Este é o único com referência externa sem correspondência.
+
+---
+
 ### INFO
 
 #### I2 — INFO: 132 arquivos SQL sem registro no ledger (drift repo↔banco)
@@ -495,6 +530,141 @@ Nenhuma query crítica identificada acima de 500ms de média.
 
 ---
 
+## Seção S9 — Auth, Storage & Realtime
+
+### Auth — Configuração (`supabase/config.toml`)
+
+`auth.config` não existe como tabela no PostgreSQL (gerenciado pelo GoTrue). Configuração auditada via `supabase/config.toml` (projeto `tnnnlkbymytvtqngbbqh`):
+
+- **10 usuários** em `auth.users`, **0 MFA factors** (achado B1)
+- JWT expiry: padrão Supabase (3600s — não há override no config.toml local)
+- Signup habilitado: padrão (nenhum override encontrado no config.toml)
+- OTP: não configurado explicitamente
+
+**Nota:** O `supabase/config.toml` do repo define `project_id = "tnnnlkbymytvtqngbbqh"` e descreve overrides de functions. Parâmetros de auth em produção são gerenciados via Dashboard Supabase → Authentication → Settings e não têm representação SQL direta auditável via MCP.
+
+### Storage — Buckets
+
+**Evidência:**
+```sql
+SELECT id, public, file_size_limit, allowed_mime_types FROM storage.buckets ORDER BY name;
+```
+
+| Bucket | Público | file_size_limit | allowed_mime_types | Observação |
+|--------|---------|----------------|--------------------|------------|
+| audio-memes | ✅ sim | 5 MB | audio/* | OK |
+| audio-messages | ❌ privado | 50 MB | audio/ogg, mpeg, wav, aac, ogg;codecs=opus | OK |
+| avatars | ✅ sim | 5 MB | image/jpeg,png,webp,gif | OK |
+| custom-emojis | ✅ sim | 512 KB | image/png,webp,gif,jpeg,svg+xml | OK |
+| multiplix-voice | ❌ privado | **null** | **null** | ⚠️ S9-01 |
+| stickers | ✅ sim | 5 MB | image/webp,png,gif | OK |
+| team-chat-files | ❌ privado | 10 MB | 22 tipos aceitos | OK |
+| whatsapp-media | ❌ privado | 100 MB | image/jpeg,png,webp,video/mp4,audio/ogg,mpeg | OK |
+
+**Achado:** `multiplix-voice` sem `file_size_limit` nem `allowed_mime_types` (S9-01 — MÉDIO).
+
+### Storage — RLS
+
+**Evidência:**
+```sql
+SELECT relname, relrowsecurity FROM pg_class
+WHERE relnamespace=(SELECT oid FROM pg_namespace WHERE nspname='storage') AND relkind='r';
+```
+
+Todas as 8 tabelas do schema `storage` têm `relrowsecurity=true` (RLS habilitado). 30 policies em `storage.objects` cobrindo SELECT, INSERT, UPDATE, DELETE por bucket.
+
+### Realtime — Tabelas habilitadas
+
+**Evidência:**
+```sql
+SELECT tablename FROM pg_publication_tables WHERE pubname = 'supabase_realtime' ORDER BY tablename;
+-- 33 tabelas
+```
+
+33 tabelas no Realtime, todas no schema `public`. Destaque:
+
+| Tabela | Justificativa de Realtime |
+|--------|--------------------------|
+| messages | UI de chat em tempo real |
+| conversations* | Atualização de fila |
+| agent_presence | Presença on/off de agentes |
+| team_messages | Chat interno |
+| talkx_campaigns | Status de campanha |
+| warroom_alerts | Alertas ao vivo |
+| queues, queue_members, queue_goals | Painel de métricas |
+
+**Risco de Realtime:** Tabelas sem RLS receberiam todos os eventos via `supabase_realtime` para qualquer subscriber. Confirmado: 0 tabelas sem RLS no schema `public` (173 tabelas com RLS habilitado).
+
+### Vault — Secrets (nomes, sem valores)
+
+**Evidência:**
+```sql
+SELECT name, created_at FROM vault.secrets ORDER BY name;
+-- 13 secrets (nomes listados abaixo)
+```
+
+| Nome do Secret | Criado em |
+|---------------|----------|
+| ai_jobs_cron_secret | 2026-10-02 |
+| avatars_refresh_cron_secret | 2026-09-30 |
+| connection_health_check_cron_secret | 2026-09-30 |
+| gmail_cron_secret | 2026-08-29 |
+| gmail_encryption_key | 2026-08-27 |
+| multiplix_cron_secret | 2026-09-27 |
+| multiplix_send_url | 2026-09-29 |
+| sicoob_service_role_key | 2026-08-27 |
+| talkx_anon_key | 2026-09-08 |
+| talkx_cron_secret | 2026-10-02 |
+| talkx_scheduler_url | 2026-09-08 |
+| talkx_send_url | 2026-10-02 |
+| zapp_anon_key | 2026-09-01 |
+
+**Achado B9:** `searchbox_alert_cron_secret` referenciado no cron `searchbox-budget-alert` mas **ausente** do Vault.
+
+---
+
+## Seção S2 — Drift: Análise Detalhada
+
+### S2-01: RPC `log_search_event` ausente no banco
+
+Ver achado S2-01 na seção MÉDIO.
+
+### S2-02: Drift migrations repo↔ledger
+
+**Evidência:**
+```sql
+SELECT count(*) FROM supabase_migrations.schema_migrations; -- 922
+-- ls supabase/migrations/*.sql (sem _foreign/ _superseded/): 1054 total
+-- Drift: 132 arquivos sem ledger (129 histórico + 3 do PR #2186)
+```
+
+Ver achado I2 — 132 arquivos sem registro no ledger.
+
+### S2-03: Deno.env × Vault Secrets
+
+**39 env keys únicas** usadas em edge functions (excluindo testes). Classificação:
+
+| Categoria | Keys |
+|-----------|------|
+| Supabase built-in | SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_PUBLISHABLE_KEY |
+| Vault secrets | ai_jobs_cron_secret, gmail_cron_secret, multiplix_cron_secret, talkx_cron_secret, talkx_anon_key, zapp_anon_key, multiplix_send_url, talkx_send_url, talkx_scheduler_url, avatars_refresh_cron_secret, connection_health_check_cron_secret, sicoob_service_role_key, gmail_encryption_key |
+| Edge Function Secrets (fora do Vault DB) | EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_INSTANCE_NAME, EVOLUTION_WEBHOOK_SECRET, CRON_SECRET, RESEND_API_KEY, BITRIX_WEBHOOK_URL, ELEVENLABS_WEBHOOK_SECRET, SIP_PASSWORD, MULTIPLIX_SCOPE_HMAC_SECRET, TALKX_CONVERT_SECRET, INTERNAL_ALERT_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY, PROMOGIFTS_SUPABASE_URL, PREVIEW_EGRESS_SHARED_SECRET, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL |
+| Config/não-secret | EVOLUTION_API_FLAVOR, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_VPS_SUPABASE_ANON_KEY, MESSAGING_MEDIA_MAX_BYTES, MULTIPLIX_BATCH_SIZE, TALKX_BATCH_SIZE, TALKX_BATCH_BUDGET_MS, TALKX_LINK_BASE_URL, TRUSTED_EMAIL_DOMAINS, PREVIEW_EGRESS_PROXY_URL, ZAPP_BUILD_ID |
+
+**Achado B9:** `searchbox_alert_cron_secret` usa o Vault via cron job mas não está cadastrado no Vault.
+
+### S2-04: Edge functions deployadas × repo — NÃO VERIFICADO
+
+**Razão:** `list_edge_functions` não está disponível neste MCP. Pendência P6 já registrada.
+
+**O que pode ser verificado:** 78 diretórios de funções em `supabase/functions/` (excluindo `_shared`). A paridade repo↔deploy não pode ser confirmada sem `supabase functions list --project-ref tnnnlkbymytvtqngbbqh`.
+
+### S2-05: Replay de migrations do zero — NÃO VERIFICADO
+
+**Razão:** Requer banco Postgres local com as migrations do repo aplicadas do zero. Banco `zapp_s11_final` desta sessão foi usado apenas para testes RLS, não para replay completo. O `db-live-guard.yml` já cobre este check em CI. As 21 falhas esperadas de replay estão documentadas em `scripts/db-audit/replay-known-failures.json`.
+
+---
+
 ## Seção S11 — Matriz RLS Multi-tenant
 
 ### Limitação técnica em produção
@@ -523,6 +693,15 @@ Banco criado com as migrations reais do repo. Resultados:
 | C3b | tenant B deleta invite do tenant A (policy NEW) | DELETE 0 = corrigido | DELETE 0 | ✅ CORRIGIDA |
 | C3c | tenant B insere invite com dept_id de A (WITH CHECK true) | INSERT aceito | INSERT aceito | ✅ VULN CONFIRMADA (S3-02) |
 | C4 | anon acessa tabela com RLS | 0 linhas | 0 linhas | ✅ PROTEGIDO |
+| C5 | tenant B SELECT departments de A | 0 linhas | — | ⬜ NÃO TESTADO (ver `testes/s11-rls-matrix.sql`) |
+| C6 | tenant B UPDATE contacts de A | 0 linhas atualizadas | — | ⬜ NÃO TESTADO |
+| C7 | tenant B DELETE contacts de A | 0 linhas deletadas | — | ⬜ NÃO TESTADO |
+| C8 | tenant A lê próprios dados (controle positivo) | >= 0 linhas | — | ⬜ NÃO TESTADO |
+| C9 | tenant B INSERT contacts com org_id de A | bloqueado por WITH CHECK | — | ⬜ NÃO TESTADO |
+| C10 | anon acessa messages | 0 linhas | — | ⬜ NÃO TESTADO |
+
+Script completo (C1-C10): `auditoria-supabase/testes/s11-rls-matrix.sql`  
+Executar em banco local com migrations aplicadas — NÃO em produção (BEGIN bloqueado no MCP).
 
 **Confirmação direta via `pg_policies` em produção:**
 
@@ -640,7 +819,7 @@ WHERE tablename = 'department_invites';
 | Achado | Ação | Esforço |
 |--------|------|---------|
 | S4-01 | Migration com CHECK constraint em `search_events.result_kind` | 2h |
-| S5-01 | `CREATE INDEX idx_messages_sender ON messages(sender, conversation_id, created_at DESC)` | 1h |
+| S5-01 | `CREATE INDEX CONCURRENTLY idx_contacts_name_trgm ON contacts USING GIN(name gin_trgm_ops)` + rever 3 sub-calls de `search_contacts` com CTE único | 3h |
 | I1 | Triagem e correção dos 61 `statements IS NULL` no ledger | 1 semana |
 | I2 | Triagem do drift de 129 arquivos sem ledger | 2 semanas |
 
@@ -681,16 +860,19 @@ WHERE tablename = 'department_invites';
 
 ## EXPLAIN — Queries Selecionadas
 
-### E1 — Messages por conversation_id + sender (Verde)
+### E1 — Messages por contact_id + sender (Verde)
+
+> **Correção (2026-10-22):** o EXPLAIN original usava `conversation_id` — coluna que **não existe** em `messages`. A coluna correta é `contact_id`. O plano correto usa `idx_messages_contact_read_sender(contact_id, sender)` cobrindo **ambas** as condições como Index Cond (não Filter). Ver seção S5-01 para detalhes.
+
 ```sql
 EXPLAIN SELECT m.id, m.content FROM messages m
-WHERE m.conversation_id = '...' AND m.sender = 'user'
+WHERE m.contact_id = '00000000-0000-0000-0000-000000000001' AND m.sender = 'user'
 ORDER BY m.created_at DESC LIMIT 50;
--- Index Scan using idx_messages_contact_created on messages
--- (cost=0.56..8.21 rows=10 width=48)
--- Filter: ((sender)::text = 'user'::text)
+-- Index Scan using idx_messages_contact_read_sender on messages
+--   Index Cond: ((contact_id = '...') AND ((sender)::text = 'user'::text))
+-- → índice cobre ambas as condições; sender NÃO é Filter
 ```
-**Análise:** Índice usado, filtro `sender` aplicado pós-índice. Aceitável.
+**Análise:** Índice `idx_messages_contact_read_sender` cobre `contact_id` + `sender` — sem Filter extra. Verde.
 
 ### E2 — Contacts search (Verde)
 ```sql
@@ -717,6 +899,27 @@ git log --all -S 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' -- '*.sql'
 ```
 
 **Conclusão:** Nenhuma chave de servidor (service_role, JWT secret) encontrada no histórico git.
+
+---
+
+## Itens NÃO VERIFICADOS — Limitações Permanentes desta Auditoria
+
+Os itens abaixo não puderam ser verificados via MCP em modo READ-ONLY. Cada um tem motivo técnico específico.
+
+| ID | Seção | Item | Motivo da impossibilidade | Como verificar |
+|----|-------|------|--------------------------|----------------|
+| NV-01 | S11 | Matriz RLS produção (tenant A × B) | `BEGIN` bloqueado no MCP (0A000 — "cannot begin/end transactions") | Banco local com migrations aplicadas + usuário A e B |
+| NV-02 | S10 | Logs das edge functions (7 dias) | `query_logs` não expõe logs de edge functions via MCP | Dashboard Supabase → Functions → Logs |
+| NV-03 | S2-04 | Edge functions deployadas × repo (78 dirs) | `list_edge_functions` indisponível via MCP | `supabase functions list --project-ref tnnnlkbymytvtqngbbqh` |
+| NV-04 | S2-05 | Replay de migrations do zero | Requer Postgres local com `supabase start` + replay completo | `scripts/db-audit/replay-local.sh` (máquina do Joaquim) |
+| NV-05 | S8 | ~~Código de 15 edge functions não inspecionadas~~ **VERIFICADO 2026-10-22** | 78 de 78 edge functions lidas (15 lidas nesta sessão: invite-user, create-user, revoke-auth-sessions, approve-password-reset, detect-new-device, talkx-scheduler, external-db-proxy, external-db-bridge, webauthn, ai-proxy, multiplix-send, talkx-send, gmail-send, send-scheduled-report, migrate-media-storage) — nenhum achado novo | — |
+| NV-06 | S6 | ~~Histograma de falhas do cron por causa raiz~~ **VERIFICADO 2026-10-22** | `SELECT last_fail_msg FROM cron.job` confirmou: todas as falhas = `"job startup timeout"` — outage de infraestrutura Supabase (timestamps agrupados: 11:45 em 21/10, 15:54 em 18/10, 19:15 em 17/10), não bug de código | — |
+
+**Nota S11 (crítica):** A verificação da matriz RLS (que um usuário do tenant A não acesse dados do tenant B) é o controle de privacidade mais importante de um sistema multi-tenant. Ela NÃO pôde ser feita via MCP mas **está coberta** pelos testes de comportamento em `scripts/db-audit/inbox-contact-authorization.test.sh` (L6, PR #687) que rodam em CI a cada PR — confira o resultado verde desses checks antes de concluir que o isolamento está garantido.
+
+---
+
+**Nota sobre contagem de achados:** Este relatório consolida **26 achados top-level** (CRÍTICO:0, ALTO:2, MÉDIO:6, BAIXO:9, INFO:9). O arquivo `progresso.json` rastreia internamente **34 sub-achados** porque decompõe variantes, agrupa duplicatas (ex.: B6=dup de B3) e inclui sub-itens de cada seção. A diferença é metodológica — 26 é a contagem consolidada para tomada de decisão; 34 é o inventário detalhado para rastreabilidade. *(Correção 2026-10-22: S5-01 rebaixado de MÉDIO→INFO após EXPLAIN corrigido; S5 real é ILIKE sem FTS.)*
 
 ---
 
