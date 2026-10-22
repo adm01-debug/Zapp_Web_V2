@@ -1,0 +1,248 @@
+{
+  "secao": "S3 - Segurança",
+  "data": "2026-10-22",
+  "resumo": {
+    "total_tabelas_sem_rls": 0,
+    "total_tabelas_rls_zero_policies": 11,
+    "total_policies_qual_true": 33,
+    "total_policies_update_sem_with_check": 41,
+    "total_funcoes_secdef_sem_search_path": 0,
+    "total_funcoes_executaveis_por_anon": 0,
+    "total_buckets_publicos": 4,
+    "total_crons_com_secret_detectado": 4,
+    "crons_usando_vault": 4,
+    "crons_hardcoded_secret": 0,
+    "funcoes_usando_user_metadata_para_authz": 0,
+    "service_role_no_bundle_frontend": false
+  },
+  "q1_tabelas_sem_rls": {
+    "query": "SELECT tablename FROM pg_tables WHERE schemaname='public' AND rowsecurity=false ORDER BY tablename",
+    "resultado": [],
+    "contagem": 0,
+    "observacao": "Todas as tabelas public possuem RLS habilitado."
+  },
+  "q2_tabelas_rls_zero_policies": {
+    "query": "SELECT c.relname as tablename FROM pg_class c JOIN pg_namespace n ON c.relnamespace=n.oid WHERE n.nspname='public' AND c.relkind='r' AND c.relrowsecurity=true AND (SELECT count(*) FROM pg_policy p WHERE p.polrelid=c.oid)=0 ORDER BY c.relname",
+    "resultado": [
+      "_zapp_fn_before",
+      "_zapp_mig133_log",
+      "ai_budget_reservations",
+      "ai_jobs",
+      "catalog_rate_limit_hits",
+      "catalog_rate_limits",
+      "edge_rate_limits",
+      "gmail_oauth_states",
+      "link_preview_cache",
+      "talkx_storage_purge_queue",
+      "talkx_test_send_claims"
+    ],
+    "contagem": 11,
+    "observacao": "RLS habilitado sem nenhuma policy = DENY ALL implícito para authenticated/anon; acesso só via service_role. Em geral intencional para tabelas operacionais internas. talkx_test_send_claims tem nome sugestivo de artefato de teste em produção."
+  },
+  "q3_policies_qual_true": {
+    "query": "SELECT schemaname, tablename, policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname='public' AND (qual='true' OR with_check='true') ORDER BY tablename, policyname",
+    "resultado_resumido": [
+      {"tablename": "agent_presence", "policyname": "Authenticated can read all presence", "cmd": "SELECT", "qual": "true"},
+      {"tablename": "ai_model_prices", "policyname": "authenticated_read_ai_model_prices", "cmd": "SELECT", "qual": "true"},
+      {"tablename": "ai_usage_logs", "policyname": "Service role can insert AI usage logs", "cmd": "INSERT", "with_check": "true"},
+      {"tablename": "department_invites", "policyname": "dept_invites_delete_authenticated", "cmd": "DELETE", "qual": "true"},
+      {"tablename": "department_invites", "policyname": "dept_invites_insert_authenticated", "cmd": "INSERT", "with_check": "true"},
+      {"tablename": "department_invites", "policyname": "dept_invites_select_authenticated", "cmd": "SELECT", "qual": "true"},
+      {"tablename": "email_attachments", "policyname": "service_role inserts email attachments", "cmd": "INSERT", "with_check": "true"},
+      {"tablename": "feature_flags", "policyname": "feature_flags_select_authenticated", "cmd": "SELECT", "qual": "true"},
+      {"tablename": "webhook_failures", "policyname": "service_role_full", "cmd": "ALL", "qual": "true", "with_check": "true"},
+      {"tablename": "other_select_true_tables": "agent_presence, ai_model_prices, audio_memes, auto_close_config, away_messages, business_hours, channel_routing_rules, chatbot_flows, csat_auto_config, custom_emojis, departments, feature_flags, number_reputation, playbooks, products, queue_goals, queue_skill_requirements, queues, sales_pipeline_stages, sla_configurations, stickers, talkx_settings, whatsapp_connection_queues, whatsapp_flows, whatsapp_groups, whatsapp_templates"}
+    ],
+    "contagem": 33,
+    "observacao": "SELECT qual=true para authenticated em tabelas de referência é aceitável. ALERTA: department_invites tem DELETE qual='true' e INSERT with_check='true' para authenticated — qualquer usuário autenticado pode criar ou deletar qualquer convite, sem restrição de ownership."
+  },
+  "q4_policies_update_sem_with_check": {
+    "query": "SELECT schemaname, tablename, policyname FROM pg_policies WHERE schemaname='public' AND cmd='UPDATE' AND (with_check IS NULL OR trim(with_check)='' OR with_check='null') ORDER BY tablename",
+    "contagem": 41,
+    "observacao": "PostgreSQL usa USING como WITH CHECK implícito quando WITH CHECK é NULL (comportamento documentado). Não é vulnerabilidade direta, mas impede controle explícito de transições de estado. Policies de UPDATE que permitem mudança de campo owner (assigned_to, created_by) sem WITH CHECK explícito podem permitir escalada de acesso indireta.",
+    "tabelas_sensiveis_destacadas": [
+      "contacts (Users can update their assigned contacts)",
+      "messages (Users can update messages from their assigned contacts)",
+      "sales_deals (Users can update assigned deals)",
+      "whatsapp_connections (Admins can update connections)",
+      "talkx_campaigns (Users can update own campaigns)"
+    ]
+  },
+  "q5_secdef_sem_search_path": {
+    "query": "SELECT p.proname, p.proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' AND p.prosecdef=true AND NOT (array_to_string(coalesce(p.proconfig,'{}'),'|') LIKE '%search_path=%') ORDER BY p.proname",
+    "resultado": [],
+    "contagem": 0,
+    "observacao": "Todas as funções SECURITY DEFINER possuem search_path definido. Sem risco de search_path injection."
+  },
+  "q6_funcoes_executaveis_por_anon": {
+    "query": "SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' AND has_function_privilege('anon', p.oid, 'EXECUTE') ORDER BY p.proname",
+    "resultado": [],
+    "contagem": 0,
+    "observacao": "Nenhuma função public é executável pelo role anon."
+  },
+  "q7_buckets_publicos": {
+    "query": "SELECT id, name, public, file_size_limit FROM storage.buckets WHERE public=true",
+    "resultado": [
+      {"id": "audio-memes", "name": "audio-memes", "public": true, "file_size_limit": 5242880},
+      {"id": "avatars", "name": "avatars", "public": true, "file_size_limit": 5242880},
+      {"id": "custom-emojis", "name": "custom-emojis", "public": true, "file_size_limit": 512000},
+      {"id": "stickers", "name": "stickers", "public": true, "file_size_limit": 5242880}
+    ],
+    "contagem": 4,
+    "observacao": "4 buckets públicos com leitura anônima direta via URL. Legítimos para ativos de mídia pública (avatars, stickers, etc). Escrita requer authenticated."
+  },
+  "q8_storage_anon_escrita": {
+    "query": "SELECT policyname, tablename, cmd, roles FROM pg_policies WHERE schemaname='storage' AND cmd IN ('INSERT','UPDATE','DELETE') ORDER BY tablename, policyname",
+    "resultado": "Todas as policies de escrita (INSERT/UPDATE/DELETE) em storage.objects usam role 'authenticated', não 'anon'. Sem escrita anônima.",
+    "alerta_role_public": {
+      "policyname": "Conversation members can read team chat files",
+      "bucket": "team-chat-files",
+      "cmd": "SELECT",
+      "roles": ["public"],
+      "observacao": "Policy SELECT usa role 'public' (inclui anon) em vez de 'authenticated'. A lógica USING usa auth.uid() que retorna NULL para anon, bloqueando acesso na prática, mas o uso de 'public' amplia a superfície de avaliação e é risco de manutenção."
+    }
+  },
+  "q9_crons_secret_check": {
+    "query": "SELECT jobid, jobname, CASE WHEN lower(command) ~ '(bearer|service_role|anon_key|apikey|api_key|secret|password)' THEN 'POSSÍVEL SECRET' ELSE 'OK' END as token_check FROM cron.job ORDER BY jobid",
+    "total_jobs": 16,
+    "jobs_com_keyword_secret": [
+      {"jobid": 4, "jobname": "gmail-incremental-sync", "secret_storage_method": "VAULT_REF"},
+      {"jobid": 17, "jobname": "connection-health-check", "secret_storage_method": "VAULT_REF"},
+      {"jobid": 18, "jobname": "avatars-refresh", "secret_storage_method": "VAULT_REF"},
+      {"jobid": 21, "jobname": "searchbox-budget-alert", "secret_storage_method": "VAULT_REF"}
+    ],
+    "observacao": "Os 4 jobs que contêm palavras-chave de secret usam referências ao Vault (SELECT from vault), não secrets hardcoded. Sem exposição de credenciais em texto plano."
+  },
+  "q10_user_metadata_authz": {
+    "query": "SELECT proname FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' AND prosrc ILIKE '%user_metadata%' ORDER BY proname",
+    "resultado": [],
+    "contagem": 0,
+    "observacao": "Nenhuma função usa user_metadata para autorização — padrão seguro (user_metadata é mutável pelo próprio usuário)."
+  },
+  "q11_service_role_frontend": {
+    "comando": "grep -r 'service_role' /home/user/Zapp_Web_V2/src/ --include='*.ts' --include='*.tsx' -l",
+    "arquivos_com_match": [
+      "src/__tests__/rls-boundary.test.ts",
+      "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+      "src/components/calls/__tests__/calls-access.test.ts",
+      "src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts",
+      "src/hooks/gamification/useAgentGamification.ts",
+      "src/hooks/integrations/useTalkXResumeChecklist.ts",
+      "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+      "src/hooks/team-chat/__tests__/useDepartmentWhatsAppCredentials.contrato-rpc.test.tsx",
+      "src/hooks/team-chat/useDepartmentManagement.ts",
+      "src/components/inbox/AudioMessagePlayer.tsx"
+    ],
+    "avaliacao": "Todos os matches são em comentários, docstrings ou testes que VERIFICAM ausência da chave — nenhum contém valor real de service_role. Sem exposição de chave no bundle.",
+    "vulneravel": false
+  },
+  "q12_auth_config": {
+    "query": "SELECT name, CASE WHEN name ILIKE '%secret%' OR ... THEN '[REDACTED]' ELSE value::text END as val FROM auth.config ORDER BY name",
+    "status": "TABELA NÃO EXISTE",
+    "alternativa": "SELECT * FROM auth.schema_migrations ORDER BY version DESC LIMIT 3",
+    "resultado_alternativa": [
+      {"version": "20260831180000"},
+      {"version": "20260824000001"},
+      {"version": "20260824000000"}
+    ],
+    "observacao": "auth.config não existe como tabela SQL acessível — configuração de auth é gerenciada pelo painel Supabase (hosted). Última migration de auth: 20260831180000."
+  },
+  "achados": [
+    {
+      "id": "S3-01",
+      "severidade": "ALTO",
+      "titulo": "department_invites: DELETE e INSERT sem restrição de ownership para qualquer usuário autenticado",
+      "evidencia": "Q3: policyname='dept_invites_delete_authenticated' cmd=DELETE qual='true'; policyname='dept_invites_insert_authenticated' cmd=INSERT with_check='true'. Roles: authenticated.",
+      "impacto": "Qualquer usuário autenticado pode deletar convites de qualquer outro usuário e criar convites para qualquer departamento sem restrição. Comprometimento do controle de acesso para gerenciamento de equipes.",
+      "correcao": "Adicionar condição de ownership em WITH CHECK do INSERT (ex: created_by = auth.uid() ou is_admin_or_supervisor()) e restrição de USING no DELETE (ex: created_by = auth.uid() OR is_admin_or_supervisor())."
+    },
+    {
+      "id": "S3-02",
+      "severidade": "MÉDIO",
+      "titulo": "11 tabelas com RLS ativo mas zero policies (DENY ALL implícito) — inclui artefato de teste em produção",
+      "evidencia": "Q2: tablenames=[_zapp_fn_before, _zapp_mig133_log, ai_budget_reservations, ai_jobs, catalog_rate_limit_hits, catalog_rate_limits, edge_rate_limits, gmail_oauth_states, link_preview_cache, talkx_storage_purge_queue, talkx_test_send_claims]. Row count=11.",
+      "impacto": "Para tabelas operacionais (gmail_oauth_states, ai_jobs, etc.) o DENY ALL implícito é intencional e seguro. talkx_test_send_claims com nome sugestivo de artefato de teste levanta dúvida sobre dados de teste persistidos em produção.",
+      "correcao": "Verificar se talkx_test_send_claims é tabela de teste deixada em produção — remover ou documentar intenção. Para as demais, documentar explicitamente que o DENY ALL é intencional (comentário ou migration de comentário)."
+    },
+    {
+      "id": "S3-03",
+      "severidade": "MÉDIO",
+      "titulo": "Policy SELECT em storage team-chat-files usa role 'public' em vez de 'authenticated'",
+      "evidencia": "Q8 via pg_policies: policyname='Conversation members can read team chat files', schemaname=storage, tablename=objects, roles=['public'], cmd=SELECT. USING faz referência a auth.uid() que retorna NULL para anon.",
+      "impacto": "O acesso anon é bloqueado na prática pelas condições NULL de auth.uid(), mas o uso de 'public' é risco de manutenção: uma mudança futura na função USING poderia expor arquivos de chat de equipe inadvertidamente para usuários não autenticados.",
+      "correcao": "Alterar a policy para usar role 'authenticated' em vez de 'public'. Resultado prático idêntico, mas elimina a superfície de risco para anon."
+    },
+    {
+      "id": "S3-04",
+      "severidade": "MÉDIO",
+      "titulo": "41 policies UPDATE sem WITH CHECK explícito (usa USING implícito como WITH CHECK)",
+      "evidencia": "Q4: 41 linhas retornadas com cmd=UPDATE e with_check IS NULL. Exemplos: contacts/Users can update their assigned contacts, messages/Users can update messages from their assigned contacts, whatsapp_connections/Admins can update connections.",
+      "impacto": "PostgreSQL usa USING como WITH CHECK implícito (comportamento documentado). Policies sem WITH CHECK explícito dificultam auditoria de transições de estado e podem permitir que um UPDATE mude campos sensíveis (assigned_to, created_by) para valores que o USING não verifica na direção pós-escrita.",
+      "correcao": "Adicionar WITH CHECK explícito nas policies de UPDATE para tabelas com campos de ownership (assigned_to, created_by, user_id). Priorizar: contacts, messages, talkx_campaigns, sales_deals."
+    },
+    {
+      "id": "S3-05",
+      "severidade": "BAIXO",
+      "titulo": "4 buckets storage públicos com leitura anônima direta",
+      "evidencia": "Q7: buckets audio-memes (5MB), avatars (5MB), custom-emojis (512KB), stickers (5MB) com public=true.",
+      "impacto": "Qualquer URL de arquivo nesses buckets é acessível sem autenticação. Para avatars e stickers isso é intencional (distribuição pública de mídia). Sem controle de enumeração de arquivos.",
+      "correcao": "Confirmar intenção para cada bucket. Se algum contiver dados que não devem ser públicos (ex: avatars de funcionários), mover para bucket privado com signed URLs."
+    },
+    {
+      "id": "S3-06",
+      "severidade": "INFO",
+      "titulo": "0 tabelas sem RLS — cobertura 100%",
+      "evidencia": "Q1: row_count=0. Todas as tabelas public têm rowsecurity=true.",
+      "impacto": "Sem impacto negativo.",
+      "correcao": "Manter monitoramento via db-live-guard."
+    },
+    {
+      "id": "S3-07",
+      "severidade": "INFO",
+      "titulo": "0 funções SECURITY DEFINER sem search_path fixo",
+      "evidencia": "Q5: row_count=0. Todas as funções SECURITY DEFINER têm proconfig com search_path.",
+      "impacto": "Sem risco de search_path injection em funções com privilégio elevado.",
+      "correcao": "Manter padrão ao criar novas funções SECURITY DEFINER."
+    },
+    {
+      "id": "S3-08",
+      "severidade": "INFO",
+      "titulo": "0 funções public executáveis pelo role anon",
+      "evidencia": "Q6: row_count=0. has_function_privilege('anon', ...) retornou vazio.",
+      "impacto": "Sem superfície de ataque via funções para usuários não autenticados.",
+      "correcao": "Nenhuma."
+    },
+    {
+      "id": "S3-09",
+      "severidade": "INFO",
+      "titulo": "4 cron jobs com keywords de secret usam Vault (não hardcoded)",
+      "evidencia": "Q9: jobids [4,17,18,21] matched keyword pattern. Q9b: todos com secret_storage_method=VAULT_REF (comando contém 'from vault' ou equivalente).",
+      "impacto": "Sem exposição de credenciais em texto plano em cron.job.",
+      "correcao": "Manter uso de Vault para todos os secrets em cron jobs."
+    },
+    {
+      "id": "S3-10",
+      "severidade": "INFO",
+      "titulo": "Nenhum arquivo src/ expõe chave service_role no bundle",
+      "evidencia": "Q11: 10 arquivos com 'service_role' — todos em comentários, docstrings ou testes de guarda que verificam ausência da chave.",
+      "impacto": "Sem exposição de service_role_key no bundle do cliente.",
+      "correcao": "Manter testes de guarda (calls-access.test.ts, rls-boundary.test.ts)."
+    },
+    {
+      "id": "S3-11",
+      "severidade": "INFO",
+      "titulo": "0 funções usam user_metadata para autorização",
+      "evidencia": "Q10: row_count=0. Nenhuma função pública faz ILIKE '%user_metadata%' em prosrc.",
+      "impacto": "Sem risco de escalada via user_metadata manipulável pelo próprio usuário.",
+      "correcao": "Nenhuma."
+    },
+    {
+      "id": "S3-12",
+      "severidade": "INFO",
+      "titulo": "auth.config inacessível via SQL (Supabase hosted auth)",
+      "evidencia": "Q12: relation 'auth.config' does not exist. auth.schema_migrations: última versão 20260831180000.",
+      "impacto": "Configurações de auth não ficam expostas via SQL — gerenciadas pelo painel Supabase.",
+      "correcao": "Nenhuma. Verificar configurações de auth via Dashboard Supabase > Authentication > Settings."
+    }
+  ]
+}

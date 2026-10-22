@@ -1,0 +1,56 @@
+{
+  "auditoria": "Supabase tnnnlkbymytvtqngbbqh",
+  "data": "2026-10-22",
+  "projeto": "Zapp Web V2",
+  "secoes": {
+    "S1": "concluída",
+    "S2": "concluída",
+    "S3": "concluída",
+    "S4": "concluída",
+    "S5": "concluída",
+    "S6": "concluída",
+    "S7": "concluída",
+    "S8": "concluída",
+    "S9": "concluída",
+    "S10": "concluída",
+    "S11": "concluída",
+    "S12": "concluída"
+  },
+  "totais": {
+    "CRÍTICO": 0,
+    "ALTO": 10,
+    "MÉDIO": 23,
+    "BAIXO": 13,
+    "INFO": 22
+  },
+  "total_achados": 68,
+  "top_riscos": [
+    "S2-A2: 17 RPCs chamadas no frontend inexistentes em produção (PGRST202 em produção)",
+    "S3-01: DELETE/INSERT sem restrição de ownership em department_invites",
+    "S8-01: Nenhum usuário com MFA configurado (10 contas apenas senha)",
+    "S1-A1 / S2-A4: 61 migrations com statements NULL no ledger",
+    "S10-CRON-PICO: 1779 falhas de cron em 2026-10-16 sem alerta externo"
+  ],
+  "nao_verificado": [
+    "auth.config (inacessível via SQL — verificar via Dashboard)",
+    "Configuração PITR (verificar em Dashboard > Settings > General)",
+    "Políticas RLS individuais das 33 tabelas na publicação realtime",
+    "Causa raiz exata do pico de falhas em 2026-10-16 (incidente de infra Supabase)"
+  ],
+  "prova_readonly": "ZERO escritas em produção durante esta auditoria. Todas as queries foram SELECT. Nenhuma migration aplicada, nenhum INSERT/UPDATE/DELETE executado via MCP.",
+  "arquivos_gerados": [
+    "auditoria-supabase/progresso.json",
+    "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+    "auditoria-supabase/propostas/P001-department-invites-ownership.sql",
+    "auditoria-supabase/propostas/P002-get-search-insights-wrapper.sql",
+    "auditoria-supabase/propostas/P003-fk-indexes-sem-indice.sql",
+    "auditoria-supabase/propostas/P004-duplicate-index-department-invites.sql",
+    "auditoria-supabase/propostas/P005-multiplix-voice-file-size-limit.sql",
+    "auditoria-supabase/propostas/P006-storage-policy-role-authenticated.sql",
+    "auditoria-supabase/propostas/P007-messages-performance-indexes.sql",
+    "auditoria-supabase/propostas/P008-vacuum-messages-cron-deactivate.sql",
+    "auditoria-supabase/propostas/P009-cron-autovacuum-pequenas-tabelas.sql",
+    "auditoria-supabase/propostas/P010-login-attempts-retencao-ttl.sql",
+    "auditoria-supabase/testes/roteiro-rls.md"
+  ]
+}

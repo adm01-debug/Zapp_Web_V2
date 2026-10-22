@@ -1,0 +1,114 @@
+{
+  "section": "s5-performance",
+  "generated_at": "2026-10-22",
+  "database": "tnnnlkbymytvtqngbbqh",
+
+  "slow_queries_top20": [
+    {"rank": 1, "calls": 7513, "avg_ms": 1265.88, "total_ms": 9510578.9, "query_summary": "mcp_exec wrapper (infra - excluir de análise)"},
+    {"rank": 2, "calls": 1329, "avg_ms": 2014.7, "total_ms": 2677535.8, "query_summary": "SELECT id FROM storage.objects WHERE name COLLATE C = $1 AND bucket_id = $2 AND archived_at IS NULL LIMIT $3"},
+    {"rank": 3, "calls": 719, "avg_ms": 2427.5, "total_ms": 1745373.8, "query_summary": "public.get_last_message_dates(contact_ids := ...)"},
+    {"rank": 4, "calls": 96, "avg_ms": 3316.53, "total_ms": 318386.9, "query_summary": "SELECT FROM pg_available_extensions (infra Supabase Studio)"},
+    {"rank": 5, "calls": 60, "avg_ms": 2285.44, "total_ms": 137126.7, "query_summary": "jsonb_pretty health check MCP (infra)"},
+    {"rank": 6, "calls": 137, "avg_ms": 1320.28, "total_ms": 180878.7, "query_summary": "SELECT id FROM messages WHERE is_read = $1 AND sender = $2 LIMIT $3 OFFSET $4"},
+    {"rank": 7, "calls": 40, "avg_ms": 2561.02, "total_ms": 102440.9, "query_summary": "supabase_migrations ledger query (infra)"},
+    {"rank": 8, "calls": 12, "avg_ms": 6321.29, "total_ms": 75855.5, "query_summary": "VACUUM ANALYZE public.contacts (infra maint)"},
+    {"rank": 9, "calls": 22, "avg_ms": 3278.02, "total_ms": 72116.4, "query_summary": "schema introspection tables CTE (Supabase Studio)"},
+    {"rank": 10, "calls": 3, "avg_ms": 4401.48, "total_ms": 13204.4, "query_summary": "public.dashboard_hourly_volume(p_days, p_queue, p_agent)"},
+    {"rank": 11, "calls": 3, "avg_ms": 1890.0, "total_ms": 5670.0, "query_summary": "SELECT id FROM messages WHERE status = $1 AND created_at < $2 LIMIT $3 OFFSET $4"},
+    {"rank": 12, "calls": 2, "avg_ms": 15055.78, "total_ms": 30111.6, "query_summary": "INSERT INTO contacts (avatar_url, name, phone, whatsapp_connection_id) via PostgREST"},
+    {"rank": 13, "calls": 2, "avg_ms": 7410.51, "total_ms": 14821.0, "query_summary": "schema introspection tables CTE variant (Supabase Studio)"},
+    {"rank": 14, "calls": 40, "avg_ms": 2003.04, "total_ms": 80121.4, "query_summary": "supabase_migrations do-block ledger reader (infra)"},
+    {"rank": 15, "calls": 12, "avg_ms": 4725.38, "total_ms": 56704.5, "query_summary": "functions CTE introspection (Supabase Studio)"}
+  ],
+
+  "missing_indexes": [],
+
+  "duplicate_indexes": [
+    {"idx1": "department_invites_code_key", "idx2": "idx_dept_invites_code", "size": "16 kB", "note": "ambos cobrem coluna code de department_invites"},
+    {"idx1": "auth.custom_oauth_providers_identifier_key", "idx2": "auth.custom_oauth_providers_identifier_idx", "size": "16 kB", "note": "schema auth - gerenciado pelo Supabase"}
+  ],
+
+  "table_bloat_top20": [
+    {"table": "public.agent_presence", "live": 6, "dead": 49, "dead_pct": 89.1, "last_autovacuum": "2026-10-22T11:34:29"},
+    {"table": "public.edge_rate_limits", "live": 5, "dead": 34, "dead_pct": 87.2, "last_autovacuum": "2026-10-21T16:22:30"},
+    {"table": "public.whatsapp_connections", "live": 2, "dead": 10, "dead_pct": 83.3, "last_autovacuum": "2026-10-18T17:27:57"},
+    {"table": "public.messages", "live": 6, "dead": 12, "dead_pct": 66.7, "last_autovacuum": null},
+    {"table": "public.email_labels", "live": 24, "dead": 34, "dead_pct": 58.6, "last_autovacuum": null},
+    {"table": "public.user_sessions", "live": 5, "dead": 7, "dead_pct": 58.3, "last_autovacuum": null},
+    {"table": "public.catalog_rate_limit_hits", "live": 200, "dead": 78, "dead_pct": 28.1, "last_autovacuum": "2026-10-15T18:45:50"},
+    {"table": "public.connection_health_logs", "live": 1929, "dead": 133, "dead_pct": 6.5, "last_autovacuum": "2026-10-22T11:46:30"},
+    {"table": "public.email_threads", "live": 2460, "dead": 122, "dead_pct": 4.7, "last_autovacuum": "2026-10-22T11:55:31"},
+    {"table": "public.talkx_settings", "live": 0, "dead": 13, "dead_pct": 100.0, "last_autovacuum": null},
+    {"table": "public.crm_sync_outbox", "live": 0, "dead": 16, "dead_pct": 100.0, "last_autovacuum": null},
+    {"table": "public.whatsapp_flows", "live": 0, "dead": 1, "dead_pct": 100.0, "last_autovacuum": null},
+    {"table": "public.feature_flags", "live": 0, "dead": 1, "dead_pct": 100.0, "last_autovacuum": null},
+    {"table": "public.login_attempts", "live": 0, "dead": 1, "dead_pct": 100.0, "last_autovacuum": null},
+    {"table": "public.audio_memes", "live": 0, "dead": 2, "dead_pct": 100.0, "last_autovacuum": null},
+    {"table": "public.user_devices", "live": 1, "dead": 11, "dead_pct": 91.7, "last_autovacuum": null},
+    {"table": "public.gmail_accounts", "live": 1, "dead": 11, "dead_pct": 91.7, "last_autovacuum": null},
+    {"table": "auth.refresh_tokens", "live": 420, "dead": 90, "dead_pct": 17.6, "last_autovacuum": "2026-10-16T23:07:47"},
+    {"table": "auth.sessions", "live": 222, "dead": 38, "dead_pct": 14.6, "last_autovacuum": null},
+    {"table": "auth.users", "live": 10, "dead": 27, "dead_pct": 73.0, "last_autovacuum": "2026-10-15T17:01:45"}
+  ],
+
+  "index_usage_zero_scans_notable": [
+    {"index": "idx_messages_content_trgm", "table": "messages", "size": "5000 kB", "idx_scan": 0},
+    {"index": "ux_messages_dedup", "table": "messages", "size": "4400 kB", "idx_scan": 0},
+    {"index": "idx_messages_media_url_trgm", "table": "messages", "size": "4368 kB", "idx_scan": 0},
+    {"index": "audit_logs_pkey", "table": "audit_logs", "size": "3144 kB", "idx_scan": 0},
+    {"index": "email_attachments_pkey", "table": "email_attachments", "size": "2464 kB", "idx_scan": 0},
+    {"index": "idx_objects_bucket_id_name", "table": "storage.objects", "size": "2360 kB", "idx_scan": 0},
+    {"index": "idx_objects_null_version", "table": "storage.objects", "size": "2216 kB", "idx_scan": 0},
+    {"index": "objects_pkey", "table": "storage.objects", "size": "952 kB", "idx_scan": 0},
+    {"index": "idx_contacts_name_asc", "table": "contacts", "size": "344 kB", "idx_scan": 0},
+    {"index": "idx_contacts_tags_gin", "table": "contacts", "size": "216 kB", "idx_scan": 0},
+    {"index": "idx_email_threads_account_date", "table": "email_threads", "size": "192 kB", "idx_scan": 0},
+    {"index": "idx_contacts_assigned_to", "table": "contacts", "size": "160 kB", "idx_scan": 0},
+    {"index": "idx_email_messages_date", "table": "email_messages", "size": "160 kB", "idx_scan": 0},
+    {"index": "idx_messages_transcription_trgm", "table": "messages", "size": "88 kB", "idx_scan": 0},
+    {"index": "idx_contacts_whatsapp_connection_id", "table": "contacts", "size": "128 kB", "idx_scan": 0}
+  ],
+
+  "table_sizes_top10_public": [
+    {"relname": "email_attachments", "total": "90 MB", "table_only": "39 MB", "n_live_tup": 66762, "n_dead_tup": 10},
+    {"relname": "email_messages", "total": "42 MB", "table_only": "4288 kB", "n_live_tup": 3427, "n_dead_tup": 72},
+    {"relname": "messages", "total": "40 MB", "table_only": "13 MB", "n_live_tup": 6, "n_dead_tup": 12},
+    {"relname": "audit_logs", "total": "31 MB", "table_only": "19 MB", "n_live_tup": 79555, "n_dead_tup": 0},
+    {"relname": "contacts", "total": "6656 kB", "table_only": "3120 kB", "n_live_tup": 3730, "n_dead_tup": 0},
+    {"relname": "email_threads", "total": "2224 kB", "table_only": "1504 kB", "n_live_tup": 2460, "n_dead_tup": 122},
+    {"relname": "conversation_events", "total": "1400 kB", "table_only": "656 kB", "n_live_tup": 2, "n_dead_tup": 0},
+    {"relname": "conversation_sla", "total": "696 kB", "table_only": "344 kB", "n_live_tup": 0, "n_dead_tup": 0},
+    {"relname": "connection_health_logs", "total": "608 kB", "table_only": "232 kB", "n_live_tup": 1929, "n_dead_tup": 133},
+    {"relname": "stickers", "total": "496 kB", "table_only": "400 kB", "n_live_tup": 0, "n_dead_tup": 0}
+  ],
+
+  "pg_stat_statements": "NOT_AVAILABLE - extension pg_stat_statements não disponível neste projeto Supabase",
+
+  "explain_plans": {
+    "query1_storage_objects": {
+      "query": "SELECT id FROM storage.objects WHERE name COLLATE C = 'test' AND bucket_id = 'avatars' AND archived_at IS NULL LIMIT 1",
+      "plan": [
+        "Limit (cost=0.41..2.63 rows=1 width=16)",
+        "  -> Index Scan using idx_objects_current_version on objects (cost=0.41..2.63 rows=1 width=16)",
+        "       Index Cond: ((bucket_id = 'avatars') AND ((name)::text = 'test'))"
+      ],
+      "observation": "Usa idx_objects_current_version corretamente. Latencia media de 2014ms apesar do index scan sugere I/O elevado ou tabela muito grande (storage.objects pode ter >100k rows)."
+    },
+    "query2_get_last_message_dates": {
+      "query": "SELECT * FROM public.get_last_message_dates(ARRAY['00000000-0000-0000-0000-000000000000'::uuid])",
+      "plan": [
+        "Function Scan on get_last_message_dates (cost=0.25..10.25 rows=1000 width=24)"
+      ],
+      "observation": "Function Scan opaco - plano nao revela queries internas da funcao. Com 719 chamadas e avg 2427ms o corpo da funcao provavelmente faz sequential scan em messages ou contacts sem aproveitar indice composto adequado."
+    },
+    "query3_messages_is_read": {
+      "query": "SELECT id FROM messages WHERE is_read = false AND sender = '00000000-...' LIMIT 50 OFFSET 0",
+      "plan": [
+        "Limit (cost=0.29..2.51 rows=1 width=16)",
+        "  -> Index Scan using idx_messages_read_sender on messages (cost=0.29..2.51 rows=1 width=16)",
+        "       Index Cond: ((is_read = false) AND (sender = '00000000-...':text))"
+      ],
+      "observation": "Usa idx_messages_read_sender. Latencia de 1320ms com index scan pode ser artefato de tabela com 66.7% dead tuples e stats desatualizadas (autovacuum nao rodou)."
+    }
+  }
+}
