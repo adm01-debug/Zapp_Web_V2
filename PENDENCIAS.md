@@ -3,7 +3,7 @@
 > Atualizado em 2026-10-22 00:10 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
-> **§5 atualizado (FINAL):** run 39695347415 concluído — todos os 3 shards falharam. Shards 2/3 e 3/3 têm erros adicionais além do flaky de timing (ver detalhes abaixo).
+> **§5 atualizado (FINAL — classificação definitiva 2026-10-22):** run 39695347415 concluído — todos os 3 shards falharam. Shards 2/3 e 3/3 têm erros adicionais além do flaky de timing. Todos os erros do shard 3/3 foram investigados e confirmados como **pré-existentes** (ver evidências abaixo).
 > **§5b atualizado:** E2E cancelled (passo 9 cancelado por timeout às 23:59 UTC).
 > **§5c atualizado:** Build skipped confirmado no run 39695347415 (job 119555036010).
 
@@ -18,7 +18,7 @@
 ### Testes que falham
 
 | ID | Spec | Linha | Descrição |
-|----|------|-------|-----------|
+|----|------|-------|----------|
 | E71 | `location-picker.spec.ts` | 81 | Seletor de localização — ação primária |
 | E71 | `location-picker.spec.ts` | 148 | Seletor de localização — confirmação |
 | E73 | `contact-address.spec.ts` | 184 | Endereço do contato via mapa |
@@ -131,7 +131,7 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 **Conclusões confirmadas — run 39693077461 (SHA `cf895c6a`):**
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|---------------|
+|-----|--------|-----------|-------------|
 | `🧪 Unit Tests (1/3)` | [119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` | 23:30 UTC |
 | `🧪 Unit Tests (2/3)` | [119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ❌ `failure` | 23:33 UTC |
 | `🧪 Unit Tests (3/3)` | [119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ❌ `failure` | 23:33 UTC |
@@ -139,12 +139,12 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 **Segunda falha — run 39695347415 (SHA `43dd766`) — CONCLUÍDO:**
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|---------------|
+|-----|--------|-----------|-------------|
 | `🧪 Unit Tests (1/3)` | [119551484892](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484892) | ❌ `failure` | 23:52 UTC |
 | `🧪 Unit Tests (2/3)` | [119551484995](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484995) | ❌ `failure` | 23:53 UTC |
 | `🧪 Unit Tests (3/3)` | [119551484800](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484800) | ❌ `failure` | 23:55 UTC |
 
-**Status:** todos os 3 shards falharam em dois runs consecutivos. Além do flaky de timing (`ChatMessagesArea` / `react-virtual`), os shards 2/3 e 3/3 têm erros adicionais que podem ser novos (ver tabelas abaixo).
+**Status:** todos os 3 shards falharam em dois runs consecutivos. Além do flaky de timing (`ChatMessagesArea` / `react-virtual`), os shards 2/3 e 3/3 têm erros adicionais — todos confirmados como pré-existentes (ver tabelas abaixo).
 
 ### Erros exatos — run 39693077461 (SHA `cf895c6a`) — referência histórica
 
@@ -168,23 +168,25 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 | `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` | pré-existente (presente em `cf895c6a` shard 2/3) |
 
-### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — inclui erros potencialmente novos
+### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — classificação definitiva
 
 | Arquivo | Linha | Erro | Classificação |
 |---------|-------|------|---------------|
 | `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
 | `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente |
-| `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts: expected false to be true` | **potencialmente novo** — `types.ts` pode estar desatualizado; requer `types-sync` |
-| `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | `AssertionError: expected "vi.fn()" to be called with arguments [...]` (número de chamadas = 1) | **potencialmente novo** — mismatch de args |
-| `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Esperava `"reply-audio-1"` como 6º arg, recebeu `null` + UUID `eb5f8992-...` como 7º arg | **potencialmente novo** — assinatura de função mudou |
-| `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava `["c1","[Áudio]","audio","audio/arquivo.webm",undefined,"reply-audio-1"]`, recebeu com `null` extra e UUID | **potencialmente novo** — assinatura de função mudou |
-| `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 5 + `undefined` + `null` + UUID `8c685bec-...` | **potencialmente novo** — assinatura de função mudou |
+| `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts: expected false to be true` | **pré-existente confirmado** — `team_message_read_state` ausente de `types.ts` em `main` e nesta branch; verificado via `git show main:src/integrations/supabase/types.ts \| grep -c 'team_message_read_state'` = 0; requer `types-sync` para adicionar ao `types.ts` |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | `AssertionError: expected "vi.fn()" to be called with arguments [...]` (número de chamadas = 1) | **pré-existente confirmado (mascarado)** — em `main` o teste falha na inicialização porque o mock de `@/lib/logger` não tinha `createLogger` (Vitest strict mode); esta PR adicionou `createLogger` ao mock, expondo a falha de asserção runtime que sempre existiu; o hook usa `getLogger` (não `createLogger`), portanto o comportamento de `h.logWarn` é inalterado por esta PR |
+| `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Esperava `"reply-audio-1"` como 6º arg, recebeu `null` + UUID `eb5f8992-...` como 7º arg | **pré-existente confirmado (mascarado)** — mesmo que linha 185 acima: falha runtime pré-existente exposta pela correção do mock |
+| `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava `["c1","[Áudio]","audio","audio/arquivo.webm",undefined,"reply-audio-1"]`, recebeu com `null` extra e UUID | **pré-existente confirmado** — `git diff main HEAD -- src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` vazio (arquivo não alterado por esta PR); `src/hooks/inbox/useRealtimeInbox.ts` linha 314 já chamava `sendMessage` com 7 args em `main`; teste não faz parte do conjunto de 276 arquivos atualizados (não tinha logger mock) |
+| `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 5 + `undefined` + `null` + UUID `8c685bec-...` | **pré-existente confirmado** — mesma causa da linha 177 acima: arquivo não alterado, implementação já tinha 7 args em `main` |
 
-**Nota sobre erros "potencialmente novos":** Os erros de `contratosModulo.test.ts` e `useRealtimeInbox.sendAudio.test.tsx` podem indicar:
-- `types.ts` desatualizado (ausência de `team_message_read_state`) → resolvível com `types-sync`
-- Assinatura de função de envio de áudio mudou (novo parâmetro UUID de mensagem) → os testes precisam ser atualizados para a nova assinatura
+**Classificação definitiva — todos os erros do shard 3/3 são pré-existentes:**
 
-Sem acesso a execução local (OOM no container), não foi possível verificar se esses erros existiam em `main` antes desta PR.
+| Arquivo | Evidência de pré-existência |
+|---------|----------------------------|
+| `contratosModulo.test.ts:87` | `grep -c 'team_message_read_state' src/integrations/supabase/types.ts` = 0 (ausente em main e na branch) |
+| `useRealtimeInbox.sendAudio.test.tsx:177,185` | `git diff main HEAD -- [arquivo]` vazio; `useRealtimeInbox.ts:314` já tinha 7 args em main |
+| `useTeamChatNotifications.canal-estavel.test.tsx:185,198` | Falha mascarada em main por mock incompleto; esta PR expõe ao corrigir o strict-mode; hook não foi alterado |
 
 ### Causa raiz (padrão flaky)
 
@@ -209,7 +211,7 @@ Flaky confirmado por dois runs consecutivos (`cf895c6a` e `43dd766`). Opções:
 **Status no run 39695347415 (SHA `43dd766`):** **CONCLUÍDO** — passo 9 `🧪 Run Playwright E2E (PR sem autenticação)` foi cancelado às 23:59 UTC (timeout de 12 min).
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|---------------|
+|-----|--------|-----------|-------------|
 | `🎭 E2E Tests (Playwright)` | [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580) | ❌ `cancelled` | 23:59 UTC |
 
 **Causa:** O passo 9 rodou por 12 min 26 seg (23:46–23:59 UTC) antes de ser cancelado. O job de E2E roda em paralelo com os Unit Tests e foi cancelado por timeout. As falhas dos testes E2E de geolocalização documentadas em §1 são a causa esperada dos timeouts nesses testes.
@@ -227,7 +229,7 @@ Investigar os logs do passo `🧪 Run Playwright E2E` do job [119551484580](http
 **Conclusão confirmada (SHA `cf895c6a`, run [39693077461](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461)):**
 
 | Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|---------------|
+|-----|--------|-----------|-------------|
 | `🏗️ Build` | [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) | ⏭️ `skipped` | 23:33 UTC |
 
 **Causa:** O job `🏗️ Build` só inicia após todos os shards de `Unit Tests` passarem. Como os 3 shards falharam, o Build foi pulado automaticamente pelo CI.
@@ -298,5 +300,5 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
-*Documento atualizado em 2026-10-22 00:10 UTC.*
+*Documento atualizado em 2026-10-22 (classificação definitiva — todos os erros do shard 3/3 confirmados como pré-existentes).*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
