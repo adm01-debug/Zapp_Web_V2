@@ -79,7 +79,7 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
 // GUARDA DE REDE — nenhum teste fala com o Supabase de PRODUCAO.
 //
 // Contexto (incidente de 02-03/10/2026): o cliente do app
-// (`src/integrations/supabase/client.ts`) tem a URL e a anon key de PRODUCAO
+// (`src/integrations/supabase/client.ts`) tem a URL e a anom key de PRODUCAO
 // fixas no codigo — a key e publica por design e a URL e fixa de proposito
 // (ver o comentario do proprio arquivo). Um teste que monta um componente sem
 // mockar o cliente faz request REAL contra producao.
@@ -91,7 +91,7 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
 // pago e contribuiu para a saturacao do Postgres que pendurou o Auth
 // (ver `docs/runbooks/auth-pendurado-saturacao-postgres.md`).
 //
-// Esta guarda troca o `fetch` global por um que RECUSA qualquer destino
+// Esta guarda troca o `fetch` global por Um que RECUSA qualquer destino
 // Supabase. Nenhum teste precisa de rede real — todos mockam. Um teste que
 // venha a precisar falha aqui de forma explicita, dizendo o que mockar, em vez
 // de vazar silenciosamente para producao (era esse o modo de falha).
@@ -143,10 +143,26 @@ Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
   },
 });
 
+// @tanstack/virtual-core (versão atual) mede o contêiner de rolagem por
+// `element.clientHeight`/`clientWidth` (via `getRect()`), NÃO por
+// `getBoundingClientRect()`. O jsdom retorna 0 para elementos sem altura inline
+// ou CSScompilado, então `getVirtualItems()` devolve [] e nenhum item é
+// renderizado. Definir um valor não-nulo aqui faz o virtualizador funcionar.
+// Testes que precisam de valores específicos podem sobrescrever com vi.spyOn
+// ou Object.defineProperty de forma `configurable: true`.
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get: function () { return 600; },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+  configurable: true,
+  get: function () { return 800; },
+});
+
 // ==========================================================================
 // TETO DE ESPERA DAS CONSULTAS ASSINCRONAS — determinismo sob carga.
 //
-// `findBy*`/`waitFor` do Testing Library esperam por condicao, mas com um teto
+// `findBy**`/`waitFor` do Testing Library esperam por condicao, mas com um teto
 // de 1000 ms (`asyncUtilTimeout`, o padrao da lib). Esse teto e medido no
 // RELOGIO DE PAREDE do processo: com a maquina carregada o worker do vitest fica
 // preemptado e o proprio trabalho que o teste espera (o `import()` dinamico do
