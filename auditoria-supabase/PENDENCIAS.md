@@ -16,17 +16,22 @@ WHERE version IN ('20261026100300','20261026110300','20261026120300');
 -- 0 linhas → nenhuma das 3 está no ledger
 ```
 
-**Por que trava:** a regra do projeto exige: PR → merge em `main` → deploy → `db-migrate.yml` com
-aprovação no environment `producao-ddl`.
+**Por que trava:** a regra do projeto exige: PR → merge em `main` → deploy → apply em produção
+com aprovação no environment `producao-ddl`.
+
+**⚠️ IMPORTANTE — aplicar uma migration por vez:** o workflow `db-migrate.yml` aceita exatamente
+um alvo por disparo; com 3 migrations pendentes, executar todas de uma vez pára no preflight.
+Repetir os passos 3–6 abaixo para CADA migration na ordem cronológica.
 
 **Passo a passo:**
 1. Revisar e mergear PR #2186 em `main`
 2. Aguardar deploy automático no Vercel
-3. Disparar workflow `deploy-functions.yml` se houver mudança de edge function (não há neste PR)
-4. Ir em `.github/Actions → db-migrate.yml → Run workflow` com `apply=false` (dry-run)
-5. Conferir output do dry-run — hash SHA-256 gerado
-6. Rodar novamente com `apply=true` e `confirm_runtime_sha256=<hash do dry-run>`
-7. Aprovar no environment `producao-ddl`
+3. **Para cada migration** (na ordem: `20261026100300`, depois `20261026110300`, depois `20261026120300`):
+   a. `.github/Actions → db-migrate.yml → Run workflow` → `migration_version=<versão>` + `apply=false`
+   b. Conferir output do dry-run — hash SHA-256 gerado
+   c. Rodar novamente com `apply=true` e `confirm_runtime_sha256=<hash do dry-run>`
+   d. Aprovar no environment `producao-ddl`
+   e. Confirmar que a version aparece no ledger antes de aplicar a próxima
 
 **Severity das correções:**
 - `20261026100300` → S3-01 + S3-02 (ALTO — deleta/insere invites de outros departamentos)

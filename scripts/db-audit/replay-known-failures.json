@@ -107,6 +107,10 @@
     "20261026100300_dept_invites_ownership_fix.sql": {
       "categoria": "cascata-objeto-existe-no-canonico",
       "motivo": "function is_admin_or_supervisor() does not exist no replay. A funcao existe no canonico mas nao e criada por nenhuma migration replicavel (provavelmente parte das 61 migrations com statements NULL). Canonico: funcao presente, policies department_invites corrigidas (S3-01). Medido em 22/10/2026."
+    },
+    "20261026110300_login_attempts_ttl_lgpd.sql": {
+      "categoria": "ambiente",
+      "motivo": "cron.schedule() exige pg_cron instalado. A imagem postgres:17-alpine usada no replay nao tem pg_cron; outras migrations de cron (20260902000200, 20261002541230) ja estao nesta lista pelo mesmo motivo. Canonico: indice idx_login_attempts_updated_at presente, job cleanup-login-attempts-pii agendado (S12-01). Medido em 22/10/2026."
     }
   }
 }
