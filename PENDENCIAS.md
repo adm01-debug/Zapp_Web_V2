@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 02:38 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
+> Atualizado em 2026-10-22 09:07 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2185).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
 > **§5 CORRIGIDO (2026-10-22 02:38 UTC):** mock `clientHeight`/`clientWidth` adicionado a `src/test/setup.ts` em `Element.prototype`. Causa raiz verdadeira: `@tanstack/react-virtual` 3.x usa `element.clientHeight/clientWidth` (não `getBoundingClientRect`) via `getRect()` no virtual-core; jsdom retorna 0 para esses campos, causando 0 itens virtualizados. 11 testes de 4 arquivos passam localmente. _Correção anterior (commit `1ce17b04`) resolve a regressão FilesTab.fase6 mas não resolvia os ChatMessagesArea._
@@ -475,7 +475,7 @@ documentação) tem relação com os testes que agora falham.
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 82 | `expected 2 to be 1` — `h.subs.length` = 2 | React StrictMode double-mount registra 2 subscrições |
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 97 | `expected 2 to be 1` — mesmo motivo | Idem |
 | `useTalkXSegments.test.ts` | 398 | `expected Error{…} received 7` | Erro assíncrono não propagado corretamente |
-| (TTS — arquivo não identificado no log) | — | `Unable to find button "Ouvir resumo"` | Botão renomeado no componente (aria-label diferente do esperado no teste) |
+| `src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx` | 156 | `Unable to find role="button" and name "Ouvir resumo"` | Botão renomeado no componente — aria-label atual no DOM: `"Ouvir Tudo — ouvir o resumo completo em voz alta"` ou `"Ouvir o resumo em voz alta"` |
 
 ### Por que não são regressões desta PR
 
@@ -499,7 +499,7 @@ ou o componente TTS que usa botão "Ouvir resumo".
    montagem (ex.: `Date.now()` ou `Math.random()`), ou ajustar o mock de teste para StrictMode.
 3. **`useTalkXSegments.test.ts:398`:** Investigar por que o erro assíncrono não é propagado
    como `Error` — verificar `fetchTalkXSegmentActivity` ou equivalente.
-4. **Botão TTS "Ouvir resumo":** Atualizar o teste para o aria-label atual do botão (ex.: `"Ouvir o resumo em voz alta"`).
+4. **`a11y-ferramentas-ia.test.tsx:156` (botão TTS "Ouvir resumo"):** Atualizar `screen.getByRole('button', { name: 'Ouvir resumo' })` para o aria-label atual do componente. Confirmado localmente: o componente renderiza `"Ouvir Tudo — ouvir o resumo completo em voz alta"`, `"Ouvir o resumo em voz alta"` e `"Ouvir os pontos-chave em voz alta"` — nenhum deles corresponde ao nome `"Ouvir resumo"` que o teste procura. Confirmado como pré-existente: falha tanto com `setup.ts` da `main` quanto com o desta PR.
 
 ---
 
