@@ -44,6 +44,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  deriveOwnMessageStatus: vi.fn(() => 'sent' as const),
+  useTeamReadState: vi.fn(() => ({ readStates: {}, isLoading: false })),
+}));
+
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
 function render(conversationId = 'conv-1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
