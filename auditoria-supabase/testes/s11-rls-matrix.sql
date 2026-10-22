@@ -53,6 +53,13 @@ BEGIN
     ('aaaaaaaa-0000-4000-a000-aaaaaaaaaaaa', v_dept_a, 'TESTCODE1', v_profile_a, now() + interval '7 days', now())
   ON CONFLICT DO NOTHING;
 
+  -- Inserir contato atribuído a profile_a (tenant A)
+  -- Isolação de contacts é via assigned_to → profiles.user_id, não via organization_id
+  INSERT INTO contacts (id, name, phone, assigned_to, conversation_status, is_lid_legacy, created_at, updated_at)
+  VALUES
+    ('cccccccc-0000-4000-a000-aaaaaaaaaaaa', 'Contato Teste A', '11999990001', v_profile_a, 'open', false, now(), now())
+  ON CONFLICT DO NOTHING;
+
   RAISE NOTICE 'Setup: org_a=%, org_b=%, user_a=%, user_b=%, profile_a=%, profile_b=%, dept_a=%, dept_b=%',
     v_org_a, v_org_b, v_user_a, v_user_b, v_profile_a, v_profile_b, v_dept_a, v_dept_b;
 END;
@@ -66,34 +73,49 @@ $setup$;
 --   SKIP   = caso não aplicável nesta versão do schema
 -- ==============================================================
 
--- C1: Tenant B faz SELECT em contacts de Tenant A → esperado 0 linhas (PROTEGIDO)
+-- C1: Controle positivo (user_a vê seu contato) + cross-tenant (user_b NÃO vê contato de tenant A)
+-- Nota: contacts não tem organization_id — isolação é via assigned_to → profiles.user_id (auth.uid())
 DO $c1$
 DECLARE
-  v_user_b  uuid := '22222222-2222-4000-b000-bbbbbbbbbbbb';
-  v_org_a   uuid := '00000000-0000-4000-a000-aaaaaaaaaaaa';
-  v_count   int;
-  v_jwt     json;
+  v_user_a    uuid := '11111111-1111-4000-a000-aaaaaaaaaaaa';
+  v_user_b    uuid := '22222222-2222-4000-b000-bbbbbbbbbbbb';
+  v_contact_a uuid := 'cccccccc-0000-4000-a000-aaaaaaaaaaaa';
+  v_count     int;
+  v_jwt       json;
 BEGIN
+  -- Controle positivo: user_a deve ver seu próprio contato (assigned_to = profile_a)
+  v_jwt := json_build_object(
+    'sub', v_user_a::text,
+    'role', 'authenticated',
+    'app_metadata', json_build_object('organization_id', '00000000-0000-4000-a000-aaaaaaaaaaaa')
+  );
+  BEGIN
+    PERFORM set_config('request.jwt.claims', v_jwt::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+    SELECT count(*) INTO v_count FROM contacts WHERE id = v_contact_a;
+    IF v_count >= 1 THEN
+      RAISE NOTICE 'C1-pos (contacts SELECT próprio, user_a): OK — % linha(s) (user_a vê seu contato)', v_count;
+    ELSE
+      RAISE NOTICE 'C1-pos (contacts SELECT próprio, user_a): FALHOU — 0 linhas (RLS bloqueou o dono ou dado não seedado)';
+    END IF;
+    ROLLBACK;
+  END;
+
+  -- Cross-tenant: user_b NÃO deve ver o contato atribuído a user_a
   v_jwt := json_build_object(
     'sub', v_user_b::text,
     'role', 'authenticated',
     'app_metadata', json_build_object('organization_id', '00000000-0000-4000-b000-bbbbbbbbbbbb')
   );
-
   BEGIN
     PERFORM set_config('request.jwt.claims', v_jwt::text, true);
     PERFORM set_config('role', 'authenticated', true);
-
-    SELECT count(*) INTO v_count
-    FROM contacts
-    WHERE organization_id = v_org_a;
-
+    SELECT count(*) INTO v_count FROM contacts WHERE id = v_contact_a;
     IF v_count = 0 THEN
-      RAISE NOTICE 'C1 (contacts SELECT cross-tenant): OK — 0 linhas (PROTEGIDO)';
+      RAISE NOTICE 'C1 (contacts SELECT cross-tenant, user_b): OK — 0 linhas (PROTEGIDO)';
     ELSE
-      RAISE NOTICE 'C1 (contacts SELECT cross-tenant): VULN — % linhas visíveis para user_b', v_count;
+      RAISE NOTICE 'C1 (contacts SELECT cross-tenant, user_b): VULN — % linhas visíveis para user_b', v_count;
     END IF;
-
     ROLLBACK;
   END;
 END;
@@ -407,7 +429,7 @@ $c10$;
 
 -- ==============================================================
 -- Resumo esperado (banco com migrations atuais, S3-01/S3-02 NÃO corrigidas):
---   C1  → OK (contacts isolado por org)
+--   C1  → OK (contacts isolado por assigned_to)
 --   C2  → OK (messages isolado via contact)
 --   C3a → VULN (dept_invites DELETE USING true — S3-01)
 --   C3b → VULN (dept_invites INSERT WITH CHECK true — S3-02)

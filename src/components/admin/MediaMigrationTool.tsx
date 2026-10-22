@@ -138,6 +138,10 @@ export function MediaMigrationTool() {
       } else {
         toast.info(migrationResult.message || 'Nenhuma mídia para migrar');
       }
+    } catch (e) {
+      const msg = (e instanceof Error ? e.message : null) ?? 'Erro inesperado na migração';
+      setEdgeError({ message: msg });
+      toast.error(msg);
     } finally {
       setRunning(false);
     }
