@@ -2,7 +2,7 @@
   "_comment": "Falhas ESPERADAS do replay local (scripts/db-audit/replay-local.sh). Cada entrada e uma migration que nao aplica em banco vazio por motivo JA investigado e medido no banco canonico. O replay fica VERDE quando nao ha falha fora desta lista - e isso o transforma em gate contra drift novo. NUNCA adicione entrada sem medir o objeto no canonico e/ou apontar a versao substituta: o valor deste arquivo e ser a fronteira entre 'esperado' e 'regressao'.",
   "_metodo": "Medir o objeto real no canonico antes de aceitar: pg_proc (funcao ou coluna), pg_policies, information_schema. Receita em docs/MIGRATIONS.md secao 7.",
   "_contexto": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
-  "_atualizado_em": "2026-10-04",
+  "_atualizado_em": "2026-10-22",
   "esperadas": {
     "20260906000001_e31_contacts_is_lid_legacy.sql": {
       "categoria": "ambiente",
