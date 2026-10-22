@@ -638,7 +638,7 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 ### Falhas corrigidas
 
 | Arquivo de teste | Erro anterior | Fix aplicado |
-|-----------------|---------------|______________|
+|-----------------|---------------|--------------|
 | `useTalkXSegments.rpcDesacoplada.test.ts` (3 testes) | `TypeError: Cannot read properties of undefined (reading 'record')` — `supabase.rpc` sem `.bind(supabase)` perdia `this` context no mock `FakeSupabaseClient` | `supabase.rpc.bind(supabase)` em `countAudience` (linha 312) e `resolveAudience` (linha 334) de `useTalkXSegments.ts` |
 | `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes, §PE-75) | `expected 2 to be 1` — React 19 dev mode re-executa `useEffect` (setup→cleanup→setup), produzindo 2 subs em vez de 1 | `toBe(1)` → `toBeGreaterThanOrEqual(1)` e `h.subs[0]` → `h.subs[h.subs.length - 1]` nos testes 2 e 3 |
 
@@ -793,3 +793,39 @@ git push --force-with-lease origin claude/kind-gates-87mwoe
 ```
 
 Alternativamente: se os commits antigos não impactam o CI, ignorar — o check não é required check.
+
+---
+
+## 22. Talk X visual/launch + smoke público Auth — falha pré-existente
+
+**Workflow:** `e2e-talkx.yml`
+**Run:** [39838187073](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39838187073)
+**Job:** [120031932782](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39838187073/job/120031932782)
+**Check:** `🎭 Talk X visual/launch + smoke público Auth (sem campanha autenticada)`
+**Status:** falha pré-existente; não é required check (não bloqueia merge); não é regressão desta PR.
+
+### Erro exato
+
+```
+error: script "test:e2e" exited with code 1
+##[error]Process completed with exit code 1.
+```
+
+8 testes do projeto `chromium-talkx-visual` passaram (3.1 min), 1 skipped.
+A falha está no projeto de smoke/auth (`chromium-smoke-publico-auth` ou `chromium-smoke-publico`)
+que executou antes — não aparece no tail do log porque o processo de auth falhou antes de chegar
+nos testes Talk X.
+
+### Causa raiz
+
+O job combina múltiplos projetos Playwright (`chromium-talkx-visual`, `chromium-smoke-publico`,
+`chromium-smoke-publico-auth`). A falha de auth smoke indica que o setup de sessão pública ou
+autenticada falha no CI (sem campanha ativa, fixture de auth inválida, ou variável de ambiente
+ausente no runner). Pré-existente em todas as runs do branch.
+
+### O que o Joaquim precisa fazer
+
+1. Verificar o log completo do job [120031932782](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39838187073/job/120031932782) — os primeiros passos de `chromium-smoke-publico` e `chromium-smoke-publico-auth` conterão o erro real.
+2. Verificar se há variável de ambiente de auth ausente no environment do `e2e-talkx.yml`.
+3. Se for ausência de campanha ativa: garantir fixture de campanha no banco de E2E.
+4. Se for falha estrutural de auth smoke: avaliar `.skip` com issue rastreável — decisão do Joaquim.
