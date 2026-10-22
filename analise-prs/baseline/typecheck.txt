@@ -1,19 +1,9 @@
-$ tsc -b --force
-error TS2688: Cannot find type definition file for 'node'.
-  The file is in the program because:
-    Entry point of type library 'node' specified in compilerOptions
-error TS2688: Cannot find type definition file for 'vitest/globals'.
-  The file is in the program because:
-    Entry point of type library 'vitest/globals' specified in compilerOptions
-vite.config.ts(1,30): error TS2307: Cannot find module 'vite' or its corresponding type declarations.
-vite.config.ts(2,19): error TS2307: Cannot find module '@vitejs/plugin-react' or its corresponding type declarations.
-vite.config.ts(3,18): error TS2591: Cannot find name 'path'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
-vite.config.ts(6,32): error TS7031: Binding element 'mode' implicitly has an 'any' type.
-vite.config.ts(8,19): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
-vite.config.ts(8,56): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
-vite.config.ts(20,38): error TS2307: Cannot find module 'vite' or its corresponding type declarations.
-vite.config.ts(34,39): error TS2339: Property 'dirname' does not exist on type 'ImportMeta'.
-error TS2688: Cannot find type definition file for 'node'.
-  The file is in the program because:
-    Entry point of type library 'node' specified in compilerOptions
-error: script "typecheck" exited with code 1
+# Baseline de typecheck — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
+# Data: 2026-10-22
+# Nota: container não tem bun install; resultados abaixo são da API do GitHub
+
+CHECK: 🔎 TypeCheck (parte de 🔍 Lint & TypeCheck)
+STATUS: success
+SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+RESULT: passed — sem erros de typecheck na main atual

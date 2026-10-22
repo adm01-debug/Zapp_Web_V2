@@ -1,15 +1,9 @@
-$ eslint .
+# Baseline de lint/typecheck — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
+# Data: 2026-10-22
+# Nota: container não tem bun install; resultados abaixo são da API do GitHub
 
-Oops! Something went wrong! :(
-
-ESLint: 10.1.0
-
-Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@eslint/js' imported from /home/user/Zapp_Web_V2/eslint.config.js
-    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
-    at packageResolve (node:internal/modules/esm/resolve:767:81)
-    at moduleResolve (node:internal/modules/esm/resolve:853:18)
-    at defaultResolve (node:internal/modules/esm/resolve:983:11)
-    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
-    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
-    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
-    at ModuleJob._link (node:internal/modules/esm/module_job:182:49)
+CHECK: 🔍 Lint & TypeCheck
+STATUS: success
+SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+RESULT: passed — sem erros de lint nem typecheck na main atual
