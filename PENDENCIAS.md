@@ -638,7 +638,7 @@ e adicionar créditos. Após recarregar, o check passará automaticamente na pr�
 ### Falhas corrigidas
 
 | Arquivo de teste | Erro anterior | Fix aplicado |
-|-----------------|---------------|--------------|
+|-----------------|---------------|______________|
 | `useTalkXSegments.rpcDesacoplada.test.ts` (3 testes) | `TypeError: Cannot read properties of undefined (reading 'record')` — `supabase.rpc` sem `.bind(supabase)` perdia `this` context no mock `FakeSupabaseClient` | `supabase.rpc.bind(supabase)` em `countAudience` (linha 312) e `resolveAudience` (linha 334) de `useTalkXSegments.ts` |
 | `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes, §PE-75) | `expected 2 to be 1` — React 19 dev mode re-executa `useEffect` (setup→cleanup→setup), produzindo 2 subs em vez de 1 | `toBe(1)` → `toBeGreaterThanOrEqual(1)` e `h.subs[0]` → `h.subs[h.subs.length - 1]` nos testes 2 e 3 |
 
@@ -761,3 +761,35 @@ o comportamento atual.
 *§17 cobre: fix Qodo HIGH `useInboxBulkActions` — test c2 `'waiting'` → `'pending'` (2 grupos distintos, 2 restores).*
 *§18–20 cobre: falhas pré-existentes em Unit Tests shards 1–3, não introduzidas por esta PR.*
 *§12: TTS failure identificado como `a11y-ferramentas-ia.test.tsx:156` — botão "Ouvir resumo" renomeado no componente; confirmado pré-existente na main.*
+
+---
+
+## 21. Commits não-verificados no branch `claude/kind-gates-87mwoe`
+
+**Identificado por:** stop-hook `~/.claude/stop-hook-git-check.sh`
+**Status:** bloqueado — correção exige force push, que é proibido pelas restrições do projeto.
+
+### Commits afetados
+
+| SHA | E-mail autoria |
+|-----|----------------|
+| 855be30 | adm01@promobrindes.com.br |
+| 411b712 | adm01@promobrindes.com.br |
+| 1c80488 | adm01@promobrindes.com.br |
+| 931b0a7 | adm01@promobrindes.com.br |
+| b90eb9e | adm01@promobrindes.com.br |
+
+O commit HEAD `a818c4be` foi enviado via `github_push_files` (MCP) e está corretamente atribuído.
+
+### O que o Joaquim precisa fazer
+
+```bash
+git config user.email noreply@anthropic.com
+git config user.name Claude
+# Para cada commit listado:
+git checkout claude/kind-gates-87mwoe
+git rebase --root  # ou amend individual de cada commit
+git push --force-with-lease origin claude/kind-gates-87mwoe
+```
+
+Alternativamente: se os commits antigos não impactam o CI, ignorar — o check não é required check.
