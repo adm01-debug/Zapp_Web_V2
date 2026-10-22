@@ -77,6 +77,7 @@ const ids = (r: { current: ReturnType<typeof useInboxFilters> }) =>
 
 beforeEach(() => {
   routerSearchRef.current = '';
+  localStorage.clear();
 });
 
 describe('useInboxFilters — type pela URL (PK-14)', () => {

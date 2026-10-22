@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
@@ -114,6 +115,10 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   // troca de conta no mesmo navegador não reaproveita o estado do anterior.
   const [draft, setDraft] = useState<Record<string, InboxFilterPrefs>>({});
 
+  // searchParams precisa ser declarado antes de basePrefs para que o useMemo
+  // abaixo possa ler searchParams.get('type') sem violar a ordem dos hooks.
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     return {
@@ -121,12 +126,17 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: contactTypeFromUrl() ?? storedPrefs?.contactType ?? null,
+      // Usa searchParams (React Router) em vez de window.location para funcionar
+      // em MemoryRouter (testes) e manter sincronismo com o estado do roteador.
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
-  }, [storedPrefs]);
+  }, [storedPrefs, searchParams]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
-  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
+  const { chipTab, mainTab, subTab, queueId: selectedQueueId } = prefs;
+  // URL tem precedência sobre o draft: deep-links e back/forward funcionam mesmo
+  // com draft ativo (R2-INB-031). Quando não há ?type= na URL cai no draft/storage.
+  const selectedContactType = normalizeContactType(searchParams.get('type')) ?? prefs.contactType;
 
   /**
    * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
@@ -165,14 +175,17 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
+    // Usa window.location.search (URL viva) como base, não o snapshot do React
+    // Router, porque setViewParam/useNavigationHistory usam window.history.pushState
+    // diretamente e o snapshot pode não conter view=inbox.
     const params = new URLSearchParams(window.location.search);
     if (value && value !== 'all') {
       params.set('type', value);
     } else {
       params.delete('type');
     }
-    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, [applyPrefs]);
+    setSearchParams(params, { replace: true });
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({
