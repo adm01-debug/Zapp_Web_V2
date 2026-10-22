@@ -441,4 +441,37 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 
 ---
 
+---
+
+## 15. Correções de Revisão — Qodo (commit `cba3ef6` — findings MEDIUM e HIGH)
+
+### 15.1 MEDIUM — `useUserSettings` catch sem toast (commit desta sessão)
+
+**Finding Qodo:** O bloco `catch` de `fetchSettings` setava `isError` mas não exibia toast — a interface ficava silenciosa quando a query do Supabase lançava exceção (ao invés de retornar um objeto `error`). O caminho de retorno (`if (error && error.code !== 'PGRST116')`) já tinha tanto `setIsError(true)` quanto `toast({...})`.
+
+**Correção aplicada (`src/hooks/system/useUserSettings.ts` linhas ~187–196):**
+```diff
+  } catch (err) {
+    log.error('Error in fetchSettings:', err);
+-   if (ativo) setIsError(true);
++   if (ativo) {
++     setIsError(true);
++     toast({
++       title: 'Não foi possível carregar as configurações',
++       description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
++       variant: 'destructive',
++     });
++   }
+  } finally {
+```
+
+### 15.2 HIGH — `PENDENCIAS.md §14` descrição incorreta dos gates `types-sync`
+
+**Finding Qodo:** §14 descrevia os 4 flags de drift como "4 gates retornaram true" e referenciava `scripts/ci/types-sync.mjs` (inexistente). O `types-sync.yml` tem 4 flags de drift e 3 gates de bloqueio independentes.
+
+**Correção aplicada (`PENDENCIAS.md`):** §14 reescrito para distinguir flags de drift dos gates reais (Gate 1: TypeScript; Gate 2: usage-guard; Gate 3: remoções), com a referência ao script inexistente removida.
+
+---
+
 *Relatório atualizado em 2026-10-22 09:00 UTC: §4.1 corrigido (diagnóstico das migrations); §14 adicionado — Qodo Finding 4 corrigido em `useDiagnosticsData.ts`.*
+*Relatório atualizado em 2026-10-22 (sessão atual): §15 adicionado — Qodo MEDIUM (useUserSettings toast ausente no catch) e HIGH (PENDENCIAS.md §14 gates vs flags) corrigidos.*

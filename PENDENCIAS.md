@@ -556,40 +556,45 @@ com `searchParams` adicionado à dependency array. Commits a confirmar no CI.
 ### Erro exato
 
 ```
-A sincronizacao foi bloqueada por um ou mais gates:
-  types.ts: true
-  schema-catalog.json: true
-  schema-manifest.json: true
-  grants-baseline.json: true
+A sincronizacao foi bloqueada por um ou mais gates.
 ```
+
+O run produziu os seguintes **flags de drift** (arquivo do repo ≠ banco atual):
+- `types.ts: true` — drift detectado
+- `schema-catalog.json: true` — drift detectado
+- `schema-manifest.json: true` — drift detectado
+- `grants-baseline.json: true` — drift detectado
+
+**Distinção importante:** esses flags indicam QUAIS artefatos diferem, não o resultado dos gates.
+O `types-sync.yml` tem **3 gates** independentes (Gate 1: TypeScript não piora; Gate 2: usage-guard;
+Gate 3: remoções dentro do limite). O erro de `"A sincronizacao foi bloqueada"` significa que ao menos
+um dos 3 gates falhou — não que "os 4 flags retornaram true".
 
 ### Causa raiz
 
 Após o merge da PR #2182, o workflow `types-sync` detectou diferenças entre os artefatos
-commitados no repo (`types.ts`, `schema-catalog.json`, `schema-manifest.json`,
-`grants-baseline.json`) e o estado atual do banco oficial `tnnnlkbymytvtqngbbqh`. Todos os
-quatro gates retornaram `true` (diferença detectada), bloqueando a sincronização automática.
+commitados no repo e o estado atual do banco oficial `tnnnlkbymytvtqngbbqh`. Com drift detectado,
+o workflow executou os gates — e ao menos um deles falhou, bloqueando a abertura automática da PR.
 
 **Por que agente não corrigiu:** A resolução requer:
-1. Diagnóstico de quais objetos diferem entre repo e banco (possivelmente funções, views ou
-   grants alterados diretamente no banco sem migration versionada — como o incidente do E40
-   documentado no CLAUDE.md);
-2. Regeneração dos artefatos contra o banco oficial:
-   `node scripts/ci/types-sync.mjs` ou re-dispatch do workflow `types-sync.yml` via `workflow_dispatch`;
-3. Se a diferença for um drift genuíno (DDL no banco sem arquivo em `supabase/migrations/`),
-   reconciliar com arquivo + PR antes de fazer o sync.
+1. Verificar nos logs do run [39709064516](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39709064516)
+   qual gate falhou (Gate 1 = TypeScript, Gate 2 = usage-guard, Gate 3 = remoções) e por quê;
+2. Corrigir o problema que causou a falha do gate (ex.: se Gate 1 falhou, o novo `types.ts` gerado
+   tem erros de TypeScript que precisam ser resolvidos antes de abrir a PR);
+3. Re-disparar o `types-sync.yml` via `workflow_dispatch` na `main` APENAS após corrigir o gate.
 
-Agente não tem acesso ao Supabase CLI nem às credenciais para `tsc --generateDeclarations` contra o banco oficial.
+Agente não tem acesso ao Supabase CLI nem às credenciais para regenerar os artefatos contra o banco oficial.
 
 ### O que o Joaquim precisa fazer
 
-1. Re-disparar o `types-sync.yml` via `workflow_dispatch` na `main`:
+1. Verificar qual gate bloqueou no run [39709064516](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39709064516):
+   - Abrir a aba "Jobs" → localizar Gate 1/2/3 com `passed=false`.
+2. Corrigir o motivo da falha do gate identificado.
+3. Re-disparar o `types-sync.yml` via `workflow_dispatch` na `main`:
    - Actions → `types-sync` → Run workflow → branch `main`.
-   - O workflow vai regenerar os 4 artefatos, abrir (ou atualizar) uma PR de sync e fazer os checks passarem.
-2. Se o workflow reportar drift de schema (DDL no banco sem arquivo em `supabase/migrations/`),
+   - O workflow vai regenerar os 4 artefatos e abrir uma PR de sync SE os 3 gates passarem.
+4. Se o workflow reportar drift de schema (DDL no banco sem arquivo em `supabase/migrations/`),
    reconciliar conforme seção 1/regra 6 do CLAUDE.md antes de fazer o sync.
-3. Se o gate de `grants-baseline.json` for o único bloqueio, verificar se houve GRANT/REVOKE manual
-   recente no banco.
 
 **Nota:** Este workflow roda na `main` e não é um required check de PR — não bloqueia o merge da
 PR #2185. A falha é na `main` após o merge da PR #2182 e é independente desta PR.
