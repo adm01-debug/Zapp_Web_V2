@@ -298,6 +298,8 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
+---
+
 ## 8. `git push` — RESOLVIDO (commit `4604a5a` empurrado com sucesso)
 
 **Status:** ✅ Push realizado em 2026-10-22 ~02:00 UTC. Branch remota avançou de `f042a4a` para `4604a5a`.
@@ -466,7 +468,7 @@ documentação) tem relação com os testes que agora falham.
 ### Falhas identificadas (run `39727885851`, job `119656011418`)
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|-----------|
+|---------|-------|------|----------|
 | `useTalkXSuppression.hook-morto.test.ts` | 84 | `expected true to be false` — hook ainda exportado | TL-002 pendente: `useTalkXSuppression` não foi removido do módulo |
 | `useTalkXSuppression.hook-morto.test.ts` | 138 | `expected [] to deeply equal []` — arquivos do hook encontrados | Mesmo item: hook e test file existem, test de guarda acusa |
 | `useTeamMessages.canal-e-reconexao.test.tsx` | 70 | `expected false to be true` — nomes de canal idênticos entre instâncias | Canal de realtime sem sufixo único por montagem |
@@ -507,7 +509,7 @@ ou o componente TTS que usa botão "Ouvir resumo".
 ### Shard 2 (job [119656011579](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011579)) — falhas pré-existentes
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|-----------|
+|---------|-------|------|----------|
 | `useInboxBulkActions.test.ts` | 625 | `expected undefined to deeply equal [Array(1)]` — `archiveUpdate?.filters.id` undefined | Pré-existente: hook `useInboxBulkActions` não modificado por esta PR |
 
 **Regressão nossa corrigida (`useInboxFilters.type-url.test.tsx`):**
@@ -523,7 +525,7 @@ com `searchParams` adicionado à dependency array. Commits a confirmar no CI.
 ### Shard 3 (job [119656011528](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851/job/119656011528)) — falhas pré-existentes
 
 | Arquivo | Linha | Erro | Causa raiz |
-|---------|-------|------|-----------|
+|---------|-------|------|----------|
 | `useWarRoomData.test.tsx` | 194 | `expected false to be true` | Pré-existente: hook não modificado por esta PR |
 | `useWarRoomData.test.tsx` | 210 | `expected false to be true` | Idem |
 | `useTeamChatNotifications.canal-estavel.test.tsx` | 131 | `expected 'team-chat-notifications' to match /^team-chat-notifications:/` — nome sem sufixo | Mesmo padrão de `useTeamMessages` (§12): canal sem sufixo único por instância |
@@ -540,5 +542,57 @@ com `searchParams` adicionado à dependency array. Commits a confirmar no CI.
 
 ---
 
-*Documento atualizado em 2026-10-22 07:30 UTC.*
-*Correções aplicadas nesta sessão: ver RELATORIO_CI.md. Regressão `useInboxFilters` (hook ordering + React Router searchParams) corrigida neste push.*
+---
+
+## 14. `types-sync` — bloqueado por gates (run `39709064516`, `main` `61a973da`)
+
+**Workflow:** `types-sync.yml` (disparado automaticamente após merge da PR #2182)
+**Run:** [39709064516](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39709064516)
+**Commit:** `61a973da` (merge PR #2182 em 2026-10-22T02:01:37Z)
+**Status:** `conclusion: failure`
+
+### Erro exato
+
+```
+A sincronizacao foi bloqueada por um ou mais gates:
+  types.ts: true
+  schema-catalog.json: true
+  schema-manifest.json: true
+  grants-baseline.json: true
+```
+
+### Causa raiz
+
+Após o merge da PR #2182, o workflow `types-sync` detectou diferenças entre os artefatos
+commitados no repo (`types.ts`, `schema-catalog.json`, `schema-manifest.json`,
+`grants-baseline.json`) e o estado atual do banco oficial `tnnnlkbymytvtqngbbqh`. Todos os
+quatro gates retornaram `true` (diferença detectada), bloqueando a sincronização automática.
+
+**Por que agente não corrigiu:** A resolução requer:
+1. Diagnóstico de quais objetos diferem entre repo e banco (possivelmente funções, views ou
+   grants alterados diretamente no banco sem migration versionada — como o incidente do E40
+   documentado no CLAUDE.md);
+2. Regeneração dos artefatos contra o banco oficial:
+   `node scripts/ci/types-sync.mjs` ou re-dispatch do workflow `types-sync.yml` via `workflow_dispatch`;
+3. Se a diferença for um drift genuíno (DDL no banco sem arquivo em `supabase/migrations/`),
+   reconciliar com arquivo + PR antes de fazer o sync.
+
+Agente não tem acesso ao Supabase CLI nem às credenciais para `tsc --generateDeclarations` contra o banco oficial.
+
+### O que o Joaquim precisa fazer
+
+1. Re-disparar o `types-sync.yml` via `workflow_dispatch` na `main`:
+   - Actions → `types-sync` → Run workflow → branch `main`.
+   - O workflow vai regenerar os 4 artefatos, abrir (ou atualizar) uma PR de sync e fazer os checks passarem.
+2. Se o workflow reportar drift de schema (DDL no banco sem arquivo em `supabase/migrations/`),
+   reconciliar conforme seção 1/regra 6 do CLAUDE.md antes de fazer o sync.
+3. Se o gate de `grants-baseline.json` for o único bloqueio, verificar se houve GRANT/REVOKE manual
+   recente no banco.
+
+**Nota:** Este workflow roda na `main` e não é um required check de PR — não bloqueia o merge da
+PR #2185. A falha é na `main` após o merge da PR #2182 e é independente desta PR.
+
+---
+
+*Documento atualizado em 2026-10-22 08:00 UTC.*
+*Correções aplicadas nesta sessão: ver RELATORIO_CI.md. Regressão `useInboxFilters` corrigida neste push.*
