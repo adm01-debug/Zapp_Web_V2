@@ -298,8 +298,6 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 
 ---
 
----
-
 ## 8. `git push` — RESOLVIDO (commit `4604a5a` empurrado com sucesso)
 
 **Status:** ✅ Push realizado em 2026-10-22 ~02:00 UTC. Branch remota avançou de `f042a4a` para `4604a5a`.
@@ -404,5 +402,52 @@ Instalando em `Element.prototype`, o spy de `vi.spyOn(Element.prototype, …)` f
 
 ---
 
-*Documento atualizado em 2026-10-22 02:40 UTC.*
+---
+
+## 11. `useDiagnosticsData` — `messagesCountError` não propagado (CORRIGIDO)
+
+**Arquivo:** `src/hooks/system/useDiagnosticsData.ts`
+**Detectado por:** Qodo/Codex bots (finding) + leitura do teste `useDiagnosticsData.test.ts:882–894`
+**Status:** ✅ Corrigido neste branch (`claude/kind-gates-87mwoe`, commit desta sessão)
+
+### Problema
+
+Em `fetchSystemHealth`, o erro da contagem estimada de mensagens (`messagesCountError`) era capturado
+mas **nunca relançado**. Quando a query `supabase.from('messages').select(..., { count: 'estimated', head: true })`
+falhava (ex.: RLS negando acesso, código `57014`), `fetchAll` nunca entrava no bloco `catch`,
+`coletaFalhou` ficava `null`, e `collectionError` retornava `null` — escondendo a falha.
+
+**Teste que falhava (`useDiagnosticsData.test.ts:882–894`):**
+```typescript
+it('erro na contagem estimada de messages também não passa em branco', async () => {
+  mocks.errosTabela = [{
+    table: 'messages',
+    filtro: (c) => c.head && c.filters.length === 0,
+    error: { code: '57014', message: 'query cancelada' },
+  }];
+  const { result } = await montar();
+  expect(result.current.collectionError).not.toBeNull();  // falhava com null
+  expect(result.current.errorLogs.some((l) => l.id === 'collect-error')).toBe(true);
+});
+```
+
+### Correção aplicada
+
+```diff
+  } catch (err) {
+    messagesCountError = err as ProbeError;
+  }
++ // Falha de contagem estimada não pode passar em branco — propaga para o
++ // bloco catch de fetchAll, que a torna visível via coletaFalhou.
++ if (messagesCountError) throw messagesCountError;
+```
+
+A propagação do erro faz com que `fetchSystemHealth` lance exceção, `fetchAll` captura em seu `catch`,
+seta `coletaFalhou` com id `collect-error`, e `collectionError` passa a ser não-nulo.
+
+**Nenhuma ação necessária do Joaquim.**
+
+---
+
+*Documento atualizado em 2026-10-22 05:30 UTC.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
