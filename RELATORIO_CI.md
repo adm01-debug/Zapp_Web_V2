@@ -1,6 +1,6 @@
 # RELATÓRIO CI — Baseline × Final
 
-> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 07:00 UTC.
+> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 08:30 UTC.
 > Branch de trabalho: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
 > Esta sessão corrigiu uma regressão introduzida pela PR #2182 e documentou falhas pré-existentes.
 
@@ -129,7 +129,9 @@ received: null   (collectionError)
 | `7b18ebf` | `PENDENCIAS.md` | Docs: §5 RESOLVIDO (clientHeight/clientWidth), §9 inventário atualizado |
 | `6c883342` | múltiplos arquivos | Fix §2.4–§2.7: `workItemFormat` timezone; `useUserSettings` isError; `useInboxFilters` setSearchParams; `useDiagnosticsData` connectionsCountError; docs |
 | `2dd6c92` | `src/hooks/system/useDiagnosticsData.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.8: propaga `messagesCountError` via throw em `fetchSystemHealth`; docs §11 |
-| _(este push)_ | `src/hooks/inbox/useInboxFilters.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.9 (regressão `useInboxFilters`): `contactTypeFromUrl()` substituída por `normalizeContactType(searchParams.get('type'))` (React Router); `useSearchParams` movido para antes de `basePrefs` (ordem de hooks); docs §0, §13 |
+| _(commits anteriores)_ | `src/hooks/inbox/useInboxFilters.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.9 (regressão `useInboxFilters`): `contactTypeFromUrl()` substituída por `normalizeContactType(searchParams.get('type'))` (React Router); `useSearchParams` movido para antes de `basePrefs` (ordem de hooks); docs §0, §13 |
+| `5bc7b3a` | `src/hooks/inbox/useInboxFilters.ts` | Fix Qodo Finding 2: `handleContactTypeChange` usa `window.location.search` como base (URL viva) em vez do snapshot React Router — preserva `view=inbox` definido via `window.history.pushState` |
+| `7de89bd` | `src/hooks/inbox/useInboxFilters.ts` | Fix Qodo Finding 1: `selectedContactType` lê `searchParams` primeiro (precedência URL sobre draft) — deep-links e back/forward funcionam mesmo com draft ativo |
 
 ### 3.1 Required checks — run [39727885851](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851) (commit `1e44e21`)
 
@@ -367,4 +369,68 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 
 ---
 
-*Relatório atualizado em 2026-10-22 08:10 UTC: §11 completo; §12 completo — todos 10 jobs de `62c9b3c` confirmados. Unit Tests/E2E/Build/Contrato: falhas pré-existentes conforme §§1,4,12,13.*
+---
+
+## 13. Correções de Revisão — Findings Qodo (commits `5bc7b3a` e `7de89bd`)
+
+### 13.1 Finding 2 — `handleContactTypeChange` apaga `view=inbox` (commit `5bc7b3a`)
+
+**Confirmação pela revisão Qodo:** o bot confirmou que a regressão é real e introduzida por esta PR.
+
+**Causa raiz:** `setSearchParams((prev) => ...)` usava o snapshot interno do React Router como base. `setViewParam` e `useNavigationHistory` gravam `view=inbox` via `window.history.replaceState`/`pushState` diretamente, **fora** do React Router — o snapshot não continha `view=inbox`. Resultado: toda troca de tipo de contato apagava o parâmetro `view=inbox` da URL.
+
+**Correção aplicada (commit `5bc7b3a`):**
+```diff
+- setSearchParams((prev) => {
+-   const params = new URLSearchParams(prev);
++ // Usa window.location.search (URL viva) como base, não o snapshot do React
++ // Router, porque setViewParam/useNavigationHistory usam window.history.pushState
++ // diretamente e o snapshot pode não conter view=inbox.
++ const params = new URLSearchParams(window.location.search);
+    if (value && value !== 'all') {
+      params.set('type', value);
+    } else {
+      params.delete('type');
+    }
+-   return params;
+- }, { replace: true });
++ setSearchParams(params, { replace: true });
+```
+
+### 13.2 Finding 1 — `draft` shadowing bloqueia deep-links após interação (commit `7de89bd`)
+
+**Confirmação pela revisão Qodo:** o bot confirmou que a regressão é real e introduzida por esta PR.
+
+**Causa raiz:** `prefs = draft[ownerKey] ?? basePrefs` — uma vez que o usuário interage com qualquer filtro (chip, fila, tipo), `draft[ownerKey]` é preenchido e passa a sombrar `basePrefs` completamente. Mudanças externas em `?type=` (deep-link, back/forward do browser, voice agent) são ignoradas porque `selectedContactType` vinha do draft, não de `searchParams`.
+
+Esta PR tornou `basePrefs` reativo a `searchParams` (`useMemo` depende de `searchParams`), mas o draft ainda bloqueia a atualização — a reatividade nova de `basePrefs` ficou invisível enquanto o draft estivesse ativo.
+
+**Correção aplicada (commit `7de89bd`):**
+```diff
+  const prefs = draft[ownerKey] ?? basePrefs;
+- const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
++ const { chipTab, mainTab, subTab, queueId: selectedQueueId } = prefs;
++ // URL tem precedência sobre o draft: deep-links e back/forward funcionam mesmo
++ // com draft ativo (R2-INB-031). Quando não há ?type= na URL cai no draft/storage.
++ const selectedContactType = normalizeContactType(searchParams.get('type')) ?? prefs.contactType;
+```
+
+### 13.3 Tabela de Prova — commits `5bc7b3a` e `7de89bd`
+
+> Pushes enviados em 2026-10-22 ~08:30 UTC. Run CI ainda pendente quando este relatório foi atualizado.
+> Commits alteram apenas `src/hooks/inbox/useInboxFilters.ts` — TypeCheck e Lint ratchet passaram nos pre-push hooks locais sem erros novos.
+
+| Checagem local | Resultado |
+|---|---|
+| Lint ratchet (staged) | ✅ `novas=0` (ambos os commits) |
+| TypeCheck ratchet (pre-push) | ✅ `baseline=93, atual=76, removidas=17, novas=0` |
+
+CI esperado idêntico ao §12 (só `useInboxFilters.ts` alterado, sem tocar testes, workflows ou migrations):
+- TypeCheck ✅, Security Audit ✅, Node CI Scripts ✅
+- Unit Tests: ❌ failure (pré-existentes §§12–13, inalterados)
+- Contrato DB offline: ❌ failure (pré-existente §4)
+- E2E: ❌/⚠️ cancelled (pré-existente §1)
+
+---
+
+*Relatório atualizado em 2026-10-22 08:30 UTC: §12 completo; §13 adicionado — Qodo Findings 1 e 2 confirmados como regressões reais desta PR, corrigidos em commits `5bc7b3a` e `7de89bd`.*
