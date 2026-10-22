@@ -355,16 +355,16 @@ Adicionalmente corrigiu 7 outros bugs expostos: §§2.3–2.8 (mock `clientHeigh
 | `🔒 Security Audit` | [119684026238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026238) | ✅ success (06:54:07Z) | Confirmado |
 | `🧬 Mutação do mapa` | [119684026364](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026364) | ✅ success (06:54:15Z) | Confirmado — sem mudança módulo mapa |
 | `🔎 TypeCheck` | [119684026071](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026071) | ✅ success (06:55:11Z) | Confirmado |
-| `🧩 Node CI Scripts` | [119684026221](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026221) | ⏳ in_progress | Em andamento (06:54:27Z step 9/10) |
-| `🧪 Unit Tests (1/3)` | [119684026270](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026270) | ⏳ in_progress | Em andamento (vitest 06:53:55Z) |
-| `🧪 Unit Tests (2/3)` | [119684026551](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026551) | ⏳ in_progress | Em andamento (vitest 06:54:24Z) |
-| `🧪 Unit Tests (3/3)` | [119684026418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026418) | ⏳ in_progress | Em andamento (vitest 06:54:24Z) |
-| `🎭 E2E Tests (Playwright)` | [119684026280](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026280) | ⏳ in_progress | Instalando Playwright (06:54:17Z) |
-| `Contrato DB offline` | [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013) | ⏳ in_progress | Aguardando conclusão |
-| `🏗️ Build` | — | ⏳ aguardando | Depende de Unit Tests |
+| `🧩 Node CI Scripts` | [119684026221](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026221) | ✅ success (06:56:17Z) | Confirmado |
+| `🧪 Unit Tests (1/3)` | [119684026270](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026270) | ❌ failure (07:00:50Z) | Pré-existente §12 — falha em `useTalkXSuppression`, `useTeamMessages`, etc. |
+| `🧪 Unit Tests (2/3)` | [119684026551](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026551) | ❌ failure (07:01:38Z) | Pré-existente §13 — falhas pré-existentes shard 2/3 |
+| `🧪 Unit Tests (3/3)` | [119684026418](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026418) | ⚠️ cancelled (07:01:58Z) | Cancelado pelo runner após shard 1/3 falhar — pré-existente §13 |
+| `🎭 E2E Tests (Playwright)` | [119684026280](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119684026280) | ⚠️ cancelled (07:01:47Z) | Step 9 "Run Playwright E2E" cancelled — pré-existente §1 |
+| `Contrato DB offline` | [39736607013](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607013) | ❌ failure | Pré-existente §4 — `sanitize_reset_request()` referencia `NEW.reset_token` |
+| `🏗️ Build` | [119687255410](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39736607183/job/119687255410) | ⚠️ cancelled (07:01:58Z) | `needs: [unit-tests]` não satisfeito (Unit Tests 1/3–2/3 falharam) |
 
-> **Commit docs-only** — sem alterações de código; Unit Tests/E2E esperados ❌ pré-existentes (§§1, 12, 13). Atualizar quando jobs concluírem.
+**Resumo §12:** 4 ✅ success · 2 ❌ failure (pré-existentes §§4,12,13) · 3 ⚠️ cancelled (cascata). Nenhuma regressão introduzida por esta PR.
 
 ---
 
-*Relatório atualizado em 2026-10-22 07:50 UTC: §11 completo (todos 9 jobs de 39734675483 confirmados). §12 criado para commit `62c9b3c` (run 39736607183 em andamento — 3 jobs confirmados ✅).*
+*Relatório atualizado em 2026-10-22 08:10 UTC: §11 completo; §12 completo — todos 10 jobs de `62c9b3c` confirmados. Unit Tests/E2E/Build/Contrato: falhas pré-existentes conforme §§1,4,12,13.*
