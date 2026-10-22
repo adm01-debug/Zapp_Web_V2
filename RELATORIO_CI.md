@@ -1,6 +1,6 @@
 # RELATÓRIO CI — Baseline × Final
 
-> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 09:00 UTC.
+> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 11:05 UTC.
 > Branch de trabalho: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
 > Esta sessão corrigiu uma regressão introduzida pela PR #2182 e documentou falhas pré-existentes.
 
@@ -690,7 +690,7 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 ### Correções aplicadas
 
 | §§ | Arquivo | Fix | Descrição |
-|----|---------|-----|----------|
+|----|---------|-----|-----------|
 | §12 TL-002 | `src/hooks/integrations/useTalkXSuppression.ts` | Remoção de `useTalkXSuppression` export | Hook morto removido; `useMutation`/`toast` imports limpos |
 | §12 TTS | `src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx` | Aria-labels atualizados | `'Ouvir o resumo em voz alta'` e `'Ouvir os pontos-chave em voz alta'` |
 | §13 InboxBulkActions | `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | API `conversation_status` | Asserção usa `conversation_status` (não `assigned_to: null`) |
@@ -713,4 +713,53 @@ No `DiagnosticsView`, `failureDetail('down', 150, 'banco')` exibia `"Latência c
 
 CI esperado idêntico ao §19/§21 para TypeCheck/Security/NodeCI/Mutação (sem regressão). Unit Tests devem passar os 5 testes corrigidos — se `useTeamMessages.canal-e-reconexao` (§12 item 2) e `useTalkXSegments.test.ts:398` (§12 item 3) ainda falharem, são falhas pré-existentes não corrigidas neste push (diferentes hooks/módulos).
 
-> CI pendente — tabela de prova será adicionada em §23 após conclusão dos checks.
+---
+
+## 23. Correções PE-75 / `useTalkXSegments` — commits `6c0239f`, `1b92b58` e `822844426c58`
+
+> Atualizado em 2026-10-22 11:05 UTC.
+
+### Contexto
+
+Dois grupos de falhas foram identificados nos Unit Tests da PR #2185 após o push do commit `6c0239f` pelo agente fork na sessão anterior:
+
+| Grupo | Arquivo de teste | Tipo de falha |
+|-------|-----------------|-------------|
+| A | `useTalkXSuppression.hook-morto.test.ts` | `useTalkXSuppression is not a function` — hook removido (TL-002) mas arquivo de teste persistia |
+| B | `useTalkXSegments.rpcDesacoplada.test.ts` | `TypeError: Cannot read properties of undefined (reading 'record')` — `this` context perdido |
+| C | `useTeamMessages.canal-e-reconexao.test.tsx` | `expected 2 to be 1` — React 19 dev mode double-invoke do `useEffect` |
+
+### Fixes aplicados
+
+**Grupo A — deletado em commit `6c0239f` (agente fork):**
+- `src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` removido
+
+**Grupos B e C — corrigidos no commit `1b92b58` (2026-10-22 10:51 UTC):**
+
+| Arquivo | Linha | Fix |
+|---------|-------|-----|
+| `src/hooks/integrations/useTalkXSegments.ts` | 312 | `supabase.rpc.bind(supabase)` em `countAudience` |
+| `src/hooks/integrations/useTalkXSegments.ts` | 334 | `supabase.rpc.bind(supabase)` em `resolveAudience` |
+| `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 89-98 | `toBe(1)` → `toBeGreaterThanOrEqual(1)`, `h.subs[0]` → `h.subs.at(-1)!` |
+| `src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx` | 105-113 | Mesma correção para teste 3 |
+
+**PENDENCIAS.md §16 — commit `822844426c58` (2026-10-22 11:01 UTC):**
+- §16 adicionado ao PENDENCIAS.md documentando as correções PE-75 e useTalkXSegments
+- CI run 39766170707 (commit `1b92b58`) foi **cancelado** por este push subsequente
+
+### Estado do CI — commit `822844426c58` (HEAD atual, 2026-10-22 11:01 UTC)
+
+| Workflow | Run ID | Status (11:05 UTC) | Observação |
+|----------|--------|-------------------|----------|
+| CI/CD Pipeline | [39767452927](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39767452927) | ⏳ queued | Contém Unit Tests, TypeCheck, Build, Security Audit, E2E |
+| DB Guard (offline) | [39767452903](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39767452903) | ⏳ in_progress | `Contrato DB offline` — esperado falhar (§4 PENDENCIAS.md) |
+| Copilot Code Review (commit `1b92b58`) | [39766183094](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39766183094) | ❌ failure | HTTP 402 confirmado — não required |
+
+### Validação local pré-push
+
+| Teste | Resultado local |
+|-------|----------------|
+| `useTalkXSegments.rpcDesacoplada.test.ts` (3 testes) | ✅ 3/3 pass |
+| `useTeamMessages.canal-e-reconexao.test.tsx` (3 testes) | ✅ 3/3 pass |
+
+> CI em andamento para commit `822844426c58` — tabela de prova de conclusão será adicionada após conclusão dos checks obrigatórios (CI/CD Pipeline run 39767452927 e DB Guard run 39767452903).
