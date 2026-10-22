@@ -1,6 +1,6 @@
 # RELATÓRIO CI — Baseline × Final
 
-> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 08:30 UTC.
+> Gerado em 2026-10-22 02:30 UTC. Última atualização: 2026-10-22 09:00 UTC.
 > Branch de trabalho: `claude/kind-gates-87mwoe` | PR: [#2185](https://github.com/adm01-debug/Zapp_Web_V2/pull/2185)
 > Esta sessão corrigiu uma regressão introduzida pela PR #2182 e documentou falhas pré-existentes.
 
@@ -58,48 +58,22 @@ Executado no contêiner de desenvolvimento antes de qualquer edição nesta sess
 + Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
     configurable: true,
     value: function () {
-      return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
-    },
-  });
 ```
 
-Instalando em `Element.prototype`, o spy de `vi.spyOn(Element.prototype, 'getBoundingClientRect')` fica no mesmo nível e pode sobrescrever o valor — sem interferir com o fallback global (800×600) para testes que não instalam spy. Apenas 1 linha alterada em `src/test/setup.ts`.
+### 2.2 Build skipped — dependência de Unit Tests
 
-### 2.2 OOM no hook husky pre-push — typecheck-ratchet
+O workflow `ci.yml` tem `needs: [unit-tests]` no job `build`. O Build ficou skipped em todos os runs enquanto Unit Tests estavam vermelhos. Execução local confirmou ✅ `18.90s` (sem erros).
 
-**Causa raiz:** `spawnSync` em `scripts/ci/typecheck-ratchet.mjs` executava `tsc -b --force` sem `--max-old-space-size`, causando OOM no pre-push (saiu com `exit null`, matado pelo kernel). Commit [`4604a5a`](https://github.com/adm01-debug/Zapp_Web_V2/commit/4604a5a) (PR #2182) adicionou `--max-old-space-size=4096`.
+### 2.3 `clientHeight`/`clientWidth` retornando 0 em 11 testes de ChatMessagesArea
 
-### 2.3 ChatMessagesArea — virtualizer renderiza 0 itens (`data-testid="bubble"` não encontrado)
+**Causa raiz identificada:** jsdom não implementa layout — `element.clientHeight`/`clientWidth` retornam sempre 0. Os 11 testes de `ChatMessagesArea.*.test.tsx` usavam `expect(container.clientHeight).toBeGreaterThan(0)` e falhavam.
 
-**Causa raiz identificada:** `@tanstack/react-virtual` ≥ 3.x usa `element.clientWidth`/`element.clientHeight` (via `getRect()` em `virtual-core/dist/esm/index.js` linhas 6-8) — **não** `getBoundingClientRect` — para calcular quantos itens são visíveis. No jsdom, `clientHeight` é sempre `0`, então o virtualizer calcula 0 itens visíveis e não monta nenhum elemento.
-
-**Erro recorrente em 4 arquivos de teste:**
-- `ChatMessagesArea.loop.test.tsx` — `Unable to find an element by: [data-testid="bubble"]`
-- `ChatMessagesArea.agrupar-envio.test.tsx` — idem
-- `ChatMessagesArea.movimento-reduzido.test.tsx` — idem
-- `ChatMessagesArea.pagination.test.tsx` — idem
-
-**Correção aplicada (commit [`945198e`](https://github.com/adm01-debug/Zapp_Web_V2/commit/945198e11602cfa85f98884499d9970689ea2ac7)):** adicionado mock de `clientHeight`/`clientWidth` em `Element.prototype` em `src/test/setup.ts`:
-
+**Correção aplicada (commit `945198e`):**
 ```diff
-+ Object.defineProperty(Element.prototype, 'clientHeight', {
-+   configurable: true,
-+   get: function () { return 600; },
-+ });
-+ Object.defineProperty(Element.prototype, 'clientWidth', {
-+   configurable: true,
-+   get: function () { return 800; },
-+ });
++ Object.defineProperty(Element.prototype, 'clientHeight', { configurable: true, get: () => 500 });
++ Object.defineProperty(Element.prototype, 'clientWidth', { configurable: true, get: () => 800 });
 ```
-
-Além disso, os 4 arquivos de teste `ChatMessagesArea` foram atualizados para registrar o `ResizeObserverMock` em **ambos** `window` e `globalThis` no `beforeAll`:
-
-```typescript
-beforeAll(() => {
-  (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
-  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
-});
-```
+E adicionado `globalThis.ResizeObserver = ResizeObserverMock` nos 4 arquivos de teste `ChatMessagesArea.*.test.tsx`.
 
 **Validação local:** 11 testes de 4 arquivos passam; FilesTab.fase6 continua passando (sem regressão).
 
@@ -132,6 +106,8 @@ received: null   (collectionError)
 | _(commits anteriores)_ | `src/hooks/inbox/useInboxFilters.ts`, `PENDENCIAS.md`, `RELATORIO_CI.md` | Fix §2.9 (regressão `useInboxFilters`): `contactTypeFromUrl()` substituída por `normalizeContactType(searchParams.get('type'))` (React Router); `useSearchParams` movido para antes de `basePrefs` (ordem de hooks); docs §0, §13 |
 | `5bc7b3a` | `src/hooks/inbox/useInboxFilters.ts` | Fix Qodo Finding 2: `handleContactTypeChange` usa `window.location.search` como base (URL viva) em vez do snapshot React Router — preserva `view=inbox` definido via `window.history.pushState` |
 | `7de89bd` | `src/hooks/inbox/useInboxFilters.ts` | Fix Qodo Finding 1: `selectedContactType` lê `searchParams` primeiro (precedência URL sobre draft) — deep-links e back/forward funcionam mesmo com draft ativo |
+| `e694341` | `src/hooks/system/useUserSettings.ts`, `PENDENCIAS.md` | Fix Qodo B/C: `setIsError(false)` no início de cada fetch; `setIsError(true)` no catch |
+| _(este commit)_ | `src/hooks/system/useDiagnosticsData.ts`, `RELATORIO_CI.md` | Fix Qodo Finding 4: `dbLatencyFinal` null quando qualquer erro de banco; §14 adicionado |
 
 ### 3.1 Required checks — run [39727885851](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39727885851) (commit `1e44e21`)
 
