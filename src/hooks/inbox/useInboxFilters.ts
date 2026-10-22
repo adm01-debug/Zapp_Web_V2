@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
@@ -151,6 +152,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const [showAll, setShowAll] = useState(false);
 
   const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
+  const [, setSearchParams] = useSearchParams();
 
   // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
   // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
@@ -165,14 +167,16 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    const params = new URLSearchParams(window.location.search);
-    if (value && value !== 'all') {
-      params.set('type', value);
-    } else {
-      params.delete('type');
-    }
-    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, [applyPrefs]);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (value && value !== 'all') {
+        params.set('type', value);
+      } else {
+        params.delete('type');
+      }
+      return params;
+    }, { replace: true });
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({

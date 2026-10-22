@@ -120,7 +120,10 @@ describe('workItemFormat — regra única de datas (etapa 058 / D21)', () => {
   });
 
   it('aceita o ISO com offset que o banco devolve', () => {
-    expect(formatWorkItemDate('2026-10-11T17:00:00-03:00', { now: AGORA })).toBe('Hoje, 17:00');
+    withTimeZone('America/Sao_Paulo', () => {
+      const agora = new Date(2026, 9, 11, 14, 0);
+      expect(formatWorkItemDate('2026-10-11T17:00:00-03:00', { now: agora })).toBe('Hoje, 17:00');
+    });
   });
 
   it('ISO em Z que vira outro dia local em UTC-3 é lido no fuso local', () => {

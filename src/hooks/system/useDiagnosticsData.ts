@@ -285,12 +285,27 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
-    const { count: messagesCount, error: messagesCountError } = await supabase
-      .from('messages').select('id', { count: 'estimated', head: true });
-    if (messagesCountError) throw messagesCountError;
-    const { count: connectionsCount, error: connectionsCountError } = await supabase
-      .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
+    let messagesCount: number | null = null;
+    let messagesCountError: ProbeError | null = null;
+    try {
+      const { count, error } = await supabase
+        .from('messages').select('id', { count: 'estimated', head: true });
+      messagesCount = count ?? null;
+      messagesCountError = error ?? null;
+    } catch (err) {
+      messagesCountError = err as ProbeError;
+    }
+
+    let connectionsCount: number | null = null;
+    let connectionsCountError: ProbeError | null = null;
+    try {
+      const { count, error } = await supabase
+        .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
+      connectionsCount = count ?? null;
+      connectionsCountError = error ?? null;
+    } catch (err) {
+      connectionsCountError = err as ProbeError;
+    }
 
     const realtime = await probeRealtime();
 
@@ -313,7 +328,7 @@ export function useDiagnosticsData() {
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
-      database: classifyHealth(dbError, dbLatency, 500, 2000),
+      database: classifyHealth(dbError ?? connectionsCountError, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
@@ -322,9 +337,9 @@ export function useDiagnosticsData() {
       realtimeCheckedAt: realtime.checkedAt,
       lastHealthCheckAt,
       healthCheckLogs,
-      contactsCount: contactsCount || 0,
-      messagesCount: messagesCount || 0,
-      connectionsCount: connectionsCount || 0,
+      contactsCount: contactsCount ?? 0,
+      messagesCount: messagesCount ?? 0,
+      connectionsCount: connectionsCount ?? 0,
     });
   };
 
