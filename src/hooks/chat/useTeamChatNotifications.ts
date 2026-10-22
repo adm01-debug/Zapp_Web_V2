@@ -138,16 +138,27 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
+  const notifSettingsRef = useRef(notifSettings);
+  const isQuietHoursRef = useRef(isQuietHours);
+  const showNotificationRef = useRef(showNotification);
+  const permissionRef = useRef(permission);
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
   }, [activeConversationId]);
 
   useEffect(() => {
+    notifSettingsRef.current = notifSettings;
+    isQuietHoursRef.current = isQuietHours;
+    showNotificationRef.current = showNotification;
+    permissionRef.current = permission;
+  });
+
+  useEffect(() => {
     if (!profile) return;
 
     const channel = supabase
-      .channel('team-chat-notifications')
+      .channel(`team-chat-notifications:${profile.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -194,20 +205,16 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         })) return;
 
         // Play sound if enabled — volume do painel (10-100), nunca fixo
-        if (notifSettings.soundEnabled && !isQuietHours()) {
-          playTeamChatSound(notifSettings.soundVolume);
+        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {
+          playTeamChatSound(notifSettingsRef.current.soundVolume);
         }
 
-        // Show browser notification if enabled
-        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o
-        // `showNotification` publica pela inscrição do service worker LOCAL
-        // (`registration.showNotification`), que não precisa da assinatura de push.
-        // Exigir `isSubscribed` do `usePushNotifications` (que significa "alertas do
-        // navegador ligados", `state.isActive`, e só fica ligado com assinatura push)
-        // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
-        // som. O liga/desliga de avisos do chat interno continua valendo por
-        // `notifSettings.browserNotifications`.
-        if (permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
+        // Show browser notification if enabled.
+        // PE-75: usa a API Notification direta (não o service worker) para que o aviso
+        // funcione mesmo com SERVICE_WORKER_ENABLED=false. Checa Notification.permission
+        // em vez do estado do usePushNotifications (que só fica 'granted' com push ativo).
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted'
+            && notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -225,19 +232,20 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          await showNotification({
-            title: `💬 Teams: ${senderName}`,
-            body,
-            tag: `team-msg-${msg.conversation_id}`,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
-            requireInteraction: false,
-          });
-
-          log.debug('Team chat notification sent for message:', msg.id);
+          try {
+            const notif = new Notification(`💬 Teams: ${senderName}`, {
+              body,
+              tag: `team-msg-${msg.conversation_id}`,
+              requireInteraction: false,
+            });
+            notif.onclick = () => {
+              window.focus();
+              navigateToView('team-chat');
+            };
+            log.debug('Team chat notification sent for message:', msg.id);
+          } catch (err) {
+            log.warn('Failed to create browser notification:', err);
+          }
         }
       })
       .subscribe();
@@ -245,7 +253,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isQuietHours, showNotification]);
+  }, [profile]);
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da

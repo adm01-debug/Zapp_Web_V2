@@ -138,6 +138,7 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // ==========================================================================
 Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
   configurable: true,
+  writable: true,
   value: function () {
     return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
   },

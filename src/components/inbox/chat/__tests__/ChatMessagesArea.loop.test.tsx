@@ -48,6 +48,11 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  // virtual-core usa clientHeight/clientWidth (não getBoundingClientRect) para
+  // calcular o tamanho do viewport: com 0, calculateRange retorna null e
+  // getVirtualItems() devolve []. Simular 600px de altura para que itens sejam renderizados.
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 600; } });
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return 800; } });
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
@@ -65,6 +70,11 @@ vi.mock('@/services/realtime.service', () => ({
 
 vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
+}));
+
+vi.mock('@/hooks/reactions/useBatchReactions', () => ({
+  ReactionsBatchProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useReactionsBatch: () => null,
 }));
 
 function makeMessage(id: string, content: string): Message {

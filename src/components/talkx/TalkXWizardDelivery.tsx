@@ -248,7 +248,6 @@ function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: st
 
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const sample = ed.contacts?.[0];
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
@@ -306,21 +305,6 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const { data: insights } = useTalkXInsights();
   const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
   const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
-
-  const launch = async () => {
-    if (!launchAllowed) return;
-    setError(null);
-    try {
-      const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
-      if (id) {
-        setConfirmOpen(false);
-        onLaunched(id, ed.isScheduled && ed.scheduledAt ? 'scheduled' : 'sending');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao lançar a campanha');
-    }
-  };
-
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr_0.9fr] gap-4 min-w-0">
@@ -387,17 +371,20 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
-        {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
-      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
-          as 3 caixas ficam DENTRO do modal e "Confirmar lançamento" só
-          habilita com as três marcadas. Antes era um `Dialog` próprio, com as
-          confirmações num cartão de fora repetidas dentro do modal como texto. */}
+      {/* X051 — o disparo confirma pelo controlador único de ciclo de vida:
+          as confirmações obrigatórias (X136) ficam no cartão externo e
+          controlam `ed.canProceed[4]` — não são duplicadas dentro do diálogo. */}
       <TalkXConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        onConfirm={() => { void launch(); }}
+        onConfirm={async () => {
+          const mode = ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch';
+          const id = await ed.handleSave(mode);
+          if (!id) throw new Error('O envio não foi aceito pelo servidor. Verifique os dados e tente novamente.');
+          onLaunched(id, mode === 'schedule' ? 'scheduled' : 'sending');
+        }}
         icon={Send}
         iconColor="blue"
         title="Confirmar disparo?"
@@ -406,13 +393,12 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
         details={[
           { label: 'Campanha', value: ed.name || '—' },
-          { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
+          { label: 'Segmento', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
           { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
           { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
-          { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
+          { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato' },
         ]}
-        checks={LAUNCH_CONFIRMATIONS}
-        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
+        confirmLabel="Confirmar envio"
         cancelLabel="Cancelar"
         loading={ed.saving}
       />

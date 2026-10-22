@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * fronteira mockada é o cliente Supabase, o provedor de notificações e o RPC de
  * nomes; o `QueryClientContext` é real, para semear o cache do inbox.
  */
+type NotifFalsa = { title: string; options?: NotificationOptions };
+
 const h = vi.hoisted(() => ({
   profile: { id: 'eu' } as { id: string } | null,
   settings: { soundEnabled: false, soundVolume: 60, browserNotifications: true },
@@ -20,6 +22,7 @@ const h = vi.hoisted(() => ({
   logWarn: vi.fn(),
   rpc: vi.fn(),
   show: vi.fn(),
+  notifs: [] as NotifFalsa[],
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -104,6 +107,15 @@ function wrapper(client: QueryClient | null) {
     );
 }
 
+class FakeNotif {
+  static permission: NotificationPermission = 'granted';
+  close = vi.fn();
+  onclick: (() => void) | null = null;
+  constructor(public title: string, public options?: NotificationOptions) {
+    h.notifs.push({ title, options });
+  }
+}
+
 beforeEach(() => {
   h.profile = { id: 'eu' };
   h.settings = { soundEnabled: false, soundVolume: 60, browserNotifications: true };
@@ -112,10 +124,12 @@ beforeEach(() => {
   h.fromTables = [];
   h.membership = [{ id: 'm1', is_muted: false }];
   h.erro = null;
+  h.notifs = [];
   h.logWarn.mockReset();
   h.rpc.mockReset();
   h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
   h.show.mockReset();
+  Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotif });
 });
 
 afterEach(() => {
@@ -151,7 +165,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(h.notifs.some((n) => n.title === '💬 Teams: Ana')).toBe(true);
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
@@ -173,7 +187,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalled();
+    expect(h.notifs).toHaveLength(1);
   });
 
   it('silencia conversa mutada ainda que esteja em cache', async () => {
