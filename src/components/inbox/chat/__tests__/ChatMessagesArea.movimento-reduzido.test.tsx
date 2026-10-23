@@ -53,7 +53,7 @@ beforeAll(() => {
 
 vi.mock('../MessageBubble', () => ({
   MessageBubble: ({ message }: { message: { id: string } }) => (
-    <div data-testid={`bubble-${message.id}`} style={{ height: 80 }} />
+    <div data-testid="bubble" data-message-id={message.id} />
   ),
 }));
 
@@ -68,63 +68,74 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
 }));
 
-type Props = ComponentProps<typeof ChatMessagesArea>;
-
-function makeMessage(id: string): Message {
+function makeMessage(id: string, sender: 'contact' | 'agent', timestamp: Date): Message {
   return {
     id,
-    content: `msg ${id}`,
-    sender: 'contact',
-    senderName: 'Bot',
-    timestamp: new Date('2026-09-02T12:00:00Z'),
+    content: `mensagem ${id}`,
+    sender,
+    senderName: 'Contato',
+    timestamp,
     status: 'delivered',
     type: 'text',
+  } as unknown as Message;
+}
+
+type AreaProps = ComponentProps<typeof ChatMessagesArea>;
+
+function makeProps(messages: Message[]): AreaProps {
+  return {
+    messages,
+    isContactTyping: false,
+    typingUserName: 'Contato',
+    ttsLoading: false,
+    ttsPlaying: false,
+    ttsMessageId: null,
+    onSpeak: vi.fn(),
+    onStop: vi.fn(),
+    onReply: vi.fn(),
+    onForward: vi.fn(),
+    onCopy: vi.fn(),
+    onScrollToMessage: vi.fn(),
+    onInteractiveButtonClick: vi.fn(),
   };
 }
 
-function setup(props: Partial<Props> = {}) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const ref = { current: null } as React.RefObject<ChatMessagesAreaRef | null>;
-  const messages: Message[] = Array.from({ length: 5 }, (_, i) => makeMessage(`m${i}`));
-  const utils = render(
-    <QueryClientProvider client={qc}>
-      <div style={{ height: 600, overflow: 'auto' }}>
-        <ChatMessagesArea
-          ref={ref}
-          messages={messages}
-          conversationId="conv-mr"
-          isLoading={false}
-          hasMore={false}
-          onLoadMore={vi.fn()}
-          {...props}
-        />
-      </div>
+const areaRef: { current: ChatMessagesAreaRef | null } = { current: null };
+
+beforeEach(() => {
+  areaRef.current = null;
+});
+
+function renderArea(props: AreaProps) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ChatMessagesArea ref={(r) => { areaRef.current = r; }} {...props} />
     </QueryClientProvider>,
   );
-  return { ...utils, ref, messages };
 }
 
 describe('ChatMessagesArea — movimento reduzido', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  it('entrada do grupo e selo aparecem sem deslocamento (so opacidade)', async () => {
+    renderArea(makeProps([
+      makeMessage('msg-1', 'contact', new Date('2026-10-12T12:00:00Z')),
+      makeMessage('msg-2', 'contact', new Date('2026-10-12T12:06:00Z')),
+    ]));
 
-  it('renderiza as bolhas com prefers-reduced-motion ativo', async () => {
-    const { messages } = setup();
-    await waitFor(
-      () => {
-        messages.forEach((m) => {
-          expect(screen.getByTestId(`bubble-${m.id}`)).toBeInTheDocument();
-        });
-      },
-      { timeout: 5000 },
-    );
-  });
+    await waitFor(() => {
+      expect(screen.getAllByTestId('bubble')).toHaveLength(2);
+    });
 
-  it('scrollToBottom via ref não lança erro com movimento reduzido', async () => {
-    const { ref, messages } = setup();
-    await waitFor(
-      () => expect(screen.getByTestId(`bubble-${messages[0].id}`)).toBeInTheDocument(),
-      { timeout: 5000 },
-    );
-    await act(async () => { ref.current?.scrollToBottom?.(); });
+    // O cabecalho do grupo novo continua presente (fade de opacidade).
+    const entrada = screen.getByTestId('group-entry-fade');
+    expect(entrada).toBeInTheDocument();
+    expect(entrada.style.transform === '' || entrada.style.transform === 'none').toBe(true);
+
+    act(() => { areaRef.current?.scrollToBottomAfterSend(); });
+
+    const selo = screen.getByTestId('sent-badge');
+    expect(selo).toHaveTextContent(/nova mensagem enviada/i);
+    // Sem translate: com movimento reduzido nada se desloca.
+    expect(selo.style.transform === '' || selo.style.transform === 'none').toBe(true);
   });
 });

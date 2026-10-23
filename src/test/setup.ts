@@ -135,16 +135,14 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // getVirtualItems() retorna [] e nenhum item é renderizado (nem data-testid).
 // Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes.
 // Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
-//
-// IMPORTANTE: definido em Element.prototype (não HTMLElement.prototype) para que
-// vi.spyOn(Element.prototype, 'getBoundingClientRect') consiga interceptar as
-// chamadas — se estivesse em HTMLElement.prototype, sombrearia o spy porque
-// HTMLElement.prototype é mais próximo na cadeia de protótipos que Element.prototype.
 // ==========================================================================
 Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
-  value: function () {
-    return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
+  value: function (this: Element) {
+    const styleEl = this as HTMLElement;
+    const styleHeight = styleEl.style ? parseInt(styleEl.style.height, 10) : NaN;
+    const h = Number.isFinite(styleHeight) && styleHeight > 0 ? styleHeight : 600;
+    return { width: 800, height: h, top: 0, left: 0, right: 800, bottom: h, x: 0, y: 0, toJSON: () => ({}) };
   },
 });
 
