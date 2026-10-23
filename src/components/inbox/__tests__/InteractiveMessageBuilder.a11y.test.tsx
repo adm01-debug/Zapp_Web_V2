@@ -24,7 +24,7 @@ function comporListaComDuasLinhas() {
   // Radix Tabs ativa no mouseDown.
   fireEvent.mouseDown(screen.getByRole('tab', { name: /lista/i }));
   fireEvent.click(screen.getByRole('button', { name: /^seção$/i }));
-  fireEvent.click(screen.getByRole('button', { name: /seção 1/i }));
+  // A seção já nasce expandida; seu controle fica disponível para toggle.
   fireEvent.click(screen.getByRole('button', { name: /^item$/i }));
   fireEvent.click(screen.getByRole('button', { name: /^item$/i }));
 }
