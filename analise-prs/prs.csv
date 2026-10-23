@@ -1,0 +1,120 @@
+number,draft,mergeable_state,changed_files,additions,deletions,commits,author,title
+1922,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): mutação do mapa só roda em pull_request (W10)
+1930,false,DIRTY,0,0,0,0,adm01-debug,feat(db-audit): W21 — check-migration-drift --classificar: 4 classes de drift
+1975,false,DIRTY,0,0,0,0,adm01-debug,ci: reativar 8 suites no job node-scripts (allowlist → runner)
+1979,false,BEHIND,0,0,0,0,adm01-debug,docs: plano de correções dos workflows em FAILURE — 200 etapas (2026-10-16)
+1991,true,DRAFT,0,0,0,0,adm01-debug,fix: corrige nomes de workflows no notificador e cancelamento de scroll programático
+1997,true,DRAFT,0,0,0,0,adm01-debug,feat: CV-010–020 — Fase 2 RADAR copilot (migrations + feature flag)
+1998,true,DRAFT,0,0,0,0,adm01-debug,feat: CV-021–030 Motor copilot-live — worker incremental com roteamento dois andares
+2000,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR Fase 4 — Inteligência B·R·I·N·D·E (CV-031–040)
+2002,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR CV-041–050 — Sugestões ao vivo com caminhos; tone chips e split
+2003,true,DRAFT,0,0,0,0,adm01-debug,feat: CV-051–060 — Fase 6 RADAR painel flutuante (popup; drag; DND; atalhos; a11y)
+2005,false,BEHIND,0,0,0,0,adm01-debug,feat: Fase 7 RADAR — ghost text; feedback; templates e voz (CV-061–070)
+2013,true,DRAFT,0,0,0,0,adm01-debug,feat: CV-071–080 — Fase 8 RADAR objeções; battlecard; guardrail de desconto e risco de perda
+2022,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR copilot Phase 9 — Catalog; Budget; Timeline (CV-081–090)
+2024,true,DRAFT,0,0,0,0,adm01-debug,feat(copilot): Phase 10 — sinais; temperatura; timing; follow-up (CV-091–098)
+2025,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR Fase 11 — Multimodal CV-101–110 (áudio; imagem; documento)
+2026,true,DRAFT,0,0,0,0,adm01-debug,feat: CV-111–120 Guardrails; segurança e LGPD — Fase 12 do RADAR
+2029,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR Phase 13 — Supervisor; coaching e treinamento (CV-121–130)
+2030,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR copiloto CV-131–140 — Aprendizado contínuo e avaliação (Fase 14)
+2032,true,DRAFT,0,0,0,0,adm01-debug,feat: RADAR Copiloto — Fase 15: Custos; Piloto e Rollout (CV-141–150)
+2034,true,DRAFT,0,0,0,0,adm01-debug,fix(ci): GA02 + GA10 — guarda CLAUDE.md no CI e contrato de nomes do notificador
+2035,true,DRAFT,0,0,0,0,adm01-debug,fix: mock global @/lib/logger no Vitest — desbloqueia CI de todos os PRs do Copiloto RADAR
+2036,true,DRAFT,0,0,0,0,adm01-debug,fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05
+2037,true,DRAFT,0,0,0,0,adm01-debug,fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV
+2040,false,DIRTY,0,0,0,0,adm01-debug,fix(e2e-logado): restaura W71 — workflow_run em vez de push na main
+2042,false,DIRTY,0,0,0,0,adm01-debug,ci(W94+W32): talkx-status-regen concurrency + MIGRATIONS daily lote section
+2044,false,DIRTY,0,0,0,0,adm01-debug,ci(W39/W49/W50): playwright versao dinamica; VITE_* scoped; codeql dispatch
+2046,false,BEHIND,0,0,0,0,adm01-debug,W45: pular test/build/security/e2e/db-guard em PR draft
+2051,false,DIRTY,0,0,0,0,adm01-debug,ci(W85/W86/W87): OpenSSF Scorecard semanal + dependency-review no security job
+2054,true,DRAFT,0,0,0,0,adm01-debug,fix(ci+security): Z011–Z032 — requireAuth; timingSafeEqual; node-scripts split; test.skip removidos; pg_isready flags
+2056,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): restaura auto-update-pr-branch e settings-guard; corrige docs de notifica-falha-main
+2057,false,BEHIND,0,0,0,0,adm01-debug,feat(ci): lint-ratchet.mjs --base <ref> para lint escopado por PR
+2058,false,DIRTY,0,0,0,0,adm01-debug,fix(test): mock de @/lib/logger sem createLogger — 9 arquivos (lote F1a)
+2059,false,DIRTY,0,0,0,0,adm01-debug,fix(test): ConnectionCard — handleDisconnectDialogOpenChange indefinido — 6 arquivos (lote F1a)
+2060,false,DIRTY,0,0,0,0,adm01-debug,fix(test): mock da cadeia supabase sem o 2º .order() — 1 arquivo (lote F1a)
+2061,false,BEHIND,0,0,0,0,adm01-debug,fix(test): AuthProvider ausente em testes do inbox — 2 arquivos (lote F1a)
+2062,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de framer-motion sem useReducedMotion — 1 arquivo (lote F1a)
+2063,false,DIRTY,0,0,0,0,adm01-debug,fix(test): useAuth sem AuthProvider no teste — 2 arquivos (lote F1a)
+2064,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de supabase.channel incompleto — 1 arquivo (lote F1a)
+2065,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de supabase.channel ausente em AgentsView — 2 arquivos (lote F1a)
+2066,false,BEHIND,0,0,0,0,adm01-debug,fix: useAudioMemes sobe chave solta no bucket com policy por pasta (PK-16/PK-17)
+2067,false,BEHIND,0,0,0,0,adm01-debug,fix(test): 2 mocks locais incompletos — 1 arquivo (lote F1a)
+2068,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de useAdminData sem AUDIT_PAGE_SIZE/MIN_PASSWORD_LENGTH — 2 arquivos (lote F1a)
+2069,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de supabase sem .range()/.gte()/.lte() em useAdminData.select — 1 arquivo (lote F1a)
+2070,false,BEHIND,0,0,0,0,adm01-debug,fix: avatar assinado ao carregar + testes de handleCreateUser na camada antiga de Edge — 4 arquivos (lote F1a)
+2071,false,DIRTY,0,0,0,0,adm01-debug,fix: remove hook morto useTalkXSuppression (TL-002) — 1 produto + 1 teste (lote F1a)
+2072,false,DIRTY,0,0,0,0,adm01-debug,fix: supabase.rpc perde o this + lead_origin sem comingSoon + real_sector/real_uf sem falha fechada — useTalkXSegments.ts (lote F1a)
+2073,false,BEHIND,0,0,0,0,adm01-debug,fix: useKnowledgeBase não expunha erro de leitura (t_1944d290) — 2 arquivos (lote F1a)
+2074,false,DIRTY,0,0,0,0,adm01-debug,fix: overlay de useScreenProtection sem role=alert/aria-live — 1 arquivo (lote F1a)
+2075,false,BEHIND,0,0,0,0,adm01-debug,fix: aviso de desktop do War Room saía pelo caminho que exige Service Worker — 1 arquivo (lote F1a)
+2076,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de framer-motion sem useReducedMotion/MotionConfig em GroupsView.a11y — 1 arquivo (lote F1a)
+2077,false,BEHIND,0,0,0,0,adm01-debug,fix: remove teste obsoleto de mutations.ts — gamificação é só leitura no cliente (lote F1a)
+2078,false,BEHIND,0,0,0,0,adm01-debug,ci(F3): baseline strict=false — opção A sem fila serial
+2079,false,BEHIND,0,0,0,0,adm01-debug,fix(test): assume canal errado quando useTeamReadState abre o seu próprio — useTeamMessages (lote F1a)
+2080,false,DIRTY,0,0,0,0,adm01-debug,fix: useTeamChatNotifications — canal recriado no volume + aviso sem Service Worker + cache do inbox (HZ5-09/PE-75) — 2 arquivos (lote F1a)
+2081,false,BEHIND,0,0,0,0,adm01-debug,fix: contagem de whatsapp_connections lançava e derrubava toda a coleta de diagnóstico (N-216) — 1 arquivo (lote F1a)
+2082,false,BEHIND,0,0,0,0,adm01-debug,fix: falha de leitura em useUserSettings ficava invisível (C-1) — 1 arquivo (lote F1a)
+2083,false,BEHIND,0,0,0,0,adm01-debug,fix: NPSDashboard não expunha erro de leitura nem aviso de teto (t_1944d290) — 1 arquivo (lote F1a)
+2084,false,BEHIND,0,0,0,0,adm01-debug,fix: Leaderboard não distinguia RPC caída de ranking vazio — 1 arquivo (lote F1a)
+2085,false,BEHIND,0,0,0,0,adm01-debug,fix: WhatsAppTemplatesManager sem gate de escrita admin-only (RLS) — 2 arquivos (lote F1a)
+2086,false,BEHIND,0,0,0,0,adm01-debug,fix: botão de remover atendente do QueueCard sem nome exato e morto ao toque (N-180.6) — 1 arquivo (lote F1a)
+2087,false,BEHIND,0,0,0,0,adm01-debug,fix(test): mock de supabase.rpc ausente ao buscar em GmailInboxView.paginacao (lote F1a)
+2088,false,DIRTY,0,0,0,0,adm01-debug,fix: área segura mobile (safe-area-*) e rolagem sem barra (scrollbar-none) sem regra CSS (t_edd11f2d) — 1 arquivo (lote F1a)
+2089,false,BEHIND,0,0,0,0,adm01-debug,fix: ChatService.uploadAudio gravava sempre como .webm; ignorando o mime real do Blob — 1 arquivo (lote F1a)
+2090,false,BEHIND,0,0,0,0,adm01-debug,fix: fila de envio offline não era por usuário — trocar de atendente na mesma máquina drenava o texto alheio — 4 arquivos (lote F1a)
+2091,false,DIRTY,0,0,0,0,adm01-debug,fix: timing-safe comparison em searchbox-budget-alert e whatsapp-webhook (Z011-B/C)
+2092,true,DRAFT,0,0,0,0,adm01-debug,fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)
+2093,true,DRAFT,0,0,0,0,adm01-debug,fix: migration-evidence expectedKeys; version collision; playwright unpin (Z022+Z023+Z024)
+2095,false,BEHIND,0,0,0,0,adm01-debug,fix(security): Z018+Z020 — external-db-proxy code-leak em 502; catch via internalErrorResponse (Z017+Z019 auditados; já corretos)
+2097,false,BEHIND,0,0,0,0,adm01-debug,fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSegments)
+2098,false,DIRTY,0,0,0,0,adm01-debug,fix: corrigir falhas de CI — testes; a11y; bundle e motion (261019)
+2100,true,DRAFT,0,0,0,0,adm01-debug,fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency; codeql diário; endpoint; rate-limit; docs
+2102,false,BEHIND,0,0,0,0,dependabot[bot],⬆️ deps: Bump the deps-semanal group with 11 updates
+2104,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + security-unit
+2105,false,DIRTY,0,0,0,0,adm01-debug,docs: plano de integração de branches em 300 etapas (153 branches → só main)
+2107,false,BEHIND,0,0,0,0,adm01-debug,docs(g9): absorver planos de docs ausentes da main — E274
+2108,true,DRAFT,0,0,0,0,adm01-debug,fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions
+2109,false,DIRTY,0,0,0,0,adm01-debug,fix(test): mock useCustomEmojis.upload suporta duplo .order()
+2110,false,DIRTY,0,0,0,0,adm01-debug,fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes
+2111,false,DIRTY,0,0,0,0,adm01-debug,fix(types): narrowar reason_code em useTalkXSuppression para union type
+2112,false,DIRTY,0,0,0,0,devin-ai-integration[bot],chore(inbox): remove órfão ConversationMemorySection + desbloqueia gates da main
+2113,true,DRAFT,0,0,0,0,adm01-debug,fix(evolution-api): remover set-presence; find-chats e find-status-messages (GO_GAPS D6)
+2116,true,DRAFT,0,0,0,0,adm01-debug,feat: security headers V130-V133 — COOP; Reporting-Endpoints; report-to (plano Vercel V130-V150)
+2119,false,BEHIND,0,0,0,0,adm01-debug,docs(inbox): registra o encerramento do plano de 20 etapas das abas da conversa
+2120,false,BEHIND,0,0,0,0,adm01-debug,fix(inbox): fecha a semântica de tablist das 8 abas da conversa (etapa 15 do plano de 20 etapas)
+2121,false,BEHIND,0,0,0,0,adm01-debug,docs(contatos): incorpora o plano de 50 etapas e a auditoria com plano de correção em 60 etapas
+2123,false,BEHIND,0,0,0,0,adm01-debug,fix(ci): restaura o parse dos contratos de workflow e corrige 8 violações (cache do Bun; TE05/exit-code; concurrency duplicada)
+2124,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): Fase 0 do plano GA02-GA12
+2125,false,BEHIND,0,0,0,0,adm01-debug,fix(ci): Fase 1 do plano GA18 GA19 + GA26 prepare
+2126,false,BEHIND,0,0,0,0,adm01-debug,fix(ci): Fases 4+5+6 do plano GA49-GA74
+2127,false,BEHIND,0,0,0,0,adm01-debug,fix(e91): log de CHANNEL_ERROR nos canais Realtime do Team Chat (hardening E91)
+2128,false,BEHIND,0,0,0,0,adm01-debug,fix(ci): Fases 2+3 do plano GA27-GA47
+2129,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): Fases 7+8 do plano GA75-GA95
+2135,false,BEHIND,0,0,0,0,adm01-debug,fix(contatos): restaura topo sem cabeçalho e devolve o toque ao FAB
+2137,false,BEHIND,0,0,0,0,adm01-debug,fix(db): recria canonicamente as policies de receipt do team chat (replay)
+2138,true,DRAFT,0,0,0,0,adm01-debug,fix(ci): desbloqueia a main - contratos de CI; Pin do Playwright/E2E; E88 e DB Guard offline
+2139,false,DIRTY,0,0,0,0,adm01-debug,Codex/fix failed workflows 20261020
+2141,false,BEHIND,0,0,0,0,adm01-debug,feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)
+2142,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): Resto GA13-GA17 (db-migrate 2 jobs; apply_all_missing; portao destrutivo)
+2143,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): Resto GA20-GA25 (Gate 3; DESTINO split; auto-merge grants)
+2144,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): Resto GA37 GA96-GA98 (docs deploy; regen; CODEOWNERS)
+2145,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): Resto GA86 GA99 GA100 (sonar; contracts; adocao)
+2146,false,BEHIND,0,0,0,0,adm01-debug,feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90)
+2147,false,DIRTY,0,0,0,0,adm01-debug,fix(db-audit): guard n011 com teto dinamico por dominio e canonico atual
+2148,false,BEHIND,0,0,0,0,adm01-debug,test(e2e): destrava specs deslogados de Contatos com boot e health mockados
+2149,false,BEHIND,0,0,0,0,adm01-debug,docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)
+2151,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): destravar workflows que falhavam antes de executar
+2152,false,BEHIND,0,0,0,0,adm01-debug,test(e2e): spec de toque 44px volta ao verde com seletores do app real
+2155,false,DIRTY,0,0,0,0,adm01-debug,fix(ci): destrava workflows que falhavam antes de executar
+2185,false,DIRTY,0,0,0,0,adm01-debug,docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main
+2186,false,BEHIND,0,0,0,0,adm01-debug,fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD
+2187,false,BEHIND,0,0,0,0,adm01-debug,fix(tests): corrige falhas de testes no baseline main — mocks; lógica e código morto
+2190,false,BEHIND,0,0,0,0,adm01-debug,fix: corrige 9 falhas de CI que mantinham a main vermelha
+2191,false,BEHIND,0,0,0,0,adm01-debug,fix(e2e): auth.setup não clica mais na aba Entrar (a tela de acesso não tem abas)
+2192,false,BEHIND,0,0,0,0,adm01-debug,fix: guarda de vigência do teste RLS do Dashboard (destrava Contrato DB offline)
+2193,false,BEHIND,0,0,0,0,adm01-debug,fix: testes de ChatMessagesArea e FilesTab (clientHeight do virtualizador + spy no prototype certo)
+2195,true,DRAFT,0,0,0,0,adm01-debug,fix: crash cachedConversations undefined e this-binding perdido no rpc de metas de fila
+2196,false,BEHIND,0,0,0,0,adm01-debug,feat: TalkX editor de templates e artefatos gerados (dia/2026-10-19)
+2197,false,BEHIND,0,0,0,0,adm01-debug,ci: lote GA49–GA64 — fila-merge; actions-kpi; types-sync; codeql e branch-hygiene
+2198,true,DRAFT,0,0,0,0,adm01-debug,fix(tests): corrige testes unitários falhando na main
