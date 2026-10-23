@@ -4,7 +4,7 @@
 
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SCRIPT = new URL('../../scripts/vercel/ignore-build.sh', import.meta.url).pathname;
@@ -12,10 +12,10 @@ const SCRIPT = new URL('../../scripts/vercel/ignore-build.sh', import.meta.url).
 let passed = 0;
 let failed = 0;
 
-function run(env = {}, expectExit) {
+function run(env = {}, expectExit, cwd = process.cwd()) {
   const fullEnv = { ...process.env, VERCEL_GIT_PREVIOUS_SHA: '', ...env };
   try {
-    execSync(`sh "${SCRIPT}"`, { env: fullEnv, stdio: 'pipe' });
+    execSync(`sh "${SCRIPT}"`, { cwd, env: fullEnv, stdio: 'pipe' });
     return 0;
   } catch (e) {
     return e.status ?? 1;
@@ -55,7 +55,7 @@ test(
 // T2: Sem SHA base e sem git: fail-open (builda).
 test(
   'T2: sem base commit → fail-open (builda)',
-  run({ VERCEL_ENV: 'preview', HOME: '/nonexistent', PATH: '/usr/bin:/bin' }, 1),
+  run({ VERCEL_ENV: 'preview', HOME: '/nonexistent', PATH: '/usr/bin:/bin' }, 1, '/tmp'),
   1
 );
 
@@ -67,12 +67,13 @@ test(
 );
 
 // T4: Base definido, src/ mudou → builda.
-writeFileSync(join(tmpRepo, 'src/index.ts'), 'export {}', { recursive: true });
+mkdirSync(join(tmpRepo, 'src'), { recursive: true });
+writeFileSync(join(tmpRepo, 'src/index.ts'), 'export {}');
 execSync('git -C "' + tmpRepo + '" add . && git -C "' + tmpRepo + '" commit -q -m "src change"', { shell: true });
 const head2 = execSync('git -C "' + tmpRepo + '" log --format=%H -n 1', { shell: true }).toString().trim();
 test(
   'T4: src/ mudou → builda',
-  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, 1),
+  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, 1, tmpRepo),
   1
 );
 

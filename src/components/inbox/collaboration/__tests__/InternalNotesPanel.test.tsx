@@ -35,6 +35,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }));
+vi.mock('@/hooks/inbox/useMentionableProfiles', () => ({
+  useMentionableProfileNames: () => ({ data: undefined }),
+}));
 vi.mock('sonner', () => ({ toast }));
 vi.mock('framer-motion', () => ({
   motion: new Proxy({}, {
