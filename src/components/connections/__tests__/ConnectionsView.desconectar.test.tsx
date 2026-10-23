@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   connections: [] as Array<Record<string, unknown>>,
   handleDisconnect: vi.fn(),
   isAdmin: false,
+  reducedMotion: false,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -38,6 +39,7 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: h.isAdmin, isSupervisor: false, roles: [], loading: false }),
 }));
 vi.mock('framer-motion', () => ({
+  useReducedMotion: () => h.reducedMotion,
   motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
   AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
 }));
@@ -60,8 +62,8 @@ vi.mock('../BusinessHoursDialog', () => ({ BusinessHoursDialog: () => null }));
 vi.mock('../ConnectionQueuesDialog', () => ({ ConnectionQueuesDialog: () => null }));
 vi.mock('../InstanceSettingsDialog', () => ({ InstanceSettingsDialog: () => null }));
 vi.mock('../BusinessHoursIndicator', () => ({ BusinessHoursIndicator: () => null }));
-vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
-vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
+vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => <div data-testid="aurora-background" /> }));
+vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => <div data-testid="floating-particles" /> }));
 
 vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
   useConnectionsManager: () => ({
@@ -110,6 +112,7 @@ beforeEach(() => {
   h.isAdmin = false;
   h.connections = [];
   h.handleDisconnect.mockReset();
+  h.reducedMotion = false;
 });
 
 describe('ConnectionsView — estado `disconnecting` do desconectar (t_53fc1ddb)', () => {
@@ -141,27 +144,76 @@ describe('ConnectionsView — estado `disconnecting` do desconectar (t_53fc1ddb)
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(screen.getByRole('button', { name: /^Desconectar$/ })).toBeEnabled();
   });
+
+  it('falha: mantém a confirmação aberta, expõe o erro e permite tentar novamente', async () => {
+    h.handleDisconnect.mockRejectedValueOnce(new Error('Falha de rede'));
+    h.connections = [makeConnection()];
+
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: /^Desconectar$/ }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Desconectar' }));
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Falha de rede');
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Desconectar' })).toBeEnabled();
+  });
 });
 
-describe('ConnectionsView — subtexto e plural dos cartões de estatística (t_53fc1ddb)', () => {
-  it('duas conexões: plural e subtextos de estado', () => {
+describe('ConnectionsView — contagem dos cartões de estatística (t_53fc1ddb)', () => {
+  it('respeita a preferência de movimento reduzido omitindo efeitos animados', () => {
+    h.reducedMotion = true;
+    h.connections = [makeConnection()];
+    renderView();
+
+    expect(screen.queryByTestId('aurora-background')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('floating-particles')).not.toBeInTheDocument();
+  });
+
+  it('exibe os efeitos de fundo quando movimento reduzido não está ativo', () => {
+    h.connections = [makeConnection()];
+    renderView();
+
+    expect(screen.getByTestId('aurora-background')).toBeInTheDocument();
+    expect(screen.getByTestId('floating-particles')).toBeInTheDocument();
+  });
+
+  it('duas conexões: total, conectadas e desconectadas', () => {
     h.connections = [
       makeConnection({ id: 'a', name: 'A', status: 'connected' }),
       makeConnection({ id: 'b', name: 'B', status: 'disconnected', is_default: false }),
     ];
     renderView();
 
-    expect(screen.getByText('2 instâncias configuradas')).toBeTruthy();
-    expect(screen.getByText('Recebendo mensagens')).toBeTruthy();
-    expect(screen.getByText('Precisam reconectar')).toBeTruthy();
+    expect(screen.getByText('Total de Conexões').parentElement).toHaveTextContent('2');
+    expect(screen.getByText('Conectadas').parentElement).toHaveTextContent('1');
+    expect(screen.getByText('Desconectadas').parentElement).toHaveTextContent('1');
   });
 
-  it('uma conexão online: singular e estado pleno', () => {
+  it('uma conexão online: contagens coerentes', () => {
     h.connections = [makeConnection()];
     renderView();
 
-    expect(screen.getByText('1 instância configurada')).toBeTruthy();
-    expect(screen.getByText('Recebendo mensagens')).toBeTruthy();
-    expect(screen.getByText('Tudo funcionando')).toBeTruthy();
+    expect(screen.getByText('Total de Conexões').parentElement).toHaveTextContent('1');
+    expect(screen.getByText('Conectadas').parentElement).toHaveTextContent('1');
+    expect(screen.getByText('Desconectadas').parentElement).toHaveTextContent('0');
+  });
+
+  it('não conta estados transitórios ou desconhecidos como desconectados', () => {
+    h.connections = [
+      makeConnection({ id: 'connected', status: 'connected' }),
+      makeConnection({ id: 'disconnected', status: 'disconnected' }),
+      makeConnection({ id: 'connecting', status: 'connecting' }),
+      makeConnection({ id: 'pending', status: 'pending' }),
+      makeConnection({ id: 'qr_pending', status: 'qr_pending' }),
+      makeConnection({ id: 'error', status: 'error' }),
+      makeConnection({ id: 'unknown', status: 'unknown' }),
+    ];
+
+    renderView();
+
+    expect(screen.getByText('Total de Conexões').parentElement).toHaveTextContent('7');
+    expect(screen.getByText('Conectadas').parentElement).toHaveTextContent('1');
+    expect(screen.getByText('Desconectadas').parentElement).toHaveTextContent('1');
   });
 });

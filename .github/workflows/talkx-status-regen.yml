@@ -36,11 +36,6 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
-  group: talkx-regen-${{ github.ref }}
-  cancel-in-progress: true
-
-concurrency:
   group: talkx-status-regen
   cancel-in-progress: false
 
@@ -53,6 +48,8 @@ permissions:
 
 jobs:
   regen:
+    # O dispatch não deve executar código de uma ref arbitrária com token de escrita.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
