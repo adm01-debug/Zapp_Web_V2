@@ -25,16 +25,19 @@ class ResizeObserverMock {
   }
   observe(target: Element) {
     setTimeout(() => {
+      const rect = target.getBoundingClientRect();
+      const blockSize = rect.height > 0 ? rect.height : 600;
+      const inlineSize = rect.width > 0 ? rect.width : 800;
       this.cb(
         [
           {
             target,
             contentRect: {
-              height: 120, width: 800, top: 0, left: 0,
-              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),
+              height: blockSize, width: inlineSize, top: 0, left: 0,
+              bottom: blockSize, right: inlineSize, x: 0, y: 0, toJSON: () => ({}),
             } as DOMRectReadOnly,
-            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],
-            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],
+            borderBoxSize: [{ blockSize, inlineSize }],
+            contentBoxSize: [{ blockSize, inlineSize }],
             devicePixelContentBoxSize: [],
           },
         ],

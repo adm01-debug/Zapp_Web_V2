@@ -127,7 +127,7 @@ assert_last_definer() { # $1=rotulo $2=basename do arquivo de origem $3=regex ER
 
 # Helpers SECURITY DEFINER extraidos verbatim mais abaixo:
 assert_last_definer 'helper is_admin_or_supervisor' \
-  '20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql' \
+  '20261016170000_fix_security_definer_search_path.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.is_admin_or_supervisor|ALTER FUNCTION[^;]*public\.is_admin_or_supervisor|DROP FUNCTION[^;]*public\.is_admin_or_supervisor)'
 assert_last_definer 'helper get_profile_id_for_user' \
   '20260909200000_harden_inbox_contact_authorization.sql' \
@@ -158,7 +158,7 @@ assert_last_definer 'policy "Agents or admins can view closures"' \
 
 # RPCs do dashboard (lista fixa — a cadeia e aplicada mais abaixo):
 assert_last_definer 'RPC dashboard_kpi' \
-  '20261003272707_reconcile_local_replay_with_canonical.sql' \
+  '20261007013217_conversation_closures_reopen_same_day.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_kpi|ALTER FUNCTION[^;]*public\.dashboard_kpi|DROP FUNCTION[^;]*public\.dashboard_kpi)'
 assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
@@ -417,10 +417,10 @@ for f in \
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
 
-# Definição final de dashboard_kpi vive na migration de reconciliação
-# (arquivo multi-objeto): extrai só o CREATE OR REPLACE dessa função.
-awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
-  "$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql" \
+# Definição final de dashboard_kpi vive em 20261007013217 (última a redefinir a função).
+# Padrões ancorados ao início da linha para não capturar o bloco de rollback comentado.
+awk '/^CREATE OR REPLACE FUNCTION public\.dashboard_kpi/,/^\$function\$;$/' \
+  "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
   > "$tmp_dir/kpi_final.sql"
 grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi da migration de reconciliacao veio vazia'

@@ -62,7 +62,7 @@ expect_error_as() {
   local l="$1" needle="$2" r="$3" j="$4" s="$5" out st
   set +e; out="$(as_role "$r" "$j" "$s" 2>&1)"; st=$?; set -e
   (( st == 0 )) && { printf '%s\n' "$out" >&2; fail "$l: deveria falhar, mas passou"; }
-  [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
+  [[  "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$l"
 }
 expect_same_success_as() {
@@ -98,7 +98,7 @@ trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
 # ---------------------------------------------------------------------------------------------
 # Estado ANTERIOR canonico: papeis da API, auth.users/auth.uid(), profiles com as policies TO
 # authenticated, password_reset_requests com a policy de INSERT TO authenticated, os DOIS
-# gatilhos reais e os grants reais (anon ja tem INSERT de TABELA — o que falta e a policy).
+# gatilhos reais e os grants reais (anon ja tem INSERT de tabela — o que falta e a policy).
 # ---------------------------------------------------------------------------------------------
 cat > "$tmp_dir/pre.sql" <<'SQL'
 CREATE ROLE anon NOLOGIN;
@@ -155,8 +155,8 @@ CREATE POLICY "Admins can view reset requests" ON public.password_reset_requests
   USING (false);  -- no teste so existe o ramo admin canonico; o foco e o caminho anonimo
 CREATE POLICY "Users can request own password reset" ON public.password_reset_requests FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
-
--- Gatilhos REAIS, com o corpo vigente (a referencia a reset_token E o defeito)
+-- Gatilho ORIGINAL com defeito: cita a coluna reset_token removida em 20260827170000
+-- A.3 espera que INSERT autenticado falhe com "has no field reset_token"
 CREATE OR REPLACE FUNCTION public.sanitize_reset_request()
  RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $function$
 BEGIN

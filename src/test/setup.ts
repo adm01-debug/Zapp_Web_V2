@@ -136,11 +136,34 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes.
 // Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
 // ==========================================================================
-Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
-  value: function () {
-    return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
+  value: function (this: Element) {
+    const styleEl = this as HTMLElement;
+    const styleHeight = styleEl.style ? parseInt(styleEl.style.height, 10) : NaN;
+    const h = Number.isFinite(styleHeight) && styleHeight > 0 ? styleHeight : 600;
+    return { width: 800, height: h, top: 0, left: 0, right: 800, bottom: h, x: 0, y: 0, toJSON: () => ({}) };
   },
+});
+
+// ==========================================================================
+// MOCK clientHeight / clientWidth — @tanstack/react-virtual no jsdom.
+//
+// O virtualizador usa scrollElement.clientHeight como tamanho do viewport para
+// decidir quais itens renderizar. O jsdom nao implementa layout CSS: o valor e
+// sempre 0, getVirtualItems() devolve [] e nenhum item aparece no DOM do teste.
+// Fixar 600 x 800 e coerente com o getBoundingClientRect acima e suficiente para
+// os testes de regressao de loop (ChatMessagesArea.loop) e qualquer outro que
+// monte um virtualizador sem mock proprio de clientHeight.
+// Testes que precisam de valor especifico definem vi.spyOn(el, 'clientHeight', ...).
+// ==========================================================================
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get() { return 600; },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+  configurable: true,
+  get() { return 800; },
 });
 
 // ==========================================================================

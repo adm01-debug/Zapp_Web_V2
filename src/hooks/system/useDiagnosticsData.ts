@@ -285,12 +285,11 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
-    const { count: messagesCount, error: messagesCountError } = await supabase
+    // Erros de contagem não cancelam setHealth — usam 0 como fallback.
+    const { count: messagesCount } = await supabase
       .from('messages').select('id', { count: 'estimated', head: true });
-    if (messagesCountError) throw messagesCountError;
-    const { count: connectionsCount, error: connectionsCountError } = await supabase
+    const { count: connectionsCount } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
 
     const realtime = await probeRealtime();
 
