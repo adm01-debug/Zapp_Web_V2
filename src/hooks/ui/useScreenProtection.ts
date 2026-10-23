@@ -116,8 +116,6 @@ export function useScreenProtection() {
       if (overlay) return;
       overlay = document.createElement('div');
       overlay.id = 'screen-protection-overlay';
-      // O overlay cobre a tela inteira: quem usa leitor de tela precisa saber
-      // pelo anúncio, não só pela imagem.
       overlay.setAttribute('role', 'alert');
       overlay.setAttribute('aria-live', 'assertive');
       overlay.style.cssText = `

@@ -359,8 +359,8 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura',
-    'producao-ddl', 'producao-edge-functions',
+    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo',
+    'perimetro-leitura', 'producao-ddl', 'producao-edge-functions',
     ...extras,
   ];
   const envsStub =

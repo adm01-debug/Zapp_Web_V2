@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 84 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 84 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -16,27 +16,6 @@ partir do código e falha quando:
 * o grupo publicado deixa de ser o primeiro chamador real na ordem A → B → C → D;
 * uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
   `supabase/config.toml` (ou vice-versa).
-
-O quadro `## Totais` e a contagem do cabeçalho são um **retrato manual** da ponta do dia: eles
-mudam a cada entrega que acrescenta uma edge, então a guarda **não** os recalcula — dois cartões
-empilhados não podem brigar por um número global. O que a guarda prova é a tabela acima (conjunto
-de edges, âncora e grupo de cada linha), sempre recalculado do código.
-
-Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
-
-## Grupos (prioridade nesta ordem)
-
-| Grupo | Significado |
-|---|---|
-| A | front (`invoke`/`invokeEdge`/rota em `src/`) |
-| B | outra edge (`supabase/functions/`) |
-| C | agendador `pg_cron`/`pg_net` (migration) |
-| D | entrada externa (declarada em `supabase/config.toml`) |
-| E | órfã (sem chamador no repositório) |
-
-Uma edge pode ter mais de um chamador; o grupo registra o **primeiro** recalculado pela
-guarda na ordem acima (A → B → C → D) e a coluna de âncoras lista as evidências achadas.
-Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatro fontes.
 
 ## Totais
 
@@ -60,39 +39,39 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:131` · `src/hooks/integrations/useKnowledgeBase.ts:199` |
-| `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
+| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
+| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
 | `ai-usage-outbox-drain` | E | — sem chamador no repositório — |
-| `approve-password-reset` | A | `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` · `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` |
+| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:31` · `src/components/security/PasswordResetRequestsPanel.tsx:43` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
-| `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:245` · `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
-| `bitrix-api` | A | `src/hooks/integrations/useBitrixApi.ts:33` · `src/components/integrations/BitrixIntegrationView.tsx:29` |
+| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:245` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
+| `bitrix-api` | A | `src/components/integrations/BitrixIntegrationView.tsx:29` · `src/hooks/integrations/useBitrixApi.ts:33` |
 | `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:590` |
-| `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:252` · `src/components/settings/media-library/AIGenerateDialog.tsx:59` |
+| `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:243` |
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` |
-| `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:329` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
+| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
-| `connection-health-check` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/connections/ConnectionsView.tsx:141` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
-| `create-user` | A | `src/components/admin/useAdminData.ts:471` · `src/components/admin/useAdminData.ts:478` |
+| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:101` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `create-user` | A | `src/components/admin/useAdminData.ts:448` · `src/components/admin/useAdminData.ts:455` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:117` |
 | `elevenlabs-agent-token` | E | — sem chamador no repositório — |
 | `elevenlabs-dialogue` | A | `src/components/voice/ElevenLabsDialogue.tsx:63` |
-| `elevenlabs-scribe-token` | A | `src/hooks/communication/useVoiceAgent.ts:307` · `src/components/inbox/RealtimeTranscription.tsx:88` |
+| `elevenlabs-scribe-token` | A | `src/components/inbox/RealtimeTranscription.tsx:88` · `src/hooks/communication/useVoiceAgent.ts:307` |
 | `elevenlabs-sfx` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:31` |
 | `elevenlabs-sts` | A | `src/components/inbox/VoiceChanger.tsx:81` |
-| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:112` |
+| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:99` |
 | `elevenlabs-tts-stream` | A | `src/hooks/voice/playTtsAudio.ts:165` |
 | `elevenlabs-voice-design` | A | `src/components/voice/ElevenLabsVoiceDesign.tsx:32` |
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
-| `evolution-api` | A | `src/hooks/groups/actions.ts:106` · `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` |
-| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:116` |
-| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/functions/evolution-api/index.ts:492` · `supabase/functions/evolution-api/index.ts:558` · `supabase/functions/evolution-api/index.ts:719` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/config.toml:8` |
+| `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:106` |
+| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:76` |
+| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:493` · `supabase/functions/evolution-api/index.ts:559` · `supabase/functions/evolution-api/index.ts:720` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
@@ -106,9 +85,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
-| `message-delivery` | A | `src/services/outbound-message.service.ts:468` · `src/lib/invokeEdge.ts:24` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:456` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
-| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:158` |
+| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
@@ -117,7 +96,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `public-api` | D | `supabase/config.toml:35` |
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
 | `recover-message-media` | E | — sem chamador no repositório — |
-| `revoke-auth-sessions` | A | `src/pages/ResetPassword.tsx:168` · `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:162` · `src/hooks/ui/useDeviceDetection.ts:173` · `src/components/admin/ForceLogoutButton.tsx:40` |
+| `revoke-auth-sessions` | A | `src/components/admin/ForceLogoutButton.tsx:40` · `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:162` · `src/hooks/ui/useDeviceDetection.ts:173` · `src/pages/ResetPassword.tsx:168` |
 | `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/migrations/20261006235031_searchbox_budget_alert_email_ledger.sql:82` · `supabase/config.toml:68` |
 | `send-email` | E | — sem chamador no repositório — |
 | `send-rate-limit-alert` | E | — sem chamador no repositório — |
@@ -132,7 +111,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:509` · `src/hooks/integrations/useTalkX.ts:525` · `src/hooks/integrations/useTalkX.ts:534` · `src/hooks/integrations/useTalkX.ts:543` · `src/hooks/integrations/useTalkXTemplates.ts:196` · `supabase/functions/talkx-scheduler/index.ts:341` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
 | `talkx-storage-purge` | E | — sem chamador no repositório — |
 | `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
-| `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:255` |
+| `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:246` |
 | `voice-copilot-action` | E | — sem chamador no repositório — |
 | `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |

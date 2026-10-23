@@ -45,6 +45,7 @@ vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
   log: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 // A identidade do agente vem do `useAuth` (o `useMessageSignature` deixou de chamar
 // `auth.getUser()` na rede — paridade V3). Aqui a fronteira é só a identidade já

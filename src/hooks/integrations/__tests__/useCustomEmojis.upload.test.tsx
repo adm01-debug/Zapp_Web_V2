@@ -74,25 +74,21 @@ beforeEach(() => {
   inserted = [];
   mocks.getUser.mockResolvedValue({ data: { user: { id: UID } }, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
-  mocks.tableFrom.mockImplementation(() => {
-    // Construtor encadeável como o do PostgREST: o hook encadeia dois `.order()`
-    // (use_count + desempate por id) e fecha a página com `.range()`.
-    const construtor: Record<string, unknown> = {};
-    for (const metodo of ['select', 'order', 'eq', 'in', 'or', 'is', 'not', 'filter', 'gte', 'lte', 'lt']) {
-      construtor[metodo] = () => construtor;
-    }
-    construtor.range = () => Promise.resolve({ data: [emoji()], error: null });
-    construtor.limit = () => Promise.resolve({ data: [emoji()], error: null });
-    return {
-      ...construtor,
-      insert: (payload: Record<string, unknown>) => {
-        inserted.push(payload);
-        return Promise.resolve({ error: null });
-      },
-      update: () => ({ eq: () => Promise.resolve({ error: null }) }),
-      delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
-    };
-  });
+  mocks.tableFrom.mockImplementation(() => ({
+    select: () => {
+      const query = {
+        order: () => query,
+        range: () => Promise.resolve({ data: [emoji()], error: null }),
+      };
+      return query;
+    },
+    insert: (payload: Record<string, unknown>) => {
+      inserted.push(payload);
+      return Promise.resolve({ error: null });
+    },
+    update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+    delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
+  }));
   mocks.storageFrom.mockImplementation((bucket: string) => ({
     upload: (path: string, file: unknown, opts: unknown) => mocks.storageUpload(bucket, path, file, opts),
     remove: (paths: string[]) => mocks.storageRemove(bucket, paths),

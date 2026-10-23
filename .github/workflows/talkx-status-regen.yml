@@ -48,6 +48,8 @@ permissions:
 
 jobs:
   regen:
+    # O dispatch não deve executar código de uma ref arbitrária com token de escrita.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write

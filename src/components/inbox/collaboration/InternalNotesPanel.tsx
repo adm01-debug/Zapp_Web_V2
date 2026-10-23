@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Send, Loader2, AlertCircle } from 'lucide-react';
@@ -16,9 +16,12 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { contactNotesKey } from '@/hooks/crm/useContactNotes';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { useMentionableProfileNames } from '@/hooks/inbox/useMentionableProfiles';
-import { splitMentionText } from '@/lib/mentionText';
-
+import { cn } from '@/lib/utils';
 import { MentionInput } from './MentionInput';
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const [newNote, setNewNote] = useState('');
@@ -63,27 +66,26 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
     onError: () => toast.error('Erro ao adicionar nota'),
   });
 
-  // O selo é montado a partir dos nomes ativos (não de uma regex de palavra):
-  // assim `@Ana Maria` vira um selo inteiro em vez de só `@Ana`.
-  // Enquanto a lista está indisponível (carregando ou erro), cai no
-  // comportamento anterior (`@palavra` vira selo) para a nota não perder o selo.
+  const namesPattern = [...new Set((mentionableNames ?? []).map((name) => name.trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp);
+  const mentionPattern = new RegExp(
+    `(@(?:${namesPattern.length ? `${namesPattern.join('|')}|` : ''}[\\p{L}\\p{N}_]+))(?=$|[^\\p{L}\\p{N}_])`,
+    'giu',
+  );
+
   const renderNoteContent = (content: string) => {
-    if (mentionableNames === undefined) {
-      return content.split(/(@\w+)/g).map((part, i) =>
-        part.startsWith('@') ? (
-          <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      );
-    }
-    return splitMentionText(content, mentionableNames).map((part, i) =>
-      part.isMention ? (
-        <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part.text}</Badge>
-      ) : (
-        <span key={i}>{part.text}</span>
-      ),
-    );
+    const parts = content.split(mentionPattern);
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        return (
+          <span key={i} className={cn(badgeVariants({ variant: 'secondary' }), 'text-xs mx-0.5')}>
+            {part}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
   };
 
   return (

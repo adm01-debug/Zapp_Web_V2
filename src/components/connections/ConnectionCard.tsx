@@ -71,34 +71,35 @@ export function ConnectionCard({
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
-  const desconectando = disconnectPending || disconnecting;
 
-  // O hook devolve `false` quando a sessão NÃO caiu (a Evolution recusou ou o
-  // vínculo local não atualizou): o diálogo só fecha no sucesso e a falha vira
-  // `errorMessage` (role="alert"), como manda o t_cce2f0f7.
+  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
+  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  const handleDisconnectDialogOpenChange = (open: boolean) => {
+    if (disconnecting || disconnectPending) return;
+    setConfirmDisconnect(open);
+    if (!open) setDisconnectError(null);
+  };
+
   const handleConfirmDisconnect = async () => {
-    setDisconnectError(null);
+    if (disconnecting || disconnectPending) return;
     setDisconnectPending(true);
+    setDisconnectError(null);
     try {
-      const ok = await onDisconnect(connection);
-      if (ok === false) {
-        setDisconnectError('Não foi possível desconectar. A sessão continua ativa — tente novamente.');
+      const disconnected = await onDisconnect(connection);
+      if (disconnected === false) {
+        setDisconnectError('Não foi possível desconectar esta conexão. Verifique o estado e tente novamente.');
         return;
       }
       setConfirmDisconnect(false);
-    } catch {
-      setDisconnectError('Não foi possível desconectar. A sessão continua ativa — tente novamente.');
+    } catch (error) {
+      setDisconnectError(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Não foi possível desconectar esta conexão. Tente novamente.',
+      );
     } finally {
       setDisconnectPending(false);
     }
-  };
-
-  // Em voo o diálogo fica travado (as duas saídas bloqueadas). Ao fechar, o
-  // motivo da tentativa anterior é limpo: o erro é da tentativa, não do estado.
-  const handleDisconnectDialogOpenChange = (open: boolean) => {
-    if (disconnectPending) return;
-    if (!open) setDisconnectError(null);
-    setConfirmDisconnect(open);
   };
 
   return (
@@ -182,16 +183,16 @@ export function ConnectionCard({
                 </motion.div>
               )}
               {connection.status === 'connected' && (
-                <motion.div whileHover={{ scale: desconectando ? 1 : 1.05 }} whileTap={{ scale: desconectando ? 1 : 0.95 }}>
+                <motion.div whileHover={{ scale: disconnecting ? 1 : 1.05 }} whileTap={{ scale: disconnecting ? 1 : 0.95 }}>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={desconectando}
-                    aria-busy={desconectando}
-                    className={cn(desconectando && 'motion-safe:animate-pulse')}
+                    disabled={disconnecting}
+                    aria-busy={disconnecting}
+                    className={cn(disconnecting && 'motion-safe:animate-pulse')}
                     onClick={() => setConfirmDisconnect(true)}
                   >
-                    {desconectando
+                    {disconnecting
                       ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
                       : <><WifiOff className="w-4 h-4 mr-2" />Desconectar</>}
                   </Button>
@@ -243,7 +244,7 @@ export function ConnectionCard({
         onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={desconectando}
+        pending={disconnecting || disconnectPending}
         errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />

@@ -42,7 +42,7 @@ function violacoesContagemClaude(texto, totalYaml) {
     }
   }
   const chato = achata(texto);
-  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`.github/workflows/\``).test(chato)) {
+  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos (?:YAML )?em \`.github/workflows/\``).test(chato)) {
     out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
   }
   if (!texto.includes('docs/ci/README.md')) {
@@ -228,14 +228,14 @@ const TAREFA_E76 = { id: 'E76', status: 'IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE',
 const TAREFA_E62 = { id: 'E62', status: 'PARTIAL', documentation: { original_claim: 'UNCHECKED' } };
 
 const PLANO_ANTES = [
-  '- [x] **E76** - `bunx playwright@1.63.0` -> `bunx playwright`.',
+  '- [x] **E76** - `bunx playwright@1.64.1` -> `bunx playwright`.',
   '- [ ] **E62** - Destino do `db-migrate.yml`.',
 ].join('\n');
 
 const PLANO_DEPOIS = [
-  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.63.0 entre lock e workflows).',
+  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.64.1 entre lock e workflows).',
   '- [~] **E62** - PARCIAL (12 contratos extraidos).',
-  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.63.0) | nao ha mismatch; remover o pin e opcao da E75 |',
+  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.64.1) | nao ha mismatch; remover o pin e opcao da E75 |',
   '| **E62** | `[~]` PARCIAL | PR #1778 | guardas de DB preservadas |',
 ].join('\n');
 
@@ -260,11 +260,11 @@ const RECON_COMPLETA = [
 ].join('\n');
 
 test('fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado', () => {
-  assert.ok(violacoesContagemClaude(CLAUDE_ANTES, 15).length > 0);
+  assert.ok(violacoesContagemClaude(CLAUDE_ANTES, 16).length > 0);
   assert.ok(violacoesStrictClaude(CLAUDE_ANTES).length > 0);
 });
 
-test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado)', () => {
+test('fixture: CLAUDE.md corrigido passa (15 arquivos, fonte gerada, strict=false rotulado)', () => {
   assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 15), []);
   assert.deepEqual(violacoesStrictClaude(CLAUDE_DEPOIS), []);
 });
@@ -291,7 +291,7 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 15 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
   assert.equal(arquivos.length, 15);
   const readme = await readFile(README_CI, 'utf8');
@@ -332,7 +332,7 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
   }
 });
 
-test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
+test('plano: inventario atual e 15 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
   assert.match(chato, /\*\*15\*\* arquivos YAML em `\.github\/workflows\/`/);

@@ -59,7 +59,7 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
 
 // `invoke(` = chamada direta do supabase-js; `invokeEdge(` = wrapper central do front
 // (src/lib/invokeEdge.ts) que injeta o id de correlacao — mesmo chamador de front, grupo A.
-const invoca = (n) => new RegExp(`invoke(?:Edge)?(?:<[^>]*>)?\\(\\s*['"\`]${n}['"\`]`);
+const invoca = (n) => new RegExp(`invoke(?:Edge)?\\(\\s*['"\`]${n}['"\`]`);
 const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
 const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
 
@@ -223,8 +223,9 @@ for (const m of blocoEspeciais[0].matchAll(/'([\w-]+)':/g)) {
   viewsReais.push({ view: m[1], componente: componente ? componente[1] : '?' });
 }
 
-const usaBanco = (texto) => /(?<!Array)\.from\(|\.rpc\(|\binvoke\(/.test(texto);
-const hooksImportados = (texto) => [...texto.matchAll(/from ['"]@\/(hooks|services|lib)\/([\w/.-]+)['"]/g)].map((m) => `src/${m[1]}/${m[2]}`);
+const usaBanco = (texto) => /\.from\(|\.rpc\(|\binvoke\(/.test(texto);
+const hooksImportados = (texto) =>
+  [...texto.matchAll(/from '@\/(hooks|services|lib)\/([\w/.-]+)'/g)].map((m) => `src/${m[1]}/${m[2]}`);
 const acharArquivo = (base) => {
   for (const c of [base, base + '.tsx', base + '.ts', base + '/index.ts', base + '/index.tsx']) {
     if (base && fs.existsSync(path.join(raiz, c)) && fs.statSync(path.join(raiz, c)).isFile()) return c;
@@ -346,7 +347,6 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   const contratos = ler('vitest.contracts.config.ts');
   const pacote = JSON.parse(ler('package.json'));
   const ci = ler('.github/workflows/ci.yml');
-  const deployFns = ler('.github/workflows/deploy-functions.yml');
 
   // 1. unidade do app: glob do Vitest citado no doc == glob do arquivo
   const globApp = "src/**/*.{test,spec}.{ts,tsx}";
@@ -372,11 +372,15 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   assert.equal(pacote.scripts.test, 'vitest run');
   assert.equal(pacote.scripts['test:e2e'], 'playwright test');
 
-  // 4. o runner node:test da CI: o ci.yml atual usa linha simples (`run: node --test ...`),
-  //    não bloco `>-`; o doc tem de citar exatamente essa linha.
-  const nodeCiLinha = ci.split('\n').find((l) => l.trim().startsWith('run: node --test scripts/ci/*.unit.mjs'));
-  assert.ok(nodeCiLinha, 'ci.yml não tem mais o passo node:test');
-  const comandoNodeCi = normalizaEspacos(nodeCiLinha.replace(/^\s*run:\s*/, ''));
+  // 4. os comandos de CI citados precisam estar no ci.yml, incluindo a linha completa de node:test.
+  for (const trecho of [
+    "deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1",
+    "deno check --config scripts/ci/deno.json --frozen",
+  ]) {
+    assert.ok(ci.includes(trecho), `ci.yml não tem mais o passo \`${trecho}\``);
+    assert.ok(doc.includes(trecho), `TESTING_CONVENTION.md não cita o passo real da CI: \`${trecho}\``);
+  }
+  const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs');
   const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]*)`/);
   assert.ok(comandoNodeDoc, 'TESTING_CONVENTION.md não cita o comando node:test da CI');
   assert.equal(
@@ -389,13 +393,8 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
     'TESTING_CONVENTION.md não pode reduzir a varredura da CI a scripts/ci/*.unit.mjs',
   );
 
-  // 5. a camada Deno das edges: o deploy typecheca as edges antes de publicar
-  //    (deploy-functions.yml); o doc cita o check real e o glob de teste das edges.
-  assert.ok(
-    deployFns.includes('deno check supabase/functions/**/index.ts'),
-    'deploy-functions.yml perdeu o deno check das edges',
-  );
-  assert.ok(doc.includes('deno check supabase/functions/**/index.ts'), 'TESTING_CONVENTION.md não cita o deno check real');
+  // 5. a camada Deno das edges: o doc precisa citar o glob de teste das edges que a CI usa
+  assert.ok(ci.includes("git ls-files 'supabase/functions/**/*.test.ts'"), 'a CI perdeu o glob dos testes Deno');
   assert.ok(doc.includes('supabase/functions/**/*.test.ts'), 'TESTING_CONVENTION.md não cita os testes Deno das edges');
 
   // 6. a convenção de nome do diretório de contratos vale para todos os arquivos de lá

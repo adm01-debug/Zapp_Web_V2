@@ -10,8 +10,9 @@
  * perder id/título/descrição da linha.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { InteractiveMessageBuilder } from '@/components/inbox/InteractiveMessageBuilder';
+import type { InteractiveMessage } from '@/types/chat';
 
 function renderizar() {
   return render(
@@ -24,10 +25,7 @@ function comporListaComDuasLinhas() {
   // Radix Tabs ativa no mouseDown (o clique só não troca a aba).
   fireEvent.mouseDown(screen.getByRole('tab', { name: /lista/i }));
   fireEvent.click(screen.getByRole('button', { name: /^seção$/i }));
-  // A seção nasce recolhida: abre pelo cabeçalho para os itens aparecerem.
-  // Ancorado: o gatilho da seção é nomeado "Seção 1"; o botão de remover
-  // (a11y, UK-13) também diz "seção 1" no meio do rótulo e o regex solto casava os dois.
-  fireEvent.click(screen.getByRole('button', { name: /^seção 1\b/i }));
+  // A seção nasce expandida com seu ID estável, pronta para receber itens.
 
   fireEvent.click(screen.getByRole('button', { name: /^item$/i }));
   fireEvent.click(screen.getByRole('button', { name: /^item$/i }));
@@ -68,6 +66,67 @@ describe('InteractiveMessageBuilder — reordenar linha da lista', () => {
     expect(screen.getAllByRole('button', { name: 'Descer item' })[1]).toBeDisabled();
     expect(screen.getAllByRole('button', { name: 'Subir item' })[1]).toBeEnabled();
     expect(screen.getAllByRole('button', { name: 'Descer item' })[0]).toBeEnabled();
+  });
+
+  it('remove a seção pelo controle separado sem acionar o disclosure', async () => {
+    renderizar();
+    comporListaComDuasLinhas();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remover seção 1' }));
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Seção 1' })).toBeNull());
+    expect(screen.getByText('Adicione seções para criar a lista')).toBeInTheDocument();
+  });
+
+  it('mantém a seção remanescente expandida depois de remover a anterior', async () => {
+    renderizar();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /lista/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^seção$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^seção$/i }));
+
+    const sectionTitles = screen.getAllByPlaceholderText('Ex: Categorias, Opções, Produtos...');
+    fireEvent.change(sectionTitles[0], { target: { value: 'Primeira' } });
+    fireEvent.change(sectionTitles[1], { target: { value: 'Segunda' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Remover seção 1' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByPlaceholderText('Ex: Categorias, Opções, Produtos...')).toHaveLength(1);
+      expect(screen.getByPlaceholderText('Ex: Categorias, Opções, Produtos...')).toHaveValue('Segunda');
+    });
+    expect(screen.getByRole('button', { name: 'Seção 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^item$/i })).toBeInTheDocument();
+  });
+
+  it('envia a ordem reordenada e preserva conteúdo no payload final', async () => {
+    const onSend = vi.fn(async (_message: InteractiveMessage) => {});
+    render(
+      <InteractiveMessageBuilder open onOpenChange={vi.fn()} onSend={onSend} />,
+    );
+    comporListaComDuasLinhas();
+
+    fireEvent.change(screen.getByPlaceholderText('Digite o corpo da mensagem...'), {
+      target: { value: 'Escolha um produto' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Ex: Categorias, Opções, Produtos...'), {
+      target: { value: 'Produtos' },
+    });
+    const descricoes = screen.getAllByPlaceholderText(/Descrição \(opcional/i);
+    fireEvent.change(descricoes[0], { target: { value: 'Cerâmica' } });
+    fireEvent.change(descricoes[1], { target: { value: 'Algodão' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Descer item' })[0]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar Mensagem' }));
+
+    await waitFor(() => expect(onSend).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'list',
+      sections: [expect.objectContaining({
+        title: 'Produtos',
+        rows: [
+          expect.objectContaining({ title: 'Segundo', description: 'Algodão' }),
+          expect.objectContaining({ title: 'Primeiro', description: 'Cerâmica' }),
+        ],
+      })],
+    })));
   });
 });
 

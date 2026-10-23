@@ -63,7 +63,6 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: true, roles: ['admin'], loading: false }),
 }));
 vi.mock('framer-motion', () => ({
-  MotionConfig: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
   useReducedMotion: () => false,
   motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
 }));

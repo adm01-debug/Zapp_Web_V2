@@ -93,12 +93,10 @@ test('Talk X não rotula tamanho de audiência como "Desempenho"', () => {
   assert.match(segments, /<Th>Público relativo<\/Th>/);
 });
 
-test('Talk X não rotula uso de template como "Mais convertidos"', () => {
-  // V08: o medidor de USO da biblioteca e o KpiCard "Mais usados" (label=).
-  // T04-039: o painel lateral "Mais convertidos" (RailCard title=) e ranking por
-  // taxa de resposta e tem guarda propria em __tests__/TalkXTemplatesRail.test.tsx.
-  // A guarda cobra o defeito original: rotular o medidor de uso como conversao.
-  assert.doesNotMatch(templates, /label="Mais convertidos"/);
+test('Talk X separa ranking por resposta de uso de template', () => {
+  assert.match(templates, /title="Mais convertidos"/);
+  assert.match(templates, /conversion\.ranking\?\.items/);
+  assert.match(templates, /item\.replyRatePct/);
   assert.match(templates, /label="Mais usados"/);
 });
 

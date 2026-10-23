@@ -1,6 +1,6 @@
 # TESTING_CONVENTION.md — onde cada teste mora e como ele roda
 
-Convenção de testes do Zapp Web V2 na ponta do dia `dia/2026-10-08`. O objetivo é
+Convenção de testes do Zapp Web V2 na ponta do dia `dia/2026-10-20`. O objetivo é
 responder, para qualquer teste novo, **onde ele mora e qual comando o executa** — sem
 descobrir isso lendo o `package.json` e o `ci.yml`.
 
@@ -35,19 +35,19 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 
 * Moram dentro da pasta da edge (`supabase/functions/<edge>/index.test.ts`) e importam o
   handler direto.
-* Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio. Comando local
-  (o mesmo que a régua de cobertura `scripts/ci/edge-coverage-authz.unit.mjs` usa):
-  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/**/*.test.ts`.
-* No CI, o deploy das edges (`.github/workflows/deploy-functions.yml`) roda antes de publicar:
-  `deno check supabase/functions/**/index.ts` (passo "Typecheck das edge functions"),
-  para não subir função com erro de tipo.
+* Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio.
+* Comando (CI, passo "Run executable Edge handler contracts"):
+  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')`.
+  O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`
+  roda antes, no mesmo job.
 
 ## 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`
 
 * Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
   (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).
-* Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`; os contratos
-  `.test.mjs` de `scripts/db-audit/` rodam no `.github/workflows/db-guard.yml`, não no `ci.yml`.
+* Runner: **`node:test`** (nativo), sem framework. O job `node-scripts` da CI roda
+  as guardas `*.unit.mjs` de `scripts/ci/`; as suítes de deploy e os contratos de
+  Edge rodam nos workflows específicos.
 * Comando (CI, passo "Run Node CI scripts tests"):
   `node --test scripts/ci/*.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
@@ -58,10 +58,15 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 
 * Moram em `e2e/`, specs `*.spec.ts`; fixtures e helpers em `e2e/fixtures/` e `e2e/support/`.
 * Runner: **Playwright** (`playwright.config.ts`; `bun run test:e2e`).
-* **Regra R1 (obrigatória):** E2E autenticado roda SÓ contra o **banco local**, com usuário
-  sintético criado localmente. É proibido usar a URL/credencial de produção, reaproveitar
-  `e2e/.auth/*` de outra sessão, rodar o projeto `chromium-authenticated` fora disso, ou
-  subir o app com `--mode production`. Fixture "real" de produção não é fixture.
+* **E2E de PR (`ci.yml`):** roda sem autenticação real; não é a suíte de login real.
+* **Suíte logada (`e2e-logado.yml`):** Playwright com login real contra produção. Executa em
+  `push` para `main` ou `workflow_dispatch`, com uma guarda que encerra a execução se a ref
+  não for `main`. Usa a conta de teste dedicada por `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`;
+  não reutilize `e2e/.auth/*` de outra sessão.
+* O workflow declara teardown das fixtures de produção. A limpeza de
+  `conversation_closures` roda com `if: always()` e `continue-on-error`; a limpeza de
+  `catalog_send_events` também é best-effort, pode ser pulada sem a service role e sua falha
+  não reprova o job.
 * **Quarentena com prazo:** um spec quebrado e adiado entra em `e2e/quarantine.js`, com
   `spec`, `motivo`, `issue` e `prazo` (`AAAA-MM-DD`). O verificador
   `scripts/ci/check-quarantine.mjs` recusa item sem forma completa e **derruba o CI** quando
@@ -78,13 +83,13 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 | Fluxo no navegador | `e2e/<fluxo>.spec.ts` | Playwright |
 
 * Nome do arquivo diz o que ele é: `.test.ts`/`.spec.ts` = suíte de código;
-  `.unit.mjs` = guarda executável de CI. Depois do CI mínimo de 16/10/2026, o passo
-  `node:test` do `ci.yml` varre só `scripts/ci/*.unit.mjs`; `scripts/edge-deploy/*.unit.mjs`
-  roda no `.github/workflows/deploy-functions.yml` e `scripts/db-audit/*.test.mjs` no `.github/workflows/db-guard.yml`.
+  `.unit.mjs` = guarda executável de CI. O job de scripts varre
+  `scripts/ci/*.unit.mjs`; os diretórios de deploy e os contratos `.test.mjs`
+  têm workflows/steps próprios.
 * Teste que prova correção de defeito nasce **vermelho** e fica verde com a correção; teste
   que não falha sem a correção não prova nada.
-* Nada de produção: nenhuma camada acima aponta para banco, edge ou segredo de produção.
-  Dado de cliente não entra em fixture — use amostra sintética.
+* A suíte `e2e-logado.yml` é a execução existente contra produção descrita acima. Não use
+  dados reais de clientes em fixtures; as amostras de teste devem ser sintéticas.
 
 ## Portão local (fora do repositório)
 

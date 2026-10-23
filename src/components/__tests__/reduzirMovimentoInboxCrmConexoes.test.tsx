@@ -74,7 +74,7 @@ vi.mock('@/hooks/business/useQueues', () => ({
 }));
 vi.mock('@/hooks/business/useQueueGoals', () => ({
   useQueueGoals: () => ({ goals: {} }),
-  useQueueGoalMetrics: () => ({ metrics: {}, loading: false, refetch: vi.fn() }),
+  useQueueGoalMetrics: () => ({ metrics: {} }),
 }));
 vi.mock('@/components/queues/CreateQueueDialog', () => ({ CreateQueueDialog: () => null }));
 vi.mock('@/components/queues/EditQueueDialog', () => ({ EditQueueDialog: () => null }));
