@@ -10,7 +10,7 @@
  *   - "fora de hora" — não era o momento certo
  *   - "genérica"     — muito genérica, sem contexto
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ThumbsUp, ThumbsDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,6 +38,12 @@ export function CopilotFeedback({
 }: CopilotFeedbackProps) {
   const [submitted, setSubmitted] = useState(false);
   const [showReasons, setShowReasons] = useState(false);
+
+  // Reseta o estado de feedback quando uma nova sugestão é exibida
+  useEffect(() => {
+    setSubmitted(false);
+    setShowReasons(false);
+  }, [suggestionId]);
 
   const handlePositive = () => {
     onFeedback('positive');

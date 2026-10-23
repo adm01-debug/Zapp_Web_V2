@@ -1,5 +1,5 @@
 /**
- * CV-070 — Ditado por oz&para o RADAR.
+ * CV-070 — Ditado por voz para o RADAR.
  *
  * O vendedor fala uma instrução (ex.: "responde que o prazo é 15 dias úteis
  * e pergunta a quantidade") e o RADAR monta a mensagem, reutilizando a
@@ -58,8 +58,8 @@ export function useVoiceDictation({
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
-  // Bug 1: cancelledRef evita que processAudio rode após cancelRecording()
-  const cancelledRef = useRef(false);
+  // AbortController para cancelar processAudio em voo após cancelRecording()
+  const processAbortRef = useRef<AbortController | null>(null);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -71,10 +71,14 @@ export function useVoiceDictation({
   }, []);
 
   const cancelRecording = useCallback(() => {
-    // Bug 1: setar cancelledRef ANTES de stop() — onstop é assíncrono
-    cancelledRef.current = true;
-    mediaRecorderRef.current?.stop();
+    // 1. Cancela processAudio em voo antes de qualquer outra coisa
+    processAbortRef.current?.abort();
+    // 2. Captura o recorder antes de cleanup() zerar a ref
+    const recorderToStop = mediaRecorderRef.current;
+    // 3. cleanup() seta mediaRecorderRef.current = null ANTES de stop()
+    //    — assim onstop vê a ref nula e retorna cedo (verificação de identidade)
     cleanup();
+    recorderToStop?.stop();
     setState('idle');
     setErrorMessage(null);
   }, [cleanup]);
@@ -82,6 +86,11 @@ export function useVoiceDictation({
   /** Processa o blob gravado: transcreve e então gera a mensagem. */
   const processAudio = useCallback(
     async (blob: Blob) => {
+      // Cria AbortController por chamada; aborta chamada anterior se existir
+      processAbortRef.current?.abort();
+      const abortCtrl = new AbortController();
+      processAbortRef.current = abortCtrl;
+
       setState('transcribing');
       try {
         // 1. Transcrição via ai-transcribe-audio.
@@ -91,6 +100,8 @@ export function useVoiceDictation({
           transcription?: string;
           text?: string;
         }>('ai-transcribe-audio', { body: formData });
+
+        if (abortCtrl.signal.aborted) return;
 
         if (transcribeError || (!transcribeData?.transcription && !transcribeData?.text)) {
           throw new Error('Transcrição falhou ou retornou vazia.');
@@ -112,9 +123,11 @@ export function useVoiceDictation({
             messages: recentMessages,
             contactName,
             contactId,
-            context: `INSTRUÇÃO DO VENDEDOR (ditado por voz): "${instruction}".\n\nMonte a mensagem exata para enviar ao cliente seguindo essa instrução. A mensagem DEVE ser curta, direta e no tom adequado à conversa. Retorne APENAS a mensagem pronta, sem explicaçõec.`,
+            context: `INSTRUÇÃO DO VENDEDOR (ditado por voz): "${instruction}".\n\nMonte a mensagem exata para enviar ao cliente seguindo essa instrução. A mensagem DEVE ser curta, direta e no tom adequado à conversa. Retorne APENAS a mensagem pronta, sem explicações.`,
           },
         });
+
+        if (abortCtrl.signal.aborted) return;
 
         if (genError || !genData?.suggestions?.length) {
           throw new Error('Geração da mensagem falhou.');
@@ -127,6 +140,7 @@ export function useVoiceDictation({
         setState('idle');
         setErrorMessage(null);
       } catch (err) {
+        if (abortCtrl.signal.aborted) return;
         const msg = err instanceof Error ? err.message : 'Erro desconhecido';
         log.error('ditado por voz: falhou', { msg });
         setState('error');
@@ -139,8 +153,6 @@ export function useVoiceDictation({
   const startRecording = useCallback(async () => {
     if (!enabled) return;
     if (state !== 'idle' && state !== 'error') return;
-    // Bug 1: resetar cancelledRef no início de cada gravação
-    cancelledRef.current = false;
     setErrorMessage(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -162,11 +174,9 @@ export function useVoiceDictation({
       };
 
       recorder.onstop = () => {
-        // Bug 1: se cancelRecording() foi chamado, não processar o áudio
-        if (cancelledRef.current) {
-          cancelledRef.current = false;
-          return;
-        }
+        // Verificação de identidade: se este recorder não é mais o atual,
+        // foi cancelado ou substituído — não processar o áudio.
+        if (mediaRecorderRef.current !== recorder) return;
         const blob = new Blob(chunksRef.current, { type: mimeType });
         cleanup();
         void processAudio(blob);
@@ -189,7 +199,7 @@ export function useVoiceDictation({
   const stopRecording = useCallback(() => {
     if (state !== 'recording') return;
     mediaRecorderRef.current?.stop();
-    }, [state]);
+  }, [state]);
 
   return { state, errorMessage, startRecording, stopRecording, cancelRecording, durationSeconds };
 }
