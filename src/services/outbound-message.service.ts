@@ -379,12 +379,14 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 export function drainOfflineSendQueue(): Promise<OfflineQueueDrainResult | null> {
   return drainOfflineQueueOnOpen(offlineSendQueue, deliverQueuedOfflineMessage, {
     onError: avisarFilaOffline,
+    userId: readAuthenticatedUserId,
   });
 }
 
 // Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
   onError: avisarFilaOffline,
+  userId: readAuthenticatedUserId,
 });
 
 async function enqueueOffline(
@@ -426,7 +428,7 @@ export async function sendOutboundMessage(
     // A fila offline guarda o PRÓPRIO id no item enfileirado, então a chave da
     // ação não precisa sobreviver a este envio. Deixá-la viva era o defeito: o
     // mesmo texto mandado depois, já online, reaproveitava o id e a Edge o
-    // descartava como idempotente sem nenhum WhatsApp sair.
+    // descartaria como idempotente sem nenhum WhatsApp sair.
     const result = await enqueueOffline(input, clientMessageId);
     clearPendingAction(key, clientMessageId);
     return result;
