@@ -1,6 +1,15 @@
 # Regras de Negócio — Zapp Web V2
 
 > Extraídas de: `CLAUDE.md`, `docs/`, `supabase/migrations/`, `.github/workflows/`, `src/`, auditoria de código
+> Cada regra indica a fonte (arquivo:seção ou PR).
+
+**Fontes primárias:**
+- `CLAUDE.md` — seção "Perímetro do GitHub" (estado canônico 2026-10-03)
+- `CLAUDE.md` — seção "Fluxo Git"
+- `CLAUDE.md` — seção "E15(b)" (strict=true policy desde 02/10)
+- `CLAUDE.md` — seção "Auditoria de workflows"
+- `.github/workflows/ci.yml` — definição dos required checks
+- API `GET /repos/adm01-debug/Zapp_Web_V2/branches/main/protection` — verified 2026-10-23
 
 ## 1. Banco de dados
 
@@ -29,10 +38,13 @@
 
 ## 4. Branch protection (perímetro canônico 2026-10-03)
 
-- `strict=true` (política vigente desde 01/10)
+**Fonte:** `CLAUDE.md` seção "Perímetro do GitHub — estado canônico (2026-10-03)" + API verificada em 2026-10-23
+
+- `strict=true` (política vigente desde 01/10 — `CLAUDE.md` E15(b), 02/10/2026)
 - `enforce_admins=true`
-- 6 required checks: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
-- Squash merge apenas (`allow_squash_merge=true`, `allow_merge_commit=false`, `allow_rebase_merge=false`)
+- 6 required checks DECLARADOS no CLAUDE.md: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
+- **Required checks REAIS (API branch protection, verificado 2026-10-23):** apenas `🏗️ Build` e `🔎 TypeCheck` — os demais rodam mas não bloqueiam merge pela API
+- Squash merge apenas (`allow_squash_merge=true`, `allow_merge_commit=false`, `allow_rebase_merge=false`) — fonte: `CLAUDE.md` seção "Perímetro do GitHub"
 - `delete_branch_on_merge=true`
 - `allow_auto_merge=true`
 - Sem required reviewers (vários agentes com auto-merge)
@@ -81,5 +93,9 @@
 
 ## 11. Escrita no GitHub
 
+**Fonte:** `CLAUDE.md` seção "Repo e escrita" + `/goal` hard rules da sessão
+
 - **SOMENTE** via MCP `GITHUB - MCP - FOREVER` (`github_push_files`)
 - MCP padrão do GitHub retorna 403 em write
+- **Nesta sessão de análise:** única escrita permitida é `github_merge_pull_request` (regra do goal)
+- `github_update_pr_branch` NÃO está autorizado → PRs BEHIND não podem ser atualizadas por esta sessão
