@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
+import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import {
   drainOfflineQueueOnOpen,
@@ -397,6 +398,7 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
+    userId: readAuthenticatedUserId() ?? undefined,
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
@@ -422,7 +424,7 @@ export async function sendOutboundMessage(
     // A fila offline guarda o PRÓPRIO id no item enfileirado, então a chave da
     // ação não precisa sobreviver a este envio. Deixá-la viva era o defeito: o
     // mesmo texto mandado depois, já online, reaproveitava o id e a Edge o
-    // descartava como idempotente sem nenhum WhatsApp sair.
+    // descartaria como idempotente sem nenhum WhatsApp sair.
     const result = await enqueueOffline(input, clientMessageId);
     clearPendingAction(key, clientMessageId);
     return result;
