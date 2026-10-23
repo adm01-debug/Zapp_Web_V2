@@ -2,7 +2,7 @@
   "timestamp": "2026-10-23T20:30:00Z",
   "total_prs": 119,
   "analisados": 119,
-  "mergeados": 0,
+  "mergeados": 1,
   "estados": {
     "BEHIND": 55,
     "DIRTY": 36,
@@ -16,7 +16,7 @@
     "SKIP_SELF": 1,
     "BEHIND_BLOQUEADA": 45,
     "PENDENTE": 0,
-    "MERGEADA": 0
+    "MERGEADA": 1
   },
   "vereditos": {
     "1991": "DRAFT",
@@ -135,11 +135,13 @@
     "2186": "BEHIND_BLOQUEADA",
     "2187": "BEHIND_BLOQUEADA",
     "2191": "BEHIND_BLOQUEADA",
-    "2192": "BEHIND_BLOQUEADA",
+    "2192": "MERGEADA",
     "2193": "BEHIND_BLOQUEADA",
     "2196": "BEHIND_BLOQUEADA"
   },
-  "merges": [],
+  "merges": [
+    {"pr": 2192, "sha": "bac62ba98454811c3bfd117b838af926b1e795b2", "timestamp": "2026-10-23T20:30Z", "titulo": "fix: guarda de vigência do teste RLS do Dashboard (destrava Contrato DB offline)"}
+  ],
   "ci_main_status": "RED",
   "main_sha": "328a475ca75b421664edacfda79a598e01c77e64",
   "bloqueio_merge": "strict=true: PRs BEHIND precisam ser atualizadas antes do merge. Atualização de branch (github_update_pr_branch) não está autorizada nesta sessão. PRs DIRTY têm conflito. PRs DRAFT não prontas.",
