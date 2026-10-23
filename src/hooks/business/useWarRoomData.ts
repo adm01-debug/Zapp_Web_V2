@@ -106,7 +106,7 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
 
       const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
       if (rows.length > WARROOM_MAX_ROWS) {
-        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas (teto: ${WARROOM_MAX_ROWS})`);
+        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);
       }
       const userIdByProfile = new Map(
         (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
@@ -152,7 +152,7 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
 
       const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
       if (rows.length > WARROOM_MAX_ROWS) {
-        throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas (teto: ${WARROOM_MAX_ROWS})`);
+        throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas`);
       }
       return rows.map((q): WarRoomQueue => ({
         id: q.id,
