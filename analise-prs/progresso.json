@@ -2,21 +2,21 @@
   "timestamp": "2026-10-23T20:30:00Z",
   "total_prs": 119,
   "analisados": 119,
-  "mergeados": 1,
+  "mergeados": 2,
   "estados": {
-    "BEHIND": 55,
-    "DIRTY": 36,
+    "BEHIND": 42,
+    "DIRTY": 37,
     "DRAFT": 28,
     "CLEAN": 0
   },
   "vereditos_resumo": {
     "DRAFT": 28,
-    "CONFLITO": 36,
+    "CONFLITO": 37,
     "DESCARTADA": 9,
     "SKIP_SELF": 1,
-    "BEHIND_BLOQUEADA": 45,
+    "BEHIND_BLOQUEADA": 42,
     "PENDENTE": 0,
-    "MERGEADA": 1
+    "MERGEADA": 2
   },
   "vereditos": {
     "1991": "DRAFT",
@@ -137,14 +137,17 @@
     "2191": "BEHIND_BLOQUEADA",
     "2192": "MERGEADA",
     "2193": "BEHIND_BLOQUEADA",
-    "2196": "BEHIND_BLOQUEADA"
+    "2196": "BEHIND_BLOQUEADA",
+    "2061": "MERGEADA",
+    "2187": "CONFLITO"
   },
   "merges": [
-    {"pr": 2192, "sha": "bac62ba98454811c3bfd117b838af926b1e795b2", "timestamp": "2026-10-23T20:30Z", "titulo": "fix: guarda de vigência do teste RLS do Dashboard (destrava Contrato DB offline)"}
+    {"pr": 2192, "sha": "bac62ba98454811c3bfd117b838af926b1e795b2", "timestamp": "2026-10-23T20:15Z", "titulo": "fix: guarda de vigência do teste RLS do Dashboard (destrava Contrato DB offline)"},
+    {"pr": 2061, "sha": "af9d36e55a3bef972bcb509bbfb9072d70f7c970", "timestamp": "2026-10-23T20:45Z", "titulo": "squash-merge PR #2061"}
   ],
   "ci_main_status": "RED",
-  "main_sha": "328a475ca75b421664edacfda79a598e01c77e64",
-  "bloqueio_merge": "strict=true: PRs BEHIND precisam ser atualizadas antes do merge. Atualização de branch (github_update_pr_branch) não está autorizada nesta sessão. PRs DIRTY têm conflito. PRs DRAFT não prontas.",
+  "main_sha": "af9d36e55a3bef972bcb509bbfb9072d70f7c970",
+  "bloqueio_merge": "strict=true: PRs BEHIND precisam ser atualizadas antes do merge. github_update_pr_branch é PROIBIDO. auto-update-pr-branch.yml NÃO EXISTE no repo (removido). Sem mecanismo autorizado para atualizar branches BEHIND. PRs DIRTY têm conflito. PRs DRAFT não prontas.",
   "testes_falhando_main": [
     "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx > FilesTab fase 6 — detalhes (etapa 31) > com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid",
     "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx > FilesTab fase 6 — detalhes (etapa 31) > com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6",
