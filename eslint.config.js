@@ -10,7 +10,9 @@ export default tseslint.config(
   // criados/destruídos em paralelo por agentes em background; sem este ignore o lint do
   // pre-push varre esses diretórios e quebra com ENOENT quando um worktree é desmontado
   // no meio do scan (achado 2026-09-26, sessão de auditoria de 5 agentes).
-  { ignores: ["dist", ".claude/worktrees/**"] },
+  // Zapp_fase456/, zapp-worktrees/: worktrees nomeados manuais; têm seu próprio baseline
+  // e não devem ser varridos pelo lint do worktree principal.
+  { ignores: ["dist", ".claude/worktrees/**", "Zapp_fase456/**", "zapp-worktrees/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
