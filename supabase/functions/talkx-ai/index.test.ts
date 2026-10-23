@@ -237,6 +237,7 @@ Deno.test("X076: gasto do mês no teto recusa com 429 budget_exceeded e não pag
   );
   const resposta = await handleTalkxAi(pedido(PEDIDO_VARIACAO), t.deps);
   assertEquals(resposta.status, 429);
+  assertEquals(resposta.headers.get("Retry-After"), null, "teto mensal não tem reset conhecido neste endpoint");
   assertEquals((await resposta.json()).reason, "budget_exceeded");
   assertEquals(t.chamadas.length, 0);
 });
@@ -272,6 +273,7 @@ Deno.test("X076: limite diário por usuário recusa com 429 user_daily_limit_exc
   );
   const resposta = await handleTalkxAi(pedido(PEDIDO_VARIACAO), t.deps);
   assertEquals(resposta.status, 429);
+  assertEquals(resposta.headers.get("Retry-After"), null, "limite móvel de 24h não deve prometer espera fixa de 60s");
   assertEquals((await resposta.json()).reason, "user_daily_limit_exceeded");
   assertEquals(t.chamadas.length, 0);
 });
