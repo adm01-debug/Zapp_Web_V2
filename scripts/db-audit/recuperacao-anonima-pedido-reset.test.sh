@@ -155,6 +155,18 @@ CREATE POLICY "Admins can view reset requests" ON public.password_reset_requests
   USING (false);  -- no teste so existe o ramo admin canonico; o foco e o caminho anonimo
 CREATE POLICY "Users can request own password reset" ON public.password_reset_requests FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Anon can file a password reset request"
+  ON public.password_reset_requests
+  FOR INSERT
+  TO anon
+  WITH CHECK (
+    user_id IS NOT NULL
+    AND status = 'pending'
+    AND reviewed_by IS NULL
+    AND reviewed_at IS NULL
+    AND rejection_reason IS NULL
+    AND token_expires_at IS NULL
+  );
 
 -- Gatilhos REAIS, corpo vigente apos 20261006231105 (reset_token removida em 20260411111454)
 CREATE OR REPLACE FUNCTION public.sanitize_reset_request()
