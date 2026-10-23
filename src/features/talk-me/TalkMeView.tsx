@@ -16,6 +16,7 @@ import {
   Search,
   UserRoundCheck,
   Volume2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,6 +46,7 @@ import {
   type TalkMeWaitingContact,
 } from './types';
 import type { TalkMeQueueController } from './useTalkMeQueue';
+import { TalkMeMedia } from './TalkMeMedia';
 import './talk-me-layout.css';
 
 interface TalkMeViewProps {
@@ -73,9 +75,10 @@ function messagePreview(item: TalkMeWaitingContact) {
   return describeMessageText(item.lastMessageContent, item.lastMessageCaption, item.lastMessageType);
 }
 
-function pendingSenderLabel(sender: string) {
-  if (sender === 'contact') return 'Cliente';
-  if (sender === 'agent') return 'Saída';
+function pendingSenderLabel(message: TalkMePendingMessage) {
+  if (message.messageType.toLowerCase() === 'internal_note') return 'Nota interna';
+  if (message.sender === 'contact') return 'Cliente';
+  if (message.sender === 'agent') return 'Saída';
   return 'Sistema';
 }
 
@@ -92,6 +95,7 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
   onMove?: (direction: -1 | 1) => void;
 }) {
   const isAudio = item.lastMessageType.toLowerCase().includes('audio');
+  const hasActiveMedia = active && Boolean(item.lastMessageMediaUrl);
 
   const nameId = `talk-me-main-name-${item.contactId}`;
   const companyId = `talk-me-main-company-${item.contactId}`;
@@ -106,7 +110,9 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
       onFocus={onFocus}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove?.(-1); }
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove?.(1); }
       }}
       tabIndex={active ? 0 : -1}
@@ -156,9 +162,10 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
             {isAudio ? <Volume2 className="h-3.5 w-3.5" /> : <MessageCircleMore className="h-3.5 w-3.5" />}
             Última mensagem
           </div>
-          <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground">
+          <p className={cn('line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground', hasActiveMedia && 'sr-only')}>
             {messagePreview(item)}
           </p>
+          {hasActiveMedia && <div aria-hidden="true" className="h-20" />}
           {item.pendingMessageCount > 1 && (
             <p className="mt-1 text-xs font-semibold text-foreground">
               {item.pendingMessageCount} mensagens aguardando resposta
@@ -192,7 +199,9 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onFocus, onMove, bu
       onFocus={onFocus}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove(-1); }
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove(1); }
       }}
       disabled={disabled}
@@ -287,12 +296,14 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   const pendingForwardRef = useRef<{ contactId: string; moveFocus: boolean } | null>(null);
   const focusRequestRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
   const lastCardFocusRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
+  // eslint-disable-next-line local/no-secret-compare -- scopeKey identifica apenas fila e busca da UI.
   const selectedContactId = selection?.scopeKey === scopeKey ? selection.contactId : null;
   const notifiedMissingRef = useRef<string | null>(null);
   // TM-01 (#170): leitura integral da última mensagem sem assumir o atendimento.
   const [fullMessageContactId, setFullMessageContactId] = useState<string | null>(null);
   const [pendingHistory, setPendingHistory] = useState<PendingHistoryState | null>(null);
   const historyRequestRef = useRef(0);
+  const historyDialogRef = useRef<HTMLDivElement>(null);
 
   const activeIndex = useMemo(
     () => items.findIndex((item) => item.contactId === selectedContactId),
@@ -420,6 +431,17 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     setPendingHistory(null);
   }, []);
 
+  const historyContactId = pendingHistory?.contactId ?? null;
+
+  useLayoutEffect(() => {
+    if (!historyContactId) return;
+    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    historyDialogRef.current?.focus();
+    return () => {
+      if (returnFocus?.isConnected) returnFocus.focus();
+    };
+  }, [historyContactId]);
+
   const handleViewOpenChange = useCallback((nextOpen: boolean) => {
     if (!nextOpen) closePendingHistory();
     onOpenChange(nextOpen);
@@ -492,6 +514,9 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
         size="full"
         showCloseButton={false}
         aria-describedby="talk-me-description"
+        onEscapeKeyDown={(event) => {
+          if (pendingHistory) event.preventDefault();
+        }}
         className="talk-me-view h-[calc(100dvh-16px)] max-h-none w-[calc(100vw-16px)] max-w-none overflow-hidden rounded-2xl border-border/70 bg-background/96 p-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[28px]"
       >
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
@@ -534,6 +559,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar nome, empresa ou mensagem…"
+                  maxLength={80}
                   aria-label="Buscar na fila TALK ME"
                   className="h-8 rounded-xl bg-background/80 pl-9 text-xs"
                 />
@@ -626,6 +652,19 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                                 else cardRefs.current.delete(item.contactId);
                               }}
                             />
+                            {active && item.lastMessageMediaUrl && (
+                              <TalkMeMedia
+                                mediaUrl={item.lastMessageMediaUrl}
+                                messageType={item.lastMessageType}
+                                caption={item.lastMessageCaption}
+                                senderName={item.name || 'contato sem nome'}
+                                fallbackText={messagePreview(item)}
+                                className={cn(
+                                  'talk-me-main-media absolute left-3 right-3 z-30',
+                                  item.pendingMessageCount > 1 ? 'bottom-9' : 'bottom-3',
+                                )}
+                              />
+                            )}
                           </motion.div>
                         );
                     })}
@@ -827,59 +866,94 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
               </div>
             )}
           </main>
+          {pendingHistory && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm">
+              <div
+                ref={historyDialogRef}
+                role="dialog"
+                aria-modal={false}
+                aria-labelledby="talk-me-history-title"
+                aria-describedby="talk-me-history-description"
+                tabIndex={-1}
+                onKeyDown={(event) => {
+                  // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
+                  if (event.key !== 'Escape') return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  closePendingHistory();
+                }}
+                className="relative flex max-h-[80dvh] w-full max-w-lg flex-col gap-3 overflow-hidden rounded-2xl border border-border/60 bg-background p-6 shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <button
+                  type="button"
+                  onClick={closePendingHistory}
+                  aria-label="Fechar histórico"
+                  className="absolute right-4 top-4 rounded-lg p-1 opacity-70 transition-all hover:bg-muted hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <h2 id="talk-me-history-title" className="pr-8 text-lg font-black tracking-tight">Histórico antes do aceite</h2>
+                <p id="talk-me-history-description" className="text-xs text-muted-foreground">
+                  Saídas, mensagens do cliente e notas internas do bloco pendente. A leitura não assume o atendimento nem marca mensagens como lidas.
+                </p>
+
+                {pendingHistory.status === 'loading' && (
+                  <div role="status" aria-label="Carregando mensagens" className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 motion-safe:animate-spin text-muted-foreground motion-reduce:animate-none" />
+                  </div>
+                )}
+
+                {pendingHistory.status === 'error' && (
+                  <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
+                    <p className="text-sm text-muted-foreground">Não foi possível carregar as mensagens.</p>
+                    <Button variant="outline" size="sm" onClick={() => void openPendingHistory(pendingHistory.contactId)}>
+                      Tentar novamente
+                    </Button>
+                  </div>
+                )}
+
+                {pendingHistory.status === 'ready' && (
+                  pendingHistory.messages.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      Não há mensagens pendentes para este atendimento.
+                    </p>
+                  ) : (
+                    <ol aria-label="Histórico do bloco pendente" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+                      {pendingHistory.messages.map((message) => {
+                        const senderLabel = pendingSenderLabel(message);
+                        const fallbackText = describeMessageText(message.content, message.caption, message.messageType);
+                        return (
+                          <li key={message.messageId} className="min-w-0 rounded-xl border border-border/60 bg-muted/35 p-3">
+                            <div className="mb-1 flex items-center justify-between gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                              <span>{senderLabel}</span>
+                              <time dateTime={message.createdAt}>
+                                {format(new Date(message.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </time>
+                            </div>
+                            {message.mediaUrl ? (
+                              <TalkMeMedia
+                                mediaUrl={message.mediaUrl}
+                                messageType={message.messageType}
+                                caption={message.caption}
+                                senderName={senderLabel}
+                                fallbackText={fallbackText}
+                              />
+                            ) : (
+                              <p className="whitespace-pre-wrap break-words text-sm leading-5 text-foreground">
+                                {fallbackText}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
-
-      <Dialog open={open && pendingHistory !== null} onOpenChange={(nextOpen) => { if (!nextOpen) closePendingHistory(); }}>
-        <DialogContent
-          aria-describedby="talk-me-history-description"
-          className="flex max-h-[80dvh] w-[calc(100vw-32px)] max-w-lg flex-col gap-3 overflow-hidden rounded-2xl"
-        >
-          <DialogTitle className="text-lg font-black tracking-tight">Histórico antes do aceite</DialogTitle>
-          <DialogDescription id="talk-me-history-description" className="text-xs">
-            Saídas, mensagens do cliente e notas internas do bloco pendente. A leitura não assume o atendimento nem marca mensagens como lidas.
-          </DialogDescription>
-
-          {pendingHistory?.status === 'loading' && (
-            <div role="status" aria-label="Carregando mensagens" className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 motion-safe:animate-spin text-muted-foreground motion-reduce:animate-none" />
-            </div>
-          )}
-
-          {pendingHistory?.status === 'error' && (
-            <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
-              <p className="text-sm text-muted-foreground">Não foi possível carregar as mensagens.</p>
-              <Button variant="outline" size="sm" onClick={() => void openPendingHistory(pendingHistory.contactId)}>
-                Tentar novamente
-              </Button>
-            </div>
-          )}
-
-          {pendingHistory?.status === 'ready' && (
-            pendingHistory.messages.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Não há mensagens pendentes para este atendimento.
-              </p>
-            ) : (
-              <ol aria-label="Histórico do bloco pendente" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-                {pendingHistory.messages.map((message) => (
-                  <li key={message.messageId} className="rounded-xl border border-border/60 bg-muted/35 p-3">
-                    <div className="mb-1 flex items-center justify-between gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground">
-                      <span>{pendingSenderLabel(message.sender)}</span>
-                      <time dateTime={message.createdAt}>
-                        {format(new Date(message.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </time>
-                    </div>
-                    <p className="whitespace-pre-wrap break-words text-sm leading-5 text-foreground">
-                      {describeMessageText(message.content, message.caption, message.messageType)}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            )
-          )}
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }

@@ -414,7 +414,7 @@ export function useSegmentLibraryStats() {
   return useQuery({
     queryKey: LIBRARY_STATS_QUERY_KEY,
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as TalkXLibraryStatsRpc;
       const { data, error } = await rpc('talkx_segment_library_stats', { p_timezone: SEGMENT_TIMEZONE });
       if (error) throw new Error(error.message);
       return data as TalkXSegmentLibraryStats;
@@ -499,7 +499,7 @@ export async function applySegmentBulkAction(input: {
   // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada.
   if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em massa.');
 
-  const rpc = supabase.rpc as unknown as TalkXBulkRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXBulkRpc;
   const results: TalkXSegmentBulkResult[] = [];
 
   for (let start = 0; start < ids.length; start += BULK_ACTION_MAX_IDS) {
