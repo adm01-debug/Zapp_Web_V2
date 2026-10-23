@@ -254,6 +254,7 @@ export function CommandPalette({
                       return (
                         <motion.button key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
                           onClick={() => executeCommand(item)} disabled={item.disabled}
+                          role="option"
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', gi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50', item.disabled && 'opacity-50 cursor-not-allowed')}>
                           <div className="flex items-center gap-3">
                             <span className={cn('transition-colors', item.category === 'action' ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')}>{item.icon || categoryIcons[item.category]}</span>

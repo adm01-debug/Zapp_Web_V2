@@ -44,7 +44,7 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: unknown) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
@@ -108,7 +108,15 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        revalidar();
+        if (onEvent && (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE')) {
+          const row = payload.new as { id?: string; content?: string; is_edited?: boolean; updated_at?: string } | undefined;
+          if (row?.id) {
+            onEvent({ type: payload.eventType === 'UPDATE' ? 'update' : 'delete', id: row.id, content: row.content, is_edited: row.is_edited, updated_at: row.updated_at });
+          }
+        }
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -117,7 +125,7 @@ export function useTeamMessages(conversationId: string | null) {
         jaInscrito = true;
       });
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId, queryClient]);
+  }, [conversationId, queryClient, onEvent]);
 
   useEffect(() => {
     if (!conversationId || !profile) return;
@@ -166,5 +174,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }
