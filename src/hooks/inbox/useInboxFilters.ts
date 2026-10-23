@@ -163,7 +163,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
         next.set('type', normalized);
       } else {
         next.delete('type');
-      };
+      }
       return next;
     }, { replace: true });
   }, [applyPrefs, setSearchParams]);

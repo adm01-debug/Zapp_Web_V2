@@ -192,12 +192,23 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
 const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
+const SINGU_BRIDGE_FIELDS = ['real_sector', 'real_uf'] as const;
+function checkSinguBridgeFields(rules: SegmentRules | null | undefined): void {
+  const allRules = (rules?.groups ?? []).flatMap(g => g.rules);
+  for (const rule of allRules) {
+    if ((SINGU_BRIDGE_FIELDS as readonly string[]).includes(rule.field)) {
+      throw new Error(`${rule.field}: requer p_contact_ids`);
+    }
+  }
+}
+
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
   if (!def) return null;
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  if ((SINGU_BRIDGE_FIELDS as readonly string[]).includes(r.field)) throw new Error(`${r.field}: requer p_contact_ids`);
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -282,6 +293,7 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+  checkSinguBridgeFields(rules);
   const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
@@ -303,6 +315,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
+  checkSinguBridgeFields(rules);
   const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];

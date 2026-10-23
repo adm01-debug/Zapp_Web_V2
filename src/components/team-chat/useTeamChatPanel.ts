@@ -65,6 +65,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+  const [olderError, setOlderError] = useState(false);
 
   // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
   // conversa, então o reset acontece no render (mesmo padrão de
@@ -82,7 +83,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  const { messages: newestMessages, isLoading, isError: messagesQueryError, refetch: refetchNewest } = useTeamMessages(conversation.id, undefined);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -223,6 +224,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       }
     } catch (err) {
       log.error('Erro ao carregar mensagens anteriores', err);
+      setOlderError(true);
     } finally {
       setIsFetchingOlder(false);
     }
@@ -260,7 +262,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       const { data, error } = await supabase.rpc('search_team_messages', {
         p_conversation_id: conversationId,
         p_query: searchTerm,
-        p_limit: 50,
+        p_limit: 100,
       });
       if (cancelado) return;
       if (error) {
@@ -317,12 +319,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // busca dela ainda está pendente.
   const serverSearchMatches = serverSearch?.conversationId === conversation.id
     && serverSearch?.term === searchTerm;
-  const searchError = searchActive
-    && serverSearchError?.conversationId === conversation.id
-    && serverSearchError.term === searchTerm
-    ? serverSearchError.message
-    : null;
-  const isSearching = searchActive && !searchError && !serverSearchMatches;
+  const searchError = searchActive && serverSearchError?.conversationId === conversation.id && serverSearchError?.term === searchTerm;
+  const isSearchingMessages = searchActive && !searchError && !serverSearchMatches;
+  const searchBelowMinChars = debouncedSearchQuery.trim().length > 0 && debouncedSearchQuery.trim().length < 2;
+  const searchIsCapped = serverSearch?.results?.length === 100;
+  const refetchMessages = () => { refetchNewest(); };
+  const retrySearch = () => { setServerSearch(null); setServerSearchError(null); };
 
   const filteredMessages = useMemo(() => {
     if (!searchActive) return messages;
@@ -485,9 +487,14 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     profile,
     messages,
     filteredMessages,
-    isSearching,
+    isSearching: isSearchingMessages,
+    isSearchingMessages,
     searchError,
+    searchBelowMinChars,
+    searchIsCapped,
     isLoading,
+    messagesError: !!messagesQueryError,
+    olderError,
     isMuted,
     canTransfer,
     canTransferDepartment,
@@ -495,6 +502,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isFetchingOlder,
     hasOlderMessages,
     fetchOlderMessages,
+    refetchMessages,
+    retrySearch,
     showStats,
     setShowStats,
     showTransferDialog,
