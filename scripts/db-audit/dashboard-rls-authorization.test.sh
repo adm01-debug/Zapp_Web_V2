@@ -416,7 +416,6 @@ for f in \
   20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql \
   20260927120000_dashboard_kpi_p_since_default_null_guard.sql \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
-  20261003272707_reconcile_local_replay_with_canonical.sql \
   20261006064630_dashboard_contact_counts_restaura_trava_e33.sql; do
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
