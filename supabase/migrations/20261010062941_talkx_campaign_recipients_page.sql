@@ -1,6 +1,6 @@
 -- Rollback: RPC nova (N-131), sem corpo anterior. Desfazer nesta ordem:
---   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) FROM PUBLIC, anon, authenticated, service_role;
---   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text);
+--   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) FROM PUBLIC, anon, authenticated, service_role;
+--   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, text);
 --
 -- N-131: lista paginada (keyset por created_at,id) dos destinatarios de uma
 -- campanha Talk X, com o contato embutido, filtro por status, busca por
