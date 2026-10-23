@@ -74,6 +74,7 @@ CREATE TABLE public.talkx_campaigns (
   created_by uuid REFERENCES public.profiles(id),
   status text NOT NULL DEFAULT 'draft'
 );
+CREATE TABLE public.contacts (id uuid PRIMARY KEY, name text, phone text);
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id),
@@ -86,6 +87,7 @@ CREATE TABLE public.talkx_recipients (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   click_count integer NOT NULL DEFAULT 0,
+  manual_retry_count integer NOT NULL DEFAULT 0,
   replied_at timestamptz,
   read_at timestamptz
 );
