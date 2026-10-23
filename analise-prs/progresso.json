@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-10-23T19:50:00Z",
+  "total_prs": 119,
+  "analisados": 0,
+  "mergeados": 0,
+  "estados": {
+    "BEHIND": 55,
+    "DIRTY": 36,
+    "DRAFT": 28,
+    "CLEAN": 0
+  },
+  "vereditos": {
+    "VALID_BEHIND": 0,
+    "VALID_DIRTY": 0,
+    "DRAFT": 0,
+    "JA_IMPLEMENTADA": 0,
+    "REGRESSAO": 0,
+    "TOCA_WORKFLOWS": 0,
+    "PENDENTE": 119
+  },
+  "merges": [],
+  "ci_main_status": "RED",
+  "main_sha": "328a475ca75b421664edacfda79a598e01c77e64"
+}
