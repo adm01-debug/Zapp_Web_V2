@@ -17,6 +17,7 @@ vi.mock('@paper-design/shaders', () => ({
     setSpeed = shader.setSpeed;
   },
 }));
+vi.mock('@/lib/talkme/telemetry', () => ({ emitTalkMeTelemetry: vi.fn() }));
 
 import { LiquidMetalButton } from '@/components/ui/liquid-metal-button';
 
@@ -24,6 +25,7 @@ describe('LiquidMetalButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     Object.defineProperty(window, 'WebGL2RenderingContext', { configurable: true, value: class {} });
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
   });
 
   it('mantém rótulo, contador e clique disponíveis antes do shader', () => {
@@ -52,6 +54,32 @@ describe('LiquidMetalButton', () => {
     expect(shader.setSpeed).toHaveBeenCalledWith(0.85);
     unmount();
     expect(shader.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('pausa quando a aba fica oculta e retoma na velocidade de hover ao voltar', async () => {
+    render(<LiquidMetalButton />);
+    const button = screen.getByRole('button', { name: 'TALK ME' });
+    await waitFor(() => expect(button.querySelector('canvas')).toBeInTheDocument());
+
+    fireEvent.pointerEnter(button);
+    expect(shader.setSpeed).toHaveBeenLastCalledWith(0.85);
+
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    fireEvent(document, new Event('visibilitychange'));
+    expect(shader.setSpeed).toHaveBeenLastCalledWith(0);
+
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    fireEvent(document, new Event('visibilitychange'));
+    expect(shader.setSpeed).toHaveBeenLastCalledWith(0.85);
+  });
+
+  it('faz dispose uma única vez por montagem em três ciclos de montar e desmontar', async () => {
+    for (let cycle = 1; cycle <= 3; cycle += 1) {
+      const { unmount, container } = render(<LiquidMetalButton />);
+      await waitFor(() => expect(container.querySelector('canvas')).toBeInTheDocument());
+      expect(() => unmount()).not.toThrow();
+      expect(shader.dispose).toHaveBeenCalledTimes(cycle);
+    }
   });
 
   it('bloqueia ativações duplicadas enquanto está carregando', () => {
