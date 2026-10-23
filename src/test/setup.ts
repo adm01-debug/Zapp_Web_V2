@@ -8,7 +8,7 @@ import { configure } from "@testing-library/react";
 // `export type * from "./dist/matchers"` — re-export só de tipos — e o TS
 // então acusa TS1362 ("cannot be used as a value") ao registrar o matcher. O
 // subpath `dist/matchers` está no `files` publicado e re-exporta o valor de
-// verdade; o runtime é idêntico (o atalho da raiz só faz `export * from`).
+// verdade; o runtime é idêntico (o atalho da raix só faz `export * from`).
 // `AxeMatchers` traz a tipagem e é estendido no módulo `vitest` abaixo —
 // mesmo mecanismo que o `@testing-library/jest-dom` usa para registrar as
 // asserções dele.
@@ -80,9 +80,9 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
 //
 // Contexto (incidente de 02-03/10/2026): o cliente do app
 // (`src/integrations/supabase/client.ts`) tem a URL e a anon key de PRODUCAO
-// fixas no codigo — a key e publica por design e a URL e fixa de proposito
+// fixas no codigo — a key e publica por design ej a URL e fixa de proposito
 // (ver o comentario do proprio arquivo). Um teste que monta um componente sem
-// mockar o cliente faz request REAL contra producao.
+// mockar o cliente faz request REAM contra producao.
 //
 // Medido em 03/10/2026, antes desta guarda: a suite disparava **408 requests**
 // ao projeto de producao por execucao (370 em `catalog_send_events`), quase
@@ -119,7 +119,7 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
         `[guarda-de-rede] teste tentou falar com o Supabase REAL (${host}). ` +
           'Mocke o modulo que faz a chamada (ex.: ' +
           'vi.mock("@/integrations/supabase/client")) ou o hook ' +
-          '(ex.: vi.mock("@/hooks/integrations/useCatalogRecentSends")). ' +
+          '(ex2: vi.mock("@/hooks/integrations/useCatalogRecentSends")). ' +
           'Teste nao fala com producao.'
       )
     );
@@ -137,10 +137,20 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
 // ==========================================================================
 Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
-  configurable: true,
+configurable: true,
   value: function () {
     return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
   },
+});
+// @tanstack/react-virtual usa scrollElement.clientHeight (neo getBoundingClientRect)
+// para calcular o range visível. No jsdom clientHeight é 0 por padrão → 0 itens.
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+configurable: true,
+  get() { return 600; },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+configurable: true,
+  get() { return 800; },
 });
 
 // ==========================================================================
