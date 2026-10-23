@@ -11,8 +11,7 @@
  * Fuso: `date_from` é derivado do relógio local do navegador (`setMonth`), então
  * os casos de período congelam o `Date` (só o `Date`, os timers seguem reais) e
  * usam uma data no meio do mês, em que a aritmética de mês é estável em qualquer
- * fuso. O caso do dia 31 fica em `it.fails`: ali a conta transborda (31/03 - 1
- * mês vira 03/03) e o filtro "Mês" encurta a janela em silêncio.
+ * fuso. O caso do dia 31 prova que a conta não transborda (31/03 - 1 mês = 28/02, não 03/03).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
@@ -356,7 +355,7 @@ describe('useContactsSearch — ordenação e períodos', () => {
     await waitFor(() => expect(ultimoArgs(SEARCH).date_from).toBeUndefined());
   });
 
-  it.fails('"Mês" a partir do dia 31 recua um mês de calendário (28/02), sem transbordar para 03/03', async () => {
+  it('"Mês" a partir do dia 31 recua um mês de calendário (28/02), sem transbordar para 03/03', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-03-31T12:00:00.000Z'));
     h.results[SEARCH] = { data: [contato('c1')], error: null };
