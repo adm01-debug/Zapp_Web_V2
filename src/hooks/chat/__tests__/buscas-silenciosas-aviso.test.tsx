@@ -152,6 +152,6 @@ describe('useScheduledReports — falha silenciosa de toggle avisa', () => {
       await result.current.toggleActive('relatorio-1', true);
     });
 
-    expect(mocks.sonnerError).toHaveBeenCalledWith('Erro ao atualizar o relatorio');
+    expect(mocks.sonnerError).toHaveBeenCalledWith('Erro ao ativar/desativar relatório');
   });
 });

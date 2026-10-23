@@ -1,0 +1,9 @@
+# Baseline de typecheck — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
+# Data: 2026-10-22
+# Nota: container não tem bun install; resultados abaixo são da API do GitHub
+
+CHECK: 🔎 TypeCheck (parte de 🔍 Lint & TypeCheck)
+STATUS: success
+SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+RESULT: passed — sem erros de typecheck na main atual

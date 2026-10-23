@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 
 interface AuditLog {
@@ -102,15 +101,22 @@ export function AuditLogDashboard() {
       // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
       // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
       setTruncated(data.length >= LOGS_PAGE_LIMIT);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
+
+      // Contagem "Hoje" vem do SERVIDOR com janela de 24 h exata (não meia-noite
+      // truncada — ver cartão HZ1-08). Fetch separado para não depender do
+      // recorte de página de 200 linhas.
+      const janela24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count: countHoje } = await supabase
+        .from('audit_logs')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', janela24h);
+
       const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
       const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
+
       setStats({
         total: data.length,
-        today: todayLogs.length,
+        today: countHoje ?? 0,
         suspicious: suspicious.length,
         uniqueUsers: uniqueUsers.size,
       });
@@ -153,10 +159,10 @@ export function AuditLogDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary', hint: undefined },
+          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success', hint: 'últimas 24 h' },
+          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive', hint: 'últimas 24 h' },
+          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info', hint: undefined },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -165,6 +171,7 @@ export function AuditLogDashboard() {
                 <div>
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  {stat.hint && <p className="text-xs text-muted-foreground/70">{stat.hint}</p>}
                 </div>
               </div>
             </CardContent>

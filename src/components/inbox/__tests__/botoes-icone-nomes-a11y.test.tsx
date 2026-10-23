@@ -18,6 +18,10 @@ vi.mock('@/lib/logger', () => ({
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: { id: 'u1', email: 'test@test.com' }, profile: null, loading: false })),
+}));
+
 const template = {
   id: 't1',
   title: 'Boas-vindas',

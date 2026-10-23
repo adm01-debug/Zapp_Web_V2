@@ -1,0 +1,105 @@
+# Baseline de testes com falha — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Fonte: github_get_job_logs nos 3 shards de Unit Tests (jobs 119760268054, 119760267990, 119760268115)
+# Data: 2026-10-22
+# Nota: falhas pré-existentes na main — não introduzidas por nenhuma das 30 PRs analisadas
+
+## SHARD 1/3 — job 119760268054
+
+src/components/groups/__tests__/GroupsView.a11y.test.tsx
+src/components/integrations/__tests__/N8nIntegrationView.a11y.test.tsx
+src/components/knowledge/__tests__/KnowledgeBaseView.erro.test.tsx
+src/components/inbox/__tests__/VoiceChanger.aria.test.tsx
+src/components/inbox/__tests__/VoiceSelector.test.tsx
+src/components/inbox/__tests__/WhisperMode.contador.test.tsx
+src/components/inbox/__tests__/botoes-icone-nomes-a11y.test.tsx
+src/components/nps/__tests__/NPSDashboard.erro.test.tsx
+src/components/notifications/__tests__/PushNotificationToggle.dica.test.tsx
+src/components/reports/__tests__/PeriodComparison.test.tsx
+src/components/queues/__tests__/QueueCard.a11y.test.tsx
+src/components/security/__tests__/AuditLogDashboard.hoje-janela24h.test.tsx
+src/components/security/__tests__/AuditLogDashboard.test.tsx
+src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+src/components/talkx/__tests__/TalkXOverview.table.test.tsx
+src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx
+src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx
+src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx
+src/components/talkx/__tests__/TalkXWizardReview.lifecycle.test.tsx
+src/components/ui/__tests__/VolumeDial.test.tsx
+src/components/ui/__tests__/alvos-toque-44px.test.tsx
+src/hooks/contacts/__tests__/useContainerColumns.test.ts
+src/hooks/integrations/__tests__/useKnowledgeBase.erro.test.tsx
+src/hooks/integrations/__tests__/useTalkXSegments.rpcDesacoplada.test.ts
+src/hooks/integrations/__tests__/useTalkXSegments.test.ts
+src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts
+src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx
+src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx
+src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx
+src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx
+src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx
+
+## SHARD 2/3 — job 119760267990
+
+src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx
+src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx
+src/components/talkx/__tests__/TalkXCampaignWizard.resumo-servidor.test.tsx
+src/components/talkx/__tests__/TalkXTemplateEditor.states.test.tsx
+src/components/talkx/__tests__/TalkXView.ajuda-teclado.test.tsx
+src/components/talkx/__tests__/TalkXView.routing.test.tsx
+src/components/talkx/__tests__/TalkXWizardDelivery.confirmacao.test.tsx
+src/components/talkx/__tests__/contrasteAA.test.tsx
+src/components/ui/__tests__/command-palette.a11y.test.tsx
+src/components/ui/__tests__/phone-input.internacional.test.tsx
+src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx
+src/hooks/calls/__tests__/useCallRecording.test.tsx
+src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx
+src/hooks/chat/__tests__/buscas-silenciosas-aviso.test.tsx
+src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx
+src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx
+src/hooks/dashboard/__tests__/useDashboardKpi.periodo.test.tsx
+src/hooks/gamification/__tests__/useAgentCelebrations.test.tsx
+src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx
+src/hooks/tasks/__tests__/workItemFormat.test.ts
+src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx
+src/hooks/system/__tests__/useDiagnosticsData.select.test.ts
+src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx
+
+## SHARD 3/3 — job 119760268115
+
+src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx
+src/components/integrations/__tests__/GoogleCalendarIntegration.test.tsx
+src/components/inbox/__tests__/InboxEmptyChat.cta.test.tsx
+src/components/inbox/__tests__/QuickRepliesManager.exclusao-confirmada.test.tsx
+src/components/inbox/__tests__/RealtimeInboxView.contato-fora-lista.test.tsx
+src/components/inbox/__tests__/RealtimeInboxView.empty-chat-nova-conversa.test.tsx
+src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx
+src/components/inbox/__tests__/SummaryResult.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.aria.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.voz-temporaria.test.tsx
+src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+src/components/security/__tests__/PasswordResetRequestsPanel.acesso-negado.test.tsx
+src/components/settings/__tests__/AvatarUpload.invalidacao.test.tsx
+src/components/settings/__tests__/SettingsView.test.tsx
+src/components/tasks/__tests__/WorkItemSheet.fuso.test.tsx
+src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx
+src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx
+src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+src/components/talkx/__tests__/TalkXTemplates.route.test.tsx
+src/components/talkx/__tests__/useCampaignRowActions.test.tsx
+src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts
+src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx
+src/components/ui/__tests__/command-palette.busca-antiga.test.tsx
+src/hooks/auth/__tests__/useAuth.fila-offline-logout.test.tsx
+src/hooks/business/__tests__/useWarRoomData.test.tsx
+src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx
+src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx
+
+## RESUMO
+
+Total de arquivos de teste com falha: 86 (35 shard1 + 24 shard2 + 27 shard3)
+Todas as falhas são pré-existentes na main — nenhuma das 30 PRs analisadas as introduziu.
+Nenhuma das 6 PRs do grupo CI-FALHA causou novas falhas de teste além do baseline.

@@ -290,7 +290,8 @@ export function useDiagnosticsData() {
     if (messagesCountError) throw messagesCountError;
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
+    // Erro na contagem de conexões sinaliza banco indisponível — não lança para que
+    // setHealth() seja chamado com database:'down' em vez de abortar toda a coleta.
 
     const realtime = await probeRealtime();
 
@@ -313,7 +314,7 @@ export function useDiagnosticsData() {
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
-      database: classifyHealth(dbError, dbLatency, 500, 2000),
+      database: classifyHealth(dbError ?? connectionsCountError ?? null, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
@@ -324,7 +325,7 @@ export function useDiagnosticsData() {
       healthCheckLogs,
       contactsCount: contactsCount || 0,
       messagesCount: messagesCount || 0,
-      connectionsCount: connectionsCount || 0,
+      connectionsCount: connectionsCount ?? 0,
     });
   };
 

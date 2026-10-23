@@ -1,8 +1,19 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { useState } from 'react';
 import { VolumeDial, type VolumeDialProps } from '@/components/ui/VolumeDial';
+
+// O setup global (src/test/setup.ts) define getBoundingClientRect com width=800/height=600,
+// o que desloca o centro do elemento para (400,300). O VolumeDial usa o centro para calcular
+// o ângulo do ponteiro — com o centro errado todos os testes de ponteiro falham.
+// Este beforeAll sobrescreve o mock global para este arquivo, zerando as dimensões do
+// elemento, de modo que cx=0/cy=0 coincida com as coordenadas esperadas pelos testes.
+beforeAll(() => {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}),
+  } as DOMRect);
+});
 
 // `useReducedMotion` é controlado pelo teste: o ambiente jsdom não tem mídia de verdade.
 const estado = vi.hoisted(() => ({ reduzido: false }));

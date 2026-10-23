@@ -90,6 +90,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [layout, setLayout] = useState<'list' | 'grid'>(loadLayout);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [draftsExpanded, setDraftsExpanded] = useState(false);
 
   // X080 — as ações de linha (matriz por status + confirmação das ações que
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
@@ -255,14 +256,18 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           if (drafts.length === 0) return null;
           return (
             <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setDraftsExpanded((v) => !v)}
+                aria-expanded={draftsExpanded}
+                className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between hover:bg-muted/10 transition-colors"
+              >
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-dash-amber" />
-                  <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
-                  <span className="text-2xs text-muted-foreground">({drafts.length})</span>
+                  <FileText className="w-4 h-4 text-dash-amber" aria-hidden="true" />
+                  <span className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</span><span className="text-2xs text-muted-foreground">({drafts.length})</span>
                 </div>
-              </div>
-              <div className="divide-y divide-border/50">
+              </button>
+              {draftsExpanded && <div className="divide-y divide-border/50">
                 {drafts.slice(0, 5).map((c) => (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
@@ -283,7 +288,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                     </button>
                   </div>
                 ))}
-              </div>
+              </div>}
             </section>
           );
         })()}

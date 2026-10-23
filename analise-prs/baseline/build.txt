@@ -1,0 +1,19 @@
+# Baseline de build — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
+# Data: 2026-10-22
+# Nota: container não tem bun install; resultados abaixo são da API do GitHub
+
+CHECK: 🏗️ Build
+STATUS: skipped
+SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
+RESULT: job pulado por condição no ci.yml (não é required check failure)
+
+# REQUIRED CHECKS STATUS na main SHA 5a4632c:
+# ✅ 🔍 Lint & TypeCheck → success
+# ❌ 🧪 Unit Tests (1/3) → failure (44 falhas pré-existentes)
+# ❌ 🧪 Unit Tests (2/3) → failure (44 falhas pré-existentes)
+# ❌ 🧪 Unit Tests (3/3) → failure (44 falhas pré-existentes)
+# ⏭️ 🏗️ Build → skipped (condicional)
+# ✅ 🔒 Security Audit → success
+# ❌ Contrato DB offline → failure (pré-existente)
+# 🚫 🎭 E2E Tests (Playwright) → cancelled

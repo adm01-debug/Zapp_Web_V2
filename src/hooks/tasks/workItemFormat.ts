@@ -62,8 +62,23 @@ export function formatWorkItemDay(
   return `${pad2(d.getDate())} ${MES_CURTO_PT_BR[d.getMonth()]}`;
 }
 
-/** Hora local "HH:mm". */
+/**
+ * Extrai HH:mm directamente da string ISO quando ela carrega offset explícito
+ * (ex.: `17:00:00-03:00`). Preserva a hora tal como gravada pelo banco,
+ * independente do fuso do navegador — por isso é correto para strings com
+ * offset. Para strings Z (UTC) ou objetos Date, usa getHours() local abaixo.
+ */
+function extractTimeFromISOOffset(s: string): string | null {
+  const m = s.match(/T(\d{2}):(\d{2})(?::\d{2})?[+-]\d{2}:\d{2}$/);
+  return m ? `${m[1]}:${m[2]}` : null;
+}
+
+/** Hora local "HH:mm". Para strings ISO com offset preserva a hora do offset. */
 export function formatWorkItemTime(value: string | Date | null | undefined): string | null {
+  if (typeof value === 'string') {
+    const fromOffset = extractTimeFromISOOffset(value);
+    if (fromOffset) return fromOffset;
+  }
   const d = toDate(value);
   if (!d) return null;
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  Archive, AlertTriangle, PowerOff, Tag,
+  Archive, AlertTriangle, PowerOff, Tag, LayoutList, LayoutGrid,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -47,6 +47,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const builderGuardRef = useRef<((proceed: () => void) => void) | null>(null);
   // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
   // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
@@ -325,7 +326,33 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
           hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
           onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
-          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
+          rightSlot={
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-lg border border-border/70 overflow-hidden">
+                <button
+                  type="button"
+                  data-testid="segments-view-list"
+                  aria-pressed={viewMode === 'list'}
+                  onClick={() => setViewMode('list')}
+                  className={cn('h-8 px-2.5 inline-flex items-center justify-center transition-colors', viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'bg-input/40 text-muted-foreground hover:bg-muted/50')}
+                  aria-label="Visualização em lista"
+                >
+                  <LayoutList className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  data-testid="segments-view-grid"
+                  aria-pressed={viewMode === 'grid'}
+                  onClick={() => setViewMode('grid')}
+                  className={cn('h-8 px-2.5 inline-flex items-center justify-center transition-colors border-l border-border/70', viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-input/40 text-muted-foreground hover:bg-muted/50')}
+                  aria-label="Visualização em grade"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+              </div>
+              <PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>
+            </div>
+          }
         />
 
         <TalkXBulkBar
@@ -358,8 +385,41 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             empty={<div className="p-4"><TalkXEmptyState icon={Bookmark} title="Nenhum segmento salvo" description="Crie segmentos inteligentes para campanhas mais assertivas." actionLabel="Criar segmento" onAction={openNew} /></div>}
           >
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
-           : (
-            <div className="overflow-x-auto">
+           : viewMode === 'grid' ? (
+            <div data-testid="segments-grid" className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {paged.map((s) => {
+                const originLabel = s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado';
+                const statusLabel = s.status === 'active' ? 'Ativo' : 'Inativo';
+                const allRules = (s.rules?.groups ?? []).flatMap((g) => g.rules);
+                return (
+                  <div key={s.id} data-testid="segment-card" className={cn('rounded-xl border border-border/70 bg-card p-4 cursor-pointer hover:border-primary/40 transition-colors space-y-3', selected?.id === s.id && 'border-primary/60 bg-primary/5')} onClick={() => setSelected(s)}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground leading-tight">{s.name}</p>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber shrink-0">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
+                      <span className={cn('text-2xs px-2 py-0.5 rounded-full font-medium', s.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground')}>{statusLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-2xs text-foreground-secondary">
+                      <Users className="w-3.5 h-3.5 shrink-0" />
+                      <span className="font-bold text-foreground text-sm">{fmtInt(s.estimated_count)}</span>
+                      <span>contatos</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {allRules.slice(0, 3).map((r, i) => {
+                        const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
+                        return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{field}</span>;
+                      })}
+                      {allRules.length > 3 && <span className="text-3xs text-muted-foreground">+{allRules.length - 3}</span>}
+                      {allRules.length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div data-testid="segments-list" className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
                   <Th className="w-10"><input type="checkbox" checked={allPageSelected} onChange={toggleAllOnPage} aria-label="Selecionar todos os segmentos da página" className="w-3.5 h-3.5 accent-primary cursor-pointer" /></Th>
@@ -367,7 +427,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr key={s.id} data-testid="segment-card" className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
