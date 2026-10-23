@@ -22,7 +22,16 @@ const state = vi.hoisted(() => ({
   listQueryCalls: [] as Array<{ page?: number; search?: string } | undefined>,
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  motion: {
+    div: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    tr: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    span: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    section: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  },
+  useReducedMotion: () => false,
+}));
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: (_accountId?: string, _threadId?: string | null, listQuery?: { page?: number; search?: string }) => {
     state.listQueryCalls.push(listQuery);

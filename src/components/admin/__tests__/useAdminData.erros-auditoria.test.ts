@@ -45,6 +45,14 @@ vi.mock('sonner', () => ({
   toast: { error: h.toastError, success: vi.fn(), warning: vi.fn() },
 }));
 
+vi.mock('@/lib/invokeEdge', () => ({
+  invokeEdge: vi.fn(async (name: string, opts?: { body?: unknown }) => {
+    await fetch(name, { method: 'POST', body: JSON.stringify(opts?.body ?? {}) });
+    return {};
+  }),
+  readEdgeError: vi.fn().mockResolvedValue({ message: '', status: 500 }),
+}));
+
 import {
   useAdminData,
   MIN_PASSWORD_LENGTH,
