@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { WorkItemSheet } from '@/components/tasks/shared/WorkItemSheet';
 import { QuickAdd } from '@/components/tasks/shared/QuickAdd';
-import { makeQueryClient, makeWrapper } from '@/test/mocks/tarefas';
+import { makeQueryClient, makeWrapper, resetSupabaseMock } from '@/test/mocks/tarefas';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
 /** Dia e hora escolhidos na tela: 2026-10-20 09:00 em São Paulo (UTC-3). */
@@ -70,6 +70,7 @@ function props(over: Record<string, unknown> = {}) {
 
 // jsdom não implementa as APIs de captura de ponteiro que o Radix usa.
 beforeEach(() => {
+  resetSupabaseMock();
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.setPointerCapture = () => {};

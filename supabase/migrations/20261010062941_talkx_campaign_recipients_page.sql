@@ -1,6 +1,6 @@
 -- Rollback: RPC nova (N-131), sem corpo anterior. Desfazer nesta ordem:
---   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) FROM PUBLIC, anon, authenticated, service_role;
---   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text);
+--   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) FROM PUBLIC, anon, authenticated, service_role;
+--   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, text);
 --
 -- N-131: lista paginada (keyset por created_at,id) dos destinatarios de uma
 -- campanha Talk X, com o contato embutido, filtro por status, busca por
@@ -14,7 +14,6 @@ CREATE OR REPLACE FUNCTION public.talkx_campaign_recipients_page(
   p_page_size integer DEFAULT 50,
   p_cursor text DEFAULT NULL,
   p_status text DEFAULT NULL,
-  p_segment_id uuid DEFAULT NULL,
   p_search text DEFAULT NULL
 )
 RETURNS jsonb
@@ -82,7 +81,6 @@ BEGIN
   LEFT JOIN public.contacts c ON c.id = r.contact_id
   WHERE r.campaign_id = p_campaign_id
     AND (p_status IS NULL OR r.status = p_status)
-    AND (p_segment_id IS NULL OR r.segment_id = p_segment_id)
     AND (v_search IS NULL OR c.name ILIKE '%' || v_search || '%' OR c.phone ILIKE '%' || v_search || '%');
 
   WITH page AS (
@@ -91,7 +89,6 @@ BEGIN
     LEFT JOIN public.contacts c ON c.id = r.contact_id
     WHERE r.campaign_id = p_campaign_id
       AND (p_status IS NULL OR r.status = p_status)
-      AND (p_segment_id IS NULL OR r.segment_id = p_segment_id)
       AND (v_search IS NULL OR c.name ILIKE '%' || v_search || '%' OR c.phone ILIKE '%' || v_search || '%')
       AND (v_cur_at IS NULL OR (r.created_at, r.id) > (v_cur_at, v_cur_id))
     ORDER BY r.created_at, r.id
@@ -130,7 +127,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) TO authenticated, service_role;
-COMMENT ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) IS
+REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) TO authenticated, service_role;
+COMMENT ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) IS
   'Talk X (N-131): pagina de destinatarios por cursor keyset (created_at,id) com contato embutido, filtro de status, busca por nome/telefone e KPIs da campanha calculados no servidor. Retorna jsonb {rows,next_cursor,total,kpis}. Nenhum campo de origem/canal.';
