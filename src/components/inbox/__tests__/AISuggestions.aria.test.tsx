@@ -14,15 +14,18 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 type AnyProps = Record<string, unknown> & { children?: ReactNode };
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const passthrough =
-    (tag: 'div' | 'button') =>
-    ({ children, ...props }: AnyProps) => {
-      const Tag = tag;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <Tag {...(props as any)}>{children}</Tag>;
-    };
+      (tag: 'div' | 'button') =>
+      ({ children, ...props }: AnyProps) => {
+        const Tag = tag;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return <Tag {...(props as any)}>{children}</Tag>;
+      };
   return {
+    ...actual,
+
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
   };

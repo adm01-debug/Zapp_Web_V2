@@ -7,9 +7,14 @@ import React from 'react';
  * precisam de rótulo pt-BR + cor por token e entrar no filtro "Erro".
  * A prova renderiza o componente REAL (sem dublê de status).
  */
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 vi.mock('@/components/ui/scroll-area', () => ({
   ScrollArea: ({ children, className }: { children?: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
 }));

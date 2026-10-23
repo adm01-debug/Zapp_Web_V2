@@ -15,10 +15,15 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div> },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div> },
+      AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { VideoPreview } from '../MediaPreview';
 

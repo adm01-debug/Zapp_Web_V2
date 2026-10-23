@@ -38,11 +38,15 @@ vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: h.isAdmin, isSupervisor: false, roles: [], loading: false }),
 }));
-vi.mock('framer-motion', () => ({
-  useReducedMotion: () => h.reducedMotion,
-  motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
-  AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useReducedMotion: () => h.reducedMotion,
+      motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
+      AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
+  };
+});
 vi.mock('@/components/ui/motion', () => ({
   motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
   StaggeredList: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,

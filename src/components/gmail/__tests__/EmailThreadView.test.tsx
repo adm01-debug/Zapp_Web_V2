@@ -14,10 +14,15 @@ function makeMotionEl(tag: string) {
     return createElement(tag, safe, children as React.ReactNode);
   };
 }
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: new Proxy({}, { get: (_t, prop: string) => makeMotionEl(prop === 'button' ? 'button' : 'div') }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      motion: new Proxy({}, { get: (_t, prop: string) => makeMotionEl(prop === 'button' ? 'button' : 'div') }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/ui/scroll-area', () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,

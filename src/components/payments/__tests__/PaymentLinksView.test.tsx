@@ -18,14 +18,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => (
+          <div {...props}>{children}</div>
+        ),
+      },
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 vi.mock('@/components/layout/PageHeader', () => ({
   PageHeader: ({ title, subtitle, actions }: { title: string; subtitle: string; actions?: React.ReactNode }) => (
     <header>

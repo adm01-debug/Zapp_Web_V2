@@ -22,17 +22,21 @@ import React from 'react';
  * viabilidade ao fallback ANTES de qualquer aparelho real entrar na conta.
  */
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
-  // VideoFullscreen (U2) lê `useReducedMotion` para o gesto de entrada.
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
+      // VideoFullscreen (U2) lê `useReducedMotion` para o gesto de entrada.
+      useReducedMotion: () => false,
+  };
+});
 
 // Foco no DOM do <video>: o hook de volume e a sonda de faixa de áudio entram stubados.
 vi.mock('@/hooks/communication/useMediaElementVolume', () => ({

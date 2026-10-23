@@ -41,16 +41,21 @@ vi.mock('@/lib/logger', () => ({
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 

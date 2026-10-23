@@ -27,20 +27,25 @@ vi.mock('sonner', () => ({
   },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef(
-      ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
-        React.createElement('div', { ...filterDomProps(props), ref }, children),
-    ),
-    button: React.forwardRef(
-      ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLButtonElement>) =>
-        React.createElement('button', { ...filterDomProps(props), ref }, children),
-    ),
-  },
-  AnimatePresence: ({ children }: React.PropsWithChildren) =>
-    React.createElement(React.Fragment, null, children),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef(
+          ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
+            React.createElement('div', { ...filterDomProps(props), ref }, children),
+        ),
+        button: React.forwardRef(
+          ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLButtonElement>) =>
+            React.createElement('button', { ...filterDomProps(props), ref }, children),
+        ),
+      },
+      AnimatePresence: ({ children }: React.PropsWithChildren) =>
+        React.createElement(React.Fragment, null, children),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 function filterDomProps(props: Record<string, unknown>) {
   const { whileHover, whileTap, initial, animate, exit, transition, ...rest } = props;

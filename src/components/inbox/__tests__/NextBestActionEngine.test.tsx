@@ -12,10 +12,13 @@ const { useNba } = vi.hoisted(() => ({ useNba: vi.fn() }));
 
 vi.mock('@/hooks/chat/useNextBestAction', () => ({ useNextBestAction: useNba }));
 
-vi.mock('framer-motion', async () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const React = await import('react');
-  const semAnimacao = ({ initial, animate, exit, transition, variants, whileHover, whileTap, ...rest }: Record<string, unknown>) => rest;
+    const semAnimacao = ({ initial, animate, exit, transition, variants, whileHover, whileTap, ...rest }: Record<string, unknown>) => rest;
   return {
+    ...actual,
+
     motion: {
       div: React.forwardRef((props: Record<string, unknown>, ref: unknown) =>
         React.createElement('div', { ...semAnimacao(props), ref }),

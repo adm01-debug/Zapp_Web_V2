@@ -3,12 +3,17 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: ComponentProps<'div'>) => <div {...props}>{children}</div>,
-    circle: (props: ComponentProps<'circle'>) => <circle {...props} />,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: ComponentProps<'div'>) => <div {...props}>{children}</div>,
+        circle: (props: ComponentProps<'circle'>) => <circle {...props} />,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { SLAIndicator } from '../SLAIndicator';
 

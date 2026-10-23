@@ -17,10 +17,15 @@ function makeMotionEl(tag: string) {
     return createElement(tag, safeProps, children as React.ReactNode);
   };
 }
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: new Proxy({}, { get: () => makeMotionEl('div') }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      motion: new Proxy({}, { get: () => makeMotionEl('div') }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 

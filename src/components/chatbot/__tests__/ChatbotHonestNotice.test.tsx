@@ -44,11 +44,14 @@ vi.mock('@/hooks/integrations/useChatbotFlows', () => ({
 }));
 
 // framer-motion é usado como `motion.div` + `AnimatePresence` + `useReducedMotion` nesta view.
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const MotionDiv = ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (
-    <div {...props}>{children}</div>
-  );
+      <div {...props}>{children}</div>
+    );
   return {
+    ...actual,
+
     motion: { div: MotionDiv },
     AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
     useReducedMotion: () => false,

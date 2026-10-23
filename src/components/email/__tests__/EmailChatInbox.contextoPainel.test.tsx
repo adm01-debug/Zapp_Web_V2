@@ -60,7 +60,13 @@ const state = vi.hoisted(() => ({
   subscribeToThreads: vi.fn(() => () => {}),
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>, useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({

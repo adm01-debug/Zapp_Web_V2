@@ -21,14 +21,17 @@ import React from 'react';
 
 const estado = vi.hoisted(() => ({ forcarFalha: false }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const passthrough = (tag: string) =>
-    React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
-      return React.createElement(tag, { ...rest, ref });
-    });
+      React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+        const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+        void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
+        return React.createElement(tag, { ...rest, ref });
+      });
   return {
+    ...actual,
+
     motion: {
       div: passthrough('div'),
       span: passthrough('span'),

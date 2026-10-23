@@ -62,10 +62,14 @@ vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: true, roles: ['admin'], loading: false }),
 }));
-vi.mock('framer-motion', () => ({
-  useReducedMotion: () => false,
-  motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useReducedMotion: () => false,
+      motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+  };
+});
 vi.mock('@/components/ui/motion', () => ({
   motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
   StaggeredList: ({ children, className }: { children?: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,

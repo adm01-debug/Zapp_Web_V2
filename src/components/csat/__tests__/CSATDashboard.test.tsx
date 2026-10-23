@@ -9,12 +9,17 @@ vi.mock('@/hooks/business/useCSAT', () => ({
   useCSAT: vi.fn(),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
-      <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
+          <div {...props}>{children}</div>,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 const mockUseCSAT = vi.mocked(useCSAT);
 

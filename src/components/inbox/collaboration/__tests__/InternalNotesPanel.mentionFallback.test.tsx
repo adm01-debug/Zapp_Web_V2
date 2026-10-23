@@ -26,18 +26,23 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('framer-motion', () => ({
-  motion: new Proxy(
-    {},
-    {
-      get: (_t, tag: string) => (props: Record<string, unknown>) => {
-        const { children, initial, animate, exit, transition, layout, ...rest } = props;
-        return React.createElement(tag, rest as Record<string, unknown>, children as React.ReactNode);
-      },
-    },
-  ),
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: new Proxy(
+        {},
+        {
+          get: (_t, tag: string) => (props: Record<string, unknown>) => {
+            const { children, initial, animate, exit, transition, layout, ...rest } = props;
+            return React.createElement(tag, rest as Record<string, unknown>, children as React.ReactNode);
+          },
+        },
+      ),
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/inbox/collaboration/MentionInput', () => ({
   MentionInput: () => <div />,

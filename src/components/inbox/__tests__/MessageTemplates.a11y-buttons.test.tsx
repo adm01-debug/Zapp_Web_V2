@@ -31,10 +31,15 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { id: 'u1', email: 'test@test.com' } })),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div> },
-  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div> },
+      AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // O dialog real só monta o conteúdo quando `open`; o mock imita isso para o
 // teste provar que os nomes acessíveis existem na tela realmente aberta.

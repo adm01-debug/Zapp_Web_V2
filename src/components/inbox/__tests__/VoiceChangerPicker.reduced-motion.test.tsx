@@ -21,17 +21,21 @@ const toastMock = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
 
 vi.mock('sonner', () => ({ toast: toastMock }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      motionProps.push(props);
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: ReactNode }) => children,
-  useReducedMotion: () => motionState.reduzido,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          motionProps.push(props);
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children: ReactNode }) => children,
+      useReducedMotion: () => motionState.reduzido,
+  };
+});
 
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({ children, onOpenChange }: { children: ReactNode; onOpenChange?: (v: boolean) => void }) => {

@@ -25,15 +25,18 @@ const estado = vi.hoisted(() => ({
   propsDeMovimento: [] as Record<string, unknown>[],
 }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const passthrough = (tag: string) =>
-    React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      void whileHover; void whileTap; void transition; void variants;
-      estado.propsDeMovimento.push({ ...rest, initial, animate, exit });
-      return React.createElement(tag, { ...rest, ref });
-    });
+      React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+        const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+        void whileHover; void whileTap; void transition; void variants;
+        estado.propsDeMovimento.push({ ...rest, initial, animate, exit });
+        return React.createElement(tag, { ...rest, ref });
+      });
   return {
+    ...actual,
+
     motion: {
       div: passthrough('div'),
       span: passthrough('span'),

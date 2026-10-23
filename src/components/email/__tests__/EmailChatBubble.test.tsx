@@ -7,14 +7,19 @@ import { sanitizeEmailHtml, buildBodyPreview } from '@/lib/emailHtml';
 // jsdom não aplica CSS real: asserções são sobre classes/atributos renderizados,
 // não pixels (honestidade de teste — o layout visual é validado na matriz manual).
 
-vi.mock('framer-motion', () => ({
-  motion: new Proxy({}, {
-    get: (_t: unknown, prop: string) => {
-      if (prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <div {...props}>{children as React.ReactNode}</div>;
-      return ({ children }: Record<string, unknown>) => <div>{children as React.ReactNode}</div>;
-    },
-  }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: new Proxy({}, {
+        get: (_t: unknown, prop: string) => {
+          if (prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <div {...props}>{children as React.ReactNode}</div>;
+          return ({ children }: Record<string, unknown>) => <div>{children as React.ReactNode}</div>;
+        },
+      }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 function makeMessage(overrides: Partial<EmailMessage> = {}): EmailMessage {
   return {

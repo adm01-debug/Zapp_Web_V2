@@ -25,20 +25,24 @@ vi.mock('sonner', () => ({ toast: toastMock }));
 // jsdom + framer-motion não concluem as animações do AnimatePresence. Mesmo
 // pass-through usado nos testes de inbox (motion.button e motion.div viram
 // elementos nativos, então os cliques exercitam o componente real).
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-    button: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('button', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: ReactNode }) => children,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+        button: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('button', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children: ReactNode }) => children,
+      useReducedMotion: () => false,
+  };
+});
 
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({

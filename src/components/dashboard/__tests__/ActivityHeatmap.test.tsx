@@ -5,15 +5,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { ActivityHeatmap } from '../ActivityHeatmap';
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({

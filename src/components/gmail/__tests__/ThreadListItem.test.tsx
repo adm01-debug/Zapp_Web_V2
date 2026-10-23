@@ -6,18 +6,23 @@ import { ThreadListItem } from '../ThreadListItem';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout', 'whileInView']);
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: new Proxy({}, {
-    get: (_t, prop: string) => {
-      const tag = prop === 'button' ? 'button' : prop === 'span' ? 'span' : 'div';
-      return function MotionEl({ children, ...props }: Record<string, unknown>) {
-        const safe = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));
-        return createElement(tag, safe, children as React.ReactNode);
-      };
-    },
-  }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      motion: new Proxy({}, {
+        get: (_t, prop: string) => {
+          const tag = prop === 'button' ? 'button' : prop === 'span' ? 'span' : 'div';
+          return function MotionEl({ children, ...props }: Record<string, unknown>) {
+            const safe = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));
+            return createElement(tag, safe, children as React.ReactNode);
+          };
+        },
+      }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/ui/avatar', () => ({
   Avatar: ({ children, className }: { children: ReactNode; className?: string }) => <div className={className}>{children}</div>,

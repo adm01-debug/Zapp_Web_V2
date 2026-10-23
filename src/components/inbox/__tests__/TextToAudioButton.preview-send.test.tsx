@@ -20,20 +20,22 @@ const { toastErro, toastSucesso } = vi.hoisted(() => ({
 
 vi.mock('sonner', () => ({ toast: { error: toastErro, success: toastSucesso } }));
 
-vi.mock('framer-motion', async () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const React = await import('react');
-  const semAnimacao = ({
-    whileTap,
-    whileHover,
-    initial,
-    animate,
-    exit,
-    transition,
-    variants,
-    ...rest
-  }: Record<string, unknown>) => rest;
-
+    const semAnimacao = ({
+      whileTap,
+      whileHover,
+      initial,
+      animate,
+      exit,
+      transition,
+      variants,
+      ...rest
+    }: Record<string, unknown>) => rest;
   return {
+    ...actual,
+
     motion: {
       button: React.forwardRef((props: Record<string, unknown>, ref: unknown) =>
         React.createElement('button', { ...semAnimacao(props), ref }),

@@ -16,13 +16,18 @@ vi.mock('@/hooks/communication/useSpeechToText', () => ({
 }));
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div>{children}</div>,
-    span: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <span>{children}</span>,
-  },
-  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div>{children}</div>,
+        span: ({ children, ...rest }: { children?: import("react").ReactNode } & Record<string, unknown>) => <span>{children}</span>,
+      },
+      AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // Mock tooltip
 vi.mock('@/components/ui/tooltip', () => ({

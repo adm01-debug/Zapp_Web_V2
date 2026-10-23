@@ -63,11 +63,16 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
 }));
 vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';

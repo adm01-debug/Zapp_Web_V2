@@ -10,16 +10,19 @@ import { render, screen, fireEvent } from '@testing-library/react';
  * Estes casos renderizam o componente REAL (`VoiceSearchOverlay`), só trocando o
  * `motion` do framer-motion por tags nativas para o DOM ser inspecionável.
  */
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const make = (tag: string) =>
-    React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const {
-        initial: _initial, animate: _animate, exit: _exit, transition: _transition,
-        variants: _variants, whileHover: _whileHover, whileTap: _whileTap, ...rest
-      } = props;
-      return React.createElement(tag, { ...rest, ref });
-    });
+      React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+        const {
+          initial: _initial, animate: _animate, exit: _exit, transition: _transition,
+          variants: _variants, whileHover: _whileHover, whileTap: _whileTap, ...rest
+        } = props;
+        return React.createElement(tag, { ...rest, ref });
+      });
   return {
+    ...actual,
+
     motion: new Proxy({} as Record<string, unknown>, { get: (_alvo, tag: string) => make(tag) }),
     AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useReducedMotion: () => true,

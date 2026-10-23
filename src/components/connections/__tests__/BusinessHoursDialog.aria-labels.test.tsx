@@ -16,9 +16,14 @@ const state = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), warning: vi.fn() }) }));
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

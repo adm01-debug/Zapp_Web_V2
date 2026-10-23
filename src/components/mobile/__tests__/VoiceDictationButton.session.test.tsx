@@ -9,13 +9,18 @@ vi.mock('sonner', () => ({ toast: { error: toastError, success: vi.fn() } }));
 // Só a moldura visual é mockada (framer-motion/tooltip). O componente REAL e o
 // hook REAL (useSpeechToText) ficam de pé: é o indicador deles que está sob teste.
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
-    span: ({ children }: { children?: import('react').ReactNode }) => <span>{children}</span>,
-  },
-  AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
+        span: ({ children }: { children?: import('react').ReactNode }) => <span>{children}</span>,
+      },
+      AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/ui/tooltip', () => ({
   Tooltip: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,

@@ -28,13 +28,17 @@ const { estado } = vi.hoisted(() => ({
   estado: { incomingCall: null as null | Record<string, unknown> },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
+      },
+      AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
+      useReducedMotion: () => false,
+  };
+});
 vi.mock('../CallDialog', () => ({ CallDialog: () => <div data-testid="call-dialog" /> }));
 vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
   useIncomingCallListener: () => ({ incomingCall: estado.incomingCall, dismissCall: vi.fn() }),

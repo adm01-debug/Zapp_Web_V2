@@ -5,13 +5,17 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { axe } from 'vitest-axe';
 import ConversationHeatmap from '../ConversationHeatmap';
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
-      <div {...props}>{children}</div>,
-  },
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
+          <div {...props}>{children}</div>,
+      },
+      useReducedMotion: () => false,
+  };
+});
 
 const mockData = [
   { day: 0, hour: 9, value: 5, count: 3 },

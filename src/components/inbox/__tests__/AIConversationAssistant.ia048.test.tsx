@@ -51,14 +51,19 @@ vi.mock('@/components/inbox/ai-tools/AnalysisTabs', () => ({
 vi.mock('@/components/inbox/ai-tools/VisionIcon', () => ({
   VisionIcon: () => <span data-testid="vision-icon" />,
 }));
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <div {...(props as any)}>{children}</div>;
-    },
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return <div {...(props as any)}>{children}</div>;
+        },
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 const messages = Array.from({ length: 6 }, (_, i) => ({
   id: `m${i}`,

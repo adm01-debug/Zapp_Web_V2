@@ -40,14 +40,19 @@ vi.mock('@/hooks/system/useDownloadPermission', () => ({
   useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: new Proxy({}, {
-    get: (_t: unknown, prop: string) => {
-      if (prop === 'button' || prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <button type="button" {...props}>{children as React.ReactNode}</button>;
-      return ({ children }: Record<string, unknown>) => <div>{children as React.ReactNode}</div>;
-    },
-  }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: new Proxy({}, {
+        get: (_t: unknown, prop: string) => {
+          if (prop === 'button' || prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <button type="button" {...props}>{children as React.ReactNode}</button>;
+          return ({ children }: Record<string, unknown>) => <div>{children as React.ReactNode}</div>;
+        },
+      }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 /**
  * Cliente Supabase falso que REGISTRA cada round-trip. Cada consulta é uma

@@ -49,8 +49,8 @@ vi.mock('@/hooks/system/useNetworkStatus', () => ({
   }),
 }));
 
-vi.mock('framer-motion', async () => {
-  const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion');
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   return {
     ...actual,
     useReducedMotion: () => h.reduced,

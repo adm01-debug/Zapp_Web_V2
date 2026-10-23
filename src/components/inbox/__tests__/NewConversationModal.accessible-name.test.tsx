@@ -57,7 +57,14 @@ vi.mock('@/components/ui/select', async () => {
   };
 });
 vi.mock('@/lib/utils', () => ({ cn: (...args: unknown[]) => args.filter(Boolean).join(' ') }));
-vi.mock('framer-motion', () => ({ motion: { button: ({ children, ...props }: React.ComponentProps<'button'>) => <button {...props}>{children}</button> } }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { button: ({ children, ...props }: React.ComponentProps<'button'>) => <button {...props}>{children}</button> },
+    useReducedMotion: vi.fn(() => null),
+  };
+});
 vi.mock('lucide-react', () => ({
   Search: () => null,
   MessageSquarePlus: () => null,

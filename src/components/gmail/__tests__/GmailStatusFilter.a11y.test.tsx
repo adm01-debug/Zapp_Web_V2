@@ -22,9 +22,14 @@ import type { EmailThread, GmailAccount } from '@/hooks/integrations/useGmail';
  */
 
 // framer-motion: AnimatePresence passes through children
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // ScrollArea: simple div wrapper
 vi.mock('@/components/ui/scroll-area', () => ({

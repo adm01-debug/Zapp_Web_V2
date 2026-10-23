@@ -41,12 +41,17 @@ const { mockAccept, mockReject, controle } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
+      },
+      AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // Probe do diálogo: a prova de que o alerta abriu o estado "atendido".
 vi.mock('../CallDialog', () => ({

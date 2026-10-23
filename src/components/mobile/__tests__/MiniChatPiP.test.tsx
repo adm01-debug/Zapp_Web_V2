@@ -3,16 +3,21 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, className, style, onClick, ...rest }: { children?: import("react").ReactNode; className?: string; style?: import("react").CSSProperties; onClick?: () => void } & Record<string, unknown>) => (
-      <div className={className} style={style} onClick={onClick} data-testid="pip-container">
-        {children}
-      </div>
-    ),
-  },
-  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, className, style, onClick, ...rest }: { children?: import("react").ReactNode; className?: string; style?: import("react").CSSProperties; onClick?: () => void } & Record<string, unknown>) => (
+          <div className={className} style={style} onClick={onClick} data-testid="pip-container">
+            {children}
+          </div>
+        ),
+      },
+      AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 describe('MiniChatPiP', () => {
   const defaultProps = {

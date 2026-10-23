@@ -22,16 +22,20 @@ const audioState = vi.hoisted(() => ({
 vi.mock('sonner', () => ({ toast: toastMock }));
 
 // Pass-through do framer-motion (jsdom não conclui AnimatePresence).
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: ReactNode }) => children,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children: ReactNode }) => children,
+      useReducedMotion: () => false,
+  };
+});
 
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({

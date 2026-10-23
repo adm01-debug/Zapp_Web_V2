@@ -10,9 +10,12 @@ vi.mock('@/hooks/system/usePermissions', () => ({
   usePermissions: () => mockUsePermissions(),
 }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
   return {
+    ...actual,
+
     motion: {
       div: ({ children, ...props }: { children?: ReactNode } & Record<string, unknown>) => {
         const safe = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));

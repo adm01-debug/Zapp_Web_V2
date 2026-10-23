@@ -19,10 +19,15 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
-  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
+      AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { ConnectionHealthPanel } from '@/components/diagnostics/ConnectionHealthPanel';
 import { toast } from 'sonner';

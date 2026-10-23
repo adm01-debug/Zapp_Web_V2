@@ -21,24 +21,29 @@ import type { CommandItem } from '@/components/ui/command-palette';
 const ANIMATION_PROPS = new Set([
   'initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout',
 ]);
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  // Preserva a TAG real (`motion.button` -> <button>) para o item continuar sendo um botão
-  // de verdade para quem usa (e para o `getByRole` do teste).
-  motion: new Proxy(
-    {},
-    {
-      get:
-        (_target, tag: string) =>
-        ({ children, ...props }: Record<string, unknown>) => {
-          const safe = Object.fromEntries(
-            Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k))
-          );
-          return createElement(tag, safe, children as React.ReactNode);
-        },
-    }
-  ),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      // Preserva a TAG real (`motion.button` -> <button>) para o item continuar sendo um botão
+      // de verdade para quem usa (e para o `getByRole` do teste).
+      motion: new Proxy(
+        {},
+        {
+          get:
+            (_target, tag: string) =>
+            ({ children, ...props }: Record<string, unknown>) => {
+              const safe = Object.fromEntries(
+                Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k))
+              );
+              return createElement(tag, safe, children as React.ReactNode);
+            },
+        }
+      ),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

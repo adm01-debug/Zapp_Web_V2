@@ -15,16 +15,19 @@ import { Message, type UnsupportedMessageKind } from '@/types/chat';
 
 const reduced = vi.hoisted(() => ({ value: false }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const passthrough = ({
-    children,
-    whileHover: _whileHover,
-    transition: _transition,
-    initial: _initial,
-    animate: _animate,
-    ...rest
-  }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>) => <div {...rest}>{children}</div>;
+      children,
+      whileHover: _whileHover,
+      transition: _transition,
+      initial: _initial,
+      animate: _animate,
+      ...rest
+    }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>) => <div {...rest}>{children}</div>;
   return {
+    ...actual,
+
     motion: new Proxy({}, { get: () => passthrough }),
     AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useReducedMotion: () => reduced.value,

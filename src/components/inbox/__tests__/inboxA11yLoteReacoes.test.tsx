@@ -22,9 +22,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // O `useReducedMotion` do framer-motion lê um singleton inicializado uma única
 // vez; trocar o `matchMedia` depois não adianta. Aqui ele vira um interruptor.
 const movimento = { reduzido: true };
-vi.mock('framer-motion', async () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const real = await vi.importActual<typeof import('framer-motion')>('framer-motion');
-  return { ...real, useReducedMotion: () => movimento.reduzido };
+  return {
+    ...actual,
+    ...real, useReducedMotion: () => movimento.reduzido
+  };
 });
 
 vi.mock('@/hooks/auth/useAuth', () => ({

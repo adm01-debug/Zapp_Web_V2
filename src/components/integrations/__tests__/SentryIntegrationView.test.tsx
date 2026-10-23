@@ -10,11 +10,16 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // O hub também renderiza o cartão do Gmail, que depende deste hook.
 vi.mock('@/hooks/integrations/useGmail', () => ({

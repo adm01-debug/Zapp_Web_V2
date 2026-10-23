@@ -15,9 +15,14 @@ const roleState = vi.hoisted(() => ({ isAdmin: true }));
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

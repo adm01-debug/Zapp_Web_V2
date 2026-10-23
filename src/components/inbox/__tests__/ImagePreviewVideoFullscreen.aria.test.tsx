@@ -3,21 +3,25 @@ import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import React from 'react';
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-    img: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('img', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
-  // VideoFullscreen (U2) lê `useReducedMotion` para o gesto de entrada.
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+        img: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('img', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
+      // VideoFullscreen (U2) lê `useReducedMotion` para o gesto de entrada.
+      useReducedMotion: () => false,
+  };
+});
 
 vi.mock('@/hooks/system/useDownloadPermission', () => ({
   useDownloadPermission: () => ({ canDownload: true, isLoading: false }),

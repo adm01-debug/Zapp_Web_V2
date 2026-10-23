@@ -50,7 +50,8 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: () => null,
 }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   type MotionProps = Record<string, unknown> & { children?: React.ReactNode };
   const strip = ({
     whileHover: _whileHover,
@@ -61,12 +62,14 @@ vi.mock('framer-motion', () => {
     ...rest
   }: MotionProps) => rest;
   return {
+    ...actual,
     motion: {
       button: (props: MotionProps) => (
         <button {...(strip(props) as React.ButtonHTMLAttributes<HTMLButtonElement>)} />
       ),
       div: (props: MotionProps) => <div {...(strip(props) as React.HTMLAttributes<HTMLDivElement>)} />,
     },
+    useReducedMotion: vi.fn(() => null),
   };
 });
 

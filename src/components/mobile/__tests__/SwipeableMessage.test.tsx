@@ -3,15 +3,20 @@ import { render, screen } from '@testing-library/react';
 import { SwipeableMessage } from '@/components/mobile/SwipeableMessage';
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, className, style, onClick, ...rest }: { children?: import("react").ReactNode; className?: string; style?: import("react").CSSProperties; onClick?: () => void } & Record<string, unknown>) => (
-      <div className={className} style={style}>{children}</div>
-    ),
-  },
-  useMotionValue: () => ({ get: () => 0, set: vi.fn() }),
-  useTransform: () => ({ get: () => 0, set: vi.fn() }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, className, style, onClick, ...rest }: { children?: import("react").ReactNode; className?: string; style?: import("react").CSSProperties; onClick?: () => void } & Record<string, unknown>) => (
+          <div className={className} style={style}>{children}</div>
+        ),
+      },
+      useMotionValue: () => ({ get: () => 0, set: vi.fn() }),
+      useTransform: () => ({ get: () => 0, set: vi.fn() }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // Mock useIsMobile
 vi.mock('@/hooks/ui/use-mobile', () => ({

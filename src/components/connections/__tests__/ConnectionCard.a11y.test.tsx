@@ -17,13 +17,18 @@ import { axe } from 'vitest-axe';
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => (
+          <div {...props}>{children}</div>
+        ),
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: false, isSupervisor: false, roles: [], loading: false }),
 }));

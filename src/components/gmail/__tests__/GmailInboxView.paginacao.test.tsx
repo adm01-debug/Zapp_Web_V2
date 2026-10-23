@@ -31,10 +31,15 @@ vi.mock('@/lib/gmailOAuth', () => ({ createGmailOAuthState: vi.fn(() => 'state')
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ RESERVED_HASHES: new Set(['main-content']) }));
 
 // Apresentação apenas: o que o teste mede é a consulta, não o desenho do item.
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
-  motion: new Proxy({}, { get: () => ({ children, ...props }: { children?: ReactNode }) => createElement('div', props, children) }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+      motion: new Proxy({}, { get: () => ({ children, ...props }: { children?: ReactNode }) => createElement('div', props, children) }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 const SelectCtx = createContext<(value: string) => void>(() => {});
 vi.mock('@/components/ui/select', () => ({
   Select: ({ children, onValueChange }: { children: ReactNode; onValueChange?: (v: string) => void }) => (

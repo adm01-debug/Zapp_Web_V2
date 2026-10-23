@@ -76,14 +76,19 @@ vi.mock('@/hooks/ui/useUniversityHelp', () => ({
   useUniversityHelp: () => universityHelp.value,
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => (
-      <div {...(props as Record<string, unknown>)}>{children}</div>
-    ),
-  },
-  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => (
+          <div {...(props as Record<string, unknown>)}>{children}</div>
+        ),
+      },
+      AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 const recentMessages = (count: number) =>
   Array.from({ length: count }, (_, i) => ({

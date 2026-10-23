@@ -119,15 +119,20 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { id: 'u1', email: 'test@test.com' } })),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-    // O botão do framer-motion perde `whileHover`/`whileTap` (atributo que não
-    // existe no DOM); o que interessa aqui é o botão nativo por dentro.
-    button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
-  },
-  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+        // O botão do framer-motion perde `whileHover`/`whileTap` (atributo que não
+        // existe no DOM); o que interessa aqui é o botão nativo por dentro.
+        button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
+      },
+      AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),

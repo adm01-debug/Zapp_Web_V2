@@ -17,9 +17,13 @@ type Handler = (payload: { new?: Record<string, unknown> }) => void;
 
 const prefersReduzido = vi.hoisted(() => ({ valor: false }));
 
-vi.mock('framer-motion', async () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const real = await vi.importActual<typeof import('framer-motion')>('framer-motion');
-  return { ...real, useReducedMotion: () => prefersReduzido.valor };
+  return {
+    ...actual,
+    ...real, useReducedMotion: () => prefersReduzido.valor
+  };
 });
 
 const h = vi.hoisted(() => ({

@@ -9,14 +9,19 @@ import { EmailThreadList } from '../EmailThreadList';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 import { EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_PAGE_SIZE } from '@/lib/emailThreadQuery';
 
-vi.mock('framer-motion', () => ({
-  motion: new Proxy({}, {
-    get: (_t: unknown, prop: string) => {
-      if (prop === 'button' || prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <button type="button" {...props}>{children as React.ReactNode}</button>;
-      return ({ children }: Record<string, unknown>) => <div>{children as React.ReactNode}</div>;
-    },
-  }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: new Proxy({}, {
+        get: (_t: unknown, prop: string) => {
+          if (prop === 'button' || prop === 'div') return ({ children, ...props }: Record<string, unknown>) => <button type="button" {...props}>{children as React.ReactNode}</button>;
+          return ({ children }: Record<string, unknown>) => <div>{children as React.ReactNode}</div>;
+        },
+      }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 function makeThread(overrides: Partial<EmailThread> = {}): EmailThread {
   return {

@@ -114,12 +114,17 @@ vi.mock('@/components/ui/avatar', () => ({
   AvatarFallback: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+      },
+      AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { CallDialog } from '../CallDialog';
 import { REMOTE_AUDIO_ID } from '@/lib/calls/adapters/SipCallAdapter';

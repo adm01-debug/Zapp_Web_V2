@@ -8,28 +8,31 @@ import type { WhatsAppStatusMessage } from '@/hooks/integrations/useWhatsAppStat
 // (o teste mede o COMPORTAMENTO: qual transform/transição o componente escolhe
 // em cada modo, não a animação em si).
 const fm = vi.hoisted(() => ({ reduced: false }));
-vi.mock('framer-motion', async () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const React = await import('react');
-  const motionDiv = ({
-    initial,
-    animate,
-    exit,
-    transition,
-    ...rest
-  }: Record<string, unknown>) => {
-    void exit;
-    const initialX =
-      initial && typeof initial === 'object' && 'x' in (initial as Record<string, unknown>)
-        ? String((initial as Record<string, unknown>).x)
-        : '';
-    return React.createElement('div', {
-      ...rest,
-      'data-initial-x': initialX,
-      'data-animate': animate ? JSON.stringify(animate) : '',
-      'data-transition': transition ? JSON.stringify(transition) : '',
-    });
-  };
+    const motionDiv = ({
+      initial,
+      animate,
+      exit,
+      transition,
+      ...rest
+    }: Record<string, unknown>) => {
+      void exit;
+      const initialX =
+        initial && typeof initial === 'object' && 'x' in (initial as Record<string, unknown>)
+          ? String((initial as Record<string, unknown>).x)
+          : '';
+      return React.createElement('div', {
+        ...rest,
+        'data-initial-x': initialX,
+        'data-animate': animate ? JSON.stringify(animate) : '',
+        'data-transition': transition ? JSON.stringify(transition) : '',
+      });
+    };
   return {
+    ...actual,
+
     motion: { div: motionDiv },
     AnimatePresence: ({ children }: { children: React.ReactNode }) =>
       React.createElement(React.Fragment, null, children),

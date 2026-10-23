@@ -16,28 +16,32 @@ import { createElement, type ReactNode } from 'react';
 
 const reduzido = { value: false };
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const propsDeMovimento = new Set([
-    'initial', 'animate', 'exit', 'transition', 'variants', 'whileHover',
-    'whileTap', 'whileFocus', 'layout', 'layoutId', 'drag', 'onAnimationComplete',
-  ]);
-  const cache = new Map<string, (props: Record<string, unknown>) => ReactNode>();
-  const motion = new Proxy({} as Record<string, unknown>, {
-    get(_target, tag: string) {
-      if (typeof tag !== 'string') return undefined;
-      if (!cache.has(tag)) {
-        cache.set(tag, (props: Record<string, unknown>) => {
-          const limpos: Record<string, unknown> = {};
-          for (const [chave, valor] of Object.entries(props)) {
-            if (!propsDeMovimento.has(chave)) limpos[chave] = valor;
-          }
-          return createElement(tag, limpos, props.children as ReactNode);
-        });
-      }
-      return cache.get(tag);
-    },
-  });
-  return { motion, AnimatePresence: ({ children }: { children: ReactNode }) => children, Variants: undefined, useReducedMotion: () => reduzido.value };
+      'initial', 'animate', 'exit', 'transition', 'variants', 'whileHover',
+      'whileTap', 'whileFocus', 'layout', 'layoutId', 'drag', 'onAnimationComplete',
+    ]);
+    const cache = new Map<string, (props: Record<string, unknown>) => ReactNode>();
+    const motion = new Proxy({} as Record<string, unknown>, {
+      get(_target, tag: string) {
+        if (typeof tag !== 'string') return undefined;
+        if (!cache.has(tag)) {
+          cache.set(tag, (props: Record<string, unknown>) => {
+            const limpos: Record<string, unknown> = {};
+            for (const [chave, valor] of Object.entries(props)) {
+              if (!propsDeMovimento.has(chave)) limpos[chave] = valor;
+            }
+            return createElement(tag, limpos, props.children as ReactNode);
+          });
+        }
+        return cache.get(tag);
+      },
+    });
+  return {
+    ...actual,
+    motion, AnimatePresence: ({ children }: { children: ReactNode }) => children, Variants: undefined, useReducedMotion: () => reduzido.value
+  };
 });
 
 import { AnimatedCounter, Typewriter } from '@/components/ui/motion/effects';

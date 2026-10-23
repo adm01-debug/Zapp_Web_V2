@@ -28,11 +28,16 @@ vi.mock('@/hooks/system/useUserRole', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { NumberReputationMonitor } from '@/components/connections/NumberReputationMonitor';
 import { toast } from 'sonner';

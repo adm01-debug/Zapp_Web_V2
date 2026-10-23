@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { MonitoringDiagnosticPanel } from '@/components/monitoring/MonitoringDiagnosticPanel';
 import type { DiagnosticResult } from '@/components/monitoring/hooks/types';

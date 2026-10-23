@@ -19,15 +19,20 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef(({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
-      React.createElement('div', { ...filterDomProps(props), ref }, children)),
-    img: React.forwardRef((props: Record<string, unknown>, ref: React.Ref<HTMLImageElement>) =>
-      React.createElement('img', { ...filterDomProps(props), ref })),
-  },
-  AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef(({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
+          React.createElement('div', { ...filterDomProps(props), ref }, children)),
+        img: React.forwardRef((props: Record<string, unknown>, ref: React.Ref<HTMLImageElement>) =>
+          React.createElement('img', { ...filterDomProps(props), ref })),
+      },
+      AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 // Filter out non-DOM props
 function filterDomProps(props: Record<string, unknown>) {

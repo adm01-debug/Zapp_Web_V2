@@ -11,11 +11,16 @@ import { axe } from 'vitest-axe';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({

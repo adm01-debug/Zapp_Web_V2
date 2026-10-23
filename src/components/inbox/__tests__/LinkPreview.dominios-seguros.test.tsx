@@ -4,20 +4,25 @@ import React from 'react';
 
 // framer-motion real monta os elementos via `motion.*`; o mock mantém o DOM
 // equivalente (a/tag reais) e tira as props de animação.
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef(
-      ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
-        React.createElement('div', { ...filterDomProps(props), ref }, children)
-    ),
-    a: React.forwardRef(
-      ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLAnchorElement>) =>
-        React.createElement('a', { ...filterDomProps(props), ref }, children)
-    ),
-  },
-  AnimatePresence: ({ children }: React.PropsWithChildren) =>
-    React.createElement(React.Fragment, null, children),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef(
+          ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
+            React.createElement('div', { ...filterDomProps(props), ref }, children)
+        ),
+        a: React.forwardRef(
+          ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLAnchorElement>) =>
+            React.createElement('a', { ...filterDomProps(props), ref }, children)
+        ),
+      },
+      AnimatePresence: ({ children }: React.PropsWithChildren) =>
+        React.createElement(React.Fragment, null, children),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 function filterDomProps(props: Record<string, unknown>) {
   const { initial, animate, exit, transition, whileHover, whileTap, ...rest } = props;

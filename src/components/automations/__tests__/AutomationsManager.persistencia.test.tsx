@@ -51,16 +51,20 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1' }, session: null, loading: false }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, initial, animate, exit, transition, ...props }: Record<string, unknown>) =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <div {...(props as any)}>{children as ReactNode}</div>,
-  },
-  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
-  // CT-70 — AutomationCard lê useReducedMotion; aqui só o stub para o mock.
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, initial, animate, exit, transition, ...props }: Record<string, unknown>) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <div {...(props as any)}>{children as ReactNode}</div>,
+      },
+      AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+      // CT-70 — AutomationCard lê useReducedMotion; aqui só o stub para o mock.
+      useReducedMotion: () => false,
+  };
+});
 
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,

@@ -31,14 +31,18 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
-  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
-  // Grupos passou a usar o movimento reduzido do sistema (MotionConfig + useReducedMotion);
-  // sem a preferência nada muda na tela sob teste.
-  MotionConfig: ({ children }: { children?: import("react").ReactNode }) => children,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
+      AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
+      // Grupos passou a usar o movimento reduzido do sistema (MotionConfig + useReducedMotion);
+      // sem a preferência nada muda na tela sob teste.
+      MotionConfig: ({ children }: { children?: import("react").ReactNode }) => children,
+      useReducedMotion: () => false,
+  };
+});
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
 vi.mock('@/components/ui/empty-state', () => ({

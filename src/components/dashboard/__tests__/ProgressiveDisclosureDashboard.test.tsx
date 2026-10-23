@@ -12,17 +12,20 @@ import { EnhancedProgressiveDisclosure } from '../ProgressiveDisclosureDashboard
  * do `dataUpdatedAt` dessa busca.
  */
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
   const motion = new Proxy(
-    {},
-    {
-      get: () => (props: Record<string, unknown>) => {
-        const { initial, animate, exit, transition, layoutId, variants, ...rest } = props;
-        return React.createElement('div', rest);
+      {},
+      {
+        get: () => (props: Record<string, unknown>) => {
+          const { initial, animate, exit, transition, layoutId, variants, ...rest } = props;
+          return React.createElement('div', rest);
+        },
       },
-    },
-  );
+    );
   return {
+    ...actual,
+
     motion,
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
     useReducedMotion: () => false,

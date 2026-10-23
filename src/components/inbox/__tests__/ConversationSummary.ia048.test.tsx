@@ -35,12 +35,17 @@ vi.mock('@/components/inbox/summary/SummaryResult', () => ({
   SummaryResult: () => <div data-testid="summary-result" />,
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>,
+      },
+      AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 const makeMessages = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
