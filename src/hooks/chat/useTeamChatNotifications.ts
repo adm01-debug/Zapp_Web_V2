@@ -2,7 +2,6 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
@@ -136,7 +135,6 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
 
   useEffect(() => {
@@ -207,7 +205,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
         // `notifSettings.browserNotifications`.
-        if (permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
+        if (Notification.permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -225,17 +223,15 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          await showNotification({
-            title: `💬 Teams: ${senderName}`,
+          const notif = new Notification(`💬 Teams: ${senderName}`, {
             body,
             tag: `team-msg-${msg.conversation_id}`,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
             requireInteraction: false,
           });
+          notif.onclick = () => {
+            window.focus();
+            navigateToView('team-chat');
+          };
 
           log.debug('Team chat notification sent for message:', msg.id);
         }
