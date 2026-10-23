@@ -4090,6 +4090,7 @@
         "user_service_accounts.\"Only admins can update service accounts\"": "7faf6b6043792a23eba34d68446a11ea",
         "followup_executions.\"Authenticated can view followup executions\"": "c7c4c4713886cbce6d193e95ebdfb1f1",
         "link_preview_cache_metrics.\"Admins/supervisors can read metrics\"": "f8f0f3765f5fb7b2833be7afa578805d",
+        "password_reset_requests.\"Anon can file a password reset request\"": "483afda039a6f7494c25341ed90e129c",
         "performance_snapshots.\"Users can view own performance snapshots\"": "0fdfcdd10f7f49333459b413256f4aad",
         "talkx_campaign_segments.\"Users can update own campaign segments\"": "cc354e2e39011d618d9224382803cfb2",
         "whatsapp_connection_queues.\"Admins can manage connection queues\"": "daaee03f9653b76cee9e34ea9a133a1c",
@@ -4298,7 +4299,7 @@
         "f:log_assignment_change()": "b4cc721f1e9bf299cd5f4965f12b8cf1",
         "f:get_own_gmail_accounts()": "758fdaecac53fb2569a75ee1abc9ec4f",
         "f:get_team_unread_counts()": "a1b3c89a4e5ed64abcc60e723facd9da",
-        "f:sanitize_reset_request()": "0fcc982cfb17173e4118b52d2d6eaf8f",
+        "f:sanitize_reset_request()": "3204a09f629d123a1737b9020a990838",
         "f:delete_contact(p_id uuid)": "52868956b953807d74d432b2212dc40c",
         "f:get_ai_jobs_cron_secret()": "c387004f4b90081fb8b9fa282033dc2e",
         "f:normalize_contact_phone()": "ea6717483343755ba769302b18013a9a",
@@ -5281,7 +5282,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-10-16T18:17:30Z",
+    "generated_at": "2026-10-23T20:00:06Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
