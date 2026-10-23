@@ -162,7 +162,7 @@ export function RadarPhase7Panel({
           <CopilotFeedback
             suggestionId={`${conversationId}-${lastSuggestionText}`}
             onFeedback={(rating, reason) =>
-              recordFeedback(`${conversationId}-last`, rating, reason)
+              recordFeedback(`${conversationId}-${lastSuggestionText}`, rating, reason)
             }
           />
         )}

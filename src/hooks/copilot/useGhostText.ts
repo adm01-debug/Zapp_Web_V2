@@ -159,8 +159,7 @@ export function useGhostText({
           return;
         }
         const raw = data.suggestions[0].text ?? '';
-        const suffix = raw.startsWith(text) ? raw.slice(text.length) : '';
-        setGhostState({ suffix: suffix.trim() ? ` ${suffix.trim()}` : '', forInput: text });
+        setGhostState({ suffix: raw.trim() ? ` ${raw.trim()}` : '', forInput: text });
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
           log.error('ghost text: erro na requisição', { msg: err.message });
