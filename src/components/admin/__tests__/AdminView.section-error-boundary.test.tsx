@@ -21,7 +21,7 @@ vi.mock('../useAdminData', () => ({
     users: [], auditLogs: [], loading: false,
     auditTotal: 0, error: null,
     fetchData: vi.fn(), handleRoleChange: vi.fn(), handleToggleActive: vi.fn(),
-    handleSaveUser: vi.fn(), handleCreateUser: vi.fn(),
+    handleSaveUser: vi.fn(), handleSaveRamal: vi.fn(), handleCreateUser: vi.fn(),
   }),
   accessLevelConfig: {},
   MIN_PASSWORD_LENGTH: 8,
@@ -68,7 +68,7 @@ describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
   it('não expõe mais as ferramentas do supervisor (migraram para a visão supervisao)', () => {
     render(<AdminView />);
 
-    for (const nome of [/Playbooks/, /Copiloto/, /Treinamento/, /Sala de Crise/]) {
+    for (const nome of [/Playbooks/, /Copiloto/, /Sala de Crise/]) {
       expect(screen.queryByRole('tab', { name: nome })).toBeNull();
     }
     // O que o admin mantém continua lá.

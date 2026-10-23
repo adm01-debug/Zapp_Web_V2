@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -66,10 +66,12 @@ describe('N-066: nomes acessíveis em combobox e progressbar', () => {
 
   describe('MediaMigrationTool — 2 progressbars nomeados', () => {
     it('progresso da migração de mídia tem nome acessível (estado em execução)', async () => {
-      mockInvokeEdge.mockResolvedValueOnce({ data: null, error: null });
+      mockInvokeEdge.mockImplementationOnce(() => new Promise(() => {}));
 
       render(<MediaMigrationTool />);
       fireEvent.click(screen.getByRole('button', { name: /iniciar migração/i }));
+      const dialog = await screen.findByRole('alertdialog');
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar migração' }));
 
       await waitFor(() => {
         expect(screen.getByRole('progressbar', { name: /migração de mídia/i })).toBeInTheDocument();
@@ -84,6 +86,8 @@ describe('N-066: nomes acessíveis em combobox e progressbar', () => {
 
       render(<MediaMigrationTool />);
       fireEvent.click(screen.getByRole('button', { name: /iniciar migração/i }));
+      const dialog = await screen.findByRole('alertdialog');
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar migração' }));
 
       await waitFor(() => {
         expect(screen.getByRole('progressbar', { name: /progresso da migração/i })).toBeInTheDocument();
@@ -118,6 +122,8 @@ describe('N-066: nomes acessíveis em combobox e progressbar', () => {
 
       const { container } = render(<MediaMigrationTool />);
       fireEvent.click(screen.getByRole('button', { name: /iniciar migração/i }));
+      const dialog = await screen.findByRole('alertdialog');
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar migração' }));
 
       await waitFor(() => {
         expect(screen.getByRole('progressbar', { name: /progresso da migração/i })).toBeInTheDocument();
