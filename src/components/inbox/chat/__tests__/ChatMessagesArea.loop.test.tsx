@@ -67,6 +67,15 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
 }));
 
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
+    from: () => ({
+      select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+    }),
+  },
+}));
+
 function makeMessage(id: string, content: string): Message {
   return {
     id,
