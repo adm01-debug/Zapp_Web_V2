@@ -82,7 +82,10 @@ beforeEach(() => {
 
 describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', () => {
   beforeEach(() => cleanup());
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it('editar só o título não mexe em prazo/alarme nem habilita o Salvar por formato', () => {
     const item = { ...base, due_date: NOVE_H_ISO, remind_at: NOVE_H_ISO };
@@ -118,6 +121,11 @@ describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', ()
   });
 
   it('criar pelo QuickAdd e editar no Sheet o mesmo 09:00 produzem o mesmo instante ISO', async () => {
+    // Relógio congelado antes do dia escolhido: o QuickAdd recusa lembrete no passado,
+    // e 20/10/2026 deixaria de ser futuro com o calendário real. Só o `Date` é falso.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 19, 12, 0, 0, 0));
+
     // Criação (QuickAdd): alarme 20/10 09:00.
     const onAdd = vi.fn().mockResolvedValue(undefined);
     const Wrapper = makeWrapper(makeQueryClient());
