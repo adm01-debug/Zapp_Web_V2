@@ -29,7 +29,7 @@ export interface GmailMessage {
 interface GmailMessageList { messages?: Array<{ id: string }>; nextPageToken?: string }
 interface GmailLabelList { labels?: Array<{ id: string; name: string; type: string; color?: { backgroundColor?: string }; messagesTotal?: number; messagesUnread?: number }> }
 interface GmailTokens { access_token: string; refresh_token: string }
-interface GmailAccountForToken { id: string; token_expires_at: string }
+interface GmailAccountForToken { id: string; token_expires_at: string; updated_at?: string | null }
 
 // ── Refresh do token do Gmail: UMA cópia em todo o projeto ────────────────
 // Todo caminho que renova o access_token passa por aqui: `ensureValidToken`
@@ -41,6 +41,105 @@ interface GmailAccountForToken { id: string; token_expires_at: string }
 // unauthorized_client) é preservado na mensagem — é o que isGmailReauthError
 // usa — e nunca carrega token.
 export interface GmailRefreshedTokens { access_token: string; refresh_token?: string; expires_in: number }
+
+export interface GmailAccountDueFields {
+  is_active?: boolean | null;
+  sync_status?: string | null;
+  next_attempt_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface GmailSyncClaimSnapshot extends GmailAccountDueFields {
+  id: string;
+  history_id?: string | null;
+  updated_at?: string | null;
+  error_count?: number | null;
+}
+
+export interface GmailSyncClaim {
+  /** Timestamp returned by Postgres' updated_at trigger for this claim. */
+  updatedAt: string;
+  errorCount?: number | null;
+}
+
+export const GMAIL_RETRY_BASE_DELAY_MS = 60_000;
+export const GMAIL_RETRY_MAX_DELAY_MS = 60 * 60_000;
+export const GMAIL_SYNC_CLAIM_STALE_MS = 5 * 60_000;
+
+/** Exponential retry delay: 1m, 2m, 4m… capped at 1h. */
+export function gmailRetryDelayMs(consecutiveFailures: number): number {
+  const failures = Number.isFinite(consecutiveFailures)
+    ? Math.max(1, Math.floor(consecutiveFailures))
+    : 1;
+  const maxExponent = Math.ceil(Math.log2(GMAIL_RETRY_MAX_DELAY_MS / GMAIL_RETRY_BASE_DELAY_MS));
+  const exponent = Math.min(failures - 1, maxExponent);
+  return Math.min(GMAIL_RETRY_MAX_DELAY_MS, GMAIL_RETRY_BASE_DELAY_MS * (2 ** exponent));
+}
+
+export function gmailNextAttemptAt(consecutiveFailures: number, nowMs = Date.now()): string {
+  return new Date(nowMs + gmailRetryDelayMs(consecutiveFailures)).toISOString();
+}
+
+/** Seleciona contas ativas e elegíveis para retry, sem adiar estado malformado. */
+export function selectGmailAccountsDue<T extends GmailAccountDueFields>(
+  accounts: readonly T[],
+  nowMs = Date.now(),
+): T[] {
+  return accounts.filter((account) => {
+    if (account.is_active === false || account.sync_status === 'reauth_required') return false;
+    if (account.sync_status === 'syncing') {
+      const claimedAt = Date.parse(account.updated_at ?? '');
+      // A recent claim is active. Only reclaim a lease whose timestamp proves
+      // it has aged out; malformed timestamps fail closed instead of racing.
+      if (!Number.isFinite(claimedAt) || nowMs - claimedAt < GMAIL_SYNC_CLAIM_STALE_MS) return false;
+    }
+    if (!account.next_attempt_at) return true;
+    const nextAttemptMs = Date.parse(account.next_attempt_at);
+    return !Number.isFinite(nextAttemptMs) || nextAttemptMs <= nowMs;
+  });
+}
+
+/**
+ * Atomically claim a due account using fields already present in the schema.
+ * The update trigger supplies a fresh `updated_at` value that fences later
+ * success/failure writes; concurrent workers that read the same snapshot get
+ * zero rows after the first worker changes sync_status to `syncing`.
+ */
+export async function claimGmailAccountSync(
+  supabase: SupabaseClient,
+  account: GmailSyncClaimSnapshot,
+): Promise<GmailSyncClaim | null> {
+  if (account.sync_status === "reauth_required") return null;
+  if (account.sync_status === "syncing") {
+    const claimedAt = Date.parse(account.updated_at ?? "");
+    if (!Number.isFinite(claimedAt) || Date.now() - claimedAt < GMAIL_SYNC_CLAIM_STALE_MS) return null;
+  }
+  let query = supabase.from("gmail_accounts")
+    .update({ sync_status: "syncing" })
+    .eq("id", account.id)
+    .eq("is_active", account.is_active ?? true);
+  query = account.sync_status == null
+    ? query.is("sync_status", null)
+    : query.eq("sync_status", account.sync_status);
+  query = account.history_id == null
+    ? query.is("history_id", null)
+    : query.eq("history_id", account.history_id);
+  if (account.updated_at) query = query.eq("updated_at", account.updated_at);
+  if (account.next_attempt_at == null) query = query.is("next_attempt_at", null);
+  else query = query.eq("next_attempt_at", account.next_attempt_at);
+  const { data, error } = await query.select("updated_at");
+  if (error) throw new Error("Failed to claim Gmail account sync");
+  const updatedAt = (data?.[0] as { updated_at?: unknown } | undefined)?.updated_at;
+  if (!data?.length) return null;
+  if (typeof updatedAt !== "string") throw new Error("Gmail sync claim missing updated_at fence");
+  return { updatedAt, errorCount: account.error_count };
+}
+
+export const GMAIL_REAUTH_HTTP_STATUS = 409;
+
+export function gmailReauthErrorPayload(): { code: 'reauth_required'; error: string } {
+  return { code: 'reauth_required', error: GMAIL_REAUTH_MESSAGE };
+}
 
 export async function requestGmailTokenRefresh(refreshToken: string, clientId: string, clientSecret: string): Promise<GmailRefreshedTokens> {
   const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -122,28 +221,28 @@ export async function storeTokens(supabase: SupabaseClient, accountId: string, a
   if (error) throw new Error("Failed to persist refreshed Gmail token");
 }
 
-export async function ensureValidToken(supabase: SupabaseClient, account: GmailAccountForToken, log: Logger): Promise<string> {
+export async function ensureValidToken(
+  supabase: SupabaseClient,
+  account: GmailAccountForToken,
+  log: Logger,
+  onUpdatedAt?: (updatedAt: string) => void,
+): Promise<string> {
   const storedTokens = await getTokens(supabase, account.id);
   if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;
   log.info("Refreshing Gmail token");
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ refresh_token: storedTokens.refresh_token, client_id: requireEnv("GOOGLE_CLIENT_ID"), client_secret: requireEnv("GOOGLE_CLIENT_SECRET"), grant_type: "refresh_token" }),
-  });
-  if (!response.ok) {
-    // O corpo do Google distingue token revogado/expirado (invalid_grant) de
-    // falha transitória — sem ele a conta cairia em "error" mudo. O corpo do
-    // erro do refresh nunca carrega token.
-    const detail = await response.text();
-    throw new Error(`Gmail token refresh rejected (${response.status}): ${detail}`);
-  }
-  const tokens = await response.json() as { access_token: string; refresh_token?: string; expires_in: number };
-
   const tokens = await requestGmailTokenRefresh(storedTokens.refresh_token, requireEnv("GOOGLE_CLIENT_ID"), requireEnv("GOOGLE_CLIENT_SECRET"));
   const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
   await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
-  const { error } = await supabase.from("gmail_accounts").update({ token_expires_at: newExpiresAt }).eq("id", account.id);
+  const { data, error } = await supabase.from("gmail_accounts").update({ token_expires_at: newExpiresAt }).eq("id", account.id).select("updated_at");
   if (error) throw new Error("Failed to persist Gmail token expiration");
+  const updatedAt = (data?.[0] as { updated_at?: unknown } | undefined)?.updated_at;
+  // A cron/manual sync claim uses updated_at as its fencing token. Refreshing
+  // the OAuth credentials is another UPDATE, so carry forward its server value
+  // to keep the owning sync's later CAS valid.
+  if (typeof updatedAt === "string") {
+    account.updated_at = updatedAt;
+    onUpdatedAt?.(updatedAt);
+  }
   return tokens.access_token;
 }
 
@@ -280,7 +379,10 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
   }
 
   await reconcileEmailThreads(supabase, accountId, [...affectedLocalThreadIds]);
-  if (failed.length > 0) await supabase.from("gmail_accounts").update({ last_error: `${failed.length} mensagens falharam na sincronização` }).eq("id", accountId);
+  // Account-level status/backoff is committed by the caller, which owns the
+  // sync claim and its updated_at fencing token. Updating gmail_accounts here
+  // would invalidate that token and could let a stale worker overwrite a newer
+  // success after a partial message failure.
   return { synced: results.length, failed: failed.length, failures: failed, messages: results };
 }
 
@@ -331,25 +433,40 @@ export async function resetGmailHistoryCursor(supabase: SupabaseClient, accountI
   return data && data.length > 0 ? "reset" : "conflict";
 }
 
-export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "in:inbox", maxResults = 50) {
+export async function runGmailFullSync(
+  supabase: SupabaseClient,
+  accountId: string,
+  accessToken: string,
+  log: Logger,
+  query = "in:inbox",
+  maxResults = 50,
+  claim?: GmailSyncClaim,
+) {
   const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults);
   if (result.failed > 0) {
-    const { error: statusError } = await supabase.from("gmail_accounts").update({
-      sync_status: "error", last_sync_at: new Date().toISOString(),
-      last_error: `${result.failed} mensagens falharam na sincronização`,
-    }).eq("id", accountId);
-    if (statusError) throw new Error("Failed to record Gmail sync error state");
+    const previousErrorCount = Math.max(0, claim?.errorCount ?? 0);
+    await recordGmailAccountFailure(
+      supabase,
+      accountId,
+      new Error(`${result.failed} mensagens falharam na sincronização`),
+      previousErrorCount + 1,
+      previousErrorCount,
+      claim,
+    );
     return result;
   }
   const profile = await gmailFetch<{ historyId?: string }>(accessToken, "/profile");
   if (!profile.historyId) throw new Error("Gmail profile response missing historyId");
-  const { error } = await supabase.from("gmail_accounts").update({
+  let updateQuery = supabase.from("gmail_accounts").update({
     sync_status: "synced", history_id: profile.historyId,
     last_sync_at: new Date().toISOString(), last_error: null,
     // sincronizar de novo zera a espera crescente das falhas transitórias
     error_count: 0, next_attempt_at: null,
   }).eq("id", accountId);
+  if (claim) updateQuery = updateQuery.eq("updated_at", claim.updatedAt);
+  const { data, error } = claim ? await updateQuery.select("id") : await updateQuery;
   if (error) throw new Error("Failed to persist Gmail sync cursor");
+  if (claim && !data?.length) throw new Error("Gmail sync claim lost before full sync commit");
   return result;
 }
 
@@ -384,6 +501,8 @@ export async function recordGmailAccountFailure(
   accountId: string,
   error: unknown,
   attempts: number,
+  previousErrorCount = Math.max(0, attempts - 1),
+  claim?: GmailSyncClaim,
 ): Promise<GmailAccountFailure> {
   const status: GmailAccountFailure = isGmailReauthError(error) ? "reauth_required" : "error";
   const detail = sanitizeGmailErrorMessage(error instanceof Error ? error.message : String(error ?? ""));
@@ -391,9 +510,23 @@ export async function recordGmailAccountFailure(
     ? GMAIL_REAUTH_MESSAGE
     : `${Math.max(1, attempts)} tentativa(s) de sincronização falharam`;
   const lastError = detail && !base.includes(detail) ? `${base}: ${detail}` : base;
-  const { error: updateError } = await supabase.from("gmail_accounts")
-    .update({ sync_status: status, last_error: lastError })
+  const failureCount = Number.isFinite(previousErrorCount)
+    ? Math.max(0, Math.floor(previousErrorCount)) + 1
+    : 1;
+  const failureState = status === "reauth_required"
+    ? { sync_status: status, last_error: lastError, next_attempt_at: null }
+    : {
+      sync_status: status,
+      last_error: lastError,
+      error_count: failureCount,
+      next_attempt_at: gmailNextAttemptAt(failureCount),
+    };
+  let updateQuery = supabase.from("gmail_accounts")
+    .update({ ...failureState, last_sync_at: new Date().toISOString() })
     .eq("id", accountId);
+  if (claim) updateQuery = updateQuery.eq("updated_at", claim.updatedAt);
+  const { data, error: updateError } = claim ? await updateQuery.select("id") : await updateQuery;
   if (updateError) throw new Error("Failed to record Gmail account failure state");
+  if (claim && !data?.length) throw new Error("Gmail sync claim lost before failure state commit");
   return status;
 }

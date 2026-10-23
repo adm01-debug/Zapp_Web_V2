@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { getLogger } from "@/lib/logger";
-import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter } from "react-router-dom";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { SkipLinks } from "@/components/ui/skip-link";
@@ -64,6 +63,13 @@ const Sonner = lazy(() =>
   import("@/components/ui/sonner")
     .then(m => ({ default: m.Toaster }))
 );
+// API legada de `@/hooks/ui/use-toast` tem store independente do Sonner. O host
+// segue montado globalmente para não perder esses avisos, mas fica em chunk lazy
+// para manter seus componentes Radix fora do bundle inicial.
+const LegacyToaster = lazy(() =>
+  import("@/components/ui/toaster")
+    .then(m => ({ default: m.Toaster }))
+);
 // Gamificação: host do toast de conquista/subida de nível. É overlay (renderiza o
 // próprio aviso e não envolve as rotas), então vive no mesmo bloco lazy do Sonner —
 // nada dele existe na primeira pintura.
@@ -102,6 +108,7 @@ function DeferredProviders() {
       {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
       <EasterEggsProvider>{null}</EasterEggsProvider>
       <Sonner />
+      <LegacyToaster />
       <AchievementCelebrationToaster />
     </Suspense>
   );
@@ -184,7 +191,6 @@ function AppContent() {
             <DeferredHooks />
           </Suspense>
         </ErrorBoundary>
-        <Toaster />
         <AppRoutes />
       </GlobalKeyboardProvider>
     </BrowserRouter>
