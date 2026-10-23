@@ -97,7 +97,7 @@ for f in \
   20260926100302_dashboard_revoke_public_execute_rpcs.sql \
   20260927120000_dashboard_kpi_p_since_default_null_guard.sql \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
-  20261003272707_reconcile_local_replay_with_canonical.sql \
+  20261007013217_conversation_closures_reopen_same_day.sql \
   20261006064630_dashboard_contact_counts_restaura_trava_e33.sql; do
   [[ -f "$migrations_dir/$f" ]] || fail "migration nao encontrada: $f"
 done
@@ -116,7 +116,8 @@ assert_last_definer() { # $1=rotulo $2=basename do arquivo de origem $3=regex ER
   grep -qxF "$origin" <<< "$migrations_sorted" \
     || fail "guarda de vigencia: arquivo de origem de $label nao esta em supabase/migrations ($origin)"
   while IFS= read -r rel; do
-    if grep -qiE "$pattern" "$migrations_dir/$rel"; then
+    # Linhas de comentario SQL nao sao DDL (ex.: bloco "Rollback" com CREATE OR REPLACE comentado).
+    if grep -qiE "$pattern" <<< "$(grep -vE '^[[:space:]]*--' "$migrations_dir/$rel" || true)"; then
       later+="$rel "
     fi
   done < <(awk -v o="$origin" '$0==o{seen=1; next} seen{print}' <<< "$migrations_sorted")
@@ -126,6 +127,8 @@ assert_last_definer() { # $1=rotulo $2=basename do arquivo de origem $3=regex ER
 }
 
 # Helpers SECURITY DEFINER extraidos verbatim mais abaixo:
+# ALTER FUNCTION fica de fora de proposito: 20261010150628 e 20261016170000 so trocam o search_path
+# (pg_temp) e reafirmam GRANTs; ALTER nao muda o corpo extraido. CREATE/DROP seguem barrados.
 assert_last_definer 'helper is_admin_or_supervisor' \
   '20261016170000_fix_security_definer_search_path.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.is_admin_or_supervisor|ALTER FUNCTION[^;]*public\.is_admin_or_supervisor|DROP FUNCTION[^;]*public\.is_admin_or_supervisor)'
@@ -417,13 +420,13 @@ for f in \
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
 
-# Definição final de dashboard_kpi vive na migration de reconciliação
+# Definição final de dashboard_kpi vive na migration conversation_closures_reopen_same_day
 # (arquivo multi-objeto): extrai só o CREATE OR REPLACE dessa função.
 awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
-  "$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql" \
+  "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
   > "$tmp_dir/kpi_final.sql"
 grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
-  || fail 'extracao de dashboard_kpi da migration de reconciliacao veio vazia'
+  || fail 'extracao de dashboard_kpi da migration conversation_closures_reopen_same_day veio vazia'
 grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi nao fechou o corpo da funcao'
 psql_file "$tmp_dir/kpi_final.sql"
