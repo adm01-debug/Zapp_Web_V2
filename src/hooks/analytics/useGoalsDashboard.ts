@@ -119,22 +119,16 @@ export function useGoalsDashboard() {
     enabled: !!profile?.id,
   });
 
-  const { data: contactsResolution, isLoading: loadingResolution } = useQuery({
-    queryKey: ['goals-contacts-resolution', period, profile?.id],
+  const { data: resolvedCount, isLoading: loadingResolution } = useQuery({
+    queryKey: ['goals-contacts-resolved', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return { total: 0, resolved: 0 };
-      const { count: total, error: totalError } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
         .eq('assigned_to', profile.id)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-      if (totalError) throw totalError;
-      const { count: resolved, error: resolvedError } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
-        .eq('assigned_to', profile.id)
-        .eq('conversation_status', 'resolvido')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-      if (resolvedError) throw resolvedError;
-      return { total: total ?? 0, resolved: resolved ?? 0 };
+        .eq('conversation_status', 'resolved')
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (error) throw error;
+      return count ?? 0;
     },
     enabled: !!profile?.id,
   });
@@ -153,10 +147,10 @@ export function useGoalsDashboard() {
   const goals = useMemo((): Goal[] => {
     const messagesSent = messagesCount ?? 0;
     const contactsHandled = contactsCount ?? 0;
-    const hasResolutionData = contactsHandled > 0;
-    const totalContacts = contactsResolution?.total ?? 0;
-    const resolvedContacts = contactsResolution?.resolved ?? 0;
-    const resolutionRate = totalContacts > 0 ? Math.round((resolvedContacts / totalContacts) * 100) : 0;
+    const contactsTotal = contactsCount ?? 0;
+    const contactsResolved = resolvedCount ?? 0;
+    const resolutionRate = contactsTotal > 0 ? Math.round((contactsResolved / contactsTotal) * 100) : 0;
+    const hasResolutionData = contactsTotal > 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
     // "sem config" (x undefined) virava SEMPRE inativo em vez de "usar
@@ -183,12 +177,12 @@ export function useGoalsDashboard() {
         icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium', hasData: hasResolutionData });
     }
     return allGoals;
-  }, [messagesCount, contactsCount, contactsResolution, period, customGoals]);
+  }, [messagesCount, contactsCount, resolvedCount, period, customGoals]);
 
   const overallProgress = useMemo(() => {
-    const eligible = goals.filter(g => g.hasData !== false);
-    if (eligible.length === 0) return 0;
-    return Math.round(eligible.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / eligible.length);
+    const countableGoals = goals.filter(g => g.hasData !== false);
+    if (countableGoals.length === 0) return 0;
+    return Math.round(countableGoals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / countableGoals.length);
   }, [goals]);
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
