@@ -36,6 +36,8 @@ const STAGE_KEYWORDS: Record<string, string[]> = {
   negociação: ['desconto', 'condições', 'parcelamento', 'prazo', 'negociar', 'reduzir'],
   fechamento: ['fechar', 'confirmar', 'pedido', 'contrato', 'assinar', 'formalizar'],
   'pós-venda': ['entrega', 'satisfação', 'obrigado', 'feedback', 'suporte', 'acompanhamento'],
+  // Bug 5: estágio 'Novo Lead' ausente — normalizado para lowercase na comparação
+  'novo lead': ['olá', 'novo', 'primeiro contato', 'cadastro', 'bem-vindo'],
 };
 
 /** Palavras-chave do template title+content para cada estágio. */
@@ -46,6 +48,8 @@ const TEMPLATE_STAGE_HINTS: Record<string, string[]> = {
   negociação: ['desconto', 'condição', 'negociar', 'flexível'],
   fechamento: ['confirmar', 'fechamento', 'pedido', 'contrato'],
   'pós-venda': ['entrega', 'satisfação', 'suporte', 'avaliação'],
+  // Bug 5: estágio 'Novo Lead' ausente — normalizado para lowercase na comparação
+  'novo lead': ['boas-vindas', 'bem-vindo', 'cadastro', 'primeiro contato', 'novo cliente'],
 };
 
 function scoreTemplate(
@@ -57,17 +61,19 @@ function scoreTemplate(
   const stage = (context.salesStage ?? '').toLowerCase();
   const lastMsg = (context.lastClientMessage ?? '').toLowerCase();
 
-  // Pontuação por estágio
-  if (stage && TEMPLATE_STAGE_HINTS[stage]) {
+  // Pontuação por estágio — Bug 6: hasOwnProperty para evitar prototype pollution
+  if (stage && Object.prototype.hasOwnProperty.call(TEMPLATE_STAGE_HINTS, stage)) {
     for (const kw of TEMPLATE_STAGE_HINTS[stage]) {
       if (text.includes(kw)) score += 2;
     }
   }
 
   // Pontuação por palavras da última mensagem do cliente
-  if (stage && STAGE_KEYWORDS[stage]) {
+  // Bug 6: hasOwnProperty para evitar prototype pollution
+  // Bug 10: score só sobe se o template também contém a palavra-chave
+  if (stage && Object.prototype.hasOwnProperty.call(STAGE_KEYWORDS, stage)) {
     for (const kw of STAGE_KEYWORDS[stage]) {
-      if (lastMsg.includes(kw)) score += 1;
+      if (lastMsg.includes(kw) && text.includes(kw)) score += 1;
     }
   }
 

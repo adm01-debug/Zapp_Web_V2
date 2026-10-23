@@ -1,5 +1,5 @@
 /**
- * CV-070 — Ditado por voz para o RADAR.
+ * CV-070 — Ditado por oz&para o RADAR.
  *
  * O vendedor fala uma instrução (ex.: "responde que o prazo é 15 dias úteis
  * e pergunta a quantidade") e o RADAR monta a mensagem, reutilizando a
@@ -58,6 +58,8 @@ export function useVoiceDictation({
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
+  // Bug 1: cancelledRef evita que processAudio rode após cancelRecording()
+  const cancelledRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -69,6 +71,8 @@ export function useVoiceDictation({
   }, []);
 
   const cancelRecording = useCallback(() => {
+    // Bug 1: setar cancelledRef ANTES de stop() — onstop é assíncrono
+    cancelledRef.current = true;
     mediaRecorderRef.current?.stop();
     cleanup();
     setState('idle');
@@ -108,7 +112,7 @@ export function useVoiceDictation({
             messages: recentMessages,
             contactName,
             contactId,
-            context: `INSTRUÇÃO DO VENDEDOR (ditado por voz): "${instruction}".\n\nMonte a mensagem exata para enviar ao cliente seguindo essa instrução. A mensagem DEVE ser curta, direta e no tom adequado à conversa. Retorne APENAS a mensagem pronta, sem explicações.`,
+            context: `INSTRUÇÃO DO VENDEDOR (ditado por voz): "${instruction}".\n\nMonte a mensagem exata para enviar ao cliente seguindo essa instrução. A mensagem DEVE ser curta, direta e no tom adequado à conversa. Retorne APENAS a mensagem pronta, sem explicaçõec.`,
           },
         });
 
@@ -135,6 +139,8 @@ export function useVoiceDictation({
   const startRecording = useCallback(async () => {
     if (!enabled) return;
     if (state !== 'idle' && state !== 'error') return;
+    // Bug 1: resetar cancelledRef no início de cada gravação
+    cancelledRef.current = false;
     setErrorMessage(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -156,6 +162,11 @@ export function useVoiceDictation({
       };
 
       recorder.onstop = () => {
+        // Bug 1: se cancelRecording() foi chamado, não processar o áudio
+        if (cancelledRef.current) {
+          cancelledRef.current = false;
+          return;
+        }
         const blob = new Blob(chunksRef.current, { type: mimeType });
         cleanup();
         void processAudio(blob);
@@ -178,7 +189,7 @@ export function useVoiceDictation({
   const stopRecording = useCallback(() => {
     if (state !== 'recording') return;
     mediaRecorderRef.current?.stop();
-  }, [state]);
+    }, [state]);
 
   return { state, errorMessage, startRecording, stopRecording, cancelRecording, durationSeconds };
 }

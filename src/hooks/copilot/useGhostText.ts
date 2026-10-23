@@ -44,6 +44,10 @@ export interface UseGhostTextOptions {
   onAccept: (fullText: string) => void;
   /** Flag para desabilitar completamente (feature flag). */
   enabled?: boolean;
+  /** Posição do cursor no textarea; padrão = fim do texto. */
+  selectionEnd?: number;
+  /** true enquanto algum menu de comandos estiver aberto — impede que Esc seja interceptado. */
+  commandMenuOpen?: boolean;
 }
 
 export interface GhostTextState {
@@ -68,6 +72,8 @@ export function useGhostText({
   messages,
   onAccept,
   enabled = true,
+  selectionEnd,
+  commandMenuOpen = false,
 }: UseGhostTextOptions): GhostTextState {
   const [ghostSuffix, setGhostSuffix] = useState('');
   const [suspended, setSuspended] = useState(false);
@@ -80,27 +86,28 @@ export function useGhostText({
 
   const accept = useCallback(() => {
     if (ghostSuffix) {
-      onAccept(inputValue + ghostSuffix);
+      const insertAt = selectionEnd ?? inputValue.length;
+      onAccept(inputValue.slice(0, insertAt) + ghostSuffix + inputValue.slice(insertAt));
       setGhostSuffix('');
     }
-  }, [ghostSuffix, inputValue, onAccept]);
+  }, [ghostSuffix, inputValue, selectionEnd, onAccept]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
       if (!ghostSuffix) return false;
-      if (e.key === 'Tab') {
+      if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
         accept();
         return true;
       }
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !commandMenuOpen) {
         e.preventDefault();
         dismiss();
         return true;
       }
       return false;
     },
-    [ghostSuffix, accept, dismiss],
+    [ghostSuffix, accept, dismiss, commandMenuOpen],
   );
 
   const recordLatency = useCallback((ms: number) => {
