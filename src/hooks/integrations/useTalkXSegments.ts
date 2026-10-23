@@ -624,7 +624,7 @@ export function useTalkXSegments() {
 
   const refreshEstimates = useMutation({
     mutationFn: async (segments: TalkXSegment[]) => {
-      await Promise.all(segments.map(async (s) => {
+      await Promise.allSettled(segments.map(async (s) => {
         const estimated_count = await countAudience(s.rules);
         if (estimated_count !== s.estimated_count) await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
       }));
