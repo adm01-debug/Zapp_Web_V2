@@ -62,7 +62,7 @@ export interface TalkXSegment {
   creator?: { name: string | null } | null;
 }
 
-export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[]; comingSoon?: boolean }[] = [
+export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[]; comingSoon?: boolean; requiresPreResolution?: boolean }[] = [
   { value: 'tags', label: 'Tags', kind: 'array', category: 'basico' },
   { value: 'company', label: 'Empresa', kind: 'text', category: 'basico' },
   { value: 'city', label: 'Cidade', kind: 'text', category: 'basico' },
@@ -74,14 +74,19 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   // ramos/UFs vem da RPC do Singu, e uma constante local ofereceria valor que a
   // ponte pode recusar. Sem `category` nova: entram no grupo básico junto de
   // Empresa/Cidade/UF. company/city/state seguem intactos (segmentos salvos).
-  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico' },
-  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico' },
+  // requiresPreResolution: a resolução de audiência falha fechada enquanto o front
+  // não resolver p_contact_ids via ponte Singu — nunca descarta a regra em silêncio.
+  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', requiresPreResolution: true },
+  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', requiresPreResolution: true },
   // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
   // para a regra nunca oferecer categoria que o banco não guarda.
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  // t_bbe423a7 — contacts.lead_origin: nenhum fluxo de criação do Zapp grava a coluna
+  // (o contato derivado do WhatsApp carrega a origem só na projeção em memória, não na
+  // linha do banco). Filtrar por origem devolveria sempre vazio → "em breve".
+  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico', comingSoon: true },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
@@ -164,7 +169,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
-        // "Em breve" (lead_score/risk_score): a regra é completa e bem descrita
+        // "Em breve" (lead_score/risk_score/lead_origin): a regra é completa e bem descrita
         // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
         // calculada — então fica fora da estimativa/PostgREST e barra a
         // publicação via validateSegment, sem quebrar o catálogo v2.
@@ -190,7 +195,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\\"]/, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
@@ -198,6 +203,9 @@ function ruleToFilter(r: SegmentRule): string | null {
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  // Campos que requerem pré-resolução (ponte Singu) nunca viram filtro PostgREST:
+  // a regra deve ser resolvida em p_contact_ids antes de chegar ao motor.
+  if (def.requiresPreResolution) return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -258,7 +266,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`) );
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
@@ -276,12 +284,29 @@ type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise
 const AUDIENCE_RPC_PAGE_LIMIT = 1000;
 
 /**
+ * Varre todos os grupos/regras e devolve o primeiro campo que requer
+ * pré-resolução via ponte Singu (p_contact_ids). Se houver, countAudience e
+ * resolveAudience falham fechados antes de chamar a RPC — nunca descartam a
+ * regra em silêncio, o que retornaria mais contatos do que o pedido.
+ */
+function findPreResolutionField(rules: SegmentRules | null | undefined): string | null {
+  for (const group of (rules?.groups ?? [])) {
+    for (const rule of group.rules) {
+      if (RULE_FIELDS.find((f) => f.value === rule.field)?.requiresPreResolution) return rule.field;
+    }
+  }
+  return null;
+}
+
+/**
  * X017 — a contagem do público é decidida no servidor pela RPC
  * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do
  * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+  const preResField = findPreResolutionField(rules);
+  if (preResField) throw new Error(`${preResField} requer p_contact_ids (ponte Singu não resolvida)`);
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
@@ -303,6 +328,8 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
+  const preResField = findPreResolutionField(rules);
+  if (preResField) throw new Error(`${preResField} requer p_contact_ids (ponte Singu não resolvida)`);
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
