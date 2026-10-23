@@ -1,5 +1,5 @@
  import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
- import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService, type SignInResult } from '@/services/auth.service';
