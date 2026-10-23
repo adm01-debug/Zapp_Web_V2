@@ -29,7 +29,7 @@ export interface QueueAlert {
  * Linha de `public.rpc_queue_goal_metrics()` (PM-02, cartão t_35099565): as métricas REAIS por
  * fila visível ao usuário. `null` = não medido (fila sem base ou métrica sem base no período) e
  * `0` = dado (fila existe e está vazia). Trocar um pelo outro inventa alerta (NULL tratado como
- * zero) ou esconde fila estourada (zero tratado como sem medição).
+ * zero) ou esconde fila estoura (zero tratado como sem medição).
  */
 export interface QueueGoalMetricsRow {
   queue_id: string;
@@ -105,7 +105,7 @@ type PendingDatabaseRpc = (
 
 /** Busca as métricas reais das filas. Lança quando a RPC falha — quem chama decide o que fazer. */
 export async function fetchQueueGoalMetrics(): Promise<QueueGoalMetricsRow[]> {
-  const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
   const { data, error } = await rpc('rpc_queue_goal_metrics');
   if (error) throw error;
   return (Array.isArray(data) ? data : []) as QueueGoalMetricsRow[];
