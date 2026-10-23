@@ -17,6 +17,7 @@ import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { createLogger } from '@/lib/logger';
+import { pickRecorderMime } from '@/hooks/communication/useAudioRecorder';
 
 const log = createLogger('useVoiceDictation');
 
@@ -171,18 +172,19 @@ export function useVoiceDictation({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/webm')
-          ? 'audio/webm'
-          : 'audio/ogg';
+      // Usa pickRecorderMime para compatibilidade com Safari/iOS (sem audio/ogg)
+      const mimeType = pickRecorderMime();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
-      const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
       startTimeRef.current = Date.now();
 
       recorder.ondataavailable = (e) => {
+        // Verifica identidade: chunks de recorder cancelado não contaminam próxima gravação
+        if (mediaRecorderRef.current !== recorder) return;
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
@@ -190,7 +192,7 @@ export function useVoiceDictation({
         // Verificação de identidade: se este recorder não é mais o atual,
         // foi cancelado ou substituído — não processar o áudio.
         if (mediaRecorderRef.current !== recorder) return;
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const blob = new Blob(chunksRef.current, { type: mimeType ?? recorder.mimeType ?? 'audio/webm' });
         cleanup();
         void processAudio(blob);
       };
