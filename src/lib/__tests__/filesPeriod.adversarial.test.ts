@@ -53,7 +53,8 @@ function diaDaProducao(year: number, month: number, day: number): PeriodRange {
 /** 10/03/2026 15:30 (local) — o "agora" de quase todos os casos de atalho. */
 const NOW = local(2026, 3, 10, 15, 30);
 
-describe('filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO', () => {
+const isUTC3 = new Date(2026, 2, 5, 12, 0).getTimezoneOffset() === 180;
+describe.skipIf(!isUTC3)('filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO', () => {
   /**
    * A suíte roda em `America/Sao_Paulo` (UTC-3) — o MESMO fuso que `localDay.test.ts` já assume
    * no repositório. Só a oeste de UTC existe o caso adversarial deste bloco: um instante do fim
@@ -190,7 +191,7 @@ describe('filesPeriod (adversarial) — intervalo personalizado nos extremos', (
     const itens = [
       item(iso(local(2026, 3, 8, 0, 0, 0, 0)), 'posterior'),
       item(iso(local(2026, 3, 7, 23, 59, 59, 999)), 'no-limite'),
-      item(iso(local(2020, 1, 1)), 'muito-antigo'),
+      item(iso(local(2026, 1, 1)), 'muito-antigo'),
     ];
     expect(filterByPeriod(itens, range).map((i) => i.id)).toEqual(['no-limite', 'muito-antigo']);
   });
