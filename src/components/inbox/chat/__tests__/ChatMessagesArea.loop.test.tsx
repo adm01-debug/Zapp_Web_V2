@@ -49,6 +49,13 @@ class ResizeObserverMock {
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      height: 600, width: 800, top: 0, left: 0,
+      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),
+    }),
+  });
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
