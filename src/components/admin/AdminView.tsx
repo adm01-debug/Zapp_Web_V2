@@ -14,10 +14,11 @@ import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
   UserPlus, Building, Eye, Loader2,
-  AlertTriangle, ChevronLeft, ChevronRight,
+  AlertTriangle, ChevronLeft, ChevronRight, Clock,
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
 import { useAdminData, accessLevelConfig, AUDIT_PAGE_SIZE, MIN_PASSWORD_LENGTH, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
@@ -43,7 +44,7 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm';
+type AdminTab = 'users' | 'audit' | 'crm' | 'cron';
 
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
@@ -56,6 +57,45 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
   { key: 'google_calendar', label: 'Google Calendar', available: false },
   { key: 'google_drive', label: 'Google Drive', available: true },
 ];
+
+interface CronJob {
+  jobname: string;
+  schedule: string;
+  active: boolean;
+  last_status: string | null;
+  last_run_at: string | null;
+  last_return_message: string | null;
+}
+
+function CronJobsPanel() {
+  const [jobs, setJobs] = useState<CronJob[]>([]);
+  const [cronLoading, setCronLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchJobs() {
+      const { data } = await supabase.rpc('admin_list_cron_jobs');
+      if (data) setJobs(data as CronJob[]);
+      setCronLoading(false);
+    }
+    void fetchJobs();
+  }, []);
+
+  if (cronLoading) {
+    return <div className="flex justify-center py-12"><RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {jobs.map(job => (
+        <li key={job.jobname} className="flex items-center gap-4 p-3 rounded-lg border">
+          <span className="font-mono text-sm">{job.jobname}</span>
+          <span className="text-xs text-muted-foreground">{job.schedule}</span>
+          <span className="text-xs">{job.last_status ?? '—'}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
@@ -80,7 +120,7 @@ export function AdminView() {
   const [auditPage, setAuditPage] = useState(1);
 
   const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
-    useAdminData(activeTab as 'users' | 'audit' | 'crm', {
+    useAdminData((activeTab === 'cron' ? 'users' : activeTab) as 'users' | 'audit' | 'crm', {
       from: auditFrom || undefined,
       to: auditTo || undefined,
       page: auditPage,
@@ -178,11 +218,12 @@ export function AdminView() {
     );
   }
 
-  const abas: ReadonlyArray<readonly [AdminTab, LucideIcon, string]> = [
+  const abas: Array<[AdminTab, LucideIcon, string]> = [
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
   ];
+  if (isAdmin) abas.push(['cron', Clock, 'Tarefas agendadas']);
 
   const navegarNasAbas = (event: KeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
     const indice = abas.findIndex(([id]) => id === tab);
@@ -488,6 +529,8 @@ export function AdminView() {
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
         </SectionErrorBoundary>
+      ) : activeTab === 'cron' ? (
+        <CronJobsPanel />
       ) : null}
       </div>
     </div>
