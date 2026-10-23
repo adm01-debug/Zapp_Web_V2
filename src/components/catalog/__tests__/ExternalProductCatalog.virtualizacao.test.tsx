@@ -11,7 +11,7 @@
  * Os dois números medidos que alimentam docs/catalogo/PERF.md saem daqui:
  * a janela renderizada com pageSize >= 48 e a lista inteira com pageSize 24.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductCatalog } from '../ExternalProductCatalog';
@@ -113,6 +113,20 @@ const escolherTamanhoDePagina = async (rotulo: string) => {
   fireEvent.keyDown(selects[selects.length - 1], { key: 'ArrowDown' });
   fireEvent.click(await screen.findByRole('option', { name: rotulo }));
 };
+
+beforeAll(() => {
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    const el = this as HTMLElement;
+    if (el.classList?.contains('overflow-y-auto')) {
+      return {
+        width: 800, height: SCROLL_VIEWPORT_HEIGHT,
+        top: 0, left: 0, bottom: SCROLL_VIEWPORT_HEIGHT, right: 800, x: 0, y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
+    }
+    return { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+  });
+});
 
 beforeEach(() => {
   mockCatalog.mockReset();
