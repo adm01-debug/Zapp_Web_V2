@@ -110,6 +110,106 @@
       "analisado_em": "2026-10-23",
       "sessao": "claude/dazzling-cannon-j7iw08",
       "notas": "Category A real (inventário registrou B/NONE). Merge base 7a158527. 853 arquivos (83173 ins, 8052 del). Branch de lote diário. Commits de lote em main: 15494eecc (Lote 07–08/10 #1905), 5f8a69571 (Lote 07/10 tarde #1902), 99aa354f5 (Lote 06–07/10 #1900). Tip SHA não ancestor direto (squash-merge — padrão esperado)."
+    },
+    {
+      "branch": "dia/2026-10-08",
+      "tip_sha": "f891205568255a7478741f771cb768b902a1c61b",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-01-dia-2026-10-08.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base 7a1585279. 1310 arquivos. Lote integrado via 01b753e7d (lote 2026-10-08 tarde, PR #1908). src/App.tsx diff=0."
+    },
+    {
+      "branch": "backup/dia-2026-10-13",
+      "tip_sha": "338a420d1e0fa57f993a1b5d8064e0d80f54d6c0",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-02-backup-dia-2026-10-13.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base 7a1585279. 2785 arquivos. Snapshot de backup pré-lote. Main superset: 122 linhas extras em src/App.tsx."
+    },
+    {
+      "branch": "backup/dia-2026-10-14",
+      "tip_sha": "f5885801b111986d8f36c1c163b0e54bbe020ab1",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-03-backup-dia-2026-10-14.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base 7a1585279. 3184 arquivos. Snapshot de backup pré-lote. Main superset: 108 linhas extras em src/App.tsx."
+    },
+    {
+      "branch": "claude/w21-classificar-migration-drift",
+      "tip_sha": "8b401af1bb17bff3eed71f3bba4da6b21391ed96",
+      "veredito": "PENDENTE",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-04-w21-classificar-migration-drift.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base dbabef518. 2 arquivos: check-migration-drift.mjs + .test.mjs. Adiciona --classificar, duplicateVersions, classifications — ausentes na main (grep=0). Funcionalidade não mergeada."
+    },
+    {
+      "branch": "claude/w10-mutacao-mapa-so-pr",
+      "tip_sha": "a2e1c193963448ec649faeb6f997fb95e0abb779",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-05-w10-mutacao-mapa-so-pr.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base 95f6ad07f. 1 arquivo: ci.yml. Guard 'if: github.event_name == pull_request' para mutation-mapa confirmado em main."
+    },
+    {
+      "branch": "ci/cors-zappweb-app-br",
+      "tip_sha": "0038a3348f1c025077cd5536a8de6c224afca744",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-06-cors-zappweb-app-br.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base bb62612a1. 4 arquivos. CORS para zappweb.app.br confirmado em main (_shared/cors.ts). docs/deploy.md diff=0."
+    },
+    {
+      "branch": "claude/fix-ci-reativar-suites-261016-1530",
+      "tip_sha": "a7c3edaeb264d296c123a6ccefbc5b655264b39e",
+      "veredito": "PENDENTE",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-07-fix-ci-reativar-suites-261016-1530.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base 5721e4f50. 2 arquivos: ci.yml + check-test-inventory.mjs. ci.yml propõe expandir node-scripts para 6 globs; main só tem scripts/ci/*.unit.mjs. 8 suites na allowlist da main confirmadas por grep. Reativação não mergeada."
+    },
+    {
+      "branch": "lote/2026-10-16-880-cards",
+      "tip_sha": "f3bbbaf08a53dcd2df4c5607f956a42e116a6bf4",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-08-lote-2026-10-16-880-cards.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base 5721e4f50. 3115 arquivos. Lote integrado via 025d0258d 'lote 880 cartões + fixes F1-F6 (completo, compila)'."
+    },
+    {
+      "branch": "codex/sincronizacao-ledger-20261016",
+      "tip_sha": "f586369d2f7b56c57ed6dbc33e13b1e3235fd15a",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-09-codex-sincronizacao-ledger-20261016.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "Category A. Merge base fbd422204. 114 arquivos. 4 migrations de 16/10 verificadas presentes em main. Main é superconjunto."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv011-020-migrations-261016-1930",
+      "tip_sha": "b30b8efb9d855bfc05b9af294e83652919e037f6",
+      "veredito": "PENDENTE",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/lote2-10-feat-copiloto-cv011-020-migrations-261016-1930.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "notas": "RISCO. Category A. Merge base fbd422204. 9 arquivos. 6 migrations 20261016193*_copilot_*.sql ausentes da main (git show fatal) E ausentes do ledger (query 0 rows). Módulo Copiloto CV011-020 não mergeado."
     }
   ]
 }
