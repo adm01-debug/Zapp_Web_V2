@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { FilesTab } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
@@ -125,6 +125,10 @@ beforeEach(() => {
   h.updateError.value = null;
   h.update.mockImplementation(() => ({ eq: h.eq }));
   h.eq.mockImplementation(() => Promise.resolve({ error: h.updateError.value }));
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe('FilesTab fase 6 — detalhes (etapa 31)', () => {
