@@ -25,6 +25,7 @@ import {
 } from "../request-policy.ts";
 import {
   checkRateLimit,
+  errorResponse,
   enforceRateLimit,
   type EnforceRateLimitContext,
 } from "../validation.ts";
@@ -274,15 +275,32 @@ Deno.test("enforceRateLimit sem req: deriva endpoint do prefixo da chave e ip un
 Deno.test("enforceRateLimit permitido NÃO grava (e o ramo persistente indisponível também não)", async () => {
   const recorded: RateLimitLogEntry[] = [];
   const writer = (entry: RateLimitLogEntry) => { recorded.push(entry); };
-  await enforceRateLimit(`rl-ok-${crypto.randomUUID()}`, 5, 60_000, {
-    consumeRpc: { rpc: () => Promise.resolve({ data: [{ allowed: true, remaining: 4 }], error: null }) },
+  let allowedRpcCalls = 0;
+  const allowed = await enforceRateLimit(`rl-ok-${crypto.randomUUID()}`, 5, 60_000, {
+    consumeRpc: { rpc: () => { allowedRpcCalls++; return Promise.resolve({ data: [{ allowed: true, remaining: 4 }], error: null }); } },
     writer,
   });
-  await enforceRateLimit(`rl-err-${crypto.randomUUID()}`, 5, 60_000, {
+  const unavailable = await enforceRateLimit(`rl-err-${crypto.randomUUID()}`, 5, 60_000, {
     consumeRpc: { rpc: () => Promise.resolve({ data: null, error: { message: "down" } }) },
     writer,
   });
+  assertEquals(allowed, { allowed: true, remaining: 4, persistent: true });
+  assertEquals(allowedRpcCalls, 1);
+  assertEquals(unavailable.allowed, true, "indisponibilidade mantém o fallback local");
+  assertEquals(unavailable.unavailable, true);
   assertEquals(recorded.length, 0);
+});
+
+Deno.test("errorResponse só inclui Retry-After quando o tempo de espera é conhecido", async () => {
+  const limited = errorResponse("Rate limit exceeded", 429, request());
+  assertEquals(limited.status, 429);
+  assertEquals(limited.headers.get("Retry-After"), null);
+
+  const knownWindow = errorResponse("Rate limit exceeded", 429, request(), 12.2);
+  assertEquals(knownWindow.headers.get("Retry-After"), "13");
+
+  const unavailable = errorResponse("Unavailable", 503, request());
+  assertEquals(unavailable.headers.get("Retry-After"), null);
 });
 
 Deno.test("falha de gravação no 429 NÃO quebra a requisição (segue allowed:false)", async () => {
