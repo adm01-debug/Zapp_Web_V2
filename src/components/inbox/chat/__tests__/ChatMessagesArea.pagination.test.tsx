@@ -54,6 +54,7 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
 });
 
 vi.mock('../MessageBubble', () => ({
@@ -71,6 +72,11 @@ vi.mock('@/services/realtime.service', () => ({
 
 vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
+}));
+
+vi.mock('@/hooks/reactions/useBatchReactions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ReactionsBatchProvider: ({ children }: { children: any }) => children,
 }));
 
 const MESMO_TIMESTAMP = new Date('2026-09-02T12:00:00Z');
