@@ -1,9 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   cleanupE2EDraftCampaigns,
+  createE2ETalkXDraftName,
   E2E_TALKX_CONNECTION_LABEL,
   E2E_TALKX_SEGMENT_REGEX,
 } from './fixtures/e2e-talkx';
+
+const campaignDraftNames = new Set<string>();
 
 // SidebarNavGroup defaults to closed (defaultOpen=false). Fresh auth storageState
 // has no saved group-open state, so the group must be expanded before clicking
@@ -177,7 +180,7 @@ test.describe('Talk X module', () => {
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 
-  test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }) => {
+  test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }, testInfo) => {
     // Navigate directly to campaigns overview via URL deep-link.
     await page.goto('/?view=talkx');
 
@@ -195,8 +198,11 @@ test.describe('Talk X module', () => {
     // Step 1 — fill campaign name.
     // The name field must be non-empty for canProceed[1] to be satisfied.
     // NOTE: useCampaignEditor autosave fires ~3s after first keystroke.
-    // afterAll calls cleanupE2EDraftCampaigns() to remove the resulting draft.
-    await page.getByPlaceholder('Ex: Lançamento Linha Office').fill('[E2E] Campanha de Teste');
+    // Unique per CI execution + project + test, but stable across retries. This avoids
+    // one browser project's afterAll deleting another project's in-flight draft.
+    const campaignDraftName = createE2ETalkXDraftName(testInfo.project.name, testInfo.testId);
+    campaignDraftNames.add(campaignDraftName);
+    await page.getByPlaceholder('Ex: Lançamento Linha Office').fill(campaignDraftName);
 
     // Step 1 — select WhatsApp connection (fixture connection, may be disconnected).
     // StepAudience renders three comboboxes: index 0 = Objetivo, index 1 = Conexão
@@ -248,17 +254,31 @@ test.describe('Talk X module', () => {
   });
 });
 
-// Remove draft campaigns created during the wizard step-2 test.
-// Runs once after all specs to keep the production DB clean on every CI run.
+// Remove only exact names registered by this worker's campaign test. Names are stable
+// across retries and unique across projects, so parallel browsers cannot delete each
+// other's in-flight draft. The fixture also filters by creator and draft status.
 // try/finally ensures context.close() is called even if goto or cleanup throws.
 test.afterAll(async ({ browser }) => {
+  if (campaignDraftNames.size === 0) return;
+
   const context = await browser.newContext({
     storageState: 'e2e/.auth/user.json',
   });
   try {
     const page = await context.newPage();
     await page.goto('/');
-    await cleanupE2EDraftCampaigns(page);
+
+    const cleanupErrors: string[] = [];
+    for (const campaignDraftName of campaignDraftNames) {
+      try {
+        await cleanupE2EDraftCampaigns(page, campaignDraftName);
+      } catch (error) {
+        cleanupErrors.push(error instanceof Error ? error.message : 'erro desconhecido');
+      }
+    }
+    if (cleanupErrors.length > 0) {
+      throw new Error(`Falha ao limpar ${cleanupErrors.length} draft(s) E2E: ${cleanupErrors.join('; ')}`);
+    }
   } finally {
     await context.close();
   }
