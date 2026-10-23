@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-23T19:50:00Z",
+  "timestamp": "2026-10-23T20:04:00.391Z",
   "total_prs": 119,
-  "analisados": 0,
+  "analisados": 119,
   "mergeados": 0,
   "estados": {
     "BEHIND": 55,
@@ -10,15 +10,22 @@
     "CLEAN": 0
   },
   "vereditos": {
-    "VALID_BEHIND": 0,
-    "VALID_DIRTY": 0,
-    "DRAFT": 0,
-    "JA_IMPLEMENTADA": 0,
-    "REGRESSAO": 0,
-    "TOCA_WORKFLOWS": 0,
-    "PENDENTE": 119
+    "MERGE_CANDIDATO": 45,
+    "TOCA_WORKFLOWS": 8,
+    "MUST_NOT_MERGE": 1,
+    "SKIP_SELF": 1,
+    "BLOCKED_CONFLICT": 36,
+    "SKIP_DRAFT": 28,
+    "PENDENTE": 0
   },
   "merges": [],
   "ci_main_status": "RED",
-  "main_sha": "328a475ca75b421664edacfda79a598e01c77e64"
+  "main_sha": "328a475ca75b421664edacfda79a598e01c77e64",
+  "notas": [
+    "CI do main RED: Unit Tests (3/3 shards), Contrato DB offline falham. TypeCheck e Security passam.",
+    "Required checks da branch protection: 🏗️ Build (skipped=OK) + 🔎 TypeCheck (success).",
+    "PR #2078 excluída permanentemente: reverte strict=false (E15(b) CLAUDE.md).",
+    "PRs que tocam .github/workflows/ excluídas do batch: #1979,#2046,#2123,#2125,#2126,#2128,#2190,#2197.",
+    "PR #2095 (claude/fix-z017-z020-auth-cors-261018-1950) é o branch desta sessão de análise."
+  ]
 }
